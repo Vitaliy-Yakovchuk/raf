@@ -1,3 +1,5 @@
+import { loadFlowPolicy, type ResourceThresholds } from './flow-policy.ts';
+
 export interface FileSystemMeasurement {
   id: string;
   totalBytes: number;
@@ -35,6 +37,7 @@ export interface ResourceAdmission {
 }
 
 export function evaluateResourceAdmission(input: ResourceAdmissionInput): ResourceAdmission {
+  const policy = loadFlowPolicy().resources;
   const { measurement, requested, unusedReservations, requiredFileSystemIds } = input;
   const reasons: string[] = [];
   const validNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0;
@@ -85,18 +88,17 @@ export function evaluateResourceAdmission(input: ResourceAdmissionInput): Resour
   if (measurement.memoryPressure === 'critical') {
     return { level: 'NO_RESOURCES', allowed: { normal: false, hotfix: false }, reasons: ['Critical memory pressure'], measurement, remaining };
   }
-  const gib = 1024 ** 3;
-  const failures = (label: string, load: number, ramFraction: number, ramMinimum: number, diskFraction: number, diskMinimum: number) => {
+  const failures = (label: string, thresholds: ResourceThresholds) => {
     const result: string[] = [];
-    if (normalizedLoad > load) result.push(`${label}: normalized load exceeds ${load}`);
-    if (ramBytes < Math.max(measurement.totalRamBytes * ramFraction, ramMinimum * gib)) result.push(`${label}: insufficient RAM after reservations`);
+    if (normalizedLoad > thresholds.maxNormalizedLoad) result.push(`${label}: normalized load exceeds ${thresholds.maxNormalizedLoad}`);
+    if (ramBytes < Math.max(measurement.totalRamBytes * thresholds.minRamFraction, thresholds.minRamBytes)) result.push(`${label}: insufficient RAM after reservations`);
     for (const id of ids) {
-      if (diskBytes[id] < Math.max(disks.get(id)!.totalBytes * diskFraction, diskMinimum * gib)) result.push(`${label}: insufficient disk on ${id} after reservations`);
+      if (diskBytes[id] < Math.max(disks.get(id)!.totalBytes * thresholds.minDiskFraction, thresholds.minDiskBytes)) result.push(`${label}: insufficient disk on ${id} after reservations`);
     }
     return result;
   };
-  const normal = failures('normal', 1.2, 0.2, 2, 0.1, 10);
-  const hotfix = failures('hotfix', 1.5, 0.1, 1, 0.05, 5);
+  const normal = failures('normal', policy.normal);
+  const hotfix = failures('hotfix', policy.hotfix);
   return {
     level: normal.length === 0 ? 'ANY_RUN' : hotfix.length === 0 ? 'HOTFIX_ONLY' : 'NO_RESOURCES',
     allowed: { normal: normal.length === 0, hotfix: hotfix.length === 0 },

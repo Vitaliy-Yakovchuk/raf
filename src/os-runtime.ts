@@ -1,0 +1,149 @@
+import { spawn } from 'node:child_process';
+import { lstat, readlink, readFile } from 'node:fs/promises';
+import { availableParallelism, loadavg, totalmem, platform } from 'node:os';
+import { posix } from 'node:path';
+import type { AdapterCommandExecutor } from './agent-adapters.ts';
+import type { WorkspaceRoutingDependencies } from './workspace-routing.ts';
+import type { ResourceMeasurement } from './resource-admission.ts';
+import type { ProcessIdentity, ProcessObservation } from './session-state.ts';
+
+export const executeCommand: AdapterCommandExecutor = command => new Promise((resolve, reject) => {
+  const child = spawn(command.executable, [...command.args], { cwd: command.cwd, shell: false, stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, LC_ALL: 'C' } });
+  let stdout = '';
+  let stderr = '';
+  child.stdout.setEncoding('utf8').on('data', data => { stdout += data; });
+  child.stderr.setEncoding('utf8').on('data', data => { stderr += data; });
+  child.on('error', reject);
+  child.stdin.on('error', error => { if ((error as NodeJS.ErrnoException).code !== 'EPIPE') reject(error); });
+  child.on('close', code => resolve({ exitCode: code ?? 1, stdout, stderr }));
+  child.stdin.end(command.stdin ?? '');
+});
+
+export function createWorkspacePorts(execute: AdapterCommandExecutor = executeCommand): WorkspaceRoutingDependencies {
+  return {
+    async pathKind(path) {
+      try { const stat = await lstat(path); return stat.isSymbolicLink() ? 'symlink' : stat.isDirectory() ? 'directory' : 'file'; }
+      catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return 'missing'; throw error; }
+    },
+    readLink: readlink,
+    async currentBranch(cwd) {
+      const result = await execute({ executable: 'git', args: ['symbolic-ref', '--quiet', '--short', 'HEAD'], cwd });
+      if (result.exitCode === 1) return null;
+      if (result.exitCode !== 0) throw new Error(result.stderr || 'Cannot inspect Git branch');
+      return result.stdout.trim() || null;
+    },
+  };
+}
+
+export interface ProcessScanDependencies { execute?: AdapterCommandExecutor; now?: () => string; }
+
+export async function observeProcesses(identities: readonly ProcessIdentity[], dependencies: ProcessScanDependencies = {}): Promise<ProcessObservation[]> {
+  if (!identities.length) return [];
+  const observedAt = (dependencies.now ?? (() => new Date().toISOString()))();
+  const unknown = (error: string): ProcessObservation => ({ state: 'unknown', observedAt, error });
+  try {
+    const result = await (dependencies.execute ?? executeCommand)({ executable: 'ps', args: ['-ww', '-axo', 'pid=,lstart=,command='] });
+    if (result.exitCode !== 0) return identities.map(() => unknown('Process scan failed'));
+    const rows = new Map<number, { start: string; command: string }>();
+    for (const line of result.stdout.split('\n').filter(line => line.trim())) {
+      const match = line.match(/^\s*(\d+)\s+(\w{3}\s+\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/);
+      if (!match) return identities.map(() => unknown('Malformed process scan'));
+      rows.set(Number(match[1]), { start: match[2].replace(/\s+/g, ' '), command: match[3] });
+    }
+    return identities.map(identity => {
+      const expected = identity.evidence.command;
+      if (!Number.isInteger(identity.pid) || identity.pid <= 0 || !expected || !Number.isFinite(Date.parse(identity.startedAt))) return unknown('Missing process identity evidence');
+      const row = rows.get(identity.pid);
+      if (!row) return { state: 'exited', observedAt, exitCode: null, evidence: 'PID absent from successful process scan' };
+      if (Date.parse(row.start) !== Date.parse(identity.startedAt) || row.command !== expected) return { state: 'exited', observedAt, exitCode: null, evidence: 'Process identity mismatch: PID reused' };
+      return { state: 'alive', observedAt, identity };
+    });
+  } catch { return identities.map(() => unknown('Process scan failed')); }
+}
+
+export interface ResourceSnapshot { measurement: ResourceMeasurement; reasons: string[]; fileSystemByPath: Record<string, string>; }
+export interface ResourceSnapshotOptions { machineId: string; paths: readonly string[]; }
+export interface ResourceProbeDependencies {
+  platform: () => string;
+  loadAverage1m: () => number;
+  availableCores: () => number;
+  totalRamBytes: () => number;
+  readFile: (path: string) => Promise<string>;
+  execute: AdapterCommandExecutor;
+}
+export interface ResourceSnapshotReader { read(): Promise<ResourceSnapshot>; }
+
+export function createResourceSnapshotReader(options: ResourceSnapshotOptions, dependencies?: ResourceProbeDependencies): ResourceSnapshotReader {
+  const deps = dependencies ?? { platform, loadAverage1m: () => loadavg()[0], availableCores: availableParallelism, totalRamBytes: totalmem, readFile: (path: string) => readFile(path, 'utf8'), execute: executeCommand };
+  let inflight: Promise<ResourceSnapshot> | undefined;
+  async function probe(): Promise<ResourceSnapshot> {
+    const reasons: string[] = [];
+    const measurement: ResourceMeasurement = { machineId: options.machineId, loadAverage1m: NaN, availableCores: NaN, totalRamBytes: NaN, availableRamBytes: NaN, memoryPressure: 'unknown', fileSystems: [] };
+    const fileSystemByPath: Record<string, string> = {};
+    const command = async (executable: string, args: string[]) => { const result = await deps.execute({ executable, args }); if (result.exitCode !== 0) throw new Error(`${executable} probe failed`); return result.stdout; };
+    try { measurement.loadAverage1m = deps.loadAverage1m(); measurement.availableCores = deps.availableCores(); measurement.totalRamBytes = deps.totalRamBytes(); } catch { reasons.push('Host resource measurements unavailable'); }
+    try {
+      if (deps.platform() === 'darwin') {
+        const [vm, pressure] = await Promise.all([command('vm_stat', []), command('sysctl', ['-n', 'kern.memorystatus_vm_pressure_level'])]);
+        const page = Number(vm.match(/page size of (\d+) bytes/)?.[1]);
+        const pages = (label: string) => Number(vm.match(new RegExp(`${label}:\\s+(\\d+)`))?.[1]);
+        measurement.availableRamBytes = (pages('Pages free') + pages('Pages inactive') + pages('Pages speculative')) * page;
+        measurement.memoryPressure = pressure.trim() === '4' ? 'critical' : ['1', '2'].includes(pressure.trim()) ? 'normal' : 'unknown';
+      } else if (deps.platform() === 'linux') {
+        const mem = await deps.readFile('/proc/meminfo');
+        measurement.totalRamBytes = Number(mem.match(/^MemTotal:\s+(\d+) kB/m)?.[1]) * 1024;
+        measurement.availableRamBytes = Number(mem.match(/^MemAvailable:\s+(\d+) kB/m)?.[1]) * 1024;
+        const psi = await deps.readFile('/proc/pressure/memory');
+        const pressureRows = psi.trim().split('\n');
+        const noStalls = pressureRows.length === 2 && ['some', 'full'].every(kind => pressureRows.some(row => {
+          const match = row.match(/^(some|full) avg10=(\d+(?:\.\d+)?) avg60=(\d+(?:\.\d+)?) avg300=(\d+(?:\.\d+)?) total=(\d+)$/);
+          return match?.[1] === kind && match.slice(2).every(value => Number(value) === 0);
+        }));
+        measurement.memoryPressure = noStalls ? 'normal' : 'unknown';
+        if (!noStalls) reasons.push('Linux memory pressure has no defined critical threshold');
+        const membership = await deps.readFile('/proc/self/cgroup');
+        const relative = membership.match(/^0::(.*)$/m)?.[1];
+        if (relative === undefined) throw new Error('Unsupported cgroup hierarchy');
+        const mountInfo = await deps.readFile('/proc/self/mountinfo');
+        const mount = mountInfo.split('\n').find(line => line.includes(' - cgroup2 '))?.split(' ');
+        if (!mount) throw new Error('Cgroup mount unavailable');
+        const root = mount[3];
+        const mountPoint = mount[4];
+        if (relative !== root && !relative.startsWith(root.replace(/\/$/, '') + '/')) throw new Error('Cgroup membership outside mount');
+        let directory = posix.join(mountPoint, relative.slice(root === '/' ? 1 : root.length)).replace(/\/$/, '');
+        while (directory === mountPoint || directory.startsWith(mountPoint + '/')) {
+          const [cpu, memory, current] = await Promise.all([deps.readFile(`${directory}/cpu.max`), deps.readFile(`${directory}/memory.max`), deps.readFile(`${directory}/memory.current`)]);
+          const [quota, period] = cpu.trim().split(/\s+/);
+          if (quota !== 'max') measurement.availableCores = Math.min(measurement.availableCores, Number(quota) / Number(period));
+          if (memory.trim() !== 'max') {
+            measurement.totalRamBytes = Math.min(measurement.totalRamBytes, Number(memory));
+            measurement.availableRamBytes = Math.min(measurement.availableRamBytes, Math.max(0, Number(memory) - Number(current)));
+          }
+          if (directory === mountPoint) break;
+          directory = posix.dirname(directory);
+        }
+      } else reasons.push('Unsupported resource probe platform');
+    } catch { reasons.push('Memory or environment resource probe unavailable'); measurement.memoryPressure = 'unknown'; }
+    try {
+      if (options.paths.length) {
+        const output = await command('df', ['-Pk', ...new Set(options.paths)]);
+        const volumes = output.trim().split('\n').slice(1).map(line => {
+          const match = line.match(/^(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\s+\d+%\s+(.+)$/);
+          if (!match) throw new Error('Malformed filesystem measurement');
+          return { id: match[1], totalBytes: Number(match[2]) * 1024, availableBytes: Number(match[4]) * 1024, mount: match[5] };
+        });
+        for (const [index, path] of [...new Set(options.paths)].entries()) {
+          const absolute = posix.resolve(path);
+          const volume = volumes.length === new Set(options.paths).size ? volumes[index] : volumes.filter(volume => absolute === volume.mount || absolute.startsWith(volume.mount.replace(/\/$/, '') + '/')).sort((a, b) => b.mount.length - a.mount.length)[0];
+          if (!volume) { reasons.push(`Filesystem probe unavailable: ${path}`); continue; }
+          fileSystemByPath[path] = volume.id;
+          if (!measurement.fileSystems.some(fs => fs.id === volume.id)) measurement.fileSystems.push({ id: volume.id, totalBytes: volume.totalBytes, availableBytes: volume.availableBytes });
+        }
+      }
+    } catch { reasons.push('Filesystem probe unavailable'); }
+    for (const key of ['loadAverage1m', 'availableCores', 'totalRamBytes', 'availableRamBytes'] as const) if (!Number.isFinite(measurement[key]) || measurement[key] < 0) reasons.push(`Invalid ${key}`);
+    if (measurement.memoryPressure === 'unknown') reasons.push('Memory pressure unknown');
+    return { measurement, reasons, fileSystemByPath };
+  }
+  return { read() { if (!inflight) inflight = probe().finally(() => { inflight = undefined; }); return inflight; } };
+}

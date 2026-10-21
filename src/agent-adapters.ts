@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { LaunchOwnership, LaunchWrapperPorts } from './launch-wrapper.ts';
 
 export type AgentRunner = 'codex' | 'grok' | 'agy' | 'claude';
 export interface AdapterCommand {
@@ -46,7 +47,76 @@ export interface AgentAdapterDependencies {
   execute: AdapterCommandExecutor;
   protocols: Readonly<Record<AgentRunner, RunnerProtocol>>;
 }
+export interface AdapterLaunchTransportOptions {
+  reportWrapper: ReportWrapper;
+  inspectOwnership(session: AdapterSession): Promise<LaunchOwnership>;
+  pollIntervalMs: number;
+  now?: () => number;
+  delay?: (milliseconds: number) => Promise<void>;
+}
 export class TmuxAgentAdapter {
+  createLaunchTransport(options: AdapterLaunchTransportOptions): LaunchWrapperPorts['transport'] {
+    if (!Number.isFinite(options.pollIntervalMs) || options.pollIntervalMs <= 0) throw new Error('Poll interval must be positive');
+    const now = options.now ?? Date.now;
+    const delay = options.delay ?? (milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)));
+    let session: AdapterSession | undefined;
+    let readyId: string | undefined;
+    let stopped = false;
+    let exit: { code: number | null; signal: string | null } | undefined;
+    const current = () => { if (!session) throw new Error('Launch has not started'); return session; };
+    return {
+      startWithoutInput: async request => {
+        if (session) throw new Error('Launch already started');
+        session = await this.startWithoutInput({ selection: request.selection, tmuxSession: request.tmuxSession, cwd: request.cwd, reportWrapper: options.reportWrapper });
+      },
+      waitReady: async timeoutMs => {
+        if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error('Readiness timeout must be positive');
+        readyId = undefined;
+        const deadline = now() + timeoutMs;
+        while (now() < deadline) {
+          const observation = await this.inspect(current());
+          if (observation.status === 'exited') {
+            exit = { code: observation.exitCode, signal: null };
+            return { state: 'exited', reason: 'Runner exited before readiness' };
+          }
+          if (observation.status === 'ready') {
+            if (!observation.cliSessionId?.trim()) return { state: 'unknown_screen', reason: 'Ready screen has no native session identity' };
+            readyId = observation.cliSessionId;
+            return { state: 'ready', runnerSessionId: readyId };
+          }
+          if (observation.status !== 'starting') return { state: 'unknown_screen', reason: observation.reason };
+          await delay(Math.min(options.pollIntervalMs, Math.max(0, deadline - now())));
+        }
+        return { state: 'timeout', reason: 'Runner readiness timed out' };
+      },
+      ownership: () => options.inspectOwnership(current()),
+      deliver: async brief => {
+        if (!readyId || exit || stopped) throw new Error('Runner readiness and native session identity are required');
+        await this.deliver(current(), brief);
+      },
+      waitExit: async () => {
+        while (!exit) {
+          const observation = await this.inspect(current());
+          if (observation.status === 'exited') exit = { code: observation.exitCode, signal: null };
+          else if (stopped) throw new Error('Stopped runner is still alive');
+          else await delay(options.pollIntervalMs);
+        }
+        return exit;
+      },
+      stop: async identity => {
+        const ownership = await options.inspectOwnership(current());
+        if (ownership.state !== 'owned') throw new Error('Runner ownership cannot be verified');
+        const actual = ownership.identity;
+        if (actual.pid !== identity.pid || actual.startedAt !== identity.startedAt || actual.runner !== identity.runner || actual.runnerSessionId !== identity.runnerSessionId || actual.tmuxSession !== identity.tmuxSession ||
+            Object.keys(actual.evidence).length !== Object.keys(identity.evidence).length || Object.entries(identity.evidence).some(([key, value]) => actual.evidence[key] !== value)) throw new Error('Runner ownership identity mismatch');
+        if (actual.tmuxSession !== current().tmuxSession || actual.runner !== current().selection.runner) throw new Error('Runner identity belongs to another launch');
+        if (exit) return;
+        await this.stop(current());
+        stopped = true;
+      },
+    };
+  }
+
   private readonly dependencies: AgentAdapterDependencies;
 
   constructor(dependencies: AgentAdapterDependencies) {
@@ -64,7 +134,7 @@ export class TmuxAgentAdapter {
     return result;
   }
 
-  async start(request: AdapterStartRequest): Promise<AdapterSession> {
+  async startWithoutInput(request: Omit<AdapterStartRequest, 'brief'>): Promise<AdapterSession> {
     if (!/^[A-Za-z0-9_-]+$/.test(request.tmuxSession)) throw new Error('Invalid tmux session name');
     const protocol = this.dependencies.protocols[request.selection.runner];
     if (!protocol) throw new Error('Unknown runner');
@@ -83,6 +153,11 @@ export class TmuxAgentAdapter {
       ';', 'respawn-pane', '-k', '-t', this.target(session),
       ...invocation.map(value => value.endsWith(';') ? `${value.slice(0, -1)}\\;` : value),
     ]);
+    return session;
+  }
+
+  async start(request: AdapterStartRequest): Promise<AdapterSession> {
+    const session = await this.startWithoutInput(request);
     try {
       await this.deliver(session, request.brief);
       return session;
@@ -96,9 +171,9 @@ export class TmuxAgentAdapter {
 
   async inspect(session: AdapterSession): Promise<AdapterObservation> {
     const target = this.target(session);
-    const state = await this.dependencies.execute({ executable: 'tmux', args: ['display-message', '-p', '-t', target, '#{pane_dead}\t#{pane_dead_status}'] });
+    const state = await this.dependencies.execute({ executable: 'tmux', args: ['display-message', '-p', '-t', target, '#{pane_dead}|#{pane_dead_status}'] });
     if (state.exitCode !== 0) return { status: 'exited', exitCode: null };
-    const [dead, status] = state.stdout.trim().split('\t');
+    const [dead, status] = state.stdout.trim().split(/[|\t]/);
     if (dead === '1') return { status: 'exited', exitCode: status !== undefined && /^\d+$/.test(status) ? Number(status) : null };
     if (dead !== '0') return { status: 'exited', exitCode: null };
     const pane = await this.dependencies.execute({ executable: 'tmux', args: ['capture-pane', '-p', '-t', target] });

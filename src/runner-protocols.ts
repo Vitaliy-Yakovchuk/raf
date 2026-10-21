@@ -1,0 +1,159 @@
+export type RunnerId = 'codex' | 'grok' | 'agy' | 'claude';
+export type ScreenState = 'ready' | 'known_navigation' | 'auth_required' | 'permission_required' | 'unknown_screen' | 'timeout' | 'exited' | 'quota_untrusted' | 'quota_panel';
+export type ProtocolSettings = {
+  runner: RunnerId;
+  executable: string;
+  version: string;
+  baseArgs: string[];
+  modelFlag: string;
+  effortFlag: string;
+  effortFormat: 'literal' | 'codex_config';
+  modelAliases: Record<string, string>;
+  promptTransport: 'positional' | 'prompt_interactive';
+  sessionIdFlag: string | null;
+  quotaCommand: string | null;
+  navigation: { state: ScreenState; match: string; keys: string[] }[];
+  markers: Partial<Record<ScreenState, string[]>>;
+  quotaParser: 'codex_status' | 'agy_usage' | 'unknown';
+  modelPools: Record<string, string>;
+  quotaReliable: boolean;
+  liveTaskVerified: boolean;
+  timeouts: { startupMs: number; transitionMs: number; overallMs: number; pollMs: number };
+  collection: { intervalMs: number; failureBackoffMs: number; staleAfterMs: number };
+};
+export type Invocation = { executable: string; args: string[]; liveTaskVerified: boolean };
+export type ScreenObservation = { state: ScreenState; requestedCommand: string | null; matchedNavigation: number | null };
+export type ProtocolAction = { kind: 'text'; text: string } | { kind: 'keys'; keys: string[] } | { kind: 'capture' } | { kind: 'stop'; reason: ScreenState };
+export type QuotaWindow = {
+  name: 'weekly' | 'five_hour';
+  state: 'measured' | 'disabled' | 'unknown';
+  used: number | null;
+  remaining: number | null;
+  resetAt: string | null;
+  resetUncertaintyMs: number | null;
+  explanation: string | null;
+};
+export type QuotaPool = { id: string; windows: QuotaWindow[] };
+export type QuotaSnapshot = {
+  runner: RunnerId;
+  observedAt: string;
+  pools: QuotaPool[];
+  credits: number | null;
+  reliable: boolean;
+  completeness: 'complete' | 'partial' | 'unknown';
+  issues: string[];
+};
+export function buildRunnerInvocation(settings: ProtocolSettings, input: { model: string; effort: string; prompt?: string; sessionId?: string }): Invocation {
+  if (settings.runner === 'claude' && input.model.startsWith('claude-') && !Object.hasOwn(settings.modelAliases, input.model)) throw new Error(`Missing Claude model alias for ${input.model}`);
+  const model = Object.hasOwn(settings.modelAliases, input.model) ? settings.modelAliases[input.model] : input.model;
+  const args = [...settings.baseArgs, settings.modelFlag, model, settings.effortFlag,
+    settings.effortFormat === 'codex_config' ? `model_reasoning_effort=${JSON.stringify(input.effort)}` : input.effort];
+  if (input.sessionId !== undefined) {
+    if (!settings.sessionIdFlag) throw new Error('Session identity is unsupported');
+    args.push(settings.sessionIdFlag, input.sessionId);
+  }
+  if (input.prompt !== undefined) {
+    if (settings.promptTransport === 'prompt_interactive') args.push('--prompt-interactive');
+    args.push(input.prompt);
+  }
+  return { executable: settings.executable, args, liveTaskVerified: settings.liveTaskVerified };
+}
+export function observeRunnerScreen(settings: ProtocolSettings, input: { text: string; version: string; requestedCommand: string | null; exited?: boolean; timedOut?: boolean }): ScreenObservation {
+  const result = (state: ScreenState, matchedNavigation: number | null = null): ScreenObservation => ({ state, requestedCommand: input.requestedCommand, matchedNavigation });
+  if (input.exited) return result('exited');
+  if (input.timedOut) return result('timeout');
+  if (input.version !== settings.version) return result('unknown_screen');
+  for (const state of ['auth_required', 'permission_required', 'quota_untrusted', 'quota_panel'] as ScreenState[]) {
+    if (settings.markers[state]?.some(marker => input.text.includes(marker))) return result(state);
+  }
+  const navigation = settings.navigation.findIndex(item => {
+    if (!settings.markers[item.state]?.some(marker => input.text.includes(marker))) return false;
+    if (!item.match.startsWith('/')) return input.text.includes(item.match);
+    return item.match === input.requestedCommand && item.match === settings.quotaCommand && input.text.split(/\s+/).includes(item.match);
+  });
+  if (navigation >= 0) return result('known_navigation', navigation);
+  if (settings.markers.ready?.some(marker => input.text.includes(marker))) return result('ready');
+  return result('unknown_screen');
+}
+export function nextRunnerAction(settings: ProtocolSettings, observation: ScreenObservation): ProtocolAction {
+  if (observation.state === 'known_navigation') {
+    const navigation = observation.matchedNavigation === null ? undefined : settings.navigation[observation.matchedNavigation];
+    if (navigation && (!navigation.match.startsWith('/') || navigation.match === observation.requestedCommand && navigation.match === settings.quotaCommand)) return { kind: 'keys', keys: [...navigation.keys] };
+  }
+  if (observation.state === 'quota_panel') return { kind: 'capture' };
+  if (observation.state === 'ready' && settings.quotaCommand && observation.requestedCommand === null) return { kind: 'text', text: settings.quotaCommand };
+  if (observation.state === 'ready' && observation.requestedCommand === settings.quotaCommand) return { kind: 'capture' };
+  return { kind: 'stop', reason: observation.state === 'known_navigation' || observation.state === 'ready' ? 'unknown_screen' : observation.state };
+}
+export function parseRunnerQuota(settings: ProtocolSettings, input: { text: string; observedAt: string; version: string; truncated: boolean }): QuotaSnapshot {
+  const snapshot: QuotaSnapshot = { runner: settings.runner, observedAt: input.observedAt, pools: [], credits: null, reliable: settings.quotaReliable, completeness: 'unknown', issues: [] };
+  if (input.version !== settings.version || !Number.isFinite(Date.parse(input.observedAt))) {
+    snapshot.reliable = false;
+    snapshot.issues.push('Unsupported version or observation time');
+    return snapshot;
+  }
+  const window = (name: QuotaWindow['name'], text: string): QuotaWindow => {
+    const result: QuotaWindow = { name, state: 'unknown', used: null, remaining: null, resetAt: null, resetUncertaintyMs: null, explanation: null };
+    const disabled = text.match(/Disabled:\s*([^\n]*)/i);
+    if (disabled) {
+      result.state = 'disabled';
+      result.explanation = disabled[1].trim();
+      return result;
+    }
+    const percent = text.match(/(\d+(?:\.\d+)?)\s*%/);
+    if (percent && Number(percent[1]) <= 100) {
+      result.state = 'measured';
+      const value = Number(percent[1]) / 100;
+      const used = /%\s*used/i.test(text) || /limit used/i.test(text);
+      result.used = used ? value : (100 - Number(percent[1])) / 100;
+      result.remaining = used ? (100 - Number(percent[1])) / 100 : value;
+    }
+    const relative = text.match(/Refreshes in\s*(?:(\d+)d\s*)?(?:(\d+)h\s*)?(?:(\d+)m)?/i);
+    if (relative && relative.slice(1).some(Boolean)) {
+      const minutes = Number(relative[1] ?? 0) * 1440 + Number(relative[2] ?? 0) * 60 + Number(relative[3] ?? 0);
+      result.resetAt = new Date(Date.parse(input.observedAt) + minutes * 60000).toISOString();
+      result.resetUncertaintyMs = relative[3] ? 60000 : 3600000;
+    } else if (/resets/i.test(text)) snapshot.issues.push('Reset year/timezone unknown');
+    return result;
+  };
+  if (settings.quotaParser === 'agy_usage') {
+    const headings = [...input.text.matchAll(/GEMINI MODELS|CLAUDE AND GPT MODELS/g)];
+    for (let index = 0; index < headings.length; index++) {
+      const heading = headings[index];
+      const section = input.text.slice(heading.index! + heading[0].length, headings[index + 1]?.index ?? input.text.length);
+      const id = heading[0] === 'GEMINI MODELS' ? 'gemini' : 'claude_gpt';
+      const windows: QuotaWindow[] = [];
+      const labels = [...section.matchAll(/Weekly Limit Remaining|Five Hour Limit Remaining/g)];
+      for (let j = 0; j < labels.length; j++) {
+        windows.push(window(labels[j][0].startsWith('Weekly') ? 'weekly' : 'five_hour', section.slice(labels[j].index!, labels[j + 1]?.index ?? section.length)));
+      }
+      snapshot.pools.push({ id, windows });
+    }
+    snapshot.completeness = snapshot.pools.length === 2 && new Set(snapshot.pools.map(pool => pool.id)).size === 2 && snapshot.pools.every(pool => pool.windows.length === 2 && new Set(pool.windows.map(value => value.name)).size === 2 && pool.windows.every(value => value.state !== 'unknown')) ? 'complete' : 'partial';
+  } else if (settings.quotaParser === 'codex_status') {
+    const windows: QuotaWindow[] = [];
+    for (const line of input.text.split('\n')) {
+      if (/weekly limit:/i.test(line)) windows.push(window('weekly', line));
+      else if (/(?:5h|five hour|5.hour) limit:/i.test(line)) windows.push(window('five_hour', line));
+      const credits = line.match(/Credits:\s*([\d,.]+)/i);
+      if (credits) snapshot.credits = Number(credits[1].replaceAll(',', ''));
+    }
+    if (windows.length) snapshot.pools.push({ id: 'shared', windows });
+    snapshot.completeness = windows.length === 2 ? 'complete' : 'partial';
+  } else {
+    snapshot.reliable = false;
+    snapshot.issues.push('Quota protocol unverified');
+  }
+  if (!settings.quotaReliable) snapshot.issues.push('Quota reliability unverified');
+  if (input.truncated) {
+    snapshot.completeness = 'partial';
+    snapshot.issues.push('Truncated quota screen');
+  }
+  if (snapshot.completeness !== 'complete') snapshot.issues.push('Missing or unknown quota windows');
+  return snapshot;
+}
+export function quotaForModel(settings: ProtocolSettings, snapshot: QuotaSnapshot, model: string): QuotaPool | null {
+  if (snapshot.runner !== settings.runner) return null;
+  const pool = settings.modelPools[model];
+  return pool ? snapshot.pools.find(value => value.id === pool) ?? null : null;
+}

@@ -1,7 +1,9 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import type { SessionRepository, SessionTransaction, SessionRecord, PendingIntent } from "./session-state.ts";
+import { ReminderService, type Reminder, type ReminderRepository, type ReminderTransaction } from "./reminders.ts";
+import type { ReminderSessionEffect } from "./reminder-repository.ts";
+import type { SessionRepository, SessionTransaction, SessionRecord, PendingIntent, AdmissionReservation } from "./session-state.ts";
 
 export type RunnerInitialState = { id: string; initialEnabled: boolean };
 
@@ -16,6 +18,7 @@ export type CommandTiming = { averageMs: number; updatedAt: string };
 
 export interface StateStore {
   sessionRepository: SessionRepository;
+  reminderRepository: ReminderRepository;
   close(): void;
   getRunnerEnabled(id: string): boolean | undefined;
   initializeRunners(entries: RunnerInitialState[]): void;
@@ -81,13 +84,13 @@ export function openStateStore(path: string): StateStore {
       }
       db.exec("PRAGMA synchronous = FULL; PRAGMA wal_autocheckpoint = 1000; PRAGMA journal_size_limit = 4194304");
       const version = () => Number(db.prepare("PRAGMA user_version").get()?.user_version);
-      if (version() > 2) throw new Error("Unsupported state store schema version");
-      if (version() < 2) {
+      if (version() > 4) throw new Error("Unsupported state store schema version");
+      if (version() < 4) {
         transaction(() => {
 
           const current = version();
-          if (current > 2) throw new Error("Unsupported state store schema version");
-          if (current === 2) return;
+          if (current > 4) throw new Error("Unsupported state store schema version");
+          if (current === 4) return;
           if (current === 0) {
           db.exec(`
             CREATE TABLE runners (
@@ -109,7 +112,7 @@ export function openStateStore(path: string): StateStore {
             PRAGMA user_version = 1;
           `);
           }
-          db.exec(`
+          if (current < 2) db.exec(`
             CREATE TABLE sessions (
               run_id TEXT PRIMARY KEY NOT NULL,
               address_id TEXT NOT NULL,
@@ -129,6 +132,25 @@ export function openStateStore(path: string): StateStore {
             ) STRICT;
             PRAGMA user_version = 2;
           `);
+          if (current < 3) db.exec(`
+            CREATE TABLE reminders (
+              id TEXT PRIMARY KEY NOT NULL,
+              created_for TEXT NOT NULL,
+              assigned_to TEXT NOT NULL,
+              at TEXT NOT NULL,
+              state TEXT NOT NULL CHECK(state IN ('pending', 'active', 'closed')),
+              closed_at TEXT,
+              payload TEXT NOT NULL
+            ) STRICT;
+            CREATE INDEX reminders_due ON reminders(state, at);
+            CREATE INDEX reminders_retention ON reminders(state, closed_at);
+            PRAGMA user_version = 3;
+          `);
+          db.exec(`
+            ALTER TABLE pending_intents ADD COLUMN run_id TEXT;
+            UPDATE pending_intents SET run_id = json_extract(payload, '$.runId');
+            PRAGMA user_version = 4;
+          `);
         });
       }
     });
@@ -136,6 +158,47 @@ export function openStateStore(path: string): StateStore {
     try { db.close(); } catch {                                        }
     throw error;
   }
+
+  function withReminderTransaction<T>(action: (tx: ReminderTransaction) => T): T {
+    let active = true;
+    const access = <R>(action: () => R): R => {
+      if (!active) throw new Error("Reminder transaction is closed");
+      return action();
+    };
+    const tx: ReminderTransaction = {
+      get: id => access(() => {
+        const row = db.prepare("SELECT payload FROM reminders WHERE id = ?").get(id);
+        return row ? JSON.parse(row.payload as string) as Reminder : undefined;
+      }),
+      list: () => access(() => db.prepare("SELECT payload FROM reminders").all().map(row => JSON.parse(row.payload as string) as Reminder)),
+      save: reminder => access(() => {
+        const existing = tx.get(reminder.id);
+        if (existing && existing.createdFor !== reminder.createdFor) throw new Error("Original reminder address is immutable");
+        db.prepare(`INSERT INTO reminders(id, created_for, assigned_to, at, state, closed_at, payload) VALUES (?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET assigned_to = excluded.assigned_to, at = excluded.at,
+          state = excluded.state, closed_at = excluded.closed_at, payload = excluded.payload`).run(
+            reminder.id, reminder.createdFor, reminder.assignedTo, reminder.at, reminder.state, reminder.closedAt, JSON.stringify(reminder));
+      }),
+      remove: id => access(() => { db.prepare("DELETE FROM reminders WHERE id = ?").run(id); }),
+      session: address => access(() => {
+        const row = db.prepare("SELECT state FROM sessions WHERE address_id = ? ORDER BY state = 'finished' LIMIT 1").get(address);
+        return row ? { active: row.state !== 'finished' } : undefined;
+      }),
+      emit: event => access(() => {
+        const reminder = tx.get(event.id);
+        if (!reminder) throw new Error("Unknown reminder event object");
+        const session = db.prepare("SELECT run_id FROM sessions WHERE address_id = ? AND state != 'finished'").get(reminder.assignedTo);
+        const intent: PendingIntent = { id: `${event.kind}:${event.id}`, runId: session?.run_id as string ?? null,
+          event: event.kind, payload: { ...event, address: reminder.assignedTo } };
+        db.prepare("INSERT INTO pending_intents(id, run_id, payload) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING").run(intent.id, intent.runId, JSON.stringify(intent));
+      }),
+    };
+    try { return action(tx); } finally { active = false; }
+  }
+
+  const reminderRepository: ReminderRepository = {
+    transaction: action => operation("reminderTransaction", () => transaction(() => withReminderTransaction(action))),
+  };
 
   const sessionRepository: SessionRepository = {
     transaction<T>(action: (tx: SessionTransaction) => T): T {
@@ -158,19 +221,36 @@ export function openStateStore(path: string): StateStore {
                 session.runId, session.addressId, session.state, session.finishedAt ?? null, JSON.stringify(session));
           }),
           deleteSession: runId => access(() => { db.prepare("DELETE FROM sessions WHERE run_id = ?").run(runId); }),
+          listReservations: () => access(() => db.prepare("SELECT payload FROM admission_reservations").all().map(row => JSON.parse(row.payload as string) as AdmissionReservation)),
           putReservation: reservation => access(() => {
             db.prepare(`INSERT INTO admission_reservations(run_id, payload) VALUES (?, ?)
               ON CONFLICT(run_id) DO UPDATE SET payload = excluded.payload`).run(reservation.runId, JSON.stringify(reservation));
           }),
           deleteReservation: runId => access(() => { db.prepare("DELETE FROM admission_reservations WHERE run_id = ?").run(runId); }),
           putPending: intent => access(() => {
-            db.prepare(`INSERT INTO pending_intents(id, payload) VALUES (?, ?)
-              ON CONFLICT(id) DO NOTHING`).run(intent.id, JSON.stringify(intent));
+            db.prepare(`INSERT INTO pending_intents(id, run_id, payload) VALUES (?, ?, ?)
+              ON CONFLICT(id) DO NOTHING`).run(intent.id, intent.runId, JSON.stringify(intent));
           }),
           deletePending: id => access(() => { db.prepare("DELETE FROM pending_intents WHERE id = ?").run(id); }),
           listPending: () => access(() => db.prepare("SELECT payload FROM pending_intents").all().map(row => JSON.parse(row.payload as string) as PendingIntent)),
           applyEffects: effects => access(() => {
-            if (effects.length) throw new Error("Unknown domain effect");
+            for (const effect of effects) {
+              if (effect.domain !== 'reminders') throw new Error("Unknown domain effect");
+              const payload = effect.payload as ReminderSessionEffect['payload'];
+              if (!payload || payload.operation !== 'session-ended' || !payload.end || !Number.isFinite(Date.parse(payload.at)))
+                throw new Error("Invalid reminder session effect");
+              const session = tx.getSession(payload.runId);
+              if (!session || session.addressId !== payload.end.address) throw new Error("Reminder effect session address mismatch");
+              if (payload.end.confirmedSucceeded && session.result?.status !== 'succeeded')
+                throw new Error("Confirmed success requires an accepted session result");
+              const service = new ReminderService({
+                repository: { transaction: withReminderTransaction }, now: () => payload.at,
+                nextId: () => { throw new Error("Session effects cannot create reminders"); },
+                approvedEventKinds: ['reminder.closed'],
+              });
+              const result = service.sessionEnded({ ...payload.end, confirmedSucceeded: session.result?.status === 'succeeded' });
+              if (!result.allowed) throw new Error("Session has unfinished reminders");
+            }
           }),
         };
         try { return action(tx); } finally { active = false; }
@@ -180,6 +260,7 @@ export function openStateStore(path: string): StateStore {
 
   return {
     sessionRepository,
+    reminderRepository,
     close() {
       operation("close", () => db.close());
     },

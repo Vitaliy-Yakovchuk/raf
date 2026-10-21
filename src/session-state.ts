@@ -1,3 +1,7 @@
+import type { AssignmentSnapshot } from './assignment.ts';
+import { loadFlowPolicy } from './flow-policy.ts';
+import type { ResourceReservation } from './resource-admission.ts';
+
 export type ProcessIdentity = {
   pid: number;
   startedAt: string;
@@ -19,6 +23,7 @@ export type AdmissionReservation = {
   runId: string;
   resource: string;
   amount: number;
+  resourceBundle?: { machineId: string; resources: ResourceReservation };
 };
 
 export type ProcessObservation =
@@ -27,9 +32,16 @@ export type ProcessObservation =
   | { state: 'unknown'; observedAt: string; error: string };
 
 export type WorkResult = { status: string; response: string; proof: unknown };
-export type PendingIntent = { id: string; runId: string; event: string; payload: unknown };
+export type PendingIntent = { id: string; runId: string | null; event: string; payload: unknown };
 export type DomainEffect = { id: string; domain: string; payload: unknown };
 export type TransitionEffects = { pending: readonly PendingIntent[]; domain: readonly DomainEffect[] };
+
+export type SessionLaunchContext = {
+  assignment: AssignmentSnapshot;
+  selection: { runner: string; model: string; effort: string; reason: string };
+  briefPath: string;
+  reportPath: string;
+};
 
 export type SessionRecord = {
   runId: string;
@@ -37,6 +49,7 @@ export type SessionRecord = {
   revision: number;
   state: 'reserved' | 'running' | 'exited' | 'finished';
   activity?: SessionActivity;
+  launchContext?: SessionLaunchContext;
   process?: ProcessIdentity;
   observation?: ProcessObservation;
   result?: WorkResult;
@@ -49,6 +62,7 @@ export interface SessionTransaction {
   listSessions(): SessionRecord[];
   putSession(session: SessionRecord): void;
   deleteSession(runId: string): void;
+  listReservations(): AdmissionReservation[];
   putReservation(reservation: AdmissionReservation): void;
   deleteReservation(runId: string): void;
   putPending(intent: PendingIntent): void;
@@ -189,7 +203,7 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
       });
     },
     cleanupCompleted(now) {
-      const cutoff = validTime(now) - 24 * 60 * 60 * 1000;
+      const cutoff = validTime(now) - loadFlowPolicy().retention.finishedSessionsMs;
       return repository.transaction(tx => {
         let removed = 0;
         for (const session of tx.listSessions()) {

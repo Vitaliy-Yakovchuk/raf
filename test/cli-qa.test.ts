@@ -24,6 +24,7 @@ test('production public API: required scalar and multi-value parameters preserve
     text: 'Перевірити довідку CLI', at: '2026-10-21T12:00:00Z',
     'event-id': 'qa-smoke', 'event-action': 'activate',
     reason: 'Перевірку завершено', 'created-for': 'qa-smoke',
+    file: '/synthetic/qa-secrets-source.json',
   };
   for (const command of production.commands.filter(c => c.parameters.length)) {
     const required = command.parameters.filter(p => p.required);

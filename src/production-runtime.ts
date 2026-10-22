@@ -31,6 +31,7 @@ import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
 import { settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
 import { readPendingAgentReport } from './agent-report.ts';
+import { prepareCodexRafCommandAccess, type PreparedCodexRafCommandAccess } from './codex-raf-command-access.ts';
 
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const object = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -806,6 +807,7 @@ export async function runProductionWorker(
   const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
   if (!availability.available) fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
   const store = openStateStore(request.statePath);
+  let codexAccess: PreparedCodexRafCommandAccess | undefined;
   try {
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings.timeouts, options.execute);
     const session = tools.current(request.runId);
@@ -820,10 +822,15 @@ export async function runProductionWorker(
     const native = settings.native!;
     const identityCommand = native.identity.command;
     const assignedId = native.identity.source === 'assigned' ? randomUUID() : undefined;
-    const invocation = buildRunnerInvocation(settings, { ...request.selection, ...(assignedId ? { sessionId: assignedId } : {}) });
+    let invocation = buildRunnerInvocation(settings, { ...request.selection, ...(assignedId ? { sessionId: assignedId } : {}) });
     const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath);
     invocation.args.push(...nativeWriteScopeArgs(settings, writable.directories, writable.workspace));
-    invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, await runnerSandboxScope(session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot)));
+    const scope = await runnerSandboxScope(session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot);
+    invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
+    if (settings.runner === 'codex') {
+      codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs });
+      invocation = codexAccess.invocation;
+    }
     let screen = '';
     let nativeId: string | undefined;
     let dismissed = false;
@@ -1094,5 +1101,5 @@ export async function runProductionWorker(
       if (!handedOff) await discardFailedLaunch().catch(cleanup => process.stderr.write(`${request.runId}: failed launch cleanup: ${cleanup instanceof Error ? cleanup.message : String(cleanup)}\n`));
       throw error;
     }
-  } finally { store.close(); }
+  } finally { try { await codexAccess?.cleanup(); } finally { store.close(); } }
 }

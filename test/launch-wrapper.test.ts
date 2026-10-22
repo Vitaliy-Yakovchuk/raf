@@ -149,6 +149,7 @@ test('sink failure cannot acknowledge accepted report or finalize the session', 
 
 test('persistent wrapper outlives launching CLI and finalizes a real child through private socket and files', { timeout: 15000 }, async t => {
   const f = await fixture(t);
+  const request = { ...f.request, readinessTimeoutMs: 5000 };
   const moduleUrl = pathToFileURL(resolve('src/launch-wrapper.ts')).href;
   const workerPath = join(f.request.tmpRoot, 'worker.mjs');
   const launcherPath = join(f.request.tmpRoot, 'launcher.mjs');
@@ -217,7 +218,7 @@ await runLaunchWrapper(request,ports);
   await writeFile(workerPath, workerSource);
   await writeFile(launcherPath, `
 import { launchPersistentWrapper } from ${JSON.stringify(moduleUrl)};
-const result=await launchPersistentWrapper(${JSON.stringify(f.request)},{workerCommand:{executable:process.execPath,args:[${JSON.stringify(workerPath)}]},timeoutMs:5000});
+const result=await launchPersistentWrapper(${JSON.stringify(request)},{workerCommand:{executable:process.execPath,args:[${JSON.stringify(workerPath)}]},timeoutMs:5000});
 process.stdout.write(JSON.stringify(result));
 `);
   const launcher = spawn(process.execPath, [launcherPath], { stdio: ['ignore', 'pipe', 'pipe'] });

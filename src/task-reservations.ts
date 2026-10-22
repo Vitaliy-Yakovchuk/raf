@@ -192,7 +192,11 @@ async function checkReservations(dependencies: TaskReservationDependencies, boot
   const sets = listTaskReservations(dependencies.store);
   const observations = [];
   for (const set of sets) {
-    observations.push({ set, ...await observeProcess(dependencies, guard(set), set.lease.owner.runId, boot, set.boot) });
+    let observation = await observeProcess(dependencies, guard(set), set.lease.owner.runId, boot, set.boot);
+    if (!observation.alive && set.stage === 'running') {
+      observation = await observeProcess(dependencies, set.wrapper, set.lease.owner.runId, boot, set.boot);
+    }
+    observations.push({ set, ...observation });
   }
   return observations;
 }
@@ -210,7 +214,18 @@ function closeAbandoned(tx: ReservationTransaction, observations: Awaited<Return
     if (!session || session.addressId !== set.lease.owner.addressId) {
       throw failure('TASK_IDENTITY_INVALID', 'Reservation session identity mismatch', set.lease);
     }
-    closeSessionInTransaction(tx, session, at);
+    const ended = session.state === 'running' || session.state === 'exited';
+    const result = session.result ?? (ended ? { status: 'failed', response: '', proof: null } : undefined);
+    closeSessionInTransaction(tx, { ...session, ...(result ? { result } : {}) }, at);
+    if (ended) {
+      tx.applyEffects([{ id: `${session.runId}:reminders:session-ended`, domain: 'reminders',
+        payload: { operation: 'session-ended', runId: session.runId, at,
+          end: { address: session.addressId, confirmedSucceeded: result?.status === 'succeeded', crashed: true } } }]);
+      if (result?.status !== 'succeeded') tx.putPending({ id: `${session.runId}:agent.failed`, runId: session.runId,
+        event: 'agent.failed', payload: { kind: 'agent.failed', id: session.addressId } });
+      tx.putPending({ id: `${session.runId}:agent.closed`, runId: session.runId,
+        event: 'agent.closed', payload: { kind: 'agent.closed', id: session.addressId } });
+    }
     tx.deleteTaskReservation(set.lease.owner.runId);
   }
 }
@@ -301,6 +316,14 @@ async function advanceReservation(dependencies: TaskReservationDependencies, lea
     const updated: TaskReservationSet = { ...current, stage, lease: { owner: current.lease.owner, revision: current.lease.revision + 1 },
       ...(stage === 'handoff' ? { wrapper: identity } : { agent: identity }) };
     tx.putTaskReservation(updated);
+    if (stage === 'handoff') {
+      const session = tx.getSession(lease.owner.runId);
+      if (!session || session.addressId !== lease.owner.addressId || session.state !== 'reserved') {
+        throw failure('TASK_IDENTITY_INVALID', 'Wrapper handoff session changed', lease);
+      }
+      if (session.launchContext) tx.putSession({ ...session, revision: session.revision + 1,
+        launchContext: { ...session.launchContext, wrapper: copy(identity) } });
+    }
     return copy(updated.lease);
   });
 }

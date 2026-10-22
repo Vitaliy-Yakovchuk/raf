@@ -2,7 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { hostname, tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
-import { observeProcesses, createResourceSnapshotReader } from './os-runtime.ts';
+import { observeProcesses, createResourceSnapshotReader, readMachineBootIdentity } from './os-runtime.ts';
+import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
+import { reconcileTaskReservations, listTaskReservations } from './task-reservations.ts';
 import { evaluateResourceAdmission } from './resource-admission.ts';
 import { evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
 import { createServicePorts as composeServicePorts } from './service-host.ts';
@@ -58,6 +60,39 @@ export async function createProductionServiceDependencies(
   return {
     now,
     nextReminderId: options?.nextReminderId ?? randomUUID,
+    reconcileLaunches: async () => {
+      const handle = boundStore();
+      const currentBoot = () => readMachineBootIdentity(options?.processScan?.execute);
+      const retained = new Set<string>();
+      if (listTaskReservations(handle).length) {
+        const projects = JSON.parse(await readFile(join(context.orchestratorRoot, 'conf', 'projects.json'), 'utf8'));
+        if (projects.version !== 1 || !projects.projects || typeof projects.projects !== 'object' || Array.isArray(projects.projects)) throw new Error('Invalid recovery project configuration');
+        const identity = createAssignmentIdentityAdapter(Object.fromEntries(Object.keys(projects.projects).map(project => [project, context.orchestratorRoot])));
+        const result = await reconcileTaskReservations({ store: handle, currentBoot,
+          observe: async process => (await observeProcesses([process], options?.processScan))[0],
+          resolveTasks: identity.resolveTasks, newFence: randomUUID });
+        for (const lease of result.retained) retained.add(lease.owner.runId);
+      }
+      const candidates = handle.sessionRepository.transaction(tx => tx.listSessions().filter(session =>
+        session.state !== 'finished' && !retained.has(session.runId) && session.launchContext?.wrapper));
+      if (candidates.length) {
+        const boot = await currentBoot();
+        for (const session of candidates) {
+          const wrapper = session.launchContext!.wrapper!;
+          const evidence = wrapper.evidence;
+          const unknown = (reason: string): never => { throw Object.assign(new Error(`${session.runId}: ${reason}`), { code: 'TASK_LIVENESS_UNKNOWN' }); };
+          if (!evidence || evidence.runId !== session.runId || !evidence.machineId || !evidence.bootId || !evidence.command ||
+              !Number.isSafeInteger(wrapper.pid) || wrapper.pid <= 0 || !Number.isFinite(Date.parse(wrapper.startedAt)) ||
+              !wrapper.runner || !wrapper.runnerSessionId || !wrapper.tmuxSession) unknown('Incomplete report wrapper identity');
+          if (evidence.machineId !== boot.machineId) unknown('Report wrapper belongs to another machine');
+          if (evidence.bootId !== boot.bootId) continue;
+          const observation = (await observeProcesses([wrapper], options?.processScan))[0];
+          if (observation.state === 'unknown') unknown(`Report wrapper observation unknown: ${observation.error}`);
+          if (observation.state === 'alive') retained.add(session.runId);
+        }
+      }
+      return [...retained];
+    },
     observeProcesses: identities => observeProcesses(identities, options?.processScan),
     effectsForObservation: (session, observation) => ({
       pending: observation.state === 'exited' && session.result?.status !== 'succeeded' ? [{

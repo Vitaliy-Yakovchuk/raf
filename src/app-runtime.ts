@@ -57,6 +57,7 @@ export interface RuntimeLaunch {
   selection: Extract<ModelSelection, { status: 'selected' }>;
   statePath: string;
   tmpRoot: string;
+  writeBoundaries?: readonly string[];
 }
 
 export interface PreparedRuntimeReport {
@@ -164,7 +165,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       if (selection.status === 'waiting') throw fail(selection.code, 'selection', selection.reason);
       const launch: RuntimeLaunch = { ...dependencies.nextRunIdentity(), addressId: params.id,
         activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
-        assignment, selection, statePath: context.statePath, tmpRoot: context.tmpRoot };
+        assignment, selection, statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...task.writeBoundaries] };
       let prepared: PreparedRuntimeReport | undefined;
       let reserved = false;
       let startAttempted = false;

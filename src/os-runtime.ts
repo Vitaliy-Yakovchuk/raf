@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { lstat, readlink, readFile } from 'node:fs/promises';
-import { availableParallelism, loadavg, totalmem, platform } from 'node:os';
+import { availableParallelism, loadavg, totalmem, platform, hostname } from 'node:os';
 import { posix } from 'node:path';
 import type { AdapterCommandExecutor } from './agent-adapters.ts';
 import type { WorkspaceRoutingDependencies } from './workspace-routing.ts';
@@ -18,6 +18,22 @@ export const executeCommand: AdapterCommandExecutor = command => new Promise((re
   child.on('close', code => resolve({ exitCode: code ?? 1, stdout, stderr }));
   child.stdin.end(command.stdin ?? '');
 });
+
+export async function readMachineBootIdentity(execute: AdapterCommandExecutor = executeCommand): Promise<{ machineId: string; bootId: string }> {
+  let machineId: string;
+  let bootId: string;
+  if (platform() === 'darwin') {
+    const result = await execute({ executable: 'sysctl', args: ['-n', 'kern.boottime'] });
+    if (result.exitCode !== 0) throw new Error('Cannot establish OS boot identity');
+    machineId = hostname();
+    bootId = result.stdout.trim();
+  } else if (platform() === 'linux') {
+    machineId = (await readFile('/etc/machine-id', 'utf8')).trim();
+    bootId = (await readFile('/proc/sys/kernel/random/boot_id', 'utf8')).trim();
+  } else throw new Error('Unsupported OS boot identity');
+  if (!machineId || !bootId) throw new Error('Missing machine or boot identity');
+  return { machineId, bootId };
+}
 
 export function createWorkspacePorts(execute: AdapterCommandExecutor = executeCommand): WorkspaceRoutingDependencies {
   return {

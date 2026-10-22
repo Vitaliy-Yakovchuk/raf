@@ -38,14 +38,14 @@ async function fixture(t: test.TestContext) {
   return { root, home, app, conf, settings, models, run };
 }
 
-test('QA real bin: help, invalid and unwired commands leave isolated HOME empty without config', async t => {
+test('QA real bin: lazy help and invalid args bypass config while wired ps rejects malformed root before DB', async t => {
   const f = await fixture(t);
   await rm(f.conf, { recursive: true });
   const help = await f.run(['help', 'runner', 'list']);
   assert.equal(help.code, 0, help.stderr);
   const flag = await f.run(['runner', 'list', '--help']);
   assert.equal(flag.stdout, help.stdout);
-  for (const [args, expected] of [[['runner', 'list', '--invalid'], 'UNKNOWN_ARGUMENT'], [['agent', 'ps'], 'COMMAND_UNAVAILABLE']] as const) {
+  for (const [args, expected] of [[['runner', 'list', '--invalid'], 'UNKNOWN_ARGUMENT'], [['agent', 'ps'], 'CONFIGURATION_INVALID']] as const) {
     const result = await f.run([...args]);
     assert.equal(result.code, 1);
     assert.equal(JSON.parse(result.stderr).code, expected);

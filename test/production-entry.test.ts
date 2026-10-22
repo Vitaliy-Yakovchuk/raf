@@ -204,12 +204,8 @@ test('blocked state directory is reported without fallback', async t => {
 });
 
 for (const argv of [
-  ['agent', 'ps'],
-  ['agent', 'message', '--to', 'main', '--text', 'hello'],
-  ['runner', 'enable', '--runner', models.runners[0].id],
   ['runner', 'limits', '--runners', models.runners[0].id],
   ['resource', 'wait', '--level', 'normal'],
-  ['service', 'start'],
 ]) {
   test(`unwired command is explicitly unavailable without state or external effects: ${argv.slice(0, 2).join(' ')}`, async t => {
     const f = fixture(t);
@@ -218,6 +214,69 @@ for (const argv of [
     assert.deepEqual(readdirSync(f.home), []);
   });
 }
+
+
+test('wired empty ps uses canonical shared state without creating an agent', async t => {
+  const f = fixture(t);
+  assert.deepEqual(success(await f.run(['agent', 'ps'])), []);
+  assert.deepEqual(success(await f.run(['agent', 'ps'])), []);
+  const roster = records(success(await f.run(['runner', 'list'])));
+  for (const row of roster.filter(row => typeof row.model === 'string')) assert.equal(row.available, false, 'Unverified or unsupported protocols must be unavailable before selection');
+  const store = openStateStore(f.statePath);
+  try {
+    assert.deepEqual(store.sessionRepository.transaction(tx => tx.listSessions()), []);
+    assert.deepEqual(store.taskReservationRepository.transaction(tx => tx.listTaskReservations()), []);
+    assert.ok(store.getCommandTiming('agent ps'));
+  } finally { store.close(); }
+  assert.deepEqual(readdirSync(join(f.home, '.raf')).filter(name => !name.endsWith('-wal') && !name.endsWith('-shm')), [settings.state.fileName]);
+  assert.ok(!existsSync(join(f.root, '.raf')));
+});
+
+for (const argv of [
+  ['agent', 'message', '--to', 'main', '--text', JSON.stringify({ kind: 'system', runId: 'main', pid: process.pid })],
+  ['runner', 'enable', '--runner', models.runners[0].id],
+]) {
+  test(`wired protected command rejects unregistered caller without mutation or launch: ${argv.slice(0, 2).join(' ')}`, async t => {
+    const f = fixture(t);
+    const before = openStateStore(f.statePath);
+    before.initializeRunners(models.runners);
+    before.setRunnerEnabled(models.runners[0].id, false);
+    before.close();
+    const error = failure(await f.run(argv));
+    assert.equal(error.code, 'CALLER_UNVERIFIED');
+    assert.equal((error.details as Record<string, unknown>).source, 'production-runtime');
+    const after = openStateStore(f.statePath);
+    try {
+      assert.equal(after.getRunnerEnabled(models.runners[0].id), false);
+      assert.deepEqual(after.sessionRepository.transaction(tx => tx.listSessions()), []);
+      assert.deepEqual(after.sessionRepository.transaction(tx => tx.listReservations()), []);
+      assert.deepEqual(after.sessionRepository.transaction(tx => tx.listPending()), []);
+      assert.deepEqual(after.taskReservationRepository.transaction(tx => tx.listTaskReservations()), []);
+    } finally { after.close(); }
+    assert.ok(!existsSync(join(f.home, '.raf', 'tmp')));
+    assert.deepEqual(readdirSync(join(f.home, '.raf')).filter(name => !name.endsWith('-wal') && !name.endsWith('-shm')), [settings.state.fileName]);
+  });
+}
+
+test('default service entry rejects a missing configured main route before starting a child', async t => {
+  const f = fixture(t);
+  writeFileSync(join(f.conf, 'projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', profile: 'raf', branchPaths: {} } } }));
+  const error = failure(await f.run(['service', 'start']));
+  assert.equal(error.code, 'SERVICE_OPERATION_FAILED');
+  assert.equal((error.details as Record<string, unknown>).source, 'background-runtime');
+  assert.match(String((error.details as Record<string, unknown>).reason), /UNKNOWN_BRANCH/);
+  assert.ok(!existsSync(f.statePath));
+  assert.deepEqual(readdirSync(join(f.home, '.raf')), []);
+});
+
+test('invalid service operational budget fails before state or child creation', async t => {
+  const f = fixture(t);
+  writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ ...settings, service: { ...settings.service, readinessTimeoutMs: 0 } }));
+  const error = failure(await f.run(['service', 'start']));
+  assert.equal(error.code, 'PRODUCTION_ENTRY_FAILED');
+  assert.match(String((error.details as Record<string, unknown>).reason), /Invalid configured service/);
+  assert.deepEqual(readdirSync(f.home), []);
+});
 
 
 test('configured state basename is the single location used by all read-only invocations', async t => {

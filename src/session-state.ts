@@ -37,10 +37,12 @@ export type DomainEffect = { id: string; domain: string; payload: unknown };
 export type TransitionEffects = { pending: readonly PendingIntent[]; domain: readonly DomainEffect[] };
 
 export type SessionLaunchContext = {
+  wrapper?: ProcessIdentity;
   assignment: AssignmentSnapshot;
   selection: { runner: string; model: string; effort: string; reason: string };
   briefPath: string;
   reportPath: string;
+  writeBoundaries?: readonly string[];
 };
 
 export type SessionRecord = {

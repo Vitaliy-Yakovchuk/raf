@@ -1,7 +1,7 @@
 import { promises as fs, watch } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
-import { dirname, isAbsolute, join, basename } from 'node:path';
-import { hostname, platform, availableParallelism, loadavg, totalmem } from 'node:os';
+import { dirname, isAbsolute, join, basename, resolve, relative, sep } from 'node:path';
+import { platform, availableParallelism, loadavg, totalmem } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
@@ -10,10 +10,10 @@ import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, type Prot
 import { openStateStore, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
 import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
-import { createWorkspacePorts, executeCommand, observeProcesses, createResourceSnapshotReader } from './os-runtime.ts';
+import { createWorkspacePorts, executeCommand, observeProcesses, createResourceSnapshotReader, readMachineBootIdentity } from './os-runtime.ts';
 import { resolveWorkspaceRoute } from './workspace-routing.ts';
 import { selectModel, listModelAvailability } from './model-routing.ts';
-import { createLaunchState, reserveLaunchInTransaction } from './launch-state.ts';
+import { createLaunchState, reserveLaunchInTransaction, evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
 import { createSessionState, closeSessionInTransaction, type ProcessIdentity, type SessionRecord, type WorkResult } from './session-state.ts';
 import { AgentControlService, type VerifiedSender, type ActivityEvent } from './agent-control.ts';
 import { ReminderService } from './reminders.ts';
@@ -42,17 +42,67 @@ function protocolFor(settings: readonly ProtocolSettings[], runner: string): Pro
   if (runner !== 'codex') fail('RUNNER_IDENTITY_UNAVAILABLE', `Pre-brief native identity evidence is unavailable for ${runner}`);
   const matches = settings.filter(row => row.runner === runner);
   const value = matches[0];
-  if (matches.length !== 1 || !value || value.liveTaskVerified !== true || !text(value.executable) || !text(value.version) || !Array.isArray(value.baseArgs) || !value.baseArgs.every(text) || !text(value.modelFlag) || !text(value.effortFlag) || !['literal', 'codex_config'].includes(value.effortFormat) || !object(value.modelAliases) || !Array.isArray(value.navigation) || !object(value.markers) || !strings(value.markers.ready) || !object(value.timeouts) || Object.values(value.timeouts).some(n => !Number.isFinite(n) || n <= 0) || !['startupMs', 'transitionMs', 'overallMs', 'pollMs'].every(key => Number.isFinite(value.timeouts[key]) && value.timeouts[key] > 0)) fail('RUNNER_PROTOCOL_UNAVAILABLE', `Runner ${runner} lacks a validated versioned invocation/readiness protocol and deadlines`);
+  if (matches.length !== 1 || !value || typeof value.liveTaskVerified !== 'boolean' || value.quotaCommand !== '/status' || !text(value.executable) || !text(value.version) || !Array.isArray(value.baseArgs) || !value.baseArgs.every(text) || !text(value.modelFlag) || !text(value.effortFlag) || !['literal', 'codex_config'].includes(value.effortFormat) || !object(value.modelAliases) || !Array.isArray(value.navigation) || !object(value.markers) || !strings(value.markers.ready) || !object(value.timeouts) || Object.values(value.timeouts).some(n => !Number.isFinite(n) || n <= 0) || !['startupMs', 'transitionMs', 'overallMs', 'pollMs'].every(key => Number.isFinite(value.timeouts[key]) && value.timeouts[key] > 0)) fail('RUNNER_PROTOCOL_UNAVAILABLE', `Runner ${runner} lacks a validated versioned invocation/readiness protocol and deadlines`);
   return value;
 }
-async function bootIdentity(execute: AdapterCommandExecutor) {
-  if (platform() === 'darwin') {
-    const result = await execute({ executable: 'sysctl', args: ['-n', 'kern.boottime'] });
-    if (result.exitCode !== 0 || !result.stdout.trim()) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Cannot establish OS boot identity');
-    return { machineId: hostname(), bootId: result.stdout.trim() };
+async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string): Promise<string[]> {
+  const workspace = await fs.realpath(cwd);
+  const stateDirectory = await fs.realpath(dirname(statePath));
+  const inside = (root: string, path: string) => {
+    const suffix = relative(root, path);
+    return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`);
+  };
+  const directories = new Set<string>();
+  for (const boundary of boundaries) {
+    const target = resolve(workspace, boundary);
+    let directory: string;
+    try {
+      const stat = await fs.stat(target);
+      if (!stat.isDirectory() && !stat.isFile()) fail('RUNNER_WRITE_SCOPE_INVALID', 'Declared write boundary is not a file or directory');
+      const canonical = await fs.realpath(target);
+      directory = stat.isDirectory() ? canonical : dirname(canonical);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      let parent = boundary.endsWith(sep) ? target : dirname(target);
+      const missing: string[] = [];
+      for (;;) {
+        try { directory = resolve(await fs.realpath(parent), ...missing); break; }
+        catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || dirname(parent) === parent) throw error;
+          missing.unshift(basename(parent));
+          parent = dirname(parent);
+        }
+      }
+    }
+    if (inside(workspace, directory)) continue;
+    if (inside(directory, workspace) || inside(directory, stateDirectory) || inside(stateDirectory, directory)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Declared write boundary would grant a workspace ancestor or RAF state directory');
+    await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+    const canonical = await fs.realpath(directory);
+    if (inside(canonical, workspace) || inside(canonical, stateDirectory) || inside(stateDirectory, canonical)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Resolved write directory exceeds the declared task scope');
+    directories.add(canonical);
   }
-  if (platform() === 'linux') return { machineId: (await fs.readFile('/etc/machine-id', 'utf8')).trim(), bootId: (await fs.readFile('/proc/sys/kernel/random/boot_id', 'utf8')).trim() };
-  return fail('PROCESS_IDENTITY_UNAVAILABLE', 'Unsupported OS boot identity');
+  directories.add(await fs.realpath(reportDirectory));
+  return [...directories];
+}
+function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot'>, override?: AdapterCommandExecutor): AdapterCommandExecutor {
+  if (override) return override;
+  const directory = join(context.tmpRoot, 'tmux');
+  const socketPath = join(directory, 'server.sock');
+  return async command => {
+    if (command.executable !== 'tmux') return executeCommand(command);
+    await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+    const owner = await fs.lstat(directory);
+    if (!owner.isDirectory() || owner.uid !== process.getuid?.() || (owner.mode & 0o077) !== 0) fail('TMUX_CONTEXT_INVALID', 'RAF tmux directory must be private and owned by the current user');
+    try { const socket = await fs.lstat(socketPath); if (!socket.isSocket() || socket.uid !== process.getuid?.()) fail('TMUX_CONTEXT_INVALID', 'RAF tmux socket has foreign ownership or file type'); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+    const result = await executeCommand({ ...command, args: ['-S', socketPath, ...command.args] });
+    await fs.chmod(socketPath, 0o600).catch(error => { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; });
+    return result;
+  };
+}
+async function bootIdentity(execute: AdapterCommandExecutor) {
+  try { return await readMachineBootIdentity(execute); }
+  catch (error) { return fail('PROCESS_IDENTITY_UNAVAILABLE', error instanceof Error ? error.message : String(error)); }
 }
 async function processRows(execute: AdapterCommandExecutor) {
   const result = await execute({ executable: 'ps', args: ['-ww', '-axo', 'pid=,ppid=,lstart=,command='] });
@@ -84,7 +134,7 @@ async function ownIdentity(execute: AdapterCommandExecutor, runId: string, tmuxS
   if (!row) return fail('PROCESS_IDENTITY_UNAVAILABLE', 'Current process identity unavailable');
   return { pid: row.pid, startedAt: row.startedAt, runner: 'raf', runnerSessionId: runId, tmuxSession, evidence: { command: row.command, runId, ...await bootIdentity(execute) } };
 }
-function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: RuntimeConfiguration, context: RuntimeContext) {
+function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: RuntimeConfiguration, context: RuntimeContext, identityExecute?: AdapterCommandExecutor) {
   const verified = new WeakMap<object, string>();
   const state = createSessionState({ repository: store.sessionRepository, verifyMainAuthority: () => false, verifyWorkResult: (runId, result) => verified.get(result) === runId });
   const current = (runId: string) => store.sessionRepository.transaction(tx => tx.getSession(runId));
@@ -92,6 +142,8 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const intents = (rows: readonly ActivityEvent[]) => rows.map(row => { const event = row.kind === 'started' ? 'agent.started' : row.kind === 'updated' ? 'agent.activity-changed' : 'agent.closed'; return { id: `${row.session.runId}:activity:${row.session.revision}:${row.kind}:${row.project}`, runId: row.session.runId, event, payload: { kind: event, id: row.session.addressId, activity: row } }; });
   const publish = async (rows: readonly ActivityEvent[]) => { store.sessionRepository.transaction(tx => { for (const intent of intents(rows)) tx.putPending(intent); }); };
   const finalize = async (session: SessionRecord, rows: readonly ActivityEvent[]) => {
+    const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
+    if (wrapper && wrapper.pid !== process.pid) { const observed = (await observeProcesses([wrapper], { execute }))[0]; if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId} before recovery finalization`); }
     const at = now();
     const effect: ReminderSessionEffect = { id: `${session.runId}:reminders:session-ended`, domain: 'reminders', payload: { operation: 'session-ended', runId: session.runId, at, end: { address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: true } } };
     const pending = intents(rows);
@@ -103,7 +155,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     }
     const lease = listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.lease;
     if (lease) {
-      const released = await releaseTaskReservations(await reservationTools(store, context, execute), { lease, reason: session.result?.status === 'succeeded' ? 'succeeded' : 'failed', closeLaunch: tx => {
+      const released = await releaseTaskReservations(await reservationTools(store, context, execute, identityExecute), { lease, reason: session.result?.status === 'succeeded' ? 'succeeded' : 'failed', closeLaunch: tx => {
         const row = tx.getSession(session.runId);
         if (!row || row.state !== 'exited') throw new Error('Session changed before final closure');
         closeSessionInTransaction(tx, row, at);
@@ -139,7 +191,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     coordinator: {
       observe: async (session, observation) => {
         if (observation.state === 'exited') {
-          const wrapper = listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
+          const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
           if (wrapper) {
             const wrapperState = (await observeProcesses([wrapper], { execute }))[0];
             if (wrapperState.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${wrapperState.state}; preserve ${session.runId} until its report/exit transition completes`);
@@ -174,12 +226,10 @@ function assignmentPorts(execute: AdapterCommandExecutor) {
 async function measureResources(paths: readonly string[], machineId: string, execute: AdapterCommandExecutor) {
   return createResourceSnapshotReader({ machineId, paths }, { platform, loadAverage1m: () => loadavg()[0], availableCores: availableParallelism, totalRamBytes: totalmem, readFile: path => fs.readFile(path, 'utf8'), execute }).read();
 }
-async function reservationTools(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor): Promise<TaskReservationDependencies> {
+async function reservationTools(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, identityExecute?: AdapterCommandExecutor): Promise<TaskReservationDependencies> {
   const projects = await json(join(context.confRoot, 'projects.json'));
   const roots = Object.fromEntries(Object.keys(projects.projects).map(project => [project, context.orchestratorRoot]));
-  let identity: ReturnType<typeof createAssignmentIdentityAdapter>;
-  try { identity = createAssignmentIdentityAdapter(roots, { execute }); }
-  catch (error) { if ((error as Error).message === 'NotImplemented') fail('TASK_IDENTITY_UNAVAILABLE', 'R3 integration pending authoritative assignment identity adapter; mandatory task claims cannot be bypassed'); throw error; }
+  const identity = createAssignmentIdentityAdapter(roots, identityExecute ? { execute: identityExecute } : {});
   return { store, currentBoot: () => bootIdentity(execute), observe: async identity => (await observeProcesses([identity], { execute }))[0], resolveTasks: identity.resolveTasks, newFence: randomUUID };
 }
 
@@ -196,8 +246,8 @@ export async function createProductionServices(
 ): Promise<RuntimeServices> {
   for (const name of ['orchestratorRoot', 'confRoot', 'artifactPath', 'statePath', 'tmpRoot'] as const) if (!isAbsolute(context[name])) fail('INVALID_CONTEXT', `Absolute ${name} required`);
   if (options.taskContextPath && !isAbsolute(options.taskContextPath) || options.workerModulePath && !isAbsolute(options.workerModulePath)) fail('INVALID_CONTEXT', 'Internal context and worker overrides must be absolute');
-  const execute = options.execute ?? executeCommand;
-  const tools = sessionTools(store, execute, configuration, context);
+  const execute = runtimeExecution(context, options.execute);
+  const tools = sessionTools(store, execute, configuration, context, options.execute);
   const assignments = assignmentPorts(execute);
   const prepared = new Map<string, { launch: RuntimeLaunch; reportPath: string; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean }>();
   const readSession = tools.current;
@@ -205,7 +255,7 @@ export async function createProductionServices(
   const release = async (runId: string, reason: 'cancelled' | 'failed' | 'succeeded') => {
     const lease = leaseFor(runId);
     if (lease) {
-      if (!await releaseTaskReservations(await reservationTools(store, context, execute), { lease, reason, closeLaunch: tx => { const session = tx.getSession(runId); if (!session) throw new Error('Unknown launch'); closeSessionInTransaction(tx, session, now()); } })) fail('LAUNCH_RECOVERABLE', `Cannot safely release run ${runId}`);
+      if (!await releaseTaskReservations(await reservationTools(store, context, execute, options.execute), { lease, reason, closeLaunch: tx => { const session = tx.getSession(runId); if (!session) throw new Error('Unknown launch'); closeSessionInTransaction(tx, session, now()); } })) fail('LAUNCH_RECOVERABLE', `Cannot safely release run ${runId}`);
     } else if (readSession(runId)?.state === 'reserved') tools.state.abortLaunch(runId, reason, now());
   };
   return {
@@ -224,40 +274,46 @@ export async function createProductionServices(
     route: async request => resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts(execute)),
     routingSnapshot: async () => {
       const cliAvailable: Record<string, boolean> = {};
+      let configured: readonly ProtocolSettings[] = [];
+      try { configured = await protocols(context.confRoot, options.protocolSettings); } catch {}
       for (const runner of configuration.models.runners) {
-        try { const result = await execute({ executable: runner.id, args: ['--version'] }); cliAvailable[runner.id] = result.exitCode === 0; } catch { cliAvailable[runner.id] = false; }
+        cliAvailable[runner.id] = false;
+        try {
+          const settings = protocolFor(configured, runner.id);
+          const version = await execute({ executable: settings.executable, args: ['--version'] });
+          cliAvailable[runner.id] = version.exitCode === 0 && version.stdout.trim().split(/\s+/).includes(settings.version);
+        } catch {}
       }
       return { runnerEnabled: Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])), cliAvailable, quotas: [] };
     },
     selectModel, listModels: listModelAvailability,
     prepareReport: async launch => {
       if (launch.statePath !== context.statePath || launch.tmpRoot !== context.tmpRoot || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(launch.runId) || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(launch.addressId)) fail('INVALID_CONTEXT', 'Launch paths or identity mismatch');
+      const writeBoundaries = launch.writeBoundaries ?? [];
+      if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text)) fail('INVALID_CONTEXT', 'Launch write boundaries must be declared paths');
       const directory = join(context.tmpRoot, launch.runId);
       await fs.mkdir(context.tmpRoot, { recursive: true, mode: 0o700 });
       await fs.mkdir(directory, { mode: 0o700 });
       const reportPath = join(directory, `${launch.addressId}.json`);
-      await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings }), { mode: 0o600, flag: 'wx' });
+      await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries }), { mode: 0o600, flag: 'wx' });
       prepared.set(launch.tmuxSession, { launch: structuredClone(launch), reportPath });
       return { reportPath, reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
     },
     reserve: async input => {
-      const resourceSnapshot = await measureResources([input.activity.cwd, dirname(input.statePath), input.tmpRoot], hostname(), execute);
-      const requestedAdmission = evaluateResourceAdmission({ measurement: resourceSnapshot.measurement, requested: input.requested, unusedReservations: [], requiredFileSystemIds: input.requiredFileSystemIds });
-      if (!requestedAdmission.allowed[input.activity.type === 'hotfix' ? 'hotfix' : 'normal']) return { admitted: false, reason: requestedAdmission.reasons.join('; ') };
-      const record = prepared.get(input.tmuxSession);
-      if (!record || record.reportPath !== input.reportPath || !isDeepStrictEqual(record.launch.assignment, input.assignment)) fail('INVALID_CONTEXT', 'Prepared launch context mismatch');
-      const dependencies = await reservationTools(store, context, execute);
+      const dependencies = await reservationTools(store, context, execute, options.execute);
       await reconcileTaskReservations(dependencies);
-      const identityAdapter = createAssignmentIdentityAdapter({ [input.activity.project]: input.assignment.root }, { execute });
-      let tasks;
-      try { tasks = await identityAdapter.capture(input.activity.project, input.assignment); }
-      catch (error) { if ((error as Error).message === 'NotImplemented') fail('TASK_IDENTITY_UNAVAILABLE', 'R3 integration pending authoritative assignment identity adapter; mandatory task claims cannot be bypassed'); throw error; }
-      const snapshot = resourceSnapshot;
-      snapshot.measurement.machineId = (await dependencies.currentBoot()).machineId;
+      const boot = await dependencies.currentBoot();
+      const resourceSnapshot = await measureResources([input.activity.cwd, dirname(input.statePath), input.tmpRoot], boot.machineId, execute);
       const candidates = tools.state.listReconciliationCandidates().filter(session => session.process);
       const observed = await observeProcesses(candidates.map(session => session.process!), { execute });
-      const measured = { measurement: snapshot.measurement, observedProcesses: candidates.flatMap((session, index) => observed[index].state === 'alive' ? [{ runId: session.runId, identity: session.process! }] : []) };
-      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt') }, resource: 'runtime', amount: input.requested.ramBytes, requested: input.requested, requiredFileSystemIds: input.requiredFileSystemIds, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
+      const measured = { measurement: resourceSnapshot.measurement, observedProcesses: candidates.flatMap((session, index) => observed[index].state === 'alive' ? [{ runId: session.runId, identity: session.process! }] : []) };
+      const admission = store.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, input, measured, evaluateResourceAdmission));
+      if (!admission.allowed[input.activity.type === 'hotfix' ? 'hotfix' : 'normal']) return { admitted: false, reason: admission.reasons.join('; ') };
+      const record = prepared.get(input.tmuxSession);
+      if (!record || record.reportPath !== input.reportPath || input.assignment.root !== context.orchestratorRoot || !isDeepStrictEqual(record.launch.assignment, input.assignment) || !isDeepStrictEqual(record.launch.writeBoundaries ?? [], input.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Prepared launch context mismatch');
+      const identityAdapter = createAssignmentIdentityAdapter({ [input.activity.project]: context.orchestratorRoot }, options.execute ? { execute: options.execute } : {});
+      const tasks = await identityAdapter.capture(input.activity.project, input.assignment);
+      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: input.requested.ramBytes, requested: input.requested, requiredFileSystemIds: input.requiredFileSystemIds, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
       try {
         const claimed = await claimTaskReservations(dependencies, { runId: input.runId, addressId: input.addressId, tasks, starter: await ownIdentity(execute, input.runId, input.tmuxSession), reserveLaunch: tx => {
@@ -270,22 +326,29 @@ export async function createProductionServices(
       } catch (error) { if (admissionReason) return { admitted: false, reason: admissionReason }; throw error; }
     },
     adapter: { start: async request => {
+      const selection = { runner: request.selection.runner, model: request.selection.model, effort: request.selection.effort };
       const record = prepared.get(request.tmuxSession);
-      if (!record || !isDeepStrictEqual({ runner: record.launch.selection.runner, model: record.launch.selection.model, effort: record.launch.selection.effort }, request.selection) || request.cwd !== record.launch.activity.cwd) fail('INVALID_CONTEXT', 'Unprepared worker launch');
+      if (!record || !isDeepStrictEqual({ runner: record.launch.selection.runner, model: record.launch.selection.model, effort: record.launch.selection.effort }, selection) || request.cwd !== record.launch.activity.cwd) fail('INVALID_CONTEXT', 'Unprepared worker launch');
       const session = readSession(record.launch.runId);
       if (session?.state !== 'reserved' || !leaseFor(record.launch.runId)) fail('TASK_CLAIM_REQUIRED', 'Durable launch and task claims required before spawn');
       const settings = protocolFor(await protocols(context.confRoot, options.protocolSettings), request.selection.runner);
       const version = await execute({ executable: settings.executable, args: ['--version'] });
       if (version.exitCode !== 0 || !version.stdout.trim().split(/\s+/).includes(settings.version)) fail('RUNNER_PROTOCOL_UNAVAILABLE', 'Installed runner version does not match configured protocol');
-      await fs.writeFile(session.launchContext!.briefPath, request.brief, { mode: 0o600, flag: 'wx' });
+      try { await fs.writeFile(session.launchContext!.briefPath, request.brief, { mode: 0o600, flag: 'wx' }); }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+        const briefFile = await fs.lstat(session.launchContext!.briefPath);
+        if (!briefFile.isFile() || briefFile.uid !== process.getuid?.() || await fs.readFile(session.launchContext!.briefPath, 'utf8') !== request.brief) fail('BRIEF_CONTEXT_MISMATCH', 'Existing durable brief does not match this prepared launch');
+        await fs.chmod(session.launchContext!.briefPath, 0o600);
+      }
       record.brief = request.brief;
       const modulePath = options.workerModulePath ?? fileURLToPath(import.meta.url);
       record.spawnAttempted = true;
-      record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, assignment: record.launch.assignment, selection: request.selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
+      record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, assignment: record.launch.assignment, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
         timeoutMs: settings.timeouts.overallMs,
         workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});await m.runProductionWorker();`], cwd: request.cwd },
       });
-      return { tmuxSession: request.tmuxSession, selection: request.selection };
+      return { tmuxSession: request.tmuxSession, selection };
     } },
     verifyStarted: async (launch, session) => {
       const handshake = prepared.get(launch.tmuxSession)?.handshake;
@@ -328,7 +391,6 @@ export async function runProductionWorker(
 ): Promise<void> {
   const channel = await consumeWrapperRequest();
   const request = channel.request;
-  const execute = options.execute ?? executeCommand;
   let manifest;
   const manifestPath = join(request.tmpRoot, request.runId, 'runtime.json');
   try {
@@ -338,20 +400,25 @@ export async function runProductionWorker(
   } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') fail('WORKER_CONTEXT_UNAVAILABLE', `Prepared worker runtime envelope is missing: ${manifestPath}`); throw error; }
   if (manifest.version !== 1 || manifest.context?.statePath !== request.statePath || manifest.context?.tmpRoot !== request.tmpRoot || manifest.context?.orchestratorRoot !== request.assignment.root || !isAbsolute(manifest.context?.confRoot ?? '')) fail('INVALID_CONTEXT', 'Worker runtime envelope mismatch');
   const context: RuntimeContext = { ...manifest.context, resolveCaller: async () => undefined };
+  const execute = runtimeExecution(context, options.execute);
   const settings = protocolFor(options.protocolSettings ?? manifest.protocolSettings ?? await protocols(context.confRoot), request.selection.runner);
   const version = await execute({ executable: settings.executable, args: ['--version'] });
   if (version.exitCode !== 0 || !version.stdout.trim().split(/\s+/).includes(settings.version)) fail('RUNNER_PROTOCOL_UNAVAILABLE', `Installed ${request.selection.runner} version does not match ${settings.version}`);
   const store = openStateStore(request.statePath);
   try {
-    const tools = sessionTools(store, execute, manifest.configuration, context);
+    const tools = sessionTools(store, execute, manifest.configuration, context, options.execute);
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
-    const dependencies = await reservationTools(store, context, execute);
+    const writeBoundaries = manifest.writeBoundaries ?? [];
+    if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text) || !isDeepStrictEqual(writeBoundaries, session.launchContext.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Worker write boundaries do not match durable launch context');
+    const dependencies = await reservationTools(store, context, execute, options.execute);
     let lease: TaskReservationLease | null | undefined = listTaskReservations(store).find(set => set.lease.owner.runId === request.runId)?.lease;
     if (!lease) fail('TASK_CLAIM_REQUIRED', 'Worker has no fenced task reservation');
     lease = await handoffTaskReservations(dependencies, { lease, wrapper: await ownIdentity(execute, request.runId, request.tmuxSession) });
     if (!lease) fail('TASK_CLAIM_LOST', 'Worker handoff lost its task reservation');
     const invocation = buildRunnerInvocation(settings, request.selection);
+    const writableDirectories = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath);
+    invocation.args.push(...writableDirectories.flatMap(path => ['--add-dir', path]));
     let screen = '';
     let nativeId: string | undefined;
     let actual: ProcessIdentity | undefined;
@@ -380,12 +447,19 @@ export async function runProductionWorker(
       const candidates = matching.filter(candidate => !matching.some(other => { let pid = other.ppid; const seen = new Set<number>(); while (pid && !seen.has(pid)) { if (pid === candidate.pid) return true; seen.add(pid); pid = rows.find(row => row.pid === pid)?.ppid ?? 0; } return false; }));
       if (candidates.length !== 1) return { state: 'unknown', reason: 'Actual runner PID is ambiguous or unavailable; shell PID is not identity' };
       const row = candidates[0];
-      actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, ...await dependencies.currentBoot() } };
+      actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, ...await dependencies.currentBoot(), ...(!options.execute ? { tmuxSocket: join(context.tmpRoot, 'tmux', 'server.sock') } : {}) } };
       return { state: 'owned', identity: actual, processKind: 'agent' };
     };
     const transport = adapter.createLaunchTransport({ reportWrapper: { wrap: command => command }, inspectOwnership: ownership, pollIntervalMs: settings.timeouts.pollMs });
     let requestedStatus = false;
+    let submittedStatus = false;
     let retriedStatus = false;
+    let statusDeadline = 0;
+    const target = `=${request.tmuxSession}:0.0`;
+    const sendKeys = async (keys: string[]) => {
+      const result = await execute({ executable: 'tmux', args: ['send-keys', '-t', target, ...keys] });
+      if (result.exitCode !== 0) throw new Error('Runner status/navigation transport failed');
+    };
     transport.waitReady = async timeoutMs => {
       const deadline = Date.now() + timeoutMs;
       while (Date.now() < deadline) {
@@ -393,20 +467,28 @@ export async function runProductionWorker(
         if (observed.status === 'ready' && observed.cliSessionId) return { state: 'ready', runnerSessionId: observed.cliSessionId };
         if (observed.status === 'exited') return { state: 'exited', reason: 'Runner exited before native identity' };
         if (observed.status === 'failed' || observed.status === 'limited') return { state: 'unknown_screen', reason: observed.reason };
-        const observation = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: requestedStatus ? '/status' : null });
+        const observation = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: requestedStatus ? settings.quotaCommand : null });
         if (observation.state === 'known_navigation') {
           const action = nextRunnerAction(settings, observation);
           if (action.kind !== 'keys') return { state: 'unknown_screen', reason: 'Unsupported startup navigation' };
-          const result = await execute({ executable: 'tmux', args: ['send-keys', '-t', `=${request.tmuxSession}:0.0`, ...action.keys] });
-          if (result.exitCode !== 0) throw new Error('Startup navigation failed');
-        } else if (observation.state === 'ready' && !nativeId) {
-          if (request.selection.runner !== 'codex') return { state: 'unknown_screen', reason: 'Pre-brief native identity evidence unavailable for runner' };
-          if (!requestedStatus) { requestedStatus = true; await adapter.deliver(adapterSession, '/status'); }
-          else if (!retriedStatus && /\/status\s*$/.test(screen.trim())) { retriedStatus = true; await execute({ executable: 'tmux', args: ['send-keys', '-t', `=${request.tmuxSession}:0.0`, 'Enter'] }); }
-        } else if (!screen.trim()) {
-          await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
-          continue;
-        } else if (!['ready', 'known_navigation'].includes(observation.state)) return { state: 'unknown_screen', reason: `Runner readiness ${observation.state}` };
+          await sendKeys(action.keys);
+          requestedStatus = false;
+          submittedStatus = false;
+          retriedStatus = false;
+        } else if (observation.state === 'ready' && !nativeId && !requestedStatus) {
+          requestedStatus = true;
+          statusDeadline = Date.now() + settings.timeouts.transitionMs;
+          await sendKeys(['-l', settings.quotaCommand!]);
+        } else if (requestedStatus) {
+          if (Date.now() >= statusDeadline) return { state: 'timeout', reason: 'Native status transition timed out' };
+          if (!submittedStatus && screen.includes(settings.quotaCommand!)) {
+            await sendKeys(['Enter']);
+            submittedStatus = true;
+          } else if (submittedStatus && !retriedStatus && /(?:›|>)\s*\/status(?:\s|$)/m.test(screen)) {
+            await sendKeys(['Enter']);
+            retriedStatus = true;
+          } else if (screen.trim() && !screen.includes(settings.quotaCommand!) && !/\bSession\b/.test(screen) && observation.state !== 'ready') return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
+        } else if (screen.trim() && observation.state !== 'ready') return { state: 'unknown_screen', reason: `Runner readiness ${observation.state}` };
         await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
       }
       return { state: 'timeout', reason: 'Native runner readiness timed out' };
@@ -419,7 +501,65 @@ export async function runProductionWorker(
       if (!next || !tools.state.commitStarted(request.runId, identity)) fail('TASK_CLAIM_LOST', 'Durable start gate rejected runner before brief');
       lease = next;
     };
-    transport.deliver = async brief => { const owned = await ownership(); if (owned.state !== 'owned') fail('PROCESS_IDENTITY_UNAVAILABLE', 'Runner ownership lost before durable start gate'); await gate(owned.identity); await adapter.deliver(adapterSession, brief); };
+    transport.deliver = async brief => {
+      const owned = await ownership();
+      if (owned.state !== 'owned') fail('PROCESS_IDENTITY_UNAVAILABLE', 'Runner ownership lost before durable start gate');
+      await gate(owned.identity);
+      const expectedIdentity = owned.identity;
+      const verifyOwner = async () => {
+        const current = await ownership();
+        if (current.state !== 'owned' || !sameIdentity(current.identity, expectedIdentity) || nativeId !== expectedIdentity.runnerSessionId) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Native runner identity changed during initial brief delivery');
+      };
+      const initial = await adapter.inspect(adapterSession);
+      if (initial.status !== 'ready' || initial.cliSessionId !== expectedIdentity.runnerSessionId) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Runner is not on its known native input before initial brief delivery');
+      const before = screen;
+      const beforeLines = before.split('\n');
+      const beforeComposer = beforeLines.findLastIndex(line => /^\s*›(?:\s|$)/u.test(line));
+      const beforeInput = beforeLines[beforeComposer]?.replace(/^\s*›\s?/u, '').trimEnd();
+      if (beforeInput === undefined || beforeInput !== '' && !settings.markers.ready?.includes(beforeInput)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input before initial brief submission');
+      const footer = (lines: string[], index: number) => lines.slice(index + 1).map(line => line.trim()).filter(Boolean).join('\n');
+      const beforeFooter = beforeComposer < 0 ? undefined : footer(beforeLines, beforeComposer);
+      await adapter.deliver(adapterSession, brief);
+      const deadline = Date.now() + settings.timeouts.transitionMs;
+      const characters = [...brief].length;
+      let previousPending: string | undefined;
+      let retried = false;
+      while (Date.now() < deadline) {
+        const observed = await adapter.inspect(adapterSession);
+        await verifyOwner();
+        if (observed.status === 'exited' || observed.status === 'failed' || observed.status === 'limited') fail('RUNNER_DELIVERY_UNAVAILABLE', `Initial brief delivery stopped on ${observed.status}`);
+        const lines = screen.split('\n');
+        const composerIndex = lines.findLastIndex(line => /^\s*›(?:\s|$)/u.test(line));
+        const composer = lines[composerIndex];
+        const input = composer?.replace(/^\s*›\s?/u, '').trimEnd();
+        const paste = input?.match(/^\[Pasted Content (\d+) chars\]$/u);
+        const pending = paste ? Number(paste[1]) === characters || Number(paste[1]) === characters + 1 : !brief.includes('\n') && (input === brief || input === brief + '\n');
+        const state = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: '/status' }).state;
+        const working = /^\s*•\s+[^\n]+\([^\n()]*esc to interrupt\)\s*$/mu;
+        const emptyInput = input === '' || settings.markers.ready?.includes(input ?? '');
+        if (!paste && emptyInput && working.test(screen) && !working.test(before)) {
+          await verifyOwner();
+          return;
+        }
+        if (pending && state === 'ready' && beforeFooter !== undefined && footer(lines, composerIndex) === beforeFooter) {
+          if (!retried && previousPending === input) {
+            const pendingScreen = screen;
+            await verifyOwner();
+            const latest = await adapter.inspect(adapterSession);
+            if (latest.status === 'ready' && screen === pendingScreen && nativeId === expectedIdentity.runnerSessionId) {
+              await sendKeys(['Enter']);
+              retried = true;
+            }
+          }
+          previousPending = input;
+        } else {
+          previousPending = undefined;
+          if (paste || state !== 'ready' && !working.test(screen)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input or screen during initial brief submission');
+        }
+        await new Promise(resolve => setTimeout(resolve, Math.min(settings.timeouts.pollMs, Math.max(0, deadline - Date.now()))));
+      }
+      fail('RUNNER_DELIVERY_UNAVAILABLE', 'Native initial brief acceptance timed out');
+    };
     const assignments = assignmentPorts(execute);
     await runLaunchWrapper(request, {
       transport,
@@ -458,6 +598,7 @@ export async function runProductionWorker(
           tools.state.commitObservation(request.runId, current.revision, { state: 'exited', observedAt: now(), exitCode: exit.code, evidence: `Owned tmux runner exit ${exit.signal ?? exit.code}` }, effects);
           current = tools.current(request.runId)!;
           await tools.finalize(current, current.activity ? [{ kind: 'ended', session: current, project: current.activity.project }] : []);
+          if ((await adapter.inspect(adapterSession)).status === 'exited') await adapter.stop(adapterSession);
         },
         failed: async (_runId, reason, recoverable) => {
           if (recoverable) { process.stderr.write(`${request.runId}: recoverable launch: ${reason}\n`); return; }

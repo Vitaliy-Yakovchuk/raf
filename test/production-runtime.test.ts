@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, writeFile, chmod, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, chmod, rename, rm, realpath } from 'node:fs/promises';
 import { hostname, tmpdir } from 'node:os';
 import { delimiter, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -44,6 +44,13 @@ async function fixture(t: TestContext) {
   const tmuxLookup = spawnSync('which', ['tmux'], { encoding: 'utf8' });
   assert.equal(tmuxLookup.status, 0, tmuxLookup.stderr);
   const realTmuxPath = tmuxLookup.stdout.trim();
+  const openspecLookup = spawnSync('which', ['openspec'], { encoding: 'utf8' });
+  assert.equal(openspecLookup.status, 0, openspecLookup.stderr);
+  const realOpenSpecPath = openspecLookup.stdout.trim();
+  assert.ok(realOpenSpecPath.startsWith('/') && !realOpenSpecPath.startsWith(binRoot + '/'));
+  const openspecVersion = spawnSync(realOpenSpecPath, ['--version'], { encoding: 'utf8' });
+  assert.equal(openspecVersion.status, 0, openspecVersion.stderr);
+  assert.equal(openspecVersion.stdout.trim(), '1.14.3');
   const tmuxPath = join(binRoot, 'tmux');
   await writeFile(tmuxPath, `#!${process.execPath}
 import { spawnSync } from 'node:child_process';
@@ -51,9 +58,31 @@ const result = spawnSync(${JSON.stringify(realTmuxPath)}, ['-S', ${JSON.stringif
 process.exit(result.status ?? 1);
 `, { mode: 0o700 });
   const store = openStateStore(statePath);
+  const ownedPids = new Set<number>();
+  const ownedPidFiles = new Set<string>();
+  const trackProcess = (pid: number) => {
+    assert.ok(Number.isSafeInteger(pid) && pid > 0 && pid !== process.pid);
+    ownedPids.add(pid);
+  };
+  const trackPidFile = (path: string) => ownedPidFiles.add(path);
   t.after(async () => {
     await executeCommand({ executable: realTmuxPath, args: ['-S', socket, 'kill-server'] }).catch(() => undefined);
-    store.close();
+    for (const path of ownedPidFiles) {
+      const pid = await readFile(path, 'utf8').catch((error: NodeJS.ErrnoException) => {
+        if (error.code === 'ENOENT') return undefined;
+        throw error;
+      });
+      if (pid !== undefined) trackProcess(Number(pid));
+    }
+    try {
+      await Promise.all([...ownedPids].map(pid => eventually(() => {
+        try { process.kill(pid, 0); return false; }
+        catch (error) {
+          if ((error as NodeJS.ErrnoException).code === 'ESRCH') return true;
+          throw error;
+        }
+      }, exited => exited, `owned process ${pid} exited before fixture removal`)));
+    } finally { store.close(); }
     await rm(root, { recursive: true, force: true });
   });
   const git = spawnSync('git', ['init', '--quiet', '--initial-branch=develop', cwd], { encoding: 'utf8' });
@@ -81,11 +110,6 @@ process.exit(result.status ?? 1);
     writeFile(join(templates, 'tasks', 'implement.md'), 'FIXTURE_IMPLEMENT_STAGE'),
     writeFile(join(templates, 'completion.md'), 'FIXTURE_COMPLETION'),
   ]);
-  const assignment: AssignmentSnapshot = {
-    root,
-    changes: [{ id: 'fixture-launch', items: [{ id: '2.1', description: 'Виконати лише synthetic fixture' }] }],
-    baselineArchives: [],
-  };
   const changeRoot = join(root, 'openspec', 'changes', 'fixture-launch');
   const specRoot = join(changeRoot, 'specs', 'projects', 'raf', 'agent-run');
   await mkdir(specRoot, { recursive: true });
@@ -109,17 +133,17 @@ process.exit(result.status ?? 1);
   };
   const taskContextPath = join(tmpRoot, 'task-context', `${params.id}.json`);
   await mkdir(dirname(taskContextPath));
-  await writeFile(taskContextPath, JSON.stringify({ version: 1, parameters: params, assignment, context: taskContext }), { mode: 0o600 });
-  const completedPath = join(root, 'completed');
   const cliCalls = join(root, 'openspec-calls.jsonl');
   const openspecPath = join(binRoot, 'openspec');
   await writeFile(openspecPath, `#!${process.execPath}
-import { appendFileSync, existsSync } from 'node:fs';
+import { appendFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 const args = process.argv.slice(2);
 appendFileSync(${JSON.stringify(cliCalls)}, JSON.stringify({ args, cwd: process.cwd() }) + '\\n');
-if (args[0] === 'list') console.log(JSON.stringify({ changes: args.includes('--archived') ? [] : [{ name: 'fixture-launch', completedTasks: existsSync(${JSON.stringify(completedPath)}) ? 1 : 0, totalTasks: 1 }] }));
-else if (JSON.stringify(args) === JSON.stringify(['instructions', 'apply', '--change', 'fixture-launch', '--json'])) console.log(JSON.stringify({ contextFiles: { proposal: [${JSON.stringify(join(changeRoot, 'proposal.md'))}], specs: [${JSON.stringify(join(specRoot, 'spec.md'))}], tasks: [${JSON.stringify(tasksPath)}] }, tasks: [{ id: '2.1', description: 'Виконати лише synthetic fixture', sourcePath: ${JSON.stringify(tasksPath)}, line: 3, done: existsSync(${JSON.stringify(completedPath)}) }] }));
-else { console.error('fixture unsupported request'); process.exitCode = 7; }
+const result = spawnSync(${JSON.stringify(realOpenSpecPath)}, args, { cwd: process.cwd(), stdio: 'inherit' });
+if (result.error) throw result.error;
+if (result.signal) process.kill(process.pid, result.signal);
+else process.exit(result.status ?? 1);
 `, { mode: 0o700 });
   const calls: AdapterCommand[] = [];
   const execute: AdapterCommandExecutor = async command => {
@@ -131,7 +155,22 @@ else { console.error('fixture unsupported request'); process.exitCode = 7; }
   };
   store.initializeRunners(configuration.models.runners);
   const context: RuntimeContext = { orchestratorRoot: root, confRoot, artifactPath: join(root, 'catalog.json'), statePath, tmpRoot, mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined };
-  return { root, confRoot, home, cwd, tmpRoot, statePath, binRoot, context, store, assignment, params, taskContext, taskContextPath, execute, calls, completedPath, cliCalls, openspecPath, socket, realTmuxPath };
+  const services = await createProductionServices(store, configuration, context, { execute });
+  const validation = await services.assignment.validate({ root, selections: [{ change: 'fixture-launch', items: [{ id: '2.1' }] }] });
+  if (!validation.ok) assert.fail(JSON.stringify(validation));
+  const assignment: AssignmentSnapshot = validation.snapshot;
+  await writeFile(taskContextPath, JSON.stringify({ version: 1, parameters: params, assignment, context: taskContext }), { mode: 0o600 });
+  const completeAssignment = async () => {
+    const current = await readFile(tasksPath, 'utf8');
+    const pending = '- [ ] 2.1 Виконати лише synthetic fixture';
+    assert.equal(current.split(pending).length, 2);
+    const completed = current.replace(pending, '- [x] 2.1 Виконати лише synthetic fixture');
+    const staging = join(changeRoot, 'tasks.next.md');
+    await writeFile(staging, completed, { mode: 0o600, flag: 'wx' });
+    await rename(staging, tasksPath);
+    assert.equal(await readFile(tasksPath, 'utf8'), completed);
+  };
+  return { root, confRoot, home, cwd, tmpRoot, statePath, binRoot, context, store, assignment, params, taskContext, taskContextPath, execute, calls, completeAssignment, cliCalls, openspecPath, socket, realTmuxPath, realOpenSpecPath, trackProcess, trackPidFile };
 }
 
 async function eventually<T>(read: () => Promise<T> | T, predicate: (value: T) => boolean, description: string): Promise<T> {
@@ -155,19 +194,22 @@ async function workerFixture(t: TestContext, prepareInFixture = true) {
   const exitGatePath = join(f.root, 'exit-gate');
   const deliveredPath = join(f.root, 'delivered.txt');
   const pidPath = join(f.root, 'agent.pid');
+  const wrapperPidPath = join(f.root, 'wrapper.pid');
+  f.trackPidFile(pidPath);
+  f.trackPidFile(wrapperPidPath);
   const nativeId = '11111111-1111-4111-8111-111111111111';
   const executable = join(f.binRoot, 'codex');
   await writeFile(executable, `#!${process.execPath}
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 if (process.argv.includes('--version')) { console.log('codex-cli 0.0.0'); process.exit(0); }
 writeFileSync(${JSON.stringify(pidPath)}, String(process.pid));
-console.log('OpenAI Codex (v0.0.0)\\nAsk Codex to do anything');
+console.log('OpenAI Codex (v0.0.0)\\nAsk Codex to do anything\\n› Ask Codex to do anything');
 let input = '';
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', text => {
   input += text;
-  if (input.includes('/status')) { console.log('Session: ${nativeId}\\nAsk Codex to do anything'); input = input.replace('/status', ''); }
-  if (input.includes('BRIEF_END')) writeFileSync(${JSON.stringify(deliveredPath)}, input);
+  if (input.includes('/status')) { console.log('Session: ${nativeId}\\nAsk Codex to do anything\\n› Ask Codex to do anything'); input = input.replace('/status', ''); }
+  if (input.includes('BRIEF_END')) { writeFileSync(${JSON.stringify(deliveredPath)}, input); console.log('\\n• Working (0s • esc to interrupt)\\n› '); }
 });
 const watchdog = setTimeout(() => process.exit(91), 20000);
 let release;
@@ -213,7 +255,13 @@ const timer = setInterval(() => {
     assert.ok(claims[0].lease.owner.fence.length > 0);
     assert.equal(f.store.sessionRepository.transaction(tx => tx.listReservations()).length, 1);
   }
-  const launch = () => launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { runProductionWorker } from ${JSON.stringify(runtimeUrl)}; process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
+  const launch = async () => {
+    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
+    f.trackProcess(started.wrapperPid);
+    f.trackProcess(started.identity.pid);
+    assert.equal(Number(await readFile(wrapperPidPath, 'utf8')), started.wrapperPid);
+    return started;
+  };
   const report = { status: 'succeeded', answer: 'Виконано лише доручену fixture.', changes: [{ id: 'fixture-launch', items: [{ id: '2.1', status: 'succeeded' }] }] };
   return { ...f, runId, address, reportPath, releasePath, exitGatePath, deliveredPath, pidPath, nativeId, settings, request, runtimeLaunch, launch, session, report };
 }
@@ -393,7 +441,7 @@ console.log(JSON.stringify({ identity, reportPath: prepared.reportPath, selectio
   assert.equal(claims.length, 1);
   assert.equal(claims[0].lease.owner.runId, f.runId);
   assert.ok(claims[0].lease.owner.fence.length > 0);
-  await writeFile(f.completedPath, 'done');
+  await f.completeAssignment();
   await writeFile(f.releasePath, JSON.stringify({ report: f.report, exitCode: 17 }));
   const accepted = await eventually(f.session, row => row?.state === 'running' && row.result?.status === 'succeeded', 'report accepted while the runner is held alive');
   assert.equal(accepted?.result?.response, f.report.answer);
@@ -426,7 +474,7 @@ test('[production-worker] persistent child commits the actual native process bef
   const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const live = await services.control.ps();
   assert.ok(live.some(row => row.runId === f.runId && row.process?.pid === agentPid));
-  await writeFile(f.completedPath, 'done');
+  await f.completeAssignment();
   await writeFile(f.releasePath, JSON.stringify({ report: f.report, exitCode: 17 }));
   const accepted = await eventually(f.session, row => row?.state === 'running' && row.result?.status === 'succeeded', 'verified report accepted before process exit');
   assert.equal(accepted?.result?.response, f.report.answer);
@@ -441,7 +489,10 @@ test('[production-worker] persistent child commits the actual native process bef
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
   assert.deepEqual(listTaskReservations(f.store), []);
   const calls = (await readFile(f.cliCalls, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
-  assert.ok(calls.some(c => c.cwd === f.root && c.args[0] === 'instructions'));
+  const canonicalRoot = await realpath(f.root);
+  assert.ok(calls.some(c => c.cwd === canonicalRoot && c.args[0] === 'instructions'));
+  assert.ok(calls.some(c => c.args[0] === '--version'));
+  assert.ok(calls.some(c => c.args[0] === 'schema' && c.args[1] === 'which'));
 });
 
 test('[production-worker] unconfirmed OpenSpec success becomes failed after exit and never auto-resumes', async t => {

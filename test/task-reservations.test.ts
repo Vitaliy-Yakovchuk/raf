@@ -350,10 +350,45 @@ scenario('a live running agent survives service restart and dead caller or wrapp
   assert.equal(listTaskReservations(restarted.store)[0].stage, 'running');
 });
 
-scenario('a crashed running agent is recovered without a report even if older processes remain alive', async f => {
-  const input = f.request('run-a', [task('R.1')]);
-  const { active, agent } = await f.running(input);
+scenario('a crashed agent retains its run until the verified report wrapper exits, even with a live older starter', async f => {
+  const request = f.request('run-a', [task('R.1')]);
+  const input = { ...request, reserveLaunch: (tx: SessionTransaction) => {
+    const session = request.reserveLaunch(tx);
+    const launchContext = {
+      assignment: { root: session.activity!.cwd, changes: [{ id: 'add-raf-agent-run', items: [{ id: 'R.1', description: 'Original assigned task' }] }], baselineArchives: [] },
+      selection: { runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture' },
+      briefPath: join(session.activity!.cwd, 'brief.txt'), reportPath: join(session.activity!.cwd, 'run-a.json'),
+    };
+    const reserved = { ...session, launchContext };
+    tx.putSession(reserved);
+    return reserved;
+  } };
+  const { active, agent, wrapper } = await f.running(input);
+  const before = f.store.sessionRepository.transaction(tx => {
+    const session = tx.getSession(input.runId)!;
+    const running: SessionRecord = { ...session, revision: session.revision + 1, state: 'running', process: agent };
+    tx.putSession(running);
+    return running;
+  });
+  const claims = listTaskReservations(f.store);
+  const admission = f.store.sessionRepository.transaction(tx => tx.listReservations());
   f.mark(agent);
+  const pending = await reconcileTaskReservations(f.dependencies());
+  assert.deepEqual(pending.retained, [active]);
+  assert.deepEqual(pending.released, []);
+  assert.deepEqual(listTaskReservations(f.store), claims);
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.getSession(input.runId)), before);
+  assert.deepEqual(before.launchContext!.wrapper, wrapper);
+  assert.equal(before.result, undefined);
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), admission);
+  assert.equal(f.store.sessionRepository.transaction(tx => tx.listPending().some(intent => intent.event === 'agent.failed' || intent.event === 'agent.succeeded')), false);
+  const denied = await claimTaskReservations(f.dependencies(), f.request('run-b', input.tasks));
+  assert.equal(denied.reserved, false);
+  assert.equal(f.launchCalls(), 1, 'pending report verification must not launch another executor');
+  assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession('run-b')), undefined);
+  assert.deepEqual(listTaskReservations(f.store), claims);
+  assert.equal((await f.dependencies().observe(input.starter)).state, 'alive', 'the older starter may remain alive');
+  f.mark(wrapper);
   const result = await reconcileTaskReservations(f.dependencies());
   assert.deepEqual(result.released, [active.owner]);
   assert.deepEqual(listTaskReservations(f.store), []);

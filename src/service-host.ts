@@ -15,6 +15,7 @@ import type { ReminderSessionEffect } from './reminder-repository.ts';
 
 export type ServiceHostDependencies = {
   now: () => number;
+  reconcileLaunches?: () => Promise<readonly string[]>;
   nextReminderId: () => string;
   observeProcesses: (identities: readonly ProcessIdentity[]) => Promise<ProcessObservation[]>;
   effectsForObservation: (session: SessionRecord, observation: ProcessObservation) => TransitionEffects;
@@ -105,7 +106,8 @@ export async function createServicePorts(
       cancelWake = dependencies.schedule(at, async () => { cancelWake = undefined; await refresh(); });
     };
     const reconcile = async () => {
-      const candidates = sessions.listReconciliationCandidates().filter(session => session.state === 'running' && session.process);
+      const retained = new Set(await dependencies.reconcileLaunches?.() ?? []);
+      const candidates = sessions.listReconciliationCandidates().filter(session => !retained.has(session.runId) && session.state === 'running' && session.process);
       const observations = await dependencies.observeProcesses(candidates.map(session => session.process!));
       if (!Array.isArray(observations) || observations.length !== candidates.length) throw new Error('Process observation result does not match service candidates');
       for (let index = 0; index < candidates.length; index++) {
@@ -114,7 +116,7 @@ export async function createServicePorts(
         if (!observation || !['alive', 'exited', 'unknown'].includes(observation.state)) throw new Error('Invalid service process observation');
         sessions.commitObservation(session.runId, session.revision, observation, observation.state === 'unknown' ? { pending: [], domain: [] } : dependencies.effectsForObservation(session, observation));
       }
-      for (const session of sessions.listReconciliationCandidates().filter(candidate => candidate.state === 'exited')) {
+      for (const session of sessions.listReconciliationCandidates().filter(candidate => !retained.has(candidate.runId) && candidate.state === 'exited')) {
         const at = new Date(clock()).toISOString();
         const effect: ReminderSessionEffect = {
           id: `${session.runId}:reminders:session-ended`, domain: 'reminders',

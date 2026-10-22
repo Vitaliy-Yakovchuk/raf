@@ -1,16 +1,19 @@
 import { observeRunnerScreen, nextRunnerAction, parseRunnerQuota } from './runner-protocols.ts';
 import type { ProtocolSettings, QuotaSnapshot, RunnerId, ScreenState } from './runner-protocols.ts';
+import { nextQuotaProbeAction, parseQuotaScreen, type QuotaProtocol, type ScreenQuotaSnapshot } from './quota-screens.ts';
+export type CollectionSettings = ProtocolSettings | QuotaProtocol;
+type AnySnapshot = QuotaSnapshot | ScreenQuotaSnapshot;
 export type ProbeHandle = { socket: string; session: string; ownershipToken: string };
 export type ProbeCapture = { text: string; version: string; observedAt: string; truncated: boolean; exited: boolean };
 export type ProbeTransport = {
-  openOwned: (settings: ProtocolSettings, deadline: string) => Promise<ProbeHandle>;
+  openOwned: (settings: CollectionSettings, deadline: string) => Promise<ProbeHandle>;
   captureOwned: (handle: ProbeHandle) => Promise<ProbeCapture>;
   sendTextOwned: (handle: ProbeHandle, text: string) => Promise<void>;
   sendKeysOwned: (handle: ProbeHandle, keys: string[]) => Promise<void>;
   cleanupOwned: (handle: ProbeHandle) => Promise<void>;
 };
-export type CollectionError = { code: ScreenState | 'probe_failed' | 'busy' | 'backoff' | 'disabled' | 'incomplete' | 'cleanup_failed'; message: string; remedy: string };
-export type CurrentQuota = { runner: RunnerId; snapshot: QuotaSnapshot | null; lastAttemptAt: string | null; error: CollectionError | null; nextAttemptAt: string | null };
+export type CollectionError = { code: ScreenState | 'command_mismatch' | 'probe_failed' | 'busy' | 'backoff' | 'disabled' | 'incomplete' | 'cleanup_failed'; message: string; remedy: string };
+export type CurrentQuota = { runner: RunnerId; snapshot: AnySnapshot | null; lastAttemptAt: string | null; error: CollectionError | null; nextAttemptAt: string | null };
 export type QuotaCurrentStore = { read: (runner: RunnerId) => Promise<CurrentQuota | null>; replaceCurrent: (value: CurrentQuota) => Promise<void> };
 export type CollectionLock = { acquire: (key: string) => Promise<{ release: () => Promise<void> } | null> };
 export type QuotaDependencies = {
@@ -20,13 +23,13 @@ export type QuotaDependencies = {
   now: () => string;
   wait: (milliseconds: number) => Promise<void>;
 };
-export type QuotaView = { runner: RunnerId; snapshot: QuotaSnapshot | null; ageMs: number | null; current: boolean; reason: 'fresh' | 'missing' | 'stale' | 'reset' | 'untrusted' | 'failed' | 'disabled'; error: CollectionError | null };
+export type QuotaView = { runner: RunnerId; snapshot: AnySnapshot | null; ageMs: number | null; current: boolean; reason: 'fresh' | 'missing' | 'stale' | 'reset' | 'untrusted' | 'failed' | 'disabled'; error: CollectionError | null };
 export type CollectionResult = { exitCode: number; results: { runner: RunnerId; collected: boolean; view: QuotaView }[] };
 export function validateQuotaRunners(requested: string[], available: RunnerId[]): RunnerId[] {
   if (requested.length === 0 || requested.some(runner => !available.includes(runner as RunnerId))) throw new Error(`Invalid runners: ${requested.join(', ') || '(empty)'}. Available: ${available.join(', ')}. Provide a nonempty --runners list from the available values.`);
   return [...new Set(requested)] as RunnerId[];
 }
-export function quotaCurrentView(current: CurrentQuota | null, settings: ProtocolSettings, now: string, enabled: boolean): QuotaView {
+export function quotaCurrentView(current: CurrentQuota | null, settings: CollectionSettings, now: string, enabled: boolean): QuotaView {
   const snapshot = current?.snapshot ?? null;
   const ageMs = snapshot ? Math.max(0, Date.parse(now) - Date.parse(snapshot.observedAt)) : null;
   let reason: QuotaView['reason'] = 'fresh';
@@ -38,11 +41,11 @@ export function quotaCurrentView(current: CurrentQuota | null, settings: Protoco
   else if (snapshot.pools.some(pool => pool.windows.some(window => window.resetAt !== null && Date.parse(window.resetAt) <= Date.parse(now)))) reason = 'reset';
   return { runner: settings.runner, snapshot, ageMs, current: reason === 'fresh', reason, error: current?.error ?? null };
 }
-export async function readQuotaViews(settings: ProtocolSettings[], enabled: Record<RunnerId, boolean>, dependencies: Pick<QuotaDependencies, 'store' | 'now'>): Promise<QuotaView[]> {
+export async function readQuotaViews(settings: readonly CollectionSettings[], enabled: Record<RunnerId, boolean>, dependencies: Pick<QuotaDependencies, 'store' | 'now'>): Promise<QuotaView[]> {
   const now = dependencies.now();
   return Promise.all(settings.map(async setting => quotaCurrentView(await dependencies.store.read(setting.runner), setting, now, enabled[setting.runner])));
 }
-export async function collectRunnerQuotas(input: { requested: string[]; mode: 'background' | 'explicit'; settings: ProtocolSettings[]; enabled: Record<RunnerId, boolean> }, dependencies: QuotaDependencies): Promise<CollectionResult> {
+export async function collectRunnerQuotas(input: { requested: string[]; mode: 'background' | 'explicit'; settings: readonly CollectionSettings[]; enabled: Record<RunnerId, boolean> }, dependencies: QuotaDependencies): Promise<CollectionResult> {
   const requested = validateQuotaRunners(input.requested, input.settings.map(setting => setting.runner));
   const results: CollectionResult['results'] = [];
   const error = (code: CollectionError['code'], message: string): CollectionError => ({ code, message, remedy: 'Check runner authentication, supported version and protocol settings, then retry collection.' });
@@ -63,7 +66,7 @@ export async function collectRunnerQuotas(input: { requested: string[]; mode: 'b
       continue;
     }
     let handle: ProbeHandle | null = null;
-    let snapshot: QuotaSnapshot | null = null;
+    let snapshot: AnySnapshot | null = null;
     let failure: CollectionError | null = null;
     const attemptedAt = dependencies.now();
     try {
@@ -79,7 +82,11 @@ export async function collectRunnerQuotas(input: { requested: string[]; mode: 'b
       let transitionDeadline = startupMs;
       let requestedCommand: string | null = null;
       handle = await dependencies.transport.openOwned(settings, new Date(start + overallMs).toISOString());
-      for (;;) {
+      if ('quota' in settings) {
+        const outcome = await screenDialog(settings, handle, start, dependencies, error);
+        snapshot = outcome.snapshot;
+        failure = outcome.failure;
+      } else for (;;) {
         elapsed = Math.max(elapsed, Date.parse(dependencies.now()) - start);
         if (elapsed >= overallMs || elapsed >= transitionDeadline) {
           failure = error('timeout', 'Quota probe exceeded its configured deadline');
@@ -130,4 +137,46 @@ export async function collectRunnerQuotas(input: { requested: string[]; mode: 'b
     }
   }
   return { exitCode: results.some(result => !result.collected) ? 1 : 0, results };
+}
+
+async function screenDialog(settings: QuotaProtocol, handle: ProbeHandle, start: number, dependencies: QuotaDependencies, error: (code: CollectionError['code'], message: string) => CollectionError): Promise<{ snapshot: ScreenQuotaSnapshot | null; failure: CollectionError | null }> {
+  const { overallMs, pollMs } = settings.timeouts;
+  let elapsed = 0;
+  let typed: string | null = null;
+  let typedAtMs: number | null = null;
+  let reissuedAtMs: number | null = null;
+  let submitted = false;
+  for (;;) {
+    elapsed = Math.max(elapsed, Date.parse(dependencies.now()) - start);
+    if (elapsed >= overallMs) return { snapshot: null, failure: error('timeout', `Quota probe exceeded its configured ${overallMs} ms deadline`) };
+    const capture = await dependencies.transport.captureOwned(handle);
+    if (capture.exited) return { snapshot: null, failure: error('exited', 'Quota probe CLI exited before the quota panel') };
+    if (capture.version !== settings.version && !capture.version.trim().split(/\s+/).includes(settings.version)) {
+      return { snapshot: null, failure: error('unknown_screen', `Unsupported ${settings.runner} version ${JSON.stringify(capture.version)}; expected ${settings.version}`) };
+    }
+    const action = nextQuotaProbeAction(settings, { text: capture.text, typed, typedAtMs, submitted, reissuedAtMs, elapsedMs: elapsed });
+    if (action.kind === 'stop') {
+      const message = action.reason === 'command_mismatch' ? `CLI did not show the configured command ${settings.quotaCommand}; Enter was not sent` : `Quota probe stopped at ${action.reason}`;
+      return { snapshot: null, failure: error(action.reason, message) };
+    }
+    if (action.kind === 'parse') {
+      const parsed = parseQuotaScreen(settings, capture);
+      if (settings.quota.dismissKeys.length) await dependencies.transport.sendKeysOwned(handle, settings.quota.dismissKeys);
+      if (!parsed.reliable) return { snapshot: null, failure: error('quota_untrusted', parsed.issues.join('; ') || 'Quota reliability has not been verified') };
+      if (parsed.completeness !== 'complete') return { snapshot: null, failure: error('incomplete', parsed.issues.join('; ')) };
+      return { snapshot: parsed, failure: null };
+    }
+    if (action.kind === 'type' || action.kind === 'reissue') {
+      await dependencies.transport.sendTextOwned(handle, action.text);
+      typed = action.text;
+      typedAtMs = elapsed;
+      submitted = false;
+      if (action.kind === 'reissue') reissuedAtMs = elapsed;
+    } else if (action.kind === 'submit') {
+      await dependencies.transport.sendKeysOwned(handle, ['Enter']);
+      submitted = true;
+    }
+    await dependencies.wait(pollMs);
+    elapsed += pollMs;
+  }
 }

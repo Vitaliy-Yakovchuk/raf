@@ -10,6 +10,8 @@ import type { ModelCatalog, ModelRequest, ModelSelection, ModelAvailability, Rou
 import type { AdapterStartRequest, AdapterSession, ReportWrapper } from './agent-adapters.ts';
 import type { DeliveryReceipt, CloseResult, MainAttachment } from './agent-control.ts';
 import type { ResourceReservation } from './resource-admission.ts';
+import { validateQuotaRunners, type CollectionResult } from './quota-collection.ts';
+import type { RunnerId } from './runner-protocols.ts';
 import { bindWorkspaceBoundaries, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
 
 export interface RuntimeContext {
@@ -91,6 +93,7 @@ export interface RuntimeServices {
     attachMain(): Promise<MainAttachment>;
   };
   authorizeMain(caller: unknown): Promise<void>;
+  collectQuotas?(runners: string[]): Promise<CollectionResult>;
 }
 
 export interface AppRuntimeDependencies {
@@ -105,6 +108,36 @@ export interface AppRuntimeDependencies {
 export interface AppRuntime {
   handlers: Record<string, Handler>;
   close(): Promise<void>;
+}
+
+export function runnerLimitsHandler(available: readonly string[], collect: (runners: string[]) => Promise<CollectionResult>): Handler {
+  const fail = (code: string, stage: string, reason: string, facts: Partial<CommandFailureContext> = {}) => commandFailure({
+    code, message: reason, stage, source: 'app-runtime', sourceCode: null, reason,
+    received: null, expected: null, found: null, completed: [], pending: [], retrySafe: true,
+    remediation: ['Виправте причину та повторіть команду.'], ...facts,
+  });
+  return async params => {
+    const requested = Array.isArray(params.runners) ? params.runners.map(String) : params.runners === undefined ? [] : [String(params.runners)];
+    let runners: string[];
+    try { runners = validateQuotaRunners(requested, available as RunnerId[]); }
+    catch (error) { throw fail('INVALID_VALUE', 'runners', error instanceof Error ? error.message : String(error), { received: requested, expected: [...available], remediation: [`Передайте непорожній --runners із значень: ${available.join(', ')}.`] }); }
+    const collected = await collect(runners);
+    const results = collected.results.map(({ runner, collected: fresh, view }) => {
+      const snapshot = view.snapshot;
+      const measured = snapshot ? { observedAt: snapshot.observedAt, ageMs: view.ageMs, pools: snapshot.pools, credits: snapshot.credits, issues: snapshot.issues } : null;
+      return fresh
+        ? { runner, collected: true, reason: view.reason, ...measured }
+        : { runner, collected: false, reason: view.reason, error: view.error, previous: measured };
+    });
+    if (collected.exitCode !== 0) {
+      const failed = results.filter(result => !result.collected);
+      throw fail('QUOTA_COLLECTION_FAILED', 'quota', `Quota collection failed for ${failed.map(result => result.runner).join(', ')}`, {
+        found: results, completed: results.filter(result => result.collected).map(result => result.runner), pending: failed.map(result => result.runner),
+        remediation: [...new Set(failed.map(result => (result as { error?: { remedy?: string } | null }).error?.remedy).filter((value): value is string => !!value))],
+      });
+    }
+    return results;
+  };
 }
 
 export function createAppRuntime(context: RuntimeContext, dependencies: AppRuntimeDependencies): AppRuntime {

@@ -204,7 +204,6 @@ test('blocked state directory is reported without fallback', async t => {
 });
 
 for (const argv of [
-  ['runner', 'limits', '--runners', models.runners[0].id],
   ['resource', 'wait', '--level', 'normal'],
 ]) {
   test(`unwired command is explicitly unavailable without state or external effects: ${argv.slice(0, 2).join(' ')}`, async t => {

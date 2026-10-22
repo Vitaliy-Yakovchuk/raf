@@ -14,7 +14,7 @@ export type ProtocolSettings = {
   quotaCommand: string | null;
   navigation: { state: ScreenState; match: string; keys: string[] }[];
   markers: Partial<Record<ScreenState, string[]>>;
-  quotaParser: 'codex_status' | 'agy_usage' | 'unknown';
+  quotaParser: 'codex_status' | 'claude_usage' | 'grok_usage' | 'agy_usage' | 'unknown';
   modelPools: Record<string, string>;
   quotaReliable: boolean;
   liveTaskVerified: boolean;

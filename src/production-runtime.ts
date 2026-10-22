@@ -12,7 +12,7 @@ import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion 
 import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
 import { createWorkspacePorts, executeCommand, observeProcesses, createResourceSnapshotReader, readMachineBootIdentity } from './os-runtime.ts';
 import { resolveWorkspaceRoute } from './workspace-routing.ts';
-import { selectModel, listModelAvailability } from './model-routing.ts';
+import { selectModel, listModelAvailability, type RoutingSnapshot } from './model-routing.ts';
 import { createLaunchState, reserveLaunchInTransaction, evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
 import { createSessionState, closeSessionInTransaction, type ProcessIdentity, type SessionRecord, type WorkResult } from './session-state.ts';
 import { AgentControlService, MainAttachedElsewhereError, type VerifiedSender, type ActivityEvent, type MainAttachment } from './agent-control.ts';
@@ -24,6 +24,9 @@ import { commandFailure } from './cli-contract.ts';
 import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile } from './task-context.ts';
 import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
 import type { ReminderSessionEffect } from './reminder-repository.ts';
+import { collectRunnerQuotas, readQuotaViews, type CollectionError, type CollectionLock, type CollectionResult, type CurrentQuota, type ProbeTransport, type QuotaCurrentStore } from './quota-collection.ts';
+import { validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
+import type { RunnerId } from './runner-protocols.ts';
 
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const object = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -374,6 +377,102 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   return { state, current, verified, reminders, publish, control, authorize, resolve, finalize, attachMain };
 }
 
+const quotaRemedy = 'Перевірте вхід, версію CLI та блок quota в conf/raf.json, потім повторіть raf runner limits.';
+async function quotaProtocols(confRoot: string, override?: readonly ProtocolSettings[]): Promise<{ rows: QuotaProtocol[]; invalid: Record<string, string> }> {
+  const rows: QuotaProtocol[] = [];
+  const invalid: Record<string, string> = {};
+  for (const row of await protocols(confRoot, override)) {
+    try { rows.push(validateQuotaProtocol(row)); }
+    catch (error) { invalid[object(row) && text(row.runner) ? row.runner : 'unknown'] = error instanceof Error ? error.message : String(error); }
+  }
+  return { rows, invalid };
+}
+function quotaStore(store: StateStore, rows: readonly QuotaProtocol[], mode: 'background' | 'explicit'): QuotaCurrentStore {
+  return {
+    read: async runner => {
+      const row = store.getQuota(runner);
+      if (!row) return null;
+      const settings = rows.find(entry => entry.runner === runner);
+      let error: CollectionError | null = null;
+      if (row.error !== null) {
+        try { error = JSON.parse(row.error); } catch { error = { code: 'probe_failed', message: row.error, remedy: quotaRemedy }; }
+      }
+      const delay = !settings ? null : error ? settings.collection.failureBackoffMs : mode === 'background' ? settings.collection.intervalMs : null;
+      return { runner, snapshot: row.snapshot as CurrentQuota['snapshot'], lastAttemptAt: row.lastAttemptAt, error, nextAttemptAt: delay === null ? null : new Date(Date.parse(row.lastAttemptAt) + delay).toISOString() };
+    },
+    replaceCurrent: async value => {
+      if (value.error || !value.snapshot || !value.lastAttemptAt) store.recordQuotaError(value.runner, JSON.stringify(value.error ?? { code: 'probe_failed', message: 'Quota probe produced no snapshot', remedy: quotaRemedy }), value.lastAttemptAt ?? now());
+      else store.setQuotaSnapshot(value.runner, value.snapshot, value.snapshot.observedAt);
+    },
+  };
+}
+function processAlive(pid: number): boolean {
+  try { process.kill(pid, 0); return true; }
+  catch (error) { return (error as NodeJS.ErrnoException).code === 'EPERM'; }
+}
+function quotaLock(store: StateStore, rows: readonly QuotaProtocol[]): CollectionLock {
+  return {
+    acquire: async key => {
+      const settings = rows.find(row => `quota:${row.runner}` === key);
+      if (!settings) return null;
+      const token = randomUUID();
+      const holdMs = settings.timeouts.overallMs + 2 * settings.timeouts.transitionMs;
+      const acquired = store.acquireQuotaLease(key, token, process.pid, new Date(Date.now() + holdMs).toISOString(), holder => Date.parse(holder.expiresAt) <= Date.now() || !processAlive(holder.pid));
+      return acquired ? { release: async () => store.releaseQuotaLease(key, token) } : null;
+    },
+  };
+}
+function quotaTransport(context: Pick<RuntimeContext, 'tmpRoot'>, execute: AdapterCommandExecutor): ProbeTransport {
+  const owned = new Map<string, { session: AdapterSession; directory: string; version: string; settings: QuotaProtocol; adapter: TmuxAgentAdapter }>();
+  const handle = (token: string) => {
+    const value = owned.get(token);
+    if (!value) throw new Error('Quota probe handle is not owned by this process');
+    return value;
+  };
+  return {
+    openOwned: async row => {
+      if (!('quota' in row)) throw new Error(`Runner ${row.runner} has no quota probe settings`);
+      const settings = row;
+      const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
+      if (!availability.available) throw new Error(availability.reason);
+      const root = join(context.tmpRoot, 'quota');
+      await fs.mkdir(root, { recursive: true, mode: 0o700 });
+      const directory = await fs.mkdtemp(join(root, `${settings.runner}-`));
+      const invocation = quotaProbeInvocation({ ...settings, executable: availability.path }, directory);
+      const command = { executable: 'env', args: [...Object.entries(invocation.env).map(([key, value]) => `${key}=${value}`), invocation.executable, ...invocation.args], cwd: directory };
+      const probe: RunnerProtocol = { invocation: () => command, observe: () => ({ status: 'starting' }) };
+      const adapter = new TmuxAgentAdapter({ execute, protocols: { [settings.runner]: probe } as Record<AgentRunner, RunnerProtocol> });
+      const tmuxSession = `raf-quota-${settings.runner}-${randomUUID().slice(0, 8)}`;
+      let session: AdapterSession;
+      try { session = await adapter.startWithoutInput({ selection: { runner: settings.runner as AgentRunner, model: '', effort: '' }, tmuxSession, cwd: directory, reportWrapper: { wrap: value => value } }); }
+      catch (error) {
+        await discardOwnedTmuxSession(execute, tmuxSession, settings.timeouts).catch(() => false);
+        await fs.rm(directory, { recursive: true, force: true });
+        throw error;
+      }
+      const token = randomUUID();
+      owned.set(token, { session, directory, version: availability.version, settings, adapter });
+      return { socket: join(context.tmpRoot, 'tmux', 'server.sock'), session: tmuxSession, ownershipToken: token };
+    },
+    captureOwned: async probe => {
+      const value = handle(probe.ownershipToken);
+      const pane = await value.adapter.capture(value.session);
+      return { text: pane.text, version: value.version, observedAt: now(), truncated: false, exited: pane.exited };
+    },
+    sendTextOwned: async (probe, value) => { const owner = handle(probe.ownershipToken); await owner.adapter.typeText(owner.session, value); },
+    sendKeysOwned: async (probe, keys) => { const owner = handle(probe.ownershipToken); await owner.adapter.sendKeys(owner.session, keys); },
+    cleanupOwned: async probe => {
+      const value = handle(probe.ownershipToken);
+      const stopped = await discardOwnedTmuxSession(execute, value.session.tmuxSession, value.settings.timeouts);
+      await fs.rm(value.directory, { recursive: true, force: true });
+      if (!stopped) throw new Error(`Own quota probe session ${value.session.tmuxSession} could not be confirmed terminated`);
+      owned.delete(probe.ownershipToken);
+    },
+  };
+}
+function runnerEnablement(store: StateStore, configuration: RuntimeConfiguration): Record<RunnerId, boolean> {
+  return Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])) as Record<RunnerId, boolean>;
+}
 function assignmentPorts(execute: AdapterCommandExecutor) {
   return { cli: { exec: (args: readonly string[], cwd: string) => execute({ executable: 'openspec', args, cwd }) }, fs: { readText: (path: string) => fs.readFile(path, 'utf8') } };
 }
@@ -437,7 +536,23 @@ export async function createProductionServices(
         cliAvailable[runner.id] = availability.available;
         if (!availability.available) cliReasons[runner.id] = availability.reason;
       }
-      return { runnerEnabled: Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])), cliAvailable, cliReasons, quotas: [] };
+      let quotas: RoutingSnapshot['quotas'] = [];
+      try {
+        const { rows } = await quotaProtocols(context.confRoot, options.protocolSettings);
+        const views = await readQuotaViews(rows, runnerEnablement(store, configuration), { store: quotaStore(store, rows, 'background'), now });
+        quotas = routingQuotaEntries(rows, views as ScreenQuotaView[], configuration.models.models, now());
+      } catch {}
+      return { runnerEnabled: Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])), cliAvailable, cliReasons, quotas };
+    },
+    collectQuotas: async requested => {
+      const { rows, invalid } = await quotaProtocols(context.confRoot, options.protocolSettings);
+      const runnable = requested.filter(runner => rows.some(row => row.runner === runner));
+      const collected: CollectionResult = runnable.length ? await collectRunnerQuotas({ requested: runnable, mode: 'explicit', settings: rows, enabled: runnerEnablement(store, configuration) }, {
+        transport: quotaTransport(context, execute), store: quotaStore(store, rows, 'explicit'), lock: quotaLock(store, rows), now,
+        wait: milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
+      }) : { exitCode: 0, results: [] };
+      const results = requested.map(runner => collected.results.find(result => result.runner === runner) ?? { runner: runner as RunnerId, collected: false, view: { runner: runner as RunnerId, snapshot: null, ageMs: null, current: false, reason: 'failed' as const, error: { code: 'probe_failed' as const, message: invalid[runner] ?? `Runner ${runner} has no quota protocol in conf/raf.json#runnerProtocols`, remedy: quotaRemedy } } });
+      return { exitCode: results.every(result => result.collected) ? 0 : 1, results };
     },
     selectModel, listModels: listModelAvailability,
     prepareReport: async launch => {

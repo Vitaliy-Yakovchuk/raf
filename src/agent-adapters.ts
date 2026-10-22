@@ -181,6 +181,25 @@ export class TmuxAgentAdapter {
     return this.dependencies.protocols[session.selection.runner].observe(pane.stdout);
   }
 
+  async capture(session: AdapterSession): Promise<{ exited: boolean; exitCode: number | null; text: string }> {
+    const target = this.target(session);
+    const state = await this.dependencies.execute({ executable: 'tmux', args: ['display-message', '-p', '-t', target, '#{pane_dead}|#{pane_dead_status}'] });
+    if (state.exitCode !== 0) return { exited: true, exitCode: null, text: '' };
+    const [dead, status] = state.stdout.trim().split(/[|\t]/);
+    const pane = await this.dependencies.execute({ executable: 'tmux', args: ['capture-pane', '-p', '-J', '-S', '-', '-t', target] });
+    const exitCode = dead === '1' && status !== undefined && /^\d+$/.test(status) ? Number(status) : null;
+    if (pane.exitCode !== 0) return { exited: true, exitCode, text: '' };
+    return { exited: dead !== '0', exitCode, text: pane.stdout };
+  }
+
+  async typeText(session: AdapterSession, text: string): Promise<void> {
+    await this.tmux(['send-keys', '-t', this.target(session), '-l', text]);
+  }
+
+  async sendKeys(session: AdapterSession, keys: readonly string[]): Promise<void> {
+    if (keys.length) await this.tmux(['send-keys', '-t', this.target(session), ...keys]);
+  }
+
   async deliver(session: AdapterSession, message: string): Promise<void> {
     await this.paste(this.target(session), message, ['-p']);
   }

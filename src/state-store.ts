@@ -38,6 +38,8 @@ export interface StateStore {
   setQuotaSnapshot(runner: string, value: unknown, observedAt: string): void;
   recordQuotaError(runner: string, message: string, attemptedAt: string): void;
   getQuota(runner: string): QuotaState | undefined;
+  acquireQuotaLease(key: string, token: string, pid: number, expiresAt: string, isStale: (holder: { pid: number; expiresAt: string }) => boolean): boolean;
+  releaseQuotaLease(key: string, token: string): void;
   recordCommandDuration(command: string, durationMs: number, alpha: number): void;
   getCommandTiming(command: string): CommandTiming | undefined;
 }
@@ -96,13 +98,13 @@ export function openStateStore(path: string): StateStore {
       }
       db.exec("PRAGMA foreign_keys = ON; PRAGMA synchronous = FULL; PRAGMA wal_autocheckpoint = 1000; PRAGMA journal_size_limit = 4194304");
       const version = () => Number(db.prepare("PRAGMA user_version").get()?.user_version);
-      if (version() > 6) throw new Error("Unsupported state store schema version");
-      if (version() < 6) {
+      if (version() > 7) throw new Error("Unsupported state store schema version");
+      if (version() < 7) {
         transaction(() => {
 
           const current = version();
-          if (current > 6) throw new Error("Unsupported state store schema version");
-          if (current === 6) return;
+          if (current > 7) throw new Error("Unsupported state store schema version");
+          if (current === 7) return;
           if (current === 0) {
           db.exec(`
             CREATE TABLE runners (
@@ -192,12 +194,21 @@ export function openStateStore(path: string): StateStore {
               END;
             PRAGMA user_version = 5;
           `);
-          db.exec(`
+          if (current < 6) db.exec(`
             CREATE TABLE resource_wait_state (
               singleton INTEGER PRIMARY KEY CHECK(singleton = 1),
               last_grant REAL NOT NULL
             ) STRICT;
             PRAGMA user_version = 6;
+          `);
+          db.exec(`
+            CREATE TABLE quota_leases (
+              key TEXT PRIMARY KEY NOT NULL,
+              token TEXT NOT NULL,
+              pid INTEGER NOT NULL,
+              expires_at TEXT NOT NULL
+            ) STRICT;
+            PRAGMA user_version = 7;
           `);
         });
       }
@@ -432,6 +443,17 @@ export function openStateStore(path: string): StateStore {
         INSERT INTO quotas (runner, snapshot, observed_at, last_attempt_at, error) VALUES (?, NULL, NULL, ?, ?)
         ON CONFLICT(runner) DO UPDATE SET last_attempt_at = excluded.last_attempt_at, error = excluded.error
       `).run(runner, attemptedAt, message));
+    },
+    acquireQuotaLease(key, token, pid, expiresAt, isStale) {
+      return operation("acquireQuotaLease", () => transaction(() => {
+        const row = db.prepare("SELECT pid, expires_at FROM quota_leases WHERE key = ?").get(key);
+        if (row && !isStale({ pid: row.pid as number, expiresAt: row.expires_at as string })) return false;
+        db.prepare("INSERT INTO quota_leases (key, token, pid, expires_at) VALUES (?, ?, ?, ?) ON CONFLICT(key) DO UPDATE SET token = excluded.token, pid = excluded.pid, expires_at = excluded.expires_at").run(key, token, pid, expiresAt);
+        return true;
+      }));
+    },
+    releaseQuotaLease(key, token) {
+      operation("releaseQuotaLease", () => db.prepare("DELETE FROM quota_leases WHERE key = ? AND token = ?").run(key, token));
     },
     getQuota(runner) {
       return operation("getQuota", () => {

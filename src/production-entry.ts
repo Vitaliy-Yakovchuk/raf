@@ -11,7 +11,7 @@ import { performance } from 'node:perf_hooks';
 import type { ExecutionResult, Handler } from './cli.ts';
 import type { CompiledCatalog } from './catalog.ts';
 import { runCli } from './bootstrap.ts';
-import { createAppRuntime, type AppRuntime } from './app-runtime.ts';
+import { createAppRuntime, runnerLimitsHandler, type AppRuntime } from './app-runtime.ts';
 import { openStateStore } from './state-store.ts';
 import { type ModelCatalog } from './model-routing.ts';
 import { commandFailure, failureContext } from './cli-contract.ts';
@@ -76,13 +76,34 @@ function clock(options: ProductionEntryOptions): () => number {
   return options.now ?? (() => performance.now());
 }
 
+function productionContext(options: ProductionEntryOptions, orchestratorRoot: string, fileName: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>) {
+  return { orchestratorRoot: orchestratorRoot, confRoot: join(orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
+    statePath: join(options.homeDirectory, '.raf', fileName), tmpRoot: join(options.homeDirectory, '.raf', 'tmp'),
+    mode: 'production' as const, commandStartedAtMs, resolveCaller };
+}
+
+function runnerLimits(options: ProductionEntryOptions, orchestratorRoot: string, commandStartedAtMs: number): Handler {
+  return async params => {
+    const loaded = readConfiguration(orchestratorRoot);
+    const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
+    return runnerLimitsHandler(loaded.models.runners.map(runner => runner.id), async runners => {
+      const context = productionContext(options, orchestratorRoot, loaded.fileName, commandStartedAtMs, async () => undefined);
+      const store = openStateStore(context.statePath);
+      try {
+        store.initializeRunners(loaded.models.runners);
+        const services = await createProductionServices(store, { catalog, models: loaded.models, commandTiming: loaded.commandTiming }, context);
+        if (!services.collectQuotas) throw failure('COMMAND_UNAVAILABLE', 'Quota collection is unavailable in this runtime');
+        return await services.collectQuotas(runners);
+      } finally { store.close(); }
+    })(params);
+  };
+}
+
 function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>, additionalHandlers: Record<string, Handler> = {}): AppRuntime {
   const now = clock(options);
   const loaded = readConfiguration(orchestratorRoot);
   const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
-  const context = { orchestratorRoot: orchestratorRoot, confRoot: join(orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
-    statePath: join(options.homeDirectory, '.raf', loaded.fileName), tmpRoot: join(options.homeDirectory, '.raf', 'tmp'),
-    mode: 'production' as const, commandStartedAtMs, resolveCaller };
+  const context = productionContext(options, orchestratorRoot, loaded.fileName, commandStartedAtMs, resolveCaller);
   return createAppRuntime(context, {
     additionalHandlers,
     now, loadConfiguration: async () => ({ catalog, models: loaded.models, commandTiming: loaded.commandTiming }),
@@ -105,7 +126,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
   const handlers = new Proxy(Object.create(null) as Record<string, Handler>, {
     get(_target, name) {
       if (typeof name !== 'string') return undefined;
-      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'command stats', 'secrets import-conductor', 'service start', 'service status', 'service stop'].includes(name)) return unavailable;
+      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'runner limits', 'command stats', 'secrets import-conductor', 'service start', 'service status', 'service stop'].includes(name)) return unavailable;
       return async (params: Record<string, unknown>) => {
         try {
           const orchestratorRoot = validatedRoot(options);
@@ -131,7 +152,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
               throw failure('SECRETS_IMPORT_FAILED', 'Secrets import failed', 'secrets-import');
             }
           };
-          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'secrets import-conductor': importSecrets });
+          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'secrets import-conductor': importSecrets, 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) });
           const result = await runtime.handlers[name](params);
           await runtime.close();
           return result;

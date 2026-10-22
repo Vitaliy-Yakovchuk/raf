@@ -57,7 +57,7 @@ test('[claude-protocol] conf defines a PATH-resolved claude protocol pinned to t
   assert.equal(claude.sessionIdFlag, '--session-id');
   assert.equal(claude.quotaCommand, '/usage');
   assert.equal(claude.liveTaskVerified, false);
-  assert.equal(claude.quotaReliable, false);
+  assert.equal(claude.quotaReliable, true);
   for (const model of models.models.filter((row: { runner: string }) => row.runner === 'claude')) assert.ok(Object.hasOwn(claude.modelAliases, model.id), `alias for ${model.id}`);
   assert.equal((raf.runnerProtocols.find((row: { runner: string }) => row.runner === 'claude') as { operationalEvidence?: unknown }).operationalEvidence !== undefined, true);
 });

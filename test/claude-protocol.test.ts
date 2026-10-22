@@ -144,3 +144,66 @@ test('[claude-protocol] workspace trust confirmation keys come from protocol nav
   assert.ok(codexTrust.includes('› 1. Trust and continue'));
   assert.equal(observeRunnerScreen(codex, { text: codexTrust, version: codex.version, requestedCommand: null }).state, 'workspace_trust_required');
 });
+
+const liveHeader = `[Screen Reader Mode: on via flag]
+Claude Code v2.1.308
+Sonnet 5.5 with low effort · Claude Max
+/srv/dev/work/orchestrator/raf-develop
+you: /status
+Settings dialog dismissed`;
+const liveFocusHint = `tmux focus-events off · add 'set -g focus-events on' to ~/.tmux.conf and
+reattach for focus tracking`;
+const livePending = (lines: number) => `${liveHeader}
+paste again to expand
+${liveFocusHint}
+$${nbsp} [Pasted text #1 +${lines} lines]`;
+const liveWorking = (verb: string) => `Рядок контексту 29: нічого не роби.
+${verb}
+Tip: Name your conversations with /rename to find them easily in /resume later
+paste again to expand
+${liveFocusHint}
+$`;
+const liveFinished = (done: string, mode: string) => `Рядок контексту 29: нічого не роби.
+claude: ГОТОВО
+${done}
+${mode}
+effort: low · /effort
+$`;
+
+test('[claude-protocol] live 2.1.308 composer after a bracketed paste is `$`, NBSP and a space before the placeholder, and the placeholder is the pending brief', () => {
+  const claude = protocol('claude');
+  assert.deepEqual(readNativeComposer(claude, livePending(118)), { line: 9, input: '[Pasted text #1 +118 lines]' });
+  assert.equal(matchPendingBrief(claude, readNativeComposer(claude, livePending(118))!.input, brief(119)), 'pending');
+  assert.equal(matchPendingBrief(claude, readNativeComposer(claude, livePending(29))!.input, brief(30)), 'pending');
+  assert.deepEqual(readNativeComposer(claude, `${liveHeader}\n$${nbsp} /status`), { line: 6, input: '/status' });
+  assert.deepEqual(readNativeComposer(claude, `${liveHeader}\n$`), { line: 6, input: '' });
+});
+
+test('[claude-protocol] live 2.1.308 model turn: a spinner verb line is the working state although the ready marker is replaced by a mode hint and no esc to interrupt is shown', () => {
+  const claude = protocol('claude');
+  assert.ok(claude.native?.modeHints?.includes('paste again to expand'), 'conf/raf.json#/runnerProtocols/claude/native/modeHints must list the paste hint that replaces the ready marker');
+  for (const verb of ['Slithering…', 'Germinating…', 'Garnishing…', 'Pouncing…']) {
+    const screen = liveWorking(verb);
+    assert.equal(isNativeWorking(claude, screen), true, verb);
+    assert.equal(screen.includes('esc to interrupt'), false);
+    assert.deepEqual(readNativeComposer(claude, screen), { line: 6, input: '' });
+  }
+  assert.equal(isNativeWorking(claude, livePending(118)), false);
+  assert.equal(isNativeWorking(claude, claudeReady()), false);
+});
+
+test('[claude-protocol] live 2.1.308 finished turn: the done line marks the return to the ready input and is not the working state', () => {
+  const claude = protocol('claude');
+  assert.equal(typeof claude.native?.finished, 'string', 'conf/raf.json#/runnerProtocols/claude/native/finished must define the finished-turn line');
+  const finished = new RegExp(claude.native!.finished!, 'mu');
+  for (const screen of [
+    liveFinished('Baked for 6s · done 12:06 PM', 'paste again to expand'),
+    liveFinished('Baked for 3s · done 12:07 PM', "don't ask on (shift+tab to cycle)"),
+    liveFinished('Sautéed for 2s · done 12:08 PM', "don't ask on (shift+tab to cycle)"),
+  ]) {
+    assert.equal(finished.test(screen), true, screen);
+    assert.equal(isNativeWorking(claude, screen), false, screen);
+    assert.deepEqual(readNativeComposer(claude, screen)?.input, '');
+  }
+  for (const screen of [liveWorking('Slithering…'), livePending(118), claudeReady()]) assert.equal(finished.test(screen), false, screen);
+});

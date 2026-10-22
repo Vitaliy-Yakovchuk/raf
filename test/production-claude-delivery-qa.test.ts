@@ -26,7 +26,8 @@ const configuration: RuntimeConfiguration = {
 
 const alive = (pid: number) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 
-async function claudeFixture(t: TestContext, mode: 'accepted' | 'trust' | 'status-mismatch' | 'startup-banner' | 'startup-stuck' | 'startup-unknown') {
+type LiveMode = 'live' | 'live-pending-hold' | 'live-enter-lost' | 'live-finished-fast';
+async function claudeFixture(t: TestContext, mode: 'accepted' | 'trust' | 'status-mismatch' | 'startup-banner' | 'startup-stuck' | 'startup-unknown' | LiveMode) {
   assert.ok(configured, 'conf/raf.json#/runnerProtocols must define the claude protocol');
   const f = await fixture(t);
   const runId = 'claude-fixture-run';
@@ -69,6 +70,10 @@ else if (mode === 'startup-stuck') render(banner);
 else if (mode === 'startup-unknown') render(banner + '\nUnexpected startup notice');
 else if (mode === 'trust') render('[Screen Reader Mode: on via flag]\nPermission Required: Accessing workspace:\n' + process.cwd() + '\ny. Yes, I trust this folder\nn. No, exit\nEnter y/n:\nEnter to confirm · Esc to cancel');
 else ready();
+const live = mode.startsWith('live');
+const hint = 'paste again to expand';
+const focusHint = "tmux focus-events off · add 'set -g focus-events on' to ~/.tmux.conf and\nreattach for focus tracking";
+const liveScreen = (body, modeLine, input) => body + '\n' + modeLine + '\n' + focusHint + '\n$' + input;
 let typed = '';
 let paste = null;
 let pasted = null;
@@ -87,18 +92,36 @@ process.stdin.on('data', data => {
       pasted = paste;
       paste = null;
       const lines = (pasted.match(/[\r\n]/g) ?? []).length;
+      if (live) { render(liveScreen(header + '\nyou: /status\nSettings dialog dismissed', hint, '\u00a0 [Pasted text #1 +' + lines + ' lines]')); continue; }
       render(header + '\npaste again to expand\n' + footer + '\n$\u00a0[Pasted text #1 +' + lines + ' lines]');
       continue;
     }
     if (rest.startsWith('\x1b[200~')) { paste = ''; rest = rest.slice(6); continue; }
     if (rest.startsWith('\x1b')) {
       rest = rest.slice(1);
-      if (panel) { panel = false; ready('\nSettings dialog dismissed'); }
+      if (panel && live) { panel = false; render(liveScreen(header + '\nyou: /status\nSettings dialog dismissed', footer, '')); }
+      else if (panel) { panel = false; ready('\nSettings dialog dismissed'); }
       continue;
     }
     const key = rest[0];
     rest = rest.slice(1);
-    if (key !== '\r' && key !== '\n') { typed += key; if (!pasted) render(header + '\n' + footer + '\n$\u00a0' + typed); continue; }
+    if (key !== '\r' && key !== '\n') { typed += key; if (!pasted && live) render(header + '\n/status                         Show Claude Code status including version,\n$\u00a0 ' + typed); else if (!pasted) render(header + '\n' + footer + '\n$\u00a0' + typed); continue; }
+    if (pasted !== null && live) {
+      enters++;
+      if (mode === 'live-enter-lost' && enters === 1) continue;
+      const brief = pasted.replaceAll('\r', '\n');
+      const first = brief.split('\n').at(-1);
+      pasted = null;
+      setTimeout(() => {
+        writeFileSync(${JSON.stringify(acceptedPath)}, JSON.stringify({ brief, enters }));
+        if (mode !== 'live-finished-fast') render(liveScreen(first + '\nSlithering…\nTip: Name your conversations with /rename to find them easily in /resume later', hint, ''));
+        setTimeout(() => {
+          render(liveScreen(first + '\nclaude: ГОТОВО\nBaked for 6s · done 12:06 PM', hint, ''));
+          setTimeout(() => render(liveScreen(first + '\nclaude: ГОТОВО\nBaked for 6s · done 12:06 PM', footer, '')), 1500);
+        }, mode === 'live-finished-fast' ? 0 : 2000);
+      }, mode === 'live-pending-hold' ? 600 : 110);
+      continue;
+    }
     if (pasted !== null) {
       enters++;
       writeFileSync(${JSON.stringify(acceptedPath)}, JSON.stringify({ brief: pasted.replaceAll('\r', '\n'), enters }));
@@ -211,4 +234,35 @@ test('[claude-delivery-qa] startup line together with an unknown line stays an u
   assert.match(String(failure.message), /unknown_screen|Runner readiness unknown/i);
   assert.ok(Date.now() - begun < f.settings.timeouts.startupMs, 'an unknown screen is not waited out');
   assert.deepEqual(await f.inputs(), []);
+});
+
+async function liveLaunch(t: TestContext, mode: LiveMode) {
+  const f = await claudeFixture(t, mode);
+  const started = await f.launch().catch((error: unknown) => assert.fail(`claude ${mode} delivery must be accepted, got: ${error instanceof Error ? error.message : String(error)}`));
+  const accepted = JSON.parse(await readFile(f.acceptedPath, 'utf8'));
+  assert.equal(accepted.brief, f.request.brief);
+  assert.equal(f.session()?.state, 'running');
+  assert.equal(started.identity.pid, Number(await readFile(f.pidPath, 'utf8')));
+  return { f, accepted };
+}
+
+test('[claude-delivery-qa] live 2.1.308 frames: the NBSP composer placeholder is the pending brief and the spinner verb turn is accepted, not an unknown screen', async t => {
+  const { accepted } = await liveLaunch(t, 'live');
+  assert.equal(accepted.enters, 1, 'one Enter submits a pending paste that claude processes within a poll or two');
+});
+
+test('[claude-delivery-qa] live 2.1.308 frames: a pending placeholder that stays on screen for several polls under the paste hint is not a delivery failure', async t => {
+  const { accepted } = await liveLaunch(t, 'live-pending-hold');
+  assert.ok(accepted.enters >= 1);
+});
+
+test('[claude-delivery-qa] live 2.1.308 frames: an Enter that did not submit the stable pending placeholder is repeated once within the transition budget', async t => {
+  const { f, accepted } = await liveLaunch(t, 'live-enter-lost');
+  assert.equal(accepted.enters, 2, 'exactly one repeated Enter');
+  const typed = (await f.inputs()).join('');
+  assert.equal(typed.slice(typed.indexOf('\x1b[201~')).split('\r').length - 1, 2, 'no further Enter after acceptance');
+});
+
+test('[claude-delivery-qa] live 2.1.308 frames: a turn that finished before raf saw the spinner counts as accepted by the finished-turn line', async t => {
+  await liveLaunch(t, 'live-finished-fast');
 });

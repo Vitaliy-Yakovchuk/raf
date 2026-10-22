@@ -52,3 +52,15 @@ test('[launch-failure-cleanup] agent close without report exits 0 after confirme
   assert.deepEqual(await f.tmuxSessions(), []);
   await until(f.owned, pids => pids.length === 0, 'no fixture process remains after close', 5000);
 });
+
+test('[launch-failure-cleanup] claude screen failure after Enter: the delivery cause leads the error, a runner that exits after its hangup delay is confirmed dead and claims are released', async t => {
+  const f = await fixture(t, 'claude-unknown-after-enter', failureBudget, 'claude');
+  const outcome = await f.run('claude-screen-agent');
+  const failure = JSON.parse(outcome.result.stderr);
+  const message = String(failure.message);
+  const primary = message.indexOf('Unknown native input or screen during initial brief submission');
+  assert.ok(primary >= 0, `the screen failure must be the reported cause: ${message}`);
+  const secondary = message.indexOf('Task reservation cannot be released');
+  assert.ok(secondary < 0 || secondary > primary, `a cleanup failure may only follow the real cause: ${message}`);
+  await assertFailedLaunchCleaned(f, outcome, 'claude-unknown-after-enter');
+});

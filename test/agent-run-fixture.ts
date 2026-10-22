@@ -96,6 +96,57 @@ if (mode === 'readiness-unknown') {
 }
 `;
 
+export const claudeRunnerScript = String.raw`
+import { readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+const c = JSON.parse(readFileSync(process.env.RAF_AGENT_RUN_FIXTURE, 'utf8'));
+if (process.argv.includes('--version')) { console.log(c.claudeVersion + ' (Claude Code)'); process.exit(0); }
+const argv = process.argv.slice(2);
+const mode = readFileSync(c.control + '/mode', 'utf8').trim();
+const assigned = argv[argv.indexOf('--session-id') + 1];
+writeFileSync(c.control + '/runner-' + process.pid + '.pid', String(process.pid));
+setInterval(() => {}, 1000);
+process.on('SIGHUP', () => setTimeout(() => process.exit(129), c.claudeHangupExitMs));
+process.stdout.on('error', () => {});
+const render = text => { try { process.stdout.write('\x1b[2J\x1b[H' + text.replaceAll('\n', '\r\n')); } catch {} };
+const header = '[Screen Reader Mode: on via flag]\nClaude Code v' + c.claudeVersion + '\nOpus 5.5 with high effort · Claude Max\n' + process.cwd();
+const ready = "don't ask on (shift+tab to cycle)";
+const focusHint = "tmux focus-events off · add 'set -g focus-events on' to ~/.tmux.conf and\nreattach for focus tracking";
+const screen = (modeLine, input) => header + '\nyou: /status\nSettings dialog dismissed\n' + modeLine + '\n' + focusHint + '\n$' + input;
+render(header + '\n' + ready + '\neffort: high · /effort\n$');
+process.stdin.setEncoding('utf8');
+if (process.stdin.isTTY) process.stdin.setRawMode(true);
+process.stdin.resume();
+let typed = '', paste = null, pasted = null, panel = false;
+process.stdin.on('data', data => {
+  appendFileSync(c.control + '/input-' + process.pid + '.log', data);
+  let rest = data;
+  while (rest.length) {
+    if (paste !== null) {
+      const end = rest.indexOf('\x1b[201~');
+      if (end < 0) { paste += rest; rest = ''; break; }
+      paste += rest.slice(0, end);
+      rest = rest.slice(end + 6);
+      pasted = paste;
+      paste = null;
+      render(screen('paste again to expand', '  [Pasted text #1 +' + (pasted.match(/[\r\n]/g) ?? []).length + ' lines]'));
+      continue;
+    }
+    if (rest.startsWith('\x1b[200~')) { paste = ''; rest = rest.slice(6); continue; }
+    if (rest.startsWith('\x1b')) { rest = rest.slice(1); if (panel) { panel = false; render(screen(ready, '')); } continue; }
+    const key = rest[0];
+    rest = rest.slice(1);
+    if (key !== '\r' && key !== '\n') { typed += key; if (pasted === null) render(header + '\n/status                         Show Claude Code status including version,\n$  ' + typed); continue; }
+    if (pasted !== null) {
+      pasted = null;
+      if (mode === 'claude-unknown-after-enter') setTimeout(() => render(header + '\nUnrecognized native dialog after submission'), 110);
+      continue;
+    }
+    if (typed === '/status') { panel = true; typed = ''; render(header + '\nyou: /status\nSettings  Status   Config   Usage   Stats\nVersion: ' + c.claudeVersion + '\nSession ID: ' + assigned + '\nSession kind: interactive\nEsc to cancel'); continue; }
+    typed = '';
+  }
+});
+`;
+
 async function json(path: string) { return JSON.parse(await fs.readFile(path, 'utf8')); }
 async function writeJson(path: string, value: unknown) { await fs.mkdir(dirname(path), { recursive: true }); await fs.writeFile(path, JSON.stringify(value), { mode: 0o600 }); }
 export async function exists(path: string) { try { await fs.access(path); return true; } catch { return false; } }
@@ -114,7 +165,7 @@ export function alive(pid: number) {
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ESRCH') return false; throw error; }
 }
 
-export async function agentRunFixture(t: any, mode: string, timeouts: { startupMs: number; transitionMs: number; overallMs: number }) {
+export async function agentRunFixture(t: any, mode: string, timeouts: { startupMs: number; transitionMs: number; overallMs: number }, runner: 'codex' | 'claude' = 'codex') {
   const directory = await fs.realpath(await fs.mkdtemp('/tmp/raf-lfc-'));
   const root = join(directory, 'orchestrator');
   const home = join(directory, 'home');
@@ -126,14 +177,15 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   for (const path of [conf, tmpRoot, control, bin, workspace]) await fs.mkdir(path, { recursive: true, mode: 0o700 });
   const programs = await Promise.all(['openspec', 'tmux'].map(async name => (await exec('/bin/sh', ['-c', 'command -v "$1"', 'fixture', name])).stdout.trim()));
   const models = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/models.json'), 'utf8'));
-  models.models = models.models.filter((x: any) => x.id === 'gpt-6.1-sol');
-  models.runners = models.runners.filter((x: any) => x.id === 'codex');
+  const claudeProtocol = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/raf.json'), 'utf8')).runnerProtocols.find((x: any) => x.runner === 'claude');
+  models.models = models.models.filter((x: any) => runner === 'claude' ? x.id === 'claude-opus' : x.id === 'gpt-6.1-sol');
+  models.runners = models.runners.filter((x: any) => x.id === runner).map((x: any) => ({ ...x, initialEnabled: true }));
   const constants = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/raf-constants.json'), 'utf8'));
   constants.commands = constants.commands.filter((x: any) => ['agent run', 'agent close', 'help'].includes(x.path.join(' ')));
   const artifact = join(directory, 'catalog.json');
   const changeDir = join(root, 'openspec', 'changes', change);
   const marker = join(directory, 'fixture.json');
-  const cfg = { sourceRoot, root, home, artifact, control, statePath: join(home, '.raf', 'state.sqlite'), tmux: programs[1], tmuxLabel: `raf-lfc-${randomUUID().slice(0, 8)}`, commandPath: join(directory, 'command.mjs') };
+  const cfg = { sourceRoot, root, home, artifact, control, statePath: join(home, '.raf', 'state.sqlite'), tmux: programs[1], tmuxLabel: `raf-lfc-${randomUUID().slice(0, 8)}`, commandPath: join(directory, 'command.mjs'), claudeVersion: claudeProtocol.version, claudeHangupExitMs: 750 };
   const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, PATH: `${bin}:${process.env.PATH}`, RAF_AGENT_RUN_FIXTURE: marker, TMPDIR: directory };
   delete env.TMUX;
   delete env.TMUX_PANE;
@@ -161,7 +213,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   });
   await writeJson(marker, cfg);
   await fs.writeFile(cfg.commandPath, commandScript);
-  for (const [name, source] of Object.entries({ codex: runnerScript, tmux: tmuxScript })) await fs.writeFile(join(bin, name), `#!${process.execPath}\n${source}`, { mode: 0o700 });
+  for (const [name, source] of Object.entries({ [runner]: runner === 'claude' ? claudeRunnerScript : runnerScript, tmux: tmuxScript })) await fs.writeFile(join(bin, name), `#!${process.execPath}\n${source}`, { mode: 0o700 });
   await fs.writeFile(join(control, 'mode'), mode);
   await writeJson(join(conf, 'models.json'), models);
   await writeJson(join(conf, 'raf-constants.json'), constants);
@@ -170,11 +222,12 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   await writeJson(join(conf, 'flow.json'), { ...flow, resources: Object.fromEntries(Object.entries(flow.resources).map(([tier, thresholds]) => [tier, { ...(thresholds as object), minRamBytes: 1, minDiskBytes: 1 }])) });
   await fs.mkdir(join(root, 'questions', 'projects', 'raf'), { recursive: true });
   await fs.writeFile(join(root, 'questions', 'projects', 'raf', 'questions.md'), '# Питання\n');
-  await writeJson(join(conf, 'raf.json'), { version: 1, state: { fileName: 'state.sqlite' }, commandTiming: { emaAlpha: 0.1 }, runnerProtocols: [{
+  const protocols = runner === 'claude' ? [{ ...claudeProtocol, timeouts: { ...timeouts, pollMs: 25 } }] : [{
     runner: 'codex', executable: 'codex', version: 'raf-synthetic-1', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null, quotaCommand: '/status', navigation: [], markers: { ready: ['RAF SYNTHETIC READY'] }, quotaParser: 'codex_status', modelPools: {}, quotaReliable: false, liveTaskVerified: true,
     timeouts: { ...timeouts, pollMs: 25 }, collection: { intervalMs: 300000, failureBackoffMs: 60000, staleAfterMs: 60000 },
-  }] });
-  for (const path of ['runners/codex.md', 'tasks/implement.md', 'completion.md']) { await fs.mkdir(dirname(join(conf, 'briefs', path)), { recursive: true }); await fs.writeFile(join(conf, 'briefs', path), 'Synthetic launch failure fixture.\n'); }
+  }];
+  await writeJson(join(conf, 'raf.json'), { version: 1, state: { fileName: 'state.sqlite' }, commandTiming: { emaAlpha: 0.1 }, runnerProtocols: protocols });
+  for (const path of [`runners/${runner}.md`, 'tasks/implement.md', 'completion.md']) { await fs.mkdir(dirname(join(conf, 'briefs', path)), { recursive: true }); await fs.writeFile(join(conf, 'briefs', path), 'Synthetic launch failure fixture.\n'); }
   buildCatalog(conf, artifact, constants.commands.map((x: any) => x.path.join(' ')));
   await exec('git', ['init', '-b', 'develop', workspace], { env });
   await fs.mkdir(join(changeDir, 'specs', 'launch-fixture'), { recursive: true });

@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
-import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, nativeWriteScopeArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
+import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, nativeWriteScopeArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
 import { openStateStore, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
 import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
@@ -190,6 +190,14 @@ async function observeIdentity(identity: ProcessIdentity, execute: AdapterComman
   if (boot.bootId === identity.evidence.bootId && boot.machineId === identity.evidence.machineId) return observation;
   return { state: 'exited' as const, observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity belongs to a previous boot' };
 }
+async function processExited(execute: AdapterCommandExecutor, identity: ProcessIdentity, budget: { transitionMs: number; pollMs: number }): Promise<boolean> {
+  const deadline = Date.now() + budget.transitionMs;
+  for (;;) {
+    if ((await observeProcesses([identity], { execute }))[0].state === 'exited') return true;
+    if (Date.now() >= deadline) return false;
+    await new Promise(resolve => setTimeout(resolve, budget.pollMs));
+  }
+}
 async function discardOwnedTmuxSession(execute: AdapterCommandExecutor, tmuxSession: string, budget: { transitionMs: number; pollMs: number }): Promise<boolean> {
   if (!/^[A-Za-z0-9_-]+$/.test(tmuxSession)) return false;
   const panes = await execute({ executable: 'tmux', args: ['list-panes', '-s', '-t', `=${tmuxSession}`, '-F', '#{pane_pid}'] });
@@ -342,12 +350,11 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         if (observed.state !== 'alive' || !await belongsToPane(identity, execute)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Close requires a verified live process in its owned tmux pane');
         const adapter = new TmuxAgentAdapter({ execute, protocols: {} as Record<AgentRunner, RunnerProtocol> });
         await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
-        const after = (await observeProcesses([identity], { execute }))[0];
-        if (after.state !== 'exited') fail('PROCESS_TERMINATION_UNKNOWN', 'Runner termination is not confirmed');
+        const budget = await budgetFor(identity.runner);
+        if (!await processExited(execute, identity, budget)) fail('PROCESS_TERMINATION_UNKNOWN', `Runner termination is not confirmed within ${budget.transitionMs} ms`);
         const session = state.listReconciliationCandidates().find(row => row.process && sameIdentity(row.process, identity));
         const wrapper = session?.launchContext?.wrapper;
         if (session && wrapper && wrapper.pid !== process.pid) {
-          const budget = await budgetFor(identity.runner);
           if (!await waitWrapperExit(execute, wrapper, budget)) fail('WORKER_RESULT_PENDING', `Runner of ${session.addressId} stopped, but its worker did not finish result processing and closure within ${budget.transitionMs} ms; check raf agent ps later (runId: ${session.runId})`);
         }
       },
@@ -761,10 +768,7 @@ export async function runProductionWorker(
       const beforeComposer = beforeNative?.line ?? -1;
       const beforeInput = beforeNative?.input;
       if (beforeInput === undefined || beforeInput !== '' && !settings.markers.ready?.includes(beforeInput)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input before initial brief submission');
-      const footer = (lines: string[], index: number) => lines.slice(index + 1).map(line => line.trim()).filter(Boolean).join('\n');
-      const beforeFooter = beforeComposer < 0 ? undefined : footer(beforeLines, beforeComposer);
-      const header = (lines: string[], index: number) => lines.slice(0, index).map(line => line.trim()).filter(Boolean).join('\n');
-      const beforeHeader = beforeComposer < 0 ? undefined : header(beforeLines, beforeComposer);
+      const beforeContext = beforeComposer < 0 ? undefined : nativeDeliveryContext(settings, beforeLines, beforeComposer);
       await adapter.deliver(adapterSession, brief);
       const deadline = Date.now() + settings.timeouts.transitionMs;
       let previousPending: string | undefined;
@@ -782,11 +786,13 @@ export async function runProductionWorker(
         const pending = matched === 'pending';
         const state = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: identityCommand }).state;
         const emptyInput = input === '' || settings.markers.ready?.includes(input ?? '');
-        if (!paste && emptyInput && isNativeWorking(settings, screen) && !isNativeWorking(settings, before)) {
+        const working = isNativeWorking(settings, screen) && !isNativeWorking(settings, before);
+        const finished = isNativeFinished(settings, screen) && !isNativeFinished(settings, before);
+        if (!paste && emptyInput && (working || finished)) {
           await verifyOwner();
           return;
         }
-        const sameContext = beforeFooter !== undefined && footer(lines, composerIndex) === beforeFooter && header(lines, composerIndex) === beforeHeader;
+        const sameContext = beforeContext !== undefined && isDeepStrictEqual(nativeDeliveryContext(settings, lines, composerIndex), beforeContext);
         if (pending && (state === 'ready' || state === 'unknown_screen') && sameContext) {
           if (!retried && previousPending === input) {
             const pendingScreen = screen;
@@ -859,6 +865,7 @@ export async function runProductionWorker(
           if (recoverable) { process.stderr.write(`${request.runId}: recoverable launch: ${reason}\n`); return; }
           const current = tools.current(request.runId);
           if (current?.state === 'running' && current.process) {
+            if (!await processExited(execute, current.process, settings.timeouts)) fail('LAUNCH_RECOVERABLE', `${request.runId}: runner process exit is not confirmed within ${settings.timeouts.transitionMs} ms after its own tmux session stopped; task reservations stay until reconciliation`);
             tools.state.commitObservation(request.runId, current.revision, { state: 'exited', observedAt: now(), exitCode: null, evidence: reason }, effects);
             const exited = tools.current(request.runId)!;
             await tools.finalize(exited, exited.activity ? [{ kind: 'ended', session: exited, project: exited.activity.project }] : []);

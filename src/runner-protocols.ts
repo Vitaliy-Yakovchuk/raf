@@ -30,6 +30,8 @@ export type NativeDialect = {
   writeScope: { directoryFlag: string; ruleFlag: string | null; rule: string | null };
   exitCommand: string;
   startup?: string[];
+  modeHints?: string[];
+  finished?: string;
 };
 export type NativeComposer = { line: number; input: string };
 export type PendingBrief = 'pending' | 'mismatch' | 'none';
@@ -189,7 +191,7 @@ export function readNativeComposer(settings: ProtocolSettings, screen: string): 
   const lines = screen.split('\n');
   for (let line = lines.length - 1; line >= 0; line--) {
     const marker = lines[line].match(composer);
-    if (marker) return { line, input: lines[line].slice(marker[0].length).trimEnd() };
+    if (marker) return { line, input: lines[line].slice(marker[0].length).trim() };
   }
   return null;
 }
@@ -209,6 +211,16 @@ export function readNativeSessionId(settings: ProtocolSettings, screen: string):
 }
 export function isNativeWorking(settings: ProtocolSettings, screen: string): boolean {
   return new RegExp(dialect(settings).working, 'mu').test(screen);
+}
+export function nativeDeliveryContext(settings: ProtocolSettings, lines: readonly string[], composerLine: number): { header: string; footer: string } {
+  const hints = dialect(settings).modeHints ?? [];
+  const mode = (line: string) => hints.length && (hints.includes(line) || settings.markers.ready?.some(marker => line.includes(marker))) ? '\u0000mode' : line;
+  const join = (part: readonly string[]) => part.map(line => mode(line.trim())).filter(Boolean).join('\n');
+  return { header: join(lines.slice(0, composerLine)), footer: join(lines.slice(composerLine + 1)) };
+}
+export function isNativeFinished(settings: ProtocolSettings, screen: string): boolean {
+  const finished = dialect(settings).finished;
+  return finished !== undefined && new RegExp(finished, 'mu').test(screen);
 }
 export function nativeWriteScopeArgs(settings: ProtocolSettings, directories: readonly string[]): string[] {
   const scope = dialect(settings).writeScope;

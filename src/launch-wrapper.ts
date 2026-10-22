@@ -8,6 +8,7 @@ import { createAgentReportWatcher } from './agent-report.ts';
 import type { AdapterCommand, AdapterSelection } from './agent-adapters.ts';
 import type { AgentReportExit, AgentReportPorts, AgentReportRequest, AgentReportResult } from './agent-report.ts';
 import type { ProcessIdentity } from './session-state.ts';
+import { commandFailure, failureContext } from './cli-contract.ts';
 
 export interface LaunchWrapperRequest extends AgentReportRequest {
   readonly statePath: string;
@@ -78,6 +79,13 @@ async function within<T>(operation: Promise<T>, timeoutMs: number, stage: string
   } finally { if (timer) clearTimeout(timer); }
 }
 
+function withAccompanyingFailure(primary: unknown, cleanup: unknown): Error {
+  const describe = (value: unknown) => value instanceof Error ? value.message : String(value);
+  const message = `${describe(primary)}; accompanying cleanup failure: ${describe(cleanup)}`;
+  const context = failureContext(primary);
+  return context ? commandFailure({ ...context, message, reason: message }) : new Error(message);
+}
+
 export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: LaunchWrapperPorts): Promise<void> {
   if (!Number.isFinite(request.readinessTimeoutMs) || request.readinessTimeoutMs <= 0) throw new Error('Runner readiness timeout must be positive');
   let watcher: Awaited<ReturnType<typeof createAgentReportWatcher>> | undefined;
@@ -120,7 +128,8 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
         }
       } catch {}
     }
-    await ports.lifecycle.failed(request.runId, error instanceof Error ? error.message : String(error), recoverable);
+    try { await ports.lifecycle.failed(request.runId, error instanceof Error ? error.message : String(error), recoverable); }
+    catch (cleanup) { throw withAccompanyingFailure(error, cleanup); }
     if (!recoverable) await watcher?.dispose();
     throw error;
   }

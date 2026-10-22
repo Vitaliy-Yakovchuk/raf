@@ -182,13 +182,21 @@ export class TmuxAgentAdapter {
   }
 
   async deliver(session: AdapterSession, message: string): Promise<void> {
-    const target = this.target(session);
+    await this.paste(this.target(session), message);
+  }
+
+  async deliverToPane(pane: string, message: string): Promise<void> {
+    if (!/^%\d+$/.test(pane)) throw new Error('Invalid tmux pane identity');
+    await this.paste(pane, message, ['-p']);
+  }
+
+  private async paste(target: string, message: string, pasteOptions: readonly string[] = []): Promise<void> {
     const buffer = `raf-${randomUUID()}`;
     let loaded = false;
     try {
       await this.tmux(['load-buffer', '-b', buffer, '-'], message);
       loaded = true;
-      await this.tmux(['paste-buffer', '-d', '-b', buffer, '-t', target]);
+      await this.tmux(['paste-buffer', '-d', ...pasteOptions, '-b', buffer, '-t', target]);
       loaded = false;
       await this.tmux(['send-keys', '-t', target, 'Enter']);
     } finally {

@@ -41,9 +41,9 @@ async function fixture(t: { after(action: () => Promise<void>): void }) {
   await fs.copyFile(join(sourceRoot, 'bin', 'raf.ts'), join(workspace, 'bin', 'raf.ts'));
   await fs.symlink(join(sourceRoot, 'src'), join(workspace, 'src'));
   await fs.symlink(root, link);
-  await writeJson(join(workspace, 'dist', 'catalog.json'), compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' '))));
   const flow = JSON.parse(readFileSync(join(sourceRoot, '../conf/flow.json'), 'utf8'));
   const projects = { version: 1, projects: { raf: { path: 'raf-develop', profile: 'raf', branchPaths: { develop: 'raf-develop' } } } };
+  await writeJson(join(workspace, 'dist', 'catalog.json'), compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), projects));
   for (const [name, data] of [['raf.json', settings], ['models.json', models], ['raf-constants.json', constants], ['projects.json', projects], ['flow.json', flow]] as const) await writeJson(join(root, 'conf', name), data);
   await fs.writeFile(join(bin, 'openspec'), `#!${process.execPath}\n${openspecScript}`, { mode: 0o700 });
   const parameters = { id: 'root-check', type: 'implement', project: 'raf', features: ['root-fixture'], phase: 'implement', complexity: 'decision', tasks: [`${change}:1.1`] };

@@ -15,7 +15,7 @@ import { resolveWorkspaceRoute } from './workspace-routing.ts';
 import { selectModel, listModelAvailability } from './model-routing.ts';
 import { createLaunchState, reserveLaunchInTransaction, evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
 import { createSessionState, closeSessionInTransaction, type ProcessIdentity, type SessionRecord, type WorkResult } from './session-state.ts';
-import { AgentControlService, type VerifiedSender, type ActivityEvent } from './agent-control.ts';
+import { AgentControlService, MainAttachedElsewhereError, type VerifiedSender, type ActivityEvent, type MainAttachment } from './agent-control.ts';
 import { ReminderService } from './reminders.ts';
 import { evaluateResourceAdmission } from './resource-admission.ts';
 import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
@@ -33,6 +33,10 @@ const effects = { pending: [], domain: [] };
 const json = async (path: string) => JSON.parse(await fs.readFile(path, 'utf8'));
 const fail = (code: string, reason: string): never => { throw commandFailure({ code, message: reason, reason, stage: 'production-runtime', source: 'production-runtime', sourceCode: null, received: null, expected: null, found: null, completed: [], pending: [], retrySafe: true, remediation: ['Уточніть контекст або конфігурацію потрібного production компонента.'] }); };
 const sameIdentity = (a: ProcessIdentity, b: ProcessIdentity) => isDeepStrictEqual(a, b);
+const mainRemediation = 'Виконайте raf main attach у tmux-панелі сесії main, не змінюючи змінних TMUX і TMUX_PANE.';
+const mainFail = (code: string, reason: string, remediation: string, found: unknown = null): never => { throw commandFailure({ code, message: reason, reason, stage: 'main-attach', source: 'production-runtime', sourceCode: null, received: null, expected: null, found, completed: [], pending: [], retrySafe: true, remediation: [remediation] }); };
+
+export const rafSystemCaller: Readonly<Record<string, never>> = Object.freeze({});
 
 async function protocols(confRoot: string, override?: readonly ProtocolSettings[]): Promise<readonly ProtocolSettings[]> {
   if (override) return override;
@@ -136,9 +140,46 @@ async function ownIdentity(execute: AdapterCommandExecutor, runId: string, tmuxS
   if (!row) return fail('PROCESS_IDENTITY_UNAVAILABLE', 'Current process identity unavailable');
   return { pid: row.pid, startedAt: row.startedAt, runner: 'raf', runnerSessionId: runId, tmuxSession, evidence: { command: row.command, runId, ...await bootIdentity(execute) } };
 }
+function paneExecutor(socket: string, execute: AdapterCommandExecutor): AdapterCommandExecutor {
+  return command => execute(command.executable === 'tmux' ? { ...command, args: ['-S', socket, ...command.args] } : command);
+}
+async function ancestry(execute: AdapterCommandExecutor) {
+  const rows = await processRows(execute);
+  const chain: number[] = [];
+  for (let pid = process.pid; pid && !chain.includes(pid); pid = rows.find(row => row.pid === pid)?.ppid ?? 0) chain.push(pid);
+  return { rows, chain };
+}
+async function observeIdentity(identity: ProcessIdentity, execute: AdapterCommandExecutor) {
+  const observation = (await observeProcesses([identity], { execute }))[0];
+  if (observation.state !== 'alive' || !identity.evidence.bootId) return observation;
+  const boot = await bootIdentity(execute);
+  if (boot.bootId === identity.evidence.bootId && boot.machineId === identity.evidence.machineId) return observation;
+  return { state: 'exited' as const, observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity belongs to a previous boot' };
+}
+async function callerPane(execute: AdapterCommandExecutor, direct: AdapterCommandExecutor): Promise<ProcessIdentity> {
+  const socket = (process.env.TMUX ?? '').split(',')[0];
+  const pane = process.env.TMUX_PANE ?? '';
+  if (!isAbsolute(socket) || !/^%\d+$/.test(pane)) return mainFail('MAIN_CALLER_NOT_IN_TMUX', 'raf main attach must run inside a tmux pane', mainRemediation);
+  const shown = await paneExecutor(socket, direct)({ executable: 'tmux', args: ['display-message', '-p', '-t', pane, '#{pane_id}\t#{pane_pid}\t#{socket_path}\t#{session_name}'] });
+  const [paneId, panePid, socketPath, ...name] = shown.stdout.replace(/\n$/, '').split('\t');
+  const canonical = async (path: string) => fs.realpath(path).catch(() => '');
+  if (shown.exitCode !== 0 || paneId !== pane || !/^\d+$/.test(panePid ?? '') || !socketPath || await canonical(socketPath) !== await canonical(socket) || !name.length) {
+    return mainFail('MAIN_CALLER_NOT_IN_TMUX', 'TMUX and TMUX_PANE do not name a live pane of that tmux server', mainRemediation);
+  }
+  const { rows, chain } = await ancestry(execute);
+  const row = rows.find(row => row.pid === Number(panePid));
+  if (!row || !chain.includes(row.pid)) return mainFail('MAIN_CALLER_NOT_IN_TMUX', 'Calling process does not run inside the pane named by TMUX_PANE', mainRemediation);
+  return { pid: row.pid, startedAt: row.startedAt, runner: 'main', runnerSessionId: pane, tmuxSession: name.join('\t'), evidence: { command: row.command, tmuxSocket: socket, tmuxPane: pane, ...await bootIdentity(execute) } };
+}
+function mainAttachment(session: SessionRecord): MainAttachment {
+  const identity = session.process!;
+  return { id: 'main', runId: session.runId, tmuxSocket: identity.evidence.tmuxSocket, tmuxSession: identity.tmuxSession, tmuxPane: identity.evidence.tmuxPane, pid: identity.pid, startedAt: identity.startedAt, machineId: identity.evidence.machineId, bootId: identity.evidence.bootId };
+}
 function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: RuntimeConfiguration, context: RuntimeContext, identityExecute?: AdapterCommandExecutor) {
   const verified = new WeakMap<object, string>();
-  const state = createSessionState({ repository: store.sessionRepository, verifyMainAuthority: () => false, verifyWorkResult: (runId, result) => verified.get(result) === runId });
+  const mainAuthority = new WeakMap<object, ProcessIdentity>();
+  const direct = identityExecute ?? executeCommand;
+  const state = createSessionState({ repository: store.sessionRepository, verifyMainAuthority: (authority, identity) => !!authority && typeof authority === 'object' && isDeepStrictEqual(mainAuthority.get(authority), identity), verifyWorkResult: (runId, result) => verified.get(result) === runId });
   const current = (runId: string) => store.sessionRepository.transaction(tx => tx.getSession(runId));
   const reminders = new ReminderService({ repository: store.reminderRepository, now, nextId: randomUUID, approvedEventKinds: ['agent.succeeded', 'agent.failed', 'agent.started', 'agent.activity-changed', 'agent.closed', 'reminder.activated', 'reminder.closed'] });
   const intents = (rows: readonly ActivityEvent[]) => rows.map(row => { const event = row.kind === 'started' ? 'agent.started' : row.kind === 'updated' ? 'agent.activity-changed' : 'agent.closed'; return { id: `${row.session.runId}:activity:${row.session.revision}:${row.kind}:${row.project}`, runId: row.session.runId, event, payload: { kind: event, id: row.session.addressId, activity: row } }; });
@@ -169,17 +210,16 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     return current(session.runId)!;
   };
   const launch = createLaunchState({ repository: store.sessionRepository, measure: async () => { throw new Error('Measurements must precede atomic reserve'); }, evaluateAdmission: evaluateResourceAdmission });
-  const resolve = async (_caller: unknown): Promise<VerifiedSender> => {
-    const rows = await processRows(execute);
-    const ancestors = new Set<number>();
-    let pid = process.pid;
-    while (pid && !ancestors.has(pid)) { ancestors.add(pid); pid = rows.find(row => row.pid === pid)?.ppid ?? 0; }
-    const candidates = state.listReconciliationCandidates().filter(session => session.state === 'running' && session.process && ancestors.has(session.process.pid));
-    for (const session of candidates) {
-      const observation = (await observeProcesses([session.process!], { execute }))[0];
-      if (observation.state === 'alive') return { kind: 'agent', runId: session.runId };
+  const resolve = async (caller: unknown): Promise<VerifiedSender> => {
+    if (caller === rafSystemCaller) return { kind: 'system' };
+    const { chain } = await ancestry(execute);
+    const running = state.listReconciliationCandidates().filter(session => session.state === 'running' && session.process);
+    for (const pid of chain) {
+      for (const session of running.filter(session => session.process!.pid === pid)) {
+        if ((await observeIdentity(session.process!, execute)).state === 'alive') return { kind: 'agent', runId: session.runId };
+      }
     }
-    return fail('CALLER_UNVERIFIED', 'Current process ancestry has no verified registered agent; desktop/main transport is unavailable');
+    return fail('CALLER_UNVERIFIED', 'Current process ancestry has no verified registered agent or attached main pane');
   };
   const authorize = async (id: string, caller: unknown) => {
     const sender = await resolve(caller);
@@ -188,7 +228,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   };
   const types = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'type')?.values?.map(row => row.id) ?? [];
   const projects = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'project')?.values?.map(row => row.id) ?? [];
-  const control = new AgentControlService({ repository: store.sessionRepository, scanner: { inspect: async identity => (await observeProcesses([identity], { execute }))[0] }, authority: { resolve }, reminders,
+  const control = new AgentControlService({ repository: store.sessionRepository, scanner: { inspect: identity => observeIdentity(identity, execute) }, authority: { resolve }, reminders,
     projects, agentTypes: types,
     coordinator: {
       observe: async (session, observation) => {
@@ -207,7 +247,22 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       finalize, publish,
     },
     transport: {
-      deliver: async () => ({ accepted: false, reason: 'Verified message acceptance channel is unavailable; tmux send-keys is not a delivery receipt' }),
+      deliver: async (identity, message) => {
+        if (!identity.evidence.tmuxSocket || !isAbsolute(identity.evidence.tmuxSocket)) return { accepted: false, reason: 'Session has no recorded tmux socket' };
+        if ((await observeIdentity(identity, execute)).state !== 'alive') return { accepted: false, reason: 'Recipient process is not alive' };
+        const tmux = paneExecutor(identity.evidence.tmuxSocket, direct);
+        const adapter = new TmuxAgentAdapter({ execute: tmux, protocols: {} as Record<AgentRunner, RunnerProtocol> });
+        if (identity.runner === 'main') {
+          const pane = identity.evidence.tmuxPane;
+          const shown = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', pane, '#{pane_id}\t#{pane_pid}'] });
+          if (shown.exitCode !== 0 || shown.stdout.replace(/\n$/, '') !== `${pane}\t${identity.pid}`) return { accepted: false, reason: 'Attached main pane no longer holds the attached process' };
+          await adapter.deliverToPane(pane, message);
+        } else {
+          if (!await belongsToPane(identity, tmux)) return { accepted: false, reason: 'Recipient process no longer belongs to its tmux pane' };
+          await adapter.deliver({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } }, message);
+        }
+        return { accepted: true, receiptId: randomUUID() };
+      },
       interrupt: async () => fail('INTERRUPT_UNAVAILABLE', 'Runner-specific busy interrupt evidence is unavailable'),
       close: async identity => {
         const observed = (await observeProcesses([identity], { execute }))[0];
@@ -219,7 +274,18 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       },
     },
   });
-  return { state, current, verified, reminders, publish, control, authorize, resolve, finalize };
+  const attachMain = async (): Promise<MainAttachment> => {
+    const identity = await callerPane(execute, direct);
+    const authority = {};
+    mainAuthority.set(authority, identity);
+    try {
+      return mainAttachment(await control.attachMain(identity, () => state.registerExistingMain(randomUUID(), identity, authority, { type: 'main', project: 'orchestrator', features: [], phase: 'main', cwd: process.cwd() })));
+    } catch (error) {
+      if (error instanceof MainAttachedElsewhereError) return mainFail('MAIN_ALREADY_ATTACHED', 'Another live pane is attached as main', 'Працюйте з уже зареєстрованої панелі main або завершіть її процес і повторіть raf main attach.', error.session.process ? mainAttachment(error.session) : error.session.runId);
+      throw error;
+    }
+  };
+  return { state, current, verified, reminders, publish, control, authorize, resolve, finalize, attachMain };
 }
 
 function assignmentPorts(execute: AdapterCommandExecutor) {
@@ -384,6 +450,7 @@ export async function createProductionServices(
       message: (input, caller) => tools.control.message(input, caller),
       close: async (id, caller) => { await tools.authorize(id, caller); return tools.control.close(id); },
       interrupt: async (id, caller) => { await tools.authorize(id, caller); return tools.control.interrupt(id); },
+      attachMain: tools.attachMain,
     },
     authorizeMain: async caller => { await tools.authorize('main', caller); },
   };

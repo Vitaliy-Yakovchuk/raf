@@ -11,7 +11,7 @@ import type { ExecutionResult } from '../src/cli.ts';
 const constants = JSON.parse(readFileSync(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
 const models = JSON.parse(readFileSync(new URL('../../conf/models.json', import.meta.url), 'utf8'));
 const settings = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
-const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')));
+const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), JSON.parse(readFileSync(new URL('../../conf/projects.json', import.meta.url), 'utf8')));
 
 function fixture(t: { after(action: () => void): void }) {
   const directory = mkdtempSync(join(tmpdir(), 'raf-production-entry-'));

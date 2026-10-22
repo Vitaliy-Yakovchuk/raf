@@ -25,7 +25,7 @@ async function fixture(t: test.TestContext) {
   const models = await readConfig('models');
   const constants = await readConfig('raf-constants');
   for (const [name, value] of [['raf', settings], ['models', models], ['flow', await readConfig('flow')]]) await writeFile(join(conf, `${name}.json`), JSON.stringify(value));
-  const catalog = compileCatalog(constants, models, constants.commands.map(command => command.path.join(' ')));
+  const catalog = compileCatalog(constants, models, constants.commands.map(command => command.path.join(' ')), await readConfig('projects'));
   await writeFile(join(app, 'dist', 'catalog.json'), JSON.stringify(catalog));
   const run = (args: string[]) => new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve, reject) => {
     const child = spawn(process.execPath, [join(app, 'bin', 'raf.ts'), ...args], { cwd: root, env: { HOME: home, PATH: '', NODE_NO_WARNINGS: '1' }, stdio: ['ignore', 'pipe', 'pipe'] });

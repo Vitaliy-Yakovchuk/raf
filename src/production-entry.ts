@@ -67,21 +67,50 @@ function canonicalRoot(path: string): string {
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw failure('INVALID_CONTEXT', `Orchestrator root does not exist: ${path}`); throw error; }
 }
 
+function validatedRoot(options: ProductionEntryOptions): string {
+  for (const key of ['orchestratorRoot', 'homeDirectory', 'artifactPath'] as const) if (!isAbsolute(options[key])) throw failure('INVALID_CONTEXT', `Absolute ${key} required`);
+  return canonicalRoot(options.orchestratorRoot);
+}
+
+function clock(options: ProductionEntryOptions): () => number {
+  return options.now ?? (() => performance.now());
+}
+
+function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>, additionalHandlers: Record<string, Handler> = {}): AppRuntime {
+  const now = clock(options);
+  const loaded = readConfiguration(orchestratorRoot);
+  const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
+  const context = { orchestratorRoot: orchestratorRoot, confRoot: join(orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
+    statePath: join(options.homeDirectory, '.raf', loaded.fileName), tmpRoot: join(options.homeDirectory, '.raf', 'tmp'),
+    mode: 'production' as const, commandStartedAtMs, resolveCaller };
+  return createAppRuntime(context, {
+    additionalHandlers,
+    now, loadConfiguration: async () => ({ catalog, models: loaded.models, commandTiming: loaded.commandTiming }),
+    openStore: async path => openStateStore(path), nextRunIdentity: () => ({ runId: randomUUID(), tmuxSession: randomUUID() }),
+    createServices: createProductionServices,
+  });
+}
+
+export async function withProductionRuntime<T>(options: ProductionEntryOptions, resolveCaller: () => Promise<unknown>, use: (runtime: AppRuntime) => Promise<T>): Promise<T> {
+  const commandStartedAtMs = clock(options)();
+  const runtime = openProductionRuntime(options, validatedRoot(options), commandStartedAtMs, resolveCaller);
+  try { return await use(runtime); }
+  finally { await runtime.close(); }
+}
+
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
-  const now = options.now ?? (() => performance.now());
-  const commandStartedAtMs = now();
+  const commandStartedAtMs = clock(options)();
   let runtime: AppRuntime | undefined;
   const unavailable = () => { throw failure('COMMAND_UNAVAILABLE', 'Production service for this operation is unavailable'); };
   const handlers = new Proxy(Object.create(null) as Record<string, Handler>, {
     get(_target, name) {
       if (typeof name !== 'string') return undefined;
-      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'runner enable', 'runner disable', 'runner list', 'command stats', 'secrets import-conductor', 'service start', 'service status', 'service stop'].includes(name)) return unavailable;
+      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'command stats', 'secrets import-conductor', 'service start', 'service status', 'service stop'].includes(name)) return unavailable;
       return async (params: Record<string, unknown>) => {
         try {
-          for (const key of ['orchestratorRoot', 'homeDirectory', 'artifactPath'] as const) if (!isAbsolute(options[key])) throw failure('INVALID_CONTEXT', `Absolute ${key} required`);
-          const orchestratorRoot = canonicalRoot(options.orchestratorRoot);
-          const loaded = readConfiguration(orchestratorRoot);
+          const orchestratorRoot = validatedRoot(options);
           if (name.startsWith('service ')) {
+            readConfiguration(orchestratorRoot);
             const settings = JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'raf.json'), 'utf8'));
             const services = createServiceHandlers({ orchestratorRoot: orchestratorRoot, homeDirectory: options.homeDirectory,
               service: settings.service, hostModulePath: options.serviceHostModulePath ?? fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)) });
@@ -102,16 +131,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
               throw failure('SECRETS_IMPORT_FAILED', 'Secrets import failed', 'secrets-import');
             }
           };
-          const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
-          const context = { orchestratorRoot: orchestratorRoot, confRoot: join(orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
-            statePath: join(options.homeDirectory, '.raf', loaded.fileName), tmpRoot: join(options.homeDirectory, '.raf', 'tmp'),
-            mode: 'production' as const, commandStartedAtMs, resolveCaller: async () => undefined };
-          runtime = createAppRuntime(context, {
-            additionalHandlers: { 'secrets import-conductor': importSecrets },
-            now, loadConfiguration: async () => ({ catalog, models: loaded.models, commandTiming: loaded.commandTiming }),
-            openStore: async path => openStateStore(path), nextRunIdentity: () => ({ runId: randomUUID(), tmuxSession: randomUUID() }),
-            createServices: createProductionServices,
-          });
+          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'secrets import-conductor': importSecrets });
           const result = await runtime.handlers[name](params);
           await runtime.close();
           return result;

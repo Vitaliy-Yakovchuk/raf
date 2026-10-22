@@ -2,7 +2,7 @@ import type { ExecutionResult, Handler } from './cli.ts';
 import { execute } from './cli.ts';
 import { compileCatalog } from './catalog.ts';
 import type { CompiledCatalog } from './catalog.ts';
-import { readFileSync, mkdirSync, writeFileSync, renameSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, mkdirSync, writeFileSync, renameSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
@@ -17,7 +17,9 @@ export function buildCatalog(
 ): void {
   const constants = JSON.parse(readFileSync(join(confDir, 'raf-constants.json'), 'utf8'));
   const models = JSON.parse(readFileSync(join(confDir, 'models.json'), 'utf8'));
-  const catalog = compileCatalog(constants, models, handlerNames);
+  const projectsPath = join(confDir, 'projects.json');
+  const projects = existsSync(projectsPath) ? JSON.parse(readFileSync(projectsPath, 'utf8')) : undefined;
+  const catalog = compileCatalog(constants, models, handlerNames, projects);
   const contents = JSON.stringify(catalog, null, 2) + '\n';
   mkdirSync(dirname(outputPath), { recursive: true });
   const temporaryPath = `${outputPath}.${randomUUID()}.tmp`;

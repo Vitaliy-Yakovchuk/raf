@@ -31,6 +31,26 @@ export interface AgentControlDependencies {
   agentTypes: readonly string[];
 }
 export type MessageRequest = { to: string; text: string };
+export type MainAttachment = {
+  id: 'main';
+  runId: string;
+  tmuxSocket: string;
+  tmuxSession: string;
+  tmuxPane: string;
+  pid: number;
+  startedAt: string;
+  machineId: string;
+  bootId: string;
+};
+export class MainAttachedElsewhereError extends Error {
+  readonly session: SessionRecord;
+
+  constructor(session: SessionRecord) {
+    super('Main is already attached from another live pane');
+    this.name = 'MainAttachedElsewhereError';
+    this.session = session;
+  }
+}
 export type CloseResult = { closed: boolean; unfinished: SessionCloseCheck['unfinished'] };
 
 export class AgentControlService {
@@ -55,18 +75,22 @@ export class AgentControlService {
     return session.activity ? [{ kind, session: structuredClone(session), project: session.activity.project }] : [];
   }
 
-  private async reconcile(session: SessionRecord): Promise<SessionRecord> {
+  private async inspect(identity: ProcessIdentity): Promise<ProcessObservation> {
+    let observation: ProcessObservation;
+    try {
+      observation = await this.dependencies.scanner.inspect(identity);
+    } catch (error) {
+      observation = { state: 'unknown', observedAt: new Date().toISOString(), error: String(error) };
+    }
+    if (observation.state === 'alive' && !this.sameProcess(identity, observation.identity)) {
+      observation = { state: 'exited', observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity no longer belongs to this run' };
+    }
+    return observation;
+  }
+
+  private async reconcile(session: SessionRecord, observed?: ProcessObservation): Promise<SessionRecord> {
     if (session.state === 'running' && session.process) {
-      let observation: ProcessObservation;
-      try {
-        observation = await this.dependencies.scanner.inspect(session.process);
-      } catch (error) {
-        observation = { state: 'unknown', observedAt: new Date().toISOString(), error: String(error) };
-      }
-      if (observation.state === 'alive' && !this.sameProcess(session.process, observation.identity)) {
-        observation = { state: 'exited', observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity no longer belongs to this run' };
-      }
-      session = await this.dependencies.coordinator.observe(session, observation);
+      session = await this.dependencies.coordinator.observe(session, observed ?? await this.inspect(session.process));
     }
     if (session.state === 'exited') {
       this.dependencies.reminders.sessionEnded({ address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: true });
@@ -151,6 +175,18 @@ export class AgentControlService {
     if (id === 'main') throw new Error('Main cannot be interrupted');
     const session = await this.live(id);
     await this.dependencies.transport.interrupt(session.process!);
+  }
+
+  async attachMain(identity: ProcessIdentity, register: () => SessionRecord): Promise<SessionRecord> {
+    for (const candidate of this.sessions()) {
+      if (candidate.addressId !== 'main' || candidate.state === 'finished') continue;
+      const observation = candidate.state === 'running' && candidate.process ? await this.inspect(candidate.process) : undefined;
+      if (observation?.state === 'alive' && this.sameProcess(candidate.process!, identity) && this.sameProcess(identity, candidate.process!)) return candidate;
+      if (observation?.state === 'alive' || observation?.state === 'unknown') throw new MainAttachedElsewhereError(candidate);
+      const session = await this.reconcile(candidate, observation);
+      if (session.state !== 'finished') throw new MainAttachedElsewhereError(session);
+    }
+    return register();
   }
 
   async started(runId: string): Promise<void> {

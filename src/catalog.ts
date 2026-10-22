@@ -33,6 +33,7 @@ export function compileCatalog(
   constants: unknown,
   models: unknown,
   handlerNames: readonly string[],
+  projects?: unknown,
 ): CompiledCatalog {
   const object = (value: unknown, source: string): Record<string, unknown> => {
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${source}: expected object`);
@@ -50,18 +51,20 @@ export function compileCatalog(
       return { ...entry } as CatalogValue;
     });
   };
-  const roots = { 'raf-constants.json': object(constants, 'raf-constants.json'), 'models.json': object(models, 'models.json') };
+  const roots: Record<string, Record<string, unknown>> = { 'raf-constants.json': object(constants, 'raf-constants.json'), 'models.json': object(models, 'models.json') };
+  if (projects !== undefined) roots['projects.json'] = object(projects, 'projects.json');
   const resolve = (reference: unknown, source: string): CatalogValue[] => {
     if (typeof reference !== 'string') throw new Error(`${source}: expected reference string`);
-    const match = /^(raf-constants\.json|models\.json)#(\/.*)$/.exec(reference);
-    if (!match) throw new Error(`${source}: unresolved reference ${reference}`);
-    let node: unknown = roots[match[1] as keyof typeof roots];
+    const match = /^(raf-constants\.json|models\.json|projects\.json)#(\/.*)$/.exec(reference);
+    if (!match || !Object.hasOwn(roots, match[1])) throw new Error(`${source}: unresolved reference ${reference}`);
+    let node: unknown = roots[match[1]];
     for (const token of match[2].slice(1).split('/')) {
       if (/~(?![01])/.test(token)) throw new Error(`${source}: invalid reference ${reference}`);
       const key = token.replace(/~1/g, '/').replace(/~0/g, '~');
       if (!node || typeof node !== 'object' || !Object.hasOwn(node, key)) throw new Error(`${source}: unresolved reference ${reference}`);
       node = (node as Record<string, unknown>)[key];
     }
+    if (match[1] === 'projects.json' && node && typeof node === 'object' && !Array.isArray(node)) node = Object.keys(node);
     return values(node, `${source} -> ${reference}`);
   };
   const raw = roots['raf-constants.json'];

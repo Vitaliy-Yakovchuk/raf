@@ -8,7 +8,7 @@ import type { AssignmentSnapshot, AssignmentRequest, AssignmentValidation, Assig
 import type { WorkspaceRouteRequest, WorkspaceRouteResult } from './workspace-routing.ts';
 import type { ModelCatalog, ModelRequest, ModelSelection, ModelAvailability, RoutingSnapshot } from './model-routing.ts';
 import type { AdapterStartRequest, AdapterSession, ReportWrapper } from './agent-adapters.ts';
-import type { DeliveryReceipt, CloseResult } from './agent-control.ts';
+import type { DeliveryReceipt, CloseResult, MainAttachment } from './agent-control.ts';
 import type { ResourceReservation } from './resource-admission.ts';
 import { bindWorkspaceBoundaries, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
 
@@ -88,6 +88,7 @@ export interface RuntimeServices {
     message(input: { to: string; text: string }, caller: unknown): Promise<DeliveryReceipt>;
     close(id: string, caller: unknown): Promise<CloseResult>;
     interrupt(id: string, caller: unknown): Promise<void>;
+    attachMain(): Promise<MainAttachment>;
   };
   authorizeMain(caller: unknown): Promise<void>;
 }
@@ -143,6 +144,8 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const loaded = await config();
       const command = loaded.catalog.commands.find(command => command.handlerName === 'agent run');
       const type = command?.parameters.find(parameter => parameter.name === 'type')?.values?.find(value => value.id === params.type);
+      if (params.id === 'main') throw fail('MAIN_NOT_LAUNCHABLE', 'preflight', 'Address main belongs to the attached main session and cannot be launched', { received: params.id,
+        remediation: ['Зареєструйте наявну сесію командою raf main attach з її tmux-панелі або оберіть інший --id.'] });
       if (params.type === 'main' || type?.launchableByRaf === false) throw fail('TYPE_NOT_LAUNCHABLE', 'preflight', 'Agent type cannot be launched', { received: params.type });
       const selections = new Map<string, { id: string }[]>();
       if (!Array.isArray(params.tasks) || !params.tasks.length) throw fail('INVALID_ASSIGNMENT', 'assignment', 'Nonempty tasks required');
@@ -239,6 +242,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       await (await service()).control.interrupt(params.id as string, await context.resolveCaller());
       return { interrupted: true, id: params.id };
     },
+    'main attach': async () => (await service()).control.attachMain(),
     'runner list': async () => (await service()).listModels((await config()).models, await snapshot()),
     'command stats': async () => {
       const loaded = await config();

@@ -12,7 +12,7 @@ import type { ExecutionResult } from '../src/cli.ts';
 const constants = JSON.parse(readFileSync(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
 const models = JSON.parse(readFileSync(new URL('../../conf/models.json', import.meta.url), 'utf8'));
 const settings = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
-const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')));
+const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), JSON.parse(readFileSync(new URL('../../conf/projects.json', import.meta.url), 'utf8')));
 const secretValue = 'SYNTHETIC_PRIVATE_PAYLOAD_7f4e\nsecond line';
 const fileValue = 'SYNTHETIC_FILE_PAYLOAD_8a9b\nтест';
 const updated = '2026-10-21T10:00:00.000Z';

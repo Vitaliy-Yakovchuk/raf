@@ -14,8 +14,8 @@ import type { SessionRecord, ProcessIdentity } from '../src/session-state.ts';
 
 const constants = JSON.parse(readFileSync(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
 const models: ModelCatalog = JSON.parse(readFileSync(new URL('../../conf/models.json', import.meta.url), 'utf8'));
-const owned = ['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'runner list', 'runner enable', 'runner disable', 'command stats'];
-const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')));
+const owned = ['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner list', 'runner enable', 'runner disable', 'command stats'];
+const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), JSON.parse(readFileSync(new URL('../../conf/projects.json', import.meta.url), 'utf8')));
 const params = { id: 'worker', type: 'implement', project: 'raf', features: ['runtime'], phase: 'implement', complexity: models.routing.complexityOrder[0], tasks: ['change-a:1.1', 'change-b:2.1', 'change-a:1.2'] };
 const identity: ProcessIdentity = { pid: 301, startedAt: '2026-10-22T12:00:00Z', runner: 'codex', runnerSessionId: 'cli-1', tmuxSession: 'raf-safe-1', evidence: { runId: 'run-1', source: 'verified-agent' } };
 const selected: ModelSelection = { status: 'selected', runner: 'codex', model: 'chosen-model', effort: 'chosen-effort', reason: 'owner selection', quota: 'unknown' };

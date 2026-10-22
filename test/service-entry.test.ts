@@ -13,7 +13,7 @@ import { runProductionCli } from '../src/production-entry.ts';
 const entryUrl = new URL('../src/service-entry.ts', import.meta.url).href;
 const constants = JSON.parse(await readFile(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
 const models = JSON.parse(await readFile(new URL('../../conf/models.json', import.meta.url), 'utf8'));
-const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')));
+const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8')));
 
 async function fixture(t: TestContext, mode: 'valid' | 'absent' | 'broken' = 'valid') {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'raf-entry-')));

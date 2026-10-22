@@ -141,7 +141,7 @@ async function productionFixture(t: TestContext) {
   const home = await s.dir('home');
   await Promise.all([['raf.json', settings], ['models.json', models], ['raf-constants.json', constants]].map(([name, data]) => writeFile(join(conf, name as string), JSON.stringify(data))));
   const artifactPath = join(s.root, 'catalog.json');
-  await writeFile(artifactPath, JSON.stringify(compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')))));
+  await writeFile(artifactPath, JSON.stringify(compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), await readConf('projects.json'))));
   let clock = 0;
   const list = async () => {
     const result = await runProductionCli(['runner', 'list'], { orchestratorRoot: root, homeDirectory: home, artifactPath, now: () => { clock += 10; return clock; } });

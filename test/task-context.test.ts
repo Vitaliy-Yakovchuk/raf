@@ -25,7 +25,7 @@ const models: ModelCatalog = JSON.parse(readFileSync(new URL('models.json', real
 const realProjects = JSON.parse(readFileSync(new URL('projects.json', realConf), 'utf8'));
 const realFlow = readFileSync(new URL('flow.json', realConf), 'utf8');
 const flowResources = JSON.parse(realFlow).resources;
-const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')));
+const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), realProjects);
 const estimateReason = /оцінка резерву не налаштована/;
 
 const descriptions = {

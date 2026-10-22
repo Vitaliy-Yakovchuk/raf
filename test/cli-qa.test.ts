@@ -7,7 +7,7 @@ import { execute } from '../src/cli.ts';
 const constants = JSON.parse(readFileSync(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
 const models = JSON.parse(readFileSync(new URL('../../conf/models.json', import.meta.url), 'utf8'));
 const handlers = Object.fromEntries(constants.commands.map((c: { path: string[] }) => [c.path.join(' '), (params: unknown) => params]));
-const production = compileCatalog(constants, models, Object.keys(handlers));
+const production = compileCatalog(constants, models, Object.keys(handlers), JSON.parse(readFileSync(new URL('../../conf/projects.json', import.meta.url), 'utf8')));
 
 test('production public API: all command help variants agree without handlers', async () => {
   for (const command of production.commands) {

@@ -12,7 +12,7 @@ const execute = promisify(execFile);
 const constants = JSON.parse(readFileSync(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
 const models = JSON.parse(readFileSync(new URL('../../conf/models.json', import.meta.url), 'utf8'));
 const settings = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
-const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')));
+const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), JSON.parse(readFileSync(new URL('../../conf/projects.json', import.meta.url), 'utf8')));
 const payload = 'QA_PRIVATE_ENV_f470b8';
 const filePayload = 'QA_PRIVATE_FILE_c324ca\nключ';
 const conflictPayload = 'QA_PRIVATE_CONFLICT_a315b3';

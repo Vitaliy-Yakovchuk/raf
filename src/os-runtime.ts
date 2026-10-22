@@ -106,17 +106,19 @@ export function createResourceSnapshotReader(options: ResourceSnapshotOptions, d
         measurement.availableRamBytes = (pages('Pages free') + pages('Pages inactive') + pages('Pages speculative')) * page;
         measurement.memoryPressure = pressure.trim() === '4' ? 'critical' : ['1', '2'].includes(pressure.trim()) ? 'normal' : 'unknown';
       } else if (deps.platform() === 'linux') {
+        try {
+          const psi = await deps.readFile('/proc/pressure/memory');
+          const pressureRows = psi.trim().split('\n');
+          const parsedPressure = pressureRows.length === 2 && ['some', 'full'].every(kind => pressureRows.some(row => {
+            const match = row.match(/^(some|full) avg10=(\d+(?:\.\d+)?) avg60=(\d+(?:\.\d+)?) avg300=(\d+(?:\.\d+)?) total=(\d+)$/);
+            return match?.[1] === kind && match.slice(2).every(value => Number.isFinite(Number(value)));
+          }));
+          measurement.memoryPressure = parsedPressure ? 'normal' : 'unknown';
+          if (!parsedPressure) reasons.push('Malformed PSI in /proc/pressure/memory');
+        } catch { reasons.push('PSI source /proc/pressure/memory unavailable'); }
         const mem = await deps.readFile('/proc/meminfo');
         measurement.totalRamBytes = Number(mem.match(/^MemTotal:\s+(\d+) kB/m)?.[1]) * 1024;
         measurement.availableRamBytes = Number(mem.match(/^MemAvailable:\s+(\d+) kB/m)?.[1]) * 1024;
-        const psi = await deps.readFile('/proc/pressure/memory');
-        const pressureRows = psi.trim().split('\n');
-        const noStalls = pressureRows.length === 2 && ['some', 'full'].every(kind => pressureRows.some(row => {
-          const match = row.match(/^(some|full) avg10=(\d+(?:\.\d+)?) avg60=(\d+(?:\.\d+)?) avg300=(\d+(?:\.\d+)?) total=(\d+)$/);
-          return match?.[1] === kind && match.slice(2, 5).every(value => Number(value) === 0);
-        }));
-        measurement.memoryPressure = noStalls ? 'normal' : 'unknown';
-        if (!noStalls) reasons.push('Linux memory pressure has no defined critical threshold');
         const membership = await deps.readFile('/proc/self/cgroup');
         const relative = membership.match(/^0::(.*)$/m)?.[1];
         if (relative === undefined) throw new Error('Unsupported cgroup hierarchy');

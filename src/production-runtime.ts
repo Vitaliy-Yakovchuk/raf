@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
-import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, type ProtocolSettings } from './runner-protocols.ts';
+import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, nativeWriteScopeArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
 import { openStateStore, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
 import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
@@ -36,6 +36,14 @@ const sameIdentity = (a: ProcessIdentity, b: ProcessIdentity) => isDeepStrictEqu
 const mainRemediation = 'Виконайте raf main attach у tmux-панелі сесії main, не змінюючи змінних TMUX і TMUX_PANE.';
 const mainFail = (code: string, reason: string, remediation: string, found: unknown = null): never => { throw commandFailure({ code, message: reason, reason, stage: 'main-attach', source: 'production-runtime', sourceCode: null, received: null, expected: null, found, completed: [], pending: [], retrySafe: true, remediation: [remediation] }); };
 
+const launchFailurePath = (tmpRoot: string, runId: string) => join(tmpRoot, runId, 'launch-failure.json');
+async function workerLaunchFailure(tmpRoot: string, runId: string, wrapper: PersistentWrapperFailure['wrapper'] | undefined) {
+  let value: unknown;
+  try { value = JSON.parse(await fs.readFile(launchFailurePath(tmpRoot, runId), 'utf8')); } catch { return undefined; }
+  if (!object(value) || value.code !== 'RUNNER_WORKSPACE_UNTRUSTED' || !text(value.reason) || !strings(value.remediation)) return undefined;
+  return Object.assign(commandFailure({ code: value.code, message: value.reason, reason: value.reason, stage: 'readiness', source: 'production-runtime', sourceCode: null, received: null, expected: null, found: value.found ?? null, completed: [], pending: [], retrySafe: true, remediation: value.remediation }), { wrapper });
+}
+
 export const rafSystemCaller: Readonly<Record<string, never>> = Object.freeze({});
 
 async function protocols(confRoot: string, override?: readonly ProtocolSettings[]): Promise<readonly ProtocolSettings[]> {
@@ -44,11 +52,26 @@ async function protocols(confRoot: string, override?: readonly ProtocolSettings[
   if (settings.version !== 1 || !Array.isArray(settings.runnerProtocols)) fail('RUNNER_PROTOCOL_UNAVAILABLE', 'conf/raf.json#runnerProtocols requires versioned installed runner settings and measured time budgets');
   return settings.runnerProtocols;
 }
+const codexStatusDialect: NativeDialect = {
+  identity: { source: 'status', command: '/status', pattern: 'Session:\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', dismissKeys: [] },
+  composer: '^\\s*›(?:\\s|$)',
+  pendingPaste: { pattern: '^\\[Pasted Content (\\d+) chars\\]$', unit: 'characters' },
+  working: '^\\s*•\\s+[^\\n]+\\([^\\n()]*esc to interrupt\\)\\s*$',
+  writeScope: { directoryFlag: '--add-dir', ruleFlag: null, rule: null },
+  exitCommand: '/exit',
+};
+const regex = (value: unknown) => { if (!text(value)) return false; try { new RegExp(value, 'u'); return true; } catch { return false; } };
+const validDialect = (value: unknown): value is NativeDialect => object(value) && object(value.identity) && ['status', 'assigned'].includes(value.identity.source) && text(value.identity.command) && regex(value.identity.pattern) && Array.isArray(value.identity.dismissKeys) && value.identity.dismissKeys.every(text)
+  && regex(value.composer) && object(value.pendingPaste) && regex(value.pendingPaste.pattern) && ['characters', 'newlines'].includes(value.pendingPaste.unit) && regex(value.working)
+  && object(value.writeScope) && text(value.writeScope.directoryFlag) && (value.writeScope.ruleFlag === null ? value.writeScope.rule === null : text(value.writeScope.ruleFlag) && text(value.writeScope.rule) && value.writeScope.rule.includes('{directory}')) && text(value.exitCommand);
 function protocolFor(settings: readonly ProtocolSettings[], runner: string): ProtocolSettings {
-  if (runner !== 'codex') fail('RUNNER_IDENTITY_UNAVAILABLE', `Pre-brief native identity evidence is unavailable for ${runner}`);
   const matches = settings.filter(row => row.runner === runner);
-  const value = matches[0];
-  if (matches.length !== 1 || !value || typeof value.liveTaskVerified !== 'boolean' || value.quotaCommand !== '/status' || !text(value.executable) || !text(value.version) || !Array.isArray(value.baseArgs) || !value.baseArgs.every(text) || !text(value.modelFlag) || !text(value.effortFlag) || !['literal', 'codex_config'].includes(value.effortFormat) || !object(value.modelAliases) || !Array.isArray(value.navigation) || !object(value.markers) || !strings(value.markers.ready) || !object(value.timeouts) || Object.values(value.timeouts).some(n => !Number.isFinite(n) || n <= 0) || !['startupMs', 'transitionMs', 'overallMs', 'pollMs'].every(key => Number.isFinite(value.timeouts[key]) && value.timeouts[key] > 0)) fail('RUNNER_PROTOCOL_UNAVAILABLE', `Runner ${runner} lacks a validated versioned invocation/readiness protocol and deadlines`);
+  const found = matches[0];
+  const native = found?.native ?? (runner === 'codex' && found?.quotaCommand === '/status' ? codexStatusDialect : undefined);
+  if (!native) fail('RUNNER_IDENTITY_UNAVAILABLE', `Pre-brief native identity evidence is unavailable for ${runner}`);
+  if (!validDialect(native) || native.identity.source === 'assigned' && !text(found?.sessionIdFlag)) fail('RUNNER_PROTOCOL_UNAVAILABLE', `Runner ${runner} has an invalid native dialect`);
+  const value = { ...found, native } as ProtocolSettings;
+  if (matches.length !== 1 || !found || typeof value.liveTaskVerified !== 'boolean' || !text(value.executable) || !text(value.version) || !Array.isArray(value.baseArgs) || !value.baseArgs.every(text) || !text(value.modelFlag) || !text(value.effortFlag) || !['literal', 'codex_config'].includes(value.effortFormat) || !object(value.modelAliases) || !Array.isArray(value.navigation) || !object(value.markers) || !strings(value.markers.ready) || !object(value.timeouts) || Object.values(value.timeouts).some(n => !Number.isFinite(n) || n <= 0) || !['startupMs', 'transitionMs', 'overallMs', 'pollMs'].every(key => Number.isFinite(value.timeouts[key]) && value.timeouts[key] > 0)) fail('RUNNER_PROTOCOL_UNAVAILABLE', `Runner ${runner} lacks a validated versioned invocation/readiness protocol and deadlines`);
   return value;
 }
 async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string): Promise<string[]> {
@@ -370,6 +393,9 @@ export async function createProductionServices(
     if (lease) {
       const stage = listTaskReservations(store).find(set => set.lease.owner.runId === runId)?.stage;
       if (reason === 'cancelled' && stage !== 'starting') reason = 'failed';
+      const wrapper = stage === 'handoff' ? listTaskReservations(store).find(set => set.lease.owner.runId === runId)?.wrapper : undefined;
+      const runner = readSession(runId)?.launchContext?.selection.runner;
+      if (wrapper && runner && !await waitWrapperExit(execute, wrapper, await budgetFor(runner))) fail('LAUNCH_RECOVERABLE', `Worker of run ${runId} is still alive or its liveness is unknown after the runner transition budget; the next reconciliation releases its reservation`);
       if (!await releaseTaskReservations(await reservationTools(store, context, execute, options.execute), { lease, reason, closeLaunch: tx => { const session = tx.getSession(runId); if (!session) throw new Error('Unknown launch'); closeSessionInTransaction(tx, session, now()); } })) fail('LAUNCH_RECOVERABLE', `Cannot safely release run ${runId}`);
     } else if (readSession(runId)?.state === 'reserved') tools.state.abortLaunch(runId, reason, now());
   };
@@ -471,7 +497,7 @@ export async function createProductionServices(
         });
       } catch (error) {
         record.wrapperFailure = (error as Partial<PersistentWrapperFailure>).wrapper;
-        throw error;
+        throw await workerLaunchFailure(context.tmpRoot, record.launch.runId, record.wrapperFailure) ?? error;
       }
       return { tmuxSession: request.tmuxSession, selection };
     } },
@@ -564,19 +590,27 @@ export async function runProductionWorker(
     if (!lease) fail('TASK_CLAIM_REQUIRED', 'Worker has no fenced task reservation');
     lease = await handoffTaskReservations(dependencies, { lease, wrapper: await ownIdentity(execute, request.runId, request.tmuxSession) });
     if (!lease) fail('TASK_CLAIM_LOST', 'Worker handoff lost its task reservation');
-    const invocation = buildRunnerInvocation(settings, request.selection);
+    const native = settings.native!;
+    const identityCommand = native.identity.command;
+    const assignedId = native.identity.source === 'assigned' ? randomUUID() : undefined;
+    const invocation = buildRunnerInvocation(settings, { ...request.selection, ...(assignedId ? { sessionId: assignedId } : {}) });
     const writableDirectories = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath);
-    invocation.args.push(...writableDirectories.flatMap(path => ['--add-dir', path]));
+    invocation.args.push(...nativeWriteScopeArgs(settings, writableDirectories));
     let screen = '';
     let nativeId: string | undefined;
+    let dismissed = false;
     let actual: ProcessIdentity | undefined;
+    const emptyComposer = (pane: string) => { const input = readNativeComposer(settings, pane)?.input; return input !== undefined && (input === '' || !!settings.markers.ready?.includes(input)); };
     const protocol: RunnerProtocol = {
       invocation: () => invocation,
       observe: pane => {
         screen = pane;
-        nativeId = pane.match(/Session:\s*([0-9a-f]{8}-[0-9a-f-]{27,})/i)?.[1] ?? nativeId;
-        const observation = observeRunnerScreen(settings, { text: pane, version: settings.version, requestedCommand: nativeId ? '/status' : null });
-        if (observation.state === 'ready' && nativeId) return { status: 'ready', cliSessionId: nativeId };
+        const observation = observeRunnerScreen(settings, { text: pane, version: settings.version, requestedCommand: nativeId ? identityCommand : null });
+        if (observation.state === 'workspace_trust_required') return { status: 'failed', reason: observation.state };
+        const shown = readNativeSessionId(settings, pane)?.toLowerCase();
+        if (assignedId && shown && shown !== assignedId) return { status: 'failed', reason: 'Native session identity differs from the assigned session id' };
+        if (shown) nativeId = shown;
+        if (observation.state === 'ready' && nativeId && dismissed && (!native.identity.dismissKeys.length || emptyComposer(pane))) return { status: 'ready', cliSessionId: nativeId };
         if (['auth_required', 'permission_required', 'quota_untrusted'].includes(observation.state)) return { status: 'failed', reason: observation.state };
         return { status: 'starting' };
       },
@@ -604,7 +638,15 @@ export async function runProductionWorker(
     let retriedStatus = false;
     let statusDeadline = 0;
     const target = `=${request.tmuxSession}:0.0`;
-    const composerInput = (text: string) => text.split('\n').findLast(line => /^\s*›(?:\s|$)/u.test(line))?.replace(/^\s*›\s?/u, '').trimEnd();
+    const composerInput = (text: string) => readNativeComposer(settings, text)?.input;
+    const untrusted = async (): Promise<never> => {
+      const root = await execute({ executable: 'git', args: ['-C', request.cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
+      const gitRoot = root?.exitCode === 0 && root.stdout.trim() ? root.stdout.trim() : 'unknown';
+      const reason = `RUNNER_WORKSPACE_UNTRUSTED: runner ${settings.runner} asks to trust workspace ${request.cwd} (git root ${gitRoot}); raf does not answer the dialog or edit CLI configuration`;
+      const failure = { code: 'RUNNER_WORKSPACE_UNTRUSTED', reason, found: { cwd: request.cwd, gitRoot, runner: settings.runner }, remediation: [`Власник один раз довіряє корінь робочого дерева ${gitRoot} у власному діалозі ${settings.runner} CLI і повторює запуск.`] };
+      await fs.writeFile(launchFailurePath(request.tmpRoot, request.runId), JSON.stringify(failure), { mode: 0o600, flag: 'wx' }).catch(() => undefined);
+      return fail(failure.code, reason);
+    };
     const sendKeys = async (keys: string[]) => {
       const result = await execute({ executable: 'tmux', args: ['send-keys', '-t', target, ...keys] });
       if (result.exitCode !== 0) throw new Error('Runner status/navigation transport failed');
@@ -615,29 +657,34 @@ export async function runProductionWorker(
         const observed = await adapter.inspect(adapterSession);
         if (observed.status === 'ready' && observed.cliSessionId) return { state: 'ready', runnerSessionId: observed.cliSessionId };
         if (observed.status === 'exited') return { state: 'exited', reason: 'Runner exited before native identity' };
+        if (observed.status === 'failed' && observed.reason === 'workspace_trust_required') await untrusted();
         if (observed.status === 'failed' || observed.status === 'limited') return { state: 'unknown_screen', reason: observed.reason };
-        const observation = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: requestedStatus ? settings.quotaCommand : null });
+        const observation = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: requestedStatus ? identityCommand : null });
         if (observation.state === 'known_navigation') {
           const action = nextRunnerAction(settings, observation);
           if (action.kind !== 'keys') return { state: 'unknown_screen', reason: 'Unsupported startup navigation' };
           await sendKeys(action.keys);
           requestedStatus = false;
+          dismissed = false;
           submittedStatus = false;
           retriedStatus = false;
         } else if (observation.state === 'ready' && !nativeId && !requestedStatus) {
           requestedStatus = true;
           statusDeadline = Date.now() + settings.timeouts.transitionMs;
-          await sendKeys(['-l', settings.quotaCommand!]);
+          await sendKeys(['-l', identityCommand]);
         } else if (requestedStatus) {
           if (Date.now() >= statusDeadline) return { state: 'timeout', reason: 'Native status transition timed out' };
-          if (!submittedStatus && screen.includes(settings.quotaCommand!)) {
+          if (nativeId && !dismissed) {
+            if (native.identity.dismissKeys.length) await sendKeys([...native.identity.dismissKeys]);
+            dismissed = true;
+          } else if (!submittedStatus && screen.includes(identityCommand)) {
             await sendKeys(['Enter']);
             submittedStatus = true;
-          } else if (submittedStatus && !retriedStatus && /(?:›|>)\s*\/status(?:\s|$)/m.test(screen)) {
+          } else if (submittedStatus && !retriedStatus && !nativeId && (composerInput(screen) === identityCommand || new RegExp(`>\\s*${identityCommand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`, 'mu').test(screen))) {
             await sendKeys(['Enter']);
             retriedStatus = true;
-          } else if (nativeId && observation.state !== 'ready' && !['', settings.quotaCommand].includes(composerInput(screen) ?? '')) return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
-          else if (screen.trim() && !screen.includes(settings.quotaCommand!) && !/\bSession\b/.test(screen) && observation.state !== 'ready') return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
+          } else if (nativeId && observation.state !== 'ready' && !['', identityCommand].includes(composerInput(screen) ?? '')) return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
+          else if (screen.trim() && !screen.includes(identityCommand) && !nativeId && !/\bSession\b/.test(screen) && observation.state !== 'ready') return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
         } else if (screen.trim() && observation.state !== 'ready') return { state: 'unknown_screen', reason: `Runner readiness ${observation.state}` };
         await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
       }
@@ -664,8 +711,9 @@ export async function runProductionWorker(
       if (initial.status !== 'ready' || initial.cliSessionId !== expectedIdentity.runnerSessionId) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Runner is not on its known native input before initial brief delivery');
       const before = screen;
       const beforeLines = before.split('\n');
-      const beforeComposer = beforeLines.findLastIndex(line => /^\s*›(?:\s|$)/u.test(line));
-      const beforeInput = beforeLines[beforeComposer]?.replace(/^\s*›\s?/u, '').trimEnd();
+      const beforeNative = readNativeComposer(settings, before);
+      const beforeComposer = beforeNative?.line ?? -1;
+      const beforeInput = beforeNative?.input;
       if (beforeInput === undefined || beforeInput !== '' && !settings.markers.ready?.includes(beforeInput)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input before initial brief submission');
       const footer = (lines: string[], index: number) => lines.slice(index + 1).map(line => line.trim()).filter(Boolean).join('\n');
       const beforeFooter = beforeComposer < 0 ? undefined : footer(beforeLines, beforeComposer);
@@ -673,7 +721,6 @@ export async function runProductionWorker(
       const beforeHeader = beforeComposer < 0 ? undefined : header(beforeLines, beforeComposer);
       await adapter.deliver(adapterSession, brief);
       const deadline = Date.now() + settings.timeouts.transitionMs;
-      const characters = [...brief].length;
       let previousPending: string | undefined;
       let retried = false;
       while (Date.now() < deadline) {
@@ -681,15 +728,15 @@ export async function runProductionWorker(
         await verifyOwner();
         if (observed.status === 'exited' || observed.status === 'failed' || observed.status === 'limited') fail('RUNNER_DELIVERY_UNAVAILABLE', `Initial brief delivery stopped on ${observed.status}`);
         const lines = screen.split('\n');
-        const composerIndex = lines.findLastIndex(line => /^\s*›(?:\s|$)/u.test(line));
-        const composer = lines[composerIndex];
-        const input = composer?.replace(/^\s*›\s?/u, '').trimEnd();
-        const paste = input?.match(/^\[Pasted Content (\d+) chars\]$/u);
-        const pending = paste ? Number(paste[1]) === characters || Number(paste[1]) === characters + 1 : !brief.includes('\n') && (input === brief || input === brief + '\n');
-        const state = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: '/status' }).state;
-        const working = /^\s*•\s+[^\n]+\([^\n()]*esc to interrupt\)\s*$/mu;
+        const composer = readNativeComposer(settings, screen);
+        const composerIndex = composer?.line ?? -1;
+        const input = composer?.input;
+        const matched = input === undefined ? 'none' : matchPendingBrief(settings, input, brief);
+        const paste = input !== undefined && new RegExp(native.pendingPaste.pattern, 'u').test(input);
+        const pending = matched === 'pending';
+        const state = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: identityCommand }).state;
         const emptyInput = input === '' || settings.markers.ready?.includes(input ?? '');
-        if (!paste && emptyInput && working.test(screen) && !working.test(before)) {
+        if (!paste && emptyInput && isNativeWorking(settings, screen) && !isNativeWorking(settings, before)) {
           await verifyOwner();
           return;
         }
@@ -707,7 +754,7 @@ export async function runProductionWorker(
           previousPending = input;
         } else {
           previousPending = undefined;
-          if (paste || state !== 'ready' && !working.test(screen)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input or screen during initial brief submission');
+          if (paste || state !== 'ready' && !isNativeWorking(settings, screen)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input or screen during initial brief submission');
         }
         await new Promise(resolve => setTimeout(resolve, Math.min(settings.timeouts.pollMs, Math.max(0, deadline - Date.now()))));
       }

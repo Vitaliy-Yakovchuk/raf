@@ -1,5 +1,5 @@
 export type RunnerId = 'codex' | 'grok' | 'agy' | 'claude';
-export type ScreenState = 'ready' | 'known_navigation' | 'auth_required' | 'permission_required' | 'unknown_screen' | 'timeout' | 'exited' | 'quota_untrusted' | 'quota_panel';
+export type ScreenState = 'ready' | 'known_navigation' | 'auth_required' | 'workspace_trust_required' | 'permission_required' | 'unknown_screen' | 'timeout' | 'exited' | 'quota_untrusted' | 'quota_panel';
 export type ProtocolSettings = {
   runner: RunnerId;
   executable: string;
@@ -20,7 +20,18 @@ export type ProtocolSettings = {
   liveTaskVerified: boolean;
   timeouts: { startupMs: number; transitionMs: number; overallMs: number; pollMs: number };
   collection: { intervalMs: number; failureBackoffMs: number; staleAfterMs: number };
+  native?: NativeDialect;
 };
+export type NativeDialect = {
+  identity: { source: 'status' | 'assigned'; command: string; pattern: string; dismissKeys: string[] };
+  composer: string;
+  pendingPaste: { pattern: string; unit: 'characters' | 'newlines' };
+  working: string;
+  writeScope: { directoryFlag: string; ruleFlag: string | null; rule: string | null };
+  exitCommand: string;
+};
+export type NativeComposer = { line: number; input: string };
+export type PendingBrief = 'pending' | 'mismatch' | 'none';
 export type Invocation = { executable: string; args: string[]; liveTaskVerified: boolean };
 export type ScreenObservation = { state: ScreenState; requestedCommand: string | null; matchedNavigation: number | null };
 export type ProtocolAction = { kind: 'text'; text: string } | { kind: 'keys'; keys: string[] } | { kind: 'capture' } | { kind: 'stop'; reason: ScreenState };
@@ -63,7 +74,7 @@ export function observeRunnerScreen(settings: ProtocolSettings, input: { text: s
   if (input.exited) return result('exited');
   if (input.timedOut) return result('timeout');
   if (input.version !== settings.version) return result('unknown_screen');
-  for (const state of ['auth_required', 'permission_required', 'quota_untrusted', 'quota_panel'] as ScreenState[]) {
+  for (const state of ['workspace_trust_required', 'auth_required', 'permission_required', 'quota_untrusted', 'quota_panel'] as ScreenState[]) {
     if (settings.markers[state]?.some(marker => input.text.includes(marker))) return result(state);
   }
   const navigation = settings.navigation.findIndex(item => {
@@ -156,4 +167,42 @@ export function quotaForModel(settings: ProtocolSettings, snapshot: QuotaSnapsho
   if (snapshot.runner !== settings.runner) return null;
   const pool = settings.modelPools[model];
   return pool ? snapshot.pools.find(value => value.id === pool) ?? null : null;
+}
+function dialect(settings: ProtocolSettings): NativeDialect {
+  if (!settings.native) throw new Error(`Runner ${settings.runner} has no native dialect`);
+  return settings.native;
+}
+export function readNativeComposer(settings: ProtocolSettings, screen: string): NativeComposer | null {
+  const composer = new RegExp(dialect(settings).composer, 'u');
+  const lines = screen.split('\n');
+  for (let line = lines.length - 1; line >= 0; line--) {
+    const marker = lines[line].match(composer);
+    if (marker) return { line, input: lines[line].slice(marker[0].length).trimEnd() };
+  }
+  return null;
+}
+export function matchPendingBrief(settings: ProtocolSettings, input: string, brief: string): PendingBrief {
+  const pending = dialect(settings).pendingPaste;
+  const paste = input.match(new RegExp(pending.pattern, 'u'));
+  if (paste) {
+    const count = Number(paste[1]);
+    const expected = pending.unit === 'characters' ? [...brief].length : brief.split('\n').length - 1;
+    return count === expected || pending.unit === 'characters' && count === expected + 1 ? 'pending' : 'mismatch';
+  }
+  if (!brief.includes('\n') && (input === brief || input === brief + '\n')) return 'pending';
+  return input === '' ? 'none' : 'mismatch';
+}
+export function readNativeSessionId(settings: ProtocolSettings, screen: string): string | null {
+  return screen.match(new RegExp(dialect(settings).identity.pattern, 'iu'))?.[1] ?? null;
+}
+export function isNativeWorking(settings: ProtocolSettings, screen: string): boolean {
+  return new RegExp(dialect(settings).working, 'mu').test(screen);
+}
+export function nativeWriteScopeArgs(settings: ProtocolSettings, directories: readonly string[]): string[] {
+  const scope = dialect(settings).writeScope;
+  if ((scope.ruleFlag === null) !== (scope.rule === null)) throw new Error(`Runner ${settings.runner} write rule needs both flag and rule`);
+  if (directories.some(directory => !directory.startsWith('/'))) throw new Error('Write scope directories must be absolute');
+  const args = directories.flatMap(directory => [scope.directoryFlag, directory]);
+  if (scope.ruleFlag && scope.rule && directories.length) args.push(scope.ruleFlag, ...directories.map(directory => scope.rule!.replaceAll('{directory}', directory)));
+  return args;
 }

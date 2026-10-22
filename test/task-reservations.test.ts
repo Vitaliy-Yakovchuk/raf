@@ -701,3 +701,29 @@ scenario('activity updates leave the original task assignment and reservation le
   assert.deepEqual(listTaskReservations(f.store)[0].tasks, input.tasks);
   assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession(input.runId)?.activity?.project), 'another-project');
 });
+
+scenario('[handoff-release] launch failure after handoff releases only after the wrapper guard is confirmed dead and fences late start', async f => {
+  const initial = await f.claim(f.request('handoff-failure', [task('H.1')]));
+  const wrapper = identity('handoff-failure', 'wrapper', 41102);
+  const handed = await handoffTaskReservations(f.dependencies(), { lease: initial, wrapper });
+  assert.ok(handed);
+  assert.equal(await releaseTaskReservations(f.dependencies(), { lease: handed, reason: 'cancelled', closeLaunch: f.close('handoff-failure') }), false);
+  assert.equal(await releaseTaskReservations(f.dependencies(), { lease: handed, reason: 'failed', closeLaunch: f.close('handoff-failure') }), false);
+  assert.equal(listTaskReservations(f.store).length, 1);
+  f.mark(wrapper);
+  assert.equal(await releaseTaskReservations(f.dependencies(), { lease: handed, reason: 'failed', closeLaunch: f.close('handoff-failure') }), true);
+  assert.deepEqual(listTaskReservations(f.store), []);
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
+  assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession('handoff-failure'))?.state, 'finished');
+  assert.equal(await startTaskReservations(f.dependencies(), { lease: handed, agent: identity('handoff-failure', 'agent', 41103) }), null);
+});
+
+scenario('[handoff-release] unknown wrapper liveness keeps the handed-off reservation', async f => {
+  const initial = await f.claim(f.request('handoff-unknown', [task('H.2')]));
+  const wrapper = identity('handoff-unknown', 'wrapper', 41202);
+  const handed = await handoffTaskReservations(f.dependencies(), { lease: initial, wrapper });
+  assert.ok(handed);
+  f.mark(wrapper, { state: 'unknown', observedAt, error: 'fixture permission denied' } as ProcessObservation);
+  await assert.rejects(releaseTaskReservations(f.dependencies(), { lease: handed, reason: 'failed', closeLaunch: f.close('handoff-unknown') }), hasCode('TASK_LIVENESS_UNKNOWN'));
+  assert.equal(listTaskReservations(f.store).length, 1);
+});

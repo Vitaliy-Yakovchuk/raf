@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
@@ -13,9 +13,11 @@ import {
   type BugRepository,
 } from '../src/bug-store.ts';
 import { openStateStore } from '../src/state-store.ts';
-import { canonical, createBugHarness, detailOf, ETCHLY, ETCHLY_DEV, RAMUS, START } from './bug-sync-fixture.ts';
+import { ACTOR, canonical, createBugHarness, detailOf, ETCHLY, ETCHLY_DEV, RAMUS, START, type BugHarness } from './bug-sync-fixture.ts';
+import { createV1BugDatabase } from './bug-store-v1-fixture.ts';
 
-const BUG_TABLES = ['attachments', 'bugs', 'comments', 'conflicts', 'outbox', 'sections', 'sync_state'];
+const BUG_TABLES = ['attachments', 'bugs', 'comments', 'notices', 'sections', 'sync_state'];
+const REMOVED_TABLES = ['conflicts', 'outbox'];
 
 const tables = (db: DatabaseSync): string[] =>
   (db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all() as { name: string }[]).map((row) => row.name);
@@ -31,7 +33,7 @@ test('bugs.sqlite is a separate database with its own schema version and pragmas
   const state = openStateStore(join(h.dir, 'state.sqlite'));
   state.close();
 
-  assert.equal(BUG_STORE_SCHEMA_VERSION, 1);
+  assert.equal(BUG_STORE_SCHEMA_VERSION, 2);
   assert.equal(h.repo.schemaVersion(), BUG_STORE_SCHEMA_VERSION);
   assert.equal(h.repo.path, h.path);
   assert.equal((h.repo.database.prepare('PRAGMA foreign_keys').get() as { foreign_keys: number }).foreign_keys, 1);
@@ -42,10 +44,11 @@ test('bugs.sqlite is a separate database with its own schema version and pragmas
   const bugs = new DatabaseSync(h.path, { readOnly: true });
   const stateDb = new DatabaseSync(join(h.dir, 'state.sqlite'), { readOnly: true });
   try {
-    assert.equal((bugs.prepare('PRAGMA user_version').get() as { user_version: number }).user_version, 1);
+    assert.equal((bugs.prepare('PRAGMA user_version').get() as { user_version: number }).user_version, 2);
     assert.equal((bugs.prepare('PRAGMA journal_mode').get() as { journal_mode: string }).journal_mode, 'wal');
     assert.deepEqual(tables(bugs).filter((name) => BUG_TABLES.includes(name)), BUG_TABLES);
-    assert.deepEqual(tables(stateDb).filter((name) => BUG_TABLES.includes(name)), []);
+    assert.deepEqual(tables(bugs).filter((name) => REMOVED_TABLES.includes(name)), []);
+    assert.deepEqual(tables(stateDb).filter((name) => [...BUG_TABLES, ...REMOVED_TABLES].includes(name)), []);
   } finally {
     bugs.close();
     stateDb.close();
@@ -133,130 +136,185 @@ test('a raw id shared by two sections of one project is ambiguous', (t) => {
   assert.throws(() => h.repo.findBug('projects/etchly/bug#8'), storeError('bug-not-found'));
 });
 
-test('a local comment and its outbox operation are committed together', (t) => {
+test('comments hold only server comments without outbox columns', (t) => {
+  const h = createBugHarness(t);
+  const columns = (h.repo.database.prepare('PRAGMA table_info(comments)').all() as { name: string; notnull: number }[]);
+  const names = columns.map((column) => column.name);
+  for (const removed of ['origin', 'operation_id', 'link_candidate_operation_id']) assert.ok(!names.includes(removed), `comments.${removed}`);
+  assert.equal(columns.find((column) => column.name === 'server_id')?.notnull, 1);
+  const triggers = h.repo.database.prepare("SELECT name FROM sqlite_master WHERE type = 'trigger'").all() as { name: string }[];
+  assert.deepEqual(triggers.filter((row) => row.name === 'outbox_request_immutable'), []);
+});
+
+const removeDatabase = (path: string): void => {
+  for (const suffix of ['', '-wal', '-shm']) rmSync(`${path}${suffix}`, { force: true });
+};
+
+const V1_SEED = { sectionId: ETCHLY.sectionId, project: ETCHLY.project, env: ETCHLY.env, canonicalProject: ETCHLY.canonicalProject, rawId: '344', claimToken: 'v1-claim-token', at: START };
+
+const dumpFile = (path: string): string => {
+  const db = new DatabaseSync(path, { readOnly: true });
+  try {
+    return JSON.stringify({ rows: tables(db).map((name) => [name, db.prepare(`SELECT * FROM ${name}`).all()]), version: db.prepare('PRAGMA user_version').get() });
+  } finally {
+    db.close();
+  }
+};
+
+test('a version 1 base with only delivered comments migrates to version 2 without losing server data', (t) => {
+  const h = createBugHarness(t);
+  h.close();
+  removeDatabase(h.path);
+  createV1BugDatabase(h.path, V1_SEED, [{ operationId: 'op-delivered', text: 'доставлений', state: 'delivered', serverId: 'srv-c-2' }]);
+
+  h.reopen();
+
+  assert.equal(h.repo.schemaVersion(), 2);
+  assert.deepEqual(tables(h.repo.database).filter((name) => REMOVED_TABLES.includes(name)), []);
+  assert.ok(tables(h.repo.database).includes('notices'));
+  const bug = h.repo.findBug(canonical(ETCHLY, '344'));
+  assert.equal(bug.revision, 4);
+  assert.equal(bug.status, 'in_progress');
+  assert.deepEqual(bug.comments.map((comment) => [comment.serverId, comment.text]), [['srv-c-1', 'серверний'], ['srv-c-2', 'доставлений']]);
+  const stored = JSON.stringify(h.repo.database.prepare('SELECT payload FROM bugs').all()) + JSON.stringify(h.repo.database.prepare('SELECT payload FROM comments').all());
+  assert.ok(!stored.includes('v1-claim-token'), 'claim_token is cut from stored payloads');
+  const state = h.repo.syncState(ETCHLY.sectionId);
+  assert.equal(state.journalCursor, '7');
+  assert.equal(state.snapshotComplete, true);
+});
+
+for (const local of [
+  { operationId: 'op-pending', text: 'ще не доставлено', state: 'pending' as const, serverId: null },
+  { operationId: 'op-unknown', text: 'результат невідомий', state: 'unknown' as const, serverId: null },
+  { operationId: 'op-conflict', text: 'конфлікт', state: 'conflict' as const, serverId: null },
+]) {
+  test(`migration refuses a version 1 base with an undelivered ${local.state} comment and changes nothing`, (t) => {
+    const h = createBugHarness(t);
+    h.close();
+    removeDatabase(h.path);
+    createV1BugDatabase(h.path, V1_SEED, [local]);
+    const before = dumpFile(h.path);
+
+    assert.throws(() => openBugStore(h.path), (error: unknown) => {
+      assert.ok(error instanceof BugStoreError);
+      assert.equal(error.code, 'undelivered-local-comments');
+      const items = error.details.comments as { bugKey: string; text: string }[];
+      assert.deepEqual(items.map((item) => [item.bugKey, item.text]), [[canonical(ETCHLY, '344'), local.text]]);
+      return true;
+    });
+    assert.equal(dumpFile(h.path), before);
+    removeDatabase(h.path);
+    h.reopen();
+  });
+}
+
+function writeHeader(revision: number, overrides: Record<string, unknown> = {}) {
+  const detail = detailOf(ETCHLY, '344', { revision });
+  return {
+    key: detail.key, problemId: detail.problemId, revision, status: 'open', state: 'new', createdAt: START, claimedBy: null,
+    payload: { description: 'bug 344', claim_token: 'secret-claim' }, ...overrides,
+  };
+}
+
+const agentComment = (id: string, text: string) => ({ id, authorId: ACTOR, authorKind: 'agent', text, replyTo: null, createdAt: START, payload: { id, author_id: ACTOR, text } });
+const humanComment = (id: string, text: string) => ({ id, authorId: 'human', authorKind: 'human', text, replyTo: null, createdAt: START, payload: { id } });
+
+const storedPayloads = (h: BugHarness): string => JSON.stringify(h.repo.database.prepare('SELECT payload FROM bugs').all()) + JSON.stringify(h.repo.database.prepare('SELECT payload FROM comments').all());
+
+test('a write receipt stores the server comment and bug state in one step without the claim token', (t) => {
   const h = createBugHarness(t);
   seed(h.repo, '344', 3);
   const key = canonical(ETCHLY, '344');
 
-  const receipt = h.addComment(key, 'Перевірено локально');
+  const view = h.repo.applyWriteReceipt({ bugKey: key, bug: writeHeader(4, { status: 'in_progress', claimedBy: ACTOR }), comment: agentComment('srv-c-9', 'від raf'), at: START });
 
-  assert.equal(receipt.state, 'pending');
-  assert.equal(receipt.delivered, false);
-  assert.equal(receipt.bugKey, key);
-  assert.equal(receipt.expectedRevision, 3);
-  assert.match(receipt.operationId, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
-  const outbox = h.repo.outbox(receipt.operationId);
-  assert.ok(outbox);
-  assert.equal(outbox.state, 'pending');
-  assert.equal(outbox.kind, 'comment.add');
-  assert.equal(outbox.commentPk, receipt.commentPk);
-  assert.equal(outbox.claimsFingerprint, h.claims.fingerprint(ETCHLY, 'write'));
-  assert.deepEqual(JSON.parse(outbox.requestJson), { operation_id: receipt.operationId, expected_revision: 3, text: 'Перевірено локально' });
-  const [comment] = h.repo.findBug(key).comments;
-  assert.ok(comment);
-  assert.equal(comment.origin, 'local');
-  assert.equal(comment.serverId, null);
-  assert.equal(comment.text, 'Перевірено локально');
-  assert.equal(comment.delivery?.operationId, receipt.operationId);
-  assert.equal(comment.delivery?.state, 'pending');
-  const summary = h.repo.listBugs({ limit: 10 }).bugs.find((bug) => bug.key === key);
-  assert.equal(summary?.pendingOperations, 1);
+  assert.equal(view.key, key);
+  assert.equal(view.revision, 4);
+  assert.equal(view.status, 'in_progress');
+  assert.equal(view.claimedBy, ACTOR);
+  assert.deepEqual(view.comments.map((comment) => [comment.serverId, comment.text, comment.authorId]), [['srv-c-9', 'від raf', ACTOR]]);
+  assert.deepEqual(h.repo.findBug(key), view);
+  assert.ok(!storedPayloads(h).includes('secret-claim'));
 });
 
-test('a failure before the outbox insert leaves neither comment nor operation', (t) => {
+test('a status receipt without a comment updates only the bug state', (t) => {
   const h = createBugHarness(t);
-  seed(h.repo, '344');
-  h.reopen({
-    beforeOutboxInsert: () => {
-      throw new Error('disk full');
-    },
-  });
+  seed(h.repo, '344', 3);
   const key = canonical(ETCHLY, '344');
 
-  assert.throws(() => h.addComment(key, 'не має залишитись'), /disk full/);
+  const view = h.repo.applyWriteReceipt({ bugKey: key, bug: writeHeader(4, { status: 'closed' }), comment: null, at: START });
 
-  h.reopen();
-  assert.deepEqual(h.visibleTexts(key), []);
-  assert.deepEqual(h.repo.listOutbox(), []);
+  assert.equal(view.status, 'closed');
+  assert.equal(view.revision, 4);
+  assert.deepEqual(view.comments, []);
 });
 
-test('comments are rejected for unknown bugs and empty text without writing rows', (t) => {
+test('a receipt older than the local revision keeps the newer bug state but adds its comment once', (t) => {
   const h = createBugHarness(t);
-  seed(h.repo, '344');
-
-  assert.throws(() => h.addComment(canonical(ETCHLY, '999'), 'text'), storeError('bug-not-found'));
-  assert.throws(() => h.addComment(canonical(ETCHLY, '344'), '   '), storeError('invalid-comment'));
-  assert.deepEqual(h.repo.listOutbox(), []);
-  assert.deepEqual(h.visibleTexts(canonical(ETCHLY, '344')), []);
-});
-
-test('a pending comment survives restart and an interrupted send becomes unknown', (t) => {
-  const h = createBugHarness(t);
-  seed(h.repo, '344');
   const key = canonical(ETCHLY, '344');
-  const receipt = h.addComment(key, 'переживе рестарт');
-  const before = h.repo.outbox(receipt.operationId)!;
-  assert.equal(h.repo.markSending(receipt.operationId, START), true);
+  h.repo.applyPullBatch({ sectionId: ETCHLY.sectionId, details: [detailOf(ETCHLY, '344', { revision: 6, status: 'closed', comments: [agentComment('srv-c-9', 'від raf'), humanComment('srv-c-10', 'пізніше')] })], deleted: [], missing: [], position: {}, at: START });
 
-  h.reopen();
+  const view = h.repo.applyWriteReceipt({ bugKey: key, bug: writeHeader(5, { status: 'in_progress' }), comment: agentComment('srv-c-9', 'від raf'), at: START });
 
-  assert.equal(h.repo.outbox(receipt.operationId)?.state, 'sending');
-  assert.equal(h.repo.recoverInterruptedSends(START), 1);
-  const after = h.repo.outbox(receipt.operationId)!;
-  assert.equal(after.state, 'unknown');
-  assert.equal(after.operationId, before.operationId);
-  assert.equal(after.requestJson, before.requestJson);
-  assert.deepEqual(h.visibleTexts(key), ['переживе рестарт']);
-  assert.ok(existsSync(h.path));
+  assert.equal(view.revision, 6);
+  assert.equal(view.status, 'closed');
+  assert.deepEqual(view.comments.map((comment) => comment.serverId), ['srv-c-9', 'srv-c-10']);
 });
 
-test('an operation can be claimed for sending only once', (t) => {
+test('a receipt for a bug missing locally fails without writing', (t) => {
   const h = createBugHarness(t);
-  seed(h.repo, '344');
-  const receipt = h.addComment(canonical(ETCHLY, '344'), 'один раз');
+  seed(h.repo, '344', 3);
 
-  assert.equal(h.repo.markSending(receipt.operationId, START), true);
-  assert.equal(h.repo.markSending(receipt.operationId, START), false);
-  assert.throws(() => h.repo.markSending('00000000-0000-4000-8000-000000000000', START), storeError('operation-not-found'));
+  assert.throws(() => h.repo.applyWriteReceipt({ bugKey: canonical(ETCHLY, '999'), bug: writeHeader(4), comment: agentComment('srv-c-9', 'нікуди'), at: START }), storeError('bug-not-found'));
+
+  assert.deepEqual(h.repo.database.prepare('SELECT * FROM comments').all(), []);
+  assert.equal(h.repo.findBug(canonical(ETCHLY, '344')).revision, 3);
 });
 
-test('due operations follow next attempt time and skip conflicts and in-flight sends', (t) => {
+test('a pulled detail older than the local revision does not roll back the bug, comments or attachments', (t) => {
   const h = createBugHarness(t);
-  seed(h.repo, '344');
-  seed(h.repo, '345');
-  seed(h.repo, '346');
-  const later = h.addComment(canonical(ETCHLY, '344'), 'пізніше');
-  const conflicted = h.addComment(canonical(ETCHLY, '345'), 'конфлікт');
-  const inFlight = h.addComment(canonical(ETCHLY, '346'), 'в дорозі');
-  h.repo.markSending(later.operationId, START);
-  h.repo.markUnknown(later.operationId, { status: null, code: 'network', nextAttemptAt: '2026-10-22T10:00:05.000Z', at: START });
-  h.repo.markConflict(conflicted.operationId, { kind: 'conflict-409', observed: { revision: 9 }, status: 409, at: START });
-  h.repo.markSending(inFlight.operationId, START);
-
-  assert.deepEqual(h.repo.dueOperations(START).map((op) => op.operationId), []);
-  assert.deepEqual(h.repo.dueOperations('2026-10-22T10:00:05.000Z').map((op) => op.operationId), [later.operationId]);
-  assert.equal(h.repo.outbox(later.operationId)?.attempts, 1);
-  assert.equal(h.repo.outbox(later.operationId)?.lastErrorCode, 'network');
-  assert.equal(h.repo.outbox(conflicted.operationId)?.state, 'conflict');
-});
-
-test('a conflict keeps the text and operation and gets an idempotent notice key', (t) => {
-  const h = createBugHarness(t);
-  seed(h.repo, '344');
   const key = canonical(ETCHLY, '344');
-  const receipt = h.addComment(key, 'збережи мене');
+  const attachment = { id: 'a-1', commentId: null, kind: 'file', mime: 'text/plain', bytes: 10, sha256: 'a'.repeat(64) };
+  h.repo.applyPullBatch({ sectionId: ETCHLY.sectionId, details: [detailOf(ETCHLY, '344', { revision: 5, status: 'closed', comments: [humanComment('srv-c-1', 'новий')], attachments: [attachment] })], deleted: [], missing: [], position: {}, at: START });
+  const before = h.repo.findBug(key);
 
-  const first = h.repo.markConflict(receipt.operationId, { kind: 'bug-deleted', observed: { deleted: true }, status: null, at: START });
-  const again = h.repo.markConflict(receipt.operationId, { kind: 'bug-deleted', observed: { deleted: true }, status: null, at: START });
+  h.repo.applyPullBatch({ sectionId: ETCHLY.sectionId, details: [detailOf(ETCHLY, '344', { revision: 4, status: 'open' })], deleted: [], missing: [], position: { journalCursor: '9' }, at: START });
 
-  assert.equal(first.noticeKey, `bug-conflict:${receipt.operationId}:bug-deleted`);
-  assert.equal(again.noticeKey, first.noticeKey);
-  assert.equal(h.repo.conflicts().length, 1);
-  assert.deepEqual(h.repo.pendingNotices().map((notice) => notice.noticeKey), [first.noticeKey]);
-  h.repo.markNoticed(first.noticeKey, START);
-  assert.deepEqual(h.repo.pendingNotices(), []);
-  assert.equal(h.repo.conflicts()[0]?.noticedAt, START);
-  assert.deepEqual(h.visibleTexts(key), ['збережи мене']);
-  assert.equal(h.repo.findBug(key).comments[0]?.delivery?.conflict, 'bug-deleted');
-  assert.ok(h.repo.outbox(receipt.operationId));
+  const after = h.repo.findBug(key);
+  assert.equal(after.revision, 5);
+  assert.equal(after.status, 'closed');
+  assert.deepEqual(after.comments, before.comments);
+  assert.deepEqual(after.attachments, before.attachments);
+  assert.equal(h.repo.syncState(ETCHLY.sectionId).journalCursor, '9', 'the journal cursor still advances');
+});
+
+test('a pulled detail with the same revision is idempotent and a newer one replaces the local state', (t) => {
+  const h = createBugHarness(t);
+  const key = canonical(ETCHLY, '344');
+  const first = detailOf(ETCHLY, '344', { revision: 5, comments: [humanComment('srv-c-1', 'перший'), humanComment('srv-c-2', 'другий')] });
+  h.repo.applyPullBatch({ sectionId: ETCHLY.sectionId, details: [first], deleted: [], missing: [], position: {}, at: START });
+  h.repo.applyPullBatch({ sectionId: ETCHLY.sectionId, details: [first], deleted: [], missing: [], position: {}, at: START });
+  assert.deepEqual(h.visibleTexts(key), ['перший', 'другий']);
+
+  h.repo.applyPullBatch({ sectionId: ETCHLY.sectionId, details: [detailOf(ETCHLY, '344', { revision: 6, status: 'closed', comments: [humanComment('srv-c-2', 'другий')] })], deleted: [], missing: [], position: {}, at: START });
+
+  assert.deepEqual(h.visibleTexts(key), ['другий']);
+  assert.equal(h.repo.findBug(key).status, 'closed');
+  assert.equal(h.repo.findBug(key).revision, 6);
+});
+
+test('a stale pull applied after a write receipt keeps the written comment until a newer pull', (t) => {
+  const h = createBugHarness(t);
+  const key = canonical(ETCHLY, '344');
+  const stale = detailOf(ETCHLY, '344', { revision: 3, comments: [humanComment('srv-c-1', 'людина')] });
+  h.repo.applyPullBatch({ sectionId: ETCHLY.sectionId, details: [stale], deleted: [], missing: [], position: {}, at: START });
+  h.repo.applyWriteReceipt({ bugKey: key, bug: writeHeader(4), comment: agentComment('srv-c-2', 'від raf'), at: START });
+
+  h.repo.applyPullBatch({ sectionId: ETCHLY.sectionId, details: [stale], deleted: [], missing: [], position: {}, at: START });
+
+  assert.equal(h.repo.findBug(key).revision, 4);
+  assert.deepEqual(h.visibleTexts(key), ['людина', 'від raf']);
+  h.repo.applyPullBatch({ sectionId: ETCHLY.sectionId, details: [detailOf(ETCHLY, '344', { revision: 4, comments: [humanComment('srv-c-1', 'людина'), agentComment('srv-c-2', 'від raf')] })], deleted: [], missing: [], position: {}, at: START });
+  assert.deepEqual(h.visibleTexts(key), ['людина', 'від raf']);
+  assert.equal(h.repo.database.prepare('SELECT COUNT(*) AS n FROM comments').get()!.n, 2);
 });

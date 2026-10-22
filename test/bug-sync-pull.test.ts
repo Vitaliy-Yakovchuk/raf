@@ -62,7 +62,7 @@ test('initial sync takes the journal head first and follows list and detail curs
   assert.deepEqual(keys(h), ['344', '345', '346'].map((id) => canonical(ETCHLY, id)));
   const bug = h.repo.findBug(canonical(ETCHLY, '344'));
   assert.deepEqual(bug.comments.map((comment) => comment.text), ['перший', 'другий', 'третій']);
-  assert.ok(bug.comments.every((comment) => comment.origin === 'server' && comment.serverId !== null && comment.delivery === null));
+  assert.ok(bug.comments.every((comment) => comment.serverId !== null));
   assert.equal(bug.detailComplete, true);
   assert.equal(bug.presence, 'present');
   assert.deepEqual(bug.attachments.map((attachment) => attachment.serverId).sort(), ['a-1', 'a-2', 'a-3']);
@@ -143,7 +143,7 @@ test('a journal page delivered again after a failure is applied without duplicat
   assert.deepEqual(h.visibleTexts(canonical(ETCHLY, '344')), ['один', 'два']);
 });
 
-test('server removal of a comment or bug without pending work removes local rows', async (t) => {
+test('server removal of a comment or bug removes local rows without notices', async (t) => {
   const h = createBugHarness(t);
   const a = h.server.seedBug(ETCHLY, { rawId: '344', comments: [{ authorId: 'human', text: 'прибрати' }, { authorId: 'human', text: 'лишити' }] });
   const b = h.server.seedBug(ETCHLY, { rawId: '345' });
@@ -155,65 +155,7 @@ test('server removal of a comment or bug without pending work removes local rows
 
   assert.deepEqual(h.visibleTexts(canonical(ETCHLY, '344')), ['лишити']);
   assert.throws(() => h.repo.findBug(canonical(ETCHLY, '345')), (error: unknown) => error instanceof BugStoreError && error.code === 'bug-not-found');
-  assert.deepEqual(h.repo.conflicts(), []);
   assert.deepEqual(h.notifier.calls, []);
-});
-
-test('server deletion of a bug with a pending comment keeps the text and shows the conflict to main', async (t) => {
-  const h = createBugHarness(t);
-  const b = h.server.seedBug(ETCHLY, { rawId: '345' });
-  await h.syncer.pullSection(ETCHLY.sectionId);
-  const key = canonical(ETCHLY, '345');
-  const receipt = h.addComment(key, 'текст, який не можна втратити');
-  h.server.deleteBug(b);
-
-  await h.syncer.pullSection(ETCHLY.sectionId);
-
-  const bug = h.repo.findBug(key);
-  assert.equal(bug.presence, 'deleted');
-  assert.deepEqual(bug.comments.map((comment) => comment.text), ['текст, який не можна втратити']);
-  assert.equal(bug.comments[0]?.delivery?.operationId, receipt.operationId);
-  assert.equal(bug.comments[0]?.delivery?.conflict, 'bug-deleted');
-  assert.notEqual(bug.comments[0]?.delivery?.state, 'delivered');
-  assert.ok(h.repo.outbox(receipt.operationId));
-  const noticeKey = `bug-conflict:${receipt.operationId}:bug-deleted`;
-  assert.deepEqual(h.repo.conflicts().map((item) => [item.kind, item.noticeKey]), [['bug-deleted', noticeKey]]);
-  assert.equal(h.notifier.delivered.size, 1);
-  const notice = h.notifier.delivered.get(noticeKey);
-  assert.equal(notice?.bugKey, key);
-  assert.equal(notice?.operationId, receipt.operationId);
-  assert.equal(notice?.kind, 'bug-deleted');
-  assert.equal(notice?.text, 'текст, який не можна втратити');
-  assert.notEqual(h.repo.conflicts()[0]?.noticedAt, null);
-  assert.equal(h.repo.listBugs({ limit: 50 }).bugs.find((item) => item.key === key)?.conflicts, 1);
-
-  h.clock.advance(h.config.retry.maxDelayMs);
-  await h.syncer.pushDue();
-  await h.syncer.pullSection(ETCHLY.sectionId);
-
-  assert.deepEqual(h.server.commentRequests, []);
-  assert.equal(h.notifier.calls.length, 1);
-  assert.deepEqual(h.visibleTexts(key), ['текст, який не можна втратити']);
-});
-
-test('a pending comment is never overwritten by server state', async (t) => {
-  const h = createBugHarness(t);
-  const a = h.server.seedBug(ETCHLY, { rawId: '344' });
-  await h.syncer.pullSection(ETCHLY.sectionId);
-  const key = canonical(ETCHLY, '344');
-  const receipt = h.addComment(key, 'локальний');
-  h.server.addComment(a, 'human', 'серверний');
-  h.server.setStatus(a, 'in_progress');
-
-  await h.syncer.pullSection(ETCHLY.sectionId);
-
-  const bug = h.repo.findBug(key);
-  assert.equal(bug.status, 'in_progress');
-  assert.deepEqual(bug.comments.map((comment) => comment.text).sort(), ['локальний', 'серверний'].sort());
-  const local = bug.comments.find((comment) => comment.origin === 'local');
-  assert.equal(local?.delivery?.operationId, receipt.operationId);
-  assert.equal(local?.delivery?.state, 'pending');
-  assert.equal(h.repo.outbox(receipt.operationId)?.requestJson, JSON.stringify({ operation_id: receipt.operationId, expected_revision: 1, text: 'локальний' }));
 });
 
 test('an invalid saved journal cursor triggers a resync that marks vanished bugs missing', async (t) => {
@@ -222,8 +164,6 @@ test('an invalid saved journal cursor triggers a resync that marks vanished bugs
   const gone = h.server.seedBug(ETCHLY, { rawId: '345' });
   const erased = h.server.seedBug(ETCHLY, { rawId: '346' });
   await h.syncer.pullSection(ETCHLY.sectionId);
-  const pendingKey = canonical(ETCHLY, '345');
-  const receipt = h.addComment(pendingKey, 'чекає main');
   h.server.addComment(erased, 'human', 'останній');
   await h.syncer.pullSection(ETCHLY.sectionId);
   h.server.eraseBug(gone);
@@ -235,12 +175,9 @@ test('an invalid saved journal cursor triggers a resync that marks vanished bugs
   assert.equal(outcome.snapshotComplete, true);
   assert.ok(h.server.callsOf('query').length >= 2, 'resync performs a full snapshot');
   assert.equal(h.repo.findBug(canonical(ETCHLY, '344')).presence, 'present');
+  assert.equal(h.repo.findBug(canonical(ETCHLY, '345')).presence, 'missing');
   assert.equal(h.repo.findBug(canonical(ETCHLY, '346')).presence, 'missing');
-  const pending = h.repo.findBug(pendingKey);
-  assert.equal(pending.presence, 'missing');
-  assert.deepEqual(pending.comments.map((comment) => comment.text), ['чекає main']);
-  assert.deepEqual(h.repo.conflicts().map((item) => [item.operationId, item.kind]), [[receipt.operationId, 'bug-missing']]);
-  assert.ok(h.notifier.delivered.has(`bug-conflict:${receipt.operationId}:bug-missing`));
+  assert.deepEqual(h.notifier.calls, []);
   assert.equal(h.repo.syncState(ETCHLY.sectionId).journalCursor, h.server.head(ETCHLY));
 });
 
@@ -358,4 +295,54 @@ test('a cycle syncs conf sections and a section without its secret fails visibly
   assert.equal(h.repo.syncState(ETCHLY.sectionId).lastSuccessAt, null);
   assert.equal(h.repo.syncState(RAMUS.sectionId).snapshotComplete, true);
   assert.equal(h.repo.findBug(canonical(RAMUS, '345')).presence, 'present');
+});
+
+test('a pull holding an older detail does not roll back a synchronous comment and the next pull converges', async (t) => {
+  const h = createBugHarness(t);
+  const a = h.server.seedBug(ETCHLY, { rawId: '344' });
+  await h.syncer.pullSection(ETCHLY.sectionId);
+  const key = canonical(ETCHLY, '344');
+  h.server.addComment(a, 'human', 'людина');
+  const readsBefore = h.server.callsOf('read').length;
+  const release = h.server.pauseReads();
+  const pulling = h.syncer.pullSection(ETCHLY.sectionId);
+  let commentId = '';
+  try {
+    for (let turn = 0; h.server.callsOf('read').length === readsBefore; turn += 1) {
+      assert.ok(turn < 10_000, 'pull reached the detail read');
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+    const written = await h.writer.addComment({ bugKey: key, text: 'від raf' });
+    commentId = written.commentId;
+    assert.equal(h.repo.findBug(key).revision, 3);
+  } finally {
+    release();
+    await pulling;
+  }
+
+  const afterStale = h.repo.findBug(key);
+  assert.equal(afterStale.revision, 3, 'the stale detail (revision 2) does not overwrite revision 3');
+  assert.ok(afterStale.comments.some((comment) => comment.serverId === commentId), 'the synchronous comment stays');
+
+  await h.syncer.pullSection(ETCHLY.sectionId);
+
+  const final = h.repo.findBug(key);
+  assert.equal(final.revision, h.server.state(a).revision);
+  assert.deepEqual(final.comments.map((comment) => comment.serverId), h.server.serverComments(a).map((comment) => comment.id));
+  assert.deepEqual(h.visibleTexts(key), ['людина', 'від raf']);
+  assert.equal(h.repo.syncState(ETCHLY.sectionId).journalCursor, h.server.head(ETCHLY));
+});
+
+test('a sync cycle only pulls and never writes to the server', async (t) => {
+  const h = createBugHarness(t, { sections: [ETCHLY, RAMUS] });
+  h.server.seedBug(ETCHLY, { rawId: '344', comments: [{ authorId: 'human', text: 'людина' }] });
+  h.server.seedBug(RAMUS, { rawId: '345' });
+
+  await h.syncer.runCycle();
+  await h.syncer.runCycle();
+
+  assert.deepEqual(h.server.callsOf('comment'), []);
+  assert.deepEqual(h.server.mcpCalls, []);
+  assert.equal(h.server.mutations, 0);
+  assert.ok(h.server.calls.every((call) => ['events', 'query', 'read'].includes(call.method)));
 });

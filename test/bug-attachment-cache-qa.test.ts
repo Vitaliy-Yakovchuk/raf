@@ -244,8 +244,7 @@ function indexProblems(budget: number): string[] {
 function durableSnapshot(): string {
   return read(database => JSON.stringify({
     bugs: database.prepare('SELECT project, env, source, owner, raw_id, revision, status, presence, payload FROM bugs ORDER BY raw_id').all(),
-    comments: database.prepare('SELECT b.raw_id, c.server_id, c.origin, c.operation_id, c.author_id, c.text FROM comments c JOIN bugs b ON b.bug_pk = c.bug_pk ORDER BY b.raw_id, c.comment_pk').all(),
-    outbox: database.prepare('SELECT operation_id, state, request_json, expected_revision FROM outbox ORDER BY operation_id').all(),
+    comments: database.prepare('SELECT b.raw_id, c.server_id, c.author_id, c.text FROM comments c JOIN bugs b ON b.bug_pk = c.bug_pk ORDER BY b.raw_id, c.comment_pk').all(),
     attachments: database.prepare('SELECT bug_pk, comment_pk, server_id, kind, mime, bytes, sha256, presence FROM attachments ORDER BY server_id').all(),
   }));
 }
@@ -319,9 +318,6 @@ before(async () => {
   await (await openSecretsStore({ home, configPath: join(root, 'conf', 'raf.json') }))
     .merge([{ kind: 'env', name: SECRET_NAME, value: SECRET, source: 'qa-33', updatedAt: AT }]);
   await pull();
-  writeFileSync(join(workspace, 'comment.txt'), 'Локальний коментар QA 3.3, не має загубитися під час очищення кешу.');
-  const added = ok(await raf(['bug', 'comment', 'add', '--bug', KEY1, '--text-file', join(workspace, 'comment.txt')]));
-  assert.equal(added.delivery, 'pending');
   baseline = durableSnapshot();
 });
 
@@ -482,15 +478,11 @@ test('зменшення бюджету в conf застосовується п�
   writeConf(BUDGET);
 });
 
-test('жуки, коментарі, pending-операція та метадані вкладень не загубились', async () => {
+test('жуки, коментарі та метадані вкладень не загубились', async () => {
   assert.equal(durableSnapshot(), baseline);
   const shown = ok(await raf(['bug', 'show', '--bug', KEY1]));
   const texts = shown.bug.comments.map((comment: { text: string }) => comment.text);
   assert.ok(texts.includes('коментар c-1') && texts.includes('коментар c-2'), texts.join(' | '));
-  const local = shown.bug.comments.find((comment: { text: string }) => comment.text.startsWith('Локальний коментар QA 3.3'));
-  assert.ok(local, texts.join(' | '));
   assert.equal(shown.bug.attachments.length, 9);
-  const outbox = read(database => database.prepare('SELECT state FROM outbox').all() as { state: string }[]);
-  assert.deepEqual(outbox.map(item => item.state), ['pending']);
   assert.deepEqual(server.rejected, []);
 });

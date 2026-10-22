@@ -1,23 +1,26 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { spawn, spawnSync } from 'node:child_process';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { startBugSyncService, type BugSyncService, type MainNotifier } from '../src/bug-sync.ts';
-import { FakeBugServer, networkDown, serverKey } from './bug-sync-fixture.ts';
+import { buildCatalog } from '../src/bootstrap.ts';
+import { BugServerError, startBugSyncService, type BugMcpTool, type BugSyncService, type MainNotice, type MainNotifier, type ServerAuth } from '../src/bug-sync.ts';
+import { ACTOR, FakeBugServer, revisionConflict, serverKey } from './bug-sync-fixture.ts';
 
 const rafDevelop = fileURLToPath(new URL('../', import.meta.url));
 const realConf = fileURLToPath(new URL('../../conf/', import.meta.url));
 const constants = JSON.parse(readFileSync(join(realConf, 'raf-constants.json'), 'utf8'));
-const APPROVED = ['bug list', 'bug show', 'bug comment add', 'bug attachment get'];
+const APPROVED = ['bug list', 'bug show', 'bug comment add', 'bug status set', 'bug attachment get'];
+const MCP_PATH = '/internal/mcp/bugs';
 const ETCHLY = { project: 'etchly', env: 'prod', stand: 'prod', secret: 'DASH_BUGS_PROD_ETCHLY' };
 const CRM = { project: 'crm', env: 'dev', stand: 'dev1', secret: 'DASH_BUGS_DEV1_CRM' };
 const ETCHLY_KEY = 'projects/etchly/bug#344';
 const CRM_KEY = 'projects/crm/bug#344';
-const COMMENT = 'QA 3.4: локальний коментар\nдругий рядок — «лапки», emoji 🐞 і пробіли  в кінці  ';
+const COMMENT = 'QA 3.4: синхронний коментар\nдругий рядок — «лапки», emoji 🐞 і пробіли  в кінці  ';
 const ATTACHMENT = Buffer.from('hello attachment');
 
 interface Workspace {
@@ -27,6 +30,7 @@ interface Workspace {
   readonly rafHome: string;
   readonly fetchLog: string;
   readonly preload: string;
+  readonly secrets: ReadonlyMap<string, string>;
 }
 
 interface CliResult {
@@ -42,7 +46,10 @@ function workspace(): Workspace {
   const rafHome = join(home, '.raf');
   mkdirSync(join(root, 'conf'), { recursive: true });
   mkdirSync(rafHome, { recursive: true, mode: 0o700 });
-  symlinkSync(rafDevelop, join(root, 'raf-develop'));
+  const develop = join(root, 'raf-develop');
+  mkdirSync(develop);
+  for (const entry of readdirSync(rafDevelop)) if (entry !== 'dist') symlinkSync(join(rafDevelop, entry), join(develop, entry));
+  buildCatalog(realConf, join(develop, 'dist', 'catalog.json'), constants.commands.map((command: { path: string[] }) => command.path.join(' ')));
   const settings = JSON.parse(readFileSync(join(realConf, 'raf.json'), 'utf8'));
   settings.bugs = { ...settings.bugs, attachmentCacheMaxBytes: 1_000_000, sections: [ETCHLY, CRM] };
   writeFileSync(join(root, 'conf', 'raf.json'), JSON.stringify(settings, null, 2));
@@ -50,25 +57,112 @@ function workspace(): Workspace {
     name: section.secret, kind: 'env', value: `qa34-${section.secret}-${'x'.repeat(40)}`, source: 'qa34', updatedAt: '2026-10-22T00:00:00.000Z',
   }));
   writeFileSync(join(rafHome, 'secrets.json'), JSON.stringify({ version: 1, records: secrets }), { mode: 0o600 });
+  const secretValues = new Map(secrets.map(record => [record.name, record.value]));
   chmodSync(join(rafHome, 'secrets.json'), 0o600);
   const fetchLog = join(base, 'fetch.log');
   writeFileSync(fetchLog, '');
   const preload = join(base, 'offline.mjs');
   writeFileSync(preload, [
     "import { appendFileSync } from 'node:fs';",
-    'globalThis.fetch = async input => {',
-    '  appendFileSync(process.env.QA_FETCH_LOG, String(input && input.url ? input.url : input) + "\\n");',
+    'const realFetch = globalThis.fetch;',
+    'globalThis.fetch = async (input, init) => {',
+    '  const url = String(input && input.url ? input.url : input);',
+    '  appendFileSync(process.env.QA_FETCH_LOG, url + "\\n");',
+    `  if (process.env.QA_MCP_URL && new URL(url).pathname === '${MCP_PATH}') return realFetch(process.env.QA_MCP_URL, init);`,
     "  throw new TypeError('fetch failed: network disabled by qa34');",
     '};',
   ].join('\n'));
-  return { base, root, home, rafHome, fetchLog, preload };
+  return { base, root, home, rafHome, fetchLog, preload, secrets: secretValues };
+}
+
+function cliArgs(ws: Workspace, argv: readonly string[]): string[] {
+  return ['--preserve-symlinks', '--preserve-symlinks-main', '--import', ws.preload, join(ws.root, 'raf-develop', 'bin', 'raf.ts'), ...argv];
 }
 
 function cli(ws: Workspace, argv: readonly string[], input?: string, timeout = 60_000): CliResult {
-  const result = spawnSync(process.execPath, [
-    '--preserve-symlinks', '--preserve-symlinks-main', '--import', ws.preload, join(ws.root, 'raf-develop', 'bin', 'raf.ts'), ...argv,
-  ], { env: { ...process.env, HOME: ws.home, QA_FETCH_LOG: ws.fetchLog }, input: input ?? '', encoding: 'utf8', timeout });
+  const result = spawnSync(process.execPath, cliArgs(ws, argv), { env: { ...process.env, HOME: ws.home, QA_FETCH_LOG: ws.fetchLog }, input: input ?? '', encoding: 'utf8', timeout });
   return { code: result.status, stdout: result.stdout.trim(), stderr: result.stderr.trim() };
+}
+
+async function cliWithDash(ws: Workspace, dash: McpDash, argv: readonly string[]): Promise<CliResult> {
+  const child = spawn(process.execPath, cliArgs(ws, argv), {
+    env: { ...process.env, HOME: ws.home, QA_FETCH_LOG: ws.fetchLog, QA_MCP_URL: dash.url }, stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let stdout = '';
+  let stderr = '';
+  child.stdout.on('data', chunk => { stdout += chunk; });
+  child.stderr.on('data', chunk => { stderr += chunk; });
+  const code = await new Promise<number | null>(done => child.on('close', value => done(value)));
+  return { code, stdout: stdout.trim(), stderr: stderr.trim() };
+}
+
+class McpDash {
+  readonly requests: { tool: string; contractVersion: string | undefined; protocolVersion: string | undefined; scope: unknown }[] = [];
+  url = '';
+  private readonly http: Server;
+  private readonly server: FakeBugServer;
+  private readonly secrets: ReadonlyMap<string, string>;
+
+  constructor(server: FakeBugServer, secrets: ReadonlyMap<string, string>) {
+    this.server = server;
+    this.secrets = secrets;
+    this.http = createServer((request, response) => { void this.handle(request, response); });
+  }
+
+  async start(): Promise<void> {
+    await new Promise<void>(done => this.http.listen(0, '127.0.0.1', done));
+    this.url = `http://127.0.0.1:${(this.http.address() as { port: number }).port}${MCP_PATH}`;
+  }
+
+  async stop(): Promise<void> {
+    this.http.closeAllConnections();
+    await new Promise<void>(done => this.http.close(() => done()));
+  }
+
+  tools(): string[] {
+    return this.requests.map(request => request.tool);
+  }
+
+  private verified(header: string): Record<string, unknown> | null {
+    const [head, body, signature] = header.replace(/^Bearer /, '').split('.');
+    if (!head || !body || !signature) return null;
+    const given = Buffer.from(signature, 'base64url');
+    for (const secret of this.secrets.values()) {
+      const key = createHash('sha256').update(`dashboard-bugs:${secret}`).digest();
+      const expected = createHmac('sha256', key).update(`${head}.${body}`).digest();
+      if (given.length === expected.length && timingSafeEqual(given, expected)) return JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+    }
+    return null;
+  }
+
+  private async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    const chunks: Buffer[] = [];
+    for await (const chunk of request) chunks.push(chunk as Buffer);
+    const rpc = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    const claims = this.verified(request.headers.authorization ?? '');
+    const tool = rpc.params?.name as BugMcpTool;
+    this.requests.push({
+      tool, contractVersion: request.headers['x-bugs-contract-version'] as string | undefined,
+      protocolVersion: request.headers['mcp-protocol-version'] as string | undefined, scope: claims?.scope,
+    });
+    const reply = (result: unknown) => {
+      response.writeHead(200, { 'content-type': 'application/json' });
+      response.end(JSON.stringify({ jsonrpc: '2.0', id: rpc.id, result }));
+    };
+    if (!claims || claims.actor !== ACTOR || request.method !== 'POST' || rpc.method !== 'tools/call') {
+      response.writeHead(401, { 'content-type': 'application/json' });
+      response.end(JSON.stringify({ error: 'unauthenticated' }));
+      return;
+    }
+    const auth: ServerAuth = { origin: 'qa34', project: String(claims.project), env: String(claims.env), token: `qa34|${String(claims.scope)}|mcp`, timeoutMs: 0 };
+    try {
+      const answer = await this.server.mcp.call(auth, tool, rpc.params.arguments ?? {});
+      reply({ content: [{ type: 'text', text: JSON.stringify(answer) }], structuredContent: answer });
+    } catch (error) {
+      if (!(error instanceof BugServerError)) throw error;
+      reply({ isError: true, content: [{ type: 'text', text: error.code }], structuredContent: { error: error.code, status: error.status } });
+    }
+  }
 }
 
 function ok(result: CliResult): any {
@@ -101,15 +195,8 @@ function assertNoService(ws: Workspace): void {
 }
 
 class MainInbox {
-  readonly messages: { to: string; text: string }[] = [];
-  available = false;
-  readonly notifier: MainNotifier = {
-    notify: async notice => {
-      if (!this.available) throw new Error('Shared main delivery transport is unavailable or unverified');
-      const text = `Bug comment conflict ${notice.kind} for ${notice.bugKey}, operation ${notice.operationId}; the local comment is kept undelivered until main decides: ${notice.text}`;
-      this.messages.push({ to: 'main', text });
-    },
-  };
+  readonly notices: MainNotice[] = [];
+  readonly notifier: MainNotifier = { notify: async notice => { this.notices.push(notice); } };
 }
 
 async function serviceCycle(ws: Workspace, server: FakeBugServer, inbox: MainInbox): Promise<void> {
@@ -130,11 +217,16 @@ async function serviceCycle(ws: Workspace, server: FakeBugServer, inbox: MainInb
 
 test('QA 3.4: approved bug commands through the real CLI with an isolated HOME and test conf', async t => {
   const ws = workspace();
-  t.after(() => rmSync(ws.base, { recursive: true, force: true }));
   const server = new FakeBugServer();
+  const dash = new McpDash(server, ws.secrets);
+  await dash.start();
+  t.after(async () => {
+    await dash.stop();
+    rmSync(ws.base, { recursive: true, force: true });
+  });
   const inbox = new MainInbox();
 
-  await t.test('catalog holds exactly the four approved bug commands and help is detailed', () => {
+  await t.test('catalog holds exactly the five approved bug commands and help is detailed', () => {
     const catalogBug = constants.commands.filter((command: { path: string[] }) => command.path[0] === 'bug').map((command: { path: string[] }) => command.path.join(' '));
     assert.deepEqual(catalogBug, APPROVED);
     const group = ok(cli(ws, ['help', 'bug']));
@@ -151,8 +243,10 @@ test('QA 3.4: approved bug commands through the real CLI with an isolated HOME a
       }
       for (const parameter of command.parameters) assert.ok(parameter.description.length > 5 && parameter.option.startsWith('--'));
       assert.match(command.metadata.prerequisites, /служба raf не потрібна/);
+      assert.doesNotMatch(JSON.stringify(command.metadata), /outbox|pending|асинхронно/);
     }
-    assert.match(ok(cli(ws, ['bug', 'comment', 'add', '--help'])).commands[0].metadata.output, /не є серверним підтвердженням/);
+    assert.match(ok(cli(ws, ['bug', 'comment', 'add', '--help'])).commands[0].metadata.output, /серверним comment_id/);
+    assert.match(ok(cli(ws, ['bug', 'status', 'set', '--help'])).commands[0].metadata.sideEffects, /set_problem_status/);
     assert.deepEqual(fetches(ws), []);
     assertNoService(ws);
   });
@@ -187,91 +281,97 @@ test('QA 3.4: approved bug commands through the real CLI with an isolated HOME a
     assertNoService(ws);
   });
 
-  let operationId = '';
-  await t.test('comment add accepts locally with the service stopped and no network, and does not claim delivery', () => {
+  await t.test('without network comment add and status set fail as BUG_WRITE_UNKNOWN after one MCP request each, change nothing and start no service', () => {
+    const textFile = join(ws.base, 'offline.txt');
+    writeFileSync(textFile, 'офлайн коментар');
+    const before = ok(cli(ws, ['bug', 'show', '--bug', ETCHLY_KEY]));
+    const comment = failed(cli(ws, ['bug', 'comment', 'add', '--bug', ETCHLY_KEY, '--text-file', textFile]), 'BUG_WRITE_UNKNOWN', 'bug comment add');
+    const status = failed(cli(ws, ['bug', 'status', 'set', '--bug', ETCHLY_KEY, '--status', 'closed']), 'BUG_WRITE_UNKNOWN', 'bug status set');
+    for (const error of [comment, status]) assert.doesNotMatch(JSON.stringify(error), /token/i);
+    const requests = fetches(ws);
+    assert.equal(requests.length, 2, 'one read_bug attempt per command, no retries and no mutation');
+    assert.ok(requests.every(url => new URL(url).pathname === MCP_PATH), requests.join('\n'));
+    assert.deepEqual(ok(cli(ws, ['bug', 'show', '--bug', ETCHLY_KEY])), before);
+    assert.equal(server.mutations, 0);
+    assertNoService(ws);
+  });
+
+  let commentId = '';
+  await t.test('comment add and status set reach the MCP fake with the service stopped and are visible locally at once', async () => {
+    const callsBefore = server.calls.length;
+    const fetchedBefore = fetches(ws).length;
     const textFile = join(ws.base, 'comment.txt');
     writeFileSync(textFile, COMMENT);
-    const accepted = ok(cli(ws, ['bug', 'comment', 'add', '--bug', ETCHLY_KEY, '--text-file', textFile]));
-    assert.equal(accepted.source, 'local');
-    assert.equal(accepted.accepted, true);
-    assert.equal(accepted.delivered, false);
-    assert.equal(accepted.delivery, 'pending');
-    assert.equal(accepted.state, 'pending');
-    assert.match(accepted.notice, /асинхронно/);
-    operationId = accepted.operationId;
-    assert.match(operationId, /^[0-9a-f-]{36}$/);
-    const fromStdin = ok(cli(ws, ['bug', 'comment', 'add', '--bug', CRM_KEY, '--text-file', '-'], 'stdin коментар'));
-    assert.equal(fromStdin.delivered, false);
-    assert.notEqual(fromStdin.operationId, operationId);
+    const written = ok(await cliWithDash(ws, dash, ['bug', 'comment', 'add', '--bug', ETCHLY_KEY, '--text-file', textFile]));
+    const etchly = server.state(serverKey(ETCHLY, '344'));
+    assert.equal(written.bugKey, ETCHLY_KEY);
+    assert.equal(written.revision, etchly.revision);
+    commentId = written.commentId;
+    assert.equal(server.serverComments(serverKey(ETCHLY, '344')).at(-1)!.id, commentId);
+    assert.equal(written.comment.serverId, commentId);
+    assert.equal(written.comment.text, COMMENT);
+    for (const field of ['accepted', 'delivered', 'delivery', 'state', 'notice']) assert.equal(written[field], undefined, field);
     const shown = ok(cli(ws, ['bug', 'show', '--bug', ETCHLY_KEY]));
-    const local = shown.bug.comments.find((comment: { origin: string }) => comment.origin === 'local');
-    assert.equal(local.text, COMMENT);
-    assert.equal(local.serverId, null);
-    assert.equal(local.delivery.operationId, operationId);
-    assert.equal(local.delivery.state, 'pending');
-    assert.equal(local.delivery.serverCommentId, null);
-    const crm = ok(cli(ws, ['bug', 'show', '--bug', CRM_KEY]));
-    assert.deepEqual(crm.bug.comments.map((comment: { text: string }) => comment.text), ['stdin коментар']);
-    const list = ok(cli(ws, ['bug', 'list']));
-    assert.equal(list.bugs.find((bug: { key: string }) => bug.key === ETCHLY_KEY).pendingOperations, 1);
-    assert.deepEqual(fetches(ws), []);
+    assert.equal(shown.bug.revision, etchly.revision);
+    assert.equal(shown.bug.comments.find((comment: { serverId: string }) => comment.serverId === commentId)?.text, COMMENT);
+    assert.equal(shown.bug.comments.filter((comment: { text: string }) => comment.text === COMMENT).length, 1);
+
+    const status = ok(await cliWithDash(ws, dash, ['bug', 'status', 'set', '--bug', CRM_KEY, '--status', 'awaiting_verification']));
+    const crm = server.state(serverKey(CRM, '344'));
+    assert.equal(crm.status, 'awaiting_verification');
+    assert.equal(status.status, 'awaiting_verification');
+    assert.equal(status.revision, crm.revision);
+    const crmShown = ok(cli(ws, ['bug', 'show', '--bug', CRM_KEY]));
+    assert.equal(crmShown.bug.status, 'awaiting_verification');
+    assert.equal(crmShown.bug.revision, crm.revision);
+
+    assert.deepEqual(dash.tools(), ['read_bug', 'comment_problem', 'read_bug', 'set_problem_status']);
+    assert.deepEqual(dash.requests.map(request => request.scope), ['read', 'write', 'read', 'write']);
+    assert.ok(dash.requests.every(request => request.contractVersion === '2' && request.protocolVersion === '2025-11-25'));
+    const operations = server.mcpCalls.filter(call => call.tool !== 'read_bug').map(call => call.args.operation_id);
+    assert.equal(new Set(operations).size, 2);
+    assert.ok(fetches(ws).slice(fetchedBefore).every(url => new URL(url).pathname === MCP_PATH));
+    assert.equal(server.calls.length, callsBefore, 'a write command does not pull');
     assertNoService(ws);
-    assert.equal(server.callsOf('comment').length, 0);
   });
 
-  await t.test('a failed network send after restart keeps the comment pending and undelivered', async () => {
-    server.failNext('comment', networkDown());
-    server.failNext('comment', networkDown());
+  await t.test('a server refusal is a command error and leaves the local base untouched', async () => {
+    const before = ok(cli(ws, ['bug', 'show', '--bug', ETCHLY_KEY]));
+    const mutations = server.mutations;
+    server.failNextMcp('comment_problem', revisionConflict());
+    const textFile = join(ws.base, 'refused.txt');
+    writeFileSync(textFile, 'відхилений коментар');
+    const refused = failed(await cliWithDash(ws, dash, ['bug', 'comment', 'add', '--bug', ETCHLY_KEY, '--text-file', textFile]), 'BUG_WRITE_REJECTED', 'bug comment add');
+    assert.equal(refused.details.sourceCode, 'revision-conflict');
+    const invalid = failed(await cliWithDash(ws, dash, ['bug', 'status', 'set', '--bug', ETCHLY_KEY, '--status', 'no_such_status']), 'BUG_WRITE_REJECTED', 'bug status set');
+    assert.equal(invalid.details.sourceCode, 'invalid-input');
+    assert.equal(server.mutations, mutations);
+    assert.deepEqual(ok(cli(ws, ['bug', 'show', '--bug', ETCHLY_KEY])), before);
+    assertNoService(ws);
+  });
+
+  await t.test('the next pull converges with the server without duplicating the synchronous comment', async () => {
+    server.addComment(serverKey(ETCHLY, '344'), 'owner@example.test', 'reply after the write');
+    const mcpCalls = server.mcpCalls.length;
     await serviceCycle(ws, server, inbox);
     const shown = ok(cli(ws, ['bug', 'show', '--bug', ETCHLY_KEY]));
-    const local = shown.bug.comments.find((comment: { origin: string }) => comment.origin === 'local');
-    assert.equal(local.text, COMMENT);
-    assert.equal(local.serverId, null);
-    assert.equal(local.delivery.state, 'unknown');
-    assert.ok(local.delivery.attempts >= 1);
-    assert.equal(server.serverComments(serverKey(ETCHLY, '344')).length, 1);
-  });
-
-  await t.test('server deletion with a pending comment keeps the text and makes the conflict visible to main', async () => {
-    server.deleteBug(serverKey(ETCHLY, '344'));
-    inbox.available = false;
-    await serviceCycle(ws, server, inbox);
-    const first = ok(cli(ws, ['bug', 'show', '--bug', ETCHLY_KEY]));
-    assert.equal(first.bug.presence, 'deleted');
-    const local = first.bug.comments.find((comment: { origin: string }) => comment.origin === 'local');
-    assert.equal(local.text, COMMENT);
-    assert.equal(local.delivery.state, 'conflict');
-    assert.equal(local.delivery.conflict, 'bug-deleted');
-    assert.equal(local.serverId, null);
-    assert.equal(first.bug.conflicts.length, 1);
-    assert.equal(first.bug.conflicts[0].kind, 'bug-deleted');
-    assert.equal(first.bug.conflicts[0].noticedAt, null, 'notice stays pending while main delivery is unavailable');
-    assert.equal(inbox.messages.length, 0);
-    const listed = ok(cli(ws, ['bug', 'list'])).bugs.find((bug: { key: string }) => bug.key === ETCHLY_KEY);
-    assert.equal(listed.presence, 'deleted');
-    assert.equal(listed.conflicts, 1);
-    assert.equal(listed.pendingOperations, 1);
-
-    inbox.available = true;
-    await serviceCycle(ws, server, inbox);
-    assert.equal(inbox.messages.length, 1);
-    assert.equal(inbox.messages[0]!.to, 'main');
-    assert.ok(inbox.messages[0]!.text.includes(COMMENT), 'main sees the full undelivered text');
-    assert.ok(inbox.messages[0]!.text.includes(operationId) && inbox.messages[0]!.text.includes('bug-deleted') && inbox.messages[0]!.text.includes(ETCHLY_KEY));
-    await serviceCycle(ws, server, inbox);
-    assert.equal(inbox.messages.length, 1, 'notice is not duplicated');
-    const after = ok(cli(ws, ['bug', 'show', '--bug', ETCHLY_KEY]));
-    assert.ok(after.bug.conflicts[0].noticedAt);
-    assert.equal(after.bug.comments.find((comment: { origin: string }) => comment.origin === 'local').text, COMMENT);
-    assert.equal(server.mutations, 0, 'raf does not restore or deliver to the deleted bug');
+    const etchly = server.state(serverKey(ETCHLY, '344'));
+    assert.equal(shown.bug.revision, etchly.revision);
+    assert.deepEqual(shown.bug.comments.map((comment: { serverId: string }) => comment.serverId).sort(), server.serverComments(serverKey(ETCHLY, '344')).map(comment => comment.id).sort());
+    assert.equal(shown.bug.comments.filter((comment: { serverId: string }) => comment.serverId === commentId).length, 1);
+    assert.equal(ok(cli(ws, ['bug', 'show', '--bug', CRM_KEY])).bug.status, 'awaiting_verification');
+    assert.equal(server.mcpCalls.length, mcpCalls, 'the service never calls MCP');
+    assert.equal(server.callsOf('comment').length, 0);
+    assertNoService(ws);
   });
 
   await t.test('impossible or unimplemented operations fail with a JSON error, never a success payload', () => {
+    const fetchedBefore = fetches(ws).length;
     const textFile = join(ws.base, 'comment2.txt');
     writeFileSync(textFile, 'ще один');
-    const deleted = failed(cli(ws, ['bug', 'comment', 'add', '--bug', ETCHLY_KEY, '--text-file', textFile]), 'BUG_NOT_FOUND', 'bug comment add');
-    assert.equal(deleted.details.found.presence, 'deleted');
-    assert.equal(ok(cli(ws, ['bug', 'list'])).bugs.find((bug: { key: string }) => bug.key === ETCHLY_KEY).pendingOperations, 1);
+    failed(cli(ws, ['bug', 'comment', 'add', '--bug', 'projects/etchly/bug#999', '--text-file', textFile]), 'BUG_NOT_FOUND', 'bug comment add');
+    failed(cli(ws, ['bug', 'status', 'set', '--bug', 'projects/etchly/bug#999', '--status', 'closed']), 'BUG_NOT_FOUND', 'bug status set');
+    failed(cli(ws, ['bug', 'status', 'set', '--bug', ETCHLY_KEY]), 'MISSING_REQUIRED', 'bug status set');
     failed(cli(ws, ['bug', 'show', '--bug', 'projects/etchly/bug#999']), 'BUG_NOT_FOUND', 'bug show');
     failed(cli(ws, ['bug', 'show', '--bug', 'etchly#1']), 'INVALID_BUG_KEY', 'bug show');
     failed(cli(ws, ['bug', 'show']), 'MISSING_REQUIRED', 'bug show');
@@ -290,8 +390,7 @@ test('QA 3.4: approved bug commands through the real CLI with an isolated HOME a
     writeFileSync(binary, Buffer.from([0xff, 0xfe, 0x00, 0xc3]));
     failed(cli(ws, ['bug', 'comment', 'add', '--bug', CRM_KEY, '--text-file', binary]), 'COMMENT_TEXT_INVALID', 'bug comment add');
     failed(cli(ws, ['bug', 'comment', 'add', '--bug', CRM_KEY, '--text-file', join(ws.base, 'missing.txt')]), 'COMMENT_TEXT_UNREADABLE', 'bug comment add');
-    assert.equal(ok(cli(ws, ['bug', 'list'])).bugs.find((bug: { key: string }) => bug.key === CRM_KEY).pendingOperations, 1);
-    assert.deepEqual(fetches(ws), []);
+    assert.deepEqual(fetches(ws).slice(fetchedBefore), [], 'refused before any network request');
     assertNoService(ws);
   });
 

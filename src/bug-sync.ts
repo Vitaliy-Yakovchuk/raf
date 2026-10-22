@@ -6,6 +6,8 @@ import { BugStoreError, openBugStore, resolveBugStorePath } from './bug-store.ts
 import type { SecretsStore } from './secrets-store.ts';
 import type {
   BugRepository,
+  BugView,
+  CommentView,
   ConflictView,
   OutboxView,
   ServerBugDetail,
@@ -870,4 +872,83 @@ export async function startBugSyncService(options: BugSyncServiceOptions): Promi
       repository.close();
     },
   };
+}
+
+export type BugMcpTool = 'read_bug' | 'comment_problem' | 'set_problem_status';
+
+export interface BugMcpPort {
+  call(auth: ServerAuth, tool: BugMcpTool, args: Readonly<Record<string, unknown>>): Promise<unknown>;
+}
+
+export function createHttpBugMcp(_options: { readonly fetch?: typeof fetch } = {}): BugMcpPort {
+  throw new Error('NotImplemented: createHttpBugMcp');
+}
+
+export type BugWriteErrorCode = 'BUG_WRITE_UNKNOWN' | 'BUG_WRITE_REJECTED' | 'BUG_WRITE_INVALID_RESPONSE' | 'BUG_WRITE_REPLY_TARGET_MISSING';
+
+export interface BugWriteErrorFacts {
+  readonly serverCode?: string | null;
+  readonly status?: number | null;
+  readonly retryAfterMs?: number | null;
+}
+
+export class BugWriteError extends Error {
+  readonly code: BugWriteErrorCode;
+  readonly serverCode: string | null;
+  readonly status: number | null;
+  readonly retryAfterMs: number | null;
+
+  constructor(code: BugWriteErrorCode, message: string, facts: BugWriteErrorFacts = {}) {
+    super(message);
+    this.name = 'BugWriteError';
+    this.code = code;
+    this.serverCode = facts.serverCode ?? null;
+    this.status = facts.status ?? null;
+    this.retryAfterMs = facts.retryAfterMs ?? null;
+  }
+}
+
+export interface BugWriterDependencies {
+  readonly repository: BugRepository;
+  readonly mcp: BugMcpPort;
+  readonly claims: ClaimsIssuer;
+  readonly clock: Clock;
+  readonly config: BugSyncConfig;
+  readonly newOperationId?: () => string;
+}
+
+export interface CommentWriteInput {
+  readonly bugKey: string;
+  readonly text: string;
+}
+
+export interface StatusWriteInput {
+  readonly bugKey: string;
+  readonly status: string;
+}
+
+export interface CommentWriteResult {
+  readonly bugKey: string;
+  readonly operationId: string;
+  readonly commentId: string;
+  readonly revision: number;
+  readonly comment: CommentView;
+  readonly bug: BugView;
+}
+
+export interface StatusWriteResult {
+  readonly bugKey: string;
+  readonly operationId: string;
+  readonly revision: number;
+  readonly status: string;
+  readonly bug: BugView;
+}
+
+export interface BugWriter {
+  addComment(input: CommentWriteInput): Promise<CommentWriteResult>;
+  setStatus(input: StatusWriteInput): Promise<StatusWriteResult>;
+}
+
+export function createBugWriter(_dependencies: BugWriterDependencies): BugWriter {
+  throw new Error('NotImplemented: createBugWriter');
 }

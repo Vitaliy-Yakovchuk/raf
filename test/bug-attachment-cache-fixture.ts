@@ -178,17 +178,11 @@ export function seedBug(database: DatabaseSync, rawId = 'bug-1'): number {
   return Number(result.lastInsertRowid);
 }
 
-export function seedComment(database: DatabaseSync, bugPk: number, text: string, origin: 'server' | 'local' = 'server'): number {
-  const result = database.prepare(`INSERT INTO comments (bug_pk, server_id, origin, operation_id, author_id, author_kind, text, created_at, payload)
-    VALUES (?, ?, ?, ?, 'raf-system', 'agent', ?, '2026-10-22T08:00:00.000Z', '{}')`)
-    .run(bugPk, origin === 'server' ? `c-${text}` : null, origin, origin === 'local' ? `op-${text}` : null, text);
+export function seedComment(database: DatabaseSync, bugPk: number, text: string): number {
+  const result = database.prepare(`INSERT INTO comments (bug_pk, server_id, origin, author_id, author_kind, text, created_at, payload)
+    VALUES (?, ?, 'server', 'raf-system', 'agent', ?, '2026-10-22T08:00:00.000Z', '{}')`)
+    .run(bugPk, `c-${text}`, text);
   return Number(result.lastInsertRowid);
-}
-
-export function seedPendingOutbox(database: DatabaseSync, bugPk: number, commentPk: number, operationId: string): void {
-  database.prepare(`INSERT INTO outbox (operation_id, kind, bug_pk, comment_pk, section_id, request_json, expected_revision, claims_fingerprint, state, attempts, created_at, updated_at)
-    VALUES (?, 'comment.add', ?, ?, ?, '{"text":"pending"}', 1, 'claims-1', 'pending', 0, '2026-10-22T08:00:00.000Z', '2026-10-22T08:00:00.000Z')`)
-    .run(operationId, bugPk, commentPk, sectionId);
 }
 
 export interface SeedOptions {

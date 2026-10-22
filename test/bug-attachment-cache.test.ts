@@ -30,7 +30,6 @@ import {
   seedAttachment,
   seedBug,
   seedComment,
-  seedPendingOutbox,
   sha256,
   testClock,
   testRetry,
@@ -674,13 +673,12 @@ test('синхронізація метаданих не є читанням і 
   assertConsistent(ws);
 });
 
-test('очищення видаляє лише байти: метадані, жуки, коментарі та pending лишаються, повторний запит завантажує знову', async (t) => {
+test('очищення видаляє лише байти: метадані, жуки й коментарі лишаються, повторний запит завантажує знову', async (t) => {
   const ws = workspace(t, 100);
   const downloads = new FakeDownloads();
   const clock = testClock();
   const bugPk = seedBug(ws.database);
-  const commentPk = seedComment(ws.database, bugPk, 'local-note', 'local');
-  seedPendingOutbox(ws.database, bugPk, commentPk, 'op-local-note');
+  const commentPk = seedComment(ws.database, bugPk, 'server-note');
   const a = seedServed(ws, downloads, bugPk, 'a', 60, 90);
   const b = seedServed(ws, downloads, bugPk, 'b', 60, 91);
   const cache = openCache(ws, downloads, clock);
@@ -696,8 +694,7 @@ test('очищення видаляє лише байти: метадані, ж�
   assert.equal(evicted?.sha256, sha256(a.body));
   assert.equal(existsSync(aAccess.path), false);
   assert.equal((ws.database.prepare('SELECT COUNT(*) AS n FROM bugs').get() as { n: number }).n, 1);
-  assert.equal((ws.database.prepare('SELECT text FROM comments WHERE comment_pk = ?').get(commentPk) as { text: string }).text, 'local-note');
-  assert.equal((ws.database.prepare("SELECT state FROM outbox WHERE operation_id = 'op-local-note'").get() as { state: string }).state, 'pending');
+  assert.equal((ws.database.prepare('SELECT text FROM comments WHERE comment_pk = ?').get(commentPk) as { text: string }).text, 'server-note');
 
   clock.advance();
   const again = await cache.get(a.ref);

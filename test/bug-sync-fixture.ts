@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -8,8 +9,6 @@ import {
   type BugSectionInput,
   type BugSectionView,
   type BugStoreOptions,
-  type CommentRequestBody,
-  type LocalCommentReceipt,
   type ServerAttachment,
   type ServerBugDetail,
   type ServerBugKey,
@@ -19,9 +18,13 @@ import {
   BugServerError,
   ClaimsError,
   createBugSyncer,
+  createBugWriter,
+  type BugMcpPort,
+  type BugMcpTool,
   type BugServerPort,
   type BugSyncConfig,
   type BugSyncer,
+  type BugWriter,
   type ClaimsIssuer,
   type ClaimsScope,
   type Clock,
@@ -160,6 +163,9 @@ export class FakeNotifier implements MainNotifier {
 
 type Method = 'query' | 'read' | 'events' | 'comment';
 
+export const LEASE_MS = 30 * 60 * 1000;
+export const FAKE_STATUSES = ['open', 'in_progress', 'awaiting_verification', 'closed'] as const;
+
 interface FakeBug {
   key: ServerBugKey;
   problemId: string;
@@ -168,15 +174,11 @@ interface FakeBug {
   state: string;
   createdAt: string;
   claimedBy: string | null;
+  claimToken: string | null;
+  claimExpiresAt: string | null;
   payload: unknown;
   comments: ServerComment[];
   attachments: ServerAttachment[];
-}
-
-interface FakeOperation {
-  fingerprint: string;
-  body: string;
-  response: ServerBugDetailPage;
 }
 
 interface FakeFailure {
@@ -189,6 +191,8 @@ export interface SeedBug {
   rawId: string;
   status?: string;
   claimedBy?: string | null;
+  claimToken?: string | null;
+  claimExpiresAt?: string | null;
   comments?: readonly { authorId: string; text: string }[];
   attachments?: readonly { id: string; commentIndex?: number; bytes: number; sha256: string }[];
 }
@@ -200,10 +204,10 @@ export interface RecordedCall {
   input: unknown;
 }
 
-export interface RecordedComment {
-  key: ServerBugKey;
-  body: CommentRequestBody;
-  raw: string;
+export interface RecordedMcpCall {
+  tool: BugMcpTool;
+  auth: ServerAuth;
+  args: Readonly<Record<string, unknown>>;
 }
 
 export function serverKey(section: Pick<BugSectionInput, 'project' | 'env'>, rawId: string): ServerBugKey {
@@ -220,26 +224,40 @@ export const notFound = (): BugServerError => new BugServerError(404, 'not-found
 export const unauthenticated = (): BugServerError => new BugServerError(401, 'unauthenticated', 'unauthenticated');
 export const accessDenied = (): BugServerError => new BugServerError(403, 'access-denied', 'access denied');
 export const conflict = (): BugServerError => new BugServerError(409, 'conflict', 'conflict');
+export const revisionConflict = (): BugServerError => new BugServerError(409, 'revision-conflict', 'revision conflict');
+export const leaseRequired = (): BugServerError => new BugServerError(409, 'lease-required', 'lease required');
 export const invalidInput = (): BugServerError => new BugServerError(422, 'invalid-input', 'invalid input');
 export const unavailable = (retryAfterMs: number | null = null): BugServerError => new BugServerError(503, 'unavailable', 'unavailable', retryAfterMs);
+export const storageUnavailable = (): BugServerError => new BugServerError(503, 'bug-storage-unavailable', 'bug storage unavailable', 5000);
 export const networkDown = (): BugServerError => new BugServerError(null, 'network', 'network down');
+export const timedOut = (): BugServerError => new BugServerError(null, 'timeout', 'request timed out');
+
+export function wireComment(comment: ServerComment): Record<string, unknown> {
+  return { id: comment.id, author_id: comment.authorId, author_kind: comment.authorKind, text: comment.text, reply_to: comment.replyTo, created_at: comment.createdAt };
+}
 
 export class FakeBugServer implements BugServerPort {
   readonly calls: RecordedCall[] = [];
-  readonly commentRequests: RecordedComment[] = [];
+  readonly mcpCalls: RecordedMcpCall[] = [];
   mutations = 0;
+  now: () => number = () => Date.parse(START);
   private readonly bugs = new Map<string, FakeBug>();
   private readonly journal: { section: string; event: ServerJournalEvent }[] = [];
-  private readonly operations = new Map<string, FakeOperation>();
   private readonly failures: FakeFailure[] = [];
+  private readonly mcpFailures: { tool: BugMcpTool; error: Error }[] = [];
+  private readonly lostMcpResponses: BugMcpTool[] = [];
+  private readonly mcpRewrites: { tool: BugMcpTool; rewrite: (result: Record<string, unknown>) => unknown }[] = [];
   private readonly invalidJournalCursors = new Set<string>();
   private cursorSeq = 0;
   private commentSeq = 0;
   private problemSeq = 0;
+  private claimSeq = 0;
   private listEpoch = 1;
-  private lostResponses = 0;
-  private appendAfterComment: { authorId: string; text: string } | null = null;
-  private gate: Promise<void> | null = null;
+  private readGate: Promise<void> | null = null;
+
+  readonly mcp: BugMcpPort = {
+    call: (auth, tool, args) => this.mcpCall(auth, tool, args),
+  };
 
   seedBug(section: Pick<BugSectionInput, 'project' | 'env'>, seed: SeedBug): ServerBugKey {
     const key = serverKey(section, seed.rawId);
@@ -252,6 +270,8 @@ export class FakeBugServer implements BugServerPort {
       state: 'new',
       createdAt: START,
       claimedBy: seed.claimedBy ?? null,
+      claimToken: seed.claimToken ?? null,
+      claimExpiresAt: seed.claimExpiresAt ?? null,
       payload: { description: `bug ${seed.rawId}` },
       comments: [],
       attachments: [],
@@ -295,9 +315,11 @@ export class FakeBugServer implements BugServerPort {
     this.emit(bug, 'status', { status });
   }
 
-  claim(key: ServerBugKey, by: string): void {
+  claim(key: ServerBugKey, by: string, lease: { token?: string | null; expiresAt?: string | null } = {}): void {
     const bug = this.require(key);
     bug.claimedBy = by;
+    bug.claimToken = lease.token ?? null;
+    bug.claimExpiresAt = lease.expiresAt ?? null;
     bug.revision += 1;
     this.emit(bug, 'status', { claimed_by: by });
   }
@@ -336,6 +358,10 @@ export class FakeBugServer implements BugServerPort {
     return [...this.require(key).comments];
   }
 
+  state(key: ServerBugKey): Readonly<FakeBug> {
+    return { ...this.require(key), comments: [...this.require(key).comments] };
+  }
+
   detail(key: ServerBugKey): ServerBugDetail {
     const bug = this.require(key);
     return {
@@ -358,27 +384,35 @@ export class FakeBugServer implements BugServerPort {
     this.failures.push({ method, error, when });
   }
 
-  loseNextResponse(): void {
-    this.lostResponses += 1;
+  failNextMcp(tool: BugMcpTool, error: Error): void {
+    this.mcpFailures.push({ tool, error });
   }
 
-  appendAfterNextComment(authorId: string, text: string): void {
-    this.appendAfterComment = { authorId, text };
+  loseNextMcpResponse(tool: BugMcpTool): void {
+    this.lostMcpResponses.push(tool);
   }
 
-  pauseComments(): () => void {
+  rewriteNextMcpResult(tool: BugMcpTool, rewrite: (result: Record<string, unknown>) => unknown): void {
+    this.mcpRewrites.push({ tool, rewrite });
+  }
+
+  pauseReads(): () => void {
     let release: () => void = () => undefined;
-    this.gate = new Promise<void>((resolve) => {
+    this.readGate = new Promise<void>((resolve) => {
       release = resolve;
     });
     return () => {
-      this.gate = null;
+      this.readGate = null;
       release();
     };
   }
 
   callsOf(method: Method): RecordedCall[] {
     return this.calls.filter((call) => call.method === method);
+  }
+
+  mcpCallsOf(tool: BugMcpTool): RecordedMcpCall[] {
+    return this.mcpCalls.filter((call) => call.tool === tool);
   }
 
   async query(auth: ServerAuth, input: { readonly cursor: string | null; readonly limit: number }): Promise<ServerBugListPage> {
@@ -409,13 +443,15 @@ export class FakeBugServer implements BugServerPort {
     };
     const comments = slice(bug.comments, input.commentsCursor, 'cm:');
     const attachments = slice(bug.attachments, input.attachmentsCursor, 'at:');
-    return {
+    const page: ServerBugDetailPage = {
       bug: this.header(bug),
       comments: comments.items,
       attachments: attachments.items,
       nextCommentsCursor: comments.next,
       nextAttachmentsCursor: attachments.next,
     };
+    if (this.readGate) await this.readGate;
+    return page;
   }
 
   async events(auth: ServerAuth, input: { readonly cursor: string; readonly limit: number }): Promise<ServerJournalPage> {
@@ -430,50 +466,100 @@ export class FakeBugServer implements BugServerPort {
     return { events, cursor, hasMore: all.length > events.length };
   }
 
-  async comment(auth: ServerAuth, key: ServerBugKey, body: CommentRequestBody): Promise<ServerBugDetailPage> {
-    const raw = JSON.stringify(body);
+  async comment(auth: ServerAuth, key: ServerBugKey, body: unknown): Promise<ServerBugDetailPage> {
     this.record('comment', auth, key, body);
-    this.commentRequests.push({ key, body, raw });
-    if (this.gate) await this.gate;
-    if (auth.token.split('|')[1] !== 'write') throw accessDenied();
-    const fingerprint = this.fingerprint(auth);
-    const known = this.operations.get(body.operation_id);
-    if (known) {
-      if (known.body !== raw || known.fingerprint !== fingerprint) throw conflict();
-      return this.deliver(known.response);
+    throw new Error('raf must not POST comments to the bug API after Q89; writes go through MCP Dash');
+  }
+
+  private async mcpCall(auth: ServerAuth, tool: BugMcpTool, args: Readonly<Record<string, unknown>>): Promise<unknown> {
+    this.mcpCalls.push({ tool, auth, args: { ...args } });
+    const failure = this.mcpFailures.findIndex((item) => item.tool === tool);
+    if (failure >= 0) throw this.mcpFailures.splice(failure, 1)[0]!.error;
+    if ((args.project !== undefined && args.project !== auth.project) || (args.env !== undefined && args.env !== auth.env)) throw accessDenied();
+    const scope = auth.token.split('|')[1];
+    if (tool === 'read_bug') {
+      const bug = this.byProblemId(auth, args.id);
+      return this.finishMcp(tool, this.wireDetail(bug));
     }
-    const bug = this.bugs.get(keyId(key));
-    if (!bug) throw notFound();
-    if (bug.claimedBy !== null && bug.claimedBy !== ACTOR) {
-      const target = bug.comments.find((comment) => comment.id === body.reply_to);
-      if (!target || target.authorId !== bug.claimedBy) throw conflict();
+    if (scope !== 'write') throw accessDenied();
+    const bug = this.byProblemId(auth, args.problem_id);
+    if (typeof args.operation_id !== 'string' || !args.operation_id || typeof args.expected_revision !== 'number') throw invalidInput();
+    if (args.expected_revision !== bug.revision) throw revisionConflict();
+    const leaseActive = bug.claimedBy !== null && (bug.claimExpiresAt === null || Date.parse(bug.claimExpiresAt) > this.now());
+    if (leaseActive && bug.claimedBy === ACTOR && args.claimToken !== bug.claimToken) throw leaseRequired();
+    if (leaseActive && bug.claimedBy !== ACTOR) {
+      if (tool !== 'comment_problem') throw leaseRequired();
+      const target = bug.comments.find((comment) => comment.id === args.reply_to);
+      if (!target || target.authorId !== bug.claimedBy) throw leaseRequired();
     }
-    if (bug.revision !== body.expected_revision) throw conflict();
-    bug.comments.push(this.newComment(ACTOR, body.text, body.reply_to ?? null));
-    if (this.appendAfterComment) {
-      bug.comments.push(this.newComment(this.appendAfterComment.authorId, this.appendAfterComment.text));
-      this.appendAfterComment = null;
+    const base = { contract_version: 2, ok: true, problem_id: bug.problemId, operation_id: args.operation_id };
+    if (tool === 'comment_problem') {
+      if (typeof args.comment !== 'string' || !args.comment.trim()) throw invalidInput();
+      const comment = this.newComment(ACTOR, args.comment, typeof args.reply_to === 'string' ? args.reply_to : null);
+      bug.comments.push(comment);
+      bug.revision += 1;
+      this.mutations += 1;
+      this.emit(bug, 'comment', {});
+      return this.finishMcp(tool, { ...base, revision: bug.revision, comment_id: comment.id, comment: wireComment(comment), bug: this.wireHeader(bug) });
+    }
+    if (typeof args.status !== 'string' || !(FAKE_STATUSES as readonly string[]).includes(args.status)) throw invalidInput();
+    bug.status = args.status;
+    if (args.status === 'in_progress') {
+      this.claimSeq += 1;
+      bug.claimedBy = ACTOR;
+      bug.claimToken = `claim-token-${this.claimSeq}`;
+      bug.claimExpiresAt = new Date(this.now() + LEASE_MS).toISOString();
+    } else if (bug.claimedBy === ACTOR) {
+      bug.claimedBy = null;
+      bug.claimToken = null;
+      bug.claimExpiresAt = null;
     }
     bug.revision += 1;
     this.mutations += 1;
-    this.emit(bug, 'comment', {});
-    const response: ServerBugDetailPage = {
-      bug: this.header(bug),
-      comments: [...bug.comments],
-      attachments: [...bug.attachments],
+    this.emit(bug, 'status', { status: args.status });
+    return this.finishMcp(tool, { ...base, revision: bug.revision, bug: this.wireHeader(bug) });
+  }
+
+  private finishMcp(tool: BugMcpTool, result: Record<string, unknown>): unknown {
+    const lost = this.lostMcpResponses.indexOf(tool);
+    if (lost >= 0) {
+      this.lostMcpResponses.splice(lost, 1);
+      throw timedOut();
+    }
+    const rewrite = this.mcpRewrites.findIndex((item) => item.tool === tool);
+    if (rewrite >= 0) return this.mcpRewrites.splice(rewrite, 1)[0]!.rewrite(structuredClone(result));
+    return result;
+  }
+
+  private byProblemId(auth: ServerAuth, problemId: unknown): FakeBug {
+    const bug = [...this.bugs.values()].find((item) => item.problemId === problemId);
+    if (!bug || bug.key.project !== auth.project || bug.key.env !== auth.env) throw notFound();
+    return bug;
+  }
+
+  private wireHeader(bug: FakeBug): Record<string, unknown> {
+    return {
+      key: { source: bug.key.source, owner: bug.key.owner, id: bug.key.rawId },
+      problem_id: bug.problemId,
+      revision: bug.revision,
+      status: bug.status,
+      state: bug.state,
+      created_at: bug.createdAt,
+      claimed_by: bug.claimedBy,
+      claim_expires_at: bug.claimExpiresAt,
+      ...(bug.claimedBy === ACTOR && bug.claimToken ? { claim_token: bug.claimToken } : {}),
+      description: (bug.payload as { description?: string }).description ?? null,
+    };
+  }
+
+  private wireDetail(bug: FakeBug): Record<string, unknown> {
+    return {
+      ...this.wireHeader(bug),
+      comments: bug.comments.map(wireComment),
+      attachments: bug.attachments.map((attachment) => ({ id: attachment.id, kind: attachment.kind, mime: attachment.mime, bytes: attachment.bytes, sha256: attachment.sha256 })),
       nextCommentsCursor: null,
       nextAttachmentsCursor: null,
     };
-    this.operations.set(body.operation_id, { fingerprint, body: raw, response });
-    return this.deliver(response);
-  }
-
-  private deliver(response: ServerBugDetailPage): ServerBugDetailPage {
-    if (this.lostResponses > 0) {
-      this.lostResponses -= 1;
-      throw networkDown();
-    }
-    return response;
   }
 
   private record(method: Method, auth: ServerAuth, key: ServerBugKey | null, input: unknown): void {
@@ -481,7 +567,6 @@ export class FakeBugServer implements BugServerPort {
     const index = this.failures.findIndex((failure) => failure.method === method && failure.when(key));
     if (index >= 0) {
       const [failure] = this.failures.splice(index, 1);
-      if (method === 'comment') this.commentRequests.push({ key: key!, body: input as CommentRequestBody, raw: JSON.stringify(input) });
       throw failure!.error;
     }
   }
@@ -548,9 +633,10 @@ export interface BugHarness {
   readonly notifier: FakeNotifier;
   readonly repo: BugRepository;
   readonly syncer: BugSyncer;
+  readonly writer: BugWriter;
+  readonly operationIds: readonly string[];
   reopen(options?: BugStoreOptions): void;
   close(): void;
-  addComment(bugKey: string, text: string): LocalCommentReceipt;
   visibleTexts(bugKey: string): string[];
 }
 
@@ -565,6 +651,13 @@ export function createBugHarness(
   const server = new FakeBugServer();
   const claims = new FakeClaims();
   const notifier = new FakeNotifier();
+  server.now = () => clock.now().getTime();
+  const operationIds: string[] = [];
+  const newOperationId = (): string => {
+    const id = randomUUID();
+    operationIds.push(id);
+    return id;
+  };
   const sections = options.sections ?? [ETCHLY];
   let repo: BugRepository | null = null;
   let syncer: BugSyncer | null = null;
@@ -581,11 +674,6 @@ export function createBugHarness(
     }
   });
   open(options.store);
-  const sectionOf = (bugKey: string): BugSectionInput => {
-    const found = sections.find((section) => bugKey.startsWith(`${section.canonicalProject}/bug#`));
-    if (!found) throw new Error(`no test section for ${bugKey}`);
-    return found;
-  };
   return {
     dir,
     path,
@@ -600,6 +688,10 @@ export function createBugHarness(
     get syncer() {
       return syncer!;
     },
+    get writer() {
+      return createBugWriter({ repository: repo!, mcp: server.mcp, claims, clock, config, newOperationId });
+    },
+    operationIds,
     reopen(storeOptions: BugStoreOptions = {}) {
       repo?.close();
       repo = null;
@@ -608,16 +700,6 @@ export function createBugHarness(
     close() {
       repo?.close();
       repo = null;
-    },
-    addComment(bugKey: string, text: string) {
-      return repo!.addLocalComment({
-        bugKey,
-        text,
-        authorId: ACTOR,
-        authorKind: 'agent',
-        claimsFingerprint: claims.fingerprint(sectionOf(bugKey), 'write'),
-        at: clock.iso(),
-      });
     },
     visibleTexts(bugKey: string) {
       return repo!.findBug(bugKey).comments.map((comment) => comment.text);

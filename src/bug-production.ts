@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { openSecretsStore } from './secrets-store.ts';
 import { openBugStore, resolveBugStorePath } from './bug-store.ts';
 import { createAttachmentCache, loadAttachmentCacheSettings, type AttachmentDownloader } from './bug-attachment-cache.ts';
-import { BugSyncConfigError, createClaimsIssuer, loadBugSyncConfig } from './bug-sync.ts';
+import { BugSyncConfigError, createBugWriter, createClaimsIssuer, createHttpBugMcp, loadBugSyncConfig } from './bug-sync.ts';
 import type { BugCommandPorts } from './bug-cli.ts';
 
 export interface BugProductionOptions {
@@ -70,6 +70,9 @@ export function createProductionBugPorts(options: BugProductionOptions): BugComm
       database: repository.database, settings: loadAttachmentCacheSettings(confRoot, rafHome), config, claims,
       download: createHttpAttachmentDownloader(options.fetch), now: () => new Date(),
       sleep: ms => new Promise(done => setTimeout(done, ms)),
+    }),
+    writer: (repository, config, claims) => createBugWriter({
+      repository, mcp: createHttpBugMcp({ ...(options.fetch ? { fetch: options.fetch } : {}) }), claims, config, clock: { now: () => new Date() },
     }),
     readText: file => file === '-' ? readAll(options.stdin ?? process.stdin) : readFile(resolve(file)),
     now: () => new Date(),

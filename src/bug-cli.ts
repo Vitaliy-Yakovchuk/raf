@@ -2,17 +2,18 @@ import { commandFailure, failureContext, type CommandFailureContext } from './cl
 import type { Handler } from './cli.ts';
 import { BugStoreError, type BugRepository, type BugView } from './bug-store.ts';
 import { AttachmentCacheError, type AttachmentCache } from './bug-attachment-cache.ts';
-import { BugSyncConfigError, ClaimsError, type BugSyncConfig, type ClaimsIssuer } from './bug-sync.ts';
+import { BugSyncConfigError, ClaimsError, type BugSyncConfig, type BugWriter, type ClaimsIssuer } from './bug-sync.ts';
 
-export type BugCommand = 'bug list' | 'bug show' | 'bug comment add' | 'bug attachment get';
+export type BugCommand = 'bug list' | 'bug show' | 'bug comment add' | 'bug status set' | 'bug attachment get';
 
-export const bugCommands: readonly BugCommand[] = ['bug list', 'bug show', 'bug comment add', 'bug attachment get'];
+export const bugCommands: readonly BugCommand[] = ['bug list', 'bug show', 'bug comment add', 'bug status set', 'bug attachment get'];
 
 export interface BugCommandPorts {
   loadConfig(): BugSyncConfig;
   openRepository(config: BugSyncConfig): BugRepository;
   claims(config: BugSyncConfig): Promise<ClaimsIssuer>;
   openCache(repository: BugRepository, config: BugSyncConfig, claims: ClaimsIssuer): AttachmentCache;
+  writer(repository: BugRepository, config: BugSyncConfig, claims: ClaimsIssuer): BugWriter;
   readText(file: string): Promise<Uint8Array>;
   now(): Date;
 }
@@ -180,6 +181,9 @@ export function createBugHandlers(ports: BugCommandPorts): Record<BugCommand, Ha
         notice: 'Коментар і операцію відправлення збережено локально; доставку на сервер виконає служба raf асинхронно. Стан доставки — raf bug show.',
       };
     }),
+    'bug status set': async _params => {
+      throw new Error('NotImplemented: bug status set');
+    },
     'bug attachment get': params => session('attachment', async (repository, config) => {
       const bug = repository.findBug(String(params.bug));
       const claims = await ports.claims(config);

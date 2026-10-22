@@ -206,12 +206,30 @@ export interface NoticeCandidate {
   readonly commentServerId: string | null;
 }
 
+const HUMAN_AUTHOR_KIND = 'person';
+
 export function noticeKey(kind: NoticeKind, problemId: string, commentServerId: string | null): string {
-  throw new Error('NotImplemented: noticeKey');
+  if (typeof problemId !== 'string' || !problemId) throw new TypeError('Notice key needs a problem id');
+  if (kind === 'new-bug') return `bug-new:${problemId}`;
+  if (kind === 'human-comment') {
+    if (typeof commentServerId !== 'string' || !commentServerId) throw new TypeError('Human comment notice key needs a comment id');
+    return `bug-comment:${problemId}:${commentServerId}`;
+  }
+  throw new TypeError(`Unknown notice kind ${String(kind)}`);
 }
 
 export function noticeCandidates(knownCommentIds: ReadonlySet<string> | null, detail: ServerBugDetail): readonly NoticeCandidate[] {
-  throw new Error('NotImplemented: noticeCandidates');
+  const problemId = String(detail.problemId);
+  if (knownCommentIds === null) return [{ noticeKey: noticeKey('new-bug', problemId, null), kind: 'new-bug', commentServerId: null }];
+  const candidates: NoticeCandidate[] = [];
+  const seen = new Set<string>();
+  for (const comment of detail.comments ?? []) {
+    const id = String(comment.id);
+    if (comment.authorKind !== HUMAN_AUTHOR_KIND || knownCommentIds.has(id) || seen.has(id)) continue;
+    seen.add(id);
+    candidates.push({ noticeKey: noticeKey('human-comment', problemId, id), kind: 'human-comment', commentServerId: id });
+  }
+  return candidates;
 }
 
 export interface WrittenBugHeader {
@@ -716,6 +734,16 @@ export function openBugStore(path: string): BugRepository {
     run(`UPDATE sync_state SET ${sets.join(', ')} WHERE section_id = ?`, ...params, sectionId);
   }
 
+  function recordNotices(detail: ServerBugDetail, knownCommentIds: ReadonlySet<string> | null, at: string): void {
+    const bug = bugByServerKey(detail.key);
+    if (!bug) return;
+    for (const candidate of noticeCandidates(knownCommentIds, detail)) {
+      if (candidate.kind === 'human-comment' && !get('SELECT 1 AS hit FROM comments WHERE bug_pk = ? AND server_id = ?', bug.bug_pk, candidate.commentServerId)) continue;
+      run(`INSERT INTO notices(notice_key, kind, bug_pk, comment_server_id, created_at, noticed_at) VALUES (?, ?, ?, ?, ?, NULL)
+        ON CONFLICT(notice_key) DO NOTHING`, candidate.noticeKey, candidate.kind, bug.bug_pk, candidate.commentServerId, at);
+    }
+  }
+
   function noticeView(row: Row): NoticeView {
     return {
       noticeKey: String(row.notice_key), kind: row.kind as NoticeKind, bugKey: canonicalOf(row), commentServerId: text(row.comment_server_id),
@@ -761,11 +789,18 @@ export function openBugStore(path: string): BugRepository {
     applyPullBatch(batch) {
       return transaction(() => {
         const section = sectionRow(batch.sectionId);
+        const announce = get('SELECT phase FROM sync_state WHERE section_id = ?', batch.sectionId)?.phase === 'incremental';
         let applied = 0;
         let skippedOlder = 0;
         for (const detail of batch.details ?? []) {
-          if (applyDetail(section, detail, batch.at)) applied++;
-          else skippedOlder++;
+          const before = announce ? bugByServerKey(detail.key) : undefined;
+          const known = before ? new Set(all('SELECT server_id FROM comments WHERE bug_pk = ?', before.bug_pk).map(row => String(row.server_id))) : null;
+          if (!applyDetail(section, detail, batch.at)) {
+            skippedOlder++;
+            continue;
+          }
+          applied++;
+          if (announce) recordNotices(detail, known, batch.at);
         }
         for (const key of batch.deleted ?? []) removeBug(section, key, 'deleted', batch.at);
         for (const key of batch.missing ?? []) removeBug(section, key, 'missing', batch.at);

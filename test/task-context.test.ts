@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, readFile, writeFile, readdir, rename, rm, stat, access 
 import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { createAppRuntime, type RuntimeConfiguration, type RuntimeContext, type RuntimeRunParameters, type RuntimeServices, type RuntimeTaskContext } from '../src/app-runtime.ts';
 import { createProductionServices } from '../src/production-runtime.ts';
@@ -13,12 +13,13 @@ import { failureContext } from '../src/cli-contract.ts';
 import { openStateStore, type StateStore } from '../src/state-store.ts';
 import { createAgentReportWatcher, type AgentReportExit, type AgentReportResult } from '../src/agent-report.ts';
 import type { AdapterCommand, AdapterCommandExecutor } from '../src/agent-adapters.ts';
-import type { AssignmentSnapshot } from '../src/assignment.ts';
+import type { AssignmentBriefContext, AssignmentSnapshot } from '../src/assignment.ts';
 import type { ModelCatalog, ModelSelection } from '../src/model-routing.ts';
 import {
-  assignmentFingerprint, bindWorkspaceBoundaries, deriveTaskContext, rafCommandFor, rafSubcommandsFor, loadTaskContextConfiguration, writeTaskContextFile,
+  assignmentFingerprint, bindWorkspaceBoundaries, deriveTaskContext, rafCommandFor, rafSubcommandsFor, loadTaskContextConfiguration, resolveGitWriteBoundaries, writeTaskContextFile,
   TASK_CONTEXT_FILE_NAME, type TaskContextConfiguration, type TaskContextEnvelope,
 } from '../src/task-context.ts';
+import { writeGitWorktreeLayout } from './git-worktree-fixture.ts';
 
 const realConf = new URL('../../conf/', import.meta.url);
 const constants = JSON.parse(readFileSync(new URL('raf-constants.json', realConf), 'utf8'));
@@ -292,6 +293,76 @@ test('[task-context] 5a. координувальні типи отримуют�
   const coordinator = await deriveTaskContext({ root: w.root, parameters: { ...baseParams, type: 'coordinator', phase: 'coordinator', tasks }, assignment: snapshotFor(w.root, tasks), configuration: w.configuration });
   assert.equal(bindWorkspaceBoundaries(coordinator, join(w.root, 'raf-develop')).some(path => path.includes('.raf')), false);
 });
+
+const realOrSame = (path: string) => { try { return realpathSync(path); } catch { return path; } };
+const assignmentSection = (brief: string) => brief.slice(brief.indexOf('# Конкретне доручення'));
+
+test('[task-context] 5b. git-каталоги межі запису: worktree raf-develop → свій git-dir, common-dir модуля й git-каталог кореня; raf-main → common-dir без дубля; без зовнішнього git — нічого', async t => {
+  const w = await workspace(t);
+  const git = await writeGitWorktreeLayout(w.root);
+  assert.equal(git.worktreeGitDir, realpathSync(join(w.root, '.git', 'modules', 'raf', 'worktrees', 'raf-develop')));
+  assert.equal(git.commonDir, realpathSync(join(w.root, '.git', 'modules', 'raf')));
+  const develop = await resolveGitWriteBoundaries(join(w.root, 'raf-develop'), w.root);
+  assert.deepEqual([...develop].sort(), [git.worktreeGitDir, git.commonDir, git.rootGitDir].sort());
+  assert.equal(new Set(develop).size, develop.length);
+  const main = await resolveGitWriteBoundaries(join(w.root, 'raf-main'), w.root);
+  assert.deepEqual([...main].sort(), [git.commonDir, git.rootGitDir].sort());
+  for (const path of [...develop, ...main]) {
+    assert.ok(isAbsolute(path), path);
+    assert.equal(path, realpathSync(path), path);
+    assert.equal(path.startsWith(realpathSync(w.home)), false, path);
+  }
+  const plain = await mkdtemp(join(tmpdir(), 'raf-task-context-plain-'));
+  t.after(() => rm(plain, { recursive: true, force: true }));
+  await Promise.all([mkdir(join(plain, 'solo-develop', '.git', 'objects'), { recursive: true }), mkdir(join(plain, 'solo-develop', '.git', 'refs'), { recursive: true }), mkdir(join(plain, 'bare-develop'))]);
+  await writeFile(join(plain, 'solo-develop', '.git', 'HEAD'), 'ref: refs/heads/develop\n');
+  assert.deepEqual(await resolveGitWriteBoundaries(join(plain, 'solo-develop'), plain), [], 'git-dir усередині робочого дерева вже доступний як робоче дерево, а корінь без git нічого не додає');
+  assert.deepEqual(await resolveGitWriteBoundaries(join(plain, 'bare-develop'), plain), [], 'каталог без .git не дає git-каталогів і не зриває запуск');
+});
+
+for (const type of ['implement', 'spec'] as const) {
+  test(`[task-context] 5c. agent run ${type}: ${type === 'implement' ? 'тип із межею запису отримує git-dir, common-dir і git-каталог кореня в межах запису та обов’язок коміту в брифі' : 'тип без межі запису в робоче дерево не отримує git-каталогів і обов’язку коміту'}`, async t => {
+    const w = await workspace(t);
+    const git = await writeGitWorktreeLayout(w.root);
+    const gitDirectories = [git.worktreeGitDir, git.commonDir, git.rootGitDir];
+    await writeFile(join(w.confRoot, 'briefs', 'tasks', `${type}.md`), 'FIXTURE_STAGE');
+    const seen: ReserveInput[] = [];
+    const composed: { context: AssignmentBriefContext; brief: string }[] = [];
+    const h = await harness(t, w, services => {
+      const refused = refusingReserve(seen)(services);
+      return { ...refused, assignment: { ...refused.assignment, compose: async (snapshot, context) => {
+        const brief = await refused.assignment.compose(snapshot, context);
+        composed.push({ context: structuredClone(context), brief });
+        return brief;
+      } } };
+    });
+    const failure = await h.run({ ...baseParams, type, phase: type }).then(() => undefined, error => error);
+    assert.match(failureText(failure), /fixture admission refused/, 'запуск має дійти до резервування');
+    assert.equal(seen.length, 1);
+    assert.equal(composed.length, 1);
+    const launched = seen[0].writeBoundaries.map(realOrSame);
+    const briefed = composed[0].context.writeBoundaries.map(realOrSame);
+    const section = assignmentSection(composed[0].brief);
+    const declared = JSON.parse(section.slice(section.indexOf('{'))).write_boundaries.map(realOrSame);
+    if (type === 'implement') {
+      for (const directory of gitDirectories) {
+        assert.ok(launched.includes(directory), `межі запуску: ${directory}`);
+        assert.ok(briefed.includes(directory), `межі брифа: ${directory}`);
+        assert.ok(declared.includes(directory), `write_boundaries брифа: ${directory}`);
+      }
+      assert.equal(launched.includes(realpathSync(w.root)), false, 'корінь Orchestrator не стає межею запису цілком');
+      assert.equal(composed[0].context.commitOwnWork, true);
+      assert.match(section, /закоміт/i, 'бриф доручає закомітити свої зміни');
+      assert.ok(section.includes('parallel-development'), 'бриф посилається на правила комітів parallel-development');
+      assert.match(section, /хеш/i, 'бриф вимагає хеші комітів у звіті');
+      assert.match(section, /push[^\n]*(?:не |без |лише )|(?:не |без )[^\n]*push/i, 'push не доручено за замовчуванням');
+    } else {
+      for (const path of [...launched, ...briefed, ...declared]) assert.equal(gitDirectories.some(directory => path === directory || path.startsWith(`${directory}/`)), false, path);
+      assert.notEqual(composed[0].context.commitOwnWork, true);
+      assert.doesNotMatch(composed[0].brief, /коміт/i);
+    }
+  });
+}
 
 test('[task-context] 6. sources: файли зміни, шлях із пункту, «Джерела за етапом»; неіснуючий шлях до каталогу запуску', async t => {
   const w = await workspace(t);

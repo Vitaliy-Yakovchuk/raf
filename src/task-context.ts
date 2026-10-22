@@ -225,6 +225,11 @@ export function bindWorkspaceBoundaries(context: Pick<DerivedTaskContext, 'write
   return context.workspaceWritable ? [cwd, ...context.writeBoundaries.filter(path => path !== cwd)] : [...context.writeBoundaries];
 }
 
+export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: string): Promise<readonly string[]> {
+  void cwd; void orchestratorRoot;
+  throw new Error('NotImplemented: resolveGitWriteBoundaries');
+}
+
 export function assignmentFingerprint(snapshot: AssignmentSnapshot): string {
   return createHash('sha256').update(JSON.stringify(['raf-assignment-v1', snapshot.root, snapshot.changes.map(change => [change.id, change.items.map(item => [item.id, item.description])]), [...snapshot.baselineArchives]])).digest('hex');
 }

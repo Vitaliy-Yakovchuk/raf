@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import {
   buildRunnerInvocation,
@@ -12,6 +14,8 @@ import {
   readNativeSessionId,
 } from '../src/runner-protocols.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
+import { resolveGitWriteBoundaries } from '../src/task-context.ts';
+import { writeGitWorktreeLayout } from './git-worktree-fixture.ts';
 
 const raf = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
 const models = JSON.parse(await readFile(new URL('../../conf/models.json', import.meta.url), 'utf8'));
@@ -89,6 +93,25 @@ test('[claude-protocol] workspace directories get path-scoped edit rules without
   ]);
   assert.deepEqual(nativeWriteScopeArgs(protocol('claude'), [], [workspace]), ['--allowedTools', `Edit(/${workspace}/**)`]);
   assert.deepEqual(nativeWriteScopeArgs(protocol('codex'), [report], [workspace]), ['--add-dir', report]);
+});
+
+test('[claude-protocol] git-dir and common-dir of a linked worktree and the Orchestrator root git directory get --add-dir and a matching Edit rule; codex gets the same writable roots', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'raf-claude-git-scope-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const git = await writeGitWorktreeLayout(root);
+  const expected = [git.worktreeGitDir, git.commonDir, git.rootGitDir];
+  const directories = await resolveGitWriteBoundaries(join(root, 'raf-develop'), root);
+  assert.deepEqual([...directories].sort(), [...expected].sort());
+  const claude = nativeWriteScopeArgs(protocol('claude'), directories);
+  const codex = nativeWriteScopeArgs(protocol('codex'), directories);
+  for (const directory of expected) {
+    assert.ok(claude.some((arg, index) => arg === '--add-dir' && claude[index + 1] === directory), `claude --add-dir ${directory}`);
+    assert.ok(claude.includes(`Edit(/${directory}/**)`), `claude Edit(/${directory}/**)`);
+    assert.ok(codex.some((arg, index) => arg === '--add-dir' && codex[index + 1] === directory), `codex writable root ${directory}`);
+  }
+  assert.equal(claude.includes(`Edit(/${root}/**)`), false);
+  const primary = await resolveGitWriteBoundaries(join(root, 'raf-main'), root);
+  assert.deepEqual([...primary].sort(), [git.commonDir, git.rootGitDir].sort());
 });
 
 test('[claude-protocol] sandbox scope opens unix sockets only behind hidden socket locations and a private tmux directory', () => {

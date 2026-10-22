@@ -182,6 +182,26 @@ test('coordinating brief names the exact raf command to run as one simple call; 
   assert.equal(/raf_command agent run/.test(scoped), false);
 });
 
+test('brief of a type with a write boundary names the own-work commit duty under parallel-development, commit hashes in the report and no default push; other briefs stay without it', async () => {
+  const h = harness();
+  const snapshot = await initial(h);
+  installBriefs(h);
+  const section = (text: string) => text.slice(text.indexOf('# Конкретне доручення'), text.indexOf('{', text.indexOf('# Конкретне доручення')));
+  const committing = await composeAssignmentBrief(snapshot, { ...brief, commitOwnWork: true }, h.ports.fs);
+  const duty = section(committing);
+  assert.match(duty, /закоміт/i);
+  assert.ok(duty.includes('projects/orchestrator/parallel-development'), 'commit rules come from parallel-development');
+  assert.match(duty, /хеш/i);
+  assert.match(duty, /push[^\n]*(?:не |без |лише )|(?:не |без )[^\n]*push/i);
+  const assignment = JSON.parse(committing.slice(committing.indexOf('{', committing.indexOf('# Конкретне доручення'))));
+  assert.deepEqual(assignment.write_boundaries, brief.writeBoundaries);
+  for (const context of [brief, { ...brief, commitOwnWork: false }]) {
+    const plain = await composeAssignmentBrief(snapshot, context, h.ports.fs);
+    assert.doesNotMatch(plain, /коміт/i);
+    assert.equal(plain.includes('parallel-development'), false);
+  }
+});
+
 test('runner switch preserves stage and assignments while replacing runner template', async () => {
   const h = harness();
   const snapshot = await initial(h);

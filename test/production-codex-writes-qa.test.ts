@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdir, readFile, writeFile, realpath } from 'node:fs/promises';
+import { mkdir, readFile, rename, writeFile, realpath } from 'node:fs/promises';
 import { delimiter, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test, type TestContext } from 'node:test';
@@ -11,8 +11,28 @@ const runtimeUrl = pathToFileURL(fileURLToPath(new URL('../src/production-runtim
 const appRuntimeUrl = new URL('../src/app-runtime.ts', import.meta.url).href;
 const storeUrl = new URL('../src/state-store.ts', import.meta.url).href;
 
-async function scopedFixture(t: TestContext, metadata: boolean) {
+async function linkedWorktree(root: string, cwd: string) {
+  const init = spawnSync('git', ['init', '--quiet', '--initial-branch=main', root], { encoding: 'utf8' });
+  assert.equal(init.status, 0, init.stderr);
+  const common = join(root, '.git', 'modules', 'raf');
+  const linked = join(common, 'worktrees', 'raf-develop');
+  await mkdir(dirname(common), { recursive: true });
+  await rename(join(cwd, '.git'), common);
+  await mkdir(linked, { recursive: true });
+  await writeFile(join(linked, 'HEAD'), 'ref: refs/heads/develop\n');
+  await writeFile(join(linked, 'commondir'), '../..\n');
+  await writeFile(join(linked, 'gitdir'), `${join(cwd, '.git')}\n`);
+  await writeFile(join(cwd, '.git'), `gitdir: ${linked}\n`);
+  const probe = spawnSync('git', ['-C', cwd, 'rev-parse', '--show-toplevel', '--git-dir', '--git-common-dir'], { encoding: 'utf8' });
+  assert.equal(probe.status, 0, probe.stderr);
+  const directories = [await realpath(linked), await realpath(common), await realpath(join(root, '.git'))];
+  assert.deepEqual(await Promise.all(probe.stdout.trim().split('\n').map(path => realpath(path))), [await realpath(cwd), directories[0], directories[1]]);
+  return directories;
+}
+
+async function scopedFixture(t: TestContext, metadata: boolean, worktree = false) {
   const f = await fixture(t);
+  const gitDirectories = worktree ? await linkedWorktree(f.root, f.cwd) : [];
   const catalog = JSON.parse(await readFile(new URL('../dist/catalog.json', import.meta.url), 'utf8'));
   const configured = { ...configuration, catalog };
   const runId = 'writes-run-1';
@@ -20,7 +40,7 @@ async function scopedFixture(t: TestContext, metadata: boolean) {
   const metadataDirectory = f.changeRoot;
   const params = metadata ? f.params : { ...f.params, type: 'spec', phase: 'spec' };
   const documentPath = join(metadataDirectory, 'new-document.md');
-  const targets = metadata ? [documentPath, f.questionsPath, join(f.cwd, 'local.txt')] : [];
+  const targets = metadata ? [documentPath, f.questionsPath, join(f.cwd, 'local.txt'), ...gitDirectories.map(directory => join(directory, 'raf-write-probe'))] : [];
   const boundaries = metadata ? [f.cwd, metadataDirectory, f.questionsPath] : [metadataDirectory, f.questionsPath];
   await mkdir(dirname(f.legacyTaskContextPath), { recursive: true, mode: 0o700 });
   await writeFile(f.legacyTaskContextPath, JSON.stringify({ version: 1, parameters: params, assignment: f.assignment, context: { branch: 'develop', outcome: 'FOREIGN', writeBoundaries: [join(f.root, 'foreign-directory'), f.root], sources: [], requested: { ramBytes: 1, diskBytes: {} }, requiredFileSystemIds: [], reportSchema: { type: 'object' } } }), { mode: 0o600 });
@@ -112,12 +132,12 @@ try { console.log(JSON.stringify(await app.handlers['agent run'](${JSON.stringif
     return started;
   };
   const session = () => f.store.sessionRepository.transaction(tx => tx.getSession(runId));
-  return { ...f, runId, reportPath, metadataDirectory, documentPath, targets, boundaries, argvPath, releasePath, exitGate, writeEvidence, nativeId, launch, session };
+  return { ...f, runId, reportPath, metadataDirectory, documentPath, targets, boundaries, gitDirectories, argvPath, releasePath, exitGate, writeEvidence, nativeId, launch, session };
 }
 
-for (const metadata of [true, false]) {
-  test(`[production-codex-writes-qa] ${metadata ? 'implement: derived change, questions and workspace boundaries' : 'spec: derived boundaries without workspace'} persist scoped native writes after parent exit`, async t => {
-    const f = await scopedFixture(t, metadata);
+for (const [metadata, worktree] of [[true, false], [false, false], [true, true], [false, true]] as const) {
+  test(`[production-codex-writes-qa] ${metadata ? 'implement: derived change, questions and workspace boundaries' : 'spec: derived boundaries without workspace'}${worktree ? ' in a linked worktree: git-dir, common-dir and Orchestrator root git directory are writable roots only for a type with a write boundary' : ''} persist scoped native writes after parent exit`, async t => {
+    const f = await scopedFixture(t, metadata, worktree);
     const started = f.launch();
     assert.equal(started.status, 'running');
     assert.equal(started.selection.quota, 'unknown');
@@ -128,11 +148,15 @@ for (const metadata of [true, false]) {
     const directories = args.flatMap((arg, index) => arg === '--add-dir' ? [args[index + 1]] : []);
     const expected = [await realpath(dirname(f.reportPath))];
     expected.push(await realpath(f.metadataDirectory), await realpath(dirname(f.questionsPath)));
+    if (metadata) expected.push(...f.gitDirectories);
     assert.deepEqual(directories.sort(), [...new Set(expected)].sort(), 'actual native argv must grant only declared outside-cwd parents plus own report directory');
     assert.equal(directories.includes(await realpath(f.root)), false);
     assert.equal(directories.includes(await realpath(f.home)), false);
     assert.equal(directories.includes(await realpath(dirname(f.statePath))), false);
-    assert.deepEqual(f.session()?.launchContext?.writeBoundaries, f.boundaries);
+    if (metadata && worktree) {
+      const durable = await Promise.all((f.session()?.launchContext?.writeBoundaries ?? []).map(path => realpath(path).catch(() => path)));
+      assert.deepEqual(durable.sort(), (await Promise.all([...f.boundaries, ...f.gitDirectories].map(path => realpath(path)))).sort());
+    } else assert.deepEqual(f.session()?.launchContext?.writeBoundaries, f.boundaries);
     assert.equal(listTaskReservations(f.store).length, 1);
     await writeFile(f.releasePath, 'go');
     const accepted = await eventually(f.session, row => row?.result?.status === (metadata ? 'succeeded' : 'failed'), 'worker writes exact report path and accepts report after parent exited');

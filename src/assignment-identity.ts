@@ -17,6 +17,7 @@ const tuple = (stat: BigIntStats) => [stat.dev, stat.ino, stat.birthtimeNs].map(
 const signature = (stat: BigIntStats) => [stat.dev, stat.ino, stat.birthtimeNs, stat.ctimeNs, stat.mtimeNs, stat.size, stat.mode].map(String).join(':');
 const instance = (root: string, stat: BigIntStats) => JSON.stringify(['raf-local-change-v1', root, ...tuple(stat)]);
 const fingerprint = (project: string, root: string, change: string, source: string, id: string, description: string) => createHash('sha256').update(JSON.stringify(['raf-task-fingerprint-v1', project, root, change, source, id, description])).digest('hex');
+const supportedFilesystems = new Set(['darwin:26', `linux:${0xEF53n}`, `linux:${0x01021994n}`]);
 const frozenTask = (task: ReservedTaskSnapshot): ReservedTaskSnapshot => Object.freeze({ key: Object.freeze({ ...task.key }), changeInstance: task.changeInstance, fingerprint: task.fingerprint });
 
 export function createAssignmentIdentityAdapter(
@@ -25,6 +26,7 @@ export function createAssignmentIdentityAdapter(
     execute?: AdapterCommandExecutor;
     lstat?: (path: string) => Promise<BigIntStats>;
     statfs?: (path: string) => Promise<BigIntStatsFs>;
+    platform?: NodeJS.Platform;
   } = {},
 ): {
   capture(project: string, assignment: AssignmentSnapshot): Promise<readonly ReservedTaskSnapshot[]>;
@@ -34,6 +36,7 @@ export function createAssignmentIdentityAdapter(
   const execute = options.execute ?? executeCommand;
   const inspect = options.lstat ?? (path => lstat(path, { bigint: true }));
   const filesystem = options.statfs ?? (path => statfs(path, { bigint: true }));
+  const platform = options.platform ?? process.platform;
 
   async function rootFor(project: string): Promise<string> {
     if (!Object.hasOwn(roots, project) || !isAbsolute(roots[project])) throw failure('TASK_IDENTITY_INVALID', `Unknown canonical project ${project}`);
@@ -48,6 +51,7 @@ export function createAssignmentIdentityAdapter(
 
   async function guarded<T>(root: string, action: (access: {
     inspectPath(path: string, optional?: boolean): Promise<BigIntStats | undefined>;
+    probe(path: string, optional?: boolean): Promise<BigIntStats | undefined>;
     entries(path: string): Promise<string[]>;
     bytes(path: string, optional?: boolean): Promise<Buffer | undefined>;
     verify(): Promise<void>;
@@ -55,10 +59,11 @@ export function createAssignmentIdentityAdapter(
     const guards = new Map<string, Guard>();
     const absent = new Set<string>();
     const contained = (path: string) => { const part = relative(root, path); if (part === '..' || part.startsWith(`..${sep}`) || isAbsolute(part)) throw new Error(`Path outside canonical root: ${path}`); };
-    async function inspectPath(path: string, optional = false): Promise<BigIntStats | undefined> {
+    const observed = new Map<string, BigIntStats>();
+    async function probe(path: string, optional = false): Promise<BigIntStats | undefined> {
       contained(path);
-      const known = guards.get(path);
-      if (known) return known.stat;
+      const known = guards.get(path)?.stat ?? observed.get(path);
+      if (known) return known;
       if (path !== root) {
         const parent = await inspectPath(dirname(path), optional);
         if (!parent) { absent.add(path); return undefined; }
@@ -67,7 +72,16 @@ export function createAssignmentIdentityAdapter(
       let stat: BigIntStats;
       try { stat = await inspect(path); }
       catch (error) { if (optional && (error as NodeJS.ErrnoException).code === 'ENOENT') { absent.add(path); return undefined; } throw error; }
-      if (process.platform !== 'darwin' || stat.isSymbolicLink() || (!stat.isDirectory() && !stat.isFile()) || typeof stat.dev !== 'bigint' || stat.dev < 0n || typeof stat.ino !== 'bigint' || stat.ino <= 0n || typeof stat.birthtimeNs !== 'bigint' || stat.birthtimeNs <= 0n || typeof stat.ctimeNs !== 'bigint' || typeof stat.mtimeNs !== 'bigint' || (await filesystem(path)).type !== 26n) throw new Error(`Unsupported regular local darwin/APFS source: ${path}`);
+      const type = (await filesystem(path)).type;
+      if (typeof type !== 'bigint' || !supportedFilesystems.has(`${platform}:${type}`) || stat.isSymbolicLink() || (!stat.isDirectory() && !stat.isFile()) || typeof stat.dev !== 'bigint' || stat.dev < 0n || typeof stat.ino !== 'bigint' || stat.ino <= 0n || typeof stat.birthtimeNs !== 'bigint' || stat.birthtimeNs <= 0n || typeof stat.ctimeNs !== 'bigint' || typeof stat.mtimeNs !== 'bigint') throw new Error(`Unsupported local source on platform ${platform} with filesystem type 0x${typeof type === 'bigint' ? type.toString(16) : String(type)}: ${path}`);
+      observed.set(path, stat);
+      return stat;
+    }
+    async function inspectPath(path: string, optional = false): Promise<BigIntStats | undefined> {
+      const known = guards.get(path);
+      if (known) return known.stat;
+      const stat = await probe(path, optional);
+      if (!stat) return undefined;
       const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | (stat.isDirectory() ? constants.O_DIRECTORY : 0));
       try {
         if (signature(await handle.stat({ bigint: true })) !== signature(stat) || signature(await inspect(path)) !== signature(stat)) throw new Error(`Source changed while opening: ${path}`);
@@ -95,6 +109,7 @@ export function createAssignmentIdentityAdapter(
         if (signature(await guard.handle.stat({ bigint: true })) !== signature(guard.stat) || signature(await inspect(guard.path)) !== signature(guard.stat)) throw new Error(`Source read race: ${guard.path}`);
         if (guard.entries && JSON.stringify((await readdir(guard.path)).sort()) !== JSON.stringify(guard.entries)) throw new Error(`Directory read race: ${guard.path}`);
       }
+      for (const [path, stat] of observed) if (!guards.has(path) && signature(await inspect(path)) !== signature(stat)) throw new Error(`Source candidate race: ${path}`);
       for (const path of absent) {
         try { await inspect(path); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue; throw error; }
         throw new Error(`Previously absent source input appeared: ${path}`);
@@ -102,7 +117,7 @@ export function createAssignmentIdentityAdapter(
     }
     try {
       await inspectPath(root);
-      const result = await action({ inspectPath, entries, bytes, verify });
+      const result = await action({ inspectPath, probe, entries, bytes, verify });
       await verify();
       return result;
     } finally { await Promise.all([...guards.values()].map(guard => guard.handle.close())); }
@@ -236,12 +251,14 @@ export function createAssignmentIdentityAdapter(
             const matches: Source[] = [];
             let replacement = false;
             const consider = async (path: string, location: 'active' | 'archive', relevant: boolean, optional = false) => {
-              const stat = await access.inspectPath(path, optional);
+              const stat = await access.probe(path, optional);
               if (!stat) return;
               if (!stat.isDirectory()) throw new Error(`Non-directory source candidate: ${path}`);
-              const identity = instance(root, stat);
-              if (identity === task.changeInstance) matches.push({ path, instance: identity, location });
-              else if (relevant) replacement = true;
+              if (instance(root, stat) !== task.changeInstance) { if (relevant) replacement = true; return; }
+              const opened = await access.inspectPath(path);
+              const identity = instance(root, opened!);
+              if (identity !== task.changeInstance) throw new Error(`Source changed while opening: ${path}`);
+              matches.push({ path, instance: identity, location });
             };
             await consider(active, 'active', true, true);
             const archive = join(root, 'openspec', 'changes', 'archive');
@@ -249,7 +266,7 @@ export function createAssignmentIdentityAdapter(
             if (archiveStat) {
               for (const name of await access.entries(archive)) {
                 const path = join(archive, name);
-                const stat = await access.inspectPath(path);
+                const stat = await access.probe(path);
                 if (stat!.isFile()) continue;
                 await consider(path, 'archive', name === task.key.changeId || (/^\d{4}-\d{2}-\d{2}-/.test(name) && name.slice(11) === task.key.changeId));
               }

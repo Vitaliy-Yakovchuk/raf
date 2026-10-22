@@ -523,3 +523,133 @@ test('[identity-live] installed OpenSpec actual archive preserves identity throu
     resolved(await restarted.resolveTasks(JSON.parse(JSON.stringify(captured))), captured, 'completed', 'archive');
   });
 });
+
+const EXT4 = 0xEF53n;
+const TMPFS = 0x01021994n;
+const APFS = 26n;
+
+function platformAdapter(f: Awaited<ReturnType<typeof fixture>>, platform: NodeJS.Platform, type: bigint, override: {
+  birthtime?: (path: string, actual: bigint) => bigint;
+  filesystem?: (path: string) => bigint | undefined;
+} = {}) {
+  return createAssignmentIdentityAdapter({ raf: f.root }, {
+    execute: f.execute,
+    platform,
+    async lstat(path) {
+      const actual = await lstat(path, { bigint: true });
+      const positive = actual.birthtimeNs > 0n ? actual.birthtimeNs : actual.ino + 1n;
+      const birthtimeNs = override.birthtime ? override.birthtime(path, positive) : positive;
+      return new Proxy(actual, { get(target, key) {
+        if (key === 'birthtimeNs') return birthtimeNs;
+        const value = Reflect.get(target, key);
+        return typeof value === 'function' ? value.bind(target) : value;
+      } });
+    },
+    async statfs(path) {
+      const actual = await statfs(path, { bigint: true });
+      return { ...actual, type: override.filesystem?.(path) ?? type };
+    },
+  });
+}
+
+for (const [platform, type, label] of [
+  ['linux', EXT4, 'linux ext4'],
+  ['linux', TMPFS, 'linux tmpfs'],
+  ['darwin', APFS, 'darwin APFS regression'],
+] as const) {
+  test(`[identity-platform] ${label} captures, opens and completes the exact source`, async t => {
+    const f = await fixture(t);
+    await contract(`${label} is an allowlisted local identity boundary`, async () => {
+      const adapter = platformAdapter(f, platform, type);
+      const captured = await adapter.capture('raf', f.assignment);
+      const actual = await lstat(f.dir, { bigint: true });
+      const birthtimeNs = actual.birthtimeNs > 0n ? actual.birthtimeNs : actual.ino + 1n;
+      assert.equal(captured.length, 1);
+      assert.equal(captured[0].changeInstance, JSON.stringify(['raf-local-change-v1', f.root, String(actual.dev), String(actual.ino), String(birthtimeNs)]));
+      resolved(await adapter.resolveTasks(captured), captured, 'open', 'active');
+      f.setRows([task(undefined, true)]);
+      resolved(await platformAdapter(f, platform, type).resolveTasks(JSON.parse(JSON.stringify(captured))), captured, 'completed', 'active');
+    });
+  });
+}
+
+test('[identity-platform] linux archive rename with reused active name resolves the exact original', async t => {
+  const f = await fixture(t);
+  await contract('Same-filesystem rename on Linux preserves dev/ino/birthtime identity', async () => {
+    const captured = await platformAdapter(f, 'linux', EXT4).capture('raf', f.assignment);
+    f.setRows([task(undefined, true)]);
+    await f.archive('linux-renamed-original');
+    await f.reuse();
+    resolved(await platformAdapter(f, 'linux', EXT4).resolveTasks(JSON.parse(JSON.stringify(captured))), captured, 'completed', 'archive');
+  });
+});
+
+for (const [platform, type, label] of [
+  ['linux', 0x58465342n, 'linux xfs'],
+  ['linux', 0x9123683En, 'linux btrfs'],
+  ['linux', 0x6969n, 'linux NFS'],
+  ['linux', 0xFE534D42n, 'linux SMB2'],
+  ['linux', 0x794C7630n, 'linux overlayfs'],
+  ['linux', APFS, 'linux with APFS type'],
+  ['darwin', EXT4, 'darwin with ext4 type'],
+  ['win32', EXT4, 'win32 with ext4 type'],
+] as const) {
+  test(`[identity-platform] ${label} is unknown without invoking the CLI`, async t => {
+    const f = await fixture(t);
+    await contract('Only exact allowlisted platform/filesystem pairs prove identity', async () => {
+      await assert.rejects(() => platformAdapter(f, platform, type).capture('raf', f.assignment), { code: 'TASK_SOURCE_UNKNOWN' });
+      assert.equal(f.calls.length, 0);
+    });
+  });
+}
+
+test('[identity-platform] linux ext4 without birthtime is unknown without dev/ino fallback', async t => {
+  const f = await fixture(t);
+  await contract('Zero statx birthtime never falls back to a weaker identity', async () => {
+    const adapter = platformAdapter(f, 'linux', EXT4, { birthtime: () => 0n });
+    await assert.rejects(() => adapter.capture('raf', f.assignment), { code: 'TASK_SOURCE_UNKNOWN' });
+    assert.equal(f.calls.length, 0);
+  });
+});
+
+test('[identity-platform] one input on an unsupported filesystem makes capture and resolve unknown', async t => {
+  const f = await fixture(t);
+  await contract('Every traversed component and read input needs its own supported filesystem', async () => {
+    let mounted = false;
+    const filesystem = (path: string) => mounted && path === join(f.dir, 'tasks.md') ? 0x794C7630n : undefined;
+    const captured = await platformAdapter(f, 'linux', EXT4).capture('raf', f.assignment);
+    mounted = true;
+    const adapter = platformAdapter(f, 'linux', EXT4, { filesystem });
+    await assert.rejects(() => adapter.capture('raf', f.assignment), { code: 'TASK_SOURCE_UNKNOWN' });
+    f.setRows([task(undefined, true)]);
+    refused(await adapter.resolveTasks(captured), captured, 'unknown');
+  });
+});
+
+test('[identity-platform] linux inode reuse with a different birthtime is mismatch', async t => {
+  const f = await fixture(t);
+  await contract('Reused dev/ino with another birthtime is a proven different source', async () => {
+    const captured = await platformAdapter(f, 'linux', EXT4).capture('raf', f.assignment);
+    f.setRows([task(undefined, true)]);
+    const reused = platformAdapter(f, 'linux', EXT4, { birthtime: (path, actual) => path === f.dir ? actual + 1n : actual });
+    refused(await reused.resolveTasks(captured), captured, 'mismatch');
+  });
+});
+
+test('[identity-platform] unsupported pair error names platform and hex filesystem type', async t => {
+  const f = await fixture(t);
+  await contract('Diagnostics identify the rejected platform/filesystem pair', async () => {
+    const captured = await platformAdapter(f, 'linux', EXT4).capture('raf', f.assignment);
+    const adapter = platformAdapter(f, 'linux', 0x58465342n);
+    const error = await adapter.capture('raf', f.assignment).then(() => assert.fail('xfs capture must be refused'), (error: Error) => error);
+    const [result] = await adapter.resolveTasks(captured);
+    assert.equal(result.state, 'unknown');
+    assert.ok('reason' in result);
+    for (const text of [error.message, result.reason]) {
+      assert.match(text, /linux/);
+      assert.match(text, /0x58465342/i);
+      assert.ok(text.includes(f.root), text);
+      assert.doesNotMatch(text, /darwin\/APFS/);
+    }
+  });
+});

@@ -16,7 +16,8 @@ import { selectModel, listModelAvailability, type RoutingSnapshot } from './mode
 import { createLaunchState, reserveLaunchInTransaction, evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
 import { createSessionState, closeSessionInTransaction, type ProcessIdentity, type SessionRecord, type WorkResult } from './session-state.ts';
 import { AgentControlService, MainAttachedElsewhereError, type VerifiedSender, type ActivityEvent, type MainAttachment } from './agent-control.ts';
-import { ReminderService } from './reminders.ts';
+import { ReminderService, type SessionEnd } from './reminders.ts';
+import { loadEventCatalog } from './event-catalog.ts';
 import { evaluateResourceAdmission } from './resource-admission.ts';
 import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
 import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership, type PersistentWrapperFailure } from './launch-wrapper.ts';
@@ -279,7 +280,9 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const direct = identityExecute ?? executeCommand;
   const state = createSessionState({ repository: store.sessionRepository, verifyMainAuthority: (authority, identity) => !!authority && typeof authority === 'object' && isDeepStrictEqual(mainAuthority.get(authority), identity), verifyWorkResult: (runId, result) => verified.get(result) === runId });
   const current = (runId: string) => store.sessionRepository.transaction(tx => tx.getSession(runId));
-  const reminders = new ReminderService({ repository: store.reminderRepository, now, nextId: randomUUID, approvedEventKinds: ['agent.succeeded', 'agent.failed', 'agent.started', 'agent.activity-changed', 'agent.closed', 'reminder.activated', 'reminder.closed'] });
+  let reminderService: ReminderService | undefined;
+  const reminders = { sessionEnded: (input: SessionEnd) => (reminderService ??= new ReminderService({ repository: store.reminderRepository, now, nextId: randomUUID,
+    approvedEventKinds: loadEventCatalog(context.orchestratorRoot).events.map(event => event.id) })).sessionEnded(input) };
   const intents = (rows: readonly ActivityEvent[]) => rows.map(row => { const event = row.kind === 'started' ? 'agent.started' : row.kind === 'updated' ? 'agent.activity-changed' : 'agent.closed'; return { id: `${row.session.runId}:activity:${row.session.revision}:${row.kind}:${row.project}`, runId: row.session.runId, event, payload: { kind: event, id: row.session.addressId, activity: row } }; });
   const publish = async (rows: readonly ActivityEvent[]) => { store.sessionRepository.transaction(tx => { for (const intent of intents(rows)) tx.putPending(intent); }); };
   const finalize = async (session: SessionRecord, rows: readonly ActivityEvent[]) => {
@@ -436,7 +439,16 @@ function quotaLock(store: StateStore, rows: readonly QuotaProtocol[]): Collectio
     },
   };
 }
-function quotaTransport(context: Pick<RuntimeContext, 'tmpRoot'>, execute: AdapterCommandExecutor): ProbeTransport {
+async function quotaProbeWorkspace(context: Pick<RuntimeContext, 'orchestratorRoot' | 'confRoot'>, execute: AdapterCommandExecutor): Promise<string | undefined> {
+  const projects = await json(join(context.confRoot, 'projects.json')).catch(() => undefined);
+  const raf = object(projects?.projects) ? projects.projects.raf : undefined;
+  if (!object(raf) || !text(raf.path) || !object(raf.branchPaths) || !Object.values(raf.branchPaths).includes(raf.path)) return undefined;
+  const cwd = resolve(context.orchestratorRoot, raf.path);
+  const top = await execute({ executable: 'git', args: ['-C', cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
+  const gitRoot = top?.exitCode === 0 && top.stdout.trim() ? top.stdout.trim() : undefined;
+  return await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, cwd, gitRoot) ? cwd : undefined;
+}
+function quotaTransport(context: Pick<RuntimeContext, 'tmpRoot' | 'orchestratorRoot' | 'confRoot'>, execute: AdapterCommandExecutor): ProbeTransport {
   const owned = new Map<string, { session: AdapterSession; directory: string; version: string; settings: QuotaProtocol; adapter: TmuxAgentAdapter }>();
   const handle = (token: string) => {
     const value = owned.get(token);
@@ -451,14 +463,16 @@ function quotaTransport(context: Pick<RuntimeContext, 'tmpRoot'>, execute: Adapt
       if (!availability.available) throw new Error(availability.reason);
       const root = join(context.tmpRoot, 'quota');
       await fs.mkdir(root, { recursive: true, mode: 0o700 });
+      const workspace = await quotaProbeWorkspace(context, execute);
       const directory = await fs.mkdtemp(join(root, `${settings.runner}-`));
+      const cwd = workspace ?? directory;
       const invocation = quotaProbeInvocation({ ...settings, executable: availability.path }, directory);
-      const command = { executable: 'env', args: [...Object.entries(invocation.env).map(([key, value]) => `${key}=${value}`), invocation.executable, ...invocation.args], cwd: directory };
+      const command = { executable: 'env', args: [...Object.entries(invocation.env).map(([key, value]) => `${key}=${value}`), invocation.executable, ...invocation.args], cwd };
       const probe: RunnerProtocol = { invocation: () => command, observe: () => ({ status: 'starting' }) };
       const adapter = new TmuxAgentAdapter({ execute, protocols: { [settings.runner]: probe } as Record<AgentRunner, RunnerProtocol> });
       const tmuxSession = `raf-quota-${settings.runner}-${randomUUID().slice(0, 8)}`;
       let session: AdapterSession;
-      try { session = await adapter.startWithoutInput({ selection: { runner: settings.runner as AgentRunner, model: '', effort: '' }, tmuxSession, cwd: directory, reportWrapper: { wrap: value => value } }); }
+      try { session = await adapter.startWithoutInput({ selection: { runner: settings.runner as AgentRunner, model: '', effort: '' }, tmuxSession, cwd, reportWrapper: { wrap: value => value } }); }
       catch (error) {
         await discardOwnedTmuxSession(execute, tmuxSession, settings.timeouts).catch(() => false);
         await fs.rm(directory, { recursive: true, force: true });
@@ -466,7 +480,7 @@ function quotaTransport(context: Pick<RuntimeContext, 'tmpRoot'>, execute: Adapt
       }
       const token = randomUUID();
       owned.set(token, { session, directory, version: availability.version, settings, adapter });
-      return { socket: join(context.tmpRoot, 'tmux', 'server.sock'), session: tmuxSession, ownershipToken: token };
+      return { socket: join(context.tmpRoot, 'tmux', 'server.sock'), session: tmuxSession, ownershipToken: token, trustWorkspace: workspace !== undefined };
     },
     captureOwned: async probe => {
       const value = handle(probe.ownershipToken);

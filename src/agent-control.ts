@@ -93,7 +93,6 @@ export class AgentControlService {
       session = await this.dependencies.coordinator.observe(session, observed ?? await this.inspect(session.process));
     }
     if (session.state === 'exited') {
-      this.dependencies.reminders.sessionEnded({ address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: true });
       session = await this.dependencies.coordinator.finalize(session, this.events(session, 'ended'));
     }
     return session;

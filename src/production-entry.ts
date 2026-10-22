@@ -1,5 +1,5 @@
 import { createServiceHandlers } from './service-entry.ts';
-import { createProductionServices } from './production-runtime.ts';
+import { createProductionServices, rafSystemCaller } from './production-runtime.ts';
 import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
 import { openSecretsStore, SecretsStoreError } from './secrets-store.ts';
@@ -15,6 +15,11 @@ import { createAppRuntime, runnerLimitsHandler, type AppRuntime } from './app-ru
 import { openStateStore } from './state-store.ts';
 import { type ModelCatalog } from './model-routing.ts';
 import { commandFailure, failureContext } from './cli-contract.ts';
+import { loadEventCatalog } from './event-catalog.ts';
+import type { CommandStatePorts } from './reminder-cli.ts';
+import type { BugCommand } from './bug-cli.ts';
+import type { StateStore } from './state-store.ts';
+import type { RuntimeServices } from './app-runtime.ts';
 
 export interface ProductionEntryOptions {
   orchestratorRoot: string;
@@ -99,6 +104,17 @@ function runnerLimits(options: ProductionEntryOptions, orchestratorRoot: string,
   };
 }
 
+function commandState(orchestratorRoot: string): (store: StateStore, services: () => Promise<RuntimeServices>) => CommandStatePorts {
+  return (store, services) => ({
+    store, now: Date.now, nextReminderId: randomUUID, catalog: loadEventCatalog(orchestratorRoot),
+    deliver: async (request, sender) => {
+      if (sender.kind !== 'system') return { accepted: false, reason: 'Command state delivers only system messages' };
+      try { return await (await services()).control.message(request, rafSystemCaller); }
+      catch (error) { return { accepted: false, reason: error instanceof Error ? error.message : String(error) }; }
+    },
+  });
+}
+
 function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>, additionalHandlers: Record<string, Handler> = {}): AppRuntime {
   const now = clock(options);
   const loaded = readConfiguration(orchestratorRoot);
@@ -108,7 +124,7 @@ function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot
     additionalHandlers,
     now, loadConfiguration: async () => ({ catalog, models: loaded.models, commandTiming: loaded.commandTiming }),
     openStore: async path => openStateStore(path), nextRunIdentity: () => ({ runId: randomUUID(), tmuxSession: randomUUID() }),
-    createServices: createProductionServices,
+    createServices: createProductionServices, commandState: commandState(orchestratorRoot),
   });
 }
 
@@ -126,10 +142,16 @@ export async function runProductionCli(argv: readonly string[], options: Product
   const handlers = new Proxy(Object.create(null) as Record<string, Handler>, {
     get(_target, name) {
       if (typeof name !== 'string') return undefined;
-      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'runner limits', 'command stats', 'secrets import-conductor', 'service start', 'service status', 'service stop'].includes(name)) return unavailable;
+      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'runner limits', 'command stats', 'secrets import-conductor', 'service start', 'service status', 'service stop',
+        'reminder add', 'reminder list', 'reminder update', 'reminder activate', 'reminder close', 'reminder reassign', 'reminder close-all',
+        'bug list', 'bug show', 'bug comment add', 'bug attachment get'].includes(name)) return unavailable;
       return async (params: Record<string, unknown>) => {
         try {
           const orchestratorRoot = validatedRoot(options);
+          if (name.startsWith('bug ')) {
+            const [{ createBugHandlers }, { createProductionBugPorts }] = await Promise.all([import('./bug-cli.ts'), import('./bug-production.ts')]);
+            return await createBugHandlers(createProductionBugPorts({ orchestratorRoot, homeDirectory: options.homeDirectory }))[name as BugCommand](params);
+          }
           if (name.startsWith('service ')) {
             readConfiguration(orchestratorRoot);
             const settings = JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'raf.json'), 'utf8'));

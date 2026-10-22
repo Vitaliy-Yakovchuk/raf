@@ -96,11 +96,11 @@ test('confirmed process death delegates observation and final closure before ps 
   f.observations.set('cli-A', { state: 'exited', observedAt: time, exitCode: 1, evidence: 'process absent' });
   assert.equal((await f.service.ps()).some(row => row.addressId === 'A'), false);
   assert.equal(f.records.get('run-A')?.state, 'finished');
-  assert.deepEqual(f.ends, [{ address: 'A', crashed: true, confirmedSucceeded: false }]);
+  assert.deepEqual(f.ends, []);
   assert.deepEqual(f.events.map(event => [event.kind, event.session.addressId]), [['ended', 'A']]);
   await f.service.ps();
   assert.equal(f.events.length, 1);
-  assert.equal(f.ends.length, 1);
+  assert.equal(f.ends.length, 0);
 });
 
 test('unknown scan is an explicit uncertainty and never process death or a close', async () => {

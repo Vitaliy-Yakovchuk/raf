@@ -54,8 +54,15 @@ async function scopedFixture(t: TestContext, metadata: boolean, worktree = false
   const executable = join(f.binRoot, 'codex');
   await writeFile(executable, String.raw`#!${process.execPath}
 import { readFileSync, writeFileSync, existsSync, realpathSync } from 'node:fs';
-import { dirname, relative, resolve, isAbsolute } from 'node:path';
+import { dirname, relative, resolve, isAbsolute, join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 if (process.argv.includes('--version')) { console.log('codex-cli 0.160.0'); process.exit(0); }
+if (process.argv[2] === 'sandbox') {
+  const fixture = realpathSync(${JSON.stringify(f.root)});
+  const real = (process.env.PATH ?? '').split(':').filter(isAbsolute).map(directory => join(directory, 'codex')).find(path => existsSync(path) && !realpathSync(path).startsWith(fixture + '/'));
+  if (!real) process.exit(127);
+  process.exit(spawnSync(real, process.argv.slice(2), { stdio: 'inherit' }).status ?? 1);
+}
 const args = process.argv.slice(2);
 writeFileSync(${JSON.stringify(pidPath)}, String(process.pid));
 writeFileSync(${JSON.stringify(argvPath)}, JSON.stringify(args));
@@ -143,7 +150,8 @@ for (const [metadata, worktree] of [[true, false], [false, false], [true, true],
     assert.equal(started.selection.quota, 'unknown');
     assert.equal(started.process.runnerSessionId, f.nativeId);
     const args: string[] = JSON.parse(await readFile(f.argvPath, 'utf8'));
-    assert.equal(args[args.indexOf('--sandbox') + 1], 'workspace-write');
+    assert.ok(args.includes('sandbox_mode="workspace-write"') && !args.includes('--sandbox'), 'workspace-write is kept by the Codex permission profile, not the legacy --sandbox override');
+    assert.ok(args.includes('default_permissions="linux"'));
     assert.equal(args[args.indexOf('--ask-for-approval') + 1], 'never');
     const directories = args.flatMap((arg, index) => arg === '--add-dir' ? [args[index + 1]] : []);
     const expected = [await realpath(dirname(f.reportPath))];

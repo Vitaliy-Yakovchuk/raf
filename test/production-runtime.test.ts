@@ -1,190 +1,23 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, writeFile, chmod, rename, rm, realpath } from 'node:fs/promises';
-import { hostname, tmpdir } from 'node:os';
+import { mkdir, readFile, writeFile, chmod, realpath, readdir, access } from 'node:fs/promises';
 import { delimiter, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { setTimeout as delay } from 'node:timers/promises';
 import { test, type TestContext } from 'node:test';
 import { createProductionServices } from '../src/production-runtime.ts';
-import { createResourceSnapshotReader, executeCommand } from '../src/os-runtime.ts';
 import { launchPersistentWrapper } from '../src/launch-wrapper.ts';
-import { openStateStore } from '../src/state-store.ts';
 import { createSessionState } from '../src/session-state.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
 import { selectModel, listModelAvailability } from '../src/model-routing.ts';
-import type { RuntimeConfiguration, RuntimeContext, RuntimeLaunch, RuntimeTaskContext } from '../src/app-runtime.ts';
-import type { AdapterCommand, AdapterCommandExecutor } from '../src/agent-adapters.ts';
-import type { AssignmentSnapshot } from '../src/assignment.ts';
+import { failureContext } from '../src/cli-contract.ts';
+import type { RuntimeLaunch } from '../src/app-runtime.ts';
+import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import type { LaunchWrapperRequest } from '../src/launch-wrapper.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
+import { configuration, derivedLaunch, eventually, fixture, fixtureResources, recordLaunchRunnerPath, taskDescription } from './production-fixture.ts';
 
 const runtimeUrl = pathToFileURL(fileURLToPath(new URL('../src/production-runtime.ts', import.meta.url))).href;
-const configuration: RuntimeConfiguration = {
-  catalog: { commands: [], reportStatuses: [{ id: 'succeeded' }, { id: 'failed' }] },
-  models: {
-    version: 1,
-    runners: [{ id: 'codex', initialEnabled: true }],
-    models: [{ id: 'gpt-6.1-sol', version: '6.1', runner: 'codex', effort: 'high', complexity: 'decision', enabled: true }],
-    routing: { complexityOrder: ['decision'], taskClassification: {}, runnerPreferences: [], modelTransitions: [], roleModelBindings: {} },
-  },
-  commandTiming: { emaAlpha: 0.1 },
-};
-
-async function fixture(t: TestContext) {
-  const root = await mkdtemp(join(tmpdir(), 'raf-prod-'));
-  const confRoot = join(root, 'conf');
-  const home = join(root, 'home');
-  const tmpRoot = join(root, 'tmp');
-  const cwd = join(root, 'raf-develop');
-  const statePath = join(home, '.raf', 'isolated.sqlite');
-  const binRoot = join(root, 'bin');
-  const socket = join(root, 'tmux.sock');
-  await Promise.all([mkdir(confRoot), mkdir(dirname(statePath), { recursive: true }), mkdir(tmpRoot), mkdir(cwd), mkdir(binRoot)]);
-  const tmuxLookup = spawnSync('which', ['tmux'], { encoding: 'utf8' });
-  assert.equal(tmuxLookup.status, 0, tmuxLookup.stderr);
-  const realTmuxPath = tmuxLookup.stdout.trim();
-  const openspecLookup = spawnSync('which', ['openspec'], { encoding: 'utf8' });
-  assert.equal(openspecLookup.status, 0, openspecLookup.stderr);
-  const realOpenSpecPath = openspecLookup.stdout.trim();
-  assert.ok(realOpenSpecPath.startsWith('/') && !realOpenSpecPath.startsWith(binRoot + '/'));
-  const openspecVersion = spawnSync(realOpenSpecPath, ['--version'], { encoding: 'utf8' });
-  assert.equal(openspecVersion.status, 0, openspecVersion.stderr);
-  assert.equal(openspecVersion.stdout.trim(), '1.14.3');
-  const tmuxPath = join(binRoot, 'tmux');
-  await writeFile(tmuxPath, `#!${process.execPath}
-import { spawnSync } from 'node:child_process';
-const result = spawnSync(${JSON.stringify(realTmuxPath)}, ['-S', ${JSON.stringify(socket)}, ...process.argv.slice(2)], { stdio: 'inherit' });
-process.exit(result.status ?? 1);
-`, { mode: 0o700 });
-  const store = openStateStore(statePath);
-  const ownedPids = new Set<number>();
-  const ownedPidFiles = new Set<string>();
-  const trackProcess = (pid: number) => {
-    assert.ok(Number.isSafeInteger(pid) && pid > 0 && pid !== process.pid);
-    ownedPids.add(pid);
-  };
-  const trackPidFile = (path: string) => ownedPidFiles.add(path);
-  t.after(async () => {
-    await executeCommand({ executable: realTmuxPath, args: ['-S', socket, 'kill-server'] }).catch(() => undefined);
-    for (const path of ownedPidFiles) {
-      const pid = await readFile(path, 'utf8').catch((error: NodeJS.ErrnoException) => {
-        if (error.code === 'ENOENT') return undefined;
-        throw error;
-      });
-      if (pid !== undefined) trackProcess(Number(pid));
-    }
-    try {
-      await Promise.all([...ownedPids].map(pid => eventually(() => {
-        try { process.kill(pid, 0); return false; }
-        catch (error) {
-          if ((error as NodeJS.ErrnoException).code === 'ESRCH') return true;
-          throw error;
-        }
-      }, exited => exited, `owned process ${pid} exited before fixture removal`)));
-    } finally { store.close(); }
-    await rm(root, { recursive: true, force: true });
-  });
-  const git = spawnSync('git', ['init', '--quiet', '--initial-branch=develop', cwd], { encoding: 'utf8' });
-  assert.equal(git.status, 0, git.stderr);
-  await writeFile(join(confRoot, 'projects.json'), JSON.stringify({
-    version: 1,
-    projects: { raf: { path: 'raf-develop', profile: 'raf', branchPaths: { develop: 'raf-develop' }, usesSharedLibs: false } },
-    profiles: { raf: { development: 'develop', integration: 'main', production: 'main' } },
-    layout: { directoryPattern: '{project}-{branch}', sharedLibrariesLink: 'shared-libs', sharedLibrariesTarget: '../shared-libs-{branch}' },
-  }));
-  await writeFile(join(confRoot, 'models.json'), JSON.stringify(configuration.models));
-  await writeFile(join(root, 'catalog.json'), JSON.stringify(configuration.catalog));
-  await writeFile(join(confRoot, 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'isolated.sqlite' }, commandTiming: configuration.commandTiming }));
-  await writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify({
-    version: 1,
-    agentTypes: [{ id: 'main', launchableByRaf: false }, { id: 'implement', launchableByRaf: true }],
-    reportStatuses: [{ id: 'succeeded', event: 'agent.succeeded' }, { id: 'failed', event: 'agent.failed' }],
-    eventIdKinds: { agentAddress: 'Fixture agent address', reminderId: 'Fixture reminder ID' },
-    events: ['agent.started', 'agent.activity-changed', 'agent.interrupted', 'agent.closed', 'agent.succeeded', 'agent.failed', 'reminder.activated', 'reminder.closed'].map(id => ({ id, idKind: id.startsWith('reminder.') ? 'reminderId' : 'agentAddress' })),
-  }));
-  const templates = join(confRoot, 'briefs');
-  await Promise.all([mkdir(join(templates, 'runners'), { recursive: true }), mkdir(join(templates, 'tasks'), { recursive: true })]);
-  await Promise.all([
-    writeFile(join(templates, 'runners', 'codex.md'), 'FIXTURE_CODEX_RUNNER'),
-    writeFile(join(templates, 'tasks', 'implement.md'), 'FIXTURE_IMPLEMENT_STAGE'),
-    writeFile(join(templates, 'completion.md'), 'FIXTURE_COMPLETION'),
-  ]);
-  const changeRoot = join(root, 'openspec', 'changes', 'fixture-launch');
-  const specRoot = join(changeRoot, 'specs', 'projects', 'raf', 'agent-run');
-  await mkdir(specRoot, { recursive: true });
-  const tasksPath = join(changeRoot, 'tasks.md');
-  await Promise.all([
-    writeFile(tasksPath, '## 2. Fixture\n\n- [ ] 2.1 Виконати лише synthetic fixture\n'),
-    writeFile(join(changeRoot, 'proposal.md'), '# Fixture launch\n\n## Why\n\nVerify isolated production composition.\n\n## What Changes\n\nRun a synthetic executable only.\n'),
-    writeFile(join(changeRoot, 'design.md'), '# Fixture design\n\nUse the production composition with an isolated home and owned tmux socket.\n'),
-    writeFile(join(specRoot, 'spec.md'), '## ADDED Requirements\n\n### Requirement: Synthetic execution\n\nThe fixture SHALL run only its synthetic executable.\n\n#### Scenario: Owned launch\n\n- **WHEN** the fixture starts\n- **THEN** its report belongs to the reserved run\n'),
-  ]);
-  const params = { id: 'worker-fixture', type: 'implement', project: 'raf', features: ['fixture-launch'], phase: 'implement', complexity: 'decision', tasks: ['fixture-launch:2.1'] };
-  const resourcePaths = [cwd, dirname(statePath), tmpRoot];
-  const resources = await createResourceSnapshotReader({ machineId: hostname(), paths: resourcePaths }).read();
-  const fileSystemIds = [...new Set(resourcePaths.map(path => resources.fileSystemByPath[path]))];
-  assert.ok(fileSystemIds.every(id => typeof id === 'string' && id.length > 0), JSON.stringify(resources.reasons));
-  const taskContext: RuntimeTaskContext = {
-    branch: 'develop', outcome: 'Перевірити ізольовану production composition', writeBoundaries: ['fixture.txt'],
-    sources: ['openspec/changes/fixture-launch/specs/projects/raf/agent-run/spec.md'],
-    requested: { ramBytes: 1024, diskBytes: Object.fromEntries(fileSystemIds.map(id => [id, 1024])) }, requiredFileSystemIds: fileSystemIds,
-    reportSchema: { type: 'object', required: ['status', 'answer', 'changes'] },
-  };
-  const taskContextPath = join(tmpRoot, 'task-context', `${params.id}.json`);
-  await mkdir(dirname(taskContextPath));
-  const cliCalls = join(root, 'openspec-calls.jsonl');
-  const openspecPath = join(binRoot, 'openspec');
-  await writeFile(openspecPath, `#!${process.execPath}
-import { appendFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
-const args = process.argv.slice(2);
-appendFileSync(${JSON.stringify(cliCalls)}, JSON.stringify({ args, cwd: process.cwd() }) + '\\n');
-const result = spawnSync(${JSON.stringify(realOpenSpecPath)}, args, { cwd: process.cwd(), stdio: 'inherit' });
-if (result.error) throw result.error;
-if (result.signal) process.kill(process.pid, result.signal);
-else process.exit(result.status ?? 1);
-`, { mode: 0o700 });
-  const calls: AdapterCommand[] = [];
-  const execute: AdapterCommandExecutor = async command => {
-    calls.push(structuredClone(command));
-    if (command.executable === 'openspec') return executeCommand({ ...command, executable: openspecPath });
-    if (command.executable === 'tmux') return executeCommand({ ...command, executable: realTmuxPath, args: ['-S', socket, ...command.args] });
-    if (['codex', 'grok', 'agy', 'claude'].includes(command.executable) && !command.args.includes('--version')) throw new Error('Real model CLI is forbidden in this fixture');
-    return executeCommand(command);
-  };
-  store.initializeRunners(configuration.models.runners);
-  const context: RuntimeContext = { orchestratorRoot: root, confRoot, artifactPath: join(root, 'catalog.json'), statePath, tmpRoot, mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined };
-  const services = await createProductionServices(store, configuration, context, { execute });
-  const validation = await services.assignment.validate({ root, selections: [{ change: 'fixture-launch', items: [{ id: '2.1' }] }] });
-  if (!validation.ok) assert.fail(JSON.stringify(validation));
-  const assignment: AssignmentSnapshot = validation.snapshot;
-  await writeFile(taskContextPath, JSON.stringify({ version: 1, parameters: params, assignment, context: taskContext }), { mode: 0o600 });
-  const completeAssignment = async () => {
-    const current = await readFile(tasksPath, 'utf8');
-    const pending = '- [ ] 2.1 Виконати лише synthetic fixture';
-    assert.equal(current.split(pending).length, 2);
-    const completed = current.replace(pending, '- [x] 2.1 Виконати лише synthetic fixture');
-    const staging = join(changeRoot, 'tasks.next.md');
-    await writeFile(staging, completed, { mode: 0o600, flag: 'wx' });
-    await rename(staging, tasksPath);
-    assert.equal(await readFile(tasksPath, 'utf8'), completed);
-  };
-  return { root, confRoot, home, cwd, tmpRoot, statePath, binRoot, context, store, assignment, params, taskContext, taskContextPath, execute, calls, completeAssignment, cliCalls, openspecPath, socket, realTmuxPath, realOpenSpecPath, trackProcess, trackPidFile };
-}
-
-async function eventually<T>(read: () => Promise<T> | T, predicate: (value: T) => boolean, description: string): Promise<T> {
-  const deadline = Date.now() + 12000;
-  let last: T;
-  do {
-    last = await read();
-    if (predicate(last)) return last;
-    await delay(30);
-  } while (Date.now() < deadline);
-  assert.fail(`${description}: ${JSON.stringify(last)}`);
-}
-
-async function workerFixture(t: TestContext, prepareInFixture = true) {
+async function workerFixture(t: TestContext, prepareInFixture = true, launchRunnerPath?: string | null) {
   const f = await fixture(t);
   const runId = 'fixture-run-1';
   const address = f.params.id;
@@ -225,7 +58,7 @@ const timer = setInterval(() => {
 `, { mode: 0o700 });
   await chmod(executable, 0o700);
   const settings: ProtocolSettings = {
-    runner: 'codex', executable, version: '0.0.0', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config',
+    runner: 'codex', executable: 'codex', version: '0.0.0', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config',
     modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null, quotaCommand: '/status', navigation: [],
     markers: { ready: ['Ask Codex to do anything'], auth_required: ['FIXTURE_AUTH_REQUIRED'], permission_required: ['FIXTURE_PERMISSION_REQUIRED'] },
     quotaParser: 'unknown', modelPools: {}, quotaReliable: false, liveTaskVerified: true,
@@ -240,11 +73,12 @@ const timer = setInterval(() => {
   const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', ...request.selection, reason: 'synthetic fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
   if (prepareInFixture) {
     const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
-    const descriptor = await services.resolveTask(f.params, f.assignment);
-    const prepared = await services.prepareReport(runtimeLaunch);
+    const { task: descriptor, launch: derived } = await derivedLaunch(services, f, runtimeLaunch);
+    const prepared = await services.prepareReport(derived);
     assert.equal(prepared.reportPath, reportPath);
-    const reservation = await services.reserve({ ...runtimeLaunch, reportPath: prepared.reportPath, requested: descriptor.requested, requiredFileSystemIds: descriptor.requiredFileSystemIds });
+    const reservation = await services.reserve({ ...derived, reportPath: prepared.reportPath, requested: descriptor.requested, requiredFileSystemIds: [...descriptor.requiredFileSystemIds] });
     assert.equal(reservation.admitted, true, 'reason' in reservation ? reservation.reason : 'admitted');
+    if (launchRunnerPath !== null) await recordLaunchRunnerPath(f.tmpRoot, runId, launchRunnerPath ?? executable);
     const reserved = session();
     assert.ok(reserved?.launchContext);
     assert.equal(reserved.launchContext.reportPath, prepared.reportPath);
@@ -263,7 +97,7 @@ const timer = setInterval(() => {
     return started;
   };
   const report = { status: 'succeeded', answer: 'Виконано лише доручену fixture.', changes: [{ id: 'fixture-launch', items: [{ id: '2.1', status: 'succeeded' }] }] };
-  return { ...f, runId, address, reportPath, releasePath, exitGatePath, deliveredPath, pidPath, nativeId, settings, request, runtimeLaunch, launch, session, report };
+  return { ...f, runId, address, reportPath, releasePath, exitGatePath, deliveredPath, pidPath, wrapperPidPath, nativeId, executable, settings, request, runtimeLaunch, launch, session, report };
 }
 
 test('[production-factory] default factory returns the existing RuntimeServices without launching a runner', async t => {
@@ -290,8 +124,9 @@ test('[production-factory] compose reuses runner, stage and completion templates
   const f = await fixture(t);
   const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const reportPath = join(f.tmpRoot, 'run-1', `${f.params.id}.json`);
-  const brief = await services.assignment.compose(f.assignment, { briefsRoot: join(f.confRoot, 'briefs'), runner: 'codex', stage: 'implement', project: 'raf', agentId: f.params.id, sessionName: f.params.id, features: f.params.features, phase: 'implement', ...f.taskContext, reportPath });
-  for (const part of ['FIXTURE_CODEX_RUNNER', 'FIXTURE_IMPLEMENT_STAGE', 'FIXTURE_COMPLETION', reportPath, '2.1', 'fixture.txt']) assert.ok(brief.includes(part), part);
+  const task = await services.resolveTask(f.params, f.assignment);
+  const brief = await services.assignment.compose(f.assignment, { briefsRoot: join(f.confRoot, 'briefs'), runner: 'codex', stage: 'implement', project: 'raf', agentId: f.params.id, sessionName: f.params.id, features: f.params.features, phase: 'implement', outcome: task.outcome, writeBoundaries: task.writeBoundaries, sources: task.sources, reportSchema: task.reportSchema, reportPath });
+  for (const part of ['FIXTURE_CODEX_RUNNER', 'FIXTURE_IMPLEMENT_STAGE', 'FIXTURE_COMPLETION', reportPath, '2.1', f.questionsPath, join(f.changeRoot, 'design.md')]) assert.ok(brief.includes(part), part);
 });
 
 test('[production-factory] route uses configured project and actual Git branch', async t => {
@@ -304,23 +139,37 @@ test('[production-factory] route uses configured project and actual Git branch',
   assert.equal(invalid.ok, false);
 });
 
-test('[production-factory] task context binds exact parameters and assignment instead of inventing sources or resources', async t => {
+test('[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file', async t => {
   const f = await fixture(t);
+  await mkdir(dirname(f.legacyTaskContextPath), { recursive: true, mode: 0o700 });
+  await writeFile(f.legacyTaskContextPath, JSON.stringify({ version: 1, parameters: f.params, assignment: f.assignment, context: { branch: 'main', outcome: 'FOREIGN_OUTCOME', writeBoundaries: ['/FOREIGN'], sources: ['/FOREIGN — чуже; завжди'], requested: { ramBytes: 1, diskBytes: {} }, requiredFileSystemIds: [], reportSchema: { foreign: true } } }), { mode: 0o600 });
   const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
-  assert.deepEqual(await services.resolveTask(f.params, f.assignment), f.taskContext);
-  await assert.rejects(services.resolveTask({ ...f.params, tasks: ['fixture-launch:9.9'] }, f.assignment), /context|дорученн|mismatch/i);
-  await assert.rejects(services.resolveTask(f.params, { ...f.assignment, changes: [{ id: 'fixture-launch', items: [{ id: '2.1', description: 'Змінений зміст' }] }] }), /context|дорученн|mismatch/i);
-  await rm(f.taskContextPath);
-  await assert.rejects(services.resolveTask(f.params, f.assignment), /context|контекст/i);
+  const task = await services.resolveTask(f.params, f.assignment);
+  assert.doesNotMatch(JSON.stringify(task), /FOREIGN/);
+  assert.equal(task.branch, 'develop');
+  assert.equal(task.outcome, `fixture-launch:2.1 — ${taskDescription}`);
+  assert.deepEqual(task.writeBoundaries, [f.changeRoot, f.questionsPath]);
+  assert.deepEqual(task.sources.map(line => line.split(' — ')[0]), [join(f.changeRoot, 'proposal.md'), join(f.changeRoot, 'design.md'), join(f.changeRoot, 'specs', 'projects', 'raf', 'agent-run', 'spec.md')]);
+  assert.deepEqual(task.estimate, { status: 'KNOWN', tier: 'normal', ramBytes: fixtureResources.normal.minRamBytes, diskBytesPerFileSystem: fixtureResources.normal.minDiskBytes, source: 'conf/flow.json#/resources/normal' });
+  assert.equal(task.requested.ramBytes, fixtureResources.normal.minRamBytes);
+  assert.deepEqual((task.reportSchema as { required: string[] }).required, ['status', 'answer', 'changes']);
+  await assert.rejects(services.resolveTask({ ...f.params, tasks: ['fixture-launch:9.9'] }, f.assignment), /TASK_CONTEXT_MISMATCH|9\.9/);
+  const changed = await services.resolveTask(f.params, { ...f.assignment, changes: [{ id: 'fixture-launch', items: [{ id: '2.1', description: 'Змінений зміст' }] }] });
+  assert.equal(changed.outcome, 'fixture-launch:2.1 — Змінений зміст');
+  await f.writeFlowResources(undefined);
+  const unknown = await services.resolveTask(f.params, f.assignment).then(() => undefined, error => error);
+  assert.equal(failureContext(unknown)?.code ?? (unknown as { code?: string }).code, 'RESOURCE_ESTIMATE_UNKNOWN');
+  assert.match(String(unknown), /оцінка резерву не налаштована: conf\/flow\.json#\/resources/);
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
+  assert.equal(f.calls.some(c => c.executable === 'tmux'), false);
 });
 
-test('[production-factory] explicit context path is internal and incomplete context fails before any process', async t => {
+test('[production-factory] unconfigured reserve threshold fails before any run directory or process', async t => {
   const f = await fixture(t);
-  const explicitPath = join(f.root, 'explicit-context.json');
-  await writeFile(explicitPath, JSON.stringify({ version: 1, parameters: f.params, assignment: f.assignment, context: { ...f.taskContext, sources: [], requested: null } }));
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute, taskContextPath: explicitPath });
-  await assert.rejects(services.resolveTask(f.params, f.assignment), /context|sources|resource|контекст/i);
+  await f.writeFlowResources({ ...fixtureResources, normal: { ...fixtureResources.normal, minRamBytes: 0 } });
+  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  await assert.rejects(services.resolveTask(f.params, f.assignment), /оцінка резерву не налаштована: conf\/flow\.json#\/resources\/normal\/minRamBytes/);
+  assert.deepEqual((await readdir(f.tmpRoot)).filter(name => name !== 'tmux'), []);
   assert.equal(f.calls.some(c => c.executable === 'tmux'), false);
 });
 
@@ -350,30 +199,34 @@ test('[production-factory] forged main and system claims do not authorize protec
 test('[production-factory] prepared reports belong to distinct run directories and cleanup touches only its own run', async t => {
   const f = await fixture(t);
   const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
-  const launch = { runId: 'run-a', addressId: f.params.id, tmuxSession: 'fixture-a', activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected' as const, runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture', quota: 'unknown' as const }, statePath: f.statePath, tmpRoot: f.tmpRoot };
+  const base = { runId: 'run-a', addressId: f.params.id, tmuxSession: 'fixture-a', activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected' as const, runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture', quota: 'unknown' as const }, statePath: f.statePath, tmpRoot: f.tmpRoot };
+  const { launch } = await derivedLaunch(services, f, base);
   const a = await services.prepareReport(launch);
   const b = await services.prepareReport({ ...launch, runId: 'run-b', tmuxSession: 'fixture-b' });
   assert.equal(a.reportPath, join(f.tmpRoot, 'run-a', `${f.params.id}.json`));
   assert.equal(b.reportPath, join(f.tmpRoot, 'run-b', `${f.params.id}.json`));
+  for (const runId of ['run-a', 'run-b']) assert.equal(JSON.parse(await readFile(join(f.tmpRoot, runId, 'task-context.json'), 'utf8')).runId, runId);
   await writeFile(b.reportPath, 'keep-other-run');
   const wrapped = a.reportWrapper.wrap({ executable: 'codex', args: ['literal;$(touch forbidden)'], cwd: f.cwd });
   assert.notEqual(wrapped.executable, 'sh');
   assert.notEqual(wrapped.executable, 'bash');
   await a.cleanupUnstarted();
+  await assert.rejects(access(join(f.tmpRoot, 'run-a')), { code: 'ENOENT' });
   assert.equal(await readFile(b.reportPath, 'utf8'), 'keep-other-run');
   await b.cleanupUnstarted();
 });
 
 test('[production-factory] impossible resource demand refuses without a session, reservation or tmux spawn', async t => {
   const f = await fixture(t);
-  const descriptor = { ...f.taskContext, requested: { ...f.taskContext.requested, ramBytes: Number.MAX_SAFE_INTEGER } };
-  await writeFile(f.taskContextPath, JSON.stringify({ version: 1, parameters: f.params, assignment: f.assignment, context: descriptor }), { mode: 0o600 });
+  await f.writeFlowResources({ ...fixtureResources, normal: { ...fixtureResources.normal, minRamBytes: Number.MAX_SAFE_INTEGER } });
   const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
-  const launch: RuntimeLaunch = { runId: 'denied-run', addressId: f.params.id, tmuxSession: 'denied-tmux', activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
+  const base: RuntimeLaunch = { runId: 'denied-run', addressId: f.params.id, tmuxSession: 'denied-tmux', activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
+  const { task: descriptor, launch } = await derivedLaunch(services, f, base);
+  assert.equal(descriptor.requested.ramBytes, Number.MAX_SAFE_INTEGER);
   const prepared = await services.prepareReport(launch);
-  const result = await services.reserve({ ...launch, reportPath: prepared.reportPath, requested: descriptor.requested, requiredFileSystemIds: descriptor.requiredFileSystemIds });
+  const result = await services.reserve({ ...launch, reportPath: prepared.reportPath, requested: descriptor.requested, requiredFileSystemIds: [...descriptor.requiredFileSystemIds] });
   assert.equal(result.admitted, false);
-  if (!result.admitted) assert.ok(result.reason.length > 0);
+  if (!result.admitted) assert.match(result.reason, /RAM/);
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listSessions()), []);
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
   assert.deepEqual(listTaskReservations(f.store), []);
@@ -397,8 +250,10 @@ test('[production-launch] default service composition starts the persistent work
   assert.deepEqual(listTaskReservations(f.store), []);
   const scriptPath = join(f.root, 'launch-command.mjs');
   const storeUrl = new URL('../src/state-store.ts', import.meta.url).href;
+  const taskContextUrl = new URL('../src/task-context.ts', import.meta.url).href;
   await writeFile(scriptPath, `import { createProductionServices } from ${JSON.stringify(runtimeUrl)};
 import { openStateStore } from ${JSON.stringify(storeUrl)};
+import { bindWorkspaceBoundaries } from ${JSON.stringify(taskContextUrl)};
 import { readFile, writeFile } from 'node:fs/promises';
 const raf = JSON.parse(await readFile(${JSON.stringify(join(f.confRoot, 'raf.json'))}, 'utf8'));
 const configuration = { catalog: JSON.parse(await readFile(${JSON.stringify(f.context.artifactPath)}, 'utf8')), models: JSON.parse(await readFile(${JSON.stringify(join(f.confRoot, 'models.json'))}, 'utf8')), commandTiming: raf.commandTiming };
@@ -413,9 +268,9 @@ if (!route.ok) throw new Error(JSON.stringify(route));
 const snapshot = await services.routingSnapshot();
 const selection = services.selectModel(configuration.models, snapshot, { complexity: 'decision', role: 'implement' });
 if (selection.status !== 'selected') throw new Error(JSON.stringify(selection));
-const launch = { ...${JSON.stringify(f.runtimeLaunch)}, assignment: validation.snapshot, selection, activity: { ...${JSON.stringify(f.runtimeLaunch.activity)}, cwd: route.cwd } };
+const launch = { ...${JSON.stringify(f.runtimeLaunch)}, assignment: validation.snapshot, selection, activity: { ...${JSON.stringify(f.runtimeLaunch.activity)}, cwd: route.cwd }, writeBoundaries: bindWorkspaceBoundaries(descriptor, route.cwd), taskContext: { parameters: ${JSON.stringify(f.params)}, context: descriptor } };
 const prepared = await services.prepareReport(launch);
-const reservation = await services.reserve({ ...launch, reportPath: prepared.reportPath, requested: descriptor.requested, requiredFileSystemIds: descriptor.requiredFileSystemIds });
+const reservation = await services.reserve({ ...launch, reportPath: prepared.reportPath, requested: descriptor.requested, requiredFileSystemIds: [...descriptor.requiredFileSystemIds] });
 if (!reservation.admitted) throw new Error(reservation.reason);
 const reserved = store.sessionRepository.transaction(tx => tx.getSession(launch.runId));
 if (!reserved?.launchContext) throw new Error('Missing durable launch context');
@@ -494,6 +349,21 @@ test('[production-worker] persistent child commits the actual native process bef
   assert.ok(calls.some(c => c.args[0] === '--version'));
   assert.ok(calls.some(c => c.args[0] === 'schema' && c.args[1] === 'which'));
 });
+
+for (const variant of ['missing', 'different'] as const) {
+  test(`[production-worker] ${variant} launch runner path refuses before the runner process starts`, async t => {
+    const f = await workerFixture(t, true, null);
+    if (variant === 'different') {
+      const foreign = join(f.root, 'foreign-bin', 'codex');
+      await mkdir(dirname(foreign));
+      await writeFile(foreign, await readFile(f.executable, 'utf8'), { mode: 0o700 });
+      await recordLaunchRunnerPath(f.tmpRoot, f.runId, foreign);
+    }
+    await assert.rejects(f.launch(), /RUNNER_PROTOCOL_UNAVAILABLE|runner path/);
+    await assert.rejects(access(f.pidPath), { code: 'ENOENT' });
+    assert.equal(f.session()?.process, undefined);
+  });
+}
 
 test('[production-worker] unconfirmed OpenSpec success becomes failed after exit and never auto-resumes', async t => {
   const f = await workerFixture(t);

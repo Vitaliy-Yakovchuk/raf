@@ -7,9 +7,10 @@ import type { SessionActivity, SessionRecord, ProcessIdentity } from './session-
 import type { AssignmentSnapshot, AssignmentRequest, AssignmentValidation, AssignmentBriefContext } from './assignment.ts';
 import type { WorkspaceRouteRequest, WorkspaceRouteResult } from './workspace-routing.ts';
 import type { ModelCatalog, ModelRequest, ModelSelection, ModelAvailability, RoutingSnapshot } from './model-routing.ts';
-import type { ResourceReservation } from './resource-admission.ts';
 import type { AdapterStartRequest, AdapterSession, ReportWrapper } from './agent-adapters.ts';
 import type { DeliveryReceipt, CloseResult } from './agent-control.ts';
+import type { ResourceReservation } from './resource-admission.ts';
+import { bindWorkspaceBoundaries, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
 
 export interface RuntimeContext {
   orchestratorRoot: string;
@@ -38,15 +39,12 @@ export interface RuntimeRunParameters {
   tasks: string[];
 }
 
-export interface RuntimeTaskContext {
-  branch: string;
-  outcome: string;
-  writeBoundaries: readonly string[];
-  sources: readonly string[];
-  requested: ResourceReservation;
-  requiredFileSystemIds: string[];
-  reportSchema: Readonly<Record<string, unknown>>;
-}
+export type RuntimeTaskContext = Pick<DerivedTaskContext, 'branch' | 'outcome' | 'writeBoundaries' | 'sources'> & Partial<Pick<DerivedTaskContext, 'workspaceWritable'>> & {
+  readonly reportSchema: Readonly<Record<string, unknown>>;
+  readonly requested: ResourceReservation;
+  readonly requiredFileSystemIds: readonly string[];
+  readonly estimate?: KnownTaskResourceEstimate;
+};
 
 export interface RuntimeLaunch {
   runId: string;
@@ -58,6 +56,7 @@ export interface RuntimeLaunch {
   statePath: string;
   tmpRoot: string;
   writeBoundaries?: readonly string[];
+  taskContext?: { parameters: RuntimeRunParameters; context: RuntimeTaskContext };
 }
 
 export interface PreparedRuntimeReport {
@@ -161,11 +160,12 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const task = await api.resolveTask(params, assignment);
       const route = await api.route({ root: context.orchestratorRoot, project: params.project, branch: task.branch });
       if (!route.ok) throw fail(route.error.code, 'workspace', route.error.message);
+      const writeBoundaries = bindWorkspaceBoundaries(task, route.cwd);
       const selection = api.selectModel(loaded.models, await snapshot(), { complexity: params.complexity, role: params.type });
       if (selection.status === 'waiting') throw fail(selection.code, 'selection', selection.reason);
       const launch: RuntimeLaunch = { ...dependencies.nextRunIdentity(), addressId: params.id,
         activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
-        assignment, selection, statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...task.writeBoundaries] };
+        assignment, selection, statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], taskContext: { parameters: params, context: task } };
       let prepared: PreparedRuntimeReport | undefined;
       let reserved = false;
       let startAttempted = false;
@@ -175,10 +175,10 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         stage = 'brief';
         const brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,
           stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
-          features: params.features, phase: params.phase, outcome: task.outcome, writeBoundaries: task.writeBoundaries,
+          features: params.features, phase: params.phase, outcome: task.outcome, writeBoundaries,
           sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema });
         stage = 'reservation';
-        const admission = await api.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: task.requiredFileSystemIds });
+        const admission = await api.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
         if (!admission.admitted) throw fail('RESOURCE_UNAVAILABLE', stage, admission.reason);
         reserved = true;
         stage = 'start';

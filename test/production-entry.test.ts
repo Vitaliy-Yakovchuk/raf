@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, rmSync, readdirSync } from 'node:fs';
+import { chmodSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { compileCatalog } from '../src/catalog.ts';
@@ -220,7 +220,18 @@ test('wired empty ps uses canonical shared state without creating an agent', asy
   const f = fixture(t);
   assert.deepEqual(success(await f.run(['agent', 'ps'])), []);
   assert.deepEqual(success(await f.run(['agent', 'ps'])), []);
-  const roster = records(success(await f.run(['runner', 'list'])));
+  const bin = join(f.directory, 'unverified-bin');
+  mkdirSync(bin);
+  for (const protocol of settings.runnerProtocols) {
+    writeFileSync(join(bin, protocol.executable), `#!/bin/sh\nprintf '%s\\n' '${protocol.runner}-cli 0.0.0-unverified-fixture'\n`);
+    chmodSync(join(bin, protocol.executable), 0o755);
+  }
+  const previousPath = process.env.PATH;
+  const restorePath = () => { if (previousPath === undefined) delete process.env.PATH; else process.env.PATH = previousPath; };
+  process.env.PATH = bin;
+  let listed;
+  try { listed = await f.run(['runner', 'list']); } finally { restorePath(); }
+  const roster = records(success(listed));
   for (const row of roster.filter(row => typeof row.model === 'string')) assert.equal(row.available, false, 'Unverified or unsupported protocols must be unavailable before selection');
   const store = openStateStore(f.statePath);
   try {

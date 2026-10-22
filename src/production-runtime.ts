@@ -21,6 +21,8 @@ import { evaluateResourceAdmission } from './resource-admission.ts';
 import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
 import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership } from './launch-wrapper.ts';
 import { commandFailure } from './cli-contract.ts';
+import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile } from './task-context.ts';
+import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
 import type { ReminderSessionEffect } from './reminder-repository.ts';
 
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
@@ -233,12 +235,6 @@ async function reservationTools(store: StateStore, context: RuntimeContext, exec
   return { store, currentBoot: () => bootIdentity(execute), observe: async identity => (await observeProcesses([identity], { execute }))[0], resolveTasks: identity.resolveTasks, newFence: randomUUID };
 }
 
-async function canonicalRoot(root: unknown): Promise<string> {
-  if (!text(root) || !isAbsolute(root)) fail('TASK_CONTEXT_MISMATCH', 'Task context assignment root must be an absolute path');
-  try { return await fs.realpath(root as string); }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') fail('TASK_CONTEXT_MISMATCH', `Task context assignment root does not exist: ${root}`); throw error; }
-}
-
 export async function createProductionServices(
   store: StateStore,
   configuration: RuntimeConfiguration,
@@ -246,12 +242,11 @@ export async function createProductionServices(
   options: {
     execute?: AdapterCommandExecutor;
     protocolSettings?: readonly ProtocolSettings[];
-    taskContextPath?: string;
     workerModulePath?: string;
   } = {},
 ): Promise<RuntimeServices> {
   for (const name of ['orchestratorRoot', 'confRoot', 'artifactPath', 'statePath', 'tmpRoot'] as const) if (!isAbsolute(context[name])) fail('INVALID_CONTEXT', `Absolute ${name} required`);
-  if (options.taskContextPath && !isAbsolute(options.taskContextPath) || options.workerModulePath && !isAbsolute(options.workerModulePath)) fail('INVALID_CONTEXT', 'Internal context and worker overrides must be absolute');
+  if (options.workerModulePath && !isAbsolute(options.workerModulePath)) fail('INVALID_CONTEXT', 'Internal worker override must be absolute');
   const execute = runtimeExecution(context, options.execute);
   const tools = sessionTools(store, execute, configuration, context, options.execute);
   const assignments = assignmentPorts(execute);
@@ -267,41 +262,39 @@ export async function createProductionServices(
   return {
     assignment: { validate: request => validateAssignment(request, assignments), compose: (snapshot, input) => composeAssignmentBrief(snapshot, { ...input, sessionName: input.agentId }, assignments.fs) },
     resolveTask: async (parameters, assignment) => {
-      if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(parameters.id)) fail('TASK_CONTEXT_MISMATCH', 'Invalid task address');
-      const path = options.taskContextPath ?? join(context.tmpRoot, 'task-context', `${parameters.id}.json`);
-      let envelope;
-      try { const stat = await fs.lstat(path); if (!stat.isFile() || (stat.mode & 0o077) !== 0 || stat.uid !== process.getuid?.()) fail('TASK_CONTEXT_MISMATCH', 'Task context must be an owned private regular file'); envelope = await json(path); }
-      catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') fail('TASK_CONTEXT_UNAVAILABLE', `Trusted coordinator task context unavailable: ${path}`); throw error; }
-      if (envelope.version !== 1 || !isDeepStrictEqual(envelope.parameters, parameters) || !object(envelope.assignment) || !isDeepStrictEqual({ ...envelope.assignment, root: await canonicalRoot(envelope.assignment.root) }, { ...assignment, root: await canonicalRoot(assignment.root) })) fail('TASK_CONTEXT_MISMATCH', 'Task context parameters or authoritative assignment changed');
-      const task = envelope.context;
-      if (!object(task) || !text(task.branch) || !text(task.outcome) || !Array.isArray(task.writeBoundaries) || !task.writeBoundaries.every(text) || !strings(task.sources) || (!Array.isArray(task.requiredFileSystemIds) || !task.requiredFileSystemIds.every(text)) || !object(task.requested) || !Number.isFinite(task.requested.ramBytes) || task.requested.ramBytes < 0 || !object(task.requested.diskBytes) || Object.values(task.requested.diskBytes).some(n => !Number.isFinite(n) || Number(n) < 0) || !task.requiredFileSystemIds.every(id => Object.hasOwn(task.requested.diskBytes, id)) || !object(task.reportSchema) || !Object.keys(task.reportSchema).length) fail('TASK_CONTEXT_MISMATCH', 'Task context lacks branch, outcome, boundaries, sources, resource estimates, filesystem IDs or report schema');
-      return structuredClone(task) as Awaited<ReturnType<RuntimeServices['resolveTask']>>;
+      const task = await deriveTaskContext({ root: context.orchestratorRoot, parameters, assignment, configuration: await loadTaskContextConfiguration(context.confRoot) });
+      if (task.estimate.status !== 'KNOWN') return fail('RESOURCE_ESTIMATE_UNKNOWN', task.estimate.reason);
+      return { ...task, estimate: task.estimate, requested: { ramBytes: task.estimate.ramBytes, diskBytes: {} }, requiredFileSystemIds: [] };
     },
     route: async request => resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts(execute)),
     routingSnapshot: async () => {
       const cliAvailable: Record<string, boolean> = {};
       let configured: readonly ProtocolSettings[] = [];
       try { configured = await protocols(context.confRoot, options.protocolSettings); } catch {}
+      const cliReasons: Record<string, string> = {};
       for (const runner of configuration.models.runners) {
-        cliAvailable[runner.id] = false;
-        try {
-          const settings = protocolFor(configured, runner.id);
-          const version = await execute({ executable: settings.executable, args: ['--version'] });
-          cliAvailable[runner.id] = version.exitCode === 0 && version.stdout.trim().split(/\s+/).includes(settings.version);
-        } catch {}
+        let availability;
+        try { availability = await probeRunnerAvailability(protocolFor(configured, runner.id), { env: process.env, execute }); }
+        catch (error) { availability = { available: false as const, reason: error instanceof Error ? error.message : String(error) }; }
+        cliAvailable[runner.id] = availability.available;
+        if (!availability.available) cliReasons[runner.id] = availability.reason;
       }
-      return { runnerEnabled: Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])), cliAvailable, quotas: [] };
+      return { runnerEnabled: Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])), cliAvailable, cliReasons, quotas: [] };
     },
     selectModel, listModels: listModelAvailability,
     prepareReport: async launch => {
       if (launch.statePath !== context.statePath || launch.tmpRoot !== context.tmpRoot || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(launch.runId) || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(launch.addressId)) fail('INVALID_CONTEXT', 'Launch paths or identity mismatch');
       const writeBoundaries = launch.writeBoundaries ?? [];
       if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text)) fail('INVALID_CONTEXT', 'Launch write boundaries must be declared paths');
+      if (!launch.taskContext) return fail('INVALID_CONTEXT', 'Launch lacks derived task context');
       const directory = join(context.tmpRoot, launch.runId);
       await fs.mkdir(context.tmpRoot, { recursive: true, mode: 0o700 });
       await fs.mkdir(directory, { mode: 0o700 });
       const reportPath = join(directory, `${launch.addressId}.json`);
-      await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries }), { mode: 0o600, flag: 'wx' });
+      try {
+        await writeTaskContextFile(directory, { version: 1, runId: launch.runId, parameters: launch.taskContext.parameters, assignmentFingerprint: assignmentFingerprint(launch.assignment), context: launch.taskContext.context });
+        await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries }), { mode: 0o600, flag: 'wx' });
+      } catch (error) { await fs.rm(directory, { recursive: true, force: true }); throw error; }
       prepared.set(launch.tmuxSession, { launch: structuredClone(launch), reportPath });
       return { reportPath, reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
     },
@@ -309,17 +302,20 @@ export async function createProductionServices(
       const dependencies = await reservationTools(store, context, execute, options.execute);
       await reconcileTaskReservations(dependencies);
       const boot = await dependencies.currentBoot();
+      const estimate = prepared.get(input.tmuxSession)?.launch.taskContext?.context.estimate;
       const resourceSnapshot = await measureResources([input.activity.cwd, dirname(input.statePath), input.tmpRoot], boot.machineId, execute);
+      const requiredFileSystemIds = [...new Set([...input.requiredFileSystemIds, ...Object.values(resourceSnapshot.fileSystemByPath)])];
+      const requested = { ramBytes: input.requested.ramBytes, diskBytes: { ...Object.fromEntries(estimate ? requiredFileSystemIds.map(id => [id, estimate.diskBytesPerFileSystem]) : []), ...input.requested.diskBytes } };
       const candidates = tools.state.listReconciliationCandidates().filter(session => session.process);
       const observed = await observeProcesses(candidates.map(session => session.process!), { execute });
       const measured = { measurement: resourceSnapshot.measurement, observedProcesses: candidates.flatMap((session, index) => observed[index].state === 'alive' ? [{ runId: session.runId, identity: session.process! }] : []) };
-      const admission = store.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, input, measured, evaluateResourceAdmission));
+      const admission = store.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, { requested, requiredFileSystemIds }, measured, evaluateResourceAdmission));
       if (!admission.allowed[input.activity.type === 'hotfix' ? 'hotfix' : 'normal']) return { admitted: false, reason: admission.reasons.join('; ') };
       const record = prepared.get(input.tmuxSession);
       if (!record || record.reportPath !== input.reportPath || input.assignment.root !== context.orchestratorRoot || !isDeepStrictEqual(record.launch.assignment, input.assignment) || !isDeepStrictEqual(record.launch.writeBoundaries ?? [], input.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Prepared launch context mismatch');
       const identityAdapter = createAssignmentIdentityAdapter({ [input.activity.project]: context.orchestratorRoot }, options.execute ? { execute: options.execute } : {});
       const tasks = await identityAdapter.capture(input.activity.project, input.assignment);
-      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: input.requested.ramBytes, requested: input.requested, requiredFileSystemIds: input.requiredFileSystemIds, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
+      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
       try {
         const claimed = await claimTaskReservations(dependencies, { runId: input.runId, addressId: input.addressId, tasks, starter: await ownIdentity(execute, input.runId, input.tmuxSession), reserveLaunch: tx => {
@@ -338,8 +334,12 @@ export async function createProductionServices(
       const session = readSession(record.launch.runId);
       if (session?.state !== 'reserved' || !leaseFor(record.launch.runId)) fail('TASK_CLAIM_REQUIRED', 'Durable launch and task claims required before spawn');
       const settings = protocolFor(await protocols(context.confRoot, options.protocolSettings), request.selection.runner);
-      const version = await execute({ executable: settings.executable, args: ['--version'] });
-      if (version.exitCode !== 0 || !version.stdout.trim().split(/\s+/).includes(settings.version)) fail('RUNNER_PROTOCOL_UNAVAILABLE', 'Installed runner version does not match configured protocol');
+      const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
+      if (!availability.available) return fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
+      const manifestPath = join(context.tmpRoot, record.launch.runId, 'runtime.json');
+      const manifestTemporary = `${manifestPath}.${process.pid}.tmp`;
+      await fs.writeFile(manifestTemporary, JSON.stringify({ ...await json(manifestPath), runnerPath: availability.path }), { mode: 0o600, flag: 'wx' });
+      await fs.rename(manifestTemporary, manifestPath);
       try { await fs.writeFile(session.launchContext!.briefPath, request.brief, { mode: 0o600, flag: 'wx' }); }
       catch (error) {
         if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
@@ -407,9 +407,12 @@ export async function runProductionWorker(
   if (manifest.version !== 1 || manifest.context?.statePath !== request.statePath || manifest.context?.tmpRoot !== request.tmpRoot || manifest.context?.orchestratorRoot !== request.assignment.root || !isAbsolute(manifest.context?.confRoot ?? '')) fail('INVALID_CONTEXT', 'Worker runtime envelope mismatch');
   const context: RuntimeContext = { ...manifest.context, resolveCaller: async () => undefined };
   const execute = runtimeExecution(context, options.execute);
-  const settings = protocolFor(options.protocolSettings ?? manifest.protocolSettings ?? await protocols(context.confRoot), request.selection.runner);
-  const version = await execute({ executable: settings.executable, args: ['--version'] });
-  if (version.exitCode !== 0 || !version.stdout.trim().split(/\s+/).includes(settings.version)) fail('RUNNER_PROTOCOL_UNAVAILABLE', `Installed ${request.selection.runner} version does not match ${settings.version}`);
+  const configured = protocolFor(options.protocolSettings ?? manifest.protocolSettings ?? await protocols(context.confRoot), request.selection.runner);
+  const resolution = await resolveRunnerExecutable(configured.runner, configured.executable, process.env);
+  if (resolution.status !== 'resolved' || !text(manifest.runnerPath) || resolution.path !== manifest.runnerPath) fail('RUNNER_PROTOCOL_UNAVAILABLE', resolution.status === 'resolved' ? `Worker runner path ${resolution.path} differs from launch runner path ${manifest.runnerPath ?? 'missing'}` : resolution.reason);
+  const settings = { ...configured, executable: manifest.runnerPath as string };
+  const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
+  if (!availability.available) fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
   const store = openStateStore(request.statePath);
   try {
     const tools = sessionTools(store, execute, manifest.configuration, context, options.execute);

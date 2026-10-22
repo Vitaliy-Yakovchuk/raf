@@ -24,6 +24,7 @@ export interface ModelCatalog {
 export interface RoutingSnapshot {
   runnerEnabled: Record<string, boolean>;
   cliAvailable: Record<string, boolean>;
+  cliReasons?: Record<string, string>;
   quotas: { runner: string; pool: string; status: 'available' | 'exhausted' | 'unknown' }[];
 }
 
@@ -91,7 +92,7 @@ export function listModelAvailability(catalog: ModelCatalog, snapshot: RoutingSn
     const reasons: string[] = [];
     if (!model.enabled) reasons.push('Model disabled by configuration');
     if (!runnerEnabled) reasons.push('Runner disabled or absent from catalog');
-    if (!snapshot.cliAvailable[model.runner]) reasons.push('CLI unavailable');
+    if (!snapshot.cliAvailable[model.runner]) reasons.push(snapshot.cliReasons?.[model.runner] ?? 'CLI unavailable');
     if (complexityIndex < 0) reasons.push('Unknown configured complexity');
     if (quota !== 'available') reasons.push(`Quota ${quota}`);
     return {

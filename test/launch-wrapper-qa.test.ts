@@ -22,7 +22,7 @@ for (const mode of ['valid', 'malformed', 'foreign-run', 'foreign-report', 'fore
       assignment: { root, baselineArchives: [], changes: [{ id: 'fixture', items: [{ id: '1.1', description: 'Fixture' }] }] },
     };
     await writeFile(worker, `
-import { readFile, stat, writeFile } from 'node:fs/promises';
+import { readFile, rename, stat, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { connect } from 'node:net';
 const requestPath = process.env.RAF_WRAPPER_REQUEST_PATH;
@@ -38,7 +38,7 @@ if (mode === 'foreign-evidence') handshake.identity.evidence.runId = 'different-
 const socket = connect(socketPath);
 socket.on('error', () => {});
 socket.on('connect', () => socket.write((mode === 'malformed' ? '{' : JSON.stringify(handshake)) + '\\n'));
-socket.on('close', async () => { await writeFile(${JSON.stringify(completed)}, 'closed'); process.exit(0); });
+socket.on('close', async () => { await writeFile(${JSON.stringify(completed + '.tmp')}, 'closed'); await rename(${JSON.stringify(completed + '.tmp')}, ${JSON.stringify(completed)}); process.exit(0); });
 setTimeout(() => process.exit(2), 4000).unref();
 `);
     const launching = launchPersistentWrapper(request, { workerCommand: { executable: process.execPath, args: [worker] }, timeoutMs: 3000 });
@@ -56,10 +56,10 @@ setTimeout(() => process.exit(2), 4000).unref();
     await assert.rejects(readFile(actual.requestPath), { code: 'ENOENT' });
     await assert.rejects(readFile(actual.socketPath), { code: 'ENOENT' });
     let closed = false;
-    for (let attempt = 0; attempt < 100; attempt++) {
-      try { closed = await readFile(completed, 'utf8') === 'closed'; break; }
+    for (const deadline = Date.now() + 5000; !closed && Date.now() < deadline;) {
+      try { closed = await readFile(completed, 'utf8') === 'closed'; }
       catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-      await new Promise(resolve => setTimeout(resolve, 10));
+      if (!closed) await new Promise(resolve => setTimeout(resolve, 10));
     }
     assert.equal(closed, true, 'owned fixture process closed its handshake socket');
   });

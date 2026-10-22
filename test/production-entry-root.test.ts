@@ -42,14 +42,15 @@ async function fixture(t: { after(action: () => Promise<void>): void }) {
   await fs.symlink(join(sourceRoot, 'src'), join(workspace, 'src'));
   await fs.symlink(root, link);
   await writeJson(join(workspace, 'dist', 'catalog.json'), compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' '))));
-  for (const [name, data] of [['raf.json', settings], ['models.json', models], ['raf-constants.json', constants], ['projects.json', { version: 1, projects: {} }]] as const) await writeJson(join(root, 'conf', name), data);
+  const flow = JSON.parse(readFileSync(join(sourceRoot, '../conf/flow.json'), 'utf8'));
+  const projects = { version: 1, projects: { raf: { path: 'raf-develop', profile: 'raf', branchPaths: { develop: 'raf-develop' } } } };
+  for (const [name, data] of [['raf.json', settings], ['models.json', models], ['raf-constants.json', constants], ['projects.json', projects], ['flow.json', flow]] as const) await writeJson(join(root, 'conf', name), data);
   await fs.writeFile(join(bin, 'openspec'), `#!${process.execPath}\n${openspecScript}`, { mode: 0o700 });
   const parameters = { id: 'root-check', type: 'implement', project: 'raf', features: ['root-fixture'], phase: 'implement', complexity: 'decision', tasks: [`${change}:1.1`] };
-  const taskContext = { branch: 'develop', outcome: 'Complete fixture', writeBoundaries: [join(root, 'openspec', 'changes', change, 'tasks.md')], sources: [join(root, 'openspec', 'changes', change, 'design.md')], requested: { ramBytes: 1, diskBytes: { fixture: 1 } }, requiredFileSystemIds: ['fixture'], reportSchema: { type: 'object' } };
   const argv = ['agent', 'run', '--id', parameters.id, '--type', parameters.type, '--project', parameters.project, '--features', ...parameters.features, '--phase', parameters.phase, '--complexity', parameters.complexity, '--tasks', ...parameters.tasks];
   return {
     directory, root, link, workspace,
-    envelope: (assignmentRoot: string) => writeJson(join(home, '.raf', 'tmp', 'task-context', parameters.id + '.json'), { version: 1, parameters, assignment: { root: assignmentRoot, changes: [{ id: change, items: [{ id: '1.1', description }] }], baselineArchives: [] }, context: taskContext }),
+    legacyEnvelope: (assignmentRoot: string) => writeJson(join(home, '.raf', 'tmp', 'task-context', parameters.id + '.json'), { version: 1, parameters, assignment: { root: assignmentRoot, changes: [{ id: change, items: [{ id: '1.1', description: 'FOREIGN description' }] }], baselineArchives: [] }, context: { branch: 'main', outcome: 'FOREIGN', writeBoundaries: [assignmentRoot], sources: [], requested: { ramBytes: 1, diskBytes: {} }, requiredFileSystemIds: [], reportSchema: { type: 'object' } } }),
     run: async (entryRoot = root) => {
       const result = await exec(process.execPath, [join(entryRoot, 'raf-develop', 'bin', 'raf.ts'), ...argv], { cwd: directory, env: { ...process.env, HOME: home, PATH: `${bin}:${process.env.PATH}` }, timeout: 60000 }).then(
         output => ({ exitCode: 0, stdout: output.stdout, stderr: output.stderr }),
@@ -60,26 +61,29 @@ async function fixture(t: { after(action: () => Promise<void>): void }) {
 }
 
 function passedTaskContext(result: { exitCode: number; stderr: string; error?: Record<string, any> }) {
-  assert.notEqual(result.error?.code, 'TASK_CONTEXT_MISMATCH', `Корінь з bin/raf.ts має збігатися з коренем trusted task-context: ${result.stderr}`);
-  assert.deepEqual({ code: result.error?.code, stage: result.error?.details?.stage }, { code: 'UNKNOWN_PROJECT', stage: 'workspace' }, result.stderr);
+  assert.doesNotMatch(result.stderr, /TASK_CONTEXT|TASK_SOURCE_MISSING|RESOURCE_ESTIMATE_UNKNOWN|FOREIGN/, `Корінь з bin/raf.ts має давати виведений task-context без помилки: ${result.stderr}`);
+  assert.deepEqual({ code: result.error?.code, stage: result.error?.details?.stage }, { code: 'WORKSPACE_UNAVAILABLE', stage: 'workspace' }, result.stderr);
+  assert.notEqual(result.exitCode, 0);
 }
 
-test('bin/raf.ts agent run accepts trusted task context whose assignment root has no trailing slash', async t => {
+test('bin/raf.ts agent run derives task context from the orchestrator root without a trusted file', async t => {
   const f = await fixture(t);
-  await f.envelope(f.root);
   passedTaskContext(await f.run());
 });
 
-test('trusted task context root written with trailing slash, dot-dot segment or symlink names the same orchestrator root', async t => {
+test('legacy task context whose root is written with trailing slash, dot-dot segment or symlink is ignored', async t => {
   const f = await fixture(t);
+  const baseline = await f.run();
+  passedTaskContext(baseline);
   for (const assignmentRoot of [f.root + '/', f.workspace + '/..', f.link]) {
-    await f.envelope(assignmentRoot);
-    passedTaskContext(await f.run());
+    await f.legacyEnvelope(assignmentRoot);
+    const result = await f.run();
+    passedTaskContext(result);
+    assert.deepEqual(result.error, baseline.error);
   }
 });
 
-test('bin/raf.ts started through a symlinked orchestrator path accepts the lexical root from trusted task context', async t => {
+test('bin/raf.ts started through a symlinked orchestrator path derives task context from its lexical root', async t => {
   const f = await fixture(t);
-  await f.envelope(f.link);
   passedTaskContext(await f.run(f.link));
 });

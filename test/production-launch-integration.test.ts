@@ -12,7 +12,7 @@ import { listTaskReservations } from '../src/task-reservations.ts';
 import { createProductionServices } from '../src/production-runtime.ts';
 import { createServicePorts as productionPorts } from '../src/production-service-ports.ts';
 import { createServicePorts as defaultHost } from '../src/service-host.ts';
-import { createResourceSnapshotReader, observeProcesses } from '../src/os-runtime.ts';
+import { observeProcesses } from '../src/os-runtime.ts';
 import type { RuntimeRunParameters } from '../src/app-runtime.ts';
 
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -42,7 +42,7 @@ process.exit(result.status ?? 1);
 `;
 
 const openspecScript = String.raw`
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, unlinkSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 const c = JSON.parse(readFileSync(process.env.RAF_INTEGRATION_FIXTURE, 'utf8'));
 const args = process.argv.slice(2);
@@ -52,7 +52,18 @@ if (args[0] === 'instructions' && args[1] === 'apply' && existsSync(c.control + 
 }
 const child = spawn(c.openspec, args, {cwd:process.cwd(),env:process.env,stdio:'inherit'});
 child.on('error', error => { throw error; });
-child.on('exit', (code, signal) => { if (signal) process.kill(process.pid, signal); else process.exit(code ?? 1); });
+child.on('exit', (code, signal) => {
+  if (signal) { process.kill(process.pid, signal); return; }
+  const mutation = c.control + '/mutate-after-validation.json';
+  if (args[0] === 'instructions' && args[1] === 'apply' && process.cwd() === c.root && existsSync(mutation)) {
+    const { from, to } = JSON.parse(readFileSync(mutation, 'utf8'));
+    unlinkSync(mutation);
+    const path = c.root + '/openspec/changes/' + c.change + '/tasks.md';
+    writeFileSync(path, readFileSync(path, 'utf8').replace(from, to));
+    writeFileSync(c.control + '/mutated', JSON.stringify({ from, to }));
+  }
+  process.exit(code ?? 1);
+});
 `;
 
 const runnerScript = String.raw`
@@ -119,6 +130,7 @@ const c = JSON.parse(await readFile(process.argv[2], 'utf8'));
 const { openStateStore } = await import(pathToFileURL(c.sourceRoot + '/src/state-store.ts'));
 const { createProductionServices } = await import(pathToFileURL(c.sourceRoot + '/src/production-runtime.ts'));
 const { listTaskReservations } = await import(pathToFileURL(c.sourceRoot + '/src/task-reservations.ts'));
+const { bindWorkspaceBoundaries } = await import(pathToFileURL(c.sourceRoot + '/src/task-context.ts'));
 const params = JSON.parse(process.argv[3]);
 const store = openStateStore(c.statePath);
 store.initializeRunners(c.models.runners);
@@ -130,9 +142,9 @@ const task = await services.resolveTask(params,valid.snapshot);
 const selection = services.selectModel(c.models,await services.routingSnapshot(),{complexity:params.complexity,role:params.type});
 if (selection.status !== 'selected') throw new Error(JSON.stringify(selection));
 const runId = randomUUID();
-const launch = {runId,addressId:params.id,tmuxSession:randomUUID(),activity:{type:params.type,project:params.project,features:params.features,phase:params.phase,cwd:c.workspace},assignment:valid.snapshot,selection,statePath:c.statePath,tmpRoot:c.tmpRoot};
+const launch = {runId,addressId:params.id,tmuxSession:randomUUID(),activity:{type:params.type,project:params.project,features:params.features,phase:params.phase,cwd:c.workspace},assignment:valid.snapshot,selection,statePath:c.statePath,tmpRoot:c.tmpRoot,writeBoundaries:bindWorkspaceBoundaries(task,c.workspace),taskContext:{parameters:params,context:task}};
 const prepared = await services.prepareReport(launch);
-const admitted = await services.reserve({...launch,reportPath:prepared.reportPath,requested:task.requested,requiredFileSystemIds:task.requiredFileSystemIds});
+const admitted = await services.reserve({...launch,reportPath:prepared.reportPath,requested:task.requested,requiredFileSystemIds:[...task.requiredFileSystemIds]});
 if (!admitted.admitted) throw new Error(JSON.stringify(admitted));
 await writeFile(c.control + '/' + params.id + '.seeded', JSON.stringify({runId,claims:listTaskReservations(store)}));
 setInterval(()=>{},1000);
@@ -190,7 +202,9 @@ async function fixture(t: any) {
   const constants = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/raf-constants.json'), 'utf8'));
   constants.commands = constants.commands.filter((x: any) => ['agent run', 'agent close', 'agent interrupt', 'runner disable', 'help'].includes(x.path.join(' ')));
   const artifact = join(directory, 'catalog.json');
-  const cfg = { sourceRoot, root, conf, home, stateDirectory, statePath: join(stateDirectory, 'state.sqlite'), tmpRoot, control, workspace, artifact, bin, change, models,
+  const changeDir = join(root, 'openspec', 'changes', change);
+  const questionsPath = join(root, 'questions', 'projects', 'raf', 'questions.md');
+  const cfg = { sourceRoot, root, conf, home, stateDirectory, statePath: join(stateDirectory, 'state.sqlite'), tmpRoot, control, workspace, artifact, bin, change, changeDir, questionsPath, models,
     tmux: programs[1], openspec: programs[0], tmuxSocket: join(directory, 'tmux.sock'), serviceSocket: join(stateDirectory, 'service.sock'), file: join(directory, 'fixture.json') };
   const env = { ...process.env, HOME: home, PATH: `${bin}:${process.env.PATH}`, RAF_INTEGRATION_FIXTURE: cfg.file, TMPDIR: directory };
   const children: ReturnType<typeof spawn>[] = [];
@@ -245,14 +259,17 @@ async function fixture(t: any) {
   await writeJson(join(conf, 'models.json'), models);
   await writeJson(join(conf, 'raf-constants.json'), constants);
   await writeJson(join(conf, 'projects.json'), { version: 1, projects: { raf: { path: 'raf-develop', profile: 'product', branchPaths: { develop: 'raf-develop' } } } });
+  const flow = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/flow.json'), 'utf8'));
+  await writeJson(join(conf, 'flow.json'), { ...flow, resources: Object.fromEntries(Object.entries(flow.resources).map(([tier, thresholds]) => [tier, { ...(thresholds as object), minRamBytes: 1, minDiskBytes: 1 }])) });
+  await fs.mkdir(dirname(questionsPath), { recursive: true });
+  await fs.writeFile(questionsPath, '# Питання\n');
   await writeJson(join(conf, 'raf.json'), { version: 1, state: { fileName: 'state.sqlite' }, commandTiming: { emaAlpha: 0.1 }, resourceWait: { grantIntervalMs: 15000 }, service: { hostTickIntervalMs: 10000, readinessTimeoutMs: 30000, entryRelativePath: 'bin/service.ts' }, runnerProtocols: [{
-    runner: 'codex', executable: join(bin, 'codex'), version: 'raf-synthetic-1', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null, quotaCommand: '/status', navigation: [], markers: { ready: ['RAF SYNTHETIC READY'] }, quotaParser: 'codex_status', modelPools: {}, quotaReliable: false, liveTaskVerified: true,
+    runner: 'codex', executable: 'codex', version: 'raf-synthetic-1', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null, quotaCommand: '/status', navigation: [], markers: { ready: ['RAF SYNTHETIC READY'] }, quotaParser: 'codex_status', modelPools: {}, quotaReliable: false, liveTaskVerified: true,
     timeouts: { startupMs: 20000, transitionMs: 10000, overallMs: 30000, pollMs: 25 }, collection: { intervalMs: 300000, failureBackoffMs: 60000, staleAfterMs: 60000 }
   }] });
   for (const path of ['runners/codex.md', 'tasks/implement.md', 'completion.md']) { await fs.mkdir(dirname(join(conf, 'briefs', path)), { recursive: true }); await fs.writeFile(join(conf, 'briefs', path), 'Synthetic integration fixture.\n'); }
   buildCatalog(conf, artifact, constants.commands.map((x: any) => x.path.join(' ')));
   await exec('git', ['init', '-b', 'develop', workspace], { env });
-  const changeDir = join(root, 'openspec', 'changes', change);
   await fs.mkdir(changeDir, { recursive: true });
   await fs.writeFile(join(root, 'openspec', 'config.yaml'), 'schema: spec-driven\n');
   await fs.writeFile(join(changeDir, '.openspec.yaml'), 'schema: spec-driven\ncreated: 2026-10-22\n');
@@ -262,19 +279,9 @@ async function fixture(t: any) {
   await fs.writeFile(join(changeDir, 'specs', 'production-fixture', 'spec.md'), '## ADDED Requirements\n\n### Requirement: Isolated fixture task\nThe fixture SHALL execute only selected temporary tasks.\n\n#### Scenario: Selected task completes\n- **WHEN** the report gate opens\n- **THEN** only assigned temporary task items are completed\n');
   await fs.writeFile(join(changeDir, 'tasks.md'), '## 1. Fixture\n\n' + Object.entries(descriptions).map(([id, description]) => `- [ ] ${id} ${description}`).join('\n') + '\n');
   openStateStore(cfg.statePath).close();
-  const measured = await createResourceSnapshotReader({ machineId: 'fixture-path-discovery', paths: [workspace, cfg.statePath, tmpRoot] }).read();
-  const ids = [...new Set(Object.values(measured.fileSystemByPath))];
-  assert.ok(ids.length, 'Реальний OS sampler має визначити файлові системи fixture');
-  const taskContext = { branch: 'develop', outcome: 'Complete only selected fixture tasks', writeBoundaries: [join(changeDir, 'tasks.md')], sources: [join(changeDir, 'design.md')], requested: { ramBytes: 1, diskBytes: Object.fromEntries(ids.map(id => [id, 1])) }, requiredFileSystemIds: ids, reportSchema: { type: 'object', required: ['status', 'answer', 'changes'] } };
   function parameters(id: string, tasks = ['1.1']): RuntimeRunParameters { return { id, type: 'implement', project: 'raf', features: ['production-launch'], phase: 'implement', complexity: 'decision', tasks: tasks.map(item => `${change}:${item}`) }; }
-  async function intent(id: string, tasks = ['1.1']) {
-    const params = parameters(id, tasks);
-    const assignment = { root, changes: [{ id: change, items: tasks.map(id => ({ id, description: descriptions[id as keyof typeof descriptions] })) }], baselineArchives: [] };
-    await writeJson(join(tmpRoot, 'task-context', id + '.json'), { version: 1, parameters: params, assignment, context: taskContext });
-    return params;
-  }
   function argv(params: RuntimeRunParameters) { return ['agent', 'run', '--id', params.id, '--type', params.type, '--project', params.project, '--features', ...params.features, '--phase', params.phase, '--complexity', params.complexity, '--tasks', ...params.tasks]; }
-  async function run(id: string, tasks = ['1.1']) { return spawnChild('command', [JSON.stringify(argv(await intent(id, tasks)))]); }
+  async function run(id: string, tasks = ['1.1']) { return spawnChild('command', [JSON.stringify(argv(parameters(id, tasks)))]); }
   async function inspect() {
     const store = openStateStore(cfg.statePath);
     try {
@@ -304,11 +311,12 @@ async function fixture(t: any) {
     await until(async () => ({ ready: await exists(join(control, label + '.ready')), output: worker.output(), code: worker.child.exitCode }), x => { assert.equal(x.code, null, JSON.stringify(x)); return x.ready; }, 'Default service recover має завершитися');
     return worker;
   }
-  return { ...cfg, directory, env, children, spawnChild, inspect, intent, parameters, argv, run, launched, startService, taskContext, gate: (name: string) => fs.writeFile(join(control, name), 'go'), brief: (id: string) => json(join(control, id + '.brief.json')) };
+  return { ...cfg, directory, env, children, spawnChild, inspect, parameters, argv, run, launched, startService, gate: (name: string) => fs.writeFile(join(control, name), 'go'), brief: (id: string) => json(join(control, id + '.brief.json')) };
 }
 
-test('[production-launch] default entry fences actual runner before first brief and parent exits', async t => {
+test('[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief', async t => {
   const f = await fixture(t);
+  await writeJson(join(f.tmpRoot, 'task-context', 'entry.json'), { version: 1, parameters: f.parameters('entry'), assignment: { root: f.root, changes: [{ id: change, items: [{ id: '1.1', description: descriptions['1.1'] }] }], baselineArchives: [] }, context: { branch: 'main', outcome: 'FOREIGN_OUTCOME', writeBoundaries: [f.root], sources: ['/FOREIGN — чуже; завжди'], requested: { ramBytes: 1, diskBytes: {} }, requiredFileSystemIds: [], reportSchema: { foreign: true } } });
   const { brief, session, invocation } = await f.launched('entry');
   assert.equal(invocation.child.exitCode, 0);
   process.kill(brief.pid, 0);
@@ -316,6 +324,14 @@ test('[production-launch] default entry fences actual runner before first brief 
   assert.equal(session.process!.pid, brief.pid);
   assert.equal(session.process!.runnerSessionId, brief.nativeId);
   assert.match(brief.nativeId, /^[0-9a-f]{8}-[0-9a-f-]{27}$/);
+  assert.doesNotMatch(JSON.stringify(brief.assignment), /FOREIGN/);
+  assert.equal(brief.assignment.outcome, `${change}:1.1 — ${descriptions['1.1']}`);
+  assert.deepEqual(brief.assignment.write_boundaries, [f.workspace, f.changeDir, f.questionsPath]);
+  assert.deepEqual(session.launchContext!.writeBoundaries, [f.workspace, f.changeDir, f.questionsPath]);
+  const diagnostic = await json(join(f.tmpRoot, session.runId, 'task-context.json'));
+  assert.equal(diagnostic.runId, session.runId);
+  assert.deepEqual(diagnostic.parameters, f.parameters('entry'));
+  assert.equal(diagnostic.context.outcome, brief.assignment.outcome);
   const claim = brief.claims.find((x: any) => x.lease.owner.runId === session.runId);
   assert.equal(claim?.stage, 'running');
   assert.equal(claim.agent.pid, brief.pid);
@@ -332,19 +348,22 @@ test('[production-launch] default entry fences actual runner before first brief 
   assert.equal(session.launchContext!.selection.effort, 'high');
 });
 
-test('[production-launch] invalid assignment and mismatched context create no runner or claims; forged main rejected', async t => {
+test('[production-launch] invalid assignment and assignment changed between derivation and start create no runner or claims; forged main rejected', async t => {
   const f = await fixture(t);
   const bad = f.parameters('bad-assignment', ['99.9']);
   const result = await f.spawnChild('command', [JSON.stringify(f.argv(bad))]).done;
   assert.notEqual(result.exitCode, 0, JSON.stringify(result));
-  const params = await f.intent('bad-context');
-  const path = join(f.tmpRoot, 'task-context', 'bad-context.json');
-  const envelope = await json(path);
-  envelope.assignment.changes[0].items[0].description = 'forged description';
-  await writeJson(path, envelope);
-  const contextResult = await f.spawnChild('command', [JSON.stringify(f.argv(params))]).done;
-  assert.notEqual(contextResult.exitCode, 0, JSON.stringify(contextResult));
-  assert.match(contextResult.stdout + contextResult.stderr, /TASK_CONTEXT_MISMATCH/);
+  const forged = 'Write forged fixture alpha';
+  await writeJson(join(f.control, 'mutate-after-validation.json'), { from: `- [ ] 1.1 ${descriptions['1.1']}`, to: `- [ ] 1.1 ${forged}` });
+  const changedResult = await f.spawnChild('command', [JSON.stringify(f.argv(f.parameters('changed-assignment')))]).done;
+  assert.deepEqual(await json(join(f.control, 'mutated')), { from: `- [ ] 1.1 ${descriptions['1.1']}`, to: `- [ ] 1.1 ${forged}` });
+  assert.notEqual(changedResult.exitCode, 0, JSON.stringify(changedResult));
+  const failure = JSON.parse(JSON.parse(changedResult.stdout).stderr);
+  assert.equal(failure.details.stage, 'reservation', changedResult.stdout);
+  assert.match(failure.details.reason, new RegExp(`${change}/1\\.1 is missing, ambiguous, changed or completed`));
+  const leftovers = [];
+  for (const entry of await fs.readdir(f.tmpRoot)) if (await exists(join(f.tmpRoot, entry, 'task-context.json'))) leftovers.push(entry);
+  assert.deepEqual(leftovers, [], 'cleanupUnstarted має прибрати каталог запуску з виведеним контекстом');
   const snapshot = await f.inspect();
   assert.equal(snapshot.sessions.length, 0);
   assert.equal(snapshot.claims.length, 0);
@@ -433,7 +452,7 @@ test('[production-launch] default service refresh/recover cannot finalize exit w
 
 test('[production-launch] default service startup releases real SIGKILL starter before spawn without manual cleanup', async t => {
   const f = await fixture(t);
-  const params = await f.intent('starter');
+  const params = f.parameters('starter');
   const starter = f.spawnChild('starter', [JSON.stringify(params)]);
   const seeded = await until(async () => await exists(join(f.control, 'starter.seeded')) ? json(join(f.control, 'starter.seeded')) : null, Boolean, 'Public production reserve має зафіксувати starter');
   const before = await f.inspect();
@@ -473,7 +492,7 @@ test('[production-launch] live actual runner and its lease survive default servi
 
 test('[production-launch] incomplete persisted process evidence stays conservative during default startup recovery', async t => {
   const f = await fixture(t);
-  const params = await f.intent('unknown');
+  const params = f.parameters('unknown');
   const starter = f.spawnChild('starter', [JSON.stringify(params)]);
   await until(() => exists(join(f.control, 'unknown.seeded')), Boolean, 'Real starter reserve');
   const store = openStateStore(f.statePath);

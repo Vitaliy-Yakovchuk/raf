@@ -240,7 +240,13 @@ interface Environment {
   readonly config: { readonly requestTimeoutMs: number; readonly pollIntervalMs: number };
 }
 
-function prepare(dash: FakeDash, directory: string): Environment {
+interface DashEndpoint {
+  readonly port: number;
+  readonly secret: string;
+  readonly cert: string;
+}
+
+function prepare(dash: DashEndpoint, directory: string, overrides: Record<string, unknown> = {}): Environment {
   const root = join(directory, 'root');
   const home = join(directory, 'home');
   cpSync(realConf, join(root, 'conf'), { recursive: true });
@@ -249,7 +255,7 @@ function prepare(dash: FakeDash, directory: string): Environment {
   settings.bugs = {
     ...settings.bugs, origin: `https://127.0.0.1:${dash.port}`, ...config,
     retry: { initialDelayMs: 300, multiplier: 2, maxDelayMs: 1200 },
-    sections: [{ project: 'qa', env: 'dev', stand: 'qa', secret: secretName }],
+    sections: [{ project: 'qa', env: 'dev', stand: 'qa', secret: secretName }], ...overrides,
   };
   writeFileSync(join(root, 'conf', 'raf.json'), JSON.stringify(settings, null, 2));
   mkdirSync(join(home, '.raf'), { recursive: true, mode: 0o700 });
@@ -300,8 +306,8 @@ class Service {
   child: ChildProcess | undefined;
   starts = 0;
   private readonly environment: Environment;
-  private readonly dash: FakeDash;
-  constructor(environment: Environment, dash: FakeDash) {
+  private readonly dash: DashEndpoint;
+  constructor(environment: Environment, dash: DashEndpoint) {
     this.environment = environment;
     this.dash = dash;
   }
@@ -560,5 +566,403 @@ test('QA 3.1: real bugs.sqlite, real raf service process and a controlled HTTPS 
     assert.ok(dash.requests.every(request => request.status !== 401), 'every request carried a valid JWT');
     const stopped = await service.stop('SIGTERM');
     assert.equal(stopped.code, 0, service.log());
+  });
+});
+
+interface PagedAttachment {
+  readonly id: string;
+  readonly content: Buffer;
+}
+
+interface PagedBug {
+  readonly rawId: string;
+  revision: number;
+  comments: ServerComment[];
+  attachments: PagedAttachment[];
+  deleted: boolean;
+  hidden: boolean;
+}
+
+interface PagedRequest {
+  readonly path: string;
+  readonly cursor: string | null;
+  readonly commentsCursor: string | null;
+  status: number;
+}
+
+class PagedDash {
+  readonly secret = randomBytes(32).toString('hex');
+  readonly cert: string;
+  port = 0;
+  online = false;
+  bugs: PagedBug[] = [];
+  journal: { cursor: string; problem_id: string; kind: string; payload: unknown }[] = [];
+  requests: PagedRequest[] = [];
+  intercept: ((request: PagedRequest) => 'fail' | 'hang' | null) | null = null;
+  private held: ServerResponse[] = [];
+  private comments = 0;
+  private server: Server;
+  private sockets = new Set<Duplex>();
+
+  constructor(directory: string) {
+    const keyPath = join(directory, 'dash.key');
+    this.cert = join(directory, 'dash.crt');
+    execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', keyPath, '-out', this.cert, '-days', '1',
+      '-subj', '/CN=127.0.0.1', '-addext', 'subjectAltName=IP:127.0.0.1'], { stdio: 'ignore' });
+    this.server = createServer({ key: readFileSync(keyPath), cert: readFileSync(this.cert) }, (request, response) => { void this.handle(request, response); });
+    this.server.on('connection', socket => {
+      if (!this.online) { socket.destroy(); return; }
+      this.sockets.add(socket);
+      socket.on('close', () => this.sockets.delete(socket));
+    });
+  }
+
+  async start(): Promise<void> {
+    await new Promise<void>((done, fail) => { this.server.once('error', fail); this.server.listen(0, '127.0.0.1', () => { this.server.off('error', fail); done(); }); });
+    this.port = (this.server.address() as { port: number }).port;
+    this.online = true;
+  }
+
+  goOffline(): void {
+    this.online = false;
+    for (const socket of this.sockets) socket.destroy();
+  }
+
+  goOnline(): void {
+    this.online = true;
+  }
+
+  release(): void {
+    for (const response of this.held.splice(0)) response.destroy();
+  }
+
+  async close(): Promise<void> {
+    this.release();
+    this.goOffline();
+    await new Promise<void>(done => this.server.close(() => done()));
+  }
+
+  addBug(rawId: string, texts: readonly string[], attachment = false): void {
+    const bug: PagedBug = { rawId, revision: 1, comments: [], attachments: [], deleted: false, hidden: false };
+    for (const text of texts) bug.comments.push(this.comment(text));
+    if (attachment) bug.attachments.push({ id: `a${rawId}`, content: randomBytes(96) });
+    this.bugs.push(bug);
+    this.event(bug, 'bug.created');
+  }
+
+  humanComment(rawId: string, text: string): ServerComment {
+    const bug = this.bug(rawId);
+    const comment = this.comment(text);
+    bug.comments.push(comment);
+    bug.revision += 1;
+    this.event(bug, 'comment.added');
+    return comment;
+  }
+
+  deleteComment(rawId: string, id: string): void {
+    const bug = this.bug(rawId);
+    bug.comments = bug.comments.filter(comment => comment.id !== id);
+    bug.revision += 1;
+    this.event(bug, 'comment.deleted');
+  }
+
+  deleteBug(rawId: string): void {
+    const bug = this.bug(rawId);
+    bug.deleted = true;
+    this.event(bug, 'bug.deleted', { deleted: true });
+  }
+
+  hideBug(rawId: string): void {
+    const bug = this.bug(rawId);
+    bug.hidden = true;
+    this.event(bug, 'bug.hidden');
+  }
+
+  visible(): PagedBug[] {
+    return this.bugs.filter(bug => !bug.deleted && !bug.hidden);
+  }
+
+  bug(rawId: string): PagedBug {
+    const bug = this.bugs.find(candidate => candidate.rawId === rawId);
+    assert.ok(bug, `server bug ${rawId}`);
+    return bug;
+  }
+
+  since(mark: number, path: string): PagedRequest[] {
+    return this.requests.slice(mark).filter(request => request.path === path);
+  }
+
+  private comment(text: string): ServerComment {
+    this.comments += 1;
+    return { id: `pc${this.comments}`, author_id: 'owner@example.test', author_kind: 'person', text, reply_to: null, created_at: new Date().toISOString() };
+  }
+
+  private event(bug: PagedBug, kind: string, payload: unknown = {}): void {
+    this.journal.push({ cursor: String(this.journal.length + 1), problem_id: problemOf(bug.rawId), kind, payload });
+  }
+
+  private header(bug: PagedBug) {
+    return {
+      key: { source: 'web', owner: 'qa', id: bug.rawId }, problem_id: problemOf(bug.rawId), revision: bug.revision, status: 'open', state: 'triage',
+      created_at: '2026-10-22T00:00:00.000Z', claimed_by: null, claim_expires_at: null,
+    };
+  }
+
+  private detail(bug: PagedBug, commentsCursor: string | null, limit: number) {
+    const offset = commentsCursor ? Number(commentsCursor.slice(1)) : 0;
+    const attachments = offset === 0 ? bug.attachments.map(attachment => ({
+      id: attachment.id, kind: 'image', mime: 'application/octet-stream', bytes: attachment.content.length,
+      sha256: createHash('sha256').update(attachment.content).digest('hex'),
+    })) : [];
+    return {
+      ...this.header(bug), comments: bug.comments.slice(offset, offset + limit), attachments,
+      nextCommentsCursor: offset + limit < bug.comments.length ? `C${offset + limit}` : null, nextAttachmentsCursor: null,
+    };
+  }
+
+  private async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    const url = new URL(request.url ?? '/', `https://127.0.0.1:${this.port}`);
+    for await (const _ of request) { }
+    const segments = url.pathname.split('/').slice(1).map(segment => decodeURIComponent(segment));
+    const path = url.pathname === '/api/bugs/events' || segments.length <= 2 ? url.pathname : `/api/bugs/${segments.slice(2).join('/')}`;
+    const record: PagedRequest = { path, cursor: url.searchParams.get('cursor'), commentsCursor: url.searchParams.get('commentsCursor'), status: 0 };
+    this.requests.push(record);
+    const reply = (status: number, body: unknown, type = 'application/json') => {
+      record.status = status;
+      if (response.destroyed) return;
+      response.writeHead(status, { 'content-type': type });
+      response.end(Buffer.isBuffer(body) ? body : JSON.stringify(body));
+    };
+    const claims = verifiedClaims(request, this.secret);
+    if (!claims || request.method !== 'GET' || url.searchParams.get('project') !== 'qa' || url.searchParams.get('env') !== 'dev' ||
+        !(Array.isArray(claims.grants) && claims.grants.includes('bugs:read'))) return reply(401, { error: 'unauthorized' });
+    const verdict = this.intercept?.(record) ?? null;
+    if (verdict === 'fail') return reply(503, { error: 'unavailable' });
+    if (verdict === 'hang') { this.held.push(response); return; }
+    const limit = Number(url.searchParams.get('limit') ?? '50');
+    if (url.pathname === '/api/bugs') {
+      const offset = record.cursor ? Number(record.cursor.slice(1)) : 0;
+      const visible = this.visible();
+      return reply(200, {
+        bugs: visible.slice(offset, offset + limit).map(bug => this.header(bug)),
+        nextCursor: offset + limit < visible.length ? `L${offset + limit}` : null,
+      });
+    }
+    if (url.pathname === '/api/bugs/events') {
+      const cursor = Number(record.cursor ?? '0');
+      const after = this.journal.filter(event => Number(event.cursor) > cursor);
+      const events = after.slice(0, limit);
+      return reply(200, { events, cursor: events.at(-1)?.cursor ?? String(cursor), has_more: after.length > events.length });
+    }
+    const bug = this.visible().find(candidate => problemOf(candidate.rawId) === segments[2]);
+    if (!bug) return reply(404, { error: 'not-found' });
+    if (segments.length === 3) return reply(200, this.detail(bug, record.commentsCursor, limit));
+    const attachment = segments[3] === 'attachments' ? bug.attachments.find(candidate => candidate.id === segments[4]) : undefined;
+    if (!attachment) return reply(404, { error: 'attachment-not-found' });
+    return reply(200, attachment.content, 'application/octet-stream');
+  }
+}
+
+function problemOf(rawId: string): string {
+  return JSON.stringify(['web', 'qa', rawId]);
+}
+
+function verifiedClaims(request: IncomingMessage, secret: string): Record<string, unknown> | null {
+  const header = request.headers.authorization ?? '';
+  if (!header.startsWith('Bearer ') || request.headers['x-bugs-contract-version'] !== '2') return null;
+  const [head, body, signature] = header.slice(7).split('.');
+  if (!head || !body || !signature) return null;
+  const key = createHash('sha256').update(`dashboard-bugs:${secret}`).digest();
+  const expected = createHmac('sha256', key).update(`${head}.${body}`).digest();
+  const given = Buffer.from(signature, 'base64url');
+  if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
+  const claims = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as Record<string, unknown>;
+  if (claims.aud !== 'dashboard-bugs' || claims.purpose !== 'bugs-api' || claims.contract_version !== 2 || claims.actor !== actor ||
+      claims.project !== 'qa' || claims.env !== 'dev' || typeof claims.exp !== 'number' || claims.exp * 1000 <= Date.now()) return null;
+  return claims;
+}
+
+const pagedKey = (rawId: string) => `projects/qa/bug#${rawId}`;
+
+async function showPaged(environment: Environment, rawId: string): Promise<any> {
+  const result = await cli(environment, ['bug', 'show', '--bug', pagedKey(rawId)]);
+  assert.equal(result.code, 0, `bug show ${rawId} failed: ${result.stderr}`);
+  return result.json.bug;
+}
+
+async function listed(environment: Environment): Promise<{ bugs: any[]; sync: any }> {
+  const bugs: any[] = [];
+  let cursor: string | null = null;
+  let sync: any;
+  do {
+    const result = await cli(environment, ['bug', 'list', ...(cursor ? ['--cursor', cursor] : [])]);
+    assert.equal(result.code, 0, result.stderr);
+    bugs.push(...result.json.bugs);
+    sync ??= result.json.sync[0];
+    cursor = result.json.nextCursor;
+  } while (cursor);
+  return { bugs, sync };
+}
+
+async function mirrors(environment: Environment, dash: PagedDash, rawIds: readonly string[]): Promise<boolean> {
+  for (const rawId of rawIds) {
+    const server = dash.bug(rawId);
+    const local = await showPaged(environment, rawId);
+    if (local.revision !== server.revision || local.presence !== 'present' || !local.detailComplete) return false;
+    if (JSON.stringify(local.comments.map((comment: any) => comment.serverId)) !== JSON.stringify(server.comments.map(comment => comment.id))) return false;
+    if (JSON.stringify(local.attachments.map((attachment: any) => attachment.serverId)) !== JSON.stringify(server.attachments.map(attachment => attachment.id))) return false;
+  }
+  return true;
+}
+
+test('QA 3.1: paged pull resumes from the saved position after page failures, offline and service restarts; server deletions reach the local copy', { timeout: 600000 }, async t => {
+  const directory = mkdtempSync(join(tmpdir(), 'qa-bs31p-'));
+  const dash = new PagedDash(directory);
+  dash.addBug('201', ['201 first'], true);
+  dash.addBug('202', ['202 first', '202 second'], true);
+  dash.addBug('203', ['203 c1', '203 c2', '203 c3', '203 c4', '203 c5']);
+  dash.addBug('204', []);
+  dash.addBug('205', ['205 first']);
+  await dash.start();
+  const environment = prepare(dash, directory, { pageLimit: 2 });
+  const service = new Service(environment, dash);
+  const all = ['201', '202', '203', '204', '205'];
+  t.after(async () => {
+    if (service.child) await service.stop('SIGKILL');
+    await dash.close();
+    if (!process.env.QA_KEEP) rmSync(directory, { recursive: true, force: true });
+  });
+
+  let missedDuringSnapshot: ServerComment | undefined;
+
+  await t.test('snapshot: a failing second list page keeps the first page and the list position; retries do not restart the snapshot', async () => {
+    dash.intercept = request => request.path === '/api/bugs' && request.cursor === 'L2' ? 'fail' : null;
+    service.start();
+    await service.ready();
+    const failing = await until('second list page fails repeatedly', async () => {
+      const state = await listed(environment);
+      return state.sync.listCursor === 'L2' && state.sync.lastErrorCode === 'unavailable' && state.sync.consecutiveFailures >= 2 ? state : null;
+    }, service);
+    assert.equal(failing.sync.snapshotComplete, false);
+    assert.equal(failing.sync.phase, 'snapshot');
+    assert.deepEqual(failing.bugs.map(bug => bug.key), [pagedKey('201'), pagedKey('202')]);
+    assert.ok(await mirrors(environment, dash, ['201', '202']), 'the stored first page is complete');
+    const cursors = dash.since(0, '/api/bugs').map(request => request.cursor);
+    assert.equal(cursors[0], null);
+    assert.ok(cursors.slice(1).every(cursor => cursor === 'L2'), `retries resume at L2: ${cursors}`);
+    assert.deepEqual(dash.since(0, '/api/bugs/events').map(request => request.cursor), ['0', '2', '4'], 'journal head found page by page once');
+    missedDuringSnapshot = dash.humanComment('201', 'human comment on an already stored bug during the snapshot');
+  });
+
+  await t.test('restart between pages: after SIGTERM and after SIGKILL inside a page the snapshot continues from the stored cursor', async () => {
+    assert.equal((await service.stop('SIGTERM')).code, 0, service.log());
+    const restart = dash.requests.length;
+    dash.intercept = request => request.path === '/api/bugs' && request.cursor === 'L4' ? 'hang' : null;
+    service.start();
+    await service.ready();
+    await until('the service is inside the third list page', async () => dash.since(restart, '/api/bugs').some(request => request.cursor === 'L4'), service);
+    assert.deepEqual(dash.since(restart, '/api/bugs').map(request => request.cursor), ['L2', 'L4']);
+    assert.equal(dash.since(restart, '/api/bugs/events').length, 0, 'the stored journal head is reused');
+    await service.stop('SIGKILL');
+    dash.release();
+    dash.intercept = null;
+    const crashed = await listed(environment);
+    assert.equal(crashed.sync.listCursor, 'L4');
+    assert.equal(crashed.sync.snapshotComplete, false);
+    assert.deepEqual(crashed.bugs.map(bug => bug.key), ['201', '202', '203', '204'].map(pagedKey));
+    const resume = dash.requests.length;
+    service.start();
+    await service.ready();
+    await until('snapshot completes and the incremental pull catches up', async () => {
+      const state = await listed(environment);
+      return state.sync.snapshotComplete && state.sync.phase === 'incremental' && state.sync.journalCursor === String(dash.journal.length) &&
+        await mirrors(environment, dash, all);
+    }, service);
+    assert.deepEqual(dash.since(resume, '/api/bugs').map(request => request.cursor), ['L4']);
+    assert.equal(dash.since(resume, '/api/bugs/events')[0]?.cursor, '5', 'incremental starts at the journal head taken before the snapshot');
+    const local = await showPaged(environment, '201');
+    assert.equal(local.comments.filter((comment: any) => comment.serverId === missedDuringSnapshot!.id).length, 1);
+    const pages = dash.requests.filter(request => request.path === `/api/bugs/${problemOf('203')}`).map(request => request.commentsCursor);
+    assert.ok(pages.includes('C2') && pages.includes('C4'), `comments of 203 are read page by page: ${pages}`);
+    assert.deepEqual((await listed(environment)).bugs.map(bug => bug.key), all.map(pagedKey));
+  });
+
+  await t.test('incremental: a failing journal page, an offline server and restarts continue from the stored journal cursor', async () => {
+    const start = Number((await listed(environment)).sync.journalCursor);
+    assert.equal(start, dash.journal.length);
+    dash.intercept = request => request.path === '/api/bugs/events' && request.cursor === String(start + 2) ? 'fail' : null;
+    const added = ['202', '203', '204', '205', '201'].map(rawId => ({ rawId, comment: dash.humanComment(rawId, `incremental ${rawId}`) }));
+    const halfway = await until('second journal page fails', async () => {
+      const state = await listed(environment);
+      return state.sync.journalCursor === String(start + 2) && state.sync.lastErrorCode === 'unavailable' ? state : null;
+    }, service);
+    assert.equal(halfway.sync.phase, 'incremental');
+    const has = async (entry: { rawId: string; comment: ServerComment }) =>
+      (await showPaged(environment, entry.rawId)).comments.filter((comment: any) => comment.serverId === entry.comment.id).length;
+    assert.deepEqual(await Promise.all(added.map(has)), [1, 1, 0, 0, 0], 'only the first journal page is applied');
+    assert.equal((await service.stop('SIGTERM')).code, 0, service.log());
+    dash.intercept = null;
+    dash.goOffline();
+    service.start();
+    await service.ready();
+    await until('pull fails while the server is offline', async () => {
+      const state = await listed(environment);
+      return state.sync.lastErrorCode === 'network' && state.sync.consecutiveFailures >= 1 ? state : null;
+    }, service);
+    assert.equal((await service.stop('SIGTERM')).code, 0, service.log());
+    const offline = await listed(environment);
+    assert.equal(offline.sync.journalCursor, String(start + 2), 'offline keeps the stored journal cursor');
+    assert.equal(offline.sync.lastErrorCode, 'network');
+    dash.goOnline();
+    const resume = dash.requests.length;
+    service.start();
+    await service.ready();
+    await until('pull resumes and catches up', async () => {
+      const state = await listed(environment);
+      return state.sync.journalCursor === String(dash.journal.length) && state.sync.lastErrorCode === null && await mirrors(environment, dash, all);
+    }, service);
+    assert.equal(dash.since(resume, '/api/bugs/events')[0]?.cursor, String(start + 2));
+    assert.deepEqual(await Promise.all(added.map(has)), [1, 1, 1, 1, 1]);
+  });
+
+  await t.test('server deletions: a deleted bug and comment disappear, a hidden bug is marked missing, cached bytes of the deleted bug are removed', async () => {
+    const cached = await cli(environment, ['bug', 'attachment', 'get', '--bug', pagedKey('202'), '--attachment', 'a202']);
+    assert.equal(cached.code, 0, cached.stderr);
+    const cachedPath: string = cached.json.path;
+    assert.ok(existsSync(cachedPath), cachedPath);
+    const removedComment = dash.bug('203').comments[1];
+    dash.deleteBug('202');
+    dash.deleteComment('203', removedComment.id);
+    dash.hideBug('205');
+    await until('deletions reach the local copy', async () => {
+      const state = await listed(environment);
+      const presence = Object.fromEntries(state.bugs.map(bug => [bug.key, bug.presence]));
+      return state.sync.journalCursor === String(dash.journal.length) && !(pagedKey('202') in presence) && presence[pagedKey('205')] === 'missing' &&
+        await mirrors(environment, dash, ['201', '203', '204']);
+    }, service);
+    assert.equal(errorCode(await cli(environment, ['bug', 'show', '--bug', pagedKey('202')])), 'BUG_NOT_FOUND');
+    const comments = (await showPaged(environment, '203')).comments.map((comment: any) => comment.serverId);
+    assert.ok(!comments.includes(removedComment.id));
+    assert.equal((await showPaged(environment, '205')).presence, 'missing');
+    const other = await cli(environment, ['bug', 'attachment', 'get', '--bug', pagedKey('201'), '--attachment', 'a201']);
+    assert.equal(other.code, 0, other.stderr);
+    assert.equal(existsSync(cachedPath), false, 'cached bytes of the deleted bug are removed');
+    assert.ok(existsSync(other.json.path));
+  });
+
+  await t.test('final state after another restart: no resurrected, duplicated or missing records', async step => {
+    assert.equal((await service.stop('SIGTERM')).code, 0, service.log());
+    const restart = dash.requests.length;
+    service.start();
+    await service.ready();
+    await until('two more poll cycles pass', async () => dash.since(restart, '/api/bugs/events').length >= 2, service);
+    const state = await listed(environment);
+    step.diagnostic(JSON.stringify({ serviceStarts: service.starts, journal: dash.journal.length, requests: dash.requests.length }));
+    assert.deepEqual(state.bugs.map(bug => [bug.key, bug.presence]), [['201', 'present'], ['203', 'present'], ['204', 'present'], ['205', 'missing']]
+      .map(([rawId, presence]) => [pagedKey(rawId), presence]));
+    assert.equal(state.sync.journalCursor, String(dash.journal.length));
+    assert.ok(await mirrors(environment, dash, ['201', '203', '204']));
+    assert.ok(dash.requests.every(request => request.status !== 401), 'every request carried a valid JWT');
+    assert.equal((await service.stop('SIGTERM')).code, 0, service.log());
   });
 });

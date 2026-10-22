@@ -64,10 +64,10 @@ function workspace(): Workspace {
   return { base, root, home, rafHome, fetchLog, preload };
 }
 
-function cli(ws: Workspace, argv: readonly string[], input?: string): CliResult {
+function cli(ws: Workspace, argv: readonly string[], input?: string, timeout = 60_000): CliResult {
   const result = spawnSync(process.execPath, [
     '--preserve-symlinks', '--preserve-symlinks-main', '--import', ws.preload, join(ws.root, 'raf-develop', 'bin', 'raf.ts'), ...argv,
-  ], { env: { ...process.env, HOME: ws.home, QA_FETCH_LOG: ws.fetchLog }, input: input ?? '', encoding: 'utf8', timeout: 60_000 });
+  ], { env: { ...process.env, HOME: ws.home, QA_FETCH_LOG: ws.fetchLog }, input: input ?? '', encoding: 'utf8', timeout });
   return { code: result.status, stdout: result.stdout.trim(), stderr: result.stderr.trim() };
 }
 
@@ -295,15 +295,25 @@ test('QA 3.4: approved bug commands through the real CLI with an isolated HOME a
     assertNoService(ws);
   });
 
-  await t.test('attachment get without network fails explicitly without a fake local path', async () => {
+  await t.test('attachment get without network fails explicitly without a fake local path', async st => {
     server.seedBug(ETCHLY, {
       rawId: '345', attachments: [{ id: 'att-2', bytes: ATTACHMENT.length, sha256: createHash('sha256').update(ATTACHMENT).digest('hex') }],
     });
     await serviceCycle(ws, server, inbox);
     const before = fetches(ws).length;
-    const error = failed(cli(ws, ['bug', 'attachment', 'get', '--bug', 'projects/etchly/bug#345', '--attachment', 'att-2']), 'ATTACHMENT_FETCH_FAILED', 'bug attachment get');
+    const started = Date.now();
+    const error = failed(cli(ws, ['bug', 'attachment', 'get', '--bug', 'projects/etchly/bug#345', '--attachment', 'att-2'], undefined, 180_000), 'ATTACHMENT_FETCH_FAILED', 'bug attachment get');
+    const elapsedMs = Date.now() - started;
     assert.ok(!JSON.stringify(error).includes(join(ws.rafHome, 'attachments', '')), 'no local path in the failure');
-    assert.equal(fetches(ws).length, before + 1, 'exactly one explicit request for the bytes');
+    const requests = fetches(ws).slice(before);
+    const retry = JSON.parse(readFileSync(join(ws.root, 'conf', 'raf.json'), 'utf8')).bugs.retry;
+    let limit = 1;
+    let backoffMs = 0;
+    for (let next = retry.initialDelayMs; next < retry.maxDelayMs; next *= retry.multiplier) { limit += 1; backoffMs += next; }
+    assert.equal(requests.length, limit, 'bounded retries from conf retry');
+    assert.ok(requests.every(url => url.includes('/attachments/att-2?')));
+    assert.ok(elapsedMs >= backoffMs && elapsedMs < backoffMs + 30_000, `failure after bounded backoff: ${elapsedMs} ms`);
+    st.diagnostic(`attachment get offline: ${requests.length} requests, ${elapsedMs} ms before ATTACHMENT_FETCH_FAILED`);
     const shown = ok(cli(ws, ['bug', 'show', '--bug', 'projects/etchly/bug#345']));
     assert.equal(shown.bug.attachments[0].cacheState, 'absent');
     const files = existsSync(join(ws.rafHome, 'attachments')) ? readdirSync(join(ws.rafHome, 'attachments'), { recursive: true }) : [];

@@ -456,6 +456,50 @@ test('[identity-fs] capture also rejects mutation during source read', async t =
   });
 });
 
+async function sandboxWrites(dir: string) {
+  await writeFile(join(dir, '.mcp.json'), '');
+  await mkdir(join(dir, '.claude', '.cc-writes'), { recursive: true });
+}
+
+test('[identity-fs] runner sandbox entries appearing in the change and project directories during a read do not race', async t => {
+  const f = await fixture(t);
+  await contract('Sandbox .mcp.json and .claude are not change sources', async () => {
+    const adapter = f.adapter();
+    f.onRead(() => sandboxWrites(f.dir));
+    const captured = await adapter.capture('raf', f.assignment);
+    f.onRead(async () => { await rm(join(f.dir, '.mcp.json')); await sandboxWrites(f.root); });
+    resolved(await adapter.resolveTasks(captured), captured, 'open', 'active');
+  });
+});
+
+test('[identity-fs] another agent editing a different item of the same tasks.md does not fail the launch', async t => {
+  const f = await fixture(t);
+  await contract('Staged unrelated edits keep the reserved task resolvable', async () => {
+    const adapter = f.adapter();
+    const captured = await adapter.capture('raf', f.assignment);
+    const staged = join(f.dir, '.claude', '.cc-writes', 'tasks.md.tmp');
+    f.onRead(async () => {
+      await mkdir(join(f.dir, '.claude', '.cc-writes'), { recursive: true });
+      await writeFile(staged, '- [ ] 1.1 Зберегти точну ідентичність\n- [x] 1.2 Other agent item\n');
+    });
+    resolved(await adapter.resolveTasks(captured), captured, 'open', 'active');
+    await rename(staged, join(f.dir, 'tasks.md'));
+    f.setRows([task(), { id: '2', description: '1.2 Other agent item', done: true }]);
+    resolved(await adapter.resolveTasks(captured), captured, 'open', 'active');
+  });
+});
+
+test('[identity-fs] a real assigned description change stays a mismatch despite sandbox entries', async t => {
+  const f = await fixture(t);
+  await contract('Ignoring sandbox entries never masks a changed assigned task', async () => {
+    const adapter = f.adapter();
+    const captured = await adapter.capture('raf', f.assignment);
+    f.setRows([task('Змінений опис доручуваного пункту')]);
+    f.onRead(() => sandboxWrites(f.dir));
+    refused(await adapter.resolveTasks(captured), captured, 'mismatch');
+  });
+});
+
 for (const mode of ['unknown-project', 'wrong-root', 'empty', 'traversal', 'duplicate', 'description', 'completed'] as const) {
   test(`[identity-fs] capture rejects ${mode} before returning any partial assignment`, async t => {
     const f = await fixture(t);

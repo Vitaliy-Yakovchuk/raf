@@ -15,6 +15,9 @@ const message = (error: unknown) => error instanceof Error ? error.message : Str
 const failure = (code: 'TASK_IDENTITY_INVALID' | 'TASK_SOURCE_UNKNOWN', reason: string) => Object.assign(new Error(reason), { code });
 const tuple = (stat: BigIntStats) => [stat.dev, stat.ino, stat.birthtimeNs].map(String);
 const signature = (stat: BigIntStats) => [stat.dev, stat.ino, stat.birthtimeNs, stat.ctimeNs, stat.mtimeNs, stat.size, stat.mode].map(String).join(':');
+const sameEntryOnly = (before: BigIntStats, after: BigIntStats) => before.isDirectory() && after.isDirectory() && after.ctimeNs === after.mtimeNs && after.mtimeNs >= before.mtimeNs
+  && [before.dev, before.ino, before.birthtimeNs, before.mode].join(':') === [after.dev, after.ino, after.birthtimeNs, after.mode].join(':');
+const unchanged = (before: BigIntStats, after: BigIntStats) => signature(before) === signature(after) || sameEntryOnly(before, after);
 const instance = (root: string, stat: BigIntStats) => JSON.stringify(['raf-local-change-v1', root, ...tuple(stat)]);
 const fingerprint = (project: string, root: string, change: string, source: string, id: string, description: string) => createHash('sha256').update(JSON.stringify(['raf-task-fingerprint-v1', project, root, change, source, id, description])).digest('hex');
 const supportedFilesystems = new Set(['darwin:26', `linux:${0xEF53n}`, `linux:${0x01021994n}`]);
@@ -84,7 +87,7 @@ export function createAssignmentIdentityAdapter(
       if (!stat) return undefined;
       const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | (stat.isDirectory() ? constants.O_DIRECTORY : 0));
       try {
-        if (signature(await handle.stat({ bigint: true })) !== signature(stat) || signature(await inspect(path)) !== signature(stat)) throw new Error(`Source changed while opening: ${path}`);
+        if (!unchanged(stat, await handle.stat({ bigint: true })) || !unchanged(stat, await inspect(path))) throw new Error(`Source changed while opening: ${path}`);
         guards.set(path, { path, stat, handle });
       } catch (error) { await handle.close(); throw error; }
       return stat;
@@ -106,10 +109,10 @@ export function createAssignmentIdentityAdapter(
     }
     async function verify(): Promise<void> {
       for (const guard of guards.values()) {
-        if (signature(await guard.handle.stat({ bigint: true })) !== signature(guard.stat) || signature(await inspect(guard.path)) !== signature(guard.stat)) throw new Error(`Source read race: ${guard.path}`);
+        if (!unchanged(guard.stat, await guard.handle.stat({ bigint: true })) || !unchanged(guard.stat, await inspect(guard.path))) throw new Error(`Source read race: ${guard.path}`);
         if (guard.entries && JSON.stringify((await readdir(guard.path)).sort()) !== JSON.stringify(guard.entries)) throw new Error(`Directory read race: ${guard.path}`);
       }
-      for (const [path, stat] of observed) if (!guards.has(path) && signature(await inspect(path)) !== signature(stat)) throw new Error(`Source candidate race: ${path}`);
+      for (const [path, stat] of observed) if (!guards.has(path) && !unchanged(stat, await inspect(path))) throw new Error(`Source candidate race: ${path}`);
       for (const path of absent) {
         try { await inspect(path); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue; throw error; }
         throw new Error(`Previously absent source input appeared: ${path}`);

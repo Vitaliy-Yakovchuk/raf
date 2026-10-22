@@ -5,6 +5,7 @@ import {
   buildRunnerInvocation,
   isNativeWorking,
   matchPendingBrief,
+  nativeSandboxArgs,
   nativeWriteScopeArgs,
   observeRunnerScreen,
   readNativeComposer,
@@ -77,6 +78,41 @@ test('[claude-protocol] write scope grants each directory and a matching path-sc
   ]);
   assert.deepEqual(nativeWriteScopeArgs(protocol('codex'), directories), ['--add-dir', directories[0], '--add-dir', directories[1]]);
   assert.deepEqual(nativeWriteScopeArgs(protocol('claude'), []), []);
+});
+
+test('[claude-protocol] workspace directories get path-scoped edit rules without extra directory grants', () => {
+  const workspace = '/srv/work/raf-develop';
+  const report = '/home/dev/.raf/tmp/run-1';
+  assert.deepEqual(nativeWriteScopeArgs(protocol('claude'), [report], [workspace]), [
+    '--add-dir', report,
+    '--allowedTools', `Edit(/${report}/**)`, `Edit(/${workspace}/**)`,
+  ]);
+  assert.deepEqual(nativeWriteScopeArgs(protocol('claude'), [], [workspace]), ['--allowedTools', `Edit(/${workspace}/**)`]);
+  assert.deepEqual(nativeWriteScopeArgs(protocol('codex'), [report], [workspace]), ['--add-dir', report]);
+});
+
+test('[claude-protocol] sandbox scope opens unix sockets only behind hidden socket locations and a private tmux directory', () => {
+  const claude = protocol('claude');
+  const args = buildRunnerInvocation(claude, { model: 'claude-sonnet', effort: 'high', sessionId: uuid }).args;
+  const scope = { hidden: ['/run', '/tmp/tmux-1000', '/tmp/cc-socks', '/home/dev/.raf'], readable: ['/home/dev/.raf/tmp/run-1'], tmuxDirectory: '/home/dev/.raf/tmp/run-1', excludedCommands: [] };
+  const scoped = nativeSandboxArgs(claude, args, scope);
+  assert.equal(scoped.filter(value => value === '--settings').length, 1);
+  assert.deepEqual(scoped.filter((_, index) => scoped[index - 1] !== '--settings'), args.filter((_, index) => args[index - 1] !== '--settings'));
+  const settings = JSON.parse(scoped[scoped.indexOf('--settings') + 1]);
+  assert.deepEqual(settings.sandbox, {
+    enabled: true, failIfUnavailable: true, autoAllowBashIfSandboxed: true, allowUnsandboxedCommands: false,
+    network: { allowAllUnixSockets: true },
+    filesystem: { denyRead: scope.hidden, allowRead: scope.readable },
+  });
+  assert.deepEqual(settings.env, { TMUX_TMPDIR: scope.tmuxDirectory, TMUX: '' });
+  assert.deepEqual(args, buildRunnerInvocation(claude, { model: 'claude-sonnet', effort: 'high', sessionId: uuid }).args, 'invocation args are not mutated');
+  const coordinator = JSON.parse((s => s[s.indexOf('--settings') + 1])(nativeSandboxArgs(claude, args, { ...scope, excludedCommands: ['node /srv/raf-main/bin/raf.ts:*'] })));
+  assert.deepEqual(coordinator.sandbox.excludedCommands, ['node /srv/raf-main/bin/raf.ts:*']);
+  assert.equal('excludedCommands' in settings.sandbox, false);
+  const codex = buildRunnerInvocation(protocol('codex'), { model: 'gpt-6-luna', effort: 'medium' }).args;
+  assert.deepEqual(nativeSandboxArgs(protocol('codex'), codex, scope), codex);
+  const unsandboxed = { ...claude, baseArgs: claude.baseArgs.filter((_, index) => index !== claude.baseArgs.indexOf('--settings') && index !== claude.baseArgs.indexOf('--settings') + 1) };
+  assert.throws(() => nativeSandboxArgs(unsandboxed, buildRunnerInvocation(unsandboxed, { model: 'claude-sonnet', effort: 'high' }).args, scope), /sandbox/i);
 });
 
 test('[claude-protocol] ready screen, composer and working state come from the native dialect', () => {

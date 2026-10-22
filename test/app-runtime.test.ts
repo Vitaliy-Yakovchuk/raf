@@ -8,6 +8,7 @@ import { compileCatalog } from '../src/catalog.ts';
 import { execute } from '../src/cli.ts';
 import { runCli } from '../src/bootstrap.ts';
 import { commandFailure } from '../src/cli-contract.ts';
+import { rafCommandFor } from '../src/task-context.ts';
 import type { StateStore } from '../src/state-store.ts';
 import type { ModelCatalog, ModelSelection } from '../src/model-routing.ts';
 import type { SessionRecord, ProcessIdentity } from '../src/session-state.ts';
@@ -160,6 +161,16 @@ test('waiting model is a failed launch with owner reason, never running', async 
   f.services.selectModel = () => ({ status: 'waiting', code: 'NO_SUITABLE_CAPACITY', reason: 'quota exhausted' });
   await assert.rejects(() => run(f), /quota exhausted/);
   noLaunch(f);
+});
+
+test('coordinator brief receives the exact raf command of this raf checkout; executor briefs do not', async () => {
+  const f = fixture();
+  await run(f);
+  assert.equal((call(f, 'compose')?.[1] as Record<string, unknown>).rafCommand, undefined);
+  const g = fixture();
+  await run(g, { type: 'coordinator', phase: 'coordinator' });
+  assert.equal((call(g, 'compose')?.[1] as Record<string, unknown>).rafCommand, rafCommandFor('coordinator'));
+  assert.match(String(rafCommandFor('coordinator')), /^node \/.+\/bin\/raf\.ts$/);
 });
 
 test('selected model, literal brief, child paths and immutable assignment reach owners unchanged', async () => {

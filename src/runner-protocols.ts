@@ -222,11 +222,35 @@ export function isNativeFinished(settings: ProtocolSettings, screen: string): bo
   const finished = dialect(settings).finished;
   return finished !== undefined && new RegExp(finished, 'mu').test(screen);
 }
-export function nativeWriteScopeArgs(settings: ProtocolSettings, directories: readonly string[]): string[] {
+export function nativeWriteScopeArgs(settings: ProtocolSettings, directories: readonly string[], workspaceDirectories: readonly string[] = []): string[] {
   const scope = dialect(settings).writeScope;
   if ((scope.ruleFlag === null) !== (scope.rule === null)) throw new Error(`Runner ${settings.runner} write rule needs both flag and rule`);
-  if (directories.some(directory => !directory.startsWith('/'))) throw new Error('Write scope directories must be absolute');
+  if ([...directories, ...workspaceDirectories].some(directory => !directory.startsWith('/'))) throw new Error('Write scope directories must be absolute');
   const args = directories.flatMap(directory => [scope.directoryFlag, directory]);
-  if (scope.ruleFlag && scope.rule && directories.length) args.push(scope.ruleFlag, ...directories.map(directory => scope.rule!.replaceAll('{directory}', directory)));
+  const ruled = [...directories, ...workspaceDirectories.filter(directory => !directories.includes(directory))];
+  if (scope.ruleFlag && scope.rule && ruled.length) args.push(scope.ruleFlag, ...ruled.map(directory => scope.rule!.replaceAll('{directory}', directory)));
   return args;
+}
+export type NativeSandboxScope = { hidden: readonly string[]; readable: readonly string[]; tmuxDirectory: string; excludedCommands: readonly string[] };
+export function nativeSandboxArgs(settings: ProtocolSettings, args: readonly string[], scope: NativeSandboxScope): string[] {
+  if (settings.runner !== 'claude') return [...args];
+  if ([...scope.hidden, ...scope.readable, scope.tmuxDirectory].some(path => !path.startsWith('/'))) throw new Error('Sandbox scope paths must be absolute');
+  const index = args.indexOf('--settings');
+  let value: { sandbox?: Record<string, unknown>; env?: Record<string, string> } | undefined;
+  try { value = index < 0 ? undefined : JSON.parse(args[index + 1]); } catch { value = undefined; }
+  const sandbox = value?.sandbox;
+  if (!sandbox || sandbox.enabled !== true || sandbox.failIfUnavailable !== true || sandbox.allowUnsandboxedCommands !== false) throw new Error('Runner claude needs an enforced native sandbox in --settings before unix sockets are opened');
+  const list = (from: unknown, add: readonly string[]) => [...new Set([...(Array.isArray(from) ? from as string[] : []), ...add])];
+  const network = { ...(sandbox.network as Record<string, unknown> | undefined), allowAllUnixSockets: true };
+  const filesystem = sandbox.filesystem as Record<string, unknown> | undefined;
+  const merged = {
+    ...value,
+    sandbox: {
+      ...sandbox, network,
+      filesystem: { ...filesystem, denyRead: list(filesystem?.denyRead, scope.hidden), allowRead: list(filesystem?.allowRead, scope.readable) },
+      ...(scope.excludedCommands.length ? { excludedCommands: list(sandbox.excludedCommands, scope.excludedCommands) } : {}),
+    },
+    env: { ...value!.env, TMUX_TMPDIR: scope.tmuxDirectory, TMUX: '' },
+  };
+  return args.map((arg, position) => position === index + 1 ? JSON.stringify(merged) : arg);
 }

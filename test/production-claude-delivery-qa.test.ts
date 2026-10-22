@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { chmod, readFile, writeFile } from 'node:fs/promises';
-import { delimiter, join } from 'node:path';
+import { delimiter, dirname, join } from 'node:path';
+import { realpathSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test, type TestContext } from 'node:test';
 import { createProductionServices } from '../src/production-runtime.ts';
@@ -27,7 +28,7 @@ const configuration: RuntimeConfiguration = {
 const alive = (pid: number) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 
 type LiveMode = 'live' | 'live-pending-hold' | 'live-enter-lost' | 'live-finished-fast';
-async function claudeFixture(t: TestContext, mode: 'accepted' | 'trust' | 'status-mismatch' | 'startup-banner' | 'startup-stuck' | 'startup-unknown' | LiveMode) {
+async function claudeFixture(t: TestContext, mode: 'accepted' | 'trust' | 'status-mismatch' | 'startup-banner' | 'startup-stuck' | 'startup-unknown' | LiveMode, type = 'implement') {
   assert.ok(configured, 'conf/raf.json#/runnerProtocols must define the claude protocol');
   const f = await fixture(t);
   const runId = 'claude-fixture-run';
@@ -140,9 +141,9 @@ setTimeout(() => process.exit(91), 20000);
   const brief = ['CLAUDE_DELIVERY_QA', ...Array.from({ length: 40 }, (_, index) => `Рядок доручення ${index}`), 'BRIEF_END'].join('\n');
   const selection = { runner: 'claude' as const, model: 'claude-opus', effort: 'high' };
   const request: LaunchWrapperRequest = { tmpRoot: f.tmpRoot, runId, address, assignment: f.assignment, statePath: f.statePath, cwd, tmuxSession, selection, brief, readinessTimeoutMs: settings.timeouts.startupMs };
-  const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd }, assignment: f.assignment, selection: { status: 'selected', ...selection, reason: 'synthetic claude fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
+  const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type, project: 'raf', features: f.params.features, phase: type, cwd }, assignment: f.assignment, selection: { status: 'selected', ...selection, reason: 'synthetic claude fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
   const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
-  const { task, launch: derived } = await derivedLaunch(services, f, runtimeLaunch);
+  const { task, launch: derived } = await derivedLaunch(services, f, runtimeLaunch, { ...f.params, type, phase: type });
   const prepared = await services.prepareReport(derived);
   const reservation = await services.reserve({ ...derived, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
   assert.equal(reservation.admitted, true, 'reason' in reservation ? reservation.reason : 'admitted');
@@ -158,7 +159,7 @@ setTimeout(() => process.exit(91), 20000);
     return started;
   };
   const inputs = async () => (await readFile(inputLog, 'utf8').catch(() => '')).trim().split('\n').filter(Boolean).map(line => JSON.parse(line).data as string);
-  return { ...f, runId, settings, request, runtimeLaunch, services, session, launch, argvPath, acceptedPath, pidPath, wrapperPidPath, inputs, reportDirectory: join(f.tmpRoot, runId) };
+  return { ...f, runId, settings, request, runtimeLaunch, services, session, launch, argvPath, acceptedPath, pidPath, wrapperPidPath, inputs, cwd, reportDirectory: join(f.tmpRoot, runId) };
 }
 
 test('[claude-delivery-qa] native claude protocol launches with assigned session id, scoped writes and verified brief acceptance', async t => {
@@ -180,6 +181,35 @@ test('[claude-delivery-qa] native claude protocol launches with assigned session
   assert.equal(accepted.brief, f.request.brief);
   assert.equal(accepted.enters, 1);
   assert.equal(f.session()?.state, 'running');
+});
+
+const sandboxOf = (argv: string[]) => JSON.parse(argv[argv.indexOf('--settings') + 1]);
+
+test('[claude-delivery-qa] executor launch edits its workspace by a path-scoped rule and reaches only a private tmux directory', async t => {
+  const f = await claudeFixture(t, 'accepted');
+  await f.launch();
+  const argv: string[] = JSON.parse(await readFile(f.argvPath, 'utf8'));
+  const workspace = realpathSync(f.cwd);
+  assert.ok(argv.includes(`Edit(/${workspace}/**)`), `workspace edit rule is missing: ${JSON.stringify(argv)}`);
+  assert.equal(argv.flatMap((value, index) => value === '--add-dir' ? [argv[index + 1]] : []).includes(workspace), false, 'the workspace is the cwd, not an extra directory grant');
+  assert.equal(argv.filter(value => value === '--settings').length, 1);
+  const settings = sandboxOf(argv);
+  const state = realpathSync(dirname(f.statePath));
+  const report = realpathSync(f.reportDirectory);
+  assert.equal(settings.sandbox.network.allowAllUnixSockets, true);
+  for (const hidden of ['/run', `/tmp/tmux-${process.getuid!()}`, '/tmp/cc-socks', state]) assert.ok(settings.sandbox.filesystem.denyRead.includes(hidden), `hidden ${hidden}`);
+  assert.deepEqual(settings.sandbox.filesystem.allowRead, [report]);
+  assert.deepEqual(settings.env, { TMUX_TMPDIR: report, TMUX: '' });
+  assert.equal(settings.sandbox.allowUnsandboxedCommands, false);
+  assert.equal('excludedCommands' in settings.sandbox, false, 'an executor never runs raf outside its sandbox');
+});
+
+test('[claude-delivery-qa] coordinator launch runs only the exact raf command of this checkout outside its sandbox', async t => {
+  const f = await claudeFixture(t, 'accepted', 'coordinator');
+  await f.launch();
+  const settings = sandboxOf(JSON.parse(await readFile(f.argvPath, 'utf8')));
+  assert.deepEqual(settings.sandbox.excludedCommands, [`node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}:*`]);
+  assert.ok(settings.sandbox.filesystem.denyRead.includes(realpathSync(dirname(f.statePath))), 'raf state stays hidden from sandboxed coordinator commands');
 });
 
 test('[claude-delivery-qa] native status with a foreign session id never receives the brief', async t => {

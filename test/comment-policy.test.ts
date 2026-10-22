@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
@@ -87,4 +87,16 @@ test('repository check excludes generated dependencies, documentation and human 
   await mkdir(join(root, 'bin'));
   await writeFile(join(root, 'bin/raf.ts'), '#!/usr/bin/env node\nexport {};\n');
   assert.deepEqual(await checkRepositoryComments(root), []);
+});
+
+test('repository check skips hidden tool entries that a runner sandbox masks as unreadable', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'raf-comment-policy-'));
+  t.after(async () => { await chmod(join(root, '.mcp.json'), 0o600).catch(() => {}); await rm(root, { recursive: true, force: true }); });
+  await mkdir(join(root, 'src'));
+  await writeFile(join(root, 'src/a.ts'), 'export {}; // forbidden\n');
+  await writeFile(join(root, '.mcp.json'), '');
+  await chmod(join(root, '.mcp.json'), 0o000);
+  await mkdir(join(root, '.claude'));
+  await writeFile(join(root, '.claude/settings.json'), '{} // tool\n');
+  assert.deepEqual((await checkRepositoryComments(root)).map(({ filePath }) => filePath), ['src/a.ts']);
 });

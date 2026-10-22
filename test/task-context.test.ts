@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, writeFile, readdir, rename, rm, stat, access } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { test, type TestContext } from 'node:test';
@@ -15,7 +16,7 @@ import type { AdapterCommand, AdapterCommandExecutor } from '../src/agent-adapte
 import type { AssignmentSnapshot } from '../src/assignment.ts';
 import type { ModelCatalog, ModelSelection } from '../src/model-routing.ts';
 import {
-  assignmentFingerprint, bindWorkspaceBoundaries, deriveTaskContext, loadTaskContextConfiguration, writeTaskContextFile,
+  assignmentFingerprint, bindWorkspaceBoundaries, deriveTaskContext, rafCommandFor, loadTaskContextConfiguration, writeTaskContextFile,
   TASK_CONTEXT_FILE_NAME, type TaskContextConfiguration, type TaskContextEnvelope,
 } from '../src/task-context.ts';
 
@@ -276,6 +277,16 @@ test('[task-context] 5. межі запису: spec без cwd коду, impleme
   assert.equal(implement.workspaceWritable, true);
   for (const path of [...expected, cwd]) assert.ok(implementBound.includes(path), path);
   assert.equal(implementBound.includes(w.root), false);
+});
+
+test('[task-context] 5a. координувальні типи отримують точну команду raf цієї гілки raf; межі запису не містять стану raf', async t => {
+  const w = await workspace(t);
+  const entry = realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)));
+  for (const type of ['coordinator', 'main']) assert.equal(rafCommandFor(type), `node ${entry}`, type);
+  for (const type of ['implement', 'hotfix', 'spec', 'design', 'test-scaffold', 'qa']) assert.equal(rafCommandFor(type), null, type);
+  const tasks = ['change-a:1.1'];
+  const coordinator = await deriveTaskContext({ root: w.root, parameters: { ...baseParams, type: 'coordinator', phase: 'coordinator', tasks }, assignment: snapshotFor(w.root, tasks), configuration: w.configuration });
+  assert.equal(bindWorkspaceBoundaries(coordinator, join(w.root, 'raf-develop')).some(path => path.includes('.raf')), false);
 });
 
 test('[task-context] 6. sources: файли зміни, шлях із пункту, «Джерела за етапом»; неіснуючий шлях до каталогу запуску', async t => {

@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
+import { realpathSync } from 'node:fs';
 import { open, readFile, readdir, rename, rm, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { commandFailure } from './cli-contract.ts';
 import type { RuntimeRunParameters } from './app-runtime.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
@@ -107,6 +109,11 @@ const readJson = async (path: string, optional = false): Promise<unknown> => {
 const exists = async (path: string) => { try { await stat(path); return true; } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT' || (error as NodeJS.ErrnoException).code === 'ENOTDIR') return false; throw error; } };
 const explicitPaths = (text: string) => [...text.matchAll(/(?<![A-Za-z0-9._\/-])(?:openspec|conf|skills)\/[A-Za-z0-9._\/-]*/g)].map(match => match[0].replace(/[.]+$/, ''));
 const workspaceReadOnlyTypes = new Set(['spec', 'design']);
+const coordinatingTypes = new Set(['coordinator', 'main']);
+
+export function rafCommandFor(type: string): string | null {
+  return coordinatingTypes.has(type) ? `node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}` : null;
+}
 
 export async function loadTaskContextConfiguration(confRoot: string): Promise<TaskContextConfiguration> {
   const [projects, constants, flow] = await Promise.all([readJson(join(confRoot, 'projects.json')), readJson(join(confRoot, 'raf-constants.json')), readJson(join(confRoot, 'flow.json'), true)]);

@@ -12,7 +12,7 @@ import type { DeliveryReceipt, CloseResult, MainAttachment } from './agent-contr
 import type { ResourceReservation } from './resource-admission.ts';
 import { validateQuotaRunners, type CollectionResult } from './quota-collection.ts';
 import type { RunnerId } from './runner-protocols.ts';
-import { bindWorkspaceBoundaries, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
+import { bindWorkspaceBoundaries, rafCommandFor, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
 
 export interface RuntimeContext {
   orchestratorRoot: string;
@@ -212,7 +212,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         const brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,
           stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
           features: params.features, phase: params.phase, outcome: task.outcome, writeBoundaries,
-          sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema });
+          sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema, ...(rafCommandFor(params.type) ? { rafCommand: rafCommandFor(params.type)! } : {}) });
         stage = 'reservation';
         const admission = await api.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
         if (!admission.admitted) throw fail('RESOURCE_UNAVAILABLE', stage, admission.reason);

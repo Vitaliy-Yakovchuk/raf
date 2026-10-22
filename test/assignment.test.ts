@@ -163,6 +163,18 @@ test('brief composes selected runner, stage, completion, exact immutable assignm
   assert.deepEqual([...h.reads].sort(), [...h.files.keys()].sort());
 });
 
+test('coordinating brief names the exact raf command to run as one simple call; other briefs omit it', async () => {
+  const h = harness();
+  const snapshot = await initial(h);
+  installBriefs(h);
+  const plain = await composeAssignmentBrief(snapshot, brief, h.ports.fs);
+  assert.equal(plain.includes('raf_command'), false);
+  const output = await composeAssignmentBrief(snapshot, { ...brief, stage: 'implement', rafCommand: 'node /srv/raf-main/bin/raf.ts' }, h.ports.fs);
+  const assignment = JSON.parse(output.slice(output.indexOf('{', output.indexOf('# Конкретне доручення'))));
+  assert.equal(assignment.raf_command, 'node /srv/raf-main/bin/raf.ts');
+  assert.match(output, /raf_command[^\n]*простою командою/);
+});
+
 test('runner switch preserves stage and assignments while replacing runner template', async () => {
   const h = harness();
   const snapshot = await initial(h);

@@ -59,7 +59,7 @@ export async function checkRepositoryComments(root: string): Promise<SourceComme
     const entries = await readdir(directory, { withFileTypes: true });
     entries.sort((a, b) => a.name.localeCompare(b.name));
     for (const entry of entries) {
-      if (entry.isSymbolicLink() || excluded.has(entry.name)) continue;
+      if (entry.isSymbolicLink() || excluded.has(entry.name) || entry.name.startsWith('.')) continue;
       const path = join(directory, entry.name);
       if (entry.isDirectory()) {
         if (!topLevel || roots.has(entry.name)) await walk(path, false);

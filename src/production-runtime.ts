@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
-import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, nativeWriteScopeArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
+import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
 import { openStateStore, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
 import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
@@ -21,7 +21,7 @@ import { evaluateResourceAdmission } from './resource-admission.ts';
 import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
 import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership, type PersistentWrapperFailure } from './launch-wrapper.ts';
 import { commandFailure } from './cli-contract.ts';
-import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile } from './task-context.ts';
+import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile, rafCommandFor } from './task-context.ts';
 import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
 import type { ReminderSessionEffect } from './reminder-repository.ts';
 import { collectRunnerQuotas, readQuotaViews, type CollectionError, type CollectionLock, type CollectionResult, type CurrentQuota, type ProbeTransport, type QuotaCurrentStore } from './quota-collection.ts';
@@ -88,7 +88,7 @@ async function registeredBranchDirectory(orchestratorRoot: string, confRoot: str
   if (!paths.some(path => resolve(root, path) === candidate)) return false;
   return await real(candidate) === candidate && await real(cwd) === candidate && await real(gitRoot) === candidate;
 }
-async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string): Promise<string[]> {
+async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string): Promise<{ directories: string[]; workspace: string[] }> {
   const workspace = await fs.realpath(cwd);
   const stateDirectory = await fs.realpath(dirname(statePath));
   const inside = (root: string, path: string) => {
@@ -96,6 +96,7 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
     return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`);
   };
   const directories = new Set<string>();
+  const inWorkspace = new Set<string>();
   for (const boundary of boundaries) {
     const target = resolve(workspace, boundary);
     let directory: string;
@@ -117,7 +118,7 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
         }
       }
     }
-    if (inside(workspace, directory)) continue;
+    if (inside(workspace, directory)) { inWorkspace.add(directory); continue; }
     if (inside(directory, workspace) || inside(directory, stateDirectory) || inside(stateDirectory, directory)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Declared write boundary would grant a workspace ancestor or RAF state directory');
     await fs.mkdir(directory, { recursive: true, mode: 0o700 });
     const canonical = await fs.realpath(directory);
@@ -125,7 +126,20 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
     directories.add(canonical);
   }
   directories.add(await fs.realpath(reportDirectory));
-  return [...directories];
+  return { directories: [...directories], workspace: [...inWorkspace] };
+}
+async function runnerSandboxScope(type: string | undefined, cwd: string, reportDirectory: string, statePath: string, tmpRoot: string) {
+  const report = await fs.realpath(reportDirectory);
+  const state = await fs.realpath(dirname(statePath));
+  const temporary = await fs.realpath(tmpRoot);
+  const workspace = await fs.realpath(cwd);
+  const within = (root: string, path: string) => { const suffix = relative(root, path); return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`); };
+  if (within(state, workspace) || within(temporary, workspace)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Runner workspace lies inside the RAF state directory hidden from its sandbox');
+  const command = type === undefined ? null : rafCommandFor(type);
+  return {
+    hidden: ['/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', state, ...(within(state, temporary) ? [] : [temporary])],
+    readable: [report], tmuxDirectory: report, excludedCommands: command ? [`${command}:*`] : [],
+  };
 }
 function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot'>, override?: AdapterCommandExecutor): AdapterCommandExecutor {
   if (override) return override;
@@ -727,8 +741,9 @@ export async function runProductionWorker(
     const identityCommand = native.identity.command;
     const assignedId = native.identity.source === 'assigned' ? randomUUID() : undefined;
     const invocation = buildRunnerInvocation(settings, { ...request.selection, ...(assignedId ? { sessionId: assignedId } : {}) });
-    const writableDirectories = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath);
-    invocation.args.push(...nativeWriteScopeArgs(settings, writableDirectories));
+    const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath);
+    invocation.args.push(...nativeWriteScopeArgs(settings, writable.directories, writable.workspace));
+    invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, await runnerSandboxScope(session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot)));
     let screen = '';
     let nativeId: string | undefined;
     let dismissed = false;

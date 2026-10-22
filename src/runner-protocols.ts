@@ -1,5 +1,5 @@
 export type RunnerId = 'codex' | 'grok' | 'agy' | 'claude';
-export type ScreenState = 'ready' | 'known_navigation' | 'auth_required' | 'workspace_trust_required' | 'permission_required' | 'unknown_screen' | 'timeout' | 'exited' | 'quota_untrusted' | 'quota_panel';
+export type ScreenState = 'starting' | 'ready' | 'known_navigation' | 'auth_required' | 'workspace_trust_required' | 'permission_required' | 'unknown_screen' | 'timeout' | 'exited' | 'quota_untrusted' | 'quota_panel';
 export type ProtocolSettings = {
   runner: RunnerId;
   executable: string;
@@ -29,12 +29,13 @@ export type NativeDialect = {
   working: string;
   writeScope: { directoryFlag: string; ruleFlag: string | null; rule: string | null };
   exitCommand: string;
+  startup?: string[];
 };
 export type NativeComposer = { line: number; input: string };
 export type PendingBrief = 'pending' | 'mismatch' | 'none';
 export type Invocation = { executable: string; args: string[]; liveTaskVerified: boolean };
 export type ScreenObservation = { state: ScreenState; requestedCommand: string | null; matchedNavigation: number | null };
-export type ProtocolAction = { kind: 'text'; text: string } | { kind: 'keys'; keys: string[] } | { kind: 'capture' } | { kind: 'stop'; reason: ScreenState };
+export type ProtocolAction = { kind: 'wait' } | { kind: 'text'; text: string } | { kind: 'keys'; keys: string[] } | { kind: 'capture' } | { kind: 'stop'; reason: ScreenState };
 export type QuotaWindow = {
   name: 'weekly' | 'five_hour';
   state: 'measured' | 'disabled' | 'unknown';
@@ -75,8 +76,14 @@ export function observeRunnerScreen(settings: ProtocolSettings, input: { text: s
   if (input.timedOut) return result('timeout');
   if (input.version !== settings.version) return result('unknown_screen');
   for (const state of ['workspace_trust_required', 'auth_required', 'permission_required', 'quota_untrusted', 'quota_panel'] as ScreenState[]) {
-    if (settings.markers[state]?.some(marker => input.text.includes(marker))) return result(state);
+    if (!settings.markers[state]?.some(marker => input.text.includes(marker))) continue;
+    if (state !== 'workspace_trust_required') return result(state);
+    const trust = settings.navigation.findIndex(item => item.state === state && input.text.includes(item.match));
+    return result(state, trust >= 0 ? trust : null);
   }
+  const lines = input.text.split('\n').map(line => line.trim()).filter(Boolean);
+  const startup = settings.native?.startup ?? [];
+  if (lines.length && lines.every(line => startup.includes(line))) return result('starting');
   const navigation = settings.navigation.findIndex(item => {
     if (!settings.markers[item.state]?.some(marker => input.text.includes(marker))) return false;
     if (!item.match.startsWith('/')) return input.text.includes(item.match);
@@ -86,7 +93,12 @@ export function observeRunnerScreen(settings: ProtocolSettings, input: { text: s
   if (settings.markers.ready?.some(marker => input.text.includes(marker))) return result('ready');
   return result('unknown_screen');
 }
-export function nextRunnerAction(settings: ProtocolSettings, observation: ScreenObservation): ProtocolAction {
+export function nextRunnerAction(settings: ProtocolSettings, observation: ScreenObservation, options: { trustWorkspace?: boolean } = {}): ProtocolAction {
+  if (observation.state === 'starting') return { kind: 'wait' };
+  if (observation.state === 'workspace_trust_required' && options.trustWorkspace) {
+    const trust = observation.matchedNavigation === null ? undefined : settings.navigation[observation.matchedNavigation];
+    if (trust?.state === 'workspace_trust_required' && trust.keys.length) return { kind: 'keys', keys: [...trust.keys] };
+  }
   if (observation.state === 'known_navigation') {
     const navigation = observation.matchedNavigation === null ? undefined : settings.navigation[observation.matchedNavigation];
     if (navigation && (!navigation.match.startsWith('/') || navigation.match === observation.requestedCommand && navigation.match === settings.quotaCommand)) return { kind: 'keys', keys: [...navigation.keys] };

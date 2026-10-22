@@ -59,11 +59,12 @@ const codexStatusDialect: NativeDialect = {
   working: '^\\s*•\\s+[^\\n]+\\([^\\n()]*esc to interrupt\\)\\s*$',
   writeScope: { directoryFlag: '--add-dir', ruleFlag: null, rule: null },
   exitCommand: '/exit',
+  startup: [],
 };
 const regex = (value: unknown) => { if (!text(value)) return false; try { new RegExp(value, 'u'); return true; } catch { return false; } };
 const validDialect = (value: unknown): value is NativeDialect => object(value) && object(value.identity) && ['status', 'assigned'].includes(value.identity.source) && text(value.identity.command) && regex(value.identity.pattern) && Array.isArray(value.identity.dismissKeys) && value.identity.dismissKeys.every(text)
   && regex(value.composer) && object(value.pendingPaste) && regex(value.pendingPaste.pattern) && ['characters', 'newlines'].includes(value.pendingPaste.unit) && regex(value.working)
-  && object(value.writeScope) && text(value.writeScope.directoryFlag) && (value.writeScope.ruleFlag === null ? value.writeScope.rule === null : text(value.writeScope.ruleFlag) && text(value.writeScope.rule) && value.writeScope.rule.includes('{directory}')) && text(value.exitCommand);
+  && object(value.writeScope) && text(value.writeScope.directoryFlag) && (value.writeScope.ruleFlag === null ? value.writeScope.rule === null : text(value.writeScope.ruleFlag) && text(value.writeScope.rule) && value.writeScope.rule.includes('{directory}')) && text(value.exitCommand) && (value.startup === undefined || Array.isArray(value.startup) && value.startup.every(text));
 function protocolFor(settings: readonly ProtocolSettings[], runner: string): ProtocolSettings {
   const matches = settings.filter(row => row.runner === runner);
   const found = matches[0];
@@ -73,6 +74,16 @@ function protocolFor(settings: readonly ProtocolSettings[], runner: string): Pro
   const value = { ...found, native } as ProtocolSettings;
   if (matches.length !== 1 || !found || typeof value.liveTaskVerified !== 'boolean' || !text(value.executable) || !text(value.version) || !Array.isArray(value.baseArgs) || !value.baseArgs.every(text) || !text(value.modelFlag) || !text(value.effortFlag) || !['literal', 'codex_config'].includes(value.effortFormat) || !object(value.modelAliases) || !Array.isArray(value.navigation) || !object(value.markers) || !strings(value.markers.ready) || !object(value.timeouts) || Object.values(value.timeouts).some(n => !Number.isFinite(n) || n <= 0) || !['startupMs', 'transitionMs', 'overallMs', 'pollMs'].every(key => Number.isFinite(value.timeouts[key]) && value.timeouts[key] > 0)) fail('RUNNER_PROTOCOL_UNAVAILABLE', `Runner ${runner} lacks a validated versioned invocation/readiness protocol and deadlines`);
   return value;
+}
+async function registeredBranchDirectory(orchestratorRoot: string, confRoot: string, cwd: string, gitRoot: string | undefined): Promise<boolean> {
+  const real = async (path: string) => fs.realpath(path).catch(() => undefined);
+  const root = await real(orchestratorRoot);
+  if (!root || !gitRoot || !isAbsolute(cwd)) return false;
+  const projects = await json(join(confRoot, 'projects.json')).catch(() => undefined);
+  const paths = object(projects?.projects) ? Object.values(projects.projects).flatMap(entry => object(entry) && object(entry.branchPaths) ? Object.values(entry.branchPaths).filter(text) : []) : [];
+  const candidate = resolve(root, relative(orchestratorRoot, cwd));
+  if (!paths.some(path => resolve(root, path) === candidate)) return false;
+  return await real(candidate) === candidate && await real(cwd) === candidate && await real(gitRoot) === candidate;
 }
 async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string): Promise<string[]> {
   const workspace = await fs.realpath(cwd);
@@ -639,13 +650,34 @@ export async function runProductionWorker(
     let statusDeadline = 0;
     const target = `=${request.tmuxSession}:0.0`;
     const composerInput = (text: string) => readNativeComposer(settings, text)?.input;
+    let trustAnsweredAt: number | undefined;
+    let workspaceGitRoot: string | null | undefined;
+    const gitTopLevel = async () => {
+      if (workspaceGitRoot === undefined) {
+        const root = await execute({ executable: 'git', args: ['-C', request.cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
+        workspaceGitRoot = root?.exitCode === 0 && root.stdout.trim() ? root.stdout.trim() : null;
+      }
+      return workspaceGitRoot ?? undefined;
+    };
     const untrusted = async (): Promise<never> => {
-      const root = await execute({ executable: 'git', args: ['-C', request.cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
-      const gitRoot = root?.exitCode === 0 && root.stdout.trim() ? root.stdout.trim() : 'unknown';
-      const reason = `RUNNER_WORKSPACE_UNTRUSTED: runner ${settings.runner} asks to trust workspace ${request.cwd} (git root ${gitRoot}); raf does not answer the dialog or edit CLI configuration`;
-      const failure = { code: 'RUNNER_WORKSPACE_UNTRUSTED', reason, found: { cwd: request.cwd, gitRoot, runner: settings.runner }, remediation: [`Власник один раз довіряє корінь робочого дерева ${gitRoot} у власному діалозі ${settings.runner} CLI і повторює запуск.`] };
+      const gitRoot = await gitTopLevel() ?? 'unknown';
+      const answer = trustAnsweredAt === undefined ? 'raf answers it only for a registered branch directory from conf/projects.json branchPaths' : 'the prompt stayed after the protocol navigation keys';
+      const reason = `RUNNER_WORKSPACE_UNTRUSTED: runner ${settings.runner} asks to trust workspace ${request.cwd} (git root ${gitRoot}); ${answer}; raf does not edit CLI configuration`;
+      const failure = { code: 'RUNNER_WORKSPACE_UNTRUSTED', reason, found: { cwd: request.cwd, gitRoot, runner: settings.runner }, remediation: [`Запускайте агента з каталогу гілки з conf/projects.json branchPaths; інший каталог ${gitRoot} власник довіряє вручну в діалозі ${settings.runner} CLI.`] };
       await fs.writeFile(launchFailurePath(request.tmpRoot, request.runId), JSON.stringify(failure), { mode: 0o600, flag: 'wx' }).catch(() => undefined);
       return fail(failure.code, reason);
+    };
+    const answerTrust = async (): Promise<void> => {
+      if (trustAnsweredAt !== undefined) {
+        if (Date.now() - trustAnsweredAt >= settings.timeouts.transitionMs) await untrusted();
+        return;
+      }
+      if (!await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, await gitTopLevel())) await untrusted();
+      const observation = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: null });
+      const action = nextRunnerAction(settings, observation, { trustWorkspace: true });
+      if (observation.state !== 'workspace_trust_required' || action.kind !== 'keys') await untrusted();
+      trustAnsweredAt = Date.now();
+      await sendKeys((action as { keys: string[] }).keys);
     };
     const sendKeys = async (keys: string[]) => {
       const result = await execute({ executable: 'tmux', args: ['send-keys', '-t', target, ...keys] });
@@ -653,13 +685,26 @@ export async function runProductionWorker(
     };
     transport.waitReady = async timeoutMs => {
       const deadline = Date.now() + timeoutMs;
-      while (Date.now() < deadline) {
+      let trustShown = false;
+      for (let previous: number | undefined; ;) {
+        const polledAt = Date.now();
+        if (polledAt + 2 * Math.max(settings.timeouts.pollMs, polledAt - (previous ?? polledAt)) >= deadline) break;
+        previous = polledAt;
         const observed = await adapter.inspect(adapterSession);
+        trustShown = observed.status === 'failed' && observed.reason === 'workspace_trust_required';
         if (observed.status === 'ready' && observed.cliSessionId) return { state: 'ready', runnerSessionId: observed.cliSessionId };
         if (observed.status === 'exited') return { state: 'exited', reason: 'Runner exited before native identity' };
-        if (observed.status === 'failed' && observed.reason === 'workspace_trust_required') await untrusted();
+        if (trustShown) {
+          await answerTrust();
+          await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
+          continue;
+        }
         if (observed.status === 'failed' || observed.status === 'limited') return { state: 'unknown_screen', reason: observed.reason };
         const observation = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: requestedStatus ? identityCommand : null });
+        if (observation.state === 'starting' && !requestedStatus) {
+          await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
+          continue;
+        }
         if (observation.state === 'known_navigation') {
           const action = nextRunnerAction(settings, observation);
           if (action.kind !== 'keys') return { state: 'unknown_screen', reason: 'Unsupported startup navigation' };
@@ -688,6 +733,7 @@ export async function runProductionWorker(
         } else if (screen.trim() && observation.state !== 'ready') return { state: 'unknown_screen', reason: `Runner readiness ${observation.state}` };
         await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
       }
+      if (trustShown && trustAnsweredAt !== undefined) await untrusted();
       return { state: 'timeout', reason: 'Native runner readiness timed out' };
     };
     const gate = async (identity: ProcessIdentity) => {

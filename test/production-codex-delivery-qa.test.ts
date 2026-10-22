@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile, writeFile, chmod } from 'node:fs/promises';
+import { promises as fs } from 'node:fs';
 import { delimiter, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test, type TestContext } from 'node:test';
@@ -10,6 +11,7 @@ import type { RuntimeLaunch } from '../src/app-runtime.ts';
 import type { LaunchWrapperRequest } from '../src/launch-wrapper.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
 import { configuration, derivedLaunch, eventually, fixture, recordLaunchRunnerPath } from './production-fixture.ts';
+import { agentRunFixture, assertFailedLaunchCleaned, exists, until } from './agent-run-fixture.ts';
 
 const runtimeUrl = pathToFileURL(fileURLToPath(new URL('../src/production-runtime.ts', import.meta.url))).href;
 async function workerFixture(t: TestContext, prepareInFixture = true) {
@@ -213,16 +215,36 @@ for (const mode of ['native-placeholder-replaced', 'race', 'immediate']) {
   });
 }
 
-for (const mode of ['readiness-unknown', 'unknown', 'menu-above-same-footer', 'stale-ready-menu', 'auth', 'permission', 'wrong-count', 'native-mismatch', 'vanished-unknown', 'pending-forever']) {
+for (const mode of ['unknown', 'menu-above-same-footer', 'stale-ready-menu', 'auth', 'permission', 'wrong-count', 'native-mismatch', 'vanished-unknown', 'pending-forever']) {
   test(`[production-codex-delivery-qa] ${mode}: no false handshake or blind submission`, async t => {
     const f = await deliveryFixture(t, mode);
     await assert.rejects(f.launch(), /delivery|accept|submission|identity|screen|protocol/i);
     const accepted = await readFile(f.acceptedPath, 'utf8').catch(() => null);
     assert.equal(accepted, null);
     const rows = (await readFile(f.inputLog, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
-    if (mode === 'readiness-unknown') assert.equal(rows.some(row => row.data.includes('BRIEF_END')), false);
     const retries = rows.filter(row => row.pending && row.absorbed && /[\r\n]/.test(row.data));
     assert.equal(retries.length, ['vanished-unknown', 'pending-forever'].includes(mode) ? 1 : 0);
     assert.notEqual(f.session()?.state, 'reserved');
   });
 }
+
+test('[production-codex-delivery-qa] readiness-unknown: agent run leaves no claims after unknown native readiness and the same task can be launched again', async t => {
+  const f = await agentRunFixture(t, 'readiness-unknown', { startupMs: 5000, transitionMs: 5000, overallMs: 30000 });
+  const failed = await f.run('readiness-agent');
+  await assertFailedLaunchCleaned(f, failed, 'readiness-unknown');
+  const inputs = (await fs.readdir(f.control)).filter(name => name.startsWith('input-'));
+  assert.equal(inputs.length, 1, 'the runner was asked for its native status');
+  const typed = await fs.readFile(join(f.control, inputs[0]), 'utf8');
+  assert.ok(typed.includes('/status'));
+  assert.equal(/project|report_path|assignments/.test(typed), false, 'no brief after unknown readiness');
+  await fs.writeFile(join(f.control, 'mode'), 'close');
+  const retried = await f.run('readiness-agent');
+  assert.equal(retried.exitCode, 0, JSON.stringify(retried));
+  await until(() => exists(join(f.control, 'readiness-agent.brief')), Boolean, 'retried launch delivered the brief');
+  const retry = f.inspect();
+  assert.equal(retry.claims.length, 1, 'the retried launch holds the claim');
+  assert.deepEqual(retry.sessions.map(session => session.state).sort(), ['finished', 'running']);
+  await fs.writeFile(join(f.control, 'readiness-agent.close'), 'close');
+  await until(async () => await exists(join(f.control, 'readiness-agent.close.code')) ? (await fs.readFile(join(f.control, 'readiness-agent.close.code'), 'utf8')).trim() : null, value => value === '0', 'retried agent closed');
+  await until(f.owned, pids => pids.length === 0, 'no fixture process remains after close', 5000);
+});

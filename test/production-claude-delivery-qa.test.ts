@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { chmod, readFile, writeFile } from 'node:fs/promises';
 import { delimiter, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -25,12 +26,17 @@ const configuration: RuntimeConfiguration = {
 
 const alive = (pid: number) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 
-async function claudeFixture(t: TestContext, mode: 'accepted' | 'trust' | 'status-mismatch') {
+async function claudeFixture(t: TestContext, mode: 'accepted' | 'trust' | 'status-mismatch' | 'startup-banner' | 'startup-stuck' | 'startup-unknown') {
   assert.ok(configured, 'conf/raf.json#/runnerProtocols must define the claude protocol');
   const f = await fixture(t);
   const runId = 'claude-fixture-run';
   const address = f.params.id;
   const tmuxSession = 'raf-claude-fixture';
+  let cwd = f.cwd;
+  if (mode === 'trust') {
+    cwd = join(f.root, 'unregistered-develop');
+    assert.equal(spawnSync('git', ['init', '--quiet', '--initial-branch=develop', cwd], { encoding: 'utf8' }).status, 0);
+  }
   const pidPath = join(f.root, 'claude.pid');
   const argvPath = join(f.root, 'claude-argv.json');
   const acceptedPath = join(f.root, 'claude-accepted.json');
@@ -57,7 +63,11 @@ const render = text => process.stdout.write('\x1b[2J\x1b[H\x1b[?2004h' + text.re
 const header = '[Screen Reader Mode: on via flag]\nClaude Code v${configured.version}\nOpus 5.5 with high effort · Claude Max\n' + process.cwd();
 const footer = "don't ask on (shift+tab to cycle)";
 const ready = (extra = '') => render(header + extra + '\n' + footer + '\n$');
-if (mode === 'trust') render('[Screen Reader Mode: on via flag]\nPermission Required: Accessing workspace:\n' + process.cwd() + '\ny. Yes, I trust this folder\nn. No, exit\nEnter y/n:\nEnter to confirm · Esc to cancel');
+const banner = '[Screen Reader Mode: on via flag]';
+if (mode === 'startup-banner') { render(banner); setTimeout(() => ready(), 800); }
+else if (mode === 'startup-stuck') render(banner);
+else if (mode === 'startup-unknown') render(banner + '\nUnexpected startup notice');
+else if (mode === 'trust') render('[Screen Reader Mode: on via flag]\nPermission Required: Accessing workspace:\n' + process.cwd() + '\ny. Yes, I trust this folder\nn. No, exit\nEnter y/n:\nEnter to confirm · Esc to cancel');
 else ready();
 let typed = '';
 let paste = null;
@@ -106,8 +116,8 @@ setTimeout(() => process.exit(91), 20000);
   await chmod(executable, 0o700);
   const brief = ['CLAUDE_DELIVERY_QA', ...Array.from({ length: 40 }, (_, index) => `Рядок доручення ${index}`), 'BRIEF_END'].join('\n');
   const selection = { runner: 'claude' as const, model: 'claude-opus', effort: 'high' };
-  const request: LaunchWrapperRequest = { tmpRoot: f.tmpRoot, runId, address, assignment: f.assignment, statePath: f.statePath, cwd: f.cwd, tmuxSession, selection, brief, readinessTimeoutMs: settings.timeouts.startupMs };
-  const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', ...selection, reason: 'synthetic claude fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
+  const request: LaunchWrapperRequest = { tmpRoot: f.tmpRoot, runId, address, assignment: f.assignment, statePath: f.statePath, cwd, tmuxSession, selection, brief, readinessTimeoutMs: settings.timeouts.startupMs };
+  const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd }, assignment: f.assignment, selection: { status: 'selected', ...selection, reason: 'synthetic claude fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
   const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const { task, launch: derived } = await derivedLaunch(services, f, runtimeLaunch);
   const prepared = await services.prepareReport(derived);
@@ -157,7 +167,7 @@ test('[claude-delivery-qa] native status with a foreign session id never receive
   assert.equal((await f.inputs()).some(data => data.includes('BRIEF_END')), false);
 });
 
-test('[claude-delivery-qa] workspace trust prompt fails fast without answering it and the starter releases the handed-off launch', async t => {
+test('[claude-delivery-qa] workspace trust prompt outside registered branch directories fails fast without answering it and the starter releases the handed-off launch', async t => {
   const f = await claudeFixture(t, 'trust');
   const begun = Date.now();
   const failure = await f.launch().then(() => assert.fail('launch must fail on the workspace trust prompt'), (error: unknown) => error as Error);
@@ -171,4 +181,34 @@ test('[claude-delivery-qa] workspace trust prompt fails fast without answering i
   assert.equal(f.session()?.state, 'finished');
   assert.deepEqual(listTaskReservations(f.store), []);
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
+});
+
+test('[claude-delivery-qa] startup screen with only native startup lines is not ready yet and the launch proceeds once claude is ready', async t => {
+  const f = await claudeFixture(t, 'startup-banner');
+  assert.ok(f.settings.native?.startup?.includes('[Screen Reader Mode: on via flag]'), 'conf/raf.json#/runnerProtocols/claude/native/startup must list the screen reader startup line');
+  const started = await f.launch();
+  const argv: string[] = JSON.parse(await readFile(f.argvPath, 'utf8'));
+  assert.equal(started.identity.runnerSessionId, argv[argv.indexOf('--session-id') + 1]);
+  const accepted = JSON.parse(await readFile(f.acceptedPath, 'utf8'));
+  assert.equal(accepted.brief, f.request.brief);
+  assert.equal(f.session()?.state, 'running');
+});
+
+test('[claude-delivery-qa] startup screen that never becomes ready ends as a readiness timeout at startupMs, not as an unknown screen', async t => {
+  const f = await claudeFixture(t, 'startup-stuck');
+  const begun = Date.now();
+  const failure = await f.launch().then(() => assert.fail('launch must not become ready on the startup screen'), (error: unknown) => error as Error);
+  assert.match(String(failure.message), /readiness timed out/i);
+  assert.doesNotMatch(String(failure.message), /unknown_screen|Runner readiness unknown/i);
+  assert.ok(Date.now() - begun >= f.settings.timeouts.startupMs, 'the startup screen waits for the configured startup deadline');
+  assert.deepEqual(await f.inputs(), [], 'nothing is typed while claude is starting');
+});
+
+test('[claude-delivery-qa] startup line together with an unknown line stays an unknown screen without input', async t => {
+  const f = await claudeFixture(t, 'startup-unknown');
+  const begun = Date.now();
+  const failure = await f.launch().then(() => assert.fail('unknown startup screen must fail'), (error: unknown) => error as Error);
+  assert.match(String(failure.message), /unknown_screen|Runner readiness unknown/i);
+  assert.ok(Date.now() - begun < f.settings.timeouts.startupMs, 'an unknown screen is not waited out');
+  assert.deepEqual(await f.inputs(), []);
 });

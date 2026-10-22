@@ -120,3 +120,27 @@ test('[claude-protocol] workspace trust prompts are a distinct state ahead of ge
   const codex = protocol('codex');
   assert.equal(observeRunnerScreen(codex, { text: codexTrust, version: codex.version, requestedCommand: null }).state, 'workspace_trust_required');
 });
+
+test('[claude-protocol] a screen made only of native startup lines is the starting state; any other line keeps the usual classification', () => {
+  const claude = protocol('claude');
+  assert.deepEqual(claude.native?.startup, ['[Screen Reader Mode: on via flag]']);
+  const observe = (settings: ProtocolSettings, text: string) => observeRunnerScreen(settings, { text, version: settings.version, requestedCommand: null }).state;
+  assert.equal(observe(claude, '[Screen Reader Mode: on via flag]'), 'starting');
+  assert.equal(observe(claude, '\n  [Screen Reader Mode: on via flag]  \n\n'), 'starting');
+  assert.equal(observe(claude, '[Screen Reader Mode: on via flag]\nUnexpected startup notice'), 'unknown_screen');
+  assert.equal(observe(claude, claudeReady()), 'ready');
+  assert.equal(observe(claude, claudeTrust), 'workspace_trust_required');
+  const codex = protocol('codex');
+  assert.deepEqual(codex.native?.startup, []);
+  assert.equal(observe(codex, '[Screen Reader Mode: on via flag]'), 'unknown_screen');
+});
+
+test('[claude-protocol] workspace trust confirmation keys come from protocol navigation for the exact prompt option', () => {
+  const claude = protocol('claude');
+  assert.deepEqual(claude.navigation.filter(item => item.state === 'workspace_trust_required'), [{ state: 'workspace_trust_required', match: 'y. Yes, I trust this folder', keys: ['y', 'Enter'] }]);
+  assert.ok(claudeTrust.includes('y. Yes, I trust this folder'));
+  const codex = protocol('codex');
+  assert.deepEqual(codex.navigation.filter(item => item.state === 'workspace_trust_required'), [{ state: 'workspace_trust_required', match: '› 1. Trust and continue', keys: ['Enter'] }]);
+  assert.ok(codexTrust.includes('› 1. Trust and continue'));
+  assert.equal(observeRunnerScreen(codex, { text: codexTrust, version: codex.version, requestedCommand: null }).state, 'workspace_trust_required');
+});

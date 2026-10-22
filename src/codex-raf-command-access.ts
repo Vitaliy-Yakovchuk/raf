@@ -15,8 +15,11 @@ export interface CodexRafCommandAccessRequest {
 export interface PreparedCodexRafCommandAccess {
   readonly invocation: Invocation;
   readonly environment: Readonly<Record<string, string>>;
+  readonly unavailable?: string;
   cleanup(): Promise<void>;
 }
+
+class HookProtocolUnavailable extends Error {}
 
 const hookProgram = String.raw`
 const { spawn } = await import('node:child_process');
@@ -74,11 +77,29 @@ if (request.hook_event_name === 'PreToolUse' && request.tool_name === 'Bash' && 
 
 const literal = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 
+export function codexInvocationSandboxMode(args: readonly string[]): string | null {
+  let mode: string | null = null;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--') break;
+    if (arg === '--dangerously-bypass-approvals-and-sandbox' || arg === '--yolo') return 'danger-full-access';
+    if (arg === '--sandbox' || arg === '-s') mode = args[++i] ?? null;
+    else if (arg.startsWith('--sandbox=')) mode = arg.slice('--sandbox='.length);
+    else if (arg === '--full-auto') mode = 'workspace-write';
+    else if (arg === '-c' || arg === '--config') {
+      const setting = /^sandbox_mode\s*=\s*"?([A-Za-z-]+)"?\s*$/u.exec(args[++i] ?? '');
+      if (setting) mode = setting[1];
+    }
+  }
+  return mode;
+}
+
 async function hookIdentity(executable: string, args: string[], cwd: string, environment: Record<string, string>, command: string, timeoutMs: number): Promise<{ key: string; currentHash: string }> {
   return new Promise((resolve, reject) => {
     const child = spawn(executable, [...args, 'app-server', '--listen', 'stdio://'], { cwd, env: environment, stdio: ['pipe', 'pipe', 'pipe'] });
     const lines = createInterface({ input: child.stdout });
     let settled = false;
+    let answered = false;
     const finish = (error?: Error, value?: { key: string; currentHash: string }) => {
       if (settled) return;
       settled = true;
@@ -92,10 +113,17 @@ async function hookIdentity(executable: string, args: string[], cwd: string, env
     child.stderr.resume();
     child.on('error', error => finish(error));
     child.stdin.on('error', error => finish(error));
-    child.on('exit', () => finish(new Error('Codex RAF hook inspection exited before returning its definition')));
+    child.on('exit', () => finish(answered
+      ? new Error('Codex RAF hook inspection exited before returning its definition')
+      : new HookProtocolUnavailable(`${executable} exited without answering the app-server JSON-RPC initialize request`)));
     lines.on('line', line => {
+      let message: any;
+      try { message = JSON.parse(line); } catch {
+        if (!answered) return finish(new HookProtocolUnavailable(`${executable} does not speak the app-server JSON-RPC protocol`));
+        return finish(new Error('Codex RAF hook inspection received non-protocol output'));
+      }
+      answered = true;
       try {
-        const message = JSON.parse(line);
         if (message.error) return finish(new Error(`Codex RAF hook inspection failed: ${message.error.message}`));
         if (message.id === 1) {
           child.stdin.write(JSON.stringify({ method: 'initialized' }) + '\n');
@@ -117,7 +145,8 @@ export async function prepareCodexRafCommandAccess(
 ): Promise<PreparedCodexRafCommandAccess> {
   const environment = Object.fromEntries(Object.entries(request.environment).filter((entry): entry is [string, string] => entry[1] !== undefined));
   const invocation = { ...request.invocation, args: [...request.invocation.args] };
-  if (request.scope.excludedCommands.length) {
+  const sandbox = codexInvocationSandboxMode(invocation.args);
+  if (request.scope.excludedCommands.length && sandbox !== null && sandbox !== 'danger-full-access') {
     const commands = request.scope.excludedCommands.map(command => {
       if (!command.trim() || command === ':*') throw new Error('Invalid Codex RAF command scope');
       return command.endsWith(':*') ? command.slice(0, -2) : command;
@@ -132,7 +161,13 @@ export async function prepareCodexRafCommandAccess(
     configuration.push('-c', hook);
     const timeoutMs = request.timeoutMs ?? JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8')).runnerProtocols.find((protocol: { runner: string }) => protocol.runner === 'codex')?.timeouts.transitionMs;
     if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error('Codex RAF hook inspection requires a configured deadline');
-    const identity = await hookIdentity(invocation.executable, configuration, request.cwd, environment, command, timeoutMs);
+    let identity: { key: string; currentHash: string };
+    try {
+      identity = await hookIdentity(invocation.executable, configuration, request.cwd, environment, command, timeoutMs);
+    } catch (error) {
+      if (!(error instanceof HookProtocolUnavailable)) throw error;
+      return { invocation, environment, unavailable: `RAF command channel unavailable: ${error.message}; permitted raf commands stay inside the native sandbox`, cleanup: async () => {} };
+    }
     const end = invocation.args.indexOf('--');
     invocation.args.splice(end < 0 ? invocation.args.length : end, 0, '-c', hook, '-c', `hooks.state={${JSON.stringify(identity.key)}={trusted_hash=${JSON.stringify(identity.currentHash)}}}`);
   }

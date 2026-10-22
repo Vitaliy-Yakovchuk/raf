@@ -830,6 +830,7 @@ export async function runProductionWorker(
     if (settings.runner === 'codex') {
       codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs });
       invocation = codexAccess.invocation;
+      if (codexAccess.unavailable) process.stderr.write(`${request.runId}: ${codexAccess.unavailable}\n`);
     }
     let screen = '';
     let nativeId: string | undefined;

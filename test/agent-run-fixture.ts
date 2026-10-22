@@ -93,8 +93,8 @@ if (mode === 'readiness-unknown') {
     let argv;
     try { argv = readFileSync(prefix + '.json', 'utf8'); } catch { return; }
     stepping = true;
-    const out = openSync(prefix + '.out', 'w');
-    const child = spawn(process.execPath, [c.commandPath, process.env.RAF_AGENT_RUN_FIXTURE, argv], { stdio: ['ignore', out, out], env: process.env });
+    const out = openSync(prefix + '.out', 'w'), err = openSync(prefix + '.err', 'w');
+    const child = spawn(process.execPath, [c.commandPath, process.env.RAF_AGENT_RUN_FIXTURE, argv], { stdio: ['ignore', out, err], env: process.env });
     child.on('close', code => { writeFileSync(prefix + '.code.tmp', String(code)); renameSync(prefix + '.code.tmp', prefix + '.code'); step++; stepping = false; });
   }, 20);
   setInterval(() => {
@@ -103,8 +103,8 @@ if (mode === 'readiness-unknown') {
     try { readFileSync(c.control + '/' + id + '.close'); } catch { return; }
     if (assignment.closing) return;
     assignment.closing = true;
-    const out = openSync(c.control + '/' + id + '.close.out', 'w');
-    const closer = spawn('/bin/sh', ['-c', '"$0" "$1" "$2" "$3"; echo $? > "$4.tmp" && mv "$4.tmp" "$4"', process.execPath, c.commandPath, process.env.RAF_AGENT_RUN_FIXTURE, JSON.stringify(['agent', 'close', '--id', id]), c.control + '/' + id + '.close.code'], { detached: true, stdio: ['ignore', out, out], env: process.env });
+    const out = openSync(c.control + '/' + id + '.close.out', 'w'), err = openSync(c.control + '/' + id + '.close.err', 'w');
+    const closer = spawn('/bin/sh', ['-c', '"$0" "$1" "$2" "$3"; echo $? > "$4.tmp" && mv "$4.tmp" "$4"', process.execPath, c.commandPath, process.env.RAF_AGENT_RUN_FIXTURE, JSON.stringify(['agent', 'close', '--id', id]), c.control + '/' + id + '.close.code'], { detached: true, stdio: ['ignore', out, err], env: process.env });
     closer.unref();
   }, 20);
 }
@@ -269,7 +269,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
     await fs.rename(`${prefix}.json.tmp`, `${prefix}.json`);
     const code = await until(async () => await exists(`${prefix}.code`) ? Number((await fs.readFile(`${prefix}.code`, 'utf8')).trim()) : null, value => value !== null, `${id} ran ${argv.join(' ')}`);
     const printed = (await fs.readFile(`${prefix}.out`, 'utf8')).trim();
-    return { exitCode: code, result: printed ? JSON.parse(printed) : null };
+    return { exitCode: code, result: printed ? JSON.parse(printed) : null, stderr: await fs.readFile(`${prefix}.err`, 'utf8') };
   };
   const input = async (pid: number) => fs.readFile(join(control, `input-${pid}.log`), 'utf8').catch(() => '');
   const inspect = () => {

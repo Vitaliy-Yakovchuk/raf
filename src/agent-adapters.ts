@@ -182,7 +182,7 @@ export class TmuxAgentAdapter {
   }
 
   async deliver(session: AdapterSession, message: string): Promise<void> {
-    await this.paste(this.target(session), message);
+    await this.paste(this.target(session), message, ['-p']);
   }
 
   async deliverToPane(pane: string, message: string): Promise<void> {
@@ -190,7 +190,7 @@ export class TmuxAgentAdapter {
     await this.paste(pane, message, ['-p']);
   }
 
-  private async paste(target: string, message: string, pasteOptions: readonly string[] = []): Promise<void> {
+  private async paste(target: string, message: string, pasteOptions: readonly string[]): Promise<void> {
     const buffer = `raf-${randomUUID()}`;
     let loaded = false;
     try {

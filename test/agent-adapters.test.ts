@@ -128,3 +128,15 @@ test('agent-adapters: stop targets exactly the requested tmux session', async ()
   await f.adapter.stop(f.session);
   assert.deepEqual(f.commands, [{ executable: 'tmux', args: ['kill-session', '-t', `=${f.session.tmuxSession}`] }]);
 });
+
+test('agent-adapters: agent delivery uses bracketed paste so the CLI receives one paste, not keystrokes', async () => {
+  const f = fixture('codex');
+  const brief = 'line one\nline two\n' + 'x'.repeat(4000);
+  await f.adapter.deliver(f.session, brief);
+  const paste = f.commands.find(command => command.args[0] === 'paste-buffer');
+  assert.ok(paste);
+  assert.ok(paste.args.includes('-p'), 'codex 0.163.0 splits unbracketed tmux paste into keystroke bursts and shows a wrong [Pasted Content N chars]');
+  assert.ok(paste.args.includes(`=${f.session.tmuxSession}:0.0`));
+  const order = f.commands.map(command => command.args[0]);
+  assert.ok(order.indexOf('paste-buffer') < order.lastIndexOf('send-keys'));
+});

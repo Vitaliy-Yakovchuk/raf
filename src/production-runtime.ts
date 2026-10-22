@@ -141,7 +141,7 @@ async function ownIdentity(execute: AdapterCommandExecutor, runId: string, tmuxS
   return { pid: row.pid, startedAt: row.startedAt, runner: 'raf', runnerSessionId: runId, tmuxSession, evidence: { command: row.command, runId, ...await bootIdentity(execute) } };
 }
 function paneExecutor(socket: string, execute: AdapterCommandExecutor): AdapterCommandExecutor {
-  return command => execute(command.executable === 'tmux' ? { ...command, args: ['-S', socket, ...command.args] } : command);
+  return command => execute(command.executable === 'tmux' ? { ...command, args: ['-u', '-S', socket, ...command.args] } : command);
 }
 async function ancestry(execute: AdapterCommandExecutor) {
   const rows = await processRows(execute);
@@ -532,6 +532,7 @@ export async function runProductionWorker(
     let retriedStatus = false;
     let statusDeadline = 0;
     const target = `=${request.tmuxSession}:0.0`;
+    const composerInput = (text: string) => text.split('\n').findLast(line => /^\s*›(?:\s|$)/u.test(line))?.replace(/^\s*›\s?/u, '').trimEnd();
     const sendKeys = async (keys: string[]) => {
       const result = await execute({ executable: 'tmux', args: ['send-keys', '-t', target, ...keys] });
       if (result.exitCode !== 0) throw new Error('Runner status/navigation transport failed');
@@ -563,7 +564,8 @@ export async function runProductionWorker(
           } else if (submittedStatus && !retriedStatus && /(?:›|>)\s*\/status(?:\s|$)/m.test(screen)) {
             await sendKeys(['Enter']);
             retriedStatus = true;
-          } else if (screen.trim() && !screen.includes(settings.quotaCommand!) && !/\bSession\b/.test(screen) && observation.state !== 'ready') return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
+          } else if (nativeId && observation.state !== 'ready' && !['', settings.quotaCommand].includes(composerInput(screen) ?? '')) return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
+          else if (screen.trim() && !screen.includes(settings.quotaCommand!) && !/\bSession\b/.test(screen) && observation.state !== 'ready') return { state: 'unknown_screen', reason: 'Unrecognized native-status transition screen' };
         } else if (screen.trim() && observation.state !== 'ready') return { state: 'unknown_screen', reason: `Runner readiness ${observation.state}` };
         await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
       }
@@ -595,6 +597,8 @@ export async function runProductionWorker(
       if (beforeInput === undefined || beforeInput !== '' && !settings.markers.ready?.includes(beforeInput)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input before initial brief submission');
       const footer = (lines: string[], index: number) => lines.slice(index + 1).map(line => line.trim()).filter(Boolean).join('\n');
       const beforeFooter = beforeComposer < 0 ? undefined : footer(beforeLines, beforeComposer);
+      const header = (lines: string[], index: number) => lines.slice(0, index).map(line => line.trim()).filter(Boolean).join('\n');
+      const beforeHeader = beforeComposer < 0 ? undefined : header(beforeLines, beforeComposer);
       await adapter.deliver(adapterSession, brief);
       const deadline = Date.now() + settings.timeouts.transitionMs;
       const characters = [...brief].length;
@@ -617,12 +621,13 @@ export async function runProductionWorker(
           await verifyOwner();
           return;
         }
-        if (pending && state === 'ready' && beforeFooter !== undefined && footer(lines, composerIndex) === beforeFooter) {
+        const sameContext = beforeFooter !== undefined && footer(lines, composerIndex) === beforeFooter && header(lines, composerIndex) === beforeHeader;
+        if (pending && (state === 'ready' || state === 'unknown_screen') && sameContext) {
           if (!retried && previousPending === input) {
             const pendingScreen = screen;
             await verifyOwner();
             const latest = await adapter.inspect(adapterSession);
-            if (latest.status === 'ready' && screen === pendingScreen && nativeId === expectedIdentity.runnerSessionId) {
+            if ((latest.status === 'ready' || latest.status === 'starting') && screen === pendingScreen && nativeId === expectedIdentity.runnerSessionId) {
               await sendKeys(['Enter']);
               retried = true;
             }

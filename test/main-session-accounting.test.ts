@@ -407,8 +407,12 @@ test('agent and raf messages to main reach exactly the registered pane', { timeo
   assert.ok(receipt.some(row => row.accepted === true));
   assert.match(await waitForPane(f, main, '[hotfix-a1] blocker needs decision'), /\[hotfix-a1\] blocker needs decision/);
   let system;
+  const inherited = { TMUX: process.env.TMUX, TMUX_PANE: process.env.TMUX_PANE };
+  delete process.env.TMUX;
+  delete process.env.TMUX_PANE;
   try { system = await sendSystemMessageToMain(f.context, 'service notice'); }
-  catch (error) { assert.fail(`system source must deliver to main: ${error instanceof Error ? error.message : String(error)}`); }
+  catch (error) { assert.fail(`system source outside tmux, as the raf service runs, must deliver to main: ${error instanceof Error ? error.message : String(error)}`); }
+  finally { for (const [name, value] of Object.entries(inherited)) if (value !== undefined) process.env[name] = value; }
   assert.equal(system.accepted, true);
   assert.match(await waitForPane(f, main, '[raf] service notice'), /\[raf\] service notice/);
   for (const other of [decoy, agent]) assert.doesNotMatch(capture(f, other), /blocker needs decision|service notice/);

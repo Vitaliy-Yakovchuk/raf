@@ -8,6 +8,7 @@ import { promisify } from 'node:util';
 import { randomUUID } from 'node:crypto';
 import { buildCatalog } from '../src/bootstrap.ts';
 import { openStateStore } from '../src/state-store.ts';
+import type { Reminder } from '../src/reminders.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
 
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -274,12 +275,16 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   const inspect = () => {
     const store = openStateStore(cfg.statePath);
     try {
-      return { sessions: store.sessionRepository.transaction(tx => tx.listSessions()), claims: listTaskReservations(store), admission: store.sessionRepository.transaction(tx => tx.listReservations()), pending: store.sessionRepository.transaction(tx => tx.listPending()) };
+      return { sessions: store.sessionRepository.transaction(tx => tx.listSessions()), claims: listTaskReservations(store), admission: store.sessionRepository.transaction(tx => tx.listReservations()), pending: store.sessionRepository.transaction(tx => tx.listPending()), reminders: store.reminderRepository.transaction(tx => tx.list()) };
     } finally { store.close(); }
+  };
+  const seedReminder = (reminder: Reminder) => {
+    const store = openStateStore(cfg.statePath);
+    try { store.reminderRepository.transaction(tx => tx.save(reminder)); } finally { store.close(); }
   };
   const runners = async () => (await fs.readdir(control)).filter(name => /^runner-\d+\.pid$/.test(name)).map(name => Number(name.slice(7, -4)));
   const runDirectories = async () => (await fs.readdir(tmpRoot)).filter(name => name !== 'tmux');
-  return { directory, control, tmpRoot, run, runArgs, command, as, input, inspect, owned, tmuxSessions, runners, runDirectories };
+  return { directory, control, tmpRoot, run, runArgs, command, as, input, inspect, seedReminder, owned, tmuxSessions, runners, runDirectories };
 }
 
 export type AgentRunFixture = Awaited<ReturnType<typeof agentRunFixture>>;

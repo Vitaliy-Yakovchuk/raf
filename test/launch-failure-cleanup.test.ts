@@ -32,6 +32,9 @@ test('[launch-failure-cleanup] agent close without report exits 0 after confirme
   assert.equal(launched.exitCode, 0, JSON.stringify(launched));
   const runId = JSON.parse(launched.result.stdout).runId;
   await until(() => exists(join(f.control, 'close-agent.brief')), Boolean, 'runner received brief');
+  const watcher = { id: 'watch-close-agent', createdFor: 'main', assignedTo: 'main', text: 'close-agent failed', at: '2099-01-01T00:00:00.000Z',
+    binding: { kind: 'agent.failed', id: 'close-agent', action: 'activate' as const }, state: 'pending' as const, closedAt: null, closeReason: null };
+  f.seedReminder(watcher);
   await fs.writeFile(join(f.control, 'close-agent.close'), 'close');
   const code = await until(async () => await exists(join(f.control, 'close-agent.close.code')) ? (await fs.readFile(join(f.control, 'close-agent.close.code'), 'utf8')).trim() : null, value => value !== null, 'agent close finished');
   const printed = await fs.readFile(join(f.control, 'close-agent.close.out'), 'utf8');
@@ -47,7 +50,8 @@ test('[launch-failure-cleanup] agent close without report exits 0 after confirme
   assert.equal(session.result?.status, 'failed');
   assert.deepEqual(snapshot.claims, []);
   assert.deepEqual(snapshot.admission, []);
-  assert.ok(snapshot.pending.some(row => row.runId === runId && row.event === 'agent.failed'), JSON.stringify(snapshot.pending));
+  assert.equal(snapshot.reminders.find(row => row.id === watcher.id)?.state, 'active', JSON.stringify(snapshot.reminders));
+  assert.ok(!snapshot.pending.some(row => row.event === 'agent.failed'), JSON.stringify(snapshot.pending));
   assert.deepEqual(await f.runDirectories(), []);
   assert.deepEqual(await f.tmuxSessions(), []);
   await until(f.owned, pids => pids.length === 0, 'no fixture process remains after close', 5000);

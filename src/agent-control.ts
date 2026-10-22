@@ -1,5 +1,5 @@
 import { stripVTControlCharacters } from 'node:util';
-import type { ProcessIdentity, ProcessObservation, SessionActivity, SessionRecord, SessionRepository } from './session-state.ts';
+import type { ProcessIdentity, ProcessObservation, SessionActivity, SessionRecord, SessionRepository, WorkResult } from './session-state.ts';
 import type { SessionCloseCheck, SessionEnd } from './reminders.ts';
 
 export type ActivityUpdate = Pick<SessionActivity, 'project' | 'features' | 'phase'>;
@@ -51,7 +51,7 @@ export class MainAttachedElsewhereError extends Error {
     this.session = session;
   }
 }
-export type CloseResult = { closed: boolean; unfinished: SessionCloseCheck['unfinished'] };
+export type CloseResult = { closed: boolean; unfinished: SessionCloseCheck['unfinished']; result?: WorkResult['status'] };
 
 export class AgentControlService {
   private dependencies: AgentControlDependencies;
@@ -167,8 +167,8 @@ export class AgentControlService {
     }
     await this.dependencies.transport.close(session.process!);
     const exited = await this.dependencies.coordinator.observe(session, { state: 'exited', observedAt: new Date().toISOString(), exitCode: null, evidence: 'Transport confirmed orderly session closure' });
-    const final = await this.dependencies.coordinator.finalize(exited, this.events(exited, 'ended'));
-    return { closed: final.state === 'finished', unfinished: [] };
+    const final = exited.state === 'finished' ? exited : await this.dependencies.coordinator.finalize(exited, this.events(exited, 'ended'));
+    return { closed: final.state === 'finished', unfinished: [], ...(final.result ? { result: final.result.status } : {}) };
   }
 
   async interrupt(id: string): Promise<void> {

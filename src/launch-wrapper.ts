@@ -55,6 +55,7 @@ export interface PersistentWrapperOptions {
 export interface PersistentWrapperLaunch extends LaunchHandshake {
   readonly wrapperPid: number;
 }
+export type PersistentWrapperFailure = Error & { readonly wrapper: { terminate(): Promise<void> } };
 const validIdentity = (identity: ProcessIdentity, request: LaunchWrapperRequest): boolean =>
   identity !== null && typeof identity === 'object' && Number.isSafeInteger(identity.pid) && identity.pid > 0 &&
   typeof identity.startedAt === 'string' && identity.startedAt.trim().length > 0 &&
@@ -149,10 +150,19 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
     });
     await fs.chmod(socketPath, 0o600);
     return await new Promise<PersistentWrapperLaunch>((resolve, reject) => {
+      const terminate = async () => {
+        const owned = child;
+        if (!owned?.pid || owned.exitCode !== null || owned.signalCode !== null) return;
+        owned.ref();
+        const exited = new Promise<void>(resolve => owned.once('exit', () => resolve()));
+        try { process.kill(-owned.pid, 'SIGKILL'); }
+        catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error; }
+        await exited;
+      };
       const fail = (error: unknown) => {
         if (settled) return;
         settled = true;
-        void fs.readFile(logPath, 'utf8').catch(() => '').then(output => reject(new Error(`Wrapper launch ${request.runId} failed: ${String(error)}${output.trim() ? `; worker: ${output.slice(-4096).trim()}` : ''}; verify runner readiness and recover this run before retrying`)));
+        void fs.readFile(logPath, 'utf8').catch(() => '').then(output => reject(Object.assign(new Error(`Wrapper launch ${request.runId} failed: ${String(error)}${output.trim() ? `; worker: ${output.slice(-4096).trim()}` : ''}; verify runner readiness and recover this run before retrying`), { wrapper: { terminate } })));
       };
       server.on('error', fail);
       server.on('connection', socket => {

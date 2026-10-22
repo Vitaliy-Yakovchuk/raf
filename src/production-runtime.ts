@@ -19,7 +19,7 @@ import { AgentControlService, MainAttachedElsewhereError, type VerifiedSender, t
 import { ReminderService } from './reminders.ts';
 import { evaluateResourceAdmission } from './resource-admission.ts';
 import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
-import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership } from './launch-wrapper.ts';
+import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership, type PersistentWrapperFailure } from './launch-wrapper.ts';
 import { commandFailure } from './cli-contract.ts';
 import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile } from './task-context.ts';
 import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
@@ -156,6 +156,36 @@ async function observeIdentity(identity: ProcessIdentity, execute: AdapterComman
   if (boot.bootId === identity.evidence.bootId && boot.machineId === identity.evidence.machineId) return observation;
   return { state: 'exited' as const, observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity belongs to a previous boot' };
 }
+async function discardOwnedTmuxSession(execute: AdapterCommandExecutor, tmuxSession: string, budget: { transitionMs: number; pollMs: number }): Promise<boolean> {
+  if (!/^[A-Za-z0-9_-]+$/.test(tmuxSession)) return false;
+  const panes = await execute({ executable: 'tmux', args: ['list-panes', '-s', '-t', `=${tmuxSession}`, '-F', '#{pane_pid}'] });
+  if (panes.exitCode !== 0) {
+    const sessions = await execute({ executable: 'tmux', args: ['list-sessions', '-F', '#{session_name}'] });
+    if (sessions.exitCode === 0) return !sessions.stdout.split('\n').includes(tmuxSession);
+    return /no server running|error connecting/i.test(sessions.stderr);
+  }
+  const roots = panes.stdout.split('\n').filter(line => /^\d+$/.test(line.trim())).map(Number);
+  const rows = await processRows(execute);
+  const descendants = new Set(roots);
+  for (let size = -1; size !== descendants.size;) { size = descendants.size; for (const row of rows) if (descendants.has(row.ppid)) descendants.add(row.pid); }
+  const owned = rows.filter(row => descendants.has(row.pid));
+  const killed = await execute({ executable: 'tmux', args: ['kill-session', '-t', `=${tmuxSession}`] });
+  if (killed.exitCode !== 0 && !/can't find session|no server running|error connecting/i.test(killed.stderr)) return false;
+  let deadline = Date.now() + budget.transitionMs;
+  let forced = false;
+  for (;;) {
+    const current = await processRows(execute);
+    const survivors = owned.filter(row => current.some(candidate => candidate.pid === row.pid && candidate.startedAt === row.startedAt));
+    if (!survivors.length) return true;
+    if (Date.now() >= deadline) {
+      if (forced) return false;
+      forced = true;
+      deadline = Date.now() + budget.transitionMs;
+      for (const row of survivors) { try { process.kill(row.pid, 'SIGKILL'); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error; } }
+    }
+    await new Promise(resolve => setTimeout(resolve, budget.pollMs));
+  }
+}
 async function callerPane(execute: AdapterCommandExecutor, direct: AdapterCommandExecutor): Promise<ProcessIdentity> {
   const socket = (process.env.TMUX ?? '').split(',')[0];
   const pane = process.env.TMUX_PANE ?? '';
@@ -175,7 +205,16 @@ function mainAttachment(session: SessionRecord): MainAttachment {
   const identity = session.process!;
   return { id: 'main', runId: session.runId, tmuxSocket: identity.evidence.tmuxSocket, tmuxSession: identity.tmuxSession, tmuxPane: identity.evidence.tmuxPane, pid: identity.pid, startedAt: identity.startedAt, machineId: identity.evidence.machineId, bootId: identity.evidence.bootId };
 }
-function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: RuntimeConfiguration, context: RuntimeContext, identityExecute?: AdapterCommandExecutor) {
+type TransitionBudget = { transitionMs: number; pollMs: number };
+async function waitWrapperExit(execute: AdapterCommandExecutor, wrapper: ProcessIdentity, budget: TransitionBudget): Promise<boolean> {
+  const deadline = Date.now() + budget.transitionMs;
+  for (;;) {
+    if ((await observeProcesses([wrapper], { execute }))[0].state === 'exited') return true;
+    if (Date.now() >= deadline) return false;
+    await new Promise(resolve => setTimeout(resolve, budget.pollMs));
+  }
+}
+function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: RuntimeConfiguration, context: RuntimeContext, budgetFor: (runner: string) => Promise<TransitionBudget>, identityExecute?: AdapterCommandExecutor) {
   const verified = new WeakMap<object, string>();
   const mainAuthority = new WeakMap<object, ProcessIdentity>();
   const direct = identityExecute ?? executeCommand;
@@ -271,6 +310,12 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
         const after = (await observeProcesses([identity], { execute }))[0];
         if (after.state !== 'exited') fail('PROCESS_TERMINATION_UNKNOWN', 'Runner termination is not confirmed');
+        const session = state.listReconciliationCandidates().find(row => row.process && sameIdentity(row.process, identity));
+        const wrapper = session?.launchContext?.wrapper;
+        if (session && wrapper && wrapper.pid !== process.pid) {
+          const budget = await budgetFor(identity.runner);
+          if (!await waitWrapperExit(execute, wrapper, budget)) fail('WORKER_RESULT_PENDING', `Runner of ${session.addressId} stopped, but its worker did not finish result processing and closure within ${budget.transitionMs} ms; check raf agent ps later (runId: ${session.runId})`);
+        }
       },
     },
   });
@@ -314,14 +359,17 @@ export async function createProductionServices(
   for (const name of ['orchestratorRoot', 'confRoot', 'artifactPath', 'statePath', 'tmpRoot'] as const) if (!isAbsolute(context[name])) fail('INVALID_CONTEXT', `Absolute ${name} required`);
   if (options.workerModulePath && !isAbsolute(options.workerModulePath)) fail('INVALID_CONTEXT', 'Internal worker override must be absolute');
   const execute = runtimeExecution(context, options.execute);
-  const tools = sessionTools(store, execute, configuration, context, options.execute);
+  const budgetFor = async (runner: string) => protocolFor(await protocols(context.confRoot, options.protocolSettings), runner).timeouts;
+  const tools = sessionTools(store, execute, configuration, context, budgetFor, options.execute);
   const assignments = assignmentPorts(execute);
-  const prepared = new Map<string, { launch: RuntimeLaunch; reportPath: string; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean }>();
+  const prepared = new Map<string, { launch: RuntimeLaunch; reportPath: string; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;
   const leaseFor = (runId: string) => listTaskReservations(store).find(set => set.lease.owner.runId === runId)?.lease;
   const release = async (runId: string, reason: 'cancelled' | 'failed' | 'succeeded') => {
     const lease = leaseFor(runId);
     if (lease) {
+      const stage = listTaskReservations(store).find(set => set.lease.owner.runId === runId)?.stage;
+      if (reason === 'cancelled' && stage !== 'starting') reason = 'failed';
       if (!await releaseTaskReservations(await reservationTools(store, context, execute, options.execute), { lease, reason, closeLaunch: tx => { const session = tx.getSession(runId); if (!session) throw new Error('Unknown launch'); closeSessionInTransaction(tx, session, now()); } })) fail('LAUNCH_RECOVERABLE', `Cannot safely release run ${runId}`);
     } else if (readSession(runId)?.state === 'reserved') tools.state.abortLaunch(runId, reason, now());
   };
@@ -416,10 +464,15 @@ export async function createProductionServices(
       record.brief = request.brief;
       const modulePath = options.workerModulePath ?? fileURLToPath(import.meta.url);
       record.spawnAttempted = true;
-      record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, assignment: record.launch.assignment, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
+      try {
+        record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, assignment: record.launch.assignment, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
         timeoutMs: settings.timeouts.overallMs,
         workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});await m.runProductionWorker();`], cwd: request.cwd },
-      });
+        });
+      } catch (error) {
+        record.wrapperFailure = (error as Partial<PersistentWrapperFailure>).wrapper;
+        throw error;
+      }
       return { tmuxSession: request.tmuxSession, selection };
     } },
     verifyStarted: async (launch, session) => {
@@ -435,6 +488,14 @@ export async function createProductionServices(
       if (preparedLaunch && !preparedLaunch.spawnAttempted) return { stopped: true };
       const session = readSession(launch.runId);
       const identity = session?.process ?? prepared.get(launch.tmuxSession)?.handshake?.identity;
+      if (preparedLaunch?.wrapperFailure) {
+        await preparedLaunch.wrapperFailure.terminate();
+        preparedLaunch.wrapperGone = true;
+        if (!identity) {
+          const budget = protocolFor(await protocols(context.confRoot, options.protocolSettings), launch.selection.runner).timeouts;
+          return await discardOwnedTmuxSession(execute, launch.tmuxSession, budget) ? { stopped: true } : { stopped: false, reason: 'Own tmux session of the failed launch could not be confirmed terminated' };
+        }
+      }
       if (!identity) return { stopped: false, reason: 'Runner life is unknown after worker spawn; recover this run before retry' };
       const observation = (await observeProcesses([identity], { execute }))[0];
       if (observation.state === 'exited') return { stopped: true };
@@ -443,7 +504,18 @@ export async function createProductionServices(
       await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: launch.selection.model, effort: launch.selection.effort } });
       return (await observeProcesses([identity], { execute }))[0].state === 'exited' ? { stopped: true } : { stopped: false, reason: 'Runner death not confirmed' };
     },
-    abortLaunch: async (runId, reason) => { const session = readSession(runId); if (session?.state === 'running') fail('LAUNCH_RECOVERABLE', `${runId}: ${reason}; worker lifecycle owns running launch cleanup`); await release(runId, 'cancelled'); },
+    abortLaunch: async (runId, reason) => {
+      const session = readSession(runId);
+      if (session?.state === 'running') {
+        const record = [...prepared.values()].find(row => row.launch.runId === runId);
+        if (!record?.wrapperGone || !session.process || (await observeProcesses([session.process], { execute }))[0].state !== 'exited') fail('LAUNCH_RECOVERABLE', `${runId}: ${reason}; worker lifecycle owns running launch cleanup`);
+        tools.state.commitObservation(runId, session.revision, { state: 'exited', observedAt: now(), exitCode: null, evidence: reason }, effects);
+        const exited = readSession(runId)!;
+        await tools.finalize(exited, exited.activity ? [{ kind: 'ended', session: exited, project: exited.activity.project }] : []);
+        return;
+      }
+      await release(runId, 'cancelled');
+    },
     control: {
       ps: async () => { const sessions = await tools.control.ps(); if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained'); return sessions; },
       update: async (id, patch, caller) => { await tools.authorize(id, caller); const session = tools.state.listReconciliationCandidates().find(session => session.addressId === id); if (!session?.activity) fail('SESSION_UNAVAILABLE', 'Session activity unavailable'); return tools.control.update(id, { ...session.activity, ...patch }); },
@@ -482,7 +554,7 @@ export async function runProductionWorker(
   if (!availability.available) fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
   const store = openStateStore(request.statePath);
   try {
-    const tools = sessionTools(store, execute, manifest.configuration, context, options.execute);
+    const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings.timeouts, options.execute);
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
     const writeBoundaries = manifest.writeBoundaries ?? [];
@@ -642,7 +714,16 @@ export async function runProductionWorker(
       fail('RUNNER_DELIVERY_UNAVAILABLE', 'Native initial brief acceptance timed out');
     };
     const assignments = assignmentPorts(execute);
-    await runLaunchWrapper(request, {
+    let handedOff = false;
+    const discardFailedLaunch = async () => {
+      if (!await discardOwnedTmuxSession(execute, request.tmuxSession, settings.timeouts)) { process.stderr.write(`${request.runId}: own tmux session termination is not confirmed\n`); return; }
+      const current = tools.current(request.runId);
+      if (current?.state !== 'running' || !current.process) return;
+      tools.state.commitObservation(request.runId, current.revision, { state: 'exited', observedAt: now(), exitCode: null, evidence: 'Failed launch discarded its own tmux session' }, effects);
+      const exited = tools.current(request.runId)!;
+      await tools.finalize(exited, exited.activity ? [{ kind: 'ended', session: exited, project: exited.activity.project }] : []);
+    };
+    const launched = runLaunchWrapper(request, {
       transport,
       report: {
         fs: { mkdir: async path => { await fs.mkdir(path, { recursive: true, mode: 0o700 }); }, readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, removeTree: path => fs.rm(path, { recursive: true, force: true }) },
@@ -692,7 +773,12 @@ export async function runProductionWorker(
           if (current?.state === 'reserved' && lease) await releaseTaskReservations(dependencies, { lease, reason: 'cancelled', closeLaunch: tx => closeSessionInTransaction(tx, { ...tx.getSession(request.runId)!, abortReason: reason }, now()) });
         },
       },
-      handshake: channel.handshake,
+      handshake: async handshake => { await channel.handshake(handshake); handedOff = true; },
     });
+    try { await launched; }
+    catch (error) {
+      if (!handedOff) await discardFailedLaunch().catch(cleanup => process.stderr.write(`${request.runId}: failed launch cleanup: ${cleanup instanceof Error ? cleanup.message : String(cleanup)}\n`));
+      throw error;
+    }
   } finally { store.close(); }
 }

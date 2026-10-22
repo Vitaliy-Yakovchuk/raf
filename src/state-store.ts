@@ -79,7 +79,7 @@ export interface StateStore {
   getCommandTiming(command: string): CommandTiming | undefined;
 }
 
-export function openStateStore(path: string): StateStore {
+export function openStateStore(path: string, options?: import('./state-migration-guard.ts').StateStoreOpenOptions): StateStore {
   if (typeof path !== "string" || path.trim() === "") {
     throw new Error("An explicit database path is required");
   }

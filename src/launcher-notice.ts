@@ -29,10 +29,38 @@ export type ResultNoticeDelivery = {
 
 export type PsSessionView = SessionRecord & SessionNotify & { resultNotice?: ResultNoticeDelivery };
 
+export type ResultNotice = ResultNoticeDelivery & {
+  runId: string;
+  recipientRunId: string | null;
+  text: string;
+  source: SessionRecord;
+};
+
 export function resultAddressee(session: SessionRecord & SessionNotify): ResultAddressee {
-  throw new Error('NotImplemented: resultAddressee');
+  const target = session.notify ?? session.delegatedBy ?? session.launchedBy;
+  return target ? { addressId: target.addressId, runId: target.runId } : { addressId: DEFAULT_LAUNCHER, runId: null };
 }
 
 export function resultNoticeText(content: ResultNoticeContent): string {
-  throw new Error('NotImplemented: resultNoticeText');
+  return [`raf event: agent.${content.status}`, `Agent: ${content.address}`, `Result: ${content.status}`,
+    `Items: ${content.items.join(', ')}`, `Report: ${content.reportPath}`, `Answer: ${content.answer}`,
+    ...(content.reason ? [`Reason: ${content.reason}`] : [])].join('\n');
+}
+
+export function createResultNotice(session: SessionRecord): ResultNotice | undefined {
+  if (!session.launchContext || session.addressId === DEFAULT_LAUNCHER ||
+      (!session.result && session.observation?.state !== 'exited')) return undefined;
+  const target = resultAddressee(session);
+  const content: ResultNoticeContent = {
+    address: session.addressId,
+    status: session.result?.status === 'succeeded' ? 'succeeded' : 'failed',
+    items: session.launchContext.assignment.changes.flatMap(change => change.items.map(item => `${change.id}:${item.id}`)),
+    reportPath: session.launchContext.reportPath,
+    answer: session.result?.response ?? '',
+    reason: session.result ? null : NO_REPORT_REASON,
+  };
+  return { id: `${session.runId}:result-notice`, runId: session.runId, recipient: target.addressId,
+    recipientRunId: target.runId, state: 'pending', attempts: 0, lastError: null, text: resultNoticeText(content),
+    source: { runId: session.runId, addressId: session.addressId, revision: session.revision, state: session.state,
+      ...(session.activity ? { activity: structuredClone(session.activity) } : {}) } };
 }

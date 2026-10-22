@@ -31,7 +31,7 @@ export interface AgentControlDependencies {
   projects: readonly string[];
   agentTypes: readonly string[];
 }
-export type MessageRequest = { to: string; text: string };
+export type MessageRequest = { to: string; text: string; runId?: string };
 export type MainAttachment = {
   id: 'main';
   runId: string;
@@ -133,6 +133,7 @@ export class AgentControlService {
       throw new Error('Unverified sender');
     }
     const target = await this.live(input.to);
+    if (input.runId !== undefined && target.runId !== input.runId) throw new Error(`Recipient run is no longer active: ${input.to}`);
     const text = stripVTControlCharacters(input.text).replace(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g, '');
     if (!text.trim()) throw new Error('Message text is required');
     const receipt = await this.dependencies.transport.deliver(target.process!, `[${address}] ${text}`);

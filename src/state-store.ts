@@ -6,6 +6,7 @@ import { dirname } from "node:path";
 import { ReminderService, type Reminder, type ReminderRepository, type ReminderTransaction } from "./reminders.ts";
 import type { ReminderSessionEffect } from "./reminder-repository.ts";
 import type { SessionRepository, SessionTransaction, SessionRecord, PendingIntent, AdmissionReservation } from "./session-state.ts";
+import { createResultNotice, type ResultNotice } from './launcher-notice.ts';
 
 export type RunnerInitialState = { id: string; initialEnabled: boolean };
 
@@ -37,6 +38,11 @@ export function reminderDeliveryKey(reminder: Pick<Reminder, 'assignedTo' | 'tex
 }
 
 export interface StateStore {
+  resultNotices: {
+    list(): ResultNotice[];
+    claim(id: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): ResultNotice | undefined;
+    complete(id: string, token: string, error: string | null): void;
+  };
   reminderDeliveries: {
     get(reminderId: string): ReminderDeliveryMark | undefined;
     mark(value: ReminderDeliveryMark): boolean;
@@ -125,13 +131,13 @@ export function openStateStore(path: string): StateStore {
       }
       db.exec("PRAGMA foreign_keys = ON; PRAGMA synchronous = FULL; PRAGMA wal_autocheckpoint = 1000; PRAGMA journal_size_limit = 4194304");
       const version = () => Number(db.prepare("PRAGMA user_version").get()?.user_version);
-      if (version() > 9) throw new Error("Unsupported state store schema version");
-      if (version() < 9) {
+      if (version() > 10) throw new Error("Unsupported state store schema version");
+      if (version() < 10) {
         transaction(() => {
 
           const current = version();
-          if (current > 9) throw new Error("Unsupported state store schema version");
-          if (current === 9) return;
+          if (current > 10) throw new Error("Unsupported state store schema version");
+          if (current === 10) return;
           if (current === 0) {
           db.exec(`
             CREATE TABLE runners (
@@ -256,7 +262,7 @@ export function openStateStore(path: string): StateStore {
             CREATE INDEX closure_notices_undelivered ON closure_notices(delivered_at);
             PRAGMA user_version = 8;
           `);
-          db.exec(`
+          if (current < 9) db.exec(`
             CREATE TABLE delivery_claims (
               target TEXT PRIMARY KEY NOT NULL,
               delivery_key TEXT NOT NULL,
@@ -266,6 +272,14 @@ export function openStateStore(path: string): StateStore {
               claimed_at TEXT NOT NULL
             ) STRICT;
             PRAGMA user_version = 9;
+          `);
+          db.exec(`
+            CREATE TABLE result_notices (
+              id TEXT PRIMARY KEY NOT NULL,
+              run_id TEXT NOT NULL,
+              payload TEXT NOT NULL
+            ) STRICT;
+            PRAGMA user_version = 10;
           `);
         });
       }
@@ -363,6 +377,15 @@ export function openStateStore(path: string): StateStore {
           ON CONFLICT(run_id) DO UPDATE SET address_id = excluded.address_id, state = excluded.state,
           finished_at = excluded.finished_at, payload = excluded.payload`).run(
             session.runId, session.addressId, session.state, session.finishedAt ?? null, JSON.stringify(session));
+        const notice = createResultNotice(session);
+        if (notice) {
+          if (notice.recipientRunId === null) {
+            const recipient = tx.listSessions().find(row => row.addressId === notice.recipient && row.state === 'running');
+            notice.recipientRunId = recipient?.runId ?? null;
+          }
+          db.prepare("INSERT INTO result_notices(id, run_id, payload) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING").run(notice.id, notice.runId, JSON.stringify(notice));
+        }
+        if (session.state === 'finished') db.prepare("UPDATE result_notices SET payload = json_set(payload, '$.source.state', 'finished', '$.source.revision', ?, '$.source.finishedAt', ?) WHERE run_id = ?").run(session.revision, session.finishedAt ?? null, session.runId);
       }),
       deleteSession: runId => access(() => { db.prepare("DELETE FROM sessions WHERE run_id = ?").run(runId); }),
       listReservations: () => access(() => db.prepare("SELECT payload FROM admission_reservations").all().map(row => JSON.parse(row.payload as string) as AdmissionReservation)),
@@ -554,7 +577,40 @@ export function openStateStore(path: string): StateStore {
     })),
   };
 
+  const readResultNotice = (id: string): ResultNotice | undefined => {
+    const row = db.prepare("SELECT payload FROM result_notices WHERE id = ?").get(id);
+    return row ? JSON.parse(row.payload as string) as ResultNotice : undefined;
+  };
+  const resultNotices: StateStore['resultNotices'] = {
+    list: () => operation("listResultNotices", () => transaction(() => {
+      db.prepare("DELETE FROM result_notices WHERE run_id NOT IN (SELECT run_id FROM sessions) AND json_extract(payload, '$.state') = 'delivered'").run();
+      return db.prepare("SELECT payload FROM result_notices ORDER BY rowid").all().map(row => JSON.parse(row.payload as string) as ResultNotice);
+    })),
+    claim: (id, owner, claimedAt, isOwnerAlive) => operation("claimResultNotice", () => transaction(() => {
+      const notice = readResultNotice(id);
+      if (!notice || notice.state !== 'pending' || !takeClaim(`result:${id}`, id, owner, claimedAt, isOwnerAlive)) return undefined;
+      notice.attempts++;
+      if (notice.recipientRunId === null) {
+        const row = db.prepare("SELECT run_id FROM sessions WHERE address_id = ? AND state = 'running'").get(notice.recipient);
+        notice.recipientRunId = row?.run_id as string ?? null;
+      }
+      db.prepare("UPDATE result_notices SET payload = ? WHERE id = ?").run(JSON.stringify(notice), id);
+      return notice;
+    })),
+    complete: (id, token, error) => operation("completeResultNotice", () => transaction(() => {
+      if (!holds(`result:${id}`, token)) return;
+      const notice = readResultNotice(id);
+      if (notice) {
+        notice.state = error === null ? 'delivered' : 'pending';
+        notice.lastError = error;
+        db.prepare("UPDATE result_notices SET payload = ? WHERE id = ?").run(JSON.stringify(notice), id);
+      }
+      db.prepare("DELETE FROM delivery_claims WHERE target = ? AND token = ?").run(`result:${id}`, token);
+    })),
+  };
+
   return {
+    resultNotices,
     reminderDeliveries,
     closureNotices,
     eventRepository,

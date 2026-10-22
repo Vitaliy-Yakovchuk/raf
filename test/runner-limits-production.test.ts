@@ -301,5 +301,19 @@ test('claude quota probe in the registered raf branch directory confirms trust o
   assert.equal(log.filter(event => event.event === 'trusted').length, 1);
   assert.deepEqual(log.filter(event => event.event === 'submitted').map(event => event.command), ['/usage']);
   assertProbeCleaned(f);
-  for (const row of listRows(await f.run(['runner', 'list']), 'claude')) assert.equal(row.quota, 'available', String(row.model));
+  const disabled = listRows(await f.run(['runner', 'list']), 'claude');
+  assert.ok(disabled.length > 0, 'claude models in runner list');
+  for (const row of disabled) {
+    assert.equal(row.enabled, false, String(row.model));
+    assert.equal(row.quota, 'unknown', String(row.model));
+  }
+  const state = openStateStore(f.statePath);
+  try { state.setRunnerEnabled('claude', true); } finally { state.close(); }
+  const enabled = listRows(await f.run(['runner', 'list']), 'claude');
+  assert.equal(enabled.length, disabled.length);
+  for (const row of enabled) {
+    assert.equal(row.enabled, true, String(row.model));
+    assert.equal(row.quota, 'available', String(row.model));
+  }
+  assert.equal(events(f.logPath).filter(event => event.event === 'start').length, 1, 'runner list reads SQLite without launching claude');
 });

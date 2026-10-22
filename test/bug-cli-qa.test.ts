@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { buildCatalog } from '../src/bootstrap.ts';
 import { BugServerError, startBugSyncService, type BugMcpTool, type BugSyncService, type MainNotice, type MainNotifier, type ServerAuth } from '../src/bug-sync.ts';
-import { ACTOR, FakeBugServer, revisionConflict, serverKey } from './bug-sync-fixture.ts';
+import { ACTOR, FakeBugServer, revisionConflict, serverKey, storageUnavailable } from './bug-sync-fixture.ts';
 
 const rafDevelop = fileURLToPath(new URL('../', import.meta.url));
 const realConf = fileURLToPath(new URL('../../conf/', import.meta.url));
@@ -22,6 +22,10 @@ const ETCHLY_KEY = 'projects/etchly/bug#344';
 const CRM_KEY = 'projects/crm/bug#344';
 const COMMENT = 'QA 3.4: синхронний коментар\nдругий рядок — «лапки», emoji 🐞 і пробіли  в кінці  ';
 const ATTACHMENT = Buffer.from('hello attachment');
+const REQUEST_TIMEOUT_MS = 1500;
+const OWNER = 'owner@example.test';
+
+type McpFault = { readonly kind: 'hang' } | { readonly kind: 'drop-after-apply' } | { readonly kind: 'http'; readonly status: number; readonly body: string };
 
 interface Workspace {
   readonly base: string;
@@ -51,7 +55,7 @@ function workspace(): Workspace {
   for (const entry of readdirSync(rafDevelop)) if (entry !== 'dist') symlinkSync(join(rafDevelop, entry), join(develop, entry));
   buildCatalog(realConf, join(develop, 'dist', 'catalog.json'), constants.commands.map((command: { path: string[] }) => command.path.join(' ')));
   const settings = JSON.parse(readFileSync(join(realConf, 'raf.json'), 'utf8'));
-  settings.bugs = { ...settings.bugs, attachmentCacheMaxBytes: 1_000_000, sections: [ETCHLY, CRM] };
+  settings.bugs = { ...settings.bugs, attachmentCacheMaxBytes: 1_000_000, requestTimeoutMs: REQUEST_TIMEOUT_MS, sections: [ETCHLY, CRM] };
   writeFileSync(join(root, 'conf', 'raf.json'), JSON.stringify(settings, null, 2));
   const secrets = [ETCHLY, CRM].map(section => ({
     name: section.secret, kind: 'env', value: `qa34-${section.secret}-${'x'.repeat(40)}`, source: 'qa34', updatedAt: '2026-10-22T00:00:00.000Z',
@@ -84,10 +88,11 @@ function cli(ws: Workspace, argv: readonly string[], input?: string, timeout = 6
   return { code: result.status, stdout: result.stdout.trim(), stderr: result.stderr.trim() };
 }
 
-async function cliWithDash(ws: Workspace, dash: McpDash, argv: readonly string[]): Promise<CliResult> {
+async function cliWithDash(ws: Workspace, dash: McpDash, argv: readonly string[], input?: string): Promise<CliResult> {
   const child = spawn(process.execPath, cliArgs(ws, argv), {
-    env: { ...process.env, HOME: ws.home, QA_FETCH_LOG: ws.fetchLog, QA_MCP_URL: dash.url }, stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, HOME: ws.home, QA_FETCH_LOG: ws.fetchLog, QA_MCP_URL: dash.url }, stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
   });
+  if (input !== undefined) child.stdin!.end(input);
   let stdout = '';
   let stderr = '';
   child.stdout.on('data', chunk => { stdout += chunk; });
@@ -123,6 +128,12 @@ class McpDash {
     return this.requests.map(request => request.tool);
   }
 
+  private readonly faults: { tool: string; fault: McpFault }[] = [];
+
+  fault(tool: BugMcpTool, fault: McpFault): void {
+    this.faults.push({ tool, fault });
+  }
+
   private verified(header: string): Record<string, unknown> | null {
     const [head, body, signature] = header.replace(/^Bearer /, '').split('.');
     if (!head || !body || !signature) return null;
@@ -155,12 +166,29 @@ class McpDash {
       return;
     }
     const auth: ServerAuth = { origin: 'qa34', project: String(claims.project), env: String(claims.env), token: `qa34|${String(claims.scope)}|mcp`, timeoutMs: 0 };
+    const index = this.faults.findIndex(item => item.tool === tool);
+    const fault = index >= 0 ? this.faults.splice(index, 1)[0]!.fault : null;
+    if (fault?.kind === 'http') {
+      response.writeHead(fault.status, { 'content-type': 'application/json' });
+      response.end(fault.body);
+      return;
+    }
+    if (fault?.kind === 'hang') {
+      await new Promise(done => setTimeout(done, REQUEST_TIMEOUT_MS * 3));
+      if (!response.destroyed) response.destroy();
+      return;
+    }
     try {
       const answer = await this.server.mcp.call(auth, tool, rpc.params.arguments ?? {});
+      if (fault?.kind === 'drop-after-apply') {
+        response.socket?.destroy();
+        return;
+      }
       reply({ content: [{ type: 'text', text: JSON.stringify(answer) }], structuredContent: answer });
     } catch (error) {
       if (!(error instanceof BugServerError)) throw error;
-      reply({ isError: true, content: [{ type: 'text', text: error.code }], structuredContent: { error: error.code, status: error.status } });
+      const retryAfter = error.retryAfterMs === null ? {} : { retry_after: error.retryAfterMs / 1000 };
+      reply({ isError: true, content: [{ type: 'text', text: error.code }], structuredContent: { error: error.code, status: error.status, ...retryAfter } });
     }
   }
 }
@@ -193,6 +221,16 @@ function assertNoService(ws: Workspace): void {
   const unexpected = rafEntries(ws).filter(name => !/^(bugs\.sqlite(-wal|-shm)?|secrets\.json|attachments)$/.test(name));
   assert.deepEqual(unexpected, [], 'bug commands must not create state.sqlite or service files');
 }
+
+function assertNotOnDisk(ws: Workspace, needle: string): void {
+  for (const entry of readdirSync(ws.rafHome, { recursive: true })) {
+    const file = join(ws.rafHome, String(entry));
+    try { assert.ok(!readFileSync(file).includes(needle), `${needle} leaked into ${file}`); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EISDIR') throw error; }
+  }
+}
+
+const TOKEN_TEXT = /claim[-_]?token/i;
 
 class MainInbox {
   readonly notices: MainNotice[] = [];
@@ -391,6 +429,115 @@ test('QA 3.4: approved bug commands through the real CLI with an isolated HOME a
     failed(cli(ws, ['bug', 'comment', 'add', '--bug', CRM_KEY, '--text-file', binary]), 'COMMENT_TEXT_INVALID', 'bug comment add');
     failed(cli(ws, ['bug', 'comment', 'add', '--bug', CRM_KEY, '--text-file', join(ws.base, 'missing.txt')]), 'COMMENT_TEXT_UNREADABLE', 'bug comment add');
     assert.deepEqual(fetches(ws).slice(fetchedBefore), [], 'refused before any network request');
+    assertNoService(ws);
+  });
+
+  await t.test('own claim through status set in_progress: the claim token reaches Dash but is never printed or stored', async () => {
+    server.now = () => Date.now();
+    const crmKey = serverKey(CRM, '344');
+    const claimed = await cliWithDash(ws, dash, ['bug', 'status', 'set', '--bug', CRM_KEY, '--status', 'in_progress']);
+    assert.equal(ok(claimed).status, 'in_progress');
+    const token = server.state(crmKey).claimToken;
+    assert.equal(server.state(crmKey).claimedBy, ACTOR);
+    assert.ok(token);
+    assert.doesNotMatch(claimed.stdout, TOKEN_TEXT);
+    const shown = cli(ws, ['bug', 'show', '--bug', CRM_KEY]);
+    assert.equal(ok(shown).bug.status, 'in_progress');
+    assert.doesNotMatch(shown.stdout, TOKEN_TEXT);
+
+    const text = 'коментар під власною орендою через stdin';
+    const commented = await cliWithDash(ws, dash, ['bug', 'comment', 'add', '--bug', CRM_KEY, '--text-file', '-'], text);
+    const written = ok(commented);
+    assert.equal(written.comment.text, text);
+    assert.equal(server.mcpCallsOf('comment_problem').at(-1)!.args.claimToken, token, 'own lease token is sent with the write');
+    assert.doesNotMatch(commented.stdout, TOKEN_TEXT);
+    assert.equal(ok(cli(ws, ['bug', 'show', '--bug', CRM_KEY])).bug.comments.filter((comment: { serverId: string }) => comment.serverId === written.commentId).length, 1);
+
+    const released = await cliWithDash(ws, dash, ['bug', 'status', 'set', '--bug', CRM_KEY, '--status', 'awaiting_verification']);
+    assert.equal(ok(released).status, 'awaiting_verification');
+    assert.equal(server.mcpCallsOf('set_problem_status').at(-1)!.args.claimToken, token);
+    assert.equal(server.state(crmKey).claimedBy, null);
+    assert.equal(ok(cli(ws, ['bug', 'show', '--bug', CRM_KEY])).bug.revision, server.state(crmKey).revision);
+    assertNotOnDisk(ws, token);
+    assertNoService(ws);
+  });
+
+  await t.test('foreign claim: a comment replies to the claim owner, impossible writes are refused without local changes', async () => {
+    const future = new Date(Date.now() + 3_600_000).toISOString();
+    const held = server.seedBug(ETCHLY, {
+      rawId: '346', claimedBy: OWNER, claimExpiresAt: future,
+      comments: [{ authorId: OWNER, text: 'я над цим працюю' }, { authorId: 'someone@example.test', text: 'інша думка' }],
+    });
+    server.seedBug(ETCHLY, { rawId: '347', claimedBy: 'other@example.test', claimExpiresAt: future, comments: [{ authorId: 'someone@example.test', text: 'не власник оренди' }] });
+    await serviceCycle(ws, server, inbox);
+    const heldKey = 'projects/etchly/bug#346';
+    const orphanKey = 'projects/etchly/bug#347';
+    const ownerComment = server.serverComments(held).find(comment => comment.authorId === OWNER)!;
+
+    const reply = ok(await cliWithDash(ws, dash, ['bug', 'comment', 'add', '--bug', heldKey, '--text-file', '-'], 'відповідь власнику оренди'));
+    const sent = server.mcpCallsOf('comment_problem').at(-1)!.args;
+    assert.equal(sent.reply_to, ownerComment.id);
+    assert.equal(sent.claimToken, undefined, 'no token for a foreign lease');
+    assert.equal(reply.comment.replyTo, ownerComment.id);
+    assert.equal(ok(cli(ws, ['bug', 'show', '--bug', heldKey])).bug.comments.filter((comment: { serverId: string }) => comment.serverId === reply.commentId).length, 1);
+
+    const mutations = server.mutations;
+    const beforeHeld = ok(cli(ws, ['bug', 'show', '--bug', heldKey]));
+    const beforeOrphan = ok(cli(ws, ['bug', 'show', '--bug', orphanKey]));
+    const status = failed(await cliWithDash(ws, dash, ['bug', 'status', 'set', '--bug', heldKey, '--status', 'closed']), 'BUG_WRITE_REJECTED', 'bug status set');
+    assert.equal(status.details.sourceCode, 'lease-required');
+    assert.match(status.remediation[0], /оренд/);
+    const orphan = failed(await cliWithDash(ws, dash, ['bug', 'comment', 'add', '--bug', orphanKey, '--text-file', '-'], 'нема кому відповісти'), 'BUG_WRITE_REPLY_TARGET_MISSING', 'bug comment add');
+    assert.equal(orphan.details.found.localChanges, false);
+    assert.equal(server.mutations, mutations);
+    assert.deepEqual(server.mcpCalls.slice(-2).map(call => call.tool), ['set_problem_status', 'read_bug'], 'no mutation without a reply target');
+    assert.deepEqual(ok(cli(ws, ['bug', 'show', '--bug', heldKey])), beforeHeld);
+    assert.deepEqual(ok(cli(ws, ['bug', 'show', '--bug', orphanKey])), beforeOrphan);
+    assertNoService(ws);
+  });
+
+  await t.test('slow, failing or malformed Dash MCP: command error without local changes; a write Dash applied arrives only by pull', async () => {
+    const etchlyKey = serverKey(ETCHLY, '344');
+    const before = ok(cli(ws, ['bug', 'show', '--bug', ETCHLY_KEY]));
+    const mutations = server.mutations;
+
+    dash.fault('read_bug', { kind: 'hang' });
+    const started = Date.now();
+    const slow = failed(await cliWithDash(ws, dash, ['bug', 'status', 'set', '--bug', ETCHLY_KEY, '--status', 'closed']), 'BUG_WRITE_UNKNOWN', 'bug status set');
+    const elapsed = Date.now() - started;
+    assert.equal(slow.details.sourceCode, 'timeout');
+    assert.ok(elapsed >= REQUEST_TIMEOUT_MS && elapsed < REQUEST_TIMEOUT_MS * 3, `timeout from conf requestTimeoutMs: ${elapsed} ms`);
+
+    dash.fault('read_bug', { kind: 'http', status: 503, body: '' });
+    const gateway = failed(await cliWithDash(ws, dash, ['bug', 'comment', 'add', '--bug', ETCHLY_KEY, '--text-file', '-'], 'шлюз недоступний'), 'BUG_WRITE_UNKNOWN', 'bug comment add');
+    assert.equal(gateway.details.sourceCode, 'http-503');
+
+    dash.fault('read_bug', { kind: 'http', status: 401, body: JSON.stringify({ error: 'unauthenticated' }) });
+    const denied = failed(await cliWithDash(ws, dash, ['bug', 'status', 'set', '--bug', ETCHLY_KEY, '--status', 'closed']), 'BUG_WRITE_REJECTED', 'bug status set');
+    assert.equal(denied.details.sourceCode, 'unauthenticated');
+    assert.equal(denied.details.found.status, 401);
+
+    server.failNextMcp('comment_problem', storageUnavailable());
+    const busy = failed(await cliWithDash(ws, dash, ['bug', 'comment', 'add', '--bug', ETCHLY_KEY, '--text-file', '-'], 'сховище зайняте'), 'BUG_WRITE_REJECTED', 'bug comment add');
+    assert.equal(busy.details.sourceCode, 'bug-storage-unavailable');
+    assert.equal(busy.details.found.retryAfterMs, 5000);
+    assert.equal(server.mutations, mutations);
+    assert.deepEqual(ok(cli(ws, ['bug', 'show', '--bug', ETCHLY_KEY])), before);
+
+    const lostText = 'Dash застосував, але відповідь обірвалась';
+    dash.fault('comment_problem', { kind: 'drop-after-apply' });
+    const lost = failed(await cliWithDash(ws, dash, ['bug', 'comment', 'add', '--bug', ETCHLY_KEY, '--text-file', '-'], lostText), 'BUG_WRITE_UNKNOWN', 'bug comment add');
+    assert.equal(lost.details.retrySafe, false, 'unknown outcome is not marked safe to retry');
+    server.rewriteNextMcpResult('set_problem_status', result => ({ ...result, operation_id: 'someone-else' }));
+    failed(await cliWithDash(ws, dash, ['bug', 'status', 'set', '--bug', ETCHLY_KEY, '--status', 'closed']), 'BUG_WRITE_INVALID_RESPONSE', 'bug status set');
+    assert.equal(server.mutations, mutations + 2, 'Dash applied both writes');
+    assert.deepEqual(ok(cli(ws, ['bug', 'show', '--bug', ETCHLY_KEY])), before, 'nothing is written locally without a valid receipt');
+
+    await serviceCycle(ws, server, inbox);
+    const after = ok(cli(ws, ['bug', 'show', '--bug', ETCHLY_KEY]));
+    assert.equal(after.bug.revision, server.state(etchlyKey).revision);
+    assert.equal(after.bug.status, 'closed');
+    assert.equal(after.bug.comments.filter((comment: { text: string }) => comment.text === lostText).length, 1);
     assertNoService(ws);
   });
 

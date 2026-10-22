@@ -12,7 +12,7 @@ import type { DeliveryReceipt, CloseResult, MainAttachment } from './agent-contr
 import type { ResourceReservation } from './resource-admission.ts';
 import { validateQuotaRunners, type CollectionResult } from './quota-collection.ts';
 import type { RunnerId } from './runner-protocols.ts';
-import { bindWorkspaceBoundaries, rafCommandFor, rafSubcommandsFor, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
+import { bindWorkspaceBoundaries, rafCommandFor, resolveGitWriteBoundaries, rafSubcommandsFor, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
 import { createReminderHandlers, settleCommandState, type CommandStatePorts, type ReminderCommand } from './reminder-cli.ts';
 
 export interface RuntimeContext {
@@ -209,7 +209,9 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const task = await api.resolveTask(params, assignment);
       const route = await api.route({ root: context.orchestratorRoot, project: params.project, branch: task.branch });
       if (!route.ok) throw fail(route.error.code, 'workspace', route.error.message);
-      const writeBoundaries = bindWorkspaceBoundaries(task, route.cwd);
+      const workspaceBoundaries = bindWorkspaceBoundaries(task, route.cwd);
+      const gitBoundaries = task.workspaceWritable ? await resolveGitWriteBoundaries(route.cwd, context.orchestratorRoot) : [];
+      const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
       const selection = api.selectModel(loaded.models, await snapshot(), { complexity: params.complexity, role: params.type });
       if (selection.status === 'waiting') throw fail(selection.code, 'selection', selection.reason);
       const launch: RuntimeLaunch = { ...dependencies.nextRunIdentity(), addressId: params.id,
@@ -225,7 +227,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         const brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,
           stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
           features: params.features, phase: params.phase, outcome: task.outcome, writeBoundaries,
-          sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema, rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type) ? { rafSubcommands: rafSubcommandsFor(params.type)! } : {}) });
+          sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema, ...(task.workspaceWritable ? { commitOwnWork: true } : {}), rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type) ? { rafSubcommands: rafSubcommandsFor(params.type)! } : {}) });
         stage = 'reservation';
         const admission = await api.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
         if (!admission.admitted) throw fail('RESOURCE_UNAVAILABLE', stage, admission.reason);

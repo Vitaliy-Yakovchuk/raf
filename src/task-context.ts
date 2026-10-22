@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { realpathSync } from 'node:fs';
-import { open, readFile, readdir, rename, rm, stat } from 'node:fs/promises';
-import { basename, join } from 'node:path';
+import { open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
+import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { commandFailure } from './cli-contract.ts';
 import type { RuntimeRunParameters } from './app-runtime.ts';
@@ -225,9 +225,39 @@ export function bindWorkspaceBoundaries(context: Pick<DerivedTaskContext, 'write
   return context.workspaceWritable ? [cwd, ...context.writeBoundaries.filter(path => path !== cwd)] : [...context.writeBoundaries];
 }
 
+const realOrNull = async (path: string): Promise<string | null> => {
+  try { return await realpath(path); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT' || (error as NodeJS.ErrnoException).code === 'ENOTDIR') return null; throw error; }
+};
+const pointer = async (path: string, prefix: string): Promise<string | null> => {
+  try {
+    const text = (await readFile(path, 'utf8')).trim();
+    return text.startsWith(prefix) ? text.slice(prefix.length).trim() || null : null;
+  } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT' || (error as NodeJS.ErrnoException).code === 'ENOTDIR' || (error as NodeJS.ErrnoException).code === 'EISDIR') return null; throw error; }
+};
+
+async function gitDirectories(workspace: string): Promise<string[]> {
+  const dotGit = join(workspace, '.git');
+  const info = await stat(dotGit).catch(() => null);
+  if (!info) return [];
+  const linked = info.isFile() ? await pointer(dotGit, 'gitdir:') : null;
+  const gitDir = info.isDirectory() ? await realOrNull(dotGit) : linked ? await realOrNull(resolve(workspace, linked)) : null;
+  if (!gitDir) return [];
+  const common = await pointer(join(gitDir, 'commondir'), '');
+  const commonDir = common ? await realOrNull(resolve(gitDir, common)) : gitDir;
+  return commonDir ? [gitDir, commonDir] : [gitDir];
+}
+
 export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: string): Promise<readonly string[]> {
-  void cwd; void orchestratorRoot;
-  throw new Error('NotImplemented: resolveGitWriteBoundaries');
+  const workspace = await realOrNull(cwd);
+  if (!workspace) return [];
+  const inside = (path: string) => {
+    const suffix = relative(workspace, path);
+    return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`);
+  };
+  const rootGit = await realOrNull(join(orchestratorRoot, '.git'));
+  const candidates = [...await gitDirectories(workspace), ...(rootGit && (await stat(rootGit)).isDirectory() ? [rootGit] : [])];
+  return [...new Set(candidates.filter(path => !inside(path)))];
 }
 
 export function assignmentFingerprint(snapshot: AssignmentSnapshot): string {

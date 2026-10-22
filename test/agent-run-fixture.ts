@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -41,7 +42,7 @@ process.exit(result.status ?? 1);
 `;
 
 export const runnerScript = String.raw`
-import { readFileSync, writeFileSync, openSync, appendFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, openSync, appendFileSync, renameSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 if (process.argv.includes('--version')) { console.log('codex-cli raf-synthetic-1'); process.exit(0); }
@@ -70,6 +71,7 @@ if (mode === 'readiness-unknown') {
   process.stdin.resume();
   let input = '', assignment;
   process.stdin.on('data', chunk => {
+    appendFileSync(c.control + '/input-' + process.pid + '.log', chunk);
     input += chunk.replace(/\x1b\[(?:200|201)~/g, '').replace(/\r/g, '\n');
     if (input.includes('/status')) { console.log('\nSession: ' + nativeId + '\nRAF SYNTHETIC READY\n› RAF SYNTHETIC READY'); input = ''; return; }
     if (assignment) return;
@@ -83,6 +85,17 @@ if (mode === 'readiness-unknown') {
     console.log('\n• Working (0s • esc to interrupt)\n› ');
     writeFileSync(c.control + '/' + candidate.agent_id + '.brief', String(process.pid));
   });
+  let step = 1, stepping = false;
+  setInterval(() => {
+    if (!assignment || assignment === true || stepping) return;
+    const id = assignment.agent_id, prefix = c.control + '/' + id + '.cmd.' + step;
+    let argv;
+    try { argv = readFileSync(prefix + '.json', 'utf8'); } catch { return; }
+    stepping = true;
+    const out = openSync(prefix + '.out', 'w');
+    const child = spawn(process.execPath, [c.commandPath, process.env.RAF_AGENT_RUN_FIXTURE, argv], { stdio: ['ignore', out, out], env: process.env });
+    child.on('close', code => { writeFileSync(prefix + '.code.tmp', String(code)); renameSync(prefix + '.code.tmp', prefix + '.code'); step++; stepping = false; });
+  }, 20);
   setInterval(() => {
     if (!assignment || assignment === true) return;
     const id = assignment.agent_id;
@@ -165,8 +178,8 @@ export function alive(pid: number) {
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ESRCH') return false; throw error; }
 }
 
-export async function agentRunFixture(t: any, mode: string, timeouts: { startupMs: number; transitionMs: number; overallMs: number }, runner: 'codex' | 'claude' = 'codex') {
-  const directory = await fs.realpath(await fs.mkdtemp('/tmp/raf-lfc-'));
+export async function agentRunFixture(t: any, mode: string, timeouts: { startupMs: number; transitionMs: number; overallMs: number }, runner: 'codex' | 'claude' = 'codex', options: { tasks?: number; commands?: readonly string[]; stages?: readonly string[] } = {}) {
+  const directory = await fs.realpath(await fs.mkdtemp(join(tmpdir(), 'raf-lfc-')));
   const root = join(directory, 'orchestrator');
   const home = join(directory, 'home');
   const conf = join(root, 'conf');
@@ -181,12 +194,12 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   models.models = models.models.filter((x: any) => runner === 'claude' ? x.id === 'claude-opus' : x.id === 'gpt-6.1-sol');
   models.runners = models.runners.filter((x: any) => x.id === runner).map((x: any) => ({ ...x, initialEnabled: true }));
   const constants = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/raf-constants.json'), 'utf8'));
-  constants.commands = constants.commands.filter((x: any) => ['agent run', 'agent close', 'help'].includes(x.path.join(' ')));
+  constants.commands = constants.commands.filter((x: any) => ['agent run', 'agent close', 'help', ...(options.commands ?? [])].includes(x.path.join(' ')));
   const artifact = join(directory, 'catalog.json');
   const changeDir = join(root, 'openspec', 'changes', change);
   const marker = join(directory, 'fixture.json');
   const cfg = { sourceRoot, root, home, artifact, control, statePath: join(home, '.raf', 'state.sqlite'), tmux: programs[1], tmuxLabel: `raf-lfc-${randomUUID().slice(0, 8)}`, commandPath: join(directory, 'command.mjs'), claudeVersion: claudeProtocol.version, claudeHangupExitMs: 750 };
-  const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, PATH: `${bin}:${process.env.PATH}`, RAF_AGENT_RUN_FIXTURE: marker, TMPDIR: directory };
+  const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, PATH: `${bin}:${process.env.PATH}`, RAF_AGENT_RUN_FIXTURE: marker, TMPDIR: directory, TMUX_TMPDIR: directory };
   delete env.TMUX;
   delete env.TMUX_PANE;
   const owned = async () => {
@@ -199,7 +212,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
     return pids;
   };
   const tmuxSessions = async () => {
-    try { return (await exec(cfg.tmux, ['-L', cfg.tmuxLabel, 'list-sessions', '-F', '#{session_name}'])).stdout.split('\n').filter(Boolean); }
+    try { return (await exec(cfg.tmux, ['-L', cfg.tmuxLabel, 'list-sessions', '-F', '#{session_name}'], { env })).stdout.split('\n').filter(Boolean); }
     catch (error) {
       if (/no server running|error connecting/i.test(String((error as { stderr?: string }).stderr))) return [];
       throw error;
@@ -207,8 +220,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   };
   t.after(async () => {
     for (const pid of await owned()) { try { process.kill(pid, 'SIGKILL'); } catch {} }
-    await exec(cfg.tmux, ['-L', cfg.tmuxLabel, 'kill-server']).catch(() => undefined);
-    await fs.rm(join(`/tmp/tmux-${process.getuid!()}`, cfg.tmuxLabel), { force: true });
+    await exec(cfg.tmux, ['-L', cfg.tmuxLabel, 'kill-server'], { env }).catch(() => undefined);
     await fs.rm(directory, { recursive: true, force: true });
   });
   await writeJson(marker, cfg);
@@ -227,7 +239,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
     timeouts: { ...timeouts, pollMs: 25 }, collection: { intervalMs: 300000, failureBackoffMs: 60000, staleAfterMs: 60000 },
   }];
   await writeJson(join(conf, 'raf.json'), { version: 1, state: { fileName: 'state.sqlite' }, commandTiming: { emaAlpha: 0.1 }, runnerProtocols: protocols });
-  for (const path of [`runners/${runner}.md`, 'tasks/implement.md', 'completion.md']) { await fs.mkdir(dirname(join(conf, 'briefs', path)), { recursive: true }); await fs.writeFile(join(conf, 'briefs', path), 'Synthetic launch failure fixture.\n'); }
+  for (const path of [`runners/${runner}.md`, ...['implement', ...(options.stages ?? [])].map(stage => `tasks/${stage}.md`), 'completion.md']) { await fs.mkdir(dirname(join(conf, 'briefs', path)), { recursive: true }); await fs.writeFile(join(conf, 'briefs', path), 'Synthetic launch failure fixture.\n'); }
   buildCatalog(conf, artifact, constants.commands.map((x: any) => x.path.join(' ')));
   await exec('git', ['init', '-b', 'develop', workspace], { env });
   await fs.mkdir(join(changeDir, 'specs', 'launch-fixture'), { recursive: true });
@@ -236,7 +248,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   await fs.writeFile(join(changeDir, 'proposal.md'), '## Why\nLaunch failure fixture.\n\n## What Changes\nExercise failed launch cleanup.\n\n## Capabilities\n\n### New Capabilities\n- `launch-fixture`: Fail isolated launches.\n\n## Impact\nTemporary fixture only.\n');
   await fs.writeFile(join(changeDir, 'design.md'), '## Context\nSynthetic runner.\n\n## Decisions\nPrivate temporary fixture.\n');
   await fs.writeFile(join(changeDir, 'specs', 'launch-fixture', 'spec.md'), '## ADDED Requirements\n\n### Requirement: Isolated fixture task\nThe fixture SHALL execute only selected temporary tasks.\n\n#### Scenario: Selected task\n- **WHEN** the fixture starts\n- **THEN** only the assigned item is touched\n');
-  await fs.writeFile(join(changeDir, 'tasks.md'), `## 1. Fixture\n\n- [ ] 1.1 ${description}\n`);
+  await fs.writeFile(join(changeDir, 'tasks.md'), `## 1. Fixture\n\n${Array.from({ length: options.tasks ?? 1 }, (_, index) => `- [ ] 1.${index + 1} ${description}${index ? ` ${index + 1}` : ''}\n`).join('')}`);
   openStateStore(cfg.statePath).close();
   const command = async (argv: string[]) => {
     const child = spawn(process.execPath, [cfg.commandPath, marker, JSON.stringify(argv)], { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -246,7 +258,19 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
     const exitCode = await new Promise<number | null>((resolve, reject) => { child.on('error', reject); child.on('close', code => resolve(code)); });
     return { exitCode, result: stdout.trim() ? JSON.parse(stdout) : null, stderr };
   };
-  const run = (id: string) => command(['agent', 'run', '--id', id, '--type', 'implement', '--project', 'raf', '--features', 'launch-fixture', '--phase', 'implement', '--complexity', 'decision', '--tasks', `${change}:1.1`]);
+  const runArgs = (id: string, type = 'implement', tasks = ['1.1']) => ['agent', 'run', '--id', id, '--type', type, '--project', 'raf', '--features', 'launch-fixture', '--phase', type, '--complexity', 'decision', '--tasks', ...tasks.map(task => `${change}:${task}`)];
+  const run = (id: string, type?: string, tasks?: string[]) => command(runArgs(id, type, tasks));
+  const steps: Record<string, number> = {};
+  const as = async (id: string, argv: string[]) => {
+    const step = steps[id] = (steps[id] ?? 0) + 1;
+    const prefix = join(control, `${id}.cmd.${step}`);
+    await fs.writeFile(`${prefix}.json.tmp`, JSON.stringify(argv));
+    await fs.rename(`${prefix}.json.tmp`, `${prefix}.json`);
+    const code = await until(async () => await exists(`${prefix}.code`) ? Number((await fs.readFile(`${prefix}.code`, 'utf8')).trim()) : null, value => value !== null, `${id} ran ${argv.join(' ')}`);
+    const printed = (await fs.readFile(`${prefix}.out`, 'utf8')).trim();
+    return { exitCode: code, result: printed ? JSON.parse(printed) : null };
+  };
+  const input = async (pid: number) => fs.readFile(join(control, `input-${pid}.log`), 'utf8').catch(() => '');
   const inspect = () => {
     const store = openStateStore(cfg.statePath);
     try {
@@ -255,7 +279,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   };
   const runners = async () => (await fs.readdir(control)).filter(name => /^runner-\d+\.pid$/.test(name)).map(name => Number(name.slice(7, -4)));
   const runDirectories = async () => (await fs.readdir(tmpRoot)).filter(name => name !== 'tmux');
-  return { directory, control, tmpRoot, run, inspect, owned, tmuxSessions, runners, runDirectories };
+  return { directory, control, tmpRoot, run, runArgs, command, as, input, inspect, owned, tmuxSessions, runners, runDirectories };
 }
 
 export type AgentRunFixture = Awaited<ReturnType<typeof agentRunFixture>>;

@@ -16,7 +16,7 @@ import type { AdapterCommand, AdapterCommandExecutor } from '../src/agent-adapte
 import type { AssignmentSnapshot } from '../src/assignment.ts';
 import type { ModelCatalog, ModelSelection } from '../src/model-routing.ts';
 import {
-  assignmentFingerprint, bindWorkspaceBoundaries, deriveTaskContext, rafCommandFor, loadTaskContextConfiguration, writeTaskContextFile,
+  assignmentFingerprint, bindWorkspaceBoundaries, deriveTaskContext, rafCommandFor, rafSubcommandsFor, loadTaskContextConfiguration, writeTaskContextFile,
   TASK_CONTEXT_FILE_NAME, type TaskContextConfiguration, type TaskContextEnvelope,
 } from '../src/task-context.ts';
 
@@ -279,11 +279,15 @@ test('[task-context] 5. межі запису: spec без cwd коду, impleme
   assert.equal(implementBound.includes(w.root), false);
 });
 
-test('[task-context] 5a. координувальні типи отримують точну команду raf цієї гілки raf; межі запису не містять стану raf', async t => {
+test('[task-context] 5a. координувальні типи отримують точну команду raf цієї гілки raf, виконавці — лише для agent message і agent ps; межі запису не містять стану raf', async t => {
   const w = await workspace(t);
   const entry = realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)));
-  for (const type of ['coordinator', 'main']) assert.equal(rafCommandFor(type), `node ${entry}`, type);
-  for (const type of ['implement', 'hotfix', 'spec', 'design', 'test-scaffold', 'qa']) assert.equal(rafCommandFor(type), null, type);
+  for (const type of ['coordinator', 'main']) assert.equal(rafCommandFor(), `node ${entry}`, type);
+  for (const type of ['coordinator', 'main']) assert.equal(rafSubcommandsFor(type), null, type);
+  for (const type of ['implement', 'hotfix', 'spec', 'design', 'test-scaffold', 'qa']) {
+    assert.equal(rafCommandFor(), `node ${entry}`, type);
+    assert.deepEqual(rafSubcommandsFor(type), ['agent message', 'agent ps'], type);
+  }
   const tasks = ['change-a:1.1'];
   const coordinator = await deriveTaskContext({ root: w.root, parameters: { ...baseParams, type: 'coordinator', phase: 'coordinator', tasks }, assignment: snapshotFor(w.root, tasks), configuration: w.configuration });
   assert.equal(bindWorkspaceBoundaries(coordinator, join(w.root, 'raf-develop')).some(path => path.includes('.raf')), false);

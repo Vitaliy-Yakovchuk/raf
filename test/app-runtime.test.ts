@@ -163,14 +163,17 @@ test('waiting model is a failed launch with owner reason, never running', async 
   noLaunch(f);
 });
 
-test('coordinator brief receives the exact raf command of this raf checkout; executor briefs do not', async () => {
+test('coordinator brief receives the exact raf command of this raf checkout; executor briefs receive it only for message and ps', async () => {
   const f = fixture();
   await run(f);
-  assert.equal((call(f, 'compose')?.[1] as Record<string, unknown>).rafCommand, undefined);
+  const executor = call(f, 'compose')?.[1] as Record<string, unknown>;
+  assert.equal(executor.rafCommand, rafCommandFor());
+  assert.deepEqual(executor.rafSubcommands, ['agent message', 'agent ps']);
   const g = fixture();
   await run(g, { type: 'coordinator', phase: 'coordinator' });
-  assert.equal((call(g, 'compose')?.[1] as Record<string, unknown>).rafCommand, rafCommandFor('coordinator'));
-  assert.match(String(rafCommandFor('coordinator')), /^node \/.+\/bin\/raf\.ts$/);
+  assert.equal((call(g, 'compose')?.[1] as Record<string, unknown>).rafCommand, rafCommandFor());
+  assert.equal('rafSubcommands' in (call(g, 'compose')?.[1] as Record<string, unknown>), false);
+  assert.match(String(rafCommandFor()), /^node \/.+\/bin\/raf\.ts$/);
 });
 
 test('selected model, literal brief, child paths and immutable assignment reach owners unchanged', async () => {

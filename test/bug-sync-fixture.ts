@@ -193,7 +193,7 @@ export interface SeedBug {
   claimedBy?: string | null;
   claimToken?: string | null;
   claimExpiresAt?: string | null;
-  comments?: readonly { authorId: string; text: string }[];
+  comments?: readonly { authorId: string; text: string; authorKind?: string }[];
   attachments?: readonly { id: string; commentIndex?: number; bytes: number; sha256: string }[];
 }
 
@@ -276,7 +276,7 @@ export class FakeBugServer implements BugServerPort {
       comments: [],
       attachments: [],
     };
-    for (const comment of seed.comments ?? []) bug.comments.push(this.newComment(comment.authorId, comment.text));
+    for (const comment of seed.comments ?? []) bug.comments.push(this.newComment(comment.authorId, comment.text, null, comment.authorKind));
     for (const attachment of seed.attachments ?? []) {
       bug.attachments.push({
         id: attachment.id,
@@ -292,9 +292,9 @@ export class FakeBugServer implements BugServerPort {
     return key;
   }
 
-  addComment(key: ServerBugKey, authorId: string, text: string): ServerComment {
+  addComment(key: ServerBugKey, authorId: string, text: string, authorKind?: string): ServerComment {
     const bug = this.require(key);
-    const comment = this.newComment(authorId, text);
+    const comment = this.newComment(authorId, text, null, authorKind);
     bug.comments.push(comment);
     bug.revision += 1;
     this.emit(bug, 'comment', {});
@@ -594,13 +594,13 @@ export class FakeBugServer implements BugServerPort {
     };
   }
 
-  private newComment(authorId: string, text: string, replyTo: string | null = null): ServerComment {
+  private newComment(authorId: string, text: string, replyTo: string | null = null, authorKind?: string): ServerComment {
     this.commentSeq += 1;
     const id = `srv-c-${this.commentSeq}`;
     return {
       id,
       authorId,
-      authorKind: authorId === ACTOR ? 'agent' : 'human',
+      authorKind: authorKind ?? (authorId === ACTOR ? 'agent' : 'person'),
       text,
       replyTo,
       createdAt: START,

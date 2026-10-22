@@ -58,6 +58,7 @@ export type SessionRecord = {
   finishedAt?: string;
   abortReason?: string;
   delegatedBy?: { addressId: string; runId: string; fence: string };
+  launchedBy?: { addressId: string; runId: string };
 };
 
 export interface SessionTransaction {

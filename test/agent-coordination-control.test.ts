@@ -40,6 +40,46 @@ test('[coordinator-control] a coordinator closes and interrupts its delegated ch
   assert.equal(sessions.find(row => row.addressId === 'coord')?.state, 'running');
 });
 
+test('[coordinator-launched] a coordinator closes a child it launched on tasks it never reserved; a foreign coordinator cannot', async t => {
+  const f = await fixture(t, 'launched', timeouts, 'codex', { tasks: 4, commands: ['agent interrupt'], stages: ['coordinator'] });
+  const coordinator = await f.run('coord', 'coordinator', ['1.1']);
+  assert.equal(coordinator.exitCode, 0, JSON.stringify(coordinator));
+  await briefed(f, 'coord');
+  const foreign = await f.run('coord2', 'coordinator', ['1.4']);
+  assert.equal(foreign.exitCode, 0, JSON.stringify(foreign));
+  await briefed(f, 'coord2');
+  const delegated = await f.as('coord', f.runArgs('delegated', 'implement', ['1.1']));
+  assert.equal(delegated.exitCode, 0, JSON.stringify(delegated));
+  await briefed(f, 'delegated');
+  const child = await f.as('coord', f.runArgs('child', 'implement', ['1.2']));
+  assert.equal(child.exitCode, 0, JSON.stringify(child));
+  await briefed(f, 'child');
+  const outside = await f.run('outside', 'implement', ['1.3']);
+  assert.equal(outside.exitCode, 0, JSON.stringify(outside));
+  await briefed(f, 'outside');
+
+  const rows = f.inspect().sessions;
+  const row = (id: string) => rows.find(session => session.addressId === id)!;
+  const parent = { addressId: 'coord', runId: row('coord').runId };
+  assert.equal(row('child').delegatedBy, undefined, 'the child holds tasks the coordinator never reserved');
+  assert.deepEqual(row('child').launchedBy, parent, 'raf records the verified launching coordinator');
+  assert.deepEqual(row('delegated').launchedBy, parent, 'a delegated child records its launcher too');
+  for (const id of ['coord', 'coord2', 'outside']) assert.equal(row(id).launchedBy, undefined, `${id} was launched outside any agent`);
+
+  for (const command of ['close', 'interrupt']) {
+    const denied = await f.as('coord2', ['agent', command, '--id', 'child']);
+    assert.equal(failure(denied).code, 'CALLER_UNAUTHORIZED', `${command} by a foreign coordinator: ${JSON.stringify(denied)}`);
+  }
+  const interrupted = await f.as('coord', ['agent', 'interrupt', '--id', 'child']);
+  assert.notEqual(failure(interrupted).code, 'CALLER_UNAUTHORIZED', JSON.stringify(interrupted));
+  const closed = await f.as('coord', ['agent', 'close', '--id', 'child']);
+  assert.equal(closed.exitCode, 0, JSON.stringify(closed));
+  assert.equal(JSON.parse(closed.result!.stdout).closed, true);
+  const after = f.inspect().sessions;
+  assert.equal(after.find(session => session.addressId === 'child')?.state, 'finished');
+  for (const id of ['coord', 'coord2', 'delegated', 'outside']) assert.equal(after.find(session => session.addressId === id)?.state, 'running', id);
+});
+
 test('[executor-message] an executor brief carries raf only for message and ps; executors message each other and a forged sender is refused', async t => {
   const f = await fixture(t, 'message', timeouts, 'codex', { tasks: 2, commands: ['agent message', 'agent ps'] });
   for (const [id, task] of [['exec-a', '1.1'], ['exec-b', '1.2']]) {

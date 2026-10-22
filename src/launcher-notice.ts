@@ -1,20 +1,25 @@
 import type { SessionRecord } from './session-state.ts';
 
-export const LAUNCHER_FALLBACK = 'main';
+export const DEFAULT_LAUNCHER = 'main';
 export const NO_REPORT_REASON = 'процес завершився без валідного звіту';
+export const NOTIFY_TARGET_INVALID = 'NOTIFY_TARGET_INVALID';
 
-export type LauncherNoticeStatus = 'succeeded' | 'failed';
+export type NotifyTarget = { addressId: string; runId: string };
+export type SessionNotify = { notify?: NotifyTarget };
+export type ResultAddressee = { addressId: string; runId: string | null };
 
-export type LauncherNoticeContent = {
+export type ResultNoticeStatus = 'succeeded' | 'failed';
+
+export type ResultNoticeContent = {
   address: string;
-  status: LauncherNoticeStatus;
+  status: ResultNoticeStatus;
   items: readonly string[];
   reportPath: string;
   answer: string;
   reason: string | null;
 };
 
-export type LauncherNoticeDelivery = {
+export type ResultNoticeDelivery = {
   id: string;
   recipient: string;
   state: 'pending' | 'delivered';
@@ -22,12 +27,12 @@ export type LauncherNoticeDelivery = {
   lastError: string | null;
 };
 
-export type PsSessionView = SessionRecord & { launcherNotice?: LauncherNoticeDelivery };
+export type PsSessionView = SessionRecord & SessionNotify & { resultNotice?: ResultNoticeDelivery };
 
-export function launcherRecipient(session: SessionRecord, sessions: readonly SessionRecord[]): string {
-  throw new Error('NotImplemented: launcherRecipient');
+export function resultAddressee(session: SessionRecord & SessionNotify): ResultAddressee {
+  throw new Error('NotImplemented: resultAddressee');
 }
 
-export function launcherNoticeText(content: LauncherNoticeContent): string {
-  throw new Error('NotImplemented: launcherNoticeText');
+export function resultNoticeText(content: ResultNoticeContent): string {
+  throw new Error('NotImplemented: resultNoticeText');
 }

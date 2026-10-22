@@ -10,7 +10,7 @@
     "test:cli:qa": "node --test test/cli-catalog.test.ts test/cli-qa.test.ts",
     "check:comments": "node scripts/check-comments.ts",
     "test:comments": "node --test test/comment-free-source.test.ts",
-    "test:launcher-notice": "node --test test/launcher-notice.test.ts"
+    "test:launcher-notice": "node --test test/launcher-notice.test.ts test/launcher-notice-run.test.ts"
   },
   "engines": {
     "node": ">=25.4.0"

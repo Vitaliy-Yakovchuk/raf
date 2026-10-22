@@ -1,5 +1,5 @@
 import type { ResourceAdmission, ResourceAdmissionInput, ResourceMeasurement, ResourceReservation } from './resource-admission.ts';
-import type { PendingIntent, ProcessIdentity, SessionActivity, SessionLaunchContext, SessionRecord, SessionRepository } from './session-state.ts';
+import type { PendingIntent, ProcessIdentity, SessionActivity, SessionLaunchContext, SessionRecord, SessionRepository, SessionTransaction } from './session-state.ts';
 
 export type LaunchMeasurement = {
   measurement: ResourceMeasurement;
@@ -35,8 +35,12 @@ export interface LaunchState {
   updateActivity(runId: string, expectedRevision: number, patch: ActivityPatch, intents: readonly PendingIntent[]): boolean;
 }
 
-export function createLaunchState(dependencies: LaunchStateDependencies): LaunchState {
-  const { repository, measure, evaluateAdmission } = dependencies;
+export function evaluateLaunchAdmissionInTransaction(
+  tx: Pick<SessionTransaction, 'listReservations' | 'getSession'>,
+  request: Pick<ReserveLaunchRequest, 'requested' | 'requiredFileSystemIds'>,
+  measured: LaunchMeasurement,
+  evaluateAdmission: LaunchStateDependencies['evaluateAdmission'],
+): ResourceAdmission {
   const copy = <T>(value: T): T => structuredClone(value);
   const sameIdentity = (left: ProcessIdentity, right: ProcessIdentity): boolean =>
     Number.isInteger(left.pid) && left.pid > 0 && Number.isFinite(Date.parse(left.startedAt)) &&
@@ -46,49 +50,65 @@ export function createLaunchState(dependencies: LaunchStateDependencies): Launch
     !!left.evidence && !!right.evidence && Object.keys(left.evidence).length > 0 &&
     Object.keys(left.evidence).length === Object.keys(right.evidence).length &&
     Object.entries(left.evidence).every(([key, value]) => typeof value === 'string' && right.evidence[key] === value);
+  const unusedReservations: ResourceReservation[] = [];
+  for (const reservation of tx.listReservations()) {
+    if (!reservation.resourceBundle || !reservation.resourceBundle.machineId) {
+      return {
+        level: 'UNKNOWN', allowed: { normal: false, hotfix: false },
+        reasons: ['Existing reservation has no resource bundle or machine identity'],
+        measurement: measured.measurement, remaining: null,
+      };
+    }
+    if (reservation.resourceBundle.machineId !== measured.measurement.machineId) continue;
+    const session = tx.getSession(reservation.runId);
+    const consumed = session?.state === 'running' && session.process && measured.observedProcesses.some(
+      observed => observed.runId === reservation.runId && sameIdentity(session.process!, observed.identity));
+    if (!consumed) unusedReservations.push(copy(reservation.resourceBundle.resources));
+  }
+  return evaluateAdmission({
+    measurement: measured.measurement,
+    requested: copy(request.requested), unusedReservations,
+    requiredFileSystemIds: copy(request.requiredFileSystemIds),
+  });
+}
+
+export function reserveLaunchInTransaction(
+  tx: SessionTransaction,
+  request: ReserveLaunchRequest,
+  measured: LaunchMeasurement,
+  evaluateAdmission: LaunchStateDependencies['evaluateAdmission'],
+): LaunchReservationResult {
+  if (!request.runId || !request.addressId) throw new Error('Address and run identity are required');
+  if (request.addressId === 'main' || request.activity.type === 'main') throw new Error('Main must register an existing process');
+  const copy = <T>(value: T): T => structuredClone(value);
+  if (tx.getSession(request.runId)) throw new Error('Run identity already exists');
+  if (tx.listSessions().some(session => session.addressId === request.addressId && session.state !== 'finished')) {
+    throw new Error('Address already has an active session');
+  }
+  const admission = evaluateLaunchAdmissionInTransaction(tx, request, measured, evaluateAdmission);
+  if (!admission.allowed[request.mode]) return { reserved: false, admission: copy(admission) };
+  const session: SessionRecord = {
+    runId: request.runId, addressId: request.addressId, revision: 0, state: 'reserved',
+    activity: copy(request.activity), launchContext: copy(request.launchContext),
+  };
+  tx.putSession(copy(session));
+  tx.putReservation({
+    runId: request.runId, resource: request.resource, amount: request.amount,
+    resourceBundle: { machineId: measured.measurement.machineId, resources: copy(request.requested) },
+  });
+  return { reserved: true, admission: copy(admission), session: copy(session) };
+}
+
+export function createLaunchState(dependencies: LaunchStateDependencies): LaunchState {
+  const { repository, measure, evaluateAdmission } = dependencies;
+  const copy = <T>(value: T): T => structuredClone(value);
   return {
     async reserveLaunch(input) {
       const request = copy(input);
       if (!request.runId || !request.addressId) throw new Error('Address and run identity are required');
       if (request.addressId === 'main' || request.activity.type === 'main') throw new Error('Main must register an existing process');
       const measured = copy(await measure(copy(request)));
-      return repository.transaction<LaunchReservationResult>(tx => {
-        if (tx.getSession(request.runId)) throw new Error('Run identity already exists');
-        if (tx.listSessions().some(session => session.addressId === request.addressId && session.state !== 'finished')) {
-          throw new Error('Address already has an active session');
-        }
-        const unusedReservations: ResourceReservation[] = [];
-        for (const reservation of tx.listReservations()) {
-          if (!reservation.resourceBundle || !reservation.resourceBundle.machineId) {
-            return { reserved: false, admission: {
-              level: 'UNKNOWN', allowed: { normal: false, hotfix: false },
-              reasons: ['Existing reservation has no resource bundle or machine identity'],
-              measurement: measured.measurement, remaining: null,
-            } };
-          }
-          if (reservation.resourceBundle.machineId !== measured.measurement.machineId) continue;
-          const session = tx.getSession(reservation.runId);
-          const consumed = session?.state === 'running' && session.process && measured.observedProcesses.some(
-            observed => observed.runId === reservation.runId && sameIdentity(session.process!, observed.identity));
-          if (!consumed) unusedReservations.push(copy(reservation.resourceBundle.resources));
-        }
-        const admission = evaluateAdmission({
-          measurement: measured.measurement,
-          requested: copy(request.requested), unusedReservations,
-          requiredFileSystemIds: copy(request.requiredFileSystemIds),
-        });
-        if (!admission.allowed[request.mode]) return { reserved: false, admission: copy(admission) };
-        const session: SessionRecord = {
-          runId: request.runId, addressId: request.addressId, revision: 0, state: 'reserved',
-          activity: copy(request.activity), launchContext: copy(request.launchContext),
-        };
-        tx.putSession(copy(session));
-        tx.putReservation({
-          runId: request.runId, resource: request.resource, amount: request.amount,
-          resourceBundle: { machineId: measured.measurement.machineId, resources: copy(request.requested) },
-        });
-        return { reserved: true, admission: copy(admission), session: copy(session) };
-      });
+      return repository.transaction(tx => reserveLaunchInTransaction(tx, request, measured, evaluateAdmission));
     },
     updateActivity(runId, expectedRevision, patch, intents) {
       return repository.transaction(tx => {

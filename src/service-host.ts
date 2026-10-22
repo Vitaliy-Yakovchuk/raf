@@ -11,6 +11,7 @@ import type { ProcessIdentity, ProcessObservation, SessionRecord, SessionStateDe
 import type { Reminder } from './reminders.ts';
 import type { EventRegistryPorts } from './event-registry.ts';
 import type { ResourceWaitDependencies } from './resource-wait.ts';
+import type { ReminderSessionEffect } from './reminder-repository.ts';
 
 export type ServiceHostDependencies = {
   now: () => number;
@@ -32,7 +33,7 @@ export async function createServicePorts(
   context: ServiceEntryContext,
   dependencies?: ServiceHostDependencies,
 ): Promise<ComposedServicePorts> {
-  if (!dependencies) throw new Error('Service host requires explicit production dependencies for process observation, delivery, events and resource measurements');
+  if (!dependencies) return (await import('./production-service-ports.ts')).createServicePorts(context);
   const required = [dependencies.now, dependencies.nextReminderId, dependencies.observeProcesses, dependencies.effectsForObservation,
     dependencies.sessionValidation?.verifyMainAuthority, dependencies.sessionValidation?.verifyWorkResult, dependencies.eventPorts,
     dependencies.deliverReminder, dependencies.schedule, dependencies.resourceWait?.readSnapshot, dependencies.resourceWait?.isClientAlive,
@@ -105,7 +106,6 @@ export async function createServicePorts(
     };
     const reconcile = async () => {
       const candidates = sessions.listReconciliationCandidates().filter(session => session.state === 'running' && session.process);
-      if (!candidates.length) return;
       const observations = await dependencies.observeProcesses(candidates.map(session => session.process!));
       if (!Array.isArray(observations) || observations.length !== candidates.length) throw new Error('Process observation result does not match service candidates');
       for (let index = 0; index < candidates.length; index++) {
@@ -113,6 +113,18 @@ export async function createServicePorts(
         const observation = observations[index];
         if (!observation || !['alive', 'exited', 'unknown'].includes(observation.state)) throw new Error('Invalid service process observation');
         sessions.commitObservation(session.runId, session.revision, observation, observation.state === 'unknown' ? { pending: [], domain: [] } : dependencies.effectsForObservation(session, observation));
+      }
+      for (const session of sessions.listReconciliationCandidates().filter(candidate => candidate.state === 'exited')) {
+        const at = new Date(clock()).toISOString();
+        const effect: ReminderSessionEffect = {
+          id: `${session.runId}:reminders:session-ended`, domain: 'reminders',
+          payload: { operation: 'session-ended', runId: session.runId, at,
+            end: { address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: true } },
+        };
+        sessions.finalizeSession(session.runId, session.revision, at, {
+          domain: [effect], pending: [{ id: `${session.runId}:agent.closed`, runId: session.runId,
+            event: 'agent.closed', payload: { kind: 'agent.closed', id: session.addressId } }],
+        });
       }
     };
     const cycle = async () => {
@@ -195,3 +207,5 @@ export async function createServicePorts(
     throw error;
   }
 }
+
+export default createServicePorts;

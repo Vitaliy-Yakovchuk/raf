@@ -66,6 +66,9 @@ async function tasks(ports: AssignmentPorts, root: string, change: string): Prom
     return numbered && task.id === String(index + 1) ? { id: numbered[1], description: numbered[2], done: task.done } : task;
   });
 }
+export async function readAssignmentTasks(root: string, change: string, ports: AssignmentPorts): Promise<readonly { readonly id: string; readonly description: string; readonly done: boolean }[]> {
+  return tasks(ports, root, change);
+}
 const errorText = (error: unknown) => error instanceof Error ? error.message : String(error);
 export async function validateAssignment(request: AssignmentRequest, ports: AssignmentPorts): Promise<AssignmentValidation> {
   const issues: AssignmentIssue[] = [];

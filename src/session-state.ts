@@ -95,6 +95,23 @@ export interface SessionState {
   completePending(id: string): void;
 }
 
+export function closeSessionInTransaction(tx: SessionTransaction, session: SessionRecord, finishedAt: string): void {
+  if (!Number.isFinite(Date.parse(finishedAt))) throw new Error('Invalid timestamp');
+  const copy = <T>(value: T): T => structuredClone(value);
+  const finished: SessionRecord = {
+    runId: session.runId,
+    addressId: session.addressId,
+    revision: session.revision + 1,
+    state: 'finished',
+    ...(session.process ? { process: copy(session.process) } : {}),
+    ...(session.result ? { result: { status: session.result.status, response: '', proof: null } } : {}),
+    ...(session.abortReason ? { abortReason: session.abortReason } : {}),
+    finishedAt,
+  };
+  tx.putSession(finished);
+  tx.deleteReservation(session.runId);
+}
+
 export function createSessionState(dependencies: SessionStateDependencies): SessionState {
   const { repository, verifyMainAuthority, verifyWorkResult } = dependencies;
   const copy = <T>(value: T): T => structuredClone(value);
@@ -114,16 +131,6 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
     if (!Number.isFinite(timestamp)) throw new Error('Invalid timestamp');
     return timestamp;
   };
-  const closed = (session: SessionRecord, finishedAt: string): SessionRecord => ({
-    runId: session.runId,
-    addressId: session.addressId,
-    revision: session.revision + 1,
-    state: 'finished',
-    ...(session.process ? { process: copy(session.process) } : {}),
-    ...(session.result ? { result: { status: session.result.status, response: '', proof: null } } : {}),
-    ...(session.abortReason ? { abortReason: session.abortReason } : {}),
-    finishedAt,
-  });
   return {
     reserveLaunch(addressId, runId, activity, admission) {
       if (addressId === 'main' || activity.type === 'main') throw new Error('Main must register an existing process');
@@ -148,8 +155,7 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
       return repository.transaction(tx => {
         const session = tx.getSession(runId);
         if (!session || session.state !== 'reserved') return false;
-        tx.putSession(closed({ ...session, abortReason: reason }, finishedAt));
-        tx.deleteReservation(runId);
+        closeSessionInTransaction(tx, { ...session, abortReason: reason }, finishedAt);
         return true;
       });
     },
@@ -196,8 +202,7 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
       return repository.transaction(tx => {
         const session = tx.getSession(runId);
         if (!session || session.revision !== expectedRevision || session.state !== 'exited') return false;
-        tx.putSession(closed(session, finishedAt));
-        tx.deleteReservation(runId);
+        closeSessionInTransaction(tx, session, finishedAt);
         apply(tx, effects);
         return true;
       });

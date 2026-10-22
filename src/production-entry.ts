@@ -1,17 +1,19 @@
 import { createServiceHandlers } from './service-entry.ts';
+import { createProductionServices } from './production-runtime.ts';
+import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
 import { openSecretsStore, SecretsStoreError } from './secrets-store.ts';
 import { importConductorSecrets, SecretsImportError } from './secrets-import.ts';
-import { readFileSync, accessSync, statSync, constants } from 'node:fs';
-import { isAbsolute, basename, delimiter, join } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { isAbsolute, basename, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import type { ExecutionResult, Handler } from './cli.ts';
 import type { CompiledCatalog } from './catalog.ts';
 import { runCli } from './bootstrap.ts';
-import { createAppRuntime, type AppRuntime, type RuntimeServices } from './app-runtime.ts';
+import { createAppRuntime, type AppRuntime } from './app-runtime.ts';
 import { openStateStore } from './state-store.ts';
-import { listModelAvailability, selectModel, type ModelCatalog } from './model-routing.ts';
+import { type ModelCatalog } from './model-routing.ts';
 import { commandFailure, failureContext } from './cli-contract.ts';
 
 export interface ProductionEntryOptions {
@@ -60,13 +62,6 @@ function readConfiguration(root: string): { models: ModelCatalog; commandTiming:
   return { models: models as unknown as ModelCatalog, commandTiming: { emaAlpha: settings.commandTiming.emaAlpha }, fileName: settings.state.fileName };
 }
 
-function executableAvailable(name: string): boolean {
-  return (process.env.PATH ?? '').split(delimiter).filter(isAbsolute).some(directory => {
-    try { const path = join(directory, name); accessSync(path, constants.X_OK); return statSync(path).isFile(); }
-    catch { return false; }
-  });
-}
-
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
   const now = options.now ?? (() => performance.now());
   const commandStartedAtMs = now();
@@ -75,16 +70,15 @@ export async function runProductionCli(argv: readonly string[], options: Product
   const handlers = new Proxy(Object.create(null) as Record<string, Handler>, {
     get(_target, name) {
       if (typeof name !== 'string') return undefined;
-      if (!['runner list', 'command stats', 'secrets import-conductor', 'service start', 'service status', 'service stop'].includes(name)) return unavailable;
+      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'runner enable', 'runner disable', 'runner list', 'command stats', 'secrets import-conductor', 'service start', 'service status', 'service stop'].includes(name)) return unavailable;
       return async (params: Record<string, unknown>) => {
         try {
           for (const key of ['orchestratorRoot', 'homeDirectory', 'artifactPath'] as const) if (!isAbsolute(options[key])) throw failure('INVALID_CONTEXT', `Absolute ${key} required`);
           const loaded = readConfiguration(options.orchestratorRoot);
           if (name.startsWith('service ')) {
-            if (name === 'service start' && options.serviceHostModulePath === undefined) throw failure('COMMAND_UNAVAILABLE', 'Service start requires an explicit host module exporting createServicePorts', 'service-entry');
             const settings = JSON.parse(readFileSync(join(options.orchestratorRoot, 'conf', 'raf.json'), 'utf8'));
             const services = createServiceHandlers({ orchestratorRoot: options.orchestratorRoot, homeDirectory: options.homeDirectory,
-              service: settings.service, hostModulePath: options.serviceHostModulePath });
+              service: settings.service, hostModulePath: options.serviceHostModulePath ?? fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)) });
             return await services.handlers[name as keyof typeof services.handlers](params);
           }
           const importSecrets: Handler = async params => {
@@ -105,18 +99,12 @@ export async function runProductionCli(argv: readonly string[], options: Product
           const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
           const context = { orchestratorRoot: options.orchestratorRoot, confRoot: join(options.orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
             statePath: join(options.homeDirectory, '.raf', loaded.fileName), tmpRoot: join(options.homeDirectory, '.raf', 'tmp'),
-            mode: 'production' as const, commandStartedAtMs, resolveCaller: async () => unavailable() };
+            mode: 'production' as const, commandStartedAtMs, resolveCaller: async () => undefined };
           runtime = createAppRuntime(context, {
             additionalHandlers: { 'secrets import-conductor': importSecrets },
             now, loadConfiguration: async () => ({ catalog, models: loaded.models, commandTiming: loaded.commandTiming }),
             openStore: async path => openStateStore(path), nextRunIdentity: () => ({ runId: randomUUID(), tmuxSession: randomUUID() }),
-            createServices: async () => ({
-              assignment: { validate: unavailable, compose: unavailable }, resolveTask: unavailable, route: unavailable,
-              routingSnapshot: async () => ({ runnerEnabled: {}, quotas: [], cliAvailable: Object.fromEntries(loaded.models.runners.map(runner => [runner.id, executableAvailable(runner.id)])) }),
-              selectModel, listModels: listModelAvailability, prepareReport: unavailable, reserve: unavailable,
-              adapter: { start: unavailable }, verifyStarted: unavailable, commitStarted: unavailable, compensate: unavailable, abortLaunch: unavailable,
-              control: { ps: unavailable, update: unavailable, message: unavailable, close: unavailable, interrupt: unavailable }, authorizeMain: unavailable,
-            } satisfies RuntimeServices),
+            createServices: createProductionServices,
           });
           const result = await runtime.handlers[name](params);
           await runtime.close();

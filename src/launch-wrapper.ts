@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
-import { createServer, type Socket } from 'node:net';
+import { createServer, createConnection, type Socket } from 'node:net';
+import { randomUUID } from 'node:crypto';
 import { isAbsolute, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createAgentReportWatcher } from './agent-report.ts';
@@ -104,6 +105,7 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
     ended = true;
     await watcher.finish(exit);
     await ports.lifecycle.finish(handshake, exit);
+    await watcher.dispose();
   } catch (error) {
     let recoverable = attempted;
     if (recoverable && !ended) {
@@ -130,13 +132,17 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
   await fs.chmod(directory, 0o700);
   const socketPath = join(directory, 'h.sock');
   const requestPath = join(directory, 'request.json');
+  const nonce = randomUUID();
   const sockets = new Set<Socket>();
   const server = createServer();
   let child: ReturnType<typeof spawn> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let settled = false;
+  const logPath = join(directory, 'worker.log');
+  const log = await fs.open(logPath, 'wx', 0o600);
   try {
     await fs.writeFile(requestPath, JSON.stringify(request), { mode: 0o600, flag: 'wx' });
+    await fs.writeFile(requestPath + '.peer', JSON.stringify({ parentPid: process.pid, nonce }), { mode: 0o600, flag: 'wx' });
     await new Promise<void>((resolve, reject) => {
       server.once('error', reject);
       server.listen(socketPath, () => { server.off('error', reject); resolve(); });
@@ -146,7 +152,7 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
       const fail = (error: unknown) => {
         if (settled) return;
         settled = true;
-        reject(new Error(`Wrapper launch ${request.runId} failed: ${String(error)}; verify runner readiness and recover this run before retrying`));
+        void fs.readFile(logPath, 'utf8').catch(() => '').then(output => reject(new Error(`Wrapper launch ${request.runId} failed: ${String(error)}${output.trim() ? `; worker: ${output.slice(-4096).trim()}` : ''}; verify runner readiness and recover this run before retrying`)));
       };
       server.on('error', fail);
       server.on('connection', socket => {
@@ -160,7 +166,8 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
           const end = buffer.indexOf('\n');
           if (end < 0) return;
           try {
-            const handshake = JSON.parse(buffer.slice(0, end)) as LaunchHandshake;
+            const handshake = JSON.parse(buffer.slice(0, end)) as LaunchHandshake & { wrapperPeer?: { pid: number; nonce: string } };
+            if (handshake.wrapperPeer && (handshake.wrapperPeer.pid !== child?.pid || handshake.wrapperPeer.nonce !== nonce)) throw new Error('Wrapper handshake peer mismatch');
             if (handshake.runId !== request.runId || handshake.address !== request.address || handshake.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !validIdentity(handshake.identity, request)) throw new Error('Handshake does not match the requested run, report path or verified runner identity');
             process.kill(handshake.identity.pid, 0);
             if (!child?.pid || child.exitCode !== null || child.signalCode !== null) throw new Error('Wrapper exited before handshake');
@@ -173,7 +180,7 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
       child = spawn(command.executable, [...command.args], {
         cwd: command.cwd ?? request.cwd,
         detached: true,
-        stdio: [command.stdin === undefined ? 'ignore' : 'pipe', 'ignore', 'ignore'],
+        stdio: [command.stdin === undefined ? 'ignore' : 'pipe', log.fd, log.fd],
         env: { ...process.env, RAF_WRAPPER_REQUEST_PATH: requestPath, RAF_WRAPPER_HANDSHAKE_SOCKET: socketPath },
       });
       child.once('error', fail);
@@ -189,6 +196,31 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
     if (timer) clearTimeout(timer);
     for (const socket of sockets) socket.destroy();
     await new Promise<void>(resolve => server.close(() => resolve()));
+    await log.close();
     await fs.rm(directory, { recursive: true, force: true });
   }
+}
+
+export async function consumeWrapperRequest(): Promise<{ request: LaunchWrapperRequest; handshake(handshake: LaunchHandshake): Promise<void> }> {
+  const requestPath = process.env.RAF_WRAPPER_REQUEST_PATH;
+  const socketPath = process.env.RAF_WRAPPER_HANDSHAKE_SOCKET;
+  if (!requestPath || !socketPath || !isAbsolute(requestPath) || !isAbsolute(socketPath) || join(requestPath, '..') !== join(socketPath, '..')) throw new Error('Private wrapper request and handshake socket required');
+  const [requestStat, socketStat, directoryStat] = await Promise.all([fs.lstat(requestPath), fs.lstat(socketPath), fs.lstat(join(requestPath, '..'))]);
+  if (!requestStat.isFile() || !socketStat.isSocket() || !directoryStat.isDirectory() || [requestStat, socketStat, directoryStat].some(stat => stat.uid !== process.getuid?.() || (stat.mode & 0o077) !== 0)) throw new Error('Wrapper IPC must be private and owned by the current user');
+  const value = JSON.parse(await fs.readFile(requestPath, 'utf8'));
+  const peerPath = requestPath + '.peer';
+  const peerStat = await fs.lstat(peerPath);
+  if (!peerStat.isFile() || peerStat.uid !== process.getuid?.() || (peerStat.mode & 0o077) !== 0) throw new Error('Wrapper bootstrap peer must be private');
+  const peer = JSON.parse(await fs.readFile(peerPath, 'utf8'));
+  if (!peer || peer.parentPid !== process.ppid || typeof peer.nonce !== 'string' || !peer.nonce) throw new Error('Wrapper bootstrap does not belong to this parent invocation');
+  const request = value as LaunchWrapperRequest;
+  if (!isAbsolute(request.statePath) || !isAbsolute(request.cwd) || !isAbsolute(request.tmpRoot) || !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(request.runId) || !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(request.address) || !/^[A-Za-z0-9_-]+$/.test(request.tmuxSession) || !request.assignment || !request.selection || typeof request.brief !== 'string' || !request.brief.trim() || !Number.isFinite(request.readinessTimeoutMs) || request.readinessTimeoutMs <= 0) throw new Error('Invalid wrapper request');
+  const socket = createConnection(socketPath);
+  await new Promise<void>((resolve, reject) => { socket.once('connect', resolve); socket.once('error', reject); });
+  let sent = false;
+  return { request, handshake: async handshake => {
+    if (sent || handshake.runId !== request.runId || handshake.address !== request.address || !validIdentity(handshake.identity, request)) throw new Error('Invalid or duplicate worker handshake');
+    sent = true;
+    await new Promise<void>((resolve, reject) => { socket.once('error', reject); socket.end(JSON.stringify({ ...handshake, wrapperPeer: { pid: process.pid, nonce: peer.nonce } }) + '\n', () => resolve()); });
+  } };
 }

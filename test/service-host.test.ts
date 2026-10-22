@@ -213,9 +213,14 @@ test('shutdown cancels monitors and waiters without closing agents or unfinished
   assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession('existing'))?.state, 'running');
 });
 
-test('absent required OS and delivery ports fail explicitly before readiness', async t => {
+test('default production ports recover and shut down while incomplete explicit dependencies are rejected', async t => {
   const f = await fixture(t);
-  await assert.rejects(createServicePorts(f.context), /dependenc|port|delivery|оброб|порт/i);
+  const ports = await createServicePorts(f.context);
+  try {
+    await ports.recover();
+    assert.deepEqual(await ports.handle({ operation: 'reminder.list', payload: {} }, { clientId: 'default-host', signal: new AbortController().signal }), []);
+  } finally { await ports.shutdown(); }
+  await assert.rejects(createServicePorts(f.context, {} as ServiceHostDependencies), /dependenc|port|delivery|оброб|порт/i);
 });
 
 test('missing configured host cadence is rejected instead of introducing a hidden default', async t => {

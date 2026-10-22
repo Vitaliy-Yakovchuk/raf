@@ -200,6 +200,20 @@ export interface NoticeView {
   readonly noticedAt: string | null;
 }
 
+export interface NoticeCandidate {
+  readonly noticeKey: string;
+  readonly kind: NoticeKind;
+  readonly commentServerId: string | null;
+}
+
+export function noticeKey(kind: NoticeKind, problemId: string, commentServerId: string | null): string {
+  throw new Error('NotImplemented: noticeKey');
+}
+
+export function noticeCandidates(knownCommentIds: ReadonlySet<string> | null, detail: ServerBugDetail): readonly NoticeCandidate[] {
+  throw new Error('NotImplemented: noticeCandidates');
+}
+
 export interface WrittenBugHeader {
   readonly key: ServerBugKey;
   readonly problemId: string;

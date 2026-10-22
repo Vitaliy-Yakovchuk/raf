@@ -23,7 +23,7 @@ export function loadEventCatalog(orchestratorRoot: string): EventCatalog {
 
 export function validateEventObjectId(idKind: string, id: string): boolean {
   if (typeof id !== 'string' || !id.trim() || id !== id.trim() || /[\s/\\\0]/.test(id)) return false;
-  if (idKind === 'agentAddress' || idKind === 'reminderId') return /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(id);
+  if (idKind === 'agentAddress' || idKind === 'reminderId' || idKind === 'contextReviewId') return /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(id);
   if (idKind === 'changeId') return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id);
   return idKind === 'deploymentId';
 }

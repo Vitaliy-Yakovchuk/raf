@@ -30,6 +30,7 @@ export interface AgentControlDependencies {
   reminders: { sessionEnded(input: SessionEnd): SessionCloseCheck };
   projects: readonly string[];
   agentTypes: readonly string[];
+  agentPhases?: readonly string[];
 }
 export type MessageRequest = { to: string; text: string; runId?: string };
 export type MainAttachment = {
@@ -149,7 +150,7 @@ export class AgentControlService {
     if (!Array.isArray(update.features) || !update.features.length || update.features.some(feature => typeof feature !== 'string' || !feature.trim())) {
       throw new Error('Nonempty features are required');
     }
-    if (!this.dependencies.agentTypes.includes(update.phase)) throw new Error('Unknown phase');
+    if (!(this.dependencies.agentPhases ?? this.dependencies.agentTypes).includes(update.phase)) throw new Error('Unknown phase');
     const session = await this.live(id);
     if (!session.activity) throw new Error('Session activity is missing');
     const activity = { project: update.project, features: [...update.features], phase: update.phase };

@@ -111,8 +111,14 @@ const explicitPaths = (text: string) => [...text.matchAll(/(?<![A-Za-z0-9._\/-])
 const workspaceReadOnlyTypes = new Set(['spec', 'design']);
 const coordinatingTypes = new Set(['coordinator', 'main']);
 
-export function rafCommandFor(type: string): string | null {
-  return coordinatingTypes.has(type) ? `node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}` : null;
+const executorRafSubcommands: readonly string[] = Object.freeze(['agent message', 'agent ps']);
+
+export function rafCommandFor(): string {
+  return `node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}`;
+}
+
+export function rafSubcommandsFor(type: string): readonly string[] | null {
+  return coordinatingTypes.has(type) ? null : executorRafSubcommands;
 }
 
 export async function loadTaskContextConfiguration(confRoot: string): Promise<TaskContextConfiguration> {

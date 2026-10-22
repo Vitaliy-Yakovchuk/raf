@@ -163,7 +163,7 @@ test('brief composes selected runner, stage, completion, exact immutable assignm
   assert.deepEqual([...h.reads].sort(), [...h.files.keys()].sort());
 });
 
-test('coordinating brief names the exact raf command to run as one simple call; other briefs omit it', async () => {
+test('coordinating brief names the exact raf command to run as one simple call; executor briefs limit it to message and ps', async () => {
   const h = harness();
   const snapshot = await initial(h);
   installBriefs(h);
@@ -173,6 +173,13 @@ test('coordinating brief names the exact raf command to run as one simple call; 
   const assignment = JSON.parse(output.slice(output.indexOf('{', output.indexOf('# Конкретне доручення'))));
   assert.equal(assignment.raf_command, 'node /srv/raf-main/bin/raf.ts');
   assert.match(output, /raf_command[^\n]*простою командою/);
+  assert.equal('raf_subcommands' in assignment, false);
+  const scoped = await composeAssignmentBrief(snapshot, { ...brief, stage: 'implement', rafCommand: 'node /srv/raf-main/bin/raf.ts', rafSubcommands: ['agent message', 'agent ps'] }, h.ports.fs);
+  const executor = JSON.parse(scoped.slice(scoped.indexOf('{', scoped.indexOf('# Конкретне доручення'))));
+  assert.equal(executor.raf_command, 'node /srv/raf-main/bin/raf.ts');
+  assert.deepEqual(executor.raf_subcommands, ['agent message', 'agent ps']);
+  assert.match(scoped, /raf_command agent message[^\n]*raf_command agent ps[^\n]*простою командою/);
+  assert.equal(/raf_command agent run/.test(scoped), false);
 });
 
 test('runner switch preserves stage and assignments while replacing runner template', async () => {

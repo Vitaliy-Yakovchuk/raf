@@ -185,7 +185,7 @@ test('[claude-delivery-qa] native claude protocol launches with assigned session
 
 const sandboxOf = (argv: string[]) => JSON.parse(argv[argv.indexOf('--settings') + 1]);
 
-test('[claude-delivery-qa] executor launch edits its workspace by a path-scoped rule and reaches only a private tmux directory', async t => {
+test('[claude-delivery-qa] executor launch edits its workspace by a path-scoped rule, reaches only a private tmux directory and runs only raf message and ps outside its sandbox', async t => {
   const f = await claudeFixture(t, 'accepted');
   await f.launch();
   const argv: string[] = JSON.parse(await readFile(f.argvPath, 'utf8'));
@@ -201,7 +201,8 @@ test('[claude-delivery-qa] executor launch edits its workspace by a path-scoped 
   assert.deepEqual(settings.sandbox.filesystem.allowRead, [report]);
   assert.deepEqual(settings.env, { TMUX_TMPDIR: report, TMUX: '' });
   assert.equal(settings.sandbox.allowUnsandboxedCommands, false);
-  assert.equal('excludedCommands' in settings.sandbox, false, 'an executor never runs raf outside its sandbox');
+  const raf = `node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}`;
+  assert.deepEqual(settings.sandbox.excludedCommands, [`${raf} agent message:*`, `${raf} agent ps:*`], 'an executor runs only raf message and ps outside its sandbox');
 });
 
 test('[claude-delivery-qa] coordinator launch runs only the exact raf command of this checkout outside its sandbox', async t => {

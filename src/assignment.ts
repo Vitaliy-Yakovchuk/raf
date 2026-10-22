@@ -41,6 +41,7 @@ export interface AssignmentBriefContext {
   readonly reportPath: string;
   readonly reportSchema: Readonly<Record<string, unknown>>;
   readonly rafCommand?: string;
+  readonly rafSubcommands?: readonly string[];
 }
 export interface AssignmentVerification { readonly ok: boolean; readonly issues: readonly AssignmentIssue[]; }
 type Task = { id: string; description: string; done: boolean };
@@ -106,8 +107,11 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
   if (!safeName(context.runner) || !safeName(context.stage)) throw new Error('Invalid runner or stage template name');
   if (!isAbsolute(context.reportPath) || basename(context.reportPath) !== `${context.sessionName}.json`) throw new Error('report_path must be absolute and use <sessionName>.json');
   const templates = await Promise.all([fs.readText(join(context.briefsRoot, 'runners', `${context.runner}.md`)), fs.readText(join(context.briefsRoot, 'tasks', `${context.stage}.md`)), fs.readText(join(context.briefsRoot, 'completion.md'))]);
-  const assignment = { project: context.project, agent_id: context.agentId, session_name: context.sessionName, root: snapshot.root, features: context.features, phase: context.phase, outcome: context.outcome, write_boundaries: context.writeBoundaries, sources: context.sources, assignments: snapshot.changes, report_path: context.reportPath, report_schema: context.reportSchema, ...(context.rafCommand ? { raf_command: context.rafCommand } : {}) };
-  const raf = context.rafCommand ? ' Команди raf виконуй через raf_command окремою простою командою (`raf_command agent run …`), без cd, конвеєрів, підстановок і змінних перед нею: лише така команда виконується поза пісочницею й має доступ до стану raf.' : '';
+  const assignment = { project: context.project, agent_id: context.agentId, session_name: context.sessionName, root: snapshot.root, features: context.features, phase: context.phase, outcome: context.outcome, write_boundaries: context.writeBoundaries, sources: context.sources, assignments: snapshot.changes, report_path: context.reportPath, report_schema: context.reportSchema, ...(context.rafCommand ? { raf_command: context.rafCommand, ...(context.rafSubcommands ? { raf_subcommands: [...context.rafSubcommands] } : {}) } : {}) };
+  const simple = 'окремою простою командою, без cd, конвеєрів, підстановок і змінних перед нею';
+  const raf = !context.rafCommand ? ''
+    : context.rafSubcommands ? ` Для узгодження з іншими виконавцями виконуй лише ${context.rafSubcommands.map(subcommand => `\`raf_command ${subcommand} …\``).join(' і ')} ${simple}: лише такі команди виконуються поза пісочницею й мають доступ до стану raf; інших команд raf не виконуй.`
+    : ` Команди raf виконуй через raf_command ${simple} (\`raf_command agent run …\`): лише така команда виконується поза пісочницею й має доступ до стану raf.`;
   return [...templates, '# Конкретне доручення\n\nПрацюй лише над дорученими пунктами. Відповідай власнику українською. Веди правдиві галочки й запиши JSON за report_path та report_schema.' + raf + '\n\n' + JSON.stringify(assignment, null, 2)].join('\n\n');
 }
 export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, ports: AssignmentPorts, archiveClaims: Readonly<Record<string, string>> = {}): Promise<AssignmentVerification> {

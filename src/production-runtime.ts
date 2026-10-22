@@ -21,7 +21,7 @@ import { evaluateResourceAdmission } from './resource-admission.ts';
 import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
 import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership, type PersistentWrapperFailure } from './launch-wrapper.ts';
 import { commandFailure } from './cli-contract.ts';
-import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile, rafCommandFor } from './task-context.ts';
+import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile, rafCommandFor, rafSubcommandsFor } from './task-context.ts';
 import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
 import type { ReminderSessionEffect } from './reminder-repository.ts';
 import { collectRunnerQuotas, readQuotaViews, type CollectionError, type CollectionLock, type CollectionResult, type CurrentQuota, type ProbeTransport, type QuotaCurrentStore } from './quota-collection.ts';
@@ -135,10 +135,11 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
   const workspace = await fs.realpath(cwd);
   const within = (root: string, path: string) => { const suffix = relative(root, path); return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`); };
   if (within(state, workspace) || within(temporary, workspace)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Runner workspace lies inside the RAF state directory hidden from its sandbox');
-  const command = type === undefined ? null : rafCommandFor(type);
+  const command = rafCommandFor();
+  const subcommands = type === undefined ? [] : rafSubcommandsFor(type);
   return {
     hidden: ['/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', state, ...(within(state, temporary) ? [] : [temporary])],
-    readable: [report], tmuxDirectory: report, excludedCommands: command ? [`${command}:*`] : [],
+    readable: [report], tmuxDirectory: report, excludedCommands: subcommands === null ? [`${command}:*`] : subcommands.map(subcommand => `${command} ${subcommand}:*`),
   };
 }
 function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot'>, override?: AdapterCommandExecutor): AdapterCommandExecutor {
@@ -319,10 +320,13 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     }
     return fail('CALLER_UNVERIFIED', 'Current process ancestry has no verified registered agent or attached main pane');
   };
-  const authorize = async (id: string, caller: unknown) => {
+  const authorize = async (id: string, caller: unknown, delegated = false) => {
     const sender = await resolve(caller);
     const session = current(sender.kind === 'agent' ? sender.runId : '');
-    if (!session || (session.addressId !== id && session.addressId !== 'main')) fail('CALLER_UNAUTHORIZED', `Caller is not authorized for ${id}`);
+    if (session && (session.addressId === id || session.addressId === 'main')) return;
+    const child = (target: SessionRecord) => target.addressId === id && target.delegatedBy?.runId === session?.runId && target.delegatedBy.addressId === session?.addressId;
+    if (session && delegated && id !== 'main' && state.listReconciliationCandidates().some(child)) return;
+    fail('CALLER_UNAUTHORIZED', `Caller is not authorized for ${id}`);
   };
   const types = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'type')?.values?.map(row => row.id) ?? [];
   const projects = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'project')?.values?.map(row => row.id) ?? [];
@@ -696,8 +700,8 @@ export async function createProductionServices(
       ps: async () => { const sessions = await tools.control.ps(); if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained'); return sessions; },
       update: async (id, patch, caller) => { await tools.authorize(id, caller); const session = tools.state.listReconciliationCandidates().find(session => session.addressId === id); if (!session?.activity) fail('SESSION_UNAVAILABLE', 'Session activity unavailable'); return tools.control.update(id, { ...session.activity, ...patch }); },
       message: (input, caller) => tools.control.message(input, caller),
-      close: async (id, caller) => { await tools.authorize(id, caller); return tools.control.close(id); },
-      interrupt: async (id, caller) => { await tools.authorize(id, caller); return tools.control.interrupt(id); },
+      close: async (id, caller) => { await tools.authorize(id, caller, true); return tools.control.close(id); },
+      interrupt: async (id, caller) => { await tools.authorize(id, caller, true); return tools.control.interrupt(id); },
       attachMain: tools.attachMain,
     },
     authorizeMain: async caller => { await tools.authorize('main', caller); },

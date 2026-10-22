@@ -42,6 +42,7 @@ export interface AssignmentBriefContext {
   readonly reportSchema: Readonly<Record<string, unknown>>;
   readonly rafCommand?: string;
   readonly rafSubcommands?: readonly string[];
+  readonly commitOwnWork?: boolean;
 }
 export interface AssignmentVerification { readonly ok: boolean; readonly issues: readonly AssignmentIssue[]; }
 type Task = { id: string; description: string; done: boolean };

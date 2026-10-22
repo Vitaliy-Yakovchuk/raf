@@ -31,6 +31,8 @@ import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
 import { settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
 import { readPendingAgentReport } from './agent-report.ts';
+import { finalizeStartupContextRun, reserveStartupContextReview, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
+import { startupContextRuntimeFiles, startupContextAcceptedReport } from './startup-context-runtime.ts';
 import { prepareCodexRafCommandAccess, type PreparedCodexRafCommandAccess } from './codex-raf-command-access.ts';
 
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
@@ -297,7 +299,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       diagnostic: async (reason, verification) => { process.stderr.write(`${session.runId}: ${reason}${verification ? `: ${JSON.stringify(verification)}` : ''}\n`); },
     });
     if (result) {
-      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at } };
+      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context } };
       verified.set(value, session.runId);
       state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [] });
     }
@@ -311,33 +313,42 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const finalize = async (session: SessionRecord, rows: readonly ActivityEvent[]) => {
     const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
     if (wrapper && wrapper.pid !== process.pid) { const observed = (await observeProcesses([wrapper], { execute }))[0]; if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId} before recovery finalization`); }
-    session = await acceptPendingReport(session);
-    if (session.state === 'finished') return session;
-    const at = now();
-    const effect: ReminderSessionEffect = { id: `${session.runId}:reminders:session-ended`, domain: 'reminders', payload: { operation: 'session-ended', runId: session.runId, at, end: { address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: true } } };
-    const pending = intents(rows);
-    if (!session.result) {
-      const result: WorkResult = { status: 'failed', response: NO_REPORT_REASON, proof: { runId: session.runId, at } };
-      verified.set(result, session.runId);
-      state.acceptWorkResult(session.runId, result, { pending: [{ id: `${session.runId}:agent.failed`, runId: session.runId, event: 'agent.failed', payload: { kind: 'agent.failed', id: session.addressId } }], domain: [] });
-      session = current(session.runId)!;
-    }
-    const lease = listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.lease;
-    if (lease) {
-      const released = await releaseTaskReservations(await reservationTools(store, context, execute, identityExecute), { lease, reason: session.result?.status === 'succeeded' ? 'succeeded' : 'failed', closeLaunch: tx => {
-        const row = tx.getSession(session.runId);
-        if (!row || row.state !== 'exited') throw new Error('Session changed before final closure');
-        closeSessionInTransaction(tx, row, at);
-        tx.applyEffects([effect]);
-        for (const intent of pending) tx.putPending(intent);
-      } });
-      if (!released) fail('LAUNCH_RECOVERABLE', 'Task reservation cannot be released before verified process exit');
-    } else state.finalizeSession(session.runId, session.revision, at, { pending, domain: [effect] });
+    const finished = await finalizeStartupContextRun(session.runId, {
+      ...startupContextRuntimeFiles(context.tmpRoot, dirname(dirname(context.statePath))), database: store.startupContextDatabase,
+      flowPath: join(context.confRoot, 'flow.json'), mainAddress: 'main', now,
+      sessions: {
+        get: current,
+        acceptReport: async row => startupContextAcceptedReport(await acceptPendingReport(row), context.tmpRoot, now),
+        cleanupCompleted: at => state.cleanupCompleted(at),
+        finish: async (row, at, startupPending) => {
+          session = row;
+          if (!session.result) {
+            const result: WorkResult = { status: 'failed', response: NO_REPORT_REASON, proof: { runId: session.runId, at } };
+            verified.set(result, session.runId);
+            state.acceptWorkResult(session.runId, result, { pending: [{ id: `${session.runId}:agent.failed`, runId: session.runId, event: 'agent.failed', payload: { kind: 'agent.failed', id: session.addressId } }], domain: [] });
+            session = current(session.runId)!;
+          }
+          const effect: ReminderSessionEffect = { id: `${session.runId}:reminders:session-ended`, domain: 'reminders', payload: { operation: 'session-ended', runId: session.runId, at, end: { address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: true } } };
+          const pending = [...intents(rows), ...startupPending];
+          const lease = listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.lease;
+          if (lease) {
+            const released = await releaseTaskReservations(await reservationTools(store, context, execute, identityExecute), { lease, reason: session.result?.status === 'succeeded' ? 'succeeded' : 'failed', closeLaunch: tx => {
+              const row = tx.getSession(session.runId);
+              if (!row || row.state !== 'exited') throw new Error('Session changed before final closure');
+              closeSessionInTransaction(tx, row, at);
+              tx.applyEffects([effect]);
+              for (const intent of pending) tx.putPending(intent);
+            } });
+            if (!released) fail('LAUNCH_RECOVERABLE', 'Task reservation cannot be released before verified process exit');
+          } else state.finalizeSession(session.runId, session.revision, at, { pending, domain: [effect] });
+          return current(session.runId)!;
+        },
+      },
+    });
     await deliverResults();
-    const directory = reportDirectory(session);
-    if (current(session.runId)?.state === 'finished' && directory) await fs.rm(directory, { recursive: true, force: true });
-    return current(session.runId)!;
+    return finished;
   };
+
   const launch = createLaunchState({ repository: store.sessionRepository, measure: async () => { throw new Error('Measurements must precede atomic reserve'); }, evaluateAdmission: evaluateResourceAdmission });
   const resolve = async (caller: unknown): Promise<VerifiedSender> => {
     if (caller === rafSystemCaller) return { kind: 'system' };
@@ -413,10 +424,20 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       },
     },
   });
-  const deliverResults = () => settleResultNotices({ store, now: Date.now, deliver: (request, sender) => {
-    if (sender.kind !== 'system') throw new Error('Result notices require a system sender');
-    return control.message(request, rafSystemCaller);
-  } });
+  const deliverResults = async () => {
+    for (const intent of state.listPending().filter(row => row.event === 'context-review.due' && !(row.payload as any).mainDelivered)) {
+      const payload = intent.payload as { to: string; id: string; runIds: string[] };
+      try {
+        const receipt = await control.message({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, rafSystemCaller);
+        if (receipt.accepted) store.sessionRepository.transaction(tx => { tx.deletePending(intent.id); tx.putPending({ ...intent, payload: { ...payload, kind: intent.event, id: intent.id, mainDelivered: true } }); });
+      } catch {}
+    }
+    cleanupStartupContextCompleted(now(), { database: store.startupContextDatabase, flowPath: join(context.confRoot, 'flow.json'), sessions: state });
+    return settleResultNotices({ store, now: Date.now, deliver: (request, sender) => {
+      if (sender.kind !== 'system') throw new Error('Result notices require a system sender');
+      return control.message(request, rafSystemCaller);
+    } });
+  };
   const attachMain = async (): Promise<MainAttachment> => {
     const identity = await callerPane(execute, direct);
     const authority = {};
@@ -548,7 +569,7 @@ async function reservationTools(store: StateStore, context: RuntimeContext, exec
   const projects = await json(join(context.confRoot, 'projects.json'));
   const roots = Object.fromEntries(Object.keys(projects.projects).map(project => [project, context.orchestratorRoot]));
   const identity = createAssignmentIdentityAdapter(roots, identityExecute ? { execute: identityExecute } : {});
-  return { store, currentBoot: () => bootIdentity(execute), observe: async identity => (await observeProcesses([identity], { execute }))[0], resolveTasks: identity.resolveTasks, newFence: randomUUID };
+  return { store, deferAbandonedFinalization: true, currentBoot: () => bootIdentity(execute), observe: async identity => (await observeProcesses([identity], { execute }))[0], resolveTasks: identity.resolveTasks, newFence: randomUUID };
 }
 
 export async function createProductionServices(
@@ -674,11 +695,15 @@ export async function createProductionServices(
           }
           const result = reserveLaunchInTransaction(tx, request, measured, evaluateResourceAdmission);
           if (!result.reserved) { admissionReason = result.admission.reasons.join('; '); throw new Error('RESOURCE_UNAVAILABLE'); }
+          if (input.activity.phase === 'context-review') {
+            const review = reserveStartupContextReview({ runId: input.runId, phase: 'context-review', brief: '' }, { database: store.startupContextDatabase });
+            tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
+          }
           const launcher = caller ? tx.getSession(caller) : undefined;
           const launchedBy = launcher?.state === 'running' && launcher.activity?.type === 'coordinator'
             ? { addressId: launcher.addressId, runId: launcher.runId } : undefined;
-          if (!launchedBy && !input.notify) return result.session;
-          const session = { ...result.session, revision: result.session.revision + 1,
+          if (!launchedBy && !input.notify) return tx.getSession(input.runId)!;
+          const session = { ...tx.getSession(input.runId)!, revision: result.session.revision + 1,
             ...(launchedBy ? { launchedBy } : {}), ...(input.notify ? { notify: input.notify } : {}) };
           tx.putSession(session);
           return session;
@@ -693,6 +718,7 @@ export async function createProductionServices(
       if (!record || !isDeepStrictEqual({ runner: record.launch.selection.runner, model: record.launch.selection.model, effort: record.launch.selection.effort }, selection) || request.cwd !== record.launch.activity.cwd) fail('INVALID_CONTEXT', 'Unprepared worker launch');
       const session = readSession(record.launch.runId);
       if (session?.state !== 'reserved' || !leaseFor(record.launch.runId)) fail('TASK_CLAIM_REQUIRED', 'Durable launch and task claims required before spawn');
+      if (session.launchContext?.contextReview) request = { ...request, brief: request.brief + session.launchContext.contextReview.brief };
       const settings = protocolFor(await protocols(context.confRoot, options.protocolSettings), request.selection.runner);
       const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
       if (!availability.available) return fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
@@ -1043,7 +1069,7 @@ export async function runProductionWorker(
     const launched = runLaunchWrapper(request, {
       transport,
       report: {
-        fs: { mkdir: async path => { await fs.mkdir(path, { recursive: true, mode: 0o700 }); }, readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, removeTree: path => fs.rm(path, { recursive: true, force: true }) },
+        fs: { mkdir: async path => { await fs.mkdir(path, { recursive: true, mode: 0o700 }); }, readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, removeTree: async () => {} },
         watch: (directory, listener) => { const watcher = watch(directory, (event, filename) => { if (filename) void listener(event === 'rename' ? 'rename' : 'modify', filename.toString()).catch(error => process.emitWarning(error)); }); watcher.on('error', error => process.stderr.write(`${request.runId}: Report watcher error: ${String(error)}\n`)); return () => watcher.close(); },
         now,
         verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
@@ -1059,7 +1085,7 @@ export async function runProductionWorker(
             const verification = await verifyAssignmentCompletion(request.assignment, assignments, Object.fromEntries(result.report.changes.filter(change => change.archive).map(change => [change.id, change.archive!])));
             if (!verification.ok) fail('REPORT_UNVERIFIED', 'OpenSpec completion changed before result acceptance');
           }
-          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at } };
+          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context } };
           tools.verified.set(value, request.runId);
           const accepted = tools.state.acceptWorkResult(request.runId, value, { pending: [{ id: `${request.runId}:${result.event}`, runId: request.runId, event: result.event, payload: { kind: result.event, id: request.address } }], domain: [] });
           if (!accepted && !tools.current(request.runId)?.result) fail('REPORT_UNVERIFIED', 'Result could not be durably accepted for the running session');

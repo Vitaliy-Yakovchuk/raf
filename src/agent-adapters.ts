@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { startupContextRunnerEnvironment } from './startup-context-journal.ts';
 import type { LaunchOwnership, LaunchWrapperPorts } from './launch-wrapper.ts';
 
 export type AgentRunner = 'codex' | 'grok' | 'agy' | 'claude';
@@ -146,6 +147,8 @@ export class TmuxAgentAdapter {
     } else if (invocation.length === 1) {
       invocation = ['sh', '-c', 'exec "$@"', 'raf-adapter', ...invocation];
     }
+    const environment = startupContextRunnerEnvironment(request.selection.runner, {});
+    if (environment.CLAUDE_CODE_FORCE_SESSION_PERSISTENCE) invocation = ['env', 'CLAUDE_CODE_FORCE_SESSION_PERSISTENCE=1', ...invocation];
     const session: AdapterSession = { tmuxSession: request.tmuxSession, selection: { ...request.selection } };
     await this.tmux([
       'new-session', '-d', '-s', request.tmuxSession, '-c', command.cwd ?? request.cwd, 'sh', '-c', 'read -r _',

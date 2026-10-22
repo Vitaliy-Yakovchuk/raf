@@ -38,6 +38,7 @@ export type DomainEffect = { id: string; domain: string; payload: unknown };
 export type TransitionEffects = { pending: readonly PendingIntent[]; domain: readonly DomainEffect[] };
 
 export type SessionLaunchContext = {
+  contextReview?: { contextReviewId: string; runIds: readonly string[]; brief: string };
   wrapper?: ProcessIdentity;
   assignment: AssignmentSnapshot;
   selection: { runner: string; model: string; effort: string; reason: string };

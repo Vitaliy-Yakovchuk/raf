@@ -7,6 +7,7 @@ import { ReminderService, type Reminder, type ReminderRepository, type ReminderT
 import type { ReminderSessionEffect } from "./reminder-repository.ts";
 import type { SessionRepository, SessionTransaction, SessionRecord, PendingIntent, AdmissionReservation } from "./session-state.ts";
 import { createResultNotice, type ResultNotice } from './launcher-notice.ts';
+import { settleStartupContextReview } from './startup-context.ts';
 
 export type RunnerInitialState = { id: string; initialEnabled: boolean };
 
@@ -38,6 +39,7 @@ export function reminderDeliveryKey(reminder: Pick<Reminder, 'assignedTo' | 'tex
 }
 
 export interface StateStore {
+  readonly startupContextDatabase: DatabaseSync;
   resultNotices: {
     list(): ResultNotice[];
     claim(id: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): ResultNotice | undefined;
@@ -373,6 +375,7 @@ export function openStateStore(path: string): StateStore {
       }),
       listSessions: () => access(() => db.prepare("SELECT payload FROM sessions").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
       putSession: session => access(() => {
+        if (session.state === 'finished') settleStartupContextReview(db, { reviewRunId: session.runId, status: session.result?.status ?? 'failed', finishedAt: session.finishedAt! });
         db.prepare(`INSERT INTO sessions(run_id, address_id, state, finished_at, payload) VALUES (?, ?, ?, ?, ?)
           ON CONFLICT(run_id) DO UPDATE SET address_id = excluded.address_id, state = excluded.state,
           finished_at = excluded.finished_at, payload = excluded.payload`).run(
@@ -466,6 +469,7 @@ export function openStateStore(path: string): StateStore {
       const tx: EventTransaction = {
         listPending: () => access(() => db.prepare("SELECT payload FROM pending_intents").all().flatMap(row => {
           const intent = JSON.parse(row.payload as string) as PendingIntent;
+          if (intent.event === 'context-review.due' && !(intent.payload as { mainDelivered?: boolean })?.mainDelivered) return [];
           const event = intent.payload as { kind?: unknown; id?: unknown } | null;
           if (!event || typeof event.kind !== 'string' || typeof event.id !== 'string' || intent.event !== event.kind) return [];
           return [{ key: intent.id, event: { kind: event.kind, id: event.id } }];
@@ -610,6 +614,7 @@ export function openStateStore(path: string): StateStore {
   };
 
   return {
+    startupContextDatabase: db,
     resultNotices,
     reminderDeliveries,
     closureNotices,

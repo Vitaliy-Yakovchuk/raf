@@ -224,7 +224,7 @@ export function captureStartupContext(input: StartupContextCapture, ports: Start
       if (event.type === 'event_msg' && payload.type === 'token_count') {
         const info = object(payload.info);
         usage(info.total_token_usage, true);
-        if (!boundary && startupInput.value === null) {
+        if (startupInput.value === null) {
           const first = object(info.last_token_usage).input_tokens;
           if (numeric(first)) startupInput = measured(first);
         }
@@ -317,7 +317,15 @@ export function closeStartupContextReview(database: DatabaseSync, input: { reado
   database.prepare('UPDATE startup_context_reviews SET closed_at=COALESCE(closed_at, ?) WHERE review_run_id=?').run(input.closedAt, input.reviewRunId);
 }
 
+export function settleStartupContextReview(database: DatabaseSync, input: { readonly reviewRunId: string; readonly status: string; readonly finishedAt: string }): void {
+  schema(database);
+  if (input.status === 'succeeded') closeStartupContextReview(database, { reviewRunId: input.reviewRunId, closedAt: input.finishedAt });
+  else database.prepare('UPDATE startup_context_reviews SET review_run_id=NULL WHERE review_run_id=? AND closed_at IS NULL').run(input.reviewRunId);
+}
+
 export function pruneStartupContextTraces(database: DatabaseSync, input: { readonly now: string; readonly flowPath: string }): readonly string[] {
+  schema(database);
+  if (!database.prepare('SELECT 1 FROM startup_context_traces LIMIT 1').get()) return [];
   const retention = policyNumber(input.flowPath, 'retention', 'finishedSessionsMs');
   if (!Number.isFinite(Date.parse(input.now))) throw new Error('Invalid startup context retention time');
   const cutoff = Date.parse(input.now) - retention;

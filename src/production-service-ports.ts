@@ -60,6 +60,12 @@ export async function createProductionServiceDependencies(
   if (!paths.length || paths.some(path => !isAbsolute(path))) throw new Error('Absolute resource paths are required');
   const reader = options?.resourceReader ?? createResourceSnapshotReader({ machineId: hostname(), paths });
   return {
+    deliverStartupContextEvent: async intent => {
+      if (!options?.sharedDelivery) return false;
+      const payload = intent.payload as { to: string; id: string; runIds: readonly string[] };
+      const receipt = await options.sharedDelivery({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, { kind: 'system' });
+      return receipt.accepted;
+    },
     now,
     nextReminderId: options?.nextReminderId ?? randomUUID,
     reconcileLaunches: async () => {
@@ -70,7 +76,7 @@ export async function createProductionServiceDependencies(
         const projects = JSON.parse(await readFile(join(context.orchestratorRoot, 'conf', 'projects.json'), 'utf8'));
         if (projects.version !== 1 || !projects.projects || typeof projects.projects !== 'object' || Array.isArray(projects.projects)) throw new Error('Invalid recovery project configuration');
         const identity = createAssignmentIdentityAdapter(Object.fromEntries(Object.keys(projects.projects).map(project => [project, context.orchestratorRoot])));
-        const result = await reconcileTaskReservations({ store: handle, currentBoot,
+        const result = await reconcileTaskReservations({ store: handle, currentBoot, deferAbandonedFinalization: true,
           observe: async process => (await observeProcesses([process], options?.processScan))[0],
           resolveTasks: identity.resolveTasks, newFence: randomUUID });
         for (const lease of result.retained) retained.add(lease.owner.runId);

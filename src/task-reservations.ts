@@ -53,6 +53,7 @@ export type TaskReservationError = Error & {
 };
 
 export type TaskReservationDependencies = {
+  readonly deferAbandonedFinalization?: boolean;
   readonly store: StateStore;
   readonly currentBoot: () => Promise<MachineBootIdentity>;
   readonly observe: (identity: ProcessIdentity) => Promise<ProcessObservation>;
@@ -209,7 +210,7 @@ function observationsCurrent(tx: ReservationTransaction, observations: Awaited<R
     current.some(candidate => sameLease(candidate.lease, set.lease)));
 }
 
-function closeAbandoned(tx: ReservationTransaction, observations: Awaited<ReturnType<typeof checkReservations>>): void {
+function closeAbandoned(tx: ReservationTransaction, observations: Awaited<ReturnType<typeof checkReservations>>, deferFinalization = false): void {
   for (const { set, alive, at } of observations) {
     if (alive) continue;
     const session = tx.getSession(set.lease.owner.runId);
@@ -217,6 +218,12 @@ function closeAbandoned(tx: ReservationTransaction, observations: Awaited<Return
       throw failure('TASK_IDENTITY_INVALID', 'Reservation session identity mismatch', set.lease);
     }
     const ended = session.state === 'running' || session.state === 'exited';
+    if (ended && deferFinalization) {
+      tx.putSession({ ...session, revision: session.revision + 1, state: 'exited', observation: { state: 'exited', observedAt: at, exitCode: null, evidence: 'Task reservation runner and wrapper exit confirmed' } });
+      tx.deleteTaskReservation(set.lease.owner.runId);
+      returnDelegated(tx, session, set.tasks);
+      continue;
+    }
     const result = session.result ?? (ended ? { status: 'failed', response: '', proof: null } : undefined);
     closeSessionInTransaction(tx, { ...session, ...(result ? { result } : {}) }, at);
     if (ended) {
@@ -300,7 +307,7 @@ export async function claimTaskReservations(dependencies: TaskReservationDepende
       ? await request.resolveDelegator() : undefined;
     const result = dependencies.store.taskReservationRepository.transaction<ClaimTasksResult | null>(tx => {
       if (!observationsCurrent(tx, observations)) return null;
-      closeAbandoned(tx, observations);
+      closeAbandoned(tx, observations, dependencies.deferAbandonedFinalization);
       const conflicts: { task: ReservedTaskSnapshot; owner: TaskReservationOwner }[] = [];
       for (const task of request.tasks) {
         for (const set of tx.listTaskReservations()) {
@@ -373,7 +380,7 @@ export async function reconcileTaskReservations(dependencies: TaskReservationDep
     const observations = await checkReservations(dependencies, boot);
     const result = dependencies.store.taskReservationRepository.transaction(tx => {
       if (!observationsCurrent(tx, observations)) return null;
-      closeAbandoned(tx, observations);
+      closeAbandoned(tx, observations, dependencies.deferAbandonedFinalization);
       return { retained: observations.filter(item => item.alive).map(item => copy(item.set.lease)),
         released: observations.filter(item => !item.alive).map(item => copy(item.set.lease.owner)) };
     });

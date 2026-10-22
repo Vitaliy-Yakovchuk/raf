@@ -5,8 +5,8 @@ import { compileCatalog } from '../src/catalog.ts';
 import { execute, type ExecutionResult } from '../src/cli.ts';
 import { createBugHandlers, bugCommands, type BugCommandPorts } from '../src/bug-cli.ts';
 import { createAttachmentCache, loadAttachmentCacheSettings } from '../src/bug-attachment-cache.ts';
-import { BugStoreError, type BugListFilter, type BugRepository, type BugView, type LocalCommentInput } from '../src/bug-store.ts';
-import { BugSyncConfigError } from '../src/bug-sync.ts';
+import { BugStoreError, type BugListFilter, type BugRepository, type BugView } from '../src/bug-store.ts';
+import { BugSyncConfigError, BugWriteError, type BugWriter, type CommentWriteInput, type StatusWriteInput } from '../src/bug-sync.ts';
 import { FakeDownloads, bytesOf, createWorkspace, seedAttachment, seedBug, sectionId, sha256, testClock, type CacheWorkspace } from './bug-attachment-cache-fixture.ts';
 
 const confRoot = new URL('../../conf/', import.meta.url);
@@ -16,6 +16,7 @@ const projects = JSON.parse(readFileSync(new URL('projects.json', confRoot), 'ut
 const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), projects);
 const NOW = new Date(Date.UTC(2026, 9, 22, 9, 0, 0));
 const KEY = 'projects/raf/bug#bug-1';
+const APPROVED = ['bug list', 'bug show', 'bug comment add', 'bug status set', 'bug attachment get'];
 
 function success(result: ExecutionResult): any {
   assert.equal(result.exitCode, 0, result.stderr);
@@ -37,8 +38,10 @@ function failure(result: ExecutionResult, code: string): any {
 interface Harness {
   readonly ws: CacheWorkspace;
   readonly downloads: FakeDownloads;
-  readonly comments: LocalCommentInput[];
+  readonly comments: CommentWriteInput[];
+  readonly statuses: StatusWriteInput[];
   readonly filters: BugListFilter[];
+  writeError: Error | null;
   readonly texts: Map<string, Uint8Array>;
   closed: number;
   run(argv: readonly string[]): Promise<ExecutionResult>;
@@ -48,9 +51,11 @@ function bugView(): BugView {
   return {
     key: KEY, serverKey: { project: 'raf', env: 'prod', source: 'dash', owner: 'owner', rawId: 'bug-1' }, sectionId,
     problemId: 'problem-bug-1', revision: 7, status: 'open', state: 'new', claimedBy: null, presence: 'present', presenceAt: null,
-    detailComplete: true, detailErrorCode: null, payload: {}, syncedAt: NOW.toISOString(), comments: [], attachments: [], conflicts: [],
-  };
+    detailComplete: true, detailErrorCode: null, payload: {}, syncedAt: NOW.toISOString(), comments: [], attachments: [],
+  } as unknown as BugView;
 }
+
+const SERVER_COMMENT = { commentPk: 5, serverId: 'srv-c-42', authorId: 'raf:bugs', authorKind: 'agent', text: 'Перевірено на dev1.\n', replyTo: null, createdAt: NOW.toISOString() };
 
 function harness(t: TestContext, maxBytes = 1000): Harness {
   const ws = createWorkspace(maxBytes);
@@ -59,7 +64,7 @@ function harness(t: TestContext, maxBytes = 1000): Harness {
   const clock = testClock(NOW.getTime());
   seedBug(ws.database);
   const h: Harness = {
-    ws, downloads, comments: [], filters: [], texts: new Map(), closed: 0,
+    ws, downloads, comments: [], statuses: [], filters: [], texts: new Map(), closed: 0, writeError: null,
     run: argv => execute(argv, catalog, createBugHandlers(ports)),
   };
   const repository = {
@@ -73,14 +78,26 @@ function harness(t: TestContext, maxBytes = 1000): Harness {
     },
     listBugs(filter: BugListFilter) {
       h.filters.push(filter);
-      return { bugs: [{ key: KEY, sectionId, revision: 7, status: 'open', presence: 'present', pendingOperations: 0, conflicts: 0 }], nextCursor: null, sync: [] };
-    },
-    addLocalComment(input: LocalCommentInput) {
-      h.comments.push(input);
-      return { bugKey: input.bugKey, commentPk: 11, operationId: 'op-1', state: 'pending', delivered: false, expectedRevision: 7, replyTo: null };
+      return { bugs: [{ key: KEY, sectionId, revision: 7, status: 'open', presence: 'present' }], nextCursor: null, sync: [] };
     },
     close() { h.closed += 1; },
   } as unknown as BugRepository;
+  const writer: BugWriter = {
+    async addComment(input) {
+      repository.findBug(input.bugKey);
+      h.comments.push(input);
+      if (h.writeError) throw h.writeError;
+      const bug = { ...bugView(), revision: 8, comments: [SERVER_COMMENT] } as unknown as BugView;
+      return { bugKey: input.bugKey, operationId: 'op-1', commentId: SERVER_COMMENT.serverId, revision: 8, comment: SERVER_COMMENT as unknown as BugView['comments'][number], bug };
+    },
+    async setStatus(input) {
+      repository.findBug(input.bugKey);
+      h.statuses.push(input);
+      if (h.writeError) throw h.writeError;
+      const bug = { ...bugView(), revision: 8, status: input.status } as unknown as BugView;
+      return { bugKey: input.bugKey, operationId: 'op-2', revision: 8, status: input.status, bug };
+    },
+  };
   const ports: BugCommandPorts = {
     loadConfig: () => ({ ...ws.config(), pageLimit: 20 }),
     openRepository: () => repository,
@@ -89,6 +106,7 @@ function harness(t: TestContext, maxBytes = 1000): Harness {
       database: repo.database, settings: loadAttachmentCacheSettings(ws.confDir, ws.rafHome), config, claims,
       download: downloads.download, now: clock.now, sleep: async ms => { ws.sleeps.push(ms); },
     }),
+    writer: () => writer,
     readText: async file => {
       const bytes = h.texts.get(file);
       if (!bytes) throw new Error(`ENOENT: ${file}`);
@@ -99,8 +117,9 @@ function harness(t: TestContext, maxBytes = 1000): Harness {
   return h;
 }
 
-test('the four approved bug commands are compiled from the JSON catalog with handlers', () => {
-  assert.deepEqual(catalog.commands.filter(command => command.path[0] === 'bug').map(command => command.handlerName), [...bugCommands]);
+test('the five approved bug commands are compiled from the JSON catalog with handlers', () => {
+  assert.deepEqual([...bugCommands], APPROVED);
+  assert.deepEqual(catalog.commands.filter(command => command.path[0] === 'bug').map(command => command.handlerName), APPROVED);
   for (const command of catalog.commands.filter(command => command.path[0] === 'bug')) {
     assert.equal(command.metadata.requiresService, undefined, command.handlerName);
     for (const field of ['description', 'output', 'errors', 'prerequisites', 'sideEffects']) assert.equal(typeof command.metadata[field], 'string', `${command.handlerName} ${field}`);
@@ -111,12 +130,19 @@ test('the four approved bug commands are compiled from the JSON catalog with han
 test('help for bug commands comes from the catalog with parameters, output and errors', async t => {
   const h = harness(t);
   const help = success(await h.run(['help', 'bug']));
-  assert.deepEqual(help.commands.map((command: { path: string[] }) => command.path.join(' ')), [...bugCommands]);
+  assert.deepEqual(help.commands.map((command: { path: string[] }) => command.path.join(' ')), APPROVED);
   const add = success(await h.run(['bug', 'comment', 'add', '--help'])).commands[0];
   assert.deepEqual(add.parameters.map((parameter: { option: string; requirement: string }) => [parameter.option, parameter.requirement]), [['--bug', 'required'], ['--text-file', 'required']]);
-  assert.match(add.metadata.output, /локальне приймання не є серверним підтвердженням/);
-  assert.equal(typeof add.metadata.errors, 'string');
+  assert.match(add.metadata.output, /серверним comment_id/);
+  assert.match(add.metadata.output, /код 0 лише після відповіді сервера/);
+  assert.match(add.metadata.errors, /BUG_WRITE_UNKNOWN/);
+  assert.match(add.metadata.sideEffects, /comment_problem/);
   assert.match(add.metadata.prerequisites, /служба raf не потрібна/);
+  const status = success(await h.run(['bug', 'status', 'set', '--help'])).commands[0];
+  assert.deepEqual(status.parameters.map((parameter: { option: string; requirement: string }) => [parameter.option, parameter.requirement]), [['--bug', 'required'], ['--status', 'required']]);
+  assert.match(status.metadata.sideEffects, /set_problem_status/);
+  assert.match(status.metadata.prerequisites, /служба raf не потрібна/);
+  for (const command of [add, status]) assert.doesNotMatch(JSON.stringify(command.metadata), /pending|outbox|асинхронно/);
   assert.equal(h.closed, 0);
 });
 
@@ -153,21 +179,63 @@ test('bug show returns the local bug and maps store errors to explicit codes', a
   assert.equal(h.closed, 3);
 });
 
-test('bug comment add stores the comment locally as pending and never claims delivery', async t => {
+test('bug comment add writes through the MCP writer and returns the server comment only after success', async t => {
   const h = harness(t);
   h.texts.set('/tmp/comment.txt', Buffer.from('Перевірено на dev1.\n'));
   h.texts.set('-', Buffer.from('Текст зі stdin'));
-  const receipt = success(await h.run(['bug', 'comment', 'add', '--bug', KEY, '--text-file', '/tmp/comment.txt']));
-  assert.equal(receipt.accepted, true);
-  assert.equal(receipt.delivered, false);
-  assert.equal(receipt.delivery, 'pending');
-  assert.equal(receipt.state, 'pending');
-  assert.equal(receipt.operationId, 'op-1');
-  assert.match(receipt.notice, /асинхронно/);
-  assert.deepEqual(h.comments[0], { bugKey: KEY, text: 'Перевірено на dev1.\n', authorId: 'raf:bugs', authorKind: 'agent', claimsFingerprint: `fingerprint:${sectionId}:write`, at: NOW.toISOString() });
+  const written = success(await h.run(['bug', 'comment', 'add', '--bug', KEY, '--text-file', '/tmp/comment.txt']));
+  assert.equal(written.bugKey, KEY);
+  assert.equal(written.commentId, 'srv-c-42');
+  assert.equal(written.revision, 8);
+  assert.equal(written.operationId, 'op-1');
+  assert.equal(written.comment.serverId, 'srv-c-42');
+  assert.equal(written.bug.revision, 8);
+  for (const field of ['accepted', 'delivered', 'delivery', 'state', 'notice']) assert.equal(written[field], undefined, field);
+  assert.deepEqual(h.comments[0], { bugKey: KEY, text: 'Перевірено на dev1.\n' });
   success(await h.run(['bug', 'comment', 'add', '--bug', KEY, '--text-file', '-']));
-  assert.equal(h.comments[1]?.text, 'Текст зі stdin');
-  assert.deepEqual(h.ws.claims.issued, []);
+  assert.deepEqual(h.comments[1], { bugKey: KEY, text: 'Текст зі stdin' });
+  assert.equal(h.closed, 2);
+});
+
+const writeFailures: readonly [string, () => Error, string, string | null][] = [
+  ['stale revision', () => new BugWriteError('BUG_WRITE_REJECTED', 'Сервер відхилив застарілу ревізію.', { serverCode: 'revision-conflict', status: 409 }), 'BUG_WRITE_REJECTED', 'revision-conflict'],
+  ['lease', () => new BugWriteError('BUG_WRITE_REJECTED', 'Потрібна оренда.', { serverCode: 'lease-required', status: 409 }), 'BUG_WRITE_REJECTED', 'lease-required'],
+  ['access', () => new BugWriteError('BUG_WRITE_REJECTED', 'Доступ заборонено.', { serverCode: 'access-denied', status: 403 }), 'BUG_WRITE_REJECTED', 'access-denied'],
+  ['unknown result', () => new BugWriteError('BUG_WRITE_UNKNOWN', 'Результат запису невідомий.', { serverCode: 'timeout', status: null }), 'BUG_WRITE_UNKNOWN', 'timeout'],
+  ['invalid answer', () => new BugWriteError('BUG_WRITE_INVALID_RESPONSE', 'Невалідна відповідь MCP.'), 'BUG_WRITE_INVALID_RESPONSE', null],
+  ['no claim owner comment', () => new BugWriteError('BUG_WRITE_REPLY_TARGET_MISSING', 'Немає коментаря власника claim.'), 'BUG_WRITE_REPLY_TARGET_MISSING', null],
+  ['bug missing locally', () => new BugStoreError('bug-not-found', `Жука ${KEY} немає в локальній базі.`, { key: KEY }), 'BUG_NOT_FOUND', 'bug-not-found'],
+];
+
+for (const [name, error, code, sourceCode] of writeFailures) {
+  test(`bug comment add and bug status set report a ${name} failure as ${code} without a success payload`, async t => {
+    const h = harness(t);
+    h.texts.set('ok.txt', Buffer.from('ok'));
+    h.writeError = error();
+    const comment = failure(await h.run(['bug', 'comment', 'add', '--bug', KEY, '--text-file', 'ok.txt']), code);
+    const status = failure(await h.run(['bug', 'status', 'set', '--bug', KEY, '--status', 'closed']), code);
+    for (const reported of [comment, status]) {
+      if (sourceCode !== null) assert.equal(reported.details.sourceCode, sourceCode);
+      assert.doesNotMatch(JSON.stringify(reported), /token/i);
+    }
+    assert.equal(h.comments.length, 1);
+    assert.equal(h.statuses.length, 1);
+    assert.equal(h.closed, 2);
+  });
+}
+
+test('bug status set passes the status to the writer without its own status list', async t => {
+  const h = harness(t);
+  const closed = success(await h.run(['bug', 'status', 'set', '--bug', KEY, '--status', 'closed']));
+  assert.equal(closed.bugKey, KEY);
+  assert.equal(closed.status, 'closed');
+  assert.equal(closed.revision, 8);
+  assert.equal(closed.bug.status, 'closed');
+  success(await h.run(['bug', 'status', 'set', '--bug', KEY, '--status', 'some_future_status']));
+  assert.deepEqual(h.statuses, [{ bugKey: KEY, status: 'closed' }, { bugKey: KEY, status: 'some_future_status' }]);
+  failure(await h.run(['bug', 'status', 'set', '--bug', KEY]), 'MISSING_REQUIRED');
+  failure(await h.run(['bug', 'status', 'set', '--status', 'closed']), 'MISSING_REQUIRED');
+  assert.equal(h.statuses.length, 2);
 });
 
 test('bug comment add rejects unreadable, empty or non UTF-8 text before touching the store', async t => {
@@ -180,8 +248,10 @@ test('bug comment add rejects unreadable, empty or non UTF-8 text before touchin
   failure(await h.run(['bug', 'comment', 'add', '--bug', KEY, '--text-file', 'latin1.txt']), 'COMMENT_TEXT_INVALID');
   h.texts.set('ok.txt', Buffer.from('ok'));
   failure(await h.run(['bug', 'comment', 'add', '--bug', 'projects/raf/bug#404', '--text-file', 'ok.txt']), 'BUG_NOT_FOUND');
+  failure(await h.run(['bug', 'status', 'set', '--bug', 'projects/raf/bug#404', '--status', 'closed']), 'BUG_NOT_FOUND');
   assert.deepEqual(h.comments, []);
-  assert.equal(h.closed, 4);
+  assert.deepEqual(h.statuses, []);
+  assert.equal(h.closed, 5);
 });
 
 test('bug attachment get downloads on first request and serves the cache afterwards', async t => {
@@ -224,7 +294,7 @@ test('configuration and unexpected failures stay explicit and close the store', 
   const broken = createBugHandlers({
     loadConfig: () => { throw new BugSyncConfigError('pageLimit', 'conf/raf.json#/bugs/pageLimit має бути додатним цілим.'); },
     openRepository: () => { throw new Error('unreachable'); },
-    claims: async () => h.ws.claims, openCache: () => { throw new Error('unreachable'); }, readText: async () => new Uint8Array(), now: () => NOW,
+    claims: async () => h.ws.claims, openCache: () => { throw new Error('unreachable'); }, writer: () => { throw new Error('unreachable'); }, readText: async () => new Uint8Array(), now: () => NOW,
   });
   const config = failure(await execute(['bug', 'list'], catalog, broken), 'BUG_CONFIG_INVALID');
   assert.equal(config.details.sourceCode, 'pageLimit');
@@ -233,7 +303,7 @@ test('configuration and unexpected failures stay explicit and close the store', 
   const failing = createBugHandlers({
     loadConfig: () => h.ws.config(),
     openRepository: () => ({ listBugs: () => { throw new Error('disk I/O error'); }, close: () => { closed += 1; } }) as unknown as BugRepository,
-    claims: async () => h.ws.claims, openCache: () => { throw new Error('unreachable'); }, readText: async () => new Uint8Array(), now: () => NOW,
+    claims: async () => h.ws.claims, openCache: () => { throw new Error('unreachable'); }, writer: () => { throw new Error('unreachable'); }, readText: async () => new Uint8Array(), now: () => NOW,
   });
   const unexpected = failure(await execute(['bug', 'list'], catalog, failing), 'BUG_COMMAND_FAILED');
   assert.match(unexpected.message, /disk I\/O error/);

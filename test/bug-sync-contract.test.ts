@@ -6,11 +6,9 @@ import {
   bugSectionId,
   BugSyncConfigError,
   ClaimsError,
-  conflictNoticeKey,
   createClaimsIssuer,
   describeBugSection,
   loadBugSyncConfig,
-  nextAttemptDelayMs,
   type BugSyncConfig,
 } from '../src/bug-sync.ts';
 import type { SecretsSelection } from '../src/secrets-store.ts';
@@ -151,18 +149,9 @@ test('a missing or short section secret is a section error without a fallback ke
   assert.equal(decode(ok.token.split('.')[1]!).project, 'ramus-cloud');
 });
 
-test('retry delay grows from conf, is capped, and a larger retry-after wins', () => {
-  const retry = testConfig().retry;
-
-  assert.equal(nextAttemptDelayMs(retry, 1, null), 1000);
-  assert.equal(nextAttemptDelayMs(retry, 2, null), 2000);
-  assert.equal(nextAttemptDelayMs(retry, 3, null), 4000);
-  assert.equal(nextAttemptDelayMs(retry, 10, null), retry.maxDelayMs);
-  assert.equal(nextAttemptDelayMs(retry, 1, 5000), 5000);
-  assert.equal(nextAttemptDelayMs(retry, 1, 100), 1000);
-});
-
-test('conflict notice keys are stable per operation and kind', () => {
-  assert.equal(conflictNoticeKey('op-1', 'bug-deleted'), 'bug-conflict:op-1:bug-deleted');
-  assert.notEqual(conflictNoticeKey('op-1', 'bug-deleted'), conflictNoticeKey('op-1', 'bug-missing'));
+test('the production bugs configuration has no outbox or push parameters', () => {
+  const production = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8')).bugs;
+  const keys = Object.keys(production).map((key) => key.toLowerCase());
+  for (const forbidden of ['outbox', 'push', 'pending', 'conflict']) assert.ok(!keys.some((key) => key.includes(forbidden)), forbidden);
+  assert.deepEqual(Object.keys(loadBugSyncConfig(production)).sort(), Object.keys(testConfig()).sort());
 });

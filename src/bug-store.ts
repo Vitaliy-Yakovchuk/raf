@@ -21,7 +21,8 @@ export type BugStoreErrorCode =
   | 'ambiguous-bug'
   | 'invalid-comment'
   | 'operation-not-found'
-  | 'invalid-cursor';
+  | 'invalid-cursor'
+  | 'undelivered-local-comments';
 
 export class BugStoreError extends Error {
   readonly code: BugStoreErrorCode;
@@ -286,6 +287,24 @@ export interface ConflictInput {
   readonly at: string;
 }
 
+export interface WrittenBugHeader {
+  readonly key: ServerBugKey;
+  readonly problemId: string;
+  readonly revision: number;
+  readonly status: string;
+  readonly state: string;
+  readonly createdAt: string;
+  readonly claimedBy: string | null;
+  readonly payload: unknown;
+}
+
+export interface WriteReceiptInput {
+  readonly bugKey: string;
+  readonly bug: WrittenBugHeader;
+  readonly comment: ServerComment | null;
+  readonly at: string;
+}
+
 export interface BugStoreOptions {
   readonly beforeOutboxInsert?: () => void;
 }
@@ -315,6 +334,7 @@ export interface BugRepository {
   conflicts(): readonly ConflictView[];
   pendingNotices(): readonly ConflictView[];
   markNoticed(noticeKey: string, at: string): void;
+  applyWriteReceipt(input: WriteReceiptInput): BugView;
   close(): void;
 }
 
@@ -990,6 +1010,9 @@ export function openBugStore(path: string, options: BugStoreOptions = {}): BugRe
     },
     markNoticed(key, at) {
       transaction(() => { run('UPDATE conflicts SET noticed_at = ? WHERE notice_key = ? AND noticed_at IS NULL', at, key); });
+    },
+    applyWriteReceipt(_input) {
+      throw new Error('NotImplemented: BugRepository.applyWriteReceipt');
     },
     close() {
       if (db.isOpen) db.close();

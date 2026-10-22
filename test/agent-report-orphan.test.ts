@@ -49,8 +49,6 @@ async function closeAsAgent(f: AgentRunFixture, id: string) {
   return JSON.parse(JSON.parse(printed).stdout) as { closed: boolean; unfinished: unknown[]; result?: string };
 }
 
-// The result event is observed through its effect on bound reminders (event-registry «Активація і закриття окремі»):
-// processed facts are removed from pending, so pending is not a journal of handled events.
 function seedResultWatchers(f: AgentRunFixture, address: string) {
   const base = { createdFor: 'main', assignedTo: 'main', at: '2099-01-01T00:00:00.000Z', closedAt: null, closeReason: null };
   const watchers = {

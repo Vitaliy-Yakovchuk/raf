@@ -103,8 +103,16 @@ function commandShown(settings: QuotaProtocol, text: string): boolean {
   return lines(text).some(line => pattern.test(line));
 }
 
+function screenAfterAnsweredTrust(settings: QuotaProtocol, text: string, answeredAt: number | null): string {
+  if (answeredAt === null) return text;
+  const end = Math.max(-1, ...(settings.markers.workspace_trust_required ?? []).map(marker => { const index = text.lastIndexOf(marker); return index < 0 ? -1 : index + marker.length; }));
+  if (end < 0) return text;
+  const after = text.slice(end);
+  return settings.markers.ready?.some(marker => after.includes(marker)) ? after : text;
+}
+
 export function nextQuotaProbeAction(settings: QuotaProtocol, observation: QuotaProbeObservation): QuotaProbeAction {
-  const text = observation.text.replaceAll('\u00a0', ' ');
+  const text = screenAfterAnsweredTrust(settings, observation.text.replaceAll('\u00a0', ' '), observation.trustAnsweredAtMs ?? null);
   const stop = stopState(settings, text);
   if (stop === 'workspace_trust_required' && observation.trustWorkspace) {
     const answeredAt = observation.trustAnsweredAtMs ?? null;

@@ -151,7 +151,13 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
   const runDirectory = join(request.tmpRoot, request.runId);
   await fs.mkdir(runDirectory, { recursive: true, mode: 0o700 });
   const logPath = join(runDirectory, 'worker.log');
-  const log = await fs.open(logPath, 'wx', 0o600);
+  const log = await fs.open(logPath, 'wx+', 0o600);
+  const workerOutput = async () => {
+    const { size } = await log.stat();
+    const length = Math.min(size, 16384);
+    const { buffer, bytesRead } = await log.read(Buffer.alloc(length), 0, length, size - length);
+    return buffer.subarray(0, bytesRead).toString('utf8');
+  };
   try {
     await fs.writeFile(requestPath, JSON.stringify(request), { mode: 0o600, flag: 'wx' });
     await fs.writeFile(requestPath + '.peer', JSON.stringify({ parentPid: process.pid, nonce }), { mode: 0o600, flag: 'wx' });
@@ -173,7 +179,7 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
       const fail = (error: unknown) => {
         if (settled) return;
         settled = true;
-        void fs.readFile(logPath, 'utf8').catch(() => '').then(output => reject(Object.assign(new Error(`Wrapper launch ${request.runId} failed: ${String(error)}${output.trim() ? `; worker: ${output.slice(-4096).trim()}` : ''}; verify runner readiness and recover this run before retrying`), { wrapper: { terminate } })));
+        void workerOutput().catch(() => '').then(output => reject(Object.assign(new Error(`Wrapper launch ${request.runId} failed: ${String(error)}${output.trim() ? `; worker: ${output.slice(-4096).trim()}` : ''}; verify runner readiness and recover this run before retrying`), { wrapper: { terminate } })));
       };
       server.on('error', fail);
       server.on('connection', socket => {

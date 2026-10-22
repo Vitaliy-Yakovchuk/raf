@@ -108,15 +108,17 @@ export async function commandFixture(t: TestContext) {
     await settle(handle);
     return result;
   };
-  const agentPs = async (handle: StateStore = separateProcess()) => {
+  const agentPs = async (handle: StateStore = separateProcess()): Promise<SessionRecord[]> => {
     const services = await createProductionServices(handle, runtimeConfiguration, {
       orchestratorRoot: root, confRoot: join(root, 'conf'), artifactPath: join(root, 'catalog.json'), statePath, tmpRoot: join(root, 'tmp'),
       mode: 'production', commandStartedAtMs: 0, resolveCaller: async () => undefined,
     }, { execute });
     let failure: unknown;
-    try { await services.control.ps(); } catch (error) { failure = error; }
+    let rows: SessionRecord[] = [];
+    try { rows = await services.control.ps(); } catch (error) { failure = error; }
     await settle(handle);
     if (failure !== undefined) throw failure;
+    return rows;
   };
   const identityFor = (address: string, runId: string): ProcessIdentity => {
     const pid = ++nextPid;

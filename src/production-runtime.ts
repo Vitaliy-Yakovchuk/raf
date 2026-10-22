@@ -609,6 +609,9 @@ export async function createProductionServices(
           const result = reserveLaunchInTransaction(tx, request, measured, evaluateResourceAdmission);
           if (!result.reserved) { admissionReason = result.admission.reasons.join('; '); throw new Error('RESOURCE_UNAVAILABLE'); }
           return result.session;
+        }, resolveDelegator: async () => {
+          try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }
+          catch { return undefined; }
         } });
         if (!claimed.reserved) fail('TASK_RESERVED', JSON.stringify(claimed.conflicts));
         return { admitted: true };
@@ -980,7 +983,10 @@ export async function runProductionWorker(
             const subset = { ...request.assignment, changes: request.assignment.changes.map(change => ({ ...change, items: change.items.filter(item => succeeded.has(JSON.stringify([change.id, item.id]))) })).filter(change => change.items.length) };
             if (subset.changes.length && (await verifyAssignmentCompletion(subset, assignments, Object.fromEntries(result.report.changes.filter(change => change.archive).map(change => [change.id, change.archive!])))).ok) {
               const set = listTaskReservations(store).find(set => set.lease.owner.runId === request.runId);
-              if (set) { const tasks = set.tasks.filter(task => succeeded.has(JSON.stringify([task.key.changeId, task.key.taskId]))); const completed = await completeTaskReservations(dependencies, { lease, tasks }); if (completed.applied) lease = completed.lease; }
+              if (set && set.lease.owner.fence === lease.owner.fence) {
+                const tasks = set.tasks.filter(task => succeeded.has(JSON.stringify([task.key.changeId, task.key.taskId])));
+                if (tasks.length) { const completed = await completeTaskReservations(dependencies, { lease: set.lease, tasks }); if (completed.applied) lease = completed.lease; }
+              }
             }
           }
         },

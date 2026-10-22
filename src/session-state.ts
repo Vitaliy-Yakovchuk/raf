@@ -57,6 +57,7 @@ export type SessionRecord = {
   result?: WorkResult;
   finishedAt?: string;
   abortReason?: string;
+  delegatedBy?: { addressId: string; runId: string; fence: string };
 };
 
 export interface SessionTransaction {

@@ -66,6 +66,7 @@ export type ClaimTasksRequest = {
   readonly tasks: readonly ReservedTaskSnapshot[];
   readonly starter: ReservationProcessIdentity;
   readonly reserveLaunch: (transaction: SessionTransaction) => SessionRecord;
+  readonly resolveDelegator?: () => Promise<string | undefined>;
 };
 
 export type ClaimTasksResult =
@@ -228,6 +229,7 @@ function closeAbandoned(tx: ReservationTransaction, observations: Awaited<Return
         event: 'agent.closed', payload: { kind: 'agent.closed', id: session.addressId } });
     }
     tx.deleteTaskReservation(set.lease.owner.runId);
+    returnDelegated(tx, session, set.tasks);
   }
 }
 
@@ -258,6 +260,23 @@ async function resolveTasks(dependencies: TaskReservationDependencies, tasks: re
   }
 }
 
+function delegatorSet(tx: ReservationTransaction, runId: string | undefined): TaskReservationSet | undefined {
+  if (!runId) return undefined;
+  const session = tx.getSession(runId);
+  if (!session || session.state !== 'running' || session.activity?.type !== 'coordinator') return undefined;
+  return tx.listTaskReservations().find(set => set.lease.owner.runId === runId && set.lease.owner.addressId === session.addressId && set.stage === 'running');
+}
+
+function returnDelegated(tx: ReservationTransaction, session: SessionRecord | undefined, tasks: readonly ReservedTaskSnapshot[]): void {
+  const link = session?.delegatedBy;
+  if (!link || !tasks.length) return;
+  const parent = tx.listTaskReservations().find(set => set.lease.owner.runId === link.runId && set.lease.owner.addressId === link.addressId && set.lease.owner.fence === link.fence);
+  if (parent) tx.putTaskReservation({ ...parent, tasks: [...parent.tasks, ...tasks], lease: { owner: parent.lease.owner, revision: parent.lease.revision + 1 } });
+}
+
+const hasDelegates = (tx: ReservationTransaction, owner: TaskReservationOwner): boolean => tx.listSessions().some(session =>
+  session.state !== 'finished' && session.delegatedBy?.runId === owner.runId && session.delegatedBy.fence === owner.fence);
+
 function findLease(tx: ReservationTransaction, lease: TaskReservationLease): TaskReservationSet | undefined {
   return tx.listTaskReservations().find(set => sameLease(set.lease, lease));
 }
@@ -276,6 +295,9 @@ export async function claimTaskReservations(dependencies: TaskReservationDepende
     const assigned = observations.flatMap(({ set }) => set.tasks.filter(task => sources.has(sourceOf(task))));
     if (assigned.length) await resolveTasks(dependencies, assigned, 'retained');
     await resolveTasks(dependencies, request.tasks, 'claim');
+    const requested = new Set(request.tasks.map(taskKey));
+    const delegator = request.resolveDelegator && observations.some(({ set }) => set.tasks.some(task => requested.has(taskKey(task))))
+      ? await request.resolveDelegator() : undefined;
     const result = dependencies.store.taskReservationRepository.transaction<ClaimTasksResult | null>(tx => {
       if (!observationsCurrent(tx, observations)) return null;
       closeAbandoned(tx, observations);
@@ -285,7 +307,9 @@ export async function claimTaskReservations(dependencies: TaskReservationDepende
           if (set.tasks.some(candidate => taskKey(task) === taskKey(candidate))) conflicts.push({ task: copy(task), owner: copy(set.lease.owner) });
         }
       }
-      if (conflicts.length) return { reserved: false, conflicts };
+      const parent = delegatorSet(tx, delegator);
+      const foreign = conflicts.filter(conflict => conflict.owner.runId !== parent?.lease.owner.runId);
+      if (foreign.length) return { reserved: false, conflicts: foreign };
       if (tx.getSession(request.runId)) throw new Error('Run identity already exists');
       if (tx.listSessions().some(session => session.addressId === request.addressId && session.state !== 'finished')) throw new Error('Address already has an active session');
       const fence = dependencies.newFence();
@@ -295,6 +319,11 @@ export async function claimTaskReservations(dependencies: TaskReservationDepende
       if (!session || session.runId !== request.runId || session.addressId !== request.addressId || session.state !== 'reserved' ||
           !persisted || persisted.runId !== request.runId || persisted.addressId !== request.addressId || persisted.state !== 'reserved' ||
           !tx.listReservations().some(reservation => reservation.runId === request.runId)) throw failure('TASK_IDENTITY_INVALID', 'Launch participant did not reserve the requested session and admission', { runId: request.runId, addressId: request.addressId });
+      if (parent && conflicts.length) {
+        tx.putTaskReservation({ ...parent, tasks: parent.tasks.filter(task => !requested.has(taskKey(task))),
+          lease: { owner: parent.lease.owner, revision: parent.lease.revision + 1 } });
+        tx.putSession({ ...persisted, revision: persisted.revision + 1, delegatedBy: copy(parent.lease.owner) });
+      }
       const lease: TaskReservationLease = { owner: { addressId: request.addressId, runId: request.runId, fence }, revision: 0 };
       tx.putTaskReservation({ lease, tasks: request.tasks, boot, stage: 'starting', starter: request.starter });
       return { reserved: true, lease: copy(lease) };
@@ -365,7 +394,7 @@ export async function completeTaskReservations(dependencies: TaskReservationDepe
     const current = findLease(tx, request.lease);
     if (!current) return { applied: false };
     const tasks = current.tasks.filter(task => !request.tasks.some(completed => sameTask(task, completed)));
-    if (!tasks.length) {
+    if (!tasks.length && !hasDelegates(tx, current.lease.owner)) {
       tx.deleteTaskReservation(request.lease.owner.runId);
       return { applied: true, lease: null };
     }
@@ -389,7 +418,8 @@ export async function releaseTaskReservations(dependencies: TaskReservationDepen
     throw failure('TASK_IDENTITY_INVALID', 'Unknown task release reason', request.reason);
   }
   return dependencies.store.taskReservationRepository.transaction(tx => {
-    if (!findLease(tx, request.lease)) return false;
+    const current = findLease(tx, request.lease);
+    if (!current) return false;
     request.closeLaunch(tx);
     const session = tx.getSession(request.lease.owner.runId);
     if (!session || session.addressId !== request.lease.owner.addressId || session.state !== 'finished' ||
@@ -397,6 +427,7 @@ export async function releaseTaskReservations(dependencies: TaskReservationDepen
       throw failure('TASK_IDENTITY_INVALID', 'Close participant did not close the requested launch', request.lease);
     }
     tx.deleteTaskReservation(request.lease.owner.runId);
+    returnDelegated(tx, session, current.tasks);
     return true;
   });
 }

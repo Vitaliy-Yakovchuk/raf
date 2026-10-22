@@ -291,7 +291,6 @@ export function openStateStore(path: string): StateStore {
         db.prepare("DELETE FROM task_reservations WHERE run_id = ?").run(owner.runId);
         const insert = db.prepare("INSERT INTO task_reservations(project, change_instance, task_id, change_id, fingerprint, run_id) VALUES (?, ?, ?, ?, ?, ?)");
         for (const task of reservation.tasks) insert.run(task.key.project, task.changeInstance, task.key.taskId, task.key.changeId, task.fingerprint, owner.runId);
-        if (!reservation.tasks.length) tx.deleteTaskReservation(owner.runId);
       }),
       deleteTaskReservation: runId => access(() => { db.prepare("DELETE FROM task_reservation_runs WHERE run_id = ?").run(runId); }),
       getSession: runId => access(() => {

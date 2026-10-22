@@ -85,7 +85,7 @@ async function fixture(t: TestContext) {
     })),
     newFence: () => `fixture-fence-${++fence}`,
   });
-  const request = (runId: string, tasks: readonly ReservedTaskSnapshot[], addressId = runId): ClaimTasksRequest => ({
+  const request = (runId: string, tasks: readonly ReservedTaskSnapshot[], addressId = runId, type = 'test-scaffold'): ClaimTasksRequest => ({
     addressId,
     runId,
     tasks,
@@ -94,7 +94,7 @@ async function fixture(t: TestContext) {
       launchCalls++;
       const session: SessionRecord = {
         runId, addressId, revision: 0, state: 'reserved',
-        activity: { type: 'test-scaffold', project: 'raf', features: ['add-raf-agent-run'], phase: 'tests', cwd: directory },
+        activity: { type, project: 'raf', features: ['add-raf-agent-run'], phase: 'tests', cwd: directory },
       };
       tx.putSession(session);
       tx.putReservation({ runId, resource: 'fixture-admitted-resource', amount: 1 });
@@ -741,4 +741,91 @@ scenario('[handoff-release] unknown wrapper liveness keeps the handed-off reserv
   f.mark(wrapper, { state: 'unknown', observedAt, error: 'fixture permission denied' } as ProcessObservation);
   await assert.rejects(releaseTaskReservations(f.dependencies(), { lease: handed, reason: 'failed', closeLaunch: f.close('handoff-unknown') }), hasCode('TASK_LIVENESS_UNKNOWN'));
   assert.equal(listTaskReservations(f.store).length, 1);
+});
+
+async function coordinator(f: Fixture, runId: string, tasks: readonly ReservedTaskSnapshot[]) {
+  const input = f.request(runId, tasks, runId, 'coordinator');
+  const started = await f.running(input);
+  f.store.sessionRepository.transaction(tx => {
+    const session = tx.getSession(runId)!;
+    tx.putSession({ ...session, revision: session.revision + 1, state: 'running', process: started.agent });
+  });
+  return { input, ...started };
+}
+
+const delegated = (input: ClaimTasksRequest, delegator: string | undefined): ClaimTasksRequest => ({ ...input, resolveDelegator: async () => delegator });
+const owners = (f: Fixture) => Object.fromEntries(listTaskReservations(f.store).map(set => [set.lease.owner.runId, set.tasks.map(item => item.key.taskId)]));
+
+scenario('[delegation] a coordinator delegates its own reserved task to a child launch', async f => {
+  const coord = await coordinator(f, 'coord', [task('D.1'), task('D.2')]);
+  const child = await f.claim(delegated(f.request('child', [task('D.1')]), 'coord'));
+  assert.deepEqual(owners(f), { coord: ['D.2'], child: ['D.1'] });
+  assert.notEqual(child.owner.fence, coord.active.owner.fence);
+  const parent = listTaskReservations(f.store).find(set => set.lease.owner.runId === 'coord')!;
+  assert.deepEqual(parent.lease.owner, coord.active.owner, 'the coordinator keeps its fence');
+  assert.equal(parent.lease.revision, coord.active.revision + 1, 'transfer fences the old coordinator revision');
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.getSession('child'))?.delegatedBy, coord.active.owner);
+});
+
+scenario('[delegation] another agent or a second child cannot take a delegated or coordinator task', async f => {
+  await coordinator(f, 'coord', [task('D.1'), task('D.2')]);
+  const child = await f.claim(delegated(f.request('child', [task('D.1')]), 'coord'));
+  for (const [runId, delegator, taskId] of [['other', undefined, 'D.2'], ['other', 'other', 'D.2'], ['second-child', 'coord', 'D.1']] as const) {
+    const denied = await claimTaskReservations(f.dependencies(), delegated(f.request(runId, [task(taskId)]), delegator));
+    assert.equal(denied.reserved, false, `${runId} via ${delegator} on ${taskId} must get TASK_RESERVED`);
+    if (denied.reserved) throw new Error('Expected conflict');
+    assert.equal(denied.conflicts[0].owner.runId, taskId === 'D.1' ? child.owner.runId : 'coord');
+  }
+  assert.deepEqual(owners(f), { coord: ['D.2'], child: ['D.1'] });
+});
+
+scenario('[delegation] a non-coordinator owner or a foreign coordinator cannot transfer reservations', async f => {
+  await coordinator(f, 'coord', [task('D.1')]);
+  await coordinator(f, 'other-coord', [task('D.9')]);
+  const denied = await claimTaskReservations(f.dependencies(), delegated(f.request('child', [task('D.1'), task('D.9')]), 'other-coord'));
+  assert.equal(denied.reserved, false, 'a mixed own and foreign set is rejected as a whole');
+  if (denied.reserved) throw new Error('Expected conflict');
+  assert.deepEqual(denied.conflicts.map(item => item.owner.runId), ['coord']);
+  assert.deepEqual(owners(f), { coord: ['D.1'], 'other-coord': ['D.9'] });
+  const executor = await f.running(f.request('executor', [task('E.1')]));
+  f.store.sessionRepository.transaction(tx => { const session = tx.getSession('executor')!; tx.putSession({ ...session, revision: session.revision + 1, state: 'running', process: executor.agent }); });
+  assert.equal((await claimTaskReservations(f.dependencies(), delegated(f.request('child-2', [task('E.1')]), 'executor'))).reserved, false);
+});
+
+scenario('[delegation] a finished child returns its unfinished task to the live coordinator', async f => {
+  const coord = await coordinator(f, 'coord', [task('D.1'), task('D.2')]);
+  const childInput = delegated(f.request('child', [task('D.1')]), 'coord');
+  const child = await f.running(childInput);
+  f.mark(child.agent);
+  f.mark(child.wrapper);
+  assert.equal(await releaseTaskReservations(f.dependencies(), { lease: child.active, reason: 'failed', closeLaunch: f.close('child') }), true);
+  assert.deepEqual(owners(f), { coord: ['D.1', 'D.2'] });
+  const parent = listTaskReservations(f.store)[0];
+  assert.deepEqual(parent.lease.owner, coord.active.owner);
+  assert.equal(parent.lease.revision, coord.active.revision + 2);
+  const denied = await claimTaskReservations(f.dependencies(), f.request('other', [task('D.1')]));
+  assert.equal(denied.reserved, false, 'the returned task is reserved by the coordinator again');
+});
+
+scenario('[delegation] a crashed child is reconciled back to the coordinator, even when all its tasks were delegated', async f => {
+  await coordinator(f, 'coord', [task('D.1')]);
+  const child = await f.running(delegated(f.request('child', [task('D.1')]), 'coord'));
+  assert.deepEqual(owners(f), { coord: [], child: ['D.1'] }, 'a fully delegating coordinator keeps its empty fenced run');
+  f.mark(child.agent);
+  f.mark(child.wrapper);
+  await reconcileTaskReservations(f.dependencies());
+  assert.deepEqual(owners(f), { coord: ['D.1'] });
+});
+
+scenario('[delegation] after coordinator death a child task is released by the existing rules', async f => {
+  const coord = await coordinator(f, 'coord', [task('D.1'), task('D.2')]);
+  const child = await f.running(delegated(f.request('child', [task('D.1')]), 'coord'));
+  f.mark(coord.agent);
+  f.mark(coord.wrapper);
+  f.mark(child.agent);
+  f.mark(child.wrapper);
+  assert.equal(await releaseTaskReservations(f.dependencies(), { lease: child.active, reason: 'failed', closeLaunch: f.close('child') }), true);
+  await reconcileTaskReservations(f.dependencies());
+  assert.deepEqual(owners(f), {});
+  await f.claim(f.request('next', [task('D.1'), task('D.2')]));
 });

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { AgentControlService } from '../src/agent-control.ts';
 import type { ActivityEvent, AgentControlDependencies, DeliveryReceipt, VerifiedSender } from '../src/agent-control.ts';
-import type { ProcessIdentity, ProcessObservation, SessionRecord } from '../src/session-state.ts';
+import type { ProcessIdentity, ProcessObservation, SessionRecord, WorkResult } from '../src/session-state.ts';
 import type { SessionCloseCheck, SessionEnd } from '../src/reminders.ts';
 
 const time = '2026-10-21T10:00:00.000Z';
@@ -22,6 +22,8 @@ function fixture() {
   const events: ActivityEvent[] = [];
   const ends: SessionEnd[] = [];
   const observed: ProcessObservation[] = [];
+  const pendingChecks: string[] = [];
+  const pendingReports = new Map<string, WorkResult>();
   let identity: VerifiedSender = { kind: 'agent', runId: 'run-A' };
   let receipt: DeliveryReceipt = { accepted: true, receiptId: 'receipt-1' };
   let closeCheck: SessionCloseCheck = { allowed: true, unfinished: [] };
@@ -52,6 +54,14 @@ function fixture() {
         return next;
       },
       async publish(changes) { events.push(...changes); },
+      async acceptPendingReport(row) {
+        pendingChecks.push(row.runId);
+        const result = pendingReports.get(row.runId);
+        if (!result || row.result) return row;
+        const next = { ...row, revision: row.revision + 1, result };
+        records.set(row.runId, next);
+        return next;
+      },
     },
     scanner: { async inspect(process) {
       scans.push(process.runnerSessionId);
@@ -70,7 +80,7 @@ function fixture() {
     projects: ['raf', 'other'], agentTypes: ['main', 'implement', 'review'],
   };
   const service = new AgentControlService(dependencies);
-  return { service, records, observations, scans, deliveries, closed, interrupted, events, ends, observed, trustedCaller,
+  return { service, records, observations, scans, deliveries, closed, interrupted, events, ends, observed, trustedCaller, pendingChecks, pendingReports,
     sender(value: VerifiedSender) { identity = value; }, receipt(value: DeliveryReceipt) { receipt = value; },
     closeCheck(value: SessionCloseCheck) { closeCheck = value; } };
 }
@@ -271,3 +281,52 @@ for (const command of ['close', 'interrupt'] as const) {
     assert.equal(f.records.get('run-A')?.state, 'finished');
   });
 }
+
+const reported = (row: SessionRecord): SessionRecord => ({ ...row, launchContext: {
+  assignment: { root: '/workspace', baselineArchives: [], changes: [{ id: 'messages', items: [{ id: '1.1', description: 'Deliver' }] }] },
+  selection: { runner: 'codex', model: 'gpt', effort: 'high', reason: 'test' }, briefPath: `/tmp/${row.runId}/brief.txt`, reportPath: `/tmp/${row.runId}/${row.addressId}.json`,
+} });
+const succeeded: WorkResult = { status: 'succeeded', response: 'Done after the watcher died', proof: { runId: 'run-A', at: time } };
+
+test('[pending-report] ps accepts a pending report of a running session without result and lists it with that result', async () => {
+  const f = fixture();
+  f.records.set('run-A', reported(session('A')));
+  f.pendingReports.set('run-A', succeeded);
+  const rows = await f.service.ps();
+  const row = rows.find(candidate => candidate.addressId === 'A');
+  assert.equal(row?.state, 'running', 'the interactive runner stays open until closure');
+  assert.deepEqual(row?.result, succeeded);
+  assert.deepEqual(f.records.get('run-A')?.result, succeeded);
+  assert.ok(f.pendingChecks.includes('run-A'));
+});
+
+test('[pending-report] ps asks only sessions that have a report path and no result yet', async () => {
+  const f = fixture();
+  f.records.set('run-A', { ...reported(session('A')), result: succeeded });
+  f.records.set('run-B', reported(session('B')));
+  await f.service.ps();
+  assert.deepEqual(f.pendingChecks, ['run-B'], 'A already has a result; main has no report path');
+  assert.deepEqual(f.records.get('run-A')?.result, succeeded);
+  assert.equal(f.records.get('run-B')?.result, undefined, 'no report, no result');
+});
+
+test('[pending-report] a report written before the runner exited is accepted before final closure instead of a failed result', async () => {
+  const f = fixture();
+  f.records.set('run-A', reported(session('A')));
+  f.pendingReports.set('run-A', succeeded);
+  f.observations.set('cli-A', { state: 'exited', observedAt: time, exitCode: 0, evidence: 'process absent' });
+  await f.service.ps();
+  assert.equal(f.records.get('run-A')?.state, 'finished');
+  assert.deepEqual(f.records.get('run-A')?.result, succeeded);
+});
+
+test('[pending-report] close accepts a pending report and closes with its result', async () => {
+  const f = fixture();
+  f.records.set('run-A', reported(session('A')));
+  f.pendingReports.set('run-A', succeeded);
+  const closed = await f.service.close('A');
+  assert.deepEqual(closed, { closed: true, unfinished: [], result: 'succeeded' });
+  assert.deepEqual(f.ends.map(end => end.confirmedSucceeded), [true], 'reminder closure sees the accepted success');
+  assert.equal(f.closed.length, 1);
+  assert.deepEqual(f.records.get('run-A')?.result, succeeded);
+});

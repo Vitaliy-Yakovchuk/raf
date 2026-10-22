@@ -195,7 +195,7 @@ export async function createServicePorts(
       notifier: {
         notify: async notice => {
           if (!options?.sharedDelivery) throw new Error('Shared main delivery transport is unavailable or unverified');
-          const text = `Bug comment conflict ${notice.kind} for ${notice.bugKey}, operation ${notice.operationId}; the local comment is kept undelivered until main decides: ${notice.text}`;
+          const text = notice.kind === 'new-bug' ? `[raf] New bug ${notice.bugKey}` : `[raf] New human comment ${notice.commentId} on ${notice.bugKey}`;
           const receipt = await options.sharedDelivery({ to: 'main', text }, { kind: 'system' });
           if (!receipt.accepted) throw new Error(receipt.reason);
         },

@@ -1,6 +1,7 @@
 import type { AssignmentSnapshot } from './assignment.ts';
 import { loadFlowPolicy } from './flow-policy.ts';
 import type { ResourceReservation } from './resource-admission.ts';
+import type { SessionNotify } from './launcher-notice.ts';
 
 export type ProcessIdentity = {
   pid: number;
@@ -45,7 +46,7 @@ export type SessionLaunchContext = {
   writeBoundaries?: readonly string[];
 };
 
-export type SessionRecord = {
+export type SessionRecord = SessionNotify & {
   runId: string;
   addressId: string;
   revision: number;

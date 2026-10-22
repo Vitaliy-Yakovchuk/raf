@@ -8,6 +8,8 @@ import type { DeliveryReceipt, MessageRequest, VerifiedSender } from './agent-co
 import { ReminderError, ReminderService, type Reminder, type ReminderBinding, type UpdateReminder } from './reminders.ts';
 import { validateEventId } from './event-catalog.ts';
 import { commandFailure } from './cli-contract.ts';
+import type { SessionRecord } from './session-state.ts';
+import type { PsSessionView } from './launcher-notice.ts';
 
 export type ReminderCommand =
   | 'reminder add'
@@ -177,7 +179,7 @@ export function reminderDeliveryText(reminder: Pick<Reminder, 'id' | 'text' | 'c
     : `Reminder ${reminder.id} (created for ${reminder.createdFor}, assigned to ${reminder.assignedTo}): ${reminder.text}`;
 }
 
-async function send(ports: CommandStatePorts, request: MessageRequest): Promise<DeliveryReceipt> {
+async function send(ports: Pick<CommandStatePorts, 'deliver'>, request: MessageRequest): Promise<DeliveryReceipt> {
   try {
     const receipt = await ports.deliver(request, { kind: 'system' });
     if (receipt && receipt.accepted === true && typeof receipt.receiptId === 'string' && receipt.receiptId) return receipt;
@@ -210,6 +212,7 @@ function applyPendingFacts(ports: CommandStatePorts, at: string): void {
 export async function settleCommandState(ports: CommandStatePorts): Promise<CommandSettleReport> {
   const report: CommandSettleReport = { activated: [], delivered: [], undelivered: [], notices: [], pruned: [] };
   const clock = isoClock(ports);
+  await settleResultNotices(ports);
   const reminders = reminderService(ports);
   report.activated.push(...reminders.activateDue().map(reminder => reminder.id));
   ports.store.closureNotices.stage();
@@ -246,4 +249,39 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
     } else ports.store.closureNotices.release(notice.id, owner.token);
   }
   return report;
+}
+
+export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store' | 'now' | 'deliver'>): Promise<void> {
+  const owner: DeliveryClaimOwner = { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
+  for (const notice of ports.store.resultNotices.list().filter(row => row.state === 'pending')) {
+    const claimed = ports.store.resultNotices.claim(notice.id, owner, new Date(ports.now()).toISOString(), ownerAlive);
+    if (!claimed) continue;
+    let error: string | null = null;
+    try {
+      const target = ports.store.sessionRepository.transaction(tx => tx.listSessions().find(row => row.addressId === claimed.recipient &&
+        row.runId === claimed.recipientRunId && row.state === 'running'));
+      if (!target) throw new Error(`Recipient session is not active: ${claimed.recipient} (${claimed.recipientRunId ?? 'unresolved run'})`);
+      const receipt = await send(ports, { to: claimed.recipient, runId: target.runId, text: claimed.text });
+      if (!receipt.accepted) error = receipt.reason;
+    } catch (failure) { error = failure instanceof Error ? failure.message : String(failure); }
+    ports.store.resultNotices.complete(notice.id, owner.token, error);
+  }
+}
+
+export function resultNoticeViews(store: StateStore, sessions: readonly SessionRecord[]): PsSessionView[] {
+  const notices = store.resultNotices.list();
+  const rows = [...sessions];
+  const pending = new Set(notices.filter(notice => notice.state === 'pending').map(notice => notice.runId));
+  for (const session of store.sessionRepository.transaction(tx => tx.listSessions())) {
+    if (pending.has(session.runId) && !rows.some(row => row.runId === session.runId)) rows.push(session);
+  }
+  for (const notice of notices) {
+    if (notice.state === 'pending' && !rows.some(row => row.runId === notice.runId)) rows.push(notice.source);
+  }
+  return rows.map(session => {
+    const notice = notices.find(row => row.runId === session.runId);
+    if (!notice) return session;
+    const { id, recipient, state, attempts, lastError } = notice;
+    return { ...session, resultNotice: { id, recipient, state, attempts, lastError } };
+  });
 }

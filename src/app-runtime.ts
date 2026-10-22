@@ -14,6 +14,7 @@ import { validateQuotaRunners, type CollectionResult } from './quota-collection.
 import type { RunnerId } from './runner-protocols.ts';
 import { bindWorkspaceBoundaries, rafCommandFor, resolveGitWriteBoundaries, rafSubcommandsFor, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
 import { createReminderHandlers, settleCommandState, type CommandStatePorts, type ReminderCommand } from './reminder-cli.ts';
+import type { NotifyTarget } from './launcher-notice.ts';
 
 export interface RuntimeContext {
   orchestratorRoot: string;
@@ -40,6 +41,7 @@ export interface RuntimeRunParameters {
   phase: string;
   complexity: string;
   tasks: string[];
+  notify?: string;
 }
 
 export type RuntimeTaskContext = Pick<DerivedTaskContext, 'branch' | 'outcome' | 'writeBoundaries' | 'sources'> & Partial<Pick<DerivedTaskContext, 'workspaceWritable'>> & {
@@ -59,6 +61,7 @@ export interface RuntimeLaunch {
   statePath: string;
   tmpRoot: string;
   writeBoundaries?: readonly string[];
+  notify?: NotifyTarget;
   taskContext?: { parameters: RuntimeRunParameters; context: RuntimeTaskContext };
 }
 
@@ -69,6 +72,7 @@ export interface PreparedRuntimeReport {
 }
 
 export interface RuntimeServices {
+  resolveNotify?(address: string): Promise<NotifyTarget>;
   assignment: {
     validate(request: AssignmentRequest): Promise<AssignmentValidation>;
     compose(snapshot: AssignmentSnapshot, context: AssignmentBriefContext): Promise<string>;
@@ -203,6 +207,10 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         selections.set(change, items);
       }
       const api = await service();
+      const notify = params.notify === undefined ? undefined : await (async () => {
+        if (!api.resolveNotify) throw fail('NOTIFY_TARGET_INVALID', 'preflight', 'Notify target validation is unavailable');
+        return api.resolveNotify(params.notify);
+      })();
       const validation = await api.assignment.validate({ root: context.orchestratorRoot, selections: [...selections].map(([change, items]) => ({ change, items })) });
       if (!validation.ok) throw fail('INVALID_ASSIGNMENT', 'assignment', `${validation.kind}: ${validation.issues.map(issue => `${issue.change}: ${issue.reason}`).join('; ')}`, { received: params.tasks, found: validation.issues });
       const assignment = validation.snapshot;
@@ -215,6 +223,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const selection = api.selectModel(loaded.models, await snapshot(), { complexity: params.complexity, role: params.type });
       if (selection.status === 'waiting') throw fail(selection.code, 'selection', selection.reason);
       const launch: RuntimeLaunch = { ...dependencies.nextRunIdentity(), addressId: params.id,
+        ...(notify ? { notify } : {}),
         activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
         assignment, selection, statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], taskContext: { parameters: params, context: task } };
       let prepared: PreparedRuntimeReport | undefined;

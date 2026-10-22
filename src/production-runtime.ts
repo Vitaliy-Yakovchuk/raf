@@ -28,6 +28,8 @@ import type { ReminderSessionEffect } from './reminder-repository.ts';
 import { collectRunnerQuotas, readQuotaViews, type CollectionError, type CollectionLock, type CollectionResult, type CurrentQuota, type ProbeTransport, type QuotaCurrentStore } from './quota-collection.ts';
 import { validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
 import type { RunnerId } from './runner-protocols.ts';
+import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
+import { settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
 
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const object = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -293,7 +295,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     const effect: ReminderSessionEffect = { id: `${session.runId}:reminders:session-ended`, domain: 'reminders', payload: { operation: 'session-ended', runId: session.runId, at, end: { address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: true } } };
     const pending = intents(rows);
     if (!session.result) {
-      const result: WorkResult = { status: 'failed', response: 'Runner exited without an accepted result', proof: { runId: session.runId, at } };
+      const result: WorkResult = { status: 'failed', response: NO_REPORT_REASON, proof: { runId: session.runId, at } };
       verified.set(result, session.runId);
       state.acceptWorkResult(session.runId, result, { pending: [{ id: `${session.runId}:agent.failed`, runId: session.runId, event: 'agent.failed', payload: { kind: 'agent.failed', id: session.addressId } }], domain: [] });
       session = current(session.runId)!;
@@ -309,6 +311,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       } });
       if (!released) fail('LAUNCH_RECOVERABLE', 'Task reservation cannot be released before verified process exit');
     } else state.finalizeSession(session.runId, session.revision, at, { pending, domain: [effect] });
+    await deliverResults();
     return current(session.runId)!;
   };
   const launch = createLaunchState({ repository: store.sessionRepository, measure: async () => { throw new Error('Measurements must precede atomic reserve'); }, evaluateAdmission: evaluateResourceAdmission });
@@ -386,6 +389,10 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       },
     },
   });
+  const deliverResults = () => settleResultNotices({ store, now: Date.now, deliver: (request, sender) => {
+    if (sender.kind !== 'system') throw new Error('Result notices require a system sender');
+    return control.message(request, rafSystemCaller);
+  } });
   const attachMain = async (): Promise<MainAttachment> => {
     const identity = await callerPane(execute, direct);
     const authority = {};
@@ -397,7 +404,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       throw error;
     }
   };
-  return { state, current, verified, reminders, publish, control, authorize, resolve, finalize, attachMain };
+  return { state, current, verified, reminders, publish, control, authorize, resolve, finalize, attachMain, deliverResults };
 }
 
 const quotaRemedy = 'Перевірте вхід, версію CLI та блок quota в conf/raf.json, потім повторіть raf runner limits.';
@@ -551,6 +558,13 @@ export async function createProductionServices(
     } else if (readSession(runId)?.state === 'reserved') tools.state.abortLaunch(runId, reason, now());
   };
   return {
+    resolveNotify: async address => {
+      const session = tools.state.listReconciliationCandidates().find(row => row.addressId === address && row.state === 'running');
+      if (!session?.process) return fail(NOTIFY_TARGET_INVALID, `Notify target is not active: ${address}`);
+      const observation = await observeIdentity(session.process, execute);
+      if (observation.state !== 'alive') return fail(NOTIFY_TARGET_INVALID, `Notify target is not confirmed alive: ${address}`);
+      return { addressId: session.addressId, runId: session.runId };
+    },
     assignment: { validate: request => validateAssignment(request, assignments), compose: (snapshot, input) => composeAssignmentBrief(snapshot, { ...input, sessionName: input.agentId }, assignments.fs) },
     resolveTask: async (parameters, assignment) => {
       const task = await deriveTaskContext({ root: context.orchestratorRoot, parameters, assignment, configuration: await loadTaskContextConfiguration(context.confRoot) });
@@ -630,11 +644,18 @@ export async function createProductionServices(
       })();
       try {
         const claimed = await claimTaskReservations(dependencies, { runId: input.runId, addressId: input.addressId, tasks, starter: await ownIdentity(execute, input.runId, input.tmuxSession), reserveLaunch: tx => {
+          if (input.notify) {
+            const target = tx.getSession(input.notify.runId);
+            if (target?.state !== 'running' || target.addressId !== input.notify.addressId) fail(NOTIFY_TARGET_INVALID, `Notify target is no longer active: ${input.notify.addressId}`);
+          }
           const result = reserveLaunchInTransaction(tx, request, measured, evaluateResourceAdmission);
           if (!result.reserved) { admissionReason = result.admission.reasons.join('; '); throw new Error('RESOURCE_UNAVAILABLE'); }
           const launcher = caller ? tx.getSession(caller) : undefined;
-          if (launcher?.state !== 'running' || launcher.activity?.type !== 'coordinator') return result.session;
-          const session = { ...result.session, revision: result.session.revision + 1, launchedBy: { addressId: launcher.addressId, runId: launcher.runId } };
+          const launchedBy = launcher?.state === 'running' && launcher.activity?.type === 'coordinator'
+            ? { addressId: launcher.addressId, runId: launcher.runId } : undefined;
+          if (!launchedBy && !input.notify) return result.session;
+          const session = { ...result.session, revision: result.session.revision + 1,
+            ...(launchedBy ? { launchedBy } : {}), ...(input.notify ? { notify: input.notify } : {}) };
           tx.putSession(session);
           return session;
         }, resolveDelegator: async () => caller });
@@ -718,7 +739,7 @@ export async function createProductionServices(
       await release(runId, 'cancelled');
     },
     control: {
-      ps: async () => { const sessions = await tools.control.ps(); if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained'); return sessions; },
+      ps: async () => { const sessions = await tools.control.ps(); if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained'); await tools.deliverResults(); return resultNoticeViews(store, sessions); },
       update: async (id, patch, caller) => { await tools.authorize(id, caller); const session = tools.state.listReconciliationCandidates().find(session => session.addressId === id); if (!session?.activity) fail('SESSION_UNAVAILABLE', 'Session activity unavailable'); return tools.control.update(id, { ...session.activity, ...patch }); },
       message: (input, caller) => tools.control.message(input, caller),
       close: async (id, caller) => { await tools.authorize(id, caller, true); return tools.control.close(id); },
@@ -999,10 +1020,11 @@ export async function runProductionWorker(
             const verification = await verifyAssignmentCompletion(request.assignment, assignments, Object.fromEntries(result.report.changes.filter(change => change.archive).map(change => [change.id, change.archive!])));
             if (!verification.ok) fail('REPORT_UNVERIFIED', 'OpenSpec completion changed before result acceptance');
           }
-          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `Runner exited without an accepted report: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at } };
+          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at } };
           tools.verified.set(value, request.runId);
           const accepted = tools.state.acceptWorkResult(request.runId, value, { pending: [{ id: `${request.runId}:${result.event}`, runId: request.runId, event: result.event, payload: { kind: result.event, id: request.address } }], domain: [] });
           if (!accepted && !tools.current(request.runId)?.result) fail('REPORT_UNVERIFIED', 'Result could not be durably accepted for the running session');
+          await tools.deliverResults();
           if (result.report && lease) {
             const succeeded = new Set(result.report.changes.flatMap(change => change.items.filter(item => item.status === 'succeeded').map(item => JSON.stringify([change.id, item.id]))));
             const subset = { ...request.assignment, changes: request.assignment.changes.map(change => ({ ...change, items: change.items.filter(item => succeeded.has(JSON.stringify([change.id, item.id]))) })).filter(change => change.items.length) };

@@ -350,6 +350,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       },
       updateActivity: async (session, update, rows) => { if (!launch.updateActivity(session.runId, session.revision, update, intents(rows))) fail('ACTIVITY_CONFLICT', 'Session changed during activity update'); return current(session.runId)!; },
       finalize, publish,
+      acceptPendingReport: async () => { throw new Error('NotImplemented: acceptPendingReport'); },
     },
     transport: {
       deliver: async (identity, message) => {

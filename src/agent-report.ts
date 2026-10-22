@@ -46,6 +46,10 @@ export interface AgentReportWatcher {
   finish(exit: AgentReportExit): Promise<void>;
   dispose(): Promise<void>;
 }
+export type PendingAgentReportPorts = Pick<AgentReportPorts, 'now' | 'verifyAssignmentCompletion' | 'diagnostic'> & { readonly fs: Pick<AgentReportPorts['fs'], 'readText'> };
+export async function readPendingAgentReport(request: AgentReportRequest, ports: PendingAgentReportPorts): Promise<AgentReportResult | null> {
+  throw new Error('NotImplemented: readPendingAgentReport');
+}
 export async function createAgentReportWatcher(request: AgentReportRequest, ports: AgentReportPorts): Promise<AgentReportWatcher> {
   const component = (value: string) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value);
   if (!isAbsolute(request.tmpRoot) || !component(request.runId) || !component(request.address)) throw new Error('Invalid report directory, run ID or address');

@@ -15,6 +15,7 @@ export interface AgentControlCoordinator {
   updateActivity(session: SessionRecord, update: ActivityUpdate, events: readonly ActivityEvent[]): Promise<SessionRecord>;
   finalize(session: SessionRecord, events: readonly ActivityEvent[]): Promise<SessionRecord>;
   publish(events: readonly ActivityEvent[]): Promise<void>;
+  acceptPendingReport(session: SessionRecord): Promise<SessionRecord>;
 }
 export interface AgentControlDependencies {
   repository: SessionRepository;

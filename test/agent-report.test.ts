@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createAgentReportWatcher } from '../src/agent-report.ts';
+import { createAgentReportWatcher, readPendingAgentReport } from '../src/agent-report.ts';
 import type { AgentReportPorts, AgentReportResult, AgentReportRequest, AgentReportExit } from '../src/agent-report.ts';
 import type { AssignmentVerification } from '../src/assignment.ts';
 
@@ -154,4 +154,67 @@ test('reused address reads only its own run and cleans temporary artifacts', asy
   assert.ok(f.watches[0].stopped);
   assert.ok(f.processStopped());
   assert.ok(f.files.has('/workspace/tmp/previous-run/implement-demo.json'));
+});
+
+test('[pending-report] a verified report without a live watcher becomes the same addressed result, without watching or cleanup', async () => {
+  const f = fixture();
+  f.files.set(path, JSON.stringify({ ...valid, extra: { session: 'later' } }));
+  const result = await readPendingAgentReport(request, f.ports);
+  assert.deepEqual(f.reads, [path]);
+  assert.deepEqual(f.verifications, [{ snapshot: request.assignment, archives: {} }]);
+  assert.deepEqual(result, { runId: request.runId, id: request.address, event: 'agent.succeeded', status: 'succeeded', at: f.ports.now(), report: { ...valid, extra: { session: 'later' } } });
+  assert.equal(f.watches.length, 0);
+  assert.deepEqual(f.removed, []);
+  assert.deepEqual(f.results, [], 'the caller, not the reader, records the result');
+});
+
+test('[pending-report] a valid failed report is returned without OpenSpec verification', async () => {
+  const f = fixture();
+  const report = { ...valid, status: 'failed', changes: [{ id: 'demo', items: [{ id: '1.1', status: 'failed', reason: 'Contradicts the spec' }] }] };
+  f.files.set(path, JSON.stringify(report));
+  const result = await readPendingAgentReport(request, f.ports);
+  assert.equal(result?.event, 'agent.failed');
+  assert.equal(result?.status, 'failed');
+  assert.deepEqual(result?.report, report);
+  assert.equal(result?.exit, undefined, 'a pending report is not a process exit');
+  assert.equal(f.verifications.length, 0);
+});
+
+test('[pending-report] an absent report yields nothing and no diagnostic', async () => {
+  const f = fixture();
+  assert.equal(await readPendingAgentReport(request, f.ports), null);
+  assert.deepEqual(f.diagnostics, []);
+});
+
+for (const [label, content] of [['partial JSON', '{"status":"succeeded"'], ['assignment mismatch', JSON.stringify({ ...valid, changes: [{ id: 'other', items: [{ id: '1.1', status: 'succeeded' }] }] })], ['failed item without reason', JSON.stringify({ ...valid, status: 'failed', changes: [{ id: 'demo', items: [{ id: '1.1', status: 'failed' }] }] })]] as const) test(`[pending-report] ${label} is not accepted and is diagnosed`, async () => {
+  const f = fixture();
+  f.files.set(path, content);
+  assert.equal(await readPendingAgentReport(request, f.ports), null);
+  assert.ok(f.diagnostics.length > 0, label);
+});
+
+for (const unavailable of [false, true]) test(`[pending-report] unconfirmed OpenSpec completion keeps a succeeded report pending, unavailable=${unavailable}`, async () => {
+  const f = fixture();
+  f.setVerification({ ok: false, issues: [{ change: 'demo', requestedItems: ['1.1'], reason: 'Task remains open', foundItems: [], archives: [], remedy: 'Complete task' }] });
+  if (unavailable) f.failVerification();
+  f.files.set(path, JSON.stringify(valid));
+  assert.equal(await readPendingAgentReport(request, f.ports), null);
+  assert.ok(f.diagnostics.length > 0);
+});
+
+test('[pending-report] archive claims reach the verifier and the reader stays within its own run', async () => {
+  const f = fixture();
+  f.files.set('/workspace/tmp/previous-run/implement-demo.json', JSON.stringify(valid));
+  assert.equal(await readPendingAgentReport(request, f.ports), null);
+  f.files.set(path, JSON.stringify({ ...valid, changes: [{ ...valid.changes[0], archive: '2026-10-22-demo' }] }));
+  assert.equal((await readPendingAgentReport(request, f.ports))?.status, 'succeeded');
+  assert.deepEqual(f.verifications, [{ snapshot: request.assignment, archives: { demo: '2026-10-22-demo' } }]);
+  assert.ok(f.reads.every(read => read === path));
+});
+
+test('[pending-report] invalid run directory components are rejected', async () => {
+  const f = fixture();
+  await assert.rejects(() => readPendingAgentReport({ ...request, runId: '../escape' }, f.ports));
+  await assert.rejects(() => readPendingAgentReport({ ...request, tmpRoot: 'relative' }, f.ports));
+  assert.deepEqual(f.reads, []);
 });

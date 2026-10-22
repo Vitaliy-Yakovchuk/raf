@@ -99,7 +99,7 @@ database.close();
     },
     async cleanup() {
       database.close();
-      await rm(root, { recursive: true, force: true });
+      await rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
     },
   };
 }
@@ -135,6 +135,46 @@ test('[codex-state-access] preparing the channel preserves sandbox, selection an
 
 type ToolOutput = { call_id: string; output: unknown };
 
+const shellToolNames = ['exec_command', 'shell_command', 'shell'];
+
+function flattenTools(tools: readonly any[]): any[] {
+  return tools.flatMap((tool: any) => tool.type === 'namespace' ? flattenTools(tool.tools ?? []) : [tool]);
+}
+
+function shellCall(body: any, callId: string, index: number, command: string): object {
+  const direct = flattenTools(body.tools ?? []).find((entry: any) => shellToolNames.includes(entry.name));
+  if (direct) {
+    return {
+      id: `fc_${index}`, type: 'function_call', status: 'completed', call_id: callId,
+      name: direct.name,
+      arguments: JSON.stringify(direct.name === 'shell'
+        ? { command: ['bash', '-c', command] }
+        : direct.name === 'shell_command'
+          ? { command, login: false }
+          : { cmd: command, login: false, yield_time_ms: 10000 }),
+    };
+  }
+  const additional = (body.input ?? []).filter((input: any) => input.type === 'additional_tools').flatMap((input: any) => flattenTools(input.tools ?? []));
+  const exec = additional.find((entry: any) => entry.type === 'custom' && entry.name === 'exec');
+  assert.ok(exec, 'the installed Codex must expose a shell execution tool');
+  const nested = ['exec_command', 'shell_command'].find(name => String(exec.description).includes(`${name}(`));
+  assert.ok(nested, 'the code-mode exec tool must expose a nested shell execution tool');
+  const args = nested === 'exec_command'
+    ? { cmd: command, login: false, yield_time_ms: 10000 }
+    : { command, login: false };
+  return {
+    id: `ct_${index}`, type: 'custom_tool_call', status: 'completed', call_id: callId, name: exec.name,
+    input: `const r = await tools.${nested}(${JSON.stringify(args)}); text(typeof r === 'string' ? r : \`exit_code: \${r.exit_code}\\n\${r.output}\`);`,
+  };
+}
+
+function outputText(output: ToolOutput | undefined): string {
+  const value = output?.output;
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.map((part: any) => typeof part?.text === 'string' ? part.text : JSON.stringify(part)).join('\n');
+  return JSON.stringify(value);
+}
+
 async function scriptedProvider(commands: readonly string[]) {
   const outputs = new Map<string, ToolOutput>();
   const issued = new Set<string>();
@@ -145,22 +185,11 @@ async function scriptedProvider(commands: readonly string[]) {
       for await (const chunk of request) chunks.push(Buffer.from(chunk));
       const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
       for (const input of body.input ?? []) {
-        if (input.type === 'function_call_output') outputs.set(input.call_id, input);
+        if (input.type === 'function_call_output' || input.type === 'custom_tool_call_output') outputs.set(input.call_id, input);
       }
       const index = outputs.size;
       const callId = `x1-call-${index}`;
-      const tools = (body.tools ?? []).flatMap((tool: any) => tool.type === 'namespace' ? tool.tools : [tool]);
-      const tool = tools.find((entry: any) => ['exec_command', 'shell_command', 'shell'].includes(entry.name));
-      assert.ok(tool, 'the installed Codex must expose a shell execution tool');
-      const item = index < commands.length ? {
-        id: `fc_${index}`, type: 'function_call', status: 'completed', call_id: callId,
-        name: tool.name,
-        arguments: JSON.stringify(tool.name === 'shell'
-          ? { command: ['bash', '-c', commands[index]] }
-          : tool.name === 'shell_command'
-            ? { command: commands[index], login: false }
-            : { cmd: commands[index], login: false, yield_time_ms: 1000 }),
-      } : {
+      const item = index < commands.length ? shellCall(body, callId, index, commands[index]) : {
         id: 'msg_done', type: 'message', role: 'assistant', status: 'completed',
         content: [{ type: 'output_text', text: 'X.1 protocol fixture complete', annotations: [] }],
       };
@@ -224,6 +253,7 @@ for (const channelEnabled of [true, false]) {
       ...prepared.invocation.args,
       '-c', 'sandbox_workspace_write.exclude_tmpdir_env_var=true',
       '-c', 'sandbox_workspace_write.exclude_slash_tmp=true',
+      '-c', 'features.plugins=false',
       '-c', 'model_provider="raf_x1_fixture"',
       '-c', `model_providers.raf_x1_fixture={name="X.1 local fixture",base_url=${JSON.stringify(provider.url)},wire_api="responses",requires_openai_auth=false}`,
       'exec', '--json', '--ephemeral', '--skip-git-repo-check',
@@ -234,7 +264,7 @@ for (const channelEnabled of [true, false]) {
     assert.equal(result.code, 0, `native Codex failed: ${result.stderr}\n${result.stdout}`);
     assert.equal(provider.issued.size, commands.length);
     assert.equal(provider.outputs.size, commands.length, 'every native tool result must reach the scripted API');
-    const output = (index: number) => JSON.stringify(provider!.outputs.get(`x1-call-${index}`)?.output);
+    const output = (index: number) => outputText(provider!.outputs.get(`x1-call-${index}`));
     if (channelEnabled) {
       assert.match(output(1), /(?:exit_code|Process exited with code|code)[^\d]*0/, 'agent message must exit 0 through the native tool');
       assert.match(output(1), /X\.1 delivered from Codex/);

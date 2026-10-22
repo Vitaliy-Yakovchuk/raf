@@ -391,3 +391,38 @@ test('[production-worker] crash without a report records failed in the same SQLi
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
   assert.deepEqual(listTaskReservations(f.store), []);
 });
+
+test('[production-factory] disk admission covers only the development tree, not HOME, state or temporary volumes', async t => {
+  const f = await fixture(t);
+  const services = (availableDevKb: number) => {
+    const execute: AdapterCommandExecutor = async command => {
+      if (command.executable !== 'df') return f.execute(command);
+      f.calls.push(structuredClone(command));
+      const rows = command.args.slice(1).map(path => path === f.root || path.startsWith(f.root + '/') && !path.startsWith(f.tmpRoot)
+        ? `/dev/fake-dev 209715200 0 ${availableDevKb} 1% ${f.root}`
+        : `/dev/fake-home 11534336 11530240 4096 99% ${path}`);
+      return { exitCode: 0, stdout: ['Filesystem 1024-blocks Used Available Capacity Mounted on', ...rows].join('\n') + '\n', stderr: '' };
+    };
+    return createProductionServices(f.store, configuration, f.context, { execute });
+  };
+  const base = (runId: string): RuntimeLaunch => ({ runId, addressId: f.params.id, tmuxSession: `${runId}-tmux`, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot });
+  const attempt = async (runId: string, availableDevKb: number) => {
+    const runtime = await services(availableDevKb);
+    const { task, launch } = await derivedLaunch(runtime, f, base(runId));
+    const prepared = await runtime.prepareReport(launch);
+    const result = await runtime.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
+    if (!result.admitted) await prepared.cleanupUnstarted();
+    return result;
+  };
+  const denied = await attempt('dev-full', 1024);
+  assert.equal(denied.admitted, false);
+  if (!denied.admitted) {
+    assert.match(denied.reason, /insufficient disk on \/dev\/fake-dev/);
+    assert.doesNotMatch(denied.reason, /fake-home/);
+  }
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
+  const admitted = await attempt('home-full', 200 * 1024 * 1024);
+  assert.equal(admitted.admitted, true, 'reason' in admitted ? admitted.reason : 'admitted');
+  const reservation = f.store.sessionRepository.transaction(tx => tx.listReservations()).find(row => row.runId === 'home-full');
+  assert.deepEqual(Object.keys(reservation?.resourceBundle?.resources.diskBytes ?? {}), ['/dev/fake-dev']);
+});

@@ -576,7 +576,7 @@ export async function createProductionServices(
       await reconcileTaskReservations(dependencies);
       const boot = await dependencies.currentBoot();
       const estimate = prepared.get(input.tmuxSession)?.launch.taskContext?.context.estimate;
-      const resourceSnapshot = await measureResources([input.activity.cwd, dirname(input.statePath), input.tmpRoot], boot.machineId, execute);
+      const resourceSnapshot = await measureResources([context.orchestratorRoot, input.activity.cwd], boot.machineId, execute);
       const requiredFileSystemIds = [...new Set([...input.requiredFileSystemIds, ...Object.values(resourceSnapshot.fileSystemByPath)])];
       const requested = { ramBytes: input.requested.ramBytes, diskBytes: { ...Object.fromEntries(estimate ? requiredFileSystemIds.map(id => [id, estimate.diskBytesPerFileSystem]) : []), ...input.requested.diskBytes } };
       const candidates = tools.state.listReconciliationCandidates().filter(session => session.process);

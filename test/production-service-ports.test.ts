@@ -241,6 +241,27 @@ test('sqlite: resource snapshot delegates admission including unused reservation
   assert.ok(actual.reason.length > 0);
 });
 
+test('sqlite: resource wait checks disk only on the development tree volume', async t => {
+  const { context, path } = await fixture(t);
+  const store = openStateStore(path);
+  t.after(() => store.close());
+  const measured = (devAvailable: number): ResourceSnapshot => ({
+    measurement: { ...snapshot([]).measurement, fileSystems: [{ id: 'dev-volume', totalBytes: 1024 * 2 ** 30, availableBytes: devAvailable }, { id: 'home-volume', totalBytes: 11 * 2 ** 30, availableBytes: 2 ** 20 }] },
+    reasons: [], fileSystemByPath: { [context.orchestratorRoot]: 'dev-volume', [context.stateDirectory]: 'home-volume' },
+  });
+  const wait = async (devAvailable: number) => {
+    const dependencies = await createProductionServiceDependencies(context, { resourceReader: { read: async () => measured(devAvailable) } });
+    dependencies.eventPorts(store);
+    return dependencies.resourceWait.readSnapshot();
+  };
+  const ample = await wait(512 * 2 ** 30);
+  assert.equal(ample.status, 'ANY_RUN', ample.reason);
+  const full = await wait(2 ** 20);
+  assert.equal(full.status, 'NO_RESOURCES');
+  assert.match(full.reason, /insufficient disk on dev-volume/);
+  assert.doesNotMatch(full.reason, /home-volume/);
+});
+
 test('sqlite: failed resource probe and missing filesystem never become admission', async t => {
   const { context, path } = await fixture(t);
   const store = openStateStore(path);

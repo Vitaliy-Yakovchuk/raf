@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { hostname, tmpdir } from 'node:os';
+import { hostname } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { observeProcesses, createResourceSnapshotReader, readMachineBootIdentity } from './os-runtime.ts';
 import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
@@ -54,7 +54,7 @@ export async function createProductionServiceDependencies(
     if (!store) throw new Error('Production service state store is not bound');
     return store;
   };
-  const paths = [...new Set(options?.resourcePaths ?? [context.orchestratorRoot, context.stateDirectory, tmpdir()])];
+  const paths = [...new Set(options?.resourcePaths ?? [context.orchestratorRoot])];
   if (!paths.length || paths.some(path => !isAbsolute(path))) throw new Error('Absolute resource paths are required');
   const reader = options?.resourceReader ?? createResourceSnapshotReader({ machineId: hostname(), paths });
   return {

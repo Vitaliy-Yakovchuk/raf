@@ -633,6 +633,21 @@ scenario('unknown or incomplete OpenSpec answers cannot release or reserve tasks
   assert.equal(f.launchCalls(), 1);
 });
 
+scenario('a live owner editing its own change does not fail another launch and keeps its claims', async f => {
+  const owned = f.request('run-a', [task('3.1', 'etchly', 'quotas-off-until-release', 'quotas-instance')]);
+  const { active } = await f.running(owned);
+  f.resolutions.set(sourceKey(owned.tasks[0]), { state: 'unknown', requested: owned.tasks[0],
+    reason: 'etchly/quotas-off-until-release/3.1: Source read race: openspec/changes/quotas-off-until-release; main must verify the source and retry' });
+  const launched = f.request('run-b', [task('1.3', 'raf', 'add-raf-bug-sync', 'bug-sync-instance')]);
+  const result = await claimTaskReservations(f.dependencies(), launched);
+  assert.equal(result.reserved, true, 'a read race on another run source must not fail this launch');
+  const sets = listTaskReservations(f.store);
+  assert.deepEqual(sets.find(set => set.lease.owner.runId === 'run-a')?.lease, active);
+  assert.deepEqual(sets.find(set => set.lease.owner.runId === 'run-a')?.tasks, owned.tasks);
+  assert.deepEqual(sets.find(set => set.lease.owner.runId === 'run-b')?.tasks, launched.tasks);
+  assert.equal(f.launchCalls(), 2);
+});
+
 for (const reason of ['succeeded', 'failed'] as const) {
   scenario(`terminal ${reason} releases every remaining task with session and admission cleanup`, async f => {
     const input = f.request('run-a', [task('R.1'), task('R.2')]);

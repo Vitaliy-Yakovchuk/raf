@@ -183,7 +183,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const selections = new Map<string, { id: string }[]>();
       if (!Array.isArray(params.tasks) || !params.tasks.length) throw fail('INVALID_ASSIGNMENT', 'assignment', 'Nonempty tasks required');
       for (const task of params.tasks) {
-        if (typeof task !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]*:[^:\s]+$/.test(task)) throw fail('INVALID_ASSIGNMENT', 'assignment', 'Expected change:item', { received: task });
+        if (typeof task !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]*:[^:\s]+$/.test(task)) throw fail('INVALID_ASSIGNMENT', 'assignment', 'Expected change:item; pass several items by repeating the option: --tasks a:1 --tasks a:2', { received: task, expected: '--tasks a:1 --tasks a:2' });
         const [change, id] = task.split(':');
         const items = selections.get(change) ?? [];
         items.push({ id });

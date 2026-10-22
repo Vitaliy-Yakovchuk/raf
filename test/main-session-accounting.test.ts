@@ -290,6 +290,18 @@ for (const [label, argv, code] of [
   });
 }
 
+test('agent run names the repeated --tasks form when several items are joined into one value', { timeout: 120_000 }, async t => {
+  const f = await fixture(t);
+  await initializeState(f);
+  const argv = [...runArguments('joined-tasks', 'hotfix').slice(0, -1), 'add-raf-agent-run:1.1,add-raf-agent-run:1.2'];
+  const result = cli(f, argv, { PATH: `${f.sentinels}:/usr/bin:/bin` });
+  const error = failure(result);
+  assert.equal(error.code, 'INVALID_ASSIGNMENT');
+  assert.match(result.stderr, /--tasks a:1 --tasks a:2/);
+  assert.equal(readFileSync(f.stubLog, 'utf8'), '');
+  assert.deepEqual(sessions(f), []);
+});
+
 test('raf main attach registers the calling tmux pane as main without starting processes', { timeout: 180_000 }, async t => {
   const f = await fixture(t);
   await initializeState(f);

@@ -107,6 +107,7 @@ type ReservationTransaction = Parameters<Parameters<StateStore['taskReservationR
 const copy = <T>(value: T): T => structuredClone(value);
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const taskKey = (task: ReservedTaskSnapshot): string => JSON.stringify([task.key.project, task.changeInstance, task.key.taskId]);
+const sourceOf = (task: ReservedTaskSnapshot): string => JSON.stringify([task.key.project, task.key.changeId]);
 const sameTask = (left: ReservedTaskSnapshot, right: ReservedTaskSnapshot): boolean =>
   taskKey(left) === taskKey(right) && left.key.changeId === right.key.changeId && left.fingerprint === right.fingerprint;
 const sameLease = (left: TaskReservationLease, right: TaskReservationLease): boolean =>
@@ -271,7 +272,8 @@ export async function claimTaskReservations(dependencies: TaskReservationDepende
     const starter = await observeProcess(dependencies, request.starter, request.runId, boot, boot);
     if (!starter.alive) throw failure('TASK_IDENTITY_INVALID', 'Starter is no longer alive', { runId: request.runId });
     const observations = await checkReservations(dependencies, boot);
-    const assigned = observations.flatMap(({ set }) => [...set.tasks]);
+    const sources = new Set(request.tasks.map(sourceOf));
+    const assigned = observations.flatMap(({ set }) => set.tasks.filter(task => sources.has(sourceOf(task))));
     if (assigned.length) await resolveTasks(dependencies, assigned, 'retained');
     await resolveTasks(dependencies, request.tasks, 'claim');
     const result = dependencies.store.taskReservationRepository.transaction<ClaimTasksResult | null>(tx => {

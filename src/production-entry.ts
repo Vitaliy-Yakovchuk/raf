@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
 import { openSecretsStore, SecretsStoreError } from './secrets-store.ts';
 import { importConductorSecrets, SecretsImportError } from './secrets-import.ts';
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, basename, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
@@ -62,6 +62,11 @@ function readConfiguration(root: string): { models: ModelCatalog; commandTiming:
   return { models: models as unknown as ModelCatalog, commandTiming: { emaAlpha: settings.commandTiming.emaAlpha }, fileName: settings.state.fileName };
 }
 
+function canonicalRoot(path: string): string {
+  try { return realpathSync(path); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw failure('INVALID_CONTEXT', `Orchestrator root does not exist: ${path}`); throw error; }
+}
+
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
   const now = options.now ?? (() => performance.now());
   const commandStartedAtMs = now();
@@ -74,10 +79,11 @@ export async function runProductionCli(argv: readonly string[], options: Product
       return async (params: Record<string, unknown>) => {
         try {
           for (const key of ['orchestratorRoot', 'homeDirectory', 'artifactPath'] as const) if (!isAbsolute(options[key])) throw failure('INVALID_CONTEXT', `Absolute ${key} required`);
-          const loaded = readConfiguration(options.orchestratorRoot);
+          const orchestratorRoot = canonicalRoot(options.orchestratorRoot);
+          const loaded = readConfiguration(orchestratorRoot);
           if (name.startsWith('service ')) {
-            const settings = JSON.parse(readFileSync(join(options.orchestratorRoot, 'conf', 'raf.json'), 'utf8'));
-            const services = createServiceHandlers({ orchestratorRoot: options.orchestratorRoot, homeDirectory: options.homeDirectory,
+            const settings = JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'raf.json'), 'utf8'));
+            const services = createServiceHandlers({ orchestratorRoot: orchestratorRoot, homeDirectory: options.homeDirectory,
               service: settings.service, hostModulePath: options.serviceHostModulePath ?? fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)) });
             return await services.handlers[name as keyof typeof services.handlers](params);
           }
@@ -85,7 +91,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
             try {
               return await importConductorSecrets({ file: params.file as string }, {
                 readText: path => readFile(path, 'utf8'),
-                store: { merge: async records => (await openSecretsStore({ home: options.homeDirectory, configPath: join(options.orchestratorRoot, 'conf', 'raf.json') })).merge(records) },
+                store: { merge: async records => (await openSecretsStore({ home: options.homeDirectory, configPath: join(orchestratorRoot, 'conf', 'raf.json') })).merge(records) },
               });
             } catch (error) {
               if (error instanceof SecretsImportError || error instanceof SecretsStoreError) {
@@ -97,7 +103,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
             }
           };
           const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
-          const context = { orchestratorRoot: options.orchestratorRoot, confRoot: join(options.orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
+          const context = { orchestratorRoot: orchestratorRoot, confRoot: join(orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
             statePath: join(options.homeDirectory, '.raf', loaded.fileName), tmpRoot: join(options.homeDirectory, '.raf', 'tmp'),
             mode: 'production' as const, commandStartedAtMs, resolveCaller: async () => undefined };
           runtime = createAppRuntime(context, {

@@ -87,7 +87,7 @@ export async function runServiceEntry(options?: {
     return value;
   };
   const context: ServiceEntryContext = {
-    orchestratorRoot: required('RAF_ORCHESTRATOR_ROOT'), homeDirectory: required('RAF_HOME_DIRECTORY'),
+    orchestratorRoot: await fs.realpath(required('RAF_ORCHESTRATOR_ROOT')).catch((error: NodeJS.ErrnoException) => { throw error.code === 'ENOENT' ? new Error(`Service bootstrap RAF_ORCHESTRATOR_ROOT does not exist: ${environment.RAF_ORCHESTRATOR_ROOT}`) : error; }), homeDirectory: required('RAF_HOME_DIRECTORY'),
     stateDirectory: required('RAF_STATE_DIRECTORY'), socketPath: required('RAF_SOCKET_PATH'),
   };
   required('RAF_MAIN_PATH');

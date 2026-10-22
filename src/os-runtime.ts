@@ -113,7 +113,7 @@ export function createResourceSnapshotReader(options: ResourceSnapshotOptions, d
         const pressureRows = psi.trim().split('\n');
         const noStalls = pressureRows.length === 2 && ['some', 'full'].every(kind => pressureRows.some(row => {
           const match = row.match(/^(some|full) avg10=(\d+(?:\.\d+)?) avg60=(\d+(?:\.\d+)?) avg300=(\d+(?:\.\d+)?) total=(\d+)$/);
-          return match?.[1] === kind && match.slice(2).every(value => Number(value) === 0);
+          return match?.[1] === kind && match.slice(2, 5).every(value => Number(value) === 0);
         }));
         measurement.memoryPressure = noStalls ? 'normal' : 'unknown';
         if (!noStalls) reasons.push('Linux memory pressure has no defined critical threshold');
@@ -128,14 +128,19 @@ export function createResourceSnapshotReader(options: ResourceSnapshotOptions, d
         if (relative !== root && !relative.startsWith(root.replace(/\/$/, '') + '/')) throw new Error('Cgroup membership outside mount');
         let directory = posix.join(mountPoint, relative.slice(root === '/' ? 1 : root.length)).replace(/\/$/, '');
         while (directory === mountPoint || directory.startsWith(mountPoint + '/')) {
-          const [cpu, memory, current] = await Promise.all([deps.readFile(`${directory}/cpu.max`), deps.readFile(`${directory}/memory.max`), deps.readFile(`${directory}/memory.current`)]);
+          const isRoot = directory === mountPoint;
+          const readCgroupValue = (file: string) => deps.readFile(`${directory}/${file}`).catch(error => {
+            if (isRoot && (error as NodeJS.ErrnoException)?.code === 'ENOENT') return 'max';
+            throw error;
+          });
+          const [cpu, memory, current] = await Promise.all([readCgroupValue('cpu.max'), readCgroupValue('memory.max'), readCgroupValue('memory.current')]);
           const [quota, period] = cpu.trim().split(/\s+/);
           if (quota !== 'max') measurement.availableCores = Math.min(measurement.availableCores, Number(quota) / Number(period));
           if (memory.trim() !== 'max') {
             measurement.totalRamBytes = Math.min(measurement.totalRamBytes, Number(memory));
             measurement.availableRamBytes = Math.min(measurement.availableRamBytes, Math.max(0, Number(memory) - Number(current)));
           }
-          if (directory === mountPoint) break;
+          if (isRoot) break;
           directory = posix.dirname(directory);
         }
       } else reasons.push('Unsupported resource probe platform');

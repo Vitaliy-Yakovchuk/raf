@@ -225,3 +225,90 @@ test('invalid cgroup limits do not silently admit using unrestricted host resour
   assert.ok(snapshot.reasons.length > 0);
   assert.ok(!Number.isFinite(snapshot.measurement.availableRamBytes) || snapshot.measurement.memoryPressure === 'unknown');
 });
+
+const hostPsi = 'some avg10=0.00 avg60=0.00 avg300=0.00 total=4\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=4\n';
+const sessionScope = '/user.slice/user-1000.slice/session-1.scope';
+
+function hostCgroupV2(fixture: ReturnType<typeof probes>) {
+  fixture.files.set('/proc/self/cgroup', `0::${sessionScope}\n`);
+  for (const name of ['cpu.max', 'memory.max', 'memory.current']) fixture.files.delete(`/sys/fs/cgroup/${name}`);
+  for (const directory of ['/user.slice', '/user.slice/user-1000.slice', sessionScope]) {
+    fixture.files.set(`/sys/fs/cgroup${directory}/cpu.max`, 'max 100000\n');
+    fixture.files.set(`/sys/fs/cgroup${directory}/memory.max`, 'max\n');
+    fixture.files.set(`/sys/fs/cgroup${directory}/memory.current`, String(4 * gib));
+  }
+}
+
+test('Linux PSI with zero current averages is normal despite stalls accumulated since boot', async () => {
+  const fixture = probes();
+  fixture.files.set('/proc/pressure/memory', hostPsi);
+  const snapshot = await reader(fixture.dependencies).read();
+  assert.equal(snapshot.measurement.memoryPressure, 'normal');
+  assert.deepEqual(snapshot.reasons, []);
+});
+
+test('Linux PSI with nonzero current averages is not reported as normal without a configured threshold', async () => {
+  const fixture = probes();
+  fixture.files.set('/proc/pressure/memory', 'some avg10=7.50 avg60=3.10 avg300=1.00 total=912345\nfull avg10=2.00 avg60=1.00 avg300=0.50 total=400000\n');
+  const snapshot = await reader(fixture.dependencies).read();
+  assert.notEqual(snapshot.measurement.memoryPressure, 'normal');
+  assert.ok(snapshot.reasons.length > 0);
+});
+
+test('Linux cgroup v2 root without cpu.max and memory.max means no root limit, not unknown', async () => {
+  const fixture = probes();
+  fixture.files.set('/proc/pressure/memory', hostPsi);
+  hostCgroupV2(fixture);
+  const snapshot = await reader(fixture.dependencies).read();
+  assert.equal(snapshot.measurement.memoryPressure, 'normal');
+  assert.equal(snapshot.measurement.availableCores, 8);
+  assert.equal(snapshot.measurement.totalRamBytes, 16 * gib);
+  assert.equal(snapshot.measurement.availableRamBytes, 12 * gib);
+  assert.deepEqual(snapshot.reasons, []);
+});
+
+test('Linux process in the root cgroup without limit files is measured from host values', async () => {
+  const fixture = probes();
+  for (const name of ['cpu.max', 'memory.max', 'memory.current']) fixture.files.delete(`/sys/fs/cgroup/${name}`);
+  const snapshot = await reader(fixture.dependencies).read();
+  assert.equal(snapshot.measurement.memoryPressure, 'normal');
+  assert.equal(snapshot.measurement.availableCores, 8);
+  assert.equal(snapshot.measurement.availableRamBytes, 12 * gib);
+  assert.deepEqual(snapshot.reasons, []);
+});
+
+test('Linux nested cgroup limits still constrain measurements when the root has no limit files', async () => {
+  const fixture = probes();
+  fixture.files.set('/proc/pressure/memory', hostPsi);
+  hostCgroupV2(fixture);
+  fixture.files.set('/sys/fs/cgroup/user.slice/cpu.max', '200000 100000\n');
+  fixture.files.set(`/sys/fs/cgroup${sessionScope}/memory.max`, String(6 * gib));
+  fixture.files.set(`/sys/fs/cgroup${sessionScope}/memory.current`, String(5 * gib));
+  const snapshot = await reader(fixture.dependencies).read();
+  assert.equal(snapshot.measurement.memoryPressure, 'normal');
+  assert.equal(snapshot.measurement.availableCores, 2);
+  assert.equal(snapshot.measurement.totalRamBytes, 6 * gib);
+  assert.equal(snapshot.measurement.availableRamBytes, gib);
+  assert.deepEqual(snapshot.reasons, []);
+});
+
+for (const [label, path, code] of [
+  ['nested cpu.max', `/sys/fs/cgroup${sessionScope}/cpu.max`, 'EACCES'],
+  ['nested memory.max', `/sys/fs/cgroup${sessionScope}/memory.max`, 'EIO'],
+  ['nested memory.current', `/sys/fs/cgroup${sessionScope}/memory.current`, 'EACCES'],
+  ['root cpu.max', '/sys/fs/cgroup/cpu.max', 'EACCES'],
+] as const) {
+  test(`Linux unreadable ${label} stays unknown instead of unlimited`, async () => {
+    const fixture = probes();
+    fixture.files.set('/proc/pressure/memory', hostPsi);
+    hostCgroupV2(fixture);
+    const read = fixture.dependencies.readFile;
+    fixture.dependencies.readFile = async file => {
+      if (file === path) throw Object.assign(new Error(`${code} ${file}`), { code });
+      return read(file);
+    };
+    const snapshot = await reader(fixture.dependencies).read();
+    assert.equal(snapshot.measurement.memoryPressure, 'unknown');
+    assert.ok(snapshot.reasons.length > 0);
+  });
+}

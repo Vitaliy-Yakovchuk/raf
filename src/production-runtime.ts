@@ -233,6 +233,12 @@ async function reservationTools(store: StateStore, context: RuntimeContext, exec
   return { store, currentBoot: () => bootIdentity(execute), observe: async identity => (await observeProcesses([identity], { execute }))[0], resolveTasks: identity.resolveTasks, newFence: randomUUID };
 }
 
+async function canonicalRoot(root: unknown): Promise<string> {
+  if (!text(root) || !isAbsolute(root)) fail('TASK_CONTEXT_MISMATCH', 'Task context assignment root must be an absolute path');
+  try { return await fs.realpath(root as string); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') fail('TASK_CONTEXT_MISMATCH', `Task context assignment root does not exist: ${root}`); throw error; }
+}
+
 export async function createProductionServices(
   store: StateStore,
   configuration: RuntimeConfiguration,
@@ -266,7 +272,7 @@ export async function createProductionServices(
       let envelope;
       try { const stat = await fs.lstat(path); if (!stat.isFile() || (stat.mode & 0o077) !== 0 || stat.uid !== process.getuid?.()) fail('TASK_CONTEXT_MISMATCH', 'Task context must be an owned private regular file'); envelope = await json(path); }
       catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') fail('TASK_CONTEXT_UNAVAILABLE', `Trusted coordinator task context unavailable: ${path}`); throw error; }
-      if (envelope.version !== 1 || !isDeepStrictEqual(envelope.parameters, parameters) || !isDeepStrictEqual(envelope.assignment, assignment)) fail('TASK_CONTEXT_MISMATCH', 'Task context parameters or authoritative assignment changed');
+      if (envelope.version !== 1 || !isDeepStrictEqual(envelope.parameters, parameters) || !object(envelope.assignment) || !isDeepStrictEqual({ ...envelope.assignment, root: await canonicalRoot(envelope.assignment.root) }, { ...assignment, root: await canonicalRoot(assignment.root) })) fail('TASK_CONTEXT_MISMATCH', 'Task context parameters or authoritative assignment changed');
       const task = envelope.context;
       if (!object(task) || !text(task.branch) || !text(task.outcome) || !Array.isArray(task.writeBoundaries) || !task.writeBoundaries.every(text) || !strings(task.sources) || (!Array.isArray(task.requiredFileSystemIds) || !task.requiredFileSystemIds.every(text)) || !object(task.requested) || !Number.isFinite(task.requested.ramBytes) || task.requested.ramBytes < 0 || !object(task.requested.diskBytes) || Object.values(task.requested.diskBytes).some(n => !Number.isFinite(n) || Number(n) < 0) || !task.requiredFileSystemIds.every(id => Object.hasOwn(task.requested.diskBytes, id)) || !object(task.reportSchema) || !Object.keys(task.reportSchema).length) fail('TASK_CONTEXT_MISMATCH', 'Task context lacks branch, outcome, boundaries, sources, resource estimates, filesystem IDs or report schema');
       return structuredClone(task) as Awaited<ReturnType<RuntimeServices['resolveTask']>>;

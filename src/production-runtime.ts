@@ -327,7 +327,8 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     const sender = await resolve(caller);
     const session = current(sender.kind === 'agent' ? sender.runId : '');
     if (session && (session.addressId === id || session.addressId === 'main')) return;
-    const child = (target: SessionRecord) => target.addressId === id && target.delegatedBy?.runId === session?.runId && target.delegatedBy.addressId === session?.addressId;
+    const owns = (link: { addressId: string; runId: string } | undefined) => link?.runId === session?.runId && link?.addressId === session?.addressId;
+    const child = (target: SessionRecord) => target.addressId === id && (owns(target.delegatedBy) || owns(target.launchedBy));
     if (session && delegated && id !== 'main' && state.listReconciliationCandidates().some(child)) return;
     fail('CALLER_UNAUTHORIZED', `Caller is not authorized for ${id}`);
   };
@@ -623,15 +624,20 @@ export async function createProductionServices(
       const tasks = await identityAdapter.capture(input.activity.project, input.assignment);
       const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
+      const caller = await (async () => {
+        try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }
+        catch { return undefined; }
+      })();
       try {
         const claimed = await claimTaskReservations(dependencies, { runId: input.runId, addressId: input.addressId, tasks, starter: await ownIdentity(execute, input.runId, input.tmuxSession), reserveLaunch: tx => {
           const result = reserveLaunchInTransaction(tx, request, measured, evaluateResourceAdmission);
           if (!result.reserved) { admissionReason = result.admission.reasons.join('; '); throw new Error('RESOURCE_UNAVAILABLE'); }
-          return result.session;
-        }, resolveDelegator: async () => {
-          try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }
-          catch { return undefined; }
-        } });
+          const launcher = caller ? tx.getSession(caller) : undefined;
+          if (launcher?.state !== 'running' || launcher.activity?.type !== 'coordinator') return result.session;
+          const session = { ...result.session, revision: result.session.revision + 1, launchedBy: { addressId: launcher.addressId, runId: launcher.runId } };
+          tx.putSession(session);
+          return session;
+        }, resolveDelegator: async () => caller });
         if (!claimed.reserved) fail('TASK_RESERVED', JSON.stringify(claimed.conflicts));
         return { admitted: true };
       } catch (error) { if (admissionReason) return { admitted: false, reason: admissionReason }; throw error; }

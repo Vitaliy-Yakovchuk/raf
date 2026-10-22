@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { readFileSync } from 'node:fs';
 import { evaluateResourceAdmission, type ResourceAdmissionInput } from '../src/resource-admission.ts';
+import { createResourceSnapshotReader, type ResourceProbeDependencies } from '../src/os-runtime.ts';
 
 const GiB = 1024 ** 3;
 
@@ -140,4 +142,67 @@ describe('resource-admission evidence and purity', () => {
     input.unusedReservations.push({ ramBytes: 2 * GiB, diskBytes: {} });
     assert.equal(evaluateResourceAdmission(input).level, 'NO_RESOURCES');
   });
+});
+
+describe('resource-admission with measured nonzero Linux PSI', () => {
+  const { resources } = JSON.parse(readFileSync(new URL('../../conf/flow.json', import.meta.url), 'utf8'));
+  const KiB = 1024;
+  const totalRamBytes = fixture().measurement.totalRamBytes;
+  const ramMinimum = (profile: typeof resources.normal): number =>
+    Math.ceil(Math.max(profile.minRamBytes, profile.minRamFraction * totalRamBytes) / KiB) * KiB;
+
+  for (const [level, remainingRamBytes] of [
+    ['ANY_RUN', ramMinimum(resources.normal)],
+    ['HOTFIX_ONLY', ramMinimum(resources.hotfix)],
+    ['NO_RESOURCES', ramMinimum(resources.hotfix) - KiB],
+  ] as const) {
+    it(`uses RAM thresholds after reservations for ${level} despite nonzero PSI`, async () => {
+      const input = fixture();
+      const availableRamBytes = remainingRamBytes + input.requested.ramBytes
+        + input.unusedReservations.reduce((sum, reservation) => sum + reservation.ramBytes, 0);
+      const volume = input.measurement.fileSystems[0];
+      const files = new Map([
+        ['/proc/meminfo', `MemTotal: ${totalRamBytes / KiB} kB\nMemFree: 0 kB\nMemAvailable: ${availableRamBytes / KiB} kB\n`],
+        ['/proc/pressure/memory', 'some avg10=0.10 avg60=0.05 avg300=0.01 total=912345\nfull avg10=0.02 avg60=0.01 avg300=0.01 total=400000\n'],
+        ['/proc/self/cgroup', '0::/\n'],
+        ['/proc/self/mountinfo', '29 23 0:26 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime - cgroup2 cgroup rw\n'],
+        ['/sys/fs/cgroup/cpu.max', 'max 100000\n'],
+        ['/sys/fs/cgroup/memory.max', 'max\n'],
+        ['/sys/fs/cgroup/memory.current', '0\n'],
+      ]);
+      const dependencies: ResourceProbeDependencies = {
+        platform: () => 'linux',
+        loadAverage1m: () => input.measurement.loadAverage1m,
+        availableCores: () => input.measurement.availableCores,
+        totalRamBytes: () => totalRamBytes,
+        readFile: async path => {
+          if (!files.has(path)) throw Object.assign(new Error(`Missing ${path}`), { code: 'ENOENT' });
+          return files.get(path)!;
+        },
+        execute: async command => {
+          assert.equal(command.executable.split('/').at(-1), 'df');
+          return { exitCode: 0, stderr: '', stdout:
+            `Filesystem 1024-blocks Used Available Capacity Mounted on\n/dev/work ${volume.totalBytes / KiB} ${(volume.totalBytes - volume.availableBytes) / KiB} ${volume.availableBytes / KiB} 86% /work\n` };
+        },
+      };
+      const snapshot = await createResourceSnapshotReader({ machineId: 'execution-host', paths: ['/work'] }, dependencies).read();
+      const fileSystemId = snapshot.fileSystemByPath['/work'];
+      input.measurement = snapshot.measurement;
+      input.requiredFileSystemIds = [fileSystemId];
+      input.requested.diskBytes = { [fileSystemId]: input.requested.diskBytes.work };
+      input.unusedReservations = input.unusedReservations.map(reservation => ({
+        ...reservation, diskBytes: { [fileSystemId]: reservation.diskBytes.work },
+      }));
+
+      const result = evaluateResourceAdmission(input);
+      assert.equal(result.level, level);
+      assert.deepEqual(result.allowed, { normal: level === 'ANY_RUN', hotfix: level !== 'NO_RESOURCES' });
+      assert.equal(result.remaining?.ramBytes, remainingRamBytes);
+      assert.equal(snapshot.measurement.availableRamBytes, availableRamBytes);
+      assert.equal(snapshot.measurement.memoryPressure, 'normal');
+      assert.deepEqual(snapshot.reasons, []);
+      assert.ok(result.reasons.every(reason => !/unknown|PSI|pressure/i.test(reason)));
+      if (level !== 'ANY_RUN') assert.ok(result.reasons.some(reason => /RAM/i.test(reason)));
+    });
+  }
 });

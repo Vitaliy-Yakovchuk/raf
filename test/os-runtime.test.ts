@@ -247,13 +247,26 @@ test('Linux PSI with zero current averages is normal despite stalls accumulated 
   assert.deepEqual(snapshot.reasons, []);
 });
 
-test('Linux PSI with nonzero current averages is not reported as normal without a configured threshold', async () => {
+test('Linux PSI with nonzero current averages is normal without a configured critical threshold', async () => {
   const fixture = probes();
   fixture.files.set('/proc/pressure/memory', 'some avg10=7.50 avg60=3.10 avg300=1.00 total=912345\nfull avg10=2.00 avg60=1.00 avg300=0.50 total=400000\n');
   const snapshot = await reader(fixture.dependencies).read();
-  assert.notEqual(snapshot.measurement.memoryPressure, 'normal');
-  assert.ok(snapshot.reasons.length > 0);
+  assert.equal(snapshot.measurement.memoryPressure, 'normal');
+  assert.deepEqual(snapshot.reasons, []);
 });
+
+for (const pressure of [
+  'unrecognized pressure data\n',
+  'some avg10=unparsed avg60=0.00 avg300=0.00 total=4\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=4\n',
+]) {
+  test(`Linux unparseable PSI remains unknown: ${pressure.split('\n')[0]}`, async () => {
+    const fixture = probes();
+    fixture.files.set('/proc/pressure/memory', pressure);
+    const snapshot = await reader(fixture.dependencies).read();
+    assert.equal(snapshot.measurement.memoryPressure, 'unknown');
+    assert.ok(snapshot.reasons.some(reason => /PSI|\/proc\/pressure\/memory/i.test(reason)));
+  });
+}
 
 test('Linux cgroup v2 root without cpu.max and memory.max means no root limit, not unknown', async () => {
   const fixture = probes();

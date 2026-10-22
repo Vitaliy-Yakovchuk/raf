@@ -1,4 +1,4 @@
-import { createHash, createHmac } from 'node:crypto';
+import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { openSecretsStore, SecretsStoreError } from './secrets-store.ts';
@@ -8,18 +8,15 @@ import type {
   BugRepository,
   BugView,
   CommentView,
-  ConflictView,
-  OutboxView,
+  NoticeKind,
   ServerBugDetail,
   BugSectionInput,
   BugSectionView,
-  CommentRequestBody,
-  ConflictKind,
-  OutboxState,
   ServerAttachment,
   ServerBugKey,
   ServerComment,
   SyncPhase,
+  WrittenBugHeader,
 } from './bug-store.ts';
 
 export interface BugSectionConfig {
@@ -174,16 +171,13 @@ export interface BugServerPort {
   query(auth: ServerAuth, input: { readonly cursor: string | null; readonly limit: number }): Promise<ServerBugListPage>;
   read(auth: ServerAuth, key: ServerBugKey, input: DetailPageRequest): Promise<ServerBugDetailPage>;
   events(auth: ServerAuth, input: { readonly cursor: string; readonly limit: number }): Promise<ServerJournalPage>;
-  comment(auth: ServerAuth, key: ServerBugKey, body: CommentRequestBody): Promise<ServerBugDetailPage>;
 }
 
 export interface MainNotice {
   readonly noticeKey: string;
-  readonly operationId: string;
-  readonly kind: ConflictKind;
+  readonly kind: NoticeKind;
   readonly bugKey: string;
-  readonly text: string;
-  readonly observed: unknown;
+  readonly commentId: string | null;
 }
 
 export interface MainNotifier {
@@ -195,14 +189,6 @@ export interface SectionPullOutcome {
   readonly phase: SyncPhase;
   readonly snapshotComplete: boolean;
   readonly errorCode: string | null;
-  readonly conflicts: number;
-}
-
-export interface PushOutcome {
-  readonly operationId: string;
-  readonly state: OutboxState | 'confirmed';
-  readonly status: number | null;
-  readonly conflict: ConflictKind | null;
 }
 
 export interface BugSyncerDependencies {
@@ -215,9 +201,8 @@ export interface BugSyncerDependencies {
 }
 
 export interface BugSyncer {
-  recover(): number;
+  registerSections(): readonly BugSectionView[];
   pullSection(sectionId: string): Promise<SectionPullOutcome>;
-  pushDue(): Promise<readonly PushOutcome[]>;
   deliverNotices(): Promise<number>;
   runCycle(): Promise<void>;
 }
@@ -310,17 +295,6 @@ export function describeBugSection(config: BugSyncConfig, section: BugSectionCon
     sectionId: bugSectionId(section), project: section.project, env: section.env, stand: section.stand,
     canonicalProject: `projects/${section.project}`, origin: config.origin, actor: config.actor, claimsFingerprint,
   };
-}
-
-export function nextAttemptDelayMs(retry: BugRetryConfig, attempts: number, retryAfterMs: number | null): number {
-  const exponent = Math.max(0, (Number.isFinite(attempts) ? Math.floor(attempts) : 1) - 1);
-  const computed = Math.min(retry.maxDelayMs, retry.initialDelayMs * retry.multiplier ** exponent);
-  const server = retryAfterMs !== null && Number.isFinite(retryAfterMs) && retryAfterMs > 0 ? retryAfterMs : 0;
-  return Math.max(computed, server);
-}
-
-export function conflictNoticeKey(operationId: string, kind: ConflictKind): string {
-  return `bug-conflict:${operationId}:${kind}`;
 }
 
 function sectionConfig(config: BugSyncConfig, section: Pick<BugSectionView, 'project' | 'env'>): BugSectionConfig | undefined {
@@ -499,11 +473,6 @@ export function createHttpBugServer(options: { readonly fetch?: typeof fetch } =
         cursor: page.cursor, hasMore: page.has_more,
       };
     },
-    async comment(auth, key, body) {
-      return mapDetail(await call(auth, bugPath(key, '/comments'), {}, {
-        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
-      }), auth);
-    },
   };
 }
 
@@ -597,13 +566,11 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
     return keys;
   }
 
-  async function pull(section: BugSectionView): Promise<number> {
+  async function pull(section: BugSectionView): Promise<void> {
     const auth = await authFor(section, 'read');
     const readFingerprint = claims.fingerprint(section, 'read');
-    let conflicts = 0;
     const apply = (details: ServerBugDetail[], deleted: ServerBugKey[], missing: ServerBugKey[], position: Parameters<BugRepository['applyPullBatch']>[0]['position']) => {
-      const result = repository.applyPullBatch({ sectionId: section.sectionId, details, deleted, missing, position, at: now() });
-      conflicts += result.conflicts.length;
+      repository.applyPullBatch({ sectionId: section.sectionId, details, deleted, missing, position, at: now() });
     };
     for (;;) {
       const state = repository.syncState(section.sectionId);
@@ -637,7 +604,7 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
           else details.push(detail);
         }
         apply(details, deleted, missing, { journalCursor: page.cursor });
-        if (!page.hasMore || page.cursor === state.journalCursor) return conflicts;
+        if (!page.hasMore || page.cursor === state.journalCursor) return;
         continue;
       }
       if (state.listClaimsFingerprint === null) {
@@ -690,108 +657,30 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
       apply(details, [], missing, {
         phase: 'incremental', journalCursor: state.snapshotHead ?? '0', snapshotHead: null, listCursor: null, snapshotComplete: true,
       });
-      return conflicts;
-    }
-  }
-
-  function outcome(operation: OutboxView, state: PushOutcome['state'], status: number | null, conflict: ConflictKind | null): PushOutcome {
-    return { operationId: operation.operationId, state, status, conflict };
-  }
-
-  async function pushOne(operation: OutboxView): Promise<PushOutcome> {
-    let section: BugSectionView;
-    try { section = viewFor(operation.sectionId); }
-    catch { return outcome(operation, operation.state, null, null); }
-    const writeFingerprint = claims.fingerprint(section, 'write');
-    if (operation.claimsFingerprint !== writeFingerprint) {
-      repository.markConflict(operation.operationId, {
-        kind: 'claims-changed', observed: { expected: operation.claimsFingerprint, current: writeFingerprint }, status: null, at: now(),
-      });
-      return outcome(operation, 'conflict', null, 'claims-changed');
-    }
-    let auth: ServerAuth;
-    try { auth = await authFor(section, 'write'); }
-    catch (error) {
-      if (error instanceof ClaimsError) return outcome(operation, operation.state, null, null);
-      throw error;
-    }
-    if (!repository.markSending(operation.operationId, now())) return outcome(operation, repository.outbox(operation.operationId)?.state ?? 'delivered', null, null);
-    const body = JSON.parse(operation.requestJson) as CommentRequestBody;
-    try {
-      const page = await server.comment(auth, operation.serverKey, body);
-      const last = page.comments[page.comments.length - 1];
-      const serverCommentId = last && last.authorId === config.actor && last.text === body.text ? last.id : null;
-      repository.confirmDelivery(operation.operationId, { serverCommentId, revision: page.bug.revision, at: now() });
-      return outcome(operation, repository.outbox(operation.operationId) ? 'delivered' : 'confirmed', null, null);
-    } catch (error) {
-      const status = error instanceof BugServerError ? error.status : null;
-      const code = errorCode(error);
-      if (status === 409) {
-        let observed: Record<string, unknown> = { status, code, expectedRevision: body.expected_revision };
-        try {
-          const current = await server.read(auth, operation.serverKey, { commentsCursor: null, attachmentsCursor: null, limit: config.pageLimit });
-          observed = { ...observed, revision: current.bug.revision, claimedBy: current.bug.claimedBy, status: 409 };
-        } catch (diagnostic) {
-          observed = { ...observed, diagnostic: errorCode(diagnostic) };
-        }
-        repository.markConflict(operation.operationId, { kind: 'conflict-409', observed, status, at: now() });
-        return outcome(operation, 'conflict', status, 'conflict-409');
-      }
-      if (status === 404) {
-        repository.markConflict(operation.operationId, { kind: 'bug-missing', observed: { status, code }, status, at: now() });
-        return outcome(operation, 'conflict', status, 'bug-missing');
-      }
-      if (status === 401 || status === 403) {
-        repository.markConflict(operation.operationId, { kind: 'access', observed: { status, code }, status, at: now() });
-        return outcome(operation, 'conflict', status, 'access');
-      }
-      const attempts = (repository.outbox(operation.operationId)?.attempts ?? operation.attempts + 1);
-      const delay = nextAttemptDelayMs(config.retry, attempts, error instanceof BugServerError ? error.retryAfterMs : null);
-      const at = clock.now();
-      repository.markUnknown(operation.operationId, { status, code, nextAttemptAt: new Date(at.getTime() + delay).toISOString(), at: at.toISOString() });
-      return outcome(operation, 'unknown', status, null);
+      return;
     }
   }
 
   const syncer: BugSyncer = {
-    recover() {
-      ensureSections();
-      return repository.recoverInterruptedSends(now());
-    },
     async pullSection(sectionId) {
       const section = viewFor(sectionId);
       repository.upsertSection(section);
       repository.recordSyncAttempt(sectionId, now());
-      let conflicts = 0;
       let failure: string | null = null;
       try {
-        conflicts = await pull(section);
+        await pull(section);
       } catch (error) {
         failure = errorCode(error);
         repository.recordSyncFailure(sectionId, failure, now());
       }
-      await syncer.deliverNotices();
       const state = repository.syncState(sectionId);
-      return { sectionId, phase: state.phase, snapshotComplete: state.snapshotComplete, errorCode: failure, conflicts };
-    },
-    async pushDue() {
-      const outcomes: PushOutcome[] = [];
-      for (const operation of repository.dueOperations(now())) outcomes.push(await pushOne(operation));
-      await syncer.deliverNotices();
-      return outcomes;
+      return { sectionId, phase: state.phase, snapshotComplete: state.snapshotComplete, errorCode: failure };
     },
     async deliverNotices() {
       let delivered = 0;
-      const comments = new Map<string, string>();
       for (const notice of repository.pendingNotices()) {
-        const operation = repository.outbox(notice.operationId);
-        if (operation) {
-          const body = JSON.parse(operation.requestJson) as CommentRequestBody;
-          comments.set(notice.operationId, body.text);
-        }
-        const text = comments.get(notice.operationId) ?? '';
         try {
-          await notifier.notify({ noticeKey: notice.noticeKey, operationId: notice.operationId, kind: notice.kind, bugKey: notice.bugKey, text, observed: notice.observed });
+          await notifier.notify({ noticeKey: notice.noticeKey, kind: notice.kind, bugKey: notice.bugKey, commentId: notice.commentServerId });
         } catch {
           continue;
         }
@@ -800,12 +689,12 @@ export function createBugSyncer(dependencies: BugSyncerDependencies): BugSyncer 
       }
       return delivered;
     },
+    registerSections: ensureSections,
     async runCycle() {
       const configured = new Set(views().map(section => section.sectionId));
       for (const section of repository.sections()) {
         if (configured.has(section.sectionId)) await syncer.pullSection(section.sectionId);
       }
-      await syncer.pushDue();
       await syncer.deliverNotices();
     },
   };
@@ -843,7 +732,7 @@ export async function startBugSyncService(options: BugSyncServiceOptions): Promi
       repository, server: options.server ?? createHttpBugServer(), claims: createClaimsIssuer({ secrets, config, clock }),
       notifier: options.notifier, clock, config,
     });
-    syncer.recover();
+    syncer.registerSections();
   } catch (error) {
     repository.close();
     throw error;
@@ -880,8 +769,78 @@ export interface BugMcpPort {
   call(auth: ServerAuth, tool: BugMcpTool, args: Readonly<Record<string, unknown>>): Promise<unknown>;
 }
 
-export function createHttpBugMcp(_options: { readonly fetch?: typeof fetch } = {}): BugMcpPort {
-  throw new Error('NotImplemented: createHttpBugMcp');
+export const BUG_MCP_PROTOCOL_VERSION = '2025-11-25';
+const BUG_MCP_PATH = '/internal/mcp/bugs';
+const SERVER_CODE = /^[a-z][a-z0-9-]{0,63}$/;
+
+function rpcPayload(raw: string, contentType: string | null): unknown {
+  const parse = (value: string) => { try { return JSON.parse(value); } catch { return undefined; } };
+  if (!(contentType ?? '').toLowerCase().includes('text/event-stream')) return parse(raw);
+  let last: unknown;
+  for (const event of raw.split(/\r?\n\r?\n/)) {
+    const data = event.split(/\r?\n/).filter(line => line.startsWith('data:')).map(line => line.slice(5).replace(/^ /, '')).join('\n');
+    if (data) last = parse(data) ?? last;
+  }
+  return last;
+}
+
+function toolFailure(content: Record<string, unknown>): BugServerError {
+  const code = typeof content.error === 'string' && SERVER_CODE.test(content.error) ? content.error : 'tool-error';
+  const status = typeof content.status === 'number' && Number.isSafeInteger(content.status) ? content.status : null;
+  const after = content.retry_after ?? content.retryAfter;
+  const retryAfterMs = typeof after === 'number' && Number.isFinite(after) && after >= 0 ? after * 1000 : null;
+  return new BugServerError(status, code, `Dash MCP refused the call: ${code}`, retryAfterMs);
+}
+
+export function createHttpBugMcp(options: { readonly fetch?: typeof fetch } = {}): BugMcpPort {
+  const fetcher = options.fetch ?? globalThis.fetch;
+  let sequence = 0;
+  return {
+    async call(auth, tool, args) {
+      const id = ++sequence;
+      let response: Response;
+      try {
+        response = await fetcher(`${auth.origin.replace(/\/$/, '')}${BUG_MCP_PATH}`, {
+          method: 'POST', redirect: 'error', cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(auth.timeoutMs),
+          headers: {
+            'x-bugs-contract-version': '2', authorization: `Bearer ${auth.token}`, 'content-type': 'application/json',
+            accept: 'application/json, text/event-stream', 'mcp-protocol-version': BUG_MCP_PROTOCOL_VERSION,
+          },
+          body: JSON.stringify({ jsonrpc: '2.0', id, method: 'tools/call', params: { name: tool, arguments: args } }),
+        });
+      } catch (error) {
+        const name = (error as { name?: string })?.name;
+        throw new BugServerError(null, name === 'TimeoutError' || name === 'AbortError' ? 'timeout' : 'network', 'Dash MCP request failed');
+      }
+      let raw: string;
+      try { raw = await response.text(); }
+      catch (error) {
+        const name = (error as { name?: string })?.name;
+        throw new BugServerError(null, name === 'TimeoutError' || name === 'AbortError' ? 'timeout' : 'network', 'Dash MCP response was interrupted');
+      }
+      const body = rpcPayload(raw, response.headers.get('content-type'));
+      if (!response.ok) {
+        const details = plainObject(body) ? body : {};
+        const code = typeof details.error === 'string' && SERVER_CODE.test(details.error) ? details.error : `http-${response.status}`;
+        throw new BugServerError(response.status, code, `Dash MCP responded ${response.status} ${code}`, retryAfter(response, details));
+      }
+      if (!plainObject(body) || body.jsonrpc !== '2.0' || body.id !== id) invalidResponse('Dash MCP returned an invalid JSON-RPC response');
+      if (body.error !== undefined) {
+        const message = plainObject(body.error) && typeof body.error.message === 'string' && SERVER_CODE.test(body.error.message) ? body.error.message : 'rpc-error';
+        throw new BugServerError(null, message, `Dash MCP rejected the request: ${message}`);
+      }
+      const result = body.result;
+      if (!plainObject(result)) invalidResponse('Dash MCP response lacks a result');
+      let content: unknown = result.structuredContent;
+      if (content === undefined && Array.isArray(result.content)) {
+        const first = result.content.find(item => plainObject(item) && item.type === 'text' && typeof item.text === 'string') as { text: string } | undefined;
+        if (first) { try { content = JSON.parse(first.text); } catch { content = result.isError === true ? { error: first.text } : undefined; } }
+      }
+      if (result.isError === true) throw toolFailure(plainObject(content) ? content : {});
+      if (!plainObject(content)) invalidResponse('Dash MCP result lacks structured content');
+      return content;
+    },
+  };
 }
 
 export type BugWriteErrorCode = 'BUG_WRITE_UNKNOWN' | 'BUG_WRITE_REJECTED' | 'BUG_WRITE_INVALID_RESPONSE' | 'BUG_WRITE_REPLY_TARGET_MISSING';
@@ -949,6 +908,173 @@ export interface BugWriter {
   setStatus(input: StatusWriteInput): Promise<StatusWriteResult>;
 }
 
-export function createBugWriter(_dependencies: BugWriterDependencies): BugWriter {
-  throw new Error('NotImplemented: createBugWriter');
+interface FreshBug {
+  readonly detail: ServerBugDetailPage;
+  readonly raw: Record<string, unknown>;
+}
+
+function writeFailure(error: unknown, stage: 'read' | 'write'): never {
+  if (error instanceof BugWriteError || error instanceof ClaimsError) throw error;
+  if (error instanceof BugServerError) {
+    if (error.code === 'invalid-response') {
+      throw new BugWriteError('BUG_WRITE_INVALID_RESPONSE', `Dash MCP returned an invalid ${stage === 'read' ? 'read_bug' : 'write'} response`);
+    }
+    const facts = { serverCode: error.code, status: error.status, retryAfterMs: error.retryAfterMs };
+    const transport = error.status === null ? ['network', 'timeout'].includes(error.code) : error.status >= 500 && error.code.startsWith('http-');
+    if (transport) {
+      throw new BugWriteError('BUG_WRITE_UNKNOWN', stage === 'read'
+        ? `Dash MCP is unreachable (${error.code}); nothing was written`
+        : `The outcome of the write is unknown (${error.code}); if Dash applied it, the next sync brings it`, facts);
+    }
+    throw new BugWriteError('BUG_WRITE_REJECTED', `Dash refused the ${stage}: ${error.code}`, facts);
+  }
+  throw error;
+}
+
+function receiptInvalid(message: string): never {
+  throw new BugWriteError('BUG_WRITE_INVALID_RESPONSE', `Dash MCP returned an invalid write receipt: ${message}`);
+}
+
+function sameKey(left: ServerBugKey, right: ServerBugKey): boolean {
+  return left.project === right.project && left.env === right.env && left.source === right.source && left.owner === right.owner && left.rawId === right.rawId;
+}
+
+function mapComment(value: unknown): ServerComment {
+  if (!plainObject(value) || typeof value.id !== 'string' || !value.id) receiptInvalid('comment lacks an id');
+  if (typeof value.text !== 'string' || typeof value.created_at !== 'string' || typeof value.author_id !== 'string') receiptInvalid('comment lacks text, author or time');
+  return {
+    id: value.id, authorId: value.author_id, authorKind: String(value.author_kind ?? ''), text: value.text,
+    replyTo: typeof value.reply_to === 'string' ? value.reply_to : null, createdAt: value.created_at, payload: value,
+  };
+}
+
+export function createBugWriter(dependencies: BugWriterDependencies): BugWriter {
+  const { repository, mcp, claims, clock, config } = dependencies;
+  const newOperationId = dependencies.newOperationId ?? randomUUID;
+
+  function target(bugKey: string): { bug: BugView; section: BugSectionView } {
+    const bug = repository.findBug(bugKey);
+    const entry = config.sections.find(item => bugSectionId(item) === bug.sectionId);
+    if (!entry) throw new BugStoreError('unknown-section', `Section ${bug.sectionId} of ${bug.key} is not configured in conf/raf.json#/bugs/sections`, { sectionId: bug.sectionId });
+    const draft = describeBugSection(config, entry, '');
+    return { bug, section: describeBugSection(config, entry, claims.fingerprint(draft, 'read')) };
+  }
+
+  async function auth(section: BugSectionView, scope: ClaimsScope): Promise<ServerAuth> {
+    const issued = await claims.issue(section, scope);
+    return { origin: config.origin, project: section.project, env: section.env, token: issued.token, timeoutMs: config.requestTimeoutMs };
+  }
+
+  async function readFresh(section: BugSectionView, bug: BugView, allComments: boolean): Promise<FreshBug> {
+    const access = await auth(section, 'read');
+    const comments: ServerComment[] = [];
+    let first: FreshBug | undefined;
+    let commentsCursor: string | null = null;
+    try {
+      do {
+        const args: Record<string, unknown> = { id: bug.problemId, limit: config.pageLimit, ...(commentsCursor ? { commentsCursor } : {}) };
+        const raw = await mcp.call(access, 'read_bug', args);
+        if (!plainObject(raw)) invalidResponse('read_bug result must be an object');
+        const detail = mapDetail(raw, section);
+        if (!sameKey(detail.bug.key, bug.serverKey)) invalidResponse('read_bug returned another bug');
+        if (!first) first = { detail, raw };
+        else if (detail.bug.revision !== first.detail.bug.revision) break;
+        comments.push(...detail.comments);
+        commentsCursor = allComments ? detail.nextCommentsCursor : null;
+      } while (commentsCursor !== null);
+    } catch (error) {
+      writeFailure(error, 'read');
+    }
+    return { detail: { ...first!.detail, comments }, raw: first!.raw };
+  }
+
+  function ownLease(fresh: FreshBug): string | null {
+    const raw = fresh.raw;
+    const expires = typeof raw.claim_expires_at === 'string' ? Date.parse(raw.claim_expires_at) : Number.NaN;
+    if (raw.claimed_by !== config.actor || typeof raw.claim_token !== 'string' || !raw.claim_token) return null;
+    return Number.isFinite(expires) && expires > clock.now().getTime() ? raw.claim_token : null;
+  }
+
+  async function mutate(section: BugSectionView, tool: 'comment_problem' | 'set_problem_status', args: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const access = await auth(section, 'write');
+    let receipt: unknown;
+    try { receipt = await mcp.call(access, tool, args); }
+    catch (error) { writeFailure(error, 'write'); }
+    if (!plainObject(receipt)) receiptInvalid('not an object');
+    return receipt;
+  }
+
+  function receiptHeader(receipt: Record<string, unknown>, bug: BugView, section: BugSectionView, operationId: string): WrittenBugHeader {
+    if (receipt.contract_version !== 2) receiptInvalid('contract_version is not 2');
+    if (receipt.ok !== true) receiptInvalid('ok is not true');
+    if (receipt.problem_id !== bug.problemId) receiptInvalid('problem_id does not match the bug');
+    if (receipt.operation_id !== operationId) receiptInvalid('operation_id does not match the request');
+    const revision = receipt.revision;
+    if (typeof revision !== 'number' || !Number.isSafeInteger(revision) || revision < 0) receiptInvalid('revision is not a non-negative integer');
+    if (!plainObject(receipt.bug)) receiptInvalid('bug is missing');
+    if (receipt.bug.revision !== revision) receiptInvalid('bug.revision differs from revision');
+    let page: ServerBugDetailPage;
+    try { page = mapDetail(receipt.bug, section); }
+    catch { receiptInvalid('bug lacks key or revision'); }
+    if (!sameKey(page.bug.key, bug.serverKey)) receiptInvalid('bug belongs to another key');
+    if (typeof receipt.bug.status !== 'string' || !receipt.bug.status || typeof receipt.bug.state !== 'string') receiptInvalid('bug lacks status or state');
+    return page.bug;
+  }
+
+  function store(bug: BugView, header: WrittenBugHeader, comment: ServerComment | null): BugView {
+    return repository.applyWriteReceipt({ bugKey: bug.key, bug: header, comment, at: clock.now().toISOString() });
+  }
+
+  return {
+    async addComment(input) {
+      const body = typeof input?.text === 'string' ? input.text : '';
+      if (!body.trim() || body.includes('\0')) throw new BugStoreError('invalid-comment', 'Comment text must be non-empty', {});
+      const { bug, section } = target(input.bugKey);
+      const peek = await readFresh(section, bug, false);
+      const claimedBy = peek.detail.bug.claimedBy;
+      const foreign = claimedBy !== null && claimedBy !== config.actor;
+      const fresh = foreign && peek.detail.nextCommentsCursor !== null ? await readFresh(section, bug, true) : peek;
+      let replyTo: string | null = null;
+      if (foreign) {
+        const owned = fresh.detail.comments.filter(comment => comment.authorId === claimedBy);
+        const last = owned.reduce<ServerComment | null>((latest, comment) => !latest || comment.createdAt >= latest.createdAt ? comment : latest, null);
+        if (!last) {
+          throw new BugWriteError('BUG_WRITE_REPLY_TARGET_MISSING',
+            `Bug ${bug.key} is claimed by ${claimedBy}, who has no comment to reply to; nothing was written`, { serverCode: null });
+        }
+        replyTo = last.id;
+      }
+      const claimToken = ownLease(fresh);
+      const operationId = newOperationId();
+      const receipt = await mutate(section, 'comment_problem', {
+        problem_id: bug.problemId, operation_id: operationId, expected_revision: fresh.detail.bug.revision, comment: body,
+        ...(replyTo ? { reply_to: replyTo } : {}), ...(claimToken ? { claimToken } : {}),
+      });
+      const header = receiptHeader(receipt, bug, section, operationId);
+      if (typeof receipt.comment_id !== 'string' || !receipt.comment_id) receiptInvalid('comment_id is missing');
+      if (!plainObject(receipt.comment) || receipt.comment.id !== receipt.comment_id) receiptInvalid('comment.id differs from comment_id');
+      const comment = mapComment(receipt.comment);
+      const view = store(bug, header, comment);
+      const written = view.comments.find(item => item.serverId === comment.id);
+      if (!written) throw new BugStoreError('invalid-receipt', `Comment ${comment.id} was not recorded locally`, { bugKey: bug.key });
+      return { bugKey: view.key, operationId, commentId: comment.id, revision: header.revision, comment: written, bug: view };
+    },
+    async setStatus(input) {
+      const status = typeof input?.status === 'string' ? input.status : '';
+      if (!status.trim() || status !== status.trim() || status.includes('\0')) {
+        throw new BugWriteError('BUG_WRITE_REJECTED', 'Status must be a non-empty bugs-api status', { serverCode: 'invalid-input' });
+      }
+      const { bug, section } = target(input.bugKey);
+      const fresh = await readFresh(section, bug, false);
+      const claimToken = ownLease(fresh);
+      const operationId = newOperationId();
+      const receipt = await mutate(section, 'set_problem_status', {
+        problem_id: bug.problemId, operation_id: operationId, expected_revision: fresh.detail.bug.revision, status,
+        ...(claimToken ? { claimToken } : {}),
+      });
+      const header = receiptHeader(receipt, bug, section, operationId);
+      const view = store(bug, header, null);
+      return { bugKey: view.key, operationId, revision: header.revision, status: header.status, bug: view };
+    },
+  };
 }

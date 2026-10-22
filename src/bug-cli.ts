@@ -2,7 +2,7 @@ import { commandFailure, failureContext, type CommandFailureContext } from './cl
 import type { Handler } from './cli.ts';
 import { BugStoreError, type BugRepository, type BugView } from './bug-store.ts';
 import { AttachmentCacheError, type AttachmentCache } from './bug-attachment-cache.ts';
-import { BugSyncConfigError, ClaimsError, type BugSyncConfig, type BugWriter, type ClaimsIssuer } from './bug-sync.ts';
+import { BugSyncConfigError, BugWriteError, ClaimsError, type BugSyncConfig, type BugWriter, type ClaimsIssuer } from './bug-sync.ts';
 
 export type BugCommand = 'bug list' | 'bug show' | 'bug comment add' | 'bug status set' | 'bug attachment get';
 
@@ -23,7 +23,7 @@ type Facts = Partial<Omit<CommandFailureContext, 'code' | 'message'>>;
 const storeCodes: Readonly<Record<string, string>> = {
   'invalid-bug-key': 'INVALID_BUG_KEY', 'bug-not-found': 'BUG_NOT_FOUND', 'ambiguous-bug': 'AMBIGUOUS_BUG', 'invalid-comment': 'INVALID_COMMENT',
   'unknown-section': 'BUG_SECTION_UNKNOWN', 'unsupported-version': 'BUG_STORE_UNSUPPORTED_VERSION', 'unsafe-path': 'BUG_STORE_UNSAFE_PATH',
-  'operation-not-found': 'OPERATION_NOT_FOUND',
+  'undelivered-local-comments': 'BUG_STORE_UNDELIVERED_COMMENTS', 'invalid-receipt': 'BUG_WRITE_INVALID_RESPONSE',
 };
 
 const storeRemedies: Readonly<Record<string, readonly string[]>> = {
@@ -34,7 +34,25 @@ const storeRemedies: Readonly<Record<string, readonly string[]>> = {
   'unknown-section': ['Розділ жука відсутній у conf/raf.json#/bugs/sections; зверніться до main щодо конфігурації розділів.'],
   'unsupported-version': ['База жуків створена новішою версією raf; оновіть raf-develop і повторіть команду.'],
   'unsafe-path': ['Виправте conf/raf.json#/bugs/fileName: лише назва файла всередині ~/.raf.'],
-  'operation-not-found': ['Перевірте ідентифікатор операції в raf bug show.'],
+  'undelivered-local-comments': ['База жуків попередньої версії має коментарі, які не дійшли до сервера; main розбирає їх вручну за переліком у details.found, raf їх не видаляє.'],
+  'invalid-receipt': ['Відповідь сервера не відповідає локальному жуку; перевірте стан у Dash і в raf bug show після синхронізації.'],
+};
+
+const serverRemedies: Readonly<Record<string, readonly string[]>> = {
+  'revision-conflict': ['Жук змінився між читанням і записом; перегляньте актуальний стан і повторіть команду, якщо зміна досі потрібна.'],
+  conflict: ['Сервер відхилив запис через зміну стану жука чи оренди; перегляньте актуальний стан і повторіть команду, якщо зміна досі потрібна.'],
+  'lease-required': ['Жук під орендою іншого actor; дочекайтеся звільнення оренди або напишіть власнику оренди відповіддю на його коментар.'],
+  'access-denied': ['Сервер відмовив у доступі; перевірте розділ у conf/raf.json#/bugs/sections і секрет у ~/.raf/secrets.json.'],
+  'not-found': ['Жука немає на сервері або його видалено; наступна синхронізація оновить локальну копію.'],
+  'invalid-input': ['Перевірте текст коментаря чи статус: допустимі значення й переходи визначає життєвий цикл bugs-api (BUG_STATUSES, BUG_STATUS_TRANSITIONS).'],
+  'bug-storage-unavailable': ['Сховище жуків Dash тимчасово недоступне; повторіть команду після retryAfterMs.'],
+};
+
+const writeRemedies: Readonly<Record<string, readonly string[]>> = {
+  BUG_WRITE_UNKNOWN: ['Результат невідомий: якщо Dash застосував зміну, її принесе синхронізація. Перевірте raf bug show або Dash перед повтором, щоб не задублювати зміну.'],
+  BUG_WRITE_INVALID_RESPONSE: ['Відповідь Dash не відповідає контракту запису; локальна база не змінена. Перевірте стан у Dash і повідомте main.'],
+  BUG_WRITE_REPLY_TARGET_MISSING: ['Жук під орендою іншого actor без його коментаря, на який можна відповісти; запис не виконано. Зверніться до main.'],
+  BUG_WRITE_REJECTED: ['Сервер відхилив запис; виправте причину з sourceCode і повторіть команду.'],
 };
 
 const cacheRemedies: Readonly<Record<string, readonly string[]>> = {
@@ -66,6 +84,15 @@ function translate(error: unknown, stage: string, completed: readonly string[]):
     return failure(error.code, error.message, {
       stage, source: 'bug-attachment-cache', sourceCode: error.code, completed, retrySafe: true,
       remediation: cacheRemedies[error.code] ?? ['Повторіть команду пізніше.'],
+    });
+  }
+  if (error instanceof BugWriteError) {
+    const remedy = (error.code === 'BUG_WRITE_REJECTED' && error.serverCode ? serverRemedies[error.serverCode] : undefined) ?? writeRemedies[error.code];
+    return failure(error.code, error.message, {
+      stage, source: 'dash-mcp', sourceCode: error.serverCode, completed,
+      found: { status: error.status, retryAfterMs: error.retryAfterMs, localChanges: false },
+      retrySafe: error.code === 'BUG_WRITE_UNKNOWN' ? false : error.code === 'BUG_WRITE_REJECTED' ? true : null,
+      remediation: remedy ?? ['Перевірте стан жука й повторіть команду.'],
     });
   }
   if (error instanceof BugSyncConfigError) {
@@ -167,23 +194,15 @@ export function createBugHandlers(ports: BugCommandPorts): Record<BugCommand, Ha
         });
       }
       const body = decodeComment(bytes, file);
-      const bug = repository.findBug(String(params.bug));
-      const section = repository.sections().find(item => item.sectionId === bug.sectionId);
-      if (!section) throw new BugStoreError('unknown-section', `Розділ ${bug.sectionId} жука ${bug.key} відсутній у локальній базі жуків.`, { sectionId: bug.sectionId });
-      const claims = await ports.claims(config);
-      const receipt = repository.addLocalComment({
-        bugKey: bug.key, text: body, authorId: config.actor, authorKind: 'agent',
-        claimsFingerprint: claims.fingerprint(section, 'write'), at: ports.now().toISOString(),
-      });
-      completed.push('local-comment');
-      return {
-        source: 'local', accepted: true, ...receipt, delivered: false, delivery: 'pending',
-        notice: 'Коментар і операцію відправлення збережено локально; доставку на сервер виконає служба raf асинхронно. Стан доставки — raf bug show.',
-      };
+      const result = await ports.writer(repository, config, await ports.claims(config)).addComment({ bugKey: String(params.bug), text: body });
+      completed.push('dash-comment', 'local-record');
+      return { source: 'dash', ...result };
     }),
-    'bug status set': async _params => {
-      throw new Error('NotImplemented: bug status set');
-    },
+    'bug status set': params => session('status', async (repository, config, completed) => {
+      const result = await ports.writer(repository, config, await ports.claims(config)).setStatus({ bugKey: String(params.bug), status: String(params.status ?? '') });
+      completed.push('dash-status', 'local-record');
+      return { source: 'dash', ...result };
+    }),
     'bug attachment get': params => session('attachment', async (repository, config) => {
       const bug = repository.findBug(String(params.bug));
       const claims = await ports.claims(config);

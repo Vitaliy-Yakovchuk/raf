@@ -179,8 +179,8 @@ export function seedBug(database: DatabaseSync, rawId = 'bug-1'): number {
 }
 
 export function seedComment(database: DatabaseSync, bugPk: number, text: string): number {
-  const result = database.prepare(`INSERT INTO comments (bug_pk, server_id, origin, author_id, author_kind, text, created_at, payload)
-    VALUES (?, ?, 'server', 'raf-system', 'agent', ?, '2026-10-22T08:00:00.000Z', '{}')`)
+  const result = database.prepare(`INSERT INTO comments (bug_pk, server_id, author_id, author_kind, text, created_at, payload)
+    VALUES (?, ?, 'raf-system', 'agent', ?, '2026-10-22T08:00:00.000Z', '{}')`)
     .run(bugPk, `c-${text}`, text);
   return Number(result.lastInsertRowid);
 }

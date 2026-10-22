@@ -144,7 +144,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
       if (typeof name !== 'string') return undefined;
       if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'runner limits', 'command stats', 'secrets import-conductor', 'service start', 'service status', 'service stop',
         'reminder add', 'reminder list', 'reminder update', 'reminder activate', 'reminder close', 'reminder reassign', 'reminder close-all',
-        'bug list', 'bug show', 'bug comment add', 'bug attachment get'].includes(name)) return unavailable;
+        'bug list', 'bug show', 'bug comment add', 'bug status set', 'bug attachment get'].includes(name)) return unavailable;
       return async (params: Record<string, unknown>) => {
         try {
           const orchestratorRoot = validatedRoot(options);

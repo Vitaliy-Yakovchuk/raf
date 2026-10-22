@@ -148,7 +148,9 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
   let child: ReturnType<typeof spawn> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let settled = false;
-  const logPath = join(directory, 'worker.log');
+  const runDirectory = join(request.tmpRoot, request.runId);
+  await fs.mkdir(runDirectory, { recursive: true, mode: 0o700 });
+  const logPath = join(runDirectory, 'worker.log');
   const log = await fs.open(logPath, 'wx', 0o600);
   try {
     await fs.writeFile(requestPath, JSON.stringify(request), { mode: 0o600, flag: 'wx' });

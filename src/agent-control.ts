@@ -90,6 +90,9 @@ export class AgentControlService {
   }
 
   private async reconcile(session: SessionRecord, observed?: ProcessObservation): Promise<SessionRecord> {
+    if (!session.result && session.launchContext?.reportPath && (session.state === 'running' || session.state === 'exited')) {
+      session = await this.dependencies.coordinator.acceptPendingReport(session);
+    }
     if (session.state === 'running' && session.process) {
       session = await this.dependencies.coordinator.observe(session, observed ?? await this.inspect(session.process));
     }

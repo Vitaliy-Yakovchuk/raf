@@ -48,25 +48,9 @@ export interface AgentReportWatcher {
 }
 export type PendingAgentReportPorts = Pick<AgentReportPorts, 'now' | 'verifyAssignmentCompletion' | 'diagnostic'> & { readonly fs: Pick<AgentReportPorts['fs'], 'readText'> };
 export async function readPendingAgentReport(request: AgentReportRequest, ports: PendingAgentReportPorts): Promise<AgentReportResult | null> {
-  throw new Error('NotImplemented: readPendingAgentReport');
-}
-export async function createAgentReportWatcher(request: AgentReportRequest, ports: AgentReportPorts): Promise<AgentReportWatcher> {
   const component = (value: string) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value);
   if (!isAbsolute(request.tmpRoot) || !component(request.runId) || !component(request.address)) throw new Error('Invalid report directory, run ID or address');
-  const directory = join(request.tmpRoot, request.runId);
-  const filename = `${request.address}.json`;
-  const path = join(directory, filename);
-  await ports.fs.mkdir(directory);
-  let accepted = false;
-  let closed = false;
-  let queue: Promise<void> = Promise.resolve();
-  let unwatch = () => {};
-  let unsubscribe = () => {};
-  const serial = (operation: () => Promise<void>) => {
-    const next = queue.then(operation);
-    queue = next.catch(() => {});
-    return next;
-  };
+  const path = join(request.tmpRoot, request.runId, `${request.address}.json`);
   const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
   const status = (value: unknown) => value === 'succeeded' || value === 'failed';
   const valid = (value: unknown): value is AgentReport => {
@@ -88,28 +72,47 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
     }
     return true;
   };
-  const publish = async (report?: AgentReport, exit?: AgentReportExit) => {
-    const outcome = report?.status ?? 'failed';
-    await ports.result({ runId: request.runId, id: request.address, event: outcome === 'succeeded' ? 'agent.succeeded' : 'agent.failed', status: outcome, at: ports.now(), ...(report ? { report } : {}), ...(exit ? { exit } : {}) });
+  let content: string | null;
+  try { content = await ports.fs.readText(path); }
+  catch (error) { await ports.diagnostic(`Cannot read report: ${String(error)}`); return null; }
+  if (content === null) return null;
+  let report: unknown;
+  try { report = JSON.parse(content); }
+  catch { await ports.diagnostic('Incomplete or invalid report JSON'); return null; }
+  if (!valid(report)) { await ports.diagnostic('Invalid report or assignment mismatch'); return null; }
+  if (report.status === 'succeeded') {
+    let verification: AssignmentVerification;
+    try { verification = await ports.verifyAssignmentCompletion(request.assignment, Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]))); }
+    catch (error) { await ports.diagnostic(`Assignment verification failed: ${String(error)}`); return null; }
+    if (!verification.ok) { await ports.diagnostic('Assignment completion is not confirmed', verification); return null; }
+  }
+  return { runId: request.runId, id: request.address, event: report.status === 'succeeded' ? 'agent.succeeded' : 'agent.failed', status: report.status, at: ports.now(), report };
+}
+export async function createAgentReportWatcher(request: AgentReportRequest, ports: AgentReportPorts): Promise<AgentReportWatcher> {
+  const component = (value: string) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value);
+  if (!isAbsolute(request.tmpRoot) || !component(request.runId) || !component(request.address)) throw new Error('Invalid report directory, run ID or address');
+  const directory = join(request.tmpRoot, request.runId);
+  const filename = `${request.address}.json`;
+  const path = join(directory, filename);
+  await ports.fs.mkdir(directory);
+  let accepted = false;
+  let closed = false;
+  let queue: Promise<void> = Promise.resolve();
+  let unwatch = () => {};
+  let unsubscribe = () => {};
+  const serial = (operation: () => Promise<void>) => {
+    const next = queue.then(operation);
+    queue = next.catch(() => {});
+    return next;
+  };
+  const publish = async (result: AgentReportResult) => {
+    await ports.result(result);
     accepted = true;
   };
   const read = async () => {
     if (accepted || closed) return;
-    let content: string | null;
-    try { content = await ports.fs.readText(path); }
-    catch (error) { await ports.diagnostic(`Cannot read report: ${String(error)}`); return; }
-    if (content === null) return;
-    let report: unknown;
-    try { report = JSON.parse(content); }
-    catch { await ports.diagnostic('Incomplete or invalid report JSON'); return; }
-    if (!valid(report)) { await ports.diagnostic('Invalid report or assignment mismatch'); return; }
-    if (report.status === 'succeeded') {
-      let verification: AssignmentVerification;
-      try { verification = await ports.verifyAssignmentCompletion(request.assignment, Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]))); }
-      catch (error) { await ports.diagnostic(`Assignment verification failed: ${String(error)}`); return; }
-      if (!verification.ok) { await ports.diagnostic('Assignment completion is not confirmed', verification); return; }
-    }
-    await publish(report);
+    const result = await readPendingAgentReport(request, ports);
+    if (result) await publish(result);
   };
   const cleanup = async () => {
     if (closed) return;
@@ -119,7 +122,7 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
   const finish = (exit: AgentReportExit) => serial(async () => {
     if (closed) return;
     await read();
-    if (!accepted) await publish(undefined, exit);
+    if (!accepted) await publish({ runId: request.runId, id: request.address, event: 'agent.failed', status: 'failed', at: ports.now(), exit });
     await cleanup();
   });
   try {

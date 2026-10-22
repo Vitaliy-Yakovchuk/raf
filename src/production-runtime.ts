@@ -30,6 +30,7 @@ import { validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type 
 import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
 import { settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
+import { readPendingAgentReport } from './agent-report.ts';
 
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const object = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -283,6 +284,24 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const direct = identityExecute ?? executeCommand;
   const state = createSessionState({ repository: store.sessionRepository, verifyMainAuthority: (authority, identity) => !!authority && typeof authority === 'object' && isDeepStrictEqual(mainAuthority.get(authority), identity), verifyWorkResult: (runId, result) => verified.get(result) === runId });
   const current = (runId: string) => store.sessionRepository.transaction(tx => tx.getSession(runId));
+  const reportDirectory = (session: SessionRecord) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.runId) && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.addressId) && session.launchContext?.reportPath === join(context.tmpRoot, session.runId, `${session.addressId}.json`) ? join(context.tmpRoot, session.runId) : undefined;
+  const acceptPendingReport = async (session: SessionRecord): Promise<SessionRecord> => {
+    session = current(session.runId) ?? session;
+    if (session.result || !['running', 'exited'].includes(session.state) || !session.launchContext) return session;
+    if (!reportDirectory(session)) { process.stderr.write(`${session.runId}: Report path does not match the durable run identity\n`); return session; }
+    const result = await readPendingAgentReport({ tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, assignment: session.launchContext.assignment }, {
+      fs: { readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } } },
+      now,
+      verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignmentPorts(execute), archives),
+      diagnostic: async (reason, verification) => { process.stderr.write(`${session.runId}: ${reason}${verification ? `: ${JSON.stringify(verification)}` : ''}\n`); },
+    });
+    if (result) {
+      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at } };
+      verified.set(value, session.runId);
+      state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [] });
+    }
+    return current(session.runId) ?? session;
+  };
   let reminderService: ReminderService | undefined;
   const reminders = { sessionEnded: (input: SessionEnd) => (reminderService ??= new ReminderService({ repository: store.reminderRepository, now, nextId: randomUUID,
     approvedEventKinds: loadEventCatalog(context.orchestratorRoot).events.map(event => event.id) })).sessionEnded(input) };
@@ -291,6 +310,8 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const finalize = async (session: SessionRecord, rows: readonly ActivityEvent[]) => {
     const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
     if (wrapper && wrapper.pid !== process.pid) { const observed = (await observeProcesses([wrapper], { execute }))[0]; if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId} before recovery finalization`); }
+    session = await acceptPendingReport(session);
+    if (session.state === 'finished') return session;
     const at = now();
     const effect: ReminderSessionEffect = { id: `${session.runId}:reminders:session-ended`, domain: 'reminders', payload: { operation: 'session-ended', runId: session.runId, at, end: { address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: true } } };
     const pending = intents(rows);
@@ -312,6 +333,8 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       if (!released) fail('LAUNCH_RECOVERABLE', 'Task reservation cannot be released before verified process exit');
     } else state.finalizeSession(session.runId, session.revision, at, { pending, domain: [effect] });
     await deliverResults();
+    const directory = reportDirectory(session);
+    if (current(session.runId)?.state === 'finished' && directory) await fs.rm(directory, { recursive: true, force: true });
     return current(session.runId)!;
   };
   const launch = createLaunchState({ repository: store.sessionRepository, measure: async () => { throw new Error('Measurements must precede atomic reserve'); }, evaluateAdmission: evaluateResourceAdmission });
@@ -354,7 +377,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       },
       updateActivity: async (session, update, rows) => { if (!launch.updateActivity(session.runId, session.revision, update, intents(rows))) fail('ACTIVITY_CONFLICT', 'Session changed during activity update'); return current(session.runId)!; },
       finalize, publish,
-      acceptPendingReport: async () => { throw new Error('NotImplemented: acceptPendingReport'); },
+      acceptPendingReport,
     },
     transport: {
       deliver: async (identity, message) => {
@@ -758,6 +781,14 @@ export async function runProductionWorker(
 ): Promise<void> {
   const channel = await consumeWrapperRequest();
   const request = channel.request;
+  process.stderr.write(`${now()} worker started run=${request.runId} pid=${process.pid} ppid=${process.ppid}\n`);
+  if (platform() === 'linux') {
+    try {
+      const [stat, namespace] = await Promise.all([fs.readFile('/proc/self/stat', 'utf8'), fs.readlink('/proc/self/ns/pid')]);
+      const fields = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
+      process.stderr.write(`${request.runId}: worker process group=${fields[2]} session=${fields[3]} pidNamespace=${namespace}\n`);
+    } catch (error) { process.stderr.write(`${request.runId}: worker process context unavailable: ${String(error)}\n`); }
+  }
   let manifest;
   const manifestPath = join(request.tmpRoot, request.runId, 'runtime.json');
   try {
@@ -1005,7 +1036,7 @@ export async function runProductionWorker(
       transport,
       report: {
         fs: { mkdir: async path => { await fs.mkdir(path, { recursive: true, mode: 0o700 }); }, readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, removeTree: path => fs.rm(path, { recursive: true, force: true }) },
-        watch: (directory, listener) => { const watcher = watch(directory, (event, filename) => { if (filename) void listener(event === 'rename' ? 'rename' : 'modify', filename.toString()).catch(error => process.emitWarning(error)); }); return () => watcher.close(); },
+        watch: (directory, listener) => { const watcher = watch(directory, (event, filename) => { if (filename) void listener(event === 'rename' ? 'rename' : 'modify', filename.toString()).catch(error => process.emitWarning(error)); }); watcher.on('error', error => process.stderr.write(`${request.runId}: Report watcher error: ${String(error)}\n`)); return () => watcher.close(); },
         now,
         verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
         diagnostic: async reason => { process.stderr.write(`${request.runId}: ${reason}\n`); },

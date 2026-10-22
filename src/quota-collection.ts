@@ -3,7 +3,7 @@ import type { ProtocolSettings, QuotaSnapshot, RunnerId, ScreenState } from './r
 import { nextQuotaProbeAction, parseQuotaScreen, type QuotaProtocol, type ScreenQuotaSnapshot } from './quota-screens.ts';
 export type CollectionSettings = ProtocolSettings | QuotaProtocol;
 type AnySnapshot = QuotaSnapshot | ScreenQuotaSnapshot;
-export type ProbeHandle = { socket: string; session: string; ownershipToken: string };
+export type ProbeHandle = { socket: string; session: string; ownershipToken: string; trustWorkspace?: boolean };
 export type ProbeCapture = { text: string; version: string; observedAt: string; truncated: boolean; exited: boolean };
 export type ProbeTransport = {
   openOwned: (settings: CollectionSettings, deadline: string) => Promise<ProbeHandle>;
@@ -145,6 +145,7 @@ async function screenDialog(settings: QuotaProtocol, handle: ProbeHandle, start:
   let typed: string | null = null;
   let typedAtMs: number | null = null;
   let reissuedAtMs: number | null = null;
+  let trustAnsweredAtMs: number | null = null;
   let submitted = false;
   for (;;) {
     elapsed = Math.max(elapsed, Date.parse(dependencies.now()) - start);
@@ -154,9 +155,10 @@ async function screenDialog(settings: QuotaProtocol, handle: ProbeHandle, start:
     if (capture.version !== settings.version && !capture.version.trim().split(/\s+/).includes(settings.version)) {
       return { snapshot: null, failure: error('unknown_screen', `Unsupported ${settings.runner} version ${JSON.stringify(capture.version)}; expected ${settings.version}`) };
     }
-    const action = nextQuotaProbeAction(settings, { text: capture.text, typed, typedAtMs, submitted, reissuedAtMs, elapsedMs: elapsed });
+    const action = nextQuotaProbeAction(settings, { text: capture.text, typed, typedAtMs, submitted, reissuedAtMs, elapsedMs: elapsed, trustWorkspace: handle.trustWorkspace === true, trustAnsweredAtMs });
     if (action.kind === 'stop') {
-      const message = action.reason === 'command_mismatch' ? `CLI did not show the configured command ${settings.quotaCommand}; Enter was not sent` : `Quota probe stopped at ${action.reason}`;
+      const trust = !handle.trustWorkspace ? 'raf answers it only in a registered branch directory from conf/projects.json branchPaths' : 'the prompt stayed after the protocol navigation keys';
+      const message = action.reason === 'command_mismatch' ? `CLI did not show the configured command ${settings.quotaCommand}; Enter was not sent` : action.reason === 'workspace_trust_required' ? `Quota probe stopped at workspace_trust_required: ${trust}` : `Quota probe stopped at ${action.reason}`;
       return { snapshot: null, failure: error(action.reason, message) };
     }
     if (action.kind === 'parse') {
@@ -166,7 +168,10 @@ async function screenDialog(settings: QuotaProtocol, handle: ProbeHandle, start:
       if (parsed.completeness !== 'complete') return { snapshot: null, failure: error('incomplete', parsed.issues.join('; ')) };
       return { snapshot: parsed, failure: null };
     }
-    if (action.kind === 'type' || action.kind === 'reissue') {
+    if (action.kind === 'trust') {
+      await dependencies.transport.sendKeysOwned(handle, action.keys);
+      trustAnsweredAtMs = elapsed;
+    } else if (action.kind === 'type' || action.kind === 'reissue') {
       await dependencies.transport.sendTextOwned(handle, action.text);
       typed = action.text;
       typedAtMs = elapsed;

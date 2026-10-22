@@ -226,7 +226,7 @@ function closeAbandoned(tx: ReservationTransaction, observations: Awaited<Return
       if (result?.status !== 'succeeded') tx.putPending({ id: `${session.runId}:agent.failed`, runId: session.runId,
         event: 'agent.failed', payload: { kind: 'agent.failed', id: session.addressId } });
       tx.putPending({ id: `${session.runId}:agent.closed`, runId: session.runId,
-        event: 'agent.closed', payload: { kind: 'agent.closed', id: session.addressId } });
+        event: 'agent.closed', payload: { kind: 'agent.closed', id: session.addressId, ...(session.activity ? { project: session.activity.project } : {}) } });
     }
     tx.deleteTaskReservation(set.lease.owner.runId);
     returnDelegated(tx, session, set.tasks);

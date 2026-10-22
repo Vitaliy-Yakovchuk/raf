@@ -194,6 +194,20 @@ test('claude /usage typed: submit only when the composer holds exactly /usage', 
   assert.deepEqual(nextQuotaProbeAction(settings, { text: other, typed: '/usage', typedAtMs: 3800, submitted: false, reissuedAtMs: null, elapsedMs: 3800 + settings.timeouts.transitionMs }), { kind: 'stop', reason: 'command_mismatch' });
 });
 
+test('claude trust prompt in a quota probe: protocol keys once only for a registered directory, otherwise stop without input', () => {
+  const settings = validateQuotaProtocol(conf.runnerProtocols.find((row: { runner: string }) => row.runner === 'claude'));
+  const trustScreen = ['[Screen Reader Mode: on via flag]', 'Permission Required: Accessing workspace:', '/srv/dev/work/orchestrator/raf-main', 'Quick safety check: Is this a project you created or one you trust?', 'y. Yes, I trust this folder', 'n. No, exit', 'Enter y/n:', 'Enter to confirm · Esc to cancel'].join('\n');
+  const stop = { kind: 'stop', reason: 'workspace_trust_required' };
+  const base = { text: trustScreen, typed: null, typedAtMs: null, submitted: false, reissuedAtMs: null, elapsedMs: 400 };
+  assert.deepEqual(nextQuotaProbeAction(settings, base), stop);
+  assert.deepEqual(nextQuotaProbeAction(settings, { ...base, trustWorkspace: false }), stop);
+  assert.deepEqual(nextQuotaProbeAction(settings, { ...base, trustWorkspace: true, trustAnsweredAtMs: null }), { kind: 'trust', keys: ['y', 'Enter'] });
+  assert.deepEqual(nextQuotaProbeAction(settings, { ...base, trustWorkspace: true, trustAnsweredAtMs: 400, elapsedMs: 450 }), { kind: 'wait' });
+  assert.deepEqual(nextQuotaProbeAction(settings, { ...base, trustWorkspace: true, trustAnsweredAtMs: 400, elapsedMs: 400 + settings.timeouts.transitionMs }), stop);
+  assert.deepEqual(nextQuotaProbeAction({ ...settings, navigation: [] }, { ...base, trustWorkspace: true }), stop);
+  assert.deepEqual(nextQuotaProbeAction(settings, { ...base, text: frames.claudeReady, trustWorkspace: true, trustAnsweredAtMs: 400, elapsedMs: 900 }), { kind: 'type', text: '/usage' });
+});
+
 test('grok /usage modal percentage is used and must agree with the footer remaining', () => {
   const settings = protocol('grok');
   const snapshot = parseQuotaScreen(settings, { text: frames.grokUsageModal, observedAt: '2026-10-22T12:45:01.000Z', version: '1.0.67', truncated: false });

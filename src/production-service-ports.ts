@@ -8,6 +8,8 @@ import { reconcileTaskReservations, listTaskReservations } from './task-reservat
 import { evaluateResourceAdmission } from './resource-admission.ts';
 import { evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
 import { createServicePorts as composeServicePorts } from './service-host.ts';
+import { validateEventObjectId } from './event-catalog.ts';
+import { startBugSyncService } from './bug-sync.ts';
 import type { StateStore } from './state-store.ts';
 import type { DeliveryReceipt, MessageRequest, VerifiedSender } from './agent-control.ts';
 import type { ProcessScanDependencies, ResourceSnapshotReader } from './os-runtime.ts';
@@ -109,12 +111,7 @@ export async function createProductionServiceDependencies(
       store = handle;
       return {
         transaction: operation => repository.transaction(operation),
-        validateId: (kind, id) => {
-          if (typeof id !== 'string' || !id.trim() || id !== id.trim() || /[\s/\\\0]/.test(id)) return false;
-          if (kind === 'agentAddress' || kind === 'reminderId') return /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(id);
-          if (kind === 'changeId') return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id);
-          return kind === 'deploymentId';
-        },
+        validateId: validateEventObjectId,
       };
     },
     deliverReminder: async reminder => {
@@ -190,6 +187,24 @@ export async function createServicePorts(
   });
   dependencies.resourceWait.watchResources = () => () => {};
   const ports = await composeServicePorts(context, dependencies);
+  let bugSync: Awaited<ReturnType<typeof startBugSyncService>>;
+  try {
+    bugSync = await startBugSyncService({
+      orchestratorRoot: context.orchestratorRoot, homeDirectory: context.homeDirectory, stateDirectory: context.stateDirectory,
+      now: dependencies.now, schedule: dependencies.schedule,
+      notifier: {
+        notify: async notice => {
+          if (!options?.sharedDelivery) throw new Error('Shared main delivery transport is unavailable or unverified');
+          const text = `Bug comment conflict ${notice.kind} for ${notice.bugKey}, operation ${notice.operationId}; the local comment is kept undelivered until main decides: ${notice.text}`;
+          const receipt = await options.sharedDelivery({ to: 'main', text }, { kind: 'system' });
+          if (!receipt.accepted) throw new Error(receipt.reason);
+        },
+      },
+    });
+  } catch (error) {
+    await ports.shutdown();
+    throw error;
+  }
   return {
     ...ports,
     handle: async (request, client) => {
@@ -200,6 +215,9 @@ export async function createServicePorts(
       try { return await ports.handle(request, client); }
       finally { remove(); client.signal.removeEventListener('abort', remove); }
     },
-    shutdown: async () => { clients.clear(); await ports.shutdown(); },
+    shutdown: async () => {
+      clients.clear();
+      try { await bugSync?.stop(); } finally { await ports.shutdown(); }
+    },
   };
 }

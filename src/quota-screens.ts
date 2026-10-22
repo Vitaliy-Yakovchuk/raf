@@ -34,9 +34,10 @@ export type ScreenQuotaSnapshot = {
   completeness: 'complete' | 'partial' | 'unknown';
   issues: string[];
 };
-export type QuotaProbeObservation = { text: string; typed: string | null; typedAtMs: number | null; submitted: boolean; reissuedAtMs: number | null; elapsedMs: number };
+export type QuotaProbeObservation = { text: string; typed: string | null; typedAtMs: number | null; submitted: boolean; reissuedAtMs: number | null; elapsedMs: number; trustWorkspace?: boolean; trustAnsweredAtMs?: number | null };
 export type QuotaProbeAction =
   | { kind: 'wait' }
+  | { kind: 'trust'; keys: string[] }
   | { kind: 'type'; text: string }
   | { kind: 'submit' }
   | { kind: 'reissue'; text: string }
@@ -105,6 +106,12 @@ function commandShown(settings: QuotaProtocol, text: string): boolean {
 export function nextQuotaProbeAction(settings: QuotaProtocol, observation: QuotaProbeObservation): QuotaProbeAction {
   const text = observation.text.replaceAll('\u00a0', ' ');
   const stop = stopState(settings, text);
+  if (stop === 'workspace_trust_required' && observation.trustWorkspace) {
+    const answeredAt = observation.trustAnsweredAtMs ?? null;
+    if (answeredAt !== null) return observation.elapsedMs - answeredAt < settings.timeouts.transitionMs ? { kind: 'wait' } : { kind: 'stop', reason: stop };
+    const trust = settings.navigation.find(entry => entry.state === 'workspace_trust_required' && entry.keys.length > 0 && text.includes(entry.match.replaceAll('\u00a0', ' ')));
+    return trust ? { kind: 'trust', keys: [...trust.keys] } : { kind: 'stop', reason: stop };
+  }
   if (stop) return { kind: 'stop', reason: stop };
   const lastInput = Math.max(observation.typedAtMs ?? 0, observation.reissuedAtMs ?? 0);
   const sinceInput = observation.elapsedMs - lastInput;

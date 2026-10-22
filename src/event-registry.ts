@@ -14,7 +14,7 @@ export interface EventTransaction {
   listPending(): readonly PendingEvent[];
   savePending(fact: PendingEvent): void;
   deletePending(key: string): void;
-  applyReminderEvent(event: ReminderEvent): 'delivered' | 'unresolved';
+  applyReminderEvent(event: ReminderEvent, at?: string): 'delivered' | 'unresolved';
 }
 
 export interface EventRegistryPorts {

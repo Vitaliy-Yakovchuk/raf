@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { collectRunnerQuotas, quotaCurrentView, readQuotaViews, validateQuotaRunners } from '../src/quota-collection.ts';
 import type { CurrentQuota, ProbeHandle, QuotaDependencies } from '../src/quota-collection.ts';
 import type { ProtocolSettings, QuotaSnapshot, RunnerId } from '../src/runner-protocols.ts';
+import { validateQuotaProtocol } from '../src/quota-screens.ts';
+import * as frames from './quota-frames.ts';
 
 const now = '2030-01-01T00:00:00.000Z';
 const enabled = { codex: true, grok: true, agy: true, claude: false };
@@ -231,4 +234,48 @@ test('cleanup failure remains visible and releases collection lock', async () =>
   assert.notEqual(result.exitCode, 0);
   assert.equal(result.results[0].view.error?.code, 'cleanup_failed');
   assert.equal(h.held.size, 0);
+});
+
+test('claude screen probe answers the trust prompt only through a handle marked as a registered workspace', async () => {
+  const conf = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+  const settings = validateQuotaProtocol(conf.runnerProtocols.find((row: { runner: string }) => row.runner === 'claude'));
+  const trust = ['[Screen Reader Mode: on via flag]', 'Permission Required: Accessing workspace:', '/synthetic/raf-main', 'y. Yes, I trust this folder', 'n. No, exit', 'Enter y/n:'].join('\n');
+  const head = frames.claudeReady.slice(0, frames.claudeReady.lastIndexOf('\n'));
+  const run = async (trustWorkspace: boolean) => {
+    let time = Date.parse('2026-10-22T12:44:00.000Z');
+    let trusted = false;
+    let buffer = '';
+    let panel = false;
+    const sent: string[][] = [];
+    const typed: string[] = [];
+    const dependencies: QuotaDependencies = {
+      now: () => new Date(time).toISOString(),
+      wait: async milliseconds => { time += milliseconds; },
+      store: { read: async () => null, replaceCurrent: async () => {} },
+      lock: { acquire: async () => ({ release: async () => {} }) },
+      transport: {
+        openOwned: async () => ({ socket: '/synthetic-owned/probe.sock', session: 'quota-claude', ownershipToken: 'owned-claude', trustWorkspace }),
+        captureOwned: async () => ({ text: !trusted ? trust : panel ? frames.claudeUsagePanel : `${head}\n$ ${buffer}`, version: '2.1.308 (Claude Code)', observedAt: new Date(time).toISOString(), truncated: false, exited: false }),
+        sendTextOwned: async (_handle, text) => { typed.push(text); buffer += text; },
+        sendKeysOwned: async (_handle, keys) => {
+          sent.push(keys);
+          if (!trusted && keys.join(' ') === 'y Enter') trusted = true;
+          else if (keys.join(' ') === 'Enter' && buffer === '/usage') { panel = true; buffer = ''; }
+        },
+        cleanupOwned: async () => {},
+      },
+    };
+    const result = await collectRunnerQuotas({ requested: ['claude'], mode: 'explicit', settings: [settings], enabled: { codex: true, grok: true, agy: true, claude: true } }, dependencies);
+    return { result, sent, typed };
+  };
+  const refused = await run(false);
+  assert.equal(refused.result.exitCode, 1);
+  assert.equal(refused.result.results[0].view.error?.code, 'workspace_trust_required');
+  assert.deepEqual(refused.sent, []);
+  assert.deepEqual(refused.typed, []);
+  const accepted = await run(true);
+  assert.equal(accepted.result.exitCode, 0, JSON.stringify(accepted.result));
+  assert.deepEqual(accepted.sent, [['y', 'Enter'], ['Enter'], ['Escape']]);
+  assert.deepEqual(accepted.typed, ['/usage']);
+  assert.ok(accepted.result.results[0].view.snapshot?.pools.some(pool => pool.id === 'all_models'));
 });

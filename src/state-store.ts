@@ -24,7 +24,34 @@ type TaskReservationTransaction = SessionTransaction & {
   deleteTaskReservation(runId: string): void;
 };
 
+export type ReminderDeliveryMark = { reminderId: string; key: string; receiptId: string; deliveredAt: string };
+
+export type ClosureNotice = { id: string; runId: string; address: string; recipient: string; text: string };
+
+export type DeliveryClaimOwner = { token: string; pid: number; processStart: string | null };
+
+export type DeliveryOwnerProbe = (owner: DeliveryClaimOwner) => boolean;
+
+export function reminderDeliveryKey(reminder: Pick<Reminder, 'assignedTo' | 'text' | 'at'>): string {
+  return JSON.stringify([reminder.assignedTo, reminder.text, reminder.at]);
+}
+
 export interface StateStore {
+  reminderDeliveries: {
+    get(reminderId: string): ReminderDeliveryMark | undefined;
+    mark(value: ReminderDeliveryMark): boolean;
+    claim(reminderId: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): { reminder: Reminder; key: string } | undefined;
+    confirm(value: ReminderDeliveryMark, token: string): boolean;
+    release(reminderId: string, token: string): void;
+  };
+  closureNotices: {
+    stage(): ClosureNotice[];
+    listUndelivered(): ClosureNotice[];
+    claim(id: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): ClosureNotice | undefined;
+    markDelivered(id: string, receiptId: string, deliveredAt: string, token?: string): boolean;
+    release(id: string, token: string): void;
+    discard(id: string): void;
+  };
   eventRepository: Pick<EventRegistryPorts, 'transaction'>;
   getResourceWaitLastGrant(): number | null;
   saveResourceWaitLastGrant(at: number): void;
@@ -98,13 +125,13 @@ export function openStateStore(path: string): StateStore {
       }
       db.exec("PRAGMA foreign_keys = ON; PRAGMA synchronous = FULL; PRAGMA wal_autocheckpoint = 1000; PRAGMA journal_size_limit = 4194304");
       const version = () => Number(db.prepare("PRAGMA user_version").get()?.user_version);
-      if (version() > 7) throw new Error("Unsupported state store schema version");
-      if (version() < 7) {
+      if (version() > 9) throw new Error("Unsupported state store schema version");
+      if (version() < 9) {
         transaction(() => {
 
           const current = version();
-          if (current > 7) throw new Error("Unsupported state store schema version");
-          if (current === 7) return;
+          if (current > 9) throw new Error("Unsupported state store schema version");
+          if (current === 9) return;
           if (current === 0) {
           db.exec(`
             CREATE TABLE runners (
@@ -201,7 +228,7 @@ export function openStateStore(path: string): StateStore {
             ) STRICT;
             PRAGMA user_version = 6;
           `);
-          db.exec(`
+          if (current < 7) db.exec(`
             CREATE TABLE quota_leases (
               key TEXT PRIMARY KEY NOT NULL,
               token TEXT NOT NULL,
@@ -209,6 +236,36 @@ export function openStateStore(path: string): StateStore {
               expires_at TEXT NOT NULL
             ) STRICT;
             PRAGMA user_version = 7;
+          `);
+          if (current < 8) db.exec(`
+            CREATE TABLE reminder_deliveries (
+              reminder_id TEXT PRIMARY KEY NOT NULL REFERENCES reminders(id) ON DELETE CASCADE,
+              delivery_key TEXT NOT NULL,
+              receipt_id TEXT NOT NULL,
+              delivered_at TEXT NOT NULL
+            ) STRICT;
+            CREATE TABLE closure_notices (
+              id TEXT PRIMARY KEY NOT NULL,
+              run_id TEXT NOT NULL,
+              address_id TEXT NOT NULL,
+              recipient TEXT NOT NULL,
+              text TEXT NOT NULL,
+              receipt_id TEXT,
+              delivered_at TEXT
+            ) STRICT;
+            CREATE INDEX closure_notices_undelivered ON closure_notices(delivered_at);
+            PRAGMA user_version = 8;
+          `);
+          db.exec(`
+            CREATE TABLE delivery_claims (
+              target TEXT PRIMARY KEY NOT NULL,
+              delivery_key TEXT NOT NULL,
+              token TEXT NOT NULL,
+              pid INTEGER NOT NULL,
+              process_start TEXT,
+              claimed_at TEXT NOT NULL
+            ) STRICT;
+            PRAGMA user_version = 9;
           `);
         });
       }
@@ -238,7 +295,10 @@ export function openStateStore(path: string): StateStore {
           state = excluded.state, closed_at = excluded.closed_at, payload = excluded.payload`).run(
             reminder.id, reminder.createdFor, reminder.assignedTo, reminder.at, reminder.state, reminder.closedAt, JSON.stringify(reminder));
       }),
-      remove: id => access(() => { db.prepare("DELETE FROM reminders WHERE id = ?").run(id); }),
+      remove: id => access(() => {
+        db.prepare("DELETE FROM reminders WHERE id = ?").run(id);
+        db.prepare("DELETE FROM delivery_claims WHERE target = ?").run(`reminder:${id}`);
+      }),
       session: address => access(() => {
         const row = db.prepare("SELECT state FROM sessions WHERE address_id = ? ORDER BY state = 'finished' LIMIT 1").get(address);
         return row ? { active: row.state !== 'finished' } : undefined;
@@ -347,6 +407,32 @@ export function openStateStore(path: string): StateStore {
     transaction: action => operation("taskReservationTransaction", () => transaction(() => withSessionTransaction(action))),
   };
 
+  function stageClosureNotices(intents: readonly PendingIntent[]): ClosureNotice[] {
+    const staged: ClosureNotice[] = [];
+    const closures = intents.filter(intent => intent.event === 'agent.closed' && typeof intent.runId === 'string');
+    if (!closures.length) return staged;
+    const sessions = db.prepare("SELECT payload FROM sessions").all().map(row => JSON.parse(row.payload as string) as SessionRecord);
+    const insert = db.prepare("INSERT INTO closure_notices(id, run_id, address_id, recipient, text) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING");
+    const projectOf = (intent: PendingIntent, closed: SessionRecord): string | undefined => {
+      const payload = intent.payload as { project?: unknown; activity?: { project?: unknown; session?: { activity?: { project?: unknown } } } } | null;
+      const candidates = [payload?.project, payload?.activity?.project, payload?.activity?.session?.activity?.project, closed.activity?.project];
+      return candidates.find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+    };
+    for (const intent of closures) {
+      const closed = sessions.find(session => session.runId === intent.runId);
+      if (!closed || closed.state !== 'finished') continue;
+      const project = projectOf(intent, closed);
+      if (!project) continue;
+      for (const recipient of sessions) {
+        if (recipient.state === 'finished' || recipient.addressId === closed.addressId || recipient.activity?.project !== project) continue;
+        const value: ClosureNotice = { id: `${closed.runId}:closed:${recipient.addressId}`, runId: closed.runId, address: closed.addressId, recipient: recipient.addressId,
+          text: `Agent ${closed.addressId} of project ${project} is finally closed.` };
+        if (Number(insert.run(value.id, value.runId, value.address, value.recipient, value.text).changes) > 0) staged.push(value);
+      }
+    }
+    return staged;
+  }
+
   const eventRepository: StateStore['eventRepository'] = {
     transaction: action => operation("eventTransaction", () => transaction(() => {
       let active = true;
@@ -374,10 +460,14 @@ export function openStateStore(path: string): StateStore {
           const intent: PendingIntent = { id: fact.key, runId: null, event: fact.event.kind, payload: { ...fact.event } };
           db.prepare("INSERT INTO pending_intents(id, run_id, payload) VALUES (?, ?, ?)").run(intent.id, null, JSON.stringify(intent));
         }),
-        deletePending: key => access(() => { db.prepare("DELETE FROM pending_intents WHERE id = ?").run(key); }),
-        applyReminderEvent: event => access(() => {
+        deletePending: key => access(() => {
+          const row = db.prepare("SELECT payload FROM pending_intents WHERE id = ?").get(key);
+          if (row) stageClosureNotices([JSON.parse(row.payload as string) as PendingIntent]);
+          db.prepare("DELETE FROM pending_intents WHERE id = ?").run(key);
+        }),
+        applyReminderEvent: (event, at) => access(() => {
           const service = new ReminderService({ repository: { transaction: withReminderTransaction },
-            now: () => new Date().toISOString(), nextId: () => { throw new Error("Event dispatch cannot create reminders"); },
+            now: () => at ?? new Date().toISOString(), nextId: () => { throw new Error("Event dispatch cannot create reminders"); },
             approvedEventKinds: [event.kind, 'reminder.activated', 'reminder.closed'] });
           service.applyEvent(event);
           return 'delivered' as const;
@@ -387,7 +477,86 @@ export function openStateStore(path: string): StateStore {
     })),
   };
 
+  const notice = (row: Record<string, unknown>): ClosureNotice => ({ id: row.id as string, runId: row.run_id as string,
+    address: row.address_id as string, recipient: row.recipient as string, text: row.text as string });
+  const claimOwner = (row: Record<string, unknown>): DeliveryClaimOwner => ({ token: row.token as string, pid: row.pid as number, processStart: row.process_start as string | null });
+  const takeClaim = (target: string, key: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): boolean => {
+    const held = db.prepare("SELECT delivery_key, token, pid, process_start FROM delivery_claims WHERE target = ?").get(target);
+    if (held && (held.token === owner.token || (held.delivery_key === key && isOwnerAlive(claimOwner(held))))) return false;
+    db.prepare(`INSERT INTO delivery_claims(target, delivery_key, token, pid, process_start, claimed_at) VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(target) DO UPDATE SET delivery_key = excluded.delivery_key, token = excluded.token, pid = excluded.pid,
+      process_start = excluded.process_start, claimed_at = excluded.claimed_at`).run(target, key, owner.token, owner.pid, owner.processStart, claimedAt);
+    return true;
+  };
+  const holds = (target: string, token: string, key?: string): boolean => {
+    const held = db.prepare("SELECT delivery_key, token FROM delivery_claims WHERE target = ?").get(target);
+    return !!held && held.token === token && (key === undefined || held.delivery_key === key);
+  };
+  const reminderDeliveries: StateStore['reminderDeliveries'] = {
+    get: reminderId => operation("getReminderDelivery", () => {
+      const row = db.prepare("SELECT delivery_key, receipt_id, delivered_at FROM reminder_deliveries WHERE reminder_id = ?").get(reminderId);
+      return row ? { reminderId, key: row.delivery_key as string, receiptId: row.receipt_id as string, deliveredAt: row.delivered_at as string } : undefined;
+    }),
+    mark: value => operation("markReminderDelivery", () => transaction(() => {
+      if (!db.prepare("SELECT 1 FROM reminders WHERE id = ?").get(value.reminderId)) return false;
+      db.prepare(`INSERT INTO reminder_deliveries(reminder_id, delivery_key, receipt_id, delivered_at) VALUES (?, ?, ?, ?)
+        ON CONFLICT(reminder_id) DO UPDATE SET delivery_key = excluded.delivery_key, receipt_id = excluded.receipt_id, delivered_at = excluded.delivered_at`).run(
+          value.reminderId, value.key, value.receiptId, value.deliveredAt);
+      return true;
+    })),
+    claim: (reminderId, owner, claimedAt, isOwnerAlive) => operation("claimReminderDelivery", () => transaction(() => {
+      const row = db.prepare("SELECT payload FROM reminders WHERE id = ?").get(reminderId);
+      if (!row) return undefined;
+      const reminder = JSON.parse(row.payload as string) as Reminder;
+      if (reminder.state !== 'active') return undefined;
+      const key = reminderDeliveryKey(reminder);
+      const mark = db.prepare("SELECT delivery_key FROM reminder_deliveries WHERE reminder_id = ?").get(reminderId);
+      if (mark?.delivery_key === key) return undefined;
+      return takeClaim(`reminder:${reminderId}`, key, owner, claimedAt, isOwnerAlive) ? { reminder, key } : undefined;
+    })),
+    confirm: (value, token) => operation("confirmReminderDelivery", () => transaction(() => {
+      const target = `reminder:${value.reminderId}`;
+      if (!holds(target, token, value.key)) return false;
+      db.prepare("DELETE FROM delivery_claims WHERE target = ?").run(target);
+      if (!db.prepare("SELECT 1 FROM reminders WHERE id = ?").get(value.reminderId)) return false;
+      db.prepare(`INSERT INTO reminder_deliveries(reminder_id, delivery_key, receipt_id, delivered_at) VALUES (?, ?, ?, ?)
+        ON CONFLICT(reminder_id) DO UPDATE SET delivery_key = excluded.delivery_key, receipt_id = excluded.receipt_id, delivered_at = excluded.delivered_at`).run(
+          value.reminderId, value.key, value.receiptId, value.deliveredAt);
+      return true;
+    })),
+    release: (reminderId, token) => operation("releaseReminderDelivery", () => {
+      db.prepare("DELETE FROM delivery_claims WHERE target = ? AND token = ?").run(`reminder:${reminderId}`, token);
+    }),
+  };
+  const closureNotices: StateStore['closureNotices'] = {
+    stage: () => operation("stageClosureNotices", () => transaction(() => {
+      db.prepare("DELETE FROM closure_notices WHERE delivered_at IS NOT NULL AND run_id NOT IN (SELECT run_id FROM sessions)").run();
+      return stageClosureNotices(db.prepare("SELECT payload FROM pending_intents").all().map(row => JSON.parse(row.payload as string) as PendingIntent));
+    })),
+    listUndelivered: () => operation("listClosureNotices", () => db.prepare("SELECT * FROM closure_notices WHERE delivered_at IS NULL ORDER BY rowid").all().map(notice)),
+    claim: (id, owner, claimedAt, isOwnerAlive) => operation("claimClosureNotice", () => transaction(() => {
+      const row = db.prepare("SELECT * FROM closure_notices WHERE id = ? AND delivered_at IS NULL").get(id);
+      if (!row) return undefined;
+      return takeClaim(`notice:${id}`, id, owner, claimedAt, isOwnerAlive) ? notice(row) : undefined;
+    })),
+    markDelivered: (id, receiptId, deliveredAt, token) => operation("markClosureNotice", () => transaction(() => {
+      const target = `notice:${id}`;
+      if (token !== undefined && !holds(target, token)) return false;
+      if (token !== undefined) db.prepare("DELETE FROM delivery_claims WHERE target = ?").run(target);
+      return Number(db.prepare("UPDATE closure_notices SET receipt_id = ?, delivered_at = ? WHERE id = ? AND delivered_at IS NULL").run(receiptId, deliveredAt, id).changes) > 0;
+    })),
+    release: (id, token) => operation("releaseClosureNotice", () => {
+      db.prepare("DELETE FROM delivery_claims WHERE target = ? AND token = ?").run(`notice:${id}`, token);
+    }),
+    discard: id => operation("discardClosureNotice", () => transaction(() => {
+      db.prepare("DELETE FROM closure_notices WHERE id = ? AND delivered_at IS NULL").run(id);
+      db.prepare("DELETE FROM delivery_claims WHERE target = ?").run(`notice:${id}`);
+    })),
+  };
+
   return {
+    reminderDeliveries,
+    closureNotices,
     eventRepository,
     getResourceWaitLastGrant() {
       return operation("getResourceWaitLastGrant", () => {

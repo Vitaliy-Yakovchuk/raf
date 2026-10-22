@@ -13,6 +13,7 @@ import type { ResourceReservation } from './resource-admission.ts';
 import { validateQuotaRunners, type CollectionResult } from './quota-collection.ts';
 import type { RunnerId } from './runner-protocols.ts';
 import { bindWorkspaceBoundaries, rafCommandFor, resolveGitWriteBoundaries, rafSubcommandsFor, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
+import { createReminderHandlers, settleCommandState, type CommandStatePorts, type ReminderCommand } from './reminder-cli.ts';
 
 export interface RuntimeContext {
   orchestratorRoot: string;
@@ -103,7 +104,10 @@ export interface AppRuntimeDependencies {
   nextRunIdentity(): { runId: string; tmuxSession: string };
   now(): number;
   additionalHandlers?: Record<string, Handler>;
+  commandState?(store: StateStore, services: () => Promise<RuntimeServices>): CommandStatePorts;
 }
+
+const reminderCommands: readonly ReminderCommand[] = ['reminder add', 'reminder list', 'reminder update', 'reminder activate', 'reminder close', 'reminder reassign', 'reminder close-all'];
 
 export interface AppRuntime {
   handlers: Record<string, Handler>;
@@ -166,6 +170,15 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
     return state;
   })();
   const service = () => services ??= (async () => dependencies.createServices(await store(), await config(), context))();
+  let commandPorts: Promise<CommandStatePorts> | undefined;
+  const statePorts = () => commandPorts ??= (async () => dependencies.commandState!(await store(), service))();
+  const settle = async () => {
+    if (!dependencies.commandState || !opening) return;
+    try {
+      await opening;
+      await settleCommandState(await statePorts());
+    } catch {}
+  };
   const snapshot = async () => {
     const current = await (await service()).routingSnapshot();
     const state = await store();
@@ -285,6 +298,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       return loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) }));
     },
   };
+  if (dependencies.commandState) for (const name of reminderCommands) builtins[name] = async params => createReminderHandlers(await statePorts())[name](params);
   for (const [name, enabled] of [['runner enable', true], ['runner disable', false]] as const) builtins[name] = async params => {
     const loaded = await config();
     if (!loaded.models.runners.some(runner => runner.id === params.runner)) throw fail('INVALID_VALUE', 'runner', 'Unknown runner', { received: params.runner });
@@ -310,6 +324,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       if (failureContext(error)) throw error;
       throw fail('HANDLER_FAILED', 'handler', describe(error), { sourceCode: (error as { code?: string })?.code ?? null });
     } finally {
+      await settle();
       if (opening && configuration) {
         try {
           const loaded = await configuration;

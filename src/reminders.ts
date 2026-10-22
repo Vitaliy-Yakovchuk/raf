@@ -63,6 +63,18 @@ export interface SessionEnd {
   crashed: boolean;
 }
 
+export class ReminderError extends Error {
+  readonly code: string;
+
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'ReminderError';
+    this.code = code;
+  }
+}
+
+const explicitOffsetTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/;
+
 export class ReminderService {
   private options: ReminderOptions;
   private approvedKinds: Set<string>;
@@ -72,36 +84,49 @@ export class ReminderService {
     this.approvedKinds = new Set(options.approvedEventKinds);
   }
 
-  private required(value: string, name: string): void {
-    if (typeof value !== 'string' || !value.trim()) throw new Error(`${name} is required`);
+  private required(value: string, name: string, code = 'MISSING_REQUIRED'): void {
+    if (typeof value !== 'string' || !value.trim()) throw new ReminderError(code, `${name} is required`);
   }
 
   private time(value: string): number {
-    this.required(value, 'at');
+    this.required(value, 'at', 'REMINDER_INVALID_TIME');
     const time = Date.parse(value);
-    if (!Number.isFinite(time)) throw new Error('Invalid reminder time');
+    if (!Number.isFinite(time)) throw new ReminderError('REMINDER_INVALID_TIME', 'Invalid reminder time');
+    return time;
+  }
+
+  private inputTime(value: string): number {
+    const time = this.time(value);
+    if (!explicitOffsetTime.test(value)) throw new ReminderError('REMINDER_INVALID_TIME', 'Invalid reminder time: ISO 8601 with an explicit offset or Z is required');
     return time;
   }
 
   private event(event: ReminderEvent): void {
-    if (!this.approvedKinds.has(event.kind)) throw new Error('Unknown event kind');
-    this.required(event.id, 'event id');
+    if (!this.approvedKinds.has(event.kind)) throw new ReminderError('INVALID_VALUE', 'Unknown event kind');
+    this.required(event.id, 'event id', 'EVENT_ID_INVALID');
   }
 
   private binding(binding: ReminderBinding): void {
     this.event(binding);
-    if (binding.action !== 'activate' && binding.action !== 'close') throw new Error('Invalid binding action');
+    if (binding.action !== 'activate' && binding.action !== 'close') throw new ReminderError('INVALID_VALUE', 'Invalid binding action');
   }
 
   private get(tx: ReminderTransaction, id: string): Reminder {
+    this.required(id, 'reminder id');
     const reminder = tx.get(id);
-    if (!reminder) throw new Error(`Unknown reminder: ${id}`);
+    if (!reminder) throw new ReminderError('REMINDER_NOT_FOUND', `Unknown reminder: ${id}`);
+    return reminder;
+  }
+
+  private open(tx: ReminderTransaction, id: string): Reminder {
+    const reminder = this.get(tx, id);
+    if (reminder.state === 'closed') throw new ReminderError('REMINDER_CLOSED', 'Reminder is closed');
     return reminder;
   }
 
   private activeSession(tx: ReminderTransaction, to: string): void {
     this.required(to, 'session address');
-    if (!tx.session(to)?.active) throw new Error(`Session is not active: ${to}`);
+    if (!tx.session(to)?.active) throw new ReminderError('SESSION_NOT_ACTIVE', `Session is not active: ${to}`);
   }
 
   private transition(tx: ReminderTransaction, reminder: Reminder, state: 'active' | 'closed', at: string, reason?: string): Reminder {
@@ -117,8 +142,8 @@ export class ReminderService {
   }
 
   add(input: AddReminder): Reminder {
-    this.time(input.at);
-    this.required(input.text, 'text');
+    this.inputTime(input.at);
+    this.required(input.text, 'text', 'INVALID_VALUE');
     if (input.binding) this.binding(input.binding);
     return this.options.repository.transaction(tx => {
       this.activeSession(tx, input.to);
@@ -126,7 +151,7 @@ export class ReminderService {
         text: input.text, at: input.at, binding: input.binding ? { ...input.binding } : null,
         state: 'pending', closedAt: null, closeReason: null };
       this.required(reminder.id, 'reminder id');
-      if (tx.get(reminder.id)) throw new Error('Duplicate reminder id');
+      if (tx.get(reminder.id)) throw new ReminderError('REMINDER_DUPLICATE', 'Duplicate reminder id');
       tx.save(reminder);
       const now = this.options.now();
       return this.time(input.at) <= this.time(now) ? this.transition(tx, reminder, 'active', now) : reminder;
@@ -138,12 +163,12 @@ export class ReminderService {
   }
 
   update(id: string, input: UpdateReminder): Reminder {
-    if (input.at !== undefined) this.time(input.at);
-    if (input.text !== undefined) this.required(input.text, 'text');
+    if (input.at === undefined && input.text === undefined && input.binding === undefined) throw new ReminderError('REMINDER_UPDATE_EMPTY', 'Update requires at, text or a complete event binding');
+    if (input.at !== undefined) this.inputTime(input.at);
+    if (input.text !== undefined) this.required(input.text, 'text', 'INVALID_VALUE');
     if (input.binding != null) this.binding(input.binding);
     return this.options.repository.transaction(tx => {
-      const reminder = this.get(tx, id);
-      if (reminder.state === 'closed') throw new Error('Reminder is closed');
+      const reminder = this.open(tx, id);
       const changed = { ...reminder,
         at: input.at === undefined ? reminder.at : input.at,
         text: input.text === undefined ? reminder.text : input.text,
@@ -155,7 +180,7 @@ export class ReminderService {
   }
 
   activate(id: string): Reminder {
-    return this.options.repository.transaction(tx => this.transition(tx, this.get(tx, id), 'active', this.options.now()));
+    return this.options.repository.transaction(tx => this.transition(tx, this.open(tx, id), 'active', this.options.now()));
   }
 
   activateDue(): Reminder[] {
@@ -184,8 +209,7 @@ export class ReminderService {
   reassign(id: string, to: string): Reminder {
     return this.options.repository.transaction(tx => {
       this.activeSession(tx, to);
-      const reminder = this.get(tx, id);
-      if (reminder.state === 'closed') throw new Error('Reminder is closed');
+      const reminder = this.open(tx, id);
       const changed = { ...reminder, assignedTo: to };
       tx.save(changed);
       return changed;

@@ -46,6 +46,12 @@ async function fixture(t: { after(action: () => void | Promise<void>): void }) {
   await writeJson(join(workspace, 'dist', 'catalog.json'), compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), projects));
   for (const [name, data] of [['raf.json', settings], ['models.json', models], ['raf-constants.json', constants], ['projects.json', projects], ['flow.json', flow]] as const) await writeJson(join(root, 'conf', name), data);
   await prepareProductionQaFixture(t, { root, home });
+  const main = join(root, projects.projects.raf.path);
+  await fs.rename(join(workspace, 'src'), join(main, 'src'));
+  await fs.rename(join(workspace, '.git'), join(main, '.git'));
+  await fs.writeFile(join(main, '.git', 'HEAD'), 'ref: refs/heads/main\n');
+  await fs.copyFile(join(workspace, 'package.json'), join(main, 'package.json'));
+  await fs.symlink(join(main, 'src'), join(workspace, 'src'));
   await fs.writeFile(join(bin, 'openspec'), `#!${process.execPath}\n${openspecScript}`, { mode: 0o700 });
   const parameters = { id: 'root-check', type: 'implement', project: 'raf', features: ['root-fixture'], phase: 'implement', complexity: 'decision', tasks: [`${change}:1.1`] };
   const argv = ['agent', 'run', '--id', parameters.id, '--type', parameters.type, '--project', parameters.project, '--features', ...parameters.features, '--phase', parameters.phase, '--complexity', parameters.complexity, '--tasks', ...parameters.tasks];

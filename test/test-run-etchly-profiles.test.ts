@@ -1,18 +1,19 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { planTestRun, validateTestRunConfig } from '../src/test-runs.ts';
-import type { TestId, TestRunConfig, TestRunContext, TestRunEnvironment, TestRunPlan, UnitTestPolicy } from '../src/test-runs.ts';
+import { planTestRun, runTestRun, validateTestRunConfig } from '../src/test-runs.ts';
+import type { TestId, TestRunConfig, TestRunContext, TestRunEnvironment, TestRunGroup, TestRunPlan, TestRunPorts, UnitTestPolicy } from '../src/test-runs.ts';
 import { runSandboxTestCommand } from '../src/sandbox-test-run.ts';
 import type { SandboxTestRunPorts } from '../src/sandbox-test-run.ts';
-import { auditEtchlyInventory, classifyVitestResult, planVitestInvocations, prepareEtchlyEnvironment } from '../src/test-run-etchly.ts';
-import type { EtchlyEnvironmentFacts, EtchlyInventoryFact, EtchlyTestRunProfile, VitestLifecycleEvent } from '../src/test-run-etchly.ts';
+import { auditEtchlyInventory, classifyVitestResult, planVitestInvocations, prepareEtchlyEnvironment, runVitestBatch } from '../src/test-run-etchly.ts';
+import type { EtchlyEnvironmentFacts, EtchlyInventoryFact, EtchlyTestRunProfile, VitestBatchApi, VitestLifecycleEvent } from '../src/test-run-etchly.ts';
 import type { DiagnosticLimits } from '../src/test-run-diagnostics.ts';
 import * as etchlyAdapter from '../src/test-run-etchly.ts';
 import { observeEtchlyInventory } from '../src/test-run-etchly-inventory.ts';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const workspace = '/work/etchly-develop';
 const group = 'reduce-etchly-codebase/product-defaults';
@@ -472,3 +473,113 @@ test('missing Etchly audited prerequisite is environment setup rather than stale
     });
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+for (const [label, profileId, preset, dom] of [
+  ['app explicit files', 'vitest-app', false, true],
+  ['product-defaults preset', 'vitest-app', true, true],
+  ['worker consent DOM', 'vitest-worker-consent-dom', false, true],
+  ['ui-core DOM', 'vitest-ui-core', false, true],
+  ['worker Node control', 'vitest-worker', false, false],
+] as const) {
+  test(`external trusted runner retains its filesystem identity for ${label}`, async () => {
+    const c = config(), profile = c.projects.etchly.profiles[profileId];
+    const file = profile.unitFiles[0], selectedGroup = 'reduce-etchly-codebase/external-runner';
+    c.projects.etchly.groups[selectedGroup] = { profileId, files: [file] };
+    const plan = planTestRun(request(preset ? undefined : [file], selectedGroup), c, context(), environment());
+    const batch = planVitestInvocations(plan, profile, policy, '/trusted/raf/src/test-run-vitest-reporter.ts', [])[0];
+    const argv = batch.argv.slice(batch.argv.indexOf('run'));
+    const runner = '/trusted/raf/src/test-run-vitest-runner.ts';
+    const projectConfig = { root: batch.cwd, environment: dom ? 'happy-dom' : 'node',
+      runner: `${batch.cwd}/file-budget-runner.ts`, hookTimeout: 1,
+      include: ['only-unit-files'], setupFiles: ['test-support/setup.ts'],
+      deps: { web: { transformCss: true } } };
+    const retained = structuredClone(projectConfig);
+    const calls: string[] = [];
+    const api: VitestBatchApi = {
+      parseCLI(args) {
+        assert.deepEqual(args, ['vitest', ...argv]);
+        assert.equal(args.includes('--runner'), false);
+        return { filter: [file.slice(profile.cwd.length + 1)], options: {
+          run: true, hookTimeout: policy.timeoutMs, project: profileId === 'vitest-app' ? ['app'] :
+            profileId === 'vitest-worker-consent-dom' ? ['worker-consent-dom'] :
+              profileId === 'vitest-worker' ? ['worker-unit'] : undefined,
+        } };
+      },
+      async createVitest(mode, options) {
+        assert.equal(mode, 'test');
+        assert.equal(options.watch, false);
+        return { projects: [{ config: projectConfig }], async start(files) {
+          assert.deepEqual(files, [file.slice(profile.cwd.length + 1)]);
+          const id = projectConfig.runner;
+          assert.equal(typeof id, 'string');
+          const loadedFile = id.startsWith('/@fs/') ? id.slice('/@fs'.length) :
+            id.startsWith('file:') ? fileURLToPath(id) : dom ? `${projectConfig.root}${id}` : id;
+          assert.equal(loadedFile, runner, 'DOM URL resolution must reach the external trusted runner, not a path under the Etchly root');
+          assert.equal(projectConfig.hookTimeout, policy.timeoutMs);
+          assert.equal(projectConfig.root, retained.root);
+          assert.equal(projectConfig.environment, retained.environment);
+          assert.deepEqual(projectConfig.include, retained.include);
+          assert.deepEqual(projectConfig.setupFiles, retained.setupFiles);
+          assert.equal(projectConfig.deps.web.transformCss, retained.deps.web.transformCss);
+          calls.push('start');
+        }, async close() { calls.push('close'); } };
+      },
+    };
+    await runVitestBatch(api, argv, runner);
+    assert.deepEqual(calls, ['start', 'close']);
+    assert.equal(batch.environment.HOME, '/qa/home');
+    assert.deepEqual(plan.selection.files, [file]);
+    assert.ok(batch.argv.some(arg => arg.endsWith('scripts/shared-library-runtime.mjs')));
+  });
+}
+
+for (const missing of ['runtimeAvailable', 'dependenciesAvailable', 'resultAdapterAvailable'] as const) {
+  test(`full explicit Etchly inventory is refused before missing ${missing}`, () => {
+    const c = config(), env = environment();
+    const files = Object.values(c.projects.etchly.profiles).flatMap(profile => profile.unitFiles);
+    c.projects.etchly.groups[group].files = files;
+    env[missing] = false;
+    assert.throws(() => planTestRun(request(files), c, context(), env), (error: any) => {
+      assert.equal(error.code, 'UNSAFE_SELECTION');
+      assert.match(error.message, /full|entire|suite/i);
+      return true;
+    });
+  });
+}
+
+for (const fullSuite of [true, false]) {
+  test(`${fullSuite ? 'full-suite-explicit refuses before' : 'valid subset retains'} Etchly browser-cache preflight failure`, async () => {
+    const c = config();
+    const files = fullSuite ? Object.values(c.projects.etchly.profiles).flatMap(profile => profile.unitFiles) : [product];
+    c.projects.etchly.groups[group].files = files;
+    const calls = { preflight: 0, spawn: 0, temporary: 0 };
+    let stored: TestRunGroup | null = null;
+    const ports: TestRunPorts = {
+      state: { async transaction(operation) {
+        return operation({ get: () => stored, list: () => stored ? [stored] : [],
+          put: value => { stored = structuredClone(value); }, delete: () => { stored = null; } });
+      } },
+      clock: { now: () => Date.parse('2026-10-23T00:00:00Z'), schedule: () => () => {} },
+      newRunId: () => 'etchly-selection-priority',
+      async preflight() {
+        calls.preflight++;
+        throw Object.assign(new Error('Etchly setup: browser cache; repair environment without install or branch changes'), { code: 'ENVIRONMENT_INVALID' });
+      },
+      async prepareTemporary() { calls.temporary++; throw new Error('must not allocate run tmp'); },
+      async spawn() { calls.spawn++; throw new Error('must not spawn a runner'); },
+      subscribeInterruption: () => () => {},
+      async reconcile() { return { alive: false, deadlineReached: false, cleanup: { complete: true, remainingPids: [] } }; },
+    };
+    const result = await runTestRun(request(files), c, policy, context(), ports);
+    assert.equal(result.outcome, fullSuite ? 'refused' : 'setup-failed');
+    assert.equal(result.errorCode, fullSuite ? 'UNSAFE_SELECTION' : 'ENVIRONMENT_INVALID');
+    assert.deepEqual(result.failureKinds, [fullSuite ? 'refusal' : 'setup']);
+    assert.deepEqual(calls, { preflight: fullSuite ? 0 : 1, spawn: 0, temporary: 0 });
+    assert.equal(result.command, null);
+    assert.equal(result.timedOut, false);
+    assert.equal(result.timeoutCount, 0);
+    assert.deepEqual(result.knownRed, []);
+    assert.deepEqual(result.passed, []);
+    assert.deepEqual(result.cleanup, { complete: true, remainingPids: [] });
+  });
+}

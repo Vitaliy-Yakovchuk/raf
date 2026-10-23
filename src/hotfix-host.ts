@@ -42,16 +42,49 @@ export async function mainRoute(host: HotfixHost): Promise<{ cwd: string; reposi
 }
 export async function validateWorkspace(host: HotfixHost, workspace: HotfixWorkspace): Promise<Awaited<ReturnType<typeof mainRoute>>> {
   const route = await mainRoute(host);
-  const owner = await json(workspace.ownershipPath);
-  if (JSON.stringify(owner) !== JSON.stringify(workspace) || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.repositoryIdentity !== route.repositoryIdentity || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId)) throw new Error('Hotfix ownership or repository identity mismatch');
+  if (workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.repositoryIdentity !== route.repositoryIdentity || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId) || workspace.runId === '..') throw new Error('BRANCH_MISMATCH: hotfix repository identity mismatch');
   const expected = join(host.orchestratorRoot, '.raf-hotfix', 'runs', workspace.runId);
-  if (workspace.ownershipPath !== join(expected, 'ownership.json') || workspace.cwd !== join(expected, 'raf-main') || await fs.realpath(workspace.cwd) !== workspace.cwd) throw new Error('Hotfix path ownership mismatch');
+  const configured = await hotfixRoute(host);
+  if (workspace.ownershipPath !== join(expected, 'ownership.json') || workspace.cwd !== configured.cwd || await fs.realpath(workspace.cwd) !== workspace.cwd) throw new Error('BRANCH_MISMATCH: hotfix path identity mismatch');
   if (await git(workspace.cwd, 'rev-parse', '--show-toplevel') !== workspace.cwd || await fs.realpath(await git(workspace.cwd, 'rev-parse', '--path-format=absolute', '--git-dir')) !== workspace.gitDirectory || await fs.realpath(await git(workspace.cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir')) !== workspace.commonDirectory || workspace.commonDirectory !== route.repositoryIdentity) throw new Error('Hotfix worktree registration mismatch');
-  if (await git(workspace.cwd, 'symbolic-ref', '-q', 'HEAD').then(() => true, () => false)) throw new Error('Detached hotfix HEAD required');
+  if (await git(workspace.cwd, 'symbolic-ref', '-q', 'HEAD') !== 'refs/heads/hotfix') throw new Error('BRANCH_MISMATCH: hotfix branch required');
   const records = await git(route.cwd, 'worktree', 'list', '--porcelain');
-  if (!records.split('\n\n').some(record => record.startsWith('worktree ' + workspace.cwd + '\n') && record.includes('\ndetached'))) throw new Error('Lost hotfix worktree registration');
+  if (!records.split('\n\n').some(record => record.startsWith('worktree ' + workspace.cwd + '\n') && record.includes('\nbranch refs/heads/hotfix'))) throw new Error('BRANCH_MISMATCH: lost hotfix worktree registration');
   await git(workspace.cwd, 'merge-base', '--is-ancestor', workspace.baseCommit, 'HEAD');
   return route;
+}
+export async function hotfixRoute(host: HotfixHost): Promise<{ cwd: string; gitDirectory: string }> {
+  const route = await mainRoute(host);
+  const config = await json(join(host.orchestratorRoot, 'conf/projects.json'));
+  const path = config.projects?.raf?.branchPaths?.hotfix;
+  if (typeof path !== 'string' || !path.trim()) throw new Error('UNKNOWN_BRANCH: conf/projects.json#/projects/raf/branchPaths/hotfix');
+  const cwd = resolve(host.orchestratorRoot, path);
+  let canonical: string;
+  try { canonical = await fs.realpath(cwd); if (!(await fs.stat(cwd)).isDirectory()) throw new Error('not a directory'); }
+  catch (error) { throw new Error('WORKSPACE_UNAVAILABLE: ' + cwd + ': ' + String(error)); }
+  if (canonical !== cwd || await git(cwd, 'rev-parse', '--show-toplevel') !== cwd || await git(cwd, 'symbolic-ref', '-q', 'HEAD').catch(() => '') !== 'refs/heads/hotfix' || await fs.realpath(await git(cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir')) !== route.repositoryIdentity) throw new Error('BRANCH_MISMATCH: registered hotfix Git identity required');
+  const gitDirectory = await fs.realpath(await git(cwd, 'rev-parse', '--path-format=absolute', '--git-dir'));
+  return { cwd, gitDirectory };
+}
+export async function withHotfixWriter<T>(host: HotfixHost, use: () => Promise<T>): Promise<T> {
+  const route = await hotfixRoute(host);
+  const lock = join(route.gitDirectory, 'raf-writer.lock');
+  const deadline = Date.now() + await timeoutMs(host);
+  for (;;) {
+    try { await fs.mkdir(lock); break; }
+    catch (error: any) {
+      if (error.code !== 'EEXIST') throw error;
+      if (Date.now() >= deadline) throw new Error('Hotfix writer lock timeout; coordinate writers with main');
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+  }
+  try {
+    while (await exists(join(route.gitDirectory, 'index.lock'))) {
+      if (Date.now() >= deadline) throw new Error('Hotfix index.lock timeout; existing lock retained');
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    return await use();
+  } finally { await fs.rmdir(lock); }
 }
 export async function inventory(root: string, omit = new Set(['.git', 'node_modules'])): Promise<{ path: string; sha256: string; mode: number }[]> {
   const files: { path: string; sha256: string; mode: number }[] = [];

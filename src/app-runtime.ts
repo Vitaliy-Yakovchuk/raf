@@ -223,7 +223,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const route = await api.route({ root: context.orchestratorRoot, project: params.project, branch: task.branch, ...(hotfix ? { hotfixRunId: identity.runId } : {}) });
       if (!route.ok) throw fail(route.error.code, 'workspace', route.error.message);
       const workspaceBoundaries = bindWorkspaceBoundaries(task, route.cwd);
-      const gitBoundaries = await resolveGitWriteBoundaries(route.cwd, context.orchestratorRoot, hotfix || !task.workspaceWritable ? task.writeBoundaries : undefined);
+      const gitBoundaries = hotfix ? [] : await resolveGitWriteBoundaries(route.cwd, context.orchestratorRoot, !task.workspaceWritable ? task.writeBoundaries : undefined);
       const commitOwnWork = task.workspaceWritable || gitBoundaries.length > 0;
       const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
       const selection = api.selectModel(loaded.models, await snapshot(), { complexity: params.complexity, role: params.type });
@@ -231,7 +231,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const launch: RuntimeLaunch = { ...identity, addressId: params.id,
         ...(notify ? { notify } : {}),
         activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
-        assignment, selection, statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix } : {}) } } };
+        assignment, selection, statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
       let prepared: PreparedRuntimeReport | undefined;
       let reserved = false;
       let startAttempted = false;
@@ -243,9 +243,9 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
           features: params.features, phase: params.phase, outcome: task.outcome, writeBoundaries,
           sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema,
-          ...(commitOwnWork ? { commitOwnWork: true, commitPaths: workspaceBoundaries, commitRepositories: task.workspaceWritable ? [route.cwd, context.orchestratorRoot] : [context.orchestratorRoot], workspaceWritable: task.workspaceWritable } : {}),
+          ...(commitOwnWork && !hotfix ? { commitOwnWork: true, commitPaths: workspaceBoundaries, commitRepositories: task.workspaceWritable ? [route.cwd, context.orchestratorRoot] : [context.orchestratorRoot], workspaceWritable: task.workspaceWritable } : {}),
           rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type) ? { rafSubcommands: rafSubcommandsFor(params.type)! } : {}) });
-        if (hotfix) brief += `\nHotfix raf: фізичний кандидат ${route.cwd}; логічна база й ціль main, baseCommit ${route.hotfix?.baseCommit}. Коміт кандидата не активує main; живий main і push недоступні. Коміт коду виконай довіреним портом: node ${join(context.tmpRoot, launch.runId, 'hotfix-commit.mjs')} --message <повідомлення> <власні відносні шляхи>.\n`;
+        if (hotfix) brief += `\nHotfix raf: постійне спільне дерево ${route.cwd}, гілка hotfix, спільний індекс і HEAD; main включений до baseCommit ${route.hotfix?.baseCommit}. Кожен виконавець комітить лише власні явні шляхи; спільні файли та staged hunks узгоджуй через agent message за projects/orchestrator/parallel-development. Чужий index.lock очікуй, не видаляй. Коміт не активує main; push і активацію виконує лише main за окремими повноваженнями. Код hotfix запускай лише з ізольованим QA HOME. Коміт коду виконай довіреним портом: node ${join(context.tmpRoot, launch.runId, 'hotfix-commit.mjs')} --message <повідомлення> <власні відносні шляхи>. Cleanup прибирає лише власний запуск, спільне raf-hotfix зберігається.\n`;
         stage = 'reservation';
         const admission = await api.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
         if (!admission.admitted) throw fail('RESOURCE_UNAVAILABLE', stage, admission.reason);

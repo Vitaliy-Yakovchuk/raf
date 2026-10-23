@@ -38,11 +38,5 @@ export function hotfixModuleOrigin(orchestratorRoot: string, productionRoot: str
       return root;
     }
   } catch {}
-  if (!qa) return undefined;
-  try {
-    const owner = json(join(dirname(root), 'ownership.json'));
-    if (owner.cwd !== root || owner.runId !== dirname(root).split('/').at(-1) || owner.repositoryIdentity !== realpathSync(common) || owner.ownershipPath !== join(dirname(root), 'ownership.json') || owner.project !== 'raf' || owner.targetBranch !== 'main' || !root.startsWith(join(orchestratorRoot, '.raf-hotfix', 'runs') + '/')) return undefined;
-    if (git(root, 'rev-parse', '--show-toplevel') !== root || git(root, 'rev-parse', '--path-format=absolute', '--git-dir') !== owner.gitDirectory || git(root, 'rev-parse', '--path-format=absolute', '--git-common-dir') !== owner.commonDirectory) return undefined;
-    return root;
-  } catch { return undefined; }
+  return undefined;
 }

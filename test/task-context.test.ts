@@ -39,7 +39,7 @@ const descriptions = {
 
 const changes: Record<string, { tasksMd: string; items: { id: string; description: string }[] }> = {
   'change-a': {
-    tasksMd: `## Джерела за етапом\n\n- 1.1: openspec/specs/core/demo/spec.md — демо-вимога для 1.1.\n- 1.1: openspec/changes/change-a/design.md — контракт для 1.1.\n- 1.1: openspec/changes/change-a/extra-design.md — залежність для 1.1.\n- 1.1: openspec/changes/change-a/specs/projects/raf/change-a/spec.md — delta для 1.1.\n- 1.2: conf/stage-only-for-a12.json — джерело лише для 1.2.\n\n## 1. Робота\n\n- [ ] 1.1 ${descriptions.a11}\n- [ ] 1.2 ${descriptions.a12}\n`,
+    tasksMd: `## Джерела за етапом\n\n- 1.1: openspec/specs/core/demo/spec.md — демо-вимога для 1.1; openspec/changes/change-a/design.md — контракт для 1.1; openspec/changes/change-a/extra-design.md — залежність для 1.1; openspec/changes/change-a/specs/projects/raf/change-a/spec.md — delta для 1.1.\n- 1.2: conf/stage-only-for-a12.json — джерело лише для 1.2.\n\n## 1. Робота\n\n- [ ] 1.1 ${descriptions.a11}\n- [ ] 1.2 ${descriptions.a12}\n`,
     items: [{ id: '1.1', description: descriptions.a11 }, { id: '1.2', description: descriptions.a12 }],
   },
   'change-b': {

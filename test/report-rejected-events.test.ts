@@ -595,7 +595,7 @@ test('[Z.373 reminders] add/update activate/close use exact agent address indepe
   recordReportRejection(f.store, f.runId, f.snapshot());
   const dispatched = f.registry().dispatch();
   assert.equal(dispatched.delivered.length, 1);
-  assert.deepEqual(f.facts(), []);
+  assert.deepEqual(f.facts().filter(value => value.kind === eventKind), [], 'Dispatch must consume the rejection fact even when reminder transitions enqueue their own events');
   const all = service.list();
   assert.equal(all.find(value => value.id === activate.id)?.state, 'active');
   assert.equal(all.find(value => value.id === updated.id)?.state, 'active');
@@ -613,18 +613,23 @@ test('[Z.373 reminders] add/update activate/close use exact agent address indepe
 test('[Z.373 stale] accepted results and old run/path callbacks cannot reopen work or rebind an address', async t => {
   const f = await durableFixture(t);
   f.put(value => ({ ...value, result: { status: 'succeeded', response: 'accepted', proof: {} }, reportAcceptance: { runId: f.runId, status: 'succeeded', event: 'agent.succeeded' } }));
+  const acceptedNotices = f.store.resultNotices.list();
+  assert.ok(acceptedNotices.every(value => !value.text.includes(`raf event: ${eventKind}`)));
   recordReportRejection(f.store, f.runId, f.snapshot());
-  assert.deepEqual(f.store.resultNotices.list(), []);
+  assert.deepEqual(f.store.resultNotices.list(), acceptedNotices, 'An accepted result keeps its existing result notice without adding a rejection');
   assert.deepEqual(f.facts(), []);
   assert.equal(f.session()?.result?.status, 'succeeded');
   f.put(value => ({ ...value, state: 'finished', finishedAt: at }));
   const replacement = { ...f.worker, runId: randomUUID(), launchedBy: f.notify };
   f.store.sessionRepository.transaction(tx => tx.putSession(replacement));
+  const replacementNotices = f.store.resultNotices.list();
   recordReportRejection(f.store, f.runId, f.snapshot());
-  assert.deepEqual(f.store.resultNotices.list(), []);
+  assert.deepEqual(f.store.resultNotices.list(), replacementNotices, 'An old run callback must not add or redirect notices');
+  assert.deepEqual(f.facts(), []);
   assert.equal(f.store.sessionRepository.transaction(tx => tx.getSession(replacement.runId))?.result, undefined);
   recordReportRejection(f.store, replacement.runId, { ...f.snapshot(), reportPath: '/foreign/worker.json' });
-  assert.deepEqual(f.store.resultNotices.list(), [], 'A callback with the wrong trusted path is not a report for this launch');
+  assert.deepEqual(f.store.resultNotices.list(), replacementNotices, 'A callback with the wrong trusted path is not a report for this launch');
+  assert.deepEqual(f.facts(), []);
 });
 
 test('[Z.373 lifecycle] same address and bytes with a new run has its own rejection identity', async t => {
@@ -732,7 +737,7 @@ for (const explicitNotify of [false, true]) {
     assert.equal(rejected.result, undefined);
     assert.equal(rejected.reportAcceptance, undefined);
     assert.equal(rejected.state, 'running');
-    assert.ok(f.inspect().claims.some(value => value.runId === worker.runId));
+    assert.ok(f.inspect().claims.some(value => value.lease.owner.runId === worker.runId));
     const databasePath = join(f.tmpRoot, '..', 'state.sqlite');
     const notices = () => { const store = openStateStore(databasePath); try { return store.resultNotices.list().filter(value => value.runId === worker.runId); } finally { store.close(); } };
     await f.command(['agent', 'ps']);

@@ -56,31 +56,56 @@ export interface AgentReportWatcher {
   dispose(): Promise<void>;
 }
 export type PendingAgentReportPorts = Pick<AgentReportPorts, 'now' | 'verifyAssignmentCompletion' | 'diagnostic' | 'confirmTaskCheckboxes' | keyof ReportedCommitAcceptancePorts> & { readonly fs: Pick<AgentReportPorts['fs'], 'readText' | 'readBytes'> };
-export function validAgentReport(value: unknown, assignment: AssignmentSnapshot, context?: ReportedCommitRequestContext): value is AgentReport {
+function agentReportIssues(value: unknown, assignment: AssignmentSnapshot, context?: ReportedCommitRequestContext): string[] {
   const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
   const status = (value: unknown) => value === 'succeeded' || value === 'failed';
-  const valid = (value: unknown): value is AgentReport => {
-    if (!record(value) || !status(value.status) || typeof value.answer !== 'string' || !Array.isArray(value.changes) || value.changes.length !== assignment.changes.length) return false;
-    if (value.context !== undefined && !validStartupContextAssessment(value.context)) return false;
-    if (context?.reportedCommits && !validReportedCommits(value.commits)) return false;
-    const changes = new Set<string>();
-    for (const change of value.changes) {
-      if (!record(change) || typeof change.id !== 'string' || changes.has(change.id) || !Array.isArray(change.items) || (change.archive !== undefined && (typeof change.archive !== 'string' || !change.archive))) return false;
-      changes.add(change.id);
-      const assigned = assignment.changes.find(row => row.id === change.id);
-      if (!assigned || assigned.items.length !== change.items.length) return false;
-      const items = new Set<string>();
-      for (const item of change.items) {
-        if (!record(item) || typeof item.id !== 'string' || items.has(item.id) || !assigned.items.some(row => row.id === item.id) || !status(item.status)) return false;
-        if (item.reason !== undefined && typeof item.reason !== 'string') return false;
-        if (item.status === 'failed' && (typeof item.reason !== 'string' || !item.reason.trim())) return false;
-        if (value.status === 'succeeded' && item.status !== 'succeeded') return false;
-        items.add(item.id);
-      }
+  const issues: string[] = [];
+  const issue = (field: string, reason: string) => { issues.push(`${field}: ${reason}`); };
+  if (!record(value)) return ['report: expected an object'];
+  if (!status(value.status)) issue('status', 'expected succeeded or failed');
+  if (typeof value.answer !== 'string') issue('answer', 'expected a string');
+  if (value.context !== undefined && !validStartupContextAssessment(value.context)) issue('context', 'invalid startup context assessment');
+  if (context?.reportedCommits && !validReportedCommits(value.commits)) issue('commits', 'expected valid reported commits with repository and full lowercase sha');
+  const expectedChanges = assignment.changes.map(change => change.id);
+  if (!Array.isArray(value.changes)) {
+    issue('changes', `expected an array for assigned changes ${JSON.stringify(expectedChanges)}`);
+    return issues;
+  }
+  if (value.changes.length !== expectedChanges.length) issue('changes', `expected ${expectedChanges.length} assigned changes, received ${value.changes.length}`);
+  const changes = new Set<string>();
+  for (const [changeIndex, change] of value.changes.entries()) {
+    const field = `changes[${changeIndex}]`;
+    if (!record(change)) { issue(field, 'expected a change object'); continue; }
+    if (typeof change.id !== 'string') { issue(`${field}.id`, 'expected a string'); continue; }
+    if (changes.has(change.id)) issue(`${field}.id`, `duplicate change ${change.id}`);
+    changes.add(change.id);
+    const assigned = assignment.changes.find(row => row.id === change.id);
+    if (!assigned) issue(`${field}.id`, `unassigned change ${change.id}; expected ${JSON.stringify(expectedChanges)}`);
+    if (change.archive !== undefined && (typeof change.archive !== 'string' || !change.archive)) issue(`${field}.archive`, `${change.id}: expected a nonempty archive string`);
+    if (!Array.isArray(change.items)) { issue(`${field}.items`, `${change.id}: expected an array`); continue; }
+    const expectedItems = assigned?.items.map(item => `${change.id}:${item.id}`) ?? [];
+    if (assigned && assigned.items.length !== change.items.length) issue(`${field}.items`, `expected ${assigned.items.length} items ${JSON.stringify(expectedItems)}, received ${change.items.length}`);
+    const items = new Set<string>();
+    for (const [itemIndex, item] of change.items.entries()) {
+      const itemField = `${field}.items[${itemIndex}]`;
+      if (!record(item)) { issue(itemField, `${change.id}: expected an item object`); continue; }
+      if (typeof item.id !== 'string') { issue(`${itemField}.id`, `${change.id}: expected a string`); continue; }
+      const identity = `${change.id}:${item.id}`;
+      if (items.has(item.id)) issue(`${itemField}.id`, `duplicate item ${identity}`);
+      items.add(item.id);
+      if (!assigned?.items.some(row => row.id === item.id)) issue(`${itemField}.id`, `unassigned item ${identity}; expected assigned items ${JSON.stringify(expectedItems)}`);
+      if (!status(item.status)) issue(`${itemField}.status`, `${identity}: expected succeeded or failed`);
+      if (item.reason !== undefined && typeof item.reason !== 'string') issue(`${itemField}.reason`, `${identity}: expected a string`);
+      if (item.status === 'failed' && (typeof item.reason !== 'string' || !item.reason.trim())) issue(`${itemField}.reason`, `${identity}: failed item requires a nonempty reason`);
+      if (value.status === 'succeeded' && item.status !== 'succeeded') issue(`${itemField}.status`, `${identity}: succeeded report requires succeeded items`);
     }
-    return true;
-  };
-  return valid(value);
+    for (const item of assigned?.items ?? []) if (!items.has(item.id)) issue(`${field}.items`, `missing assigned item ${change.id}:${item.id}`);
+  }
+  for (const change of assignment.changes) if (!changes.has(change.id)) issue('changes', `missing assigned change ${change.id} with items ${change.items.map(item => `${change.id}:${item.id}`).join(', ')}`);
+  return issues;
+}
+export function validAgentReport(value: unknown, assignment: AssignmentSnapshot, context?: ReportedCommitRequestContext): value is AgentReport {
+  return agentReportIssues(value, assignment, context).length === 0;
 }
 const acceptanceQueues = new Map<string, Promise<unknown>>();
 const rejectedResults = new WeakMap<AgentReportResult, Set<string>>();
@@ -162,7 +187,7 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
   let report: unknown;
   try { report = JSON.parse(content); }
   catch { await diagnostic('Incomplete or invalid report JSON'); return null; }
-  if (!validAgentReport(report, request.assignment, request)) { await diagnostic('Invalid report or assignment mismatch'); return null; }
+  if (!validAgentReport(report, request.assignment, request)) { await diagnostic(agentReportIssues(report, request.assignment, request).join('\n')); return null; }
   const archives = Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]));
   let verifiedSource: AssignmentVerification | undefined;
   if (request.reportedCommits || ports.verifyAssignmentSourceIdentity) {

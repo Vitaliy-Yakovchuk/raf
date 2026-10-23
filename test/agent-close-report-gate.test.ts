@@ -71,7 +71,7 @@ function diagnostic(outcome: Awaited<ReturnType<AgentRunFixture['command']>>) {
 
 async function liveFixture(t: TestContext, options: { tasks?: number; commands?: string[] } = {}) {
   const protocol = (await json(join(conf, 'raf.json'))).runnerProtocols.find((entry: any) => entry.runner === 'codex');
-  const f = await agentRunFixture(t, 'live', protocol.timeouts, 'codex', { tasks: 2, ...options });
+  const f = await agentRunFixture(t, 'live', protocol.timeouts, 'codex', { tasks: 2, productionQa: true, ...options });
   const outcome = await f.run('gate-worker');
   assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));
   const session = await until(
@@ -570,6 +570,14 @@ function controlFixture(f: PreparationFixture) {
   const interrupted: string[] = [];
   const delivered: string[] = [];
   const events: string[] = [];
+  const finalize: AgentControlDependencies['coordinator']['finalize'] = async session => {
+    finalized.push(session.runId);
+    f.store.sessionRepository.transaction(tx => {
+      const current = tx.getSession(session.runId)!;
+      tx.putSession({ ...current, revision: current.revision + 1, state: 'finished' });
+    });
+    return f.read(session.runId)!;
+  };
   const dependencies: AgentControlDependencies = {
     repository: f.store.sessionRepository,
     coordinator: {
@@ -583,7 +591,7 @@ function controlFixture(f: PreparationFixture) {
         return f.read(session.runId)!;
       },
       updateActivity: async session => session,
-      finalize: async session => { finalized.push(session.runId); return session; },
+      finalize,
       publish: async values => { events.push(...values.map(value => `${value.kind}:${value.session.runId}`)); },
     },
     scanner: { inspect: async identity => ({ state: closed.includes(identity.runnerSessionId) ? 'exited' : 'alive', observedAt: instant, identity, exitCode: 0, evidence: 'fixture process scanner' } as any) },
@@ -598,7 +606,7 @@ function controlFixture(f: PreparationFixture) {
   };
   const service = new AgentControlService(dependencies);
   const close = (options?: AgentCloseOptions) => (service.close as (id: string, options?: AgentCloseOptions) => Promise<any>).call(service, f.session.addressId, options);
-  return { service, close, dependencies, closed, finalized, interrupted, delivered, events };
+  return { service, close, dependencies, closed, finalized, finalize, interrupted, delivered, events };
 }
 
 test('the reason and failed event are durable before the first stop signal, with no fabricated report', async t => {
@@ -739,7 +747,7 @@ for (const stage of ['transport', 'finalize'] as const) {
     assert.equal(events.length, 1);
     assert.equal(f.read()!.finishedAt, undefined);
     control.dependencies.transport.close = async identity => { control.closed.push(identity.runnerSessionId); };
-    control.dependencies.coordinator.finalize = async session => { control.finalized.push(session.runId); return session; };
+    control.dependencies.coordinator.finalize = control.finalize;
     await withinFixtureWait(control.close({ force: true, reason: 'Retry cannot replace the first reason' }), `${stage} retry finished`);
     assert.deepEqual((f.read()!.result as any).forcedClose, { reason: forced.reason });
     assert.equal(f.pending().filter(event => event.event === statusEvent('failed')).length, 1);

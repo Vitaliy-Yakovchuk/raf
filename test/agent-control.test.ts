@@ -35,6 +35,7 @@ function fixture() {
       putReservation: () => {}, deleteReservation: () => {}, putPending: () => {}, deletePending: () => {}, listPending: () => [], applyEffects: () => {},
     }); } },
     coordinator: {
+      async prepareClose(row) { return row; },
       async observe(row, observation) {
         observed.push(observation);
         const next = { ...row, observation, state: observation.state === 'exited' ? 'exited' as const : row.state };

@@ -42,7 +42,7 @@ test('[Z.125] delivery failure survives directory cleanup in the durable session
   assert.equal(JSON.stringify(f.inspect().sessions[0]), before);
 });
 
-test('[launch-failure-cleanup] agent close without report exits 0 after confirmed closure and reports failed result', async t => {
+test('[launch-failure-cleanup] explicit forced close without report exits 0 after confirmed closure and reports failed result with reason', async t => {
   const f = await fixture(t, 'close', failureBudget, 'codex', { productionQa: true });
   const launched = await f.run('close-agent');
   assert.equal(launched.exitCode, 0, JSON.stringify(launched));
@@ -51,7 +51,8 @@ test('[launch-failure-cleanup] agent close without report exits 0 after confirme
   const watcher = { id: 'watch-close-agent', createdFor: 'main', assignedTo: 'main', text: 'close-agent failed', at: '2099-01-01T00:00:00.000Z',
     binding: { kind: 'agent.failed', id: 'close-agent', action: 'activate' as const }, state: 'pending' as const, closedAt: null, closeReason: null };
   f.seedReminder(watcher);
-  await fs.writeFile(join(f.control, 'close-agent.close'), 'close');
+  const reason = 'Verify cleanup after explicitly forcing the reportless fixture to close';
+  await fs.writeFile(join(f.control, 'close-agent.close'), JSON.stringify(['--force', '--reason', reason]));
   const code = await until(async () => await exists(join(f.control, 'close-agent.close.code')) ? (await fs.readFile(join(f.control, 'close-agent.close.code'), 'utf8')).trim() : null, value => value !== null, 'agent close finished');
   const printed = await fs.readFile(join(f.control, 'close-agent.close.out'), 'utf8');
   assert.equal(code, '0', printed);
@@ -59,11 +60,13 @@ test('[launch-failure-cleanup] agent close without report exits 0 after confirme
   const output = JSON.parse(result.stdout);
   assert.equal(output.closed, true, printed);
   assert.equal(output.result, 'failed', printed);
+  assert.deepEqual(output.forcedClose, { reason });
   assert.deepEqual(output.unfinished, []);
   const snapshot = f.inspect();
   const session = snapshot.sessions.find(row => row.runId === runId)!;
   assert.equal(session.state, 'finished');
   assert.equal(session.result?.status, 'failed');
+  assert.deepEqual(session.result?.forcedClose, { reason });
   assert.deepEqual(snapshot.claims, []);
   assert.deepEqual(snapshot.admission, []);
   assert.equal(snapshot.reminders.find(row => row.id === watcher.id)?.state, 'active', JSON.stringify(snapshot.reminders));

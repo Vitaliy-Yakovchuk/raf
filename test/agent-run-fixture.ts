@@ -101,11 +101,13 @@ if (mode === 'readiness-unknown') {
   setInterval(() => {
     if (!assignment || assignment === true) return;
     const id = assignment.agent_id;
-    try { readFileSync(c.control + '/' + id + '.close'); } catch { return; }
+    let closeRequest;
+    try { closeRequest = readFileSync(c.control + '/' + id + '.close', 'utf8').trim(); } catch { return; }
     if (assignment.closing) return;
     assignment.closing = true;
+    const closeOptions = closeRequest === 'close' ? [] : JSON.parse(closeRequest);
     const out = openSync(c.control + '/' + id + '.close.out', 'w'), err = openSync(c.control + '/' + id + '.close.err', 'w');
-    const closer = spawn('/bin/sh', ['-c', '"$0" "$1" "$2" "$3"; echo $? > "$4.tmp" && mv "$4.tmp" "$4"', process.execPath, c.commandPath, process.env.RAF_AGENT_RUN_FIXTURE, JSON.stringify(['agent', 'close', '--id', id]), c.control + '/' + id + '.close.code'], { detached: true, stdio: ['ignore', out, err], env: process.env });
+    const closer = spawn('/bin/sh', ['-c', '"$0" "$1" "$2" "$3"; echo $? > "$4.tmp" && mv "$4.tmp" "$4"', process.execPath, c.commandPath, process.env.RAF_AGENT_RUN_FIXTURE, JSON.stringify(['agent', 'close', '--id', id, ...closeOptions]), c.control + '/' + id + '.close.code'], { detached: true, stdio: ['ignore', out, err], env: process.env });
     closer.unref();
   }, 20);
 }

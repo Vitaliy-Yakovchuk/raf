@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   composeAssignmentBrief, validateAssignment, verifyAssignmentCompletion,
@@ -52,18 +53,21 @@ async function initial(h: ReturnType<typeof harness>): Promise<AssignmentSnapsho
 }
 
 const brief: AssignmentBriefContext = {
-  briefsRoot: '/work/conf/briefs', runner: 'codex', stage: 'implement',
+  cwd: '/work/project/raf-develop', briefsRoot: '/work/conf/briefs', runner: 'codex', stage: 'implement',
   project: 'raf', agentId: 'implement-one', sessionName: 'implement-one',
-  features: ['agent-run'], phase: 'implementation', outcome: 'Implement selected behavior',
+  features: ['agent-run'], phase: 'implement', outcome: 'Implement selected behavior',
   writeBoundaries: ['/work/project/src/assignment.ts'], sources: ['/work/spec/agent-run/spec.md'],
   reportPath: '/tmp/raf-run-unique/implement-one.json',
   reportSchema: { type: 'object', required: ['status', 'answer', 'assignments'], properties: { status: { enum: ['succeeded', 'failed'] } } },
+  rafCommand: 'node /srv/raf-main/bin/raf.ts',
 };
 
 function installBriefs(h: ReturnType<typeof harness>) {
   h.files.set('/work/conf/briefs/runners/codex.md', 'RUNNER INSTRUCTIONS');
   h.files.set('/work/conf/briefs/tasks/implement.md', 'STAGE INSTRUCTIONS');
   h.files.set('/work/conf/briefs/completion.md', 'COMPLETION: check all tasks; sync/archive only when all done; write report atomically.');
+  h.files.set(`${root}/conf/raf-constants.json`, readFileSync(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
+  h.files.set(`${root}/conf/models.json`, readFileSync(new URL('../../conf/models.json', import.meta.url), 'utf8'));
 }
 
 function installNewArchive(h: ReturnType<typeof harness>, body = '- [x] 1.1 Create widget\n- [x] 1.2 Publish widget\n') {
@@ -160,6 +164,8 @@ test('brief composes selected runner, stage, completion, exact immutable assignm
   assert.ok(output.indexOf('RUNNER INSTRUCTIONS') < output.indexOf('STAGE INSTRUCTIONS'));
   assert.ok(output.indexOf('STAGE INSTRUCTIONS') < output.indexOf('COMPLETION:'));
   assert.ok(!output.includes('Publish widget'));
+  const assignment = JSON.parse(output.slice(output.indexOf('{', output.indexOf('# Конкретне доручення'))));
+  assert.equal(assignment.phase, 'implement');
   assert.deepEqual([...h.reads].sort(), [...h.files.keys()].sort());
 });
 
@@ -167,8 +173,7 @@ test('coordinating brief names the exact raf command to run as one simple call; 
   const h = harness();
   const snapshot = await initial(h);
   installBriefs(h);
-  const plain = await composeAssignmentBrief(snapshot, brief, h.ports.fs);
-  assert.equal(plain.includes('raf_command'), false);
+  await assert.rejects(() => composeAssignmentBrief(snapshot, { ...brief, rafCommand: undefined }, h.ports.fs), /rafCommand|raf_command/);
   const output = await composeAssignmentBrief(snapshot, { ...brief, stage: 'implement', rafCommand: 'node /srv/raf-main/bin/raf.ts' }, h.ports.fs);
   const assignment = JSON.parse(output.slice(output.indexOf('{', output.indexOf('# Конкретне доручення'))));
   assert.equal(assignment.raf_command, 'node /srv/raf-main/bin/raf.ts');

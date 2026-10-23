@@ -459,6 +459,18 @@ test('two simultaneous public forced closes retain one result, one first reason 
   assert.deepEqual((repeated.result as any).forcedClose, (saved.result as any).forcedClose);
 });
 
+async function withinFixtureWait<T>(operation: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => reject(new Error(`Fixture wait did not settle: ${label}`)), 1000);
+  });
+  try {
+    return await Promise.race([operation, expired]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function barrier() {
   let entered!: () => void;
   let release!: () => void;
@@ -639,9 +651,10 @@ test('a durable-write failure rejects force before any stop or finalization', as
 test('watcher wins the acceptance race while force is awaiting preparation: accepted result is preserved', async t => {
   const f = await preparationFixture(t);
   const gate = barrier();
+  t.after(gate.release);
   f.dependencies.acceptPendingReport = async selected => { await gate.wait(); return selected; };
   const preparing = prepareAgentClose(f.dependencies, f.session, forced);
-  await gate.reached;
+  await withinFixtureWait(gate.reached, 'watcher race reached report preparation');
   const result = f.accept('succeeded');
   gate.release();
   const prepared = await preparing;
@@ -668,12 +681,14 @@ test('force wins before a late watcher report: the selected failed result cannot
 test('two forced close preparations preserve one first reason and one failed event', async t => {
   const f = await preparationFixture(t);
   const gate = barrier();
+  t.after(gate.release);
   f.dependencies.acceptPendingReport = async selected => { await gate.wait(); return selected; };
   const first = prepareAgentClose(f.dependencies, f.session, { force: true, reason: 'First reason' });
   const second = prepareAgentClose(f.dependencies, f.session, { force: true, reason: 'Second reason' });
-  await gate.reached;
+  const settled = Promise.allSettled([first, second]);
+  await withinFixtureWait(gate.reached, 'concurrent preparations reached report acceptance');
   gate.release();
-  const outcomes = await Promise.allSettled([first, second]);
+  const outcomes = await withinFixtureWait(settled, 'concurrent preparations finished');
   assert.ok(outcomes.some(value => value.status === 'fulfilled'));
   const saved = f.read()!;
   const reason = (saved.result as any).forcedClose.reason;
@@ -687,10 +702,11 @@ test('two forced close preparations preserve one first reason and one failed eve
 test('a stale close never switches to a new run reusing the same address', async t => {
   const f = await preparationFixture(t);
   const gate = barrier();
+  t.after(gate.release);
   const control = controlFixture(f);
   f.dependencies.acceptPendingReport = async selected => { await gate.wait(); return selected; };
-  const closing = control.close(forced);
-  await gate.reached;
+  const closing = control.close(forced).catch(() => undefined);
+  await withinFixtureWait(gate.reached, 'stale close reached report preparation');
   const replacement: SessionRecord = {
     ...f.session, runId: 'replacement-run', revision: 1,
     process: { ...f.session.process!, pid: 456, runnerSessionId: 'replacement-native' },
@@ -700,7 +716,7 @@ test('a stale close never switches to a new run reusing the same address', async
     tx.putSession(replacement);
   });
   gate.release();
-  await closing.catch(() => undefined);
+  await withinFixtureWait(closing, 'stale close finished after address reuse');
   assert.deepEqual(f.read(replacement.runId), replacement);
   assert.ok(!control.closed.includes('replacement-native'));
   assert.ok(!control.finalized.includes(replacement.runId));
@@ -712,7 +728,10 @@ for (const stage of ['transport', 'finalize'] as const) {
     const control = controlFixture(f);
     if (stage === 'transport') control.dependencies.transport.close = async () => { throw new Error('fixture transport unavailable'); };
     if (stage === 'finalize') control.dependencies.coordinator.finalize = async () => { throw new Error('fixture finalization unavailable'); };
-    const outcome = await control.close(forced).then(value => ({ value, error: null }), error => ({ value: null, error }));
+    const outcome = await withinFixtureWait(
+      control.close(forced).then(value => ({ value, error: null }), error => ({ value: null, error })),
+      `${stage} failure returned`,
+    );
     assert.ok(outcome.error || outcome.value?.closed === false, 'an unconfirmed operation cannot claim closed:true');
     assert.match(String(outcome.error?.message ?? JSON.stringify(outcome.value)), new RegExp(`fixture ${stage === 'transport' ? 'transport' : 'finalization'} unavailable`));
     assert.deepEqual((f.read()!.result as any).forcedClose, { reason: forced.reason });
@@ -721,7 +740,7 @@ for (const stage of ['transport', 'finalize'] as const) {
     assert.equal(f.read()!.finishedAt, undefined);
     control.dependencies.transport.close = async identity => { control.closed.push(identity.runnerSessionId); };
     control.dependencies.coordinator.finalize = async session => { control.finalized.push(session.runId); return session; };
-    await control.close({ force: true, reason: 'Retry cannot replace the first reason' });
+    await withinFixtureWait(control.close({ force: true, reason: 'Retry cannot replace the first reason' }), `${stage} retry finished`);
     assert.deepEqual((f.read()!.result as any).forcedClose, { reason: forced.reason });
     assert.equal(f.pending().filter(event => event.event === statusEvent('failed')).length, 1);
     assert.ok(control.finalized.length <= 1);
@@ -733,16 +752,16 @@ test('force cannot close main or an unknown process identity; interrupt keeps th
   const control = controlFixture(f);
   f.store.sessionRepository.transaction(tx => tx.putSession({ ...f.session, addressId: 'main', activity: { ...f.session.activity!, type: 'main' } }));
   const mainClose = (control.service.close as (id: string, options?: AgentCloseOptions) => Promise<any>).call(control.service, 'main', forced);
-  await assert.rejects(mainClose, /main/i);
+  await withinFixtureWait(assert.rejects(mainClose, /main/i), 'main close was refused');
   assert.deepEqual(control.closed, []);
   assert.equal(f.read()!.result, undefined);
   f.store.sessionRepository.transaction(tx => tx.putSession(f.session));
   control.dependencies.scanner.inspect = async () => ({ state: 'unknown', observedAt: instant, error: 'fixture cannot verify process identity' });
-  await assert.rejects(() => control.close(forced));
+  await withinFixtureWait(assert.rejects(() => control.close(forced)), 'unknown identity close was refused');
   assert.deepEqual(control.closed, []);
   assert.equal(f.read()!.result, undefined);
   control.dependencies.scanner.inspect = async identity => ({ state: 'alive', observedAt: instant, identity });
-  await control.service.interrupt(f.session.addressId);
+  await withinFixtureWait(control.service.interrupt(f.session.addressId), 'interrupt finished');
   assert.deepEqual(control.interrupted, ['fixture-native']);
   assert.equal(f.read()!.state, 'running');
   assert.equal(f.read()!.result, undefined);
@@ -756,7 +775,7 @@ test('force does not signal a different process reported under the selected iden
     state: 'alive', observedAt: instant,
     identity: { ...identity, startedAt: '2026-10-23T08:00:01.000Z', runnerSessionId: 'foreign-native' },
   });
-  await assert.rejects(() => control.close(forced));
+  await withinFixtureWait(assert.rejects(() => control.close(forced)), 'foreign identity close was refused');
   assert.deepEqual(control.closed, []);
   assert.deepEqual(control.finalized, []);
   assert.equal(f.read()!.result, undefined);

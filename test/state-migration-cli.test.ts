@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
-import { chmodSync, existsSync, linkSync, mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, linkSync, mkdirSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import { resolveStateContext, stateContextEnvironment } from '../src/state-migration-guard.ts';
 import { command, compatibleMainCanOpen, copyMain7, directoryFiles, files, fixture, logical, nodeProcess, quietWal, seedMain7, seedVersion } from './state-migration-fixture.ts';
 
@@ -99,13 +100,20 @@ test('cwd main, a symlink executable and claimed branch=main cannot change devel
 test('a hardlinked entry under the main tree does not prove main module provenance', t => {
   const f = fixture(t);
   seedMain7(f);
+  const entry = join(f.developTree, 'bin', 'develop-hardlink.ts');
+  writeFileSync(entry, `import ${JSON.stringify(pathToFileURL(join(f.developTree, 'bin', 'raf.ts')).href)};\n`);
   const alias = join(f.mainTree, 'bin', 'develop-hardlink.ts');
-  linkSync(join(f.developTree, 'bin', 'raf.ts'), alias);
+  linkSync(entry, alias);
+  assert.equal(statSync(alias).dev, statSync(entry).dev);
+  assert.equal(statSync(alias).ino, statSync(entry).ino);
+  assert.equal(statSync(alias).nlink, 2);
   const before = files(f.statePath);
   const result = command(f, ['agent', 'ps'], { cwd: f.mainTree, executable: alias });
   assert.equal(result.error, undefined);
+  assert.equal(result.signal, null);
   assert.notEqual(result.status, 0);
   assert.match(result.stdout + result.stderr, /STATE_CONTEXT_REFUSED/);
+  assert.doesNotMatch(result.stdout + result.stderr, /ERR_MODULE_NOT_FOUND/);
   assert.deepEqual(files(f.statePath), before);
 });
 

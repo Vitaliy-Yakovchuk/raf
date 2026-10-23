@@ -437,7 +437,7 @@ test('[production-factory] disk admission checks development and HOME without re
       });
       return { exitCode: 0, stdout: ['Filesystem 1024-blocks Used Available Capacity Mounted on', ...rows].join('\n') + '\n', stderr: '' };
     };
-    return f.createProductionServices(f.store, configuration, f.context, { execute });
+    return f.createProductionServices(f.store, configuration, f.context, { execute, loadAverage1m: () => 0 });
   };
   const base = (runId: string): RuntimeLaunch => ({ runId, addressId: f.params.id, tmuxSession: `${runId}-tmux`, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot });
   const attempt = async (runId: string, availableDevKb: number, availableHomeKb: number) => {

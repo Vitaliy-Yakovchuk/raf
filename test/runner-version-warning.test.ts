@@ -83,7 +83,7 @@ for (const runner of runners) {
       assert.equal(row.available, true);
       assert.equal(row.quota, 'unknown', 'version warning is not a measured quota');
       assert.deepEqual(row.warnings, expected);
-      assert.deepEqual(row.reasons, [], 'warning is separate from unavailability reasons');
+      assert.ok(row.reasons.every(reason => !reason.includes(expected[0])), 'version warning is separate from quota unknown and other availability reasons');
       const selection = selectModel(local, snapshot, { complexity: row.configuredComplexity });
       assert.equal(selection.status, 'selected', 'runner must remain in normal model selection');
       if (selection.status === 'selected') {
@@ -156,6 +156,10 @@ async function productionFixture(t: Parameters<typeof agentRunFixture>[0], runne
   const fixture = await agentRunFixture(t, mode, timeouts, runner, { commands, productionQa: true, tasks: 2 });
   const root = join(fixture.directory, 'orchestrator');
   const confPath = join(root, 'conf', 'raf.json');
+  const flowPath = join(root, 'conf', 'flow.json');
+  const flow = await json(flowPath);
+  for (const thresholds of Object.values(flow.resources) as { maxNormalizedLoad: number }[]) thresholds.maxNormalizedLoad = Number.MAX_VALUE;
+  await putJson(flowPath, flow);
   const configuration = await json(confPath);
   const protocol = configuration.runnerProtocols.find((row: { runner: string }) => row.runner === runner);
   assert.ok(protocol, 'fixture must provide the selected protocol');
@@ -166,6 +170,20 @@ async function productionFixture(t: Parameters<typeof agentRunFixture>[0], runne
     await writeFile(executable, script.replaceAll('raf-synthetic-1', checked.codex));
     protocol.version = checked.codex;
     await putJson(confPath, configuration);
+  } else {
+    const script = await readFile(executable, 'utf8');
+    const pendingSubmission = "    if (pasted !== null) {\n      pasted = null;";
+    assert.equal(script.split(pendingSubmission).length, 2, 'one documented Claude mock submission branch');
+    const acceptedSubmission = String.raw`    if (pasted !== null) {
+      const submitted = pasted;
+      pasted = null;
+      const offset = submitted.search(/\{\s*"project"\s*:/);
+      if (offset < 0) throw new Error('Claude mock received no assignment JSON');
+      const assignment = JSON.parse(submitted.slice(offset).trim());
+      if (!assignment.agent_id || !assignment.report_path || !assignment.assignments?.length) throw new Error('Claude mock received an incomplete brief');
+      writeFileSync(c.control + '/' + assignment.agent_id + '.brief', String(process.pid));
+      render(screen(ready + '\nWorking…', ''));`;
+    await writeFile(executable, script.replace(pendingSubmission, acceptedSubmission));
   }
   const modelsPath = join(root, 'conf', 'models.json');
   const models = await json(modelsPath);
@@ -198,6 +216,20 @@ function commandResult(outcome: Awaited<ReturnType<ProductionFixture['run']>>) {
   return { exitCode: envelope.exitCode, result: payload ? JSON.parse(payload) : null, stderr: envelope.stderr };
 }
 
+async function assertBriefDelivered(fixture: ProductionFixture, id: string, reportPath: string) {
+  const marker = (await readFile(join(fixture.control, `${id}.brief`), 'utf8')).trim();
+  assert.match(marker, /^[1-9]\d*$/, 'brief marker records the accepting runner PID');
+  const raw = await readFile(join(fixture.control, `input-${marker}.log`), 'utf8');
+  const input = raw.replace(/\x1b\[(?:200|201)~/g, '').replace(/\r/g, '\n');
+  const offset = input.search(/\{\s*"project"\s*:/);
+  assert.ok(offset >= 0, 'the accepting runner received the raw assignment JSON');
+  const brief = JSON.parse(input.slice(offset).trim());
+  assert.equal(brief.agent_id, id);
+  assert.equal(brief.report_path, reportPath);
+  assert.ok(brief.assignments?.length > 0, 'the delivered brief contains assigned work');
+  assert.match(input.slice(offset), /\n\s*$/, 'brief delivery includes submission');
+}
+
 for (const runner of ['codex', 'claude'] as const) {
   for (const relation of ['exact', 'older', 'newer'] as const) {
     test(`[version-warning] production ${runner}: ${relation} version reaches worker, identity, brief and agent run JSON`, async t => {
@@ -217,7 +249,7 @@ for (const runner of ['codex', 'claude'] as const) {
       assert.ok(outcome.result.reportPath);
       assert.equal(outcome.result.process.runner, runner);
       assert.ok(outcome.result.process.runnerSessionId, 'native identity was established before the brief');
-      assert.ok((await readFile(join(fixture.control, `${id}.brief`), 'utf8')).includes(id));
+      await assertBriefDelivered(fixture, id, outcome.result.reportPath);
       assert.deepEqual(await confDigest(fixture), before, 'all conf bytes, version, operationalEvidence and liveTaskVerified stay unchanged');
     });
   }
@@ -245,6 +277,7 @@ for (const runner of ['codex', 'claude'] as const) {
     const first = commandResult(await fixture.run(`version-before-update-${runner}`));
     assert.equal(first.exitCode, 0, JSON.stringify(first));
     assert.deepEqual(first.result.warnings, [warning(installed, older[runner])]);
+    await assertBriefDelivered(fixture, `version-before-update-${runner}`, first.result.reportPath);
     if (runner === 'codex') {
       const script = await readFile(executable, 'utf8');
       assert.ok(script.includes(installed));
@@ -259,6 +292,7 @@ for (const runner of ['codex', 'claude'] as const) {
     assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));
     assert.equal(outcome.result.status, 'running');
     assert.deepEqual(outcome.result.warnings, [warning(newer[runner], older[runner])]);
+    await assertBriefDelivered(fixture, `version-updated-${runner}`, outcome.result.reportPath);
     assert.deepEqual(await confDigest(fixture), before);
   });
 
@@ -300,7 +334,7 @@ test('[version-warning] production codex: a real unknown screen after identity r
   const input = (await Promise.all(logs.map(name => readFile(join(fixture.control, name), 'utf8')))).join('');
   assert.match(input, /\/status/);
   const afterStatus = input.slice(input.lastIndexOf('/status') + '/status'.length);
-  assert.equal((afterStatus.match(/\r|\n/g) ?? []).length, 1, 'only the legitimate status Enter; no blind confirmation of the unknown screen');
+  assert.doesNotMatch(afterStatus, /[\r\n]/, 'the mock shows the unknown screen on status text; do not submit or confirm it');
   assert.ok(!(await readdir(fixture.control)).includes('version-unknown-screen.brief'));
   assert.deepEqual(await confDigest(fixture), before);
 });

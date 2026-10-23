@@ -101,16 +101,23 @@ test('navigation only confirms the exact requested command on recognized menu', 
   const unrelated = observeRunnerScreen(config, { text: '/exit\n↑/↓ Navigate · enter Select · tab Complete', version: config.version, requestedCommand: '/usage' });
   assert.equal(nextRunnerAction(config, unrelated).kind, 'stop');
 });
-test('unknown, permission and auth screens stop without confirmation and incompatible versions do not send commands', () => {
+test('unknown, permission and auth screens stop without confirmation at either version', () => {
   for (const [text, expected] of [['mystery menu', 'unknown_screen'], ['Approve permission?', 'permission_required'], ['Waiting for browser sign-in', 'auth_required']] as const) {
     const config = settings('grok');
-    const observation = observeRunnerScreen(config, { text, version: config.version, requestedCommand: null });
-    assert.equal(observation.state, expected);
-    assert.deepEqual(nextRunnerAction(config, observation), { kind: 'stop', reason: expected });
+    for (const version of [config.version, '9.9.9']) {
+      const observation = observeRunnerScreen(config, { text, version, requestedCommand: null });
+      assert.equal(observation.state, expected);
+      assert.deepEqual(nextRunnerAction(config, observation), { kind: 'stop', reason: expected });
+    }
   }
+});
+test('recognized ready screen stays ready on a different version and sends the configured command', () => {
   const config = settings('codex');
-  const observation = observeRunnerScreen(config, { text: 'Ask Codex to do anything', version: 'unverified-version', requestedCommand: null });
-  assert.equal(nextRunnerAction(config, observation).kind, 'stop');
+  for (const version of [config.version, '9.9.9', `${config.version}-beta`]) {
+    const observation = observeRunnerScreen(config, { text: 'Ask Codex to do anything', version, requestedCommand: null });
+    assert.equal(observation.state, 'ready');
+    assert.deepEqual(nextRunnerAction(config, observation), { kind: 'text', text: '/status' });
+  }
 });
 test('ready state sends configured command as text before a later observed submission', () => {
   assert.deepEqual(nextRunnerAction(settings('codex'), { state: 'ready', requestedCommand: null, matchedNavigation: null }), { kind: 'text', text: '/status' });

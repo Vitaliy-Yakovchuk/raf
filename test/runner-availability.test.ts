@@ -10,7 +10,7 @@ import { probeRunnerAvailability, resolveRunnerExecutable } from '../src/runner-
 
 const confUrl = new URL('../../conf/', import.meta.url);
 const readConf = async (name: string) => JSON.parse(await readFile(new URL(name, confUrl), 'utf8'));
-const fixtureVersion = 'raf-fixture-1.2.3';
+const fixtureVersion = '1.2.3';
 const fixtureSettings = { runner: 'codex' as const, executable: 'codex', version: fixtureVersion };
 
 async function sandbox(t: TestContext) {
@@ -94,33 +94,45 @@ test('[runner-availability] 14. знайдений runner з точною вер
   const expected = await s.file(bin, 'codex', 0o755);
   const recorder = recordingExecutor(() => ({ exitCode: 0, stdout: `codex-cli ${fixtureVersion}\n`, stderr: '' }));
   const availability = await probeRunnerAvailability(fixtureSettings, { env: { PATH: bin }, execute: recorder.execute });
-  assert.deepEqual(availability, { runner: 'codex', available: true, path: expected, version: fixtureVersion });
+  assert.deepEqual(availability, { runner: 'codex', available: true, path: expected, version: fixtureVersion, warnings: [] });
   assert.deepEqual(recorder.calls.map(call => ({ executable: call.executable, args: [...call.args] })), [{ executable: expected, args: ['--version'] }]);
 });
 
-for (const [name, result] of [
-  ['інша версія', { exitCode: 0, stdout: 'codex-cli raf-fixture-9.9.9\n', stderr: '' }],
-  ['версія лише як префікс', { exitCode: 0, stdout: `codex-cli ${fixtureVersion}-beta\n`, stderr: '' }],
-  ['ненульовий код', { exitCode: 2, stdout: `codex-cli ${fixtureVersion}\n`, stderr: 'broken install' }],
+for (const [name, installed] of [
+  ['інша версія', '9.9.9'],
+  ['версія лише як префікс', `${fixtureVersion}-beta`],
 ] as const) {
-  test(`[runner-availability] 14. ${name} дає недоступність з причиною версії`, async t => {
+  test(`[runner-availability] 14. ${name} зберігає доступність із точним попередженням`, async t => {
     const s = await sandbox(t);
     const bin = await s.dir('bin');
-    await s.file(bin, 'codex', 0o755);
-    const recorder = recordingExecutor(() => ({ ...result }));
+    const path = await s.file(bin, 'codex', 0o755);
+    const recorder = recordingExecutor(() => ({ exitCode: 0, stdout: `codex-cli ${installed}\n`, stderr: '' }));
     const availability = await probeRunnerAvailability(fixtureSettings, { env: { PATH: bin }, execute: recorder.execute });
-    assert.equal(availability.available, false);
-    assert.ok(!availability.available && availability.reason.includes(fixtureVersion) && /codex/.test(availability.reason), JSON.stringify(availability));
+    assert.deepEqual(availability, {
+      runner: 'codex', available: true, path, version: installed,
+      warnings: [`версія ${installed} не збігається з перевіреною ${fixtureVersion}, протокол не перевірено`],
+    });
     assert.equal(recorder.calls.length, 1);
   });
 }
+
+test('[runner-availability] 14. ненульовий код з очікуваною версією дає недоступність', async t => {
+  const s = await sandbox(t);
+  const bin = await s.dir('bin');
+  await s.file(bin, 'codex', 0o755);
+  const recorder = recordingExecutor(() => ({ exitCode: 2, stdout: `codex-cli ${fixtureVersion}\n`, stderr: 'broken install' }));
+  const availability = await probeRunnerAvailability(fixtureSettings, { env: { PATH: bin }, execute: recorder.execute });
+  assert.equal(availability.available, false);
+  assert.ok(!availability.available && availability.reason.includes(fixtureVersion) && /codex/.test(availability.reason), JSON.stringify(availability));
+  assert.equal(recorder.calls.length, 1);
+});
 
 test('[runner-availability] 14. явний абсолютний шлях не шукається в PATH, відносний шлях зі слешем відхиляється', async t => {
   const s = await sandbox(t);
   const explicit = await s.file(await s.dir('explicit'), 'codex', 0o755);
   const recorder = recordingExecutor(() => ({ exitCode: 0, stdout: `codex-cli ${fixtureVersion}\n`, stderr: '' }));
   const absolute = await probeRunnerAvailability({ ...fixtureSettings, executable: explicit }, { env: { PATH: '' }, execute: recorder.execute });
-  assert.deepEqual(absolute, { runner: 'codex', available: true, path: explicit, version: fixtureVersion });
+  assert.deepEqual(absolute, { runner: 'codex', available: true, path: explicit, version: fixtureVersion, warnings: [] });
   const relative = await probeRunnerAvailability({ ...fixtureSettings, executable: 'explicit/codex' }, { env: { PATH: s.root }, execute: recorder.execute });
   assert.equal(relative.available, false);
   assert.equal(recorder.calls.length, 1);

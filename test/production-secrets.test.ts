@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { cpSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, rmSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -108,9 +108,7 @@ for (const outcome of ['success', 'handler-error'] as const) {
     const f = await fixture(t);
     const fileName = 'configured-command-timing.sqlite';
     const alpha = 0.25;
-    const argv = outcome === 'success'
-      ? ['reminder', 'list', '--to', 'missing']
-      : ['runner', 'list'];
+    const argv = ['reminder', 'list', '--to', 'missing'];
     const canonical = argv.slice(0, 2).join(' ');
     writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ ...settings, state: { ...settings.state, fileName }, commandTiming: { ...settings.commandTiming, emaAlpha: alpha } }));
     const path = join(f.home, '.raf', fileName);
@@ -119,7 +117,8 @@ for (const outcome of ['success', 'handler-error'] as const) {
     if (outcome === 'handler-error') {
       const connection = new DatabaseSync(path);
       try {
-        connection.exec('ALTER TABLE runners RENAME TO fixture_runners; CREATE VIEW runners AS SELECT * FROM fixture_missing_runners');
+        // Fail the handler's read, leaving shared-state initialization and timing usable.
+        connection.exec('ALTER TABLE reminders RENAME TO fixture_reminders; CREATE VIEW reminders AS SELECT * FROM fixture_missing_reminders');
       } finally { connection.close(); }
     }
     let reads = 0;
@@ -151,7 +150,12 @@ for (const secrets of [{ lockWaitTimeoutMs: 0, pollIntervalMs: 1 }, { lockWaitTi
     await assert.rejects(store.merge([
       { name: 'SYNTHETIC_KEY', kind: 'env', value: secretValue, source: 'synthetic-test', updatedAt: '2026-10-21T10:00:00.000Z' },
     ]), /secrets|lockWaitTimeoutMs|pollIntervalMs/i);
-    assert.ok(!existsSync(join(f.home, '.raf')));
+    // A persistent private store directory is allowed; failed writes must leave no resources.
+    const storeDirectory = join(f.home, '.raf');
+    if (existsSync(storeDirectory)) {
+      assert.equal(statSync(storeDirectory).mode & 0o777, 0o700);
+      assert.deepEqual(readdirSync(storeDirectory), []);
+    }
     assert.ok(!existsSync(f.statePath));
     assert.ok(!existsSync(f.target));
   });

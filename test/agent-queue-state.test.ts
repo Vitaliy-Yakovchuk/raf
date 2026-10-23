@@ -26,12 +26,12 @@ function legacyFixture(path: string) {
 const version = (database: DatabaseSync) => Number(database.prepare('PRAGMA user_version').get()!.user_version);
 const task: ReservedTaskSnapshot = { key: { project: 'raf', changeId: 'queue-change', taskId: '4.2' }, changeInstance: 'instance', fingerprint: 'content' };
 const validation: AgentQueueValidation = { assignment: { root: '/fixture', changes: [], baselineArchives: [] }, fingerprint: 'assignment', requested: { ramBytes: 1, diskBytes: {} }, requiredFileSystemIds: [] };
-function record(runId = 'child'): AgentQueueRecord {
-  return { queueId: 'queue', requestId: `request-${runId}`, agentId: `agent-${runId}`, owner: { runId, fence: `fence-${runId}` },
+function record(queueId: string, runId = 'child'): AgentQueueRecord {
+  return { queueId, requestId: `request-${runId}`, agentId: `agent-${runId}`, owner: { runId, fence: `fence-${runId}` },
     clientIdentity: { pid: 41, startedAt: 'start', machineId: 'machine', bootId: 'boot' }, coordinator: null, eventHandle: null };
 }
-function entry(runId = 'child'): StoredAgentQueueEntry {
-  return { record: record(runId), phase: 'waiting', tasks: [task], fingerprint: validation.fingerprint };
+function entry(queueId: string, runId = 'child'): StoredAgentQueueEntry {
+  return { record: record(queueId, runId), phase: 'waiting', tasks: [task], fingerprint: validation.fingerprint };
 }
 function reservation(runId: string, tasks: readonly ReservedTaskSnapshot[]): TaskReservationSet {
   return { lease: { owner: { addressId: `agent-${runId}`, runId, fence: `fence-${runId}` }, revision: 0 }, tasks,
@@ -91,12 +91,13 @@ test('agent-queue migration failure rolls back tables version and existing recor
 });
 
 test('agent-queue claims reject whole overlapping task sets and stale fences preserve owner', t => {
-  const store = openStateStore(fixture(t));
+  const path = fixture(t);
+  const store = openStateStore(path);
   try {
     const queue = createAgentQueueState(store);
-    const first = entry();
+    const first = entry(queue.queueId(path, 'machine'));
     queue.transaction(tx => { queue.assertClaim(tx, first, validation); queue.save(first); });
-    const next = entry('next');
+    const next = entry(first.record.queueId, 'next');
     assert.throws(() => queue.transaction(tx => { queue.assertClaim(tx, next, validation); queue.save(next); }), /TASK_RESERVED/);
     assert.equal(queue.list().length, 1);
     assert.equal(queue.transaction(() => queue.remove({ ...first.record, owner: { ...first.record.owner, fence: 'stale' } })), false);
@@ -105,10 +106,11 @@ test('agent-queue claims reject whole overlapping task sets and stale fences pre
 });
 
 test('agent-queue coordinator retains tasks until fenced readiness and transfers atomically', t => {
-  const store = openStateStore(fixture(t));
+  const path = fixture(t);
+  const store = openStateStore(path);
   try {
     const queue = createAgentQueueState(store);
-    const owned = entry();
+    const owned = entry(queue.queueId(path, 'machine'));
     owned.record.coordinator = { runId: 'parent', fence: 'fence-parent' };
     queue.transaction(tx => {
       tx.putSession({ runId: 'parent', addressId: 'agent-parent', state: 'running', revision: 0, activity: { type: 'coordinator', project: 'raf', phase: 'coordinator', features: [], cwd: '/fixture' } });
@@ -130,10 +132,11 @@ test('agent-queue coordinator retains tasks until fenced readiness and transfers
 });
 
 test('agent-queue coordinator losing a selected item rolls back readiness without transfer', t => {
-  const store = openStateStore(fixture(t));
+  const path = fixture(t);
+  const store = openStateStore(path);
   try {
     const queue = createAgentQueueState(store);
-    const owned = entry();
+    const owned = entry(queue.queueId(path, 'machine'));
     owned.record.coordinator = { runId: 'parent', fence: 'fence-parent' };
     queue.transaction(tx => {
       tx.putSession({ runId: 'parent', addressId: 'agent-parent', state: 'running', revision: 0, activity: { type: 'coordinator', project: 'raf', phase: 'coordinator', features: [], cwd: '/fixture' } });
@@ -152,10 +155,11 @@ test('agent-queue coordinator losing a selected item rolls back readiness withou
 
 
 test('agent-queue recheck refuses a recreated change with identical assignment text', t => {
-  const store = openStateStore(fixture(t));
+  const path = fixture(t);
+  const store = openStateStore(path);
   try {
     const queue = createAgentQueueState(store);
-    const original = entry();
+    const original = entry(queue.queueId(path, 'machine'));
     queue.transaction(tx => { queue.assertClaim(tx, original, validation); queue.save(original); });
     const replaced = { ...original, tasks: [{ ...task, changeInstance: 'recreated-instance' }] };
     assert.throws(() => queue.transaction(tx => { queue.assertClaim(tx, replaced, validation); queue.save(replaced); }), /QUEUE_ASSIGNMENT_CHANGED/);

@@ -425,6 +425,14 @@ test('[production-factory] disk admission checks development and HOME without re
   const configuredHomeBytes = JSON.parse(await readFile(f.flowPath, 'utf8')).resources.home.minDiskBytes;
   const homeThresholdBytes = Math.ceil(configuredHomeBytes / 1024) * 1024;
   await f.writeFlowResources({ ...fixtureResources, home: { minDiskBytes: homeThresholdBytes } });
+  const protocolSettings: ProtocolSettings[] = [{
+    runner: 'codex', executable: 'codex', version: '0.0.0', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config',
+    modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null, quotaCommand: '/status', navigation: [],
+    markers: { ready: ['Ask Codex to do anything'], auth_required: ['FIXTURE_AUTH_REQUIRED'], permission_required: ['FIXTURE_PERMISSION_REQUIRED'] },
+    quotaParser: 'unknown', modelPools: {}, quotaReliable: false, liveTaskVerified: true,
+    timeouts: { startupMs: 5000, transitionMs: 5000, overallMs: 10000, pollMs: 30 },
+    collection: { intervalMs: 60000, failureBackoffMs: 60000, staleAfterMs: 60000 },
+  }];
   const services = (availableDevKb: number, availableHomeKb: number) => {
     const execute: AdapterCommandExecutor = async command => {
       if (command.executable !== 'df') return f.execute(command);
@@ -437,7 +445,7 @@ test('[production-factory] disk admission checks development and HOME without re
       });
       return { exitCode: 0, stdout: ['Filesystem 1024-blocks Used Available Capacity Mounted on', ...rows].join('\n') + '\n', stderr: '' };
     };
-    return f.createProductionServices(f.store, configuration, f.context, { execute, loadAverage1m: () => 0 });
+    return f.createProductionServices(f.store, configuration, f.context, { execute, loadAverage1m: () => 0, protocolSettings });
   };
   const base = (runId: string): RuntimeLaunch => ({ runId, addressId: f.params.id, tmuxSession: `${runId}-tmux`, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot });
   const attempt = async (runId: string, availableDevKb: number, availableHomeKb: number) => {

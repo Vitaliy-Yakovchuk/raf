@@ -3,7 +3,7 @@ import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer, type Socket } from 'node:net';
 import { connectResourceWait } from '../src/resource-wait-transport.ts';
@@ -40,7 +40,7 @@ async function fixture(t: TestContext) {
   const context: ServiceEntryContext = { orchestratorRoot: join(root, 'orchestrator'), homeDirectory: join(root, 'home'), stateDirectory: join(root, 'home', '.raf'), socketPath: join(root, 'home', '.raf', 'service.sock') };
   await mkdir(join(context.orchestratorRoot, 'conf'), { recursive: true });
   await mkdir(context.stateDirectory, { recursive: true });
-  await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'shared.sqlite' }, service: { hostTickIntervalMs: 15000 }, resourceWait: { grantIntervalMs: 15000, deliveryTimeoutMs: 30000 } }));
+  await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'shared.sqlite' }, service: { hostTickIntervalMs: 15000, readinessTimeoutMs: 30000 }, resourceWait: { grantIntervalMs: 15000, deliveryTimeoutMs: 30000 } }));
   await writeFile(join(context.orchestratorRoot, 'conf', 'raf-constants.json'), JSON.stringify(catalog));
   await writeFile(join(context.orchestratorRoot, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
   await prepareProductionQaFixture(t, { root: context.orchestratorRoot, home: context.homeDirectory });
@@ -61,7 +61,7 @@ function reminders(store: StateStore) {
 function snapshot(paths: readonly string[]): ResourceSnapshot {
   return {
     measurement: { machineId: 'fixture-machine', loadAverage1m: 0, availableCores: 8, totalRamBytes: 64 * 2 ** 30, availableRamBytes: 48 * 2 ** 30, memoryPressure: 'normal', fileSystems: [{ id: 'fixture-volume', totalBytes: 1024 * 2 ** 30, availableBytes: 512 * 2 ** 30 }] },
-    reasons: [], fileSystemByPath: Object.fromEntries(paths.map(path => [path, 'fixture-volume'])),
+    reasons: [], fileSystemByPath: Object.fromEntries([...paths, homedir()].map(path => [path, 'fixture-volume'])),
   };
 }
 
@@ -255,7 +255,7 @@ test('sqlite: resource wait checks disk only on the development tree volume', as
   t.after(() => store.close());
   const measured = (devAvailable: number): ResourceSnapshot => ({
     measurement: { ...snapshot([]).measurement, fileSystems: [{ id: 'dev-volume', totalBytes: 1024 * 2 ** 30, availableBytes: devAvailable }, { id: 'home-volume', totalBytes: 11 * 2 ** 30, availableBytes: 2 ** 20 }] },
-    reasons: [], fileSystemByPath: { [context.orchestratorRoot]: 'dev-volume', [context.stateDirectory]: 'home-volume' },
+    reasons: [], fileSystemByPath: { [context.orchestratorRoot]: 'dev-volume', [context.stateDirectory]: 'home-volume', [homedir()]: 'dev-volume' },
   });
   const wait = async (devAvailable: number) => {
     const dependencies = await createProductionServiceDependencies(context, { resourceReader: { read: async () => measured(devAvailable) } });

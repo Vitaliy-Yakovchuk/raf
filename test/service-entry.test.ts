@@ -60,6 +60,7 @@ const host = await runServiceEntry();
 await host.closed;
 `);
   await writeFile(join(develop, 'bin', 'service.ts'), 'throw new Error("forbidden develop worker");\n');
+  execFileSync('git', ['-C', main, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '--allow-empty', '-m', 'Initialize configured main fixture']);
   const children: ChildProcess[] = [];
   const options = {
     orchestratorRoot: root,

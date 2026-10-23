@@ -148,3 +148,16 @@ test('agent-queue coordinator losing a selected item rolls back readiness withou
     assert.deepEqual(store.taskReservationRepository.transaction(tx => tx.listTaskReservations().find(set => set.lease.owner.runId === 'child')!.tasks), []);
   } finally { store.close(); }
 });
+
+
+test('agent-queue recheck refuses a recreated change with identical assignment text', t => {
+  const store = openStateStore(fixture(t));
+  try {
+    const queue = createAgentQueueState(store);
+    const original = entry();
+    queue.transaction(tx => { queue.assertClaim(tx, original, validation); queue.save(original); });
+    const replaced = { ...original, tasks: [{ ...task, changeInstance: 'recreated-instance' }] };
+    assert.throws(() => queue.transaction(tx => { queue.assertClaim(tx, replaced, validation); queue.save(replaced); }), /QUEUE_ASSIGNMENT_CHANGED/);
+    assert.deepEqual(queue.get(original.record)!.tasks, [task]);
+  } finally { store.close(); }
+});

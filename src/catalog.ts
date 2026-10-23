@@ -49,7 +49,7 @@ export function compileCatalog(
       if (entry.description !== undefined && typeof entry.description !== 'string') throw new Error(`${source}/${index}: invalid description`);
       if (entry.launchableByRaf !== undefined && typeof entry.launchableByRaf !== 'boolean') throw new Error(`${source}/${index}: invalid launchableByRaf`);
       ids.add(entry.id);
-      return { ...entry } as CatalogValue;
+      return { ...entry } as unknown as CatalogValue;
     });
   };
   const roots: Record<string, Record<string, unknown>> = { 'raf-constants.json': object(constants, 'raf-constants.json'), 'models.json': object(models, 'models.json') };

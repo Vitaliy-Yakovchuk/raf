@@ -14,6 +14,7 @@ import { validateQuotaRunners, type CollectionResult } from './quota-collection.
 import type { RunnerId } from './runner-protocols.ts';
 import { bindWorkspaceBoundaries, rafCommandFor, resolveGitWriteBoundaries, rafSubcommandsFor, type DerivedTaskContext, type KnownTaskResourceEstimate } from './task-context.ts';
 import { createReminderHandlers, settleCommandState, type CommandStatePorts, type ReminderCommand } from './reminder-cli.ts';
+import type { HotfixWorkspace } from './hotfix-worktree.ts';
 import type { NotifyTarget } from './launcher-notice.ts';
 
 export interface RuntimeContext {
@@ -46,6 +47,7 @@ export interface RuntimeRunParameters {
 }
 
 export type RuntimeTaskContext = Pick<DerivedTaskContext, 'branch' | 'outcome' | 'writeBoundaries' | 'sources'> & Partial<Pick<DerivedTaskContext, 'workspaceWritable'>> & {
+  readonly hotfix?: HotfixWorkspace;
   readonly reportSchema: Readonly<Record<string, unknown>>;
   readonly requested: ResourceReservation;
   readonly requiredFileSystemIds: readonly string[];
@@ -216,18 +218,20 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       if (!validation.ok) throw fail('INVALID_ASSIGNMENT', 'assignment', `${validation.kind}: ${validation.issues.map(issue => `${issue.change}: ${issue.reason}`).join('; ')}`, { received: params.tasks, found: validation.issues });
       const assignment = validation.snapshot;
       const task = await api.resolveTask(params, assignment);
-      const route = await api.route({ root: context.orchestratorRoot, project: params.project, branch: task.branch });
+      const identity = dependencies.nextRunIdentity();
+      const hotfix = params.type === 'hotfix' && params.project === 'raf';
+      const route = await api.route({ root: context.orchestratorRoot, project: params.project, branch: task.branch, ...(hotfix ? { hotfixRunId: identity.runId } : {}) });
       if (!route.ok) throw fail(route.error.code, 'workspace', route.error.message);
       const workspaceBoundaries = bindWorkspaceBoundaries(task, route.cwd);
-      const gitBoundaries = await resolveGitWriteBoundaries(route.cwd, context.orchestratorRoot, task.workspaceWritable ? undefined : workspaceBoundaries);
+      const gitBoundaries = await resolveGitWriteBoundaries(route.cwd, context.orchestratorRoot, hotfix || !task.workspaceWritable ? task.writeBoundaries : undefined);
       const commitOwnWork = task.workspaceWritable || gitBoundaries.length > 0;
       const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
       const selection = api.selectModel(loaded.models, await snapshot(), { complexity: params.complexity, role: params.type });
       if (selection.status === 'waiting') throw fail(selection.code, 'selection', selection.reason);
-      const launch: RuntimeLaunch = { ...dependencies.nextRunIdentity(), addressId: params.id,
+      const launch: RuntimeLaunch = { ...identity, addressId: params.id,
         ...(notify ? { notify } : {}),
         activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
-        assignment, selection, statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], taskContext: { parameters: params, context: task } };
+        assignment, selection, statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix } : {}) } } };
       let prepared: PreparedRuntimeReport | undefined;
       let reserved = false;
       let startAttempted = false;
@@ -235,12 +239,13 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       try {
         prepared = await api.prepareReport(launch);
         stage = 'brief';
-        const brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,
+        let brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,
           stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
           features: params.features, phase: params.phase, outcome: task.outcome, writeBoundaries,
           sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema,
           ...(commitOwnWork ? { commitOwnWork: true, commitPaths: workspaceBoundaries, commitRepositories: task.workspaceWritable ? [route.cwd, context.orchestratorRoot] : [context.orchestratorRoot], workspaceWritable: task.workspaceWritable } : {}),
           rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type) ? { rafSubcommands: rafSubcommandsFor(params.type)! } : {}) });
+        if (hotfix) brief += `\nHotfix raf: фізичний кандидат ${route.cwd}; логічна база й ціль main, baseCommit ${route.hotfix?.baseCommit}. Коміт кандидата не активує main; живий main і push недоступні. Коміт коду виконай довіреним портом: node ${join(context.tmpRoot, launch.runId, 'hotfix-commit.mjs')} --message <повідомлення> <власні відносні шляхи>.\n`;
         stage = 'reservation';
         const admission = await api.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
         if (!admission.admitted) throw fail('RESOURCE_UNAVAILABLE', stage, admission.reason);

@@ -27,6 +27,7 @@ export interface ProductionEntryOptions {
   homeDirectory: string;
   artifactPath: string;
   now?: () => number;
+  runIdentity?: { runId: string; tmuxSession: string };
   serviceHostModulePath?: string;
 }
 
@@ -126,7 +127,7 @@ function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot
   return createAppRuntime(context, {
     additionalHandlers,
     now, loadConfiguration: async () => ({ catalog, models: loaded.models, commandTiming: loaded.commandTiming }),
-    openStore: async path => openStateStore(path, { context: context.stateContext }), nextRunIdentity: () => ({ runId: randomUUID(), tmuxSession: randomUUID() }),
+    openStore: async path => openStateStore(path, { context: context.stateContext }), nextRunIdentity: () => options.runIdentity ?? ({ runId: randomUUID(), tmuxSession: randomUUID() }),
     createServices: createProductionServices, commandState: commandState(orchestratorRoot),
   });
 }

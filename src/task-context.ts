@@ -87,6 +87,7 @@ export interface DerivedTaskContext {
 }
 
 export interface TaskContextEnvelope {
+  readonly workspace?: import('./hotfix-worktree.ts').HotfixWorkspace;
   readonly version: 1;
   readonly runId: string;
   readonly parameters: RuntimeRunParameters;

@@ -1,3 +1,8 @@
+import { promises as fs } from 'node:fs';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { command, copyTree, durable, environment, exists, git, inventory, json, mainRoute, validateWorkspace, within } from './hotfix-host.ts';
+
 export type HotfixRunner = "codex" | "claude";
 
 export interface HotfixHost {
@@ -9,6 +14,7 @@ export interface HotfixHost {
 
 export interface HotfixWorkspace {
   runId: string;
+  orchestratorRoot: string;
   project: "raf";
   targetBranch: "main";
   cwd: string;
@@ -72,22 +78,134 @@ export interface HotfixCleanupResult {
   retained: readonly string[];
 }
 
-export async function prepareHotfixWorktree(_host: HotfixHost, _runId: string): Promise<HotfixWorkspace> {
-  throw new Error("NotImplemented: prepareHotfixWorktree");
+export async function prepareHotfixWorktree(host: HotfixHost, runId: string): Promise<HotfixWorkspace> {
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(runId) || runId === '..') throw new Error('Invalid hotfix runId');
+  const route = await mainRoute(host);
+  const baseCommit = await git(route.cwd, 'rev-parse', 'HEAD');
+  const run = join(host.orchestratorRoot, '.raf-hotfix', 'runs', runId);
+  await fs.mkdir(dirname(run), { recursive: true, mode: 0o700 });
+  await fs.mkdir(run, { mode: 0o700 });
+  const cwd = join(run, 'raf-main');
+  try {
+    await git(route.cwd, 'worktree', 'add', '--detach', cwd, baseCommit);
+    const gitDirectory = await fs.realpath(await git(cwd, 'rev-parse', '--path-format=absolute', '--git-dir'));
+    const workspace: HotfixWorkspace = { runId, orchestratorRoot: host.orchestratorRoot, project: 'raf', targetBranch: 'main', cwd, baseCommit, repositoryIdentity: route.repositoryIdentity, gitDirectory, commonDirectory: route.repositoryIdentity, ownershipPath: join(run, 'ownership.json') };
+    await fs.cp(join(host.orchestratorRoot, 'conf'), join(run, 'conf'), { recursive: true, dereference: true });
+    if (await exists(join(route.cwd, 'node_modules'))) await fs.cp(join(route.cwd, 'node_modules'), join(cwd, 'node_modules'), { recursive: true, dereference: true });
+    await durable(workspace.ownershipPath, workspace);
+    await inventory(cwd);
+    return workspace;
+  } catch (error) {
+    await git(route.cwd, 'worktree', 'remove', '--force', cwd).catch(() => {});
+    await fs.rm(run, { recursive: true, force: true }).catch(() => {});
+    throw error;
+  }
 }
 
-export async function launchHotfix(_host: HotfixHost, _request: HotfixLaunchRequest): Promise<HotfixLaunch> {
-  throw new Error("NotImplemented: launchHotfix");
+export async function launchHotfix(host: HotfixHost, request: HotfixLaunchRequest): Promise<HotfixLaunch> {
+  const route = await mainRoute(host);
+  if (!['codex', 'claude'].includes(request.runner) || !['agent-run', 'direct-main'].includes(request.origin)) throw new Error('Invalid hotfix launch');
+  const module = pathToFileURL(join(route.cwd, 'src/production-entry.ts')).href;
+  const args = ['agent', 'run', '--id', request.addressId, '--type', 'hotfix', '--project', 'raf', '--phase', 'implement', '--complexity', 'decision', ...request.features.flatMap(value => ['--features', value]), ...request.tasks.flatMap(value => ['--tasks', value])];
+  const script = `const {runProductionCli}=await import(${JSON.stringify(module)}); const result=await runProductionCli(${JSON.stringify(args)},${JSON.stringify({ orchestratorRoot: host.orchestratorRoot, homeDirectory: host.qaHome, artifactPath: join(route.cwd, 'dist/catalog.json'), runIdentity: { runId: request.runId, tmuxSession: request.addressId } })}); if(result.stdout) console.log(result.stdout); if(result.stderr) console.error(result.stderr); process.exitCode=result.exitCode;`;
+  const result = await command(host, route.cwd, process.execPath, ['--input-type=module', '-e', script]);
+  if (result.code !== 0) throw new Error('Hotfix production launch failed: ' + result.stderr);
+  const output = JSON.parse(result.stdout.trim());
+  if (output.selection?.runner !== request.runner) throw new Error('Hotfix selected runner differs from requested runner');
+  const runDirectory = dirname(output.reportPath);
+  const manifest = await json(join(runDirectory, 'runtime.json'));
+  const workspace = manifest.workspaceRoute?.hotfix;
+  await validateWorkspace(host, workspace);
+  return { workspace, runId: output.runId, pid: output.process.pid, workerPid: (await json(join(dirname(workspace.ownershipPath), 'launch.json'))).pid, reportPath: output.reportPath, briefPath: join(runDirectory, 'brief.txt'), taskContextPath: join(runDirectory, 'task-context.json'), workerContextPath: join(runDirectory, 'runtime.json'), invocationPath: join(runDirectory, 'invocation.json'), trustTranscriptPath: join(runDirectory, 'trust.json'), runnerSessionId: output.process.runnerSessionId };
 }
 
-export async function runHotfixSandboxCommand(_host: HotfixHost, _workspace: HotfixWorkspace, _command: HotfixCommand): Promise<HotfixCommandResult> {
-  throw new Error("NotImplemented: runHotfixSandboxCommand");
+export async function runHotfixSandboxCommand(host: HotfixHost, workspace: HotfixWorkspace, input: HotfixCommand): Promise<HotfixCommandResult> {
+  await validateWorkspace(host, workspace);
+  try { await inventory(workspace.cwd); } catch (error) { return { code: 1, signal: null, stdout: '', stderr: 'EACCES: snapshot alias denied: ' + String(error) }; }
+  const { prepareCodexSandbox } = await import('./codex-sandbox.ts');
+  const directory = join(dirname(workspace.cwd), 'sandbox-' + (await import('node:crypto')).randomUUID());
+  await fs.mkdir(directory, { mode: 0o700 });
+  const prepared = await prepareCodexSandbox({ runId: workspace.runId, invocation: { executable: host.sandboxExecutable, args: ['--sandbox', 'workspace-write'], liveTaskVerified: false }, scope: { hidden: ['/run', join(host.qaHome, '.raf')], readable: [directory], tmuxDirectory: directory, excludedCommands: [] }, cwd: workspace.cwd, runDirectory: directory, writableDirectories: [workspace.cwd], readOnlyDirectories: [workspace.commonDirectory, join(workspace.cwd, '.git')], environment: environment(host), timeoutMs: await (await import('./hotfix-host.ts')).timeoutMs(host) });
+  try { return await command(host, workspace.cwd, prepared.toolSandbox.executable, [...prepared.toolSandbox.args, input.executable, ...input.args], { ...prepared.environment, ...input.environment }); }
+  finally { await prepared.cleanup(); await fs.rm(directory, { recursive: true, force: true }); }
 }
 
-export async function commitHotfix(_host: HotfixHost, _request: HotfixCommitRequest): Promise<HotfixCommit> {
-  throw new Error("NotImplemented: commitHotfix");
+export async function commitHotfix(host: HotfixHost, request: HotfixCommitRequest): Promise<HotfixCommit> {
+  const { workspace, paths, message } = request;
+  await validateWorkspace(host, workspace);
+  if (!paths.length || !message.trim()) throw new Error('Explicit hotfix paths and commit message required');
+  const selected = new Set<string>();
+  for (const path of paths) {
+    if (!path || isAbsolute(path) || path.split(/[\\/]/).some(part => ['..', '.git', ''].includes(part)) || path.startsWith('-')) throw new Error('Unsafe hotfix commit path: ' + path);
+    const absolute = resolve(workspace.cwd, path);
+    if (!within(workspace.cwd, absolute)) throw new Error('Hotfix path escapes workspace');
+    let current = absolute;
+    while (current !== workspace.cwd) {
+      const info = await fs.lstat(current).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
+      if (info?.isSymbolicLink() || info?.isFile() && info.nlink !== 1) throw new Error('Hotfix commit alias refused');
+      current = dirname(current);
+    }
+    selected.add(path);
+  }
+  await inventory(workspace.cwd);
+  const staged = (await git(workspace.cwd, 'diff', '--cached', '--name-only', '-z')).split('\0').filter(Boolean);
+  if (staged.some(path => !selected.has(path))) throw new Error('Foreign staged hotfix paths');
+  await git(workspace.cwd, 'add', '-f', '--', ...paths);
+  await git(workspace.cwd, '-c', 'core.hooksPath=/dev/null', 'commit', '-m', message, '--', ...paths);
+  return { commit: await git(workspace.cwd, 'rev-parse', 'HEAD'), tree: await git(workspace.cwd, 'rev-parse', 'HEAD^{tree}'), workspace };
 }
 
-export async function cleanupHotfixWorktree(_host: HotfixHost, _workspace: HotfixWorkspace): Promise<HotfixCleanupResult> {
-  throw new Error("NotImplemented: cleanupHotfixWorktree");
+export async function cleanupHotfixWorktree(host: HotfixHost, workspace: HotfixWorkspace): Promise<HotfixCleanupResult> {
+  if (!await exists(workspace.ownershipPath)) return { removed: [], retained: [] };
+  const route = await validateWorkspace(host, workspace);
+  const activity = await json(join(dirname(workspace.ownershipPath), 'launch.json')).catch(() => null);
+  if (activity) {
+    const { alive } = await import('./hotfix-host.ts');
+    if (await alive(activity.pid, activity.start)) return { removed: [], retained: [workspace.cwd] };
+  }
+  if (await exists(join(route.control, 'intent.json'))) return { removed: [], retained: [workspace.cwd] };
+  const commit = await git(workspace.cwd, 'rev-parse', 'HEAD');
+  await git(route.cwd, 'update-ref', 'refs/raf-hotfix/' + workspace.runId, commit);
+  await git(route.cwd, 'worktree', 'remove', workspace.cwd);
+  await fs.rm(dirname(workspace.ownershipPath), { recursive: true });
+  return { removed: [workspace.cwd], retained: [] };
+}
+
+export async function validateHotfixTrust(orchestratorRoot: string, cwd: string, workspace: HotfixWorkspace): Promise<boolean> {
+  try {
+    if (cwd !== workspace.cwd) return false;
+    await validateWorkspace({ orchestratorRoot, qaHome: '', environment: {}, sandboxExecutable: '' }, workspace);
+    return true;
+  } catch { return false; }
+}
+
+export async function startHotfixCommitPort(host: HotfixHost, workspace: HotfixWorkspace, directory: string): Promise<{ close(): Promise<void> }> {
+  const { createServer } = await import('node:net');
+  await validateWorkspace(host, workspace);
+  const { processStart } = await import('./hotfix-host.ts');
+  await durable(join(dirname(workspace.ownershipPath), 'launch.json'), { pid: process.pid, start: await processStart(process.pid) });
+  const socketPath = join(directory, 'hotfix-commit.sock');
+  let chain = Promise.resolve();
+  const server = createServer(socket => {
+    let input = '';
+    socket.setEncoding('utf8');
+    socket.on('data', chunk => {
+      input += chunk;
+      if (input.length > 1024 * 1024) socket.destroy();
+      if (!input.endsWith('\n')) return;
+      socket.pause();
+      chain = chain.then(async () => {
+        try {
+          const request = JSON.parse(input);
+          if (!Array.isArray(request.paths) || !request.paths.every(path => typeof path === 'string') || typeof request.message !== 'string') throw new Error('Invalid hotfix commit request');
+          socket.end(JSON.stringify(await commitHotfix(host, { workspace, paths: request.paths, message: request.message })) + '\n');
+        } catch (error) { socket.end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }) + '\n'); }
+      });
+    });
+  });
+  await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(socketPath, resolve); });
+  await fs.chmod(socketPath, 0o600);
+  const source = `import {connect} from 'node:net'; const args=process.argv.slice(2); if(args[0]!=='--message'||!args[1]||args.length<3)throw new Error('Expected --message text paths'); const socket=connect(${JSON.stringify(socketPath)}); socket.on('connect',()=>socket.write(JSON.stringify({message:args[1],paths:args.slice(2)})+'\\n')); let value=''; socket.on('data',chunk=>value+=chunk);socket.on('end',()=>{const result=JSON.parse(value);if(result.error){console.error(result.error);process.exitCode=1}else console.log(JSON.stringify(result));});socket.on('error',error=>{console.error(error.message);process.exitCode=1});`;
+  await fs.writeFile(join(directory, 'hotfix-commit.mjs'), source, { flag: 'wx', mode: 0o500 });
+  return { close: async () => { await chain; await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())); await fs.rm(socketPath, { force: true }); } };
 }

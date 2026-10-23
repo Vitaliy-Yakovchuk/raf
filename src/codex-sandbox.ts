@@ -12,6 +12,7 @@ export interface CodexSandboxRequest {
   readonly scope: NativeSandboxScope;
   readonly cwd: string;
   readonly runDirectory: string;
+  readonly readOnlyDirectories?: readonly string[];
   readonly writableDirectories: readonly string[];
   readonly environment: Readonly<Record<string, string | undefined>>;
   readonly timeoutMs: number;
@@ -256,6 +257,7 @@ export async function prepareCodexSandbox(
       if ((await fs.stat(modules).catch(() => null))?.isDirectory()) entries[modules] = 'read';
     }
   }
+  for (const path of request.readOnlyDirectories ?? []) entries[await canonical(path)] = 'read';
   entries[directory] = 'read';
   for (const path of masked) entries[path] = 'none';
   const mountpoints: { path: string; parent: string; dev: number; ino: number }[] = [];

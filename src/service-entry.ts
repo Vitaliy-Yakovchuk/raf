@@ -1,3 +1,5 @@
+import { hotfixModuleOrigin } from './hotfix-origin.ts';
+import { acquireHotfixReader } from './hotfix-activation.ts';
 import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
 import { spawn, execFile } from 'node:child_process';
 import { promises as fs } from 'node:fs';
@@ -43,6 +45,8 @@ export function createServiceHandlers(
   const stateContext = productionStateContext(options.orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'service-store');
   const stateDirectory = join(options.homeDirectory, '.raf');
   const socketPath = join(stateDirectory, 'service.sock');
+  let bootstrapLease: { release(): Promise<void> } | undefined;
+  const releaseBootstrap = async () => { const lease = bootstrapLease; bootstrapLease = undefined; await lease?.release(); };
   const runtime = createBackgroundRuntime({ ...options.service, stateDirectory, socketPath }, {
     resolveMainPath: async () => {
       const config = JSON.parse(await fs.readFile(join(options.orchestratorRoot, 'conf', 'projects.json'), 'utf8')) as WorkspaceProjectsConfig;
@@ -55,8 +59,20 @@ export function createServiceHandlers(
         readLink: path => fs.readlink(path),
         currentBranch: async cwd => (await promisify(execFile)('git', ['-C', cwd, 'branch', '--show-current'])).stdout.trim() || null,
       });
-      if (!route.ok) throw new Error(`${route.error.code}: ${route.error.message}`);
-      return route.cwd;
+      if (!route.ok) {
+        if (stateContext.mode === 'qa' && config.projects.raf.branchPaths?.main && stateContext.codeRoot === await fs.realpath(join(options.orchestratorRoot, config.projects.raf.branchPaths.main))) return stateContext.codeRoot;
+        throw new Error(`${route.error.code}: ${route.error.message}`);
+      }
+      const lease = await acquireHotfixReader({ orchestratorRoot: options.orchestratorRoot, qaHome: options.homeDirectory, environment: {}, sandboxExecutable: 'codex' }, 'service');
+      await releaseBootstrap();
+      bootstrapLease = lease;
+      return lease.generationRoot;
+    },
+    validateMainSnapshot: async root => {
+      const config = JSON.parse(await fs.readFile(join(options.orchestratorRoot, 'conf/projects.json'), 'utf8'));
+      const production = join(options.orchestratorRoot, config.projects.raf.path);
+      if (stateContext.mode === 'qa' && root === stateContext.codeRoot && root === await fs.realpath(production)) return true;
+      return hotfixModuleOrigin(options.orchestratorRoot, production, join(root, 'bin/service.ts'), stateContext.mode === 'qa') === root;
     },
     nodeExecutable: dependencies?.nodeExecutable,
     spawn: ((command, args, settings) => {
@@ -67,7 +83,7 @@ export function createServiceHandlers(
     }) as typeof spawn,
   });
   const invoke = (operation: 'start' | 'status' | 'stop'): Handler => async () => {
-    const result = await runtime[operation]();
+    const result = await runtime[operation]().finally(releaseBootstrap);
     if (result.exitCode !== 0) throw commandFailure({
       code: 'SERVICE_OPERATION_FAILED', message: result.reason, stage: operation, source: 'background-runtime', sourceCode: result.exitCode,
       reason: result.details, received: null, expected: null, found: null, completed: [], pending: [`service ${operation}`], retrySafe: false,
@@ -75,7 +91,7 @@ export function createServiceHandlers(
     });
     return result;
   };
-  return { handlers: { 'service start': invoke('start'), 'service status': invoke('status'), 'service stop': invoke('stop') }, request: (request, requestOptions) => runtime.request(request, requestOptions) };
+  return { handlers: { 'service start': invoke('start'), 'service status': invoke('status'), 'service stop': invoke('stop') }, request: (request, requestOptions) => runtime.request(request, requestOptions).finally(releaseBootstrap) };
 }
 
 export async function runServiceEntry(options?: {

@@ -1,3 +1,5 @@
+import { retainHotfixGeneration } from './hotfix-activation.ts';
+import { prepareHotfixWorktree, validateHotfixTrust, startHotfixCommitPort } from './hotfix-worktree.ts';
 import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
 import { promises as fs, watch } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
@@ -172,7 +174,7 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
   const stateRoots = [...new Set([dirname(statePath), state, tmpRoot, temporary])];
   if (stateRoots.some(root => [resolve(cwd), workspace].some(path => within(root, path) || within(path, root)))) fail('RUNNER_WRITE_SCOPE_INVALID', 'Runner workspace overlaps the RAF state directory hidden from its sandbox');
   const ownedStore = sessionStore ? undefined : openStateStore(statePath, {
-    context: productionStateContext(fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'worker'),
+    context: productionStateContext(process.env.RAF_ORCHESTRATOR_ROOT ?? fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'worker'),
   });
   const registeredSockets = new Set<string>();
   try {
@@ -686,7 +688,14 @@ export async function createProductionServices(
       if (task.estimate.status !== 'KNOWN') return fail('RESOURCE_ESTIMATE_UNKNOWN', task.estimate.reason);
       return { ...task, estimate: task.estimate, requested: { ramBytes: task.estimate.ramBytes, diskBytes: {} }, requiredFileSystemIds: [] };
     },
-    route: async request => resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts(execute)),
+    route: async request => {
+      if (request.hotfixRunId) {
+        if (request.project !== 'raf' || request.branch !== 'main') return fail('INVALID_CONTEXT', 'Detached hotfix route is restricted to raf main');
+        const workspace = await prepareHotfixWorktree({ orchestratorRoot: context.orchestratorRoot, qaHome: join(context.tmpRoot, request.hotfixRunId + '-qa'), environment: {}, sandboxExecutable: 'codex' }, request.hotfixRunId);
+        return { ok: true, project: 'raf', branch: 'main', cwd: workspace.cwd, hotfix: workspace };
+      }
+      return resolveWorkspaceRoute(request, await json(join(context.confRoot, 'projects.json')), createWorkspacePorts(execute));
+    },
     routingSnapshot: async () => {
       const cliAvailable: Record<string, boolean> = {};
       let configured: readonly ProtocolSettings[] = [];
@@ -728,8 +737,8 @@ export async function createProductionServices(
       await fs.mkdir(directory, { mode: 0o700 });
       const reportPath = join(directory, `${launch.addressId}.json`);
       try {
-        await writeTaskContextFile(directory, { version: 1, runId: launch.runId, parameters: launch.taskContext.parameters, assignmentFingerprint: assignmentFingerprint(launch.assignment), context: launch.taskContext.context });
-        await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries, workspaceRoute: { type: launch.activity.type, project: launch.activity.project, branch: launch.taskContext.context.branch } }), { mode: 0o600, flag: 'wx' });
+        await writeTaskContextFile(directory, { version: 1, runId: launch.runId, parameters: launch.taskContext.parameters, assignmentFingerprint: assignmentFingerprint(launch.assignment), ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), context: launch.taskContext.context });
+        await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries, workspaceRoute: { type: launch.activity.type, project: launch.activity.project, branch: launch.taskContext.context.branch, ...(launch.activity.type === 'hotfix' && launch.activity.project === 'raf' ? { hotfix: await json(join(dirname(launch.activity.cwd), 'ownership.json')) } : {}) } }), { mode: 0o600, flag: 'wx' });
       } catch (error) { await fs.rm(directory, { recursive: true, force: true }); throw error; }
       prepared.set(launch.tmuxSession, { launch: structuredClone(launch), reportPath });
       return { reportPath, reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
@@ -880,7 +889,8 @@ export async function runProductionWorker(
     protocolSettings?: readonly ProtocolSettings[];
   } = {},
 ): Promise<void> {
-  const stateContext = productionStateContext(fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'worker');
+  const stateContext = productionStateContext(process.env.RAF_ORCHESTRATOR_ROOT ?? fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'worker');
+  const generationLease = await retainHotfixGeneration({ orchestratorRoot: stateContext.orchestratorRoot, qaHome: homedir(), environment: {}, sandboxExecutable: 'codex' }, fileURLToPath(new URL('../', import.meta.url)).replace(/\/$/, ''));
   const channel = await consumeWrapperRequest();
   if (channel.request.statePath !== stateContext.statePath || channel.request.tmpRoot !== stateContext.tmpRoot) throw stateFailure('STATE_CONTEXT_REFUSED', 'Worker state/tmp paths differ from selected HOME');
   const request = channel.request;
@@ -909,12 +919,18 @@ export async function runProductionWorker(
   const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
   if (!availability.available) fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
   const store = openStateStore(request.statePath, { context: stateContext });
+  let hotfixCommitPort: Awaited<ReturnType<typeof startHotfixCommitPort>> | undefined;
   let codexAccess: PreparedCodexRafCommandAccess | undefined;
   let codexSandbox: PreparedCodexSandbox | undefined;
   try {
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings.timeouts, options.execute);
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
+    const hotfix = manifest.workspaceRoute?.hotfix;
+    if (hotfix) {
+      if (!await validateHotfixTrust(context.orchestratorRoot, request.cwd, hotfix)) fail('INVALID_CONTEXT', 'Invalid detached hotfix identity');
+      hotfixCommitPort = await startHotfixCommitPort({ orchestratorRoot: context.orchestratorRoot, qaHome: join(request.tmpRoot, request.runId + '-qa'), environment: {}, sandboxExecutable: 'codex' }, hotfix, dirname(session.launchContext.reportPath));
+    }
     const writeBoundaries = manifest.writeBoundaries ?? [];
     if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text) || !isDeepStrictEqual(writeBoundaries, session.launchContext.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Worker write boundaries do not match durable launch context');
     const dependencies = await reservationTools(store, context, execute, options.execute);
@@ -933,9 +949,16 @@ export async function runProductionWorker(
       throw error;
     });
     invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
+    if (hotfix && settings.runner === 'claude') {
+      const index = invocation.args.indexOf('--settings');
+      if (index < 0) fail('RUNNER_SANDBOX_UNAVAILABLE', 'Hotfix claude requires enforced filesystem sandbox');
+      const settingsValue = JSON.parse(invocation.args[index + 1]);
+      settingsValue.sandbox.filesystem = { ...settingsValue.sandbox.filesystem, denyWrite: [hotfix.commonDirectory], allowWrite: [...writable.directories, ...writable.workspace] };
+      invocation.args[index + 1] = JSON.stringify(settingsValue);
+    }
     if (settings.runner === 'codex' && codexInvocationSandboxMode(invocation.args) !== null) {
       try {
-        codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], environment: process.env, timeoutMs: settings.timeouts.transitionMs });
+        codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], ...(hotfix ? { readOnlyDirectories: [hotfix.commonDirectory, join(hotfix.cwd, '.git')] } : {}), environment: process.env, timeoutMs: settings.timeouts.transitionMs });
       } catch (error) {
         if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
         throw error;
@@ -947,6 +970,7 @@ export async function runProductionWorker(
       invocation = codexAccess.invocation;
       if (codexAccess.unavailable) process.stderr.write(`${request.runId}: ${codexAccess.unavailable}\n`);
     }
+    if (hotfix) await fs.writeFile(join(dirname(session.launchContext.reportPath), 'invocation.json'), JSON.stringify({ cwd: request.cwd, runId: request.runId, runner: settings.runner, invocation }), { mode: 0o600 });
     let screen = '';
     let nativeId: string | undefined;
     let dismissed = false;
@@ -1014,11 +1038,12 @@ export async function runProductionWorker(
       }
       const route = manifest.workspaceRoute;
       const task = object(route) && route.type === session.activity?.type && route.project === session.activity?.project && text(route.branch) ? { type: route.type, project: route.project, branch: route.branch } : undefined;
-      if (!await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, await gitTopLevel(), task, execute)) await untrusted();
+      if (!(route?.hotfix ? await validateHotfixTrust(context.orchestratorRoot, request.cwd, route.hotfix) : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, await gitTopLevel(), task, execute))) await untrusted();
       const observation = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: null });
       const action = nextRunnerAction(settings, observation, { trustWorkspace: true });
       if (observation.state !== 'workspace_trust_required' || action.kind !== 'keys') await untrusted();
       trustAnsweredAt = Date.now();
+      if (route?.hotfix) await fs.writeFile(join(dirname(session.launchContext.reportPath), 'trust.json'), JSON.stringify({ cwd: request.cwd, gitRoot: await gitTopLevel(), runId: request.runId, keys: action.keys, answeredAt: trustAnsweredAt }), { mode: 0o600 });
       await sendKeys((action as { keys: string[] }).keys);
     };
     const sendKeys = async (keys: string[]) => {
@@ -1220,5 +1245,5 @@ export async function runProductionWorker(
       if (!handedOff) await discardFailedLaunch().catch(cleanup => process.stderr.write(`${request.runId}: failed launch cleanup: ${cleanup instanceof Error ? cleanup.message : String(cleanup)}\n`));
       throw error;
     }
-  } finally { try { await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); } finally { store.close(); } } }
+  } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); } finally { store.close(); await generationLease?.release(); } } }
 }

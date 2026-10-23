@@ -14,6 +14,7 @@ export interface WorkspaceRouteRequest {
   root: string;
   project: string;
   branch: string;
+  hotfixRunId?: string;
 }
 
 export interface WorkspaceRoutingDependencies {
@@ -41,6 +42,7 @@ export type WorkspaceRouteResult = {
   branch: string;
   cwd: string;
   sharedLibrariesPath?: string;
+  hotfix?: import('./hotfix-worktree.ts').HotfixWorkspace;
 } | {
   ok: false;
   error: { code: WorkspaceRoutingErrorCode; message: string };

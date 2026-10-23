@@ -29,6 +29,7 @@ export type BackgroundRuntimeOptions = {
 
 export type BackgroundRuntimeDependencies = {
   resolveMainPath: () => Promise<string>;
+  validateMainSnapshot?: (path: string) => Promise<boolean>;
   spawn?: typeof spawn;
   nodeExecutable?: string;
 };
@@ -160,8 +161,8 @@ export function createBackgroundRuntime(
       if (!mainPath) throw new Error('Configured raf main checkout is missing');
       const root = resolve(mainPath);
       await fs.realpath(root);
-      const branch = execFileSync('git', ['-C', root, 'branch', '--show-current'], { encoding: 'utf8' }).trim();
-      if (branch !== 'main') throw new Error(`Configured raf main checkout is on branch ${branch || '(detached)'}, expected main`);
+      const branch = (() => { try { return execFileSync('git', ['-C', root, 'branch', '--show-current'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return ''; } })();
+      if (branch !== 'main' && !await dependencies.validateMainSnapshot?.(root)) throw new Error(`Configured raf main checkout is on branch ${branch || '(detached)'}, expected main`);
       const entry = resolve(root, options.entryRelativePath);
       if (!entry.startsWith(root + '/')) throw new Error('Service entry must be within the configured main checkout');
       await fs.access(entry);

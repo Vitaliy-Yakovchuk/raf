@@ -1,3 +1,4 @@
+import { hotfixModuleOrigin } from './hotfix-origin.ts';
 import { lstatSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { userInfo } from 'node:os';
@@ -123,7 +124,7 @@ export function resolveStateContext(request: StateContextRequest): StateContext 
     if (statSync(modulePath).nlink !== 1) refuse(`Module origin has hardlink aliases: ${modulePath}`);
     const roots = Object.values(project.branchPaths).filter((path): path is string => typeof path === 'string')
       .map(path => resolve(orchestratorRoot, path));
-    const codeRoot = roots.find(root => realpathSync(root) === root && inside(modulePath, root));
+    const codeRoot = roots.find(root => { try { return realpathSync(root) === root && inside(modulePath, root); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false; throw error; } }) ?? hotfixModuleOrigin(orchestratorRoot, productionRoot, modulePath, request.environment.RAF_QA_HOME !== undefined);
     if (!codeRoot || !['src', 'bin', 'scripts'].includes(relative(codeRoot, modulePath).split(sep)[0])) refuse(`Unregistered module origin: ${modulePath}`);
     const settingsPath = join(orchestratorRoot, 'conf', 'raf.json');
     let settings;
@@ -141,7 +142,7 @@ export function resolveStateContext(request: StateContextRequest): StateContext 
         refuse('RAF_QA_HOME and HOME must select the same separate canonical HOME');
       }
       mode = 'qa';
-    } else if (codeRoot !== productionRoot || selectedHome !== workingHome ||
+    } else if ((codeRoot !== productionRoot && !hotfixModuleOrigin(orchestratorRoot, productionRoot, modulePath, false)) || selectedHome !== workingHome ||
         request.environment.HOME !== undefined && canonicalStatePath(request.environment.HOME) !== workingHome) {
       refuse(`Loaded code ${codeRoot} cannot use state ${join(selectedHome, '.raf', fileName)} with HOME ${selectedHome}; production tree is ${productionRoot}, account HOME is ${workingHome}`);
     }

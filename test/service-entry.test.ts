@@ -22,7 +22,7 @@ async function fixture(t: TestContext, mode: 'valid' | 'absent' | 'broken' = 'va
   const develop = join(root, 'raf-develop');
   const homeDirectory = join(root, 'home');
   await Promise.all([mkdir(join(root, 'conf'), { recursive: true }), mkdir(join(main, 'bin'), { recursive: true }), mkdir(join(develop, 'bin'), { recursive: true }), mkdir(homeDirectory)]);
-  execFileSync('git', ['init', '-q', '-b', 'main', main]);
+  execFileSync('git', ['init', '-q', '-b', 'main', '--separate-git-dir', join(root, 'configured-main.git'), main]);
   execFileSync('git', ['init', '-q', '-b', 'develop', develop]);
   const projects = JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
   projects.projects.raf.path = 'configured-working-main';

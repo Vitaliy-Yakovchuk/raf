@@ -115,10 +115,11 @@ process.exit(result.status ?? 1);
   const writeFlowResources = (resources: unknown) => writeFile(flowPath, JSON.stringify({ ...realFlow, resources }));
   await writeFlowResources(fixtureResources);
   await writeFile(join(confRoot, 'test-runs.json'), await readFile(new URL('../../conf/test-runs.json', import.meta.url)));
-  const { agentPhases } = JSON.parse(await readFile(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
+  const { agentPhases, commands } = JSON.parse(await readFile(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
   await writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify({
     version: 1,
     agentPhases,
+    commands: commands.filter((command: { path: string[] }) => command.path.join(' ') === 'test run'),
     agentTypes: [{ id: 'main', launchableByRaf: false }, { id: 'implement', launchableByRaf: true }, { id: 'spec', launchableByRaf: true }],
     reportStatuses: [{ id: 'succeeded', event: 'agent.succeeded' }, { id: 'failed', event: 'agent.failed' }],
     eventIdKinds: { agentAddress: 'Fixture agent address', reminderId: 'Fixture reminder ID' },

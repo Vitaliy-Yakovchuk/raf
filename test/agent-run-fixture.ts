@@ -210,7 +210,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   models.models = models.models.filter((x: any) => runner === 'claude' ? x.id === 'claude-opus' : x.id === 'gpt-6.1-sol');
   models.runners = models.runners.filter((x: any) => x.id === runner).map((x: any) => ({ ...x, initialEnabled: true }));
   const constants = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/raf-constants.json'), 'utf8'));
-  constants.commands = constants.commands.filter((x: any) => ['agent run', 'agent close', 'agent message', 'agent ps', 'help', ...(options.commands ?? [])].includes(x.path.join(' ')));
+  constants.commands = constants.commands.filter((x: any) => ['agent run', 'agent close', 'agent message', 'agent ps', 'test run', 'help', ...(options.commands ?? [])].includes(x.path.join(' ')));
   const artifact = join(directory, 'catalog.json');
   const changeDir = join(root, 'openspec', 'changes', change);
   const marker = join(directory, 'fixture.json');

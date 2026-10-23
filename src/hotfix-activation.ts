@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { alive, command, copyTree, durable, exists, git, hash, inventory, json, locked, mainRoute, processStart, validateWorkspace } from './hotfix-host.ts';
 import type { HotfixCleanupResult, HotfixHost, HotfixWorkspace } from "./hotfix-worktree.ts";
+import { stateFailure } from './state-migration-guard.ts';
 
 export type HotfixGateName = "build" | "regression" | "runtime-import" | "help" | "agent-ps" | "agent-message" | "service-start" | "service-ready" | "service-status" | "service-stop";
 export type HotfixCheckpoint = "before-intent" | "after-intent" | "before-switch" | "after-switch" | "after-refs" | "after-index" | "after-smoke" | "before-cleanup" | "after-cleanup";
@@ -368,7 +369,7 @@ export async function acquireHotfixReader(host: HotfixHost, _kind: HotfixReaderK
     await reconcile(host, route);
     const state = await registry(host, route);
     const current = state.generations[state.current];
-    if (await treeIdentity(current.root) !== current.fingerprint) throw new Error('Production generation fingerprint changed');
+    if (await treeIdentity(current.root) !== current.fingerprint) throw stateFailure('STATE_CONTEXT_REFUSED', 'Production generation fingerprint changed');
     const id = randomUUID();
     const path = join(route.control, 'readers', id + '.json');
     await durable(path, { root: current.root, pid: process.pid, start: await processStart(process.pid) });

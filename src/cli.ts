@@ -152,7 +152,7 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[]): P
     const root = lease?.generationRoot ?? codeRoot;
     const { runProductionCli } = await import(pathToFileURL(join(root, 'src/production-entry.ts')).href);
     result = await runProductionCli(argv, { orchestratorRoot, homeDirectory: homedir(), artifactPath: join(root, 'dist/catalog.json') });
-  } catch (error) { result = diagnostic('PRODUCTION_ENTRY_FAILED', error); }
+  } catch (error) { result = diagnostic(failureContext(error)?.code ?? 'PRODUCTION_ENTRY_FAILED', error); }
   finally {
     try { await lease?.release(); }
     catch (error) { if (!result || result.exitCode === 0) result = diagnostic('PRODUCTION_ENTRY_FAILED', error); }

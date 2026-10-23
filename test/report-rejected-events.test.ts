@@ -299,6 +299,10 @@ async function durableFixture(t: TestContext) {
   const catalog: EventCatalog = JSON.parse(await fs.readFile(catalogPath, 'utf8'));
   const registry = () => createEventRegistry(catalog, {
     ...store.eventRepository,
+    transaction: operation => store.eventRepository.transaction(tx => operation({
+      ...tx,
+      applyReminderEvent: (event, eventAt = at) => tx.applyReminderEvent(event, eventAt),
+    })),
     validateId: (kind, id) => {
       if (kind === 'agentAddress') return /^[a-z][a-z0-9-]*$/.test(id);
       if (kind === 'reminderId') return /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(id);

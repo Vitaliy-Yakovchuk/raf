@@ -120,10 +120,17 @@ export async function rejectPendingAgentReport(request: AgentReportRequest, resu
 
 export async function readPendingAgentReport(request: AgentReportRequest, ports: PendingAgentReportPorts): Promise<AgentReportResult | null> {
   const key = request.assignment.root;
+  const diagnostics: { reason: string; snapshot?: ReportRejectionSnapshot }[] = [];
   const previous = acceptanceQueues.get(key) ?? Promise.resolve();
-  const next = previous.catch(() => {}).then(() => readReportSnapshot(request, ports));
+  const next = previous.catch(() => {}).then(() => readReportSnapshot(request, {
+    ...ports,
+    diagnostic: async (reason, snapshot) => { diagnostics.push({ reason, snapshot }); },
+  }));
   acceptanceQueues.set(key, next);
-  try { return await next; } finally { if (acceptanceQueues.get(key) === next) acceptanceQueues.delete(key); }
+  let result: AgentReportResult | null;
+  try { result = await next; } finally { if (acceptanceQueues.get(key) === next) acceptanceQueues.delete(key); }
+  for (const diagnostic of diagnostics) await ports.diagnostic(diagnostic.reason, diagnostic.snapshot);
+  return result;
 }
 async function readReportSnapshot(request: AgentReportRequest, ports: PendingAgentReportPorts): Promise<AgentReportResult | null> {
   const component = (value: string) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value);

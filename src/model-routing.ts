@@ -26,6 +26,7 @@ export interface RoutingSnapshot {
   cliAvailable: Record<string, boolean>;
   cliReasons?: Record<string, string>;
   quotas: { runner: string; pool: string; status: 'available' | 'exhausted' | 'unknown' }[];
+  cliWarnings?: Readonly<Record<string, readonly string[]>>;
 }
 
 export interface ModelRequest {
@@ -44,6 +45,7 @@ export interface ModelAvailability {
   available: boolean;
   quota: 'available' | 'exhausted' | 'unknown';
   reasons: string[];
+  warnings: readonly string[];
 }
 
 export type ModelSelection =

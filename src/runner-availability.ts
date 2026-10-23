@@ -17,7 +17,7 @@ export type RunnerExecutableResolution =
   | { readonly status: 'missing'; readonly reason: string };
 
 export type RunnerAvailability =
-  | { readonly runner: string; readonly available: true; readonly path: string; readonly version: string }
+  | { readonly runner: string; readonly available: true; readonly path: string; readonly version: string; readonly warnings: readonly string[] }
   | { readonly runner: string; readonly available: false; readonly reason: string };
 
 export interface RunnerAvailabilityDependencies {

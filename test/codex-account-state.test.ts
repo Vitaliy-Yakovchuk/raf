@@ -64,7 +64,8 @@ function exchange(path: string): Promise<string> {
 }
 
 async function fixture(t: TestContext, symlinkState = false, symlinkTmp = false): Promise<Fixture> {
-  const root = await fs.mkdtemp('/tmp/raf-y6-');
+  const scratch = await fs.realpath(process.env.RAF_TEST_SCRATCH_ROOT ?? os.userInfo().homedir);
+  const root = await fs.mkdtemp(join(scratch, '.raf-y6-'));
   const sockets: ActiveSocket[] = [];
   let database: DatabaseSync | undefined;
   t.after(async () => {

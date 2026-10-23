@@ -446,16 +446,22 @@ test('[production-factory] disk admission checks development and HOME without re
     const prepared = await runtime.prepareReport(launch);
     const result = await runtime.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
     if (!result.admitted) await prepared.cleanupUnstarted();
-    return result;
+    return {
+      result,
+      cleanup: async () => {
+        await runtime.abortLaunch(runId, 'fixture admission iteration complete');
+        await prepared.cleanupUnstarted();
+      },
+    };
   };
-  const denied = await attempt('dev-full', 1024, homeThresholdBytes / 1024);
+  const { result: denied } = await attempt('dev-full', 1024, homeThresholdBytes / 1024);
   assert.equal(denied.admitted, false);
   if (!denied.admitted) {
     assert.match(denied.reason, /insufficient disk on \/dev\/fake-dev/);
     assert.doesNotMatch(denied.reason, /fake-home/);
   }
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
-  const homeDenied = await attempt('home-full', 200 * 1024 * 1024, homeThresholdBytes / 1024 - 1);
+  const { result: homeDenied } = await attempt('home-full', 200 * 1024 * 1024, homeThresholdBytes / 1024 - 1);
   assert.equal(homeDenied.admitted, false, 'an otherwise admissible launch must check distinct HOME');
   if (!homeDenied.admitted) {
     for (const fragment of ['/dev/fake-home', String(homeThresholdBytes - 1024), String(homeThresholdBytes), 'conf/flow.json#/resources/home/minDiskBytes']) {
@@ -465,11 +471,12 @@ test('[production-factory] disk admission checks development and HOME without re
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
   for (const extraKb of [0, 1]) {
     const runId = `home-sufficient-${extraKb}`;
-    const admitted = await attempt(runId, 200 * 1024 * 1024, homeThresholdBytes / 1024 + extraKb);
+    const { result: admitted, cleanup } = await attempt(runId, 200 * 1024 * 1024, homeThresholdBytes / 1024 + extraKb);
     assert.equal(admitted.admitted, true, 'reason' in admitted ? admitted.reason : 'admitted');
     const reservation = f.store.sessionRepository.transaction(tx => tx.listReservations()).find(row => row.runId === runId);
     assert.deepEqual(Object.keys(reservation?.resourceBundle?.resources.diskBytes ?? {}), ['/dev/fake-dev']);
     assert.equal(reservation?.resourceBundle?.resources.diskBytes['/dev/fake-dev'], fixtureResourceEstimates.agentTypes.implement.diskBytesPerFileSystem);
+    await cleanup();
   }
   const measuredPaths = f.calls.filter(command => command.executable === 'df').flatMap(command => command.args.slice(1));
   assert.ok(measuredPaths.includes(f.home), 'runtime must map and measure the launch user HOME');

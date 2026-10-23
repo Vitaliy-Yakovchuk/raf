@@ -36,7 +36,6 @@ import { createLaunchState, reserveLaunchInTransaction, evaluateLaunchAdmissionI
 import { createSessionState, closeSessionInTransaction, type ProcessIdentity, type SessionRecord, type WorkResult } from './session-state.ts';
 import { AgentControlService, MainAttachedElsewhereError, type VerifiedSender, type ActivityEvent, type MainAttachment } from './agent-control.ts';
 import { ReminderService, type SessionEnd } from './reminders.ts';
-import { loadEventCatalog } from './event-catalog.ts';
 import { evaluateResourceAdmission, type ResourceAdmission, type ResourceAdmissionInput } from './resource-admission.ts';
 import { buildAdmissionSnapshot, type AdmissionSnapshot } from './admission-snapshot.ts';
 import { loadFlowPolicy, type FlowPolicy } from './flow-policy.ts';

@@ -420,37 +420,60 @@ test('[production-worker] crash without a report records failed in the same SQLi
   assert.deepEqual(listTaskReservations(f.store), []);
 });
 
-test('[production-factory] disk admission covers only the development tree, not HOME, state or temporary volumes', async t => {
-  const f = await fixture(t, { productionQa: true });
-  const services = (availableDevKb: number) => {
+test('[production-factory] disk admission checks development and HOME without reserving HOME or checking state and temporary volumes', async t => {
+  const f = await fixture(t, { productionQa: true, externalHome: true });
+  const configuredHomeBytes = JSON.parse(await readFile(f.flowPath, 'utf8')).resources.home.minDiskBytes;
+  const homeThresholdBytes = Math.ceil(configuredHomeBytes / 1024) * 1024;
+  await f.writeFlowResources({ ...fixtureResources, home: { minDiskBytes: homeThresholdBytes } });
+  const services = (availableDevKb: number, availableHomeKb: number) => {
     const execute: AdapterCommandExecutor = async command => {
       if (command.executable !== 'df') return f.execute(command);
       f.calls.push(structuredClone(command));
-      const rows = command.args.slice(1).map(path => path === f.root || path.startsWith(f.root + '/') && !path.startsWith(f.tmpRoot)
-        ? `/dev/fake-dev 209715200 0 ${availableDevKb} 1% ${f.root}`
-        : `/dev/fake-home 11534336 11530240 4096 99% ${path}`);
+      const rows = command.args.slice(1).map(path => {
+        if (path === f.home) return `/dev/fake-home 209715200 0 ${availableHomeKb} 1% ${f.home}`;
+        if (path === f.tmpRoot || path.startsWith(f.tmpRoot + '/')) return `/dev/fake-tmp 11534336 11534336 0 100% ${f.tmpRoot}`;
+        if (path === f.statePath || path === dirname(f.statePath)) return `/dev/fake-state 11534336 11534336 0 100% ${dirname(f.statePath)}`;
+        return `/dev/fake-dev 209715200 0 ${availableDevKb} 1% ${f.root}`;
+      });
       return { exitCode: 0, stdout: ['Filesystem 1024-blocks Used Available Capacity Mounted on', ...rows].join('\n') + '\n', stderr: '' };
     };
     return f.createProductionServices(f.store, configuration, f.context, { execute });
   };
   const base = (runId: string): RuntimeLaunch => ({ runId, addressId: f.params.id, tmuxSession: `${runId}-tmux`, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot });
-  const attempt = async (runId: string, availableDevKb: number) => {
-    const runtime = await services(availableDevKb);
+  const attempt = async (runId: string, availableDevKb: number, availableHomeKb: number) => {
+    const runtime = await services(availableDevKb, availableHomeKb);
     const { task, launch } = await derivedLaunch(runtime, f, base(runId));
     const prepared = await runtime.prepareReport(launch);
     const result = await runtime.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
     if (!result.admitted) await prepared.cleanupUnstarted();
     return result;
   };
-  const denied = await attempt('dev-full', 1024);
+  const denied = await attempt('dev-full', 1024, homeThresholdBytes / 1024);
   assert.equal(denied.admitted, false);
   if (!denied.admitted) {
     assert.match(denied.reason, /insufficient disk on \/dev\/fake-dev/);
     assert.doesNotMatch(denied.reason, /fake-home/);
   }
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
-  const admitted = await attempt('home-full', 200 * 1024 * 1024);
-  assert.equal(admitted.admitted, true, 'reason' in admitted ? admitted.reason : 'admitted');
-  const reservation = f.store.sessionRepository.transaction(tx => tx.listReservations()).find(row => row.runId === 'home-full');
-  assert.deepEqual(Object.keys(reservation?.resourceBundle?.resources.diskBytes ?? {}), ['/dev/fake-dev']);
+  const homeDenied = await attempt('home-full', 200 * 1024 * 1024, homeThresholdBytes / 1024 - 1);
+  assert.equal(homeDenied.admitted, false, 'an otherwise admissible launch must check distinct HOME');
+  if (!homeDenied.admitted) {
+    for (const fragment of ['/dev/fake-home', String(homeThresholdBytes - 1024), String(homeThresholdBytes), 'conf/flow.json#/resources/home/minDiskBytes']) {
+      assert.ok(homeDenied.reason.includes(fragment), `HOME refusal must name ${fragment}`);
+    }
+  }
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
+  for (const extraKb of [0, 1]) {
+    const runId = `home-sufficient-${extraKb}`;
+    const admitted = await attempt(runId, 200 * 1024 * 1024, homeThresholdBytes / 1024 + extraKb);
+    assert.equal(admitted.admitted, true, 'reason' in admitted ? admitted.reason : 'admitted');
+    const reservation = f.store.sessionRepository.transaction(tx => tx.listReservations()).find(row => row.runId === runId);
+    assert.deepEqual(Object.keys(reservation?.resourceBundle?.resources.diskBytes ?? {}), ['/dev/fake-dev']);
+    assert.equal(reservation?.resourceBundle?.resources.diskBytes['/dev/fake-dev'], fixtureResourceEstimates.agentTypes.implement.diskBytesPerFileSystem);
+  }
+  const measuredPaths = f.calls.filter(command => command.executable === 'df').flatMap(command => command.args.slice(1));
+  assert.ok(measuredPaths.includes(f.home), 'runtime must map and measure the launch user HOME');
+  for (const excluded of [f.statePath, dirname(f.statePath), f.tmpRoot]) {
+    assert.ok(!measuredPaths.includes(excluded), `non-admission path must not add a disk check: ${excluded}`);
+  }
 });

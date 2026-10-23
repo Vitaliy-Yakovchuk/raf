@@ -18,6 +18,7 @@ export interface FlowPolicy {
   readonly resources: {
     readonly normal: ResourceThresholds;
     readonly hotfix: ResourceThresholds;
+    readonly home: { readonly minDiskBytes: number };
   };
   readonly retention: {
     readonly closedRemindersMs: number;

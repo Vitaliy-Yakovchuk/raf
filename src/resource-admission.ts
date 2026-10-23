@@ -33,6 +33,7 @@ export interface ResourceAdmissionInput {
   requested: ResourceReservation;
   unusedReservations: ResourceReservation[];
   requiredFileSystemIds: string[];
+  homeFileSystemId?: string | null;
 }
 
 export interface ResourceAdmission {
@@ -44,7 +45,7 @@ export interface ResourceAdmission {
   remaining: { ramBytes: number; diskBytes: Record<string, number>; normalizedLoad: number } | null;
 }
 
-export function evaluateResourceAdmission(input: ResourceAdmissionInput): ResourceAdmission {
+export function evaluateResourceAdmission(input: ResourceAdmissionInput, policyOverride?: import('./flow-policy.ts').FlowPolicy): ResourceAdmission {
   const policy = loadFlowPolicy().resources;
   const { measurement, requested, unusedReservations, requiredFileSystemIds } = input;
   const estimate = input.estimate ? { estimate: structuredClone(input.estimate) } : {};

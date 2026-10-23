@@ -27,7 +27,7 @@ export const configuration: RuntimeConfiguration = {
 };
 
 export const realFlow = JSON.parse(await readFile(new URL('../../conf/flow.json', import.meta.url), 'utf8'));
-export const fixtureResources = { normal: { ...realFlow.resources.normal, minRamBytes: 1024, minDiskBytes: 1024 }, hotfix: { ...realFlow.resources.hotfix, minRamBytes: 1024, minDiskBytes: 1024 } };
+export const fixtureResources = { normal: { ...realFlow.resources.normal, minRamBytes: 1024, minDiskBytes: 1024 }, hotfix: { ...realFlow.resources.hotfix, minRamBytes: 1024, minDiskBytes: 1024 }, home: { ...realFlow.resources.home } };
 export const fixtureResourceEstimates = {
   agentTypes: {
     implement: { ramBytes: 2048, diskBytesPerFileSystem: 4096 },

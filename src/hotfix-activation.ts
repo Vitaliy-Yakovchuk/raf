@@ -1,9 +1,9 @@
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { promisify } from 'node:util';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { alive, command, copyTree, durable, exists, git, hash, inventory, json, locked, mainRoute, processStart, validateWorkspace } from './hotfix-host.ts';
 import type { HotfixCleanupResult, HotfixHost, HotfixWorkspace } from "./hotfix-worktree.ts";
 
@@ -87,6 +87,28 @@ async function configurationFiles(host: HotfixHost, workspace: HotfixWorkspace):
 const gateNames: readonly HotfixGateName[] = ['build', 'regression', 'runtime-import', 'help', 'agent-ps', 'agent-message', 'service-start', 'service-ready', 'service-status', 'service-stop'];
 const fingerprint = (commit: string, tree: string, files: readonly HotfixSnapshotFile[], configuration: readonly HotfixSnapshotFile[]) => hash(JSON.stringify({ commit, tree, files, configuration }));
 
+async function prepareDependencies(host: HotfixHost, workspace: HotfixWorkspace, main: string, evidenceRoot: string, environment: NodeJS.ProcessEnv): Promise<void> {
+  const lockfile = await fs.readFile(join(workspace.cwd, 'package-lock.json'));
+  const config = await json(join(host.orchestratorRoot, 'conf/projects.json'));
+  const sources = new Set([fileURLToPath(new URL('../', import.meta.url)), main]);
+  const develop = config.projects?.raf?.branchPaths?.develop;
+  if (typeof develop === 'string') sources.add(resolve(host.orchestratorRoot, develop));
+  for (const source of sources) {
+    const modules = join(source, 'node_modules');
+    if (resolve(source) === workspace.cwd || !await exists(modules)) continue;
+    const sourceLockfile = await fs.readFile(join(source, 'package-lock.json')).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
+    if (!sourceLockfile?.equals(lockfile)) continue;
+    await fs.rm(join(workspace.cwd, 'node_modules'), { recursive: true, force: true });
+    await fs.cp(modules, join(workspace.cwd, 'node_modules'), { recursive: true, dereference: true });
+    await durable(join(evidenceRoot, 'dependencies.json'), { method: 'copy', source, target: workspace.cwd, lockfileSha256: hash(lockfile) });
+    return;
+  }
+  const argv = ['ci', '--include=dev', '--ignore-scripts', '--no-audit', '--no-fund'];
+  const result = await command(host, workspace.cwd, 'npm', argv, environment);
+  await durable(join(evidenceRoot, 'dependencies.json'), { method: 'npm-ci', command: ['npm', ...argv], cwd: workspace.cwd, lockfileSha256: hash(lockfile), ...result });
+  if (result.code !== 0) throw new Error('Hotfix dependency preparation failed: no installed dependencies with an identical package-lock.json; npm ci is unavailable or failed: ' + result.stderr);
+}
+
 export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVerificationRequest): Promise<VerifiedHotfix> {
   const route = await validateWorkspace(host, request.workspace);
   const workspace = request.workspace;
@@ -103,6 +125,7 @@ export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVer
   await durable(join(qaRoot, 'conf/projects.json'), qaConfig);
   const configuration = await configurationFiles(host, workspace);
   const environment = { RAF_ORCHESTRATOR_ROOT: qaRoot };
+  await prepareDependencies(host, workspace, route.cwd, evidenceRoot, environment);
   const cli = [process.execPath, join(workspace.cwd, 'bin/raf.ts')];
   const specifications: { name: HotfixGateName; argv: readonly string[] }[] = [
     { name: 'build', argv: ['npm', 'run', 'build'] },

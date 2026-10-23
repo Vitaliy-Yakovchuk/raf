@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, rm, writeFile, lstat, symlink } from 'node:fs/promises';
+import { copyFile, mkdtemp, mkdir, readFile, rm, writeFile, lstat, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { Server } from 'node:net';
 import { join } from 'node:path';
@@ -19,8 +19,10 @@ for (const workspaceWritable of [false, true]) {
     const runDirectory = join(root, 'run');
     const change = join(root, 'change');
     const bin = join(root, 'bin');
+    const confRoot = join(root, 'conf');
     const questions = join(root, 'questions.md');
-    await Promise.all([cwd, runDirectory, change, bin].map(path => mkdir(path)));
+    await Promise.all([cwd, runDirectory, change, bin, confRoot].map(path => mkdir(path)));
+    await copyFile(new URL('../../conf/raf-constants.json', import.meta.url), join(confRoot, 'raf-constants.json'));
     await writeFile(questions, '');
     await mkdir(join(change, '.codex'));
     const foreign = join(root, 'foreign');

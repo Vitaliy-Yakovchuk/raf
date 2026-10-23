@@ -75,6 +75,7 @@ async function fixture(t: TestContext, linkedOrchestrator = false) {
   const tmpRoot = join(home, '.raf', 'tmp');
   await Promise.all([change, dirname(questions), dirname(spec), confRoot, tmpRoot].map(path => mkdir(path, { recursive: true })));
   await Promise.all([
+    writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify(constants)),
     writeFile(join(change, 'proposal.md'), '# Document only\n'),
     writeFile(join(change, 'design.md'), '# Document design\n'),
     writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Write assigned documents\n'),

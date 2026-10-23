@@ -14,8 +14,6 @@ const codexProtocol: ProtocolSettings = rafConfiguration.runnerProtocols.find((e
 assert.ok(codexProtocol?.native, 'the configured codex native dialect is required');
 
 async function linkedWorktree(root: string, cwd: string) {
-  const init = spawnSync('git', ['init', '--quiet', '--initial-branch=main', root], { encoding: 'utf8' });
-  assert.equal(init.status, 0, init.stderr);
   const common = join(root, '.git', 'modules', 'raf');
   const linked = join(common, 'worktrees', 'raf-develop');
   await mkdir(dirname(common), { recursive: true });
@@ -34,7 +32,26 @@ async function linkedWorktree(root: string, cwd: string) {
 
 async function scopedFixture(t: TestContext, metadata: boolean, worktree = false, missingQuestions = false) {
   const f = await fixture(t);
-  const gitDirectories = worktree ? await linkedWorktree(f.root, f.cwd) : [];
+  const gitEnvironment: NodeJS.ProcessEnv = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+  for (const name of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE']) delete gitEnvironment[name];
+  const git = (...args: string[]): string => {
+    const result = spawnSync('git', args, { cwd: f.root, env: gitEnvironment, encoding: 'utf8' });
+    assert.ifError(result.error);
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout.trim();
+  };
+  git('init', '--quiet', '--initial-branch=main');
+  git('config', '--local', 'user.name', 'Fixture');
+  git('config', '--local', 'user.email', 'fixture@example.invalid');
+  git('config', '--local', 'commit.gpgsign', 'false');
+  git('config', '--local', 'core.hooksPath', '/dev/null');
+  const gitDirectories = worktree ? await linkedWorktree(f.root, f.cwd)
+    : await Promise.all([join(f.cwd, '.git'), join(f.root, '.git')].map(path => realpath(path)));
+  const initialTasks = `${await readFile(f.tasksPath, 'utf8')}\n- [ ] 2.2 Unassigned fixture task stays open\n`;
+  await writeFile(f.tasksPath, initialTasks);
+  git('add', '--', relative(f.root, f.changeRoot));
+  git('commit', '--quiet', '-m', 'Fixture assignment baseline');
+  const baselineHead = git('rev-parse', 'HEAD');
   if (missingQuestions) await rm(dirname(f.questionsPath), { recursive: true });
   const catalog = JSON.parse(await readFile(new URL('../dist/catalog.json', import.meta.url), 'utf8'));
   const configured = { ...configuration, catalog };
@@ -62,8 +79,8 @@ async function scopedFixture(t: TestContext, metadata: boolean, worktree = false
   const executable = join(f.binRoot, 'codex');
   const writeProbe = String.raw`
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
-const { targets, denied, metadata, task, reportPath, report } = JSON.parse(process.argv[1]);
+import { writeFileSync, renameSync } from 'node:fs';
+const { targets, denied, reportPath, report } = JSON.parse(process.argv[1]);
 for (const path of denied) assert.throws(() => writeFileSync(path, 'forbidden synthetic write'), path);
 const writes = targets.map(path => {
   try { writeFileSync(path, 'approved synthetic write'); return { path, allowed: true }; }
@@ -71,8 +88,8 @@ const writes = targets.map(path => {
 });
 process.stdout.write(JSON.stringify(writes));
 assert.ok(writes.every(row => row.allowed), 'every assigned write must succeed inside the tool sandbox');
-if (metadata) writeFileSync(task, readFileSync(task, 'utf8').replace('- [ ] 2.1 ', '- [x] 2.1 '));
-writeFileSync(reportPath, JSON.stringify(report));
+writeFileSync(reportPath + '.tmp', JSON.stringify(report));
+renameSync(reportPath + '.tmp', reportPath);
 `;
   await writeFile(executable, String.raw`#!${process.execPath}
 import { readFileSync, writeFileSync, existsSync, realpathSync } from 'node:fs';
@@ -117,7 +134,7 @@ const timer = setInterval(() => {
   if (!reported && existsSync(${JSON.stringify(releasePath)})) {
     const report = { status: metadata ? 'succeeded' : 'failed', answer: 'Scoped synthetic writes', changes: assignment.assignments.map(change => ({ id: change.id, items: change.items.map(item => ({ id: item.id, status: metadata ? 'succeeded' : 'failed', ...(metadata ? {} : { reason: 'Synthetic report-only scope keeps task unfinished' }) })) })) };
     const launcher = JSON.parse(readFileSync(${JSON.stringify(releasePath)}, 'utf8'));
-    const probe = spawnSync(launcher.executable, [...launcher.args, process.execPath, '--input-type=module', '-e', ${JSON.stringify(writeProbe)}, JSON.stringify({ targets, denied: ${JSON.stringify(denied)}, metadata, task: ${JSON.stringify(join(metadataDirectory, 'tasks.md'))}, reportPath: assignment.report_path, report })], { encoding: 'utf8', env: launcher.environment, timeout: launcher.timeoutMs });
+    const probe = spawnSync(launcher.executable, [...launcher.args, process.execPath, '--input-type=module', '-e', ${JSON.stringify(writeProbe)}, JSON.stringify({ targets, denied: ${JSON.stringify(denied)}, reportPath: assignment.report_path, report })], { encoding: 'utf8', env: launcher.environment, timeout: launcher.timeoutMs });
     writeFileSync(${JSON.stringify(writeEvidence)}, JSON.stringify({ status: probe.status, stdout: probe.stdout, stderr: probe.stderr, error: probe.error?.message }));
     reported = true;
   }
@@ -156,7 +173,7 @@ try { console.log(JSON.stringify(await app.handlers['agent run'](${JSON.stringif
     return started;
   };
   const session = () => f.store.sessionRepository.transaction(tx => tx.getSession(runId));
-  return { ...f, runId, reportPath, metadataDirectory, documentPath, targets, boundaries, gitDirectories, writableGitDirectories, siblingPath, protocol, argvPath, releasePath, exitGate, writeEvidence, nativeId, launch, session };
+  return { ...f, runId, reportPath, metadataDirectory, documentPath, targets, boundaries, gitDirectories, writableGitDirectories, siblingPath, protocol, argvPath, releasePath, exitGate, writeEvidence, nativeId, launch, session, git, initialTasks, baselineHead };
 }
 
 for (const [metadata, worktree, missingQuestions] of [[true, false, false], [false, false, false], [true, true, false], [false, true, false], [false, true, true]] as const) {
@@ -221,6 +238,15 @@ for (const [metadata, worktree, missingQuestions] of [[true, false, false], [fal
     const accepted = await eventually(f.session, row => row?.result?.status === (metadata ? 'succeeded' : 'failed'), 'worker writes exact report path and accepts report after parent exited');
     assert.equal(accepted?.state, 'running');
     assert.equal(accepted?.result?.response, 'Scoped synthetic writes');
+    const expectedTasks = metadata ? f.initialTasks.replace('- [ ] 2.1 ', '- [x] 2.1 ') : f.initialTasks;
+    assert.equal(await readFile(f.tasksPath, 'utf8'), expectedTasks, 'raf alone marks the assigned task and preserves the unassigned task');
+    const tasksRelative = relative(f.root, f.tasksPath);
+    assert.equal(f.git('show', `HEAD:${tasksRelative}`), expectedTasks.trim(), 'the accepted checkbox state is committed');
+    assert.equal(f.git('diff', 'HEAD', '--', tasksRelative), '', 'no uncommitted checkbox remains');
+    if (metadata) {
+      assert.equal(f.git('rev-list', '--count', `${f.baselineHead}..HEAD`), '1', 'raf creates exactly one checkbox commit');
+      assert.equal(f.git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'), tasksRelative, 'the checkbox commit touches only tasks.md');
+    } else assert.equal(f.git('rev-parse', 'HEAD'), f.baselineHead, 'a failed report creates no checkbox commit');
     const writes = JSON.parse(probe.stdout);
     assert.ok(writes.every((row: { allowed: boolean }) => row.allowed));
     for (const path of f.targets) assert.equal(await readFile(path, 'utf8'), 'approved synthetic write');

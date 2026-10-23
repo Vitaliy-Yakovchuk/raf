@@ -118,10 +118,12 @@ export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVer
   const before = await inventory(workspace.cwd);
   const evidenceRoot = join(route.control, 'verification', workspace.runId, randomUUID());
   await fs.mkdir(evidenceRoot, { recursive: true, mode: 0o700 });
-  const qaRoot = dirname(workspace.cwd);
+  const qaRoot = join(evidenceRoot, 'stand');
+  await fs.cp(join(host.orchestratorRoot, 'conf'), join(qaRoot, 'conf'), { recursive: true, dereference: true });
   const qaConfig = await json(join(qaRoot, 'conf/projects.json'));
   qaConfig.projects.raf.path = 'raf-main';
   qaConfig.projects.raf.branchPaths.main = 'raf-main';
+  qaConfig.projects.raf.branchPaths.hotfix = workspace.cwd;
   await durable(join(qaRoot, 'conf/projects.json'), qaConfig);
   const configuration = await configurationFiles(host, workspace);
   const environment = { RAF_ORCHESTRATOR_ROOT: qaRoot };
@@ -143,6 +145,15 @@ export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVer
   let primary: Error | undefined;
   for (const specification of specifications) {
     if (primary && specification.name !== 'service-stop') continue;
+    if (!primary && specification.name === 'runtime-import') {
+      const snapshot = join(qaRoot, 'raf-main');
+      await copyTree(workspace.cwd, snapshot);
+      await git(snapshot, 'init', '-b', 'main');
+      await git(snapshot, 'add', '--all');
+      await git(snapshot, 'add', '-f', 'dist');
+      await git(snapshot, '-c', 'user.name=raf hotfix verification', '-c', 'user.email=raf@localhost', 'commit', '-m', 'Verified hotfix snapshot');
+      if (JSON.stringify(await inventory(snapshot)) !== JSON.stringify(await inventory(workspace.cwd))) throw new Error('Verification stand differs from hotfix candidate');
+    }
     let result = await command(host, workspace.cwd, specification.argv[0], specification.argv.slice(1), environment);
     if (specification.name === 'build' && result.code === 0) {
       const changed = (await git(workspace.cwd, 'diff', 'HEAD', '--name-only')).split('\n').filter(Boolean);
@@ -189,6 +200,9 @@ async function checkCandidate(host: HotfixHost, candidate: VerifiedHotfix) {
 interface Generation { root: string; commit: string; fingerprint: string; files: readonly HotfixSnapshotFile[] }
 interface Registry { current: string; generations: Record<string, Generation>; prepared?: string[] }
 interface Intent { version: 1; base: string; target: string; previous: string; next: string; prepared: string; oldTree: string; newTree: string; phase: string; candidate: VerifiedHotfix }
+async function generationSmoke(host: HotfixHost, root: string) {
+  return command(host, root, process.execPath, ['--input-type=module', '-e', `const {runProductionCli}=await import(${JSON.stringify(pathToFileURL(join(root, 'src/production-entry.ts')).href)});const result=await runProductionCli(['agent','ps'],${JSON.stringify({ orchestratorRoot: host.orchestratorRoot, homeDirectory: host.qaHome, artifactPath: join(root, 'dist/catalog.json') })});if(result.stdout)process.stdout.write(result.stdout+'\\n');if(result.stderr)process.stderr.write(result.stderr+'\\n');process.exitCode=result.exitCode;`]);
+}
 async function generation(host: HotfixHost, route: Awaited<ReturnType<typeof mainRoute>>, source: string, commit: string): Promise<Generation> {
   const parent = join(route.control, 'generations', randomUUID());
   const root = join(parent, 'raf-main');
@@ -223,7 +237,7 @@ async function reconcile(host: HotfixHost, route: Awaited<ReturnType<typeof main
   const actual = await treeIdentity(route.cwd);
   let commit: string;
   if (actual === intent.newTree) {
-    const smoke = await command(host, intent.next, process.execPath, [join(intent.next, 'bin/raf.ts'), 'agent', 'ps']);
+    const smoke = await generationSmoke(host, intent.next);
     if (smoke.code !== 0) {
       await createAtomicHotfixSwitch().exchange(route.cwd, intent.prepared);
       return reconcile(host, route);
@@ -281,7 +295,7 @@ export async function activateHotfix(host: HotfixHost, candidate: VerifiedHotfix
     await updateGitlink(host, route.cwd, candidate.commit);
     intent.phase = 'index'; await durable(join(route.control, 'intent.json'), intent);
     await checkpoint('after-index');
-    const smoke = await command(host, next.root, process.execPath, [join(next.root, 'bin/raf.ts'), 'agent', 'ps']);
+    const smoke = await generationSmoke(host, next.root);
     if (smoke.code !== 0) {
       await provider.exchange(route.cwd, prepared);
       await reconcile(host, route);

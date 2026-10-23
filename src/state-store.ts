@@ -81,7 +81,7 @@ export interface StateStore {
   getCommandTiming(command: string): CommandTiming | undefined;
 }
 
-export const STATE_SCHEMA_VERSION = 10;
+export const STATE_SCHEMA_VERSION = 11;
 
 export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
@@ -194,12 +194,12 @@ export function openStateStore(path: string, options?: import('./state-migration
 
       const version = () => Number(db.prepare("PRAGMA user_version").get()?.user_version);
       checkSchema(db);
-      if (version() < 10) {
+      if (version() < 11) {
         transaction(() => {
 
           checkContext();
           const current = checkSchema(db);
-          if (current === 10) return;
+          if (current === 11) return;
           if (current === 0) {
           db.exec(`
             CREATE TABLE runners (
@@ -336,7 +336,7 @@ export function openStateStore(path: string, options?: import('./state-migration
             ) STRICT;
             PRAGMA user_version = 9;
           `); options?.afterMigrationStep?.(9); }
-          db.exec(`
+          if (current < 10) { db.exec(`
             CREATE TABLE result_notices (
               id TEXT PRIMARY KEY NOT NULL,
               run_id TEXT NOT NULL,
@@ -344,7 +344,18 @@ export function openStateStore(path: string, options?: import('./state-migration
             ) STRICT;
             PRAGMA user_version = 10;
           `);
-          options?.afterMigrationStep?.(10);
+          options?.afterMigrationStep?.(10); }
+          db.exec(`
+            CREATE TABLE test_run_groups (
+              project TEXT NOT NULL,
+              workspace TEXT NOT NULL,
+              group_id TEXT NOT NULL,
+              payload TEXT NOT NULL,
+              PRIMARY KEY (project, workspace, group_id)
+            ) STRICT;
+            PRAGMA user_version = 11;
+          `);
+          options?.afterMigrationStep?.(11);
         });
       }
       for (let attempt = 0; ; attempt++) {

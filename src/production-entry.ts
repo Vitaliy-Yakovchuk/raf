@@ -140,6 +140,10 @@ export async function withProductionRuntime<T>(options: ProductionEntryOptions, 
 }
 
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
+  if (argv[0] === 'test' && argv[1] === 'run' && !argv.includes('--help')) {
+    const { runConfiguredTestRun } = await import('./test-run-runtime.ts');
+    return runConfiguredTestRun(argv.slice(2), options);
+  }
   const startedAtMs = performance.now();
   let runtime: AppRuntime | undefined;
   const unavailable = () => { throw failure('COMMAND_UNAVAILABLE', 'Production service for this operation is unavailable'); };

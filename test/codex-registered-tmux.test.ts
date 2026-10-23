@@ -295,6 +295,7 @@ for (const foreignEnvironment of [false, true]) {
     const f = await fixture(t);
     await hostControl(f);
     const before = f.store.sessionRepository.transaction(tx => tx.listSessions());
+    for (const directory of [f.workspace, f.runDirectory]) await fs.writeFile(join(directory, 'retained.json'), '{"status":"succeeded"}');
     let prepared: PreparedCodexSandbox | undefined;
     try {
       const input = await request(f, foreignEnvironment);
@@ -315,7 +316,7 @@ for (const foreignEnvironment of [false, true]) {
       if (prepared) {
         for (const path of prepared.policyPaths) await assert.rejects(fs.stat(path), { code: 'ENOENT' }, 'cleanup removes only own policy');
         for (const directory of [f.workspace, f.runDirectory]) {
-          assert.deepEqual(JSON.parse(await fs.readFile(join(directory, 'result.json'), 'utf8')), { status: 'succeeded' }, 'cleanup preserves assignment results');
+          assert.deepEqual(JSON.parse(await fs.readFile(join(directory, 'retained.json'), 'utf8')), { status: 'succeeded' }, 'cleanup preserves assignment results');
         }
       }
       await hostControl(f);

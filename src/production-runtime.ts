@@ -97,7 +97,7 @@ async function registeredBranchDirectory(orchestratorRoot: string, confRoot: str
   if (!paths.some(path => resolve(root, path) === candidate)) return false;
   return await real(candidate) === candidate && await real(cwd) === candidate && await real(gitRoot) === candidate;
 }
-async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string, exactFiles = false): Promise<{ directories: string[]; workspace: string[] }> {
+async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string, exactFiles = false, orchestratorRoot?: string): Promise<{ directories: string[]; workspace: string[] }> {
   const workspace = await fs.realpath(cwd);
   const stateDirectory = await fs.realpath(dirname(statePath));
   const inside = (root: string, path: string) => {
@@ -116,15 +116,36 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
       directory = stat.isDirectory() || exactFiles ? canonical : dirname(canonical);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      const missingFile = exactFiles && !boundary.endsWith(sep);
+      const root = missingFile && orchestratorRoot ? await fs.realpath(orchestratorRoot) : undefined;
+      if (missingFile && (!root || !inside(resolve(orchestratorRoot!), target) || target === resolve(orchestratorRoot!))) fail('RUNNER_WRITE_SCOPE_INVALID', 'Missing file boundary must lie inside Orchestrator');
+      if (missingFile && await fs.lstat(target).catch(error => {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        return null;
+      })) fail('RUNNER_WRITE_SCOPE_INVALID', 'Missing file boundary must not be a dangling link');
       let parent = boundary.endsWith(sep) ? target : dirname(target);
       const missing: string[] = [];
       for (;;) {
         try { directory = resolve(await fs.realpath(parent), ...missing); break; }
         catch (error) {
           if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || dirname(parent) === parent) throw error;
+          if (missingFile && await fs.lstat(parent).catch(error => {
+            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+            return null;
+          })) fail('RUNNER_WRITE_SCOPE_INVALID', 'Missing file boundary has an unresolved ancestor');
           missing.unshift(basename(parent));
           parent = dirname(parent);
         }
+      }
+      if (missingFile) {
+        const intended = join(directory, basename(target));
+        if (!inside(root!, directory) || inside(intended, workspace) || inside(intended, stateDirectory) || inside(stateDirectory, intended)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Missing file boundary exceeds the declared task scope');
+        await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+        const canonicalParent = await fs.realpath(directory);
+        if (!inside(root!, canonicalParent)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Missing file parent lies outside Orchestrator');
+        const file = await fs.open(join(canonicalParent, basename(target)), 'wx', 0o600);
+        await file.close();
+        directory = await fs.realpath(target);
       }
     }
     if (inside(workspace, directory)) { inWorkspace.add(directory); continue; }
@@ -889,7 +910,7 @@ export async function runProductionWorker(
     const identityCommand = native.identity.command;
     const assignedId = native.identity.source === 'assigned' ? randomUUID() : undefined;
     let invocation = buildRunnerInvocation(settings, { ...request.selection, ...(assignedId ? { sessionId: assignedId } : {}) });
-    const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex');
+    const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
     invocation.args.push(...nativeWriteScopeArgs(settings, writable.directories, writable.workspace));
     const scope = await runnerSandboxScope(session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store).catch(error => {
       if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);

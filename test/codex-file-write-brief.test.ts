@@ -101,9 +101,9 @@ for (const stage of ['spec', 'implement'] as const) {
     for (const file of f.files) assert.equal(mentions(prose, file), false);
   });
 
-  test(`[Z.369 brief] ${stage}: empty Codex scope does not invent standalone file permissions`, { timeout }, async t => {
+  test(`[Z.369 brief] ${stage}: report-only Codex scope does not invent standalone file permissions`, { timeout }, async t => {
     const f = await fixture(t);
-    const { prose } = await f.compose('codex', stage, []);
+    const { prose } = await f.compose('codex', stage, [f.runDirectory]);
     assert.doesNotMatch(prose, fileSection);
     for (const file of f.files) assert.equal(mentions(prose, file), false);
   });

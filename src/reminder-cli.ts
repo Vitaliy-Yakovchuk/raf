@@ -279,7 +279,9 @@ export function resultNoticeViews(store: StateStore, sessions: readonly SessionR
     if (notice.state === 'pending' && !rows.some(row => row.runId === notice.runId)) rows.push(notice.source);
   }
   return rows.map(session => {
-    const notice = notices.find(row => row.runId === session.runId);
+    const notice = notices.find(row => row.id === `${session.runId}:result-notice`)
+      ?? notices.findLast(row => row.runId === session.runId && row.state === 'pending')
+      ?? notices.findLast(row => row.runId === session.runId);
     if (!notice) return session;
     const { id, recipient, state, attempts, lastError } = notice;
     return { ...session, resultNotice: { id, recipient, state, attempts, lastError } };

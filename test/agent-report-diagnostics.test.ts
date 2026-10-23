@@ -4,6 +4,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { commandFixture } from './reminder-fixture.ts';
 import type { SessionRecord } from '../src/session-state.ts';
+import type { PsSessionView } from '../src/launcher-notice.ts';
 
 for (const route of ['main', 'launchedBy', 'delegatedBy', 'notify'] as const) {
   test(`[Z.354] pending report diagnostic reaches ${route} once across reconciliation commands`, async t => {
@@ -43,10 +44,11 @@ for (const route of ['main', 'launchedBy', 'delegatedBy', 'notify'] as const) {
     assert.doesNotMatch(notices[0].text, /foundItems|raf event: agent\.(succeeded|failed)/);
     assert.ok(notices[0].text.length < 2000);
     assert.equal(f.getSession(worker.runId)?.result, undefined, 'a diagnostic must not accept succeeded or invent failed');
-    assert.equal(f.query("SELECT id FROM pending_intents WHERE event IN ('agent.succeeded', 'agent.failed')").length, 0);
+    assert.equal(f.store.sessionRepository.transaction(tx => tx.listPending(), 'read').filter(row => ['agent.succeeded', 'agent.failed'].includes(row.event)).length, 0);
     await writeFile(reportPath, JSON.stringify({ status: 'failed', answer: 'Cannot finish', changes: [{ id: 'diagnostic-change', items: [{ id: 'Z.354', status: 'failed', reason: 'Task remains open' }] }] }));
-    await f.agentPs();
+    const finalRows = await f.agentPs() as PsSessionView[];
     assert.equal(f.getSession(worker.runId)?.result?.status, 'failed', 'later valid result remains acceptable');
     assert.equal(f.deliveries.filter(row => row.text.includes(reportPath)).length, 2, 'final result has its own once-only notice');
+    assert.equal(finalRows.find(row => row.runId === worker.runId)?.resultNotice?.id, `${worker.runId}:result-notice`, 'the diagnostic does not hide final result delivery status');
   });
 }

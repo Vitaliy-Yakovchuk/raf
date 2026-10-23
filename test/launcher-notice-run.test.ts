@@ -76,3 +76,37 @@ test('[result-notice-run] accepted report of a --notify launch reaches only the 
   assert.equal(after.result?.status, 'failed');
   assert.equal(after.state, 'running', 'the agent stays open until closure');
 });
+
+test('[Z.354] worker watcher and later CLI commands deliver one short refusal only to --notify', { timeout: 180_000 }, async t => {
+  const f = await fixture(t, 'notify-diagnostic', timeouts, 'codex', { productionQa: true, tasks: 3, commands: ['agent ps', 'reminder add'] });
+  for (const [id, task] of [['observer', '1.1'], ['bystander', '1.2']] as const) {
+    const outcome = await f.run(id, 'implement', [task]);
+    assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));
+  }
+  const observerPid = await runnerPid(f, 'observer');
+  const bystanderPid = await runnerPid(f, 'bystander');
+  const launched = await f.command([...f.runArgs('worker', 'implement', ['1.3']), '--notify', 'observer']);
+  assert.equal(launched.exitCode, 0, JSON.stringify(launched));
+  await runnerPid(f, 'worker');
+  const worker = live(f, 'worker');
+  const reportPath = worker.launchContext!.reportPath;
+  const report = { status: 'succeeded', answer: 'Done', changes: [{ id: change, items: [{ id: '1.3', status: 'succeeded' }] }] };
+  const staging = join(dirname(reportPath), '.diagnostic.tmp');
+  await fs.writeFile(staging, JSON.stringify(report));
+  await fs.rename(staging, reportPath);
+  const received = await until(() => f.input(observerPid), text => text.includes(reportPath), 'watcher delivered the refusal without polling');
+  for (const part of [`${change}:1.3`, 'Assignment completion is not confirmed', '1.3', reportPath]) assert.ok(received.includes(part), `diagnostic contains ${part}`);
+  assert.doesNotMatch(received, /foundItems|raf event: agent\.succeeded/);
+  assert.equal(live(f, 'worker').result, undefined);
+  await fs.writeFile(staging, JSON.stringify(report));
+  await fs.rename(staging, reportPath);
+  for (const args of [['agent', 'ps'], ['reminder', 'add', '--to', 'observer', '--text', 'unrelated reminder', '--at', '2099-01-01T00:00:00.000Z'], ['agent', 'ps']]) {
+    const outcome = await f.command(args);
+    assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));
+    assert.doesNotMatch(outcome.stderr, /Assignment completion is not confirmed|foundItems/);
+  }
+  await delay(500);
+  assert.equal(occurrences(await f.input(observerPid), reportPath), 1, 'worker and reconciliation share durable deduplication');
+  assert.equal((await f.input(bystanderPid)).includes(reportPath), false, 'bystanders do not receive the diagnostic');
+  assert.equal(live(f, 'worker').result, undefined, 'unconfirmed success remains pending');
+});

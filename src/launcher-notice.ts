@@ -1,4 +1,5 @@
 import type { SessionRecord } from './session-state.ts';
+import { createHash } from 'node:crypto';
 
 export const DEFAULT_LAUNCHER = 'main';
 export const NO_REPORT_REASON = 'процес завершився без валідного звіту';
@@ -45,6 +46,13 @@ export function resultNoticeText(content: ResultNoticeContent): string {
   return [`raf event: agent.${content.status}`, `Agent: ${content.address}`, `Result: ${content.status}`,
     `Items: ${content.items.join(', ')}`, `Report: ${content.reportPath}`, `Answer: ${content.answer}`,
     ...(content.reason ? [`Reason: ${content.reason}`] : [])].join('\n');
+}
+
+export function createReportDiagnosticNotice(session: SessionRecord, reason: string): ResultNotice {
+  const target = resultAddressee(session);
+  return { id: `${session.runId}:report-diagnostic:${createHash('sha256').update(reason).digest('hex')}`, runId: session.runId,
+    recipient: target.addressId, recipientRunId: target.runId, state: 'pending', attempts: 0, lastError: null,
+    text: reason, source: session };
 }
 
 export function createResultNotice(session: SessionRecord): ResultNotice | undefined {

@@ -41,7 +41,7 @@ export interface AgentReportPorts {
   now(): string;
   verifyAssignmentCompletion(snapshot: AssignmentSnapshot, archiveClaims: Readonly<Record<string, string>>): Promise<AssignmentVerification>;
   result(result: AgentReportResult): Promise<void>;
-  diagnostic(reason: string, verification?: AssignmentVerification): Promise<void>;
+  diagnostic(reason: string): Promise<void>;
 }
 export interface AgentReportWatcher {
   readonly path: string;
@@ -53,6 +53,8 @@ export async function readPendingAgentReport(request: AgentReportRequest, ports:
   const component = (value: string) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value);
   if (!isAbsolute(request.tmpRoot) || !component(request.runId) || !component(request.address)) throw new Error('Invalid report directory, run ID or address');
   const path = join(request.tmpRoot, request.runId, `${request.address}.json`);
+  const diagnostic = (reason: string) => ports.diagnostic(`Agent: ${request.address}\nItems: ${request.assignment.changes.flatMap(change => change.items.map(item => `${change.id}:${item.id}`)).join(', ')}\nReport: ${path}\nReason: ${reason}`);
+  const concise = (reason: string) => reason.replace(/\s+/g, ' ').slice(0, 512);
   const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
   const status = (value: unknown) => value === 'succeeded' || value === 'failed';
   const valid = (value: unknown): value is AgentReport => {
@@ -77,17 +79,17 @@ export async function readPendingAgentReport(request: AgentReportRequest, ports:
   };
   let content: string | null;
   try { content = await ports.fs.readText(path); }
-  catch (error) { await ports.diagnostic(`Cannot read report: ${String(error)}`); return null; }
+  catch (error) { await diagnostic(`Cannot read report: ${concise(String(error))}`); return null; }
   if (content === null) return null;
   let report: unknown;
   try { report = JSON.parse(content); }
-  catch { await ports.diagnostic('Incomplete or invalid report JSON'); return null; }
-  if (!valid(report)) { await ports.diagnostic('Invalid report or assignment mismatch'); return null; }
+  catch { await diagnostic('Incomplete or invalid report JSON'); return null; }
+  if (!valid(report)) { await diagnostic('Invalid report or assignment mismatch'); return null; }
   if (report.status === 'succeeded') {
     let verification: AssignmentVerification;
     try { verification = await ports.verifyAssignmentCompletion(request.assignment, Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]))); }
-    catch (error) { await ports.diagnostic(`Assignment verification failed: ${String(error)}`); return null; }
-    if (!verification.ok) { await ports.diagnostic('Assignment completion is not confirmed', verification); return null; }
+    catch (error) { await diagnostic(`Assignment verification failed: ${concise(String(error))}`); return null; }
+    if (!verification.ok) { await diagnostic(`Assignment completion is not confirmed: ${[...new Set(verification.issues.map(issue => concise(issue.reason)))].join('; ')}`); return null; }
   }
   return { runId: request.runId, id: request.address, event: report.status === 'succeeded' ? 'agent.succeeded' : 'agent.failed', status: report.status, at: ports.now(), report };
 }

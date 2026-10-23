@@ -8,7 +8,7 @@ import { inspectStateSchema } from './state-schema.ts';
 import { ReminderService, type Reminder, type ReminderRepository, type ReminderTransaction } from "./reminders.ts";
 import type { ReminderSessionEffect } from "./reminder-repository.ts";
 import type { SessionRepository, SessionTransaction, SessionRecord, PendingIntent, AdmissionReservation } from "./session-state.ts";
-import { createResultNotice, type ResultNotice } from './launcher-notice.ts';
+import { createResultNotice, createReportDiagnosticNotice, type ResultNotice } from './launcher-notice.ts';
 import { settleStartupContextReview } from './startup-context.ts';
 
 export type RunnerInitialState = { id: string; initialEnabled: boolean };
@@ -43,6 +43,7 @@ export function reminderDeliveryKey(reminder: Pick<Reminder, 'assignedTo' | 'tex
 export interface StateStore {
   readonly startupContextDatabase: DatabaseSync;
   resultNotices: {
+    stageReportDiagnostic(runId: string, reason: string): void;
     list(): ResultNotice[];
     claim(id: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): ResultNotice | undefined;
     complete(id: string, token: string, error: string | null): void;
@@ -676,6 +677,18 @@ export function openStateStore(path: string, options?: import('./state-migration
     return row ? JSON.parse(row.payload as string) as ResultNotice : undefined;
   };
   const resultNotices: StateStore['resultNotices'] = {
+    stageReportDiagnostic: (runId, reason) => operation("stageReportDiagnostic", () => transaction(() => {
+      const row = db.prepare("SELECT payload FROM sessions WHERE run_id = ?").get(runId);
+      if (!row) return;
+      const session = JSON.parse(row.payload as string) as SessionRecord;
+      if (session.result || !['running', 'exited'].includes(session.state)) return;
+      const notice = createReportDiagnosticNotice(session, reason);
+      if (notice.recipientRunId === null) {
+        const recipient = db.prepare("SELECT run_id FROM sessions WHERE address_id = ? AND state = 'running'").get(notice.recipient);
+        notice.recipientRunId = recipient?.run_id as string ?? null;
+      }
+      db.prepare("INSERT INTO result_notices(id, run_id, payload) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING").run(notice.id, notice.runId, JSON.stringify(notice));
+    })),
     list: () => operation("listResultNotices", () => transaction(() => {
       db.prepare("DELETE FROM result_notices WHERE run_id NOT IN (SELECT run_id FROM sessions) AND json_extract(payload, '$.state') = 'delivered'").run();
       return db.prepare("SELECT payload FROM result_notices ORDER BY rowid").all().map(row => JSON.parse(row.payload as string) as ResultNotice);

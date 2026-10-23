@@ -382,7 +382,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       fs: { readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } } },
       now,
       verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignmentPorts(execute), archives),
-      diagnostic: async (reason, verification) => { const latest = current(session.runId); if (latest && !latest.result && latest.state !== 'finished') process.stderr.write(`${session.runId}: ${reason}${verification ? `: ${JSON.stringify(verification)}` : ''}\n`); },
+      diagnostic: reason => reportDiagnostic(session.runId, reason),
     });
     if (result) {
       const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context } };
@@ -524,6 +524,10 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       return control.message(request, rafSystemCaller);
     } });
   };
+  const reportDiagnostic = async (runId: string, reason: string) => {
+    await retryStateOperation(() => store.resultNotices.stageReportDiagnostic(runId, reason), await budgetFor(current(runId)?.process?.runner ?? 'codex'));
+    await deliverResults();
+  };
   const attachMain = async (): Promise<MainAttachment> => {
     const identity = await callerPane(execute, direct);
     const authority = {};
@@ -535,7 +539,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       throw error;
     }
   };
-  return { state, current, verified, reminders, publish, control, authorize, resolve, finalize, attachMain, deliverResults };
+  return { state, current, verified, reminders, publish, control, authorize, resolve, finalize, attachMain, deliverResults, reportDiagnostic };
 }
 
 const quotaRemedy = 'Перевірте вхід, версію CLI та блок quota в conf/raf.json, потім повторіть raf runner limits.';
@@ -1216,7 +1220,7 @@ export async function runProductionWorker(
         watch: (directory, listener) => { const watcher = watch(directory, (event, filename) => { if (filename) void listener(event === 'rename' ? 'rename' : 'modify', filename.toString()).catch(error => process.emitWarning(error)); }); watcher.on('error', error => process.stderr.write(`${request.runId}: Report watcher error: ${String(error)}\n`)); return () => watcher.close(); },
         now,
         verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
-        diagnostic: async reason => { process.stderr.write(`${request.runId}: ${reason}\n`); },
+        diagnostic: reason => tools.reportDiagnostic(request.runId, reason),
       },
       lifecycle: {
         started: async handshake => {

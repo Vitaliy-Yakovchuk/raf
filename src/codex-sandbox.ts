@@ -58,6 +58,21 @@ async function canonical(path: string): Promise<string> {
   }
 }
 
+async function workspaceGitPaths(cwd: string): Promise<string[]> {
+  const dotGit = join(cwd, '.git');
+  const entry = await fs.stat(dotGit).catch(() => null);
+  if (!entry) return [];
+  if (entry.isDirectory()) return [await canonical(dotGit)];
+  const value = (await fs.readFile(dotGit, 'utf8')).trim();
+  if (!value.startsWith('gitdir:')) unavailable(`invalid workspace git pointer ${dotGit}`);
+  const git = await canonical(resolve(cwd, value.slice('gitdir:'.length).trim()));
+  const common = await fs.readFile(join(git, 'commondir'), 'utf8').catch(error => {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    return '';
+  });
+  return [...new Set([dotGit, git, ...(common.trim() ? [await canonical(resolve(git, common.trim()))] : [])])];
+}
+
 async function executable(name: string, environment: Readonly<Record<string, string | undefined>>, exclude: string): Promise<string> {
   const candidates = isAbsolute(name) ? [name] : (environment.PATH ?? '').split(delimiter).filter(directory => isAbsolute(directory) && directory !== exclude).map(directory => join(directory, name));
   for (const candidate of candidates) {
@@ -169,16 +184,16 @@ export async function prepareCodexSandbox(
   if (mode !== 'workspace-write') unavailable(`invocation sandbox mode ${mode ?? 'unset'} is not workspace-write`);
   const cwd = await canonical(request.cwd);
   const runDirectory = await canonical(request.runDirectory);
-  const writable = new Set<string>([cwd, runDirectory]);
+  const writable = new Set<string>([runDirectory]);
   const args: string[] = [];
   const source = request.invocation.args;
   const end = source.indexOf('--');
   for (let i = 0; i < (end < 0 ? source.length : end); i++) {
     const arg = source[i];
     if (arg === '--sandbox' || arg === '-s') { i++; continue; }
-    if (arg === '--add-dir') { const value = source[++i] ?? unavailable('--add-dir without a directory'); writable.add(await canonical(value)); args.push(arg, value); continue; }
+    if (arg === '--add-dir') { const value = source[++i] ?? unavailable('--add-dir without a directory'); writable.add(await canonical(value)); continue; }
     if (arg.startsWith('--sandbox=') || arg === '--full-auto') continue;
-    if (arg.startsWith('--add-dir=')) { writable.add(await canonical(arg.slice('--add-dir='.length))); args.push(arg); continue; }
+    if (arg.startsWith('--add-dir=')) { writable.add(await canonical(arg.slice('--add-dir='.length))); continue; }
     if ((arg === '-c' || arg === '--config') && /^\s*(?:sandbox_mode|default_permissions|permissions|sandbox_workspace_write)\b/u.test(source[i + 1] ?? '')) { i++; continue; }
     args.push(arg);
   }
@@ -219,10 +234,24 @@ export async function prepareCodexSandbox(
   const sharedTmp = !within('/tmp', directory);
   const entries: Record<string, string> = { ':root': 'read', ...(sharedTmp ? { ':slash_tmp': 'write' } : {}) };
   const toolVariables: Record<string, string> = { TMUX_TMPDIR: runDirectory, ...(sharedTmp ? {} : { TMPDIR: runDirectory }) };
-  for (const path of writable) entries[path] = 'write';
+  const fileWrites: string[] = [];
+  for (const path of writable) {
+    const info = await fs.stat(path).catch(error => {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') unavailable(`cannot inspect writable path ${path}`);
+      return null;
+    });
+    if (info?.isFile()) fileWrites.push(path);
+    else if (!info || info.isDirectory()) entries[path] = 'write';
+    else unavailable(`writable path ${path} is not a file or directory`);
+  }
+  if (!writable.has(cwd)) entries[cwd] = 'read';
   const git = join(cwd, '.git');
   const gitEntry = await fs.lstat(git).catch(() => null);
-  if (!gitEntry || gitEntry.isFile()) entries[git] = 'write';
+  if (writable.has(cwd)) {
+    if (!gitEntry || gitEntry.isFile()) entries[git] = 'write';
+  } else {
+    for (const path of await workspaceGitPaths(cwd)) entries[path] = 'read';
+  }
   entries[directory] = 'read';
   for (const path of masked) entries[path] = 'none';
   const filesystem = `{${Object.entries(entries).map(([path, access]) => `${JSON.stringify(path)}=${JSON.stringify(access)}`).join(',')}}`;
@@ -250,13 +279,13 @@ export async function prepareCodexSandbox(
       'mounted=0',
       'for argument do',
       '  shift',
-      `  if [ "$mounted" = 0 ] && [ "$argument" = -- ]; then set -- "$@" --perms 0700 --tmpfs ${literal(tmuxSockets)} --; mounted=1; else set -- "$@" "$argument"; fi`,
+      `  if [ "$mounted" = 0 ] && [ "$argument" = -- ]; then set -- "$@" --perms 0700 --tmpfs ${literal(tmuxSockets)} ${fileWrites.map(path => `--bind ${literal(path)} ${literal(path)}`).join(' ')} --; mounted=1; else set -- "$@" "$argument"; fi`,
       'done',
       `exec ${literal(bwrap)} --unshare-net --add-seccomp-fd 9 "$@" 9<${literal(join(directory, 'network.bpf'))}`,
       '',
     ].join('\n'), { mode: 0o500 });
     await fs.writeFile(launcher, `#!/bin/sh\nPATH=${literal(directory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
-    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: ['AF_UNIX'], ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
+    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: ['AF_UNIX'], ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
     const visible: string[] = [];
     for (const path of masked) if (await fs.access(path, constants.R_OK).then(() => true, () => false)) visible.push(path);
     await probe(toolSandbox, environment, cwd, probeSocket, visible, request.timeoutMs);

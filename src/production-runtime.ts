@@ -97,7 +97,7 @@ async function registeredBranchDirectory(orchestratorRoot: string, confRoot: str
   if (!paths.some(path => resolve(root, path) === candidate)) return false;
   return await real(candidate) === candidate && await real(cwd) === candidate && await real(gitRoot) === candidate;
 }
-async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string): Promise<{ directories: string[]; workspace: string[] }> {
+async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string, exactFiles = false): Promise<{ directories: string[]; workspace: string[] }> {
   const workspace = await fs.realpath(cwd);
   const stateDirectory = await fs.realpath(dirname(statePath));
   const inside = (root: string, path: string) => {
@@ -113,7 +113,7 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
       const stat = await fs.stat(target);
       if (!stat.isDirectory() && !stat.isFile()) fail('RUNNER_WRITE_SCOPE_INVALID', 'Declared write boundary is not a file or directory');
       const canonical = await fs.realpath(target);
-      directory = stat.isDirectory() ? canonical : dirname(canonical);
+      directory = stat.isDirectory() || exactFiles ? canonical : dirname(canonical);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
       let parent = boundary.endsWith(sep) ? target : dirname(target);
@@ -129,7 +129,7 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
     }
     if (inside(workspace, directory)) { inWorkspace.add(directory); continue; }
     if (inside(directory, workspace) || inside(directory, stateDirectory) || inside(stateDirectory, directory)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Declared write boundary would grant a workspace ancestor or RAF state directory');
-    await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+    if (!(await fs.stat(directory).catch(() => null))?.isFile()) await fs.mkdir(directory, { recursive: true, mode: 0o700 });
     const canonical = await fs.realpath(directory);
     if (inside(canonical, workspace) || inside(canonical, stateDirectory) || inside(stateDirectory, canonical)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Resolved write directory exceeds the declared task scope');
     directories.add(canonical);
@@ -889,7 +889,7 @@ export async function runProductionWorker(
     const identityCommand = native.identity.command;
     const assignedId = native.identity.source === 'assigned' ? randomUUID() : undefined;
     let invocation = buildRunnerInvocation(settings, { ...request.selection, ...(assignedId ? { sessionId: assignedId } : {}) });
-    const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath);
+    const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex');
     invocation.args.push(...nativeWriteScopeArgs(settings, writable.directories, writable.workspace));
     const scope = await runnerSandboxScope(session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store).catch(error => {
       if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);

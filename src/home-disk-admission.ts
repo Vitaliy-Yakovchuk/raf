@@ -14,5 +14,14 @@ export function deriveResourceAdmissionVolumes(
   paths: ResourceAdmissionVolumePaths,
   fileSystemByPath: Readonly<Record<string, string | null>>,
 ): ResourceAdmissionVolumes {
-  throw new Error('NotImplemented');
+  const reasons: string[] = [];
+  const identify = (path: string, label: string): string | null => {
+    const id = typeof path === 'string' && path.trim() ? fileSystemByPath[path] : null;
+    if (typeof id === 'string' && id.trim()) return id;
+    reasons.push(`Missing filesystem mapping for ${label}: ${path}`);
+    return null;
+  };
+  const development = [identify(paths.orchestratorRoot, 'Orchestrator root'), identify(paths.workspace, 'development workspace')];
+  const homeFileSystemId = identify(paths.home, 'HOME');
+  return { requiredFileSystemIds: [...new Set(development.filter((id): id is string => id !== null))], homeFileSystemId, reasons };
 }

@@ -46,12 +46,16 @@ export interface ResourceAdmission {
 }
 
 export function evaluateResourceAdmission(input: ResourceAdmissionInput, policyOverride?: import('./flow-policy.ts').FlowPolicy): ResourceAdmission {
-  const policy = loadFlowPolicy().resources;
+  const policy = (policyOverride ?? loadFlowPolicy()).resources;
   const { measurement, requested, unusedReservations, requiredFileSystemIds } = input;
   const estimate = input.estimate ? { estimate: structuredClone(input.estimate) } : {};
   const reasons: string[] = [];
   const validNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0;
   const unknown = (): ResourceAdmission => ({ ...estimate, level: 'UNKNOWN', allowed: { normal: false, hotfix: false }, reasons, measurement, remaining: null });
+  const homePointer = 'conf/flow.json#/resources/home/minDiskBytes';
+  if (!Number.isSafeInteger(policy?.home?.minDiskBytes) || policy.home.minDiskBytes < 0) reasons.push(`Invalid flow policy: ${homePointer}`);
+  const homeId = input.homeFileSystemId;
+  if (homeId !== undefined && (typeof homeId !== 'string' || !homeId.trim())) reasons.push('Missing HOME filesystem mapping');
   if (!measurement || typeof measurement.machineId !== 'string' || !measurement.machineId.trim()) reasons.push('Missing machine identity');
   if (!validNumber(measurement?.loadAverage1m)) reasons.push('Invalid load average');
   if (!validNumber(measurement?.availableCores) || measurement.availableCores <= 0) reasons.push('Invalid available cores');
@@ -69,12 +73,15 @@ export function evaluateResourceAdmission(input: ResourceAdmissionInput, policyO
       || Object.entries(reservation.diskBytes).some(([id, bytes]) => !id.trim() || !validNumber(bytes))) reasons.push('Invalid resource reservation');
   }
   if (reasons.length) return unknown();
-  const ids = [...new Set([...requiredFileSystemIds, ...Object.keys(requested.diskBytes)])];
+  const ids = [...new Set(requiredFileSystemIds)];
+  const separateHomeId = typeof homeId === 'string' && !ids.includes(homeId) ? homeId : null;
+  const measuredIds = new Set([...ids, ...(separateHomeId ? [separateHomeId] : [])]);
   const disks = new Map<string, FileSystemMeasurement>();
   for (const fs of measurement.fileSystems) {
+    if (fs && !measuredIds.has(fs.id)) continue;
     if (!fs || typeof fs.id !== 'string' || !fs.id.trim() || !validNumber(fs.totalBytes) || fs.totalBytes <= 0
       || !validNumber(fs.availableBytes) || fs.availableBytes > fs.totalBytes) {
-      reasons.push('Invalid filesystem measurement');
+      reasons.push(fs?.id === separateHomeId ? `Invalid HOME filesystem measurement: ${separateHomeId}` : 'Invalid filesystem measurement');
       continue;
     }
     const existing = disks.get(fs.id);
@@ -85,10 +92,12 @@ export function evaluateResourceAdmission(input: ResourceAdmissionInput, policyO
     if (!disks.has(id)) reasons.push(`Missing filesystem measurement: ${id}`);
     if (!Object.hasOwn(requested.diskBytes, id)) reasons.push(`Missing disk reservation estimate: ${id}`);
   }
+  if (separateHomeId && !disks.has(separateHomeId)) reasons.push(`Missing HOME filesystem measurement: ${separateHomeId}`);
   if (reasons.length) return unknown();
   const ramBytes = measurement.availableRamBytes - reservations.reduce((sum, reservation) => sum + reservation.ramBytes, 0);
   const diskBytes: Record<string, number> = {};
   for (const id of ids) diskBytes[id] = disks.get(id)!.availableBytes - reservations.reduce((sum, reservation) => sum + (reservation.diskBytes[id] ?? 0), 0);
+  if (separateHomeId) diskBytes[separateHomeId] = disks.get(separateHomeId)!.availableBytes;
   const normalizedLoad = measurement.loadAverage1m / measurement.availableCores;
   if (![ramBytes, normalizedLoad, ...Object.values(diskBytes)].every(Number.isFinite)) {
     reasons.push('Invalid resource arithmetic');
@@ -103,8 +112,10 @@ export function evaluateResourceAdmission(input: ResourceAdmissionInput, policyO
     if (normalizedLoad > thresholds.maxNormalizedLoad) result.push(`${label}: normalized load exceeds ${thresholds.maxNormalizedLoad}`);
     if (ramBytes < Math.max(measurement.totalRamBytes * thresholds.minRamFraction, thresholds.minRamBytes)) result.push(`${label}: insufficient RAM after reservations`);
     for (const id of ids) {
-      if (diskBytes[id] < Math.max(disks.get(id)!.totalBytes * thresholds.minDiskFraction, thresholds.minDiskBytes)) result.push(`${label}: insufficient disk on ${id} after reservations`);
+      const minimum = Math.max(disks.get(id)!.totalBytes * thresholds.minDiskFraction, thresholds.minDiskBytes);
+      if (diskBytes[id] < minimum) result.push(`${label}: insufficient disk on ${id} after reservations: ${diskBytes[id]} bytes available, threshold ${minimum} bytes`);
     }
+    if (separateHomeId && diskBytes[separateHomeId] < policy.home.minDiskBytes) result.push(`${label}: insufficient HOME disk on ${separateHomeId}: ${diskBytes[separateHomeId]} bytes available, threshold ${policy.home.minDiskBytes} bytes (${homePointer})`);
     return result;
   };
   const normal = failures('normal', policy.normal);
@@ -113,6 +124,6 @@ export function evaluateResourceAdmission(input: ResourceAdmissionInput, policyO
     ...estimate, level: normal.length === 0 ? 'ANY_RUN' : hotfix.length === 0 ? 'HOTFIX_ONLY' : 'NO_RESOURCES',
     allowed: { normal: normal.length === 0, hotfix: hotfix.length === 0 },
     reasons: normal.length === 0 ? ['All normal resource thresholds satisfied after reservations'] : [...normal, ...hotfix],
-    measurement, remaining,
+    measurement: { ...measurement, fileSystems: [...disks.values()] }, remaining,
   };
 }

@@ -33,6 +33,7 @@ import { AgentControlService, MainAttachedElsewhereError, type VerifiedSender, t
 import { ReminderService, type SessionEnd } from './reminders.ts';
 import { loadEventCatalog } from './event-catalog.ts';
 import { evaluateResourceAdmission } from './resource-admission.ts';
+import { deriveResourceAdmissionVolumes } from './home-disk-admission.ts';
 import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
 import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership, type PersistentWrapperFailure } from './launch-wrapper.ts';
 import { commandFailure, failureContext } from './cli-contract.ts';
@@ -934,10 +935,11 @@ export async function createProductionServices(
       const dependencies = await reservationTools(store, context, execute, options.execute);
       await reconcileTaskReservations(dependencies);
       const boot = await dependencies.currentBoot();
-      const paths = [...new Set([context.orchestratorRoot, input.activity.cwd])];
+      const volumePaths = { orchestratorRoot: context.orchestratorRoot, workspace: input.activity.cwd, home: homedir() };
+      const paths = [...new Set(Object.values(volumePaths))];
       const resourceSnapshot = await measureResources(paths, boot.machineId, execute);
-      if (paths.some(path => !resourceSnapshot.fileSystemByPath[path])) return { admitted: false, reason: 'Missing filesystem mapping for the development tree' };
-      const requiredFileSystemIds = [...new Set(paths.map(path => resourceSnapshot.fileSystemByPath[path]))];
+      const { requiredFileSystemIds, homeFileSystemId, reasons } = deriveResourceAdmissionVolumes(volumePaths, resourceSnapshot.fileSystemByPath);
+      if (reasons.length) return { admitted: false, reason: reasons.join('; ') };
       const taskConfiguration = await loadTaskContextConfiguration(context.confRoot);
       const resolution = resolveAgentResourceEstimate({
         flow: { resourceEstimates: taskConfiguration.resourceEstimates }, type: input.activity.type, project: input.activity.project,
@@ -950,14 +952,14 @@ export async function createProductionServices(
       const candidates = tools.state.listReconciliationCandidates().filter(session => session.process);
       const observed = await observeProcesses(candidates.map(session => session.process!), { execute });
       const measured = { measurement: resourceSnapshot.measurement, observedProcesses: candidates.flatMap((session, index) => observed[index].state === 'alive' ? [{ runId: session.runId, identity: session.process! }] : []) };
-      const admission = store.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, { requested, requiredFileSystemIds, estimate }, measured, evaluateResourceAdmission), 'read');
+      const admission = store.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, { requested, requiredFileSystemIds, homeFileSystemId, estimate }, measured, evaluateResourceAdmission), 'read');
       if (!admission.allowed[input.activity.type === 'hotfix' ? 'hotfix' : 'normal']) return { admitted: false, reason: admission.reasons.join('; ') };
       const record = prepared.get(input.tmuxSession);
       if (!record || record.reportPath !== input.reportPath || input.assignment.root !== context.orchestratorRoot || !isDeepStrictEqual(record.launch.assignment, input.assignment) || !isDeepStrictEqual(record.launch.writeBoundaries ?? [], input.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Prepared launch context mismatch');
       const identityAdapter = createAssignmentIdentityAdapter({ [input.activity.project]: context.orchestratorRoot }, options.execute ? { execute: options.execute } : {});
       const tasks = await identityAdapter.capture(input.activity.project, input.assignment);
       const testAssignment: SandboxTestAssignment = { runId: input.runId, agentId: input.addressId, type: input.activity.type, phase: input.activity.phase, project: input.activity.project, workspace: input.activity.cwd, branch: input.taskContext!.context.branch, changes: input.assignment.changes.map(change => change.id) };
-      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
+      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
       const caller = await (async () => {
         try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }

@@ -55,6 +55,9 @@ export function loadFlowPolicy(path?: string): FlowPolicy {
   for (const key of ['timeoutMs', 'optimizeAfterTimeouts', 'maxGroupTimeouts']) number(unitTests[key], `unitTests.${key}`, true);
   if ((unitTests.optimizeAfterTimeouts as number) >= (unitTests.maxGroupTimeouts as number)) fail('unitTests.optimizeAfterTimeouts must precede maxGroupTimeouts');
   const resources = object(root.resources, 'resources');
+  const homePointer = 'conf/flow.json#/resources/home/minDiskBytes';
+  const home = object(resources.home, homePointer);
+  if (typeof home.minDiskBytes !== 'number' || !Number.isSafeInteger(home.minDiskBytes) || home.minDiskBytes < 0) fail(homePointer);
   for (const profile of ['normal', 'hotfix']) {
     const thresholds = object(resources[profile], `resources.${profile}`);
     number(thresholds.maxNormalizedLoad, `resources.${profile}.maxNormalizedLoad`);

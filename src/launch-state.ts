@@ -16,6 +16,7 @@ export type ReserveLaunchRequest = {
   requested: ResourceReservation;
   estimate?: ResourceAdmissionEstimate;
   requiredFileSystemIds: string[];
+  homeFileSystemId?: string | null;
   mode: 'normal' | 'hotfix';
 };
 
@@ -38,7 +39,7 @@ export interface LaunchState {
 
 export function evaluateLaunchAdmissionInTransaction(
   tx: Pick<SessionTransaction, 'listReservations' | 'getSession'>,
-  request: Pick<ReserveLaunchRequest, 'requested' | 'requiredFileSystemIds' | 'estimate'>,
+  request: Pick<ReserveLaunchRequest, 'requested' | 'requiredFileSystemIds' | 'homeFileSystemId' | 'estimate'>,
   measured: LaunchMeasurement,
   evaluateAdmission: LaunchStateDependencies['evaluateAdmission'],
 ): ResourceAdmission {
@@ -72,6 +73,7 @@ export function evaluateLaunchAdmissionInTransaction(
     requested: copy(request.requested), unusedReservations,
     ...(request.estimate ? { estimate: copy(request.estimate) } : {}),
     requiredFileSystemIds: copy(request.requiredFileSystemIds),
+    ...(request.homeFileSystemId !== undefined ? { homeFileSystemId: request.homeFileSystemId } : {}),
   });
 }
 

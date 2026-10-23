@@ -1,3 +1,6 @@
+import { captureReportedCommitLaunchContext } from './reported-commits.ts';
+import { reconcileReportedCommitIndex } from './report-commit-index.ts';
+import type { ReportedCommitLaunchContext } from './reported-commits-contract.ts';
 import { prepareAgentClose } from './agent-close-preparation.ts';
 import { validateTestRunConfig } from './test-runs.ts';
 import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
@@ -414,27 +417,29 @@ async function waitWrapperExit(execute: AdapterCommandExecutor, wrapper: Process
     await new Promise(resolve => setTimeout(resolve, budget.pollMs));
   }
 }
+async function verifyReportedAssignmentSource(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, runId: string, assignment: import('./assignment.ts').AssignmentSnapshot, archives: Readonly<Record<string, string>> = {}, identityExecute?: AdapterCommandExecutor) {
+  const assignments = assignmentPorts(execute);
+  const set = listTaskReservations(store).find(set => set.lease.owner.runId === runId);
+  if (!set || assignment.changes.some(change => change.items.some(item => !set.tasks.some(task => task.key.changeId === change.id && task.key.taskId === item.id)))) throw new Error('Launch task source identity is unavailable');
+  const dependencies = await reservationTools(store, context, execute, identityExecute);
+  const resolutions = await dependencies.resolveTasks(set.tasks);
+  const invalid = resolutions.filter(row => row.state === 'mismatch' || row.state === 'unknown');
+  if (invalid.length || resolutions.length !== set.tasks.length) throw new Error(`Launch task source identity changed: ${invalid.map(row => row.reason).join('; ')}`);
+  for (const change of assignment.changes) {
+    const subset = { ...assignment, changes: [change] };
+    const archived = set.tasks.filter(task => task.key.changeId === change.id).every(task => resolutions.some(row => (row.state === 'open' || row.state === 'completed') && row.task.key.changeId === task.key.changeId && row.task.key.taskId === task.key.taskId && row.location === 'archive'));
+    const checked = archived ? await verifyAssignmentCompletion(subset, assignments, archives) : await validateAssignment({ root: assignment.root, selections: [{ change: change.id, items: change.items.map(item => ({ id: item.id, expectedDescription: item.description })) }] }, assignments);
+    if (!checked.ok) return { ok: false, issues: checked.issues };
+  }
+  return { ok: true, issues: [] };
+}
 async function confirmReportedTasks(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, request: AgentReportRequest, report: AgentReport, budget: TransitionBudget, identityExecute?: AdapterCommandExecutor) {
   const directory = join(context.tmpRoot, request.runId);
   const journal = join(directory, 'task-checkbox-operations.json');
   const assignments = assignmentPorts(execute);
   const indexDeadline = Date.now() + budget.transitionMs;
   const confirmation = await prepareReportedTaskCheckboxes(request, report, {
-    verifySourceIdentity: async (assignment, archives) => {
-      const set = listTaskReservations(store).find(set => set.lease.owner.runId === request.runId);
-      if (!set || assignment.changes.some(change => change.items.some(item => !set.tasks.some(task => task.key.changeId === change.id && task.key.taskId === item.id)))) throw new Error('Launch task source identity is unavailable');
-      const dependencies = await reservationTools(store, context, execute, identityExecute);
-      const resolutions = await dependencies.resolveTasks(set.tasks);
-      const invalid = resolutions.filter(row => row.state === 'mismatch' || row.state === 'unknown');
-      if (invalid.length || resolutions.length !== set.tasks.length) throw new Error(`Launch task source identity changed: ${invalid.map(row => row.reason).join('; ')}`);
-      for (const change of assignment.changes) {
-        const subset = { ...assignment, changes: [change] };
-        const archived = set.tasks.filter(task => task.key.changeId === change.id).every(task => resolutions.some(row => (row.state === 'open' || row.state === 'completed') && row.task.key.changeId === task.key.changeId && row.task.key.taskId === task.key.taskId && row.location === 'archive'));
-        const checked = archived ? await verifyAssignmentCompletion(subset, assignments, archives) : await validateAssignment({ root: assignment.root, selections: [{ change: change.id, items: change.items.map(item => ({ id: item.id, expectedDescription: item.description })) }] }, assignments);
-        if (!checked.ok) return { ok: false, issues: checked.issues };
-      }
-      return { ok: true, issues: [] };
-    },
+    verifySourceIdentity: (assignment, archives) => verifyReportedAssignmentSource(store, context, execute, request.runId, assignment, archives, identityExecute),
     verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
     operations: {
       read: async () => { try { return JSON.parse(await fs.readFile(journal, 'utf8')) as TaskCheckboxOperation[]; } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; } },
@@ -453,6 +458,25 @@ async function confirmReportedTasks(store: StateStore, context: RuntimeContext, 
   });
   return confirmation;
 }
+function reportedCommitPorts(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, session: SessionRecord, identityExecute?: AdapterCommandExecutor) {
+  return {
+    reconcileReportedCommitIndex,
+    verifyAssignmentSourceIdentity: (assignment: import('./assignment.ts').AssignmentSnapshot) => verifyReportedAssignmentSource(store, context, execute, session.runId, assignment, {}, identityExecute),
+    isCurrentReport: async (runId: string, reportPath: string) => store.sessionRepository.transaction(tx => {
+      const current = tx.getSession(runId);
+      return !!current && ['running', 'exited'].includes(current.state) && !current.result && current.addressId === session.addressId
+        && current.launchContext?.reportPath === reportPath && isDeepStrictEqual(current.launchContext.assignment, session.launchContext?.assignment)
+        && isDeepStrictEqual(current.launchContext.reportedCommits, session.launchContext?.reportedCommits);
+    }, 'read'),
+    readTaskCheckboxCommits: async (runId: string) => {
+      let operations: TaskCheckboxOperation[];
+      try { operations = JSON.parse(await fs.readFile(join(context.tmpRoot, runId, 'task-checkbox-operations.json'), 'utf8')); }
+      catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; }
+      if (!Array.isArray(operations)) throw new Error('Invalid checkbox operation journal');
+      return operations.filter(row => row.runId === runId && row.sha).map(row => ({ change: row.change, item: row.item, sha: row.sha! }));
+    },
+  };
+}
 function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: RuntimeConfiguration, context: RuntimeContext, budgetFor: (runner: string) => Promise<TransitionBudget>, identityExecute?: AdapterCommandExecutor) {
   const verified = new WeakMap<object, string>();
   const mainAuthority = new WeakMap<object, ProcessIdentity>();
@@ -464,15 +488,18 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     session = current(session.runId) ?? session;
     if (session.result || !['running', 'exited'].includes(session.state) || !session.launchContext) return session;
     if (!reportDirectory(session)) { process.stderr.write(`${session.runId}: Report path does not match the durable run identity\n`); return session; }
-    const result = await readPendingAgentReport({ tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, assignment: session.launchContext.assignment }, {
+    const required = session.launchContext.reportSchema?.required;
+    if (Array.isArray(required) && required.includes('commits') && !session.launchContext.reportedCommits) { await reportDiagnostic(session.runId, 'Reported commit launch metadata is missing'); return session; }
+    const result = await readPendingAgentReport({ tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, assignment: session.launchContext.assignment, reportedCommits: session.launchContext.reportedCommits }, {
       fs: { readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } } },
       now,
+      ...reportedCommitPorts(store, context, execute, session, identityExecute),
       verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignmentPorts(execute), archives),
       confirmTaskCheckboxes: async (request, report) => confirmReportedTasks(store, context, execute, request, report, await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner), identityExecute),
       diagnostic: reason => reportDiagnostic(session.runId, reason),
     });
     if (result) {
-      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context, checkboxCommits: result.checkboxCommits } };
+      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context, ...(session.launchContext.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits: result.checkboxCommits } };
       verified.set(value, session.runId);
       await retryStateOperation(() => state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [], reportAccepted: true }), await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner));
     }
@@ -779,7 +806,7 @@ export async function createProductionServices(
   const budgetFor = async (runner: string) => protocolFor(await protocols(context.confRoot, options.protocolSettings), runner).timeouts;
   const tools = sessionTools(store, execute, configuration, context, budgetFor, options.execute);
   const assignments = assignmentPorts(execute);
-  const prepared = new Map<string, { launch: RuntimeLaunch; reportPath: string; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
+  const prepared = new Map<string, { launch: RuntimeLaunch; reportPath: string; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;
   const leaseFor = (runId: string) => listTaskReservations(store).find(set => set.lease.owner.runId === runId)?.lease;
   const release = async (runId: string, reason: 'cancelled' | 'failed' | 'succeeded') => {
@@ -867,12 +894,18 @@ export async function createProductionServices(
       await fs.mkdir(context.tmpRoot, { recursive: true, mode: 0o700 });
       await fs.mkdir(directory, { mode: 0o700 });
       const reportPath = join(directory, `${launch.addressId}.json`);
+      let reportedCommits: ReportedCommitLaunchContext | undefined;
       try {
+        const required = launch.taskContext.context.reportSchema.required;
+        if (Array.isArray(required) && required.includes('commits')) {
+          if (!launch.commitRepositories) throw new Error('Authorized commit repositories are missing');
+          reportedCommits = await captureReportedCommitLaunchContext(launch.runId, reportPath, launch.commitRepositories, writeBoundaries);
+        }
         await writeTaskContextFile(directory, { version: 1, runId: launch.runId, parameters: launch.taskContext.parameters, assignmentFingerprint: assignmentFingerprint(launch.assignment), ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), context: launch.taskContext.context });
         await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries, workspaceRoute: { type: launch.activity.type, project: launch.activity.project, branch: launch.taskContext.context.branch, ...(launch.taskContext.context.hotfix ? { hotfix: launch.taskContext.context.hotfix } : {}) } }), { mode: 0o600, flag: 'wx' });
       } catch (error) { await fs.rm(directory, { recursive: true, force: true }); throw error; }
-      prepared.set(launch.tmuxSession, { launch: structuredClone(launch), reportPath });
-      return { reportPath, reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
+      prepared.set(launch.tmuxSession, { launch: structuredClone(launch), reportPath, reportedCommits });
+      return { reportPath, reportedCommits, reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
     },
     reserve: async input => {
       const dependencies = await reservationTools(store, context, execute, options.execute);
@@ -892,7 +925,7 @@ export async function createProductionServices(
       const identityAdapter = createAssignmentIdentityAdapter({ [input.activity.project]: context.orchestratorRoot }, options.execute ? { execute: options.execute } : {});
       const tasks = await identityAdapter.capture(input.activity.project, input.assignment);
       const testAssignment: SandboxTestAssignment = { runId: input.runId, agentId: input.addressId, type: input.activity.type, phase: input.activity.phase, project: input.activity.project, workspace: input.activity.cwd, branch: input.taskContext!.context.branch, changes: input.assignment.changes.map(change => change.id) };
-      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
+      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
       const caller = await (async () => {
         try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }
@@ -949,7 +982,7 @@ export async function createProductionServices(
       if (!options.execute && context.stateContext?.mode === 'qa') await runtimeTmuxSocket(context, stateContextEnvironment(context.stateContext, process.env));
       record.spawnAttempted = true;
       try {
-        record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, assignment: record.launch.assignment, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
+        record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, assignment: record.launch.assignment, reportedCommits: session.launchContext?.reportedCommits, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
         timeoutMs: settings.timeouts.overallMs,
         workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});await m.runProductionWorker();`], cwd: request.cwd },
         });
@@ -1065,6 +1098,9 @@ export async function runProductionWorker(
       hotfixCommitPort = await startHotfixCommitPort({ orchestratorRoot: context.orchestratorRoot, qaHome: stateContext.homeDirectory, environment: {}, sandboxExecutable: 'codex' }, hotfix, dirname(session.launchContext.reportPath));
     }
     const writeBoundaries = manifest.writeBoundaries ?? [];
+    const reportRequired = session!.launchContext!.reportSchema?.required;
+    if (Array.isArray(reportRequired) && reportRequired.includes('commits') && !session!.launchContext!.reportedCommits) fail('INVALID_CONTEXT', 'Reported commit launch metadata is missing');
+    if (!isDeepStrictEqual(request.reportedCommits, session!.launchContext!.reportedCommits)) fail('INVALID_CONTEXT', 'Worker reported commit contract does not match durable launch context');
     if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text) || !isDeepStrictEqual(writeBoundaries, session.launchContext.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Worker write boundaries do not match durable launch context');
     const dependencies = await reservationTools(store, context, execute, options.execute);
     let lease: TaskReservationLease | null | undefined = listTaskReservations(store).find(set => set.lease.owner.runId === request.runId)?.lease;
@@ -1330,29 +1366,36 @@ export async function runProductionWorker(
       const exited = tools.current(request.runId)!;
       await tools.finalize(exited, exited.activity ? [{ kind: 'ended', session: exited, project: exited.activity.project }] : []);
     };
-    const launched = runLaunchWrapper(request, {
-      transport,
-      report: {
+    const reportPorts: import('./launch-wrapper.ts').LaunchWrapperPorts['report'] = {
         fs: { mkdir: async path => { await fs.mkdir(path, { recursive: true, mode: 0o700 }); }, readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, removeTree: async () => {} },
         watch: (directory, listener) => { const watcher = watch(directory, (event, filename) => { if (filename) void listener(event === 'rename' ? 'rename' : 'modify', filename.toString()).catch(error => process.emitWarning(error)); }); watcher.on('error', error => process.stderr.write(`${request.runId}: Report watcher error: ${String(error)}\n`)); return () => watcher.close(); },
         now,
         verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
         confirmTaskCheckboxes: (reportRequest, report) => confirmReportedTasks(store, context, execute, reportRequest, report, settings.timeouts, options.execute),
         diagnostic: reason => tools.reportDiagnostic(request.runId, reason),
-      },
+      ...reportedCommitPorts(store, context, execute, session!, options.execute),
+    };
+    const launched = runLaunchWrapper(request, {
+      transport,
+      report: reportPorts,
       lifecycle: {
         started: async handshake => {
           await gate(handshake.identity);
           await tools.control.started(request.runId);
         },
         acceptReport: async result => {
+          if (result.report && session!.launchContext?.reportedCommits) {
+            const fresh = await readPendingAgentReport(request, reportPorts);
+            if (!fresh || !isDeepStrictEqual(fresh.report, result.report)) fail('REPORT_UNVERIFIED', 'Report changed before durable worker acceptance; retry the complete snapshot');
+            result = fresh!;
+          }
           let checkboxCommits = result.checkboxCommits;
-          if (result.report?.status === 'succeeded') {
+          if (result.report?.status === 'succeeded' && !session!.launchContext?.reportedCommits) {
             const verification = await confirmReportedTasks(store, context, execute, request, result.report, settings.timeouts, options.execute);
             if (!verification.ok || verification.awaitingArchive) fail('REPORT_UNVERIFIED', 'OpenSpec completion changed before result acceptance');
             checkboxCommits = verification.commits;
           }
-          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context, checkboxCommits } };
+          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context, ...(session!.launchContext?.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits } };
           tools.verified.set(value, request.runId);
           const accepted = tools.state.acceptWorkResult(request.runId, value, { pending: [{ id: `${request.runId}:${result.event}`, runId: request.runId, event: result.event, payload: { kind: result.event, id: request.address } }], domain: [], reportAccepted: !!result.report });
           if (!accepted && !tools.current(request.runId)?.result) fail('REPORT_UNVERIFIED', 'Result could not be durably accepted for the running session');

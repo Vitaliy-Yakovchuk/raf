@@ -1,4 +1,5 @@
 import { startupContextAssessmentSchema } from './startup-context.ts';
+import { reportedCommitsSchema } from './reported-commits.ts';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
@@ -32,6 +33,7 @@ export interface TaskReportSchema {
   readonly required: readonly string[];
   readonly additionalProperties: true;
   readonly properties: {
+    readonly commits: typeof reportedCommitsSchema;
     readonly context: typeof startupContextAssessmentSchema;
     readonly status: { readonly enum: readonly string[] };
     readonly answer: { readonly type: 'string' };
@@ -227,7 +229,8 @@ function deriveEstimate(type: string, resources: unknown): TaskResourceEstimate 
 
 function reportSchema(statuses: readonly { readonly id: string }[]): TaskReportSchema {
   const values = statuses.map(status => status.id);
-  return { type: 'object', required: ['status', 'answer', 'changes'], additionalProperties: true, properties: {
+  return { type: 'object', required: ['status', 'answer', 'changes', 'commits'], additionalProperties: true, properties: {
+    commits: reportedCommitsSchema,
     context: startupContextAssessmentSchema, status: { enum: values }, answer: { type: 'string' },
     changes: { type: 'array', items: { type: 'object', required: ['id', 'items'], properties: { id: { type: 'string' }, archive: { type: 'string' },
       items: { type: 'array', items: { type: 'object', required: ['id', 'status'], properties: { id: { type: 'string' }, status: { enum: values }, reason: { type: 'string' } } } } } } },

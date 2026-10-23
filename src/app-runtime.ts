@@ -65,11 +65,13 @@ export interface RuntimeLaunch {
   statePath: string;
   tmpRoot: string;
   writeBoundaries?: readonly string[];
+  commitRepositories?: readonly string[];
   notify?: NotifyTarget;
   taskContext?: { parameters: RuntimeRunParameters; context: RuntimeTaskContext };
 }
 
 export interface PreparedRuntimeReport {
+  reportedCommits?: import('./reported-commits-contract.ts').ReportedCommitLaunchContext;
   reportPath: string;
   reportWrapper: ReportWrapper;
   cleanupUnstarted(): Promise<void>;
@@ -232,7 +234,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const launch: RuntimeLaunch = { ...identity, addressId: params.id,
         ...(notify ? { notify } : {}),
         activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
-        assignment, selection, statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
+        assignment, selection, statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(task.workspaceWritable ? [route.cwd, context.orchestratorRoot] : gitBoundaries.length ? [context.orchestratorRoot] : [])], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
       let prepared: PreparedRuntimeReport | undefined;
       let reserved = false;
       let startAttempted = false;
@@ -244,7 +246,8 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           cwd: route.cwd, stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
           features: params.features, phase: params.phase, outcome: task.outcome, writeBoundaries,
           sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema,
-          ...(commitOwnWork && !hotfix ? { commitOwnWork: true, commitPaths: workspaceBoundaries, commitRepositories: task.workspaceWritable ? [route.cwd, context.orchestratorRoot] : [context.orchestratorRoot], workspaceWritable: task.workspaceWritable } : {}),
+          commitRepositories: prepared.reportedCommits?.repositories.map(row => row.repositoryRoot) ?? launch.commitRepositories,
+          ...(commitOwnWork && !hotfix ? { commitOwnWork: true, commitPaths: workspaceBoundaries, workspaceWritable: task.workspaceWritable } : {}),
           rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type, params.phase, loaded.sandboxTestPhases) ? { rafSubcommands: rafSubcommandsFor(params.type, params.phase, loaded.sandboxTestPhases)! } : {}) });
         if (hotfix) brief += `\nHotfix raf: постійне спільне дерево ${route.cwd}, гілка hotfix, спільний індекс і HEAD; main включений до baseCommit ${route.hotfix?.baseCommit}. Кожен виконавець комітить лише власні явні шляхи; спільні файли та staged hunks узгоджуй через agent message за projects/orchestrator/parallel-development. Чужий index.lock очікуй, не видаляй. Коміт не активує main; push і активацію виконує лише main за окремими повноваженнями. Код hotfix запускай лише з ізольованим QA HOME. Коміт коду виконай довіреним портом: node ${join(context.tmpRoot, launch.runId, 'hotfix-commit.mjs')} --message <повідомлення> <власні відносні шляхи>. Cleanup прибирає лише власний запуск, спільне raf-hotfix зберігається.\n`;
         stage = 'reservation';

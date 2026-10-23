@@ -2,12 +2,15 @@ import { validStartupContextAssessment, type StartupContextAssessment } from './
 import { isAbsolute, join } from 'node:path';
 import type { AssignmentSnapshot, AssignmentVerification } from './assignment.ts';
 import type { TaskCheckboxCommit, TaskCheckboxReportPort } from './task-checkbox-report.ts';
+import type { ReportedCommit, ReportedCommitRequestContext, ReportedCommitAcceptancePorts } from './reported-commits-contract.ts';
+import { validReportedCommits, validateReportedCommitGroups } from './reported-commits.ts';
 
 export type AgentReportStatus = 'succeeded' | 'failed';
 export interface AgentReport {
   readonly status: AgentReportStatus;
   readonly answer: string;
   readonly context?: StartupContextAssessment;
+  readonly commits?: readonly ReportedCommit[];
   readonly changes: readonly {
     readonly id: string;
     readonly items: readonly { readonly id: string; readonly status: AgentReportStatus; readonly reason?: string }[];
@@ -15,7 +18,7 @@ export interface AgentReport {
   }[];
   readonly [extra: string]: unknown;
 }
-export interface AgentReportRequest {
+export interface AgentReportRequest extends ReportedCommitRequestContext {
   readonly tmpRoot: string;
   readonly runId: string;
   readonly address: string;
@@ -32,7 +35,7 @@ export interface AgentReportResult {
   readonly exit?: AgentReportExit;
   readonly checkboxCommits?: readonly TaskCheckboxCommit[];
 }
-export interface AgentReportPorts extends Partial<TaskCheckboxReportPort> {
+export interface AgentReportPorts extends Partial<TaskCheckboxReportPort>, Partial<ReportedCommitAcceptancePorts> {
   readonly fs: {
     mkdir(path: string): Promise<void>;
     readText(path: string): Promise<string | null>;
@@ -50,13 +53,14 @@ export interface AgentReportWatcher {
   finish(exit: AgentReportExit): Promise<void>;
   dispose(): Promise<void>;
 }
-export type PendingAgentReportPorts = Pick<AgentReportPorts, 'now' | 'verifyAssignmentCompletion' | 'diagnostic' | 'confirmTaskCheckboxes'> & { readonly fs: Pick<AgentReportPorts['fs'], 'readText'> };
-export function validAgentReport(value: unknown, assignment: AssignmentSnapshot): value is AgentReport {
+export type PendingAgentReportPorts = Pick<AgentReportPorts, 'now' | 'verifyAssignmentCompletion' | 'diagnostic' | 'confirmTaskCheckboxes' | keyof ReportedCommitAcceptancePorts> & { readonly fs: Pick<AgentReportPorts['fs'], 'readText'> };
+export function validAgentReport(value: unknown, assignment: AssignmentSnapshot, context?: ReportedCommitRequestContext): value is AgentReport {
   const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
   const status = (value: unknown) => value === 'succeeded' || value === 'failed';
   const valid = (value: unknown): value is AgentReport => {
     if (!record(value) || !status(value.status) || typeof value.answer !== 'string' || !Array.isArray(value.changes) || value.changes.length !== assignment.changes.length) return false;
     if (value.context !== undefined && !validStartupContextAssessment(value.context)) return false;
+    if (context?.reportedCommits && !validReportedCommits(value.commits)) return false;
     const changes = new Set<string>();
     for (const change of value.changes) {
       if (!record(change) || typeof change.id !== 'string' || changes.has(change.id) || !Array.isArray(change.items) || (change.archive !== undefined && (typeof change.archive !== 'string' || !change.archive))) return false;
@@ -76,7 +80,15 @@ export function validAgentReport(value: unknown, assignment: AssignmentSnapshot)
   };
   return valid(value);
 }
+const acceptanceQueues = new Map<string, Promise<unknown>>();
 export async function readPendingAgentReport(request: AgentReportRequest, ports: PendingAgentReportPorts): Promise<AgentReportResult | null> {
+  const key = request.assignment.root;
+  const previous = acceptanceQueues.get(key) ?? Promise.resolve();
+  const next = previous.catch(() => {}).then(() => readReportSnapshot(request, ports));
+  acceptanceQueues.set(key, next);
+  try { return await next; } finally { if (acceptanceQueues.get(key) === next) acceptanceQueues.delete(key); }
+}
+async function readReportSnapshot(request: AgentReportRequest, ports: PendingAgentReportPorts): Promise<AgentReportResult | null> {
   const component = (value: string) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value);
   if (!isAbsolute(request.tmpRoot) || !component(request.runId) || !component(request.address)) throw new Error('Invalid report directory, run ID or address');
   const path = join(request.tmpRoot, request.runId, `${request.address}.json`);
@@ -89,7 +101,26 @@ export async function readPendingAgentReport(request: AgentReportRequest, ports:
   let report: unknown;
   try { report = JSON.parse(content); }
   catch { await diagnostic('Incomplete or invalid report JSON'); return null; }
-  if (!validAgentReport(report, request.assignment)) { await diagnostic('Invalid report or assignment mismatch'); return null; }
+  if (!validAgentReport(report, request.assignment, request)) { await diagnostic('Invalid report or assignment mismatch'); return null; }
+  const verifyCurrent = async () => {
+    if (!request.reportedCommits) return;
+    if (request.reportedCommits.runId !== request.runId || request.reportedCommits.reportPath !== path
+      || !ports.isCurrentReport || !await ports.isCurrentReport(request.runId, path)) throw new Error('Reported commits do not match the current run/report path');
+    if (!ports.verifyAssignmentSourceIdentity || !(await ports.verifyAssignmentSourceIdentity(request.assignment)).ok) throw new Error('Assignment source identity changed or is unavailable');
+  };
+  if (request.reportedCommits) {
+    try {
+      await verifyCurrent();
+      if (!ports.readTaskCheckboxCommits || !ports.reconcileReportedCommitIndex) throw new Error('Reported commit acceptance ports are unavailable');
+      const checkbox = await ports.readTaskCheckboxCommits(request.runId);
+      const groups = await validateReportedCommitGroups(request.reportedCommits, report.commits!, checkbox);
+      for (const group of groups) {
+        await verifyCurrent();
+        await validateReportedCommitGroups(request.reportedCommits, report.commits!, await ports.readTaskCheckboxCommits(request.runId));
+        await ports.reconcileReportedCommitIndex(group);
+      }
+    } catch (error) { await diagnostic(`Reported commit validation/repair failed (${request.runId}): ${concise(String(error))}`); return null; }
+  }
   let checkboxCommits: readonly TaskCheckboxCommit[] | undefined;
   if (report.status === 'succeeded') {
     let verification: AssignmentVerification;
@@ -106,6 +137,13 @@ export async function readPendingAgentReport(request: AgentReportRequest, ports:
     }
     catch (error) { await diagnostic(`Assignment verification failed: ${concise(String(error))}`); return null; }
     if (!verification.ok) { await diagnostic(`Assignment completion is not confirmed: ${[...new Set(verification.issues.map(issue => concise(issue.reason)))].join('; ')}`); return null; }
+  }
+  if (request.reportedCommits) {
+    try {
+      await verifyCurrent();
+      if (await ports.fs.readText(path) !== content) { await diagnostic('Report snapshot changed during acceptance; retry the complete report'); return null; }
+      await validateReportedCommitGroups(request.reportedCommits, report.commits!, await ports.readTaskCheckboxCommits!(request.runId));
+    } catch (error) { await diagnostic(`Report final verification failed: ${concise(String(error))}`); return null; }
   }
   return { runId: request.runId, id: request.address, event: report.status === 'succeeded' ? 'agent.succeeded' : 'agent.failed', status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
 }

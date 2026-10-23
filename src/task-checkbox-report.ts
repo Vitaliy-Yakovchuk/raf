@@ -78,8 +78,10 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
   }
   const root = request.assignment.root;
   const instances = new Map<string, string>();
+  const environment = { ...process.env };
+  for (const key of ['GIT_INDEX_FILE', 'GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR']) delete environment[key];
   const git = async (args: readonly string[], env?: Readonly<Record<string, string>>) => {
-    const result = ports.executeGit ? await ports.executeGit(args, { cwd: root, ...(env ? { env } : {}) }) : await executeCommand({ executable: 'git', args, cwd: root, ...(env ? { environment: { ...process.env, ...env } } : {}) }).then(result => ({ code: result.exitCode, stdout: result.stdout, stderr: result.stderr }));
+    const result = ports.executeGit ? await ports.executeGit(args, { cwd: root, ...(env ? { env } : {}) }) : await executeCommand({ executable: 'git', args, cwd: root, environment: { ...environment, ...env } }).then(result => ({ code: result.exitCode, stdout: result.stdout, stderr: result.stderr }));
     if (result.code !== 0) throw new Error(`Git ${args[0]} failed: ${result.stderr || result.stdout || result.code}`);
     return result.stdout;
   };
@@ -215,7 +217,19 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
           current = { change: change.id, item: item.id };
           const operation = operations.find(row => row.change === change.id && row.item === item.id);
           if (operation) {
-            await verifyCommit(operation, `openspec/changes/${change.id}/tasks.md`, item.description);
+            const pathspec = `openspec/changes/${change.id}/tasks.md`;
+            await verifyCommit(operation, pathspec, item.description);
+            await withIndexLock(async env => {
+              const staged = (await git(['ls-files', '--stage', '--', pathspec], env)).trim();
+              const owned = (await git(['ls-tree', operation.sha!, '--', pathspec])).trim();
+              const entry = owned.match(/^(\d+) blob ([a-f0-9]+)\t/);
+              if (!entry || staged !== `${entry[1]} ${entry[2]} 0\t${pathspec}`) return false;
+              const head = (await git(['rev-parse', 'HEAD'])).trim();
+              if ((await git(['ls-tree', head, '--', pathspec])).trim()) return false;
+              await git(['update-index', '--force-remove', '--', pathspec], env);
+              if ((await git(['rev-parse', 'HEAD'])).trim() !== head) throw new Error('HEAD changed during archive index repair; retry confirmation');
+              return true;
+            });
             commits.push({ ...current, sha: operation.sha! });
           }
         }

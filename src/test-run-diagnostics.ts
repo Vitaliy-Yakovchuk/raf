@@ -97,14 +97,15 @@ export type DiagnosticReadState = {
 export type DiagnosticDisposition = { failureKind: 'assertions' | 'setup' | null; knownRed: DiagnosticTestId | null };
 
 const configurationErrors = new WeakMap<object, string>();
-const invalid = (message: string): never => {
+export const rejectTestRunConfiguration = (message: string): never => {
   const error = Object.assign(new Error(message), { code: 'CONFIGURATION_INVALID' });
   configurationErrors.set(error, message);
   throw error;
 };
+const invalid = rejectTestRunConfiguration;
 export function diagnosticConfigurationFailure(error: unknown): InlineDiagnostic | null {
   const message = error && typeof error === 'object' ? configurationErrors.get(error) : undefined;
-  return message ? { kind: 'preflight', test: null, errorCode: 'CONFIGURATION_INVALID', message, location: null, stack: [], redacted: false, truncated: false, unavailableReason: 'Diagnostic limits were rejected before collection' } : null;
+  return message ? { kind: 'preflight', test: null, errorCode: 'CONFIGURATION_INVALID', message, location: null, stack: [], redacted: false, truncated: false, unavailableReason: 'Test run configuration was rejected before collection' } : null;
 }
 const object = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const bytes = (s: string) => Buffer.byteLength(s);
@@ -196,19 +197,23 @@ export class TestRunDiagnostics {
     s = s.replace(/\b(cookie|set-cookie)\s*[:=][^\r\n]*/gi, '$1: <redacted>');
     s = s.replace(/\b(authorization|cookie|set-cookie|password|passwd|token|api[_-]?key|secret)\b(\s*[:=]\s*)(?:Bearer\s+)?[^\s,;]+/gi, '$1$2<redacted>');
     for (const pattern of this.limits.redactionPatterns) s = s.replace(new RegExp(pattern, 'gu'), '<redacted>');
+    let redacted = s !== value;
     s = s.replace(/https?:\/\/[^\s<>"']+|(?<![\w./<>-])(?:file:\/\/)?\/[^\s():<>"']+/g, value => {
       if (/^https?:\/\//.test(value)) {
         try {
           const url = new URL(value);
           if (!url.username && !url.password && !url.search) return value;
+          redacted = true;
           url.username = ''; url.password = '';
           if (url.search) url.search = '?<redacted>';
           return url.toString();
-        } catch { return '<redacted-url>'; }
+        } catch { redacted = true; return '<redacted-url>'; }
       }
-      return this.path(value.replace(/^file:\/\//, ''));
+      const path = this.path(value.replace(/^file:\/\//, ''));
+      redacted ||= /^<(?:fixture|qa-home|external)>/.test(path);
+      return path;
     });
-    return { text: s, redacted: s !== value };
+    return { text: s, redacted };
   }
   private add(entry: InlineDiagnostic): void {
     this.total++;

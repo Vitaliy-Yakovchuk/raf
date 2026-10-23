@@ -1,5 +1,5 @@
 import { resourceEstimateInvalidPointer, type ResourceEstimateValues } from './resource-estimates.ts';
-import { TestRunDiagnostics, diagnosticConfigurationFailure, validateDiagnosticLimits, validateRunTemporaryConfiguration } from './test-run-diagnostics.ts';
+import { TestRunDiagnostics, diagnosticConfigurationFailure, rejectTestRunConfiguration, validateDiagnosticLimits, validateRunTemporaryConfiguration } from './test-run-diagnostics.ts';
 import type { DiagnosticLimits, DiagnosticAttachment, InlineDiagnostic, DiagnosticEnvironmentSummary, RunTemporaryConfiguration, RunTemporaryReservation } from './test-run-diagnostics.ts';
 import { parseCommandArguments } from './cli-arguments.ts';
 import { isAbsolute, resolve, sep } from 'node:path';
@@ -242,7 +242,7 @@ export function parseTestRunArgs(argv: readonly string[]): ParsedTestRunArgs {
 }
 
 export function validateTestRunConfig(config: unknown, phases: readonly string[], policy: UnitTestPolicy): TestRunConfig {
-  const invalid = (field: string): never => failure('CONFIGURATION_INVALID', field);
+  const invalid = (field: string): never => rejectTestRunConfiguration(`CONFIGURATION_INVALID: ${field}`);
   if (!record(policy) || (['timeoutMs', 'optimizeAfterTimeouts', 'maxGroupTimeouts'] as const).some(key => !Number.isSafeInteger(policy[key]) || policy[key] <= 0) || policy.optimizeAfterTimeouts >= policy.maxGroupTimeouts) invalid('conf/flow.json#/unitTests');
   if (!record(config) || !record(config.phases) || !record(config.hints) || !record(config.projects)) return invalid('conf/test-runs.json');
   validateDiagnosticLimits(config.diagnostics);
@@ -267,7 +267,8 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
       if (/^(?:.*\/)?(?:sh|bash|dash|zsh|fish|cmd|powershell)$/.test(profile.executable) || profile.argv.some((arg: string) => ['-e', '--eval', '-c', '--command'].includes(arg))) invalid(`projects/${projectId}/profiles/${id}/command`);
     }
     for (const [id, preset] of Object.entries(project.groups) as [string, any][]) {
-      if (!record(preset) || !project.profiles[preset.profileId] || !strings(preset.files) || !preset.files.length || preset.files.some((f: string) => !project.profiles[preset.profileId].unitFiles.includes(f))) invalid(`projects/${projectId}/groups/${id}`);
+      if (!record(preset) || !project.profiles[preset.profileId] || !strings(preset.files) || !preset.files.length) invalid(`projects/${projectId}/groups/${id}`);
+      if (preset.files.some((f: string) => !project.profiles[preset.profileId].unitFiles.includes(f))) invalid(`projects/${projectId}/groups/${id}: group files must belong to profile unitFiles`);
     }
   }
   return config as unknown as TestRunConfig;

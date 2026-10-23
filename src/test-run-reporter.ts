@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { TestRunDiagnostics, diagnosticFailureFromNodeEvent, validateDiagnosticLimits } from './test-run-diagnostics.ts';
 import type { RunnerEvent, TestId } from './test-runs.ts';
-import { isAbsolute, relative } from 'node:path';
+import { isAbsolute, relative, resolve } from 'node:path';
 
 export default async function* report(source: AsyncIterable<any>, selected?: TestId[]): AsyncGenerator<string> {
   const limits = validateDiagnosticLimits(JSON.parse(readFileSync(new URL('../../conf/test-runs.json', import.meta.url), 'utf8')).diagnostics);
@@ -14,8 +14,9 @@ export default async function* report(source: AsyncIterable<any>, selected?: Tes
   for await (const event of source) {
     const data = event.data;
     if (event.type === 'test:stderr' && data.file && typeof data.message === 'string' && stderrBytes < limits.maxStderrBytes) {
-      let collector = stderr.get(data.file);
-      if (!collector) { collector = new TestRunDiagnostics(limits, { workspace: process.cwd(), qaHome: process.env.HOME ?? '', fixtureRoots: [] }); stderr.set(data.file, collector); }
+      const file = resolve(process.cwd(), data.file);
+      let collector = stderr.get(file);
+      if (!collector) { collector = new TestRunDiagnostics(limits, { workspace: process.cwd(), qaHome: process.env.HOME ?? '', fixtureRoots: [] }); stderr.set(file, collector); }
       const chunk = Buffer.from(data.message);
       const retained = chunk.subarray(0, limits.maxStderrBytes - stderrBytes);
       collector.stderrChunk(retained); stderrBytes += retained.length;
@@ -48,8 +49,8 @@ export default async function* report(source: AsyncIterable<any>, selected?: Tes
       const failure = event.type === 'test:fail' ? diagnosticFailureFromNodeEvent(event) : null;
       if (failure) {
         failure.test = test;
-        if (failure.origin === 'collection' && failure.unavailableReason && stderr.get(file)?.stderrText()) {
-          const text = stderr.get(file)!.stderrText();
+        if (failure.origin === 'collection' && failure.unavailableReason && stderr.get(resolve(process.cwd(), file))?.stderrText()) {
+          const text = stderr.get(resolve(process.cwd(), file))!.stderrText();
           const header = text.match(/^([\w.]*Error)(?: \[([\w]+)\])?: ([^\r\n]*)/m);
           failure.error = Object.assign(new Error(header?.[3] ?? 'File runner failed; no structured error header was available'), {
             name: header?.[1] ?? 'Error', ...(header?.[2] ? { code: header[2] } : {}), stack: text,

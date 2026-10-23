@@ -84,7 +84,7 @@ for (const source of ['missing', 'explicit-missing', 'relative', 'directory']) {
   });
 }
 
-const standLifecycle = await import('../../openspec/changes/add-raf-test-run/etchly-qa/stand-lifecycle.mjs');
+const standLifecycle = await import('../scripts/etchly-stand-lifecycle.mjs');
 
 for (const fail of [false, true]) {
   test(`Etchly stand restores fixture inventory and files after ${fail ? 'failure' : 'success'}`, async t => {

@@ -230,7 +230,6 @@ for (const type of ['spec', 'design']) {
 }
 
 test('Z.111 implement regression: linked code worktree keeps its git-dir/common-dir and commit duty', { timeout }, async t => {
-  // The existing implement contract covers linked code; linked Orchestrator is tested above for spec/design.
   const f = await fixture(t);
   const captured = await captureLaunch(t, f, 'implement', 'codex');
   assert.equal(captured.context.commitOwnWork, true);
@@ -251,7 +250,6 @@ for (const type of ['spec', 'design']) {
     if (!settings) throw new Error('Missing codex protocol fixture');
     const model = models.models.find((entry: { runner: string; enabled: boolean }) => entry.runner === 'codex' && entry.enabled);
     assert.ok(model);
-    // Z.110 explicitly permits a questions file; a directory-only preflight must not widen this boundary.
     const writableDirectories = [...captured.reserved.writeBoundaries!, runDirectory];
     const baseInvocation = buildRunnerInvocation(settings, { model: model.id, effort: model.effort });
     const invocation = { ...baseInvocation, args: [...baseInvocation.args, ...nativeWriteScopeArgs(settings, writableDirectories, [])] };

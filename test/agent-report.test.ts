@@ -44,6 +44,23 @@ function fixture() {
 }
 const path = '/workspace/tmp/run-one/implement-demo.json';
 
+test('[Z.354] completion diagnostic contains only assigned IDs, reason and report path', async () => {
+  const f = fixture();
+  f.files.set(path, JSON.stringify(valid));
+  f.setVerification({ ok: false, issues: [{ change: 'demo', requestedItems: ['1.1'], reason: 'Task 1.1 remains open',
+    foundItems: Array.from({ length: 1000 }, (_, i) => ({ id: `9.${i}`, description: 'UNRELATED_TASK_PAYLOAD', done: false })), archives: [], remedy: 'Complete task' }] });
+  const calls: unknown[][] = [];
+  assert.equal(await readPendingAgentReport(request, { ...f.ports, diagnostic: async (...args) => { calls.push(args); } }), null);
+  assert.equal(calls.length, 1);
+  const serialized = JSON.stringify(calls[0]);
+  assert.ok(serialized.length < 1000, 'diagnostic must not serialize all tasks of the change');
+  assert.match(serialized, /demo:1\.1/);
+  assert.match(serialized, /Task 1\.1 remains open/);
+  assert.ok(serialized.includes(path));
+  assert.doesNotMatch(serialized, /foundItems|UNRELATED_TASK_PAYLOAD/);
+  assert.equal(calls[0].length, 1, 'raw verification is not passed to diagnostic transports');
+});
+
 test('initial read accepts verified report with extensions and addresses the result event', async () => {
   const f = fixture();
   f.files.set(path, JSON.stringify({ ...valid, extra: { informational: true } }));

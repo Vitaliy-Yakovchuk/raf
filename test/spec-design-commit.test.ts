@@ -146,6 +146,9 @@ async function captureLaunch(t: TestContext, f: Fixture, type: string, runner: '
   const runtime = createAppRuntime(context, {
     loadConfiguration: async () => configuration, openStore: async () => store, createServices: async () => services,
     nextRunIdentity: () => ({ runId: `z111-${type}-${runner}`, tmuxSession: `z111-${type}-${runner}` }), now: () => Date.now(),
+    additionalHandlers: Object.fromEntries(configuration.catalog.commands
+      .filter(command => !['help', 'agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner list', 'runner enable', 'runner disable', 'command stats'].includes(command.handlerName))
+      .map(command => [command.handlerName, unexpected])),
   });
   t.after(() => runtime.close());
   await assert.rejects(Promise.resolve().then(() => runtime.handlers['agent run'](f.parameters(type) as unknown as Record<string, unknown>)), error =>

@@ -31,6 +31,8 @@ async function launchOrphan(f: AgentRunFixture, id: string) {
 async function completeTask(f: AgentRunFixture) {
   const tasks = join(f.directory, 'orchestrator', 'openspec', 'changes', change, 'tasks.md');
   await fs.writeFile(tasks, (await fs.readFile(tasks, 'utf8')).replace('- [ ] 1.1 ', '- [x] 1.1 '));
+  await f.git('add', '--', `openspec/changes/${change}/tasks.md`);
+  await f.git('commit', '-qm', 'fixture previously completed exact item');
 }
 
 async function writeReport(reportPath: string, report: unknown) {
@@ -91,10 +93,10 @@ function psRow(listed: Awaited<ReturnType<AgentRunFixture['command']>>, address:
 }
 
 test('[report-orphan] after the worker is killed, a later valid report is accepted by agent ps, and agent close closes with it', { timeout: 180_000 }, async t => {
-  const f = await fixture(t, 'orphan-ps', timeouts, 'codex', { productionQa: true, commands: ['agent ps'] });
+  const f = await fixture(t, 'orphan-ps', timeouts, 'codex', { productionQa: true, tasks: 2, commands: ['agent ps'] });
   const { runId, reportPath } = await launchOrphan(f, 'orphan-agent');
   const watchers = seedResultWatchers(f, 'orphan-agent');
-  await completeTask(f);
+  const before = (await f.git('rev-parse', 'HEAD')).trim();
   await writeReport(reportPath, succeeded);
   await delay(500);
   assert.equal(f.inspect().sessions.find(row => row.runId === runId)?.result, undefined, 'no live watcher: nothing accepts the report on its own');
@@ -102,6 +104,16 @@ test('[report-orphan] after the worker is killed, a later valid report is accept
   assert.equal(row?.state, 'running', 'the runner is still open until closure');
   assert.equal(row?.result?.status, 'succeeded', JSON.stringify(row));
   assert.equal(row?.result?.response, answer, 'the accepted answer is visible in ps before closure');
+  const tasksPath = `openspec/changes/${change}/tasks.md`;
+  const confirmedTasks = await f.git('show', `HEAD:${tasksPath}`);
+  assert.match(confirmedTasks, /- \[x\] 1\.1 /, 'raf committed the exact assigned checkbox');
+  assert.match(confirmedTasks, /- \[ \] 1\.2 /, 'another open item keeps archive outside this assignment');
+  assert.equal((await f.git('rev-list', '--count', `${before}..HEAD`)).trim(), '1');
+  assert.equal((await f.git('show', '--format=', '--name-only', 'HEAD')).trim(), tasksPath);
+  const commitMessage = await f.git('show', '-s', '--format=%B', 'HEAD');
+  assert.ok(commitMessage.includes(runId), 'the checkbox commit identifies the run');
+  assert.ok(commitMessage.includes(`${change}:1.1`), 'the checkbox commit identifies the exact assignment');
+  const confirmedHead = await f.git('rev-parse', 'HEAD');
   assertResultEventsSettled(f, runId);
   assert.equal(reminder(f, watchers.succeeded).state, 'active', 'agent.succeeded was emitted for the address');
   const closedOnce = reminder(f, watchers.succeededClose);
@@ -109,6 +121,7 @@ test('[report-orphan] after the worker is killed, a later valid report is accept
   assert.equal(reminder(f, watchers.failed).state, 'pending', 'no agent.failed over the valid report');
   const again = psRow(await f.command(['agent', 'ps']), 'orphan-agent');
   assert.deepEqual(again?.result, row?.result, 'the second read does not accept the same report again');
+  assert.equal(await f.git('rev-parse', 'HEAD'), confirmedHead, 'reconciliation creates no duplicate checkbox commit');
   assert.equal(reminder(f, watchers.succeededClose).closedAt, closedOnce.closedAt, 'a repeated fact does not renew the closing time');
   assert.equal(reminder(f, watchers.failed).state, 'pending');
   const closed = await closeAsAgent(f, 'orphan-agent');
@@ -121,14 +134,16 @@ test('[report-orphan] after the worker is killed, a later valid report is accept
 });
 
 test('[report-orphan] agent close alone accepts a valid report left after the worker died', { timeout: 180_000 }, async t => {
-  const f = await fixture(t, 'orphan-close', timeouts, 'codex', { productionQa: true, commands: ['agent ps'] });
+  const f = await fixture(t, 'orphan-close', timeouts, 'codex', { productionQa: true, tasks: 2, commands: ['agent ps'] });
   const { runId, reportPath } = await launchOrphan(f, 'orphan-close');
   const watchers = seedResultWatchers(f, 'orphan-close');
   await completeTask(f);
+  const completedHead = await f.git('rev-parse', 'HEAD');
   await writeReport(reportPath, succeeded);
   const closed = await closeAsAgent(f, 'orphan-close');
   assert.equal(closed.closed, true);
   assert.equal(closed.result, 'succeeded');
+  assert.equal(await f.git('rev-parse', 'HEAD'), completedHead, 'a committed exact checkbox needs no empty commit');
   assertClosedClean(f, runId, 'succeeded');
   assertResultEventsSettled(f, runId);
   assert.equal(reminder(f, watchers.succeeded).state, 'active', 'agent.succeeded was emitted by close');
@@ -142,11 +157,17 @@ test('[report-orphan] an invalid or unverified report left after the worker died
   const f = await fixture(t, 'orphan-invalid', timeouts, 'codex', { productionQa: true, commands: ['agent ps'] });
   const { runId, reportPath } = await launchOrphan(f, 'orphan-invalid');
   const watchers = seedResultWatchers(f, 'orphan-invalid');
+  const tasks = join(f.directory, 'orchestrator', 'openspec', 'changes', change, 'tasks.md');
+  await fs.writeFile(tasks, (await fs.readFile(tasks, 'utf8')).replace('- [ ] 1.1 ', '- [x] 1.1 '));
+  const head = await f.git('rev-parse', 'HEAD');
+  const conflictingTasks = await fs.readFile(tasks, 'utf8');
   await writeReport(reportPath, succeeded);
   const listed = await f.command(['agent', 'ps']);
   const row = psRow(listed, 'orphan-invalid');
   assert.equal(row?.state, 'running');
-  assert.equal(row?.result, undefined, 'succeeded without the OpenSpec checkbox is not confirmed');
+  assert.equal(row?.result, undefined, 'an uncommitted checkbox with no raf ownership proof is a conflict');
+  assert.equal(await f.git('rev-parse', 'HEAD'), head, 'the foreign marker is never committed');
+  assert.equal(await fs.readFile(tasks, 'utf8'), conflictingTasks, 'the conflicting marker is preserved');
   assert.equal(listed.stderr, '', 'the refusal goes to the event addressee, without a task dump in CLI stderr');
   const diagnostic = (row as PsSessionView).resultNotice;
   assert.equal(diagnostic?.recipient, 'main');

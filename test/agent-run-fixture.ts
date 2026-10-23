@@ -275,6 +275,19 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
     await fs.copyFile(join(sourceRoot, '../conf/projects.json'), join(conf, 'projects.json'));
     await prepareProductionQaFixture(t, { root, home });
   }
+  const gitEnv: NodeJS.ProcessEnv = { ...env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+  for (const name of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE']) delete gitEnv[name];
+  const git = async (...args: string[]) => (await exec('git', [
+    '-c', 'user.name=Agent run fixture', '-c', 'user.email=agent-run@example.invalid',
+    '-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null', '-C', root, ...args,
+  ], { env: gitEnv })).stdout;
+  await git('init', '-q', '--initial-branch=main');
+  await git('config', 'user.name', 'Agent run fixture');
+  await git('config', 'user.email', 'agent-run@example.invalid');
+  await git('config', 'commit.gpgsign', 'false');
+  await git('config', 'core.hooksPath', '/dev/null');
+  await git('add', '--', 'openspec');
+  await git('commit', '-qm', 'fixture OpenSpec source');
   openStateStore(cfg.statePath).close();
   const command = async (argv: string[]) => {
     const child = spawn(process.execPath, [cfg.commandPath, marker, JSON.stringify(argv)], { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -309,7 +322,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   };
   const runners = async () => (await fs.readdir(control)).filter(name => /^runner-\d+\.pid$/.test(name)).map(name => Number(name.slice(7, -4)));
   const runDirectories = async () => (await fs.readdir(tmpRoot)).filter(name => name !== 'tmux');
-  return { directory, control, tmpRoot, run, runArgs, command, as, input, inspect, seedReminder, owned, tmuxSessions, runners, runDirectories };
+  return { directory, control, tmpRoot, git, run, runArgs, command, as, input, inspect, seedReminder, owned, tmuxSessions, runners, runDirectories };
 }
 
 export type AgentRunFixture = Awaited<ReturnType<typeof agentRunFixture>>;

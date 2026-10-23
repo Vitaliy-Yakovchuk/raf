@@ -90,12 +90,17 @@ test('[Z.354] worker watcher and later CLI commands deliver one short refusal on
   await runnerPid(f, 'worker');
   const worker = live(f, 'worker');
   const reportPath = worker.launchContext!.reportPath;
+  const tasksPath = join(f.directory, 'orchestrator', 'openspec', 'changes', change, 'tasks.md');
+  await fs.writeFile(tasksPath, (await fs.readFile(tasksPath, 'utf8')).replace('- [ ] 1.3 ', '- [x] 1.3 '));
+  const head = await f.git('rev-parse', 'HEAD');
+  const conflictingTasks = await fs.readFile(tasksPath, 'utf8');
   const report = { status: 'succeeded', answer: 'Done', changes: [{ id: change, items: [{ id: '1.3', status: 'succeeded' }] }] };
   const staging = join(dirname(reportPath), '.diagnostic.tmp');
   await fs.writeFile(staging, JSON.stringify(report));
   await fs.rename(staging, reportPath);
   const received = await until(() => f.input(observerPid), text => text.includes(reportPath), 'watcher delivered the refusal without polling');
-  for (const part of [`${change}:1.3`, 'Assignment completion is not confirmed', '1.3', reportPath]) assert.ok(received.includes(part), `diagnostic contains ${part}`);
+  for (const part of [`${change}:1.3`, '1.3', reportPath]) assert.ok(received.includes(part), `diagnostic contains ${part}`);
+  assert.match(received, /checkbox|marker|conflict|uncommitted|галоч|маркер|конфлікт|незакоміч/i, 'the notice explains the checkbox conflict');
   assert.doesNotMatch(received, /foundItems|raf event: agent\.succeeded/);
   assert.equal(live(f, 'worker').result, undefined);
   await fs.writeFile(staging, JSON.stringify(report));
@@ -103,10 +108,12 @@ test('[Z.354] worker watcher and later CLI commands deliver one short refusal on
   for (const args of [['agent', 'ps'], ['reminder', 'add', '--to', 'observer', '--text', 'unrelated reminder', '--at', '2099-01-01T00:00:00.000Z'], ['agent', 'ps']]) {
     const outcome = await f.command(args);
     assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));
-    assert.doesNotMatch(outcome.stderr, /Assignment completion is not confirmed|foundItems/);
+    assert.doesNotMatch(outcome.stderr, /checkbox|conflict|foundItems/i);
   }
   await delay(500);
   assert.equal(occurrences(await f.input(observerPid), reportPath), 1, 'worker and reconciliation share durable deduplication');
   assert.equal((await f.input(bystanderPid)).includes(reportPath), false, 'bystanders do not receive the diagnostic');
   assert.equal(live(f, 'worker').result, undefined, 'unconfirmed success remains pending');
+  assert.equal(await f.git('rev-parse', 'HEAD'), head, 'refusal creates no checkbox commit');
+  assert.equal(await fs.readFile(tasksPath, 'utf8'), conflictingTasks, 'refusal preserves the foreign marker');
 });

@@ -90,7 +90,8 @@ async function scopedFixture(t: TestContext, metadata: boolean, worktree = false
   const writeProbe = String.raw`
 import assert from 'node:assert/strict';
 import { writeFileSync, renameSync } from 'node:fs';
-const { targets, denied, reportPath, report } = JSON.parse(process.argv[1]);
+import { spawnSync } from 'node:child_process';
+const { targets, denied, reportPath, report, commitTargets } = JSON.parse(process.argv[1]);
 for (const path of denied) assert.throws(() => writeFileSync(path, 'forbidden synthetic write'), path);
 const writes = targets.map(path => {
   try { writeFileSync(path, 'approved synthetic write'); return { path, allowed: true }; }
@@ -98,6 +99,19 @@ const writes = targets.map(path => {
 });
 process.stdout.write(JSON.stringify(writes));
 assert.ok(writes.every(row => row.allowed), 'every assigned write must succeed inside the tool sandbox');
+const gitEnvironment = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+for (const name of Object.keys(gitEnvironment)) if (name.startsWith('GIT_') && !['GIT_CONFIG_NOSYSTEM', 'GIT_CONFIG_GLOBAL'].includes(name)) delete gitEnvironment[name];
+for (const { repository, paths } of commitTargets) {
+  const git = args => {
+    const result = spawnSync('git', ['-C', repository, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null', ...args], { encoding: 'utf8', env: gitEnvironment });
+    assert.ifError(result.error);
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout.trim();
+  };
+  git(['add', '--', ...paths]);
+  git(['commit', '--quiet', '-m', 'Synthetic assigned writes']);
+  report.commits.push({ repository, sha: git(['rev-parse', '--verify', 'HEAD']) });
+}
 writeFileSync(reportPath + '.tmp', JSON.stringify(report));
 renameSync(reportPath + '.tmp', reportPath);
 `;
@@ -144,7 +158,7 @@ const timer = setInterval(() => {
   if (!reported && existsSync(${JSON.stringify(releasePath)})) {
     const report = { status: metadata ? 'succeeded' : 'failed', answer: 'Scoped synthetic writes', changes: assignment.assignments.map(change => ({ id: change.id, items: change.items.map(item => ({ id: item.id, status: metadata ? 'succeeded' : 'failed', ...(metadata ? {} : { reason: 'Synthetic report-only scope keeps task unfinished' }) })) })), commits: [] };
     const launcher = JSON.parse(readFileSync(${JSON.stringify(releasePath)}, 'utf8'));
-    const probe = spawnSync(launcher.executable, [...launcher.args, process.execPath, '--input-type=module', '-e', ${JSON.stringify(writeProbe)}, JSON.stringify({ targets, denied: ${JSON.stringify(denied)}, reportPath: assignment.report_path, report })], { encoding: 'utf8', env: launcher.environment, timeout: launcher.timeoutMs });
+    const probe = spawnSync(launcher.executable, [...launcher.args, process.execPath, '--input-type=module', '-e', ${JSON.stringify(writeProbe)}, JSON.stringify({ targets, denied: ${JSON.stringify(denied)}, reportPath: assignment.report_path, report, commitTargets: ${JSON.stringify(metadata ? [{ repository: f.root, paths: [documentPath, f.questionsPath] }, { repository: f.cwd, paths: [join(f.cwd, 'local.txt')] }] : [])} })], { encoding: 'utf8', env: launcher.environment, timeout: launcher.timeoutMs });
     writeFileSync(${JSON.stringify(writeEvidence)}, JSON.stringify({ status: probe.status, stdout: probe.stdout, stderr: probe.stderr, error: probe.error?.message }));
     reported = true;
   }
@@ -253,14 +267,26 @@ for (const [metadata, worktree, missingQuestions] of [[true, false, false], [fal
     const tasksRelative = relative(f.root, f.tasksPath);
     assert.equal(f.git('show', `HEAD:${tasksRelative}`), expectedTasks.trim(), 'the accepted checkbox state is committed');
     assert.equal(f.git('diff', 'HEAD', '--', tasksRelative), '', 'no uncommitted checkbox remains');
+    const reported = JSON.parse(await readFile(f.reportPath, 'utf8'));
     if (metadata) {
-      assert.equal(f.git('rev-list', '--count', `${f.baselineHead}..HEAD`), '1', 'raf creates exactly one checkbox commit');
+      assert.deepEqual(reported.commits, [
+        { repository: f.root, sha: f.git('rev-parse', 'HEAD^') },
+        { repository: f.cwd, sha: f.git('-C', f.cwd, 'rev-parse', 'HEAD') },
+      ], 'the report names the sandbox commits separately from the raf checkbox commit');
+      assert.equal(f.git('rev-list', '--count', `${reported.commits[0].sha}..HEAD`), '1', 'raf creates exactly one checkbox commit after the reported document commit');
+      assert.equal(f.git('rev-list', '--count', `${f.baselineHead}..HEAD`), '2', 'only the synthetic document commit and raf checkbox commit advance Orchestrator');
+      assert.deepEqual(f.git('diff-tree', '--no-commit-id', '--name-only', '-r', reported.commits[0].sha).split('\n').sort(),
+        [relative(f.root, f.documentPath), relative(f.root, f.questionsPath)].sort(), 'the synthetic document commit contains only its assigned writes');
+      assert.equal(f.git('-C', f.cwd, 'diff-tree', '--no-commit-id', '--name-only', '-r', reported.commits[1].sha), 'local.txt');
       assert.equal(f.git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'), tasksRelative, 'the checkbox commit touches only tasks.md');
-    } else assert.equal(f.git('rev-parse', 'HEAD'), f.baselineHead, 'a failed report creates no checkbox commit');
+    } else {
+      assert.deepEqual(reported.commits, []);
+      assert.equal(f.git('rev-parse', 'HEAD'), f.baselineHead, 'a failed report creates no checkbox commit');
+    }
     const writes = JSON.parse(probe.stdout);
     assert.ok(writes.every((row: { allowed: boolean }) => row.allowed));
     for (const path of f.targets) assert.equal(await readFile(path, 'utf8'), 'approved synthetic write');
-    assert.equal(JSON.parse(await readFile(f.reportPath, 'utf8')).status, metadata ? 'succeeded' : 'failed');
+    assert.equal(reported.status, metadata ? 'succeeded' : 'failed');
     await writeFile(f.exitGate, 'exit');
     const done = await eventually(f.session, row => row?.state === 'finished', 'owned worker finalizes after native exit');
     assert.equal(done?.result?.status, metadata ? 'succeeded' : 'failed');

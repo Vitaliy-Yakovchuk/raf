@@ -69,6 +69,7 @@ const runnerScript = String.raw`
 import { readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { spawnSync } from 'node:child_process';
 if (process.argv.includes('--version')) { console.log('codex-cli 0.0.1'); process.exit(0); }
 const c = JSON.parse(readFileSync(process.env.RAF_INTEGRATION_FIXTURE, 'utf8'));
 const { openStateStore } = await import(pathToFileURL(c.sourceRoot + '/src/state-store.ts'));
@@ -102,13 +103,25 @@ setInterval(() => {
   if (!assignment) return;
   const id = assignment.agent_id;
   if (!reported && existsSync(c.control + '/' + id + '.report')) {
+    const paths = [];
     for (const assigned of assignment.assignments) {
       const path = assignment.root + '/openspec/changes/' + assigned.id + '/tasks.md';
       let text = readFileSync(path, 'utf8');
       for (const item of assigned.items) text = text.replace('- [ ] ' + item.id + ' ' + item.description, '- [x] ' + item.id + ' ' + item.description);
       writeFileSync(path, text);
+      paths.push(path);
     }
-    const report = {status:'succeeded',answer:'synthetic answer ' + id,changes:assignment.assignments.map(x=>({id:x.id,items:x.items.map(item=>({id:item.id,status:'succeeded'}))}))};
+    const environment = { ...process.env, GIT_CONFIG_NOSYSTEM:'1', GIT_CONFIG_GLOBAL:'/dev/null' };
+    for (const name of Object.keys(environment)) if (name.startsWith('GIT_') && !['GIT_CONFIG_NOSYSTEM','GIT_CONFIG_GLOBAL'].includes(name)) delete environment[name];
+    const git = args => {
+      const result = spawnSync('git', ['-C',assignment.root,'-c','user.name=Fixture','-c','user.email=fixture@example.invalid','-c','commit.gpgsign=false','-c','core.hooksPath=/dev/null',...args], {encoding:'utf8',env:environment});
+      if (result.error) throw result.error;
+      if (result.status !== 0) throw new Error(result.stderr);
+      return result.stdout.trim();
+    };
+    git(['add','--',...paths]);
+    git(['commit','--quiet','-m','Synthetic assigned task completion']);
+    const report = {status:'succeeded',answer:'synthetic answer ' + id,changes:assignment.assignments.map(x=>({id:x.id,items:x.items.map(item=>({id:item.id,status:'succeeded'}))})),commits:[{repository:assignment.root,sha:git(['rev-parse','--verify','HEAD'])}]};
     writeFileSync(assignment.report_path + '.partial', JSON.stringify(report));
     renameSync(assignment.report_path + '.partial', assignment.report_path);
     writeFileSync(c.control + '/' + id + '.reported', JSON.stringify(report));
@@ -141,7 +154,7 @@ const task = await services.resolveTask(params,valid.snapshot);
 const selection = services.selectModel(c.models,await services.routingSnapshot(),{complexity:params.complexity,role:params.type});
 if (selection.status !== 'selected') throw new Error(JSON.stringify(selection));
 const runId = randomUUID();
-const launch = {runId,addressId:params.id,tmuxSession:randomUUID(),activity:{type:params.type,project:params.project,features:params.features,phase:params.phase,cwd:c.workspace},assignment:valid.snapshot,selection,statePath:c.statePath,tmpRoot:c.tmpRoot,writeBoundaries:bindWorkspaceBoundaries(task,c.workspace),taskContext:{parameters:params,context:task}};
+const launch = {runId,addressId:params.id,tmuxSession:randomUUID(),activity:{type:params.type,project:params.project,features:params.features,phase:params.phase,cwd:c.workspace},assignment:valid.snapshot,selection,statePath:c.statePath,tmpRoot:c.tmpRoot,writeBoundaries:bindWorkspaceBoundaries(task,c.workspace),commitRepositories:[c.root,c.workspace],taskContext:{parameters:params,context:task}};
 const prepared = await services.prepareReport(launch);
 const admitted = await services.reserve({...launch,reportPath:prepared.reportPath,requested:task.requested,requiredFileSystemIds:[...task.requiredFileSystemIds]});
 if (!admitted.admitted) throw new Error(JSON.stringify(admitted));
@@ -281,6 +294,15 @@ async function fixture(t: any) {
   await fs.mkdir(join(changeDir, 'specs', 'production-fixture'), { recursive: true });
   await fs.writeFile(join(changeDir, 'specs', 'production-fixture', 'spec.md'), '## ADDED Requirements\n\n### Requirement: Isolated fixture task\nThe fixture SHALL execute only selected temporary tasks.\n\n#### Scenario: Selected task completes\n- **WHEN** the report gate opens\n- **THEN** only assigned temporary task items are completed\n');
   await fs.writeFile(join(changeDir, 'tasks.md'), '## 1. Fixture\n\n' + Object.entries(descriptions).map(([id, description]) => `- [ ] ${id} ${description}`).join('\n') + '\n');
+  const gitEnvironment: NodeJS.ProcessEnv = { ...env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+  for (const name of Object.keys(gitEnvironment)) if (name.startsWith('GIT_') && !['GIT_CONFIG_NOSYSTEM', 'GIT_CONFIG_GLOBAL'].includes(name)) delete gitEnvironment[name];
+  const git = async (repository: string, ...args: string[]) => (await exec('git', ['-C', repository,
+    '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null', ...args], { env: gitEnvironment })).stdout.trim();
+  await git(root, 'init', '--quiet', '--initial-branch=main');
+  await git(root, 'add', '--', 'openspec', 'questions');
+  await git(root, 'commit', '--quiet', '-m', 'Fixture assignment baseline');
+  await git(workspace, 'add', '--', 'package.json');
+  await git(workspace, 'commit', '--quiet', '-m', 'Fixture code baseline');
   openStateStore(cfg.statePath).close();
   function parameters(id: string, tasks = ['1.1']): RuntimeRunParameters { return { id, type: 'implement', project: 'raf', features: ['production-launch'], phase: 'implement', complexity: 'decision', tasks: tasks.map(item => `${change}:${item}`) }; }
   function argv(params: RuntimeRunParameters) { return ['agent', 'run', '--id', params.id, '--type', params.type, '--project', params.project, '--features', ...params.features, '--phase', params.phase, '--complexity', params.complexity, '--tasks', ...params.tasks]; }
@@ -329,8 +351,9 @@ test('[production-launch] default entry derives task context, ignores a legacy c
   assert.match(brief.nativeId, /^[0-9a-f]{8}-[0-9a-f-]{27}$/);
   assert.doesNotMatch(JSON.stringify(brief.assignment), /FOREIGN/);
   assert.equal(brief.assignment.outcome, `${change}:1.1 — ${descriptions['1.1']}`);
-  assert.deepEqual(brief.assignment.write_boundaries, [f.workspace, f.changeDir, f.questionsPath]);
-  assert.deepEqual(session.launchContext!.writeBoundaries, [f.workspace, f.changeDir, f.questionsPath]);
+  const boundaries = [f.workspace, f.changeDir, f.questionsPath, join(f.workspace, '.git'), join(f.root, '.git')].sort();
+  assert.deepEqual([...brief.assignment.write_boundaries].sort(), boundaries);
+  assert.deepEqual([...session.launchContext!.writeBoundaries!].sort(), boundaries);
   const diagnostic = await json(join(f.tmpRoot, session.runId, 'task-context.json'));
   assert.equal(diagnostic.runId, session.runId);
   assert.deepEqual(diagnostic.parameters, f.parameters('entry'));

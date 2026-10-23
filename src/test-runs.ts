@@ -277,6 +277,15 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
   return config as unknown as TestRunConfig;
 }
 
+function refuseFullUnitSuite(request: TestRunRequest, config: TestRunConfig): void {
+  const project = config.projects[request.project];
+  if (!project || request.only !== undefined) return;
+  const preset = project.groups[request.group] ?? project.groups[request.group.slice(request.group.indexOf('/') + 1)];
+  const files = [...new Set(request.files ?? preset?.files ?? [])];
+  const inventory = [...new Set(Object.values(project.profiles).flatMap(profile => profile.unitFiles))];
+  if (inventory.length && inventory.length === files.length && inventory.every(file => files.includes(file))) failure('UNSAFE_SELECTION', 'Full unit suite selection is refused; select a targeted subset');
+}
+
 export function planTestRun(request: TestRunRequest, config: TestRunConfig, context: TestRunContext, env: TestRunEnvironment): TestRunPlan {
   if (!context.agentPhases.includes(request.phase) || !config.phases[request.phase]) failure('UNKNOWN_PHASE');
   if (!config.phases[request.phase].allowed) failure('PHASE_NOT_ALLOWED');
@@ -284,6 +293,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   if (!context.activeChanges.includes(request.group.split('/')[0])) failure('INACTIVE_CHANGE');
   const project = config.projects[request.project];
   if (!project || !context.projectWorkspaces[request.project]?.includes(context.workspace)) failure('UNKNOWN_PROJECT');
+  refuseFullUnitSuite(request, config);
   if (env.canonicalWorkspace !== context.workspace || env.canonicalCwd !== context.cwd || !env.gitIdentityMatches || context.cwd !== context.workspace) failure('WORKSPACE_MISMATCH');
   for (const key of ['runtimeAvailable', 'localRunnerAvailable', 'dependenciesAvailable', 'resultAdapterAvailable', 'artifactsWritable', 'treeControlSupported'] as const) if (!env[key]) failure('ENVIRONMENT_INVALID', key);
   if (env.stateAliasesOperational || env.tmpAliasesOperational || env.inheritedOperationalChannel) failure('STATE_CONTEXT_REFUSED');
@@ -302,7 +312,6 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
     const pointers = Object.entries(project.profiles).filter(([, profile]) => profile.unitFiles.some(file => missing.includes(file)) || unexpected.length).map(([id]) => `conf/test-runs.json#/projects/${request.project}/profiles/${id}/unitFiles`);
     failure('INVENTORY_INCOMPLETE', `Unit inventory differs; missing: ${missing.join(', ') || 'none'}; unexpected: ${unexpected.join(', ') || 'none'}. Reconcile ${pointers.join(', ')} and conf/test-runs.json#/projects/${request.project}/groups with the intended unit files: restore missing files or remove stale entries; explicitly register intended new files. No automatic discovery or inventory edits were performed.`);
   }
-  if (!request.only && configuredInventory.length === files.length && configuredInventory.every(file => files.includes(file))) failure('FULL_SUITE_REFUSED');
   for (const file of files) if (!configuredInventory.includes(file) || env.files[file]?.unit === false) failure('UNSAFE_SELECTION', `Non-unit file ${file}: excluded by unit include/classification; reconcile conf/test-runs.json#/projects/${request.project}/profiles`);
   if (request.project === 'etchly' && files.some(file => !preset!.files.includes(file))) failure('CALLER_UNAUTHORIZED', `Selection is outside configured group ${request.group}: ${files.join(', ')}`);
   const profiles = Object.entries(project.profiles).filter(([, profile]) => files.every(file => profile.unitFiles.includes(file)));
@@ -312,9 +321,6 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   const cwd = resolve(context.workspace, profile.cwd);
   if (!inside(cwd, context.workspace)) failure('WORKSPACE_MISMATCH');
   if (profile.environment.isolatedHome && (!env.isolatedHome || context.home === context.operationalHome) || profile.environment.stateOrigin && !env.stateOriginAllowed) failure('STATE_CONTEXT_REFUSED');
-  const inventory = [...new Set(Object.values(project.profiles).flatMap(p => p.unitFiles.map(f => resolve(context.workspace, f))))];
-  const selected = files.map(f => resolve(context.workspace, f));
-  if (!request.only && inventory.length === selected.length && inventory.every(f => selected.includes(f))) failure('FULL_SUITE_REFUSED');
   for (const file of files) {
     const fact = env.files[file];
     if (!fact || fact.kind !== 'file' || !fact.unit || !env.unitFiles.includes(file) || !inside(fact.realpath, cwd) || fact.realpath !== resolve(context.workspace, file)) failure('UNSAFE_SELECTION', `File ${file}: directory or symlink outside canonical workspace ${context.workspace}`);
@@ -389,6 +395,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     config = validateTestRunConfig(configInput, context.agentPhases, policy);
     if (!context.agentPhases.includes(request.phase)) failure('UNKNOWN_PHASE');
     if (!config.phases[request.phase].allowed) failure('PHASE_NOT_ALLOWED');
+    refuseFullUnitSuite(request, config);
     plan = planTestRun(request, config, context, await ports.preflight(context));
   } catch (error) {
     result.errorCode = (error as any)?.code ?? 'ENVIRONMENT_INVALID';

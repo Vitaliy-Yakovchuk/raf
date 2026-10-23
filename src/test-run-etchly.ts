@@ -1,4 +1,5 @@
 import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { TestRunDiagnostics } from './test-run-diagnostics.ts';
 import type { ChildExit, RunnerClassification, TestId, TestRunCommand, TestRunPlan, TestRunProfile, UnitTestPolicy } from './test-runs.ts';
 import type { DiagnosticAttachment, DiagnosticLimits, DiagnosticOrigin, DiagnosticPaths } from './test-run-diagnostics.ts';
@@ -143,7 +144,7 @@ export async function runVitestBatch(api: VitestBatchApi, argv: string[], runner
   const vitest = await api.createVitest('test', { ...options, watch: false, runner });
   try {
     for (const project of vitest.projects) {
-      project.config.runner = runner;
+      project.config.runner = project.config.environment && project.config.environment !== 'node' ? pathToFileURL(runner).href : runner;
       project.config.hookTimeout = options.hookTimeout;
       if (options.testTimeout !== undefined) project.config.testTimeout = options.testTimeout;
     }

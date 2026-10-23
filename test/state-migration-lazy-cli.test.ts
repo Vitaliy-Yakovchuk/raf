@@ -49,19 +49,19 @@ function failure(result: Result, code: string, source?: string): void {
 async function lazyCommands(
   f: MigrationFixture, entry: Entry, environment: Record<string, string | undefined> = {},
 ): Promise<void> {
-  for (const command of [['runner', 'list'], ['secrets', 'import-conductor']]) {
+  for (const command of [['runner', 'list'], ['runner', 'enable']]) {
     const help = await run(f, entry, ['help', ...command], environment, true);
     assert.equal(help.exitCode, 0, help.stderr);
     assert.equal(help.stderr, '');
     assert.match(help.stdout, /raf/);
-    if (command[0] === 'secrets') assert.match(help.stdout, /--file/);
+    if (command[1] === 'enable') assert.match(help.stdout, /--runner/);
     const flag = await run(f, entry, [...command, '--help'], environment, true);
     assert.deepEqual(flag, help, 'help and --help use the same compiled catalog');
   }
   failure(await run(f, entry, ['no-such-command'], environment, true), 'UNKNOWN_COMMAND');
   failure(await run(f, entry, ['runner', 'list', '--not-a-valid-flag'], environment, true), 'UNKNOWN_ARGUMENT');
-  const absentSource = join(f.root, 'missing-conductor-secrets.json');
-  failure(await run(f, entry, ['secrets', 'import-conductor', '--file', absentSource, '--not-a-valid-flag'], environment, true), 'UNKNOWN_ARGUMENT');
+  failure(await run(f, entry, ['runner', 'enable', '--runner', 'codex', '--not-a-valid-flag'], environment, true), 'UNKNOWN_ARGUMENT');
+  failure(await run(f, entry, ['runner', 'enable'], environment, true), 'MISSING_REQUIRED');
 }
 
 function snapshot(f: MigrationFixture) {
@@ -84,7 +84,7 @@ function invalidateConfiguration(f: MigrationFixture, kind: 'missing' | 'partial
 function accessTripwire(f: MigrationFixture): { environment: Record<string, string>; log: string } {
   const path = join(f.root, 'lazy-access-tripwire.mjs');
   const log = join(f.root, 'forbidden-lazy-access.jsonl');
-  const roots = [join(f.root, 'conf'), f.workingHome, f.qaHome, join(f.root, 'missing-conductor-secrets.json')];
+  const roots = [join(f.root, 'conf'), f.workingHome, f.qaHome];
   writeFileSync(path, `import fs from 'node:fs';
 import promises from 'node:fs/promises';
 import processes from 'node:child_process';
@@ -137,13 +137,12 @@ for (const entry of entries) {
       const before = snapshot(f);
       await lazyCommands(f, entry);
       assert.deepEqual(snapshot(f), before, 'no runtime, finally/statistics, secrets destination or fallback files');
-      assert.equal(existsSync(join(f.root, 'missing-conductor-secrets.json')), false);
       assert.equal(existsSync(join(f.workingHome, '.raf')), false);
       assert.equal(existsSync(join(f.qaHome, '.raf')), false);
     });
   }
 
-  test(`${entry}: lazy commands do not even attempt runtime/state/source reads or child processes`, async t => {
+  test(`${entry}: lazy commands do not even attempt runtime/state reads or child processes`, async t => {
     const f = fixture(t);
     invalidateConfiguration(f, 'malformed');
     const observer = accessTripwire(f);

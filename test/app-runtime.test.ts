@@ -73,10 +73,6 @@ function fixture() {
   };
   let next = 0;
   const additionalHandlers = Object.fromEntries(catalog.commands.filter(command => command.handlerName !== 'help' && !owned.includes(command.handlerName)).map(command => [command.handlerName, async (input: Record<string, unknown>) => { note('extra', command.handlerName, input); return { status: 'delegated' }; }]));
-  additionalHandlers['secrets import-conductor'] = async input => {
-    note('secrets.import', input);
-    throw commandFailure({ code: 'COMMAND_UNAVAILABLE', message: 'Secrets import service is unavailable in this fixture', stage: 'dispatch', source: 'secrets', sourceCode: null, reason: 'Service implementation was not supplied', received: null, expected: 'Configured secrets import service', found: null, completed: [], pending: ['import'], retrySafe: true, remediation: ['Configure the secrets import service'] });
-  };
   const deps: AppRuntimeDependencies = {
     loadConfiguration: async input => { note('load', input); return config; },
     openStore: async path => { note('open', path); return store; },
@@ -421,17 +417,4 @@ test('failed preflight cleanup does not replace original brief failure', async (
   f.services.assignment.compose = async () => { throw new Error('primary template failure'); };
   await assert.rejects(() => run(f), /primary template failure/);
   noLaunch(f);
-});
-
-
-test('approved secrets command delegates to explicit service and preserves unavailable failure', async () => {
-  const f = fixture();
-  const app = f.runtime();
-  assert.equal(typeof app.handlers['secrets import-conductor'], 'function');
-  const result = await execute(['secrets', 'import-conductor', '--file', '/sandbox/synthetic-secrets.json'], catalog, app.handlers);
-  assert.notEqual(result.exitCode, 0);
-  assert.equal(JSON.parse(result.stderr).code, 'COMMAND_UNAVAILABLE');
-  assert.match(result.stderr, /Secrets import service is unavailable in this fixture/);
-  assert.deepEqual(call(f, 'secrets.import'), [{ file: '/sandbox/synthetic-secrets.json' }]);
-  assert.equal(count(f, 'start'), 0);
 });

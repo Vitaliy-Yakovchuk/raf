@@ -2,9 +2,6 @@ import { productionStateContext } from './state-migration-guard.ts';
 import { createServiceHandlers } from './service-entry.ts';
 import { createProductionServices, rafSystemCaller } from './production-runtime.ts';
 import { fileURLToPath } from 'node:url';
-import { readFile } from 'node:fs/promises';
-import { openSecretsStore, SecretsStoreError } from './secrets-store.ts';
-import { importConductorSecrets, SecretsImportError } from './secrets-import.ts';
 import { readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, basename, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -150,7 +147,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
   const handlers = new Proxy(Object.create(null) as Record<string, Handler>, {
     get(_target, name) {
       if (typeof name !== 'string') return undefined;
-      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'runner limits', 'command stats', 'secrets import-conductor', 'service start', 'service status', 'service stop',
+      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'runner limits', 'command stats', 'service start', 'service status', 'service stop',
         'reminder add', 'reminder list', 'reminder update', 'reminder activate', 'reminder close', 'reminder reassign', 'reminder close-all',
         'bug list', 'bug show', 'bug comment add', 'bug status set', 'bug attachment get'].includes(name)) return unavailable;
       return async (params: Record<string, unknown>) => {
@@ -170,22 +167,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
               service: settings.service, hostModulePath: options.serviceHostModulePath ?? fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)) });
             return await services.handlers[name as keyof typeof services.handlers](params);
           }
-          const importSecrets: Handler = async params => {
-            try {
-              return await importConductorSecrets({ file: params.file as string }, {
-                readText: path => readFile(path, 'utf8'),
-                store: { merge: async records => (await openSecretsStore({ home: options.homeDirectory, configPath: join(orchestratorRoot, 'conf', 'raf.json') })).merge(records) },
-              });
-            } catch (error) {
-              if (error instanceof SecretsImportError || error instanceof SecretsStoreError) {
-                throw commandFailure({ code: error.code, message: error.message, stage: 'import', source: error instanceof SecretsImportError ? 'secrets-import' : 'secrets-store',
-                  sourceCode: error.code, reason: error.message, received: null, expected: null, found: null, completed: [], pending: ['import'], retrySafe: true,
-                  remediation: [error.remediation] });
-              }
-              throw failure('SECRETS_IMPORT_FAILED', 'Secrets import failed', 'secrets-import');
-            }
-          };
-          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'secrets import-conductor': importSecrets, 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) });
+          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) });
           const result = await runtime.handlers[name](params);
           await runtime.close();
           return result;

@@ -12,7 +12,7 @@ export interface SecretFileBinding {
   readonly dotenvKey?: string;
 }
 
-export interface ConductorSecretMetadata {
+export interface LegacySecretMetadata {
   readonly path?: string;
   readonly root?: 'orchestrator';
   readonly key?: string;
@@ -21,7 +21,7 @@ export interface ConductorSecretMetadata {
 }
 
 export interface SecretRecordMetadata {
-  readonly conductor?: ConductorSecretMetadata;
+  readonly conductor?: LegacySecretMetadata;
   readonly name: string;
   readonly source: string;
   readonly updatedAt: string;
@@ -128,7 +128,7 @@ function storedNameValid(value: unknown): value is string {
   return typeof value === 'string' && /^[A-Za-z_][A-Za-z0-9_.-]*$/.test(value);
 }
 
-function conductorValid(value: unknown, kind: unknown): void {
+function legacyMetadataValid(value: unknown, kind: unknown): void {
   if (!object(value)) fail('invalid-record');
   fields(value, ['path', 'root', 'key', 'mode', 'expires'], 'invalid-record');
   if ('root' in value && value.root !== 'orchestrator') fail('invalid-record');
@@ -157,7 +157,7 @@ export function validateSecretRecords(value: unknown): asserts value is SecretRe
     if (!storedNameValid(record.name) || names.has(record.name) || typeof record.source !== 'string' || !record.source.trim() ||
         !timestamp(record.updatedAt) || ('expiresAt' in record && !timestamp(record.expiresAt))) fail('invalid-record');
     names.add(record.name);
-    if ('conductor' in record) conductorValid(record.conductor, record.kind);
+    if ('conductor' in record) legacyMetadataValid(record.conductor, record.kind);
     if (record.kind === 'env') {
       if (typeof record.value !== 'string' || !record.value || record.value.includes('\0')) fail('invalid-record');
     } else if (record.kind === 'file') {

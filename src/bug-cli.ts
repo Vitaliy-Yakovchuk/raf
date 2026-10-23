@@ -104,7 +104,7 @@ function translate(error: unknown, stage: string, completed: readonly string[]):
   if (error instanceof ClaimsError) {
     return failure('BUG_SECTION_UNAVAILABLE', error.message, {
       stage, source: 'bug-sync', sourceCode: error.code, received: error.sectionId, completed, retrySafe: true,
-      remediation: ['Перевірте секрет розділу в ~/.raf/secrets.json (raf secrets import-conductor).'],
+      remediation: ['Перевірте секрет розділу в ~/.raf/secrets.json.'],
     });
   }
   const message = error instanceof Error ? error.message : String(error);

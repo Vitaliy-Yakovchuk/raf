@@ -122,7 +122,10 @@ async function captureLaunch(t: TestContext, f: Fixture, type: string, runner: '
     assignment: {
       validate: async () => ({ ok: true, snapshot: f.assignment }),
       compose: async (snapshot, briefContext) => {
-        const brief = await composeAssignmentBrief(snapshot, briefContext, { readText: async () => 'FIXTURE TEMPLATE' });
+        const brief = await composeAssignmentBrief(snapshot, briefContext, {
+          readText: async path => path === join(f.confRoot, 'raf-constants.json')
+            ? readFile(path, 'utf8') : 'FIXTURE TEMPLATE',
+        });
         composed.push({ context: structuredClone(briefContext), brief });
         return brief;
       },

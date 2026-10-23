@@ -45,6 +45,10 @@ async function scopedFixture(t: TestContext, metadata: boolean, worktree = false
   git('config', '--local', 'user.email', 'fixture@example.invalid');
   git('config', '--local', 'commit.gpgsign', 'false');
   git('config', '--local', 'core.hooksPath', '/dev/null');
+  git('-C', f.cwd, 'add', '--', 'package.json');
+  git('-C', f.cwd, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+    '-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null',
+    'commit', '--quiet', '-m', 'Fixture code baseline');
   const gitDirectories = worktree ? await linkedWorktree(f.root, f.cwd)
     : await Promise.all([join(f.cwd, '.git'), join(f.root, '.git')].map(path => realpath(path)));
   const initialTasks = `${await readFile(f.tasksPath, 'utf8')}\n- [ ] 2.2 Unassigned fixture task stays open\n`;

@@ -1,10 +1,11 @@
 import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import { pathToFileURL } from 'node:url';
+import { randomUUID } from 'node:crypto';
 import { cp } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtemp, mkdir, readFile, writeFile, realpath, rm, access } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, realpath, rm, access, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
@@ -22,7 +23,8 @@ async function fixture(t: TestContext, mode: 'valid' | 'absent' | 'broken' = 'va
   const develop = join(root, 'raf-develop');
   const homeDirectory = join(root, 'home');
   await Promise.all([mkdir(join(root, 'conf'), { recursive: true }), mkdir(join(main, 'bin'), { recursive: true }), mkdir(join(develop, 'bin'), { recursive: true }), mkdir(homeDirectory)]);
-  execFileSync('git', ['init', '-q', '-b', 'main', '--separate-git-dir', join(root, 'configured-main.git'), main]);
+  const gitDirectory = join(root, 'configured-main.git');
+  execFileSync('git', ['init', '-q', '-b', 'main', '--separate-git-dir', gitDirectory, main]);
   execFileSync('git', ['init', '-q', '-b', 'develop', develop]);
   const projects = JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
   projects.projects.raf.path = 'configured-working-main';
@@ -31,7 +33,10 @@ async function fixture(t: TestContext, mode: 'valid' | 'absent' | 'broken' = 'va
   const runProductionCli = await prepareProductionQaFixture(t, { root, home: homeDirectory });
   await cp(join(develop, 'src'), join(main, 'src'), { recursive: true });
   await writeFile(join(main, 'package.json'), '{"type":"module"}');
-  const entryUrl = pathToFileURL(join(main, 'src', 'service-entry.ts')).href;
+  const origin = { configuredMain: main, nonce: randomUUID() };
+  await writeFile(join(main, 'service-fixture-origin.json'), JSON.stringify(origin));
+  const serviceModule = join(main, 'src', 'service-entry.ts');
+  await writeFile(serviceModule, (await readFile(serviceModule, 'utf8')) + `\nexport const serviceEntryFixtureOrigin = { moduleUrl: import.meta.url, nonce: ${JSON.stringify(origin.nonce)} };\n`);
   const { createServiceHandlers }: typeof import('../src/service-entry.ts') = await import(pathToFileURL(join(develop, 'src', 'service-entry.ts')).href);
   const { execute }: typeof import('../src/cli.ts') = await import(pathToFileURL(join(develop, 'src', 'cli.ts')).href);
   const log = join(root, 'service-events.jsonl');
@@ -55,13 +60,22 @@ export async function createServicePorts(context) {
 }
 `);
   await writeFile(join(main, 'bin', 'service.ts'), `
-import { runServiceEntry } from ${JSON.stringify(entryUrl)};
+import { appendFile } from 'node:fs/promises';
+import { runServiceEntry, serviceEntryFixtureOrigin } from '../src/service-entry.ts';
+await appendFile(${JSON.stringify(log)}, JSON.stringify({
+  event: 'entry', entryUrl: import.meta.url, module: serviceEntryFixtureOrigin,
+  cwd: process.cwd(), mainPath: process.env.RAF_MAIN_PATH, argv: process.argv, pid: process.pid,
+}) + '\\n');
 const host = await runServiceEntry();
 await host.closed;
 `);
   await writeFile(join(develop, 'bin', 'service.ts'), 'throw new Error("forbidden develop worker");\n');
+  execFileSync('git', ['-C', main, 'add', '--', 'bin/service.ts', 'src/service-entry.ts', 'service-fixture-origin.json', 'package.json']);
   execFileSync('git', ['-C', main, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '--allow-empty', '-m', 'Initialize configured main fixture']);
+  const mainCommit = execFileSync('git', ['-C', main, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  const committedFile = (path: string): string => execFileSync('git', ['-C', main, 'show', `${mainCommit}:${path}`], { encoding: 'utf8' });
   const children: ChildProcess[] = [];
+  const launches: { command: string; args: readonly string[]; cwd: string; mainPath: string | undefined }[] = [];
   const options = {
     orchestratorRoot: root,
     homeDirectory,
@@ -80,6 +94,7 @@ await host.closed;
   const dependencies = {
     nodeExecutable: process.execPath,
     spawn: ((command, args, settings) => {
+      launches.push({ command, args: [...args], cwd: settings.cwd, mainPath: settings.env?.RAF_MAIN_PATH });
       const child = spawn(command, args, settings);
       children.push(child);
       return child;
@@ -99,10 +114,62 @@ await host.closed;
   });
   handlers = createServiceHandlers(options, dependencies);
   return {
-    createServiceHandlers, runProductionCli, root, main, develop, homeDirectory, options, dependencies, children, handlers, artifactPath,
+    createServiceHandlers, runProductionCli, root, main, develop, gitDirectory, origin, mainCommit, committedFile, homeDirectory, options, dependencies, children, launches, handlers, artifactPath,
     cli: (argv: string[]) => execute(argv, catalog, handlers!.handlers),
     events: async () => (await readFile(log, 'utf8')).trim().split('\n').map(line => JSON.parse(line)),
   };
+}
+
+async function pinnedMain(f: Awaited<ReturnType<typeof fixture>>): Promise<string> {
+  const generations = join(f.gitDirectory, 'raf-hotfix', 'generations');
+  const candidates: string[] = [];
+  for (const directory of await readdir(generations, { withFileTypes: true })) {
+    if (!directory.isDirectory()) continue;
+    const root = join(generations, directory.name, 'raf-main');
+    let marker: string;
+    try { marker = await readFile(join(root, 'service-fixture-origin.json'), 'utf8'); }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue;
+      throw error;
+    }
+    if (marker === f.committedFile('service-fixture-origin.json')) candidates.push(root);
+  }
+  assert.equal(candidates.length, 1, 'exactly one snapshot must contain the configured main commit marker');
+  const root = await realpath(candidates[0]);
+  assert.notEqual(root, await realpath(f.main));
+  assert.notEqual(root, await realpath(f.develop));
+  for (const path of ['service-fixture-origin.json', 'bin/service.ts', 'src/service-entry.ts', 'package.json']) {
+    assert.equal(await readFile(join(root, path), 'utf8'), f.committedFile(path), `${path} must come from configured main commit ${f.mainCommit}`);
+  }
+  return root;
+}
+
+async function assertWorkerOrigin(f: Awaited<ReturnType<typeof fixture>>, root: string, pid: number): Promise<void> {
+  const entries = (await f.events()).filter(event => event.event === 'entry');
+  assert.equal(entries.length, 1, 'idempotent start must not execute another entrypoint');
+  const entry = entries[0];
+  const entryPath = join(root, f.options.service.entryRelativePath);
+  assert.equal(entry.entryUrl, pathToFileURL(entryPath).href);
+  assert.equal(entry.module.moduleUrl, pathToFileURL(join(root, 'src', 'service-entry.ts')).href);
+  assert.equal(entry.module.nonce, f.origin.nonce);
+  assert.equal(entry.cwd, root);
+  assert.equal(entry.mainPath, root);
+  assert.equal(entry.argv[1], entryPath);
+  assert.equal(entry.pid, pid);
+  const recovered = (await f.events()).filter(event => event.event === 'recover');
+  assert.equal(recovered.length, 1);
+  assert.equal(recovered[0].cwd, root);
+  assert.equal(recovered[0].context.orchestratorRoot, f.root);
+  assert.equal(recovered[0].context.homeDirectory, f.homeDirectory);
+  assert.ok(recovered[0].context.stateDirectory.startsWith(f.homeDirectory));
+}
+
+async function advanceConfiguredMain(f: Awaited<ReturnType<typeof fixture>>): Promise<void> {
+  await writeFile(join(f.main, 'bin', 'service.ts'), 'throw new Error("new configured main must wait for handover");\n');
+  await writeFile(join(f.main, 'service-fixture-origin.json'), JSON.stringify({ configuredMain: f.main, nonce: randomUUID() }));
+  execFileSync('git', ['-C', f.main, 'add', '--', 'bin/service.ts', 'service-fixture-origin.json']);
+  execFileSync('git', ['-C', f.main, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '-m', 'Advance logical main without service handover']);
+  assert.notEqual(execFileSync('git', ['-C', f.main, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), f.mainCommit);
 }
 
 function success(result: ExecutionResult) {
@@ -128,15 +195,27 @@ test('CLI service lifecycle launches configured main entry and stop preserves an
   await once(agent.stdout!, 'data');
   const started = success(await f.cli(['service', 'start']));
   assert.equal(started.state, 'ready');
-  assert.equal(started.mainPath, f.main);
+  const root = await pinnedMain(f);
+  assert.equal(started.mainPath, root);
   const status = success(await f.cli(['service', 'status']));
   assert.equal(status.pid, started.pid);
-  const recovered = (await f.events()).filter(event => event.event === 'recover');
-  assert.equal(recovered.length, 1);
-  assert.equal(recovered[0].cwd, f.main);
-  assert.equal(recovered[0].context.orchestratorRoot, f.root);
-  assert.equal(recovered[0].context.homeDirectory, f.homeDirectory);
-  assert.ok(recovered[0].context.stateDirectory.startsWith(f.homeDirectory));
+  assert.equal(status.mainPath, root);
+  assert.equal(f.launches.length, 1);
+  assert.equal(f.launches[0].command, process.execPath);
+  assert.ok(f.launches[0].args.includes(join(root, f.options.service.entryRelativePath)));
+  assert.equal(f.launches[0].cwd, root);
+  assert.equal(f.launches[0].mainPath, root);
+  await assertWorkerOrigin(f, root, started.pid);
+  await advanceConfiguredMain(f);
+  const repeated = success(await f.cli(['service', 'start']));
+  assert.equal(repeated.state, 'ready');
+  assert.equal(repeated.pid, started.pid);
+  assert.equal(repeated.mainPath, root);
+  const retained = success(await f.cli(['service', 'status']));
+  assert.equal(retained.pid, started.pid);
+  assert.equal(retained.mainPath, root);
+  assert.equal(f.launches.length, 1);
+  await assertWorkerOrigin(f, root, started.pid);
   assert.equal(success(await f.cli(['service', 'stop'])).state, 'stopped');
   assert.equal(agent.exitCode, null);
   assert.equal(agent.signalCode, null);
@@ -202,8 +281,23 @@ test('production CLI binds service handlers and passes the explicit host module 
     artifactPath: f.artifactPath,
     serviceHostModulePath: f.options.hostModulePath,
   };
-  assert.equal(success(await f.runProductionCli(['service', 'start'], options)).state, 'ready');
-  assert.equal(success(await f.runProductionCli(['service', 'status'], options)).mainPath, f.main);
+  const started = success(await f.runProductionCli(['service', 'start'], options));
+  assert.equal(started.state, 'ready');
+  const root = await pinnedMain(f);
+  assert.equal(started.mainPath, root);
+  const status = success(await f.runProductionCli(['service', 'status'], options));
+  assert.equal(status.pid, started.pid);
+  assert.equal(status.mainPath, root);
+  await assertWorkerOrigin(f, root, started.pid);
+  await advanceConfiguredMain(f);
+  const repeated = success(await f.runProductionCli(['service', 'start'], options));
+  assert.equal(repeated.state, 'ready');
+  assert.equal(repeated.pid, started.pid);
+  assert.equal(repeated.mainPath, root);
+  const retained = success(await f.runProductionCli(['service', 'status'], options));
+  assert.equal(retained.pid, started.pid);
+  assert.equal(retained.mainPath, root);
+  await assertWorkerOrigin(f, root, started.pid);
   assert.equal(success(await f.runProductionCli(['service', 'stop'], options)).state, 'stopped');
   assert.equal((await f.events()).filter(event => event.event === 'recover').length, 1);
 });

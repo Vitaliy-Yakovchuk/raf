@@ -25,7 +25,7 @@ function fixture(sources: Record<string, Source>): {
         assert.equal(cwd, root);
         calls.push([...args]);
         if (JSON.stringify(args) === JSON.stringify(['list', '--json'])) {
-          return reply({ changes: Object.keys(sources).map(name => ({ name })) });
+          return reply({ changes: Object.entries(sources).map(([name, source]) => ({ name, completedTasks: source.rows.filter(row => row.done).length, totalTasks: source.rows.length })) });
         }
         if (JSON.stringify(args) === JSON.stringify(['list', '--archived', '--json'])) {
           return reply({ changes: [] });

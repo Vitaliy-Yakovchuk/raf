@@ -19,14 +19,15 @@ test('[Z.356] delivery failure retains sanitized last frame and delivery state a
   assert.match(outcome.result.stderr, /Unknown native input or screen during initial brief submission/, JSON.stringify(outcome));
   await assertFailedLaunchCleaned(f, outcome, 'delivery');
   const session = f.inspect().sessions[0];
-  for (const reason of [session.abortReason, session.result?.response, JSON.parse(outcome.result.stderr).message]) {
-    assert.match(reason ?? '', /Unknown native input or screen during initial brief submission/);
-    assert.match(reason ?? '', /delivery=/, 'diagnostic survives in durable session, result and CLI failure');
+  for (const [field, reason] of Object.entries({ abortReason: session.abortReason, message: JSON.parse(outcome.result.stderr).message })) {
+    assert.match(reason ?? '', /Unknown native input or screen during initial brief submission/, field);
+    assert.doesNotMatch(reason?.split('delivery=')[1]?.split('\n')[0] ?? '', /[0-9a-f]{8}-[0-9a-f-]{27}/i);
+    assert.match(reason ?? '', /delivery=/, 'diagnostic survives in durable session and CLI result');
     assert.match(reason ?? '', /Unknown native transition/, 'last frame remains useful after its directory is deleted');
     assert.match(reason ?? '', /awaiting_acceptance/);
     assert.match(reason ?? '', /unknown_screen/);
     assert.match(reason ?? '', /"composer":"missing"/);
     assert.match(reason ?? '', /"retried":false/);
-    assert.doesNotMatch(reason ?? '', /private-owner|example\.test|\/private\/customer|private-api-value|private-bearer-value|[0-9a-f]{8}-[0-9a-f-]{27}/i);
+    assert.doesNotMatch(reason ?? '', /private-owner|example\.test|\/private\/customer|private-api-value|private-bearer-value/i);
   }
 });

@@ -11,6 +11,7 @@ import { randomUUID } from 'node:crypto';
 import { createConnection } from 'node:net';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
+import { deliveryDiagnostic, type DeliveryFrame } from './delivery-diagnostic.ts';
 import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
 import { openStateStore, retryStateOperation, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
@@ -26,7 +27,7 @@ import { loadEventCatalog } from './event-catalog.ts';
 import { evaluateResourceAdmission } from './resource-admission.ts';
 import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
 import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership, type PersistentWrapperFailure } from './launch-wrapper.ts';
-import { commandFailure } from './cli-contract.ts';
+import { commandFailure, failureContext } from './cli-contract.ts';
 import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile, rafCommandFor, rafSubcommandsFor } from './task-context.ts';
 import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
 import type { ReminderSessionEffect } from './reminder-repository.ts';
@@ -1142,7 +1143,9 @@ export async function runProductionWorker(
       if (!next || !await retryStateOperation(() => tools.state.commitStarted(request.runId, identity), settings.timeouts)) fail('TASK_CLAIM_LOST', 'Durable start gate rejected runner before brief');
       lease = next;
     };
-    transport.deliver = async brief => {
+    let deliveryPhase: DeliveryFrame['phase'] = 'before_submission';
+    let deliveryRetried = false;
+    const deliverInitialBrief = async (brief: string) => {
       const owned = await ownership();
       if (owned.state !== 'owned') fail('PROCESS_IDENTITY_UNAVAILABLE', 'Runner ownership lost before durable start gate');
       await gate(owned.identity);
@@ -1160,7 +1163,9 @@ export async function runProductionWorker(
       const beforeInput = beforeNative?.input;
       if (beforeInput === undefined || beforeInput !== '' && !settings.markers.ready?.includes(beforeInput)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input before initial brief submission');
       const beforeContext = beforeComposer < 0 ? undefined : nativeDeliveryContext(settings, beforeLines, beforeComposer);
+      deliveryPhase = 'submitting';
       await adapter.deliver(adapterSession, brief);
+      deliveryPhase = 'awaiting_acceptance';
       const deadline = Date.now() + settings.timeouts.transitionMs;
       let previousPending: string | undefined;
       let retried = false;
@@ -1190,6 +1195,7 @@ export async function runProductionWorker(
             await verifyOwner();
             const latest = await adapter.inspect(adapterSession);
             if ((latest.status === 'ready' || latest.status === 'starting') && screen === pendingScreen && nativeId === expectedIdentity.runnerSessionId) {
+              deliveryRetried = true;
               await sendKeys(['Enter']);
               retried = true;
             }
@@ -1202,6 +1208,15 @@ export async function runProductionWorker(
         await new Promise(resolve => setTimeout(resolve, Math.min(settings.timeouts.pollMs, Math.max(0, deadline - Date.now()))));
       }
       fail('RUNNER_DELIVERY_UNAVAILABLE', 'Native initial brief acceptance timed out');
+    };
+    transport.deliver = async brief => {
+      try { await deliverInitialBrief(brief); }
+      catch (error) {
+        const context = failureContext(error);
+        const diagnostic = deliveryDiagnostic(settings, { screen, brief, phase: deliveryPhase, retried: deliveryRetried });
+        const reason = `${context?.reason ?? (error instanceof Error ? error.message : String(error))}; delivery=${JSON.stringify(diagnostic)}`;
+        throw context ? commandFailure({ ...context, message: reason, reason }) : new Error(reason);
+      }
     };
     const assignments = assignmentPorts(execute);
     let handedOff = false;

@@ -42,7 +42,7 @@ export interface TaskCheckboxPorts {
 }
 
 export interface TaskCheckboxReportPort {
-  confirmTaskCheckboxes(request: AgentReportRequest, report: AgentReport): Promise<TaskCheckboxConfirmation>;
+  confirmTaskCheckboxes(request: AgentReportRequest, report: AgentReport, verifiedSource?: AssignmentVerification): Promise<TaskCheckboxConfirmation>;
 }
 
 const queues = new Map<string, Promise<unknown>>();

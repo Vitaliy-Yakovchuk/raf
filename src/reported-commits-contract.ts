@@ -29,7 +29,7 @@ export interface ReportedCommitRequestContext {
 
 export interface ReportedCommitAcceptancePorts {
   reconcileReportedCommitIndex(request: ReportCommitIndexRequest): Promise<void>;
-  verifyAssignmentSourceIdentity(snapshot: AssignmentSnapshot): Promise<AssignmentVerification>;
+  verifyAssignmentSourceIdentity(snapshot: AssignmentSnapshot, archiveClaims?: Readonly<Record<string, string>>): Promise<AssignmentVerification>;
   isCurrentReport(runId: string, reportPath: string): Promise<boolean>;
   readTaskCheckboxCommits(runId: string): Promise<readonly TaskCheckboxCommit[]>;
 }

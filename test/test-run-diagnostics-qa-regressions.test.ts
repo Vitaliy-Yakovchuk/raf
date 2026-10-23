@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve } from 'node:path';
-import { run, test } from 'node:test';
-import report from '../src/test-run-reporter.ts';
+import { test } from 'node:test';
 import {
   buildDiagnosticEnvironment,
   TestRunDiagnostics,
@@ -40,33 +40,68 @@ async function reportRelativeFixture(source: string, signal: AbortSignal): Promi
   const directory = await mkdtemp(join(workspace, '.raf-diagnostics-qa-'));
   const absoluteFile = join(directory, 'file-level.test.mjs');
   const file = relative(workspace, absoluteFile);
-  const observed: { stderr: boolean; fileFailure: boolean } = { stderr: false, fileFailure: false };
-  const controller = new AbortController();
-  const abort = (): void => controller.abort();
-  signal.addEventListener('abort', abort, { once: true });
+  const driver = join(directory, 'runner.mjs');
+  const reporter = new URL('../src/test-run-reporter.ts', import.meta.url).href;
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
   try {
+    signal.throwIfAborted();
     assert.equal(isAbsolute(file), false, 'the real runner must receive a relative filename');
     await writeFile(absoluteFile, source);
-    const stream = run({ files: [file], isolation: 'process', execArgv: [], signal: controller.signal });
-    async function* observe(): AsyncGenerator<unknown> {
-      for await (const event of stream) {
-        if (event.type === 'test:stderr' && event.data.file && resolve(event.data.file) === absoluteFile) observed.stderr = true;
-        if (event.type === 'test:fail' && event.data.file && resolve(event.data.file) === absoluteFile) observed.fileFailure = true;
-        yield event;
-      }
+    await writeFile(driver, `
+import { resolve } from 'node:path';
+import { run } from 'node:test';
+const { default: report } = await import(process.argv[3]);
+const file = process.argv[2];
+const controller = new AbortController();
+process.once('SIGTERM', () => controller.abort());
+const observed = { context: process.env.NODE_TEST_CONTEXT ?? null, stderrFiles: [], fileFailureFiles: [] };
+const stream = run({ files: [file], isolation: 'process', execArgv: [], signal: controller.signal });
+async function* observe() {
+  for await (const event of stream) {
+    if (event.data.file && resolve(event.data.file) === resolve(file)) {
+      if (event.type === 'test:stderr') observed.stderrFiles.push(event.data.file);
+      if (event.type === 'test:fail') observed.fileFailureFiles.push(event.data.file);
     }
-    const events: RunnerEvent[] = [];
-    for await (const line of report(observe())) events.push(JSON.parse(line) as RunnerEvent);
-    assert.equal(observed.stderr, true, 'fixture must produce real node:test stderr');
-    assert.equal(observed.fileFailure, true, 'fixture must produce a real node:test file failure');
+    yield event;
+  }
+}
+const events = [];
+for await (const line of report(observe())) events.push(JSON.parse(line));
+process.stdout.write(JSON.stringify({ observed, events }));
+`);
+    const stdout = await new Promise<string>((resolveOutput, reject) => {
+      const child = execFile(process.execPath, [driver, file, reporter], { cwd: workspace, env }, (error, output) => {
+        signal.removeEventListener('abort', abort);
+        if (error) reject(error);
+        else resolveOutput(output);
+      });
+      const abort = (): void => { child.kill('SIGTERM'); };
+      signal.addEventListener('abort', abort, { once: true });
+      if (signal.aborted) abort();
+    });
+    signal.throwIfAborted();
+    const { observed, events } = JSON.parse(stdout) as {
+      observed: { context: string | null; stderrFiles: string[]; fileFailureFiles: string[] };
+      events: RunnerEvent[];
+    };
+    assert.equal(observed.context, null, 'fixture runner must start outside node:test context');
+    assert.ok(observed.stderrFiles.length > 0, 'fixture must produce real node:test stderr');
+    for (const stderrFile of observed.stderrFiles) {
+      assert.equal(isAbsolute(stderrFile), false, 'real stderr must retain its relative filename');
+      assert.equal(stderrFile, file);
+    }
+    assert.ok(observed.fileFailureFiles.length > 0, 'fixture must produce a real node:test file failure');
+    for (const failureFile of observed.fileFailureFiles) {
+      assert.equal(isAbsolute(failureFile), true, 'real file failure must retain its absolute filename');
+      assert.equal(failureFile, absoluteFile);
+    }
     assert.ok(events.some(event => event.kind === 'complete'), 'reporter must finish its protocol');
     const classification = classifyRunnerResult(events, { exitCode: 1, signal: null, stderr: '' });
     assert.equal(classification.outcome, 'setup-failed');
     assert.deepEqual(classification.knownRed, [], 'fixture setup is not an assertion red');
     return events;
   } finally {
-    signal.removeEventListener('abort', abort);
-    controller.abort();
     await rm(directory, { recursive: true, force: true });
   }
 }

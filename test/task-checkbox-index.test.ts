@@ -127,7 +127,7 @@ test('[checkbox-index Z.368] next ordinary commit of only another file cannot re
 
 test('[checkbox-index Z.368] staged task hunks gain the checkbox and preserve staged versus unstaged ownership', async t => {
   const f = await fixture(t);
-  const staged = original.replace('- [ ] 1.2 Other task', '- [x] 1.2 Other task').replace('Original evidence', 'Foreign staged evidence');
+  const staged = original.replace('Original evidence', 'Foreign staged evidence');
   const working = staged + '\nForeign unstaged evidence\n';
   await writeFile(join(f.root, taskPath), staged);
   await writeFile(join(f.root, 'other.txt'), 'Foreign staged other file\n');

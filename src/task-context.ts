@@ -315,12 +315,8 @@ export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: s
   }
   const workspace = await realOrNull(cwd);
   if (!workspace) return [];
-  const inside = (path: string) => {
-    const suffix = relative(workspace, path);
-    return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`);
-  };
   const candidates = [...await gitDirectories(workspace), ...await gitDirectories(orchestratorRoot)];
-  return [...new Set(candidates.filter(path => !inside(path)))];
+  return [...new Set(candidates)];
 }
 
 export function assignmentFingerprint(snapshot: AssignmentSnapshot): string {

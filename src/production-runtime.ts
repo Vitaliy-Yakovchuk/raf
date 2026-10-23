@@ -1232,7 +1232,6 @@ export async function runProductionWorker(
         if (codexAccess.unavailable) process.stderr.write(`${request.runId}: ${codexAccess.unavailable}\n`);
       }
     } catch (error) {
-      // A denied launch must retain its trust refusal even when sandbox setup cannot finish.
       if (workspaceTrustDenied) {
         const root = await execute({ executable: 'git', args: ['-C', request.cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
         await runnerWorkspaceUntrusted(request, settings.runner, root?.exitCode === 0 ? root.stdout.trim() || undefined : undefined);

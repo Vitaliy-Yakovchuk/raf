@@ -15,7 +15,7 @@ import { runCli } from './bootstrap.ts';
 import { createAppRuntime, runnerLimitsHandler, type AppRuntime } from './app-runtime.ts';
 import { openStateStore } from './state-store.ts';
 import { type ModelCatalog } from './model-routing.ts';
-import { commandFailure, failureContext, redactDiagnostic } from './cli-contract.ts';
+import { commandFailure, failureContext } from './cli-contract.ts';
 import { loadEventCatalog } from './event-catalog.ts';
 import type { CommandStatePorts } from './reminder-cli.ts';
 import type { BugCommand } from './bug-cli.ts';
@@ -41,8 +41,9 @@ function readConfiguration(root: string): { models: ModelCatalog; commandTiming:
   const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
   const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(text);
   const read = (name: string) => {
-    try { return JSON.parse(readFileSync(join(root, 'conf', name), 'utf8')); }
-    catch { throw failure('CONFIGURATION_INVALID', `Cannot read valid ${name}`, name); }
+    const path = join(root, 'conf', name);
+    try { return JSON.parse(readFileSync(path, 'utf8')); }
+    catch (error) { throw failure('CONFIGURATION_INVALID', `Cannot read valid ${path}: ${(error as NodeJS.ErrnoException).code ?? 'invalid JSON'}`, path); }
   };
   const settings = read('raf.json');
   if (!object(settings) || settings.version !== 1 || !object(settings.commandTiming) ||
@@ -138,14 +139,7 @@ export async function withProductionRuntime<T>(options: ProductionEntryOptions, 
 }
 
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
-  try { productionStateContext(validatedRoot(options), fileURLToPath(import.meta.url), options.homeDirectory, 'cli'); }
-  catch (error) {
-    const diagnostic = failureContext(error);
-    if (!diagnostic) return { exitCode: 1, stdout: '', stderr: JSON.stringify({ code: 'STATE_CONTEXT_REFUSED', message: 'Cannot prove state context', details: { stage: 'state-preflight' }, remediation: ['Verify the registered production tree or select a separate RAF_QA_HOME.'] }) };
-    const { code, message, remediation, secrets, ...details } = diagnostic;
-    return { exitCode: 1, stdout: '', stderr: JSON.stringify(redactDiagnostic({ code, message, details, remediation }, secrets)) };
-  }
-  const commandStartedAtMs = clock(options)();
+  const startedAtMs = performance.now();
   let runtime: AppRuntime | undefined;
   const unavailable = () => { throw failure('COMMAND_UNAVAILABLE', 'Production service for this operation is unavailable'); };
   const handlers = new Proxy(Object.create(null) as Record<string, Handler>, {
@@ -156,7 +150,10 @@ export async function runProductionCli(argv: readonly string[], options: Product
         'bug list', 'bug show', 'bug comment add', 'bug status set', 'bug attachment get'].includes(name)) return unavailable;
       return async (params: Record<string, unknown>) => {
         try {
+          const commandStartedAtMs = options.now?.() ?? startedAtMs;
           const orchestratorRoot = validatedRoot(options);
+          readConfiguration(orchestratorRoot);
+          productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
           if (name.startsWith('bug ')) {
             const [{ createBugHandlers }, { createProductionBugPorts }] = await Promise.all([import('./bug-cli.ts'), import('./bug-production.ts')]);
             return await createBugHandlers(createProductionBugPorts({ orchestratorRoot, homeDirectory: options.homeDirectory }))[name as BugCommand](params);

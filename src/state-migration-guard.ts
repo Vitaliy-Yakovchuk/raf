@@ -1,7 +1,7 @@
 import { lstatSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { userInfo } from 'node:os';
-import { commandFailure } from './cli-contract.ts';
+import { commandFailure, failureContext } from './cli-contract.ts';
 
 export type StateEntryPoint = 'cli' | 'runner-limits' | 'worker' | 'service-store' | 'notice' | 'hook';
 
@@ -47,6 +47,12 @@ export function stateFailure(code: string, reason: string): Error {
 }
 
 function refuse(reason: string): never { throw stateFailure('STATE_CONTEXT_REFUSED', reason); }
+function contextFailure(code: 'CONFIGURATION_INVALID' | 'HANDLER_FAILED', reason: string, source: string): never {
+  throw Object.assign(commandFailure({ code, message: reason, reason, source, stage: 'state-preflight', sourceCode: null,
+    received: null, expected: null, found: null, completed: [], pending: [], retrySafe: true,
+    remediation: [code === 'CONFIGURATION_INVALID' ? 'Correct the runtime configuration file before retrying.' : 'Restore access to the selected state directory before retrying.'],
+  }), { code });
+}
 const inside = (path: string, root: string) => path === root || path.startsWith(root + sep);
 const proofs = new WeakMap<StateContext, { request: StateContextRequest; workingHome: string }>();
 
@@ -57,9 +63,9 @@ export function canonicalStatePath(path: string): string {
   for (;;) {
     try { return resolve(realpathSync(ancestor), ...parts); }
     catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') refuse(`Cannot resolve state context path: ${path}`);
+      if (!['ENOENT', 'ENOTDIR'].includes((error as NodeJS.ErrnoException).code ?? '')) refuse(`Cannot resolve state context path: ${path}`);
       try { if (lstatSync(ancestor).isSymbolicLink()) refuse(`Dangling state context symlink: ${ancestor}`); }
-      catch (missing) { if ((missing as NodeJS.ErrnoException).code !== 'ENOENT') throw missing; }
+      catch (missing) { if (!['ENOENT', 'ENOTDIR'].includes((missing as NodeJS.ErrnoException).code ?? '')) throw missing; }
       const parent = dirname(ancestor);
       if (parent === ancestor) refuse(`Cannot resolve state context ancestor: ${path}`);
       parts.unshift(basename(ancestor));
@@ -77,6 +83,14 @@ function isolatedPaths(context: StateContext, workingHome: string): void {
     if (actual !== path) refuse(`State context path changed or aliases another location: ${path} -> ${actual}`);
     if (context.mode === 'qa' && (inside(actual, workingState) || actual === workingHome || inside(workingState, actual))) {
       refuse(`QA state aliases working HOME/.raf: ${path}`);
+    }
+  }
+  for (const path of [context.homeDirectory, dirname(context.statePath), context.tmpRoot, dirname(context.tmuxSocketPath)]) {
+    try {
+      if (!statSync(path).isDirectory()) contextFailure('HANDLER_FAILED', `ENOTDIR: State directory path is blocked by a file: ${path}`, path);
+    } catch (error) {
+      if (failureContext(error)) throw error;
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') contextFailure('HANDLER_FAILED', `Cannot access state directory ${path}: ${error instanceof Error ? error.message : String(error)}`, path);
     }
   }
   if (context.mode === 'qa') {
@@ -111,10 +125,13 @@ export function resolveStateContext(request: StateContextRequest): StateContext 
       .map(path => resolve(orchestratorRoot, path));
     const codeRoot = roots.find(root => realpathSync(root) === root && inside(modulePath, root));
     if (!codeRoot || !['src', 'bin', 'scripts'].includes(relative(codeRoot, modulePath).split(sep)[0])) refuse(`Unregistered module origin: ${modulePath}`);
-    const settings = JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'raf.json'), 'utf8'));
-    const fileName = settings.state?.fileName;
-    if (settings.version !== 1 || typeof fileName !== 'string' || !fileName || ['.', '..'].includes(fileName) ||
-        basename(fileName) !== fileName || /[\\/\0]/.test(fileName)) refuse('Invalid state.fileName configuration');
+    const settingsPath = join(orchestratorRoot, 'conf', 'raf.json');
+    let settings;
+    try { settings = JSON.parse(readFileSync(settingsPath, 'utf8')); }
+    catch (error) { contextFailure('CONFIGURATION_INVALID', `Cannot read valid ${settingsPath}: ${error instanceof Error ? error.message : String(error)}`, settingsPath); }
+    const fileName = settings?.state?.fileName;
+    if (settings?.version !== 1 || typeof fileName !== 'string' || !fileName.trim() || ['.', '..'].includes(fileName) ||
+        basename(fileName) !== fileName || /[\\/\0]/.test(fileName)) contextFailure('CONFIGURATION_INVALID', `Invalid raf.json version or state.fileName: ${settingsPath}`, settingsPath);
     const workingHome = canonicalStatePath(request.operatingSystemHome);
     const selectedHome = canonicalStatePath(request.homeDirectory);
     const qa = request.environment.RAF_QA_HOME;
@@ -136,7 +153,7 @@ export function resolveStateContext(request: StateContextRequest): StateContext 
     proofs.set(context, { request: { ...request, environment: { ...request.environment } }, workingHome });
     return context;
   } catch (error) {
-    if ((error as { code?: string }).code === 'STATE_CONTEXT_REFUSED') throw error;
+    if (failureContext(error)) throw error;
     refuse(`Cannot prove state context for ${request.modulePath}: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

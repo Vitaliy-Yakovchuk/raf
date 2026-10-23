@@ -241,7 +241,7 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
 export async function loadSandboxTestPhases(confRoot: string) {
   const read = async (file: string) => JSON.parse(await fs.readFile(join(confRoot, file), 'utf8'));
   const [config, constants, flow] = await Promise.all([read('test-runs.json'), read('raf-constants.json'), read('flow.json')]);
-  return validateTestRunConfig(config, constants.agentPhases.map((row: { id: string }) => row.id), flow.unitTests).phases;
+  return validateTestRunConfig(config, constants.agentPhases.map((row: { id: string }) => row.id), flow.unitTests, flow.integrationTests).phases;
 }
 
 export async function sandboxTestControlSnapshot(store: StateStore, root: string, project: string, group: string): Promise<SandboxTestControlSnapshot> {

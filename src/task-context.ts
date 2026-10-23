@@ -250,15 +250,28 @@ async function gitDirectories(workspace: string): Promise<string[]> {
   return commonDir ? [gitDir, commonDir] : [gitDir];
 }
 
-export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: string): Promise<readonly string[]> {
+export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: string, writeBoundaries?: readonly string[]): Promise<readonly string[]> {
+  if (writeBoundaries) {
+    const directories = new Set<string>();
+    for (const boundary of writeBoundaries) {
+      let ancestor = resolve(boundary);
+      for (;;) {
+        const found = await gitDirectories(ancestor);
+        if (found.length) { for (const directory of found) directories.add(directory); break; }
+        const parent = resolve(ancestor, '..');
+        if (parent === ancestor) break;
+        ancestor = parent;
+      }
+    }
+    return [...directories];
+  }
   const workspace = await realOrNull(cwd);
   if (!workspace) return [];
   const inside = (path: string) => {
     const suffix = relative(workspace, path);
     return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`);
   };
-  const rootGit = await realOrNull(join(orchestratorRoot, '.git'));
-  const candidates = [...await gitDirectories(workspace), ...(rootGit && (await stat(rootGit)).isDirectory() ? [rootGit] : [])];
+  const candidates = [...await gitDirectories(workspace), ...await gitDirectories(orchestratorRoot)];
   return [...new Set(candidates.filter(path => !inside(path)))];
 }
 

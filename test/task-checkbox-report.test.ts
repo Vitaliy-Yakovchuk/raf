@@ -559,7 +559,7 @@ for (const stage of ['spec', 'design', 'implement']) {
   test('[checkbox-brief] ' + stage + ' assigns commits and evidence to executor and exact checkboxes to raf', async () => {
     const root = new URL('../../', import.meta.url).pathname.replace(/\/$/u, '');
     const snapshot = assignment(root);
-    const context: Parameters<typeof composeAssignmentBrief>[1] & { cwd: string } = { cwd: join(root, 'raf-develop'), briefsRoot: join(root, 'conf/briefs'), runner: 'codex', stage, project: 'raf', agentId: 'checkbox-author', sessionName: 'checkbox-author', features: ['sample'], phase: stage, outcome: 'sample:A.1', writeBoundaries: ['/fixture/result'], sources: [], reportPath: '/fixture/tmp/run/checkbox-author.json', reportSchema: { type: 'object' }, commitOwnWork: true, commitPaths: ['/fixture/result'], commitRepositories: [root], workspaceWritable: false };
+    const context: Parameters<typeof composeAssignmentBrief>[1] & { cwd: string } = { cwd: join(root, 'raf-develop'), briefsRoot: join(root, 'conf/briefs'), runner: 'codex', stage, project: 'raf', agentId: 'checkbox-author', sessionName: 'checkbox-author', features: ['sample'], phase: stage, outcome: 'sample:A.1', writeBoundaries: ['/fixture/result'], sources: [], reportPath: '/fixture/tmp/run/checkbox-author.json', reportSchema: { type: 'object' }, rafCommand: 'node ' + join(root, 'raf-main/bin/raf.ts'), rafSubcommands: ['agent message', 'agent ps'], commitOwnWork: true, commitPaths: ['/fixture/result'], commitRepositories: [root], workspaceWritable: false };
     const brief = await composeAssignmentBrief(snapshot, context, { readText: path => readFile(path, 'utf8') });
     assert.match(brief, /[Rr]af.{0,100}(галоч|checkbox)/u);
     assert.match(brief, /sync\/archive/u);

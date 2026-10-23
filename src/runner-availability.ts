@@ -61,7 +61,7 @@ export async function probeRunnerAvailability(settings: Pick<ProtocolSettings, '
   const formats: Record<string, string> = {
     codex: `(?:codex-cli\\s+)?${number}`,
     claude: `${number}(?:\\s+\\(Claude Code\\))?`,
-    grok: `(?:grok\\s+)?${number}(?:\\s+\\([0-9a-f]+\\),\\s*\\w+)?`,
+    grok: `(?:grok\\s+)?${number}(?:\\s+\\([0-9a-f]+\\)(?:,\\s*\\w+|\\s+\\[\\w+\\])?)?`,
     agy: `(?:(?:agy|Antigravity CLI)\\s+)?${number}`,
   };
   const version = formats[runner] ? new RegExp(`^${formats[runner]}$`).exec(result.stdout.trim())?.[1] : undefined;

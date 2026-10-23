@@ -855,7 +855,8 @@ export async function createProductionServices(
       const task = await deriveTaskContext({ root: context.orchestratorRoot, parameters, assignment, configuration: await loadTaskContextConfiguration(context.confRoot) });
       if (task.estimate.status !== 'KNOWN') return fail('RESOURCE_ESTIMATE_UNKNOWN', task.estimate.reason);
       configuration.sandboxTestPhases = ['implement', 'qa', 'hotfix'].includes(parameters.phase) ? await loadSandboxTestPhases(context.confRoot) : undefined;
-      return { ...task, estimate: task.estimate, requested: { ramBytes: task.estimate.ramBytes, diskBytes: {} }, requiredFileSystemIds: [] };
+      const fileSystemId = `dev:${(await fs.stat(context.orchestratorRoot, { bigint: true })).dev}`;
+      return { ...task, estimate: task.estimate, requested: { ramBytes: task.estimate.ramBytes, diskBytes: { [fileSystemId]: task.estimate.diskBytesPerFileSystem } }, requiredFileSystemIds: [fileSystemId] };
     },
     route: async request => {
       if (request.hotfixRunId) {
@@ -933,10 +934,10 @@ export async function createProductionServices(
       const dependencies = await reservationTools(store, context, execute, options.execute);
       await reconcileTaskReservations(dependencies);
       const boot = await dependencies.currentBoot();
-      const paths = [...new Set([context.orchestratorRoot, input.activity.cwd, input.tmpRoot])];
+      const paths = [...new Set([context.orchestratorRoot, input.activity.cwd])];
       const resourceSnapshot = await measureResources(paths, boot.machineId, execute);
-      if (paths.some(path => !resourceSnapshot.fileSystemByPath[path])) return { admitted: false, reason: 'Missing filesystem mapping for required working or temporary path' };
-      const requiredFileSystemIds = [...new Set([...input.requiredFileSystemIds, ...paths.map(path => resourceSnapshot.fileSystemByPath[path])])];
+      if (paths.some(path => !resourceSnapshot.fileSystemByPath[path])) return { admitted: false, reason: 'Missing filesystem mapping for the development tree' };
+      const requiredFileSystemIds = [...new Set(paths.map(path => resourceSnapshot.fileSystemByPath[path]))];
       const taskConfiguration = await loadTaskContextConfiguration(context.confRoot);
       const resolution = resolveAgentResourceEstimate({
         flow: { resourceEstimates: taskConfiguration.resourceEstimates }, type: input.activity.type, project: input.activity.project,

@@ -10,7 +10,6 @@ const reviewed = JSON.parse(readFileSync(new URL('./test-run-etchly-audit.json',
 const hash = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex');
 const fail = (message: string): never => { throw Object.assign(new Error(`INVENTORY_INCOMPLETE: ${message}; repeat static review and reconcile conf/test-runs.json#/projects/etchly/profiles and groups`), { code: 'INVENTORY_INCOMPLETE' }); };
 
-/** Read local dependencies without importing tests, configs or browser code. */
 export function etchlyBrowserRequirements(workspace: string, files: readonly string[]): string[] {
   const pending = files.map(file => resolve(workspace, file)), seen = new Set<string>();
   const engines = new Set<string>();

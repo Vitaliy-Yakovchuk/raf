@@ -1,9 +1,6 @@
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-// Preserve the reviewed workspace runner (including Etchly's file budget).
-// Reporter callbacks receive batched final results, so hook provenance must be
-// attached in the worker before Vitest serializes errors.
 const root = process.env.RAF_TEST_RUN_WORKSPACE!;
 const base = process.env.RAF_TEST_RUN_BASE_RUNNER;
 const Base = base ? (await import(pathToFileURL(base).href)).default
@@ -12,8 +9,6 @@ const Base = base ? (await import(pathToFileURL(base).href)).default
 function tagged(error: any, origin: string): any {
   if (Array.isArray(error)) return error.map(value => tagged(value, origin));
   if (error?.rafTestOrigin) return error;
-  // Vitest resolves test.extend fixtures inside the callback wrapper. A failure
-  // in that resolver is preparation, even when its exception is AssertionError.
   if (origin === 'test-body' && /\b(?:resolveFixtureFunction|resolveTestFixtureValue|resolveScopeFixtureValue)\b/.test(String(error?.stack ?? ''))) origin = 'fixture-setup';
   if (!error || typeof error !== 'object') error = new Error(String(error));
   try { Object.defineProperty(error, 'rafTestOrigin', { value: origin, enumerable: true, configurable: true }); return error; }

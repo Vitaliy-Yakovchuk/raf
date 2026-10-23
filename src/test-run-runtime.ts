@@ -1,3 +1,4 @@
+import { profileFiles, profileTestKind } from './test-run-integration-profiles.ts';
 import { testWrapperIdentity } from './test-run-resource-process.ts';
 import { createTestRunResourcePort } from './test-run-resource-runtime.ts';
 import { reconcileTestRunResources } from './test-run-reservations.ts';
@@ -158,13 +159,13 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       const projectId = Object.keys(context.projectWorkspaces).find(project => context.projectWorkspaces[project].includes(context.workspace)) ?? '';
       const projectProfiles = config.projects[projectId]?.profiles ?? {};
       const allProfiles = Object.values(projectProfiles);
-      const selectedFiles = projectId === 'etchly' && request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? config.projects[projectId].groups[request.group]?.files ?? [] : allProfiles.flatMap(p => p.unitFiles);
-      const profiles = projectId === 'etchly' && request ? allProfiles.filter(p => selectedFiles.some(file => p.unitFiles.includes(file))) : allProfiles;
+      const selectedFiles = projectId === 'etchly' && request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? config.projects[projectId].groups[request.group]?.files ?? [] : allProfiles.flatMap(profileFiles);
+      const profiles = projectId === 'etchly' && request ? allProfiles.filter(p => selectedFiles.some(file => profileFiles(p).includes(file))) : allProfiles;
       const observed = projectId === 'etchly' ? await observeEtchlyInventory(context.workspace, projectProfiles) : null;
       const files: TestRunEnvironment['files'] = {};
-      const unitFiles = [...new Set(allProfiles.flatMap(profile => profile.unitFiles))];
-      for (const profile of allProfiles) for (const file of profile.unitFiles) {
-        try { const actual = realpathSync(resolve(context.workspace, file)); files[file] = { kind: statSync(actual).isDirectory() ? 'directory' : 'file', realpath: actual, unit: true }; } catch { }
+      const unitFiles = [...new Set(allProfiles.filter(profile => profileTestKind(profile) === 'unit').flatMap(profileFiles))];
+      for (const profile of allProfiles) for (const file of profileFiles(profile)) {
+        try { const actual = realpathSync(resolve(context.workspace, file)); files[file] = { kind: statSync(actual).isDirectory() ? 'directory' : 'file', realpath: actual, unit: profileTestKind(profile) === 'unit', testKind: profileTestKind(profile) }; } catch { }
       }
       if (projectId === 'etchly') verifyEtchlyDependencies(context, profiles, selectedFiles.filter(file => unitFiles.includes(file)), inherited);
       let gitIdentityMatches = false;
@@ -270,8 +271,9 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const flowBytes = readFileSync(join(root, 'conf/flow.json'));
     const policy = loadFlowPolicy(join(root, 'conf/flow.json')).unitTests;
     if (!flowBytes.equals(readFileSync(join(root, 'conf/flow.json')))) throw Object.assign(new Error('Flow configuration changed while reading'), { code: 'CONFIGURATION_INVALID' });
+    const integrationTests = JSON.parse(flowBytes.toString('utf8')).integrationTests;
     const phases = constants.agentPhases.map((p: any) => p.id);
-    config = validateTestRunConfig(read('test-runs.json'), phases, policy);
+    config = validateTestRunConfig(read('test-runs.json'), phases, policy, integrationTests);
     const args = parseTestRunArgs(argv);
     request = { project: args.project, phase: args.phase, group: args.group };
     const projects = read('projects.json').projects;
@@ -280,7 +282,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     for (const [id, project] of Object.entries(projects) as [string, any][]) workspaces[id] = [...new Set<string>(Object.values(project.branchPaths ?? { main: project.path }).map(path => resolve(root, String(path))))];
     const workspace = workspaces[args.project]?.find(path => within(cwd, path));
     if (!workspace) throw Object.assign(new Error('cwd is outside the registered project'), { code: 'WORKSPACE_MISMATCH' });
-    context = { ...context, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases };
+    context = { ...context, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, integrationTests };
     if (!phases.includes(args.phase) || !config.phases[args.phase]?.allowed) throw Object.assign(new Error('Phase does not permit test execution'), { code: 'PHASE_NOT_ALLOWED' });
     const controlContext = productionStateContext(root, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
     controlStore = openStateStore(controlContext.statePath, { context: controlContext });
@@ -306,7 +308,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         mkdirSync(home, { recursive: true, mode: 0o700 });
         const homeIdentity = lstatSync(home);
         if (!homeIdentity.isDirectory() || homeIdentity.uid !== process.getuid?.() || (homeIdentity.mode & 0o077) !== 0) throw Object.assign(new Error('Unit HOME is not private'), { code: 'STATE_CONTEXT_REFUSED' });
-        context = { cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, activeChanges: [...control.activeChanges],
+        context = { integrationTests, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, activeChanges: [...control.activeChanges],
           agentId: 'test-run', sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
           home, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome: userInfo().homedir };
         const boot = await readMachineBootIdentity();

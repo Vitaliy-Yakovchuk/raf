@@ -76,7 +76,7 @@ function presetFor(group: string, assignment: SandboxTestAssignment, catalog: Re
   const project = catalog.config.projects[assignment.project];
   const preset = project?.groups[group];
   const profile = preset && project.profiles[preset.profileId];
-  if (!preset || !profile || !Array.isArray(preset.files) || !preset.files.length || new Set(preset.files).size !== preset.files.length || preset.files.some(file => !safeFile(file) || !profile.unitFiles.includes(file))) return refuse(`Preset ${group} or its unit inventory is invalid for project ${assignment.project}`);
+  if (!preset || !profile || !Array.isArray(preset.files) || !preset.files.length || new Set(preset.files).size !== preset.files.length || preset.files.some(file => !safeFile(file) || profile.testKind === 'integration' || !(profile.unitFiles ?? []).includes(file))) return refuse(`Preset ${group} or its unit inventory is invalid for project ${assignment.project}`);
   return preset;
 }
 
@@ -119,11 +119,19 @@ export function authorizeRegressionRun(
   control: RegressionControlSnapshot,
 ): RegressionAuthorization {
   const coordinating = assignment.type === 'main' || assignment.type === 'coordinator' && assignment.delegatedByMain === true;
-  if (!coordinating && (!['agent', 'implement', 'qa', 'hotfix'].includes(assignment.type) || !['implement', 'qa', 'hotfix'].includes(assignment.phase) || request.phase !== assignment.phase)) refuse('Caller role or phase is not authorized');
-  if (coordinating && request.phase !== 'red' && request.phase !== assignment.phase) refuse('Coordinator phase is not authorized');
+  if (!coordinating && (!['agent', 'implement', 'qa', 'hotfix'].includes(assignment.type) || !['implement', 'qa', 'hotfix'].includes(assignment.phase) || (request.phase !== assignment.phase && request.phase !== 'integration') || !coordinating && assignment.type !== 'agent' && assignment.type !== assignment.phase)) refuse('Caller role or phase is not authorized');
+  if (coordinating && request.phase !== 'red' && request.phase !== 'integration' && request.phase !== assignment.phase) refuse('Coordinator phase is not authorized');
   if (!control.config.phases[request.phase]?.allowed) refuse('Requested phase is disabled');
   if (request.project !== assignment.project || !workspaceMatches(assignment, control)) refuse('Project/workspace/branch differs from the immutable assignment');
   if (!exactGroup(request.group) || !control.activeChanges.includes(request.group.split('/')[0])) refuse('Group change is outside the active assignment');
+  if (request.phase === 'integration') {
+    const project = control.config.projects[request.project];
+    const preset = project?.groups[request.group];
+    const profile = preset && project.profiles[preset.profileId];
+    if (!coordinating && !assignment.changes.includes(request.group.split('/')[0])) refuse('Foreign integration is not authorized by unit regression grants');
+    if (!preset || !profile || profile.testKind !== 'integration' || request.only !== undefined || !Array.isArray(profile.integrationFiles) || !preset.files.length || new Set(preset.files).size !== preset.files.length || preset.files.some(file => !safeFile(file) || !profile.integrationFiles!.includes(file)) || request.files !== undefined && !filesEqual(request.files, preset.files)) refuse('Integration requires the exact configured preset');
+    return { key: { project: request.project, workspace: assignment.workspace, group: request.group }, profileId: preset.profileId, files: [...preset.files], provenance: [] };
+  }
   const key = { project: request.project, workspace: assignment.workspace, group: request.group };
   if (assignment.changes.includes(request.group.split('/')[0])) return { key, profileId: null, files: [...(request.files ?? request.only?.map(id => id.file) ?? [])], provenance: [] };
   if (!assignment.changes.every(change => control.activeChanges.includes(change))) refuse('Source assignment change is inactive');

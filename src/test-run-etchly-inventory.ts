@@ -95,6 +95,6 @@ export async function observeEtchlyInventory(workspace: string, profiles: Record
     if (!decision || hash(resolve(workspace, file)) !== decision.sha256) fail(`unreviewed Node candidate ${file}`);
     facts.push({ file, classification: decision!.classification, profileId: decision!.classification === 'unit' ? 'node-root' : null });
   }
-  auditEtchlyInventory({ profiles: Object.fromEntries(Object.entries(profiles).map(([id, p]) => [id, p.unitFiles])), sourceHashes: reviewed.sourceHashes }, facts, current);
+  auditEtchlyInventory({ profiles: Object.fromEntries(Object.entries(profiles).map(([id, p]) => [id, p.unitFiles ?? []])), sourceHashes: reviewed.sourceHashes }, facts, current);
   return facts;
 }

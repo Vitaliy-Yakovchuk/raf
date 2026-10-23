@@ -134,7 +134,7 @@ export async function runResourceReservedTestRun(
     preflight: async value => {
       const environment = await ports.preflight(value);
       const { planTestRun, validateTestRunConfig } = await import('./test-runs.ts');
-      plan = planTestRun(request, validateTestRunConfig(configInput, context.agentPhases, policy), context, environment);
+      plan = planTestRun(request, validateTestRunConfig(configInput, context.agentPhases, policy, context.integrationTests), context, environment);
       return environment;
     },
     spawn: async (command, onEvent) => {

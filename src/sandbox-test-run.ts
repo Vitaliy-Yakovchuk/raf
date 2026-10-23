@@ -108,8 +108,8 @@ export async function runSandboxTestCommand(
     if (communication) return await ports.communicate(argv, assignment);
     const args = parseTestRunArgs(argv.slice(2));
     const coordinating = assignment.type === 'main' || assignment.type === 'coordinator' && assignment.delegatedByMain === true;
-    if (!coordinating && (!executorTypes.has(assignment.type) || !executorPhases.has(assignment.phase) || args.phase !== assignment.phase)) throw new Error('Caller assignment does not authorize the requested phase');
-    if (coordinating && args.phase !== 'red' && args.phase !== assignment.phase) throw new Error('Coordinator phase is not authorized');
+    if (!coordinating && (!executorTypes.has(assignment.type) || !executorPhases.has(assignment.phase) || (args.phase !== assignment.phase && args.phase !== 'integration') || !coordinating && assignment.type !== 'agent' && assignment.type !== assignment.phase)) throw new Error('Caller assignment does not authorize the requested phase');
+    if (coordinating && args.phase !== 'red' && args.phase !== 'integration' && args.phase !== assignment.phase) throw new Error('Coordinator phase is not authorized');
     if (assignment.project !== args.project || request.cwd !== assignment.workspace) throw new Error('Project or workspace differs from the immutable assignment');
     if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch && row.actualBranch === assignment.branch)) throw new Error('Registered workspace or branch differs from the assignment');
     const { only, ...selectionArgs } = args;
@@ -124,9 +124,11 @@ export async function runSandboxTestCommand(
     let authorization: RegressionAuthorization | undefined;
     if (control.config) authorization = authorizeRegressionRun(requestArgs, assignment, { ...control, config: control.config });
     else if (!assignment.changes.includes(change)) throw new Error('Group change is outside the active assignment; no trusted regression catalog');
+    if (args.phase === 'integration' && !control.config) throw new Error('Integration requires a trusted preset catalog');
     const key = { project: args.project, workspace: assignment.workspace, group: args.group };
     if ((!control.config || !ports.wrapper) && !control.groups.some(row => row.project === key.project && row.workspace === key.workspace && row.group === key.group)) throw new Error('Group is not configured for this workspace');
-    const unit = await ports.unitContext(key);
+    const prepared = await ports.unitContext(key);
+    const unit = { ...prepared, context: { ...prepared.context, callerPhase: assignment.phase } };
     if (ports.wrapper) {
       executingWrapper = true;
       const reply = await ports.wrapper(requestArgs, unit);

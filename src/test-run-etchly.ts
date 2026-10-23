@@ -121,7 +121,7 @@ export function planVitestInvocations(
     const cwdFiles = batch.map(file => {
       const path = resolve(plan.workspace, file);
       const cwdFile = relative(plan.command.cwd, path);
-      if (!profile.unitFiles.includes(file) || !cwdFile || cwdFile.startsWith('..') || isAbsolute(cwdFile)) fail('UNSAFE_SELECTION', file);
+      if (!(profile.unitFiles ?? []).includes(file) || !cwdFile || cwdFile.startsWith('..') || isAbsolute(cwdFile)) fail('UNSAFE_SELECTION', file);
       return cwdFile;
     });
     const argv = [...profile.argv.slice(0, run + 1), ...cwdFiles, ...profile.argv.slice(run + 1), '--testTimeout', String(policy.timeoutMs), '--hookTimeout', String(policy.timeoutMs), '--reporter', trustedReporter];

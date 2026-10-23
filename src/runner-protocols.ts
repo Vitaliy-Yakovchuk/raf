@@ -76,7 +76,6 @@ export function observeRunnerScreen(settings: ProtocolSettings, input: { text: s
   const result = (state: ScreenState, matchedNavigation: number | null = null): ScreenObservation => ({ state, requestedCommand: input.requestedCommand, matchedNavigation });
   if (input.exited) return result('exited');
   if (input.timedOut) return result('timeout');
-  if (input.version !== settings.version) return result('unknown_screen');
   for (const state of ['workspace_trust_required', 'auth_required', 'permission_required', 'quota_untrusted', 'quota_panel'] as ScreenState[]) {
     if (!settings.markers[state]?.some(marker => input.text.includes(marker))) continue;
     if (state !== 'workspace_trust_required') return result(state);

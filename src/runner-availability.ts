@@ -56,6 +56,16 @@ export async function probeRunnerAvailability(settings: Pick<ProtocolSettings, '
   let result;
   try { result = await dependencies.execute({ executable: resolution.path, args: ['--version'] }); }
   catch (error) { return { runner, available: false, reason: `Runner ${runner}: ${resolution.path} --version не виконано: ${error instanceof Error ? error.message : String(error)}` }; }
-  if (result.exitCode !== 0 || !result.stdout.trim().split(/\s+/).includes(settings.version)) return { runner, available: false, reason: `Runner ${runner}: версія не перевірена: очікується ${settings.version}, ${resolution.path} --version повернув код ${result.exitCode} і вивід ${JSON.stringify(result.stdout.trim())}` };
-  return { runner, available: true, path: resolution.path, version: settings.version };
+  if (result.exitCode !== 0) return { runner, available: false, reason: `Runner ${runner}: версія не перевірена: очікується ${settings.version}, ${resolution.path} --version повернув код ${result.exitCode} і вивід ${JSON.stringify(result.stdout.trim())}` };
+  const number = '(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?)';
+  const formats: Record<string, string> = {
+    codex: `(?:codex-cli\\s+)?${number}`,
+    claude: `${number}(?:\\s+\\(Claude Code\\))?`,
+    grok: `(?:grok\\s+)?${number}(?:\\s+\\([0-9a-f]+\\),\\s*\\w+)?`,
+    agy: `(?:(?:agy|Antigravity CLI)\\s+)?${number}`,
+  };
+  const version = formats[runner] ? new RegExp(`^${formats[runner]}$`).exec(result.stdout.trim())?.[1] : undefined;
+  if (!version) return { runner, available: false, reason: `Runner ${runner}: не вдалося визначити встановлену версію: ${resolution.path} --version повернув ${JSON.stringify(result.stdout.trim())}` };
+  const warnings = version === settings.version ? [] : [`версія ${version} не збігається з перевіреною ${settings.version}, протокол не перевірено`];
+  return { runner, available: true, path: resolution.path, version, warnings };
 }

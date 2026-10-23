@@ -43,6 +43,7 @@ export interface AdapterStartRequest {
 export interface AdapterSession {
   tmuxSession: string;
   selection: AdapterSelection;
+  warnings?: readonly string[];
 }
 export type AdapterObservation = RunnerObservation | { status: 'exited'; exitCode: number | null };
 export interface AgentAdapterDependencies {

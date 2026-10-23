@@ -701,11 +701,13 @@ export async function createProductionServices(
       let configured: readonly ProtocolSettings[] = [];
       try { configured = await protocols(context.confRoot, options.protocolSettings); } catch {}
       const cliReasons: Record<string, string> = {};
+      const cliWarnings: Record<string, readonly string[]> = {};
       for (const runner of configuration.models.runners) {
         let availability;
         try { availability = await probeRunnerAvailability(protocolFor(configured, runner.id), { env: process.env, execute }); }
         catch (error) { availability = { available: false as const, reason: error instanceof Error ? error.message : String(error) }; }
         cliAvailable[runner.id] = availability.available;
+        if (availability.available) cliWarnings[runner.id] = availability.warnings;
         if (!availability.available) cliReasons[runner.id] = availability.reason;
       }
       let quotas: RoutingSnapshot['quotas'] = [];
@@ -714,7 +716,7 @@ export async function createProductionServices(
         const views = await readQuotaViews(rows, runnerEnablement(store, configuration), { store: quotaStore(store, rows, 'background'), now });
         quotas = routingQuotaEntries(rows, views as ScreenQuotaView[], configuration.models.models, now());
       } catch {}
-      return { runnerEnabled: Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])), cliAvailable, cliReasons, quotas };
+      return { runnerEnabled: Object.fromEntries(configuration.models.runners.map(runner => [runner.id, store.getRunnerEnabled(runner.id) ?? runner.initialEnabled])), cliAvailable, cliReasons, cliWarnings, quotas };
     },
     collectQuotas: async requested => {
       const { rows, invalid } = await quotaProtocols(context.confRoot, options.protocolSettings);
@@ -826,7 +828,7 @@ export async function createProductionServices(
         await retryStateOperation(() => recordLaunchFailure(store, record.launch.runId, failure instanceof Error ? failure.message : String(failure)), settings.timeouts);
         throw failure;
       }
-      return { tmuxSession: request.tmuxSession, selection };
+      return { tmuxSession: request.tmuxSession, selection, warnings: record.handshake.warnings ?? [] };
     } },
     verifyStarted: async (launch, session) => {
       const handshake = prepared.get(launch.tmuxSession)?.handshake;
@@ -980,7 +982,7 @@ export async function runProductionWorker(
       invocation: () => invocation,
       observe: pane => {
         screen = pane;
-        const observation = observeRunnerScreen(settings, { text: pane, version: settings.version, requestedCommand: nativeId ? identityCommand : null });
+        const observation = observeRunnerScreen(settings, { text: pane, version: availability.version, requestedCommand: nativeId ? identityCommand : null });
         if (observation.state === 'workspace_trust_required') return { status: 'failed', reason: observation.state };
         const shown = readNativeSessionId(settings, pane)?.toLowerCase();
         if (assignedId && shown && shown !== assignedId) return { status: 'failed', reason: 'Native session identity differs from the assigned session id' };
@@ -1039,7 +1041,7 @@ export async function runProductionWorker(
       const route = manifest.workspaceRoute;
       const task = object(route) && route.type === session.activity?.type && route.project === session.activity?.project && text(route.branch) ? { type: route.type, project: route.project, branch: route.branch } : undefined;
       if (!(route?.hotfix ? await validateHotfixTrust(context.orchestratorRoot, request.cwd, route.hotfix) : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, await gitTopLevel(), task, execute))) await untrusted();
-      const observation = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: null });
+      const observation = observeRunnerScreen(settings, { text: screen, version: availability.version, requestedCommand: null });
       const action = nextRunnerAction(settings, observation, { trustWorkspace: true });
       if (observation.state !== 'workspace_trust_required' || action.kind !== 'keys') await untrusted();
       trustAnsweredAt = Date.now();
@@ -1067,7 +1069,7 @@ export async function runProductionWorker(
           continue;
         }
         if (observed.status === 'failed' || observed.status === 'limited') return { state: 'unknown_screen', reason: observed.reason };
-        const observation = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: requestedStatus ? identityCommand : null });
+        const observation = observeRunnerScreen(settings, { text: screen, version: availability.version, requestedCommand: requestedStatus ? identityCommand : null });
         if (observation.state === 'starting' && !requestedStatus) {
           await new Promise(resolve => setTimeout(resolve, settings.timeouts.pollMs));
           continue;
@@ -1144,7 +1146,7 @@ export async function runProductionWorker(
         const matched = input === undefined ? 'none' : matchPendingBrief(settings, input, brief);
         const paste = input !== undefined && new RegExp(native.pendingPaste.pattern, 'u').test(input);
         const pending = matched === 'pending';
-        const state = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: identityCommand }).state;
+        const state = observeRunnerScreen(settings, { text: screen, version: availability.version, requestedCommand: identityCommand }).state;
         const emptyInput = input === '' || settings.markers.ready?.includes(input ?? '');
         const working = isNativeWorking(settings, screen) && !isNativeWorking(settings, before);
         const finished = isNativeFinished(settings, screen) && !isNativeFinished(settings, before);
@@ -1238,7 +1240,7 @@ export async function runProductionWorker(
           if (current?.state === 'reserved' && lease) await releaseTaskReservations(dependencies, { lease, reason: 'cancelled', closeLaunch: tx => closeSessionInTransaction(tx, tx.getSession(request.runId)!, now()) });
         },
       },
-      handshake: async handshake => { await channel.handshake(handshake); handedOff = true; },
+      handshake: async handshake => { await channel.handshake({ ...handshake, warnings: availability.warnings }); handedOff = true; },
     });
     try { await launched; }
     catch (error) {

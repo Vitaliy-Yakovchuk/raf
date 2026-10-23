@@ -99,7 +99,7 @@ export function listModelAvailability(catalog: ModelCatalog, snapshot: RoutingSn
     if (quota !== 'available') reasons.push(`Quota ${quota}`);
     return {
       runner: model.runner, model: model.id, effort: model.effort, configuredComplexity: model.complexity,
-      supportedComplexities, enabled, quota, reasons,
+      supportedComplexities, enabled, quota, reasons, warnings: [...(snapshot.cliWarnings?.[model.runner] ?? [])],
       available: enabled && snapshot.cliAvailable[model.runner] === true && complexityIndex >= 0 && quota !== 'exhausted',
     };
   });

@@ -258,7 +258,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         stage = 'commit';
         if (!await api.commitStarted(launch.runId, identity)) throw fail('START_COMMIT_CONFLICT', stage, 'Started process could not be committed');
         return { runId: launch.runId, addressId: launch.addressId, tmuxSession: launch.tmuxSession,
-          cwd: route.cwd, ...selection, status: 'running', selection, process: identity, reportPath: prepared.reportPath };
+          cwd: route.cwd, ...selection, status: 'running', selection, process: identity, reportPath: prepared.reportPath, warnings: [...new Set(session.warnings ?? [])] };
       } catch (error) {
         let safe = !startAttempted;
         const pending: string[] = [];

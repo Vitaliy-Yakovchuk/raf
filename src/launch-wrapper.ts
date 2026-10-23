@@ -30,6 +30,7 @@ export interface LaunchHandshake {
   readonly address: string;
   readonly reportPath: string;
   readonly identity: ProcessIdentity;
+  readonly warnings?: readonly string[];
 }
 export interface LaunchWrapperPorts {
   readonly transport: {

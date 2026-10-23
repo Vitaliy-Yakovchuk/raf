@@ -81,10 +81,10 @@ export async function outputFixture(t: TestContext, options: { production?: bool
   };
   const fixtureConf = join(root, 'conf');
   await mkdir(fixtureConf);
-  for (const name of ['raf-constants.json', 'models.json', 'flow.json', 'raf.json']) await writeFile(join(fixtureConf, name), await readFile(join(confRoot, name)));
-  await writeFile(join(fixtureConf, 'projects.json'), JSON.stringify({ version: 1, projects: { raf: { path: 'raf-main', profile: 'raf', branchPaths: { main: 'raf-main', develop: 'raf-develop' }, usesSharedLibs: false } }, profiles: { raf: { development: 'develop', integration: 'main', production: 'main' } } }));
+  for (const name of ['raf-constants.json', 'models.json', 'flow.json', 'raf.json', 'projects.json']) await writeFile(join(fixtureConf, name), await readFile(join(confRoot, name)));
   await prepareProductionQaFixture(t, { root, home });
-  const codeRoot = join(root, 'raf-develop');
+  const projects = JSON.parse(await readFile(join(fixtureConf, 'projects.json'), 'utf8'));
+  const codeRoot = join(root, projects.projects.raf.branchPaths.develop);
   const { openStateStore } = await import(pathToFileURL(join(codeRoot, 'src/state-store.ts')).href);
   const store = openStateStore(statePath);
   const runIds: string[] = [];

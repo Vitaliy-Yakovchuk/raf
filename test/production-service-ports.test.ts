@@ -5,6 +5,9 @@ import { test, type TestContext } from 'node:test';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createServer, type Socket } from 'node:net';
+import { connectResourceWait } from '../src/resource-wait-transport.ts';
+import { readWaitIdentity } from '../src/resource-wait-identity.ts';
 import { openStateStore } from '../src/state-store.ts';
 import { ReminderService } from '../src/reminders.ts';
 import { createEventRegistry } from '../src/event-registry.ts';
@@ -37,7 +40,7 @@ async function fixture(t: TestContext) {
   const context: ServiceEntryContext = { orchestratorRoot: join(root, 'orchestrator'), homeDirectory: join(root, 'home'), stateDirectory: join(root, 'home', '.raf'), socketPath: join(root, 'home', '.raf', 'service.sock') };
   await mkdir(join(context.orchestratorRoot, 'conf'), { recursive: true });
   await mkdir(context.stateDirectory, { recursive: true });
-  await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'shared.sqlite' }, service: { hostTickIntervalMs: 15000 }, resourceWait: { grantIntervalMs: 15000 } }));
+  await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'shared.sqlite' }, service: { hostTickIntervalMs: 15000 }, resourceWait: { grantIntervalMs: 15000, deliveryTimeoutMs: 30000 } }));
   await writeFile(join(context.orchestratorRoot, 'conf', 'raf-constants.json'), JSON.stringify(catalog));
   await writeFile(join(context.orchestratorRoot, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
   await prepareProductionQaFixture(t, { root: context.orchestratorRoot, home: context.homeDirectory });
@@ -372,21 +375,93 @@ test('sqlite: default host closes reminders for persisted verified succeeded des
 });
 
 test('sqlite: default host tracks connected resource client and persists its actual permit', async t => {
-  const { createProductionServiceDependencies, createServicePorts, context, path } = await fixture(t);
+  const { createServicePorts, context, path } = await fixture(t);
   const paths = [context.orchestratorRoot, context.stateDirectory];
   const ports = await createServicePorts(context, { now: () => at, resourcePaths: paths, resourceReader: { read: async () => snapshot(paths) } });
-  t.after(() => ports.shutdown());
-  await ports.recover();
-  const signal = new AbortController().signal;
-  const result = await ports.handle({ operation: 'resource.wait', payload: { level: 'normal' } }, { clientId: 'connected-resource-fixture', signal }) as { exitCode: number; reservation: boolean; grantedAt: number };
-  assert.equal(result.exitCode, 0);
-  assert.equal(result.reservation, false);
-  assert.equal(result.grantedAt, at);
+  const serviceEpoch = 'connected-resource-fixture-epoch';
+  const controller = new AbortController();
+  const sockets = new Set<Socket>();
+  let hostTask: Promise<void> | undefined;
+  let hostError: unknown;
+  const server = createServer(socket => {
+    sockets.add(socket);
+    socket.on('close', () => sockets.delete(socket));
+    socket.on('error', error => { hostError = error; });
+    let input = '';
+    const receiveEnqueue = (chunk: Buffer) => {
+      input += chunk.toString('utf8');
+      const newline = input.indexOf('\n');
+      if (newline < 0) return;
+      socket.off('data', receiveEnqueue);
+      try {
+        const message = JSON.parse(input.slice(0, newline));
+        assert.equal(message.kind, 'resource-wait');
+        assert.equal(message.epoch, serviceEpoch);
+        assert.equal(input.slice(newline + 1), '', 'client waits for its offer before sending ready');
+        hostTask = ports.resourceWait(socket, message, controller.signal).catch(error => {
+          hostError = error;
+          socket.destroy();
+        });
+      } catch (error) {
+        hostError = error;
+        socket.destroy();
+      }
+    };
+    socket.on('data', receiveEnqueue);
+  });
+  t.after(async () => {
+    controller.abort();
+    for (const socket of sockets) socket.destroy();
+    await new Promise<void>(resolve => server.close(() => resolve()));
+    await ports.shutdown();
+  });
+  await ports.recover({ serviceEpoch });
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(context.socketPath, resolve);
+  });
+  const client = await connectResourceWait({ endpoint: context.socketPath, serviceEpoch });
+  t.after(() => client.close());
+  const ticket = await client.enqueue({
+    level: 'normal', clientIdentity: await readWaitIdentity(),
+    connectionId: 'connected-resource-fixture', developmentDirectory: context.orchestratorRoot,
+  });
+  assert.equal(ticket.serviceEpoch, serviceEpoch);
+  assert.ok(ticket.requestId.length > 0);
+  const offered = await client.receive();
+  assert.equal(offered.kind, 'offer');
+  if (offered.kind !== 'offer') throw new Error('Expected resource offer');
+  assert.equal(offered.offer.requestId, ticket.requestId);
+  assert.equal(offered.offer.serviceEpoch, ticket.serviceEpoch);
+  assert.ok(offered.offer.offerId.length > 0);
+  const beforeReady = openStateStore(path);
+  try {
+    assert.equal(beforeReady.readResourceWaitGrant(), null);
+    assert.deepEqual(beforeReady.sessionRepository.transaction(tx => tx.listReservations()), []);
+  } finally { beforeReady.close(); }
+  await client.sendReady(offered.offer);
+  const received = await client.receive();
+  assert.equal(received.kind, 'result');
+  if (received.kind !== 'result') throw new Error('Expected committed resource result');
+  const result = received.result;
+  assert.equal(result.kind, 'permit');
+  if (result.kind !== 'permit') throw new Error('Expected resource permit');
+  assert.equal(result.requestId, ticket.requestId);
+  assert.equal(result.serviceEpoch, serviceEpoch);
+  assert.equal(result.offerId, offered.offer.offerId);
+  assert.deepEqual(result.permit, { requestId: ticket.requestId, serviceEpoch, grantedAt: at });
+  await client.close();
+  await hostTask;
+  assert.equal(hostError, undefined);
   await ports.shutdown();
   const reopened = openStateStore(path);
   t.after(() => reopened.close());
-  const dependencies = await createProductionServiceDependencies(context);
-  dependencies.eventPorts(reopened);
-  assert.equal(dependencies.resourceWait.loadLastGrant(), at);
+  const durable = reopened.readResourceWaitGrant();
+  assert.ok(durable);
+  assert.equal(durable.requestId, result.permit.requestId);
+  assert.equal(durable.serviceEpoch, result.permit.serviceEpoch);
+  assert.equal(durable.grantedAt, result.permit.grantedAt);
+  assert.ok(durable.bootIdentity.length > 0);
+  assert.ok(Number.isFinite(durable.monotonicAt));
   assert.deepEqual(reopened.sessionRepository.transaction(tx => tx.listReservations()), []);
 });

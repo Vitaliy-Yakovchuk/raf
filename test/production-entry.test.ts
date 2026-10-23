@@ -212,16 +212,20 @@ test('blocked state directory is reported without fallback', async t => {
   assert.ok(!existsSync(join(f.root, 'state.sqlite')));
 });
 
-for (const argv of [
-  ['resource', 'wait', '--level', 'normal'],
-]) {
-  test(`unwired command is explicitly unavailable without state or external effects: ${argv.slice(0, 2).join(' ')}`, async t => {
-    const f = await fixture(t);
-    const error = failure(await f.run(argv));
-    assert.equal(error.code, 'COMMAND_UNAVAILABLE');
-    assert.deepEqual(readdirSync(f.home), []);
-  });
-}
+test('resource wait uses service state preflight before starting a child or creating state', async t => {
+  const f = await fixture(t);
+  const childMarker = join(f.directory, 'unexpected-resource-wait-child');
+  f.options.serviceHostModulePath = join(f.directory, 'unexpected-resource-wait-host.mjs');
+  writeFileSync(f.options.serviceHostModulePath, `import { writeFileSync } from 'node:fs'; writeFileSync(${JSON.stringify(childMarker)}, 'started');`);
+  writeFileSync(join(f.conf, 'projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', profile: 'raf', branchPaths: {} } } }));
+  const error = failure(await f.run(['resource', 'wait', '--level', 'normal']));
+  assert.equal(error.code, 'STATE_CONTEXT_REFUSED');
+  assert.equal((error.details as Record<string, unknown>).source, 'state-store');
+  assert.equal((error.details as Record<string, unknown>).stage, 'state-preflight');
+  assert.ok(!existsSync(childMarker));
+  assert.ok(!existsSync(f.statePath));
+  assert.deepEqual(readdirSync(f.home), []);
+});
 
 
 test('wired empty ps uses canonical shared state without creating an agent', async t => {

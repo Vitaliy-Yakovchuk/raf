@@ -42,7 +42,7 @@ test("a new explicit SQLite database has no invented runner, quota, or timing va
   assert.equal(readFileSync(db.path).subarray(0, 16).toString(), "SQLite format 3\0");
   const database = new DatabaseSync(db.path, { readOnly: true });
   try {
-    assert.equal(Number(database.prepare("PRAGMA user_version").get()!.user_version), 11);
+    assert.equal(Number(database.prepare("PRAGMA user_version").get()!.user_version), 12);
     assert.equal(database.prepare("PRAGMA integrity_check").get()!.integrity_check, "ok");
   } finally {
     database.close();

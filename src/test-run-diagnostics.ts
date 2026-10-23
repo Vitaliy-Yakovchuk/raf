@@ -99,10 +99,27 @@ const object = (v: unknown): v is Record<string, any> => !!v && typeof v === 'ob
 const bytes = (s: string) => Buffer.byteLength(s);
 const clip = (s: string, n: number): string => { let out = ''; let size = 0; for (const c of s) { size += bytes(c); if (size > n) break; out += c; } return out; };
 const inside = (p: string, root: string) => p === root || p.startsWith(root + sep);
+function safeError(error: unknown, seen = new Set<unknown>()): any {
+  if (!object(error)) return typeof error === 'string' ? error : null;
+  if (seen.has(error)) return null;
+  seen.add(error);
+  const out: Record<string, unknown> = {};
+  try {
+    for (const key of ['name', 'code', 'failureType', 'diagnosticOrigin', 'generatedMessage', 'operator', 'message', 'stack', 'cause']) {
+      let current: object | null = error;
+      while (current) {
+        const descriptor = Object.getOwnPropertyDescriptor(current, key);
+        if (descriptor) { if ('value' in descriptor) out[key] = key === 'cause' ? safeError(descriptor.value, seen) : descriptor.value; break; }
+        current = Object.getPrototypeOf(current);
+      }
+    }
+  } catch { return null; }
+  return out;
+}
 export function validateDiagnosticLimits(value: unknown): DiagnosticLimits {
   if (!object(value)) return invalid('diagnostics is required');
   for (const key of ['maxEntries', 'maxMessageBytes', 'maxStackFrames', 'maxStackBytes', 'maxTotalBytes', 'maxProtocolLineBytes', 'maxStderrBytes']) if (!Number.isSafeInteger(value[key]) || value[key] <= 0) invalid(`diagnostics/${key}`);
-  if (value.maxTotalBytes < 256 || value.maxMessageBytes > value.maxTotalBytes || value.maxStackBytes > value.maxTotalBytes) invalid('diagnostics incompatible byte budgets');
+  if (value.maxTotalBytes < bytes(JSON.stringify({ diagnostics: [], diagnosticSummary: { totalEntries: Number.MAX_SAFE_INTEGER, retainedEntries: Number.MAX_SAFE_INTEGER, omittedEntries: Number.MAX_SAFE_INTEGER, truncated: false, redacted: false } })) || value.maxMessageBytes > value.maxTotalBytes || value.maxStackBytes > value.maxTotalBytes) invalid('diagnostics incompatible byte budgets');
   if (!Array.isArray(value.redactionPatterns) || value.redactionPatterns.some((p: unknown) => typeof p !== 'string' || !p)) invalid('diagnostics/redactionPatterns');
   for (const pattern of value.redactionPatterns) try { new RegExp(pattern, 'gu'); } catch { invalid('diagnostics/redactionPatterns'); }
   return value as DiagnosticLimits;
@@ -110,7 +127,7 @@ export function validateDiagnosticLimits(value: unknown): DiagnosticLimits {
 
 export function diagnosticFailureFromNodeEvent(event: NodeDiagnosticEvent): DiagnosticFailure | null {
   const data = event.data;
-  const error: any = data.details?.error;
+  const error: any = safeError(data.details?.error);
   if (error?.failureType === 'subtestsFailed') return null;
   const explicit = data.details?.diagnosticOrigin ?? error?.diagnosticOrigin;
   const origin = explicit ?? (error?.failureType === 'testCodeFailure' ? 'test-body' : error?.failureType === 'hookFailed' ? 'hook' : 'unknown');
@@ -135,6 +152,7 @@ export class TestRunDiagnostics {
   private protocol = '';
   private stderr = '';
   private decoder = new StringDecoder('utf8');
+  private stderrDecoder = new StringDecoder('utf8');
   private discarding = false;
   constructor(limits: DiagnosticLimits, paths: DiagnosticPaths) { this.limits = validateDiagnosticLimits(limits); this.paths = paths; }
 
@@ -146,15 +164,23 @@ export class TestRunDiagnostics {
   private clean(value: string): { text: string; redacted: boolean } {
     let s = value.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '').replace(/[\x00-\x08\x0b-\x1f\x7f]/g, '');
     s = s.replace(/-----BEGIN [^-]*PRIVATE KEY-----[\s\S]*?(?:-----END [^-]*PRIVATE KEY-----|$)/g, '<redacted>');
+    s = s.replace(/\b(cookie|set-cookie)\s*[:=][^\r\n]*/gi, '$1: <redacted>');
     s = s.replace(/\b(authorization|cookie|set-cookie|password|passwd|token|api[_-]?key|secret)\b(\s*[:=]\s*)(?:Bearer\s+)?[^\s,;]+/gi, '$1$2<redacted>');
     s = s.replace(/https?:\/\/[^\s<>"']+/g, raw => { try { const u = new URL(raw); if (u.username || u.password) { u.username = ''; u.password = ''; } if (u.search) u.search = '?<redacted>'; return u.toString(); } catch { return '<redacted-url>'; } });
     for (const pattern of this.limits.redactionPatterns) s = s.replace(new RegExp(pattern, 'gu'), '<redacted>');
     s = s.replace(/(?:file:\/\/)?\/[^\s():<>"']+/g, p => this.path(p.replace(/^file:\/\//, '')));
     return { text: s, redacted: s !== value };
   }
-  private add(entry: InlineDiagnostic): void { this.total++; if (this.entries.length < this.limits.maxEntries) this.entries.push(entry); else this.omittedRedacted ||= entry.redacted; }
+  private add(entry: InlineDiagnostic): void {
+    this.total++;
+    this.omittedRedacted ||= entry.redacted;
+    if (this.entries.length >= this.limits.maxEntries) return;
+    this.entries.push(entry);
+    const block = this.attach({ runId: '', outcome: '', failureKinds: [], knownRed: [], unexecuted: [], unknown: [], timeoutCount: 0, timedOut: false, cleanup: '', evidence: [] }, {} as DiagnosticEnvironmentSummary);
+    if (block.diagnostics.length < this.entries.length) this.entries.pop();
+  }
   private diagnostic(kind: DiagnosticKind, input: DiagnosticFailure): InlineDiagnostic {
-    let error: any = input.error;
+    let error: any = safeError(input.error);
     const seen = new Set<unknown>();
     while (object(error) && object(error.cause) && !seen.has(error.cause)) { seen.add(error); error = error.cause; }
     const assertion = error?.code === 'ERR_ASSERTION' || error?.name === 'AssertionError';
@@ -168,17 +194,17 @@ export class TestRunDiagnostics {
       const match = frame.match(/(?:\(|\s)(?:file:\/\/)?(\/[^()]+):(\d+):(\d+)\)?$/);
       if (!location && match && (inside(match[1], this.paths.workspace) || this.paths.fixtureRoots.some(root => inside(match[1], root)))) location = { file: this.path(match[1]), line: Number(match[2]), column: Number(match[3]) };
       const safe = this.clean(frame); redacted ||= safe.redacted;
-      if (stack.length >= this.limits.maxStackFrames || stackSize + bytes(safe.text) > this.limits.maxStackBytes) { truncated = true; continue; }
+      if (stack.length >= this.limits.maxStackFrames || bytes(JSON.stringify([...stack, safe.text])) > this.limits.maxStackBytes) { truncated = true; continue; }
       stack.push(safe.text); stackSize += bytes(safe.text);
     }
     if (!location && input.location) location = { ...input.location, file: this.path(input.location.file) };
     const safeField = (v: unknown) => typeof v === 'string' ? clip(this.clean(v).text, this.limits.maxMessageBytes) : undefined;
     return { kind, test: input.test, ...(safeField(error?.name) ? { errorName: safeField(error.name) } : {}), ...(safeField(error?.code) ? { errorCode: safeField(error.code) } : {}), message: clip(clean.text, this.limits.maxMessageBytes), location, stack, redacted, truncated,
-      ...(!object(error) && typeof error !== 'string' ? { unavailableReason: 'Runner supplied no safe error details' } : {}), ...(input.origin === 'unknown' ? { unavailableReason: 'Error origin is unknown' } : {}) };
+      ...(!object(error) && typeof error !== 'string' ? { unavailableReason: 'Runner supplied no safe error details' } : !location && !stack.length ? { unavailableReason: 'Runner supplied no location or stack' } : {}), ...(input.origin === 'unknown' ? { unavailableReason: 'Error origin is unknown' } : {}) };
   }
   failure(input: DiagnosticFailure): DiagnosticDisposition {
     const body = input.origin === 'test-body';
-    let error: any = input.error; const seen = new Set();
+    let error: any = safeError(input.error); const seen = new Set();
     while (error?.cause && !seen.has(error.cause)) { seen.add(error); error = error.cause; }
     const kind: DiagnosticKind = body ? error?.code === 'ERR_ASSERTION' || error?.name === 'AssertionError' ? 'assertion' : 'test-failure' : 'setup';
     this.add(this.diagnostic(kind, input));
@@ -202,13 +228,15 @@ export class TestRunDiagnostics {
     this.state.protocolBufferedBytes = bytes(this.protocol);
   }
   protocolError(message: string): void { this.add(this.diagnostic('protocol', { test: null, origin: 'unknown', error: new Error(message) })); }
+  markStderrTruncated(): void { this.state.stderrTruncated = true; }
+  stderrText(): string { return this.stderr; }
   stderrChunk(chunk: Uint8Array): void {
     const remaining = this.limits.maxStderrBytes - bytes(this.stderr);
-    const decoded = Buffer.from(chunk).toString('utf8'); this.stderr += clip(decoded, remaining);
+    const decoded = this.stderrDecoder.write(Buffer.from(chunk)); this.stderr += clip(decoded, remaining);
     this.state.stderrTruncated ||= bytes(decoded) > remaining; this.state.stderrBufferedBytes = bytes(this.stderr);
   }
   childExit(input: { exitCode: number | null; signal: string | null; validProtocol: boolean }): void {
-    if (!input.validProtocol) this.add({ ...this.diagnostic('runner', { test: null, origin: 'unknown', error: this.stderr ? new Error(this.stderr) : null }), truncated: this.state.stderrTruncated });
+    if (!input.validProtocol) { if (!this.state.protocolRejected) this.add({ ...this.diagnostic('protocol', { test: null, origin: 'unknown', error: new Error('Runner exited without valid protocol') }), unavailableReason: 'Valid runner protocol unavailable' }); this.add({ ...this.diagnostic('runner', { test: null, origin: 'unknown', error: this.stderr ? new Error(this.stderr) : null }), truncated: this.state.stderrTruncated }); }
   }
   recoveredDetailsUnavailable(reason: string): void { this.add({ ...this.diagnostic('runner', { test: null, origin: 'unknown', error: null }), unavailableReason: this.clean(reason).text }); }
   readState(): DiagnosticReadState { return { ...this.state }; }
@@ -275,17 +303,22 @@ export async function prepareRunTemporaryDirectory(configuration: RunTemporaryCo
   if (blocked.some(p => inside(configuration.root, p))) tmpError('Temporary root overlaps protected context');
   const created = await ports.createPrivateDirectory(configuration.root, context.runId);
   if (!inside(created.path, configuration.root) || created.path === configuration.root || !fits(created.path) || created.symlink || created.path !== created.realpath || created.uid !== context.uid || (created.mode & 0o777) !== 0o700 || created.runId && created.runId !== context.runId || blocked.some(p => inside(created.path, p) || inside(p, created.path))) tmpError('Created temporary directory is unsafe or exceeds socket capacity');
+  const inspected = await ports.inspect(created.path);
+  if (!inspected || inspected.symlink || ['path', 'realpath', 'device', 'inode', 'uid', 'mode'].some(key => (inspected as any)[key] !== (created as any)[key])) tmpError('Created temporary identity changed before reservation');
   const reservation = { runId: context.runId, temporary: { ...created, runId: context.runId } };
-  await ports.saveReservation(reservation);
+  try { await ports.saveReservation(reservation); } catch (error) {
+    await cleanupRunTemporaryDirectory(reservation, true, ports);
+    throw error;
+  }
   return { reservation, environment: { HOME: context.qaHome, RAF_QA_HOME: context.qaHome, TMPDIR: created.path }, statePath: context.statePath, stateTmpPath: context.stateTmpPath };
 }
 export async function cleanupRunTemporaryDirectory(reservation: RunTemporaryReservation, treeTerminated: boolean, ports: RunTemporaryPorts): Promise<{ cleanup: 'complete' | 'incomplete'; diagnostic: InlineDiagnostic | null }> {
   const incomplete = (): { cleanup: 'incomplete'; diagnostic: InlineDiagnostic } => ({ cleanup: 'incomplete', diagnostic: { kind: 'setup', test: null, message: 'Temporary directory ownership or process termination could not be verified', location: null, stack: [], redacted: false, truncated: false } });
-  if (!treeTerminated || reservation.temporary.runId && reservation.temporary.runId !== reservation.runId) return incomplete();
+  if (!treeTerminated || reservation.temporary.runId !== reservation.runId) return incomplete();
   try {
     const actual = await ports.inspect(reservation.temporary.path);
     if (!actual) return { cleanup: 'complete', diagnostic: null };
-    if (actual.symlink || actual.path !== actual.realpath || (actual.mode & 0o777) !== 0o700 || ['path', 'realpath', 'device', 'inode', 'uid'].some(key => (actual as any)[key] !== (reservation.temporary as any)[key]) || actual.runId && actual.runId !== reservation.runId) return incomplete();
+    if (actual.symlink || actual.path !== actual.realpath || (actual.mode & 0o777) !== 0o700 || ['path', 'realpath', 'device', 'inode', 'uid'].some(key => (actual as any)[key] !== (reservation.temporary as any)[key]) || actual.runId !== reservation.runId) return incomplete();
     await ports.removeOwnedDirectory(reservation.temporary);
     return { cleanup: 'complete', diagnostic: null };
   } catch { return incomplete(); }

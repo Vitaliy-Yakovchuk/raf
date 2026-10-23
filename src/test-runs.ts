@@ -1,4 +1,4 @@
-import { TestRunDiagnostics, validateDiagnosticLimits, validateRunTemporaryConfiguration, buildDiagnosticEnvironment } from './test-run-diagnostics.ts';
+import { TestRunDiagnostics, validateDiagnosticLimits, validateRunTemporaryConfiguration } from './test-run-diagnostics.ts';
 import type { DiagnosticLimits, DiagnosticAttachment, InlineDiagnostic, DiagnosticEnvironmentSummary, RunTemporaryConfiguration, RunTemporaryReservation } from './test-run-diagnostics.ts';
 import { parseCommandArguments } from './cli-arguments.ts';
 import { isAbsolute, resolve, sep } from 'node:path';
@@ -122,6 +122,7 @@ export interface ChildExit {
   exitCode: number | null;
   signal: string | null;
   stderr: string;
+  stderrTruncated?: boolean;
 }
 
 export interface RunnerClassification {
@@ -139,9 +140,9 @@ export interface TestRunCleanup {
 }
 
 export interface TestRunResult extends RunnerClassification {
-  diagnostics?: InlineDiagnostic[];
-  diagnosticSummary?: DiagnosticAttachment['diagnosticSummary'];
-  environmentSummary?: DiagnosticEnvironmentSummary;
+  diagnostics: InlineDiagnostic[];
+  diagnosticSummary: DiagnosticAttachment['diagnosticSummary'];
+  environmentSummary: DiagnosticEnvironmentSummary;
   runId: string;
   project: string;
   workspace: string;
@@ -231,7 +232,7 @@ export function parseTestRunArgs(argv: readonly string[]): ParsedTestRunArgs {
       required: ['project', 'phase', 'group'].includes(name),
     })),
   });
-  if ('error' in parsed) failure(parsed.error.code === 'UNKNOWN_ARGUMENT' ? 'INVALID_ARGUMENT' : parsed.error.code, `${parsed.error.details.parameter ?? ''}: ${parsed.error.message}`);
+  if ('error' in parsed) return failure(parsed.error.code === 'UNKNOWN_ARGUMENT' ? 'INVALID_ARGUMENT' : parsed.error.code, `${parsed.error.details.parameter ?? ''}: ${parsed.error.message}`);
   const { params } = parsed;
   for (const [name, value] of Object.entries(params)) if (![value].flat().every(text)) failure('MISSING_VALUE', `--${name}`);
   if (params.files && params.only) failure('SELECTION_CONFLICT');
@@ -332,8 +333,11 @@ export function classifyRunnerResult(events: readonly RunnerEvent[], exit: Child
   return { outcome: setup ? 'setup-failed' : knownRed.length ? 'assertions-failed' : 'passed', failureKinds, passed, knownRed, unexecuted, unknown };
 }
 
+function unavailableEnvironment(context: TestRunContext): DiagnosticEnvironmentSummary {
+  return { executable: process.execPath, runtimeVersion: process.version, adapter: 'unavailable', isolation: 'unavailable', configurationFingerprints: { flow: '', testRuns: '', projects: '' }, tmpPathBytes: Buffer.byteLength(context.tmpPath), privateRunTmp: false };
+}
 function emptyResult(request: TestRunRequest, context: TestRunContext, runId: string, now: number): TestRunResult {
-  return { runId, project: request.project, workspace: context.workspace, phase: request.phase, group: request.group, profileId: null,
+  return { diagnostics: [], diagnosticSummary: { totalEntries: 0, retainedEntries: 0, omittedEntries: 0, truncated: false, redacted: false }, environmentSummary: unavailableEnvironment(context), runId, project: request.project, workspace: context.workspace, phase: request.phase, group: request.group, profileId: null,
     selection: { files: request.files ?? [], testIds: request.only ?? [] }, command: null, startedAt: new Date(now).toISOString(), durationMs: 0,
     exitCode: null, signal: null, timedOut: false, cleanup: { complete: true, remainingPids: [] }, outcome: 'refused', failureKinds: ['refusal'],
     passed: [], knownRed: [], unexecuted: [], unknown: [], groupState: 'idle', timeoutCount: 0, nextAction: 'fix-setup', hintIds: [], hints: [], evidence: [] };
@@ -353,17 +357,21 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   const result = emptyResult(request, context, ports.newRunId(), started);
   let config: TestRunConfig | null = null, plan: TestRunPlan;
   let diagnostics: TestRunDiagnostics | null = null;
-  const attach = () => { if (diagnostics) Object.assign(result, diagnostics.attach(result, ports.diagnosticEnvironment?.(result.command) ?? buildDiagnosticEnvironment({ executable: result.command?.executable ?? process.execPath, runtimeVersion: process.version, adapter: 'node-test-events', isolation: 'unknown', configurationBytes: { flow: new Uint8Array(), testRuns: new Uint8Array(), projects: new Uint8Array() }, tmpPath: result.command?.environment.TMPDIR ?? context.tmpPath, privateRunTmp: !!result.command?.environment.TMPDIR }))); return attachHints(result, config); };
+  const attach = () => {
+    if (diagnostics) Object.assign(result, diagnostics.attach(result, ports.diagnosticEnvironment?.(result.command) ?? result.environmentSummary));
+    return attachHints(result, config);
+  };
   try {
+    diagnostics = new TestRunDiagnostics((configInput as TestRunConfig)?.diagnostics, { workspace: context.workspace, qaHome: context.home, fixtureRoots: [] });
     config = validateTestRunConfig(configInput, context.agentPhases, policy);
-    diagnostics = new TestRunDiagnostics(config.diagnostics, { workspace: context.workspace, qaHome: context.home, fixtureRoots: [] });
     if (!context.agentPhases.includes(request.phase)) failure('UNKNOWN_PHASE');
     if (!config.phases[request.phase].allowed) failure('PHASE_NOT_ALLOWED');
     plan = planTestRun(request, config, context, await ports.preflight(context));
   } catch (error) {
     result.errorCode = (error as any)?.code ?? 'ENVIRONMENT_INVALID';
     if (['ENVIRONMENT_INVALID', 'STATE_CONTEXT_REFUSED'].includes(result.errorCode!)) { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
-    diagnostics?.preflight(error);
+    if (!diagnostics) return testRunFailureResult(request, context, result.runId, started, configInput, error);
+    diagnostics.preflight(error);
     result.evidence = [];
     return attach();
   }
@@ -405,7 +413,13 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   if (!reserved) return attach();
   const events: RunnerEvent[] = [];
   let temporary: RunTemporaryReservation | undefined;
-  const onEvent = (event: RunnerEvent) => { if ('inlineDiagnostic' in event && event.inlineDiagnostic) diagnostics?.inline(event.inlineDiagnostic); else if (event.kind === 'protocol-error') diagnostics?.protocolError(event.diagnostic); else if (event.kind === 'assertion-failed' || event.kind === 'setup-failed') diagnostics?.failure({ test: event.test, origin: event.kind === 'assertion-failed' ? 'test-body' : 'unknown', error: event.diagnostic }); events.push(event); };
+  const onEvent = (event: RunnerEvent) => {
+    if ('inlineDiagnostic' in event && event.inlineDiagnostic) diagnostics?.inline(event.inlineDiagnostic);
+    else if (event.kind === 'protocol-error') diagnostics?.protocolError(event.diagnostic);
+    else if (event.kind === 'assertion-failed' || event.kind === 'setup-failed') diagnostics?.failure({ test: event.test, origin: event.kind === 'assertion-failed' ? 'test-body' : 'unknown', error: event.diagnostic });
+    if ('diagnostic' in event || 'inlineDiagnostic' in event) { const { diagnostic, inlineDiagnostic, ...facts } = event as any; events.push(facts as RunnerEvent); }
+    else events.push(event);
+  };
   let child: ManagedTestProcess | null = null, interruption: string | null = null;
   let cancelDeadline = () => {}, unsubscribe = () => {};
   let exit: ChildExit = { exitCode: null, signal: null, stderr: '' };
@@ -419,7 +433,10 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       temporary = await ports.prepareTemporary(result.runId, context, async reservation => { await ports.state.transaction(tx => { const group = tx.get(key); if (!group?.inFlight || group.inFlight.runId !== result.runId) return failure('RESERVATION_LOST'); group.inFlight.temporary = reservation; tx.put(group); }); });
       plan.command.environment.TMPDIR = temporary.temporary.path;
     }
-    child = await ports.spawn(plan.command, onEvent);
+    if (ports.clock.now() >= deadline) { reason = 'timeout'; }
+    else if (interruption) { reason = 'interruption'; }
+    else child = await ports.spawn(plan.command, onEvent);
+    if (child) {
     await ports.state.transaction(tx => {
       const group = tx.get(key);
       if (!group || !group.inFlight || group.inFlight.runId !== result.runId) return failure('RESERVATION_LOST');
@@ -430,14 +447,21 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (ports.clock.now() >= deadline && reason === 'exit') reason = 'timeout';
     result.cleanup = await child.cleanup(deadline, reason);
     if (reason !== 'exit' && result.cleanup.complete) exit = await child.wait();
+    }
   } catch (error) {
-    onEvent({ kind: 'protocol-error', diagnostic: error instanceof Error ? error.message : String(error) });
+    diagnostics?.failure({ test: null, origin: 'fixture-setup', error });
+    result.errorCode = (error as any)?.code ?? 'RUNNER_SETUP_FAILED';
+    events.push({ kind: 'protocol-error', diagnostic: '' });
     if (child) {
       try { result.cleanup = await child.cleanup(deadline, 'interruption'); } catch { result.cleanup = { complete: false, remainingPids: [] }; }
     }
   } finally { cancelDeadline(); unsubscribe(); }
-  if (temporary && ports.cleanupTemporary) { const cleaned = await ports.cleanupTemporary(temporary, result.cleanup.complete); if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic); if (cleaned.cleanup !== 'complete') result.cleanup.complete = false; }
+  if (temporary && ports.cleanupTemporary) {
+    try { const cleaned = await ports.cleanupTemporary(temporary, result.cleanup.complete); if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic); if (cleaned.cleanup !== 'complete') result.cleanup.complete = false; }
+    catch (error) { diagnostics?.failure({ test: null, origin: 'fixture-setup', error }); result.cleanup.complete = false; }
+  }
   diagnostics?.stderrChunk(Buffer.from(exit.stderr));
+  if (exit.stderrTruncated) diagnostics?.markStderrTruncated();
   diagnostics?.childExit({ ...exit, validProtocol: events.some(e => e.kind === 'complete') && !events.some(e => e.kind === 'protocol-error') });
   const classified = classifyRunnerResult(events, exit);
   Object.assign(result, classified, { exitCode: exit.exitCode, signal: interruption ?? exit.signal, timedOut: reason === 'timeout', durationMs: ports.clock.now() - started });
@@ -494,16 +518,34 @@ export async function reconcileTestRunGroup(key: TestRunGroupKey, policy: UnitTe
   if (!group?.inFlight) return group;
   const observed = await ports.reconcile(group.inFlight.processIdentity, group.inFlight.deadlineMs);
   const temporaryCleanup = group.inFlight.temporary && ports.cleanupTemporary ? await ports.cleanupTemporary(group.inFlight.temporary, !observed.alive && observed.cleanup.complete) : null;
-  if (temporaryCleanup?.cleanup === 'incomplete') return group;
   return ports.state.transaction(tx => {
     const current = tx.get(key);
     if (!current?.inFlight || current.inFlight.runId !== group.inFlight!.runId) return current;
-    if (observed.alive || !observed.cleanup.complete) return current;
-    const recorded = current.lastResult?.runId === current.inFlight.runId;
+    if (observed.alive) return current;
+    const complete = observed.cleanup.complete && temporaryCleanup?.cleanup !== 'incomplete';
+    const flight = current.inFlight;
+    const recorded = current.lastResult?.runId === flight.runId;
     if (observed.deadlineReached && !recorded) current.timeoutCount++;
-    current.state = 'reconcile'; current.inFlight = null;
-    if (current.lastResult && !recorded) { current.lastResult.diagnostics = [{ kind: 'runner', test: null, message: 'Recovery lost current run diagnostic details', location: null, stack: [], redacted: false, truncated: false, unavailableReason: 'Current run details unavailable after recovery' }]; current.lastResult.diagnosticSummary = { totalEntries: 1, retainedEntries: 1, omittedEntries: 0, truncated: false, redacted: false }; }
-    if (current.lastResult) { current.lastResult = { ...current.lastResult, outcome: recorded ? current.lastResult.outcome : observed.deadlineReached ? 'timed-out' : 'setup-failed', timeoutCount: current.timeoutCount, groupState: 'reconcile', nextAction: 'reconcile' }; }
+    const result = recorded ? current.lastResult! : emptyResult({ project: key.project, phase: 'recovery', group: key.group, files: current.selection.files }, context, flight.runId, flight.deadlineMs - policy.timeoutMs);
+    if (!recorded) {
+      result.outcome = observed.deadlineReached ? 'timed-out' : 'setup-failed';
+      result.timedOut = observed.deadlineReached;
+      result.failureKinds = observed.deadlineReached ? ['timeout'] : ['setup'];
+      result.knownRed = current.knownRed;
+      result.unexecuted = current.unexecuted;
+      result.diagnostics = [{ kind: 'runner', test: null, message: 'Recovery lost current run diagnostic details', location: null, stack: [], redacted: false, truncated: false, unavailableReason: 'Current run details unavailable after recovery' }];
+      result.diagnosticSummary = { totalEntries: 1, retainedEntries: 1, omittedEntries: 0, truncated: false, redacted: false };
+    }
+    if (!complete) {
+      result.cleanup = { ...observed.cleanup, complete: false };
+      result.errorCode = 'CLEANUP_INCOMPLETE';
+      result.outcome = 'setup-failed';
+      result.failureKinds = [...new Set<TestRunFailureKind>([...result.failureKinds, 'setup'])];
+    } else result.cleanup = observed.cleanup;
+    result.timeoutCount = current.timeoutCount;
+    result.groupState = 'reconcile'; result.nextAction = 'reconcile';
+    current.lastResult = result; current.state = 'reconcile';
+    if (complete) current.inFlight = null;
     tx.put(current); return current;
   });
 }
@@ -524,8 +566,8 @@ export function testRunFailureResult(request: TestRunRequest, context: TestRunCo
   result.evidence = [];
   const configured = record(config) && record(config.phases) && record(config.hints) ? config as unknown as TestRunConfig : null;
   if (configured) {
-    try { const diagnostics = new TestRunDiagnostics(configured.diagnostics, { workspace: context.workspace, qaHome: context.home, fixtureRoots: [] }); diagnostics.preflight(error); Object.assign(result, diagnostics.attach(result, buildDiagnosticEnvironment({ executable: process.execPath, runtimeVersion: process.version, adapter: 'node-test-events', isolation: 'unknown', configurationBytes: { flow: new Uint8Array(), testRuns: new Uint8Array(), projects: new Uint8Array() }, tmpPath: context.tmpPath, privateRunTmp: false }))); } catch { }
+    try { const diagnostics = new TestRunDiagnostics(configured.diagnostics, { workspace: context.workspace, qaHome: context.home, fixtureRoots: [] }); diagnostics.preflight(error); Object.assign(result, diagnostics.attach(result, result.environmentSummary)); } catch { }
   }
-  if (!result.diagnostics) { result.diagnostics = [{ kind: 'preflight', test: null, errorCode: result.errorCode, message: 'Preflight refused; diagnostic configuration unavailable', location: null, stack: [], redacted: false, truncated: false, unavailableReason: 'Valid diagnostic configuration unavailable' }]; result.diagnosticSummary = { totalEntries: 1, retainedEntries: 1, omittedEntries: 0, truncated: false, redacted: false }; }
+  if (!result.diagnostics.length) { result.diagnostics = [{ kind: 'preflight', test: null, errorCode: result.errorCode, message: 'Preflight refused; diagnostic configuration unavailable', location: null, stack: [], redacted: false, truncated: false, unavailableReason: 'Valid diagnostic configuration unavailable' }]; result.diagnosticSummary = { totalEntries: 1, retainedEntries: 1, omittedEntries: 0, truncated: false, redacted: false }; }
   return attachHints(result, configured);
 }

@@ -1,7 +1,7 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, openSync, closeSync, fstatSync } from 'node:fs';
 import { StringDecoder } from 'node:string_decoder';
 import { TestRunDiagnostics, buildDiagnosticEnvironment, prepareRunTemporaryDirectory, cleanupRunTemporaryDirectory } from './test-run-diagnostics.ts';
-import type { RunTemporaryPorts, RunTemporaryReservation } from './test-run-diagnostics.ts';
+import type { RunTemporaryPorts, DiagnosticEnvironmentInput } from './test-run-diagnostics.ts';
 import { spawn, execFileSync } from 'node:child_process';
 import { constants, accessSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -80,22 +80,40 @@ function checkChannel(context: StateContext, inherited: Readonly<Record<string, 
   return false;
 }
 
-export function createTestRunPorts(config: TestRunConfig, stateContext: StateContext, getStore: () => StateStore, inherited: Readonly<Record<string, string | undefined>> = process.env): TestRunPorts {
+export function createTestRunPorts(config: TestRunConfig, stateContext: StateContext, getStore: () => StateStore, inherited: Readonly<Record<string, string | undefined>> = process.env, configurationBytes?: DiagnosticEnvironmentInput['configurationBytes']): TestRunPorts {
   let state: TestRunStatePort | undefined;
   const environment = stateContextEnvironment(stateContext, inherited);
+  const readConfiguration = (name: string) => readFileSync(join(stateContext.orchestratorRoot, 'conf', name));
+  const snapshot = configurationBytes ?? { flow: readConfiguration('flow.json'), testRuns: readConfiguration('test-runs.json'), projects: readConfiguration('projects.json') };
   const temporaryPorts: RunTemporaryPorts = {
     socketPathCapacityBytes: () => process.platform === 'linux' ? 108 : 104,
-    inspect: async path => { try { const st = lstatSync(path); return { path, realpath: realpathSync(path), device: String(st.dev), inode: String(st.ino), uid: st.uid, mode: st.mode, symlink: st.isSymbolicLink() }; } catch (e) { if ((e as any).code === 'ENOENT') return null; throw e; } },
-    createPrivateDirectory: async root => { const path = mkdtempSync(join(root, 'r-')); return (await temporaryPorts.inspect(path))!; },
+    inspect: async path => {
+      try {
+        const st = lstatSync(path), realpath = realpathSync(path);
+        let runId: string | undefined;
+        if (st.isDirectory() && !st.isSymbolicLink() && realpath === path && st.uid === process.getuid!() && (st.mode & 0o777) === 0o700) {
+          let descriptor: number | undefined;
+          try {
+            descriptor = openSync(join(path, '.raf-test-run'), constants.O_RDONLY | constants.O_NOFOLLOW);
+            const marker = fstatSync(descriptor);
+            if (marker.isFile() && marker.uid === st.uid && marker.size === randomUUID().length) {
+              const value = readFileSync(descriptor, 'utf8');
+              if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value)) runId = value;
+            }
+          } catch (error) { if (!['ENOENT', 'ELOOP'].includes((error as any).code)) throw error; }
+          finally { if (descriptor !== undefined) closeSync(descriptor); }
+        }
+        return { path, realpath, device: String(st.dev), inode: String(st.ino), uid: st.uid, mode: st.mode, symlink: st.isSymbolicLink(), ...(runId ? { runId } : {}) };
+      } catch (error) { if ((error as any).code === 'ENOENT') return null; throw error; }
+    },
+    createPrivateDirectory: async (root, runId) => { const path = mkdtempSync(join(root, 'r-')); writeFileSync(join(path, '.raf-test-run'), runId, { flag: 'wx', mode: 0o600 }); return (await temporaryPorts.inspect(path))!; },
     saveReservation: async () => { throw new Error('Reservation writer unavailable'); },
-    removeOwnedDirectory: async identity => { const actual = await temporaryPorts.inspect(identity.path); if (!actual || ['device', 'inode', 'uid', 'realpath'].some(key => (actual as any)[key] !== (identity as any)[key]) || actual.symlink) throw new Error('Temporary identity changed'); rmSync(identity.path, { recursive: true }); },
+    removeOwnedDirectory: async identity => { const actual = await temporaryPorts.inspect(identity.path); if (!actual || ['device', 'inode', 'uid', 'realpath', 'runId'].some(key => (actual as any)[key] !== (identity as any)[key]) || actual.symlink) throw new Error('Temporary identity changed'); rmSync(identity.path, { recursive: true }); },
   };
   const ports: TestRunPorts = {
     diagnosticEnvironment: command => {
-      const root = fileURLToPath(new URL('../../', import.meta.url));
-      const read = (name: string) => readFileSync(join(root, 'conf', name));
       const profile = Object.values(config.projects).flatMap(p => Object.values(p.profiles)).find(p => p.executable === command?.executable);
-      return buildDiagnosticEnvironment({ executable: command?.executable ?? process.execPath, runtimeVersion: process.version, adapter: profile?.resultAdapter ?? 'node-test-events', isolation: command?.argv.find(a => a.startsWith('--test-isolation='))?.split('=')[1] ?? 'process', configurationBytes: { flow: read('flow.json'), testRuns: read('test-runs.json'), projects: read('projects.json') }, tmpPath: command?.environment.TMPDIR ?? stateContext.tmpRoot, privateRunTmp: !!command?.environment.TMPDIR });
+      return buildDiagnosticEnvironment({ executable: command?.executable ?? process.execPath, runtimeVersion: process.version, adapter: profile?.resultAdapter ?? 'node-test-events', isolation: command?.argv.find(a => a.startsWith('--test-isolation='))?.split('=')[1] ?? 'process', configurationBytes: snapshot, tmpPath: command?.environment.TMPDIR ?? stateContext.tmpRoot, privateRunTmp: !!command?.environment.TMPDIR });
     },
     prepareTemporary: (runId, context, save) => prepareRunTemporaryDirectory(config.temporaryArtifacts, { runId, uid: process.getuid!(), qaHome: context.home, statePath: context.statePath, stateTmpPath: context.tmpPath, workspace: context.workspace, workingStatePath: join(context.operationalHome, '.raf') }, { ...temporaryPorts, saveReservation: save }).then(p => p.reservation),
     cleanupTemporary: (reservation, terminated) => cleanupRunTemporaryDirectory(reservation, terminated, temporaryPorts),
@@ -129,7 +147,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       const pid = child.pid!;
       const exited = new Promise<void>(done => child.once('exit', () => done()));
       const identity = JSON.stringify({ pid, start: processStart(pid), boot: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
-      let buffer = '', protocolBad = false, stderr = '', discarding = false;
+      let buffer = '', protocolBad = false, discarding = false;
       const decoder = new StringDecoder('utf8');
       const readDiagnostics = new TestRunDiagnostics(config.diagnostics, { workspace: command.cwd, qaHome: stateContext.homeDirectory, fixtureRoots: command.environment.TMPDIR ? [command.environment.TMPDIR] : [] });
       const consume = (line: string) => {
@@ -150,10 +168,11 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
           if (part.endsWith('\n')) { consume(buffer); buffer = ''; }
         }
       });
-      child.stderr!.on('data', chunk => { readDiagnostics.stderrChunk(chunk); const available = config.diagnostics.maxStderrBytes - Buffer.byteLength(stderr); if (available > 0) stderr += Buffer.from(chunk).subarray(0, available).toString('utf8'); });
-      const waited = new Promise<ChildExit>(done => child.once('close', (exitCode, signal) => { if (buffer.length) { onEvent({ kind: 'protocol-error', diagnostic: 'Truncated JSON runner protocol' }); } readDiagnostics.childExit({ exitCode, signal, validProtocol: !protocolBad });
-        const details = readDiagnostics.attach({ runId: '', outcome: '', failureKinds: [], knownRed: [], unexecuted: [], unknown: [], timeoutCount: 0, timedOut: false, cleanup: '', evidence: [] }, {} as any);
-        done({ exitCode, signal, stderr }); }));
+      child.stderr!.on('data', chunk => readDiagnostics.stderrChunk(chunk));
+      const waited = new Promise<ChildExit>(done => child.once('close', (exitCode, signal) => {
+        if (buffer.length || decoder.end()) onEvent({ kind: 'protocol-error', diagnostic: 'Truncated JSON runner protocol' });
+        done({ exitCode, signal, stderr: readDiagnostics.stderrText(), stderrTruncated: readDiagnostics.readState().stderrTruncated });
+      }));
       return { identity, wait: () => waited, cleanup: async (_deadline, reason) => {
         const cleaned = await cleanupTestProcessGroup(pid, {
           tree: processTree, start: processStart, kill: target => process.kill(target, 'SIGKILL'),
@@ -187,9 +206,12 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
   let request = { project: value('--project'), phase: value('--phase'), group: value('--group') };
   try {
     const root = realpathSync(options.orchestratorRoot);
-    const read = (file: string) => JSON.parse(readFileSync(join(root, 'conf', file), 'utf8'));
+    const configuration = new Map<string, Buffer>();
+    const read = (file: string) => { const data = readFileSync(join(root, 'conf', file)); configuration.set(file, data); return JSON.parse(data.toString('utf8')); };
     const constants = read('raf-constants.json');
+    const flowBytes = readFileSync(join(root, 'conf/flow.json'));
     const policy = loadFlowPolicy(join(root, 'conf/flow.json')).unitTests;
+    if (!flowBytes.equals(readFileSync(join(root, 'conf/flow.json')))) throw Object.assign(new Error('Flow configuration changed while reading'), { code: 'CONFIGURATION_INVALID' });
     const phases = constants.agentPhases.map((p: any) => p.id);
     config = validateTestRunConfig(read('test-runs.json'), phases, policy);
     const args = parseTestRunArgs(argv);
@@ -230,7 +252,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         context = { cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, activeChanges: [...control.activeChanges],
           agentId: 'test-run', sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
           home, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome: userInfo().homedir };
-        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStateStore(stateContext.statePath, { context: stateContext }), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot });
+        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStateStore(stateContext.statePath, { context: stateContext }), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! });
         return { config, policy, context, runtime };
       },
     });

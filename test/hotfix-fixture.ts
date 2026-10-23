@@ -58,7 +58,7 @@ export function git(cwd: string, environment: Record<string, string>, ...args: s
 }
 
 export async function fixture(t: TestContext) {
-  const root = mkdtempSync(join(tmpdir(), "raf-hotfix-z317-"));
+  const root = mkdtempSync(join(tmpdir(), "raf-hotfix-z329-"));
   const home = join(root, "qa-home");
   const workingHome = join(root, "working-home");
   const main = join(root, "raf-main");
@@ -74,6 +74,7 @@ export async function fixture(t: TestContext) {
     CLAUDE_CONFIG_DIR: join(home, ".claude"),
     TMUX_TMPDIR: join(home, "tmux"),
     GIT_CONFIG_NOSYSTEM: "1",
+    GIT_OPTIONAL_LOCKS: "0",
     GIT_CONFIG_GLOBAL: join(root, "fixture.gitconfig"),
     GIT_AUTHOR_NAME: "Hotfix fixture",
     GIT_AUTHOR_EMAIL: "hotfix@example.invalid",
@@ -88,6 +89,7 @@ export async function fixture(t: TestContext) {
   const projectsPath = join(root, "conf", "projects.json");
   const projects = JSON.parse(readFileSync(projectsPath, "utf8"));
   projects.projects = { raf: projects.projects.raf, orchestrator: projects.projects.orchestrator };
+  projects.projects.raf.branchPaths = { main: "raf-main", develop: "raf-develop", hotfix: "raf-hotfix" };
   writeFileSync(projectsPath, JSON.stringify(projects));
   const config = JSON.parse(readFileSync(join(root, "conf", "raf.json"), "utf8"));
   const native = config.runnerProtocols.find((p: { runner: string }) => p.runner === "codex");
@@ -113,6 +115,8 @@ export async function fixture(t: TestContext) {
   git(root, environment, "commit", "-m", "isolated orchestrator baseline");
   const baseCommit = git(main, environment, "rev-parse", "HEAD");
   git(main, environment, "worktree", "add", "-b", "develop", join(root, "raf-develop"), baseCommit);
+  const hotfix = join(root, "raf-hotfix");
+  git(main, environment, "worktree", "add", "-b", "hotfix", hotfix, baseCommit);
   const change = join(root, "openspec", "changes", "hotfix-fixture");
   mkdirSync(change, { recursive: true });
   writeFileSync(join(change, "proposal.md"), "## Why\nIsolated hotfix fixture.\n\n## What Changes\nTemporary markers.\n\n## Impact\nFixture only.\n");
@@ -136,37 +140,45 @@ export async function fixture(t: TestContext) {
       ready: protocol.markers.ready[0],
       composer: runner === "codex" ? "› " : "$ "
     };
-    const runnerSource = `#!/usr/bin/env node
+    const runnerSource = String.raw`#!/usr/bin/env node
 import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
+import { spawn } from 'node:child_process';
+if(process.argv.includes('app-server')) {
+ const child=spawn(${JSON.stringify(realCodex)},process.argv.slice(2),{stdio:'inherit'});
+ child.on('error',error=>{process.stderr.write(error.message);process.exit(1);});
+ child.on('exit',(code,signal)=>{if(signal)process.kill(process.pid,signal);else process.exit(code??1);});
+} else {
 const screen=${JSON.stringify(screen)};
 if(process.argv.includes('--version')) { console.log(screen.version); process.exit(0); }
-const log = value => fs.appendFileSync(${JSON.stringify(runnerLog)}, JSON.stringify({...value,runner:screen.runner})+'\\n');
+const log = value => fs.appendFileSync(${JSON.stringify(runnerLog)}, JSON.stringify({...value,runner:screen.runner,pid:process.pid})+'\n');
 const assigned=process.argv.indexOf('--session-id');
 const id = assigned>=0 ? process.argv[assigned+1] : randomUUID();
 log({kind:'start',pid:process.pid,cwd:process.cwd(),argv:process.argv.slice(2),home:process.env.HOME});
 process.stdin.setRawMode?.(true); process.stdin.resume();
-const show=text=>process.stdout.write('\\x1b[2J\\x1b[H'+text);
-process.stdout.write('\\x1b[?2004h');show(screen.trust+'\\n');
-let trusted=false, buffer='',pending=false;
+const show=text=>process.stdout.write('\x1b[2J\x1b[H'+text);
+process.stdout.write('\x1b[?2004h');show(screen.trust+'\n');
+let trusted=false, trustInput='', buffer='',pending=false;
 process.stdin.on('data', data => {
  const text=data.toString(); log({kind:'input',text});
  if(!trusted) {
-   if(/[\\r\\n]/u.test(text)) { trusted=true;buffer='';log({kind:'trusted'});show(screen.ready+'\\n'+screen.composer); }
+   trustInput+=text;
+   if(/[\r\n]/u.test(text)) { trusted=true;buffer='';log({kind:'trusted',keys:trustInput});show(screen.ready+'\n'+screen.composer); }
    return;
  }
- if(pending && /[\\r\\n]/u.test(text)) { show(screen.runner==='codex' ? '• Working (esc to interrupt)' : 'Working… esc to interrupt'); return; }
+ if(pending && /[\r\n]/u.test(text)) { show((screen.runner==='codex' ? '• Working (esc to interrupt)' : 'Working… esc to interrupt')+'\n'+screen.composer); return; }
  buffer+=text;
  if(buffer.includes('/exit')) process.exit(0);
- if(buffer.includes('/status') && /[\\r\\n]/u.test(text)) { show((screen.runner==='codex'?'Session: ':'Session ID: ')+id+'\\n'+screen.ready+'\\n'+screen.composer); buffer=''; return; }
- if(buffer.includes('\\x1b[201~')) {
-   const body=buffer.split('\\x1b[200~').at(-1).split('\\x1b[201~')[0];
+ if(buffer.includes('/status') && /[\r\n]/u.test(text)) { show((screen.runner==='codex'?'Session: ':'Session ID: ')+id+'\n'+screen.ready+'\n'+screen.composer); buffer=''; return; }
+ if(buffer.includes('\x1b[201~')) {
+   const body=buffer.split('\x1b[200~').at(-1).split('\x1b[201~')[0];
    log({kind:'brief',text:body});pending=true;buffer='';
-   const pasted=screen.runner==='codex' ? '[Pasted Content '+body.length+' chars]' : '[Pasted text #1 +'+(body.match(/\\n/g)||[]).length+' lines]';
-   show(screen.composer+pasted+'\\n'+screen.ready);return;
+   const pasted=screen.runner==='codex' ? '[Pasted Content '+body.length+' chars]' : '[Pasted text #1 +'+(body.match(/\n/g)||[]).length+' lines]';
+   show(screen.composer+pasted+'\n'+screen.ready);return;
  }
  process.stdout.write(text);
 });
+}
 `;
     writeFileSync(join(binary, runner), runnerSource, { mode: 0o755 });
   }
@@ -256,7 +268,7 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
     childProcesses.add(child);
     return child;
   }
-  return { root, home, workingHome, main, host, environment, baseCommit, runnerLog, inbox, budget, poll, socket, startMain, mainCommand, liveIdentity, cli, candidate, verified, forkModule, osHomePreload };
+  return { root, home, workingHome, main, hotfix, host, environment, baseCommit, runnerLog, inbox, budget, poll, socket, startMain, mainCommand, liveIdentity, cli, candidate, verified, forkModule, osHomePreload };
 }
 
 export async function childMessage(child: ChildProcess, predicate: (value: any) => boolean, budget: number): Promise<any> {
@@ -280,10 +292,11 @@ export function assertWorkspace(workspace: HotfixWorkspace, f: Awaited<ReturnTyp
   assert.equal(workspace.targetBranch, "main");
   assert.equal(workspace.baseCommit, f.baseCommit);
   assert.equal(realpathSync(workspace.cwd), workspace.cwd);
+  assert.equal(workspace.cwd, f.hotfix);
   assert.notEqual(workspace.cwd, f.main);
   assert.equal(git(workspace.cwd, f.environment, "rev-parse", "--show-toplevel"), workspace.cwd);
-  assert.equal(git(workspace.cwd, f.environment, "rev-parse", "HEAD"), workspace.baseCommit);
-  assert.equal(git(workspace.cwd, f.environment, "rev-parse", "--abbrev-ref", "HEAD"), "HEAD");
+  git(workspace.cwd, f.environment, "merge-base", "--is-ancestor", workspace.baseCommit, "HEAD");
+  assert.equal(git(workspace.cwd, f.environment, "rev-parse", "--abbrev-ref", "HEAD"), "hotfix");
   assert.equal(git(workspace.cwd, f.environment, "rev-parse", "--absolute-git-dir"), workspace.gitDirectory);
   assert.equal(realpathSync(git(workspace.cwd, f.environment, "rev-parse", "--path-format=absolute", "--git-common-dir")), realpathSync(workspace.commonDirectory));
   assert.equal(realpathSync(workspace.commonDirectory), realpathSync(git(f.main, f.environment, "rev-parse", "--path-format=absolute", "--git-common-dir")));

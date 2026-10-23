@@ -1,215 +1,530 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { existsSync, linkSync, readFileSync, readlinkSync, renameSync, statSync, symlinkSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, linkSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { setTimeout as delay } from "node:timers/promises";
 import test from "node:test";
-import { cleanupHotfixWorktree, commitHotfix, launchHotfix, prepareHotfixWorktree, runHotfixSandboxCommand } from "../src/hotfix-worktree.ts";
+import { cleanupHotfixWorktree, commitHotfix, launchHotfix, prepareHotfixWorktree, runHotfixSandboxCommand, validateHotfixTrust, type HotfixWorkspace } from "../src/hotfix-worktree.ts";
+import { resolveStateContext } from "../src/state-migration-guard.ts";
 import { assertWorkspace, filesUnder, fixture, git, sha, timeoutMs, until } from "./hotfix-fixture.ts";
 
-test("[hotfix-pure] two detached candidates retain main and independent index/HEAD", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
-  const before = f.liveIdentity();
-  const [a, b] = await Promise.all([prepareHotfixWorktree(f.host, randomUUID()), prepareHotfixWorktree(f.host, randomUUID())]);
+type Fixture = Awaited<ReturnType<typeof fixture>>;
+const options = { timeout: timeoutMs, concurrency: false };
+const json = (path: string) => JSON.parse(readFileSync(path, "utf8"));
+const head = (f: Fixture, cwd = f.hotfix) => git(cwd, f.environment, "rev-parse", "HEAD");
+const index = (f: Fixture, cwd = f.hotfix) => git(cwd, f.environment, "rev-parse", "--path-format=absolute", "--git-path", "index");
+const records = (f: Fixture) => existsSync(f.runnerLog) ? readFileSync(f.runnerLog, "utf8").trim().split("\n").filter(Boolean).map(line => JSON.parse(line)) : [];
+
+function live(f: Fixture) {
+  const develop = join(f.root, "raf-develop");
+  return {
+    main: f.liveIdentity(),
+    mainGit: git(f.main, f.environment, "rev-parse", "--absolute-git-dir"),
+    mainTop: realpathSync(git(f.main, f.environment, "rev-parse", "--show-toplevel")),
+    developHead: head(f, develop),
+    developIndex: sha(index(f, develop)),
+    developSource: filesUnder(join(develop, "src")),
+    gitlink: git(f.root, f.environment, "ls-files", "--stage", "raf-main"),
+    parentHead: head(f, f.root),
+    parentIndex: sha(index(f, f.root))
+  };
+}
+
+function shared(f: Fixture, a: HotfixWorkspace, b: HotfixWorkspace) {
   assertWorkspace(a, f);
   assertWorkspace(b, f);
-  assert.notEqual(a.runId, b.runId);
-  assert.notEqual(a.cwd, b.cwd);
-  assert.notEqual(a.gitDirectory, b.gitDirectory);
-  assert.equal(a.repositoryIdentity, b.repositoryIdentity);
+  assert.equal(a.cwd, b.cwd);
+  assert.equal(a.gitDirectory, b.gitDirectory);
   assert.equal(a.commonDirectory, b.commonDirectory);
-  assert.notEqual(statSync(join(a.gitDirectory, "index")).ino, statSync(join(b.gitDirectory, "index")).ino);
-  assert.notEqual(statSync(join(a.cwd, "src", "production-runtime.ts")).ino, statSync(join(f.main, "src", "production-runtime.ts")).ino);
-  assert.notEqual(statSync(join(a.cwd, "src", "production-runtime.ts")).ino, statSync(join(b.cwd, "src", "production-runtime.ts")).ino);
-  assert.deepEqual(f.liveIdentity(), before);
-  assert.deepEqual(git(f.main, f.environment, "for-each-ref", "--format=%(refname)", "refs/heads").split("\n").sort(), ["refs/heads/develop", "refs/heads/main"]);
+  assert.notEqual(a.runId, b.runId);
+  assert.equal(index(f), join(a.gitDirectory, "index"));
+  assert.equal(git(f.hotfix, f.environment, "symbolic-ref", "HEAD"), "refs/heads/hotfix");
+  const registered = git(f.main, f.environment, "worktree", "list", "--porcelain").split("\n\n").filter(entry => entry.includes("branch refs/heads/hotfix"));
+  assert.equal(registered.length, 1);
+  assert.match(registered[0], new RegExp(`^worktree ${f.hotfix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "m"));
+}
+
+function ownCommit(f: Fixture, cwd: string, path: string, text: string) {
+  mkdirSync(dirname(join(cwd, path)), { recursive: true });
+  writeFileSync(join(cwd, path), text);
+  git(cwd, f.environment, "add", "--", path);
+  git(cwd, f.environment, "commit", "-m", `fixture ${path}`, "--", path);
+  return head(f, cwd);
+}
+
+function failureCode(code: string) {
+  return (error: unknown) => {
+    assert.ok(error instanceof Error);
+    assert.match(`${(error as Error & { code?: string }).code ?? ""} ${error.message}`, new RegExp(code));
+    return true;
+  };
+}
+
+function fields(value: unknown, key: string): unknown[] {
+  if (!value || typeof value !== "object") return [];
+  return Object.entries(value).flatMap(([name, child]) => [...(name === key ? [child] : []), ...fields(child, key)]);
+}
+
+test("[hotfix-pure] registered hotfix is one shared cwd, branch and index for concurrent runs", options, async t => {
+  const f = await fixture(t);
+  const before = live(f);
+  const worktrees = git(f.main, f.environment, "worktree", "list", "--porcelain");
+  const [a, b] = await Promise.all([prepareHotfixWorktree(f.host, randomUUID()), prepareHotfixWorktree(f.host, randomUUID())]);
+  shared(f, a, b);
+  assert.equal(git(f.main, f.environment, "worktree", "list", "--porcelain"), worktrees);
+  assert.deepEqual(live(f), before);
+  for (const path of [...Object.keys(filesUnder(join(f.hotfix, "src"))).map(path => "src/"+path), ...Object.keys(filesUnder(join(f.hotfix, "dist"))).map(path => "dist/"+path)]) {
+    const hot = statSync(join(f.hotfix, path));
+    const main = statSync(join(f.main, path));
+    assert.ok(hot.dev !== main.dev || hot.ino !== main.ino, `${path} shares a mutable inode with live`);
+  }
 });
 
-test("[hotfix-pure] trusted own-path commit updates only the detached candidate", { timeout: timeoutMs }, async t => {
+test("[hotfix-pure] each own commit advances the common HEAD without touching live refs or indexes", options, async t => {
   const f = await fixture(t);
   const a = await prepareHotfixWorktree(f.host, randomUUID());
   const b = await prepareHotfixWorktree(f.host, randomUUID());
-  const before = f.liveIdentity();
-  const other = { head: git(b.cwd, f.environment, "rev-parse", "HEAD"), index: sha(join(b.gitDirectory, "index")), files: filesUnder(join(b.cwd, "src")) };
-  writeFileSync(join(a.cwd, "hotfix-fixture", "a.mjs"), 'export const marker = "candidate-only";\n');
-  const result = await commitHotfix(f.host, { workspace: a, paths: ["hotfix-fixture/a.mjs"], message: "own isolated fix" });
-  assert.notEqual(result.commit, f.baseCommit);
-  assert.equal(result.commit, git(a.cwd, f.environment, "rev-parse", "HEAD"));
-  assert.equal(result.tree, git(a.cwd, f.environment, "rev-parse", "HEAD^{tree}"));
-  assert.equal(git(a.cwd, f.environment, "show", "--format=", "--name-only", "HEAD"), "hotfix-fixture/a.mjs");
-  assert.equal(git(a.cwd, f.environment, "status", "--porcelain"), "");
-  assert.deepEqual(f.liveIdentity(), before);
-  assert.deepEqual({ head: git(b.cwd, f.environment, "rev-parse", "HEAD"), index: sha(join(b.gitDirectory, "index")), files: filesUnder(join(b.cwd, "src")) }, other);
+  const before = live(f);
+  writeFileSync(join(a.cwd, "hotfix-fixture/a.mjs"), 'export const marker = "agent-a";\n');
+  const first = await commitHotfix(f.host, { workspace: a, paths: ["hotfix-fixture/a.mjs"], message: "agent a only" });
+  assert.equal(head(f, b.cwd), first.commit);
+  assert.equal(git(f.hotfix, f.environment, "diff-tree", "--no-commit-id", "--name-only", "-r", first.commit), "hotfix-fixture/a.mjs");
+  writeFileSync(join(b.cwd, "hotfix-fixture/b.mjs"), 'export const marker = "agent-b";\n');
+  const second = await commitHotfix(f.host, { workspace: b, paths: ["hotfix-fixture/b.mjs"], message: "agent b only" });
+  assert.equal(head(f, a.cwd), second.commit);
+  assert.equal(git(f.hotfix, f.environment, "rev-parse", `${second.commit}^`), first.commit);
+  assert.equal(git(f.hotfix, f.environment, "diff-tree", "--no-commit-id", "--name-only", "-r", second.commit), "hotfix-fixture/b.mjs");
+  assert.deepEqual(live(f), before);
 });
 
-for (const runner of ["codex", "claude"] as const) for (const origin of ["agent-run", "direct-main"] as const) {
-  test(`[hotfix-launch] ${runner}/${origin} carries the physical identity through production, worker, trust and brief`, { timeout: timeoutMs }, async t => {
+test("[hotfix-pure] refresh fast-forwards a clean hotfix to current main", options, async t => {
+  const f = await fixture(t);
+  const next = ownCommit(f, f.main, "hotfix-fixture/main-only.txt", "new main\n");
+  const before = live(f);
+  const workspace = await prepareHotfixWorktree(f.host, randomUUID());
+  assert.equal(workspace.cwd, f.hotfix);
+  assert.equal(head(f), next);
+  assert.equal(readFileSync(join(f.hotfix, "hotfix-fixture/main-only.txt"), "utf8"), "new main\n");
+  assert.deepEqual(live(f), before);
+});
+
+test("[hotfix-pure] refresh merges current main while retaining unpublished hotfix commits", options, async t => {
+  const f = await fixture(t);
+  const original = ownCommit(f, f.hotfix, "hotfix-fixture/agent.txt", "unpublished\n");
+  const nextMain = ownCommit(f, f.main, "hotfix-fixture/main.txt", "main advance\n");
+  const before = live(f);
+  await prepareHotfixWorktree(f.host, randomUUID());
+  git(f.hotfix, f.environment, "merge-base", "--is-ancestor", original, "HEAD");
+  git(f.hotfix, f.environment, "merge-base", "--is-ancestor", nextMain, "HEAD");
+  assert.equal(readFileSync(join(f.hotfix, "hotfix-fixture/agent.txt"), "utf8"), "unpublished\n");
+  assert.equal(readFileSync(join(f.hotfix, "hotfix-fixture/main.txt"), "utf8"), "main advance\n");
+  assert.deepEqual(live(f), before);
+});
+
+test("[hotfix-pure] included main is a no-op preserving foreign tracked, staged and untracked edits", options, async t => {
+  const f = await fixture(t);
+  const a = await prepareHotfixWorktree(f.host, randomUUID());
+  ownCommit(f, f.hotfix, "hotfix-fixture/local.txt", "existing commit\n");
+  writeFileSync(join(f.hotfix, "hotfix-fixture/a.mjs"), "foreign staged\n");
+  git(f.hotfix, f.environment, "add", "--", "hotfix-fixture/a.mjs");
+  writeFileSync(join(f.hotfix, "hotfix-fixture/b.mjs"), "foreign unstaged\n");
+  writeFileSync(join(f.hotfix, "foreign-untracked.txt"), "preserve\n");
+  const before = { head: head(f), index: sha(index(f)), files: filesUnder(join(f.hotfix, "hotfix-fixture")), untracked: sha(join(f.hotfix, "foreign-untracked.txt")), live: live(f) };
+  const b = await prepareHotfixWorktree(f.host, randomUUID());
+  shared(f, a, b);
+  assert.deepEqual({ head: head(f), index: sha(index(f)), files: filesUnder(join(f.hotfix, "hotfix-fixture")), untracked: sha(join(f.hotfix, "foreign-untracked.txt")), live: live(f) }, before);
+});
+
+for (const dirty of ["tracked", "staged", "untracked", "merge-in-progress"] as const) {
+  test(`[hotfix-pure] main refresh refuses ${dirty} hotfix without reset, stash or loss`, options, async t => {
     const f = await fixture(t);
-    await f.startMain();
-    const before = f.liveIdentity();
-    const trustBefore = [sha(join(f.home, ".codex", "config.toml")), sha(join(f.home, ".claude.json"))];
-    const runId = randomUUID();
-    const launched = await launchHotfix(f.host, { runId, addressId: `hotfix-${runId.slice(0, 8)}`, features: ["hotfix-fixture"], tasks: ["hotfix-fixture:1.1"], runner, origin });
-    assertWorkspace(launched.workspace, f);
-    assert.equal(launched.runId, runId);
-    assert.equal(launched.workspace.runId, runId);
-    assert.equal(readlinkSync(`/proc/${launched.pid}/cwd`), launched.workspace.cwd);
-    assert.equal(readlinkSync(`/proc/${launched.workerPid}/cwd`), launched.workspace.cwd);
-    for (const path of [launched.taskContextPath, launched.workerContextPath]) {
-      const context = JSON.parse(readFileSync(path, "utf8"));
-      assert.deepEqual(context.workspace, launched.workspace);
+    ownCommit(f, f.main, "hotfix-fixture/new-main.txt", "main\n");
+    if (dirty === "untracked") writeFileSync(join(f.hotfix, "foreign.txt"), "foreign\n");
+    else if (dirty === "merge-in-progress") writeFileSync(git(f.hotfix, f.environment, "rev-parse", "--path-format=absolute", "--git-path", "MERGE_HEAD"), head(f, f.main)+"\n");
+    else {
+      writeFileSync(join(f.hotfix, "hotfix-fixture/a.mjs"), "foreign\n");
+      if (dirty === "staged") git(f.hotfix, f.environment, "add", "--", "hotfix-fixture/a.mjs");
     }
-    const records = readFileSync(f.runnerLog, "utf8").trim().split("\n").map(line => JSON.parse(line));
-    const started = records.find(record => record.kind === "start" && record.pid === launched.pid);
-    assert.ok(started, "A real terminal child was started");
-    assert.equal(started.cwd, launched.workspace.cwd);
-    assert.equal(started.home, f.home);
-    assert.equal(records.filter(record => record.kind === "trusted").length, 1);
-    const brief = readFileSync(launched.briefPath, "utf8");
-    assert.ok(brief.includes(launched.workspace.cwd));
-    assert.ok(brief.includes(launched.workspace.baseCommit));
-    assert.match(brief, /push/iu);
-    assert.match(brief, /актив|activat/iu);
-    assert.ok(launched.reportPath.startsWith(join(f.home, ".raf", "tmp") + "/"));
-    const invocation = JSON.parse(readFileSync(launched.invocationPath, "utf8"));
-    assert.ok(JSON.stringify(invocation).includes(launched.workspace.cwd));
-    assert.equal(JSON.stringify(invocation).includes("danger-full-access"), false);
-    assert.equal(JSON.stringify(invocation).includes("dangerously-skip-permissions"), false);
-    assert.deepEqual([sha(join(f.home, ".codex", "config.toml")), sha(join(f.home, ".claude.json"))], trustBefore);
-    assert.deepEqual(f.liveIdentity(), before);
-    const ps = await f.mainCommand(["agent", "ps"]);
-    assert.equal(ps.code, 0, ps.stderr);
-    assert.ok(JSON.parse(ps.stdout).some((session: { runId: string }) => session.runId === runId));
+    const before = { head: head(f), index: sha(index(f)), files: filesUnder(join(f.hotfix, "hotfix-fixture")), untracked: existsSync(join(f.hotfix, "foreign.txt")) ? sha(join(f.hotfix, "foreign.txt")) : null, merge: existsSync(join(git(f.hotfix, f.environment, "rev-parse", "--absolute-git-dir"), "MERGE_HEAD")) ? sha(join(git(f.hotfix, f.environment, "rev-parse", "--absolute-git-dir"), "MERGE_HEAD")) : null, live: live(f), stash: git(f.hotfix, f.environment, "stash", "list") };
+    await assert.rejects(prepareHotfixWorktree(f.host, randomUUID()));
+    assert.deepEqual({ head: head(f), index: sha(index(f)), files: filesUnder(join(f.hotfix, "hotfix-fixture")), untracked: existsSync(join(f.hotfix, "foreign.txt")) ? sha(join(f.hotfix, "foreign.txt")) : null, merge: existsSync(join(git(f.hotfix, f.environment, "rev-parse", "--absolute-git-dir"), "MERGE_HEAD")) ? sha(join(git(f.hotfix, f.environment, "rev-parse", "--absolute-git-dir"), "MERGE_HEAD")) : null, live: live(f), stash: git(f.hotfix, f.environment, "stash", "list") }, before);
   });
 }
 
-test("[hotfix-launch] two production hotfix runs keep separate physical identities and native sessions", { timeout: timeoutMs }, async t => {
+test("[hotfix-pure] conflicting refresh stays open and retains both histories and unrelated work", options, async t => {
   const f = await fixture(t);
-  await f.startMain();
-  const before = f.liveIdentity();
-  const runs = [randomUUID(), randomUUID()];
-  const launched = await Promise.all(runs.map((runId, index) => launchHotfix(f.host, {
-    runId, addressId: `hotfix-${runId.slice(0, 8)}`, features: ["hotfix-fixture"],
-    tasks: [`hotfix-fixture:1.${index + 1}`], runner: "codex", origin: "agent-run"
-  })));
-  for (const run of launched) {
-    assertWorkspace(run.workspace, f);
-    assert.equal(readlinkSync(`/proc/${run.pid}/cwd`), run.workspace.cwd);
-    assert.equal(readlinkSync(`/proc/${run.workerPid}/cwd`), run.workspace.cwd);
-    assert.equal(JSON.parse(readFileSync(run.workerContextPath, "utf8")).workspace.runId, run.runId);
-  }
-  assert.notEqual(launched[0].workspace.cwd, launched[1].workspace.cwd);
-  assert.notEqual(launched[0].workspace.gitDirectory, launched[1].workspace.gitDirectory);
-  assert.notEqual(launched[0].runnerSessionId, launched[1].runnerSessionId);
-  assert.equal(launched[0].workspace.repositoryIdentity, launched[1].workspace.repositoryIdentity);
-  const ps = await f.mainCommand(["agent", "ps"]);
-  assert.equal(ps.code, 0, ps.stderr);
-  const sessions = JSON.parse(ps.stdout);
-  for (const runId of runs) assert.equal(sessions.filter((session: { runId: string }) => session.runId === runId).length, 1);
-  assert.deepEqual(f.liveIdentity(), before);
+  const hot = ownCommit(f, f.hotfix, "hotfix-fixture/a.mjs", "hotfix side\n");
+  const main = ownCommit(f, f.main, "hotfix-fixture/a.mjs", "main side\n");
+  const untouched = sha(join(f.hotfix, "hotfix-fixture/b.mjs"));
+  const before = live(f);
+  await assert.rejects(prepareHotfixWorktree(f.host, randomUUID()));
+  assert.equal(head(f), hot);
+  assert.equal(head(f, f.main), main);
+  assert.equal(sha(join(f.hotfix, "hotfix-fixture/b.mjs")), untouched);
+  assert.equal(git(f.hotfix, f.environment, "stash", "list"), "");
+  assert.deepEqual(live(f), before);
 });
 
-test("[hotfix-sandbox] actual native sandbox allows own bytes and denies main, refs, index, config, other worktree and aliases", { timeout: timeoutMs }, async t => {
+for (const problem of ["missing-registration", "missing-directory", "wrong-branch", "detached", "foreign-repository", "symlink"] as const) {
+  test(`[hotfix-identity] ${problem} is refused without fallback or runner launch`, options, async t => {
+    const f = await fixture(t);
+    let expected = "BRANCH_MISMATCH";
+    if (problem === "missing-registration") {
+      const path = join(f.root, "conf/projects.json");
+      const conf = json(path);
+      delete conf.projects.raf.branchPaths.hotfix;
+      writeFileSync(path, JSON.stringify(conf));
+      expected = "UNKNOWN_BRANCH";
+    } else if (problem === "missing-directory") {
+      renameSync(f.hotfix, f.hotfix+"-missing");
+      expected = "WORKSPACE_UNAVAILABLE";
+    } else if (problem === "wrong-branch") git(f.hotfix, f.environment, "switch", "-c", "foreign");
+    else if (problem === "detached") git(f.hotfix, f.environment, "checkout", "--detach");
+    else {
+      renameSync(f.hotfix, f.hotfix+"-original");
+      if (problem === "symlink") symlinkSync(f.hotfix+"-original", f.hotfix);
+      else {
+        mkdirSync(f.hotfix);
+        git(f.hotfix, f.environment, "init", "-b", "hotfix");
+        ownCommit(f, f.hotfix, "foreign.txt", "foreign repository\n");
+      }
+    }
+    const before = live(f);
+    const worktrees = git(f.main, f.environment, "worktree", "list", "--porcelain");
+    const runners = records(f);
+    await assert.rejects(prepareHotfixWorktree(f.host, randomUUID()), failureCode(expected));
+    await assert.rejects(launchHotfix(f.host, { runId: randomUUID(), addressId: "refused", features: ["hotfix-fixture"], tasks: ["1.1"], runner: "codex", origin: "agent-run" }), failureCode(expected));
+    assert.deepEqual(records(f), runners);
+    assert.equal(git(f.main, f.environment, "worktree", "list", "--porcelain"), worktrees);
+    assert.deepEqual(live(f), before);
+  });
+}
+
+test("[hotfix-identity] trust is for the registered hotfix repository, independent of run ownership", options, async t => {
   const f = await fixture(t);
   const a = await prepareHotfixWorktree(f.host, randomUUID());
   const b = await prepareHotfixWorktree(f.host, randomUUID());
-  const live = f.liveIdentity();
-  const mainGit = git(f.main, f.environment, "rev-parse", "--absolute-git-dir");
-  const own = join(a.cwd, "hotfix-fixture", "owned.txt");
-  const allowed = await runHotfixSandboxCommand(f.host, a, { executable: process.execPath, args: ["-e", "require('fs').writeFileSync(process.argv[1],'own')", own] });
-  assert.equal(allowed.code, 0, allowed.stderr);
-  assert.equal(readFileSync(own, "utf8"), "own");
-  const targets = [join(f.main, "src", "production-runtime.ts"), join(a.commonDirectory, "refs", "heads", "main"), join(mainGit, "index"), join(mainGit, "HEAD"), join(a.commonDirectory, "config"), join(b.gitDirectory, "index"), join(b.cwd, "hotfix-fixture", "a.mjs"), join(f.root, ".git", "index")];
-  for (const [index, target] of targets.entries()) {
-    assert.ok(existsSync(target), `Denied probe must target an existing resource: ${target}`);
-    const before = sha(target);
-    const alias = join(a.cwd, `alias-${index}`);
-    symlinkSync(target, alias);
-    for (const path of [target, alias]) {
-      const denied = await runHotfixSandboxCommand(f.host, a, { executable: process.execPath, args: ["-e", "require('fs').appendFileSync(process.argv[1],'forbidden')", path] });
-      assert.notEqual(denied.code, 0, `Sandbox permitted ${path}`);
-      assert.match(denied.stderr, /EACCES|EPERM|EROFS|denied|not permitted/iu);
-      assert.equal(sha(target), before);
+  assert.equal(await validateHotfixTrust(f.root, a.cwd, a), true);
+  assert.equal(await validateHotfixTrust(f.root, b.cwd, a), true);
+  assert.equal(await validateHotfixTrust(f.root, f.main, a), false);
+  assert.equal(await validateHotfixTrust(f.root, a.cwd, { ...a, gitDirectory: git(f.main, f.environment, "rev-parse", "--absolute-git-dir") }), false);
+  assert.equal(await validateHotfixTrust(f.root, a.cwd, { ...a, repositoryIdentity: "foreign" }), false);
+  assert.equal(await validateHotfixTrust(f.root, join(a.cwd, "src"), a), false);
+  const alias = join(f.root, "hotfix-alias");
+  symlinkSync(a.cwd, alias);
+  assert.equal(await validateHotfixTrust(f.root, alias, a), false);
+  git(f.hotfix, f.environment, "checkout", "--detach");
+  assert.equal(await validateHotfixTrust(f.root, a.cwd, a), false);
+});
+
+test("[hotfix-identity] worker trust rechecks registration and Git identity after prepare", options, async t => {
+  const f = await fixture(t);
+  const workspace = await prepareHotfixWorktree(f.host, randomUUID());
+  const path = join(f.root, "conf/projects.json");
+  const conf = json(path);
+  delete conf.projects.raf.branchPaths.hotfix;
+  writeFileSync(path, JSON.stringify(conf));
+  assert.equal(await validateHotfixTrust(f.root, workspace.cwd, workspace), false);
+});
+
+for (const origin of ["agent-run", "direct-main"] as const) for (const runner of ["codex", "claude"] as const) {
+  test(`[hotfix-launch] ${origin}/${runner} preserves the registered route through worker, trust and brief`, options, async t => {
+    const f = await fixture(t);
+    await f.startMain();
+    const before = live(f);
+    const userConfig = { codex: sha(join(f.home, ".codex/config.toml")), claude: sha(join(f.home, ".claude.json")) };
+    const runs = [];
+    for (const task of ["1.1", "1.2"]) runs.push(await launchHotfix(f.host, { runId: randomUUID(), addressId: `hotfix-${runner}-${task}`, features: ["hotfix-fixture"], tasks: [task], runner, origin }));
+    const [a, b] = runs;
+    shared(f, a.workspace, b.workspace);
+    assert.notEqual(a.runId, b.runId);
+    assert.notEqual(a.runnerSessionId, b.runnerSessionId);
+    assert.notEqual(a.pid, b.pid);
+    assert.notEqual(dirname(a.reportPath), dirname(b.reportPath));
+    assert.notEqual(a.reportPath, b.reportPath);
+    for (const run of runs) {
+      const task = json(run.taskContextPath);
+      assert.equal(task.runId, run.runId);
+      assert.equal(task.context.branch, "hotfix");
+      assert.equal(task.workspace.cwd, f.hotfix);
+      for (const path of [run.taskContextPath, run.workerContextPath, run.invocationPath]) {
+        const document = json(path);
+        if (path === run.invocationPath) {
+          assert.ok(fields(document, "args").flat().includes(f.hotfix), "invocation lost hotfix write scope");
+        } else {
+          assert.ok(fields(document, "cwd").includes(f.hotfix), `${path} lost canonical cwd`);
+          assert.ok(fields(document, "repositoryIdentity").includes(run.workspace.repositoryIdentity), `${path} lost repository identity`);
+          assert.ok(fields(document, "gitDirectory").includes(run.workspace.gitDirectory), `${path} lost Git identity`);
+        }
+      }
+      const brief = readFileSync(run.briefPath, "utf8");
+      assert.ok(brief.includes(f.hotfix));
+      assert.ok(brief.includes(run.reportPath));
+      assert.match(brief, /спільн/iu);
+      assert.match(brief, /коміт/iu);
+      assert.match(brief, /push/iu);
+      const trust = readFileSync(run.trustTranscriptPath, "utf8");
+      assert.match(trust, runner === "codex" ? /Trust this folder/ : /trust this folder/);
+      assert.ok(trust.includes(f.hotfix));
+      assert.ok(fields(task.context, "writeBoundaries").flat().includes(f.hotfix));
+      assert.ok(!fields(task.context, "writeBoundaries").flat().includes(f.main));
+      assert.ok(resolve(run.reportPath).startsWith(join(f.home, ".raf", "tmp")+"/"));
     }
-  }
-  const hardAlias = join(a.cwd, "main-source-hardlink");
-  linkSync(join(f.main, "src", "production-runtime.ts"), hardAlias);
-  const hardDenied = await runHotfixSandboxCommand(f.host, a, { executable: process.execPath, args: ["-e", "require('fs').appendFileSync(process.argv[1],'forbidden')", hardAlias] });
-  assert.notEqual(hardDenied.code, 0);
-  assert.deepEqual(f.liveIdentity(), live);
-});
+    const starts = records(f).filter(row => row.kind === "start" && row.runner === runner);
+    assert.equal(starts.length, 2);
+    assert.ok(starts.every(row => row.cwd === f.hotfix && row.home === f.home));
+    assert.equal(records(f).filter(row => row.kind === "trusted" && row.runner === runner).length, 2);
+    for (const row of records(f).filter(row => row.kind === "trusted" && row.runner === runner)) assert.equal(row.keys.replace(/\n/g, "\r"), runner === "codex" ? "\r" : "y\r");
+    assert.deepEqual({ codex: sha(join(f.home, ".codex/config.toml")), claude: sha(join(f.home, ".claude.json")) }, userConfig);
+    assert.deepEqual(live(f), before);
+  });
+}
 
-test("[hotfix-identity] forged ownership, foreign repository and lost registration fail closed", { timeout: timeoutMs }, async t => {
+test("[hotfix-commit] own explicit paths preserve foreign staged and unstaged changes", options, async t => {
   const f = await fixture(t);
   const workspace = await prepareHotfixWorktree(f.host, randomUUID());
-  const live = f.liveIdentity();
-  for (const forged of [{ ...workspace, runId: randomUUID() }, { ...workspace, cwd: f.main }, { ...workspace, repositoryIdentity: "foreign-repository" }, { ...workspace, gitDirectory: join(f.root, ".git") }]) {
-    await assert.rejects(commitHotfix(f.host, { workspace: forged, paths: ["hotfix-fixture/a.mjs"], message: "must refuse" }), /identity|ownership|repository|worktree|refus/iu);
-    await assert.rejects(cleanupHotfixWorktree(f.host, forged), /identity|ownership|repository|worktree|refus/iu);
+  const before = live(f);
+  const base = head(f);
+  writeFileSync(join(f.hotfix, "hotfix-fixture/a.mjs"), "own change\n");
+  writeFileSync(join(f.hotfix, "hotfix-fixture/b.mjs"), "foreign staged\n");
+  git(f.hotfix, f.environment, "add", "--", "hotfix-fixture/b.mjs");
+  writeFileSync(join(f.hotfix, "foreign.txt"), "foreign untracked\n");
+  try {
+    const own = await commitHotfix(f.host, { workspace, paths: ["hotfix-fixture/a.mjs"], message: "only own path" });
+    assert.equal(git(f.hotfix, f.environment, "diff-tree", "--no-commit-id", "--name-only", "-r", own.commit), "hotfix-fixture/a.mjs");
+  } catch (error) {
+    assert.ok(error instanceof Error);
+    assert.match(error.message, /stag|index|чуж|індекс/iu);
+    assert.equal(head(f), base);
   }
-  const gitFile = join(workspace.cwd, ".git");
-  renameSync(gitFile, `${gitFile}.lost`);
-  await assert.rejects(commitHotfix(f.host, { workspace, paths: ["hotfix-fixture/a.mjs"], message: "lost worktree" }), /identity|registration|worktree|git/iu);
-  assert.deepEqual(f.liveIdentity(), live);
+  assert.equal(git(f.hotfix, f.environment, "diff", "--cached", "--name-only"), "hotfix-fixture/b.mjs");
+  assert.equal(readFileSync(join(f.hotfix, "hotfix-fixture/b.mjs"), "utf8"), "foreign staged\n");
+  assert.equal(readFileSync(join(f.hotfix, "foreign.txt"), "utf8"), "foreign untracked\n");
+  assert.deepEqual(live(f), before);
 });
 
-test("[hotfix-commit] path traversal, symlink and staged foreign paths cannot enter trusted commit", { timeout: timeoutMs }, async t => {
+test("[hotfix-commit] agreed shared-file hunks do not absorb another staged hunk", options, async t => {
+  const f = await fixture(t);
+  const path = "hotfix-fixture/shared.txt";
+  ownCommit(f, f.hotfix, path, "own=base\n"+"separator\n".repeat(12)+"foreign=base\n");
+  const workspace = await prepareHotfixWorktree(f.host, randomUUID());
+  writeFileSync(join(f.hotfix, path), readFileSync(join(f.hotfix, path), "utf8").replace("foreign=base", "foreign=staged"));
+  git(f.hotfix, f.environment, "add", "--", path);
+  writeFileSync(join(f.hotfix, path), readFileSync(join(f.hotfix, path), "utf8").replace("own=base", "own=unstaged"));
+  const before = { head: head(f), index: sha(index(f)), file: sha(join(f.hotfix, path)) };
+  await assert.rejects(commitHotfix(f.host, { workspace, paths: [path], message: "cannot claim foreign hunk" }));
+  assert.deepEqual({ head: head(f), index: sha(index(f)), file: sha(join(f.hotfix, path)) }, before);
+});
+
+test("[hotfix-commit] simultaneous own-path commits serialize the shared index", options, async t => {
+  const f = await fixture(t);
+  const a = await prepareHotfixWorktree(f.host, randomUUID());
+  const b = await prepareHotfixWorktree(f.host, randomUUID());
+  const before = live(f);
+  writeFileSync(join(f.hotfix, "hotfix-fixture/a.mjs"), "agent a\n");
+  writeFileSync(join(f.hotfix, "hotfix-fixture/b.mjs"), "agent b\n");
+  const commits = await Promise.all([commitHotfix(f.host, { workspace: a, paths: ["hotfix-fixture/a.mjs"], message: "a" }), commitHotfix(f.host, { workspace: b, paths: ["hotfix-fixture/b.mjs"], message: "b" })]);
+  assert.notEqual(commits[0].commit, commits[1].commit);
+  for (const [i, result] of commits.entries()) {
+    git(f.hotfix, f.environment, "merge-base", "--is-ancestor", result.commit, "HEAD");
+    assert.equal(git(f.hotfix, f.environment, "diff-tree", "--no-commit-id", "--name-only", "-r", result.commit), `hotfix-fixture/${i === 0 ? "a" : "b"}.mjs`);
+  }
+  assert.equal(git(f.hotfix, f.environment, "diff", "--cached", "--name-only"), "");
+  assert.deepEqual(live(f), before);
+});
+
+test("[hotfix-commit] foreign index.lock is waited for and never removed", options, async t => {
   const f = await fixture(t);
   const workspace = await prepareHotfixWorktree(f.host, randomUUID());
-  const live = f.liveIdentity();
-  symlinkSync(f.main, join(workspace.cwd, "outside"));
-  for (const path of ["../raf-main/src/production-runtime.ts", join(f.main, "src", "production-runtime.ts"), "outside/src/production-runtime.ts"]) {
-    await assert.rejects(commitHotfix(f.host, { workspace, paths: [path], message: "escape" }), /path|boundar|symlink|outside|refus/iu);
-  }
-  writeFileSync(join(workspace.cwd, "hotfix-fixture", "a.mjs"), 'export const marker = "own";\n');
-  writeFileSync(join(workspace.cwd, "hotfix-fixture", "b.mjs"), 'export const marker = "foreign-staged";\n');
-  git(workspace.cwd, f.environment, "add", "hotfix-fixture/b.mjs");
-  const index = sha(join(workspace.gitDirectory, "index"));
-  await assert.rejects(commitHotfix(f.host, { workspace, paths: ["hotfix-fixture/a.mjs"], message: "own only" }), /stag|index|foreign|path|refus/iu);
-  assert.equal(sha(join(workspace.gitDirectory, "index")), index);
-  assert.equal(git(workspace.cwd, f.environment, "rev-parse", "HEAD"), workspace.baseCommit);
-  assert.deepEqual(f.liveIdentity(), live);
+  writeFileSync(join(f.hotfix, "hotfix-fixture/a.mjs"), "own\n");
+  const lock = index(f)+".lock";
+  writeFileSync(lock, "foreign lock\n", { flag: "wx" });
+  let settled = false;
+  const pending = commitHotfix(f.host, { workspace, paths: ["hotfix-fixture/a.mjs"], message: "wait for owner" });
+  void pending.then(() => { settled = true; }, () => { settled = true; });
+  await delay(f.poll * 2);
+  assert.equal(settled, false);
+  assert.equal(readFileSync(lock, "utf8"), "foreign lock\n");
+  rmSync(lock);
+  const result = await pending;
+  assert.equal(head(f), result.commit);
 });
 
-test("[hotfix-isolation] intermediate SyntaxError and partial second module cannot interrupt real message/ps/service", { timeout: timeoutMs }, async t => {
+for (const path of ["../raf-main/src/production-runtime.ts", ".git/config", "/etc/passwd"]) {
+  test(`[hotfix-commit] rejects traversal or metadata path ${path}`, options, async t => {
+    const f = await fixture(t);
+    const workspace = await prepareHotfixWorktree(f.host, randomUUID());
+    const before = { live: live(f), head: head(f), index: sha(index(f)) };
+    await assert.rejects(commitHotfix(f.host, { workspace, paths: [path], message: "forbidden" }));
+    assert.deepEqual({ live: live(f), head: head(f), index: sha(index(f)) }, before);
+  });
+}
+
+test("[hotfix-sandbox] real sandbox permits shared hotfix and own tmp while protecting live Git and aliases", options, async t => {
+  const f = await fixture(t);
+  const a = await prepareHotfixWorktree(f.host, randomUUID());
+  const b = await prepareHotfixWorktree(f.host, randomUUID());
+  const own = join(f.home, ".raf/tmp", a.runId);
+  const foreign = join(f.home, ".raf/tmp", b.runId);
+  mkdirSync(own, { recursive: true });
+  mkdirSync(foreign, { recursive: true });
+  writeFileSync(join(foreign, "sentinel"), "foreign\n");
+  symlinkSync(f.main, join(f.hotfix, "live-alias"));
+  const common = realpathSync(a.commonDirectory);
+  const before = live(f);
+  const targets = [join(f.main, "src/production-runtime.ts"), join(f.main, "dist/catalog.json"), join(f.root, "raf-develop/src/production-runtime.ts"), index(f, f.main), index(f, join(f.root, "raf-develop")), join(common, "refs/heads/main"), join(common, "refs/heads/develop"), join(common, "config"), join(common, "HEAD"), join(common, "packed-refs"), join(f.root, ".git/index"), join(f.root, "conf/projects.json"), join(f.hotfix, "live-alias/src/production-runtime.ts"), join(foreign, "sentinel")];
+  for (const target of targets) {
+    const result = await runHotfixSandboxCommand(f.host, a, { executable: process.execPath, args: ["-e", "require('node:fs').appendFileSync(process.argv[1],'CORRUPTION')", target] });
+    assert.notEqual(result.code, 0, `sandbox allowed ${target}`);
+    assert.doesNotMatch(result.stderr, /CODEX_SANDBOX_UNAVAILABLE|sandbox.*unavailable/iu, "sandbox unavailable is setup failure, not successful denial");
+  }
+  const allowed = await runHotfixSandboxCommand(f.host, a, { executable: process.execPath, args: ["-e", "const fs=require('node:fs'); for(const p of process.argv.slice(1)) fs.writeFileSync(p,'own');", join(b.cwd, "shared-own.txt"), join(own, "own.txt")] });
+  assert.equal(allowed.code, 0, allowed.stderr);
+  assert.equal(readFileSync(join(f.hotfix, "shared-own.txt"), "utf8"), "own");
+  assert.equal(readFileSync(join(own, "own.txt"), "utf8"), "own");
+  assert.equal(readFileSync(join(foreign, "sentinel"), "utf8"), "foreign\n");
+  assert.deepEqual(live(f), before);
+});
+
+for (const entryPoint of ["cli", "runner-limits", "worker", "service-store", "notice", "hook"] as const) {
+  test(`[hotfix-state-origin] registered hotfix remains QA-only at ${entryPoint}`, options, async t => {
+    const f = await fixture(t);
+    const workspace = await prepareHotfixWorktree(f.host, randomUUID());
+    const before = filesUnder(f.workingHome);
+    const request = { orchestratorRoot: f.root, modulePath: join(workspace.cwd, "src/production-entry.ts"), homeDirectory: f.workingHome, operatingSystemHome: f.workingHome, environment: {}, entryPoint };
+    assert.throws(() => resolveStateContext(request), failureCode("STATE_CONTEXT_REFUSED"));
+    assert.throws(() => resolveStateContext({ ...request, environment: { RAF_PRODUCTION_ROOT: f.main, RAF_PRODUCTION_GENERATION: f.baseCommit, RAF_QA_HOME: f.workingHome } }), failureCode("STATE_CONTEXT_REFUSED"));
+    assert.deepEqual(filesUnder(f.workingHome), before);
+    const qa = resolveStateContext({ ...request, homeDirectory: f.home, environment: { ...f.environment, RAF_QA_HOME: f.home } });
+    assert.equal(qa.mode, "qa");
+    assert.equal(qa.homeDirectory, f.home);
+    assert.ok(qa.statePath.startsWith(f.home+"/"));
+  });
+}
+
+test("[hotfix-state-origin] actual hotfix CLI refuses working HOME before SQLite and allows isolated QA", options, async t => {
+  const f = await fixture(t);
+  const workspace = await prepareHotfixWorktree(f.host, randomUUID());
+  const before = filesUnder(f.workingHome);
+  const refused = f.cli(workspace.cwd, ["agent", "ps"], true);
+  assert.notEqual(refused.code, 0);
+  assert.match(refused.stdout+refused.stderr, /STATE_CONTEXT_REFUSED/);
+  assert.deepEqual(filesUnder(f.workingHome), before);
+  const qa = f.cli(workspace.cwd, ["agent", "ps"]);
+  assert.equal(qa.code, 0, qa.stderr);
+  assert.ok(Array.isArray(JSON.parse(qa.stdout)));
+});
+
+test("[hotfix-isolation] broken hotfix modules leave live ps, message and service operational", options, async t => {
   const f = await fixture(t);
   await f.startMain();
-  assert.equal((await f.mainCommand(["service", "start"])).code, 0);
   const workspace = await prepareHotfixWorktree(f.host, randomUUID());
-  const live = f.liveIdentity();
-  writeFileSync(join(workspace.cwd, "src", "production-runtime.ts"), "export function broken( {\n");
-  writeFileSync(join(workspace.cwd, "hotfix-fixture", "a.mjs"), 'export const marker = "half-new";\n');
-  const nonce = `syntax-barrier-${randomUUID()}`;
+  const before = live(f);
+  writeFileSync(join(workspace.cwd, "src/production-runtime.ts"), "export const syntaxError = ( ;\n");
+  writeFileSync(join(workspace.cwd, "hotfix-fixture/a.mjs"), "export const incomplete = ;\n");
+  const message = `hotfix-isolation-${randomUUID()}`;
+  for (const args of [["agent", "ps"], ["agent", "message", "--to", "main", "--text", message], ["service", "start"], ["service", "status"], ["service", "stop"]]) {
+    const result = await f.mainCommand(args);
+    assert.equal(result.code, 0, `${args.join(" ")}: ${result.stderr}`);
+  }
+  assert.equal(readFileSync(f.inbox, "utf8").split(message).length-1, 1);
+  assert.deepEqual(live(f), before);
+});
+
+test("[hotfix-cleanup] ending either run preserves shared branch, index, commits, foreign files and evidence", options, async t => {
+  const f = await fixture(t);
+  const a = await prepareHotfixWorktree(f.host, randomUUID());
+  const b = await prepareHotfixWorktree(f.host, randomUUID());
+  const committed = ownCommit(f, f.hotfix, "hotfix-fixture/committed.txt", "persistent\n");
+  writeFileSync(join(f.hotfix, "hotfix-fixture/a.mjs"), "foreign staged\n");
+  git(f.hotfix, f.environment, "add", "--", "hotfix-fixture/a.mjs");
+  writeFileSync(join(f.hotfix, "untracked-foreign.txt"), "keep\n");
+  const btmp = join(f.home, ".raf/tmp", b.runId);
+  mkdirSync(btmp, { recursive: true });
+  writeFileSync(join(btmp, "foreign.txt"), "still running\n");
+  const evidence = join(f.root, "openspec/changes/hotfix-fixture/evidence.json");
+  writeFileSync(evidence, JSON.stringify({ commit: committed }));
+  const before = { live: live(f), index: sha(index(f)), files: filesUnder(join(f.hotfix, "hotfix-fixture")), foreign: sha(join(f.hotfix, "untracked-foreign.txt")), evidence: sha(evidence), worktrees: git(f.main, f.environment, "worktree", "list", "--porcelain") };
+  for (const run of [a, a, b, b]) {
+    const result = await cleanupHotfixWorktree(f.host, run);
+    assert.ok(!result.removed.some(path => resolve(path) === f.hotfix || resolve(path) === run.gitDirectory || resolve(path) === index(f)));
+    assert.ok(existsSync(f.hotfix));
+    assert.equal(head(f), committed);
+    assert.equal(git(f.hotfix, f.environment, "symbolic-ref", "HEAD"), "refs/heads/hotfix");
+    assert.deepEqual({ live: live(f), index: sha(index(f)), files: filesUnder(join(f.hotfix, "hotfix-fixture")), foreign: sha(join(f.hotfix, "untracked-foreign.txt")), evidence: sha(evidence), worktrees: git(f.main, f.environment, "worktree", "list", "--porcelain") }, before);
+    if (run.runId === a.runId) assert.equal(readFileSync(join(btmp, "foreign.txt"), "utf8"), "still running\n");
+  }
+  const next = await prepareHotfixWorktree(f.host, randomUUID());
+  assert.equal(next.cwd, f.hotfix);
+  assert.equal(head(f), committed);
+  assert.equal(git(f.hotfix, f.environment, "for-each-ref", "--format=%(refname)", "refs/raf/hotfix"), "");
+});
+
+test("[hotfix-cleanup] spoofed workspace identity cannot delete another run or the shared worktree", options, async t => {
+  const f = await fixture(t);
+  const workspace = await prepareHotfixWorktree(f.host, randomUUID());
+  const before = { live: live(f), head: head(f), index: sha(index(f)) };
+  await assert.rejects(cleanupHotfixWorktree(f.host, { ...workspace, cwd: f.main }));
+  await assert.rejects(cleanupHotfixWorktree(f.host, { ...workspace, repositoryIdentity: "foreign" }));
+  assert.deepEqual({ live: live(f), head: head(f), index: sha(index(f)) }, before);
+  assert.ok(existsSync(f.hotfix));
+});
+
+test("[hotfix-pure] fixture contains the complete brief tree without runtime fallback", options, async t => {
+  const f = await fixture(t);
+  const source = process.env.HOTFIX_FIXTURE_CONF ?? resolve(dirname(fileURLToPath(import.meta.url)), "../../conf");
+  const copied = filesUnder(join(f.root, "conf/briefs"));
+  assert.deepEqual(copied, filesUnder(join(source, "briefs")));
+  for (const path of ["completion.md", "tasks/hotfix.md", "tasks/test-scaffold.md", "runners/codex.md", "runners/claude.md"]) assert.ok(copied[path], `missing conf/briefs/${path}`);
+});
+
+test("[hotfix-sandbox] a hardlink alias cannot mutate a live inode", options, async t => {
+  const f = await fixture(t);
+  const workspace = await prepareHotfixWorktree(f.host, randomUUID());
+  const target = join(f.main, "src/production-runtime.ts");
+  const alias = join(f.hotfix, "live-hardlink.ts");
+  linkSync(target, alias);
+  const before = live(f);
+  let refused = false;
+  try {
+    const result = await runHotfixSandboxCommand(f.host, workspace, { executable: process.execPath, args: ["-e", "require('node:fs').appendFileSync(process.argv[1],'CORRUPTION')", alias] });
+    refused = result.code !== 0;
+    assert.doesNotMatch(result.stderr, /CODEX_SANDBOX_UNAVAILABLE|sandbox.*unavailable/iu);
+  } catch (error) {
+    assert.ok(error instanceof Error);
+    assert.doesNotMatch(error.message, /CODEX_SANDBOX_UNAVAILABLE|sandbox.*unavailable/iu);
+    assert.match(error.message, /hardlink|inode|alias|identity|BRANCH_MISMATCH/iu);
+    refused = true;
+  }
+  assert.equal(refused, true);
+  assert.deepEqual(live(f), before);
+});
+
+test("[hotfix-cleanup] a completed launch releases only its resources while another runner remains alive", options, async t => {
+  const f = await fixture(t);
+  await f.startMain();
+  const a = await launchHotfix(f.host, { runId: randomUUID(), addressId: "cleanup-a", features: ["hotfix-fixture"], tasks: ["1.1"], runner: "claude", origin: "agent-run" });
+  const b = await launchHotfix(f.host, { runId: randomUUID(), addressId: "cleanup-b", features: ["hotfix-fixture"], tasks: ["1.2"], runner: "claude", origin: "direct-main" });
+  writeFileSync(join(f.hotfix, "foreign-running.txt"), "still owned by b\n");
+  const before = { head: head(f), index: sha(index(f)), live: live(f), foreignTmp: filesUnder(dirname(b.reportPath)) };
+  process.kill(a.pid, "SIGTERM");
+  await until(() => {
+    try { process.kill(a.pid, 0); return undefined; }
+    catch (error) { if ((error as NodeJS.ErrnoException).code === "ESRCH") return true; throw error; }
+  }, f.budget, f.poll);
+  await until(() => {
+    try { process.kill(a.workerPid, 0); return undefined; }
+    catch (error) { if ((error as NodeJS.ErrnoException).code === "ESRCH") return true; throw error; }
+  }, f.budget, f.poll);
+  const result = await cleanupHotfixWorktree(f.host, a.workspace);
+  assert.ok(!result.removed.includes(f.hotfix));
+  assert.doesNotThrow(() => process.kill(b.pid, 0));
+  assert.doesNotThrow(() => process.kill(b.workerPid, 0));
+  assert.deepEqual({ head: head(f), index: sha(index(f)), live: live(f), foreignTmp: filesUnder(dirname(b.reportPath)) }, before);
+  assert.equal(readFileSync(join(f.hotfix, "foreign-running.txt"), "utf8"), "still owned by b\n");
   const ps = await f.mainCommand(["agent", "ps"]);
-  const sent = await f.mainCommand(["agent", "message", "--to", "main", "--text", nonce]);
-  const status = await f.mainCommand(["service", "status"]);
-  for (const result of [ps, sent, status]) assert.equal(result.code, 0, result.stderr);
-  assert.ok(JSON.parse(ps.stdout).some((session: { addressId: string }) => session.addressId === "main"));
-  await until(() => existsSync(f.inbox) && readFileSync(f.inbox, "utf8").includes(nonce) ? true : undefined, f.budget, f.poll);
-  const inbox = readFileSync(f.inbox, "utf8");
-  assert.equal(inbox.split(nonce).length - 1, 1);
-  assert.match(inbox, /main/iu);
-  assert.deepEqual(f.liveIdentity(), live);
-  assert.equal((await f.mainCommand(["service", "stop"])).code, 0);
-});
-
-test("[hotfix-cleanup] active runner and foreign worktree survive; finished cleanup is idempotent", { timeout: timeoutMs }, async t => {
-  const f = await fixture(t);
-  await f.startMain();
-  const runId = randomUUID();
-  const active = await launchHotfix(f.host, { runId, addressId: `hotfix-${runId.slice(0, 8)}`, features: ["hotfix-fixture"], tasks: ["hotfix-fixture:1.1"], runner: "codex", origin: "agent-run" });
-  const other = await prepareHotfixWorktree(f.host, randomUUID());
-  const finished = await prepareHotfixWorktree(f.host, randomUUID());
-  writeFileSync(join(finished.cwd, "hotfix-fixture", "a.mjs"), 'export const marker = "retain-commit";\n');
-  const committed = await commitHotfix(f.host, { workspace: finished, paths: ["hotfix-fixture/a.mjs"], message: "retain evidence" });
-  const cleanup = await cleanupHotfixWorktree(f.host, active.workspace);
-  assert.ok(cleanup.retained.includes(active.workspace.cwd));
-  assert.ok(existsSync(active.workspace.cwd));
-  process.kill(active.pid, 0);
-  await cleanupHotfixWorktree(f.host, finished);
-  await cleanupHotfixWorktree(f.host, finished);
-  assert.equal(existsSync(finished.cwd), false);
-  assert.equal(git(f.main, f.environment, "cat-file", "-t", committed.commit), "commit");
-  assert.ok(existsSync(other.cwd));
-  assert.ok(existsSync(active.workspace.cwd));
-  assert.ok(git(f.main, f.environment, "worktree", "list", "--porcelain").includes(other.cwd));
+  assert.equal(ps.code, 0, ps.stderr);
+  assert.ok(JSON.parse(ps.stdout).some((row: { runId: string }) => row.runId === b.runId));
+  assert.ok(existsSync(f.hotfix));
 });

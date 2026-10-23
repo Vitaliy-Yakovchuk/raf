@@ -803,8 +803,8 @@ function runnerEnablement(store: StateStore, configuration: RuntimeConfiguration
 function assignmentPorts(execute: AdapterCommandExecutor) {
   return { cli: { exec: (args: readonly string[], cwd: string) => execute({ executable: 'openspec', args, cwd }) }, fs: { readText: (path: string) => fs.readFile(path, 'utf8') } };
 }
-async function measureResources(paths: readonly string[], machineId: string, execute: AdapterCommandExecutor) {
-  return createResourceSnapshotReader({ machineId, paths }, { platform, loadAverage1m: () => loadavg()[0], availableCores: availableParallelism, totalRamBytes: totalmem, readFile: path => fs.readFile(path, 'utf8'), execute }).read();
+async function measureResources(paths: readonly string[], machineId: string, execute: AdapterCommandExecutor, loadAverage1m: () => number) {
+  return createResourceSnapshotReader({ machineId, paths }, { platform, loadAverage1m, availableCores: availableParallelism, totalRamBytes: totalmem, readFile: path => fs.readFile(path, 'utf8'), execute }).read();
 }
 async function reservationTools(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, identityExecute?: AdapterCommandExecutor): Promise<TaskReservationDependencies> {
   const projects = await json(join(context.confRoot, 'projects.json'));
@@ -819,6 +819,7 @@ export async function createProductionServices(
   context: RuntimeContext,
   options: {
     execute?: AdapterCommandExecutor;
+    loadAverage1m?: () => number;
     protocolSettings?: readonly ProtocolSettings[];
     workerModulePath?: string;
   } = {},
@@ -937,7 +938,7 @@ export async function createProductionServices(
       const boot = await dependencies.currentBoot();
       const volumePaths = { orchestratorRoot: context.orchestratorRoot, workspace: input.activity.cwd, home: homedir() };
       const paths = [...new Set(Object.values(volumePaths))];
-      const resourceSnapshot = await measureResources(paths, boot.machineId, execute);
+      const resourceSnapshot = await measureResources(paths, boot.machineId, execute, options.loadAverage1m ?? (() => loadavg()[0]));
       const { requiredFileSystemIds, homeFileSystemId, reasons } = deriveResourceAdmissionVolumes(volumePaths, resourceSnapshot.fileSystemByPath);
       if (reasons.length) return { admitted: false, reason: reasons.join('; ') };
       const taskConfiguration = await loadTaskContextConfiguration(context.confRoot);

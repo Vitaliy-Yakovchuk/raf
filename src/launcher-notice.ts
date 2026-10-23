@@ -55,14 +55,16 @@ export function createReportDiagnosticNotice(session: SessionRecord, reason: str
 
 export function createReportRejectionNotice(session: SessionRecord, snapshot: ReportRejectionSnapshot): ResultNotice {
   const target = session.notify ?? session.delegatedBy ?? session.launchedBy;
+  const items = session.launchContext?.assignment.changes.flatMap(change => change.items.map(item => `${change.id}:${item.id}`)).join(', ') ?? '';
+  const diagnosticHeader = `Agent: ${session.addressId}\nItems: ${items}\nReport: ${snapshot.reportPath}\nReason: `;
+  const reason = snapshot.reason.startsWith(diagnosticHeader) ? snapshot.reason.slice(diagnosticHeader.length) : snapshot.reason;
   const bytes = snapshot.bytes === null ? null : createHash('sha256').update(snapshot.bytes).digest('hex');
-  const fingerprint = createHash('sha256').update(JSON.stringify([session.runId, snapshot.reportPath, bytes, snapshot.reason])).digest('hex');
+  const fingerprint = createHash('sha256').update(JSON.stringify([session.runId, snapshot.reportPath, bytes, reason])).digest('hex');
   return { id: `${session.runId}:report-rejected:${fingerprint}`, runId: session.runId,
     recipient: target?.addressId ?? '', recipientRunId: target?.runId ?? null, state: 'pending', attempts: 0,
     lastError: target?.runId ? null : 'Report rejection recipient identity is unavailable',
     text: ['raf event: agent.report-rejected', `Agent: ${session.addressId}`, `Run: ${session.runId}`,
-      `Items: ${session.launchContext?.assignment.changes.flatMap(change => change.items.map(item => `${change.id}:${item.id}`)).join(', ') ?? ''}`,
-      `Report: ${snapshot.reportPath}`, `Reason: ${snapshot.reason}`].join('\n'),
+      `Items: ${items}`, `Report: ${snapshot.reportPath}`, `Reason: ${reason}`].join('\n'),
     source: { runId: session.runId, addressId: session.addressId, revision: session.revision, state: session.state,
       ...(session.activity ? { activity: structuredClone(session.activity) } : {}) } };
 }

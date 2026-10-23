@@ -63,11 +63,11 @@ test('[result-notice-run] accepted report of a --notify launch reaches only the 
   const reportPath = worker.launchContext?.reportPath ?? '';
   assert.ok(reportPath, 'worker has a report path');
   const answer = 'Пункт 1.3 відхилено: суперечить специфікації';
-  const report = { status: 'failed', answer, changes: [{ id: change, items: [{ id: '1.3', status: 'failed', reason: 'суперечить специфікації' }] }] };
+  const report = { status: 'failed', answer, commits: [], changes: [{ id: change, items: [{ id: '1.3', status: 'failed', reason: 'суперечить специфікації' }] }] };
   const staging = join(dirname(reportPath), `.worker-${process.pid}.tmp`);
   await fs.writeFile(staging, JSON.stringify(report), { mode: 0o600 });
   await fs.rename(staging, reportPath);
-  const received = await until(() => f.input(observerPid), text => text.includes(reportPath), 'observer received the result notice');
+  const received = await until(() => f.input(observerPid), text => text.includes('raf event: agent.failed') && text.includes(reportPath), 'observer received the accepted failed result notice');
   for (const part of ['worker', 'failed', `${change}:1.3`, reportPath, answer]) assert.ok(received.includes(part), `notice must contain ${part}`);
   await delay(1500);
   assert.equal(occurrences(await f.input(observerPid), reportPath), 1, 'exactly one notice');

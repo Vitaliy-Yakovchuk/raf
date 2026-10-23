@@ -299,7 +299,11 @@ async function durableFixture(t: TestContext) {
   const catalog: EventCatalog = JSON.parse(await fs.readFile(catalogPath, 'utf8'));
   const registry = () => createEventRegistry(catalog, {
     ...store.eventRepository,
-    validateId: (kind, id) => kind === 'agentAddress' && /^[a-z][a-z0-9-]*$/.test(id),
+    validateId: (kind, id) => {
+      if (kind === 'agentAddress') return /^[a-z][a-z0-9-]*$/.test(id);
+      if (kind === 'reminderId') return /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(id);
+      return false;
+    },
   });
   const reminders = () => new ReminderService({
     repository: store.reminderRepository, now: () => at, nextId: () => randomUUID(),
@@ -604,7 +608,10 @@ test('[Z.373 reminders] add/update activate/close use exact agent address indepe
   assert.equal(all.find(value => value.id === wrongKind.id)?.state, 'pending');
   assert.equal(f.store.resultNotices.list()[0].state, 'pending');
   const closedAt = all.find(value => value.id === close.id)?.closedAt;
+  assert.equal(closedAt, at);
   f.reopen();
+  assert.doesNotThrow(() => f.registry().validate({ kind: 'reminder.closed', id: close.id }));
+  assert.throws(() => f.registry().validate({ kind: 'reminder.closed', id: '../reminder' }));
   recordReportRejection(f.store, f.runId, f.snapshot());
   f.registry().dispatch();
   assert.equal(f.reminders().list().find(value => value.id === close.id)?.closedAt, closedAt);

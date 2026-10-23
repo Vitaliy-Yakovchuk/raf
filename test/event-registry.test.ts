@@ -20,7 +20,7 @@ function registryFixture() {
   const ports: EventRegistryPorts = {
     validateId(kind, id) {
       validations.push([kind, id]);
-      if (['agentAddress', 'reminderId', 'deploymentId'].includes(kind)) return /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(id);
+      if (['agentAddress', 'reminderId', 'deploymentId', 'contextReviewId'].includes(kind)) return /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(id);
       if (kind === 'changeId') return /^[a-z][a-z0-9-]*$/.test(id);
       return false;
     },
@@ -75,7 +75,7 @@ test('every approved event delegates its ID kind to the canonical validator', ()
   assert.equal(constants.events.find(entry => entry.id === 'agent.report-rejected')?.idKind, 'agentAddress');
   f.registry.validate({ kind: 'agent.report-rejected', id: 'worker' });
   assert.deepEqual(f.validations.at(-1), ['agentAddress', 'worker']);
-  const examples: Record<string, string> = { agentAddress: 'worker', reminderId: 'reminder-1', changeId: 'add-reminders', deploymentId: 'deployment-1' };
+  const examples: Record<string, string> = { agentAddress: 'worker', reminderId: 'reminder-1', changeId: 'add-reminders', deploymentId: 'deployment-1', contextReviewId: '79ad8c20-4d8c-4f4c-bbb0-1f3cddc16b7a' };
   for (const entry of constants.events) {
     const id = examples[entry.idKind];
     assert.ok(id);

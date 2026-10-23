@@ -251,8 +251,10 @@ test('wired empty ps uses canonical shared state without creating an agent', asy
     const protocol = settings.runnerProtocols.find((protocol: { runner: string }) => protocol.runner === model.runner);
     assert.ok(runner);
     assert.ok(protocol);
-    assert.equal(row.available, model.enabled && runner.initialEnabled, 'Version mismatch must preserve model and runner switches');
-    assert.deepEqual(row.warnings, [`версія ${installedVersion} не збігається з перевіреною ${protocol.version}, протокол не перевірено`]);
+    const hasNativeIdentity = Boolean(protocol.native?.identity);
+    assert.equal(row.available, model.enabled && runner.initialEnabled && hasNativeIdentity, `Version mismatch must preserve switches and native identity requirements for ${model.id}`);
+    assert.ok(Array.isArray(row.warnings), `Missing warnings for ${model.id}`);
+    if (hasNativeIdentity) assert.deepEqual(row.warnings, [`версія ${installedVersion} не збігається з перевіреною ${protocol.version}, протокол не перевірено`]);
     assert.equal(row.quota, 'unknown', 'A version warning must not imply measured quota');
   }
   const store = openStateStore(f.statePath);

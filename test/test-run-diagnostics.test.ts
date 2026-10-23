@@ -609,7 +609,12 @@ test('diagnostics tmp: expanded candidate that exhausts nested socket capacity i
   const h = temporaryHarness();
   h.owned.path = '/tmp/r/' + 'x'.repeat(70);
   h.owned.realpath = h.owned.path;
-  await assert.rejects(prepareRunTemporaryDirectory(h.configuration, h.context, h.ports));
+  await assert.rejects(prepareRunTemporaryDirectory(h.configuration, h.context, h.ports), (error: unknown) => {
+    const failure = error as { diagnostic?: InlineDiagnostic };
+    assert.equal(failure.diagnostic?.kind, 'setup');
+    assert.ok(failure.diagnostic?.message);
+    return true;
+  });
   assert.deepEqual(h.reservations, []);
 });
 
@@ -620,7 +625,12 @@ for (const key of ['uid', 'symlink', 'realpath', 'mode'] as const) {
     if (key === 'symlink') h.owned.symlink = true;
     if (key === 'realpath') h.owned.realpath = '/private/other';
     if (key === 'mode') h.owned.mode = 0o777;
-    await assert.rejects(prepareRunTemporaryDirectory(h.configuration, h.context, h.ports));
+    await assert.rejects(prepareRunTemporaryDirectory(h.configuration, h.context, h.ports), (error: unknown) => {
+      const failure = error as { diagnostic?: InlineDiagnostic };
+      assert.equal(failure.diagnostic?.kind, 'setup');
+      assert.ok(failure.diagnostic?.message);
+      return true;
+    });
     assert.deepEqual(h.reservations, []);
     assert.ok(!h.calls.some(call => call.startsWith('remove:')));
   });
@@ -725,7 +735,12 @@ test('diagnostics tmp: candidate outside configured root is not trusted despite 
   const h = temporaryHarness();
   h.owned.path = '/tmp/foreign/candidate';
   h.owned.realpath = h.owned.path;
-  await assert.rejects(prepareRunTemporaryDirectory(h.configuration, h.context, h.ports));
+  await assert.rejects(prepareRunTemporaryDirectory(h.configuration, h.context, h.ports), (error: unknown) => {
+    const failure = error as { diagnostic?: InlineDiagnostic };
+    assert.equal(failure.diagnostic?.kind, 'setup');
+    assert.ok(failure.diagnostic?.message);
+    return true;
+  });
   assert.deepEqual(h.reservations, []);
   assert.ok(!h.calls.some(call => call.startsWith('remove:')));
 });

@@ -22,11 +22,15 @@ export default async function* report(source: AsyncIterable<any>, selected?: Tes
       parents.set(data.nesting, data.name);
     }
     if (event.type === 'test:pass' || event.type === 'test:fail') {
-      if (data.details?.type === 'suite' || data.details?.error?.failureType === 'subtestsFailed') continue;
+      if (data.details?.type === 'suite') continue;
       const file = data.file ?? (isAbsolute(data.name ?? '') ? data.name : '');
       const test = { file: relative(process.cwd(), file), name: [...Array.from({ length: data.nesting ?? 0 }, (_, depth) => parents.get(depth)).filter(Boolean), data.name].join(' ') };
       if (!test.file || !test.name) { protocolFailed = true; continue; }
       if (selected && !selected.some(id => id.file === test.file && id.name === test.name) && !data.details?.error) continue;
+      if (data.details?.error?.failureType === 'subtestsFailed') {
+        yield JSON.stringify({ kind: 'container-complete', test }) + '\n';
+        continue;
+      }
       expected.push(test);
       if (data.skip || data.todo) continue;
       const err = data.details?.error;

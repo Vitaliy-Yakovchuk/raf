@@ -108,6 +108,7 @@ export interface TestRunPlan {
 
 export type RunnerEvent =
   | { kind: 'discovered'; test: TestId; parent?: TestId }
+  | { kind: 'container-complete'; test: TestId }
   | { kind: 'passed' | 'assertion-failed' | 'setup-failed'; test: TestId; diagnostic?: string }
   | { kind: 'complete'; expected: TestId[] }
   | { kind: 'protocol-error'; diagnostic: string };
@@ -302,11 +303,13 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
 
 export function classifyRunnerResult(events: readonly RunnerEvent[], exit: ChildExit): RunnerClassification {
   let passed: TestId[] = [], knownRed: TestId[] = [], unknown: TestId[] = [], expected: TestId[] = [];
+  const completedContainers: TestId[] = [];
   let complete = false, setup = false;
   for (const event of events) {
     if (event.kind === 'discovered') {
-      expected = uniqueIds([...expected.filter(id => !event.parent || !containsId([event.parent], id)), event.test]);
-    } else if (event.kind === 'complete') { complete = true; expected = uniqueIds([...expected, ...event.expected]); }
+      expected = uniqueIds([...expected, event.test]);
+    } else if (event.kind === 'container-complete') completedContainers.push(event.test);
+    else if (event.kind === 'complete') { complete = true; expected = uniqueIds([...expected, ...event.expected]); }
     else if (event.kind === 'protocol-error') setup = true;
     else if (event.kind === 'passed') passed.push(event.test);
     else if (event.kind === 'assertion-failed') knownRed.push(event.test);
@@ -315,7 +318,7 @@ export function classifyRunnerResult(events: readonly RunnerEvent[], exit: Child
   knownRed = uniqueIds(knownRed);
   passed = uniqueIds(passed).filter(id => !containsId(knownRed, id) && !containsId(unknown, id));
   unknown = uniqueIds(unknown);
-  const unexecuted = expected.filter(id => !containsId([...passed, ...knownRed, ...unknown], id));
+  const unexecuted = expected.filter(id => !containsId([...passed, ...knownRed, ...unknown, ...completedContainers], id));
   if (!complete || !expected.length || unexecuted.length || exit.exitCode !== 0 && !knownRed.length || exit.signal) setup = true;
   const failureKinds: TestRunFailureKind[] = [...(setup ? ['setup' as const] : []), ...(knownRed.length ? ['assertions' as const] : [])];
   return { outcome: setup ? 'setup-failed' : knownRed.length ? 'assertions-failed' : 'passed', failureKinds, passed, knownRed, unexecuted, unknown };
@@ -468,9 +471,10 @@ export async function reconcileTestRunGroup(key: TestRunGroupKey, policy: UnitTe
     const current = tx.get(key);
     if (!current?.inFlight || current.inFlight.runId !== group.inFlight!.runId) return current;
     if (observed.alive || !observed.cleanup.complete) return current;
-    if (observed.deadlineReached) current.timeoutCount++;
+    const recorded = current.lastResult?.runId === current.inFlight.runId;
+    if (observed.deadlineReached && !recorded) current.timeoutCount++;
     current.state = 'reconcile'; current.inFlight = null;
-    if (current.lastResult) { current.lastResult = { ...current.lastResult, outcome: observed.deadlineReached ? 'timed-out' : 'setup-failed', timeoutCount: current.timeoutCount, groupState: 'reconcile', nextAction: 'reconcile' }; }
+    if (current.lastResult) { current.lastResult = { ...current.lastResult, outcome: recorded ? current.lastResult.outcome : observed.deadlineReached ? 'timed-out' : 'setup-failed', timeoutCount: current.timeoutCount, groupState: 'reconcile', nextAction: 'reconcile' }; }
     tx.put(current); return current;
   });
 }

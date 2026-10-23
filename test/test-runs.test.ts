@@ -11,6 +11,56 @@ import {
 
 const successExit = { exitCode: 0, signal: null, stderr: 'FAIL is ordinary diagnostic text, not an assertion' };
 
+test('recovery after incomplete timeout cleanup counts the reserved run only once', async () => {
+  const harness = new RunHarness();
+  harness.finishImmediately = false;
+  harness.events = [];
+  harness.cleanupResult = { complete: false, remainingPids: [103] };
+  const pending = runTestRun(fixtureRequest(), harness.config, policy, harness.context, harness.ports);
+  await flushMicrotasks();
+  harness.clock.advance(policy.timeoutMs);
+  const result = await pending;
+  assert.equal(result.timedOut, true);
+  assert.equal(result.timeoutCount, 1);
+  assert.ok(harness.state.get()?.inFlight);
+  harness.recovered = { alive: false, deadlineReached: true, cleanup: { complete: true, remainingPids: [] } };
+  const recovered = await reconcileTestRunGroup(key, policy, harness.context, harness.ports);
+  assert.equal(recovered?.timeoutCount, 1);
+  assert.equal(recovered?.inFlight, null);
+  assert.equal((await reconcileTestRunGroup(key, policy, harness.context, harness.ports))?.timeoutCount, 1);
+});
+
+test('discovery retains a pending parent after a child completes', () => {
+  const parent = { file: files[0], name: 'parent' };
+  const child = { file: files[0], name: 'parent child' };
+  const result = classifyRunnerResult([
+    { kind: 'discovered', test: parent },
+    { kind: 'discovered', test: child, parent },
+    { kind: 'passed', test: child },
+  ], { exitCode: null, signal: 'SIGKILL', stderr: '' });
+  assert.deepEqual(result.unexecuted, [parent]);
+});
+
+test('recovery of incomplete interrupted cleanup does not turn it into a timeout', async () => {
+  const harness = new RunHarness();
+  harness.finishImmediately = false;
+  harness.events = [];
+  harness.cleanupResult = { complete: false, remainingPids: [103] };
+  const pending = runTestRun(fixtureRequest(), harness.config, policy, harness.context, harness.ports);
+  await flushMicrotasks();
+  harness.interrupt?.('SIGINT');
+  const result = await pending;
+  assert.equal(result.timedOut, false);
+  assert.equal(result.timeoutCount, 0);
+  harness.clock.advance(policy.timeoutMs);
+  harness.recovered = { alive: false, deadlineReached: true, cleanup: { complete: true, remainingPids: [] } };
+  const recovered = await reconcileTestRunGroup(key, policy, harness.context, harness.ports);
+  assert.equal(recovered?.timeoutCount, 0);
+  assert.equal(recovered?.lastResult?.timedOut, false);
+  assert.equal(recovered?.lastResult?.outcome, result.outcome);
+  assert.equal(recovered?.inFlight, null);
+});
+
 test('structured pass ignores FAIL in stderr and records stable IDs', () => {
   const result = classifyRunnerResult([
     { kind: 'passed', test: alpha }, { kind: 'passed', test: beta }, { kind: 'complete', expected: [alpha, beta] },

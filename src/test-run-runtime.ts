@@ -111,9 +111,9 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       const consume = (line: string) => {
         try {
           const event = JSON.parse(line);
-          if (!event || !['discovered', 'passed', 'assertion-failed', 'setup-failed', 'complete', 'protocol-error'].includes(event.kind) ||
+          if (!event || !['discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed', 'complete', 'protocol-error'].includes(event.kind) ||
               event.kind === 'complete' && (!Array.isArray(event.expected) || event.expected.some((id: any) => typeof id?.file !== 'string' || typeof id?.name !== 'string')) ||
-              ['discovered', 'passed', 'assertion-failed', 'setup-failed'].includes(event.kind) && (typeof event.test?.file !== 'string' || typeof event.test?.name !== 'string') ||
+              ['discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed'].includes(event.kind) && (typeof event.test?.file !== 'string' || typeof event.test?.name !== 'string') ||
               event.parent !== undefined && (typeof event.parent?.file !== 'string' || typeof event.parent?.name !== 'string')) throw new Error('Invalid runner event');
           onEvent(event as RunnerEvent);
         } catch { if (!protocolBad) onEvent({ kind: 'protocol-error', diagnostic: 'Invalid JSON runner protocol' }); protocolBad = true; }

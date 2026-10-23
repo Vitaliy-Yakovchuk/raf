@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, linkSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
+import { STATE_SCHEMA_VERSION } from '../src/state-store.ts';
 import {
   compatibleMainCanOpen, directoryFiles, files, fixture, logical, nodeProcess, quietWal, seedMain7,
 } from './state-migration-fixture.ts';
@@ -101,8 +102,8 @@ function forbidden(value) {
   const path = resolve(value);
   return roots.some(root => path === root || path.startsWith(root + '/'));
 }
-function record(operation) {
-  append(${JSON.stringify(log)}, JSON.stringify({ operation }) + '\\n');
+function record(operation, paths = []) {
+  append(${JSON.stringify(log)}, JSON.stringify({ operation, paths, argv: process.argv, stack: new Error().stack }) + '\\n');
   throw new Error('Z311 forbidden lazy access: ' + operation);
 }
 for (const target of [fs, promises]) {
@@ -110,11 +111,11 @@ for (const target of [fs, promises]) {
     const original = target[name];
     if (typeof original !== 'function') continue;
     function guarded(...args) {
-      if (forbidden(args[0]) || (/rename|copyFile|link|symlink/.test(name) && forbidden(args[1]))) record(name);
+      if (forbidden(args[0]) || (/rename|copyFile|link|symlink/.test(name) && forbidden(args[1]))) record(name, args.slice(0, 2).filter(forbidden).map(String));
       return Reflect.apply(original, this, args);
     }
     if (typeof original.native === 'function') guarded.native = (...args) => {
-      if (forbidden(args[0])) record(name + '.native');
+      if (forbidden(args[0])) record(name + '.native', [String(args[0])]);
       return original.native(...args);
     };
     target[name] = guarded;
@@ -169,7 +170,7 @@ openStateStore(context.statePath, { context }).close();`;
   try {
     connection.exec("CREATE TABLE migration_sentinel(id TEXT PRIMARY KEY, payload TEXT NOT NULL); INSERT INTO migration_sentinel VALUES ('main', 'preserve-fixture-payload')");
   } finally { connection.close(); }
-  assert.equal(logical(f.qaStatePath).version, 10, 'current fixture comes from real migrations, never relabelled schema 7');
+  assert.equal(logical(f.qaStatePath).version, STATE_SCHEMA_VERSION, 'current fixture comes from real migrations, never relabelled schema 7');
   mkdirSync(join(f.workingHome, '.raf'));
   for (const suffix of ['', '-wal', '-shm']) {
     if (existsSync(f.qaStatePath + suffix)) {
@@ -180,12 +181,12 @@ openStateStore(context.statePath, { context }).close();`;
 }
 
 for (const entry of entries) {
-  for (const version of [7, 10, 'missing'] as const) {
+  for (const version of [7, STATE_SCHEMA_VERSION, 'missing'] as const) {
     for (const withWal of version === 'missing' ? [false] : [false, true]) {
       test(`${entry}: lazy commands leave working schema ${version} ${withWal ? 'with WAL/SHM' : 'without sidecars'} unchanged; state commands still refuse`, async t => {
         const f = fixture(t);
         if (version === 7) seedMain7(f);
-        if (version === 10) await seedCurrent(f);
+        if (version === STATE_SCHEMA_VERSION) await seedCurrent(f);
         if (withWal) quietWal(t, f.statePath);
         const beforeLogical = version === 'missing' ? null : logical(f.statePath);
         const before = snapshot(f);

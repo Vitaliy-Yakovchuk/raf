@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 import { cpSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { compileCatalog } from '../src/catalog.ts';
 import type { ProductionEntryOptions } from '../src/production-entry.ts';
 import { openSecretsStore } from '../src/secrets-store.ts';
@@ -108,23 +109,32 @@ for (const outcome of ['success', 'handler-error'] as const) {
     const fileName = 'configured-command-timing.sqlite';
     const alpha = 0.25;
     const argv = outcome === 'success'
-      ? ['runner', 'enable', '--runner', 'codex']
-      : ['bug', 'show', '--bug', 'projects/raf/bug#999999'];
+      ? ['reminder', 'list', '--to', 'missing']
+      : ['runner', 'list'];
     const canonical = argv.slice(0, 2).join(' ');
     writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ ...settings, state: { ...settings.state, fileName }, commandTiming: { ...settings.commandTiming, emaAlpha: alpha } }));
     const path = join(f.home, '.raf', fileName);
     const store = openStateStore(path);
     try { store.recordCommandDuration(canonical, 100, alpha); } finally { store.close(); }
+    if (outcome === 'handler-error') {
+      const connection = new DatabaseSync(path);
+      try {
+        connection.exec('ALTER TABLE runners RENAME TO fixture_runners; CREATE VIEW runners AS SELECT * FROM fixture_missing_runners');
+      } finally { connection.close(); }
+    }
     let reads = 0;
     f.options.now = () => reads++ === 0 ? 100 : 140;
     const result = await f.run(argv);
     if (outcome === 'success') success(result);
-    else failure(result, 'BUG_NOT_FOUND');
+    else {
+      failure(result, 'HANDLER_FAILED');
+      assert.match(result.stderr, /fixture_missing_runners|runners.*view|view.*runners/i);
+    }
     assert.equal(reads, 2, 'one completed invocation has exactly one start and end clock read');
     const reopened = openStateStore(path);
     try {
       assert.equal(reopened.getCommandTiming(canonical)?.averageMs, 85);
-      assert.equal(reopened.getCommandTiming(argv.join(' ')), undefined);
+      if (argv.length > 2) assert.equal(reopened.getCommandTiming(argv.join(' ')), undefined);
     } finally { reopened.close(); }
     assert.ok(!existsSync(f.statePath));
     assert.ok(!existsSync(f.target));
@@ -134,8 +144,10 @@ for (const outcome of ['success', 'handler-error'] as const) {
 for (const secrets of [{ lockWaitTimeoutMs: 0, pollIntervalMs: 1 }, { lockWaitTimeoutMs: 5, pollIntervalMs: 6 }]) {
   test(`secrets lock config is validated from explicit orchestrator root: ${JSON.stringify(secrets)}`, async t => {
     const f = await fixture(t);
-    writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ ...settings, secrets }));
-    failure(await f.run(), 'CONFIGURATION_INVALID');
+    const configPath = join(f.conf, 'raf.json');
+    writeFileSync(configPath, JSON.stringify({ ...settings, secrets }));
+    await assert.rejects(openSecretsStore({ home: f.home, configPath }), /secrets|lockWaitTimeoutMs|pollIntervalMs/i);
+    assert.ok(!existsSync(join(f.home, '.raf')));
     assert.ok(!existsSync(f.statePath));
     assert.ok(!existsSync(f.target));
   });

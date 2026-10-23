@@ -66,8 +66,9 @@ export type ClaimTasksRequest = {
   readonly runId: string;
   readonly tasks: readonly ReservedTaskSnapshot[];
   readonly starter: ReservationProcessIdentity;
-  readonly reserveLaunch: (transaction: SessionTransaction) => SessionRecord;
+  readonly reserveLaunch: (transaction: ReservationTransaction) => SessionRecord;
   readonly resolveDelegator?: () => Promise<string | undefined>;
+  readonly deferDelegation?: boolean;
 };
 
 export type ClaimTasksResult =
@@ -193,7 +194,7 @@ const guard = (set: TaskReservationSet): ReservationProcessIdentity | undefined 
 
 async function checkReservations(dependencies: TaskReservationDependencies, boot: MachineBootIdentity) {
   const sets = listTaskReservations(dependencies.store);
-  const observations = [];
+  const observations: ({ set: TaskReservationSet } & Awaited<ReturnType<typeof observeProcess>>)[] = [];
   for (const set of sets) {
     let observation = await observeProcess(dependencies, guard(set), set.lease.owner.runId, boot, set.boot);
     if (!observation.alive && set.stage === 'running') {
@@ -327,12 +328,12 @@ export async function claimTaskReservations(dependencies: TaskReservationDepende
           !persisted || persisted.runId !== request.runId || persisted.addressId !== request.addressId || persisted.state !== 'reserved' ||
           !tx.listReservations().some(reservation => reservation.runId === request.runId)) throw failure('TASK_IDENTITY_INVALID', 'Launch participant did not reserve the requested session and admission', { runId: request.runId, addressId: request.addressId });
       if (parent && conflicts.length) {
-        tx.putTaskReservation({ ...parent, tasks: parent.tasks.filter(task => !requested.has(taskKey(task))),
+        if (!request.deferDelegation) tx.putTaskReservation({ ...parent, tasks: parent.tasks.filter(task => !requested.has(taskKey(task))),
           lease: { owner: parent.lease.owner, revision: parent.lease.revision + 1 } });
         tx.putSession({ ...persisted, revision: persisted.revision + 1, delegatedBy: copy(parent.lease.owner) });
       }
       const lease: TaskReservationLease = { owner: { addressId: request.addressId, runId: request.runId, fence }, revision: 0 };
-      tx.putTaskReservation({ lease, tasks: request.tasks, boot, stage: 'starting', starter: request.starter });
+      tx.putTaskReservation({ lease, tasks: request.deferDelegation && parent && conflicts.length ? [] : request.tasks, boot, stage: 'starting', starter: request.starter });
       return { reserved: true, lease: copy(lease) };
     });
     if (result) return result;

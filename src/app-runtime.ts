@@ -1,3 +1,4 @@
+import { runAgentWithQueue, type AgentQueueRecord, type AgentQueueValidation, type AgentQueueRequest, type AgentRunQueuePorts } from './agent-run-queue.ts';
 import { isAbsolute, join } from 'node:path';
 import { commandFailure, failureContext, type CommandFailureContext } from './cli-contract.ts';
 import type { Handler } from './cli.ts';
@@ -50,7 +51,7 @@ export interface RuntimeRunParameters {
 
 export type RuntimeTaskContext = Pick<DerivedTaskContext, 'branch' | 'outcome' | 'writeBoundaries' | 'sources'> & Partial<Pick<DerivedTaskContext, 'workspaceWritable'>> & {
   readonly hotfix?: HotfixWorkspace;
-  readonly reportSchema: Readonly<Record<string, unknown>>;
+  readonly reportSchema: DerivedTaskContext['reportSchema'];
   readonly requested: ResourceReservation;
   readonly requiredFileSystemIds: readonly string[];
   readonly estimate?: KnownTaskResourceEstimate;
@@ -78,7 +79,12 @@ export interface PreparedRuntimeReport {
   cleanupUnstarted(): Promise<void>;
 }
 
+export type RuntimeReservationInput = RuntimeLaunch & { reportPath: string; requested: ResourceReservation; requiredFileSystemIds: string[];
+  queueClaim?: { record: AgentQueueRecord; validation: AgentQueueValidation; rechecking: boolean } };
+
 export interface RuntimeServices {
+  agentQueue?(input: RuntimeReservationInput): Promise<{ request: AgentQueueRequest; ports: Omit<AgentRunQueuePorts, 'start' | 'verifyReady'> }>;
+
   resolveNotify?(address: string): Promise<NotifyTarget>;
   assignment: {
     validate(request: AssignmentRequest): Promise<AssignmentValidation>;
@@ -90,7 +96,7 @@ export interface RuntimeServices {
   selectModel(catalog: ModelCatalog, snapshot: RoutingSnapshot, request: ModelRequest): ModelSelection;
   listModels(catalog: ModelCatalog, snapshot: RoutingSnapshot): ModelAvailability[];
   prepareReport(launch: RuntimeLaunch): Promise<PreparedRuntimeReport>;
-  reserve(input: RuntimeLaunch & { reportPath: string; requested: ResourceReservation; requiredFileSystemIds: string[] }): Promise<{ admitted: true; admission?: AdmissionSnapshot | null } | { admitted: false; reason: string; admission?: AdmissionSnapshot | null }>;
+  reserve(input: RuntimeReservationInput): Promise<{ admitted: true; admission?: AdmissionSnapshot | null } | { admitted: false; reason: string; admission?: AdmissionSnapshot | null; waiting?: boolean }>;
   adapter: { start(request: AdapterStartRequest): Promise<AdapterSession> };
   verifyStarted(launch: RuntimeLaunch, session: AdapterSession): Promise<ProcessIdentity>;
   commitStarted(runId: string, identity: ProcessIdentity): Promise<boolean>;
@@ -216,7 +222,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const api = await service();
       const notify = params.notify === undefined ? undefined : await (async () => {
         if (!api.resolveNotify) throw fail('NOTIFY_TARGET_INVALID', 'preflight', 'Notify target validation is unavailable');
-        return api.resolveNotify(params.notify);
+        return api.resolveNotify(params.notify!);
       })();
       const validation = await api.assignment.validate({ root: context.orchestratorRoot, selections: [...selections].map(([change, items]) => ({ change, items })) });
       if (!validation.ok) throw fail('INVALID_ASSIGNMENT', 'assignment', `${validation.kind}: ${validation.issues.map(issue => `${issue.change}: ${issue.reason}`).join('; ')}`, { received: params.tasks, found: validation.issues });
@@ -241,6 +247,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       let startAttempted = false;
       let stage = 'report';
       let admissionSnapshot: AdmissionSnapshot | null = null;
+      let queueOwnsCleanup = false;
       try {
         prepared = await api.prepareReport(launch);
         stage = 'brief';
@@ -253,6 +260,47 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type, params.phase, loaded.sandboxTestPhases) ? { rafSubcommands: rafSubcommandsFor(params.type, params.phase, loaded.sandboxTestPhases)! } : {}) });
         if (hotfix) brief += `\nHotfix raf: постійне спільне дерево ${route.cwd}, гілка hotfix, спільний індекс і HEAD; main включений до baseCommit ${route.hotfix?.baseCommit}. Кожен виконавець комітить лише власні явні шляхи; спільні файли та staged hunks узгоджуй через agent message за projects/orchestrator/parallel-development. Чужий index.lock очікуй, не видаляй. Коміт не активує main; push і активацію виконує лише main за окремими повноваженнями. Код hotfix запускай лише з ізольованим QA HOME. Коміт коду виконай довіреним портом: node ${join(context.tmpRoot, launch.runId, 'hotfix-commit.mjs')} --message <повідомлення> <власні відносні шляхи>. Cleanup прибирає лише власний запуск, спільне raf-hotfix зберігається.\n`;
         stage = 'reservation';
+        if (api.agentQueue) {
+          queueOwnsCleanup = true;
+          const queued = await api.agentQueue({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
+          let session: AdapterSession | undefined;
+          let processIdentity: ProcessIdentity | undefined;
+          const controller = new AbortController();
+          const abort = () => controller.abort();
+          process.once('SIGINT', abort);
+          process.once('SIGTERM', abort);
+          try {
+            const result = await runAgentWithQueue({ ...queued.request, signal: controller.signal }, { ...queued.ports,
+              start: async () => {
+                stage = 'start';
+                startAttempted = true;
+                session = await api.adapter.start({ selection: { runner: selection.runner as AdapterStartRequest['selection']['runner'], model: selection.model, effort: selection.effort }, tmuxSession: launch.tmuxSession, cwd: route.cwd, brief, reportWrapper: prepared!.reportWrapper });
+                processIdentity = await api.verifyStarted(launch, session);
+                return { pid: processIdentity.pid, startedAt: processIdentity.startedAt, machineId: processIdentity.evidence.machineId,
+                  bootId: processIdentity.evidence.bootId, runnerSessionId: processIdentity.runnerSessionId };
+              },
+              verifyReady: async () => {
+                stage = 'identity';
+                processIdentity = await api.verifyStarted(launch, session!);
+                return { pid: processIdentity.pid, startedAt: processIdentity.startedAt,
+                  machineId: processIdentity.evidence.machineId, bootId: processIdentity.evidence.bootId, runnerSessionId: processIdentity.runnerSessionId };
+              },
+            });
+            const value = JSON.parse(result.exitCode === 0 ? result.stdout : result.stderr);
+            admissionSnapshot = value.admission ?? value.details?.admission ?? null;
+            if (result.exitCode !== 0) {
+              const details = value.details;
+              throw fail(value.code, details.stage, value.message, { ...details, remediation: value.remediation });
+            }
+            reserved = true;
+            return { runId: launch.runId, addressId: launch.addressId, tmuxSession: launch.tmuxSession,
+              cwd: route.cwd, admission: admissionSnapshot, queue: value.queue, ...selection, status: 'running', selection,
+              process: processIdentity, reportPath: prepared.reportPath, warnings: [...new Set(session?.warnings ?? [])] };
+          } finally {
+            process.off('SIGINT', abort);
+            process.off('SIGTERM', abort);
+          }
+        }
         const admission = await api.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
         admissionSnapshot = admission.admission ?? null;
         if (!admission.admitted) throw fail('RESOURCE_UNAVAILABLE', stage, admission.reason, { admission: admissionSnapshot });
@@ -269,22 +317,25 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       } catch (error) {
         let safe = !startAttempted;
         const pending: string[] = [];
-        if (startAttempted) {
+        if (startAttempted && !queueOwnsCleanup) {
           try { const result = await api.compensate(launch, error); safe = result.stopped; if (!safe) pending.push('process termination'); }
           catch { safe = false; pending.push('process termination'); }
         }
-        if (safe && reserved) {
+        if (safe && reserved && !queueOwnsCleanup) {
           try { await api.abortLaunch(launch.runId, describe(error)); }
           catch { safe = false; pending.push('abortLaunch'); }
         }
-        if (safe && prepared) {
+        if (safe && prepared && !queueOwnsCleanup) {
           try { await prepared.cleanupUnstarted(); }
           catch { pending.push('report cleanup'); safe = false; }
         }
         const supplied = failureContext(error);
+        if (queueOwnsCleanup && prepared && (!startAttempted && !supplied?.cleanup || supplied?.cleanup?.state === 'released')) {
+          try { await prepared.cleanupUnstarted(); } catch { pending.push('report cleanup'); }
+        }
         throw fail(supplied?.code ?? 'LAUNCH_FAILED', stage, supplied?.reason ?? describe(error), {
           ...supplied, message: `${supplied?.message ?? describe(error)} (runId: ${launch.runId})`, received: { runId: launch.runId, ...(supplied?.received ? { input: supplied.received } : {}) },
-          completed: reserved ? ['reservation'] : [], pending, retrySafe: safe, admission: admissionSnapshot,
+          completed: queueOwnsCleanup ? supplied?.completed ?? [] : reserved ? ['reservation'] : [], pending: queueOwnsCleanup ? [...new Set([...(supplied?.pending ?? []), ...pending])] : pending, retrySafe: queueOwnsCleanup ? supplied?.retrySafe ?? false : safe, admission: admissionSnapshot,
         });
       }
     },

@@ -20,6 +20,7 @@ export interface CommandFailureContext {
   pending: readonly string[];
   retrySafe: boolean | null;
   remediation: readonly string[];
+  cleanup?: import('./agent-run-queue.ts').AgentQueueCleanup;
   secrets?: readonly string[];
   admission?: import('./admission-snapshot.ts').AdmissionSnapshot | null;
 }

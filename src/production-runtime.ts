@@ -1,3 +1,5 @@
+import { createProductionAgentQueue } from './production-agent-queue.ts';
+import { createAgentQueueState } from './agent-queue-state.ts';
 import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { recordReportRejection, type ReportRejectionSnapshot } from './report-rejection.ts';
 import { captureReportedCommitLaunchContext } from './reported-commits.ts';
@@ -65,7 +67,7 @@ async function readReportBytes(path: string): Promise<Uint8Array | null> {
   try { return await fs.readFile(path); }
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; }
 }
-const fail = (code: string, reason: string): never => { throw commandFailure({ code, message: reason, reason, stage: 'production-runtime', source: 'production-runtime', sourceCode: null, received: null, expected: null, found: null, completed: [], pending: [], retrySafe: true, remediation: ['Уточніть контекст або конфігурацію потрібного production компонента.'] }); };
+const fail: (code: string, reason: string) => never = (code, reason) => { throw commandFailure({ code, message: reason, reason, stage: 'production-runtime', source: 'production-runtime', sourceCode: null, received: null, expected: null, found: null, completed: [], pending: [], retrySafe: true, remediation: ['Уточніть контекст або конфігурацію потрібного production компонента.'] }); };
 const sameIdentity = (a: ProcessIdentity, b: ProcessIdentity) => isDeepStrictEqual(a, b);
 const mainRemediation = 'Виконайте raf main attach у tmux-панелі сесії main, не змінюючи змінних TMUX і TMUX_PANE.';
 const mainFail = (code: string, reason: string, remediation: string, found: unknown = null): never => { throw commandFailure({ code, message: reason, reason, stage: 'main-attach', source: 'production-runtime', sourceCode: null, received: null, expected: null, found, completed: [], pending: [], retrySafe: true, remediation: [remediation] }); };
@@ -449,7 +451,7 @@ async function verifyReportedAssignmentSource(store: StateStore, context: Runtim
   const dependencies = await reservationTools(store, context, execute, identityExecute);
   const resolutions = await dependencies.resolveTasks(set.tasks);
   const invalid = resolutions.filter(row => row.state === 'mismatch' || row.state === 'unknown');
-  if (invalid.length || resolutions.length !== set.tasks.length) throw new Error(`Launch task source identity changed: ${invalid.map(row => row.reason).join('; ')}`);
+  if (invalid.length || resolutions.length !== set.tasks.length) throw new Error(`Launch task source identity changed: ${invalid.map(row => 'reason' in row ? row.reason : row.state).join('; ')}`);
   for (const change of assignment.changes) {
     const subset = { ...assignment, changes: [change] };
     const archived = set.tasks.filter(task => task.key.changeId === change.id).every(task => resolutions.some(row => (row.state === 'open' || row.state === 'completed') && row.task.key.changeId === task.key.changeId && row.task.key.taskId === task.key.taskId && row.location === 'archive'));
@@ -863,7 +865,17 @@ export async function createProductionServices(
       if (!await releaseTaskReservations(await reservationTools(store, context, execute, options.execute), { lease, reason, closeLaunch: tx => { const session = tx.getSession(runId); if (!session) throw new Error('Unknown launch'); closeSessionInTransaction(tx, session, now()); } })) fail('LAUNCH_RECOVERABLE', `Cannot safely release run ${runId}`);
     } else if (readSession(runId)?.state === 'reserved') tools.state.abortLaunch(runId, readSession(runId)?.abortReason ?? reason, now());
   };
-  return {
+  const api: RuntimeServices = {
+    agentQueue: input => createProductionAgentQueue(input, { store, context, configuration, api, current: readSession,
+      caller: async () => { try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; } catch { return undefined; } },
+      observe: identity => observeIdentity(identity, execute),
+      reconcile: async () => { await tools.control.ps(); await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute)); },
+      cleanReport: async runId => {
+        if (readSession(runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch');
+        await fs.rm(join(context.tmpRoot, runId), { recursive: true, force: true });
+        for (const [key, row] of prepared) if (row.launch.runId === runId) prepared.delete(key);
+      },
+    }),
     resolveNotify: async address => {
       const session = tools.state.listReconciliationCandidates().find(row => row.addressId === address && row.state === 'running');
       if (!session?.process) return fail(NOTIFY_TARGET_INVALID, `Notify target is not active: ${address}`);
@@ -955,7 +967,7 @@ export async function createProductionServices(
             ? { contract: 'reported-commits-v1', runId: launch.runId, reportPath, repositories: [], writeBoundaries: [...writeBoundaries] }
             : await captureReportedCommitLaunchContext(launch.runId, reportPath, launch.commitRepositories, writeBoundaries);
         }
-        await writeTaskContextFile(directory, { version: 1, runId: launch.runId, parameters: launch.taskContext.parameters, assignmentFingerprint: assignmentFingerprint(launch.assignment), ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), context: launch.taskContext.context });
+        await writeTaskContextFile(directory, { version: 1, runId: launch.runId, parameters: launch.taskContext.parameters, assignmentFingerprint: assignmentFingerprint(launch.assignment), ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), context: { ...launch.taskContext.context, workspaceWritable: launch.taskContext.context.workspaceWritable ?? false, estimate: launch.taskContext.context.estimate ?? { status: 'UNKNOWN', reason: 'Task resource estimate is unavailable' } } });
         await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, workspaceTrustDenied, ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries, workspaceRoute: { type: launch.activity.type, project: launch.activity.project, branch: launch.taskContext.context.branch, ...(launch.taskContext.context.hotfix ? { hotfix: launch.taskContext.context.hotfix } : {}) } }), { mode: 0o600, flag: 'wx' });
       } catch (error) { await fs.rm(directory, { recursive: true, force: true }); throw error; }
       prepared.set(launch.tmuxSession, { testAssignment, launch: structuredClone(launch), reportPath, reportedCommits, workspaceTrustDenied });
@@ -970,7 +982,7 @@ export async function createProductionServices(
       const resourceSnapshot = await measureResources(paths, boot.machineId, execute, options.loadAverage1m ?? (() => loadavg()[0]));
       const { requiredFileSystemIds, homeFileSystemId, reasons } = deriveResourceAdmissionVolumes(volumePaths, resourceSnapshot.fileSystemByPath);
       const requestedTier = input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const;
-      const queueId = options.admissionQueueId?.({ stateDomain: await fs.realpath(context.statePath), machineId: boot.machineId }) ?? '';
+      const queueId = input.queueClaim?.record.queueId ?? options.admissionQueueId?.({ stateDomain: await fs.realpath(context.statePath), machineId: boot.machineId }) ?? '';
       let policy: FlowPolicy | null = null;
       try { policy = loadFlowPolicy(join(context.confRoot, 'flow.json')); }
       catch (error) { reasons.push(error instanceof Error ? error.message : String(error)); }
@@ -1009,13 +1021,29 @@ export async function createProductionServices(
       };
       const admission = store.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, { requested, requiredFileSystemIds, homeFileSystemId, estimate }, measured, evaluate), 'read');
       synchronize(admission);
-      if (!admission.allowed[requestedTier]) return { admitted: false, reason: admission.reasons.join('; '), admission: admissionSnapshot! };
+      if ((!input.queueClaim && !admission.allowed[requestedTier]) || admission.level === 'UNKNOWN') return { admitted: false, reason: admission.reasons.join('; '), admission: admissionSnapshot! };
       const record = prepared.get(input.tmuxSession);
       if (!record || record.reportPath !== input.reportPath || input.assignment.root !== context.orchestratorRoot || !isDeepStrictEqual(record.launch.assignment, input.assignment) || !isDeepStrictEqual(record.launch.writeBoundaries ?? [], input.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Prepared launch context mismatch');
       const identityAdapter = createAssignmentIdentityAdapter({ [input.activity.project]: context.orchestratorRoot }, options.execute ? { execute: options.execute } : {});
       const tasks = await identityAdapter.capture(input.activity.project, input.assignment);
+      const queueState = input.queueClaim ? createAgentQueueState(store) : undefined;
+      if (input.queueClaim) {
+        const claim = input.queueClaim;
+        const wait = queueState!.transaction(tx => {
+          const own = queueState!.get(claim.record);
+          if (claim.rechecking && (!own || own.phase !== 'rechecking')) fail('LAUNCH_FENCE_LOST', 'Queue claim changed before resource recheck');
+          if (!claim.rechecking && own) fail('LAUNCH_FENCE_LOST', 'Queue claim already exists');
+          const entry = { ...own, record: claim.record, phase: 'waiting' as const, tasks, fingerprint: claim.validation.fingerprint };
+          queueState!.assertClaim(tx, entry, claim.validation);
+          const predecessors = queueState!.list().some(other => other.record.clientIdentity.machineId === claim.record.clientIdentity.machineId && other.record.requestId !== claim.record.requestId);
+          const waiting = !admission.allowed[requestedTier] || !claim.rechecking && predecessors;
+          queueState!.save({ ...entry, phase: waiting ? 'waiting' : 'starting' });
+          return waiting;
+        });
+        if (wait) return { admitted: false, waiting: true, reason: admission.reasons.join('; ') || 'Existing launch queue requires a resource permit', admission: admissionSnapshot! };
+      }
       const testAssignment = record.testAssignment;
-      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
+      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { ...(input.queueClaim ? { agentQueue: input.queueClaim.record } : {}), ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
       const caller = await (async () => {
         try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }
@@ -1023,6 +1051,11 @@ export async function createProductionServices(
       })();
       try {
         const claimed = await claimTaskReservations(dependencies, { runId: input.runId, addressId: input.addressId, tasks, starter: await ownIdentity(execute, input.runId, input.tmuxSession), reserveLaunch: tx => {
+          if (input.queueClaim) {
+            const entry = queueState!.get(input.queueClaim.record);
+            if (!entry || entry.phase !== 'starting') fail('LAUNCH_FENCE_LOST', 'Queue claim changed before atomic resource reserve');
+            queueState!.assertClaim(tx, entry, input.queueClaim.validation);
+          }
           if (input.notify) {
             const target = tx.getSession(input.notify.runId);
             if (target?.state !== 'running' || target.addressId !== input.notify.addressId) fail(NOTIFY_TARGET_INVALID, `Notify target is no longer active: ${input.notify.addressId}`);
@@ -1042,10 +1075,25 @@ export async function createProductionServices(
             ...(launchedBy ? { launchedBy } : {}), ...(input.notify ? { notify: input.notify } : {}) };
           tx.putSession(session);
           return session;
-        }, resolveDelegator: async () => caller });
+        }, resolveDelegator: async () => caller, deferDelegation: !!input.queueClaim?.record.coordinator });
         if (!claimed.reserved) fail('TASK_RESERVED', JSON.stringify(claimed.conflicts));
         return { admitted: true, admission: admissionSnapshot! };
-      } catch (error) { if (admissionReason) return { admitted: false, reason: admissionReason, admission: admissionSnapshot! }; throw error; }
+      } catch (error) {
+        if (admissionReason) {
+          if (input.queueClaim && admissionSnapshot?.level !== 'UNKNOWN') {
+            queueState!.transaction(() => {
+              const entry = queueState!.get(input.queueClaim!.record);
+              if (!entry) fail('LAUNCH_FENCE_LOST', 'Queue claim lost after resource refusal');
+              queueState!.save({ ...entry!, phase: 'waiting' });
+            });
+            return { admitted: false, waiting: true, reason: admissionReason, admission: admissionSnapshot! };
+          }
+          if (input.queueClaim && !input.queueClaim.rechecking) queueState!.transaction(() => { queueState!.remove(input.queueClaim!.record); });
+          return { admitted: false, reason: admissionReason, admission: admissionSnapshot! };
+        }
+        if (input.queueClaim && !input.queueClaim.rechecking) queueState!.transaction(() => { queueState!.remove(input.queueClaim!.record); });
+        throw error;
+      }
     },
     adapter: { start: async request => {
       const selection = { runner: request.selection.runner, model: request.selection.model, effort: request.selection.effort };
@@ -1138,6 +1186,7 @@ export async function createProductionServices(
     },
     authorizeMain: async caller => { await tools.authorize('main', caller); },
   };
+  return api;
 }
 
 export async function runProductionWorker(
@@ -1306,7 +1355,7 @@ export async function runProductionWorker(
       const action = nextRunnerAction(settings, observation, { trustWorkspace: true });
       if (observation.state !== 'workspace_trust_required' || action.kind !== 'keys') await untrusted();
       trustAnsweredAt = Date.now();
-      if (route?.hotfix) await fs.writeFile(join(dirname(session.launchContext.reportPath), 'trust.json'), JSON.stringify({ cwd: request.cwd, gitRoot: await gitTopLevel(), runId: request.runId, screen, keys: action.keys, answeredAt: trustAnsweredAt }), { mode: 0o600 });
+      if (route?.hotfix) await fs.writeFile(join(dirname(session.launchContext!.reportPath), 'trust.json'), JSON.stringify({ cwd: request.cwd, gitRoot: await gitTopLevel(), runId: request.runId, screen, keys: (action as { keys: string[] }).keys, answeredAt: trustAnsweredAt }), { mode: 0o600 });
       await sendKeys((action as { keys: string[] }).keys);
     };
     const sendKeys = async (keys: string[]) => {
@@ -1371,6 +1420,10 @@ export async function runProductionWorker(
     };
     const gate = async (identity: ProcessIdentity) => {
       const current = tools.current(request.runId);
+      if (current?.launchContext?.agentQueue) {
+        const queueState = createAgentQueueState(store);
+        if (!queueState.transaction(() => queueState.get(current.launchContext!.agentQueue!))) fail('LAUNCH_FENCE_LOST', 'Queue claim lost before initial brief');
+      }
       if (current?.state === 'running' && current.process && sameIdentity(current.process, identity)) return;
       if (!lease) fail('TASK_CLAIM_LOST', 'Task reservation lost before brief');
       const next = await startTaskReservations(dependencies, { lease, agent: identity as Awaited<ReturnType<typeof ownIdentity>> });
@@ -1444,9 +1497,9 @@ export async function runProductionWorker(
       fail('RUNNER_DELIVERY_UNAVAILABLE', 'Native initial brief acceptance timed out');
     };
     transport.deliver = async brief => {
-      const reportRequired = session.launchContext.reportSchema?.required;
-      if (Array.isArray(reportRequired) && reportRequired.includes('commits') && !session.launchContext.reportedCommits) fail('INVALID_CONTEXT', 'Reported commit launch metadata is missing');
-      if (!isDeepStrictEqual(request.reportedCommits, session.launchContext.reportedCommits)) fail('INVALID_CONTEXT', 'Worker reported commit contract does not match durable launch context');
+      const reportRequired = session.launchContext!.reportSchema?.required;
+      if (Array.isArray(reportRequired) && reportRequired.includes('commits') && !session.launchContext!.reportedCommits) fail('INVALID_CONTEXT', 'Reported commit launch metadata is missing');
+      if (!isDeepStrictEqual(request.reportedCommits, session.launchContext!.reportedCommits)) fail('INVALID_CONTEXT', 'Worker reported commit contract does not match durable launch context');
       try { await deliverInitialBrief(brief); }
       catch (error) {
         const context = failureContext(error);
@@ -1480,6 +1533,13 @@ export async function runProductionWorker(
       lifecycle: {
         started: async handshake => {
           await gate(handshake.identity);
+          const queued = tools.current(request.runId)?.launchContext?.agentQueue;
+          if (queued) {
+            const queueState = createAgentQueueState(store);
+            await retryStateOperation(() => queueState.transaction(tx => {
+              if (!queueState.confirmReady(tx, queued)) fail('LAUNCH_FENCE_LOST', 'Queue launch readiness fence changed');
+            }), settings.timeouts);
+          }
           await tools.control.started(request.runId);
         },
         acceptReport: async result => {

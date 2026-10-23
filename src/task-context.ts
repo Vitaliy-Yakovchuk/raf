@@ -30,7 +30,7 @@ export interface TaskContextRequest {
   readonly configuration: TaskContextConfiguration;
 }
 
-export interface TaskReportSchema {
+export interface TaskReportSchema extends Readonly<Record<string, unknown>> {
   readonly type: 'object';
   readonly required: readonly string[];
   readonly additionalProperties: true;

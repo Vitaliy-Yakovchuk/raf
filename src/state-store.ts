@@ -88,7 +88,8 @@ export interface StateStore {
   getCommandTiming(command: string): CommandTiming | undefined;
 }
 
-export const STATE_SCHEMA_VERSION = 12;
+export const STATE_SCHEMA_VERSION = 13;
+export const STATE_SCHEMA_SUPPORTED_VERSIONS = [12, 13] as const;
 
 export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
@@ -135,7 +136,7 @@ export function openStateStore(path: string, options?: import('./state-migration
     if (permit && version !== permit.fromVersion && version !== permit.toVersion) {
       throw stateFailure('STATE_MIGRATION_CONFLICT', `State ${path} is at ${version}; expected ${permit.fromVersion} or ${permit.toVersion}`);
     }
-    if (!permit && version > 0 && version < STATE_SCHEMA_VERSION) {
+    if (!permit && version > 0 && !STATE_SCHEMA_SUPPORTED_VERSIONS.includes(version as 12 | 13)) {
       throw stateFailure('STATE_MIGRATION_REQUIRED', `State ${path} is at version ${version}; explicit migration to ${STATE_SCHEMA_VERSION} required`);
     }
     return version;
@@ -201,7 +202,7 @@ export function openStateStore(path: string, options?: import('./state-migration
 
       const version = () => Number(db.prepare("PRAGMA user_version").get()?.user_version);
       checkSchema(db);
-      if (version() < STATE_SCHEMA_VERSION) {
+      if (version() === 0 || permit && version() < STATE_SCHEMA_VERSION) {
         transaction(() => {
 
           checkContext();
@@ -363,7 +364,7 @@ export function openStateStore(path: string, options?: import('./state-migration
             PRAGMA user_version = 11;
           `);
           options?.afterMigrationStep?.(11); }
-          db.exec(`
+          if (current < 12) { db.exec(`
             CREATE TABLE resource_wait_protocol_state (
               singleton INTEGER PRIMARY KEY CHECK(singleton = 1),
               epoch TEXT NOT NULL,
@@ -373,7 +374,23 @@ export function openStateStore(path: string, options?: import('./state-migration
               SELECT 1, '', json_object('requestId','legacy','serviceEpoch','legacy','grantedAt',last_grant,'bootIdentity','legacy','monotonicAt',0) FROM resource_wait_state WHERE singleton=1;
             PRAGMA user_version = 12;
           `);
-          options?.afterMigrationStep?.(12);
+          options?.afterMigrationStep?.(12); }
+          db.exec(`
+            CREATE TABLE agent_launch_queues (
+              state_domain TEXT NOT NULL,
+              machine_id TEXT NOT NULL,
+              queue_id TEXT NOT NULL UNIQUE,
+              PRIMARY KEY (state_domain, machine_id)
+            ) STRICT;
+            CREATE TABLE agent_launch_queue_entries (
+              request_id TEXT PRIMARY KEY NOT NULL,
+              run_id TEXT NOT NULL UNIQUE,
+              agent_id TEXT NOT NULL UNIQUE,
+              payload TEXT NOT NULL
+            ) STRICT;
+            PRAGMA user_version = 13;
+          `);
+          options?.afterMigrationStep?.(13);
         });
       }
       for (let attempt = 0; ; attempt++) {

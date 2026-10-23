@@ -36,7 +36,8 @@ import { validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type 
 import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
 import { settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
-import { readPendingAgentReport } from './agent-report.ts';
+import { readPendingAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
+import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from './task-checkbox-report.ts';
 import { finalizeStartupContextRun, reserveStartupContextReview, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
 import { startupContextRuntimeFiles, startupContextAcceptedReport } from './startup-context-runtime.ts';
 import { prepareCodexRafCommandAccess, codexInvocationSandboxMode, type PreparedCodexRafCommandAccess } from './codex-raf-command-access.ts';
@@ -368,6 +369,45 @@ async function waitWrapperExit(execute: AdapterCommandExecutor, wrapper: Process
     await new Promise(resolve => setTimeout(resolve, budget.pollMs));
   }
 }
+async function confirmReportedTasks(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, request: AgentReportRequest, report: AgentReport, budget: TransitionBudget, identityExecute?: AdapterCommandExecutor) {
+  const directory = join(context.tmpRoot, request.runId);
+  const journal = join(directory, 'task-checkbox-operations.json');
+  const assignments = assignmentPorts(execute);
+  const indexDeadline = Date.now() + budget.transitionMs;
+  const confirmation = await prepareReportedTaskCheckboxes(request, report, {
+    verifySourceIdentity: async (assignment, archives) => {
+      const set = listTaskReservations(store).find(set => set.lease.owner.runId === request.runId);
+      if (!set || assignment.changes.some(change => change.items.some(item => !set.tasks.some(task => task.key.changeId === change.id && task.key.taskId === item.id)))) throw new Error('Launch task source identity is unavailable');
+      const dependencies = await reservationTools(store, context, execute, identityExecute);
+      const resolutions = await dependencies.resolveTasks(set.tasks);
+      const invalid = resolutions.filter(row => row.state === 'mismatch' || row.state === 'unknown');
+      if (invalid.length || resolutions.length !== set.tasks.length) throw new Error(`Launch task source identity changed: ${invalid.map(row => row.reason).join('; ')}`);
+      for (const change of assignment.changes) {
+        const subset = { ...assignment, changes: [change] };
+        const archived = set.tasks.filter(task => task.key.changeId === change.id).every(task => resolutions.some(row => (row.state === 'open' || row.state === 'completed') && row.task.key.changeId === task.key.changeId && row.task.key.taskId === task.key.taskId && row.location === 'archive'));
+        const checked = archived ? await verifyAssignmentCompletion(subset, assignments, archives) : await validateAssignment({ root: assignment.root, selections: [{ change: change.id, items: change.items.map(item => ({ id: item.id, expectedDescription: item.description })) }] }, assignments);
+        if (!checked.ok) return { ok: false, issues: checked.issues };
+      }
+      return { ok: true, issues: [] };
+    },
+    verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
+    operations: {
+      read: async () => { try { return JSON.parse(await fs.readFile(journal, 'utf8')) as TaskCheckboxOperation[]; } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; } },
+      write: async (_runId, operations) => {
+        await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+        const temporary = `${journal}.${randomUUID()}.tmp`;
+        try { await fs.writeFile(temporary, JSON.stringify(operations), { mode: 0o600 }); await fs.rename(temporary, journal); }
+        finally { await fs.rm(temporary, { force: true }); }
+      },
+    },
+    executeGit: async (args, options) => { const environment = context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env; const result = await (identityExecute ?? executeCommand)({ executable: 'git', args, cwd: options.cwd, environment: { ...environment, ...options.env } }); return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr }; },
+    waitForIndex: async () => {
+      if (Date.now() >= indexDeadline) throw new Error('Git index.lock is busy; retain foreign lock and retry report confirmation');
+      await new Promise(resolve => setTimeout(resolve, budget.pollMs));
+    },
+  });
+  return confirmation;
+}
 function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: RuntimeConfiguration, context: RuntimeContext, budgetFor: (runner: string) => Promise<TransitionBudget>, identityExecute?: AdapterCommandExecutor) {
   const verified = new WeakMap<object, string>();
   const mainAuthority = new WeakMap<object, ProcessIdentity>();
@@ -383,10 +423,11 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       fs: { readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } } },
       now,
       verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignmentPorts(execute), archives),
+      confirmTaskCheckboxes: async (request, report) => confirmReportedTasks(store, context, execute, request, report, await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner), identityExecute),
       diagnostic: reason => reportDiagnostic(session.runId, reason),
     });
     if (result) {
-      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context } };
+      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context, checkboxCommits: result.checkboxCommits } };
       verified.set(value, session.runId);
       await retryStateOperation(() => state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [] }), await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner));
     }
@@ -1235,6 +1276,7 @@ export async function runProductionWorker(
         watch: (directory, listener) => { const watcher = watch(directory, (event, filename) => { if (filename) void listener(event === 'rename' ? 'rename' : 'modify', filename.toString()).catch(error => process.emitWarning(error)); }); watcher.on('error', error => process.stderr.write(`${request.runId}: Report watcher error: ${String(error)}\n`)); return () => watcher.close(); },
         now,
         verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
+        confirmTaskCheckboxes: (reportRequest, report) => confirmReportedTasks(store, context, execute, reportRequest, report, settings.timeouts, options.execute),
         diagnostic: reason => tools.reportDiagnostic(request.runId, reason),
       },
       lifecycle: {
@@ -1243,11 +1285,13 @@ export async function runProductionWorker(
           await tools.control.started(request.runId);
         },
         acceptReport: async result => {
+          let checkboxCommits = result.checkboxCommits;
           if (result.report?.status === 'succeeded') {
-            const verification = await verifyAssignmentCompletion(request.assignment, assignments, Object.fromEntries(result.report.changes.filter(change => change.archive).map(change => [change.id, change.archive!])));
-            if (!verification.ok) fail('REPORT_UNVERIFIED', 'OpenSpec completion changed before result acceptance');
+            const verification = await confirmReportedTasks(store, context, execute, request, result.report, settings.timeouts, options.execute);
+            if (!verification.ok || verification.awaitingArchive) fail('REPORT_UNVERIFIED', 'OpenSpec completion changed before result acceptance');
+            checkboxCommits = verification.commits;
           }
-          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context } };
+          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context, checkboxCommits } };
           tools.verified.set(value, request.runId);
           const accepted = tools.state.acceptWorkResult(request.runId, value, { pending: [{ id: `${request.runId}:${result.event}`, runId: request.runId, event: result.event, payload: { kind: result.event, id: request.address } }], domain: [] });
           if (!accepted && !tools.current(request.runId)?.result) fail('REPORT_UNVERIFIED', 'Result could not be durably accepted for the running session');

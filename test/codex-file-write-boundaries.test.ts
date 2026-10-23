@@ -55,7 +55,7 @@ async function fixture() {
   const files = [
     join(root, 'questions', 'projects', 'raf', 'questions.md'),
     join(root, 'questions', 'projects', 'project with spaces', 'questions.md'),
-    join(root, 'outside workspace', 'review "notes".md'),
+    join(root, 'outside workspace', 'review "notes" and owner\'s.md'),
   ];
   const siblings = files.map(file => join(dirname(file), 'unassigned.md'));
   const created = files.map(file => join(dirname(file), 'new-unassigned.md'));
@@ -120,15 +120,29 @@ async function execute(prepared: PreparedCodexSandbox, cwd: string, script: stri
   });
 }
 
-test('[Z.369 policy] every file write boundary is writable in the native edit policy without granting its parent', async () => {
+test('[Z.369 policy] both native invocations exclude file write roots and writable ancestors while exact shell binds remain', async () => {
   const f = await fixture();
   try {
+    assert.ok(!contains('/tmp', f.root), 'file boundaries must be outside :slash_tmp');
+    const policies = await Promise.all(f.prepared.policyPaths.map(path => readFile(join(path, 'bwrap'), 'utf8')));
+    assert.ok(policies.length > 0, 'prepared sandbox exposes its actual bwrap wrapper');
+    const quote = (path: string) => `'${path.replaceAll("'", "'\\''")}'`;
+    for (const file of f.files) {
+      for (const wrapper of policies) {
+        assert.ok(wrapper.includes(`--bind ${quote(file)} ${quote(file)}`), `exact shell bind for ${file}`);
+      }
+      assert.equal(await readFile(file, 'utf8'), 'original\n', 'preparation preserves existing file bytes');
+    }
     for (const [name, invocation] of [['runner', f.prepared.invocation], ['shell', f.prepared.toolSandbox]] as const) {
       const permissions = filesystem(invocation);
+      assert.notEqual(permissions.get(':root'), 'write', `${name}: the symbolic root must not widen file boundaries`);
+      for (const directory of [f.cwd, f.runDirectory]) {
+        assert.equal(permissions.get(directory), 'write', `${name}: declared directory keeps native writes`);
+      }
       for (const file of f.files) {
-        assert.equal(permissions.get(file), 'write', `${name}: native edits must allow the exact boundary ${file}`);
+        assert.notEqual(permissions.get(file), 'write', `${name}: a standalone file must not be a native write root ${file}`);
         for (const [path, access] of permissions) {
-          if (access === 'write' && isAbsolute(path) && path !== file) {
+          if (access === 'write' && isAbsolute(path)) {
             assert.ok(!contains(path, file), `${name}: ${path} must not widen the file boundary ${file}`);
           }
         }
@@ -137,6 +151,8 @@ test('[Z.369 policy] every file write boundary is writable in the native edit po
         assert.notEqual(permissions.get(sibling), 'write', `${name}: unassigned sibling is not writable`);
       }
     }
+    assert.deepEqual([...filesystem(f.prepared.invocation)].sort(), [...filesystem(f.prepared.toolSandbox)].sort(),
+      'runner and tool preflight use the same native filesystem boundaries');
   } finally { await f.cleanup(); }
 });
 

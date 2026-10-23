@@ -1,7 +1,9 @@
 import type { Invocation, NativeSandboxScope } from './runner-protocols.ts';
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
-import { readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, open, readFile, readdir, realpath, rm, rmdir, writeFile } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { join } from 'node:path';
 
 export interface CodexRafCommandAccessRequest {
   readonly invocation: Invocation;
@@ -21,8 +23,64 @@ export interface PreparedCodexRafCommandAccess {
 
 class HookProtocolUnavailable extends Error {}
 
+const replayProgram = String.raw`
+const fs = await import('node:fs/promises');
+const { constants, createReadStream } = await import('node:fs');
+const { pipeline } = await import('node:stream/promises');
+const [root, id] = process.argv.slice(1);
+let directory, claimed;
+const files = [];
+try {
+  if (!/^[a-f0-9-]+$/u.test(id)) throw new Error('invalid result identifier');
+  claimed = root + '/replay-' + process.pid + '-' + id;
+  await fs.rename(root + '/ready-' + id, claimed);
+  directory = await fs.open(claimed, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+  const path = '/proc/self/fd/' + directory.fd;
+  for (const name of ['stdout', 'stderr', 'result.json']) {
+    const file = await fs.open(path + '/' + name, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+    files.push(file);
+    const stat = await file.stat();
+    if (!stat.isFile() || stat.nlink !== 1) throw new Error('invalid result file ' + name);
+  }
+  const result = JSON.parse(await files[2].readFile('utf8'));
+  if (!Number.isInteger(result.code) || result.code < 0 || result.code > 255) throw new Error('invalid result exit code');
+  const stats = await Promise.all(files.slice(0, 2).map(file => file.stat()));
+  if (stats[0].size !== result.stdoutBytes || stats[1].size !== result.stderrBytes) throw new Error('incomplete result streams');
+  const streamed = await Promise.allSettled([
+    pipeline(createReadStream('', { fd: files[0].fd, autoClose: false }), process.stdout, { end: false }),
+    pipeline(createReadStream('', { fd: files[1].fd, autoClose: false }), process.stderr, { end: false }),
+  ]);
+  const failure = streamed.find(result => result.status === 'rejected');
+  if (failure) throw failure.reason;
+  process.exitCode = result.code;
+} catch (error) {
+  process.stderr.write('RAF command result read failed: ' + error.message + '\n');
+  process.exitCode = 1;
+} finally {
+  await Promise.all(files.map(file => file.close().catch(() => {})));
+  await directory?.close();
+  if (claimed) {
+    try { await fs.rm(claimed, { recursive: true, force: true }); }
+    catch (error) { process.stderr.write('RAF command result cleanup failed: ' + error.message + '\n'); process.exitCode = 1; }
+    try {
+      const entries = await fs.readdir(root);
+      if (entries.length === 1 && entries[0] === 'closed') {
+        await fs.rm(root + '/closed', { force: true });
+        await fs.rmdir(root).catch(error => { if (!['ENOENT', 'ENOTEMPTY'].includes(error.code)) throw error; });
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT') { process.stderr.write('RAF command result cleanup failed: ' + error.message + '\n'); process.exitCode = 1; }
+    }
+  }
+}
+`;
+
 const hookProgram = String.raw`
 const { spawn } = await import('node:child_process');
+const fs = await import('node:fs/promises');
+const { constants, createWriteStream } = await import('node:fs');
+const { randomUUID } = await import('node:crypto');
+const { pipeline } = await import('node:stream/promises');
 const parse = source => {
   const words = [];
   let word = '', started = false, quote = '';
@@ -61,17 +119,66 @@ const command = request.tool_input?.command;
 const words = typeof command === 'string' ? parse(command) : null;
 const allowed = access.commands.map(parse).find(prefix => prefix?.length && words?.length >= prefix.length && prefix.every((word, index) => words[index] === word));
 if (request.hook_event_name === 'PreToolUse' && request.tool_name === 'Bash' && allowed) {
-  const result = await new Promise(resolve => {
-    const child = spawn(allowed[0], words.slice(1), { cwd: access.cwd, env: process.env, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
-    let stdout = '', stderr = '';
-    child.stdout.setEncoding('utf8').on('data', chunk => { stdout += chunk; });
-    child.stderr.setEncoding('utf8').on('data', chunk => { stderr += chunk; });
-    child.on('error', error => { stderr += error.message; });
-    child.on('close', code => resolve({ stdout, stderr, code: code ?? 1 }));
-  });
+  let root, directory, name;
+  const files = [];
+  let response, published = false, verified = false;
   const literal = value => "'" + value.replaceAll("'", "'\\''") + "'";
-  const replay = 'printf %s ' + literal(result.stdout) + '; printf %s ' + literal(result.stderr) + ' >&2; exit ' + result.code;
-  process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', updatedInput: { command: replay } } }));
+  const failure = error => ({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', updatedInput: { command: literal(access.node) + ' -e ' + literal('process.stderr.write(process.argv[1] + "\\n"); process.exitCode = 1') + ' ' + literal('RAF command transport failed: ' + error.message + '; raf was not retried') } } });
+  try {
+    root = await fs.open(access.results.path, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+    const identity = await root.stat();
+    if (identity.dev !== access.results.dev || identity.ino !== access.results.ino) throw new Error('result directory identity changed');
+    verified = true;
+    const base = '/proc/self/fd/' + root.fd;
+    const closed = async () => fs.lstat(base + '/closed').then(() => true, error => { if (error.code === 'ENOENT') return false; throw error; });
+    if (await closed()) throw new Error('command channel is closed');
+    const id = randomUUID();
+    name = 'capture-' + process.pid + '-' + id;
+    await fs.mkdir(base + '/' + name, { mode: 0o700 });
+    directory = await fs.open(base + '/' + name, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+    const path = '/proc/self/fd/' + directory.fd;
+    for (const filename of ['stdout', 'stderr', 'result.json']) files.push(await fs.open(path + '/' + filename, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600));
+    if (await closed()) throw new Error('command channel closed before execution');
+    const child = spawn(allowed[0], words.slice(1), { cwd: access.cwd, env: process.env, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
+    let spawnError;
+    const completed = new Promise(resolve => {
+      child.once('error', error => { spawnError = error; });
+      child.once('close', code => resolve(code ?? 1));
+    });
+    const outputs = [child.stdout, child.stderr].map((stream, index) => pipeline(stream, createWriteStream('', { fd: files[index].fd, autoClose: false })).catch(error => { child.kill('SIGKILL'); throw error; }));
+    const [code, streams] = await Promise.all([completed, Promise.allSettled(outputs)]);
+    if (spawnError) throw new Error('raf spawn failed: ' + spawnError.message);
+    const failed = streams.find(stream => stream.status === 'rejected');
+    if (failed) throw new Error('result stream write failed: ' + failed.reason.message);
+    const stats = await Promise.all(files.slice(0, 2).map(file => file.stat()));
+    await files[2].writeFile(JSON.stringify({ code, stdoutBytes: stats[0].size, stderrBytes: stats[1].size }));
+    await Promise.all(files.splice(0).map(file => file.close()));
+    if (await closed()) throw new Error('command channel closed after execution; raf was not retried');
+    await fs.rename(base + '/' + name, base + '/ready-' + id);
+    name = 'ready-' + id;
+    published = true;
+    const replay = literal(access.node) + ' --input-type=module -e ' + literal(access.reader) + ' ' + literal(access.results.path) + ' ' + literal(id);
+    response = { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', updatedInput: { command: replay } } };
+  } catch (error) {
+    process.stderr.write('RAF command result capture failed: ' + error.message + '\n');
+    response = failure(error);
+  } finally {
+    try {
+      await Promise.all(files.map(file => file.close()));
+      await directory?.close();
+      if (root && name && !published) await fs.rm('/proc/self/fd/' + root.fd + '/' + name, { recursive: true, force: true });
+      if (root && verified) {
+        const base = '/proc/self/fd/' + root.fd;
+        const entries = await fs.readdir(base);
+        if (entries.length === 1 && entries[0] === 'closed') {
+          await fs.rm(base + '/closed', { force: true });
+          await fs.rmdir(access.results.path).catch(error => { if (!['ENOENT', 'ENOTEMPTY'].includes(error.code)) throw error; });
+        }
+      }
+    } catch (error) { response = failure(new Error('result cleanup failed: ' + error.message)); }
+    finally { await root?.close().catch(error => { response = failure(error); }); }
+  }
+  process.stdout.write(JSON.stringify(response));
 } else process.stdout.write('{}');
 `;
 
@@ -146,12 +253,54 @@ export async function prepareCodexRafCommandAccess(
   const environment = Object.fromEntries(Object.entries(request.environment).filter((entry): entry is [string, string] => entry[1] !== undefined));
   const invocation = { ...request.invocation, args: [...request.invocation.args] };
   const sandbox = codexInvocationSandboxMode(invocation.args);
+  let results: { path: string; dev: number; ino: number } | undefined;
+  const cleanup = async () => {
+    if (!results) return;
+    const root = await open(results.path, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW).catch(error => {
+      if (error.code === 'ENOENT') return undefined;
+      throw error;
+    });
+    if (!root) return;
+    try {
+      const identity = await root.stat();
+      if (identity.dev !== results.dev || identity.ino !== results.ino) throw new Error('Codex RAF result directory identity changed during cleanup');
+      const base = `/proc/self/fd/${root.fd}`;
+      await writeFile(`${base}/closed`, '', { flag: 'wx', mode: 0o600 }).catch(error => { if (error.code !== 'EEXIST') throw error; });
+      let active = false;
+      for (const name of await readdir(base)) {
+        if (name === 'closed') continue;
+        const pid = /^(?:capture|replay)-(\d+)-/u.exec(name)?.[1];
+        if (pid) {
+          try {
+            const stat = await readFile(`/proc/${pid}/stat`, 'utf8');
+            if (!['Z', 'X'].includes(stat.slice(stat.lastIndexOf(')') + 2).split(' ')[0])) { process.kill(Number(pid), 0); active = true; continue; }
+          }
+          catch (error) { if (!['ESRCH', 'ENOENT'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error; }
+        }
+        await rm(join(base, name), { recursive: true, force: true });
+      }
+      if (!active) {
+        await rm(`${base}/closed`, { force: true });
+        await rmdir(results.path).catch(error => { if (!['ENOENT', 'ENOTEMPTY'].includes(error.code)) throw error; });
+      }
+    } finally { await root.close(); }
+  };
   if (request.scope.excludedCommands.length && sandbox !== null && sandbox !== 'danger-full-access') {
     const commands = request.scope.excludedCommands.map(command => {
       if (!command.trim() || command === ':*') throw new Error('Invalid Codex RAF command scope');
       return command.endsWith(':*') ? command.slice(0, -2) : command;
     });
-    const source = `const access = ${JSON.stringify({ commands, cwd: request.cwd })};\n${hookProgram}`;
+    const timeoutMs = request.timeoutMs ?? JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8')).runnerProtocols.find((protocol: { runner: string }) => protocol.runner === 'codex')?.timeouts.transitionMs;
+    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error('Codex RAF hook inspection requires a configured deadline');
+    await mkdir(request.runDirectory, { recursive: true, mode: 0o700 });
+    const runDirectory = await realpath(request.runDirectory);
+    const path = await mkdtemp(join(runDirectory, 'codex-raf-results-'));
+    const root = await open(path, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+    try {
+      const identity = await root.stat();
+      results = { path, dev: identity.dev, ino: identity.ino };
+    } finally { await root.close(); }
+    const source = `const access = ${JSON.stringify({ commands, cwd: request.cwd, results, node: process.execPath, reader: replayProgram })};\n${hookProgram}`;
     const command = `${literal(process.execPath)} --input-type=module -e ${literal(source)}`;
     const hook = `hooks.PreToolUse=[{matcher="^Bash$",hooks=[{type="command",command=${JSON.stringify(command)}}]}]`;
     const configuration: string[] = [];
@@ -159,17 +308,17 @@ export async function prepareCodexRafCommandAccess(
       if (['-c', '--config'].includes(invocation.args[i])) configuration.push('-c', invocation.args[++i]);
     }
     configuration.push('-c', hook);
-    const timeoutMs = request.timeoutMs ?? JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8')).runnerProtocols.find((protocol: { runner: string }) => protocol.runner === 'codex')?.timeouts.transitionMs;
-    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error('Codex RAF hook inspection requires a configured deadline');
+
     let identity: { key: string; currentHash: string };
     try {
       identity = await hookIdentity(invocation.executable, configuration, request.cwd, environment, command, timeoutMs);
     } catch (error) {
+      await cleanup();
       if (!(error instanceof HookProtocolUnavailable)) throw error;
       return { invocation, environment, unavailable: `RAF command channel unavailable: ${error.message}; permitted raf commands stay inside the native sandbox`, cleanup: async () => {} };
     }
     const end = invocation.args.indexOf('--');
     invocation.args.splice(end < 0 ? invocation.args.length : end, 0, '-c', hook, '-c', `hooks.state={${JSON.stringify(identity.key)}={trusted_hash=${JSON.stringify(identity.currentHash)}}}`);
   }
-  return { invocation, environment, cleanup: async () => {} };
+  return { invocation, environment, cleanup };
 }

@@ -692,7 +692,7 @@ export async function createProductionServices(
     route: async request => {
       if (request.hotfixRunId) {
         if (request.project !== 'raf' || request.branch !== 'hotfix') return fail('BRANCH_MISMATCH', 'Persistent hotfix route is restricted to raf hotfix');
-        const host = { orchestratorRoot: context.orchestratorRoot, qaHome: join(context.tmpRoot, request.hotfixRunId + '-qa'), environment: {}, sandboxExecutable: 'codex' };
+        const host = { orchestratorRoot: context.orchestratorRoot, qaHome: context.stateContext?.homeDirectory ?? homedir(), environment: {}, sandboxExecutable: 'codex' };
         try { await hotfixRoute(host); }
         catch (error) {
           const reason = error instanceof Error ? error.message : String(error);
@@ -941,7 +941,7 @@ export async function runProductionWorker(
     const hotfix = manifest.workspaceRoute?.hotfix;
     if (hotfix) {
       if (hotfix.runId !== request.runId || manifest.workspaceRoute.branch !== 'hotfix' || !isDeepStrictEqual(hotfix, manifest.workspace) || !await validateHotfixTrust(context.orchestratorRoot, request.cwd, hotfix)) fail('BRANCH_MISMATCH', 'Invalid persistent hotfix identity');
-      hotfixCommitPort = await startHotfixCommitPort({ orchestratorRoot: context.orchestratorRoot, qaHome: join(request.tmpRoot, request.runId + '-qa'), environment: {}, sandboxExecutable: 'codex' }, hotfix, dirname(session.launchContext.reportPath));
+      hotfixCommitPort = await startHotfixCommitPort({ orchestratorRoot: context.orchestratorRoot, qaHome: stateContext.homeDirectory, environment: {}, sandboxExecutable: 'codex' }, hotfix, dirname(session.launchContext.reportPath));
     }
     const writeBoundaries = manifest.writeBoundaries ?? [];
     if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text) || !isDeepStrictEqual(writeBoundaries, session.launchContext.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Worker write boundaries do not match durable launch context');
@@ -954,6 +954,7 @@ export async function runProductionWorker(
     const identityCommand = native.identity.command;
     const assignedId = native.identity.source === 'assigned' ? randomUUID() : undefined;
     let invocation = buildRunnerInvocation(settings, { ...request.selection, ...(assignedId ? { sessionId: assignedId } : {}) });
+    if (hotfix && settings.runner === 'codex') invocation.args.push('-C', request.cwd);
     const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
     invocation.args.push(...nativeWriteScopeArgs(settings, hotfix ? [...new Set([...writable.directories, ...writable.workspace])] : writable.directories, writable.workspace));
     const scope = await runnerSandboxScope(session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store).catch(error => {

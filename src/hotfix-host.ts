@@ -20,6 +20,9 @@ export async function git(cwd: string, ...args: string[]): Promise<string> {
   for (const key of Object.keys(env)) if (['GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR', 'GIT_OBJECT_DIRECTORY', 'GIT_ALTERNATE_OBJECT_DIRECTORIES'].includes(key)) delete env[key];
   return (await execute('git', ['-C', cwd, ...args], { env, maxBuffer: 64 * 1024 * 1024 })).stdout.trim();
 }
+export async function hostGit(host: HotfixHost, cwd: string, ...args: string[]): Promise<string> {
+  return (await execute('git', ['-C', cwd, ...args], { env: environment(host), maxBuffer: 64 * 1024 * 1024 })).stdout.trim();
+}
 export async function durable(path: string, data: unknown): Promise<void> {
   await fs.mkdir(dirname(path), { recursive: true, mode: 0o700 });
   const temporary = path + '.' + randomUUID();

@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { command, durable, environment, exists, git, hotfixRoute, inventory, json, mainRoute, validateWorkspace, withHotfixWriter, within } from './hotfix-host.ts';
+import { command, durable, environment, exists, git, hostGit, hotfixRoute, inventory, json, mainRoute, validateWorkspace, withHotfixWriter, within } from './hotfix-host.ts';
 
 export type HotfixRunner = "codex" | "claude";
 
@@ -90,7 +90,7 @@ export async function prepareHotfixWorktree(host: HotfixHost, runId: string): Pr
     const included = await git(cwd, 'merge-base', '--is-ancestor', baseCommit, 'HEAD').then(() => true, () => false);
     if (!included) {
       if (await git(cwd, 'status', '--porcelain', '--untracked-files=all')) throw new Error('Dirty hotfix workspace/index; main must coordinate writers before refresh');
-      await git(cwd, '-c', 'core.hooksPath=/dev/null', 'merge', '--no-edit', baseCommit);
+      await hostGit(host, cwd, '-c', 'core.hooksPath=/dev/null', 'merge', '--no-edit', baseCommit);
     }
     if (await git(route.cwd, 'rev-parse', 'HEAD') !== baseCommit) throw new Error('Main changed during hotfix preparation; refresh again before launch');
     const run = join(host.orchestratorRoot, '.raf-hotfix', 'runs', runId);
@@ -168,8 +168,8 @@ export async function commitHotfix(host: HotfixHost, request: HotfixCommitReques
   const staged = (await git(workspace.cwd, 'diff', '--cached', '--name-only', '-z')).split('\0').filter(Boolean);
   if (staged.some(path => !selected.has(path))) throw new Error('Foreign staged hotfix paths');
   if (staged.length && await git(workspace.cwd, '--literal-pathspecs', 'diff', '--name-only', '--', ...staged)) throw new Error('Shared staged hunks require coordination; index preserved');
-  await git(workspace.cwd, '--literal-pathspecs', 'add', '-f', '--', ...paths);
-  await git(workspace.cwd, '--literal-pathspecs', '-c', 'core.hooksPath=/dev/null', 'commit', '-m', message, '--', ...paths);
+  await hostGit(host, workspace.cwd, '--literal-pathspecs', 'add', '-f', '--', ...paths);
+  await hostGit(host, workspace.cwd, '--literal-pathspecs', '-c', 'core.hooksPath=/dev/null', 'commit', '-m', message, '--', ...paths);
   return { commit: await git(workspace.cwd, 'rev-parse', 'HEAD'), tree: await git(workspace.cwd, 'rev-parse', 'HEAD^{tree}'), workspace };
   });
 }

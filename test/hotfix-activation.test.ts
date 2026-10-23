@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import { acquireHotfixReader, activateHotfix, cleanupHotfixActivation, createAtomicHotfixSwitch, recoverHotfixActivation, verifyHotfixCandidate, type AtomicHotfixSwitch, type HotfixCheckpoint, type HotfixGateName, type HotfixReaderKind } from "../src/hotfix-activation.ts";
@@ -21,7 +21,19 @@ function assertMain(f: Awaited<ReturnType<typeof fixture>>, commit: string, mark
   assert.match(git(f.root, f.environment, "ls-files", "--stage", "raf-main"), /^160000 /u);
   assert.ok(statSync(join(f.main, ".git")).isFile(), "main remains a registered submodule");
   assert.equal(git(f.root, f.environment, "submodule", "status", "raf-main").includes(commit), true);
-  assert.ok(git(f.main, f.environment, "worktree", "list", "--porcelain").includes(f.main));
+  assert.equal(realpathSync(git(f.main, f.environment, "rev-parse", "--show-toplevel")), realpathSync(f.main));
+  const mainGitDirectory = realpathSync(git(f.main, f.environment, "rev-parse", "--absolute-git-dir"));
+  assert.equal(mainGitDirectory, realpathSync(join(f.root, ".git", "modules", "raf-main")));
+  const mainWorktrees = git(f.main, f.environment, "worktree", "list", "--porcelain")
+    .split("\n\n")
+    .map(record => record.split("\n"))
+    .filter(lines => lines.includes("branch refs/heads/main"));
+  assert.equal(mainWorktrees.length, 1, "exactly one registered worktree owns main");
+  const mainWorktree = mainWorktrees[0]!;
+  assert.ok(mainWorktree.includes(`HEAD ${commit}`), "registered main points to the expected commit");
+  const registeredPath = mainWorktree.find(line => line.startsWith("worktree "))?.slice("worktree ".length);
+  assert.ok(registeredPath, "registered main has a worktree path");
+  assert.equal(realpathSync(git(registeredPath, f.environment, "rev-parse", "--absolute-git-dir")), mainGitDirectory);
   for (const name of ["a.mjs", "b.mjs"]) assert.equal(readFileSync(join(f.main, "hotfix-fixture", name), "utf8"), `export const marker = ${JSON.stringify(marker)};\n`);
 }
 

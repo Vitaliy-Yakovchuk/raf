@@ -249,7 +249,7 @@ export async function prepareCodexSandbox(
   const git = join(cwd, '.git');
   const gitEntry = await fs.lstat(git).catch(() => null);
   if (writable.has(cwd)) {
-    if (!gitEntry || gitEntry.isFile()) entries[git] = 'write';
+    if (!gitEntry || gitEntry.isFile() || gitEntry.isDirectory()) entries[git] = 'write';
   } else {
     for (const path of await workspaceGitPaths(cwd)) entries[path] = writable.has(path) ? 'write' : 'read';
     for (const path of writable) {

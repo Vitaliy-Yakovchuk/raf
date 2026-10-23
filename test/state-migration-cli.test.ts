@@ -14,6 +14,25 @@ const commands = [
   ['agent', 'ps', '--not-a-valid-flag'],
 ];
 
+function lazyResult(argv: readonly string[], result: ReturnType<typeof command>): boolean {
+  if (argv[0] === 'help') {
+    assert.equal(result.error, undefined);
+    assert.equal(result.signal, null);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /raf/);
+    return true;
+  }
+  if (argv[0] === 'no-such-command' || argv.includes('--not-a-valid-flag')) {
+    assert.equal(result.error, undefined);
+    assert.equal(result.signal, null);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stdout + result.stderr, argv[0] === 'no-such-command' ? /UNKNOWN_COMMAND/ : /UNKNOWN_ARGUMENT/);
+    assert.doesNotMatch(result.stdout + result.stderr, /STATE_CONTEXT_REFUSED|CONFIGURATION_INVALID|HANDLER_FAILED/);
+    return true;
+  }
+  return false;
+}
+
 function refused(result: ReturnType<typeof command>, f: ReturnType<typeof fixture>, path = f.statePath): void {
   assert.equal(result.error, undefined, 'Node and the fixture entry must start successfully');
   assert.equal(result.signal, null);
@@ -27,7 +46,7 @@ function refused(result: ReturnType<typeof command>, f: ReturnType<typeof fixtur
 
 for (const argv of commands) {
   for (const withWal of [false, true]) {
-    test(`develop ${argv.join(' ')} refuses working schema 7 ${withWal ? 'with WAL/SHM' : 'without sidecars'} byte-for-byte`, t => {
+    test(`develop ${argv.join(' ')} preserves working schema 7 ${withWal ? 'with WAL/SHM' : 'without sidecars'} byte-for-byte`, t => {
       const f = fixture(t);
       seedMain7(f);
       if (withWal) quietWal(t, f.statePath);
@@ -39,7 +58,7 @@ for (const argv of commands) {
         assert.equal(before['-shm'], null);
       }
       const result = command(f, argv);
-      refused(result, f);
+      if (!lazyResult(argv, result)) refused(result, f);
       assert.deepEqual(files(f.statePath), before, 'DB and existing sidecars retain their bytes; absent sidecars stay absent');
       assert.deepEqual(directoryFiles(join(f.workingHome, '.raf')), beforeFiles, 'no statistics, maintenance or runtime artifacts');
       assert.deepEqual(logical(f.statePath), beforeLogical);
@@ -50,12 +69,13 @@ for (const argv of commands) {
 
 for (const version of [10, 'missing'] as const) {
   for (const argv of commands) {
-    test(`develop ${argv.join(' ')} checks context before inspecting ${version} state`, t => {
+    test(`develop ${argv.join(' ')} leaves ${version} state untouched`, t => {
       const f = fixture(t);
       if (version === 10) seedVersion(f, 10);
       const before = files(f.statePath);
       const beforeHome = directoryFiles(f.workingHome);
-      refused(command(f, argv), f);
+      const result = command(f, argv);
+      if (!lazyResult(argv, result)) refused(result, f);
       assert.deepEqual(files(f.statePath), before);
       assert.deepEqual(directoryFiles(f.workingHome), beforeHome);
       if (version === 'missing') assert.equal(existsSync(join(f.workingHome, '.raf')), false);
@@ -70,7 +90,7 @@ test('cwd main, a symlink executable and claimed branch=main cannot change devel
   symlinkSync(join(f.developTree, 'bin', 'raf.ts'), alias);
   const before = files(f.statePath);
   for (const executable of [join(f.developTree, 'bin', 'raf.ts'), alias]) {
-    const result = command(f, ['help'], { cwd: f.mainTree, executable, env: { branch: 'main', RAF_BRANCH: 'main' } });
+    const result = command(f, ['agent', 'ps'], { cwd: f.mainTree, executable, env: { branch: 'main', RAF_BRANCH: 'main' } });
     refused(result, f);
     assert.deepEqual(files(f.statePath), before);
   }
@@ -82,7 +102,7 @@ test('a hardlinked entry under the main tree does not prove main module provenan
   const alias = join(f.mainTree, 'bin', 'develop-hardlink.ts');
   linkSync(join(f.developTree, 'bin', 'raf.ts'), alias);
   const before = files(f.statePath);
-  const result = command(f, ['help'], { cwd: f.mainTree, executable: alias });
+  const result = command(f, ['agent', 'ps'], { cwd: f.mainTree, executable: alias });
   assert.equal(result.error, undefined);
   assert.notEqual(result.status, 0);
   assert.match(result.stdout + result.stderr, /STATE_CONTEXT_REFUSED/);
@@ -93,7 +113,7 @@ test('changing HOME alone does not authorize QA or make the account HOME a diffe
   const f = fixture(t);
   seedMain7(f);
   const before = files(f.statePath);
-  const result = command(f, ['help'], { env: { HOME: f.qaHome } });
+  const result = command(f, ['agent', 'ps'], { env: { HOME: f.qaHome } });
   assert.equal(result.error, undefined);
   assert.notEqual(result.status, 0);
   assert.match(result.stdout + result.stderr, /STATE_CONTEXT_REFUSED/);

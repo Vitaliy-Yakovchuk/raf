@@ -26,6 +26,22 @@ test('[launch-failure-cleanup] brief delivery failure cleans its own launch', as
   await assertFailedLaunchCleaned(f, await f.run('delivery-agent'), 'delivery');
 });
 
+test('[Z.125] delivery failure survives directory cleanup in the durable session and closed failures do not warn in ps', async t => {
+  const f = await fixture(t, 'delivery', failureBudget, 'codex', { productionQa: true, commands: ['agent ps'] });
+  const outcome = await f.run('cause-agent');
+  await assertFailedLaunchCleaned(f, outcome, 'delivery');
+  const session = f.inspect().sessions[0];
+  assert.match(session.abortReason ?? '', /Unknown native input or screen during initial brief submission/);
+  const before = JSON.stringify(session);
+  for (let index = 0; index < 2; index++) {
+    const ps = await f.command(['agent', 'ps']);
+    assert.equal(ps.exitCode, 0, JSON.stringify(ps));
+    assert.doesNotMatch(ps.stderr, /Assignment completion is not confirmed/);
+    assert.doesNotMatch(ps.result.stderr, /Assignment completion is not confirmed/);
+  }
+  assert.equal(JSON.stringify(f.inspect().sessions[0]), before);
+});
+
 test('[launch-failure-cleanup] agent close without report exits 0 after confirmed closure and reports failed result', async t => {
   const f = await fixture(t, 'close', failureBudget, 'codex', { productionQa: true });
   const launched = await f.run('close-agent');

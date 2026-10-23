@@ -84,7 +84,7 @@ export async function createProductionServiceDependencies(
         for (const lease of result.retained) retained.add(lease.owner.runId);
       }
       const candidates = handle.sessionRepository.transaction(tx => tx.listSessions().filter(session =>
-        session.state !== 'finished' && !retained.has(session.runId) && session.launchContext?.wrapper));
+        session.state !== 'finished' && !retained.has(session.runId) && session.launchContext?.wrapper), 'read');
       if (candidates.length) {
         const boot = await currentBoot();
         for (const session of candidates) {
@@ -140,7 +140,7 @@ export async function createProductionServiceDependencies(
         if (snapshot.reasons.length || requiredIds.some(id => typeof id !== 'string' || !id.trim())) {
           return { status: 'UNKNOWN', reason: [...snapshot.reasons, ...(requiredIds.some(id => !id) ? ['Required filesystem mapping unavailable'] : [])].join('; ') };
         }
-        const running = handle.sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state === 'running' && session.process));
+        const running = handle.sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state === 'running' && session.process), 'read');
         const observations = await observeProcesses(running.map(session => session.process!), options?.processScan);
         const unknown = observations.find(observation => observation.state === 'unknown');
         if (unknown?.state === 'unknown') return { status: 'UNKNOWN', reason: unknown.error };
@@ -150,7 +150,7 @@ export async function createProductionServiceDependencies(
         const admission = handle.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, {
           requested: { ramBytes: 0, diskBytes: Object.fromEntries(ids.map(id => [id, 0])) },
           requiredFileSystemIds: ids,
-        }, { measurement: snapshot.measurement, observedProcesses }, evaluateResourceAdmission));
+        }, { measurement: snapshot.measurement, observedProcesses }, evaluateResourceAdmission), 'read');
         return { status: admission.level, reason: admission.reasons.join('; ') };
       },
       isClientAlive: options?.isClientAlive ?? (() => false),

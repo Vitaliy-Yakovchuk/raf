@@ -83,6 +83,22 @@ export interface StateStore {
 
 export const STATE_SCHEMA_VERSION = 10;
 
+export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
+  if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
+  const deadline = Date.now() + budget.transitionMs;
+  for (;;) {
+    try { return action(); }
+    catch (error) {
+      const source = error as { code?: string; errcode?: number };
+      if (!source?.code?.startsWith('ERR_SQLITE') || ![5, 6].includes((source.errcode ?? 0) & 255)) throw error;
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) throw error;
+      await new Promise(resolve => setTimeout(resolve, Math.min(budget.pollMs, remaining)));
+      if (Date.now() >= deadline) throw error;
+    }
+  }
+}
+
 export function openStateStore(path: string, options?: import('./state-migration-guard.ts').StateStoreOpenOptions): StateStore {
   if (typeof path !== "string" || path.trim() === "") {
     throw new Error("An explicit database path is required");
@@ -486,7 +502,11 @@ export function openStateStore(path: string, options?: import('./state-migration
   }
 
   const sessionRepository: SessionRepository = {
-    transaction: action => operation("sessionTransaction", () => transaction(() => withSessionTransaction(action), false)),
+    transaction: (action, mode) => operation("sessionTransaction", () => {
+      if (mode === 'read') db.exec('PRAGMA query_only = ON');
+      try { return transaction(() => withSessionTransaction(action), mode !== 'read'); }
+      finally { if (mode === 'read') db.exec('PRAGMA query_only = OFF'); }
+    }),
   };
   const taskReservationRepository: StateStore["taskReservationRepository"] = {
     transaction: action => operation("taskReservationTransaction", () => transaction(() => withSessionTransaction(action))),

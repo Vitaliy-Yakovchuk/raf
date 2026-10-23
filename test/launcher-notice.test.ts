@@ -79,6 +79,20 @@ test('[result-notice] notice text carries the agent ID, result, items, report pa
   for (const part of ['worker', 'failed', ...items, '/tmp/run/worker.json', NO_REPORT_REASON]) assert.ok(crash.includes(part), `${part}: ${crash}`);
 });
 
+test('[Z.125] first durable failure notice keeps the launch cause when exit precedes result acceptance', async t => {
+  const f = await commandFixture(t);
+  f.session('main', { project: 'orchestrator' });
+  const worker = launched(f, 'worker');
+  const cause = 'State store sessionTransaction failed (SQLite 5)';
+  f.store.sessionRepository.transaction(tx => tx.putSession({ ...worker, abortReason: cause, state: 'exited',
+    observation: { state: 'exited', observedAt: '2026-10-23T04:45:26.000Z', exitCode: null, evidence: cause } }));
+  const first = f.store.resultNotices.list().find(notice => notice.runId === worker.runId)!;
+  assert.match(first.text, /Reason: State store sessionTransaction failed \(SQLite 5\)/);
+  assert.ok(!first.text.includes(NO_REPORT_REASON));
+  accept(f, worker, 'failed', cause);
+  assert.equal(f.store.resultNotices.list().find(notice => notice.runId === worker.runId)?.text, first.text);
+});
+
 for (const status of ['succeeded', 'failed'] as const) {
   test(`[result-notice] accepted ${status} report of an agent launched by main reaches main once while the agent stays open and peers hear nothing`, async t => {
     const f = await commandFixture(t);

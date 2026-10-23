@@ -210,7 +210,7 @@ test('integration: opening and reading current schema works while another connec
   writer.exec('BEGIN IMMEDIATE');
   try {
     const reader = child(f.path, `const handle = openSessionRepository(path);
-try { console.log(JSON.stringify(handle.repository.transaction(tx => tx.listSessions()))); }
+try { console.log(JSON.stringify(handle.repository.transaction(tx => tx.listSessions(), 'read'))); }
 finally { handle.close(); }`);
     const outcome = await reader.done;
     assert.equal(outcome.code, 0, outcome.stderr);

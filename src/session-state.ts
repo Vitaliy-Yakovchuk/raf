@@ -78,7 +78,7 @@ export interface SessionTransaction {
 }
 
 export interface SessionRepository {
-  transaction<T>(operation: (transaction: SessionTransaction) => T): T;
+  transaction<T>(operation: (transaction: SessionTransaction) => T, mode?: 'read'): T;
 }
 
 export type SessionStateDependencies = {
@@ -175,7 +175,7 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
       });
     },
     listReconciliationCandidates() {
-      return repository.transaction(tx => copy(tx.listSessions().filter(session => session.state !== 'finished')));
+      return repository.transaction(tx => copy(tx.listSessions().filter(session => session.state !== 'finished')), 'read');
     },
     commitObservation(runId, expectedRevision, observation, effects) {
       return repository.transaction(tx => {
@@ -227,7 +227,7 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
       });
     },
     listPending() {
-      return repository.transaction(tx => copy(tx.listPending()));
+      return repository.transaction(tx => copy(tx.listPending()), 'read');
     },
     completePending(id) {
       repository.transaction(tx => tx.deletePending(id));

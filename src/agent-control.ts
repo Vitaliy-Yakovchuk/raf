@@ -63,7 +63,7 @@ export class AgentControlService {
   }
 
   private sessions(): SessionRecord[] {
-    return this.dependencies.repository.transaction(tx => structuredClone(tx.listSessions()));
+    return this.dependencies.repository.transaction(tx => structuredClone(tx.listSessions()), 'read');
   }
 
   private sameProcess(expected: ProcessIdentity, actual: ProcessIdentity): boolean {

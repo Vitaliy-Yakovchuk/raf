@@ -126,7 +126,7 @@ export async function createServicePorts(
       }
       for (const session of sessions.listReconciliationCandidates().filter(candidate => !retained.has(candidate.runId) && candidate.state === 'exited')) {
         if (session.launchContext) {
-          const get = (runId: string) => store.sessionRepository.transaction(tx => tx.getSession(runId));
+          const get = (runId: string) => store.sessionRepository.transaction(tx => tx.getSession(runId), 'read');
           await finalizeStartupContextRun(session.runId, {
             ...startupContextRuntimeFiles(join(context.homeDirectory, '.raf', 'tmp'), context.homeDirectory), database: store.startupContextDatabase,
             flowPath: join(context.orchestratorRoot, 'conf', 'flow.json'), mainAddress: 'main', now: () => new Date(clock()).toISOString(),

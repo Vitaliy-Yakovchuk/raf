@@ -57,7 +57,7 @@ export function createResultNotice(session: SessionRecord): ResultNotice | undef
     items: session.launchContext.assignment.changes.flatMap(change => change.items.map(item => `${change.id}:${item.id}`)),
     reportPath: session.launchContext.reportPath,
     answer: session.result?.response ?? '',
-    reason: session.result ? null : NO_REPORT_REASON,
+    reason: session.result ? null : session.abortReason ?? NO_REPORT_REASON,
   };
   return { id: `${session.runId}:result-notice`, runId: session.runId, recipient: target.addressId,
     recipientRunId: target.runId, state: 'pending', attempts: 0, lastError: null, text: resultNoticeText(content),

@@ -259,7 +259,7 @@ export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store'
     let error: string | null = null;
     try {
       const target = ports.store.sessionRepository.transaction(tx => tx.listSessions().find(row => row.addressId === claimed.recipient &&
-        row.runId === claimed.recipientRunId && row.state === 'running'));
+        row.runId === claimed.recipientRunId && row.state === 'running'), 'read');
       if (!target) throw new Error(`Recipient session is not active: ${claimed.recipient} (${claimed.recipientRunId ?? 'unresolved run'})`);
       const receipt = await send(ports, { to: claimed.recipient, runId: target.runId, text: claimed.text });
       if (!receipt.accepted) error = receipt.reason;
@@ -272,7 +272,7 @@ export function resultNoticeViews(store: StateStore, sessions: readonly SessionR
   const notices = store.resultNotices.list();
   const rows = [...sessions];
   const pending = new Set(notices.filter(notice => notice.state === 'pending').map(notice => notice.runId));
-  for (const session of store.sessionRepository.transaction(tx => tx.listSessions())) {
+  for (const session of store.sessionRepository.transaction(tx => tx.listSessions(), 'read')) {
     if (pending.has(session.runId) && !rows.some(row => row.runId === session.runId)) rows.push(session);
   }
   for (const notice of notices) {

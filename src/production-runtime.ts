@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
 import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
-import { openStateStore, type StateStore } from './state-store.ts';
+import { openStateStore, retryStateOperation, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
 import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
 import { createWorkspacePorts, executeCommand, observeProcesses, createResourceSnapshotReader, readMachineBootIdentity } from './os-runtime.ts';
@@ -176,7 +176,7 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
   });
   const registeredSockets = new Set<string>();
   try {
-    const sessions = (sessionStore ?? ownedStore!).sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state !== 'finished'));
+    const sessions = (sessionStore ?? ownedStore!).sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state !== 'finished'), 'read');
     for (const session of sessions) {
       if (!session.process) continue;
       const socket = session.process.evidence?.tmuxSocket;
@@ -336,6 +336,13 @@ function mainAttachment(session: SessionRecord): MainAttachment {
   return { id: 'main', runId: session.runId, tmuxSocket: identity.evidence.tmuxSocket, tmuxSession: identity.tmuxSession, tmuxPane: identity.evidence.tmuxPane, pid: identity.pid, startedAt: identity.startedAt, machineId: identity.evidence.machineId, bootId: identity.evidence.bootId };
 }
 type TransitionBudget = { transitionMs: number; pollMs: number };
+function recordLaunchFailure(store: StateStore, runId: string, reason: string): void {
+  store.sessionRepository.transaction(tx => {
+    const session = tx.getSession(runId);
+    if (!session || session.abortReason || session.result?.status === 'succeeded') return;
+    tx.putSession({ ...session, revision: session.revision + 1, abortReason: reason.slice(0, 4096) });
+  });
+}
 async function waitWrapperExit(execute: AdapterCommandExecutor, wrapper: ProcessIdentity, budget: TransitionBudget): Promise<boolean> {
   const deadline = Date.now() + budget.transitionMs;
   for (;;) {
@@ -349,7 +356,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const mainAuthority = new WeakMap<object, ProcessIdentity>();
   const direct = identityExecute ?? executeCommand;
   const state = createSessionState({ repository: store.sessionRepository, verifyMainAuthority: (authority, identity) => !!authority && typeof authority === 'object' && isDeepStrictEqual(mainAuthority.get(authority), identity), verifyWorkResult: (runId, result) => verified.get(result) === runId });
-  const current = (runId: string) => store.sessionRepository.transaction(tx => tx.getSession(runId));
+  const current = (runId: string) => store.sessionRepository.transaction(tx => tx.getSession(runId), 'read');
   const reportDirectory = (session: SessionRecord) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.runId) && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.addressId) && session.launchContext?.reportPath === join(context.tmpRoot, session.runId, `${session.addressId}.json`) ? join(context.tmpRoot, session.runId) : undefined;
   const acceptPendingReport = async (session: SessionRecord): Promise<SessionRecord> => {
     session = current(session.runId) ?? session;
@@ -359,12 +366,12 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       fs: { readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } } },
       now,
       verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignmentPorts(execute), archives),
-      diagnostic: async (reason, verification) => { process.stderr.write(`${session.runId}: ${reason}${verification ? `: ${JSON.stringify(verification)}` : ''}\n`); },
+      diagnostic: async (reason, verification) => { const latest = current(session.runId); if (latest && !latest.result && latest.state !== 'finished') process.stderr.write(`${session.runId}: ${reason}${verification ? `: ${JSON.stringify(verification)}` : ''}\n`); },
     });
     if (result) {
       const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context } };
       verified.set(value, session.runId);
-      state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [] });
+      await retryStateOperation(() => state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [] }), await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner));
     }
     return current(session.runId) ?? session;
   };
@@ -386,7 +393,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         finish: async (row, at, startupPending) => {
           session = row;
           if (!session.result) {
-            const result: WorkResult = { status: 'failed', response: NO_REPORT_REASON, proof: { runId: session.runId, at } };
+            const result: WorkResult = { status: 'failed', response: session.abortReason ?? NO_REPORT_REASON, proof: { runId: session.runId, at } };
             verified.set(result, session.runId);
             state.acceptWorkResult(session.runId, result, { pending: [{ id: `${session.runId}:agent.failed`, runId: session.runId, event: 'agent.failed', payload: { kind: 'agent.failed', id: session.addressId } }], domain: [] });
             session = current(session.runId)!;
@@ -663,7 +670,7 @@ export async function createProductionServices(
       const runner = readSession(runId)?.launchContext?.selection.runner;
       if (wrapper && runner && !await waitWrapperExit(execute, wrapper, await budgetFor(runner))) fail('LAUNCH_RECOVERABLE', `Worker of run ${runId} is still alive or its liveness is unknown after the runner transition budget; the next reconciliation releases its reservation`);
       if (!await releaseTaskReservations(await reservationTools(store, context, execute, options.execute), { lease, reason, closeLaunch: tx => { const session = tx.getSession(runId); if (!session) throw new Error('Unknown launch'); closeSessionInTransaction(tx, session, now()); } })) fail('LAUNCH_RECOVERABLE', `Cannot safely release run ${runId}`);
-    } else if (readSession(runId)?.state === 'reserved') tools.state.abortLaunch(runId, reason, now());
+    } else if (readSession(runId)?.state === 'reserved') tools.state.abortLaunch(runId, readSession(runId)?.abortReason ?? reason, now());
   };
   return {
     resolveNotify: async address => {
@@ -738,7 +745,7 @@ export async function createProductionServices(
       const candidates = tools.state.listReconciliationCandidates().filter(session => session.process);
       const observed = await observeProcesses(candidates.map(session => session.process!), { execute });
       const measured = { measurement: resourceSnapshot.measurement, observedProcesses: candidates.flatMap((session, index) => observed[index].state === 'alive' ? [{ runId: session.runId, identity: session.process! }] : []) };
-      const admission = store.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, { requested, requiredFileSystemIds }, measured, evaluateResourceAdmission));
+      const admission = store.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, { requested, requiredFileSystemIds }, measured, evaluateResourceAdmission), 'read');
       if (!admission.allowed[input.activity.type === 'hotfix' ? 'hotfix' : 'normal']) return { admitted: false, reason: admission.reasons.join('; ') };
       const record = prepared.get(input.tmuxSession);
       if (!record || record.reportPath !== input.reportPath || input.assignment.root !== context.orchestratorRoot || !isDeepStrictEqual(record.launch.assignment, input.assignment) || !isDeepStrictEqual(record.launch.writeBoundaries ?? [], input.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Prepared launch context mismatch');
@@ -806,7 +813,9 @@ export async function createProductionServices(
         });
       } catch (error) {
         record.wrapperFailure = (error as Partial<PersistentWrapperFailure>).wrapper;
-        throw await workerLaunchFailure(context.tmpRoot, record.launch.runId, record.wrapperFailure) ?? error;
+        const failure = await workerLaunchFailure(context.tmpRoot, record.launch.runId, record.wrapperFailure) ?? error;
+        await retryStateOperation(() => recordLaunchFailure(store, record.launch.runId, failure instanceof Error ? failure.message : String(failure)), settings.timeouts);
+        throw failure;
       }
       return { tmuxSession: request.tmuxSession, selection };
     } },
@@ -840,6 +849,8 @@ export async function createProductionServices(
       return (await observeProcesses([identity], { execute }))[0].state === 'exited' ? { stopped: true } : { stopped: false, reason: 'Runner death not confirmed' };
     },
     abortLaunch: async (runId, reason) => {
+      const runner = readSession(runId)?.launchContext?.selection.runner ?? [...prepared.values()].find(row => row.launch.runId === runId)?.launch.selection.runner;
+      if (runner) await retryStateOperation(() => recordLaunchFailure(store, runId, reason), await budgetFor(runner));
       const session = readSession(runId);
       if (session?.state === 'running') {
         const record = [...prepared.values()].find(row => row.launch.runId === runId);
@@ -1072,7 +1083,7 @@ export async function runProductionWorker(
       if (current?.state === 'running' && current.process && sameIdentity(current.process, identity)) return;
       if (!lease) fail('TASK_CLAIM_LOST', 'Task reservation lost before brief');
       const next = await startTaskReservations(dependencies, { lease, agent: identity as Awaited<ReturnType<typeof ownIdentity>> });
-      if (!next || !tools.state.commitStarted(request.runId, identity)) fail('TASK_CLAIM_LOST', 'Durable start gate rejected runner before brief');
+      if (!next || !await retryStateOperation(() => tools.state.commitStarted(request.runId, identity), settings.timeouts)) fail('TASK_CLAIM_LOST', 'Durable start gate rejected runner before brief');
       lease = next;
     };
     transport.deliver = async brief => {
@@ -1190,15 +1201,16 @@ export async function runProductionWorker(
           if ((await adapter.inspect(adapterSession)).status === 'exited') await adapter.stop(adapterSession);
         },
         failed: async (_runId, reason, recoverable) => {
+          await retryStateOperation(() => recordLaunchFailure(store, request.runId, reason), settings.timeouts);
           if (recoverable) { process.stderr.write(`${request.runId}: recoverable launch: ${reason}\n`); return; }
           const current = tools.current(request.runId);
           if (current?.state === 'running' && current.process) {
             if (!await processExited(execute, current.process, settings.timeouts)) fail('LAUNCH_RECOVERABLE', `${request.runId}: runner process exit is not confirmed within ${settings.timeouts.transitionMs} ms after its own tmux session stopped; task reservations stay until reconciliation`);
-            tools.state.commitObservation(request.runId, current.revision, { state: 'exited', observedAt: now(), exitCode: null, evidence: reason }, effects);
+            await retryStateOperation(() => tools.state.commitObservation(request.runId, current.revision, { state: 'exited', observedAt: now(), exitCode: null, evidence: reason }, effects), settings.timeouts);
             const exited = tools.current(request.runId)!;
             await tools.finalize(exited, exited.activity ? [{ kind: 'ended', session: exited, project: exited.activity.project }] : []);
           }
-          if (current?.state === 'reserved' && lease) await releaseTaskReservations(dependencies, { lease, reason: 'cancelled', closeLaunch: tx => closeSessionInTransaction(tx, { ...tx.getSession(request.runId)!, abortReason: reason }, now()) });
+          if (current?.state === 'reserved' && lease) await releaseTaskReservations(dependencies, { lease, reason: 'cancelled', closeLaunch: tx => closeSessionInTransaction(tx, tx.getSession(request.runId)!, now()) });
         },
       },
       handshake: async handshake => { await channel.handshake(handshake); handedOff = true; },

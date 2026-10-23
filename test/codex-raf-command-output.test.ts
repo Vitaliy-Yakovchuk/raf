@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { access, chmod, mkdir, readFile, rename, rm, symlink, writeFile } from 'node:fs/promises';
+import { access, chmod, mkdir, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { digest, filesBelow, outputFixture, outputTimeout, shellQuote } from './codex-command-output-fixture.ts';
@@ -181,7 +181,9 @@ test('[codex-command-output] result write failure is explicit and does not run a
   await f.configure(payload(256 * 1024, 'WRITE-FAILURE'));
   await f.replay(prepared, requireReplay(await f.hook(prepared)));
   const baseline = await filesBelow(f.runDirectory);
-  const directories = [...new Set([f.runDirectory, ...baseline.map(path => dirname(path))])];
+  const preparedDirectories = (await readdir(f.runDirectory, { withFileTypes: true }))
+    .filter(entry => entry.isDirectory()).map(entry => join(f.runDirectory, entry.name));
+  const directories = [...new Set([f.runDirectory, ...preparedDirectories, ...baseline.map(path => dirname(path))])];
   for (const directory of directories) await chmod(directory, 0o500);
   const callsBefore = (await f.calls()).length;
   try {

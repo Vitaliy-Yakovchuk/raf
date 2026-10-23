@@ -9,6 +9,7 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { prepareCodexRafCommandAccess } from '../src/codex-raf-command-access.ts';
 import type { PreparedCodexRafCommandAccess } from '../src/codex-raf-command-access.ts';
+import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
 import { buildRunnerInvocation, nativeSandboxArgs } from '../src/runner-protocols.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
 import { outputFixture } from './codex-command-output-fixture.ts';
@@ -312,8 +313,15 @@ test('[codex-state-access] native Codex agent ps transports >128 KiB from 512 pr
   const siblingRead = `${quote(process.execPath)} -e ${quote(`try {process.stdout.write(require('node:fs').readFileSync(${JSON.stringify(join(sibling, 'stdout'))}));process.exitCode=19;}catch {console.log('Z101_SIBLING_DENIED');}`)}`;
   const request = { ...f.request, scope: { ...f.request.scope, hidden: [...f.request.scope.hidden, sibling] } };
   request.invocation = { ...request.invocation, args: nativeSandboxArgs(settings, buildRunnerInvocation(settings, { model: 'gpt-6.1-sol', effort: 'high' }).args, request.scope) };
-  const prepared = await prepareCodexRafCommandAccess(request);
-  t.after(async () => { await prepared.cleanup(); await prepared.cleanup(); });
+  const sandbox = await prepareCodexSandbox({
+    ...request, runId: 'z101-native-output', writableDirectories: [f.cwd, f.runDirectory],
+  });
+  let prepared: PreparedCodexRafCommandAccess | undefined;
+  t.after(async () => {
+    try { await prepared?.cleanup(); await prepared?.cleanup(); }
+    finally { await sandbox.cleanup(); await sandbox.cleanup(); }
+  });
+  prepared = await prepareCodexRafCommandAccess({ ...request, invocation: sandbox.invocation });
   const commands = [`${f.rafCommand} agent ps`, directRead, siblingRead];
   const provider = await scriptedProvider(commands, 100000);
   t.after(() => provider.close());

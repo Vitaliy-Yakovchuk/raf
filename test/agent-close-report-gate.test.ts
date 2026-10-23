@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
 import { promises as fs } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { promisify } from 'node:util';
 import { execFile } from 'node:child_process';
@@ -69,34 +69,116 @@ function diagnostic(outcome: Awaited<ReturnType<AgentRunFixture['command']>>) {
   return JSON.parse(outcome.result.stderr);
 }
 
+const mainCallerScript = String.raw`
+import { readFile, readdir, writeFile, rename } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+const marker = process.argv[2];
+const c = JSON.parse(await readFile(marker, 'utf8'));
+const started = new Set();
+setInterval(async () => {
+  for (const name of await readdir(c.control)) {
+    if (!/^main-command-\d+\.json$/.test(name) || started.has(name)) continue;
+    started.add(name);
+    const prefix = c.control + '/' + name.slice(0, -5);
+    const argv = JSON.parse(await readFile(prefix + '.json', 'utf8'));
+    const child = spawn(process.execPath, [c.commandPath, marker, JSON.stringify(argv)], {
+      cwd: c.root, env: process.env, stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '', stderr = '', spawnError;
+    child.stdout.on('data', data => { stdout += data; });
+    child.stderr.on('data', data => { stderr += data; });
+    child.on('error', error => { spawnError = error.message; });
+    child.on('close', async exitCode => {
+      const outcome = { exitCode, result: stdout.trim() ? JSON.parse(stdout) : null, stderr: spawnError ?? stderr };
+      await writeFile(prefix + '.done.tmp', JSON.stringify(outcome));
+      await rename(prefix + '.done.tmp', prefix + '.done');
+    });
+  }
+}, 20);
+`;
+
+async function attachMainCaller(f: AgentRunFixture, timeouts: { startupMs: number; transitionMs: number }) {
+  const marker = join(f.directory, 'fixture.json');
+  const cfg = await json(marker);
+  const env: NodeJS.ProcessEnv = {
+    ...process.env, HOME: cfg.home, RAF_QA_HOME: cfg.home, RAF_AGENT_RUN_FIXTURE: marker,
+    PATH: `${join(f.directory, 'bin')}:${process.env.PATH}`,
+    TMPDIR: f.directory, TMUX_TMPDIR: f.directory,
+  };
+  delete env.TMUX;
+  delete env.TMUX_PANE;
+  const socket = (await exec(cfg.tmux, ['-L', cfg.tmuxLabel, 'display-message', '-p', '#{socket_path}'], {
+    env, timeout: timeouts.startupMs,
+  })).stdout.trim();
+  const socketLocation = relative(f.directory, socket);
+  assert.ok(socketLocation && !socketLocation.startsWith('..') && !isAbsolute(socketLocation), 'main uses only the fixture tmux socket');
+  const script = join(f.directory, 'main-caller.mjs');
+  await fs.writeFile(script, mainCallerScript);
+  await exec(cfg.tmux, ['-S', socket, 'new-session', '-d', '-s', 'main', '-c', cfg.root, process.execPath, script, marker], {
+    env, timeout: timeouts.startupMs,
+  });
+  let sequence = 0;
+  const command: AgentRunFixture['command'] = async argv => {
+    const prefix = join(f.control, `main-command-${++sequence}`);
+    await fs.writeFile(`${prefix}.json.tmp`, JSON.stringify(argv));
+    await fs.rename(`${prefix}.json.tmp`, `${prefix}.json`);
+    await until(() => exists(`${prefix}.done`), Boolean, `attached main ran ${argv.join(' ')}`, timeouts.transitionMs);
+    return json(`${prefix}.done`);
+  };
+  const attached = await command(['main', 'attach']);
+  assert.equal(attached.exitCode, 0, JSON.stringify(attached));
+  const main = f.inspect().sessions.find(session => session.addressId === 'main');
+  assert.ok(main?.process && main.state === 'running', 'public main attach registers the stable caller');
+  return { ...f, command };
+}
+
 async function liveFixture(t: TestContext, options: { tasks?: number; commands?: string[] } = {}) {
   const protocol = (await json(join(conf, 'raf.json'))).runnerProtocols.find((entry: any) => entry.runner === 'codex');
-  const f = await agentRunFixture(t, 'live', protocol.timeouts, 'codex', { tasks: 2, productionQa: true, ...options });
-  const outcome = await f.run('gate-worker');
+  const base = await agentRunFixture(t, 'live', protocol.timeouts, 'codex', {
+    tasks: 2, productionQa: true, ...options, commands: ['main attach', ...(options.commands ?? [])],
+  });
+  const outcome = await base.run('gate-worker');
   assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));
   const session = await until(
-    () => f.inspect().sessions.find(session => session.addressId === 'gate-worker'),
+    () => base.inspect().sessions.find(session => session.addressId === 'gate-worker'),
     session => session?.state === 'running' && Boolean(session.process),
     'fixture worker has a registered running identity',
   );
   assert.ok(session?.process);
-  await until(() => exists(join(f.control, 'gate-worker.brief')), Boolean, 'runner accepted the assignment');
+  await until(() => exists(join(base.control, 'gate-worker.brief')), Boolean, 'runner accepted the assignment');
+  const f = await attachMainCaller(base, protocol.timeouts);
   return { f, session };
 }
 
 async function acceptReport(f: AgentRunFixture, session: SessionRecord, status: 'succeeded' | 'failed') {
+  const tasksFile = 'openspec/changes/launch-failure-fixture/tasks.md';
+  let before: string | undefined;
+  let parent: string | undefined;
   if (status === 'succeeded') {
-    const tasksPath = join(session.launchContext!.assignment.root, 'openspec/changes/launch-failure-fixture/tasks.md');
-    const tasks = await fs.readFile(tasksPath, 'utf8');
-    assert.ok(tasks.includes(`- [ ] 1.1 ${description}`));
-    await fs.writeFile(tasksPath, tasks.replace(`- [ ] 1.1 ${description}`, `- [x] 1.1 ${description}`));
+    before = await f.git('show', `HEAD:${tasksFile}`);
+    assert.ok(before.includes(`- [ ] 1.1 ${description}`));
+    assert.equal(await fs.readFile(join(session.launchContext!.assignment.root, tasksFile), 'utf8'), before);
+    assert.equal(await f.git('diff', '--cached', '--', tasksFile), '');
+    parent = (await f.git('rev-parse', 'HEAD')).trim();
   }
   await atomicReport(session, report(status));
-  return until(
+  const accepted = await until(
     () => f.inspect().sessions.find(value => value.runId === session.runId),
     value => value?.result?.status === status,
     `production accepted the ${status} report`,
   );
+  if (status === 'succeeded') {
+    const expected = before!.replace(`- [ ] 1.1 ${description}`, `- [x] 1.1 ${description}`);
+    assert.equal(await f.git('show', `HEAD:${tasksFile}`), expected, 'raf commits the exact assigned checkbox');
+    assert.equal(await fs.readFile(join(session.launchContext!.assignment.root, tasksFile), 'utf8'), expected);
+    assert.equal(await f.git('diff', '--', tasksFile), '');
+    assert.equal(await f.git('diff', '--cached', '--', tasksFile), '');
+    const commits = (await f.git('rev-list', `${parent}..HEAD`)).trim().split('\n');
+    assert.equal(commits.length, 1, 'one raf checkbox commit precedes accepted success');
+    assert.notEqual(commits[0], '');
+    assert.equal((await f.git('diff-tree', '--no-commit-id', '--name-only', '-r', commits[0])).trim(), tasksFile);
+  }
+  return accepted;
 }
 
 async function assertPendingPreserves(f: AgentRunFixture, session: SessionRecord) {
@@ -128,7 +210,8 @@ async function assertPendingPreserves(f: AgentRunFixture, session: SessionRecord
     after.pending.filter(value => value.runId === session.runId && [statusEvent('failed'), 'agent.closed'].includes(value.event)),
     before.pending.filter(value => value.runId === session.runId && [statusEvent('failed'), 'agent.closed'].includes(value.event)),
   );
-  assert.deepEqual(await f.tmuxSessions(), [session.process!.tmuxSession]);
+  const expectedTmux = before.sessions.filter(value => value.state === 'running').map(value => value.process!.tmuxSession);
+  assert.deepEqual((await f.tmuxSessions()).sort(), expectedTmux.sort());
   const cfg = await json(join(f.directory, 'fixture.json'));
   const reopened = openStateStore(cfg.statePath);
   try {
@@ -172,7 +255,12 @@ for (const variant of ['partial', 'malformed', 'foreign', 'unverified', 'answer-
       await fs.writeFile(join(foreignRun, 'gate-worker.json'), JSON.stringify(report('failed')));
       await atomicReport(session, { ...report('failed'), changes: [{ id: 'foreign-change', items: [] }] });
     }
-    if (variant === 'unverified') await atomicReport(session, report('succeeded'));
+    if (variant === 'unverified') {
+      const tasksPath = join(session.launchContext!.assignment.root, 'openspec/changes/launch-failure-fixture/tasks.md');
+      const tasks = await fs.readFile(tasksPath, 'utf8');
+      await fs.writeFile(tasksPath, tasks.replace(`1.1 ${description}`, `1.1 Changed after assignment`));
+      await atomicReport(session, report('succeeded'));
+    }
     if (variant === 'answer-only') await fs.writeFile(path, 'Усе готово. SENSITIVE_FIXTURE_BRIEF');
     await assertPendingPreserves(f, session);
   });

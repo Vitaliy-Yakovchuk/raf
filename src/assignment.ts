@@ -1,4 +1,5 @@
-import { basename, isAbsolute, join } from 'node:path';
+import { realpath, stat } from 'node:fs/promises';
+import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { composeBriefGuide } from './brief-guide.ts';
 
 export interface AssignmentCliPort {
@@ -115,6 +116,27 @@ export async function validateAssignment(request: AssignmentRequest, ports: Assi
   const snapshot: AssignmentSnapshot = Object.freeze({ root: request.root, changes: Object.freeze(changes.map(change => Object.freeze({ id: change.id, items: Object.freeze(change.items.map(item => Object.freeze(item))) }))), baselineArchives: Object.freeze(archived.map(row => row.name)) });
   return { ok: true, snapshot };
 }
+async function codexFileWriteInstructions(context: AssignmentBriefContext): Promise<string> {
+  if (context.runner !== 'codex') return '';
+  const boundaries = await Promise.all(context.writeBoundaries.map(async boundary => {
+    const path = resolve(context.cwd!, boundary);
+    try {
+      const info = await stat(path);
+      return { path, canonical: await realpath(path), file: info.isFile(), directory: info.isDirectory() };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      return { path, canonical: path, file: !boundary.endsWith(sep), directory: boundary.endsWith(sep) };
+    }
+  }));
+  const files = boundaries.filter(boundary => boundary.file && !boundaries.some(directory => {
+    if (!directory.directory) return false;
+    const suffix = relative(directory.canonical, boundary.canonical);
+    return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`);
+  }));
+  if (!files.length) return '';
+  return `Окремі файли поза дозволеними теками: ${JSON.stringify([...new Set(files.map(file => file.path))])}. Змінюй їхній вміст через shell-команду в пісочниці, відкриваючи сам файл для запису на місці (in-place), наприклад Node fs.writeFile або Python open/Path.write_text. Вбудований apply_patch не має native дозволу на ці окремі файли; запис через тимчасовий сусідній файл і rename, unlink або атомарну заміну не підтримується. Відмова apply_patch не потребує approval чи розширення доступу: використовуй shell-запис самого файла. Батьківські теки й сусідні файли не отримують дозволу на запис. JSON-звіт записуй атомарно за report_path у власній дозволеній теці запуску.`;
+}
+
 export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, context: AssignmentBriefContext, fs: AssignmentFilePort): Promise<string> {
   if (!safeName(context.runner) || !safeName(context.stage)) throw new Error('Invalid runner or stage template name');
   if (!isAbsolute(context.reportPath) || basename(context.reportPath) !== `${context.sessionName}.json`) throw new Error('report_path must be absolute and use <sessionName>.json');
@@ -126,6 +148,7 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
   }));
   templates[2] = templates[2].replace(/^Онови галочки[^\n]+/mu, 'Виконавець пише й комітить власний результат і докази до JSON-звіту. Галочки саме доручених пунктів tasks.md ставить і комітить raf за валідним succeeded; сам їх не змінюй. Failed не запускає відміток. Якщо це останні пункти, атомарно запиши succeeded без archive, дочекайся підтверджених галочок і комітів raf у цій самій сесії, перевір усі задачі та виконай sync/archive за projects/orchestrator/autonomous-development з урахуванням skip_specs. Закоміть власне завершення й атомарно доповни той самий JSON точним changes[].archive та власними commits. До перевірки архіву raf не приймає остаточний succeeded. Якщо інші пункти відкриті, не виконуй їх і не архівуй зміну.');
   const guide = await composeBriefGuide(snapshot, context, fs);
+  const fileWriteInstructions = await codexFileWriteInstructions(context);
   const assignment = { project: context.project, agent_id: context.agentId, session_name: context.sessionName, root: snapshot.root, cwd: context.cwd, features: context.features, phase: context.phase, outcome: context.outcome, write_boundaries: context.writeBoundaries, sources: context.sources, assignments: snapshot.changes, report_path: context.reportPath, report_schema: context.reportSchema, ...(context.rafCommand ? { raf_command: context.rafCommand, ...(context.rafSubcommands ? { raf_subcommands: [...context.rafSubcommands] } : {}) } : {}) };
   const simple = 'окремою простою командою, без cd, конвеєрів, підстановок і змінних перед нею';
   const raf = !context.rafCommand ? ''
@@ -133,7 +156,7 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
     : ` Команди raf виконуй через raf_command ${simple} (\`raf_command agent run …\`): лише така команда виконується поза пісочницею й має доступ до стану raf.`;
   const commitScope = context.commitOwnWork ? ` Репозиторії коміту: ${(context.commitRepositories ?? [snapshot.root]).join(', ')} (Orchestrator: ${snapshot.root}). Дозволені файлові шляхи: ${(context.commitPaths ?? context.writeBoundaries).join(', ')}; для власних результатів і доказів; галочки доручених пунктів tasks.md ставить і комітить raf. Git-права не розширюють файлових меж.${context.workspaceWritable === false ? ' Коміть лише власні OpenSpec/документні шляхи в Orchestrator; код workspace і його git-каталоги залишаються read-only.' : ''}` : '';
   const commit = context.commitOwnWork ? ' Після перевірок сам закоміть свої зміни до JSON-звіту: додавай до коміту лише власні шляхи, чужі незакомічені правки в тому самому дереві не чіпай і не комітуй, перетини й спільні незакомічені файли узгоджуй з іншими виконавцями за projects/orchestrator/parallel-development «Коміти в спільному робочому дереві». Зайнятий індекс очікуй, чужий index.lock не видаляй. Обов\'язок закомітити свою роботу входить у доручення; хеші створених комітів вкажи у звіті (поле commits). Push не виконуй: `git push` дозволено лише окремим дорученням, push визначає main.' + commitScope : '';
-  return [...templates, guide, '# Конкретне доручення\n\nПрацюй лише над дорученими пунктами. Відповідай власнику українською. Зберігай правдиві результати й докази; галочки доручення ставить raf. Запиши JSON за report_path та report_schema. Коротко заповни context: unnecessary (source, reason) і missing (description, foundAt); порожні масиви допустимі.' + raf + commit + '\n\n' + JSON.stringify(assignment, null, 2)].join('\n\n');
+  return [...templates, guide, ...(fileWriteInstructions ? [fileWriteInstructions] : []), '# Конкретне доручення\n\nПрацюй лише над дорученими пунктами. Відповідай власнику українською. Зберігай правдиві результати й докази; галочки доручення ставить raf. Запиши JSON за report_path та report_schema. Коротко заповни context: unnecessary (source, reason) і missing (description, foundAt); порожні масиви допустимі.' + raf + commit + '\n\n' + JSON.stringify(assignment, null, 2)].join('\n\n');
 }
 export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, ports: AssignmentPorts, archiveClaims: Readonly<Record<string, string>> = {}): Promise<AssignmentVerification> {
   const issues: AssignmentIssue[] = [];

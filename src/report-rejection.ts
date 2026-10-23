@@ -7,5 +7,5 @@ export interface ReportRejectionSnapshot {
 }
 
 export function recordReportRejection(store: StateStore, runId: string, snapshot: ReportRejectionSnapshot): void {
-  throw new Error('NotImplemented');
+  store.resultNotices.stageReportRejection(runId, snapshot);
 }

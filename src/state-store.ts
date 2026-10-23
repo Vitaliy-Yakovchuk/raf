@@ -1,3 +1,4 @@
+import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import type { TaskReservationSet } from "./task-reservations.ts";
 import type { EventRegistryPorts, EventTransaction, PendingEvent } from "./event-registry.ts";
 import { DatabaseSync } from "node:sqlite";
@@ -8,7 +9,7 @@ import { inspectStateSchema } from './state-schema.ts';
 import { ReminderService, type Reminder, type ReminderRepository, type ReminderTransaction } from "./reminders.ts";
 import type { ReminderSessionEffect } from "./reminder-repository.ts";
 import type { SessionRepository, SessionTransaction, SessionRecord, PendingIntent, AdmissionReservation } from "./session-state.ts";
-import { createResultNotice, createReportDiagnosticNotice, type ResultNotice } from './launcher-notice.ts';
+import { createResultNotice, createReportRejectionNotice, type ResultNotice } from './launcher-notice.ts';
 import { settleStartupContextReview } from './startup-context.ts';
 
 export type RunnerInitialState = { id: string; initialEnabled: boolean };
@@ -44,6 +45,7 @@ export interface StateStore {
   readonly startupContextDatabase: DatabaseSync;
   resultNotices: {
     stageReportDiagnostic(runId: string, reason: string): void;
+    stageReportRejection(runId: string, snapshot: ReportRejectionSnapshot): void;
     list(): ResultNotice[];
     claim(id: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): ResultNotice | undefined;
     complete(id: string, token: string, error: string | null): void;
@@ -677,18 +679,25 @@ export function openStateStore(path: string, options?: import('./state-migration
     return row ? JSON.parse(row.payload as string) as ResultNotice : undefined;
   };
   const resultNotices: StateStore['resultNotices'] = {
-    stageReportDiagnostic: (runId, reason) => operation("stageReportDiagnostic", () => transaction(() => {
+    stageReportRejection: (runId, snapshot) => operation("stageReportRejection", () => transaction(() => {
       const row = db.prepare("SELECT payload FROM sessions WHERE run_id = ?").get(runId);
       if (!row) return;
       const session = JSON.parse(row.payload as string) as SessionRecord;
-      if (session.result || !['running', 'exited'].includes(session.state)) return;
-      const notice = createReportDiagnosticNotice(session, reason);
-      if (notice.recipientRunId === null) {
-        const recipient = db.prepare("SELECT run_id FROM sessions WHERE address_id = ? AND state = 'running'").get(notice.recipient);
-        notice.recipientRunId = recipient?.run_id as string ?? null;
-      }
-      db.prepare("INSERT INTO result_notices(id, run_id, payload) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING").run(notice.id, notice.runId, JSON.stringify(notice));
+      if (session.result || session.reportAcceptance || !['running', 'exited'].includes(session.state)) return;
+      if (session.launchContext && session.launchContext.reportPath !== snapshot.reportPath) return;
+      if (db.prepare("SELECT 1 FROM sessions WHERE address_id = ? AND run_id <> ? AND state <> 'finished'").get(session.addressId, runId)) return;
+      const notice = createReportRejectionNotice(session, snapshot);
+      const recipient = db.prepare("SELECT state FROM sessions WHERE run_id = ? AND address_id = ?").get(notice.recipientRunId, notice.recipient);
+      if (!recipient || recipient.state !== 'running') notice.lastError = `Recipient session is not active: ${notice.recipient || 'unknown'} (${notice.recipientRunId ?? 'unresolved run'})`;
+      const inserted = db.prepare("INSERT INTO result_notices(id, run_id, payload) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING").run(notice.id, runId, JSON.stringify(notice));
+      if (!Number(inserted.changes)) return;
+      const intent: PendingIntent = { id: notice.id, runId, event: 'agent.report-rejected', payload: { kind: 'agent.report-rejected', id: session.addressId } };
+      db.prepare("INSERT INTO pending_intents(id, run_id, payload) VALUES (?, ?, ?)").run(intent.id, runId, JSON.stringify(intent));
     })),
+    stageReportDiagnostic: (runId, reason) => {
+      const session = sessionRepository.transaction(tx => tx.getSession(runId), 'read');
+      if (session?.launchContext) resultNotices.stageReportRejection(runId, { reportPath: session.launchContext.reportPath, bytes: null, reason });
+    },
     list: () => operation("listResultNotices", () => transaction(() => {
       db.prepare("DELETE FROM result_notices WHERE run_id NOT IN (SELECT run_id FROM sessions) AND json_extract(payload, '$.state') = 'delivered'").run();
       return db.prepare("SELECT payload FROM result_notices ORDER BY rowid").all().map(row => JSON.parse(row.payload as string) as ResultNotice);
@@ -697,7 +706,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       const notice = readResultNotice(id);
       if (!notice || notice.state !== 'pending' || !takeClaim(`result:${id}`, id, owner, claimedAt, isOwnerAlive)) return undefined;
       notice.attempts++;
-      if (notice.recipientRunId === null) {
+      if (notice.recipientRunId === null && !notice.id.startsWith(`${notice.runId}:report-rejected:`)) {
         const row = db.prepare("SELECT run_id FROM sessions WHERE address_id = ? AND state = 'running'").get(notice.recipient);
         notice.recipientRunId = row?.run_id as string ?? null;
       }

@@ -1,3 +1,4 @@
+import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import { validStartupContextAssessment, type StartupContextAssessment } from './startup-context.ts';
 import { isAbsolute, join } from 'node:path';
 import type { AssignmentSnapshot, AssignmentVerification } from './assignment.ts';
@@ -39,6 +40,7 @@ export interface AgentReportPorts extends Partial<TaskCheckboxReportPort>, Parti
   readonly fs: {
     mkdir(path: string): Promise<void>;
     readText(path: string): Promise<string | null>;
+    readBytes?(path: string): Promise<Uint8Array | null>;
     removeTree(path: string): Promise<void>;
   };
   watch(directory: string, listener: (event: 'create' | 'modify' | 'rename', filename: string) => Promise<void>): () => void;
@@ -46,14 +48,14 @@ export interface AgentReportPorts extends Partial<TaskCheckboxReportPort>, Parti
   now(): string;
   verifyAssignmentCompletion(snapshot: AssignmentSnapshot, archiveClaims: Readonly<Record<string, string>>): Promise<AssignmentVerification>;
   result(result: AgentReportResult): Promise<void>;
-  diagnostic(reason: string): Promise<void>;
+  diagnostic(reason: string, snapshot?: ReportRejectionSnapshot): Promise<void>;
 }
 export interface AgentReportWatcher {
   readonly path: string;
   finish(exit: AgentReportExit): Promise<void>;
   dispose(): Promise<void>;
 }
-export type PendingAgentReportPorts = Pick<AgentReportPorts, 'now' | 'verifyAssignmentCompletion' | 'diagnostic' | 'confirmTaskCheckboxes' | keyof ReportedCommitAcceptancePorts> & { readonly fs: Pick<AgentReportPorts['fs'], 'readText'> };
+export type PendingAgentReportPorts = Pick<AgentReportPorts, 'now' | 'verifyAssignmentCompletion' | 'diagnostic' | 'confirmTaskCheckboxes' | keyof ReportedCommitAcceptancePorts> & { readonly fs: Pick<AgentReportPorts['fs'], 'readText' | 'readBytes'> };
 export function validAgentReport(value: unknown, assignment: AssignmentSnapshot, context?: ReportedCommitRequestContext): value is AgentReport {
   const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
   const status = (value: unknown) => value === 'succeeded' || value === 'failed';
@@ -81,20 +83,41 @@ export function validAgentReport(value: unknown, assignment: AssignmentSnapshot,
   return valid(value);
 }
 const acceptanceQueues = new Map<string, Promise<unknown>>();
-const verifiedSnapshots = new WeakMap<AgentReportResult, { request: AgentReportRequest; content: string; result: string }>();
+const rejectedResults = new WeakMap<AgentReportResult, Set<string>>();
+const verifiedSnapshots = new WeakMap<AgentReportResult, { request: AgentReportRequest; content: string; bytes: Uint8Array; result: string }>();
+async function sameReportBytes(path: string, bytes: Uint8Array, content: string, ports: PendingAgentReportPorts): Promise<boolean> {
+  if (!ports.fs.readBytes) return await ports.fs.readText(path) === content;
+  const current = await ports.fs.readBytes(path);
+  return current !== null && Buffer.from(bytes).equals(current);
+}
 async function verifyCurrentReport(request: AgentReportRequest, path: string, ports: PendingAgentReportPorts): Promise<void> {
   if (request.reportedCommits?.runId !== request.runId || request.reportedCommits.reportPath !== path
     || !ports.isCurrentReport || !await ports.isCurrentReport(request.runId, path)) throw new Error('Reported commits do not match the current run/report path');
 }
 export async function verifyPendingAgentReportFreshness(request: AgentReportRequest, result: AgentReportResult, ports: PendingAgentReportPorts): Promise<void> {
-  const snapshot = verifiedSnapshots.get(result);
-  if (!snapshot || snapshot.request !== request || snapshot.result !== JSON.stringify(result)) throw new Error('Report has no verified snapshot in this process');
-  const path = join(request.tmpRoot, request.runId, `${request.address}.json`);
-  if (await ports.fs.readText(path) !== snapshot.content) throw new Error('Report snapshot changed before durable worker acceptance; retry the complete report');
-  await verifyCurrentReport(request, path, ports);
-  if (!ports.readTaskCheckboxCommits) throw new Error('Reported commit acceptance ports are unavailable');
-  await validateReportedCommitGroups(request.reportedCommits!, result.report!.commits!, await ports.readTaskCheckboxCommits(request.runId));
+  try {
+    const snapshot = verifiedSnapshots.get(result);
+    if (!snapshot || snapshot.request !== request || snapshot.result !== JSON.stringify(result)) throw new Error('Report has no verified snapshot in this process');
+    const path = join(request.tmpRoot, request.runId, `${request.address}.json`);
+    if (!await sameReportBytes(path, snapshot.bytes, snapshot.content, ports)) throw new Error('Report snapshot changed before durable worker acceptance; retry the complete report');
+    await verifyCurrentReport(request, path, ports);
+    if (!ports.readTaskCheckboxCommits) throw new Error('Reported commit acceptance ports are unavailable');
+    await validateReportedCommitGroups(request.reportedCommits!, result.report!.commits!, await ports.readTaskCheckboxCommits(request.runId));
+  } catch (error) {
+    await rejectPendingAgentReport(request, result, ports, error instanceof Error ? error.message : String(error));
+    throw error;
+  }
 }
+export async function rejectPendingAgentReport(request: AgentReportRequest, result: AgentReportResult, ports: PendingAgentReportPorts, reason: string): Promise<void> {
+  const snapshot = verifiedSnapshots.get(result);
+  if (!result.report || !snapshot || snapshot.request !== request) return;
+  if (rejectedResults.get(result)?.has(reason)) return;
+  await ports.diagnostic(reason, { reportPath: join(request.tmpRoot, request.runId, `${request.address}.json`), bytes: snapshot.bytes, reason });
+  const reasons = rejectedResults.get(result) ?? new Set<string>();
+  reasons.add(reason);
+  rejectedResults.set(result, reasons);
+}
+
 export async function readPendingAgentReport(request: AgentReportRequest, ports: PendingAgentReportPorts): Promise<AgentReportResult | null> {
   const key = request.assignment.root;
   const previous = acceptanceQueues.get(key) ?? Promise.resolve();
@@ -106,11 +129,21 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
   const component = (value: string) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value);
   if (!isAbsolute(request.tmpRoot) || !component(request.runId) || !component(request.address)) throw new Error('Invalid report directory, run ID or address');
   const path = join(request.tmpRoot, request.runId, `${request.address}.json`);
-  const diagnostic = (reason: string) => ports.diagnostic(`Agent: ${request.address}\nItems: ${request.assignment.changes.flatMap(change => change.items.map(item => `${change.id}:${item.id}`)).join(', ')}\nReport: ${path}\nReason: ${reason}`);
-  const concise = (reason: string) => reason.replace(/\s+/g, ' ').slice(0, 512);
+  let bytes: Uint8Array | null = null;
+  const diagnostic = (reason: string) => ports.diagnostic(reason, { reportPath: path, bytes, reason });
+  const issueText = (issues: AssignmentVerification['issues']) => issues.map(issue => `${issue.change}: ${issue.requestedItems.join(', ')}: ${issue.reason}\nActual items: ${JSON.stringify(issue.foundItems.filter(item => issue.requestedItems.includes(item.id)))}\nArchives: ${JSON.stringify(issue.archives)}\nRemedy: ${issue.remedy}`).join('\n');
   let content: string | null;
-  try { content = await ports.fs.readText(path); }
-  catch (error) { await diagnostic(`Cannot read report: ${concise(String(error))}`); return null; }
+  try {
+    if (ports.fs.readBytes) {
+      const raw = await ports.fs.readBytes(path);
+      bytes = raw === null ? null : Uint8Array.from(raw);
+      content = bytes === null ? null : Buffer.from(bytes).toString('utf8');
+    } else {
+      content = await ports.fs.readText(path);
+      bytes = content === null ? null : Buffer.from(content, 'utf8');
+    }
+  }
+  catch (error) { await diagnostic(`Cannot read report: ${String(error)}`); return null; }
   if (content === null) return null;
   let report: unknown;
   try { report = JSON.parse(content); }
@@ -118,20 +151,22 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
   if (!validAgentReport(report, request.assignment, request)) { await diagnostic('Invalid report or assignment mismatch'); return null; }
   const archives = Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]));
   let verifiedSource: AssignmentVerification | undefined;
-  if (request.reportedCommits) {
+  if (request.reportedCommits || ports.verifyAssignmentSourceIdentity) {
     try {
-      await verifyCurrentReport(request, path, ports);
+      if (request.reportedCommits) await verifyCurrentReport(request, path, ports);
       verifiedSource = await ports.verifyAssignmentSourceIdentity?.(request.assignment, archives);
-      if (!verifiedSource?.ok) throw new Error('Assignment source identity changed or is unavailable');
-      if (!ports.readTaskCheckboxCommits || !ports.reconcileReportedCommitIndex) throw new Error('Reported commit acceptance ports are unavailable');
-      const checkbox = await ports.readTaskCheckboxCommits(request.runId);
-      const groups = await validateReportedCommitGroups(request.reportedCommits, report.commits!, checkbox);
-      for (const group of groups) {
-        await verifyCurrentReport(request, path, ports);
-        await validateReportedCommitGroups(request.reportedCommits, report.commits!, await ports.readTaskCheckboxCommits(request.runId));
-        await ports.reconcileReportedCommitIndex(group);
+      if (!verifiedSource?.ok) throw new Error(`Assignment source identity changed or is unavailable: ${verifiedSource ? issueText(verifiedSource.issues) : 'source verification is unavailable'}`);
+      if (request.reportedCommits) {
+        if (!ports.readTaskCheckboxCommits || !ports.reconcileReportedCommitIndex) throw new Error('Reported commit acceptance ports are unavailable');
+        const checkbox = await ports.readTaskCheckboxCommits(request.runId);
+        const groups = await validateReportedCommitGroups(request.reportedCommits, report.commits!, checkbox);
+        for (const group of groups) {
+          await verifyCurrentReport(request, path, ports);
+          await validateReportedCommitGroups(request.reportedCommits, report.commits!, await ports.readTaskCheckboxCommits(request.runId));
+          await ports.reconcileReportedCommitIndex(group);
+        }
       }
-    } catch (error) { await diagnostic(`Reported commit validation/repair failed (${request.runId}): ${concise(String(error))}`); return null; }
+    } catch (error) { await diagnostic(`Reported commit validation/repair failed (${request.runId}): ${String(error)}`); return null; }
   }
   let checkboxCommits: readonly TaskCheckboxCommit[] | undefined;
   if (report.status === 'succeeded') {
@@ -141,24 +176,24 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
         const confirmation = await ports.confirmTaskCheckboxes(request, report, verifiedSource);
         checkboxCommits = confirmation.commits;
         if (!confirmation.ok || confirmation.awaitingArchive) {
-          await diagnostic(confirmation.awaitingArchive ? 'Awaiting executor sync/archive and an exact archive claim in the same report' : `Task checkbox confirmation failed: ${confirmation.issues.map(issue => concise(issue.reason)).join('; ')}`);
+          await diagnostic(confirmation.awaitingArchive ? `Awaiting executor sync/archive and an exact archive claim in the same report${confirmation.issues.length ? ': ' + issueText(confirmation.issues) : ''}` : `Task checkbox confirmation failed: ${issueText(confirmation.issues)}`);
           return null;
         }
       }
       verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
     }
-    catch (error) { await diagnostic(`Assignment verification failed: ${concise(String(error))}`); return null; }
-    if (!verification.ok) { await diagnostic(`Assignment completion is not confirmed: ${[...new Set(verification.issues.map(issue => concise(issue.reason)))].join('; ')}`); return null; }
+    catch (error) { await diagnostic(`Assignment verification failed: ${String(error)}`); return null; }
+    if (!verification.ok) { await diagnostic(`Assignment completion is not confirmed: ${issueText(verification.issues)}`); return null; }
   }
   if (request.reportedCommits) {
     try {
       await verifyCurrentReport(request, path, ports);
-      if (await ports.fs.readText(path) !== content) { await diagnostic('Report snapshot changed during acceptance; retry the complete report'); return null; }
+      if (!await sameReportBytes(path, bytes!, content, ports)) { await diagnostic('Report snapshot changed during acceptance; retry the complete report'); return null; }
       await validateReportedCommitGroups(request.reportedCommits, report.commits!, await ports.readTaskCheckboxCommits!(request.runId));
-    } catch (error) { await diagnostic(`Report final verification failed: ${concise(String(error))}`); return null; }
+    } catch (error) { await diagnostic(`Report final verification failed: ${String(error)}`); return null; }
   }
   const result: AgentReportResult = { runId: request.runId, id: request.address, event: report.status === 'succeeded' ? 'agent.succeeded' : 'agent.failed', status: report.status, at: ports.now(), report, ...(checkboxCommits ? { checkboxCommits } : {}) };
-  if (request.reportedCommits) verifiedSnapshots.set(result, { request, content, result: JSON.stringify(result) });
+  verifiedSnapshots.set(result, { request, content, bytes: bytes!, result: JSON.stringify(result) });
   return result;
 }
 export async function createAgentReportWatcher(request: AgentReportRequest, ports: AgentReportPorts): Promise<AgentReportWatcher> {
@@ -179,8 +214,13 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
     return next;
   };
   const publish = async (result: AgentReportResult) => {
-    await ports.result(result);
-    accepted = true;
+    try {
+      await ports.result(result);
+      accepted = true;
+    } catch (error) {
+      if (!result.report) throw error;
+      await rejectPendingAgentReport(request, result, ports, error instanceof Error ? error.message : String(error));
+    }
   };
   const read = async () => {
     if (accepted || closed) return;

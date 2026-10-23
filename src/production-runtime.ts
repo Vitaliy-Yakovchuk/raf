@@ -1,3 +1,4 @@
+import { recordReportRejection, type ReportRejectionSnapshot } from './report-rejection.ts';
 import { captureReportedCommitLaunchContext } from './reported-commits.ts';
 import { reconcileReportedCommitIndex } from './report-commit-index.ts';
 import type { ReportedCommitLaunchContext } from './reported-commits-contract.ts';
@@ -42,7 +43,7 @@ import { validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type 
 import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
 import { settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
-import { readPendingAgentReport, verifyPendingAgentReportFreshness, type AgentReport, type AgentReportRequest } from './agent-report.ts';
+import { readPendingAgentReport, verifyPendingAgentReportFreshness, rejectPendingAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from './task-checkbox-report.ts';
 import { finalizeStartupContextRun, reserveStartupContextReview, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
 import { startupContextRuntimeFiles, startupContextAcceptedReport } from './startup-context-runtime.ts';
@@ -55,6 +56,10 @@ const strings = (value: unknown): value is string[] => Array.isArray(value) && v
 const now = () => new Date().toISOString();
 const effects = { pending: [], domain: [] };
 const json = async (path: string) => JSON.parse(await fs.readFile(path, 'utf8'));
+async function readReportBytes(path: string): Promise<Uint8Array | null> {
+  try { return await fs.readFile(path); }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; }
+}
 const fail = (code: string, reason: string): never => { throw commandFailure({ code, message: reason, reason, stage: 'production-runtime', source: 'production-runtime', sourceCode: null, received: null, expected: null, found: null, completed: [], pending: [], retrySafe: true, remediation: ['Уточніть контекст або конфігурацію потрібного production компонента.'] }); };
 const sameIdentity = (a: ProcessIdentity, b: ProcessIdentity) => isDeepStrictEqual(a, b);
 const mainRemediation = 'Виконайте raf main attach у tmux-панелі сесії main, не змінюючи змінних TMUX і TMUX_PANE.';
@@ -462,7 +467,7 @@ async function confirmReportedTasks(store: StateStore, context: RuntimeContext, 
 function reportedCommitPorts(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, session: SessionRecord, identityExecute?: AdapterCommandExecutor) {
   return {
     reconcileReportedCommitIndex,
-    verifyAssignmentSourceIdentity: (assignment: import('./assignment.ts').AssignmentSnapshot, archives: Readonly<Record<string, string>> = {}) => verifyReportedAssignmentSource(store, context, execute, session.runId, assignment, archives, identityExecute),
+    ...(session.launchContext?.reportedCommits ? { verifyAssignmentSourceIdentity: (assignment: import('./assignment.ts').AssignmentSnapshot, archives: Readonly<Record<string, string>> = {}) => verifyReportedAssignmentSource(store, context, execute, session.runId, assignment, archives, identityExecute) } : {}),
     isCurrentReport: async (runId: string, reportPath: string) => store.sessionRepository.transaction(tx => {
       const current = tx.getSession(runId);
       return !!current && ['running', 'exited'].includes(current.state) && !current.result && current.addressId === session.addressId
@@ -487,22 +492,36 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const reportDirectory = (session: SessionRecord) => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.runId) && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(session.addressId) && session.launchContext?.reportPath === join(context.tmpRoot, session.runId, `${session.addressId}.json`) ? join(context.tmpRoot, session.runId) : undefined;
   const acceptPendingReport = async (session: SessionRecord): Promise<SessionRecord> => {
     session = current(session.runId) ?? session;
-    if (session.result || !['running', 'exited'].includes(session.state) || !session.launchContext) return session;
-    if (!reportDirectory(session)) { process.stderr.write(`${session.runId}: Report path does not match the durable run identity\n`); return session; }
-    const required = session.launchContext.reportSchema?.required;
-    if (Array.isArray(required) && required.includes('commits') && !session.launchContext.reportedCommits) { await reportDiagnostic(session.runId, 'Reported commit launch metadata is missing'); return session; }
-    const result = await readPendingAgentReport({ tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, assignment: session.launchContext.assignment, reportedCommits: session.launchContext.reportedCommits }, {
-      fs: { readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } } },
+    if (session.result || !['running', 'exited'].includes(session.state)) return session;
+    const expectedPath = join(context.tmpRoot, session.runId, `${session.addressId}.json`);
+    const metadataFailure = !session.launchContext ? 'Report launch metadata is missing'
+      : !reportDirectory(session) ? 'Report path does not match the durable run identity'
+      : Array.isArray(session.launchContext.reportSchema?.required) && session.launchContext.reportSchema.required.includes('commits') && !session.launchContext.reportedCommits ? 'Reported commit launch metadata is missing' : null;
+    if (metadataFailure) {
+      let bytes: Uint8Array | null;
+      try { bytes = await readReportBytes(expectedPath); }
+      catch (error) { await reportDiagnostic(session.runId, metadataFailure, { reportPath: expectedPath, bytes: null, reason: `${metadataFailure}: Cannot read report: ${String(error)}` }); return session; }
+      if (bytes !== null) await reportDiagnostic(session.runId, metadataFailure, { reportPath: expectedPath, bytes, reason: metadataFailure });
+      return session;
+    }
+    const request: AgentReportRequest = { tmpRoot: context.tmpRoot, runId: session.runId, address: session.addressId, assignment: session.launchContext!.assignment, reportedCommits: session.launchContext!.reportedCommits };
+    const reportPorts: import('./agent-report.ts').PendingAgentReportPorts = {
+      fs: { readText: async path => { const bytes = await readReportBytes(path); return bytes === null ? null : Buffer.from(bytes).toString('utf8'); }, readBytes: readReportBytes },
       now,
       ...reportedCommitPorts(store, context, execute, session, identityExecute),
       verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignmentPorts(execute), archives),
       confirmTaskCheckboxes: async (request, report, verifiedSource) => confirmReportedTasks(store, context, execute, request, report, await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner), identityExecute, verifiedSource),
-      diagnostic: reason => reportDiagnostic(session.runId, reason),
-    });
+      diagnostic: (reason, snapshot) => reportDiagnostic(session.runId, reason, snapshot),
+    };
+    const result = await readPendingAgentReport(request, reportPorts);
     if (result) {
-      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context, ...(session.launchContext.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits: result.checkboxCommits } };
-      verified.set(value, session.runId);
-      await retryStateOperation(() => state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [], reportAccepted: true }), await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner));
+      try {
+        if (request.reportedCommits) await verifyPendingAgentReportFreshness(request, result, reportPorts);
+        const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context, ...(session.launchContext!.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits: result.checkboxCommits } };
+        verified.set(value, session.runId);
+        const accepted = await retryStateOperation(() => state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [], reportAccepted: true }), await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner));
+        if (!accepted && !current(session.runId)?.result) throw new Error('Result could not be durably accepted for the running session');
+      } catch (error) { await rejectPendingAgentReport(request, result, reportPorts, error instanceof Error ? error.message : String(error)); }
     }
     return current(session.runId) ?? session;
   };
@@ -653,8 +672,9 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       return control.message(request, rafSystemCaller);
     } });
   };
-  const reportDiagnostic = async (runId: string, reason: string) => {
-    await retryStateOperation(() => store.resultNotices.stageReportDiagnostic(runId, reason), await budgetFor(current(runId)?.process?.runner ?? 'codex'));
+  const reportDiagnostic = async (runId: string, reason: string, snapshot?: ReportRejectionSnapshot) => {
+    if (!snapshot) throw new Error(`Report rejection snapshot is unavailable: ${reason}`);
+    await retryStateOperation(() => recordReportRejection(store, runId, snapshot), await budgetFor(current(runId)?.process?.runner ?? 'codex'));
     await deliverResults();
   };
   const attachMain = async (): Promise<MainAttachment> => {
@@ -1368,12 +1388,12 @@ export async function runProductionWorker(
       await tools.finalize(exited, exited.activity ? [{ kind: 'ended', session: exited, project: exited.activity.project }] : []);
     };
     const reportPorts: import('./launch-wrapper.ts').LaunchWrapperPorts['report'] = {
-        fs: { mkdir: async path => { await fs.mkdir(path, { recursive: true, mode: 0o700 }); }, readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, removeTree: async () => {} },
+        fs: { mkdir: async path => { await fs.mkdir(path, { recursive: true, mode: 0o700 }); }, readBytes: readReportBytes, readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, removeTree: async () => {} },
         watch: (directory, listener) => { const watcher = watch(directory, (event, filename) => { if (filename) void listener(event === 'rename' ? 'rename' : 'modify', filename.toString()).catch(error => process.emitWarning(error)); }); watcher.on('error', error => process.stderr.write(`${request.runId}: Report watcher error: ${String(error)}\n`)); return () => watcher.close(); },
         now,
         verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
         confirmTaskCheckboxes: (reportRequest, report, verifiedSource) => confirmReportedTasks(store, context, execute, reportRequest, report, settings.timeouts, options.execute, verifiedSource),
-        diagnostic: reason => tools.reportDiagnostic(request.runId, reason),
+        diagnostic: (reason, snapshot) => tools.reportDiagnostic(request.runId, reason, snapshot),
       ...reportedCommitPorts(store, context, execute, session!, options.execute),
     };
     const launched = runLaunchWrapper(request, {
@@ -1392,7 +1412,7 @@ export async function runProductionWorker(
           let checkboxCommits = result.checkboxCommits;
           if (result.report?.status === 'succeeded' && !session!.launchContext?.reportedCommits) {
             const verification = await confirmReportedTasks(store, context, execute, request, result.report, settings.timeouts, options.execute);
-            if (!verification.ok || verification.awaitingArchive) fail('REPORT_UNVERIFIED', 'OpenSpec completion changed before result acceptance');
+            if (!verification.ok || verification.awaitingArchive) fail('REPORT_UNVERIFIED', verification.awaitingArchive ? 'Awaiting executor sync/archive and an exact archive claim in the same report' : `OpenSpec completion changed before result acceptance: ${JSON.stringify(verification.issues)}`);
             checkboxCommits = verification.commits;
           }
           const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context, ...(session!.launchContext?.reportedCommits ? { commits: result.report?.commits } : {}), checkboxCommits } };

@@ -1,3 +1,4 @@
+import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import type { SessionRecord } from './session-state.ts';
 import { createHash } from 'node:crypto';
 
@@ -49,10 +50,21 @@ export function resultNoticeText(content: ResultNoticeContent): string {
 }
 
 export function createReportDiagnosticNotice(session: SessionRecord, reason: string): ResultNotice {
-  const target = resultAddressee(session);
-  return { id: `${session.runId}:report-diagnostic:${createHash('sha256').update(reason).digest('hex')}`, runId: session.runId,
-    recipient: target.addressId, recipientRunId: target.runId, state: 'pending', attempts: 0, lastError: null,
-    text: reason, source: session };
+  return createReportRejectionNotice(session, { reportPath: session.launchContext?.reportPath ?? '', bytes: null, reason });
+}
+
+export function createReportRejectionNotice(session: SessionRecord, snapshot: ReportRejectionSnapshot): ResultNotice {
+  const target = session.notify ?? session.delegatedBy ?? session.launchedBy;
+  const bytes = snapshot.bytes === null ? null : createHash('sha256').update(snapshot.bytes).digest('hex');
+  const fingerprint = createHash('sha256').update(JSON.stringify([session.runId, snapshot.reportPath, bytes, snapshot.reason])).digest('hex');
+  return { id: `${session.runId}:report-rejected:${fingerprint}`, runId: session.runId,
+    recipient: target?.addressId ?? '', recipientRunId: target?.runId ?? null, state: 'pending', attempts: 0,
+    lastError: target?.runId ? null : 'Report rejection recipient identity is unavailable',
+    text: ['raf event: agent.report-rejected', `Agent: ${session.addressId}`, `Run: ${session.runId}`,
+      `Items: ${session.launchContext?.assignment.changes.flatMap(change => change.items.map(item => `${change.id}:${item.id}`)).join(', ') ?? ''}`,
+      `Report: ${snapshot.reportPath}`, `Reason: ${snapshot.reason}`].join('\n'),
+    source: { runId: session.runId, addressId: session.addressId, revision: session.revision, state: session.state,
+      ...(session.activity ? { activity: structuredClone(session.activity) } : {}) } };
 }
 
 export function createResultNotice(session: SessionRecord): ResultNotice | undefined {

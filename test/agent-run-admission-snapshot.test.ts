@@ -311,7 +311,7 @@ function transportSnapshot(level: AdmissionSnapshot['level'], tier: AdmissionTie
   };
 }
 
-async function runWithAdmission(admission: AdmissionSnapshot | null, authorize = true) {
+async function runWithAdmission(admission: AdmissionSnapshot | null, resolveTaskSucceeds = true) {
   const calls = { reserve: 0, spawn: 0, ready: 0, commit: 0, cleanup: 0 };
   const root = '/unit/orchestrator';
   const runId = '813e07e8-f351-49ba-bd81-264586af8227';
@@ -321,11 +321,14 @@ async function runWithAdmission(admission: AdmissionSnapshot | null, authorize =
     items: [{ id: 'Z.382', description: 'unit assignment' }] }], baselineArchives: [] };
   const request = fixture(admission?.requestedTier ?? 'normal');
   const services: RuntimeServices = {
-    authorizeMain: async () => { if (!authorize) throw new Error('unit authorization refused'); },
+    authorizeMain: async () => {},
     assignment: { validate: async () => ({ ok: true, snapshot: assignment }), compose: async () => 'unit brief' },
-    resolveTask: async () => ({ branch: 'develop', outcome: 'unit', writeBoundaries: [root], sources: [],
-      reportSchema: { type: 'object' }, requested: request.input.requested,
-      requiredFileSystemIds: [...request.input.requiredFileSystemIds] }),
+    resolveTask: async () => {
+      if (!resolveTaskSucceeds) throw new Error('unit task resolution refused');
+      return { branch: 'develop', outcome: 'unit', writeBoundaries: [root], sources: [],
+        reportSchema: { type: 'object' }, requested: request.input.requested,
+        requiredFileSystemIds: [...request.input.requiredFileSystemIds] };
+    },
     route: async () => ({ ok: true, project: 'raf', branch: 'develop', cwd: `${root}/raf-develop` }),
     routingSnapshot: async () => ({ runnerEnabled: { codex: true }, cliAvailable: { codex: true }, quotas: [] }),
     selectModel: () => selection, listModels: () => [],

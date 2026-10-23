@@ -1,5 +1,6 @@
 export interface CatalogValue {
   id: string;
+  event?: string;
   description?: string;
   launchableByRaf?: boolean;
 }
@@ -93,10 +94,12 @@ export function compileCatalog(
       names.add(p.name); options.add(p.option);
       for (const key of ['required', 'multiple']) if (p[key] !== undefined && typeof p[key] !== 'boolean') throw new Error(`${where}/${key}: expected boolean`);
       if (p.description !== undefined && typeof p.description !== 'string') throw new Error(`${where}/description: expected string`);
-      if (p.type !== undefined && p.type !== 'string') throw new Error(`${where}/type (${p.name}): unsupported parameter type`);
+      if (p.type !== undefined && p.type !== 'string' && p.type !== 'boolean') throw new Error(`${where}/type (${p.name}): unsupported parameter type`);
       for (const key of ['values', 'enum', 'valueSource']) if (p[key] !== undefined) throw new Error(`${where}/${key} (${p.name}): enum values must use command valueSources`);
       const allowed = valueSources[p.name];
-      if (p.default !== undefined) {
+      if (p.type === 'boolean' && (p.multiple === true || allowed !== undefined)) throw new Error(`${where} (${p.name}): boolean flags cannot be multiple or use valueSources`);
+      if (p.type === 'boolean' && p.default !== undefined && typeof p.default !== 'boolean') throw new Error(`${where}/default: expected boolean`);
+      if (p.type !== 'boolean' && p.default !== undefined) {
         const defaults = p.multiple ? p.default : [p.default];
         if (!Array.isArray(defaults) || defaults.some(v => typeof v !== 'string' || (allowed && !allowed.some(a => a.id === v)))) throw new Error(`${where}/default: invalid default`);
       }

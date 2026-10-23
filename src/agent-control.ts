@@ -54,7 +54,8 @@ export class MainAttachedElsewhereError extends Error {
     this.session = session;
   }
 }
-export type CloseResult = { closed: boolean; unfinished: SessionCloseCheck['unfinished']; result?: WorkResult['status'] };
+export type CloseOptions = { force?: boolean; reason?: string };
+export type CloseResult = { forcedClose?: { reason: string }; closed: boolean; unfinished: SessionCloseCheck['unfinished']; result?: WorkResult['status'] };
 
 export class AgentControlService {
   private dependencies: AgentControlDependencies;
@@ -162,19 +163,35 @@ export class AgentControlService {
     return this.dependencies.coordinator.updateActivity(session, activity, events);
   }
 
-  async close(id: string): Promise<CloseResult> {
+  async close(id: string, options: CloseOptions = {}): Promise<CloseResult> {
+    if ((options.force !== undefined && typeof options.force !== 'boolean') || (options.force === true ? typeof options.reason !== 'string' || !options.reason.trim() : options.reason !== undefined)) throw new Error('Force requires a nonempty reason; reason requires force');
+    options = options.force ? { force: true, reason: options.reason!.trim() } : {};
     if (id === 'main') throw new Error('Main cannot be closed');
-    const session = await this.live(id);
+    const candidates = this.sessions().filter(row => row.addressId === id && row.state !== 'finished');
+    if (candidates.length !== 1) throw new Error(`Unknown or ambiguous session: ${id}`);
+    let session = candidates[0];
+    if (session.state === 'exited' && session.result?.forcedClose && options.force) {
+      const final = await this.dependencies.coordinator.finalize(session, this.events(session, 'ended'));
+      return { closed: final.state === 'finished', unfinished: [], result: final.result?.status, forcedClose: final.result?.forcedClose };
+    }
+    if (session.state !== 'running' || !session.process || (await this.inspect(session.process)).state !== 'alive') throw new Error(`Session is not confirmed alive: ${id}`);
+    const selected = session;
+    session = await this.dependencies.coordinator.acceptPendingReport(session);
+    if (session.runId !== selected.runId || session.state !== 'running' || !session.process || !this.sameProcess(selected.process!, session.process)) throw new Error('Selected run changed during report acceptance');
+    if (!options.force) session = await this.dependencies.coordinator.prepareClose(session, {});
     const check = this.dependencies.reminders.sessionEnded({ address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: false });
     if (!check.allowed) {
       const receipt = await this.dependencies.transport.deliver(session.process!, `[raf] Unfinished reminders:\n${check.unfinished.map(reminder => `${reminder.id}: ${reminder.text}`).join('\n')}`);
       if (!receipt.accepted) throw new Error(`Reminder delivery failed: ${receipt.reason}`);
       return { closed: false, unfinished: check.unfinished };
     }
+    session = await this.dependencies.coordinator.prepareClose(session, options);
+    const current = this.sessions().find(row => row.runId === session.runId);
+    if (!current || current.state !== 'running' || !current.process || !this.sameProcess(session.process!, current.process) || current.revision !== session.revision) throw new Error('Session changed before close transport');
     await this.dependencies.transport.close(session.process!);
     const exited = await this.dependencies.coordinator.observe(session, { state: 'exited', observedAt: new Date().toISOString(), exitCode: null, evidence: 'Transport confirmed orderly session closure' });
     const final = exited.state === 'finished' ? exited : await this.dependencies.coordinator.finalize(exited, this.events(exited, 'ended'));
-    return { closed: final.state === 'finished', unfinished: [], ...(final.result ? { result: final.result.status } : {}) };
+    return { closed: final.state === 'finished', unfinished: [], ...(final.result ? { result: final.result.status, ...(final.result.forcedClose ? { forcedClose: final.result.forcedClose } : {}) } : {}) };
   }
 
   async interrupt(id: string): Promise<void> {

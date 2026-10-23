@@ -90,6 +90,12 @@ export async function execute(
     const parameter = command.parameters.find(p => p.option === option);
     if (!parameter) return fail('UNKNOWN_ARGUMENT', 'Невідомий аргумент або зайве позиційне значення.', { ...context, parameter: /^--[a-zA-Z0-9-]+$/.test(option) ? option : '[redacted]' });
     if (seen.has(parameter.name) && !parameter.multiple) return fail('DUPLICATE_ARGUMENT', 'Параметр можна задати лише раз.', { ...context, parameter: parameter.option });
+    if (parameter.type === 'boolean') {
+      if (separator >= 0 || (i + 1 < rest.length && !rest[i + 1].startsWith('--'))) return fail('INVALID_VALUE', 'Boolean прапорець не приймає значення.', { ...context, parameter: parameter.option });
+      params[parameter.name] = true;
+      seen.add(parameter.name);
+      continue;
+    }
     const incoming: string[] = [];
     if (separator >= 0) incoming.push(token.slice(separator + 1));
     else {
@@ -115,6 +121,10 @@ export async function execute(
     if (!seen.has(parameter.name) && parameter.default !== undefined) params[parameter.name] = structuredClone(parameter.default);
     if (command.handlerName === 'agent run' && parameter.name === 'type' && [params[parameter.name]].flat().some(value => parameter.values?.find(v => v.id === value)?.launchableByRaf === false)) return fail('TYPE_NOT_LAUNCHABLE', 'Цей тип агента обліковується, але не запускається raf.', { ...context, parameter: parameter.option, received: params[parameter.name] });
     if (parameter.required && (params[parameter.name] === undefined || (Array.isArray(params[parameter.name]) && !(params[parameter.name] as unknown[]).length))) return fail('MISSING_REQUIRED', 'Не задано обов’язковий параметр.', { ...context, parameter: parameter.option });
+  }
+  if (command.handlerName === 'agent close') {
+    if ((params.force === true && (typeof params.reason !== 'string' || !params.reason.trim())) || (params.force !== true && params.reason !== undefined)) return fail('INVALID_VALUE', 'Примусове закриття потребує --force та непорожню --reason разом.', { ...context, example: 'raf agent close --id worker --force --reason "Власник скасував запуск"' });
+    if (typeof params.reason === 'string') params.reason = params.reason.trim();
   }
   const handler = handlers[command.handlerName];
   if (typeof handler !== 'function') return fail('HANDLER_UNAVAILABLE', 'Обробник команди недоступний.', { ...context, stage: 'dispatch' });

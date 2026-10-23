@@ -96,7 +96,7 @@ export interface RuntimeServices {
     ps(): Promise<SessionRecord[]>;
     update(id: string, patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>>, caller: unknown): Promise<SessionRecord>;
     message(input: { to: string; text: string }, caller: unknown): Promise<DeliveryReceipt>;
-    close(id: string, caller: unknown): Promise<CloseResult>;
+    close(id: string, caller: unknown, options?: { force?: boolean; reason?: string }): Promise<CloseResult>;
     interrupt(id: string, caller: unknown): Promise<void>;
     attachMain(): Promise<MainAttachment>;
   };
@@ -300,7 +300,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       return receipt;
     },
     'agent close': async params => {
-      const result = await (await service()).control.close(params.id as string, await context.resolveCaller());
+      const result = await (await service()).control.close(params.id as string, await context.resolveCaller(), { force: params.force as boolean | undefined, reason: params.reason as string | undefined });
       if (!result.closed) throw fail('SESSION_CLOSE_BLOCKED', 'close', 'Session has unfinished reminders', { found: result.unfinished });
       return result;
     },

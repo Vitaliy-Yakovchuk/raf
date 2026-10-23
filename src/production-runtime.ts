@@ -1,3 +1,4 @@
+import { prepareAgentClose } from './agent-close-preparation.ts';
 import { retainHotfixGeneration } from './hotfix-activation.ts';
 import { prepareHotfixWorktree, validateHotfixTrust, startHotfixCommitPort } from './hotfix-worktree.ts';
 import { hotfixRoute } from './hotfix-host.ts';
@@ -429,7 +430,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     if (result) {
       const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context, checkboxCommits: result.checkboxCommits } };
       verified.set(value, session.runId);
-      await retryStateOperation(() => state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [] }), await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner));
+      await retryStateOperation(() => state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [], reportAccepted: true }), await budgetFor(session.process?.runner ?? session.launchContext!.selection.runner));
     }
     return current(session.runId) ?? session;
   };
@@ -503,6 +504,20 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const control = new AgentControlService({ repository: store.sessionRepository, scanner: { inspect: identity => observeIdentity(identity, execute) }, authority: { resolve }, reminders,
     projects, agentTypes: types, agentPhases: configuration.catalog.commands.find(row => row.handlerName === 'agent update')?.parameters.find(row => row.name === 'phase')?.values?.map(row => row.id) ?? types,
     coordinator: {
+      prepareClose: (session, options) => prepareAgentClose({
+        repository: store.sessionRepository,
+        acceptPendingReport,
+        acceptedReport: (_tx, row) => {
+          const fact = row.reportAcceptance;
+          const event = configuration.catalog.reportStatuses.find(status => status.id === fact?.status)?.event;
+          return fact && (fact.status === 'succeeded' || fact.status === 'failed') ? { runId: fact.runId, status: fact.status, eventRecorded: fact.event === event } : null;
+        },
+        eventForStatus: status => {
+          const event = configuration.catalog.reportStatuses.find(row => row.id === status)?.event;
+          if (!text(event)) fail('CONFIGURATION_INVALID', `Missing report event for ${status}`);
+          return event;
+        },
+      }, session, options),
       observe: async (session, observation) => {
         if (observation.state === 'exited') {
           const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
@@ -947,7 +962,7 @@ export async function createProductionServices(
       ps: async () => { const sessions = await tools.control.ps(); if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained'); await tools.deliverResults(); return resultNoticeViews(store, sessions); },
       update: async (id, patch, caller) => { await tools.authorize(id, caller); const session = tools.state.listReconciliationCandidates().find(session => session.addressId === id); if (!session?.activity) fail('SESSION_UNAVAILABLE', 'Session activity unavailable'); return tools.control.update(id, { ...session.activity, ...patch }); },
       message: (input, caller) => tools.control.message(input, caller),
-      close: async (id, caller) => { await tools.authorize(id, caller, true); return tools.control.close(id); },
+      close: async (id, caller, options) => { await tools.authorize(id, caller, true); return tools.control.close(id, options); },
       interrupt: async (id, caller) => { await tools.authorize(id, caller, true); return tools.control.interrupt(id); },
       attachMain: tools.attachMain,
     },
@@ -1293,7 +1308,7 @@ export async function runProductionWorker(
           }
           const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context, checkboxCommits } };
           tools.verified.set(value, request.runId);
-          const accepted = tools.state.acceptWorkResult(request.runId, value, { pending: [{ id: `${request.runId}:${result.event}`, runId: request.runId, event: result.event, payload: { kind: result.event, id: request.address } }], domain: [] });
+          const accepted = tools.state.acceptWorkResult(request.runId, value, { pending: [{ id: `${request.runId}:${result.event}`, runId: request.runId, event: result.event, payload: { kind: result.event, id: request.address } }], domain: [], reportAccepted: !!result.report });
           if (!accepted && !tools.current(request.runId)?.result) fail('REPORT_UNVERIFIED', 'Result could not be durably accepted for the running session');
           await tools.deliverResults();
           if (result.report && lease) {

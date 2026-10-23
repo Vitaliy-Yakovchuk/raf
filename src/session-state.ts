@@ -32,10 +32,10 @@ export type ProcessObservation =
   | { state: 'exited'; observedAt: string; exitCode: number | null; evidence: string }
   | { state: 'unknown'; observedAt: string; error: string };
 
-export type WorkResult = { status: string; response: string; proof: unknown };
+export type WorkResult = { status: string; response: string; proof: unknown; forcedClose?: { reason: string } };
 export type PendingIntent = { id: string; runId: string | null; event: string; payload: unknown };
 export type DomainEffect = { id: string; domain: string; payload: unknown };
-export type TransitionEffects = { pending: readonly PendingIntent[]; domain: readonly DomainEffect[] };
+export type TransitionEffects = { pending: readonly PendingIntent[]; domain: readonly DomainEffect[]; reportAccepted?: boolean };
 
 export type SessionLaunchContext = {
   contextReview?: { contextReviewId: string; runIds: readonly string[]; brief: string };
@@ -57,6 +57,7 @@ export type SessionRecord = SessionNotify & {
   process?: ProcessIdentity;
   observation?: ProcessObservation;
   result?: WorkResult;
+  reportAcceptance?: { runId: string; status: string; event: string };
   finishedAt?: string;
   abortReason?: string;
   delegatedBy?: { addressId: string; runId: string; fence: string };
@@ -110,12 +111,22 @@ export function closeSessionInTransaction(tx: SessionTransaction, session: Sessi
     revision: session.revision + 1,
     state: 'finished',
     ...(session.process ? { process: copy(session.process) } : {}),
-    ...(session.result ? { result: { status: session.result.status, response: '', proof: null } } : {}),
+    ...(session.result ? { result: { status: session.result.status, response: '', proof: null, ...(session.result.forcedClose ? { forcedClose: copy(session.result.forcedClose) } : {}) } } : {}),
     ...(session.abortReason ? { abortReason: session.abortReason } : {}),
     finishedAt,
   };
   tx.putSession(finished);
   tx.deleteReservation(session.runId);
+}
+
+export function forceCloseInTransaction(tx: SessionTransaction, session: SessionRecord, reason: string, event: string): SessionRecord {
+  if (!reason.trim() || !event) throw new Error('Forced closure requires a reason and result event');
+  if (session.result?.forcedClose) return session;
+  const result: WorkResult = session.result ? { ...session.result, forcedClose: { reason } } : { status: 'failed', response: `Forced close: ${reason}`, proof: { runId: session.runId, at: new Date().toISOString() }, forcedClose: { reason } };
+  const next = { ...session, revision: session.revision + 1, result };
+  tx.putSession(next);
+  if (!session.result) tx.putPending({ id: `${session.runId}:${event}`, runId: session.runId, event, payload: { kind: event, id: session.addressId } });
+  return next;
 }
 
 export function createSessionState(dependencies: SessionStateDependencies): SessionState {
@@ -198,7 +209,9 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
       return repository.transaction(tx => {
         const session = tx.getSession(runId);
         if (!session || (session.state !== 'running' && session.state !== 'exited') || session.result) return false;
-        tx.putSession({ ...session, revision: session.revision + 1, result: copy(result) });
+        const event = effects.pending.find(intent => intent.runId === runId && intent.event.length > 0);
+        if (effects.reportAccepted && !event) throw new Error('Accepted report requires its result event in the same transaction');
+        tx.putSession({ ...session, revision: session.revision + 1, result: copy(result), ...(effects.reportAccepted ? { reportAcceptance: { runId, status: result.status, event: event!.event } } : {}) });
         apply(tx, effects);
         return true;
       });

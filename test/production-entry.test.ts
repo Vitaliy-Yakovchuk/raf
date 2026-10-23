@@ -233,7 +233,8 @@ test('wired empty ps uses canonical shared state without creating an agent', asy
   mkdirSync(bin);
   for (const protocol of settings.runnerProtocols) {
     assert.notEqual(protocol.version, installedVersion);
-    writeFileSync(join(bin, protocol.executable), `#!/bin/sh\nprintf '%s\\n' '${protocol.runner}-cli ${installedVersion}'\n`);
+    const versionOutput = protocol.runner === 'claude' ? `${installedVersion} (Claude Code)` : `${protocol.runner}-cli ${installedVersion}`;
+    writeFileSync(join(bin, protocol.executable), `#!/bin/sh\nprintf '%s\\n' '${versionOutput}'\n`);
     chmodSync(join(bin, protocol.executable), 0o755);
   }
   const previousPath = process.env.PATH;

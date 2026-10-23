@@ -32,7 +32,8 @@ const context: TestRunContext = {
 const hints = { refusal: 'refusal', setup: 'setup', assertions: 'assertions', timeout: 'timeout', interruption: 'interruption' };
 const config: TestRunConfig = {
   phases: Object.fromEntries(context.agentPhases.map(phase => [phase, {
-    allowed: phase !== 'test-scaffold', purpose: phase === 'red' ? 'initial-red' : 'verification', hints,
+    allowed: phase !== 'test-scaffold',
+    purpose: phase === 'test-scaffold' ? 'none' : phase === 'red' ? 'initial-red' : 'verification', hints,
   }])),
   hints, diagnostics: {
     maxEntries: 64, maxMessageBytes: 4096, maxStackFrames: 16, maxStackBytes: 8192,

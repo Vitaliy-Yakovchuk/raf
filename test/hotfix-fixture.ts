@@ -143,7 +143,7 @@ export async function fixture(t: TestContext) {
 import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
-if(process.argv.includes('app-server')) {
+if(process.argv.includes('app-server') || (${JSON.stringify(runner)}==='codex' && process.argv[2]==='sandbox')) {
  const child=spawn(${JSON.stringify(realCodex)},process.argv.slice(2),{stdio:'inherit'});
  child.on('error',error=>{process.stderr.write(error.message);process.exit(1);});
  child.on('exit',(code,signal)=>{if(signal)process.kill(process.pid,signal);else process.exit(code??1);});

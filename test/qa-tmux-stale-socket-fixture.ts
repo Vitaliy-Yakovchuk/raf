@@ -60,7 +60,12 @@ export async function qaTmuxFixture(t: TestContext, mode = 'live') {
   const env: NodeJS.ProcessEnv = { ...process.env, HOME: cfg.home, RAF_QA_HOME: cfg.home, RAF_AGENT_RUN_FIXTURE: join(f.directory, 'fixture.json'), TMPDIR: f.directory, TMUX_TMPDIR: f.directory };
   delete env.TMUX;
   delete env.TMUX_PANE;
-  await fs.mkdir(join(f.tmpRoot, 'tmux'), { recursive: true });
+  const tmuxDirectory = join(f.tmpRoot, 'tmux');
+  await fs.mkdir(tmuxDirectory, { recursive: true, mode: 0o700 });
+  const tmuxDirectoryStat = await fs.lstat(tmuxDirectory);
+  assert.equal(tmuxDirectoryStat.isDirectory(), true);
+  assert.equal(tmuxDirectoryStat.mode & 0o777, 0o700, 'fixture tmux directory is private');
+  assert.equal(tmuxDirectoryStat.uid, process.getuid!(), 'fixture tmux directory belongs to the current user');
   await fs.writeFile(join(f.directory, 'bin', 'tmux'), `#!${process.execPath}
 import { appendFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';

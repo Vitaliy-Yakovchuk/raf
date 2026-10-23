@@ -1,6 +1,8 @@
 import { runTestRunCli, type TestRunCliPorts } from './test-run-cli.ts';
+import { authorizeRegressionRun } from './test-regression-groups.ts';
+import type { RegressionGrant, RegressionAuthorization } from './test-regression-groups.ts';
 import { parseTestRunArgs } from './test-runs.ts';
-import type { TestRunConfig, TestRunGroupKey } from './test-runs.ts';
+import type { TestRunConfig, TestRunGroupKey, TestRunRequest } from './test-runs.ts';
 
 export interface SandboxProcessIdentity {
   readonly pid: number;
@@ -17,6 +19,7 @@ export interface SandboxTestAssignment {
   readonly branch: string;
   readonly changes: readonly string[];
   readonly delegatedByMain?: boolean;
+  readonly regressionGroups?: readonly RegressionGrant[];
 }
 
 export interface SandboxTestSession {
@@ -36,6 +39,7 @@ export interface SandboxTestControlSnapshot {
   }[];
   readonly activeChanges: readonly string[];
   readonly groups: readonly TestRunGroupKey[];
+  readonly config?: Pick<TestRunConfig, 'projects' | 'phases'>;
 }
 
 export interface SandboxCommandRequest {
@@ -56,6 +60,8 @@ export interface SandboxTestRunPorts {
   readonly entrypoint: readonly string[];
   control(caller: SandboxProcessIdentity): Promise<SandboxTestControlSnapshot>;
   unitContext(key: TestRunGroupKey): Promise<SandboxUnitContext>;
+  wrapper?(request: TestRunRequest, context: SandboxUnitContext): Promise<SandboxCommandReply>;
+  evidence?(authorization: RegressionAuthorization, reply: SandboxCommandReply): Promise<void>;
   communicate(argv: readonly string[], caller: SandboxTestAssignment): Promise<SandboxCommandReply>;
 }
 
@@ -79,6 +85,7 @@ export async function runSandboxTestCommand(
   request: SandboxCommandRequest,
   ports: SandboxTestRunPorts,
 ): Promise<SandboxCommandReply> {
+  let executingWrapper = false;
   try {
     const words = parseSandboxCommand(request.command);
     if (!ports.entrypoint.length || !words || !ports.entrypoint.every((word, index) => words[index] === word)) throw new Error('Untrusted entrypoint or non-simple command');
@@ -86,7 +93,7 @@ export async function runSandboxTestCommand(
     const communication = argv[0] === 'agent' && ['message', 'ps'].includes(argv[1]);
     if (!communication && !(argv[0] === 'test' && argv[1] === 'run')) throw new Error('Command is not allowed through the sandbox channel');
     const control = await ports.control(ports.caller);
-    if (![ports.caller, ...control.ancestors, ...control.sessions.map(row => row.process)].every(identity => Number.isSafeInteger(identity.pid) && identity.pid > 0 && Number.isFinite(Date.parse(identity.startedAt)))) throw new Error('Process identity is invalid');
+    if (![ports.caller, ...control.ancestors, ...control.sessions.map(row => row.process)].every(identity => Number.isSafeInteger(identity.pid) && identity.pid > 0 && typeof identity.startedAt === 'string' && identity.startedAt.length > 0)) throw new Error('Process identity is invalid');
     if (!control.ancestors.some(identity => sameProcess(identity, ports.caller))) throw new Error('Caller process identity is not observable');
     let session: SandboxTestSession | undefined;
     for (const ancestor of control.ancestors) {
@@ -105,16 +112,35 @@ export async function runSandboxTestCommand(
     if (coordinating && args.phase !== 'red' && args.phase !== assignment.phase) throw new Error('Coordinator phase is not authorized');
     if (assignment.project !== args.project || request.cwd !== assignment.workspace) throw new Error('Project or workspace differs from the immutable assignment');
     if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch && row.actualBranch === assignment.branch)) throw new Error('Registered workspace or branch differs from the assignment');
+    const { only, ...selectionArgs } = args;
+    const requestArgs: TestRunRequest = { ...selectionArgs, ...(only ? { only: only.map(value => {
+      const separator = value.indexOf('::');
+      const id = value.startsWith('{') ? JSON.parse(value) : { file: value.slice(0, separator), name: value.slice(separator + 2) };
+      if ((!value.startsWith('{') && separator < 1) || !id || typeof id.file !== 'string' || typeof id.name !== 'string' || !id.name.length) throw new Error('Invalid exact test-id');
+      return id;
+    }) } : {}) };
     const change = args.group.split('/')[0];
-    if (!args.group.includes('/') || !assignment.changes.includes(change) || !control.activeChanges.includes(change)) throw new Error('Group change is outside the active assignment');
+    if (!args.group.includes('/') || !control.activeChanges.includes(change)) throw new Error('Group change is outside the active assignment');
+    let authorization: RegressionAuthorization | undefined;
+    if (control.config) authorization = authorizeRegressionRun(requestArgs, assignment, { ...control, config: control.config });
+    else if (!assignment.changes.includes(change)) throw new Error('Group change is outside the active assignment; no trusted regression catalog');
     const key = { project: args.project, workspace: assignment.workspace, group: args.group };
-    if (!control.groups.some(row => row.project === key.project && row.workspace === key.workspace && row.group === key.group)) throw new Error('Group is not configured for this workspace');
+    if ((!control.config || !ports.wrapper) && !control.groups.some(row => row.project === key.project && row.workspace === key.workspace && row.group === key.group)) throw new Error('Group is not configured for this workspace');
     const unit = await ports.unitContext(key);
+    if (ports.wrapper) {
+      executingWrapper = true;
+      const reply = await ports.wrapper(requestArgs, unit);
+      if (authorization && ports.evidence) await ports.evidence(authorization, reply);
+      return reply;
+    }
     if (unit.context.workspace !== key.workspace || unit.context.cwd !== request.cwd || !unit.context.projectWorkspaces[key.project]?.includes(key.workspace)) throw new Error('Unit context workspace differs from the authorized workspace');
     let stdout = '', stderr = '';
     const code = await runTestRunCli(argv.slice(2), { ...unit, context: { ...unit.context, agentId: assignment.agentId }, stdout: value => { stdout += value; }, stderr: value => { stderr += value; } });
-    return { code, stdout, stderr };
+    const reply = { code, stdout, stderr };
+    if (authorization && ports.evidence) await ports.evidence(authorization, reply);
+    return reply;
   } catch (error) {
+    if (executingWrapper) throw error;
     return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${error instanceof Error ? error.message : String(error)}; use agent message to main with the exact command; raf was not retried\n` };
   }
 }

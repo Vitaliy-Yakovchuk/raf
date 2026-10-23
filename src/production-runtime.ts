@@ -4,6 +4,7 @@ import { captureReportedCommitLaunchContext } from './reported-commits.ts';
 import { reconcileReportedCommitIndex } from './report-commit-index.ts';
 import type { ReportedCommitLaunchContext } from './reported-commits-contract.ts';
 import { prepareAgentClose } from './agent-close-preparation.ts';
+import { snapshotRegressionAssignment } from './test-regression-groups.ts';
 import { validateTestRunConfig } from './test-runs.ts';
 import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
 import { retainHotfixGeneration } from './hotfix-activation.ts';
@@ -270,6 +271,7 @@ export async function sandboxTestControlSnapshot(store: StateStore, root: string
   return {
     ancestors: chain.flatMap(pid => { const row = rows.find(row => row.pid === pid); return row ? [{ pid, startedAt: row.startedAt }] : []; }),
     sessions: observed.filter((row): row is NonNullable<typeof row> => row !== null), workspaces, activeChanges,
+    config,
     groups: workspaces.flatMap(row => config.projects?.[row.project]?.groups?.[group] ? [{ project: row.project, workspace: row.workspace, group }] : []),
   };
 }
@@ -847,7 +849,7 @@ export async function createProductionServices(
   const budgetFor = async (runner: string) => protocolFor(await protocols(context.confRoot, options.protocolSettings), runner).timeouts;
   const tools = sessionTools(store, execute, configuration, context, budgetFor, options.execute);
   const assignments = assignmentPorts(execute);
-  const prepared = new Map<string, { launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
+  const prepared = new Map<string, { testAssignment: SandboxTestAssignment; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;
   const leaseFor = (runId: string) => listTaskReservations(store).find(set => set.lease.owner.runId === runId)?.lease;
   const release = async (runId: string, reason: 'cancelled' | 'failed' | 'succeeded') => {
@@ -932,6 +934,12 @@ export async function createProductionServices(
       const writeBoundaries = launch.writeBoundaries ?? [];
       if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text)) fail('INVALID_CONTEXT', 'Launch write boundaries must be declared paths');
       if (!launch.taskContext) return fail('INVALID_CONTEXT', 'Launch lacks derived task context');
+      const baseAssignment: SandboxTestAssignment = { runId: launch.runId, agentId: launch.addressId, type: launch.activity.type, phase: launch.activity.phase, project: launch.activity.project, workspace: launch.activity.cwd, branch: launch.taskContext.context.branch, changes: launch.assignment.changes.map(change => change.id) };
+      let testAssignment = baseAssignment;
+      if (launch.assignment.changes.some(change => change.items.some(item => item.description.includes('; regressionGroups=')))) {
+        const catalog = await sandboxTestControlSnapshot(store, context.orchestratorRoot, launch.activity.project, '');
+        testAssignment = snapshotRegressionAssignment({ assignment: baseAssignment, verifiedChanges: launch.assignment.changes, selectedItems: launch.assignment.changes.flatMap(change => change.items.map(item => ({ change: change.id, item: item.id }))), catalog: { ...catalog, config: catalog.config! } });
+      }
       const directory = join(context.tmpRoot, launch.runId);
       await fs.mkdir(context.tmpRoot, { recursive: true, mode: 0o700 });
       await fs.mkdir(directory, { mode: 0o700 });
@@ -950,7 +958,7 @@ export async function createProductionServices(
         await writeTaskContextFile(directory, { version: 1, runId: launch.runId, parameters: launch.taskContext.parameters, assignmentFingerprint: assignmentFingerprint(launch.assignment), ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), context: launch.taskContext.context });
         await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, workspaceTrustDenied, ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries, workspaceRoute: { type: launch.activity.type, project: launch.activity.project, branch: launch.taskContext.context.branch, ...(launch.taskContext.context.hotfix ? { hotfix: launch.taskContext.context.hotfix } : {}) } }), { mode: 0o600, flag: 'wx' });
       } catch (error) { await fs.rm(directory, { recursive: true, force: true }); throw error; }
-      prepared.set(launch.tmuxSession, { launch: structuredClone(launch), reportPath, reportedCommits, workspaceTrustDenied });
+      prepared.set(launch.tmuxSession, { testAssignment, launch: structuredClone(launch), reportPath, reportedCommits, workspaceTrustDenied });
       return { reportPath, reportedCommits, reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
     },
     reserve: async input => {
@@ -1006,7 +1014,7 @@ export async function createProductionServices(
       if (!record || record.reportPath !== input.reportPath || input.assignment.root !== context.orchestratorRoot || !isDeepStrictEqual(record.launch.assignment, input.assignment) || !isDeepStrictEqual(record.launch.writeBoundaries ?? [], input.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Prepared launch context mismatch');
       const identityAdapter = createAssignmentIdentityAdapter({ [input.activity.project]: context.orchestratorRoot }, options.execute ? { execute: options.execute } : {});
       const tasks = await identityAdapter.capture(input.activity.project, input.assignment);
-      const testAssignment: SandboxTestAssignment = { runId: input.runId, agentId: input.addressId, type: input.activity.type, phase: input.activity.phase, project: input.activity.project, workspace: input.activity.cwd, branch: input.taskContext!.context.branch, changes: input.assignment.changes.map(change => change.id) };
+      const testAssignment = record.testAssignment;
       const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
       const caller = await (async () => {

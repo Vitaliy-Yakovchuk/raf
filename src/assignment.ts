@@ -48,6 +48,7 @@ export interface AssignmentVerification { readonly ok: boolean; readonly issues:
 type Task = { id: string; description: string; done: boolean };
 type Change = { name: string; completedTasks: number; totalTasks: number };
 const safeName = (name: string) => typeof name === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name);
+const taskIdPattern = /^(?:[0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)+)$/;
 const matchingArchive = (name: string, id: string) => name === id || (/^\d{4}-\d{2}-\d{2}-/.test(name) && name.slice(11) === id);
 const issue = (change: string, items: readonly { id: string }[], reason: string, foundItems: Task[] = [], archives: string[] = []): AssignmentIssue => ({ change, requestedItems: items.map(item => item.id), reason, foundItems, archives, remedy: 'Уточніть доручення за актуальними даними OpenSpec і повторіть перевірку.' });
 async function json(ports: AssignmentPorts, root: string, args: string[]): Promise<any> {
@@ -65,7 +66,7 @@ async function tasks(ports: AssignmentPorts, root: string, change: string): Prom
   const data = await json(ports, root, ['instructions', 'apply', '--change', change, '--json']);
   if (!data || !Array.isArray(data.tasks) || data.tasks.some((task: Task) => !task || typeof task.id !== 'string' || !task.id || typeof task.description !== 'string' || !task.description || typeof task.done !== 'boolean')) throw new Error('OpenSpec instructions apply: malformed tasks');
   return data.tasks.map((task: Task, index: number) => {
-    const numbered = task.description.match(/^(\d+(?:\.\d+)+|[A-Z]\.\d+)\s+(.+)$/);
+    const numbered = task.description.match(/^([0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)+)\s+(.+)$/s);
     return numbered && task.id === String(index + 1) ? { id: numbered[1], description: numbered[2], done: task.done } : task;
   });
 }
@@ -94,8 +95,13 @@ export async function validateAssignment(request: AssignmentRequest, ports: Assi
     catch (error) { unavailable = true; issues.push(issue(selection.change, selection.items, errorText(error), [], archives)); continue; }
     const selected: { id: string; description: string }[] = [];
     for (const item of selection.items) {
+      if (!taskIdPattern.test(item.id)) {
+        issues.push(issue(selection.change, selection.items, `Пункт ${item.id} має некоректний формат ID.`, found, archives)); continue;
+      }
       const matches = found.filter(task => task.id === item.id);
-      if (matches.length !== 1 || (item.expectedDescription !== undefined && matches[0].description !== item.expectedDescription)) issues.push(issue(selection.change, selection.items, `Пункт ${item.id} відсутній, неоднозначний або змінив опис.`, found, archives));
+      if (matches.length === 0) issues.push(issue(selection.change, selection.items, `Пункт ${item.id} відсутній: точного ID не знайдено.`, found, archives));
+      else if (matches.length > 1) issues.push(issue(selection.change, selection.items, `Пункт ${item.id} неоднозначний: знайдено кілька пунктів із цим ID.`, found, archives));
+      else if (item.expectedDescription !== undefined && matches[0].description !== item.expectedDescription) issues.push(issue(selection.change, selection.items, `Пункт ${item.id} змінив опис.`, found, archives));
       else selected.push({ id: matches[0].id, description: matches[0].description });
     }
     changes.push({ id: selection.change, items: selected });

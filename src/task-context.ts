@@ -10,6 +10,7 @@ import { commandFailure } from './cli-contract.ts';
 import type { RuntimeRunParameters } from './app-runtime.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
 import type { WorkspaceProjectsConfig } from './workspace-routing.ts';
+import { configuredWorkspaceRoute, resolveDevelopmentBranch } from './workspace-routing.ts';
 
 export interface TaskContextConfiguration {
   readonly projects: WorkspaceProjectsConfig;
@@ -133,10 +134,14 @@ export async function loadTaskContextConfiguration(confRoot: string): Promise<Ta
 }
 
 function branchFor(parameters: RuntimeRunParameters, projects: WorkspaceProjectsConfig): string {
-  const branch = parameters.type === 'hotfix' ? 'main' : 'develop';
-  const entry = Object.hasOwn(projects.projects, parameters.project) ? projects.projects[parameters.project] : undefined;
-  if (!entry) return contextFailure('UNKNOWN_PROJECT', `Невідомий проєкт: ${parameters.project}`, parameters.project);
-  if (!entry.branchPaths || !Object.hasOwn(entry.branchPaths, branch)) return contextFailure('UNKNOWN_BRANCH', `conf/projects.json#/projects/${parameters.project}/branchPaths/${branch} не задано для типу ${parameters.type}`, parameters.project);
+  let branch = parameters.type === 'hotfix' ? 'main' : 'develop';
+  if (workspaceReadOnlyTypes.has(parameters.type)) {
+    const development = resolveDevelopmentBranch(parameters.project, projects);
+    if (!development.ok) return contextFailure(development.error.code, development.error.message, parameters.project);
+    branch = development.branch;
+  }
+  const route = configuredWorkspaceRoute({ root: '.', project: parameters.project, branch }, projects);
+  if (!route.ok) return contextFailure(route.error.code, route.error.message, parameters.project);
   return branch;
 }
 

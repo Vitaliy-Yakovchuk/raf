@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { lstat, readlink, readFile } from 'node:fs/promises';
+import { lstat, readlink, readFile, realpath } from 'node:fs/promises';
 import { availableParallelism, loadavg, totalmem, platform, hostname } from 'node:os';
 import { posix } from 'node:path';
 import type { AdapterCommandExecutor } from './agent-adapters.ts';
@@ -42,6 +42,11 @@ export function createWorkspacePorts(execute: AdapterCommandExecutor = executeCo
       catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return 'missing'; throw error; }
     },
     readLink: readlink,
+    realPath: realpath,
+    async gitRoot(cwd) {
+      const result = await execute({ executable: 'git', args: ['-C', cwd, 'rev-parse', '--show-toplevel'] });
+      return result.exitCode === 0 && result.stdout.trim() ? realpath(result.stdout.trim()) : null;
+    },
     async currentBranch(cwd) {
       const result = await execute({ executable: 'git', args: ['symbolic-ref', '--quiet', '--short', 'HEAD'], cwd });
       if (result.exitCode === 1) return null;

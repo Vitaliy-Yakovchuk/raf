@@ -87,15 +87,20 @@ function protocolFor(settings: readonly ProtocolSettings[], runner: string): Pro
   if (matches.length !== 1 || !found || typeof value.liveTaskVerified !== 'boolean' || !text(value.executable) || !text(value.version) || !Array.isArray(value.baseArgs) || !value.baseArgs.every(text) || !text(value.modelFlag) || !text(value.effortFlag) || !['literal', 'codex_config'].includes(value.effortFormat) || !object(value.modelAliases) || !Array.isArray(value.navigation) || !object(value.markers) || !strings(value.markers.ready) || !object(value.timeouts) || Object.values(value.timeouts).some(n => !Number.isFinite(n) || n <= 0) || !['startupMs', 'transitionMs', 'overallMs', 'pollMs'].every(key => Number.isFinite(value.timeouts[key]) && value.timeouts[key] > 0)) fail('RUNNER_PROTOCOL_UNAVAILABLE', `Runner ${runner} lacks a validated versioned invocation/readiness protocol and deadlines`);
   return value;
 }
-async function registeredBranchDirectory(orchestratorRoot: string, confRoot: string, cwd: string, gitRoot: string | undefined): Promise<boolean> {
+async function registeredBranchDirectory(orchestratorRoot: string, confRoot: string, cwd: string, gitRoot: string | undefined, task?: { type: string; project: string; branch: string }, execute: AdapterCommandExecutor = executeCommand): Promise<boolean> {
   const real = async (path: string) => fs.realpath(path).catch(() => undefined);
   const root = await real(orchestratorRoot);
   if (!root || !gitRoot || !isAbsolute(cwd)) return false;
   const projects = await json(join(confRoot, 'projects.json')).catch(() => undefined);
   const paths = object(projects?.projects) ? Object.values(projects.projects).flatMap(entry => object(entry) && object(entry.branchPaths) ? Object.values(entry.branchPaths).filter(text) : []) : [];
   const candidate = resolve(root, relative(orchestratorRoot, cwd));
-  if (!paths.some(path => resolve(root, path) === candidate)) return false;
-  return await real(candidate) === candidate && await real(cwd) === candidate && await real(gitRoot) === candidate;
+  if (await real(candidate) !== candidate || await real(cwd) !== candidate || await real(gitRoot) !== candidate) return false;
+  if (candidate === root) {
+    if (!task || !['spec', 'design'].includes(task.type) || task.project !== 'orchestrator' || !text(task.branch) || projects?.projects?.orchestrator?.path !== '.') return false;
+    const route = await resolveWorkspaceRoute({ root, project: task.project, branch: task.branch }, projects, createWorkspacePorts(execute));
+    return route.ok && route.cwd === candidate;
+  }
+  return paths.some(path => resolve(root, path) === candidate);
 }
 async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string, exactFiles = false, orchestratorRoot?: string): Promise<{ directories: string[]; workspace: string[] }> {
   const workspace = await fs.realpath(cwd);
@@ -717,7 +722,7 @@ export async function createProductionServices(
       const reportPath = join(directory, `${launch.addressId}.json`);
       try {
         await writeTaskContextFile(directory, { version: 1, runId: launch.runId, parameters: launch.taskContext.parameters, assignmentFingerprint: assignmentFingerprint(launch.assignment), context: launch.taskContext.context });
-        await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries }), { mode: 0o600, flag: 'wx' });
+        await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries, workspaceRoute: { type: launch.activity.type, project: launch.activity.project, branch: launch.taskContext.context.branch } }), { mode: 0o600, flag: 'wx' });
       } catch (error) { await fs.rm(directory, { recursive: true, force: true }); throw error; }
       prepared.set(launch.tmuxSession, { launch: structuredClone(launch), reportPath });
       return { reportPath, reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
@@ -985,7 +990,7 @@ export async function runProductionWorker(
     };
     const untrusted = async (): Promise<never> => {
       const gitRoot = await gitTopLevel() ?? 'unknown';
-      const answer = trustAnsweredAt === undefined ? 'raf answers it only for a registered branch directory from conf/projects.json branchPaths' : 'the prompt stayed after the protocol navigation keys';
+      const answer = trustAnsweredAt === undefined ? 'raf answers it only for a registered branch directory or a verified spec/design Orchestrator root from conf/projects.json' : 'the prompt stayed after the protocol navigation keys';
       const reason = `RUNNER_WORKSPACE_UNTRUSTED: runner ${settings.runner} asks to trust workspace ${request.cwd} (git root ${gitRoot}); ${answer}; raf does not edit CLI configuration`;
       const failure = { code: 'RUNNER_WORKSPACE_UNTRUSTED', reason, found: { cwd: request.cwd, gitRoot, runner: settings.runner }, remediation: [`Запускайте агента з каталогу гілки з conf/projects.json branchPaths; інший каталог ${gitRoot} власник довіряє вручну в діалозі ${settings.runner} CLI.`] };
       await fs.writeFile(launchFailurePath(request.tmpRoot, request.runId), JSON.stringify(failure), { mode: 0o600, flag: 'wx' }).catch(() => undefined);
@@ -996,7 +1001,9 @@ export async function runProductionWorker(
         if (Date.now() - trustAnsweredAt >= settings.timeouts.transitionMs) await untrusted();
         return;
       }
-      if (!await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, await gitTopLevel())) await untrusted();
+      const route = manifest.workspaceRoute;
+      const task = object(route) && route.type === session.activity?.type && route.project === session.activity?.project && text(route.branch) ? { type: route.type, project: route.project, branch: route.branch } : undefined;
+      if (!await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, await gitTopLevel(), task, execute)) await untrusted();
       const observation = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: null });
       const action = nextRunnerAction(settings, observation, { trustWorkspace: true });
       if (observation.state !== 'workspace_trust_required' || action.kind !== 'keys') await untrusted();

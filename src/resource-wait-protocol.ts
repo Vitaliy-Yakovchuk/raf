@@ -381,7 +381,7 @@ export type ResourceWaitClientConnection = {
   close: () => Promise<void>;
 };
 export type ResourceWaitCommandPorts = {
-  ensureReady: () => Promise<ResourceWaitEndpoint>;
+  ensureReady: (signal?: AbortSignal) => Promise<ResourceWaitEndpoint>;
   connect: (endpoint: ResourceWaitEndpoint) => Promise<ResourceWaitClientConnection>;
   recordDuration: (elapsedMs: number) => void;
 };
@@ -404,7 +404,7 @@ export async function runResourceWaitCommand(
       request.signal?.addEventListener('abort', onAbort, { once: true });
       if (request.signal?.aborted) onAbort();
     });
-    const endpoint = await Promise.race([ports.ensureReady(), cancelled]);
+    const endpoint = await Promise.race([ports.ensureReady(request.signal), cancelled]);
     connection = await Promise.race([ports.connect(endpoint).then(async value => { if (aborted) await value.close(); return value; }), cancelled]);
     ticket = await Promise.race([connection.enqueue(request).then(value => { if (aborted) void connection!.cancel(value).catch(() => {}); return value; }), cancelled]);
     if (ticket.serviceEpoch !== endpoint.serviceEpoch || !ticket.requestId) throw new Error('Resource wait enqueue returned a mismatched epoch or requestId');

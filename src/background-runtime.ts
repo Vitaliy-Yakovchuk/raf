@@ -33,7 +33,7 @@ export type BackgroundRuntimeOptions = {
 };
 
 export type BackgroundRuntimeDependencies = {
-  resolveMainPath: () => Promise<string>;
+  resolveMainPath: (signal?: AbortSignal) => Promise<string>;
   validateMainSnapshot?: (path: string) => Promise<boolean>;
   spawn?: typeof spawn;
   nodeExecutable?: string;
@@ -44,7 +44,7 @@ export type ServiceResponse = { exitCode: 0; value: unknown } | ServiceFailure;
 
 export type BackgroundRuntime = {
   start: () => Promise<ServiceStatus | ServiceFailure>;
-  ensureReady: () => Promise<ServiceStatus | ServiceFailure>;
+  ensureReady: (options?: { signal?: AbortSignal }) => Promise<ServiceStatus | ServiceFailure>;
   status: () => Promise<ServiceStatus | ServiceFailure>;
   stop: () => Promise<ServiceStatus | ServiceFailure>;
   request: (request: ServiceRequest, options?: { signal?: AbortSignal }) => Promise<ServiceResponse>;
@@ -123,8 +123,8 @@ export function createBackgroundRuntime(
   options: BackgroundRuntimeOptions,
   dependencies: BackgroundRuntimeDependencies,
 ): BackgroundRuntime {
-  const probe = async (timeout = options.readinessTimeoutMs) => {
-    const response = await exchange(options.socketPath, { kind: 'status' }, timeout);
+  const probe = async (timeout = options.readinessTimeoutMs, signal?: AbortSignal) => {
+    const response = await exchange(options.socketPath, { kind: 'status' }, timeout, signal);
     const record = await readRecord(options.stateDirectory);
     if (response.state === 'ready') {
       if (!record || record.state !== 'ready' || response.serviceEpoch !== record.token || response.pid !== record.pid) throw new Error('Endpoint readiness differs from current service epoch');
@@ -144,24 +144,28 @@ export function createBackgroundRuntime(
         stopReason: record?.stopReason ?? null, reasonKnown: record?.stopReason != null };
     } catch (error) { return failure('Cannot inspect service state', error); }
   };
-  const start = async (): Promise<ServiceStatus | ServiceFailure> => {
+  const start = async (startOptions?: { signal?: AbortSignal }): Promise<ServiceStatus | ServiceFailure> => {
     let lease: Awaited<ReturnType<typeof tryWaitLease>> = null;
     let child: ReturnType<typeof spawn> | undefined;
+    const signal = startOptions?.signal;
     const deadline = performance.now() + options.readinessTimeoutMs;
-    const remaining = () => { const time = deadline - performance.now(); if (time <= 0) throw new Error('Service readiness budget exhausted'); return Math.ceil(time); };
+    const remaining = () => { if (signal?.aborted) throw new Error('Service readiness cancelled'); const time = deadline - performance.now(); if (time <= 0) throw new Error('Service readiness budget exhausted'); return Math.ceil(time); };
     const within = <T>(work: Promise<T>): Promise<T> => new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('Service readiness budget exhausted')), remaining());
-      work.then(value => { clearTimeout(timer); resolve(value); }, error => { clearTimeout(timer); reject(error); });
+      const timer = setTimeout(() => { signal?.removeEventListener('abort', abort); reject(new Error('Service readiness budget exhausted')); }, remaining());
+      const abort = () => { clearTimeout(timer); signal?.removeEventListener('abort', abort); reject(new Error('Service readiness cancelled')); };
+      signal?.addEventListener('abort', abort, { once: true });
+      work.then(value => { clearTimeout(timer); signal?.removeEventListener('abort', abort); resolve(value); }, error => { clearTimeout(timer); signal?.removeEventListener('abort', abort); reject(error); });
+      if (signal?.aborted) abort();
     });
-    const currentReady = async () => { try { const result = await within(probe(remaining())); return result.exitCode === 0 && result.state === 'ready' ? result as ServiceStatus : null; } catch { remaining(); return null; } };
+    const currentReady = async () => { try { const result = await within(probe(remaining(), signal)); return result.exitCode === 0 && result.state === 'ready' ? result as ServiceStatus : null; } catch { remaining(); return null; } };
     const lock = join(options.stateDirectory, 'service-start.lock');
     try {
       await fs.mkdir(options.stateDirectory, { recursive: true });
       while (!lease) {
         const current = await currentReady();
         if (current) return current;
-        lease = await within(tryWaitLease(lock, remaining()).then(async value => {
-          if (performance.now() >= deadline) { await value?.release(); throw new Error('Service readiness budget exhausted'); }
+        lease = await within(tryWaitLease(lock, remaining(), signal).then(async value => {
+          if (signal?.aborted || performance.now() >= deadline) { await value?.release(); throw new Error('Service readiness cancelled or budget exhausted'); }
           return value;
         }));
         if (!lease) await pause(Math.min(25, remaining()));
@@ -171,11 +175,11 @@ export function createBackgroundRuntime(
       const previous = await readRecord(options.stateDirectory);
       const previousState = previous?.identity ? (await within(observeWaitIdentity(previous.identity))).state : previous && alive(previous.pid) ? 'unknown' : 'dead';
       if (previous && previousState !== 'dead' && previous.state !== 'stopped') throw new Error(`Recorded service PID ${previous.pid} is alive but readiness failed; refusing to replace its socket`);
-      const mainPath = await within(dependencies.resolveMainPath());
+      const mainPath = await within(dependencies.resolveMainPath(signal));
       if (!mainPath) throw new Error('Configured raf main checkout is missing');
       const root = resolve(mainPath);
       await fs.realpath(root);
-      const branch = await promisify(execFile)('git', ['-C', root, 'branch', '--show-current'], { timeout: remaining() }).then(result => result.stdout.trim()).catch(() => '');
+      const branch = await promisify(execFile)('git', ['-C', root, 'branch', '--show-current'], { timeout: remaining(), signal }).then(result => result.stdout.trim()).catch(() => '');
       if (branch !== 'main' && !await within(Promise.resolve(dependencies.validateMainSnapshot?.(root)))) throw new Error(`Configured raf main checkout is on branch ${branch || '(detached)'}, expected main`);
       const entry = resolve(root, options.entryRelativePath);
       if (!entry.startsWith(root + '/')) throw new Error('Service entry must be within the configured main checkout');
@@ -200,7 +204,7 @@ export function createBackgroundRuntime(
         if (childError) throw childError;
         if (child.exitCode !== null || child.signalCode !== null) throw new Error(`Service exited before readiness: code=${child.exitCode}, signal=${child.signalCode}`);
         try {
-          const result = await within(probe(remaining()));
+          const result = await within(probe(remaining(), signal));
           if (result.exitCode === 0 && result.state === 'ready' && result.pid === child.pid) return result;
         } catch { remaining(); }
         await pause(Math.min(25, remaining()));

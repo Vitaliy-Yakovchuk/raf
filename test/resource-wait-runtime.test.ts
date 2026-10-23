@@ -116,3 +116,27 @@ test('[resource-wait/runtime] cancellation during readiness never opens a connec
   try { assert.equal((await waiting).exitCode, 1); assert.equal(connects, 0); }
   finally { finish(); }
 });
+
+
+test('[resource-wait/runtime] cancelling startup releases its OS lease while the resolver is blocked', async () => {
+  const directory = await mkdtemp('/tmp/raf-wait-cancel-');
+  const controller = new AbortController();
+  let entered!: () => void;
+  const resolving = new Promise<void>(resolve => { entered = resolve; });
+  let finish!: (path: string) => void;
+  const path = new Promise<string>(resolve => { finish = resolve; });
+  const runtime = createBackgroundRuntime({ stateDirectory: directory, socketPath: join(directory, 'service.sock'), entryRelativePath: 'unused.ts', readinessTimeoutMs: 30000 }, {
+    resolveMainPath: async signal => { assert.equal(signal, controller.signal); entered(); return path; },
+  });
+  try {
+    const waiting = runtime.ensureReady({ signal: controller.signal });
+    await resolving;
+    controller.abort();
+    const result = await waiting;
+    assert.equal(result.exitCode, 1);
+    assert.match('details' in result ? result.details : '', /cancelled/);
+    const lease = await tryWaitLease(join(directory, 'service-start.lock'));
+    assert.ok(lease, 'startup ownership must not remain held by its pending resolver');
+    await lease.release();
+  } finally { finish(directory); await rm(directory, { recursive: true, force: true }); }
+});

@@ -86,18 +86,22 @@ print(str(p)+' '+str(u))`;
   if (pid !== identity.pid || uid !== process.getuid?.()) throw new Error('Claimed client PID does not match Unix peer credentials');
 }
 
-export async function tryWaitLease(path: string, timeoutMs?: number): Promise<{ release(): Promise<void> } | null> {
+export async function tryWaitLease(path: string, timeoutMs?: number, signal?: AbortSignal): Promise<{ release(): Promise<void> } | null> {
   const { open } = await import('node:fs/promises');
   const { spawn } = await import('node:child_process');
   const file = await open(path, 'a+', 0o600);
   try {
+    if (signal?.aborted) throw new Error('OS service lock acquisition cancelled');
     const code = await new Promise<number | null>((resolve, reject) => {
       const child = spawn('python3', ['-c', `import fcntl,sys
 try: fcntl.flock(3,fcntl.LOCK_EX|fcntl.LOCK_NB)
 except BlockingIOError: sys.exit(2)`], { stdio: ['ignore', 'ignore', 'ignore', file.fd] });
       const timer = timeoutMs === undefined ? undefined : setTimeout(() => child.kill('SIGKILL'), Math.max(1, timeoutMs));
+      const abort = () => child.kill('SIGKILL');
+      signal?.addEventListener('abort', abort, { once: true });
       child.once('error', reject);
-      child.once('close', code => { if (timer) clearTimeout(timer); resolve(code); });
+      child.once('close', code => { if (timer) clearTimeout(timer); signal?.removeEventListener('abort', abort); resolve(code); });
+      if (signal?.aborted) abort();
     });
     if (code === 2) { await file.close(); return null; }
     if (code !== 0) throw new Error('OS service lock unavailable; python3 with fcntl is required');

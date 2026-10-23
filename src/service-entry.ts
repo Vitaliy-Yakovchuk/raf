@@ -31,7 +31,7 @@ export type ServiceHandlerOptions = {
 export type ServiceHandlers = {
   handlers: Record<'service start' | 'service status' | 'service stop', Handler>;
   request: (request: ServiceRequest, options?: { signal?: AbortSignal }) => Promise<ServiceResponse>;
-  ensureResourceReady: () => Promise<import('./resource-wait-protocol.ts').ResourceWaitEndpoint>;
+  ensureResourceReady: (signal?: AbortSignal) => Promise<import('./resource-wait-protocol.ts').ResourceWaitEndpoint>;
 };
 
 export function createServiceHandlers(
@@ -49,7 +49,7 @@ export function createServiceHandlers(
   let bootstrapLease: { release(): Promise<void> } | undefined;
   const releaseBootstrap = async () => { const lease = bootstrapLease; bootstrapLease = undefined; await lease?.release(); };
   const runtime = createBackgroundRuntime({ ...options.service, stateDirectory, socketPath }, {
-    resolveMainPath: async () => {
+    resolveMainPath: async signal => {
       const config = JSON.parse(await fs.readFile(join(options.orchestratorRoot, 'conf', 'projects.json'), 'utf8')) as WorkspaceProjectsConfig;
       if (!config || typeof config.projects !== 'object' || config.projects === null) throw new Error('Invalid projects.json configuration for raf main');
       const route = await resolveWorkspaceRoute({ root: options.orchestratorRoot, project: 'raf', branch: 'main' }, config, {
@@ -65,6 +65,7 @@ export function createServiceHandlers(
         throw new Error(`${route.error.code}: ${route.error.message}`);
       }
       const lease = await acquireHotfixReader({ orchestratorRoot: options.orchestratorRoot, qaHome: options.homeDirectory, environment: {}, sandboxExecutable: 'codex' }, 'service');
+      if (signal?.aborted) { await lease.release(); throw new Error('Resource wait service startup cancelled'); }
       await releaseBootstrap();
       bootstrapLease = lease;
       return lease.generationRoot;
@@ -92,8 +93,8 @@ export function createServiceHandlers(
     });
     return result;
   };
-  const ensureResourceReady = async () => {
-    const result = await runtime.ensureReady().finally(releaseBootstrap);
+  const ensureResourceReady = async (signal?: AbortSignal) => {
+    const result = await runtime.ensureReady({ signal }).finally(releaseBootstrap);
     if (result.exitCode !== 0 || result.state !== 'ready' || !result.serviceEpoch || !result.resourceWaitReady) throw new Error(`Resource wait service readiness failed: ${JSON.stringify(result)}`);
     return { endpoint: socketPath, serviceEpoch: result.serviceEpoch };
   };

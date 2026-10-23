@@ -142,6 +142,7 @@ export interface TestRunCleanup {
 }
 
 export interface TestRunResult extends RunnerClassification {
+  removed: TestId[];
   diagnostics: InlineDiagnostic[];
   diagnosticSummary: DiagnosticAttachment['diagnosticSummary'];
   environmentSummary: DiagnosticEnvironmentSummary;
@@ -292,10 +293,11 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   if (!files.length) failure('EMPTY_SELECTION');
   if (files.some(file => !safeFile(file))) failure('UNSAFE_SELECTION');
   const configuredInventory = [...new Set(Object.values(project.profiles).flatMap(p => p.unitFiles))];
-  if (env.unitFiles.length !== configuredInventory.length || env.unitFiles.some(file => !configuredInventory.includes(file))) {
-    const missing = configuredInventory.filter(file => !env.unitFiles.includes(file));
-    const unexpected = env.unitFiles.filter(file => !configuredInventory.includes(file));
-    failure('INVENTORY_INCOMPLETE', `Unit inventory differs; missing: ${missing.join(', ')}; unexpected: ${unexpected.join(', ')}`);
+  const missing = configuredInventory.filter(file => !env.unitFiles.includes(file) || env.files[file]?.kind !== 'file');
+  const unexpected = env.unitFiles.filter(file => !configuredInventory.includes(file));
+  if (missing.length || unexpected.length) {
+    const pointers = Object.entries(project.profiles).filter(([, profile]) => profile.unitFiles.some(file => missing.includes(file)) || unexpected.length).map(([id]) => `conf/test-runs.json#/projects/${request.project}/profiles/${id}/unitFiles`);
+    failure('INVENTORY_INCOMPLETE', `Unit inventory differs; missing: ${missing.join(', ') || 'none'}; unexpected: ${unexpected.join(', ') || 'none'}. Reconcile ${pointers.join(', ')} and conf/test-runs.json#/projects/${request.project}/groups with the intended unit files: restore missing files or remove stale entries; explicitly register intended new files. No automatic discovery or inventory edits were performed.`);
   }
   const profiles = Object.entries(project.profiles).filter(([, profile]) => files.every(file => profile.unitFiles.includes(file)));
   if (profiles.length !== 1) failure('PROFILE_AMBIGUOUS', 'Selection must belong to one configured profile');
@@ -351,7 +353,7 @@ function emptyResult(request: TestRunRequest, context: TestRunContext, runId: st
   return { diagnostics: [], diagnosticSummary: { totalEntries: 0, retainedEntries: 0, omittedEntries: 0, truncated: false, redacted: false }, environmentSummary: unavailableEnvironment(context), runId, project: request.project, workspace: context.workspace, phase: request.phase, group: request.group, profileId: null,
     selection: { files: request.files ?? [], testIds: request.only ?? [] }, command: null, startedAt: new Date(now).toISOString(), durationMs: 0,
     exitCode: null, signal: null, timedOut: false, cleanup: { complete: true, remainingPids: [] }, outcome: 'refused', failureKinds: ['refusal'],
-    passed: [], knownRed: [], unexecuted: [], unknown: [], groupState: 'idle', timeoutCount: 0, nextAction: 'fix-setup', hintIds: [], hints: [], evidence: [] };
+    passed: [], knownRed: [], unexecuted: [], unknown: [], removed: [], groupState: 'idle', timeoutCount: 0, nextAction: 'fix-setup', hintIds: [], hints: [], evidence: [] };
 }
 function attachHints(result: TestRunResult, config: TestRunConfig | null): TestRunResult {
   const phase = config?.phases[result.phase];
@@ -398,7 +400,8 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       }
       for (const other of tx.list(key.project, key.workspace)) {
         if (other.key.group === key.group || other.key.group.split('/')[0] !== key.group.split('/')[0]) continue;
-        if (plan.selection.files.some(file => other.selection.files.includes(file))) failure('GROUP_RENAME_REFUSED');
+        const overlap = plan.selection.files.filter(file => other.selection.files.includes(file));
+        if (overlap.length) failure('GROUP_RENAME_REFUSED', `Files ${overlap.join(', ')} already belong to ${other.key.group}. Continue with --group ${other.key.group}. To release or reassign the selection, ask main to reconcile the existing group's selection, preserving timeoutCount and knownRed; do not rename the group or reset its state.`);
       }
       if (group?.inFlight) failure('GROUP_IN_FLIGHT');
       if (request.only && (!group || request.only.some(id => !containsId(group!.knownRed, id)))) failure('UNKNOWN_RED_TEST');
@@ -488,9 +491,13 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   try { await ports.state.transaction(tx => {
     const group = tx.get(key);
     if (!group || group.inFlight?.runId !== result.runId) return;
-    group.knownRed = uniqueIds([...group.knownRed.filter(id => !events.some(event => event.kind === 'complete') || events.some(event => event.kind === 'protocol-error') || !containsId(result.passed, id)), ...result.knownRed]);
+    const collected = uniqueIds(events.flatMap(event => event.kind === 'complete' ? event.expected : event.kind === 'discovered' || event.kind === 'container-complete' ? [event.test] : []));
+    const completeCollection = !request.only && reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
+    const removed = (id: TestId) => completeCollection && plan.selection.files.includes(id.file) && !containsId(collected, id);
+    result.removed = uniqueIds([...group.knownRed, ...group.unexecuted].filter(removed));
+    group.knownRed = uniqueIds([...group.knownRed.filter(id => !removed(id) && (!events.some(event => event.kind === 'complete') || events.some(event => event.kind === 'protocol-error') || !containsId(result.passed, id))), ...result.knownRed]);
     result.knownRed = group.knownRed;
-    result.unexecuted = uniqueIds([...group.unexecuted.filter(id => !containsId([...result.passed, ...result.knownRed], id)), ...result.unexecuted, ...(request.only ?? []).filter(id => !containsId([...result.passed, ...classified.knownRed], id))]);
+    result.unexecuted = uniqueIds([...group.unexecuted.filter(id => !removed(id) && !containsId([...result.passed, ...result.knownRed], id)), ...result.unexecuted, ...(request.only ?? []).filter(id => !containsId([...result.passed, ...classified.knownRed], id))]);
     group.unexecuted = result.unexecuted;
     if (result.timedOut) group.timeoutCount++;
     result.timeoutCount = group.timeoutCount;

@@ -39,17 +39,17 @@ export async function eventually<T>(read: () => Promise<T> | T, predicate: (valu
   assert.fail(`${description}: ${JSON.stringify(last)}`);
 }
 
-export async function fixture(t: TestContext) {
+export async function fixture(t: TestContext, options: { tmpRootInHome?: boolean } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'raf-prod-'));
   const confRoot = join(root, 'conf');
   const home = join(root, 'home');
-  const tmpRoot = join(root, 'tmp');
+  const tmpRoot = options.tmpRootInHome ? join(home, '.raf', 'tmp') : join(root, 'tmp');
   const cwd = join(root, 'raf-develop');
   const statePath = join(home, '.raf', 'isolated.sqlite');
   const binRoot = join(root, 'bin');
   const socket = join(root, 'tmux.sock');
   const questionsPath = join(root, 'questions', 'projects', 'raf', 'questions.md');
-  await Promise.all([mkdir(confRoot), mkdir(dirname(statePath), { recursive: true }), mkdir(tmpRoot), mkdir(cwd), mkdir(binRoot), mkdir(dirname(questionsPath), { recursive: true })]);
+  await Promise.all([mkdir(confRoot), mkdir(dirname(statePath), { recursive: true }), mkdir(tmpRoot, { recursive: true }), mkdir(cwd), mkdir(binRoot), mkdir(dirname(questionsPath), { recursive: true })]);
   await writeFile(questionsPath, '# Питання\n');
   const tmuxLookup = spawnSync('which', ['tmux'], { encoding: 'utf8' });
   assert.equal(tmuxLookup.status, 0, tmuxLookup.stderr);

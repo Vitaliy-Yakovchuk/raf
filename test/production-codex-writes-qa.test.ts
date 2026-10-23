@@ -2,14 +2,10 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdir, readFile, rename, writeFile, realpath } from 'node:fs/promises';
 import { delimiter, dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test, type TestContext } from 'node:test';
 import { listTaskReservations } from '../src/task-reservations.ts';
-import { configuration, eventually, fixture } from './production-fixture.ts';
-
-const runtimeUrl = pathToFileURL(fileURLToPath(new URL('../src/production-runtime.ts', import.meta.url))).href;
-const appRuntimeUrl = new URL('../src/app-runtime.ts', import.meta.url).href;
-const storeUrl = new URL('../src/state-store.ts', import.meta.url).href;
+import { configuration, eventually } from './production-fixture.ts';
+import { productionCodexQaFixture as fixture } from './production-codex-qa-fixture.ts';
 
 async function linkedWorktree(root: string, cwd: string) {
   const init = spawnSync('git', ['init', '--quiet', '--initial-branch=main', root], { encoding: 'utf8' });
@@ -113,16 +109,18 @@ const timer = setInterval(() => {
 `, { mode: 0o700 });
   const syntax = spawnSync(process.execPath, ['--check', executable], { encoding: 'utf8' });
   assert.equal(syntax.status, 0, syntax.stderr);
-  await writeFile(join(f.confRoot, 'raf.json'), JSON.stringify({ version: 1, runnerProtocols: [{
+  const rafPath = join(f.confRoot, 'raf.json');
+  const raf = JSON.parse(await readFile(rafPath, 'utf8'));
+  await writeFile(rafPath, JSON.stringify({ ...raf, runnerProtocols: [{
     runner: 'codex', executable: 'codex', version: '0.160.0', baseArgs: ['--no-daemon', '--no-alt-screen', '--sandbox', 'workspace-write', '--ask-for-approval', 'never'],
     modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null,
     quotaCommand: '/status', navigation: [], markers: { ready: ['Ask Codex to do anything'] }, quotaParser: 'codex_status', modelPools: {}, quotaReliable: false, liveTaskVerified: false,
     timeouts: { startupMs: 5000, transitionMs: 5000, overallMs: 15000, pollMs: 30 }, collection: { intervalMs: 60000, failureBackoffMs: 60000, staleAfterMs: 60000 },
   }] }));
   const command = join(f.root, 'writes-command.mjs');
-  await writeFile(command, `import { createAppRuntime } from ${JSON.stringify(appRuntimeUrl)};
-import { createProductionServices } from ${JSON.stringify(runtimeUrl)};
-import { openStateStore } from ${JSON.stringify(storeUrl)};
+  await writeFile(command, `import { createAppRuntime } from ${JSON.stringify(f.appRuntimeUrl)};
+import { createProductionServices } from ${JSON.stringify(f.runtimeUrl)};
+import { openStateStore } from ${JSON.stringify(f.storeUrl)};
 const context = { ...${JSON.stringify(f.context)}, resolveCaller: async () => undefined };
 const app = createAppRuntime(context, { loadConfiguration: async () => (${JSON.stringify(configured)}), openStore: async path => openStateStore(path), createServices: createProductionServices, nextRunIdentity: () => ({runId:${JSON.stringify(runId)},tmuxSession:'raf-writes-synthetic'}), now: Date.now });
 try { console.log(JSON.stringify(await app.handlers['agent run'](${JSON.stringify(params)}))); } finally { await app.close(); }

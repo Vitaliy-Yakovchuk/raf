@@ -1,7 +1,8 @@
+import type { LaunchQueueTransaction, LaunchQueueState } from './launch-queue-events.ts';
 import type { ResourceWaitLastGrant } from './resource-wait-protocol.ts';
 import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import type { TaskReservationSet } from "./task-reservations.ts";
-import type { EventRegistryPorts, EventTransaction, PendingEvent } from "./event-registry.ts";
+import type { PendingEvent } from "./event-registry.ts";
 import { DatabaseSync } from "node:sqlite";
 import { existsSync, mkdirSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -66,7 +67,7 @@ export interface StateStore {
     release(id: string, token: string): void;
     discard(id: string): void;
   };
-  eventRepository: Pick<EventRegistryPorts, 'transaction'>;
+  eventRepository: { transaction<T>(action: (tx: LaunchQueueTransaction) => T): T };
   claimResourceWaitEpoch(epoch: string): void;
   readResourceWaitGrant(): ResourceWaitLastGrant | null;
   commitResourceWaitGrant(change: { expectedEpoch: string; previous: ResourceWaitLastGrant | null; next: ResourceWaitLastGrant }): 'committed' | 'not-committed';
@@ -88,8 +89,8 @@ export interface StateStore {
   getCommandTiming(command: string): CommandTiming | undefined;
 }
 
-export const STATE_SCHEMA_VERSION = 13;
-export const STATE_SCHEMA_SUPPORTED_VERSIONS = [12, 13] as const;
+export const STATE_SCHEMA_VERSION = 14;
+export const STATE_SCHEMA_SUPPORTED_VERSIONS = [12, 13, 14] as const;
 
 export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
@@ -136,7 +137,7 @@ export function openStateStore(path: string, options?: import('./state-migration
     if (permit && version !== permit.fromVersion && version !== permit.toVersion) {
       throw stateFailure('STATE_MIGRATION_CONFLICT', `State ${path} is at ${version}; expected ${permit.fromVersion} or ${permit.toVersion}`);
     }
-    if (!permit && version > 0 && !STATE_SCHEMA_SUPPORTED_VERSIONS.includes(version as 12 | 13)) {
+    if (!permit && version > 0 && !STATE_SCHEMA_SUPPORTED_VERSIONS.includes(version as 12 | 13 | 14)) {
       throw stateFailure('STATE_MIGRATION_REQUIRED', `State ${path} is at version ${version}; explicit migration to ${STATE_SCHEMA_VERSION} required`);
     }
     return version;
@@ -183,17 +184,23 @@ export function openStateStore(path: string, options?: import('./state-migration
     }
     checkSchema(db);
   } catch (error) { db.close(); throw error; }
+  let transactionDepth = 0;
   function transaction<T>(action: () => T, immediate = true): T {
-    db.exec(immediate ? "BEGIN IMMEDIATE" : "BEGIN");
+    const savepoint = transactionDepth ? `raf_nested_${transactionDepth}` : null;
+    db.exec(savepoint ? `SAVEPOINT ${savepoint}` : immediate ? "BEGIN IMMEDIATE" : "BEGIN");
+    transactionDepth++;
     try {
       const result = action();
       if (result && typeof (result as { then?: unknown }).then === "function") throw new Error("State transactions must be synchronous");
-      db.exec("COMMIT");
+      db.exec(savepoint ? `RELEASE ${savepoint}` : "COMMIT");
       return result;
     } catch (error) {
-      try { db.exec("ROLLBACK"); } catch {                                      }
+      try {
+        db.exec(savepoint ? `ROLLBACK TO ${savepoint}` : "ROLLBACK");
+        if (savepoint) db.exec(`RELEASE ${savepoint}`);
+      } catch {                                      }
       throw error;
-    }
+    } finally { transactionDepth--; }
   }
 
   try {
@@ -375,7 +382,7 @@ export function openStateStore(path: string, options?: import('./state-migration
             PRAGMA user_version = 12;
           `);
           options?.afterMigrationStep?.(12); }
-          db.exec(`
+          if (current < 13) { db.exec(`
             CREATE TABLE agent_launch_queues (
               state_domain TEXT NOT NULL,
               machine_id TEXT NOT NULL,
@@ -390,7 +397,12 @@ export function openStateStore(path: string, options?: import('./state-migration
             ) STRICT;
             PRAGMA user_version = 13;
           `);
-          options?.afterMigrationStep?.(13);
+          options?.afterMigrationStep?.(13); }
+          if (current < 14) { db.exec(`
+            ALTER TABLE agent_launch_queues ADD COLUMN payload TEXT;
+            PRAGMA user_version = 14;
+          `);
+          options?.afterMigrationStep?.(14); }
         });
       }
       for (let attempt = 0; ; attempt++) {
@@ -584,6 +596,9 @@ export function openStateStore(path: string, options?: import('./state-migration
     return staged;
   }
 
+  const requireQueueSchema = () => {
+    if (Number(db.prepare('PRAGMA user_version').get()?.user_version) < 14) throw stateFailure('STATE_MIGRATION_REQUIRED', 'Launch queue events require explicit state schema migration to 14');
+  };
   const eventRepository: StateStore['eventRepository'] = {
     transaction: action => operation("eventTransaction", () => transaction(() => {
       let active = true;
@@ -591,13 +606,26 @@ export function openStateStore(path: string, options?: import('./state-migration
         if (!active) throw new Error("Event transaction is closed");
         return operation();
       };
-      const tx: EventTransaction = {
+      const tx: LaunchQueueTransaction = {
+        loadQueue: identity => access(() => {
+          requireQueueSchema();
+          const row = db.prepare('SELECT queue_id, payload FROM agent_launch_queues WHERE state_domain=? AND machine_id=?').get(identity.stateDomain, identity.machineId);
+          if (!row) return undefined;
+          return row.payload ? JSON.parse(row.payload as string) as LaunchQueueState : { queueId: row.queue_id as string, generation: 0, entries: [], hadFailure: false };
+        }),
+        saveQueue: (identity, state) => access(() => {
+          requireQueueSchema();
+          const result = db.prepare(`INSERT INTO agent_launch_queues(state_domain, machine_id, queue_id, payload) VALUES (?, ?, ?, ?)
+            ON CONFLICT(state_domain, machine_id) DO UPDATE SET payload=excluded.payload WHERE queue_id=excluded.queue_id`)
+            .run(identity.stateDomain, identity.machineId, state.queueId, JSON.stringify(state));
+          if (Number(result.changes) !== 1) throw new Error('Launch queue identity changed');
+        }),
         listPending: () => access(() => db.prepare("SELECT payload FROM pending_intents").all().flatMap(row => {
           const intent = JSON.parse(row.payload as string) as PendingIntent;
           if (intent.event === 'context-review.due' && !(intent.payload as { mainDelivered?: boolean })?.mainDelivered) return [];
           const event = intent.payload as { kind?: unknown; id?: unknown } | null;
           if (!event || typeof event.kind !== 'string' || typeof event.id !== 'string' || intent.event !== event.kind) return [];
-          return [{ key: intent.id, event: { kind: event.kind, id: event.id } }];
+          return [{ key: intent.id, event: { kind: event.kind, id: event.id }, ...('data' in event ? { data: event.data } : {}) }];
         })),
         savePending: fact => access(() => {
           if (!fact || typeof fact.key !== 'string' || !fact.key.trim() ||
@@ -609,7 +637,7 @@ export function openStateStore(path: string, options?: import('./state-migration
             if (intent.event !== fact.event.kind || event?.kind !== fact.event.kind || event?.id !== fact.event.id) throw new Error("Conflicting pending event key");
             return;
           }
-          const intent: PendingIntent = { id: fact.key, runId: null, event: fact.event.kind, payload: { ...fact.event } };
+          const intent: PendingIntent = { id: fact.key, runId: null, event: fact.event.kind, payload: { ...fact.event, ...(fact.data !== undefined ? { data: fact.data } : {}) } };
           db.prepare("INSERT INTO pending_intents(id, run_id, payload) VALUES (?, ?, ?)").run(intent.id, null, JSON.stringify(intent));
         }),
         deletePending: key => access(() => {

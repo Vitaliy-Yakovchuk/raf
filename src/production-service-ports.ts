@@ -1,3 +1,4 @@
+import { storedLaunchQueueIdentity, validateStoredQueueId } from './stored-launch-queue-events.ts';
 import { productionResourceWait } from './production-resource-wait.ts';
 import { readResourceWaitProtocolOptions } from './resource-wait-protocol.ts';
 import { productionStateContext } from './state-migration-guard.ts';
@@ -63,6 +64,7 @@ export async function createProductionServiceDependencies(
   };
   const paths = [...new Set(options?.resourcePaths ?? [context.orchestratorRoot])];
   if (!paths.length || paths.some(path => !isAbsolute(path))) throw new Error('Absolute resource paths are required');
+  const eventMachine = await readMachineBootIdentity(options?.processScan?.execute);
   const reader = options?.resourceReader ?? createResourceSnapshotReader({ machineId: hostname(), paths });
   return {
     deliverStartupContextEvent: async intent => {
@@ -123,7 +125,9 @@ export async function createProductionServiceDependencies(
       options?.onStore?.(handle);
       return {
         transaction: operation => repository.transaction(operation),
-        validateId: validateEventObjectId,
+        validateId: (kind, id) => kind === 'resourceQueueId'
+          ? validateStoredQueueId(handle, storedLaunchQueueIdentity(handle, eventMachine.machineId), id)
+          : validateEventObjectId(kind, id),
       };
     },
     deliverReminder: async reminder => {

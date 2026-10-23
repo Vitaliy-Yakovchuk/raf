@@ -8,6 +8,7 @@ export interface EventCatalog {
 export interface PendingEvent {
   readonly key: string;
   readonly event: ReminderEvent;
+  readonly data?: unknown;
 }
 
 export interface EventTransaction {
@@ -63,7 +64,7 @@ export function createEventRegistry(catalog: EventCatalog, ports: EventRegistryP
           }
           return;
         }
-        tx.savePending({ key: fact.key, event: { ...fact.event } });
+        tx.savePending({ ...fact, event: { ...fact.event } });
       });
     },
     dispatch() {

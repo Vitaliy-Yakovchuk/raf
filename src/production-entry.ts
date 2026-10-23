@@ -1,3 +1,5 @@
+import { storedLaunchQueueIdentity, validateStoredQueueId } from './stored-launch-queue-events.ts';
+import { readMachineBootIdentity } from './os-runtime.ts';
 import { productionStateContext } from './state-migration-guard.ts';
 import { createServiceHandlers } from './service-entry.ts';
 import { createProductionServices, rafSystemCaller } from './production-runtime.ts';
@@ -108,6 +110,7 @@ function runnerLimits(options: ProductionEntryOptions, orchestratorRoot: string,
 function commandState(orchestratorRoot: string): (store: StateStore, services: () => Promise<RuntimeServices>) => CommandStatePorts {
   return (store, services) => ({
     store, now: Date.now, nextReminderId: randomUUID, catalog: loadEventCatalog(orchestratorRoot),
+    validateResourceQueueId: async id => validateStoredQueueId(store, storedLaunchQueueIdentity(store, (await readMachineBootIdentity()).machineId), id),
     deliver: async (request, sender) => {
       if (sender.kind !== 'system') return { accepted: false, reason: 'Command state delivers only system messages' };
       try { return await (await services()).control.message(request, rafSystemCaller); }

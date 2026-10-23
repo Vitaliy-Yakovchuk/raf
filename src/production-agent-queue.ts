@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import type { RuntimeServices, RuntimeContext, RuntimeReservationInput, RuntimeConfiguration } from './app-runtime.ts';
@@ -30,7 +31,7 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
     const parent = caller && tx.listTaskReservations().find(set => set.lease.owner.runId === caller && set.stage === 'running' && tx.getSession(caller)?.activity?.type === 'coordinator');
     return parent ? { runId: parent.lease.owner.runId, fence: parent.lease.owner.fence } : null;
   });
-  const queueId = state.queueId(context.statePath, clientIdentity.machineId);
+  const queueId = state.queueId(realpathSync(context.statePath), clientIdentity.machineId);
   const request = { orchestratorRoot: context.orchestratorRoot, homeDirectory: context.stateContext?.homeDirectory ?? process.env.HOME!,
     developmentDirectory: input.activity.cwd, project: input.activity.project, agentId: input.addressId,
     agentType: input.activity.type, owner, clientIdentity,

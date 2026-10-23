@@ -1,3 +1,5 @@
+import { loadEventCatalog } from './event-catalog.ts';
+import { createStoredLaunchQueueEvents } from './stored-launch-queue-events.ts';
 import { createProductionAgentQueue } from './production-agent-queue.ts';
 import { createAgentQueueState } from './agent-queue-state.ts';
 import { resolveAgentResourceEstimate } from './resource-estimates.ts';
@@ -49,7 +51,7 @@ import { collectRunnerQuotas, readQuotaViews, type CollectionError, type Collect
 import { validateQuotaProtocol, quotaProbeInvocation, routingQuotaEntries, type QuotaProtocol, type ScreenQuotaView } from './quota-screens.ts';
 import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
-import { settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
+import { settleCommandState, settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
 import { readPendingAgentReport, verifyPendingAgentReportFreshness, rejectPendingAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
 import { prepareReportedTaskCheckboxes, type TaskCheckboxOperation } from './task-checkbox-report.ts';
 import { finalizeStartupContextRun, reserveStartupContextReview, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
@@ -982,7 +984,7 @@ export async function createProductionServices(
       const resourceSnapshot = await measureResources(paths, boot.machineId, execute, options.loadAverage1m ?? (() => loadavg()[0]));
       const { requiredFileSystemIds, homeFileSystemId, reasons } = deriveResourceAdmissionVolumes(volumePaths, resourceSnapshot.fileSystemByPath);
       const requestedTier = input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const;
-      const queueId = input.queueClaim?.record.queueId ?? options.admissionQueueId?.({ stateDomain: await fs.realpath(context.statePath), machineId: boot.machineId }) ?? '';
+      const queueId = input.queueClaim?.record.queueId ?? options.admissionQueueId?.({ stateDomain: await fs.realpath(context.statePath), machineId: boot.machineId }) ?? createStoredLaunchQueueEvents(store, { stateDomain: await fs.realpath(context.statePath), machineId: boot.machineId }).queueId();
       let policy: FlowPolicy | null = null;
       try { policy = loadFlowPolicy(join(context.confRoot, 'flow.json')); }
       catch (error) { reasons.push(error instanceof Error ? error.message : String(error)); }
@@ -1541,6 +1543,10 @@ export async function runProductionWorker(
             }), settings.timeouts);
           }
           await tools.control.started(request.runId);
+          if (queued?.eventHandle) await settleCommandState({ store, now: Date.now, nextReminderId: randomUUID,
+            catalog: loadEventCatalog(context.orchestratorRoot),
+            deliver: message => tools.control.message(message, rafSystemCaller),
+          });
         },
         acceptReport: async result => {
           if (result.report && session!.launchContext?.reportedCommits) {

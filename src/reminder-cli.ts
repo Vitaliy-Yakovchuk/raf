@@ -25,6 +25,7 @@ export interface CommandStatePorts {
   now: () => number;
   nextReminderId: () => string;
   catalog: EventCatalog;
+  validateResourceQueueId?: (id: string) => Promise<boolean>;
   deliver: (request: MessageRequest, sender: VerifiedSender) => Promise<DeliveryReceipt>;
 }
 
@@ -95,7 +96,8 @@ function optionalText(params: Record<string, unknown>, option: string, ...names:
   return value;
 }
 
-function bindingFrom(params: Record<string, unknown>, catalog: EventCatalog): ReminderBinding | undefined {
+async function bindingFrom(params: Record<string, unknown>, ports: CommandStatePorts): Promise<ReminderBinding | undefined> {
+  const catalog = ports.catalog;
   const kind = optionalText(params, '--event', 'event');
   const id = optionalText(params, '--event-id', 'event-id', 'eventId');
   const action = optionalText(params, '--event-action', 'event-action', 'eventAction');
@@ -105,6 +107,8 @@ function bindingFrom(params: Record<string, unknown>, catalog: EventCatalog): Re
   if (!catalog.events.some(event => event.id === kind)) throw reminderFailure('INVALID_VALUE', `Unknown event kind: ${kind}`, kind);
   if (action !== 'activate' && action !== 'close') throw reminderFailure('INVALID_VALUE', `Invalid binding action: ${action}`, action);
   if (!validateEventId(catalog, kind!, id!)) throw reminderFailure('EVENT_ID_INVALID', `Invalid ${catalog.events.find(event => event.id === kind)!.idKind} event ID: ${id}`, id);
+  if (catalog.events.find(event => event.id === kind)!.idKind === 'resourceQueueId' &&
+      (!ports.validateResourceQueueId || !await ports.validateResourceQueueId(id!))) throw reminderFailure('EVENT_ID_INVALID', `Unknown resourceQueueId: ${id}`, id);
   return { kind: kind!, id: id!, action };
 }
 
@@ -115,7 +119,7 @@ export function createReminderHandlers(ports: CommandStatePorts): Record<Reminde
       const to = requiredText(params, '--to', 'to');
       const at = requiredText(params, '--at', 'at');
       const text = requiredText(params, '--text', 'text');
-      const binding = bindingFrom(params, ports.catalog);
+      const binding = await bindingFrom(params, ports);
       return translated(() => service().add({ to, at, text, ...(binding ? { binding } : {}) }));
     },
     'reminder list': async params => {
@@ -127,7 +131,7 @@ export function createReminderHandlers(ports: CommandStatePorts): Record<Reminde
       const id = requiredText(params, '--id', 'id');
       const at = optionalText(params, '--at', 'at');
       const text = optionalText(params, '--text', 'text');
-      const binding = bindingFrom(params, ports.catalog);
+      const binding = await bindingFrom(params, ports);
       const patch: UpdateReminder = { ...(at !== undefined ? { at } : {}), ...(text !== undefined ? { text } : {}), ...(binding ? { binding } : {}) };
       if (!Object.keys(patch).length) throw reminderFailure('REMINDER_UPDATE_EMPTY', 'Update requires --at, --text or a complete event binding');
       return translated(() => service().update(id, patch));

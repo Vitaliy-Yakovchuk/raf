@@ -2,7 +2,7 @@ import type { StateStore } from './state-store.ts';
 import type { AgentQueueRecord, AgentQueueValidation } from './agent-run-queue.ts';
 import type { ReservedTaskSnapshot } from './task-reservations.ts';
 import type { SessionTransaction } from './session-state.ts';
-import { randomUUID } from 'node:crypto';
+import { createStoredLaunchQueueEvents } from './stored-launch-queue-events.ts';
 import { stateFailure } from './state-migration-guard.ts';
 
 export interface StoredAgentQueueEntry {
@@ -16,19 +16,34 @@ export interface StoredAgentQueueEntry {
 
 export function createAgentQueueState(store: StateStore) {
   const database = store.startupContextDatabase;
-  if (!database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='agent_launch_queue_entries'").get()) throw stateFailure('STATE_MIGRATION_REQUIRED', 'Agent queue requires explicit state schema migration to 13');
+  if (!database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='agent_launch_queue_entries'").get()) throw stateFailure('STATE_MIGRATION_REQUIRED', 'Agent queue requires explicit state schema migration to 14');
   const list = (): StoredAgentQueueEntry[] => database.prepare('SELECT payload FROM agent_launch_queue_entries').all()
     .map(row => JSON.parse(row.payload as string));
   const get = (record: AgentQueueRecord) => list().find(entry => entry.record.requestId === record.requestId &&
-    entry.record.owner.runId === record.owner.runId && entry.record.owner.fence === record.owner.fence);
-  const save = (entry: StoredAgentQueueEntry) => database.prepare(`INSERT INTO agent_launch_queue_entries(request_id, run_id, agent_id, payload)
-    VALUES (?, ?, ?, ?) ON CONFLICT(request_id) DO UPDATE SET payload=excluded.payload`).run(
-      entry.record.requestId, entry.record.owner.runId, entry.record.agentId, JSON.stringify(entry));
-  const remove = (record: AgentQueueRecord) => {
-    if (!get(record)) return false;
+    entry.record.queueId === record.queueId && entry.record.owner.runId === record.owner.runId && entry.record.owner.fence === record.owner.fence);
+  const events = (record: AgentQueueRecord) => {
+    const row = database.prepare('SELECT state_domain, machine_id FROM agent_launch_queues WHERE queue_id=?').get(record.queueId);
+    if (!row || row.machine_id !== record.clientIdentity.machineId) throw new Error('Launch queue identity mismatch');
+    return createStoredLaunchQueueEvents(store, { stateDomain: row.state_domain as string, machineId: row.machine_id as string });
+  };
+  const save = (entry: StoredAgentQueueEntry) => store.taskReservationRepository.transaction(() => {
+    const existing = get(entry.record);
+    let handle = existing?.record.eventHandle ?? entry.record.eventHandle;
+    if (entry.phase === 'waiting' && !entry.ready) handle = events(entry.record).record({ kind: 'agent-run', waited: true,
+      requestId: entry.record.requestId, fence: entry.record.owner.fence });
+    entry.record.eventHandle = handle;
+    if (handle) events(entry.record).transition(handle, entry.phase);
+    database.prepare(`INSERT INTO agent_launch_queue_entries(request_id, run_id, agent_id, payload)
+      VALUES (?, ?, ?, ?) ON CONFLICT(request_id) DO UPDATE SET payload=excluded.payload`).run(
+        entry.record.requestId, entry.record.owner.runId, entry.record.agentId, JSON.stringify(entry));
+  });
+  const remove = (record: AgentQueueRecord) => store.taskReservationRepository.transaction(() => {
+    const entry = get(record);
+    if (!entry) return false;
+    if (!entry.ready && entry.record.eventHandle) events(entry.record).fail(entry.record.eventHandle, 'launch-failed');
     database.prepare('DELETE FROM agent_launch_queue_entries WHERE request_id=? AND run_id=?').run(record.requestId, record.owner.runId);
     return true;
-  };
+  });
   const sameTask = (left: ReservedTaskSnapshot, right: ReservedTaskSnapshot) => left.key.project === right.key.project &&
     left.changeInstance === right.changeInstance && left.key.taskId === right.key.taskId;
   return {
@@ -50,17 +65,12 @@ export function createAgentQueueState(store: StateStore) {
         tx.putTaskReservation({ ...parent, tasks: parent.tasks.filter(task => !entry.tasks.some(candidate => sameTask(task, candidate))), lease: { owner: parent.lease.owner, revision: parent.lease.revision + 1 } });
         tx.putTaskReservation({ ...child, tasks: entry.tasks, lease: { owner: child.lease.owner, revision: child.lease.revision + 1 } });
       }
+      if (entry.record.eventHandle) events(entry.record).confirmReady(entry.record.eventHandle);
       save({ ...entry, ready: true });
       return true;
     },
     queueId(stateDomain: string, machineId: string): string {
-      return store.sessionRepository.transaction(() => {
-        const existing = database.prepare('SELECT queue_id FROM agent_launch_queues WHERE state_domain=? AND machine_id=?').get(stateDomain, machineId);
-        if (existing) return existing.queue_id as string;
-        const id = randomUUID();
-        database.prepare('INSERT INTO agent_launch_queues(state_domain, machine_id, queue_id) VALUES (?, ?, ?)').run(stateDomain, machineId, id);
-        return id;
-      });
+      return createStoredLaunchQueueEvents(store, { stateDomain, machineId }).queueId();
     },
     assertClaim(tx: SessionTransaction & { listTaskReservations(): import('./task-reservations.ts').TaskReservationSet[] }, entry: StoredAgentQueueEntry, validation: AgentQueueValidation): void {
       const own = get(entry.record);

@@ -44,13 +44,13 @@ async function writeReport(reportPath: string, report: unknown) {
 
 const succeeded = { status: 'succeeded', answer, changes: [{ id: change, items: [{ id: '1.1', status: 'succeeded' }] }], commits: [] };
 
-async function closeAsAgent(f: AgentRunFixture, id: string) {
-  await fs.writeFile(join(f.control, `${id}.close`), 'close');
+async function closeAsAgent(f: AgentRunFixture, id: string, options: readonly string[] = []) {
+  await fs.writeFile(join(f.control, `${id}.close`), JSON.stringify(options));
   const code = await until(async () => await exists(join(f.control, `${id}.close.code`)) ? (await fs.readFile(join(f.control, `${id}.close.code`), 'utf8')).trim() : null, value => value !== null, `${id} agent close finished`);
   const printed = await fs.readFile(join(f.control, `${id}.close.out`), 'utf8');
   const diagnostics = await fs.readFile(join(f.control, `${id}.close.err`), 'utf8');
   assert.equal(code, '0', `${printed}\n${diagnostics}`);
-  return JSON.parse(JSON.parse(printed).stdout) as { closed: boolean; unfinished: unknown[]; result?: string };
+  return JSON.parse(JSON.parse(printed).stdout) as { closed: boolean; unfinished: unknown[]; result?: string; forcedClose?: { reason: string } };
 }
 
 function seedResultWatchers(f: AgentRunFixture, address: string) {
@@ -154,9 +154,9 @@ test('[report-orphan] agent close alone accepts a valid report left after the wo
   assert.deepEqual(await f.runDirectories(), []);
 });
 
-test('[report-orphan] an invalid or unverified report left after the worker died is not accepted; close records failure', { timeout: 180_000 }, async t => {
+test('[report-orphan] after the watcher dies, an unverified report keeps the live runner open until forced close records failure', { timeout: 180_000 }, async t => {
   const f = await fixture(t, 'orphan-invalid', timeouts, 'codex', { productionQa: true, commands: ['agent ps'] });
-  const { runId, reportPath } = await launchOrphan(f, 'orphan-invalid');
+  const { runId, runner, reportPath } = await launchOrphan(f, 'orphan-invalid');
   const watchers = seedResultWatchers(f, 'orphan-invalid');
   const tasks = join(f.directory, 'orchestrator', 'openspec', 'changes', change, 'tasks.md');
   await fs.writeFile(tasks, (await fs.readFile(tasks, 'utf8')).replace('- [ ] 1.1 ', '- [x] 1.1 '));
@@ -186,13 +186,40 @@ test('[report-orphan] an invalid or unverified report left after the worker died
   assert.notEqual(mismatchNotice?.id, diagnostic?.id, 'a changed refusal reason has its own addressed diagnostic');
   assert.equal(reminder(f, watchers.succeeded).state, 'pending', 'no agent.succeeded for a refused report');
   assert.equal(reminder(f, watchers.succeededClose).state, 'active');
-  const closed = await closeAsAgent(f, 'orphan-invalid');
+  assert.ok(alive(runner), 'losing the report watcher is not a runner crash under session-recovery');
+  const beforeClose = f.inspect();
+  const directories = await f.runDirectories();
+  const refusedReport = await fs.readFile(reportPath, 'utf8');
+  const denied = await f.as('orphan-invalid', ['agent', 'close', '--id', 'orphan-invalid']);
+  assert.equal(denied.exitCode, 1, JSON.stringify(denied));
+  const failure = JSON.parse(denied.result.stderr);
+  assert.equal(failure.code, 'AGENT_RESULT_PENDING');
+  assert.deepEqual(failure.details.received, { id: 'orphan-invalid', runId });
+  const afterDenial = f.inspect();
+  const pendingSession = afterDenial.sessions.find(session => session.runId === runId);
+  assert.equal(pendingSession?.state, 'running');
+  assert.equal(pendingSession?.result, undefined, 'denied close does not invent a failed result');
+  assert.ok(alive(runner), 'ordinary close leaves the runner and its command channel alive');
+  assert.deepEqual(afterDenial.claims, beforeClose.claims, 'denied close retains task reservations');
+  assert.deepEqual(afterDenial.admission, beforeClose.admission, 'denied close retains admission');
+  assert.deepEqual(await f.runDirectories(), directories, 'denied close leaves the run directory available');
+  assert.equal(await fs.readFile(reportPath, 'utf8'), refusedReport, 'denied close preserves the report');
+  assert.equal(reminder(f, watchers.failed).state, 'pending', 'denied close emits no agent.failed');
+  assert.equal(reminder(f, watchers.succeeded).state, 'pending');
+  assert.equal(reminder(f, watchers.succeededClose).state, 'active');
+  const reason = 'Звіт осиротілого запуску не підтверджено; завершити живий runner';
+  const closed = await closeAsAgent(f, 'orphan-invalid', ['--force', '--reason', reason]);
   assert.equal(closed.closed, true);
   assert.equal(closed.result, 'failed');
-  assertClosedClean(f, runId, 'failed');
+  assert.deepEqual(closed.forcedClose, { reason });
+  const finished = assertClosedClean(f, runId, 'failed');
+  assert.deepEqual(finished.sessions.find(session => session.runId === runId)?.result?.forcedClose, { reason }, 'the exact force reason survives finalization and a reopened store');
   assertResultEventsSettled(f, runId);
   assert.equal(reminder(f, watchers.failed).state, 'active', 'close emits agent.failed');
   assert.equal(reminder(f, watchers.succeeded).state, 'pending', 'the refused report never becomes agent.succeeded');
+  assert.equal(reminder(f, watchers.succeededClose).state, 'active');
+  assert.equal(await f.git('rev-parse', 'HEAD'), head, 'force does not commit the foreign checkbox');
+  assert.equal(await fs.readFile(tasks, 'utf8'), conflictingTasks, 'force preserves the conflicting checkbox');
   assert.deepEqual((await f.runners()).filter(alive), []);
   assert.deepEqual(await f.runDirectories(), [], 'the run directory is removed after the failed closure');
 });

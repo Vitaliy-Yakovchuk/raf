@@ -1,4 +1,5 @@
 import { basename, isAbsolute, join } from 'node:path';
+import { composeBriefGuide } from './brief-guide.ts';
 
 export interface AssignmentCliPort {
   exec(args: readonly string[], cwd: string): Promise<{ exitCode: number; stdout: string; stderr: string }>;
@@ -27,6 +28,7 @@ export type AssignmentValidation =
   | { readonly ok: true; readonly snapshot: AssignmentSnapshot }
   | { readonly ok: false; readonly kind: 'invalid-assignment' | 'openspec-unavailable'; readonly root: string; readonly issues: readonly AssignmentIssue[] };
 export interface AssignmentBriefContext {
+  readonly cwd?: string;
   readonly briefsRoot: string;
   readonly runner: string;
   readonly stage: string;
@@ -116,15 +118,21 @@ export async function validateAssignment(request: AssignmentRequest, ports: Assi
 export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, context: AssignmentBriefContext, fs: AssignmentFilePort): Promise<string> {
   if (!safeName(context.runner) || !safeName(context.stage)) throw new Error('Invalid runner or stage template name');
   if (!isAbsolute(context.reportPath) || basename(context.reportPath) !== `${context.sessionName}.json`) throw new Error('report_path must be absolute and use <sessionName>.json');
-  const templates = await Promise.all([fs.readText(join(context.briefsRoot, 'runners', `${context.runner}.md`)), fs.readText(join(context.briefsRoot, 'tasks', `${context.stage}.md`)), fs.readText(join(context.briefsRoot, 'completion.md'))]);
-  const assignment = { project: context.project, agent_id: context.agentId, session_name: context.sessionName, root: snapshot.root, features: context.features, phase: context.phase, outcome: context.outcome, write_boundaries: context.writeBoundaries, sources: context.sources, assignments: snapshot.changes, report_path: context.reportPath, report_schema: context.reportSchema, ...(context.rafCommand ? { raf_command: context.rafCommand, ...(context.rafSubcommands ? { raf_subcommands: [...context.rafSubcommands] } : {}) } : {}) };
+  const templatePaths = [join(context.briefsRoot, 'runners', `${context.runner}.md`), join(context.briefsRoot, 'tasks', `${context.stage}.md`), join(context.briefsRoot, 'completion.md')];
+  const templates = await Promise.all(templatePaths.map(async path => {
+    const text = await fs.readText(path);
+    if (!text.trim()) throw new Error(`Required brief template is empty: ${path}`);
+    return text;
+  }));
+  const guide = await composeBriefGuide(snapshot, context, fs);
+  const assignment = { project: context.project, agent_id: context.agentId, session_name: context.sessionName, root: snapshot.root, cwd: context.cwd, features: context.features, phase: context.phase, outcome: context.outcome, write_boundaries: context.writeBoundaries, sources: context.sources, assignments: snapshot.changes, report_path: context.reportPath, report_schema: context.reportSchema, ...(context.rafCommand ? { raf_command: context.rafCommand, ...(context.rafSubcommands ? { raf_subcommands: [...context.rafSubcommands] } : {}) } : {}) };
   const simple = 'окремою простою командою, без cd, конвеєрів, підстановок і змінних перед нею';
   const raf = !context.rafCommand ? ''
     : context.rafSubcommands ? ` Для узгодження з іншими виконавцями виконуй лише ${context.rafSubcommands.map(subcommand => `\`raf_command ${subcommand} …\``).join(' і ')} ${simple}: лише такі команди виконуються поза пісочницею й мають доступ до стану raf; інших команд raf не виконуй.`
     : ` Команди raf виконуй через raf_command ${simple} (\`raf_command agent run …\`): лише така команда виконується поза пісочницею й має доступ до стану raf.`;
   const commitScope = context.commitOwnWork ? ` Репозиторії коміту: ${(context.commitRepositories ?? [snapshot.root]).join(', ')} (Orchestrator: ${snapshot.root}). Дозволені файлові шляхи: ${(context.commitPaths ?? context.writeBoundaries).join(', ')}; включно з власними галочками tasks.md доручених changes. Git-права не розширюють файлових меж.${context.workspaceWritable === false ? ' Коміть лише власні OpenSpec/документні шляхи в Orchestrator; код workspace і його git-каталоги залишаються read-only.' : ''}` : '';
   const commit = context.commitOwnWork ? ' Після перевірок сам закоміть свої зміни до JSON-звіту: додавай до коміту лише власні шляхи, чужі незакомічені правки в тому самому дереві не чіпай і не комітуй, перетини й спільні незакомічені файли узгоджуй з іншими виконавцями за projects/orchestrator/parallel-development «Коміти в спільному робочому дереві». Зайнятий індекс очікуй, чужий index.lock не видаляй. Обов\'язок закомітити свою роботу входить у доручення; хеші створених комітів вкажи у звіті (поле commits). Push не виконуй: `git push` дозволено лише окремим дорученням, push визначає main.' + commitScope : '';
-  return [...templates, '# Конкретне доручення\n\nПрацюй лише над дорученими пунктами. Відповідай власнику українською. Веди правдиві галочки й запиши JSON за report_path та report_schema. Коротко заповни context: unnecessary (source, reason) і missing (description, foundAt); порожні масиви допустимі.' + raf + commit + '\n\n' + JSON.stringify(assignment, null, 2)].join('\n\n');
+  return [...templates, guide, '# Конкретне доручення\n\nПрацюй лише над дорученими пунктами. Відповідай власнику українською. Веди правдиві галочки й запиши JSON за report_path та report_schema. Коротко заповни context: unnecessary (source, reason) і missing (description, foundAt); порожні масиви допустимі.' + raf + commit + '\n\n' + JSON.stringify(assignment, null, 2)].join('\n\n');
 }
 export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, ports: AssignmentPorts, archiveClaims: Readonly<Record<string, string>> = {}): Promise<AssignmentVerification> {
   const issues: AssignmentIssue[] = [];

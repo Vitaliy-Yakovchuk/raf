@@ -240,7 +240,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         prepared = await api.prepareReport(launch);
         stage = 'brief';
         let brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,
-          stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
+          cwd: route.cwd, stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
           features: params.features, phase: params.phase, outcome: task.outcome, writeBoundaries,
           sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema,
           ...(commitOwnWork && !hotfix ? { commitOwnWork: true, commitPaths: workspaceBoundaries, commitRepositories: task.workspaceWritable ? [route.cwd, context.orchestratorRoot] : [context.orchestratorRoot], workspaceWritable: task.workspaceWritable } : {}),

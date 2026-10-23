@@ -2,8 +2,8 @@ import { startupContextAssessmentSchema } from './startup-context.ts';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
-import { open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
-import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { open, readFile, realpath, rename, rm, stat } from 'node:fs/promises';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { commandFailure } from './cli-contract.ts';
@@ -113,7 +113,14 @@ const readJson = async (path: string, optional = false): Promise<unknown> => {
   }
 };
 const exists = async (path: string) => { try { await stat(path); return true; } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT' || (error as NodeJS.ErrnoException).code === 'ENOTDIR') return false; throw error; } };
-const explicitPaths = (text: string) => [...text.matchAll(/(?<![A-Za-z0-9._\/-])(?:openspec|conf|skills)\/[A-Za-z0-9._\/-]*/g)].map(match => match[0].replace(/[.]+$/, ''));
+function explicitReferences(text: string) {
+  const matches = [...text.matchAll(/(?<![A-Za-z0-9._\/-])(?:openspec|conf|skills|specs)\/[A-Za-z0-9._\/-]+(?:#[A-Za-z0-9_~\/-]+)?/g)];
+  const tails = matches.map((match, index) => text.slice(match.index! + match[0].length, matches[index + 1]?.index ?? text.length));
+  return matches.map((match, index) => ({
+    path: match[0].replace(/[.]+$/, ''),
+    details: (tails.slice(index).find(tail => /\s—\s/.test(tail)) ?? tails[index]).replace(/^[`\s)]+|[`\s]+$/g, '').trim(),
+  }));
+}
 const workspaceReadOnlyTypes = new Set(['spec', 'design']);
 const coordinatingTypes = new Set(['coordinator', 'main']);
 
@@ -158,17 +165,13 @@ function selectedItems(parameters: RuntimeRunParameters, assignment: AssignmentS
 
 function stageSourceLine(tasks: string, item: string): string {
   const section = tasks.split(/^## /m).find(part => part.startsWith('Джерела за етапом'));
-  return section?.split('\n').find(line => line.replace(/^\s*-\s*/, '').startsWith(`${item}:`)) ?? '';
+  return section?.split('\n').filter(line => line.replace(/^\s*-\s*/, '').startsWith(`${item}:`)).join('\n') ?? '';
 }
 
-async function changeSources(root: string, change: string): Promise<string[]> {
+async function changeSources(root: string, change: string, hasExplicitSources: boolean): Promise<string[]> {
   const directory = join(root, 'openspec', 'changes', change);
-  const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
-  const designs = entries.filter(entry => entry.isFile() && (entry.name === 'design.md' || entry.name.endsWith('-design.md'))).map(entry => entry.name).sort();
-  const lines = [...(await exists(join(directory, 'proposal.md')) ? [`${join(directory, 'proposal.md')} — мета й межі зміни ${change}; читати зараз`] : []),
-    ...designs.map(name => `${join(directory, name)} — контракт реалізації зміни ${change}; читати зараз`)];
-  const specs = await readdir(join(directory, 'specs'), { recursive: true }).catch(() => [] as string[]);
-  for (const path of specs.filter(path => basename(path) === 'spec.md').sort()) lines.push(`${join(directory, 'specs', path)} — дельта вимог зміни ${change}; читати вимоги, яких стосується пункт`);
+  const lines = await exists(join(directory, 'proposal.md')) ? [`${join(directory, 'proposal.md')} — мета й межі зміни ${change}, секції Why/What Changes/Non-goals; читати зараз`] : [];
+  if (!hasExplicitSources) lines.push(`${join(directory, 'tasks.md')} — лише вибрані пункти й «Джерела за етапом»; за потреби конкретного контракту шукай у ${directory} релевантну секцію design або повну вимогу delta зі сценаріями; каталог не є дорученням читати всі файли`);
   return lines;
 }
 
@@ -176,18 +179,30 @@ async function deriveSources(root: string, selected: readonly { change: string; 
   const lines: string[] = [];
   const explicit = new Map<string, string>();
   for (const change of [...new Set(selected.map(row => row.change))]) {
-    lines.push(...await changeSources(root, change));
     const tasks = await readFile(join(root, 'openspec', 'changes', change, 'tasks.md'), 'utf8').catch(() => '');
+    let allItemsHaveExplicitSources = true;
     for (const { item } of selected.filter(row => row.change === change)) {
-      for (const path of explicitPaths(item.description)) if (!explicit.has(path)) explicit.set(path, `згадано в пункті ${change}:${item.id}; читати для виконання пункту`);
-      for (const path of explicitPaths(stageSourceLine(tasks, item.id))) if (!explicit.has(path)) explicit.set(path, `«Джерела за етапом» для ${change}:${item.id}; читати зараз`);
+      const stage = stageSourceLine(tasks, item.id);
+      let hasExplicitSources = false;
+      for (const [text, reason] of [[item.description, `пункт ${change}:${item.id}`], [stage, `«Джерела за етапом» для ${change}:${item.id}`]]) {
+        for (const { path, details: selector } of explicitReferences(text)) {
+          hasExplicitSources = true;
+          const canonical = path.startsWith('specs/') ? `openspec/${path}` : path;
+          const details = `${reason}${selector ? `: ${selector}` : '; читати для виконання пункту'}; повну релевантну вимогу зі сценаріями`;
+          explicit.set(canonical, explicit.has(canonical) ? `${explicit.get(canonical)}; ${details}` : details);
+        }
+      }
+      allItemsHaveExplicitSources &&= hasExplicitSources;
     }
+    lines.push(...await changeSources(root, change, allItemsHaveExplicitSources));
   }
   for (const [path, reason] of explicit) {
     const absolute = join(root, path);
-    if (!await exists(absolute)) contextFailure('TASK_SOURCE_MISSING', `Джерело доручення не існує: ${absolute}`, path);
+    if (!await exists(absolute.split('#')[0])) contextFailure('TASK_SOURCE_MISSING', `Джерело доручення не існує: ${absolute}`, path);
     const line = `${absolute} — ${reason}`;
-    if (!lines.some(row => row.startsWith(`${absolute} — `))) lines.push(line);
+    const existing = lines.findIndex(row => row.startsWith(`${absolute} — `));
+    if (existing < 0) lines.push(line);
+    else lines[existing] += `; ${reason}`;
   }
   return lines;
 }

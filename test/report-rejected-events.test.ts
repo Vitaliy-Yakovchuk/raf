@@ -687,7 +687,7 @@ for (const explicitNotify of [false, true]) {
     const runtime = JSON.parse(await fs.readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
     const { timeouts } = runtime.runnerProtocols.find((value: { runner: string }) => value.runner === 'codex');
     const f = await agentRunFixture(t, 'ready', timeouts, 'codex', {
-      tasks: 4, commands: ['reminder add', 'reminder update', 'reminder list'],
+      tasks: 4, commands: ['reminder add', 'reminder update', 'reminder list'], productionQa: true,
     });
     const launcher = await f.run('launcher', 'implement', ['1.1']);
     assert.equal(launcher.exitCode, 0, JSON.stringify(launcher));
@@ -761,7 +761,7 @@ for (const explicitNotify of [false, true]) {
 test('[Z.373 reconciliation] orphan worker rejection is delivered through CLI with the native runner still alive', async t => {
   const runtime = JSON.parse(await fs.readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
   const { timeouts } = runtime.runnerProtocols.find((value: { runner: string }) => value.runner === 'codex');
-  const f = await agentRunFixture(t, 'ready', timeouts, 'codex', { tasks: 3 });
+  const f = await agentRunFixture(t, 'ready', timeouts, 'codex', { tasks: 3, productionQa: true });
   const launcher = await f.run('launcher', 'implement', ['1.1']);
   assert.equal(launcher.exitCode, 0, JSON.stringify(launcher));
   const launched = await f.as('launcher', f.runArgs('worker', 'implement', ['1.2']));

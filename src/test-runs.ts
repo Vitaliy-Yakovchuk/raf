@@ -1,3 +1,4 @@
+import { parseCommandArguments } from './cli-arguments.ts';
 import { isAbsolute, resolve, sep } from 'node:path';
 
 export type TestRunOutcome = 'passed' | 'assertions-failed' | 'setup-failed' | 'timed-out' | 'interrupted' | 'refused' | 'unverified-remainder';
@@ -213,23 +214,18 @@ const containsId = (ids: readonly TestId[], id: TestId) => ids.some(other => idK
 const kinds: TestRunFailureKind[] = ['refusal', 'setup', 'assertions', 'timeout', 'interruption'];
 
 export function parseTestRunArgs(argv: readonly string[]): ParsedTestRunArgs {
-  const values: Record<string, string[]> = {};
-  for (let i = 0; i < argv.length;) {
-    const token = argv[i++];
-    if (!['--project', '--phase', '--group', '--files', '--only'].includes(token)) failure('INVALID_ARGUMENT', `Unsupported argument: ${token}`);
-    if (values[token]) failure('DUPLICATE_ARGUMENT', token);
-    const incoming: string[] = [];
-    while (i < argv.length && !argv[i].startsWith('-')) {
-      incoming.push(argv[i++]);
-      if (token !== '--files' && token !== '--only') break;
-    }
-    if (!incoming.length || incoming.some(v => !text(v))) failure('MISSING_VALUE', token);
-    values[token] = incoming;
-  }
-  for (const key of ['--project', '--phase', '--group']) if (!values[key]) failure('MISSING_REQUIRED', key);
-  if (values['--files'] && values['--only']) failure('SELECTION_CONFLICT');
-  return { project: values['--project'][0], phase: values['--phase'][0], group: values['--group'][0],
-    ...(values['--files'] ? { files: values['--files'] } : {}), ...(values['--only'] ? { only: values['--only'] } : {}) };
+  const parsed = parseCommandArguments(argv, {
+    path: ['test', 'run'], handlerName: 'test run',
+    parameters: ['project', 'phase', 'group', 'files', 'only'].map(name => ({
+      name, option: `--${name}`, multiple: name === 'files' || name === 'only',
+      required: ['project', 'phase', 'group'].includes(name),
+    })),
+  });
+  if ('error' in parsed) failure(parsed.error.code === 'UNKNOWN_ARGUMENT' ? 'INVALID_ARGUMENT' : parsed.error.code, `${parsed.error.details.parameter ?? ''}: ${parsed.error.message}`);
+  const { params } = parsed;
+  for (const [name, value] of Object.entries(params)) if (![value].flat().every(text)) failure('MISSING_VALUE', `--${name}`);
+  if (params.files && params.only) failure('SELECTION_CONFLICT');
+  return { ...params } as unknown as ParsedTestRunArgs;
 }
 
 export function validateTestRunConfig(config: unknown, phases: readonly string[], policy: UnitTestPolicy): TestRunConfig {

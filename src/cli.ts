@@ -1,3 +1,4 @@
+import { parseCommandArguments } from './cli-arguments.ts';
 import { homedir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { statSync, readFileSync } from 'node:fs';
@@ -80,48 +81,12 @@ export async function execute(
   const command = [...catalog.commands].sort((a, b) => b.path.length - a.path.length).find(c => c.path.every((t, i) => argv[i] === t));
   if (!command) return fail('UNKNOWN_COMMAND', 'Невідома команда.', { command: tokens.join(' '), received: tokens, found: catalog.commands.map(c => c.path.join(' ')), expected: catalog.commands.map(c => c.path.join(' ')) });
   const context = { command: command.path.join(' ') };
-  const params: Record<string, unknown> = Object.create(null);
-  const seen = new Set<string>();
-  const rest = argv.slice(command.path.length);
-  for (let i = 0; i < rest.length; i++) {
-    const token = rest[i];
-    const separator = token.indexOf('=');
-    const option = separator < 0 ? token : token.slice(0, separator);
-    const parameter = command.parameters.find(p => p.option === option);
-    if (!parameter) return fail('UNKNOWN_ARGUMENT', 'Невідомий аргумент або зайве позиційне значення.', { ...context, parameter: /^--[a-zA-Z0-9-]+$/.test(option) ? option : '[redacted]' });
-    if (seen.has(parameter.name) && !parameter.multiple) return fail('DUPLICATE_ARGUMENT', 'Параметр можна задати лише раз.', { ...context, parameter: parameter.option });
-    if (parameter.type === 'boolean') {
-      if (separator >= 0 || (i + 1 < rest.length && !rest[i + 1].startsWith('--'))) return fail('INVALID_VALUE', 'Boolean прапорець не приймає значення.', { ...context, parameter: parameter.option });
-      params[parameter.name] = true;
-      seen.add(parameter.name);
-      continue;
-    }
-    const incoming: string[] = [];
-    if (separator >= 0) incoming.push(token.slice(separator + 1));
-    else {
-      while (i + 1 < rest.length && !rest[i + 1].startsWith('--')) {
-        incoming.push(rest[++i]);
-        if (!parameter.multiple) break;
-      }
-    }
-    if (!incoming.length || incoming.some(v => !v.length)) return fail('MISSING_VALUE', 'Потрібне значення параметра.', { ...context, parameter: parameter.option });
-    for (const value of incoming) {
-      if (parameter.values && !parameter.values.some(v => v.id === value)) {
-        const applicable = parameter.values.filter(v => !(command.handlerName === 'agent run' && parameter.name === 'type' && v.launchableByRaf === false));
-        const replacement = applicable[0]?.id;
-        const quoted = replacement === undefined ? undefined : /^[a-zA-Z0-9_-]+$/.test(replacement) ? replacement : "'" + replacement.replaceAll("'", "'\"'\"'") + "'";
-        return fail('INVALID_VALUE', 'Значення параметра не підтримується.', { ...context, parameter: parameter.option, received: value, expected: parameter.values.map(v => v.id), ...(quoted === undefined ? {} : { example: `raf ${context.command} ${parameter.option} ${quoted}` }) });
-      }
-      if (command.handlerName === 'agent run' && parameter.name === 'type' && parameter.values?.find(v => v.id === value)?.launchableByRaf === false) return fail('TYPE_NOT_LAUNCHABLE', 'Цей тип агента обліковується, але не запускається raf.', { ...context, parameter: parameter.option, received: value });
-    }
-    params[parameter.name] = parameter.multiple ? [...(params[parameter.name] as string[] ?? []), ...incoming] : incoming[0];
-    seen.add(parameter.name);
+  const parsed = parseCommandArguments(argv.slice(command.path.length), command);
+  if ('error' in parsed) {
+    const { code, message, details, remediation } = parsed.error;
+    return fail(code, message, details, remediation);
   }
-  for (const parameter of command.parameters) {
-    if (!seen.has(parameter.name) && parameter.default !== undefined) params[parameter.name] = structuredClone(parameter.default);
-    if (command.handlerName === 'agent run' && parameter.name === 'type' && [params[parameter.name]].flat().some(value => parameter.values?.find(v => v.id === value)?.launchableByRaf === false)) return fail('TYPE_NOT_LAUNCHABLE', 'Цей тип агента обліковується, але не запускається raf.', { ...context, parameter: parameter.option, received: params[parameter.name] });
-    if (parameter.required && (params[parameter.name] === undefined || (Array.isArray(params[parameter.name]) && !(params[parameter.name] as unknown[]).length))) return fail('MISSING_REQUIRED', 'Не задано обов’язковий параметр.', { ...context, parameter: parameter.option });
-  }
+  const { params } = parsed;
   if (command.handlerName === 'agent close') {
     if ((params.force === true && (typeof params.reason !== 'string' || !params.reason.trim())) || (params.force !== true && params.reason !== undefined)) return fail('INVALID_VALUE', 'Примусове закриття потребує --force та непорожню --reason разом.', { ...context, example: 'raf agent close --id worker --force --reason "Власник скасував запуск"' });
     if (typeof params.reason === 'string') params.reason = params.reason.trim();

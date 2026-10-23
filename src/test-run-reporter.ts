@@ -1,7 +1,10 @@
+import { readFileSync } from 'node:fs';
+import { TestRunDiagnostics, diagnosticFailureFromNodeEvent, validateDiagnosticLimits } from './test-run-diagnostics.ts';
 import type { RunnerEvent, TestId } from './test-runs.ts';
 import { isAbsolute, relative } from 'node:path';
 
 export default async function* report(source: AsyncIterable<any>, selected?: TestId[]): AsyncGenerator<string> {
+  const limits = validateDiagnosticLimits(JSON.parse(readFileSync(new URL('../../conf/test-runs.json', import.meta.url), 'utf8')).diagnostics);
   const expected: TestId[] = [];
   const parents = new Map<number, string>();
   const declared = new Map<string, { test: TestId; type: string }>();
@@ -33,10 +36,13 @@ export default async function* report(source: AsyncIterable<any>, selected?: Tes
       }
       expected.push(test);
       if (data.skip || data.todo) continue;
-      const err = data.details?.error;
-      const assertion = err?.code === 'ERR_ASSERTION' || err?.cause?.code === 'ERR_ASSERTION' || err?.failureType === 'testCodeFailure' && err?.cause?.name === 'AssertionError';
-      const kind: RunnerEvent['kind'] = event.type === 'test:pass' ? 'passed' : assertion ? 'assertion-failed' : 'setup-failed';
-      yield JSON.stringify({ kind, test, ...(err ? { diagnostic: String(err.message) } : {}) }) + '\n';
+      const failure = event.type === 'test:fail' ? diagnosticFailureFromNodeEvent({ ...event, data: { ...data, file: test.file, name: test.name } }) : null;
+      const current = new TestRunDiagnostics(limits, { workspace: process.cwd(), qaHome: process.env.HOME ?? '', fixtureRoots: process.env.TMPDIR ? [process.env.TMPDIR] : [] });
+      const disposition = failure ? current.failure(failure) : null;
+      const kind: RunnerEvent['kind'] = event.type === 'test:pass' ? 'passed' : disposition?.failureKind === 'assertions' ? 'assertion-failed' : 'setup-failed';
+      const attachment = current.attach({ runId: '', outcome: '', failureKinds: [], knownRed: [], unexecuted: [], unknown: [], timeoutCount: 0, timedOut: false, cleanup: '', evidence: [] }, {} as any);
+      const inlineDiagnostic = attachment.diagnostics.at(-1);
+      yield JSON.stringify({ kind, test, ...(failure && inlineDiagnostic ? { inlineDiagnostic } : {}) }) + '\n';
     }
   }
   if (protocolFailed) yield JSON.stringify({ kind: 'protocol-error', diagnostic: 'Missing structured test identity' }) + '\n';

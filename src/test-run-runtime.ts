@@ -1,3 +1,7 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { StringDecoder } from 'node:string_decoder';
+import { TestRunDiagnostics, buildDiagnosticEnvironment, prepareRunTemporaryDirectory, cleanupRunTemporaryDirectory } from './test-run-diagnostics.ts';
+import type { RunTemporaryPorts, RunTemporaryReservation } from './test-run-diagnostics.ts';
 import { spawn, execFileSync } from 'node:child_process';
 import { constants, accessSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -79,7 +83,22 @@ function checkChannel(context: StateContext, inherited: Readonly<Record<string, 
 export function createTestRunPorts(config: TestRunConfig, stateContext: StateContext, getStore: () => StateStore, inherited: Readonly<Record<string, string | undefined>> = process.env): TestRunPorts {
   let state: TestRunStatePort | undefined;
   const environment = stateContextEnvironment(stateContext, inherited);
+  const temporaryPorts: RunTemporaryPorts = {
+    socketPathCapacityBytes: () => process.platform === 'linux' ? 108 : 104,
+    inspect: async path => { try { const st = lstatSync(path); return { path, realpath: realpathSync(path), device: String(st.dev), inode: String(st.ino), uid: st.uid, mode: st.mode, symlink: st.isSymbolicLink() }; } catch (e) { if ((e as any).code === 'ENOENT') return null; throw e; } },
+    createPrivateDirectory: async root => { const path = mkdtempSync(join(root, 'r-')); return (await temporaryPorts.inspect(path))!; },
+    saveReservation: async () => { throw new Error('Reservation writer unavailable'); },
+    removeOwnedDirectory: async identity => { const actual = await temporaryPorts.inspect(identity.path); if (!actual || ['device', 'inode', 'uid', 'realpath'].some(key => (actual as any)[key] !== (identity as any)[key]) || actual.symlink) throw new Error('Temporary identity changed'); rmSync(identity.path, { recursive: true }); },
+  };
   const ports: TestRunPorts = {
+    diagnosticEnvironment: command => {
+      const root = fileURLToPath(new URL('../../', import.meta.url));
+      const read = (name: string) => readFileSync(join(root, 'conf', name));
+      const profile = Object.values(config.projects).flatMap(p => Object.values(p.profiles)).find(p => p.executable === command?.executable);
+      return buildDiagnosticEnvironment({ executable: command?.executable ?? process.execPath, runtimeVersion: process.version, adapter: profile?.resultAdapter ?? 'node-test-events', isolation: command?.argv.find(a => a.startsWith('--test-isolation='))?.split('=')[1] ?? 'process', configurationBytes: { flow: read('flow.json'), testRuns: read('test-runs.json'), projects: read('projects.json') }, tmpPath: command?.environment.TMPDIR ?? stateContext.tmpRoot, privateRunTmp: !!command?.environment.TMPDIR });
+    },
+    prepareTemporary: (runId, context, save) => prepareRunTemporaryDirectory(config.temporaryArtifacts, { runId, uid: process.getuid!(), qaHome: context.home, statePath: context.statePath, stateTmpPath: context.tmpPath, workspace: context.workspace, workingStatePath: join(context.operationalHome, '.raf') }, { ...temporaryPorts, saveReservation: save }).then(p => p.reservation),
+    cleanupTemporary: (reservation, terminated) => cleanupRunTemporaryDirectory(reservation, terminated, temporaryPorts),
     state: { transaction: action => (state ??= sqliteTestRunState(getStore())).transaction(action) },
     clock: { now: Date.now, schedule: (deadline, callback) => { const timer = setTimeout(callback, Math.max(0, deadline - Date.now())); return () => clearTimeout(timer); } },
     newRunId: randomUUID,
@@ -105,12 +124,14 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         inheritedOperationalChannel, unitFiles: unitFiles.filter(file => files[file]?.kind === 'file'), files };
     },
     spawn: async (command, onEvent): Promise<ManagedTestProcess> => {
-      const child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...environment, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []) }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+      const child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...environment, TMPDIR: command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []) }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
       await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', fail); });
       const pid = child.pid!;
       const exited = new Promise<void>(done => child.once('exit', () => done()));
       const identity = JSON.stringify({ pid, start: processStart(pid), boot: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
-      let buffer = '', protocolBad = false, stderr = '';
+      let buffer = '', protocolBad = false, stderr = '', discarding = false;
+      const decoder = new StringDecoder('utf8');
+      const readDiagnostics = new TestRunDiagnostics(config.diagnostics, { workspace: command.cwd, qaHome: stateContext.homeDirectory, fixtureRoots: command.environment.TMPDIR ? [command.environment.TMPDIR] : [] });
       const consume = (line: string) => {
         try {
           const event = JSON.parse(line);
@@ -121,9 +142,18 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
           onEvent(event as RunnerEvent);
         } catch { if (!protocolBad) onEvent({ kind: 'protocol-error', diagnostic: 'Invalid JSON runner protocol' }); protocolBad = true; }
       };
-      child.stdout!.on('data', chunk => { buffer += chunk.toString(); let newline: number; while ((newline = buffer.indexOf('\n')) >= 0) { consume(buffer.slice(0, newline)); buffer = buffer.slice(newline + 1); } });
-      child.stderr!.on('data', chunk => { stderr += chunk.toString(); });
-      const waited = new Promise<ChildExit>(done => child.once('close', (exitCode, signal) => { if (buffer.length) { onEvent({ kind: 'protocol-error', diagnostic: 'Truncated JSON runner protocol' }); } done({ exitCode, signal, stderr }); }));
+      child.stdout!.on('data', chunk => {
+        for (const part of decoder.write(chunk).split(/(?<=\n)/)) {
+          if (discarding) { if (part.endsWith('\n')) discarding = false; continue; }
+          if (Buffer.byteLength(buffer) + Buffer.byteLength(part) > config.diagnostics.maxProtocolLineBytes) { if (!protocolBad) onEvent({ kind: 'protocol-error', diagnostic: 'Runner protocol line exceeds configured limit' }); protocolBad = true; buffer = ''; discarding = !part.endsWith('\n'); continue; }
+          buffer += part;
+          if (part.endsWith('\n')) { consume(buffer); buffer = ''; }
+        }
+      });
+      child.stderr!.on('data', chunk => { readDiagnostics.stderrChunk(chunk); const available = config.diagnostics.maxStderrBytes - Buffer.byteLength(stderr); if (available > 0) stderr += Buffer.from(chunk).subarray(0, available).toString('utf8'); });
+      const waited = new Promise<ChildExit>(done => child.once('close', (exitCode, signal) => { if (buffer.length) { onEvent({ kind: 'protocol-error', diagnostic: 'Truncated JSON runner protocol' }); } readDiagnostics.childExit({ exitCode, signal, validProtocol: !protocolBad });
+        const details = readDiagnostics.attach({ runId: '', outcome: '', failureKinds: [], knownRed: [], unexecuted: [], unknown: [], timeoutCount: 0, timedOut: false, cleanup: '', evidence: [] }, {} as any);
+        done({ exitCode, signal, stderr }); }));
       return { identity, wait: () => waited, cleanup: async (_deadline, reason) => {
         const cleaned = await cleanupTestProcessGroup(pid, {
           tree: processTree, start: processStart, kill: target => process.kill(target, 'SIGKILL'),

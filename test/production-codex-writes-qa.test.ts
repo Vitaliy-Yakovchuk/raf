@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdir, readFile, rename, rm, writeFile, realpath } from 'node:fs/promises';
+import { lstat, mkdir, readFile, rename, rm, writeFile, realpath } from 'node:fs/promises';
 import { delimiter, dirname, isAbsolute, join, relative } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
@@ -49,6 +49,12 @@ async function scopedFixture(t: TestContext, metadata: boolean, worktree = false
   git('-C', f.cwd, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
     '-c', 'commit.gpgsign=false', '-c', 'core.hooksPath=/dev/null',
     'commit', '--quiet', '-m', 'Fixture code baseline');
+  assert.ok((await lstat(join(f.cwd, '.git'))).isDirectory(), 'the plain code checkout owns its .git directory');
+  assert.equal(git('-C', f.cwd, 'rev-parse', '--show-toplevel'), await realpath(f.cwd),
+    'the code checkout must not resolve to the Orchestrator repository');
+  assert.deepEqual(git('-C', f.cwd, 'rev-parse', '--path-format=absolute', '--git-dir', '--git-common-dir').split('\n'),
+    [await realpath(join(f.cwd, '.git')), await realpath(join(f.cwd, '.git'))],
+    'both code git roots belong to the code checkout before the optional linked-worktree layout');
   const gitDirectories = worktree ? await linkedWorktree(f.root, f.cwd)
     : await Promise.all([join(f.cwd, '.git'), join(f.root, '.git')].map(path => realpath(path)));
   const initialTasks = `${await readFile(f.tasksPath, 'utf8')}\n- [ ] 2.2 Unassigned fixture task stays open\n`;

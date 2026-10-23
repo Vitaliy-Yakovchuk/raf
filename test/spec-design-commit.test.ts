@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { readFileSync, realpathSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { userInfo } from 'node:os';
 import { Server } from 'node:net';
 import { dirname, join } from 'node:path';
@@ -74,8 +74,8 @@ async function fixture(t: TestContext, linkedOrchestrator = false) {
   const home = join(base, 'home');
   const tmpRoot = join(home, '.raf', 'tmp');
   await Promise.all([change, dirname(questions), dirname(spec), confRoot, tmpRoot].map(path => mkdir(path, { recursive: true })));
+  await cp(conf, confRoot, { recursive: true });
   await Promise.all([
-    writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify(constants)),
     writeFile(join(change, 'proposal.md'), '# Document only\n'),
     writeFile(join(change, 'design.md'), '# Document design\n'),
     writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Write assigned documents\n'),
@@ -123,8 +123,7 @@ async function captureLaunch(t: TestContext, f: Fixture, type: string, runner: '
       validate: async () => ({ ok: true, snapshot: f.assignment }),
       compose: async (snapshot, briefContext) => {
         const brief = await composeAssignmentBrief(snapshot, briefContext, {
-          readText: async path => path === join(f.confRoot, 'raf-constants.json')
-            ? readFile(path, 'utf8') : 'FIXTURE TEMPLATE',
+          readText: async path => readFile(path, 'utf8'),
         });
         composed.push({ context: structuredClone(briefContext), brief });
         return brief;

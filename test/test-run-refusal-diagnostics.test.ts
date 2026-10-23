@@ -162,7 +162,7 @@ test('a filtered --only completion cannot prove that another knownRed in the sam
   harness.state.seed(fixtureGroup({ knownRed: [alpha, removedAlpha] }));
   harness.events = [{ kind: 'passed', test: alpha }, { kind: 'complete', expected: [alpha] }];
 
-  const result = await execute(harness, { phase: 'implement', only: [alpha] });
+  const result = await execute(harness, { phase: 'implement', files: undefined, only: [alpha] });
 
   assert.deepEqual(result.knownRed, [removedAlpha]);
   assert.deepEqual(removed(result) ?? [], []);

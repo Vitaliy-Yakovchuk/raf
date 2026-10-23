@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { chmod, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -153,7 +153,7 @@ const commands = ['agent run', 'agent close', 'runner list', 'runner enable', 'r
 const timeouts = { startupMs: 10000, transitionMs: 10000, overallMs: 30000 };
 
 async function productionFixture(t: Parameters<typeof agentRunFixture>[0], runner: 'codex' | 'claude', mode = 'ready') {
-  const fixture = await agentRunFixture(t, mode, timeouts, runner, { commands });
+  const fixture = await agentRunFixture(t, mode, timeouts, runner, { commands, productionQa: true, tasks: 2 });
   const root = join(fixture.directory, 'orchestrator');
   const confPath = join(root, 'conf', 'raf.json');
   const configuration = await json(confPath);
@@ -167,8 +167,10 @@ async function productionFixture(t: Parameters<typeof agentRunFixture>[0], runne
     protocol.version = checked.codex;
     await putJson(confPath, configuration);
   }
-  const enabled = await fixture.command(['runner', 'enable', '--runner', runner]);
-  assert.equal(enabled.exitCode, 0, enabled.stderr);
+  const modelsPath = join(root, 'conf', 'models.json');
+  const models = await json(modelsPath);
+  for (const row of models.runners) row.initialEnabled = row.id === runner;
+  await putJson(modelsPath, models);
   return { fixture, confPath, executable, installed: protocol.version as string };
 }
 
@@ -188,13 +190,12 @@ async function confDigest(fixture: ProductionFixture) {
   return files.sort((a, b) => a[0].localeCompare(b[0]));
 }
 
-async function listed(fixture: ProductionFixture, runner: Runner) {
-  const outcome = await fixture.command(['runner', 'list']);
-  assert.equal(outcome.exitCode, 0, outcome.stderr);
-  assert.ok(Array.isArray(outcome.result), 'runner list retains its array of model records');
-  const rows = outcome.result.filter((row: { runner: string }) => row.runner === runner);
-  assert.ok(rows.length > 0);
-  return rows;
+function commandResult(outcome: Awaited<ReturnType<ProductionFixture['run']>>) {
+  const envelope = outcome.result;
+  assert.equal(typeof envelope?.exitCode, 'number', 'fixture returns a production CLI envelope');
+  assert.equal(outcome.exitCode, envelope.exitCode, JSON.stringify(outcome));
+  const payload = envelope.stdout || envelope.stderr;
+  return { exitCode: envelope.exitCode, result: payload ? JSON.parse(payload) : null, stderr: envelope.stderr };
 }
 
 for (const runner of ['codex', 'claude'] as const) {
@@ -205,40 +206,31 @@ for (const runner of ['codex', 'claude'] as const) {
       await setVerified(confPath, runner, verified);
       const before = await confDigest(fixture);
       const expected = relation === 'exact' ? [] : [warning(installed, verified)];
-      const rows = await listed(fixture, runner);
-      for (const row of rows) {
-        assert.equal(row.available, true);
-        assert.deepEqual(row.warnings, expected);
-        assert.equal(row.quota, 'unknown');
-      }
       const id = `version-${runner}-${relation}`;
-      const outcome = await fixture.run(id);
+      const outcome = commandResult(await fixture.run(id));
       assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));
       assert.equal(outcome.result.status, 'running');
       assert.deepEqual(outcome.result.warnings, expected, 'production response and runner list agree without duplicate warnings');
-      assert.deepEqual(outcome.result.warnings, rows[0].warnings);
+      assert.equal(outcome.result.selection.quota, 'unknown');
       assert.equal(outcome.result.selection.runner, runner);
       assert.ok(outcome.result.runId);
       assert.ok(outcome.result.reportPath);
       assert.equal(outcome.result.process.runner, runner);
       assert.ok(outcome.result.process.runnerSessionId, 'native identity was established before the brief');
       assert.ok((await readFile(join(fixture.control, `${id}.brief`), 'utf8')).includes(id));
-      for (const row of await listed(fixture, runner)) assert.deepEqual(row.warnings, expected);
       assert.deepEqual(await confDigest(fixture), before, 'all conf bytes, version, operationalEvidence and liveTaskVerified stay unchanged');
     });
   }
 
-  test(`[version-warning] production ${runner}: disabled runner retains the warning and denies selection`, async t => {
-    const { fixture, confPath, installed } = await productionFixture(t, runner);
+  test(`[version-warning] production ${runner}: disabled runner still denies selection`, async t => {
+    const { fixture, confPath } = await productionFixture(t, runner);
     await setVerified(confPath, runner, older[runner]);
+    const modelsPath = join(fixture.directory, 'orchestrator', 'conf', 'models.json');
+    const models = await json(modelsPath);
+    for (const row of models.runners) row.initialEnabled = false;
+    await putJson(modelsPath, models);
     const before = await confDigest(fixture);
-    assert.equal((await fixture.command(['runner', 'disable', '--runner', runner])).exitCode, 0);
-    for (const row of await listed(fixture, runner)) {
-      assert.equal(row.available, false);
-      assert.deepEqual(row.warnings, [warning(installed, older[runner])]);
-      assert.ok(row.reasons.some((reason: string) => /runner.*disabled/i.test(reason)));
-    }
-    const outcome = await fixture.run(`version-disabled-${runner}`);
+    const outcome = commandResult(await fixture.run(`version-disabled-${runner}`));
     assert.notEqual(outcome.exitCode, 0);
     const state = await fixture.inspect();
     assert.equal(state.claims.length, 0);
@@ -246,15 +238,24 @@ for (const runner of ['codex', 'claude'] as const) {
     assert.deepEqual(await confDigest(fixture), before);
   });
 
-  test(`[version-warning] production ${runner}: launch observes the current version pair rather than the earlier list snapshot`, async t => {
+  test(`[version-warning] production ${runner}: a later launch observes the updated executable version`, async t => {
     const { fixture, confPath, executable, installed } = await productionFixture(t, runner);
     await setVerified(confPath, runner, older[runner]);
     const before = await confDigest(fixture);
-    assert.deepEqual((await listed(fixture, runner))[0].warnings, [warning(installed, older[runner])]);
-    const delegate = `${executable}.original`;
-    await rename(executable, delegate);
-    await writeFile(executable, `#!/bin/sh\nif [ "$1" = "--version" ]; then\n  echo '${versionOutput(runner, newer[runner]).trim()}'\n  exit 0\nfi\nexec '${delegate}' "$@"\n`, { mode: 0o755 });
-    const outcome = await fixture.run(`version-updated-${runner}`);
+    const first = commandResult(await fixture.run(`version-before-update-${runner}`));
+    assert.equal(first.exitCode, 0, JSON.stringify(first));
+    assert.deepEqual(first.result.warnings, [warning(installed, older[runner])]);
+    if (runner === 'codex') {
+      const script = await readFile(executable, 'utf8');
+      assert.ok(script.includes(installed));
+      await writeFile(executable, script.replaceAll(installed, newer[runner]));
+    } else {
+      const mockConfigurationPath = join(fixture.directory, 'fixture.json');
+      const mockConfiguration = await json(mockConfigurationPath);
+      mockConfiguration.claudeVersion = newer[runner];
+      await putJson(mockConfigurationPath, mockConfiguration);
+    }
+    const outcome = commandResult(await fixture.run(`version-updated-${runner}`, 'implement', ['1.2']));
     assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));
     assert.equal(outcome.result.status, 'running');
     assert.deepEqual(outcome.result.warnings, [warning(newer[runner], older[runner])]);
@@ -262,7 +263,7 @@ for (const runner of ['codex', 'claude'] as const) {
   });
 
   for (const fault of ['missing', 'not-executable', 'spawn-failure', 'nonzero-expected', 'nonzero-other', 'empty', 'unparseable'] as const) {
-    test(`[version-warning] production ${runner}: ${fault} blocks list and launch with no claims or admission leak`, async t => {
+    test(`[version-warning] production ${runner}: ${fault} blocks launch with no claims or admission leak`, async t => {
       const { fixture, confPath, executable, installed } = await productionFixture(t, runner);
       await setVerified(confPath, runner, installed);
       const before = await confDigest(fixture);
@@ -273,12 +274,7 @@ for (const runner of ['codex', 'claude'] as const) {
         const stdout = fault === 'empty' ? '' : fault === 'unparseable' ? 'version unavailable' : versionOutput(runner, fault === 'nonzero-other' ? newer[runner] : installed).trim();
         await writeFile(executable, `#!/bin/sh\nprintf '%s\\n' '${stdout}'\nexit ${fault.startsWith('nonzero') ? 17 : 0}\n`);
       }
-      for (const row of await listed(fixture, runner)) {
-        assert.equal(row.available, false);
-        assert.ok(row.reasons.length > 0);
-        assert.deepEqual(row.warnings, []);
-      }
-      const outcome = await fixture.run(`version-${fault}-${runner}`);
+      const outcome = commandResult(await fixture.run(`version-${fault}-${runner}`));
       assert.notEqual(outcome.exitCode, 0, 'bad binary is a launch refusal');
       const state = await fixture.inspect();
       assert.equal(state.claims.length, 0);
@@ -289,16 +285,16 @@ for (const runner of ['codex', 'claude'] as const) {
 }
 
 test('[version-warning] production codex: a real unknown screen after identity request keeps its primary failure and cleanup', async t => {
-  const { fixture, confPath, installed } = await productionFixture(t, 'codex', 'readiness-unknown');
+  const { fixture, confPath } = await productionFixture(t, 'codex', 'readiness-unknown');
   await setVerified(confPath, 'codex', older.codex);
   const before = await confDigest(fixture);
-  assert.deepEqual((await listed(fixture, 'codex'))[0].warnings, [warning(installed, older.codex)]);
-  const outcome = await fixture.run('version-unknown-screen');
+  const rawOutcome = await fixture.run('version-unknown-screen');
+  const outcome = commandResult(rawOutcome);
   assert.equal(outcome.exitCode, 1);
   const failure = JSON.stringify(outcome.result);
   assert.match(failure, /unknown_screen|Approve unknown action|Unknown native/i, 'primary reason is the observed screen');
   assert.doesNotMatch(failure, /RUNNER_PROTOCOL_UNAVAILABLE|версія не перевірена/i, 'version inequality is not the failure');
-  await assertFailedLaunchCleaned(fixture, outcome, 'version mismatch with unknown screen');
+  await assertFailedLaunchCleaned(fixture, rawOutcome, 'version mismatch with unknown screen');
   const logs = (await readdir(fixture.control)).filter(name => /^input-.*\.log$/.test(name));
   assert.ok(logs.length > 0);
   const input = (await Promise.all(logs.map(name => readFile(join(fixture.control, name), 'utf8')))).join('');

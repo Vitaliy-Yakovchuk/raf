@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
@@ -58,8 +57,8 @@ export function git(cwd: string, environment: Record<string, string>, ...args: s
 }
 
 export async function fixture(t: TestContext) {
-  const root = mkdtempSync(join(tmpdir(), "raf-hotfix-z329-"));
-  const home = join(root, "qa-home");
+  const root = mkdtempSync("/tmp/hf-");
+  const home = join(root, "q");
   const workingHome = join(root, "working-home");
   const main = join(root, "raf-main");
   const binary = join(root, "fixture-bin");

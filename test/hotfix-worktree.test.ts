@@ -194,7 +194,7 @@ for (const problem of ["missing-registration", "missing-directory", "wrong-branc
     const worktrees = git(f.main, f.environment, "worktree", "list", "--porcelain");
     const runners = records(f);
     await assert.rejects(prepareHotfixWorktree(f.host, randomUUID()), failureCode(expected));
-    await assert.rejects(launchHotfix(f.host, { runId: randomUUID(), addressId: "refused", features: ["hotfix-fixture"], tasks: ["1.1"], runner: "codex", origin: "agent-run" }), failureCode(expected));
+    await assert.rejects(launchHotfix(f.host, { runId: randomUUID(), addressId: "refused", features: ["hotfix-fixture"], tasks: ["hotfix-fixture:1.1"], runner: "codex", origin: "agent-run" }), failureCode(expected));
     assert.deepEqual(records(f), runners);
     assert.equal(git(f.main, f.environment, "worktree", "list", "--porcelain"), worktrees);
     assert.deepEqual(live(f), before);
@@ -235,7 +235,7 @@ for (const origin of ["agent-run", "direct-main"] as const) for (const runner of
     const before = live(f);
     const userConfig = { codex: sha(join(f.home, ".codex/config.toml")), claude: sha(join(f.home, ".claude.json")) };
     const runs = [];
-    for (const task of ["1.1", "1.2"]) runs.push(await launchHotfix(f.host, { runId: randomUUID(), addressId: `hotfix-${runner}-${task}`, features: ["hotfix-fixture"], tasks: [task], runner, origin }));
+    for (const task of ["1.1", "1.2"]) runs.push(await launchHotfix(f.host, { runId: randomUUID(), addressId: `hotfix-${runner}-${task}`, features: ["hotfix-fixture"], tasks: [`hotfix-fixture:${task}`], runner, origin }));
     const [a, b] = runs;
     shared(f, a.workspace, b.workspace);
     assert.notEqual(a.runId, b.runId);
@@ -363,8 +363,8 @@ for (const path of ["../raf-main/src/production-runtime.ts", ".git/config", "/et
 
 test("[hotfix-sandbox] real sandbox permits shared hotfix and own tmp while protecting live Git and aliases", options, async t => {
   const f = await fixture(t);
-  const a = await prepareHotfixWorktree(f.host, randomUUID());
-  const b = await prepareHotfixWorktree(f.host, randomUUID());
+  const a = await prepareHotfixWorktree(f.host, randomUUID().slice(0, 8));
+  const b = await prepareHotfixWorktree(f.host, randomUUID().slice(0, 8));
   const own = join(f.home, ".raf/tmp", a.runId);
   const foreign = join(f.home, ".raf/tmp", b.runId);
   mkdirSync(own, { recursive: true });
@@ -481,7 +481,7 @@ test("[hotfix-pure] fixture contains the complete brief tree without runtime fal
 
 test("[hotfix-sandbox] a hardlink alias cannot mutate a live inode", options, async t => {
   const f = await fixture(t);
-  const workspace = await prepareHotfixWorktree(f.host, randomUUID());
+  const workspace = await prepareHotfixWorktree(f.host, randomUUID().slice(0, 8));
   const target = join(f.main, "src/production-runtime.ts");
   const alias = join(f.hotfix, "live-hardlink.ts");
   linkSync(target, alias);
@@ -504,8 +504,8 @@ test("[hotfix-sandbox] a hardlink alias cannot mutate a live inode", options, as
 test("[hotfix-cleanup] a completed launch releases only its resources while another runner remains alive", options, async t => {
   const f = await fixture(t);
   await f.startMain();
-  const a = await launchHotfix(f.host, { runId: randomUUID(), addressId: "cleanup-a", features: ["hotfix-fixture"], tasks: ["1.1"], runner: "claude", origin: "agent-run" });
-  const b = await launchHotfix(f.host, { runId: randomUUID(), addressId: "cleanup-b", features: ["hotfix-fixture"], tasks: ["1.2"], runner: "claude", origin: "direct-main" });
+  const a = await launchHotfix(f.host, { runId: randomUUID(), addressId: "cleanup-a", features: ["hotfix-fixture"], tasks: ["hotfix-fixture:1.1"], runner: "claude", origin: "agent-run" });
+  const b = await launchHotfix(f.host, { runId: randomUUID(), addressId: "cleanup-b", features: ["hotfix-fixture"], tasks: ["hotfix-fixture:1.2"], runner: "claude", origin: "direct-main" });
   writeFileSync(join(f.hotfix, "foreign-running.txt"), "still owned by b\n");
   const before = { head: head(f), index: sha(index(f)), live: live(f), foreignTmp: filesUnder(dirname(b.reportPath)) };
   process.kill(a.pid, "SIGTERM");

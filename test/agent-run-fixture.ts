@@ -47,7 +47,7 @@ export const runnerScript = String.raw`
 import { readFileSync, writeFileSync, openSync, appendFileSync, renameSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-if (process.argv.includes('--version')) { console.log('codex-cli raf-synthetic-1'); process.exit(0); }
+if (process.argv.includes('--version')) { console.log('codex-cli 0.0.1'); process.exit(0); }
 const c = JSON.parse(readFileSync(process.env.RAF_AGENT_RUN_FIXTURE, 'utf8'));
 const mode = readFileSync(c.control + '/mode', 'utf8').trim();
 const nativeId = randomUUID();
@@ -257,7 +257,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   await fs.mkdir(join(root, 'questions', 'projects', 'raf'), { recursive: true });
   await fs.writeFile(join(root, 'questions', 'projects', 'raf', 'questions.md'), '# Питання\n');
   const protocols = runner === 'claude' ? [{ ...claudeProtocol, timeouts: { ...timeouts, pollMs: 25 } }] : [{
-    runner: 'codex', executable: 'codex', version: 'raf-synthetic-1', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null, quotaCommand: '/status', navigation: [], markers: { ready: ['RAF SYNTHETIC READY'] }, quotaParser: 'codex_status', modelPools: {}, quotaReliable: false, liveTaskVerified: true,
+    runner: 'codex', executable: 'codex', version: '0.0.1', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null, quotaCommand: '/status', navigation: [], markers: { ready: ['RAF SYNTHETIC READY'] }, quotaParser: 'codex_status', modelPools: {}, quotaReliable: false, liveTaskVerified: true,
     timeouts: { ...timeouts, pollMs: 25 }, collection: { intervalMs: 300000, failureBackoffMs: 60000, staleAfterMs: 60000 },
   }];
   await writeJson(join(conf, 'raf.json'), { version: 1, state: { fileName: 'state.sqlite' }, commandTiming: { emaAlpha: 0.1 }, runnerProtocols: protocols });

@@ -166,8 +166,8 @@ async function productionFixture(t: Parameters<typeof agentRunFixture>[0], runne
   const executable = join(fixture.directory, 'bin', runner);
   if (runner === 'codex') {
     const script = await readFile(executable, 'utf8');
-    assert.ok(script.includes('raf-synthetic-1'), 'documented fake codex version marker');
-    await writeFile(executable, script.replaceAll('raf-synthetic-1', checked.codex));
+    assert.ok(script.includes('0.0.1'), 'documented fake codex version marker');
+    await writeFile(executable, script.replaceAll('0.0.1', checked.codex));
     protocol.version = checked.codex;
     await putJson(confPath, configuration);
   }

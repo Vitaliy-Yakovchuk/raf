@@ -69,7 +69,7 @@ const runnerScript = String.raw`
 import { readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-if (process.argv.includes('--version')) { console.log('codex-cli raf-synthetic-1'); process.exit(0); }
+if (process.argv.includes('--version')) { console.log('codex-cli 0.0.1'); process.exit(0); }
 const c = JSON.parse(readFileSync(process.env.RAF_INTEGRATION_FIXTURE, 'utf8'));
 const { openStateStore } = await import(pathToFileURL(c.sourceRoot + '/src/state-store.ts'));
 const { listTaskReservations } = await import(pathToFileURL(c.sourceRoot + '/src/task-reservations.ts'));
@@ -267,7 +267,7 @@ async function fixture(t: any) {
   await fs.mkdir(dirname(questionsPath), { recursive: true });
   await fs.writeFile(questionsPath, '# Питання\n');
   await writeJson(join(conf, 'raf.json'), { version: 1, state: { fileName: 'state.sqlite' }, commandTiming: { emaAlpha: 0.1 }, resourceWait: { grantIntervalMs: 15000 }, service: { hostTickIntervalMs: 10000, readinessTimeoutMs: 30000, entryRelativePath: 'bin/service.ts' }, runnerProtocols: [{
-    runner: 'codex', executable: 'codex', version: 'raf-synthetic-1', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null, quotaCommand: '/status', navigation: [], markers: { ready: ['RAF SYNTHETIC READY'] }, quotaParser: 'codex_status', modelPools: {}, quotaReliable: false, liveTaskVerified: true,
+    runner: 'codex', executable: 'codex', version: '0.0.1', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null, quotaCommand: '/status', navigation: [], markers: { ready: ['RAF SYNTHETIC READY'] }, quotaParser: 'codex_status', modelPools: {}, quotaReliable: false, liveTaskVerified: true,
     timeouts: { startupMs: 20000, transitionMs: 10000, overallMs: 30000, pollMs: 25 }, collection: { intervalMs: 300000, failureBackoffMs: 60000, staleAfterMs: 60000 }
   }] });
   for (const path of ['runners/codex.md', 'tasks/implement.md', 'completion.md']) { await fs.mkdir(dirname(join(conf, 'briefs', path)), { recursive: true }); await fs.writeFile(join(conf, 'briefs', path), 'Synthetic integration fixture.\n'); }

@@ -121,7 +121,6 @@ const constants=JSON.parse(readFileSync(${JSON.stringify(join(fixtureConf, 'raf-
 buildCatalog(${JSON.stringify(fixtureConf)},${JSON.stringify(artifactPath)},constants.commands.map(command=>command.path.join(' ')));
 try {await withProductionRuntime({orchestratorRoot:${JSON.stringify(root)},homeDirectory:${JSON.stringify(home)},artifactPath:${JSON.stringify(artifactPath)},now:()=>0},async()=>undefined,async production=>{
 const handlers={...production.handlers,'agent ps':runtime.handlers['agent ps']};
-buildCatalog(${JSON.stringify(fixtureConf)},${JSON.stringify(artifactPath)},Object.keys(handlers));
 const result=await runCli(process.argv.slice(2),${JSON.stringify(artifactPath)},handlers);process.stdout.write(result.stdout);process.stderr.write(result.stderr);process.exitCode=result.exitCode;
 });} finally {await runtime.close();}
 `;

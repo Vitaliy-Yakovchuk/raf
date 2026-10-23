@@ -350,6 +350,7 @@ async function runWithAdmission(admission: AdmissionSnapshot | null, authorize =
   };
   const store = {
     close: () => {}, initializeRunners: () => {}, recordCommandDuration: () => {},
+    getRunnerEnabled: () => undefined,
   } as unknown as StateStore;
   const commandConstants = { ...constants,
     commands: constants.commands.filter((command: { path: string[] }) => command.path.join(' ') === 'agent run') };

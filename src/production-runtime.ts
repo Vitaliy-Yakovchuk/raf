@@ -1202,33 +1202,42 @@ export async function runProductionWorker(
     const assignedId = native.identity.source === 'assigned' ? randomUUID() : undefined;
     let invocation = buildRunnerInvocation(settings, { ...request.selection, ...(assignedId ? { sessionId: assignedId } : {}) });
     if (hotfix && settings.runner === 'codex') invocation.args.push('-C', request.cwd);
-    const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
-    invocation.args.push(...nativeWriteScopeArgs(settings, hotfix ? [...new Set([...writable.directories, ...writable.workspace])] : writable.directories, writable.workspace));
-    const scope = await runnerSandboxScope(session?.launchContext?.testAssignment?.type ?? session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store, session?.launchContext?.testAssignment?.phase ?? session?.activity?.phase, context.confRoot).catch(error => {
-      if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
-      throw error;
-    });
-    invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
-    if (hotfix && settings.runner === 'claude') {
-      const index = invocation.args.indexOf('--settings');
-      if (index < 0) fail('RUNNER_SANDBOX_UNAVAILABLE', 'Hotfix claude requires enforced filesystem sandbox');
-      const settingsValue = JSON.parse(invocation.args[index + 1]);
-      settingsValue.sandbox.filesystem = { ...settingsValue.sandbox.filesystem, denyWrite: [...(settingsValue.sandbox.filesystem?.denyWrite ?? []), hotfix.commonDirectory, join(hotfix.cwd, '.git')], allowWrite: [...writable.directories, ...writable.workspace] };
-      invocation.args[index + 1] = JSON.stringify(settingsValue);
-    }
-    if (settings.runner === 'codex' && codexInvocationSandboxMode(invocation.args) !== null) {
-      try {
-        codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], ...(hotfix ? { readOnlyDirectories: [hotfix.commonDirectory, join(hotfix.cwd, '.git')] } : {}), environment: process.env, timeoutMs: settings.timeouts.transitionMs });
-      } catch (error) {
+    try {
+      const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
+      invocation.args.push(...nativeWriteScopeArgs(settings, hotfix ? [...new Set([...writable.directories, ...writable.workspace])] : writable.directories, writable.workspace));
+      const scope = await runnerSandboxScope(session?.launchContext?.testAssignment?.type ?? session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store, session?.launchContext?.testAssignment?.phase ?? session?.activity?.phase, context.confRoot).catch(error => {
         if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
         throw error;
+      });
+      invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
+      if (hotfix && settings.runner === 'claude') {
+        const index = invocation.args.indexOf('--settings');
+        if (index < 0) fail('RUNNER_SANDBOX_UNAVAILABLE', 'Hotfix claude requires enforced filesystem sandbox');
+        const settingsValue = JSON.parse(invocation.args[index + 1]);
+        settingsValue.sandbox.filesystem = { ...settingsValue.sandbox.filesystem, denyWrite: [...(settingsValue.sandbox.filesystem?.denyWrite ?? []), hotfix.commonDirectory, join(hotfix.cwd, '.git')], allowWrite: [...writable.directories, ...writable.workspace] };
+        invocation.args[index + 1] = JSON.stringify(settingsValue);
       }
-      invocation = codexSandbox.invocation;
-    }
-    if (settings.runner === 'codex') {
-      codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs });
-      invocation = codexAccess.invocation;
-      if (codexAccess.unavailable) process.stderr.write(`${request.runId}: ${codexAccess.unavailable}\n`);
+      if (settings.runner === 'codex' && codexInvocationSandboxMode(invocation.args) !== null) {
+        try {
+          codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], ...(hotfix ? { readOnlyDirectories: [hotfix.commonDirectory, join(hotfix.cwd, '.git')] } : {}), environment: process.env, timeoutMs: settings.timeouts.transitionMs });
+        } catch (error) {
+          if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
+          throw error;
+        }
+        invocation = codexSandbox.invocation;
+      }
+      if (settings.runner === 'codex') {
+        codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs });
+        invocation = codexAccess.invocation;
+        if (codexAccess.unavailable) process.stderr.write(`${request.runId}: ${codexAccess.unavailable}\n`);
+      }
+    } catch (error) {
+      // A denied launch must retain its trust refusal even when sandbox setup cannot finish.
+      if (workspaceTrustDenied) {
+        const root = await execute({ executable: 'git', args: ['-C', request.cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
+        await runnerWorkspaceUntrusted(request, settings.runner, root?.exitCode === 0 ? root.stdout.trim() || undefined : undefined);
+      }
+      throw error;
     }
     if (hotfix) await fs.writeFile(join(dirname(session.launchContext.reportPath), 'invocation.json'), JSON.stringify({ cwd: request.cwd, runId: request.runId, runner: settings.runner, invocation }), { mode: 0o600 });
     let screen = '';

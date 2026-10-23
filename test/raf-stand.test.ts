@@ -83,3 +83,33 @@ for (const source of ['missing', 'explicit-missing', 'relative', 'directory']) {
     await assert.rejects(readFile(f.log), { code: 'ENOENT' });
   });
 }
+
+const standLifecycle = await import('../../openspec/changes/add-raf-test-run/etchly-qa/stand-lifecycle.mjs');
+
+for (const fail of [false, true]) {
+  test(`Etchly stand restores fixture inventory and files after ${fail ? 'failure' : 'success'}`, async t => {
+    const root = await mkdtemp(join(tmpdir(), 'etchly-stand-lifecycle-'));
+    t.after(() => rm(root, { recursive: true, force: true }));
+    const config = join(root, 'test-runs.json');
+    const fixtures = join(root, 'qa544-fixtures');
+    const original = '{ "projects": {} }\n';
+    await writeFile(config, original);
+    for (let pass = 0; pass < 2; pass++) {
+      const operation = standLifecycle.withFixtureWorkspace(config, fixtures, async () => {
+        await mkdir(fixtures);
+        await writeFile(join(fixtures, 'fixture.test.ts'), 'controlled fixture');
+        await writeFile(config, '{"projects":{"etchly":{"groups":{"qa544":{}}}}}');
+        if (fail) throw new Error('controlled fixture failure');
+        return 'complete';
+      });
+      if (fail) await assert.rejects(operation, /controlled fixture failure/);
+      else assert.equal(await operation, 'complete');
+      assert.equal(await readFile(config, 'utf8'), original, 'byte-exact inventory restoration');
+      await assert.rejects(readFile(join(fixtures, 'fixture.test.ts')), { code: 'ENOENT' });
+    }
+  });
+}
+
+test('Etchly stand resolves raf next to its own conf for code-relative reporters', () => {
+  assert.equal(standLifecycle.standCodeRoot('/tmp/etchly-isolated-stand'), '/tmp/etchly-isolated-stand/raf-develop');
+});

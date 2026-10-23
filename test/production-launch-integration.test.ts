@@ -276,10 +276,11 @@ async function fixture(t: any) {
   await writeJson(join(conf, 'models.json'), models);
   await writeJson(join(conf, 'raf-constants.json'), constants);
   const flow = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/flow.json'), 'utf8'));
+  const raf = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/raf.json'), 'utf8'));
   await writeJson(join(conf, 'flow.json'), { ...flow, resources: Object.fromEntries(Object.entries(flow.resources).map(([tier, thresholds]) => [tier, { ...(thresholds as object), minRamBytes: 1, minDiskBytes: 1 }])) });
   await fs.mkdir(dirname(questionsPath), { recursive: true });
   await fs.writeFile(questionsPath, '# Питання\n');
-  await writeJson(join(conf, 'raf.json'), { version: 1, state: { fileName: 'state.sqlite' }, commandTiming: { emaAlpha: 0.1 }, resourceWait: { grantIntervalMs: 15000 }, service: { hostTickIntervalMs: 10000, readinessTimeoutMs: 30000, entryRelativePath: 'bin/service.ts' }, runnerProtocols: [{
+  await writeJson(join(conf, 'raf.json'), { version: 1, state: { fileName: 'state.sqlite' }, commandTiming: { emaAlpha: 0.1 }, resourceWait: { ...raf.resourceWait }, service: { hostTickIntervalMs: 10000, readinessTimeoutMs: 30000, entryRelativePath: 'bin/service.ts' }, runnerProtocols: [{
     runner: 'codex', executable: 'codex', version: '0.0.1', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null, quotaCommand: '/status', navigation: [], markers: { ready: ['RAF SYNTHETIC READY'] }, quotaParser: 'codex_status', modelPools: {}, quotaReliable: false, liveTaskVerified: true,
     timeouts: { startupMs: 20000, transitionMs: 10000, overallMs: 30000, pollMs: 25 }, collection: { intervalMs: 300000, failureBackoffMs: 60000, staleAfterMs: 60000 }
   }] });

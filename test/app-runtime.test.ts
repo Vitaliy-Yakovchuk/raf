@@ -291,7 +291,7 @@ test('close denial and interrupt are separate owner operations with caller verif
   assert.equal(session.state, 'running');
   assert.equal(reminder.state, 'active');
   await app.handlers['agent interrupt']({ id: 'worker' });
-  assert.deepEqual(call(f, 'close'), ['worker', { verifiedRun: 'main-1' }, { force: undefined, reason: undefined }]);
+  assert.deepEqual(call(f, 'close'), ['worker', { verifiedRun: 'main-1' }, { force: false, reason: undefined }]);
   assert.deepEqual(call(f, 'interrupt'), ['worker', { verifiedRun: 'main-1' }]);
   assert.equal(count(f, 'compensate'), 0);
   assert.equal(count(f, 'abort'), 0);

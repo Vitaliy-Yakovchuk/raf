@@ -109,11 +109,12 @@ for (const [name, change] of [
   });
 }
 
-test('[production-runner-readiness-qa] mismatched installed version remains unavailable', async t => {
+test('[production-runner-readiness-qa] mismatched installed version remains eligible with a warning', async t => {
   const f = await fixture(t);
   await f.configure([{ ...f.settings, version: '0.161.0', liveTaskVerified: true }]);
   const snapshot = await f.services.routingSnapshot();
-  assert.equal(snapshot.cliAvailable.codex, false);
-  assert.equal(f.services.selectModel(configuration.models, snapshot, { complexity: 'decision', role: 'implement' }).status, 'waiting');
+  assert.equal(snapshot.cliAvailable.codex, true);
+  assert.deepEqual(snapshot.cliWarnings?.codex, ['версія 0.160.0 не збігається з перевіреною 0.161.0, протокол не перевірено']);
+  assert.equal(f.services.selectModel(configuration.models, snapshot, { complexity: 'decision', role: 'implement' }).status, 'selected');
   assert.deepEqual(await f.calls(), [['--version']]);
 });

@@ -92,7 +92,7 @@ async function fixture(t: TestContext, linkedOrchestrator = false) {
       ...projects,
       projects: { raf: { path: 'raf-main', profile: 'raf', branchPaths: { main: 'raf-main', develop: 'raf-develop' }, usesSharedLibs: false } },
     },
-    reportStatuses: constants.reportStatuses, resources: flow.resources,
+    reportStatuses: constants.reportStatuses, resources: flow.resources, resourceEstimates: flow.resourceEstimates,
   };
   const assignment: AssignmentSnapshot = {
     root, changes: [{ id: 'document-only', items: [{ id: '1.1', description: 'Write assigned documents' }] }], baselineArchives: [],

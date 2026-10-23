@@ -186,7 +186,6 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
   const tmuxSession = `raf-trust-${runner}`;
   const selection = selections[runner];
   const brief = ['WORKSPACE_TRUST_QA', ...Array.from({ length: 12 }, (_, index) => `Рядок доручення ${index}`), 'BRIEF_END'].join('\n');
-  const request: LaunchWrapperRequest = { tmpRoot: f.tmpRoot, runId, address, assignment: f.assignment, statePath: f.statePath, cwd, tmuxSession, selection, brief, readinessTimeoutMs: settings.timeouts.startupMs };
   const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type: parameters.type, project: parameters.project, features: parameters.features, phase: parameters.phase, cwd }, assignment: f.assignment, selection: { status: 'selected', ...selection, reason: 'synthetic workspace trust fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const { task, launch: derived } = await derivedLaunch(services, f, runtimeLaunch, parameters);
@@ -196,6 +195,9 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
   assert.equal(reservation.admitted, true, 'reason' in reservation ? reservation.reason : 'admitted');
   await recordLaunchRunnerPath(f.tmpRoot, runId, executable);
   const session = () => f.store.sessionRepository.transaction(tx => tx.getSession(runId));
+  const reportedCommits = session()?.launchContext?.reportedCommits;
+  assert.ok(reportedCommits, 'workspace trust fixture must carry the reserved launch commit contract');
+  const request: LaunchWrapperRequest = { tmpRoot: f.tmpRoot, runId, address, assignment: f.assignment, statePath: f.statePath, cwd, tmuxSession, selection, brief, readinessTimeoutMs: settings.timeouts.startupMs, reportedCommits };
   await writeFile(session()!.launchContext!.briefPath, brief);
   const wrapperPidPath = join(f.root, 'wrapper.pid');
   f.trackPidFile(wrapperPidPath);

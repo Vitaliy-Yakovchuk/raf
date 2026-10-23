@@ -131,7 +131,7 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
   const path = join(request.tmpRoot, request.runId, `${request.address}.json`);
   let bytes: Uint8Array | null = null;
   const diagnostic = (reason: string) => ports.diagnostic(reason, { reportPath: path, bytes, reason });
-  const issueText = (issues: AssignmentVerification['issues']) => issues.map(issue => `${issue.change}: ${issue.requestedItems.join(', ')}: ${issue.reason}\nActual items: ${JSON.stringify(issue.foundItems.filter(item => issue.requestedItems.includes(item.id)))}\nArchives: ${JSON.stringify(issue.archives)}\nRemedy: ${issue.remedy}`).join('\n');
+  const issueText = (issues: AssignmentVerification['issues']) => issues.map(issue => `${issue.requestedItems.map(id => `${issue.change}:${id}`).join(', ')}: ${issue.reason}\nActual items: ${JSON.stringify(issue.foundItems.filter(item => issue.requestedItems.includes(item.id)))}\nArchives: ${JSON.stringify(issue.archives)}\nRemedy: ${issue.remedy}`).join('\n');
   let content: string | null;
   try {
     if (ports.fs.readBytes) {

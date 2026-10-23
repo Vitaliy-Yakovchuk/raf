@@ -150,9 +150,9 @@ export function openStateStore(path: string, options?: import('./state-migration
     try {
       return action();
     } catch (error) {
-      const source = error as { code?: string; errcode?: number };
+      const source = error as { code?: string; errcode?: number; message?: string };
       if (source?.code?.startsWith("ERR_SQLITE")) {
-        throw Object.assign(new Error(`State store ${name} failed (SQLite ${source.errcode ?? source.code})`), {
+        throw Object.assign(new Error(`State store ${name} failed (SQLite ${source.errcode ?? source.code}): ${source.message ?? String(error)}`, { cause: error }), {
           code: source.code,
           errcode: source.errcode,
           operation: name,

@@ -3,7 +3,7 @@ import { existsSync, linkSync, mkdirSync, readFileSync, rmSync, symlinkSync, wri
 import { join } from 'node:path';
 import { backup, DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
-import { openStateStore } from '../src/state-store.ts';
+import { openStateStore, STATE_SCHEMA_VERSION } from '../src/state-store.ts';
 import { resolveStateContext, stateContextEnvironment, verifyStateContext } from '../src/state-migration-guard.ts';
 import type { StateContext, StateEntryPoint } from '../src/state-migration-guard.ts';
 import { migrateState } from '../src/state-migration.ts';
@@ -176,7 +176,7 @@ for (const pathKind of ['missing', 'empty-version-zero'] as const) {
     openStateStore(f.qaStatePath, { context }).close();
     const db = new DatabaseSync(f.qaStatePath, { readOnly: true });
     const before = db.prepare('PRAGMA schema_version').get()!.schema_version;
-    assert.equal(Number(db.prepare('PRAGMA user_version').get()!.user_version), 11);
+    assert.equal(Number(db.prepare('PRAGMA user_version').get()!.user_version), STATE_SCHEMA_VERSION);
     db.close();
     openStateStore(f.qaStatePath, { context }).close();
     const after = new DatabaseSync(f.qaStatePath, { readOnly: true });
@@ -186,13 +186,13 @@ for (const pathKind of ['missing', 'empty-version-zero'] as const) {
   });
 }
 
-for (const version of [0, 12, 777]) {
+for (const version of [0, STATE_SCHEMA_VERSION + 1, 777]) {
   test(`nonempty schema ${version} is unsupported with and without an explicit transfer`, t => {
     const f = fixture(t);
     seedVersion(f, version, f.qaStatePath);
     const context = qaContext(f);
     const before = files(f.qaStatePath);
-    for (const transfer of [undefined, { statePath: f.qaStatePath, fromVersion: version, toVersion: 11 }]) {
+    for (const transfer of [undefined, { statePath: f.qaStatePath, fromVersion: version, toVersion: STATE_SCHEMA_VERSION }]) {
       assert.throws(() => openStateStore(f.qaStatePath, { context, transfer }), errorCode('STATE_SCHEMA_UNSUPPORTED'));
       assert.deepEqual(files(f.qaStatePath), before);
     }
@@ -227,18 +227,18 @@ for (const fromVersion of [7, 10] as const) {
     assert.deepEqual(files(f.qaStatePath), before);
   });
 
-  test(`explicit path-bound ${fromVersion}→11 applies each SQL migration once and ordinary reopen does not replay it`, t => {
+  test(`explicit path-bound ${fromVersion}→${STATE_SCHEMA_VERSION} applies each SQL migration once and ordinary reopen does not replay it`, t => {
     const f = fixture(t);
     seed(f, f.qaStatePath);
     const context = qaContext(f);
     const before = logical(f.qaStatePath);
     assert.equal(before.schema.some(row => row.type === 'table' && row.name === 'test_run_groups'), false);
     const steps: number[] = [];
-    const transfer = { statePath: f.qaStatePath, fromVersion, toVersion: 11 };
+    const transfer = { statePath: f.qaStatePath, fromVersion, toVersion: STATE_SCHEMA_VERSION };
     openStateStore(f.qaStatePath, { context, transfer, afterMigrationStep: version => steps.push(version) }).close();
     assert.deepEqual(steps, expectedSteps);
     assert.deepEqual(logical(f.qaStatePath).rows, before.rows);
-    assert.equal(logical(f.qaStatePath).version, 11);
+    assert.equal(logical(f.qaStatePath).version, STATE_SCHEMA_VERSION);
     assert.equal(logical(f.qaStatePath).integrity, 'ok');
     const migrated = logical(f.qaStatePath);
     assert.equal(migrated.schema.filter(row => row.type === 'table' && row.name === 'test_run_groups').length, 1);
@@ -254,8 +254,8 @@ for (const fromVersion of [7, 10] as const) {
     const context = qaContext(f);
     const before = files(f.qaStatePath);
     for (const [transfer, code] of [
-      [{ statePath: f.statePath, fromVersion, toVersion: 11 }, 'STATE_MIGRATION_CONFLICT'],
-      [{ statePath: f.qaStatePath, fromVersion: fromVersion - 1, toVersion: 11 }, 'STATE_MIGRATION_CONFLICT'],
+      [{ statePath: f.statePath, fromVersion, toVersion: STATE_SCHEMA_VERSION }, 'STATE_MIGRATION_CONFLICT'],
+      [{ statePath: f.qaStatePath, fromVersion: fromVersion - 1, toVersion: STATE_SCHEMA_VERSION }, 'STATE_MIGRATION_CONFLICT'],
       [{ statePath: f.qaStatePath, fromVersion, toVersion: fromVersion }, 'STATE_SCHEMA_UNSUPPORTED'],
       [{ statePath: f.qaStatePath, fromVersion, toVersion: 10 }, 'STATE_SCHEMA_UNSUPPORTED'],
       [{ statePath: f.qaStatePath, fromVersion, toVersion: 999 }, 'STATE_SCHEMA_UNSUPPORTED'],
@@ -267,7 +267,7 @@ for (const fromVersion of [7, 10] as const) {
     db.exec('PRAGMA user_version = 9');
     db.close();
     const conflict = files(f.qaStatePath);
-    assert.throws(() => openStateStore(f.qaStatePath, { context, transfer: { statePath: f.qaStatePath, fromVersion, toVersion: 11 } }), errorCode('STATE_MIGRATION_CONFLICT'));
+    assert.throws(() => openStateStore(f.qaStatePath, { context, transfer: { statePath: f.qaStatePath, fromVersion, toVersion: STATE_SCHEMA_VERSION } }), errorCode('STATE_MIGRATION_CONFLICT'));
     assert.deepEqual(files(f.qaStatePath), conflict);
   });
 
@@ -276,7 +276,7 @@ for (const fromVersion of [7, 10] as const) {
     seed(f, f.qaStatePath);
     const context = qaContext(f);
     const before = logical(f.qaStatePath);
-    const transfer = { statePath: f.qaStatePath, fromVersion, toVersion: 11 };
+    const transfer = { statePath: f.qaStatePath, fromVersion, toVersion: STATE_SCHEMA_VERSION };
     let reachedStep = false;
     assert.throws(() => openStateStore(f.qaStatePath, {
       context, transfer,
@@ -285,7 +285,7 @@ for (const fromVersion of [7, 10] as const) {
     assert.equal(reachedStep, true);
     assert.deepEqual(logical(f.qaStatePath), before);
     openStateStore(f.qaStatePath, { context, transfer }).close();
-    assert.equal(logical(f.qaStatePath).version, 11);
+    assert.equal(logical(f.qaStatePath).version, STATE_SCHEMA_VERSION);
     assert.deepEqual(logical(f.qaStatePath).rows, before.rows);
   });
 
@@ -303,11 +303,11 @@ for (const fromVersion of [7, 10] as const) {
   writeFileSync(process.argv[1] + '/' + process.pid, 'ready');
   while (readdirSync(process.argv[1]).length < 2) await setImmediate();
   const context = JSON.parse(process.argv[2]);
-  openStateStore(context.statePath, { context, transfer: { statePath: context.statePath, fromVersion: ${fromVersion}, toVersion: 11 }, afterMigrationStep: version => appendFileSync(process.argv[3], version + '\\n') }).close();`;
+  openStateStore(context.statePath, { context, transfer: { statePath: context.statePath, fromVersion: ${fromVersion}, toVersion: ${STATE_SCHEMA_VERSION} }, afterMigrationStep: version => appendFileSync(process.argv[3], version + '\\n') }).close();`;
     const results = await Promise.all([nodeProcess(f, program, [barrier, JSON.stringify(context), stepsPath]), nodeProcess(f, program, [barrier, JSON.stringify(context), stepsPath])]);
     for (const result of results) assert.equal(result.code, 0, result.stderr);
     assert.deepEqual(readFileSync(stepsPath, 'utf8').trim().split('\n').map(Number).sort((a, b) => a - b), expectedSteps);
-    assert.equal(logical(f.qaStatePath).version, 11);
+    assert.equal(logical(f.qaStatePath).version, STATE_SCHEMA_VERSION);
     assert.equal(logical(f.qaStatePath).integrity, 'ok');
   });
 
@@ -326,15 +326,15 @@ for (const fromVersion of [7, 10] as const) {
     const source = files(f.statePath);
     const before = logical(f.qaStatePath);
     const backupPath = join(f.root, 'before-transfer.sqlite');
-    const request = { context: qaContext(f), statePath: f.qaStatePath, fromVersion, toVersion: 11, backupPath };
+    const request = { context: qaContext(f), statePath: f.qaStatePath, fromVersion, toVersion: STATE_SCHEMA_VERSION, backupPath };
     const result = await migrateState(request, { async inspectClients() { return 'quiescent'; } });
     assert.equal(result.applied, true);
     assert.equal(result.fromVersion, fromVersion);
-    assert.equal(result.toVersion, 11);
+    assert.equal(result.toVersion, STATE_SCHEMA_VERSION);
     assert.equal(result.backupPath, backupPath);
     assert.deepEqual(logical(backupPath), before);
     assert.equal(logical(backupPath).rows.length, 2, 'backup includes the committed WAL row');
-    assert.equal(logical(f.qaStatePath).version, 11);
+    assert.equal(logical(f.qaStatePath).version, STATE_SCHEMA_VERSION);
     assert.equal(logical(f.qaStatePath).integrity, 'ok');
     const migrated = logical(f.qaStatePath);
     const backupBytes = files(backupPath);
@@ -353,7 +353,7 @@ for (const fromVersion of [7, 10] as const) {
       seed(f, f.qaStatePath);
       const backupPath = join(f.root, 'forbidden-backup.sqlite');
       const before = files(f.qaStatePath);
-      await assert.rejects(migrateState({ context: qaContext(f), statePath: f.qaStatePath, fromVersion, toVersion: 11, backupPath }, { async inspectClients(path) { assert.equal(path, f.qaStatePath); return clients; } }), /client|клієнт/i);
+      await assert.rejects(migrateState({ context: qaContext(f), statePath: f.qaStatePath, fromVersion, toVersion: STATE_SCHEMA_VERSION, backupPath }, { async inspectClients(path) { assert.equal(path, f.qaStatePath); return clients; } }), /client|клієнт/i);
       assert.deepEqual(files(f.qaStatePath), before);
       assert.equal(existsSync(backupPath), false);
     });
@@ -367,7 +367,7 @@ for (const fromVersion of [7, 10] as const) {
     const occupied = join(f.root, 'keep-backup.sqlite');
     writeFileSync(occupied, 'existing-backup-sentinel');
     for (const backupPath of [occupied, join(occupied, 'not-a-directory.sqlite')]) {
-      await assert.rejects(migrateState({ context, statePath: f.qaStatePath, fromVersion, toVersion: 11, backupPath }, { async inspectClients() { return 'quiescent'; } }), /backup|копі|резерв/i);
+      await assert.rejects(migrateState({ context, statePath: f.qaStatePath, fromVersion, toVersion: STATE_SCHEMA_VERSION, backupPath }, { async inspectClients() { return 'quiescent'; } }), /backup|копі|резерв/i);
       assert.deepEqual(files(f.qaStatePath), before);
       assert.equal(readFileSync(occupied, 'utf8'), 'existing-backup-sentinel');
     }

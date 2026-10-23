@@ -22,6 +22,8 @@ test('production public API: required scalar and multi-value parameters preserve
     id: 'qa-smoke', project: 'raf', features: 'cli-catalog',
     tasks: 'complete-raf-flow-contracts:1.1', to: 'qa-smoke',
     notify: 'qa-smoke',
+    status: 'new', cursor: 'qa-next-page', limit: '10',
+    bug: 'projects/etchly/bug#344', 'text-file': '-', attachment: 'qa-attachment',
     text: 'Перевірити довідку CLI', at: '2026-10-21T12:00:00Z',
     'event-id': 'qa-smoke', 'event-action': 'activate',
     reason: 'Перевірку завершено', 'created-for': 'qa-smoke',

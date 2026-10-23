@@ -123,7 +123,7 @@ test('[resource-wait/interval] delayed durable commit starts the interval at obs
   const release = deferred<void>();
   env.onCommit = async () => { entered.resolve(); await release.promise; };
   const issuing = queue.ready(lastOffer(env, first.requestId), identity());
-  await entered.promise;
+  await Promise.race([entered.promise, issuing]);
   env.clock.monotonic = config.grantIntervalMs * 2;
   const completedAt = env.clock.monotonic;
   release.resolve();
@@ -175,7 +175,7 @@ for (const boundary of ['waiting', 'offered', 'client-ready'] as const) {
         return { state: 'alive', identity: client };
       };
       ready = queue.ready(offer!, identity());
-      await observed.promise;
+      await Promise.race([observed.promise, ready]);
     }
     assert.equal(await queue.cancel(first, identity(), 'external timeout'), 'cancelled');
     release.resolve();
@@ -329,7 +329,7 @@ test('[resource-wait/monitor] idle queue does no probes and active clients share
   };
   queue.enqueue(request());
   const first = queue.pump();
-  await entered.promise;
+  await Promise.race([entered.promise, first]);
   for (let pid = 102; pid < 122; pid++) queue.enqueue(request(pid));
   const concurrent = queue.pump();
   await Promise.resolve();
@@ -355,7 +355,7 @@ test('[resource-wait/monitor] a cancelled request cannot resurrect when its asyn
   };
   const ticket = queue.enqueue(request());
   const pumping = queue.pump();
-  await entered.promise;
+  await Promise.race([entered.promise, pumping]);
   assert.equal(await queue.cancel(ticket, identity(), 'timeout during probe'), 'cancelled');
   release.resolve();
   await pumping;
@@ -438,7 +438,7 @@ test('[resource-wait/persistence] concurrent ready messages produce at most one 
   const release = deferred<void>();
   env.onCommit = async () => { entered.resolve(); await release.promise; };
   const first = queue.ready(offer, identity());
-  await entered.promise;
+  await Promise.race([entered.promise, first]);
   const second = queue.ready(offer, identity());
   await Promise.resolve();
   assert.equal(env.maxCommitsInFlight, 1);
@@ -503,7 +503,7 @@ test('[resource-wait/delivery] backpressure on an offer cannot block cancellatio
   };
   const ticket = queue.enqueue(request());
   const pumping = queue.pump();
-  await entered.promise;
+  await Promise.race([entered.promise, pumping]);
   assert.equal(await queue.cancel(ticket, identity(), 'timeout under backpressure'), 'cancelled');
   release.resolve();
   await pumping;
@@ -524,7 +524,7 @@ test('[resource-wait/cancel] commit wins before final delivery; blocked transpor
   const ticket = queue.enqueue(request());
   await queue.pump();
   const issuing = queue.ready(lastOffer(env, ticket.requestId), identity());
-  await entered.promise;
+  await Promise.race([entered.promise, issuing]);
   assert.equal(env.row?.requestId, ticket.requestId);
   assert.equal(await queue.cancel(ticket, identity(), 'timeout before final result'), 'already-issued');
   env.observations.set(101, { state: 'dead', reason: 'death observed after commit' });
@@ -544,7 +544,7 @@ test('[resource-wait/ordering] hotfix arriving during precommit liveness invalid
   const release = deferred<void>();
   env.onObserve = async client => { entered.resolve(); await release.promise; return { state: 'alive', identity: client }; };
   const issuing = queue.ready(oldOffer, identity());
-  await entered.promise;
+  await Promise.race([entered.promise, issuing]);
   const hotfix = queue.enqueue(request(102, 'hotfix'));
   release.resolve();
   assert.equal(await issuing, 'ignored');
@@ -592,7 +592,7 @@ test('[resource-wait/monitor] snapshot expiring during asynchronous liveness is 
   const release = deferred<void>();
   env.onObserve = async client => { entered.resolve(); await release.promise; return { state: 'alive', identity: client }; };
   const issuing = queue.ready(lastOffer(env, ticket.requestId), identity());
-  await entered.promise;
+  await Promise.race([entered.promise, issuing]);
   env.clock.monotonic = config.hostTickIntervalMs + 1;
   env.admission = { status: 'UNKNOWN', reason: 'probe failed while liveness awaited' };
   release.resolve();

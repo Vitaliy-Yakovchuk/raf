@@ -123,11 +123,12 @@ test('[resource-wait/readiness] concurrent independent connectors start one main
   env.afterStart = async () => { started.resolve(); await release.promise; env.ready = true; };
   const connectors = Array.from({ length: 8 }, () => createResourceWaitServiceConnector(options(), env.ports));
   const waits = connectors.map(connector => connector.ensureReady());
-  await started.promise;
+  const completed = Promise.all(waits);
+  await Promise.race([started.promise, completed]);
   assert.equal(env.starts, 1);
   assert.equal(env.ready, false);
   release.resolve();
-  assert.deepEqual(await Promise.all(waits), connectors.map(() => endpoint));
+  assert.deepEqual(await completed, connectors.map(() => endpoint));
   assert.equal(env.starts, 1);
   assert.equal(env.releases, 1);
 });
@@ -206,7 +207,7 @@ test('[resource-wait/client] offer and ready are insufficient; only matching fin
   };
   let finished = false;
   const waiting = runResourceWaitCommand(request(), options(), env.ports).then(result => { finished = true; return result; });
-  await offered.promise;
+  await Promise.race([offered.promise, waiting]);
   assert.equal(env.readyCalls, 1);
   assert.equal(finished, false);
   final.resolve();

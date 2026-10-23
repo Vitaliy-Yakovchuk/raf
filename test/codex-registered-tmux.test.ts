@@ -93,7 +93,7 @@ async function fixture(t: TestContext, location: 'external' | 'workspace' | 'run
   await prepareProductionQaFixture(t, { root: orchestratorRoot, home });
   const productionModule = join(codeRoot, 'src', 'production-runtime.ts');
   await fs.appendFile(productionModule, '\nexport { runnerSandboxScope };\n');
-  const production = await import(pathToFileURL(productionModule).href) as { runnerSandboxScope: ScopeBuilder };
+  const production = await import(`${pathToFileURL(productionModule).href}?y71-scope`) as { runnerSandboxScope: ScopeBuilder };
   assert.equal(typeof production.runnerSandboxScope, 'function', 'fixture exposes the existing production scope without changing its body');
   const guard: typeof import('../src/state-migration-guard.ts') = await import(pathToFileURL(join(codeRoot, 'src', 'state-migration-guard.ts')).href);
   const storage: typeof import('../src/state-store.ts') = await import(pathToFileURL(join(codeRoot, 'src', 'state-store.ts')).href);

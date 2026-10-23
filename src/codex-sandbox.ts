@@ -205,6 +205,13 @@ export async function prepareCodexSandbox(
     }))?.isDirectory())) unavailable(`workspace ${cwd} overlaps hidden host state directory ${path}`);
     for (const directory of writable) if (within(path, directory) && !within(runDirectory, directory)) unavailable(`writable directory ${directory} lies inside hidden host resource ${path}`);
   }
+  const existingHidden: string[] = [];
+  for (const path of hidden) {
+    if (path !== await canonical(path)) continue;
+    try { await fs.stat(path); existingHidden.push(path); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') unavailable(`cannot inspect hidden host resource ${path}`); }
+  }
+  const masked = existingHidden.filter(path => !existingHidden.some(other => other !== path && within(other, path)));
   const directory = join(runDirectory, `codex-sandbox-${request.runId}`);
   const codex = await executable(request.invocation.executable, request.environment, directory);
   const bwrap = await executable('bwrap', request.environment, directory);
@@ -217,7 +224,7 @@ export async function prepareCodexSandbox(
   const gitEntry = await fs.lstat(git).catch(() => null);
   if (!gitEntry || gitEntry.isFile()) entries[git] = 'write';
   entries[directory] = 'read';
-  for (const path of hidden) entries[path] = 'none';
+  for (const path of masked) entries[path] = 'none';
   const filesystem = `{${Object.entries(entries).map(([path, access]) => `${JSON.stringify(path)}=${JSON.stringify(access)}`).join(',')}}`;
   const policy = ['-c', 'sandbox_mode="workspace-write"', '-c', `default_permissions="${profile}"`, '-c', `permissions.${profile}.filesystem=${filesystem}`, '-c', `permissions.${profile}.network.enabled=true`];
   const shellEnvironment = [...scrubbed.flatMap(name => ['-c', `shell_environment_policy.set.${name}=""`]), ...Object.entries(toolVariables).flatMap(([name, value]) => ['-c', `shell_environment_policy.set.${name}=${JSON.stringify(value)}`])];
@@ -251,7 +258,7 @@ export async function prepareCodexSandbox(
     await fs.writeFile(launcher, `#!/bin/sh\nPATH=${literal(directory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
     await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: ['AF_UNIX'], ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
     const visible: string[] = [];
-    for (const path of hidden) if (await fs.access(path, constants.R_OK).then(() => true, () => false)) visible.push(path);
+    for (const path of masked) if (await fs.access(path, constants.R_OK).then(() => true, () => false)) visible.push(path);
     await probe(toolSandbox, environment, cwd, probeSocket, visible, request.timeoutMs);
   } catch (error) {
     await cleanup().catch(() => undefined);

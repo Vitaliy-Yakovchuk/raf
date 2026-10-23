@@ -8,6 +8,11 @@ import type { SandboxTestRunPorts } from '../src/sandbox-test-run.ts';
 import { auditEtchlyInventory, classifyVitestResult, planVitestInvocations, prepareEtchlyEnvironment } from '../src/test-run-etchly.ts';
 import type { EtchlyEnvironmentFacts, EtchlyInventoryFact, EtchlyTestRunProfile, VitestLifecycleEvent } from '../src/test-run-etchly.ts';
 import type { DiagnosticLimits } from '../src/test-run-diagnostics.ts';
+import * as etchlyAdapter from '../src/test-run-etchly.ts';
+import { observeEtchlyInventory } from '../src/test-run-etchly-inventory.ts';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const workspace = '/work/etchly-develop';
 const group = 'reduce-etchly-codebase/product-defaults';
@@ -420,4 +425,50 @@ test('unreceived outcomes stay unknown and raw FAIL/PASS text cannot manufacture
   const r = classifyVitestResult([], { exitCode: 0, signal: null, stderr: 'Tests 99 passed PASS' }, 'app', limits, paths);
   assert.notEqual(r.outcome, 'passed'); assert.deepEqual(r.passed, []);
   assert.ok(r.diagnostics.some(d => d.kind === 'protocol' || d.kind === 'runner'));
+});
+
+test('trusted Vitest API applies structured runner without an unsupported CLI flag', async () => {
+  const run = (etchlyAdapter as any).runVitestBatch;
+  assert.equal(typeof run, 'function', 'Vitest CLI rejects --runner; use the trusted programmatic boundary');
+  const argv = ['run', 'admin/value.test.ts', '--project', 'app', '-t', '^literal\\[x\\]$', '--hookTimeout', '1234'];
+  const projects = [{ config: { runner: '/etchly/file-budget-runner.ts', hookTimeout: 9, include: ['value.test.ts'] } }, { config: { runner: '/etchly/file-budget-runner.ts', hookTimeout: 10 } }];
+  const calls: unknown[] = [];
+  const api = {
+    parseCLI(args: string[]) {
+      assert.deepEqual(args, ['vitest', ...argv]);
+      assert.equal(args.includes('--runner'), false);
+      return { filter: ['admin/value.test.ts'], options: { run: true, project: ['app'], testNamePattern: '^literal\\[x\\]$', hookTimeout: 1234 } };
+    },
+    async createVitest(mode: string, options: any) {
+      assert.equal(mode, 'test');
+      assert.equal(options.watch, false);
+      assert.deepEqual(options.project, ['app']);
+      assert.equal(options.testNamePattern, '^literal\\[x\\]$');
+      return { projects, async start(files: string[]) {
+        assert.deepEqual(files, ['admin/value.test.ts']);
+        for (const p of projects) {
+          assert.equal(p.config.runner, '/trusted/structured-runner.ts');
+          assert.equal(p.config.hookTimeout, 1234);
+        }
+        assert.deepEqual(projects[0].config.include, ['value.test.ts']);
+        calls.push('start');
+      }, async close() { calls.push('close'); } };
+    },
+  };
+  await run(api, argv, '/trusted/structured-runner.ts');
+  assert.deepEqual(calls, ['start', 'close']);
+  api.createVitest = async () => ({ projects, async start() { throw new Error('collection failure'); }, async close() { calls.push('close-after-failure'); } }) as any;
+  await assert.rejects(run(api, argv, '/trusted/structured-runner.ts'), /collection failure/);
+  assert.equal(calls.at(-1), 'close-after-failure');
+});
+
+test('missing Etchly audited prerequisite is environment setup rather than stale inventory refusal', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'raf-etchly-prerequisite-'));
+  try {
+    await assert.rejects(observeEtchlyInventory(root, {}), (error: any) => {
+      assert.equal(error.code, 'ENVIRONMENT_INVALID');
+      assert.match(error.message, /package\.json/);
+      return true;
+    });
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });

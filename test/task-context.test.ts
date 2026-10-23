@@ -39,7 +39,7 @@ const descriptions = {
 
 const changes: Record<string, { tasksMd: string; items: { id: string; description: string }[] }> = {
   'change-a': {
-    tasksMd: `## Джерела за етапом\n\n- 1.1: openspec/specs/core/demo/spec.md — демо-вимога для 1.1.\n- 1.2: conf/stage-only-for-a12.json — джерело лише для 1.2.\n\n## 1. Робота\n\n- [ ] 1.1 ${descriptions.a11}\n- [ ] 1.2 ${descriptions.a12}\n`,
+    tasksMd: `## Джерела за етапом\n\n- 1.1: openspec/specs/core/demo/spec.md — демо-вимога для 1.1.\n- 1.1: openspec/changes/change-a/design.md — контракт для 1.1.\n- 1.1: openspec/changes/change-a/extra-design.md — залежність для 1.1.\n- 1.1: openspec/changes/change-a/specs/projects/raf/change-a/spec.md — delta для 1.1.\n- 1.2: conf/stage-only-for-a12.json — джерело лише для 1.2.\n\n## 1. Робота\n\n- [ ] 1.1 ${descriptions.a11}\n- [ ] 1.2 ${descriptions.a12}\n`,
     items: [{ id: '1.1', description: descriptions.a11 }, { id: '1.2', description: descriptions.a12 }],
   },
   'change-b': {
@@ -87,11 +87,11 @@ async function workspace(t: TestContext) {
     if (previousHome === undefined) delete process.env.HOME; else process.env.HOME = previousHome;
     await rm(root, { recursive: true, force: true });
   });
-  await Promise.all([mkdir(confRoot, { recursive: true }), mkdir(tmpRoot, { recursive: true, mode: 0o700 }), mkdir(join(root, 'raf-develop')), mkdir(join(root, 'raf-main')), mkdir(join(root, 'solo-develop'))]);
+  await Promise.all([mkdir(confRoot, { recursive: true }), mkdir(tmpRoot, { recursive: true, mode: 0o700 }), mkdir(join(root, 'raf-develop')), mkdir(join(root, 'raf-main')), mkdir(join(root, 'raf-hotfix')), mkdir(join(root, 'solo-develop'))]);
   const projects = {
     version: 1, profiles: realProjects.profiles, layout: realProjects.layout,
     projects: {
-      raf: { path: 'raf-main', profile: 'raf', branchPaths: { main: 'raf-main', develop: 'raf-develop' }, usesSharedLibs: false },
+      raf: { path: 'raf-main', profile: 'raf', branchPaths: { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' }, usesSharedLibs: false },
       solo: { path: 'solo-develop', profile: 'raf', branchPaths: { develop: 'solo-develop' }, usesSharedLibs: false },
       orchestrator: { path: '.', profile: 'orchestrator' },
     },
@@ -99,6 +99,8 @@ async function workspace(t: TestContext) {
   await Promise.all([
     writeFile(join(confRoot, 'projects.json'), JSON.stringify(projects)),
     writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify(constants)),
+    writeFile(join(confRoot, 'models.json'), JSON.stringify(models)),
+    writeFile(join(confRoot, 'raf.json'), readFileSync(new URL('raf.json', realConf))),
     writeFile(join(confRoot, 'flow.json'), realFlow),
     writeFile(join(confRoot, 'test-runs.json'), readFileSync(new URL('test-runs.json', realConf))),
     writeFile(join(confRoot, 'stage-only-for-a12.json'), '{}'),
@@ -120,7 +122,7 @@ async function workspace(t: TestContext) {
       ...Object.entries(extra).map(([name, content]) => writeFile(join(changeRoot, name), content)),
     ]);
   };
-  await writeChange('change-a', { 'extra-design.md': '# extra\n', 'notes.md': 'не джерело\n' });
+  await writeChange('change-a', { 'extra-design.md': '# extra\n', 'unrelated-design.md': '# не стосується 1.1\n', 'notes.md': 'не джерело\n' });
   await writeChange('change-b', {});
   await writeChange('change-c', {});
   await mkdir(join(root, 'openspec', 'specs', 'core', 'demo'), { recursive: true });
@@ -150,7 +152,7 @@ async function harness(t: TestContext, w: Workspace, override: (services: Runtim
   const execute: AdapterCommandExecutor = async command => {
     calls.push(structuredClone(command));
     if (command.executable === 'openspec') return fakeOpenSpec(command.args);
-    if (command.executable === 'git') return { exitCode: 0, stdout: `${(command.cwd ?? '').endsWith('-main') ? 'main' : 'develop'}\n`, stderr: '' };
+    if (command.executable === 'git') return { exitCode: 0, stdout: `${(command.cwd ?? '').endsWith('-main') ? 'main' : (command.cwd ?? '').endsWith('-hotfix') ? 'hotfix' : 'develop'}\n`, stderr: '' };
     throw new Error(`Forbidden executable in unit fixture: ${command.executable}`);
   };
   let store: StateStore | undefined;
@@ -241,12 +243,23 @@ test('[task-context] 2. старий чужий task-context/<id>.json ігно�
   assert.equal(derived.branch, 'develop');
 });
 
-test('[task-context] 3. гілка: implement і qa → develop, hotfix → main, відсутній ключ → UNKNOWN_BRANCH без підстановки', async t => {
+test('[task-context] 3. гілка: implement і qa → develop, raf hotfix → hotfix, відсутній ключ → UNKNOWN_BRANCH без підстановки', async t => {
   const w = await workspace(t);
   const derive = (parameters: Partial<RuntimeRunParameters>) => deriveTaskContext({ root: w.root, parameters: { ...baseParams, ...parameters }, assignment: snapshotFor(w.root, baseParams.tasks), configuration: w.configuration });
   assert.equal((await derive({ type: 'implement' })).branch, 'develop');
   assert.equal((await derive({ type: 'qa', phase: 'qa' })).branch, 'develop');
-  assert.equal((await derive({ type: 'hotfix' })).branch, 'main');
+  const hotfix = await derive({ type: 'hotfix' });
+  assert.equal(hotfix.branch, 'hotfix');
+  const hotfixBoundaries = bindWorkspaceBoundaries(hotfix, join(w.root, 'raf-hotfix'));
+  assert.ok(hotfixBoundaries.includes(join(w.root, 'raf-hotfix')));
+  for (const branch of ['main', 'develop']) assert.equal(hotfixBoundaries.includes(join(w.root, `raf-${branch}`)), false);
+  const missingRoute = structuredClone(w.configuration);
+  delete missingRoute.projects.projects.raf.branchPaths!.hotfix;
+  await assert.rejects(deriveTaskContext({ root: w.root, parameters: { ...baseParams, type: 'hotfix' }, assignment: snapshotFor(w.root, baseParams.tasks), configuration: missingRoute }), error => {
+    const text = failureText(error);
+    for (const pattern of [/UNKNOWN_BRANCH/, /branchPaths\/hotfix/, /main/, /develop/]) assert.match(text, pattern);
+    return true;
+  });
   await assert.rejects(derive({ type: 'hotfix', project: 'solo' }), error => /UNKNOWN_BRANCH/.test(failureText(error)));
   await assert.rejects(derive({ type: 'implement', project: 'orchestrator' }), error => /UNKNOWN_BRANCH/.test(failureText(error)));
 });
@@ -388,6 +401,7 @@ test('[task-context] 6. sources: файли зміни, шлях із пункт
   const change = join(w.root, 'openspec', 'changes', 'change-a');
   for (const path of [join(change, 'proposal.md'), join(change, 'design.md'), join(change, 'extra-design.md'), join(change, 'specs', 'projects', 'raf', 'change-a', 'spec.md'), join(w.root, 'conf', 'flow.json'), join(w.root, 'openspec', 'specs', 'core', 'demo', 'spec.md')]) assert.ok(paths.includes(path), path);
   assert.equal(paths.includes(join(change, 'notes.md')), false);
+  assert.equal(paths.includes(join(change, 'unrelated-design.md')), false);
   assert.equal(paths.includes(join(w.root, 'conf', 'stage-only-for-a12.json')), false);
 });
 
@@ -484,7 +498,7 @@ test('[task-context] 9. атомарний запис: 0600 у каталозі 
 test('[task-context] 10. помилка після prepareReport прибирає <tmpRoot>/<runId>/, однаковий --id дає різні каталоги', async t => {
   const w = await workspace(t);
   const seen: { runId: string; contextFile: unknown; mode: number }[] = [];
-  const fixedContext: RuntimeTaskContext = { branch: 'develop', outcome: `change-a:1.1 — ${descriptions.a11}`, writeBoundaries: [], sources: [], requested: { ramBytes: 1, diskBytes: {} }, requiredFileSystemIds: [], reportSchema: { type: 'object' } };
+  const fixedContext: RuntimeTaskContext = { branch: 'develop', outcome: `change-a:1.1 — ${descriptions.a11}`, writeBoundaries: [join(w.root, 'raf-develop'), join(w.root, 'openspec', 'changes', 'change-a')], sources: [join(w.root, 'openspec', 'changes', 'change-a', 'proposal.md') + ' — мета доручення; читати зараз'], requested: { ramBytes: flowResources.normal.minRamBytes, diskBytes: {} }, requiredFileSystemIds: [], reportSchema: { type: 'object' } };
   const h = await harness(t, w, services => ({
     ...services,
     resolveTask: async () => structuredClone(fixedContext),

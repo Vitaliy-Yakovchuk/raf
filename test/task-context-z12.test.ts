@@ -101,9 +101,17 @@ for (const type of ['spec', 'design']) {
 
 test('[task-context] Z.12 regression: implementation, QA, hotfix and test-scaffold retain their existing branch policy', { timeout }, async t => {
   const f = await z12Fixture(t);
+  git(join(f.root, 'raf-main'), 'worktree', 'add', '-b', 'hotfix', join(f.root, 'raf-hotfix'), 'main');
+  f.projects.projects.raf.branchPaths!.hotfix = 'raf-hotfix';
+  await f.persist();
+  assert.equal(git(join(f.root, 'raf-hotfix'), 'branch', '--show-current'), 'hotfix');
   for (const type of ['implement', 'qa', 'test-scaffold', 'hotfix']) {
     const task = await f.derive(type, 'raf');
-    assert.equal(task.branch, type === 'hotfix' ? 'main' : 'develop');
+    assert.equal(task.branch, type === 'hotfix' ? 'hotfix' : 'develop');
     assert.equal(task.workspaceWritable, true);
+    const cwd = join(f.root, type === 'hotfix' ? 'raf-hotfix' : 'raf-develop');
+    const boundaries = bindWorkspaceBoundaries(task, cwd);
+    assert.ok(boundaries.includes(cwd));
+    assert.equal(boundaries.includes(join(f.root, 'raf-main')), false);
   }
 });

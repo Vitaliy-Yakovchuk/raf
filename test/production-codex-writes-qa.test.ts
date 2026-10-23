@@ -9,6 +9,10 @@ import { listTaskReservations } from '../src/task-reservations.ts';
 import { configuration, eventually } from './production-fixture.ts';
 import { productionCodexQaFixture as fixture } from './production-codex-qa-fixture.ts';
 
+const rafConfiguration = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+const codexProtocol: ProtocolSettings = rafConfiguration.runnerProtocols.find((entry: ProtocolSettings) => entry.runner === 'codex');
+assert.ok(codexProtocol?.native, 'the configured codex native dialect is required');
+
 async function linkedWorktree(root: string, cwd: string) {
   const init = spawnSync('git', ['init', '--quiet', '--initial-branch=main', root], { encoding: 'utf8' });
   assert.equal(init.status, 0, init.stderr);
@@ -126,6 +130,7 @@ const timer = setInterval(() => {
   const raf = JSON.parse(await readFile(rafPath, 'utf8'));
   const protocol: ProtocolSettings = {
     runner: 'codex', executable: 'codex', version: '0.160.0', baseArgs: ['--no-daemon', '--no-alt-screen', '--sandbox', 'workspace-write', '--ask-for-approval', 'never'],
+    native: codexProtocol.native,
     modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null,
     quotaCommand: '/status', navigation: [], markers: { ready: ['Ask Codex to do anything'] }, quotaParser: 'codex_status', modelPools: {}, quotaReliable: false, liveTaskVerified: false,
     timeouts: { startupMs: 5000, transitionMs: 5000, overallMs: 15000, pollMs: 30 }, collection: { intervalMs: 60000, failureBackoffMs: 60000, staleAfterMs: 60000 },
@@ -188,8 +193,6 @@ for (const [metadata, worktree, missingQuestions] of [[true, false, false], [fal
     }
     if (missingQuestions) assert.equal(await readFile(f.questionsPath, 'utf8'), '', 'preflight creates only an empty questions file');
     assert.equal(listTaskReservations(f.store).length, 1);
-    // Exercise exact file binds with the public tool sandbox, rather than treating
-    // every declared file as a writable parent directory in the synthetic CLI.
     const runDirectory = dirname(f.reportPath);
     const probeDirectory = join(runDirectory, 'write-probe');
     await mkdir(probeDirectory);

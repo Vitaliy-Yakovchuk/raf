@@ -84,7 +84,7 @@ export async function fixture(t: TestContext) {
   };
   writeFileSync(environment.GIT_CONFIG_GLOBAL, "");
   mkdirSync(environment.TMUX_TMPDIR, { recursive: true });
-  for (const name of readdirSync(confSource)) if (name.endsWith(".json")) cpSync(join(confSource, name), join(root, "conf", name));
+  cpSync(confSource, join(root, "conf"), { recursive: true });
   const projectsPath = join(root, "conf", "projects.json");
   const projects = JSON.parse(readFileSync(projectsPath, "utf8"));
   projects.projects = { raf: projects.projects.raf, orchestrator: projects.projects.orchestrator };

@@ -663,6 +663,10 @@ function sharedWrapper() {
       onEvent({ kind: 'discovered', test: pending });
       if (mode === 'timeout') {
         onEvent({ kind: 'assertion-failed', test: red, diagnostic: 'assertion from target group' });
+        let resolveWait!: (result: { exitCode: number; signal: string | null; stderr: string }) => void;
+        const waitResult = new Promise<{ exitCode: number; signal: string | null; stderr: string }>(resolve => {
+          resolveWait = resolve;
+        });
         return {
           identity: `fake-tree-${spawned}`,
           wait() {
@@ -672,9 +676,12 @@ function sharedWrapper() {
               now = active.at;
               active.callback();
             });
-            return new Promise(() => {});
+            return waitResult;
           },
-          async cleanup() { return { complete: true, remainingPids: [] }; },
+          async cleanup() {
+            resolveWait({ exitCode: 1, signal: null, stderr: '' });
+            return { complete: true, remainingPids: [] };
+          },
         };
       }
       const selected = command.environment.testIds ?? [red, pending];

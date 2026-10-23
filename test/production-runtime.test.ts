@@ -64,7 +64,7 @@ const timer = setInterval(() => {
   const rafPath = join(f.confRoot, 'raf.json');
   const raf = JSON.parse(await readFile(rafPath, 'utf8'));
   await writeFile(rafPath, JSON.stringify({ ...raf, runnerProtocols: [settings] }));
-  const request: LaunchWrapperRequest = { tmpRoot: f.tmpRoot, runId, address, assignment: f.assignment, statePath: f.statePath, cwd: f.cwd, tmuxSession, selection: { runner: 'codex', model: 'gpt-6.1-sol', effort: 'high' }, brief: `FIXTURE_NARROW_BRIEF\nreport_path=${reportPath}\nBRIEF_END`, readinessTimeoutMs: 5000 };
+  let request: LaunchWrapperRequest = { tmpRoot: f.tmpRoot, runId, address, assignment: f.assignment, statePath: f.statePath, cwd: f.cwd, tmuxSession, selection: { runner: 'codex', model: 'gpt-6.1-sol', effort: 'high' }, brief: `FIXTURE_NARROW_BRIEF\nreport_path=${reportPath}\nBRIEF_END`, readinessTimeoutMs: 5000 };
   const session = () => f.store.sessionRepository.transaction(tx => tx.getSession(runId));
   const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', ...request.selection, reason: 'synthetic fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
   if (prepareInFixture) {
@@ -78,6 +78,8 @@ const timer = setInterval(() => {
     const reserved = session();
     assert.ok(reserved?.launchContext);
     assert.equal(reserved.launchContext.reportPath, prepared.reportPath);
+    assert.ok(reserved.launchContext.reportedCommits);
+    request = { ...request, reportedCommits: reserved.launchContext.reportedCommits };
     await writeFile(reserved.launchContext.briefPath, request.brief);
     const claims = listTaskReservations(f.store);
     assert.equal(claims.length, 1);
@@ -132,7 +134,9 @@ test('[production-factory] route uses configured project and actual Git branch',
   const routed = await services.route({ root: f.root, project: 'raf', branch: 'develop' });
   assert.equal(routed.ok, true);
   if (routed.ok) assert.equal(routed.cwd, f.cwd);
-  const invalid = await services.route({ root: f.root, project: 'raf', branch: 'main' });
+  const renamed = await f.execute({ executable: 'git', args: ['branch', '-m', 'fixture-mismatched-branch'], cwd: f.cwd });
+  assert.equal(renamed.exitCode, 0, renamed.stderr);
+  const invalid = await services.route({ root: f.root, project: 'raf', branch: 'develop' });
   assert.equal(invalid.ok, false);
 });
 

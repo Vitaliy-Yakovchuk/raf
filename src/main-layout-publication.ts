@@ -34,7 +34,10 @@ export function nativeMainLayoutPublicationProvider(): MainLayoutPublicationProv
       if (!original.isDirectory()) throw new Error('Atomic raf-main publication expected original directory at ' + logicalPath);
       const parent = dirname(activePath);
       if ((await fs.stat(parent)).dev !== original.dev) throw Object.assign(new Error('Atomic raf-main conversion cannot cross filesystems'), { code: 'EXDEV' });
-      await fs.symlink(target, activePath);
+      const prepared = await fs.lstat(activePath).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
+      if (prepared) {
+        if (!prepared.isSymbolicLink() || await fs.readlink(activePath) !== target) throw new Error('Atomic raf-main publication found a foreign prepared target at ' + activePath);
+      } else await fs.symlink(target, activePath);
       const owned = await fs.lstat(activePath);
       try { await exchange(logicalPath, activePath); }
       catch (error) {

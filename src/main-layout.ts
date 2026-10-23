@@ -367,7 +367,8 @@ async function recoverLayout(options: MainLayoutStartOptions, intent: LayoutInte
   const logical = await stat(intent.logicalPath);
   const active = await stat(intent.activePath);
   const isOriginal = (info: Awaited<ReturnType<typeof stat>>) => info?.isDirectory() && info.dev === intent.originalDevice && info.ino === intent.originalInode;
-  if (isOriginal(logical) && !active) {
+  const preparedLink = active?.isSymbolicLink() && await fs.readlink(intent.activePath) === relative(dirname(intent.logicalPath), intent.activePath);
+  if (isOriginal(logical) && (!active || preparedLink)) {
     await fs.mkdir(dirname(intent.activePath), { recursive: true });
     if (await fs.realpath(dirname(intent.activePath)) !== dirname(intent.activePath)) refuse('active target parent is an alias');
     await options.publicationProvider!.publish(publication);
@@ -397,6 +398,7 @@ async function recoverLayout(options: MainLayoutStartOptions, intent: LayoutInte
     const repository = await inspectRepository(intent.inactivePath);
     if (!repository || repository.identity !== intent.repository || repository.branch !== null || repository.head !== intent.head) refuse(`occupied or incomplete inactive target ${intent.inactivePath}; files retained for recovery`);
   }
+  if (await git(intent.inactivePath, ['status', '--porcelain=v1', '--untracked-files=normal'])) refuse(`incomplete or externally modified inactive checkout ${intent.inactivePath}; files and recovery intent retained`);
   await replaceExpected(join(intent.root, '.gitmodules'), Buffer.from(intent.moduleBefore, 'base64'), Buffer.from(intent.moduleAfter, 'base64'));
   const index = await fs.readFile(intent.indexPath);
   const before = Buffer.from(intent.indexBefore, 'base64');
@@ -463,6 +465,8 @@ export async function ensureMainLayoutForStart(
   const repository = intent?.repository ?? (await inspectRepository(join(root, 'raf-main')))!.identity;
   if (await fs.realpath(repository) !== repository) refuse('repository identity must be canonical');
   return withLayoutWriter(repository, async () => {
+    intent = await fs.readFile(intentPath, 'utf8').then(JSON.parse, error => { if (error.code === 'ENOENT') return null; throw error; });
+    if (intent && intent.repository !== repository) refuse('recovery repository changed while acquiring writer barrier');
     const recovered = !!intent;
     if (!intent) {
       layout = await validateMainLayoutForStart({ root, projects, probe: nativeProbe });

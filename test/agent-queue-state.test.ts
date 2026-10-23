@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
-import { openStateStore, STATE_SCHEMA_SUPPORTED_VERSIONS } from '../src/state-store.ts';
+import { openStateStore, STATE_SCHEMA_VERSION, STATE_SCHEMA_SUPPORTED_VERSIONS } from '../src/state-store.ts';
 import { createAgentQueueState, type StoredAgentQueueEntry } from '../src/agent-queue-state.ts';
 import type { AgentQueueRecord, AgentQueueValidation } from '../src/agent-run-queue.ts';
 import type { TaskReservationSet, ReservedTaskSnapshot } from '../src/task-reservations.ts';
@@ -44,7 +44,8 @@ test('agent-queue schema 12 ordinary readers write existing state without implic
   legacyFixture(path);
   const store = openStateStore(path);
   try {
-    assert.deepEqual(STATE_SCHEMA_SUPPORTED_VERSIONS, [12, 13]);
+    assert.ok(STATE_SCHEMA_SUPPORTED_VERSIONS.includes(12));
+    assert.equal(STATE_SCHEMA_SUPPORTED_VERSIONS.at(-1), STATE_SCHEMA_VERSION);
     assert.equal(version(store.startupContextDatabase), 12);
     assert.equal(store.getRunnerEnabled('legacy-runner'), true);
     store.setRunnerEnabled('legacy-runner', false);
@@ -61,11 +62,11 @@ test('agent-queue explicit additive migration preserves old data and shared writ
   const original = before.prepare("SELECT name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name").all();
   before.close();
   const legacy = openStateStore(path);
-  const migrated = openStateStore(path, { transfer: { statePath: path, fromVersion: 12, toVersion: 13 } });
+  const migrated = openStateStore(path, { transfer: { statePath: path, fromVersion: 12, toVersion: STATE_SCHEMA_VERSION } });
   try {
     const names = new Set(['agent_launch_queues', 'agent_launch_queue_entries']);
     assert.deepEqual(migrated.startupContextDatabase.prepare("SELECT name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name").all().filter(row => !names.has(row.name as string)), original);
-    assert.equal(version(legacy.startupContextDatabase), 13);
+    assert.equal(version(legacy.startupContextDatabase), STATE_SCHEMA_VERSION);
     legacy.setRunnerEnabled('legacy-runner', false);
     assert.equal(migrated.getRunnerEnabled('legacy-runner'), false);
     migrated.setRunnerEnabled('legacy-runner', true);
@@ -80,7 +81,7 @@ test('agent-queue explicit additive migration preserves old data and shared writ
 test('agent-queue migration failure rolls back tables version and existing records', t => {
   const path = fixture(t);
   legacyFixture(path);
-  assert.throws(() => openStateStore(path, { transfer: { statePath: path, fromVersion: 12, toVersion: 13 }, afterMigrationStep: () => { throw new Error('injected-before-commit'); } }), /injected-before-commit/);
+  assert.throws(() => openStateStore(path, { transfer: { statePath: path, fromVersion: 12, toVersion: STATE_SCHEMA_VERSION }, afterMigrationStep: () => { throw new Error('injected-before-commit'); } }), /injected-before-commit/);
   const store = openStateStore(path);
   try {
     assert.equal(version(store.startupContextDatabase), 12);

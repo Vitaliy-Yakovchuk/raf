@@ -11,6 +11,7 @@ export type ActivityEvent = {
 export type VerifiedSender = { kind: 'agent'; runId: string } | { kind: 'system' };
 export type DeliveryReceipt = { accepted: true; receiptId: string } | { accepted: false; reason: string };
 export interface AgentControlCoordinator {
+  prepareClose(session: SessionRecord, options: { force?: boolean; reason?: string }): Promise<SessionRecord>;
   observe(session: SessionRecord, observation: ProcessObservation): Promise<SessionRecord>;
   updateActivity(session: SessionRecord, update: ActivityUpdate, events: readonly ActivityEvent[]): Promise<SessionRecord>;
   finalize(session: SessionRecord, events: readonly ActivityEvent[]): Promise<SessionRecord>;

@@ -38,6 +38,7 @@ export type DomainEffect = { id: string; domain: string; payload: unknown };
 export type TransitionEffects = { pending: readonly PendingIntent[]; domain: readonly DomainEffect[]; reportAccepted?: boolean };
 
 export type SessionLaunchContext = {
+  testAssignment?: import('./sandbox-test-run.ts').SandboxTestAssignment;
   contextReview?: { contextReviewId: string; runIds: readonly string[]; brief: string };
   wrapper?: ProcessIdentity;
   assignment: AssignmentSnapshot;

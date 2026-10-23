@@ -11,6 +11,8 @@ import type { RuntimeRunParameters } from './app-runtime.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
 import type { WorkspaceProjectsConfig } from './workspace-routing.ts';
 import { configuredWorkspaceRoute, resolveDevelopmentBranch } from './workspace-routing.ts';
+import { sandboxRafCommandAccess } from './sandbox-test-run.ts';
+import type { TestRunConfig } from './test-runs.ts';
 
 export interface TaskContextConfiguration {
   readonly projects: WorkspaceProjectsConfig;
@@ -130,8 +132,10 @@ export function rafCommandFor(): string {
   return `node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}`;
 }
 
-export function rafSubcommandsFor(type: string): readonly string[] | null {
-  return coordinatingTypes.has(type) ? null : executorRafSubcommands;
+export function rafSubcommandsFor(type: string, phase = type, phases?: TestRunConfig['phases']): readonly string[] | null {
+  if (coordinatingTypes.has(type)) return null;
+  if (!phases) return executorRafSubcommands;
+  return sandboxRafCommandAccess({ runId: '', agentId: '', type, phase, project: '', workspace: '', branch: '', changes: [] }, 'codex', ['node', realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))], phases).raf_subcommands;
 }
 
 export async function loadTaskContextConfiguration(confRoot: string): Promise<TaskContextConfiguration> {

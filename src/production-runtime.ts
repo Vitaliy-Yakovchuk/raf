@@ -1,4 +1,6 @@
 import { prepareAgentClose } from './agent-close-preparation.ts';
+import { validateTestRunConfig } from './test-runs.ts';
+import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
 import { retainHotfixGeneration } from './hotfix-activation.ts';
 import { prepareHotfixWorktree, validateHotfixTrust, startHotfixCommitPort } from './hotfix-worktree.ts';
 import { hotfixRoute } from './hotfix-host.ts';
@@ -170,7 +172,7 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
   directories.add(await fs.realpath(reportDirectory));
   return { directories: [...directories], workspace: [...inWorkspace] };
 }
-async function runnerSandboxScope(type: string | undefined, cwd: string, reportDirectory: string, statePath: string, tmpRoot: string, sessionStore?: Pick<StateStore, 'sessionRepository'>) {
+async function runnerSandboxScope(type: string | undefined, cwd: string, reportDirectory: string, statePath: string, tmpRoot: string, sessionStore?: Pick<StateStore, 'sessionRepository'>, phase?: string, confRoot?: string) {
   const report = await fs.realpath(reportDirectory);
   const state = await fs.realpath(dirname(statePath));
   const temporary = await fs.realpath(tmpRoot);
@@ -197,10 +199,52 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
     }
   } finally { ownedStore?.close(); }
   const command = rafCommandFor();
-  const subcommands = type === undefined ? [] : rafSubcommandsFor(type);
+  const phases = confRoot ? await loadSandboxTestPhases(confRoot) : undefined;
+  const subcommands = type === undefined ? [] : rafSubcommandsFor(type, phase ?? type, phases);
   return {
     hidden: ['/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots, ...registeredSockets],
     readable: [report], tmuxDirectory: report, excludedCommands: subcommands === null ? [`${command}:*`] : subcommands.map(subcommand => `${command} ${subcommand}:*`),
+  };
+}
+
+export async function loadSandboxTestPhases(confRoot: string) {
+  const read = async (file: string) => JSON.parse(await fs.readFile(join(confRoot, file), 'utf8'));
+  const [config, constants, flow] = await Promise.all([read('test-runs.json'), read('raf-constants.json'), read('flow.json')]);
+  return validateTestRunConfig(config, constants.agentPhases.map((row: { id: string }) => row.id), flow.unitTests).phases;
+}
+
+export async function sandboxTestControlSnapshot(store: StateStore, root: string, project: string, group: string): Promise<SandboxTestControlSnapshot> {
+  const { rows, chain } = await ancestry(executeCommand);
+  const sessions = store.sessionRepository.transaction(tx => tx.listSessions(), 'read');
+  const activeChanges = (await fs.readdir(join(root, 'openspec/changes'), { withFileTypes: true })).filter(row => row.isDirectory() && row.name !== 'archive').map(row => row.name);
+  const projects = JSON.parse(await fs.readFile(join(root, 'conf/projects.json'), 'utf8')).projects;
+  const config = JSON.parse(await fs.readFile(join(root, 'conf/test-runs.json'), 'utf8'));
+  const workspaces: SandboxTestControlSnapshot['workspaces'][number][] = [];
+  for (const [id, value] of Object.entries(projects) as [string, any][]) for (const [branch, path] of Object.entries(value.branchPaths ?? { main: value.path })) {
+    const workspace = resolve(root, String(path));
+    if (id !== project) continue;
+    try {
+      if (await fs.realpath(workspace) !== workspace) continue;
+      const actual = await executeCommand({ executable: 'git', args: ['-C', workspace, 'branch', '--show-current'] });
+      if (actual.exitCode === 0) workspaces.push({ project: id, workspace, branch, actualBranch: actual.stdout.trim() });
+    } catch {}
+  }
+  const observed = await Promise.all(sessions.map(async session => {
+    if (!session.process || !chain.includes(session.process.pid)) return null;
+    if ((await observeIdentity(session.process, executeCommand)).state !== 'alive') return { process: session.process, state: 'finished' as const, assignment: session.launchContext?.testAssignment! };
+    let assignment = session.launchContext?.testAssignment;
+    if (session.addressId === 'main' && session.activity?.type === 'main') {
+      const workspace = workspaces.find(row => row.workspace === process.cwd());
+      if (workspace) assignment = { runId: session.runId, agentId: session.addressId, type: 'main', phase: 'main', project, workspace: workspace.workspace, branch: workspace.branch, changes: activeChanges };
+    }
+    if (!assignment) return { process: session.process, state: 'finished' as const, assignment: {} as SandboxTestAssignment };
+    const delegatedByMain = session.delegatedBy?.addressId === 'main' && sessions.some(row => row.runId === session.delegatedBy!.runId && row.addressId === 'main');
+    return { process: session.process, state: session.state === 'running' ? 'running' as const : 'finished' as const, assignment: { ...assignment, delegatedByMain } };
+  }));
+  return {
+    ancestors: chain.flatMap(pid => { const row = rows.find(row => row.pid === pid); return row ? [{ pid, startedAt: row.startedAt }] : []; }),
+    sessions: observed.filter((row): row is NonNullable<typeof row> => row !== null), workspaces, activeChanges,
+    groups: workspaces.flatMap(row => config.projects?.[row.project]?.groups?.[group] ? [{ project: row.project, workspace: row.workspace, group }] : []),
   };
 }
 async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, environment: NodeJS.ProcessEnv): Promise<string> {
@@ -759,6 +803,7 @@ export async function createProductionServices(
     },
     assignment: { validate: request => validateAssignment(request, assignments), compose: (snapshot, input) => composeAssignmentBrief(snapshot, { ...input, sessionName: input.agentId }, assignments.fs) },
     resolveTask: async (parameters, assignment) => {
+      configuration.sandboxTestPhases = await loadSandboxTestPhases(context.confRoot);
       const task = await deriveTaskContext({ root: context.orchestratorRoot, parameters, assignment, configuration: await loadTaskContextConfiguration(context.confRoot) });
       if (task.estimate.status !== 'KNOWN') return fail('RESOURCE_ESTIMATE_UNKNOWN', task.estimate.reason);
       return { ...task, estimate: task.estimate, requested: { ramBytes: task.estimate.ramBytes, diskBytes: {} }, requiredFileSystemIds: [] };
@@ -846,7 +891,8 @@ export async function createProductionServices(
       if (!record || record.reportPath !== input.reportPath || input.assignment.root !== context.orchestratorRoot || !isDeepStrictEqual(record.launch.assignment, input.assignment) || !isDeepStrictEqual(record.launch.writeBoundaries ?? [], input.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Prepared launch context mismatch');
       const identityAdapter = createAssignmentIdentityAdapter({ [input.activity.project]: context.orchestratorRoot }, options.execute ? { execute: options.execute } : {});
       const tasks = await identityAdapter.capture(input.activity.project, input.assignment);
-      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
+      const testAssignment: SandboxTestAssignment = { runId: input.runId, agentId: input.addressId, type: input.activity.type, phase: input.activity.phase, project: input.activity.project, workspace: input.activity.cwd, branch: input.taskContext!.context.branch, changes: input.assignment.changes.map(change => change.id) };
+      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
       const caller = await (async () => {
         try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }
@@ -1032,7 +1078,7 @@ export async function runProductionWorker(
     if (hotfix && settings.runner === 'codex') invocation.args.push('-C', request.cwd);
     const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
     invocation.args.push(...nativeWriteScopeArgs(settings, hotfix ? [...new Set([...writable.directories, ...writable.workspace])] : writable.directories, writable.workspace));
-    const scope = await runnerSandboxScope(session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store).catch(error => {
+    const scope = await runnerSandboxScope(session.launchContext.testAssignment?.type ?? session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store, session.launchContext.testAssignment?.phase ?? session.activity?.phase, context.confRoot).catch(error => {
       if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
       throw error;
     });

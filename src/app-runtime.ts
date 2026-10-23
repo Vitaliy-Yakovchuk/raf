@@ -30,6 +30,7 @@ export interface RuntimeContext {
 }
 
 export interface RuntimeConfiguration {
+  sandboxTestPhases?: import('./test-runs.ts').TestRunConfig['phases'];
   catalog: CompiledCatalog;
   models: ModelCatalog;
   commandTiming: { emaAlpha: number };
@@ -244,7 +245,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           features: params.features, phase: params.phase, outcome: task.outcome, writeBoundaries,
           sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema,
           ...(commitOwnWork && !hotfix ? { commitOwnWork: true, commitPaths: workspaceBoundaries, commitRepositories: task.workspaceWritable ? [route.cwd, context.orchestratorRoot] : [context.orchestratorRoot], workspaceWritable: task.workspaceWritable } : {}),
-          rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type) ? { rafSubcommands: rafSubcommandsFor(params.type)! } : {}) });
+          rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type, params.phase, loaded.sandboxTestPhases) ? { rafSubcommands: rafSubcommandsFor(params.type, params.phase, loaded.sandboxTestPhases)! } : {}) });
         if (hotfix) brief += `\nHotfix raf: постійне спільне дерево ${route.cwd}, гілка hotfix, спільний індекс і HEAD; main включений до baseCommit ${route.hotfix?.baseCommit}. Кожен виконавець комітить лише власні явні шляхи; спільні файли та staged hunks узгоджуй через agent message за projects/orchestrator/parallel-development. Чужий index.lock очікуй, не видаляй. Коміт не активує main; push і активацію виконує лише main за окремими повноваженнями. Код hotfix запускай лише з ізольованим QA HOME. Коміт коду виконай довіреним портом: node ${join(context.tmpRoot, launch.runId, 'hotfix-commit.mjs')} --message <повідомлення> <власні відносні шляхи>. Cleanup прибирає лише власний запуск, спільне raf-hotfix зберігається.\n`;
         stage = 'reservation';
         const admission = await api.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });

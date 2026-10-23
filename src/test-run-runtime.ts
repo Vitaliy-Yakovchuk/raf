@@ -4,12 +4,15 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { userInfo } from 'node:os';
 import { randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
+import { lstatSync } from 'node:fs';
+import { runSandboxTestCommand } from './sandbox-test-run.ts';
+import { sandboxTestControlSnapshot } from './production-runtime.ts';
 import { productionStateContext, stateContextEnvironment, canonicalStatePath, type StateContext } from './state-migration-guard.ts';
 import { openStateStore } from './state-store.ts';
 import { loadFlowPolicy } from './flow-policy.ts';
 import { parseTestRunArgs, validateTestRunConfig, cleanupClosedTestRunGroups, reconcileTestRunGroup, testRunFailureResult } from './test-runs.ts';
 import { cleanupTestProcessGroup, reconcileTestRunProcess } from './test-run-processes.ts';
-import { runTestRunCli } from './test-run-cli.ts';
 import type { ChildExit, ManagedTestProcess, RunnerEvent, TestRunConfig, TestRunContext, TestRunEnvironment, TestRunGroup, TestRunGroupKey, TestRunPorts, TestRunStatePort, TestRunTransaction } from './test-runs.ts';
 import type { ExecutionResult } from './cli.ts';
 import type { StateStore } from './state-store.ts';
@@ -64,8 +67,8 @@ function executableAvailable(executable: string, cwd: string): boolean {
   const paths = isAbsolute(executable) ? [executable] : executable.includes('/') ? [resolve(cwd, executable)] : (process.env.PATH ?? '').split(':').map(path => join(path, executable));
   return paths.some(path => { try { accessSync(path, constants.X_OK); return statSync(path).isFile(); } catch { return false; } });
 }
-function checkChannel(context: StateContext): boolean {
-  for (const [key, value] of Object.entries(process.env)) {
+function checkChannel(context: StateContext, inherited: Readonly<Record<string, string | undefined>>): boolean {
+  for (const [key, value] of Object.entries(inherited)) {
     if (!value || !/^RAF_/.test(key)) continue;
     if (/STATE_DIRECTORY|SOCKET_PATH|HOME_DIRECTORY/.test(key) && !within(canonicalStatePath(value), context.homeDirectory)) return true;
     if (/COMMAND_(ACCESS|CHANNEL)|CONTROL_CHANNEL/.test(key)) return true;
@@ -73,9 +76,9 @@ function checkChannel(context: StateContext): boolean {
   return false;
 }
 
-export function createTestRunPorts(config: TestRunConfig, stateContext: StateContext, getStore: () => StateStore): TestRunPorts {
+export function createTestRunPorts(config: TestRunConfig, stateContext: StateContext, getStore: () => StateStore, inherited: Readonly<Record<string, string | undefined>> = process.env): TestRunPorts {
   let state: TestRunStatePort | undefined;
-  const environment = stateContextEnvironment(stateContext, process.env);
+  const environment = stateContextEnvironment(stateContext, inherited);
   const ports: TestRunPorts = {
     state: { transaction: action => (state ??= sqliteTestRunState(getStore())).transaction(action) },
     clock: { now: Date.now, schedule: (deadline, callback) => { const timer = setTimeout(callback, Math.max(0, deadline - Date.now())); return () => clearTimeout(timer); } },
@@ -89,7 +92,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       }
       let gitIdentityMatches = false;
       try { gitIdentityMatches = realpathSync(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: context.cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()) === context.workspace; } catch { }
-      const inheritedOperationalChannel = checkChannel(stateContext);
+      const inheritedOperationalChannel = checkChannel(stateContext, inherited);
       if (!inheritedOperationalChannel) mkdirSync(stateContext.tmpRoot, { recursive: true });
       return { canonicalWorkspace: realpathSync(context.workspace), canonicalCwd: realpathSync(context.cwd), gitIdentityMatches,
         runtimeAvailable: profiles.every(p => executableAvailable(p.executable, resolve(context.workspace, p.cwd))),
@@ -147,7 +150,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
 }
 
 export async function runConfiguredTestRun(argv: readonly string[], options: { orchestratorRoot: string; homeDirectory: string }): Promise<ExecutionResult> {
-  let store: StateStore | undefined, stdout = '', stderr = '';
+  let store: StateStore | undefined, controlStore: StateStore | undefined;
   let config: TestRunConfig | undefined;
   let context: TestRunContext = { cwd: process.cwd(), workspace: '', projectWorkspaces: {}, agentPhases: [], activeChanges: [], agentId: 'test-run', sha: '', home: options.homeDirectory, statePath: '', tmpPath: '', operationalHome: userInfo().homedir };
   const value = (option: string) => { const index = argv.indexOf(option); return index >= 0 ? argv[index + 1] ?? '' : ''; };
@@ -169,16 +172,44 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     if (!workspace) throw Object.assign(new Error('cwd is outside the registered project'), { code: 'WORKSPACE_MISMATCH' });
     context = { ...context, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases };
     if (!phases.includes(args.phase) || !config.phases[args.phase]?.allowed) throw Object.assign(new Error('Phase does not permit test execution'), { code: 'PHASE_NOT_ALLOWED' });
-    const stateContext = productionStateContext(root, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
-    context = { cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases,
-      activeChanges: readdirSync(join(root, 'openspec/changes'), { withFileTypes: true }).filter(entry => entry.isDirectory() && entry.name !== 'archive').map(entry => entry.name),
-      agentId: 'test-run', sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
-      home: stateContext.homeDirectory, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome: userInfo().homedir };
-    const runtime = createTestRunPorts(config, stateContext, () => store ??= openStateStore(stateContext.statePath, { context: stateContext }));
-    const exitCode = await runTestRunCli(argv, { config, policy, context, runtime, stdout: value => { stdout += value; }, stderr: value => { stderr += value; } });
-    if (store && JSON.parse(stdout).errorCode === 'GROUP_IN_FLIGHT') await reconcileTestRunGroup({ project: args.project, workspace, group: args.group }, policy, context, runtime);
-    if (store) await cleanupClosedTestRunGroups(context.activeChanges, context, runtime);
-    return { exitCode, stdout: stdout.trimEnd(), stderr: stderr.trimEnd() };
+    const controlContext = productionStateContext(root, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
+    controlStore = openStateStore(controlContext.statePath, { context: controlContext });
+    const control = await sandboxTestControlSnapshot(controlStore, root, args.project, args.group);
+    controlStore.close(); controlStore = undefined;
+    const caller = control.ancestors.find(row => row.pid === process.pid);
+    if (!caller) throw Object.assign(new Error('Current caller identity is unavailable'), { code: 'CALLER_UNVERIFIED' });
+    const entrypoint = [process.execPath, realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))];
+    const literal = (word: string) => `'${word.replaceAll("'", "'\\''")}'`;
+    let runtime: TestRunPorts | undefined;
+    const reply = await runSandboxTestCommand({ command: [...entrypoint, 'test', 'run', ...argv].map(literal).join(' '), cwd }, {
+      caller, entrypoint, control: async () => control,
+      communicate: async () => { throw new Error('Unexpected communication request in the test entrypoint'); },
+      unitContext: async key => {
+        const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
+        mkdirSync(owner, { recursive: true, mode: 0o700 });
+        const identity = lstatSync(owner);
+        if (realpathSync(owner) !== owner || !identity.isDirectory() || identity.uid !== process.getuid?.() || (identity.mode & 0o077) !== 0) throw Object.assign(new Error('Unit HOME root is not private or has aliases'), { code: 'STATE_CONTEXT_REFUSED' });
+        const home = join(owner, createHash('sha256').update(JSON.stringify([root, key.project, key.workspace])).digest('hex'));
+        const inherited = Object.fromEntries(Object.entries(process.env).filter(([name]) => ['PATH', 'LANG', 'TZ', 'SYSTEMROOT'].includes(name) || name.startsWith('LC_')));
+        const unitEnvironment = { ...inherited, HOME: home, RAF_QA_HOME: home };
+        const stateContext = productionStateContext(root, fileURLToPath(import.meta.url), home, 'cli', unitEnvironment);
+        if (within(stateContext.homeDirectory, controlContext.homeDirectory) || within(controlContext.homeDirectory, stateContext.homeDirectory)) throw Object.assign(new Error('Unit HOME overlaps the control context'), { code: 'STATE_CONTEXT_REFUSED' });
+        mkdirSync(home, { recursive: true, mode: 0o700 });
+        const homeIdentity = lstatSync(home);
+        if (!homeIdentity.isDirectory() || homeIdentity.uid !== process.getuid?.() || (homeIdentity.mode & 0o077) !== 0) throw Object.assign(new Error('Unit HOME is not private'), { code: 'STATE_CONTEXT_REFUSED' });
+        context = { cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, activeChanges: [...control.activeChanges],
+          agentId: 'test-run', sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
+          home, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome: userInfo().homedir };
+        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStateStore(stateContext.statePath, { context: stateContext }), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot });
+        return { config, policy, context, runtime };
+      },
+    });
+    if (!reply.stdout) throw Object.assign(new Error(reply.stderr), { code: 'CALLER_UNAUTHORIZED' });
+    if (store && runtime) {
+      if (JSON.parse(reply.stdout).errorCode === 'GROUP_IN_FLIGHT') await reconcileTestRunGroup({ project: args.project, workspace, group: args.group }, policy, context, runtime);
+      await cleanupClosedTestRunGroups(context.activeChanges, context, runtime);
+    }
+    return { exitCode: reply.code, stdout: reply.stdout.trimEnd(), stderr: reply.stderr.trimEnd() };
   } catch (error) {
     const result = testRunFailureResult(request, context, randomUUID(), Date.now(), config, error);
     if (!config || ['STATE_CONTEXT_REFUSED', 'STATE_SCHEMA_MISMATCH', 'HANDLER_FAILED'].includes(result.errorCode!)) {
@@ -187,5 +218,5 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
       result.hintIds = hintId ? [hintId] : []; result.hints = hintId ? [config!.hints[hintId]] : [];
     }
     return { exitCode: 1, stdout: JSON.stringify(result), stderr: '' };
-  } finally { store?.close(); }
+  } finally { store?.close(); controlStore?.close(); }
 }

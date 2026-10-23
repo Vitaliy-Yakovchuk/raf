@@ -148,7 +148,9 @@ export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVer
     if (!primary && specification.name === 'runtime-import') {
       const snapshot = join(qaRoot, 'raf-main');
       await copyTree(workspace.cwd, snapshot);
-      await git(snapshot, 'init', '-b', 'main');
+      const metadata = join(qaRoot, '.git', 'modules', 'raf-main');
+      await fs.mkdir(dirname(metadata), { recursive: true });
+      await git(snapshot, 'init', '-b', 'main', '--separate-git-dir', metadata);
       await git(snapshot, 'add', '--all');
       await git(snapshot, 'add', '-f', 'dist');
       await git(snapshot, '-c', 'user.name=raf hotfix verification', '-c', 'user.email=raf@localhost', 'commit', '-m', 'Verified hotfix snapshot');

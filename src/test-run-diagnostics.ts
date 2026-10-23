@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
-import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { isAbsolute, normalize, relative, resolve, sep } from 'node:path';
 import { StringDecoder } from 'node:string_decoder';
+import { types } from 'node:util';
 export type DiagnosticTestId = { file: string; name: string };
 export type DiagnosticLocation = { file: string; line: number | null; column: number | null };
 export type DiagnosticOrigin = 'test-body' | 'import' | 'collection' | 'hook' | 'fixture-setup' | 'unknown';
@@ -21,6 +22,7 @@ export type DiagnosticFailure = {
   origin: DiagnosticOrigin;
   error: unknown;
   location?: DiagnosticLocation | null;
+  unavailableReason?: string;
 };
 export type NodeDiagnosticEvent = {
   type: 'test:fail';
@@ -94,22 +96,45 @@ export type DiagnosticReadState = {
 };
 export type DiagnosticDisposition = { failureKind: 'assertions' | 'setup' | null; knownRed: DiagnosticTestId | null };
 
-const invalid = (message: string): never => { throw Object.assign(new Error(message), { code: 'CONFIGURATION_INVALID' }); };
+const configurationErrors = new WeakMap<object, string>();
+const invalid = (message: string): never => {
+  const error = Object.assign(new Error(message), { code: 'CONFIGURATION_INVALID' });
+  configurationErrors.set(error, message);
+  throw error;
+};
+export function diagnosticConfigurationFailure(error: unknown): InlineDiagnostic | null {
+  const message = error && typeof error === 'object' ? configurationErrors.get(error) : undefined;
+  return message ? { kind: 'preflight', test: null, errorCode: 'CONFIGURATION_INVALID', message, location: null, stack: [], redacted: false, truncated: false, unavailableReason: 'Diagnostic limits were rejected before collection' } : null;
+}
 const object = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const bytes = (s: string) => Buffer.byteLength(s);
 const clip = (s: string, n: number): string => { let out = ''; let size = 0; for (const c of s) { size += bytes(c); if (size > n) break; out += c; } return out; };
 const inside = (p: string, root: string) => p === root || p.startsWith(root + sep);
+const nativeStackGetter = Object.getOwnPropertyDescriptor(new Error(), 'stack')?.get;
+const safeStackLabels = (error: object): boolean => ['name', 'message'].every(key => {
+  let current: object | null = error;
+  while (current) {
+    const descriptor = Object.getOwnPropertyDescriptor(current, key);
+    if (descriptor) return 'value' in descriptor && (descriptor.value === undefined || typeof descriptor.value === 'string');
+    current = Object.getPrototypeOf(current);
+  }
+  return true;
+});
 function safeError(error: unknown, seen = new Set<unknown>()): any {
   if (!object(error)) return typeof error === 'string' ? error : null;
   if (seen.has(error)) return null;
   seen.add(error);
   const out: Record<string, unknown> = {};
   try {
-    for (const key of ['name', 'code', 'failureType', 'diagnosticOrigin', 'generatedMessage', 'operator', 'message', 'stack', 'cause']) {
+    for (const key of ['name', 'code', 'failureType', 'exitCode', 'signal', 'diagnosticOrigin', 'generatedMessage', 'operator', 'message', 'stack', 'cause']) {
       let current: object | null = error;
       while (current) {
         const descriptor = Object.getOwnPropertyDescriptor(current, key);
-        if (descriptor) { if ('value' in descriptor) out[key] = key === 'cause' ? safeError(descriptor.value, seen) : descriptor.value; break; }
+        if (descriptor) {
+          if ('value' in descriptor) out[key] = key === 'cause' ? safeError(descriptor.value, seen) : descriptor.value;
+          else if (key === 'stack' && nativeStackGetter && descriptor.get === nativeStackGetter && types.isNativeError(error) && safeStackLabels(error)) out.stack = nativeStackGetter.call(error);
+          break;
+        }
         current = Object.getPrototypeOf(current);
       }
     }
@@ -130,10 +155,14 @@ export function diagnosticFailureFromNodeEvent(event: NodeDiagnosticEvent): Diag
   const error: any = safeError(data.details?.error);
   if (error?.failureType === 'subtestsFailed') return null;
   const explicit = data.details?.diagnosticOrigin ?? error?.diagnosticOrigin;
-  const origin = explicit ?? (error?.failureType === 'testCodeFailure' ? 'test-body' : error?.failureType === 'hookFailed' ? 'hook' : 'unknown');
+  const fileFailure = error?.failureType === 'testCodeFailure' &&
+    (Object.hasOwn(error, 'exitCode') || Object.hasOwn(error, 'signal') ||
+      data.file && data.name && normalize(data.file) === normalize(data.name));
+  const origin = explicit ?? (fileFailure ? 'collection' : error?.failureType === 'testCodeFailure' ? 'test-body' : error?.failureType === 'hookFailed' ? 'hook' : 'unknown');
   const cause = error?.failureType === 'testCodeFailure' && object(error.cause) ? error.cause : error;
   return { test: data.file && data.name ? { file: data.file, name: data.name } : null, origin, error: cause,
-    location: data.file && Number.isFinite(data.line) ? { file: data.file, line: data.line!, column: data.column ?? null } : null };
+    location: data.file && Number.isFinite(data.line) ? { file: data.file, line: data.line!, column: data.column ?? null } : null,
+    ...(fileFailure && !object(error?.cause) ? { unavailableReason: 'Runner supplied no underlying file failure cause' } : {}) };
 }
 
 export function buildDiagnosticEnvironment(input: DiagnosticEnvironmentInput): DiagnosticEnvironmentSummary {
@@ -166,9 +195,19 @@ export class TestRunDiagnostics {
     s = s.replace(/-----BEGIN [^-]*PRIVATE KEY-----[\s\S]*?(?:-----END [^-]*PRIVATE KEY-----|$)/g, '<redacted>');
     s = s.replace(/\b(cookie|set-cookie)\s*[:=][^\r\n]*/gi, '$1: <redacted>');
     s = s.replace(/\b(authorization|cookie|set-cookie|password|passwd|token|api[_-]?key|secret)\b(\s*[:=]\s*)(?:Bearer\s+)?[^\s,;]+/gi, '$1$2<redacted>');
-    s = s.replace(/https?:\/\/[^\s<>"']+/g, raw => { try { const u = new URL(raw); if (u.username || u.password) { u.username = ''; u.password = ''; } if (u.search) u.search = '?<redacted>'; return u.toString(); } catch { return '<redacted-url>'; } });
     for (const pattern of this.limits.redactionPatterns) s = s.replace(new RegExp(pattern, 'gu'), '<redacted>');
-    s = s.replace(/(?:file:\/\/)?\/[^\s():<>"']+/g, p => this.path(p.replace(/^file:\/\//, '')));
+    s = s.replace(/https?:\/\/[^\s<>"']+|(?<![\w./<>-])(?:file:\/\/)?\/[^\s():<>"']+/g, value => {
+      if (/^https?:\/\//.test(value)) {
+        try {
+          const url = new URL(value);
+          if (!url.username && !url.password && !url.search) return value;
+          url.username = ''; url.password = '';
+          if (url.search) url.search = '?<redacted>';
+          return url.toString();
+        } catch { return '<redacted-url>'; }
+      }
+      return this.path(value.replace(/^file:\/\//, ''));
+    });
     return { text: s, redacted: s !== value };
   }
   private add(entry: InlineDiagnostic): void {
@@ -200,7 +239,7 @@ export class TestRunDiagnostics {
     if (!location && input.location) location = { ...input.location, file: this.path(input.location.file) };
     const safeField = (v: unknown) => typeof v === 'string' ? clip(this.clean(v).text, this.limits.maxMessageBytes) : undefined;
     return { kind, test: input.test, ...(safeField(error?.name) ? { errorName: safeField(error.name) } : {}), ...(safeField(error?.code) ? { errorCode: safeField(error.code) } : {}), message: clip(clean.text, this.limits.maxMessageBytes), location, stack, redacted, truncated,
-      ...(!object(error) && typeof error !== 'string' ? { unavailableReason: 'Runner supplied no safe error details' } : !location && !stack.length ? { unavailableReason: 'Runner supplied no location or stack' } : {}), ...(input.origin === 'unknown' ? { unavailableReason: 'Error origin is unknown' } : {}) };
+      ...(!object(error) && typeof error !== 'string' ? { unavailableReason: 'Runner supplied no safe error details' } : !location && !stack.length ? { unavailableReason: 'Runner supplied no location or stack' } : {}), ...(input.origin === 'unknown' ? { unavailableReason: 'Error origin is unknown' } : {}), ...(input.unavailableReason ? { unavailableReason: this.clean(input.unavailableReason).text } : {}) };
   }
   failure(input: DiagnosticFailure): DiagnosticDisposition {
     const body = input.origin === 'test-body';

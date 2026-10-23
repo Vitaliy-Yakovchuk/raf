@@ -8,9 +8,18 @@ export default async function* report(source: AsyncIterable<any>, selected?: Tes
   const expected: TestId[] = [];
   const parents = new Map<number, string>();
   const declared = new Map<string, { test: TestId; type: string }>();
+  const stderr = new Map<string, TestRunDiagnostics>();
+  let stderrBytes = 0;
   let protocolFailed = false;
   for await (const event of source) {
     const data = event.data;
+    if (event.type === 'test:stderr' && data.file && typeof data.message === 'string' && stderrBytes < limits.maxStderrBytes) {
+      let collector = stderr.get(data.file);
+      if (!collector) { collector = new TestRunDiagnostics(limits, { workspace: process.cwd(), qaHome: process.env.HOME ?? '', fixtureRoots: [] }); stderr.set(data.file, collector); }
+      const chunk = Buffer.from(data.message);
+      const retained = chunk.subarray(0, limits.maxStderrBytes - stderrBytes);
+      collector.stderrChunk(retained); stderrBytes += retained.length;
+    }
     if (event.type === 'test:enqueue' && data.entryFile) {
       const file = relative(process.cwd(), data.file);
       const parent = declared.get(`${file}:${data.parentId}`);
@@ -36,7 +45,18 @@ export default async function* report(source: AsyncIterable<any>, selected?: Tes
       }
       expected.push(test);
       if (data.skip || data.todo) continue;
-      const failure = event.type === 'test:fail' ? diagnosticFailureFromNodeEvent({ ...event, data: { ...data, file: test.file, name: test.name } }) : null;
+      const failure = event.type === 'test:fail' ? diagnosticFailureFromNodeEvent(event) : null;
+      if (failure) {
+        failure.test = test;
+        if (failure.origin === 'collection' && failure.unavailableReason && stderr.get(file)?.stderrText()) {
+          const text = stderr.get(file)!.stderrText();
+          const header = text.match(/^([\w.]*Error)(?: \[([\w]+)\])?: ([^\r\n]*)/m);
+          failure.error = Object.assign(new Error(header?.[3] ?? 'File runner failed; no structured error header was available'), {
+            name: header?.[1] ?? 'Error', ...(header?.[2] ? { code: header[2] } : {}), stack: text,
+          });
+          if (header) delete failure.unavailableReason;
+        }
+      }
       const current = new TestRunDiagnostics(limits, { workspace: process.cwd(), qaHome: process.env.HOME ?? '', fixtureRoots: process.env.TMPDIR ? [process.env.TMPDIR] : [] });
       const disposition = failure ? current.failure(failure) : null;
       const kind: RunnerEvent['kind'] = event.type === 'test:pass' ? 'passed' : disposition?.failureKind === 'assertions' ? 'assertion-failed' : 'setup-failed';

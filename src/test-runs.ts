@@ -1,4 +1,5 @@
-import { TestRunDiagnostics, validateDiagnosticLimits, validateRunTemporaryConfiguration } from './test-run-diagnostics.ts';
+import { resourceEstimateInvalidPointer, type ResourceEstimateValues } from './resource-estimates.ts';
+import { TestRunDiagnostics, diagnosticConfigurationFailure, validateDiagnosticLimits, validateRunTemporaryConfiguration } from './test-run-diagnostics.ts';
 import type { DiagnosticLimits, DiagnosticAttachment, InlineDiagnostic, DiagnosticEnvironmentSummary, RunTemporaryConfiguration, RunTemporaryReservation } from './test-run-diagnostics.ts';
 import { parseCommandArguments } from './cli-arguments.ts';
 import { isAbsolute, resolve, sep } from 'node:path';
@@ -35,6 +36,7 @@ export interface UnitTestPolicy {
 }
 
 export interface TestRunProfile {
+  resourceEstimate?: ResourceEstimateValues;
   cwd: string;
   executable: string;
   argv: string[];
@@ -257,7 +259,11 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
   for (const [projectId, project] of Object.entries(config.projects)) {
     if (!record(project) || !record(project.profiles) || !Object.keys(project.profiles).length || !record(project.groups)) invalid(`projects/${projectId}`);
     for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) {
-      if (!record(profile) || Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'exactIds', 'resultAdapter', 'environment', 'checks'].includes(key)) || !text(profile.cwd) || (profile.cwd !== '.' && !safeFile(profile.cwd)) || !text(profile.executable) || !strings(profile.argv) || !strings(profile.unitFiles) || !profile.unitFiles.length || profile.unitFiles.some((f: string) => !safeFile(f)) || new Set(profile.unitFiles).size !== profile.unitFiles.length || !['node-test-name', null].includes(profile.exactIds) || profile.resultAdapter !== 'node-test-events' || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) invalid(`projects/${projectId}/profiles/${id}`);
+      if (!record(profile) || Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'exactIds', 'resultAdapter', 'environment', 'checks', 'resourceEstimate'].includes(key)) || !text(profile.cwd) || (profile.cwd !== '.' && !safeFile(profile.cwd)) || !text(profile.executable) || !strings(profile.argv) || !strings(profile.unitFiles) || !profile.unitFiles.length || profile.unitFiles.some((f: string) => !safeFile(f)) || new Set(profile.unitFiles).size !== profile.unitFiles.length || !['node-test-name', null].includes(profile.exactIds) || profile.resultAdapter !== 'node-test-events' || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) invalid(`projects/${projectId}/profiles/${id}`);
+      if (Object.hasOwn(profile, 'resourceEstimate')) {
+        const problem = resourceEstimateInvalidPointer(profile.resourceEstimate, `conf/test-runs.json#/projects/${projectId.replaceAll('~', '~0').replaceAll('/', '~1')}/profiles/${id.replaceAll('~', '~0').replaceAll('/', '~1')}/resourceEstimate`);
+        if (problem) invalid(problem);
+      }
       if (/^(?:.*\/)?(?:sh|bash|dash|zsh|fish|cmd|powershell)$/.test(profile.executable) || profile.argv.some((arg: string) => ['-e', '--eval', '-c', '--command'].includes(arg))) invalid(`projects/${projectId}/profiles/${id}/command`);
     }
     for (const [id, preset] of Object.entries(project.groups) as [string, any][]) {
@@ -285,7 +291,11 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   if (!files.length) failure('EMPTY_SELECTION');
   if (files.some(file => !safeFile(file))) failure('UNSAFE_SELECTION');
   const configuredInventory = [...new Set(Object.values(project.profiles).flatMap(p => p.unitFiles))];
-  if (env.unitFiles.length !== configuredInventory.length || env.unitFiles.some(file => !configuredInventory.includes(file))) failure('INVENTORY_INCOMPLETE');
+  if (env.unitFiles.length !== configuredInventory.length || env.unitFiles.some(file => !configuredInventory.includes(file))) {
+    const missing = configuredInventory.filter(file => !env.unitFiles.includes(file));
+    const unexpected = env.unitFiles.filter(file => !configuredInventory.includes(file));
+    failure('INVENTORY_INCOMPLETE', `Unit inventory differs; missing: ${missing.join(', ')}; unexpected: ${unexpected.join(', ')}`);
+  }
   const profiles = Object.entries(project.profiles).filter(([, profile]) => files.every(file => profile.unitFiles.includes(file)));
   if (profiles.length !== 1) failure('PROFILE_AMBIGUOUS', 'Selection must belong to one configured profile');
   const [profileId, profile] = profiles[0];
@@ -462,7 +472,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   }
   diagnostics?.stderrChunk(Buffer.from(exit.stderr));
   if (exit.stderrTruncated) diagnostics?.markStderrTruncated();
-  diagnostics?.childExit({ ...exit, validProtocol: events.some(e => e.kind === 'complete') && !events.some(e => e.kind === 'protocol-error') });
+  if (child && reason === 'exit') diagnostics?.childExit({ ...exit, validProtocol: events.some(e => e.kind === 'complete') && !events.some(e => e.kind === 'protocol-error') });
   const classified = classifyRunnerResult(events, exit);
   Object.assign(result, classified, { exitCode: exit.exitCode, signal: interruption ?? exit.signal, timedOut: reason === 'timeout', durationMs: ports.clock.now() - started });
   if (reason !== 'exit') {
@@ -568,6 +578,6 @@ export function testRunFailureResult(request: TestRunRequest, context: TestRunCo
   if (configured) {
     try { const diagnostics = new TestRunDiagnostics(configured.diagnostics, { workspace: context.workspace, qaHome: context.home, fixtureRoots: [] }); diagnostics.preflight(error); Object.assign(result, diagnostics.attach(result, result.environmentSummary)); } catch { }
   }
-  if (!result.diagnostics.length) { result.diagnostics = [{ kind: 'preflight', test: null, errorCode: result.errorCode, message: 'Preflight refused; diagnostic configuration unavailable', location: null, stack: [], redacted: false, truncated: false, unavailableReason: 'Valid diagnostic configuration unavailable' }]; result.diagnosticSummary = { totalEntries: 1, retainedEntries: 1, omittedEntries: 0, truncated: false, redacted: false }; }
+  if (!result.diagnostics.length) { result.diagnostics = [diagnosticConfigurationFailure(error) ?? { kind: 'preflight', test: null, errorCode: result.errorCode, message: `Preflight refused (${result.errorCode}); diagnostic configuration unavailable`, location: null, stack: [], redacted: false, truncated: false, unavailableReason: 'Valid diagnostic configuration unavailable' }]; result.diagnosticSummary = { totalEntries: 1, retainedEntries: 1, omittedEntries: 0, truncated: false, redacted: false }; }
   return attachHints(result, configured);
 }

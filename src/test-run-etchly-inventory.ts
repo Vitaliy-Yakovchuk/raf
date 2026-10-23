@@ -63,7 +63,11 @@ function literal(source: string): any {
 export async function observeEtchlyInventory(workspace: string, profiles: Record<string, TestRunProfile>): Promise<EtchlyInventoryFact[]> {
   const current: Record<string, string> = {};
   for (const [file, expected] of Object.entries(reviewed.sourceHashes)) {
-    try { current[file] = hash(resolve(workspace, file)); } catch { fail(`missing source ${file}`); }
+    try { current[file] = hash(resolve(workspace, file)); }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw Object.assign(new Error(`Etchly setup: missing audited source ${file}; restore environment without install or branch changes`), { code: 'ENVIRONMENT_INVALID' });
+      throw error;
+    }
     if (current[file] !== expected) fail(`changed source ${file}`);
   }
   const helper = resolve(workspace, 'test-support/vitest-project-files.ts');

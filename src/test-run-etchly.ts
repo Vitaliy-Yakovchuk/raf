@@ -129,6 +129,30 @@ export function planVitestInvocations(
   });
 }
 
+export interface VitestBatchApi {
+  parseCLI(argv: string[]): { filter: string[]; options: Record<string, any> };
+  createVitest(mode: string, options: Record<string, any>): Promise<{
+    projects: { config: Record<string, any> }[];
+    start(files: string[]): Promise<unknown>;
+    close(): Promise<unknown>;
+  }>;
+}
+
+export async function runVitestBatch(api: VitestBatchApi, argv: string[], runner: string): Promise<void> {
+  const { filter, options } = api.parseCLI(['vitest', ...argv]);
+  const vitest = await api.createVitest('test', { ...options, watch: false, runner });
+  try {
+    for (const project of vitest.projects) {
+      project.config.runner = runner;
+      project.config.hookTimeout = options.hookTimeout;
+      if (options.testTimeout !== undefined) project.config.testTimeout = options.testTimeout;
+    }
+    await vitest.start(filter);
+  } finally {
+    await vitest.close();
+  }
+}
+
 export function classifyVitestResult(
   events: readonly VitestLifecycleEvent[],
   exit: ChildExit,

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { readFileSync, realpathSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { userInfo } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import {
@@ -41,7 +41,9 @@ const git = (cwd: string, ...args: string[]) => execFileSync('git', ['-c', 'comm
 const unexpected = async (): Promise<never> => { throw new Error('Unexpected external dependency in Z.111 fixture'); };
 
 async function fixture(t: TestContext, linkedOrchestrator = false) {
-  const base = realpathSync(await mkdtemp(join(tmpdir(), 'raf-z111-')));
+  const scratch = realpathSync(process.env.RAF_TEST_SCRATCH_ROOT ?? userInfo().homedir);
+  assert.ok(scratch !== '/tmp' && !scratch.startsWith('/tmp/'), 'sandbox fixture scratch must be outside globally hidden /tmp');
+  const base = await mkdtemp(join(scratch, '.raf-z111-'));
   t.after(() => rm(base, { recursive: true, force: true }));
   const primary = join(base, 'primary');
   await mkdir(primary);
@@ -228,7 +230,8 @@ for (const type of ['spec', 'design']) {
 }
 
 test('Z.111 implement regression: linked code worktree keeps its git-dir/common-dir and commit duty', { timeout }, async t => {
-  const f = await fixture(t, true);
+  // The existing implement contract covers linked code; linked Orchestrator is tested above for spec/design.
+  const f = await fixture(t);
   const captured = await captureLaunch(t, f, 'implement', 'codex');
   assert.equal(captured.context.commitOwnWork, true);
   for (const path of [f.cwd, f.moduleGitDir, f.moduleCommonDir, f.rootGitDir, f.rootCommonDir]) {
@@ -248,6 +251,7 @@ for (const type of ['spec', 'design']) {
     if (!settings) throw new Error('Missing codex protocol fixture');
     const model = models.models.find((entry: { runner: string; enabled: boolean }) => entry.runner === 'codex' && entry.enabled);
     assert.ok(model);
+    // Z.110 explicitly permits a questions file; a directory-only preflight must not widen this boundary.
     const writableDirectories = [...captured.reserved.writeBoundaries!, runDirectory];
     const baseInvocation = buildRunnerInvocation(settings, { model: model.id, effort: model.effort });
     const invocation = { ...baseInvocation, args: [...baseInvocation.args, ...nativeWriteScopeArgs(settings, writableDirectories, [])] };

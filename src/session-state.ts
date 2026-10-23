@@ -25,6 +25,7 @@ export type AdmissionReservation = {
   resource: string;
   amount: number;
   resourceBundle?: { machineId: string; resources: ResourceReservation };
+  testRun?: { claim: import('./test-run-reservations.ts').TestRunResourceClaim; committed: boolean; spawning?: boolean; ownerIdentity: string };
 };
 
 export type ProcessObservation =

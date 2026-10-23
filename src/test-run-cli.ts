@@ -1,3 +1,5 @@
+import { runResourceReservedTestRun } from './test-run-reservations.ts';
+import type { ResourceReservedTestRunPorts } from './test-run-reservations.ts';
 import { parseTestRunArgs, runTestRun, testRunFailureResult } from './test-runs.ts';
 import type { TestId, TestRunContext, TestRunPorts, UnitTestPolicy } from './test-runs.ts';
 
@@ -24,7 +26,8 @@ export async function runTestRunCli(argv: readonly string[], ports: TestRunCliPo
       if (!id || typeof id.file !== 'string' || typeof id.name !== 'string' || !id.name.length) throw new Error('Invalid exact test-id');
       return id;
     });
-    const result = await runTestRun({ ...args, only }, ports.config, ports.policy, ports.context, ports.runtime);
+    const run = 'resources' in ports.runtime ? runResourceReservedTestRun : runTestRun;
+    const result = await run({ ...args, only }, ports.config, ports.policy, ports.context, ports.runtime as ResourceReservedTestRunPorts);
     ports.stdout(JSON.stringify(result) + '\n');
     return result.outcome === 'passed' ? 0 : 1;
   } catch (error) {

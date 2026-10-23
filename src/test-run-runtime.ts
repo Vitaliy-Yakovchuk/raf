@@ -1,3 +1,7 @@
+import { testWrapperIdentity } from './test-run-resource-process.ts';
+import { createTestRunResourcePort } from './test-run-resource-runtime.ts';
+import { reconcileTestRunResources } from './test-run-reservations.ts';
+import { readMachineBootIdentity } from './os-runtime.ts';
 import { etchlyBrowserRequirements, observeEtchlyInventory } from './test-run-etchly-inventory.ts';
 import { planVitestInvocations, prepareEtchlyEnvironment } from './test-run-etchly.ts';
 import { mkdtempSync, rmSync, writeFileSync, openSync, closeSync, fstatSync } from 'node:fs';
@@ -110,7 +114,7 @@ function verifyEtchlyDependencies(context: TestRunContext, profiles: import('./t
   }, { home: context.home, tmp: context.tmpPath });
 }
 
-export function createTestRunPorts(config: TestRunConfig, stateContext: StateContext, getStore: () => StateStore, inherited: Readonly<Record<string, string | undefined>> = process.env, configurationBytes?: DiagnosticEnvironmentInput['configurationBytes'], request?: import('./test-runs.ts').ParsedTestRunArgs): TestRunPorts {
+export function createTestRunPorts(config: TestRunConfig, stateContext: StateContext, getStore: () => StateStore, inherited: Readonly<Record<string, string | undefined>> = process.env, configurationBytes?: DiagnosticEnvironmentInput['configurationBytes'], request?: import('./test-runs.ts').ParsedTestRunArgs, bindSpawn?: (identity: string) => void, spawnFailed?: () => void): TestRunPorts {
   let state: TestRunStatePort | undefined;
   const environment = stateContextEnvironment(stateContext, inherited);
   const readConfiguration = (name: string) => readFileSync(join(stateContext.orchestratorRoot, 'conf', name));
@@ -196,10 +200,11 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         command.argv = [fileURLToPath(new URL('../scripts/test-run-vitest.ts', import.meta.url))];
       }
       const child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...environment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []) }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
-      await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', fail); });
+      await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', error => { spawnFailed?.(); fail(error); }); });
       const pid = child.pid!;
       const exited = new Promise<void>(done => child.once('exit', () => done()));
       const identity = JSON.stringify({ pid, start: processStart(pid), boot: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
+      bindSpawn?.(identity);
       let buffer = '', protocolBad = false, discarding = false;
       const decoder = new StringDecoder('utf8');
       const readDiagnostics = new TestRunDiagnostics(config.diagnostics, { workspace: command.cwd, qaHome: stateContext.homeDirectory, fixtureRoots: command.environment.TMPDIR ? [command.environment.TMPDIR] : [] });
@@ -280,7 +285,6 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const controlContext = productionStateContext(root, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
     controlStore = openStateStore(controlContext.statePath, { context: controlContext });
     const control = await sandboxTestControlSnapshot(controlStore, root, args.project, args.group);
-    controlStore.close(); controlStore = undefined;
     const caller = control.ancestors.find(row => row.pid === process.pid);
     if (!caller) throw Object.assign(new Error('Current caller identity is unavailable'), { code: 'CALLER_UNVERIFIED' });
     const entrypoint = [process.execPath, realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))];
@@ -305,8 +309,12 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         context = { cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, activeChanges: [...control.activeChanges],
           agentId: 'test-run', sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
           home, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome: userInfo().homedir };
-        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStateStore(stateContext.statePath, { context: stateContext }), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args);
-        return { config, policy, context, runtime };
+        const boot = await readMachineBootIdentity();
+        const resources = createTestRunResourcePort(controlStore!, { root, workspace, home: context.operationalHome, machineId: boot.machineId, config });
+        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStateStore(stateContext.statePath, { context: stateContext }), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
+        const reserved = Object.assign(runtime, { machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
+        await reconcileTestRunResources(context, policy, reserved);
+        return { config, policy, context, runtime: reserved };
       },
     });
     if (!reply.stdout) throw Object.assign(new Error(reply.stderr), { code: 'CALLER_UNAUTHORIZED' });

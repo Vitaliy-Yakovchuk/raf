@@ -1,3 +1,4 @@
+import { observeReservedTestTree } from './test-run-resource-process.ts';
 import type { ResourceAdmission, ResourceAdmissionEstimate, ResourceAdmissionInput, ResourceMeasurement, ResourceReservation } from './resource-admission.ts';
 import type { PendingIntent, ProcessIdentity, SessionActivity, SessionLaunchContext, SessionRecord, SessionRepository, SessionTransaction } from './session-state.ts';
 
@@ -63,6 +64,13 @@ export function evaluateLaunchAdmissionInTransaction(
       };
     }
     if (reservation.resourceBundle.machineId !== measured.measurement.machineId) continue;
+    if (reservation.testRun) {
+      const observed = observeReservedTestTree(reservation.testRun.claim.processIdentity);
+      const requested = reservation.resourceBundle.resources;
+      unusedReservations.push({ ramBytes: Math.max(0, requested.ramBytes - (observed.consumed?.ramBytes ?? 0)),
+        diskBytes: Object.fromEntries(Object.entries(requested.diskBytes).map(([id, bytes]) => [id, Math.max(0, bytes - (observed.consumed?.diskBytes[id] ?? 0))])) });
+      continue;
+    }
     const session = tx.getSession(reservation.runId);
     const consumed = session?.state === 'running' && session.process && measured.observedProcesses.some(
       observed => observed.runId === reservation.runId && sameIdentity(session.process!, observed.identity));

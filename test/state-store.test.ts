@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { test, type TestContext } from "node:test";
 import { openStateStore, type StateStore } from "../src/state-store.ts";
 
@@ -39,6 +40,13 @@ test("a new explicit SQLite database has no invented runner, quota, or timing va
   assert.equal(store.getCommandTiming("runner list"), undefined);
   db.close(store);
   assert.equal(readFileSync(db.path).subarray(0, 16).toString(), "SQLite format 3\0");
+  const database = new DatabaseSync(db.path, { readOnly: true });
+  try {
+    assert.equal(Number(database.prepare("PRAGMA user_version").get()!.user_version), 11);
+    assert.equal(database.prepare("PRAGMA integrity_check").get()!.integrity_check, "ok");
+  } finally {
+    database.close();
+  }
 });
 
 test("creates missing parent directories for the explicitly supplied database", (t) => {

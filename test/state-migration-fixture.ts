@@ -11,6 +11,7 @@ import type { StateContextRequest } from '../src/state-migration-guard.ts';
 const sourceRoot = fileURLToPath(new URL('../', import.meta.url));
 const orchestratorRoot = resolve(sourceRoot, '..');
 const schema7ClientCommit = '084ff760f7690670d30dd4d5aa9cce23da1ba7ac';
+const schema10ClientCommit = '8f7135da4c63e63cdf5321dc6a8147230c4b0c4e';
 const fixtureConnections = new Map<string, Set<DatabaseSync>>();
 
 export interface MigrationFixture {
@@ -131,6 +132,32 @@ export function seedVersion(f: MigrationFixture, version: number, path = f.state
   seedMain7(f, path);
   const db = new DatabaseSync(path);
   db.exec(`PRAGMA user_version = ${version}`);
+  db.close();
+}
+
+export function seedMain10(f: MigrationFixture, path = f.statePath): void {
+  assert.ok(path.startsWith(f.root + '/'));
+  const tree = join(f.root, 'schema-10-client');
+  if (!existsSync(tree)) {
+    mkdirSync(tree);
+    const archivePath = join(f.root, 'schema-10-client.tar');
+    const archived = spawnSync('git', ['-C', sourceRoot, 'archive', '--format=tar', '--output', archivePath, schema10ClientCommit, 'src', 'package.json'], { env: f.env, encoding: 'utf8' });
+    assert.equal(archived.error, undefined);
+    assert.equal(archived.status, 0, archived.stderr);
+    const extracted = spawnSync('tar', ['-xf', archivePath, '-C', tree], { env: f.env, encoding: 'utf8' });
+    assert.equal(extracted.error, undefined);
+    assert.equal(extracted.status, 0, extracted.stderr);
+    rmSync(archivePath);
+  }
+  mkdirSync(dirname(path), { recursive: true });
+  const program = `import { openStateStore } from ${JSON.stringify(new URL('src/state-store.ts', 'file://' + tree + '/').href)};
+const store = openStateStore(process.argv[1]); store.close();`;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', program, path], { env: f.env, encoding: 'utf8' });
+  assert.equal(result.error, undefined);
+  assert.equal(result.status, 0, result.stderr);
+  const db = new DatabaseSync(path);
+  assert.equal(Number(db.prepare('PRAGMA user_version').get()!.user_version), 10, `fixture must come from the pinned schema-10 client ${schema10ClientCommit}`);
+  db.exec("CREATE TABLE migration_sentinel(id TEXT PRIMARY KEY, payload TEXT NOT NULL); INSERT INTO migration_sentinel VALUES ('main', 'preserve-fixture-payload'); PRAGMA wal_checkpoint(TRUNCATE)");
   db.close();
 }
 

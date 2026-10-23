@@ -1,9 +1,11 @@
 import { startupContextAssessmentSchema } from './startup-context.ts';
 import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
 import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import { commandFailure } from './cli-contract.ts';
 import type { RuntimeRunParameters } from './app-runtime.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
@@ -252,18 +254,34 @@ async function gitDirectories(workspace: string): Promise<string[]> {
 
 export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: string, writeBoundaries?: readonly string[]): Promise<readonly string[]> {
   if (writeBoundaries) {
-    const directories = new Set<string>();
+    const root = await realOrNull(orchestratorRoot);
+    if (!root || !(await gitDirectories(root)).length) return [];
+    let directories: string[];
+    try {
+      const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
+      const result = await promisify(execFile)('git', ['-C', root, 'rev-parse', '--path-format=absolute', '--show-toplevel', '--git-dir', '--git-common-dir'], { env });
+      const [top, ...paths] = result.stdout.trim().split('\n');
+      if (await realOrNull(top) !== root || paths.length !== 2) return [];
+      const resolved = await Promise.all(paths.map(realOrNull));
+      if (resolved.some(path => path === null)) return [];
+      directories = [...new Set(resolved as string[])];
+    } catch { return []; }
     for (const boundary of writeBoundaries) {
       let ancestor = resolve(boundary);
       for (;;) {
-        const found = await gitDirectories(ancestor);
-        if (found.length) { for (const directory of found) directories.add(directory); break; }
+        const actual = await realOrNull(ancestor);
+        if (actual) {
+          const suffix = relative(root, actual);
+          if (isAbsolute(suffix) || suffix === '..' || suffix.startsWith(`..${sep}`)) break;
+          if (actual === root) return directories;
+          if ((await gitDirectories(actual)).length) break;
+        }
         const parent = resolve(ancestor, '..');
         if (parent === ancestor) break;
         ancestor = parent;
       }
     }
-    return [...directories];
+    return [];
   }
   const workspace = await realOrNull(cwd);
   if (!workspace) return [];

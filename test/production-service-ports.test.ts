@@ -34,7 +34,7 @@ const catalog = {
 async function fixture(t: TestContext) {
   const root = await mkdtemp(join(tmpdir(), 'raf-service-ports-'));
   t.after(() => rm(root, { recursive: true, force: true }));
-  const context: ServiceEntryContext = { orchestratorRoot: join(root, 'orchestrator'), homeDirectory: join(root, 'home'), stateDirectory: join(root, 'home', '.raf'), socketPath: join(root, 'service.sock') };
+  const context: ServiceEntryContext = { orchestratorRoot: join(root, 'orchestrator'), homeDirectory: join(root, 'home'), stateDirectory: join(root, 'home', '.raf'), socketPath: join(root, 'home', '.raf', 'service.sock') };
   await mkdir(join(context.orchestratorRoot, 'conf'), { recursive: true });
   await mkdir(context.stateDirectory, { recursive: true });
   await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'shared.sqlite' }, service: { hostTickIntervalMs: 15000 }, resourceWait: { grantIntervalMs: 15000 } }));

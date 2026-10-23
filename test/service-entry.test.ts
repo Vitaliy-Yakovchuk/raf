@@ -9,8 +9,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import { compileCatalog } from '../src/catalog.ts';
-import { execute, type ExecutionResult } from '../src/cli.ts';
-import { createServiceHandlers, runServiceEntry } from '../src/service-entry.ts';
+import type { ExecutionResult } from '../src/cli.ts';
+import { runServiceEntry } from '../src/service-entry.ts';
 
 const constants = JSON.parse(await readFile(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
 const models = JSON.parse(await readFile(new URL('../../conf/models.json', import.meta.url), 'utf8'));
@@ -33,6 +33,7 @@ async function fixture(t: TestContext, mode: 'valid' | 'absent' | 'broken' = 'va
   await writeFile(join(main, 'package.json'), '{"type":"module"}');
   const entryUrl = pathToFileURL(join(main, 'src', 'service-entry.ts')).href;
   const { createServiceHandlers }: typeof import('../src/service-entry.ts') = await import(pathToFileURL(join(develop, 'src', 'service-entry.ts')).href);
+  const { execute }: typeof import('../src/cli.ts') = await import(pathToFileURL(join(develop, 'src', 'cli.ts')).href);
   const log = join(root, 'service-events.jsonl');
   const modulePath = join(root, 'fixture-ports.ts');
   await writeFile(modulePath, `
@@ -97,7 +98,7 @@ await host.closed;
   });
   handlers = createServiceHandlers(options, dependencies);
   return {
-    runProductionCli, root, main, develop, homeDirectory, options, dependencies, children, handlers, artifactPath,
+    createServiceHandlers, runProductionCli, root, main, develop, homeDirectory, options, dependencies, children, handlers, artifactPath,
     cli: (argv: string[]) => execute(argv, catalog, handlers!.handlers),
     events: async () => (await readFile(log, 'utf8')).trim().split('\n').map(line => JSON.parse(line)),
   };
@@ -154,7 +155,7 @@ test('help is lazy and remains usable with absent main and absent host ports', {
 
 test('service requests auto-start one configured worker and reuse it after command completion', { timeout: 10_000 }, async t => {
   const f = await fixture(t);
-  const other = createServiceHandlers(f.options, f.dependencies);
+  const other = f.createServiceHandlers(f.options, f.dependencies);
   const results = await Promise.all([
     f.handlers.request({ operation: 'fixture.echo', payload: 'first' }),
     other.request({ operation: 'fixture.echo', payload: 'second' }),

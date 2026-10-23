@@ -31,7 +31,7 @@ async function fixture(t: TestContext) {
     writeFile(join(root, 'conf', 'raf-constants.json'), JSON.stringify(constants)),
     writeFile(join(root, 'conf', 'flow.json'), JSON.stringify(flow)),
   ]);
-  const context = { orchestratorRoot: root, homeDirectory, stateDirectory, socketPath: join(root, 'service.sock') };
+  const context = { orchestratorRoot: root, homeDirectory, stateDirectory, socketPath: join(stateDirectory, 'service.sock') };
   const path = join(stateDirectory, settings.state.fileName);
   await writeFile(join(root, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
   await prepareProductionQaFixture(t, { root, home: homeDirectory });

@@ -43,7 +43,8 @@ async function fixture(t: test.TestContext) {
 
 test('QA real bin: lazy help and invalid args bypass runtime config while wired ps rejects malformed root before DB', async t => {
   const f = await fixture(t);
-  for (const name of ['raf.json', 'models.json', 'flow.json']) await rm(join(f.conf, name));
+  for (const name of ['models.json', 'flow.json']) await rm(join(f.conf, name));
+  await writeFile(join(f.conf, 'raf.json'), JSON.stringify({ state: f.settings.state }));
   const help = await f.run(['help', 'runner', 'list']);
   assert.equal(help.code, 0, help.stderr);
   const flag = await f.run(['runner', 'list', '--help']);
@@ -90,12 +91,12 @@ test('QA real bin: persisted runner switches and configured EMA survive separate
 
 test('QA real bin: malformed configuration and blocked state path fail without fallback files', async t => {
   const f = await fixture(t);
-  await writeFile(join(f.conf, 'raf.json'), '{');
+  await writeFile(join(f.conf, 'models.json'), '{');
   const malformed = await f.run(['runner', 'list']);
   assert.equal(malformed.code, 1);
   assert.equal(JSON.parse(malformed.stderr).code, 'CONFIGURATION_INVALID');
   assert.deepEqual(await readdir(f.home), []);
-  await writeFile(join(f.conf, 'raf.json'), JSON.stringify(f.settings));
+  await writeFile(join(f.conf, 'models.json'), JSON.stringify(f.models));
   await writeFile(join(f.home, '.raf'), 'blocked fixture');
   const blocked = await f.run(['command', 'stats']);
   assert.equal(blocked.code, 1);

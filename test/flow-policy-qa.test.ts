@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { TestContext } from 'node:test';
-import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -16,7 +16,7 @@ async function fixture(t: TestContext) {
   await mkdir(src, { recursive: true });
   await mkdir(join(root, 'conf'));
   await writeFile(join(root, 'package.json'), '{"type":"module"}');
-  for (const name of ['flow-policy', 'resource-admission', 'session-state', 'reminders', 'launcher-notice', 'state-store', 'state-migration-guard']) await copyFile(new URL(`../src/${name}.ts`, import.meta.url), join(src, `${name}.ts`));
+  await cp(new URL('../src', import.meta.url), src, { recursive: true });
   const configPath = join(root, 'conf', 'flow.json');
   const policy = structuredClone(configured);
   const save = () => writeFile(configPath, JSON.stringify(policy));

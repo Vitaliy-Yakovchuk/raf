@@ -172,7 +172,8 @@ for (const invalid of ['missing', 'malformed', 'unsupported-version']) {
 
 test('secrets help needs neither runtime config nor source nor destination state', async t => {
   const f = await fixture(t);
-  for (const name of ['raf.json', 'models.json', 'raf-constants.json', 'flow.json']) rmSync(join(f.conf, name));
+  for (const name of ['models.json', 'raf-constants.json', 'flow.json']) rmSync(join(f.conf, name));
+  writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ state: settings.state }));
   rmSync(f.sourcePath);
   const result = await f.runProductionCli(['secrets', 'import-conductor', '--help'], f.options);
   assert.equal(result.exitCode, 0, result.stderr);

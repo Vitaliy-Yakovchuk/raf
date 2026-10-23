@@ -25,7 +25,7 @@ const bundle = { ramBytes: 47 * 2 ** 30, diskBytes: { volume: 0 } };
 async function fixture(t: TestContext, interval = 80) {
   const root = await mkdtemp(join(tmpdir(), 'raf-host-qa-'));
   t.after(() => rm(root, { recursive: true, force: true }));
-  const context = { orchestratorRoot: join(root, 'orchestrator'), homeDirectory: join(root, 'home'), stateDirectory: join(root, 'home', '.raf'), socketPath: join(root, 'service.sock') };
+  const context = { orchestratorRoot: join(root, 'orchestrator'), homeDirectory: join(root, 'home'), stateDirectory: join(root, 'home', '.raf'), socketPath: join(root, 'home', '.raf', 'service.sock') };
   await mkdir(join(context.orchestratorRoot, 'conf'), { recursive: true });
   await mkdir(context.stateDirectory, { recursive: true });
   await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'shared.sqlite' }, service: { hostTickIntervalMs: 25 }, resourceWait: { grantIntervalMs: interval } }));

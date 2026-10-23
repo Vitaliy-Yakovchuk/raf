@@ -61,7 +61,7 @@ test('service recovery captures a persisted accepted report before removing its 
     schedule: () => () => {},
     resourceWait: { readSnapshot: async () => ({ status: 'UNKNOWN', reason: 'unused' }), isClientAlive: () => false, watchResources: () => () => {}, schedule: () => () => {}, loadLastGrant: () => null, saveLastGrant: () => {} },
   };
-  host = await createServicePorts({ orchestratorRoot: root, homeDirectory, stateDirectory, socketPath: join(root, 'unused.sock') }, dependencies);
+  host = await createServicePorts({ orchestratorRoot: root, homeDirectory, stateDirectory, socketPath: join(stateDirectory, 'service.sock') }, dependencies);
   await host.recover();
   const trace = readStartupContextTrace(store.startupContextDatabase, 'native-recovery');
   assert.ok(trace && trace.brief.tokens > 0);

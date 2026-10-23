@@ -1,4 +1,7 @@
-import { spawn, execFileSync } from 'node:child_process';
+import { readWaitIdentity, observeWaitIdentity, tryWaitLease } from './resource-wait-identity.ts';
+import { performance } from 'node:perf_hooks';
+import { promisify } from 'node:util';
+import { spawn, execFile } from 'node:child_process';
 import { promises as fs, writeFileSync, renameSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createConnection, createServer, type Socket } from 'node:net';
@@ -13,6 +16,8 @@ export type ServiceFailure = {
 
 export type ServiceStatus = {
   exitCode: 0;
+  serviceEpoch?: string;
+  resourceWaitReady?: boolean;
   state: 'ready' | 'stopped' | 'failed';
   pid: number | null;
   mainPath: string | null;
@@ -49,7 +54,8 @@ export type ServiceHostOptions = {
   stateDirectory: string;
   socketPath: string;
   handlers: {
-    recover: () => Promise<void>;
+    recover: (bootstrap?: { serviceEpoch: string }) => Promise<void>;
+    resourceWait?: (socket: Socket, message: any, signal: AbortSignal) => Promise<void>;
     handle: (request: ServiceRequest, context: { signal: AbortSignal; clientId: string }) => Promise<unknown>;
     shutdown: () => Promise<void>;
   };
@@ -61,6 +67,7 @@ type RecordState = {
   mainPath: string;
   state: 'starting' | 'ready' | 'stopped' | 'failed';
   stopReason: string | null;
+  identity?: import('./resource-wait-protocol.ts').ResourceWaitIdentity;
 };
 
 const failure = (reason: string, error: unknown): ServiceFailure => ({
@@ -116,7 +123,15 @@ export function createBackgroundRuntime(
   options: BackgroundRuntimeOptions,
   dependencies: BackgroundRuntimeDependencies,
 ): BackgroundRuntime {
-  const probe = () => exchange(options.socketPath, { kind: 'status' }, options.readinessTimeoutMs);
+  const probe = async (timeout = options.readinessTimeoutMs) => {
+    const response = await exchange(options.socketPath, { kind: 'status' }, timeout);
+    const record = await readRecord(options.stateDirectory);
+    if (response.state === 'ready') {
+      if (!record || record.state !== 'ready' || response.serviceEpoch !== record.token || response.pid !== record.pid) throw new Error('Endpoint readiness differs from current service epoch');
+      if (!record.identity || (await observeWaitIdentity(record.identity)).state !== 'alive') throw new Error('Current service owner identity is unverified');
+    }
+    return response;
+  };
   const status = async (): Promise<ServiceStatus | ServiceFailure> => {
     try {
       try {
@@ -130,47 +145,47 @@ export function createBackgroundRuntime(
     } catch (error) { return failure('Cannot inspect service state', error); }
   };
   const start = async (): Promise<ServiceStatus | ServiceFailure> => {
-    let lockOwned = false;
+    let lease: Awaited<ReturnType<typeof tryWaitLease>> = null;
     let child: ReturnType<typeof spawn> | undefined;
-    const token = randomUUID();
+    const deadline = performance.now() + options.readinessTimeoutMs;
+    const remaining = () => { const time = deadline - performance.now(); if (time <= 0) throw new Error('Service readiness budget exhausted'); return time; };
+    const within = <T>(work: Promise<T>): Promise<T> => new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Service readiness budget exhausted')), remaining());
+      work.then(value => { clearTimeout(timer); resolve(value); }, error => { clearTimeout(timer); reject(error); });
+    });
+    const currentReady = async () => { try { const result = await within(probe(remaining())); return result.exitCode === 0 && result.state === 'ready' ? result as ServiceStatus : null; } catch { remaining(); return null; } };
     const lock = join(options.stateDirectory, 'service-start.lock');
     try {
       await fs.mkdir(options.stateDirectory, { recursive: true });
-      const deadline = Date.now() + options.readinessTimeoutMs;
-      while (!lockOwned) {
-        const current = await status();
-        if (current.exitCode === 0 && current.state === 'ready') return current;
-        const candidate = join(options.stateDirectory, `start.${token}.tmp`);
-        await fs.writeFile(candidate, JSON.stringify({ pid: process.pid, token }), { mode: 0o600 });
-        try { await fs.link(candidate, lock); lockOwned = true; }
-        catch (error) {
-          if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
-          const owner = JSON.parse(await fs.readFile(lock, 'utf8'));
-          if (!alive(owner.pid)) await fs.unlink(lock).catch(() => {});
-        } finally { await fs.unlink(candidate).catch(() => {}); }
-        if (!lockOwned) {
-          if (Date.now() >= deadline) throw new Error('Timed out waiting for the service startup owner');
-          await pause(25);
-        }
+      while (!lease) {
+        const current = await currentReady();
+        if (current) return current;
+        lease = await within(tryWaitLease(lock, remaining()).then(async value => {
+          if (performance.now() >= deadline) { await value?.release(); throw new Error('Service readiness budget exhausted'); }
+          return value;
+        }));
+        if (!lease) await pause(Math.min(25, remaining()));
       }
-      const existing = await status();
-      if (existing.exitCode === 0 && existing.state === 'ready') return existing;
+      const existing = await currentReady();
+      if (existing) return existing;
       const previous = await readRecord(options.stateDirectory);
-      if (previous && alive(previous.pid) && previous.state !== 'stopped') throw new Error(`Recorded service PID ${previous.pid} is alive but readiness failed; refusing to replace its socket`);
-      const mainPath = await dependencies.resolveMainPath();
+      const previousState = previous?.identity ? (await within(observeWaitIdentity(previous.identity))).state : previous && alive(previous.pid) ? 'unknown' : 'dead';
+      if (previous && previousState !== 'dead' && previous.state !== 'stopped') throw new Error(`Recorded service PID ${previous.pid} is alive but readiness failed; refusing to replace its socket`);
+      const mainPath = await within(dependencies.resolveMainPath());
       if (!mainPath) throw new Error('Configured raf main checkout is missing');
       const root = resolve(mainPath);
       await fs.realpath(root);
-      const branch = (() => { try { return execFileSync('git', ['-C', root, 'branch', '--show-current'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return ''; } })();
-      if (branch !== 'main' && !await dependencies.validateMainSnapshot?.(root)) throw new Error(`Configured raf main checkout is on branch ${branch || '(detached)'}, expected main`);
+      const branch = await promisify(execFile)('git', ['-C', root, 'branch', '--show-current'], { timeout: remaining() }).then(result => result.stdout.trim()).catch(() => '');
+      if (branch !== 'main' && !await within(Promise.resolve(dependencies.validateMainSnapshot?.(root)))) throw new Error(`Configured raf main checkout is on branch ${branch || '(detached)'}, expected main`);
       const entry = resolve(root, options.entryRelativePath);
       if (!entry.startsWith(root + '/')) throw new Error('Service entry must be within the configured main checkout');
       await fs.access(entry);
       try {
         const stat = await fs.lstat(options.socketPath);
-        if (!stat.isSocket() || !previous || alive(previous.pid)) throw new Error('Socket exists without verified dead service ownership');
+        if (!stat.isSocket() || !previous || previousState !== 'dead') throw new Error('Socket exists without verified dead service ownership');
         await fs.unlink(options.socketPath);
       } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+      remaining();
       const log = await fs.open(join(options.stateDirectory, 'service.log'), 'a', 0o600);
       try {
         child = (dependencies.spawn ?? spawn)(dependencies.nodeExecutable ?? process.execPath, [entry], {
@@ -181,37 +196,29 @@ export function createBackgroundRuntime(
       let childError: Error | undefined;
       child.on('error', error => { childError = error; });
       child.unref();
-      while (Date.now() < deadline) {
+      while (performance.now() < deadline) {
         if (childError) throw childError;
         if (child.exitCode !== null || child.signalCode !== null) throw new Error(`Service exited before readiness: code=${child.exitCode}, signal=${child.signalCode}`);
         try {
-          const result = await probe();
+          const result = await within(probe(remaining()));
           if (result.exitCode === 0 && result.state === 'ready' && result.pid === child.pid) return result;
-        } catch {}
-        await pause(25);
+        } catch { remaining(); }
+        await pause(Math.min(25, remaining()));
       }
       throw new Error(`Service PID ${child.pid} did not complete recovery and readiness within ${options.readinessTimeoutMs} ms`);
     } catch (error) {
       if (child?.pid && child.exitCode === null && child.signalCode === null) {
-        const running = child;
-        await new Promise<void>(resolve => {
-          const timer = setTimeout(() => { running.kill('SIGKILL'); resolve(); }, options.readinessTimeoutMs);
-          running.once('exit', () => { clearTimeout(timer); resolve(); });
-          running.kill('SIGTERM');
-        });
+        child.kill('SIGKILL');
       }
       const log = await fs.readFile(join(options.stateDirectory, 'service.log'), 'utf8').catch(() => '');
       const persisted = await readRecord(options.stateDirectory).catch(() => null);
       if (persisted?.stopReason) error = `${error instanceof Error ? error.message : error}\n${persisted.stopReason}`;
-      if (child?.pid && persisted?.pid === child.pid) {
+      if (child?.pid && persisted && persisted.pid === child.pid) {
         await writeRecord(options.stateDirectory, { ...persisted, state: 'failed', stopReason: error instanceof Error ? error.message : String(error) }).catch(() => {});
       }
       return failure('Service startup failed', `${error instanceof Error ? error.message : error}${log ? '\n' + log.slice(-8192) : ''}`);
     } finally {
-      if (lockOwned) {
-        const owner = await fs.readFile(lock, 'utf8').then(JSON.parse).catch(() => null);
-        if (owner?.token === token) await fs.unlink(lock).catch(() => {});
-      }
+      await lease?.release();
     }
   };
   return {
@@ -237,12 +244,17 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
   closed: Promise<void>;
 }> {
   await fs.mkdir(options.stateDirectory, { recursive: true });
-  const record: RecordState = { pid: process.pid, token: randomUUID(), mainPath: process.env.RAF_MAIN_PATH ?? process.cwd(), state: 'starting', stopReason: null };
+  const ownerPath = join(options.stateDirectory, 'service-owner.lock');
+  const identity = await readWaitIdentity();
+  const owner = await tryWaitLease(ownerPath);
+  if (!owner) throw new Error('OS service owner lock is held; refusing second service');
+  const releaseOwner = () => owner.release();
+  const record: RecordState = { pid: process.pid, identity, token: randomUUID(), mainPath: process.env.RAF_MAIN_PATH ?? process.cwd(), state: 'starting', stopReason: null };
   const sockets = new Set<Socket>();
   let resolveClosed!: () => void;
   const closed = new Promise<void>(resolve => { resolveClosed = resolve; });
   let closing: Promise<void> | undefined;
-  const serviceStatus = (): ServiceStatus => ({ exitCode: 0, state: record.state === 'ready' ? 'ready' : record.state === 'stopped' ? 'stopped' : 'failed', pid: record.state === 'ready' ? process.pid : null, mainPath: record.mainPath, stopReason: record.stopReason, reasonKnown: record.stopReason !== null });
+  const serviceStatus = (): ServiceStatus => ({ serviceEpoch: record.token, resourceWaitReady: record.state === 'ready' && !!options.handlers.resourceWait, exitCode: 0, state: record.state === 'ready' ? 'ready' : record.state === 'stopped' ? 'stopped' : 'failed', pid: record.state === 'ready' ? process.pid : null, mainPath: record.mainPath, stopReason: record.stopReason, reasonKnown: record.stopReason !== null });
   const server = createServer(socket => {
     sockets.add(socket);
     const controller = new AbortController();
@@ -259,7 +271,8 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
       handled = true;
       void (async () => {
         const message = JSON.parse(buffer.slice(0, end));
-        if (message.kind === 'status') socket.end(JSON.stringify(serviceStatus()) + '\n');
+        if (message.kind === 'resource-wait' && record.state === 'ready' && options.handlers.resourceWait) { await options.handlers.resourceWait(socket, message, controller.signal); }
+        else if (message.kind === 'status') socket.end(JSON.stringify(serviceStatus()) + '\n');
         else if (message.kind === 'stop') {
           await shutdown(false, socket);
           socket.end(JSON.stringify(serviceStatus()) + '\n');
@@ -284,6 +297,7 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
         record.stopReason ??= failed ? 'Service failed' : 'Service stopped normally';
       } catch (error) { record.state = 'failed'; record.stopReason = String(error); }
       await writeRecord(options.stateDirectory, record);
+      await releaseOwner();
       resolveClosed();
     })();
     return closing;
@@ -308,13 +322,14 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
     process.on('exit', onExit);
     process.on('SIGTERM', onSignal);
     process.on('SIGINT', onSignal);
-    await Promise.race([options.handlers.recover(), closed.then(() => { throw new Error('Service stopped during recovery'); })]);
+    await Promise.race([options.handlers.recover({ serviceEpoch: record.token }), closed.then(() => { throw new Error('Service stopped during recovery'); })]);
     record.state = 'ready';
     await writeRecord(options.stateDirectory, record);
     server.on('error', error => { record.stopReason = String(error); void shutdown(true); });
     return { close: () => shutdown(), closed };
   } catch (error) {
     if (server.listening) { record.stopReason = String(error); await shutdown(true); }
+    else await releaseOwner();
     throw error;
   }
 }

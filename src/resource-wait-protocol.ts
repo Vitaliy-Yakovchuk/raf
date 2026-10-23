@@ -84,56 +84,234 @@ export type ResourceWaitProtocol = {
   };
 };
 
+const diagnostic = (reason: string, details: string, received: unknown = null, expected: unknown = null): ResourceWaitDiagnostic => ({
+  reason, details, remediation: 'Correct the reported service, identity or resource problem, then start a new resource wait.',
+  received, expected, completed: [], pending: ['confirmed resource permit'],
+});
+const message = (error: unknown) => error instanceof Error ? error.message : String(error);
+const sameIdentity = (a: ResourceWaitIdentity, b: ResourceWaitIdentity) =>
+  a.pid === b.pid && a.startedAt === b.startedAt && a.machineId === b.machineId && a.bootId === b.bootId;
+const validIdentity = (value: ResourceWaitIdentity) => value && Number.isSafeInteger(value.pid) && value.pid > 0 &&
+  (['startedAt', 'machineId', 'bootId'] as const).every(key => typeof value[key] === 'string' && value[key].trim());
+const positive = (value: unknown) => Number.isSafeInteger(value) && Number(value) > 0;
+
 export class ResourceWaitProtocolService implements ResourceWaitProtocol {
+  private options: ResourceWaitProtocolOptions;
+  private ports: ResourceWaitProtocolPorts;
+  private pending = new Map<string, ResourceWaitPending>();
+  private detach = new Map<string, () => void>();
+  private epoch = '';
+  private sequence = 0;
+  private lastGrant: ResourceWaitLastGrant | null = null;
+  private lastIdentity: ResourceWaitIdentity | null = null;
+  private nextGrantAt = -Infinity;
+  private stopped = true;
+  private timer?: () => void;
+  private running?: Promise<void>;
+  private dirty = false;
+  private cache: ResourceWaitProbeSnapshot | null = null;
+  private cacheDirectories = new Set<string>();
+
   constructor(options: ResourceWaitProtocolOptions, ports: ResourceWaitProtocolPorts) {
-    throw new Error('NotImplemented');
+    if (![options.grantIntervalMs, options.hostTickIntervalMs, options.deliveryTimeoutMs, options.readinessTimeoutMs].every(positive) ||
+        !Array.isArray(options.levels) || !options.levels.length || options.levels.some(level => !level.id?.trim() || !Number.isFinite(level.priority)) ||
+        new Set(options.levels.map(level => level.id)).size !== options.levels.length) throw new Error('Invalid resource wait configuration');
+    this.options = options;
+    this.ports = ports;
   }
 
   async start(serviceEpoch: string): Promise<void> {
-    throw new Error('NotImplemented');
+    if (!this.stopped || !serviceEpoch) throw new Error('Resource wait requires a new service epoch');
+    const grant = await this.ports.loadLastGrant();
+    if (grant && (!grant.requestId || !grant.serviceEpoch || !grant.bootIdentity || !Number.isFinite(grant.grantedAt) || !Number.isFinite(grant.monotonicAt))) throw new Error('Invalid persisted resource wait lastGrant');
+    this.epoch = serviceEpoch;
+    this.lastGrant = grant;
+    this.lastIdentity = null;
+    this.sequence = 0;
+    this.cache = null;
+    this.cacheDirectories.clear();
+    this.nextGrantAt = grant ? this.ports.monotonicNow() + this.options.grantIntervalMs : -Infinity;
+    this.stopped = false;
+  }
+
+  private ordered() {
+    const priorities = new Map(this.options.levels.map(level => [level.id, level.priority]));
+    return [...this.pending.values()].sort((a, b) => priorities.get(a.level!)! - priorities.get(b.level!)! || a.sequence - b.sequence);
+  }
+
+  private remove(entry: ResourceWaitPending) {
+    this.pending.delete(entry.requestId);
+    this.detach.get(entry.requestId)?.();
+    this.detach.delete(entry.requestId);
+    if (!this.pending.size) { this.timer?.(); this.timer = undefined; this.cache = null; }
+  }
+
+  private async fail(entry: ResourceWaitPending, reason: string, details: string) {
+    this.remove(entry);
+    void this.ports.sendError(entry.connectionId, entry, diagnostic(reason, details)).catch(() => {});
+  }
+
+  private current(entry: ResourceWaitPending, offer?: ResourceWaitOffer) {
+    return !this.stopped && this.pending.get(entry.requestId) === entry && entry.serviceEpoch === this.epoch &&
+      !entry.signal?.aborted && this.ports.isConnectionOpen(entry.connectionId) &&
+      (!offer || entry.offer?.offerId === offer.offerId && entry.offer.deadline === offer.deadline && offer.serviceEpoch === this.epoch);
+  }
+
+  private arm() {
+    this.timer?.(); this.timer = undefined;
+    if (this.stopped || !this.pending.size) return;
+    const now = this.ports.monotonicNow();
+    let at = now + this.options.hostTickIntervalMs;
+    if (this.nextGrantAt > now) at = Math.min(at, this.nextGrantAt);
+    for (const entry of this.pending.values()) if (entry.offer) at = Math.min(at, entry.offer.deadline);
+    this.timer = this.ports.schedule(at, async () => { this.timer = undefined; await this.pump(); });
   }
 
   enqueue(request: ResourceWaitRequest): ResourceWaitTicket {
-    throw new Error('NotImplemented');
+    const ticket = { requestId: this.ports.nextId(), serviceEpoch: this.epoch };
+    if (this.stopped) throw new Error('Resource wait service is not ready');
+    if (!this.options.levels.some(level => level.id === request.level)) throw new Error(`Invalid resource wait level; allowed: ${this.options.levels.map(level => level.id).join(', ')}`);
+    if (!validIdentity(request.clientIdentity) || !request.connectionId || !request.developmentDirectory) throw new Error('Missing resource wait client identity or development directory');
+    const entry: ResourceWaitPending = { ...request, ...ticket, sequence: ++this.sequence, phase: 'waiting', offer: null };
+    this.pending.set(ticket.requestId, entry);
+    const abort = () => { void this.cancel(ticket, request.clientIdentity, 'Client cancelled'); };
+    request.signal?.addEventListener('abort', abort, { once: true });
+    this.detach.set(ticket.requestId, () => request.signal?.removeEventListener('abort', abort));
+    const head = this.ordered()[0];
+    for (const previous of this.pending.values()) if (previous !== head && previous.offer) { previous.offer = null; previous.phase = 'waiting'; }
+    if (request.signal?.aborted) abort();
+    void this.pump();
+    return ticket;
   }
 
-  async pump(): Promise<void> {
-    throw new Error('NotImplemented');
+  private async live(entry: ResourceWaitPending) {
+    if (!this.current(entry)) { if (this.pending.has(entry.requestId)) await this.fail(entry, 'client_lost', 'Client connection closed or request cancelled'); return false; }
+    const observation = await this.ports.observeClient(entry.clientIdentity);
+    if (!this.current(entry)) return false;
+    if (observation.state !== 'alive' || !sameIdentity(observation.identity, entry.clientIdentity)) {
+      await this.fail(entry, observation.state === 'unknown' ? 'identity_unknown' : 'client_lost', observation.state === 'alive' ? 'Client PID was reused' : observation.reason);
+      return false;
+    }
+    return true;
+  }
+
+  private async snapshot() {
+    const now = this.ports.monotonicNow();
+    const requests = this.ordered();
+    if (!this.cache || now < this.cache.observedAt || now - this.cache.observedAt >= this.options.hostTickIntervalMs || requests.some(request => !this.cacheDirectories.has(request.developmentDirectory))) {
+      this.cache = await this.ports.readSnapshot(requests);
+      this.cacheDirectories = new Set(requests.map(request => request.developmentDirectory));
+      if (this.ordered().some(request => !this.cacheDirectories.has(request.developmentDirectory))) return this.snapshot();
+    }
+    const age = this.ports.monotonicNow() - this.cache.observedAt;
+    if (!Number.isFinite(age) || age < 0 || age > this.options.hostTickIntervalMs) throw new Error('Stale resource snapshot cannot authorize a permit');
+    return this.cache;
+  }
+
+  private async step() {
+    for (const entry of [...this.pending.values()]) {
+      if (!await this.live(entry)) continue;
+      if (entry.offer && this.ports.monotonicNow() >= entry.offer.deadline) await this.fail(entry, 'delivery_timeout', 'Client did not complete offer delivery within deliveryTimeoutMs');
+    }
+    if (this.stopped || !this.pending.size) return;
+    if (this.ports.monotonicNow() < this.nextGrantAt) return;
+    const snapshot = await this.snapshot();
+    if (this.stopped) return;
+    const entry = this.ordered()[0];
+    if (!entry || !this.current(entry)) return;
+    const admission = this.ports.evaluateSnapshot(snapshot, entry);
+    if (admission.status === 'UNKNOWN' || !['ANY_RUN', 'HOTFIX_ONLY', 'NO_RESOURCES'].includes(admission.status)) { await this.fail(entry, 'resource_unknown', admission.reason); this.dirty = true; return; }
+    if (admission.status === 'NO_RESOURCES' || admission.status === 'HOTFIX_ONLY' && entry.level !== 'hotfix') return;
+    if (entry.phase === 'waiting') {
+      const offer = { requestId: entry.requestId, serviceEpoch: this.epoch, offerId: this.ports.nextId(), deadline: this.ports.monotonicNow() + this.options.deliveryTimeoutMs };
+      entry.offer = offer; entry.phase = 'offered';
+      void this.ports.sendOffer(entry.connectionId, offer).catch(async error => { if (this.current(entry, offer)) { await this.fail(entry, 'delivery_failed', message(error)); void this.pump(); } });
+      return;
+    }
+    if (entry.phase !== 'client-ready' || !entry.offer) return;
+    const offer = entry.offer;
+    if (!await this.live(entry) || !this.current(entry, offer) || this.ordered()[0] !== entry) return;
+    const currentSnapshot = await this.snapshot();
+    if (!this.current(entry, offer) || this.ordered()[0] !== entry) return;
+    const final = this.ports.evaluateSnapshot(currentSnapshot, entry);
+    if (final.status === 'UNKNOWN') { await this.fail(entry, 'resource_unknown', final.reason); return; }
+    if (final.status !== 'ANY_RUN' && !(final.status === 'HOTFIX_ONLY' && entry.level === 'hotfix')) { entry.phase = 'waiting'; entry.offer = null; return; }
+    const now = this.ports.monotonicNow();
+    if (now >= offer.deadline) { await this.fail(entry, 'delivery_timeout', 'Offer expired before commit'); return; }
+    if (now < this.nextGrantAt) return;
+    const next: ResourceWaitLastGrant = { requestId: entry.requestId, serviceEpoch: this.epoch, grantedAt: this.ports.wallNow(), bootIdentity: this.ports.bootIdentity(), monotonicAt: now };
+    const outcome = await this.ports.commitLastGrant({ expectedEpoch: this.epoch, previous: this.lastGrant, next });
+    if (outcome !== 'committed') {
+      if (outcome === 'unknown') { await this.stop('Grant commit outcome unknown; reconcile durable lastGrant before restarting'); }
+      else { await this.fail(entry, 'commit_failed', 'Resource grant transaction was not committed (including service fence mismatch)'); }
+      return;
+    }
+    this.lastGrant = next;
+    this.lastIdentity = entry.clientIdentity;
+    this.nextGrantAt = this.ports.monotonicNow() + this.options.grantIntervalMs;
+    this.remove(entry);
+    void this.ports.sendResult(entry.connectionId, { ...offer, kind: 'permit', permit: { requestId: next.requestId, serviceEpoch: next.serviceEpoch, grantedAt: next.grantedAt } }).catch(() => {});
+    this.dirty = true;
+  }
+
+  pump(): Promise<void> {
+    if (this.stopped) return Promise.resolve();
+    this.dirty = true;
+    if (!this.running) this.running = Promise.resolve().then(async () => {
+      while (this.dirty && !this.stopped) {
+        this.dirty = false;
+        try { await this.step(); }
+        catch (error) { for (const entry of [...this.pending.values()]) await this.fail(entry, 'resource_error', message(error)); }
+      }
+    }).finally(() => { this.running = undefined; this.arm(); if (this.dirty && !this.stopped) void this.pump(); });
+    return this.running;
   }
 
   async ready(offer: ResourceWaitOffer, clientIdentity: ResourceWaitIdentity): Promise<'issued' | 'already-issued' | 'ignored' | 'error'> {
-    throw new Error('NotImplemented');
+    if (this.lastGrant?.requestId === offer.requestId && this.lastGrant.serviceEpoch === offer.serviceEpoch && this.lastIdentity && sameIdentity(this.lastIdentity, clientIdentity)) return 'already-issued';
+    const entry = this.pending.get(offer.requestId);
+    if (!entry || !this.current(entry, offer) || !sameIdentity(entry.clientIdentity, clientIdentity)) return 'ignored';
+    const duplicate = entry.phase === 'client-ready';
+    entry.phase = 'client-ready';
+    await this.pump();
+    return this.lastGrant?.requestId === offer.requestId ? duplicate ? 'already-issued' : 'issued' : 'ignored';
   }
 
   async cancel(ticket: ResourceWaitTicket, clientIdentity: ResourceWaitIdentity, reason: string): Promise<'cancelled' | 'already-issued' | 'ignored'> {
-    throw new Error('NotImplemented');
+    if (this.lastGrant?.requestId === ticket.requestId && this.lastGrant.serviceEpoch === ticket.serviceEpoch && this.lastIdentity && sameIdentity(this.lastIdentity, clientIdentity)) return 'already-issued';
+    const entry = this.pending.get(ticket.requestId);
+    if (!entry || entry.serviceEpoch !== ticket.serviceEpoch || !sameIdentity(entry.clientIdentity, clientIdentity)) return 'ignored';
+    await this.fail(entry, 'cancelled', reason);
+    void this.pump();
+    return 'cancelled';
   }
 
   async disconnect(connectionId: string): Promise<void> {
-    throw new Error('NotImplemented');
+    for (const entry of [...this.pending.values()]) if (entry.connectionId === connectionId) await this.fail(entry, 'client_lost', 'Client connection closed');
+    void this.pump();
   }
 
   async stop(reason: string): Promise<void> {
-    throw new Error('NotImplemented');
+    this.stopped = true; this.timer?.(); this.timer = undefined; this.cache = null;
+    for (const entry of [...this.pending.values()]) await this.fail(entry, 'service_stopped', reason);
   }
 
   inspect(): ReturnType<ResourceWaitProtocol['inspect']> {
-    throw new Error('NotImplemented');
+    return { pending: this.ordered().map(entry => ({ ...entry })), lastGrant: this.lastGrant && { ...this.lastGrant }, stopped: this.stopped };
   }
 }
 
-export function readResourceWaitProtocolOptions(configuration: {
-  constants: unknown;
-  raf: unknown;
-}): ResourceWaitProtocolOptions {
-  throw new Error('NotImplemented');
+export function readResourceWaitProtocolOptions(configuration: { constants: unknown; raf: unknown }): ResourceWaitProtocolOptions {
+  const constants = configuration.constants as { resourceWaitLevels?: ResourceWaitProtocolOptions['levels'] };
+  const raf = configuration.raf as { resourceWait?: { grantIntervalMs?: number; deliveryTimeoutMs?: number }; service?: { hostTickIntervalMs?: number; readinessTimeoutMs?: number } };
+  const options = { levels: constants?.resourceWaitLevels, grantIntervalMs: raf?.resourceWait?.grantIntervalMs, deliveryTimeoutMs: raf?.resourceWait?.deliveryTimeoutMs, hostTickIntervalMs: raf?.service?.hostTickIntervalMs, readinessTimeoutMs: raf?.service?.readinessTimeoutMs };
+  for (const key of ['grantIntervalMs', 'deliveryTimeoutMs', 'hostTickIntervalMs', 'readinessTimeoutMs'] as const) if (!positive(options[key])) throw new Error(`Invalid configured resource wait ${key}`);
+  if (!Array.isArray(options.levels) || !options.levels.length || options.levels.some(level => !level.id?.trim() || !Number.isFinite(level.priority)) || new Set(options.levels.map(level => level.id)).size !== options.levels.length) throw new Error('Invalid resourceWaitLevels catalog');
+  return options as ResourceWaitProtocolOptions;
 }
 
-export function createResourceWaitProtocol(
-  options: ResourceWaitProtocolOptions,
-  ports: ResourceWaitProtocolPorts,
-): ResourceWaitProtocol {
-  throw new Error('NotImplemented');
+export function createResourceWaitProtocol(options: ResourceWaitProtocolOptions, ports: ResourceWaitProtocolPorts): ResourceWaitProtocol {
+  return new ResourceWaitProtocolService(options, ports);
 }
 
 export type ResourceWaitEndpoint = { endpoint: string; serviceEpoch: string };
@@ -150,20 +328,38 @@ export type ResourceWaitStarterPorts = {
 export type ResourceWaitServiceConnector = { ensureReady: () => Promise<ResourceWaitEndpoint> };
 
 export class ResourceWaitServiceStarter implements ResourceWaitServiceConnector {
+  private options: Pick<ResourceWaitProtocolOptions, 'readinessTimeoutMs'>;
+  private ports: ResourceWaitStarterPorts;
   constructor(options: Pick<ResourceWaitProtocolOptions, 'readinessTimeoutMs'>, ports: ResourceWaitStarterPorts) {
-    throw new Error('NotImplemented');
+    if (!positive(options.readinessTimeoutMs)) throw new Error('Invalid readinessTimeoutMs');
+    this.options = options; this.ports = ports;
   }
 
   async ensureReady(): Promise<ResourceWaitEndpoint> {
-    throw new Error('NotImplemented');
+    const deadline = this.ports.monotonicNow() + this.options.readinessTimeoutMs;
+    let last: ResourceWaitHandshake | undefined;
+    let started = false;
+    for (;;) {
+      last = await this.ports.handshake();
+      if (this.ports.monotonicNow() >= deadline) throw Object.assign(new Error(`Service readiness timeout: ${last.kind === 'unavailable' ? last.reason : 'handshake exceeded budget'}`), { diagnostic: diagnostic('readiness_timeout', 'Service readiness budget exhausted', last, 'current fenced ready endpoint') });
+      if (last.kind === 'ready' && last.ownsFence && last.stateValidated && last.acceptsEnqueue && last.endpoint?.endpoint && last.endpoint.serviceEpoch) return last.endpoint;
+      const lease = started ? null : await this.ports.acquireStartLease();
+      if (lease) {
+        try {
+          const current = await this.ports.handshake();
+          if (current.kind === 'ready' && current.ownsFence && current.stateValidated && current.acceptsEnqueue && current.endpoint?.endpoint && current.endpoint.serviceEpoch) return current.endpoint;
+          started = true;
+          await this.ports.startMain();
+        } finally { await lease.release(); }
+      }
+      if (this.ports.monotonicNow() >= deadline) throw new Error(`Service readiness timeout: ${last.kind === 'unavailable' ? last.reason : 'unverified handshake'}`);
+      await this.ports.waitForChange(deadline);
+    }
   }
 }
 
-export function createResourceWaitServiceConnector(
-  options: Pick<ResourceWaitProtocolOptions, 'readinessTimeoutMs'>,
-  ports: ResourceWaitStarterPorts,
-): ResourceWaitServiceConnector {
-  throw new Error('NotImplemented');
+export function createResourceWaitServiceConnector(options: Pick<ResourceWaitProtocolOptions, 'readinessTimeoutMs'>, ports: ResourceWaitStarterPorts): ResourceWaitServiceConnector {
+  return new ResourceWaitServiceStarter(options, ports);
 }
 
 export type ResourceWaitCommandResult =
@@ -191,7 +387,48 @@ export async function runResourceWaitCommand(
   options: Pick<ResourceWaitProtocolOptions, 'levels'>,
   ports: ResourceWaitCommandPorts,
 ): Promise<ResourceWaitCommandResult> {
-  throw new Error('NotImplemented');
+  if (!options.levels.some(level => level.id === request.level)) return { exitCode: 1, kind: 'error', diagnostic: diagnostic('invalid_level', `Allowed levels: ${options.levels.map(level => level.id).join(', ')}. Example: raf resource wait --level ${options.levels[0]?.id}`, request.level, options.levels) };
+  let connection: ResourceWaitClientConnection | undefined;
+  let ticket: ResourceWaitTicket | undefined;
+  let ready = false;
+  let aborted = false;
+  let onAbort: (() => void) | undefined;
+  try {
+    if (request.signal?.aborted) throw new Error('Resource wait cancelled');
+    const cancelled = new Promise<never>((_resolve, reject) => {
+      onAbort = () => { aborted = true; if (ticket) void connection!.cancel(ticket).catch(() => {}); reject(new Error('Resource wait cancelled')); };
+      request.signal?.addEventListener('abort', onAbort, { once: true });
+      if (request.signal?.aborted) onAbort();
+    });
+    const endpoint = await Promise.race([ports.ensureReady(), cancelled]);
+    connection = await Promise.race([ports.connect(endpoint).then(async value => { if (aborted) await value.close(); return value; }), cancelled]);
+    ticket = await Promise.race([connection.enqueue(request).then(value => { if (aborted) void connection!.cancel(value).catch(() => {}); return value; }), cancelled]);
+    if (ticket.serviceEpoch !== endpoint.serviceEpoch || !ticket.requestId) throw new Error('Resource wait enqueue returned a mismatched epoch or requestId');
+    let lastOffer: ResourceWaitOffer | undefined;
+    for (;;) {
+      const incoming = await Promise.race([connection.receive(), cancelled]);
+      if (incoming.kind === 'closed') throw new Error(incoming.reason);
+      const envelope = incoming.kind === 'offer' ? incoming.offer : incoming.result;
+      if (envelope.requestId !== ticket.requestId || envelope.serviceEpoch !== ticket.serviceEpoch) continue;
+      if (incoming.kind === 'offer') {
+        lastOffer = incoming.offer;
+        if (aborted) throw new Error('Resource wait cancelled');
+        ready = true;
+        await Promise.race([connection.sendReady(incoming.offer), cancelled]);
+      } else {
+        if (incoming.result.kind === 'error') return { exitCode: 1, kind: 'error', diagnostic: incoming.result.diagnostic };
+        if (!ready || !lastOffer || incoming.result.offerId !== lastOffer.offerId || incoming.result.permit.requestId !== ticket.requestId || incoming.result.permit.serviceEpoch !== ticket.serviceEpoch) continue;
+        return { exitCode: 0, kind: 'permit', permit: incoming.result.permit, reservation: false };
+      }
+    }
+  } catch (error) {
+    const failure = diagnostic(ready ? 'delivery_unknown' : 'resource_wait_failed', `${message(error)}${ready ? '; permit delivery is unconfirmed and may have committed; no automatic retry' : ''}`, ticket ?? message(error), 'matching committed permit');
+    if (ticket) failure.completed = ready ? ['enqueue', 'ready sent'] : ['enqueue'];
+    return { exitCode: 1, kind: 'error', diagnostic: (error as { diagnostic?: ResourceWaitDiagnostic })?.diagnostic ?? failure };
+  } finally {
+    if (onAbort) request.signal?.removeEventListener('abort', onAbort);
+    await connection?.close().catch(() => {});
+  }
 }
 
 export type ResourceWaitAdmissionAttempt =
@@ -205,5 +442,7 @@ export async function admitAgentRunAfterResourceWait(ports: {
   | { kind: 'attempted'; permit: ResourceWaitPermit; admission: ResourceWaitAdmissionAttempt }
   | { kind: 'error'; diagnostic: ResourceWaitDiagnostic }
 > {
-  throw new Error('NotImplemented');
+  const waited = await ports.wait();
+  if (waited.kind === 'error') return { kind: 'error', diagnostic: waited.diagnostic };
+  return { kind: 'attempted', permit: waited.permit, admission: await ports.admitAndReserve() };
 }

@@ -7,9 +7,10 @@ import { runServiceHost, createBackgroundRuntime } from '../src/background-runti
 import { readWaitIdentity, tryWaitLease } from '../src/resource-wait-identity.ts';
 import { connectResourceWait, createResourceWaitSocketHost } from '../src/resource-wait-transport.ts';
 import type { ResourceWaitProtocol } from '../src/resource-wait-protocol.ts';
+import { runResourceWaitCommand } from '../src/resource-wait-protocol.ts';
 
 async function fixture() {
-  const directory = await mkdtemp(join(tmpdir(), 'raf-wait-runtime-'));
+  const directory = await mkdtemp('/tmp/raf-wait-runtime-');
   const socketPath = join(directory, 'service.sock');
   const identity = await readWaitIdentity();
   let epoch = '';
@@ -42,12 +43,12 @@ test('[resource-wait/runtime] OS lease survives helper exit and releases without
   const directory = await mkdtemp(join(tmpdir(), 'raf-wait-lock-'));
   const path = join(directory, 'owner.lock');
   let first = await tryWaitLease(path);
-  assert.ok(first);
+  if (!first) throw new Error('First owner did not acquire OS lock');
   try {
     assert.equal(await tryWaitLease(path), null);
     await first.release(); first = null;
     const second = await tryWaitLease(path);
-    assert.ok(second);
+    if (!second) throw new Error('Second owner did not acquire released OS lock');
     await second.release();
     assert.equal((await readFile(path)).length, 0);
   } finally { await first?.release(); await rm(directory, { recursive: true, force: true }); }
@@ -97,4 +98,21 @@ test('[resource-wait/runtime] reuse requires the current ready epoch and OS owne
     assert.match('details' in rejected ? rejected.details : '', /alive|readiness/i);
     assert.equal(spawns, 0);
   } finally { await f.close(); }
+});
+
+test('[resource-wait/runtime] cancellation during readiness never opens a connection', async () => {
+  const controller = new AbortController();
+  let start!: () => void;
+  let finish!: () => void;
+  const started = new Promise<void>(resolve => { start = resolve; });
+  const readiness = new Promise<void>(resolve => { finish = resolve; });
+  let connects = 0;
+  const waiting = runResourceWaitCommand({ level: 'normal', developmentDirectory: '/tmp', clientIdentity: await readWaitIdentity(), connectionId: '', signal: controller.signal }, { levels: [{ id: 'normal', priority: 1 }] }, {
+    ensureReady: async () => { start(); await readiness; return { endpoint: 'unused', serviceEpoch: 'e1' }; },
+    connect: async () => { connects++; throw new Error('Cancelled caller must not connect'); }, recordDuration: () => {},
+  });
+  await started;
+  controller.abort();
+  try { assert.equal((await waiting).exitCode, 1); assert.equal(connects, 0); }
+  finally { finish(); }
 });

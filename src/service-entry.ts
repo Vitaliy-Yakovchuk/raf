@@ -31,6 +31,7 @@ export type ServiceHandlerOptions = {
 export type ServiceHandlers = {
   handlers: Record<'service start' | 'service status' | 'service stop', Handler>;
   request: (request: ServiceRequest, options?: { signal?: AbortSignal }) => Promise<ServiceResponse>;
+  ensureResourceReady: () => Promise<import('./resource-wait-protocol.ts').ResourceWaitEndpoint>;
 };
 
 export function createServiceHandlers(
@@ -91,7 +92,12 @@ export function createServiceHandlers(
     });
     return result;
   };
-  return { handlers: { 'service start': invoke('start'), 'service status': invoke('status'), 'service stop': invoke('stop') }, request: (request, requestOptions) => runtime.request(request, requestOptions).finally(releaseBootstrap) };
+  const ensureResourceReady = async () => {
+    const result = await runtime.ensureReady().finally(releaseBootstrap);
+    if (result.exitCode !== 0 || result.state !== 'ready' || !result.serviceEpoch || !result.resourceWaitReady) throw new Error(`Resource wait service readiness failed: ${JSON.stringify(result)}`);
+    return { endpoint: socketPath, serviceEpoch: result.serviceEpoch };
+  };
+  return { ensureResourceReady, handlers: { 'service start': invoke('start'), 'service status': invoke('status'), 'service stop': invoke('stop') }, request: (request, requestOptions) => runtime.request(request, requestOptions).finally(releaseBootstrap) };
 }
 
 export async function runServiceEntry(options?: {

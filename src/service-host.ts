@@ -20,6 +20,7 @@ import type { ReminderSessionEffect } from './reminder-repository.ts';
 
 export type ServiceHostDependencies = {
   deliverStartupContextEvent?: (intent: PendingIntent) => Promise<boolean>;
+  disableLegacyResourceWait?: boolean;
   now: () => number;
   reconcileLaunches?: () => Promise<readonly string[]>;
   nextReminderId: () => string;
@@ -73,7 +74,7 @@ export async function createServicePorts(
     if (!eventPorts || typeof eventPorts.transaction !== 'function' || typeof eventPorts.validateId !== 'function') throw new Error('Service event ports are incomplete');
     const events = createEventRegistry(catalog, eventPorts);
     let resourceInitializationError: unknown;
-    queue = createResourceWaitQueue({ grantIntervalMs, levels: catalog.resourceWaitLevels }, {
+    if (!dependencies.disableLegacyResourceWait) queue = createResourceWaitQueue({ grantIntervalMs, levels: catalog.resourceWaitLevels }, {
       ...dependencies.resourceWait, now: clock,
       loadLastGrant: () => {
         try {
@@ -191,7 +192,7 @@ export async function createServicePorts(
           const receipt = await dependencies.deliverReminder(reminder);
           if (receipt?.delivered === true) delivered.set(reminder.id, key);
         }
-        await resourceQueue.pump();
+        await resourceQueue?.pump();
       } finally { arm(); }
     };
     const refresh = () => serial(cycle);
@@ -212,6 +213,7 @@ export async function createServicePorts(
         if (client.signal.aborted) throw new Error('Service request cancelled');
         if (request.operation === 'resource.wait') {
           const input = payload(request.payload);
+          if (!resourceQueue) throw new Error('Resource wait requires the offer/ready/commit channel');
           const result = await resourceQueue.enqueue({ clientId: client.clientId, level: input.level, signal: client.signal }).result;
           return result;
         }
@@ -240,7 +242,7 @@ export async function createServicePorts(
           shutdown = (async () => {
             cancelWake?.();
             cancelWake = undefined;
-            resourceQueue.close('Service stopped');
+            resourceQueue?.close('Service stopped');
             await tail;
             store.close();
           })();

@@ -1,3 +1,5 @@
+import { productionResourceWait } from './production-resource-wait.ts';
+import { readResourceWaitProtocolOptions } from './resource-wait-protocol.ts';
 import { productionStateContext } from './state-migration-guard.ts';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -21,6 +23,7 @@ import type { ComposedServicePorts, ServiceHostDependencies } from './service-ho
 export async function createProductionServiceDependencies(
   context: ServiceEntryContext,
   options?: {
+    onStore?: (store: StateStore) => void;
     now?: () => number;
     nextReminderId?: () => string;
     processScan?: ProcessScanDependencies;
@@ -117,6 +120,7 @@ export async function createProductionServiceDependencies(
       const repository = handle.eventRepository;
       if (!repository || typeof repository.transaction !== 'function') throw new Error('StateStore eventRepository transaction is unavailable');
       store = handle;
+      options?.onStore?.(handle);
       return {
         transaction: operation => repository.transaction(operation),
         validateId: validateEventObjectId,
@@ -187,17 +191,22 @@ export async function createServicePorts(
   options?: Parameters<typeof createProductionServiceDependencies>[1],
 ): Promise<ComposedServicePorts> {
   productionStateContext(context.orchestratorRoot, fileURLToPath(import.meta.url), context.homeDirectory, 'service-store');
+  let resourceStore: StateStore | undefined;
   const clients = new Map<string, AbortSignal>();
   const dependencies = await createProductionServiceDependencies(context, {
-    ...options, isClientAlive: id => {
+    ...options, onStore: store => { resourceStore = store; options?.onStore?.(store); }, isClientAlive: id => {
       const signal = clients.get(id);
       return !!signal && !signal.aborted && (options?.isClientAlive?.(id) ?? true);
     },
   });
+  dependencies.disableLegacyResourceWait = true;
   dependencies.resourceWait.watchResources = () => () => {};
   const ports = await composeServicePorts(context, dependencies);
+  let resource: Awaited<ReturnType<typeof productionResourceWait>>;
   let bugSync: Awaited<ReturnType<typeof startBugSyncService>>;
   try {
+    const [constants, raf] = await Promise.all(['raf-constants.json', 'raf.json'].map(async name => JSON.parse(await readFile(join(context.orchestratorRoot, 'conf', name), 'utf8'))));
+    resource = await productionResourceWait(context, readResourceWaitProtocolOptions({ constants, raf }), () => { if (!resourceStore) throw new Error('Resource state not initialized'); return resourceStore; });
     bugSync = await startBugSyncService({
       orchestratorRoot: context.orchestratorRoot, homeDirectory: context.homeDirectory, stateDirectory: context.stateDirectory,
       now: dependencies.now, schedule: dependencies.schedule,
@@ -216,6 +225,8 @@ export async function createServicePorts(
   }
   return {
     ...ports,
+    resourceWait: resource.attach,
+    recover: async bootstrap => { await ports.recover(); if (bootstrap?.serviceEpoch) await resource.start(bootstrap.serviceEpoch); },
     handle: async (request, client) => {
       if (client.signal.aborted) throw new Error('Service request cancelled');
       clients.set(client.clientId, client.signal);
@@ -226,6 +237,7 @@ export async function createServicePorts(
     },
     shutdown: async () => {
       clients.clear();
+      await resource.stop();
       try { await bugSync?.stop(); } finally { await ports.shutdown(); }
     },
   };

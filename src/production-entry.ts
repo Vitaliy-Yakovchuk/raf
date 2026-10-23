@@ -147,7 +147,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
   const handlers = new Proxy(Object.create(null) as Record<string, Handler>, {
     get(_target, name) {
       if (typeof name !== 'string') return undefined;
-      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'runner limits', 'command stats', 'service start', 'service status', 'service stop',
+      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'runner limits', 'command stats', 'resource wait', 'service start', 'service status', 'service stop',
         'reminder add', 'reminder list', 'reminder update', 'reminder activate', 'reminder close', 'reminder reassign', 'reminder close-all',
         'bug list', 'bug show', 'bug comment add', 'bug status set', 'bug attachment get'].includes(name)) return unavailable;
       return async (params: Record<string, unknown>) => {
@@ -159,6 +159,14 @@ export async function runProductionCli(argv: readonly string[], options: Product
           if (name.startsWith('bug ')) {
             const [{ createBugHandlers }, { createProductionBugPorts }] = await Promise.all([import('./bug-cli.ts'), import('./bug-production.ts')]);
             return await createBugHandlers(createProductionBugPorts({ orchestratorRoot, homeDirectory: options.homeDirectory }))[name as BugCommand](params);
+          }
+          if (name === 'resource wait') {
+            const { waitForResources } = await import('./resource-wait-command.ts');
+            const result = await waitForResources({ orchestratorRoot, homeDirectory: options.homeDirectory, level: params.level as string, developmentDirectory: process.cwd(), hostModulePath: options.serviceHostModulePath });
+            if (result.kind === 'error') throw commandFailure({ code: 'SERVICE_OPERATION_FAILED', message: result.diagnostic.reason, stage: 'resource wait', source: 'resource-wait', sourceCode: 1,
+              reason: result.diagnostic.details, received: result.diagnostic.received, expected: result.diagnostic.expected, found: null,
+              completed: [...result.diagnostic.completed], pending: [...result.diagnostic.pending], retrySafe: false, remediation: [result.diagnostic.remediation] });
+            return result;
           }
           if (name.startsWith('service ')) {
             readConfiguration(orchestratorRoot);

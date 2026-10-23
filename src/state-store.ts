@@ -1,3 +1,4 @@
+import type { ResourceWaitLastGrant } from './resource-wait-protocol.ts';
 import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import type { TaskReservationSet } from "./task-reservations.ts";
 import type { EventRegistryPorts, EventTransaction, PendingEvent } from "./event-registry.ts";
@@ -66,6 +67,9 @@ export interface StateStore {
     discard(id: string): void;
   };
   eventRepository: Pick<EventRegistryPorts, 'transaction'>;
+  claimResourceWaitEpoch(epoch: string): void;
+  readResourceWaitGrant(): ResourceWaitLastGrant | null;
+  commitResourceWaitGrant(change: { expectedEpoch: string; previous: ResourceWaitLastGrant | null; next: ResourceWaitLastGrant }): 'committed' | 'not-committed';
   getResourceWaitLastGrant(): number | null;
   saveResourceWaitLastGrant(at: number): void;
   taskReservationRepository: { transaction<T>(action: (tx: TaskReservationTransaction) => T): T };
@@ -84,7 +88,7 @@ export interface StateStore {
   getCommandTiming(command: string): CommandTiming | undefined;
 }
 
-export const STATE_SCHEMA_VERSION = 11;
+export const STATE_SCHEMA_VERSION = 12;
 
 export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
@@ -197,12 +201,12 @@ export function openStateStore(path: string, options?: import('./state-migration
 
       const version = () => Number(db.prepare("PRAGMA user_version").get()?.user_version);
       checkSchema(db);
-      if (version() < 11) {
+      if (version() < STATE_SCHEMA_VERSION) {
         transaction(() => {
 
           checkContext();
           const current = checkSchema(db);
-          if (current === 11) return;
+          if (current === STATE_SCHEMA_VERSION) return;
           if (current === 0) {
           db.exec(`
             CREATE TABLE runners (
@@ -348,7 +352,7 @@ export function openStateStore(path: string, options?: import('./state-migration
             PRAGMA user_version = 10;
           `);
           options?.afterMigrationStep?.(10); }
-          db.exec(`
+          if (current < 11) { db.exec(`
             CREATE TABLE test_run_groups (
               project TEXT NOT NULL,
               workspace TEXT NOT NULL,
@@ -358,7 +362,18 @@ export function openStateStore(path: string, options?: import('./state-migration
             ) STRICT;
             PRAGMA user_version = 11;
           `);
-          options?.afterMigrationStep?.(11);
+          options?.afterMigrationStep?.(11); }
+          db.exec(`
+            CREATE TABLE resource_wait_protocol_state (
+              singleton INTEGER PRIMARY KEY CHECK(singleton = 1),
+              epoch TEXT NOT NULL,
+              grant_json TEXT
+            ) STRICT;
+            INSERT INTO resource_wait_protocol_state(singleton, epoch, grant_json)
+              SELECT 1, '', json_object('requestId','legacy','serviceEpoch','legacy','grantedAt',last_grant,'bootIdentity','legacy','monotonicAt',0) FROM resource_wait_state WHERE singleton=1;
+            PRAGMA user_version = 12;
+          `);
+          options?.afterMigrationStep?.(12);
         });
       }
       for (let attempt = 0; ; attempt++) {
@@ -731,6 +746,29 @@ export function openStateStore(path: string, options?: import('./state-migration
     reminderDeliveries,
     closureNotices,
     eventRepository,
+    claimResourceWaitEpoch(epoch) {
+      if (!epoch) throw new Error('Missing service epoch');
+      operation('claimResourceWaitEpoch', () => db.prepare('INSERT INTO resource_wait_protocol_state(singleton, epoch) VALUES(1, ?) ON CONFLICT(singleton) DO UPDATE SET epoch=excluded.epoch').run(epoch));
+    },
+    readResourceWaitGrant() {
+      return operation('readResourceWaitGrant', () => {
+        const row = db.prepare('SELECT grant_json FROM resource_wait_protocol_state WHERE singleton=1').get();
+        if (row?.grant_json == null) return null;
+        const grant = JSON.parse(String(row.grant_json));
+        if (!grant || typeof grant !== 'object' || Array.isArray(grant) ||
+            !['requestId', 'serviceEpoch', 'bootIdentity'].every(key => typeof grant[key] === 'string' && grant[key].trim()) ||
+            !Number.isFinite(grant.grantedAt) || !Number.isFinite(grant.monotonicAt)) throw new Error('Invalid persisted resource wait lastGrant');
+        return grant;
+      });
+    },
+    commitResourceWaitGrant(change) {
+      return operation('commitResourceWaitGrant', () => transaction(() => {
+        const row = db.prepare('SELECT epoch, grant_json FROM resource_wait_protocol_state WHERE singleton=1').get();
+        if (row?.epoch !== change.expectedEpoch || JSON.stringify(row.grant_json == null ? null : JSON.parse(String(row.grant_json))) !== JSON.stringify(change.previous) || change.next.serviceEpoch !== change.expectedEpoch) return 'not-committed';
+        db.prepare('UPDATE resource_wait_protocol_state SET grant_json=? WHERE singleton=1 AND epoch=?').run(JSON.stringify(change.next), change.expectedEpoch);
+        return 'committed';
+      }));
+    },
     getResourceWaitLastGrant() {
       return operation("getResourceWaitLastGrant", () => {
         const row = db.prepare("SELECT last_grant FROM resource_wait_state WHERE singleton = 1").get();

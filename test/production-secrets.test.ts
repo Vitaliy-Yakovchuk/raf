@@ -127,8 +127,9 @@ for (const outcome of ['success', 'handler-error'] as const) {
     const result = await f.run(argv);
     if (outcome === 'success') success(result);
     else {
-      failure(result, 'HANDLER_FAILED');
-      assert.match(result.stderr, /fixture_missing_runners|runners.*view|view.*runners/i);
+      const diagnostic = failure(result, 'HANDLER_FAILED');
+      assert.equal(diagnostic.details.stage, 'handler');
+      assert.equal(diagnostic.details.sourceCode, 'ERR_SQLITE_ERROR');
     }
     assert.equal(reads, 2, 'one completed invocation has exactly one start and end clock read');
     const reopened = openStateStore(path);
@@ -146,7 +147,10 @@ for (const secrets of [{ lockWaitTimeoutMs: 0, pollIntervalMs: 1 }, { lockWaitTi
     const f = await fixture(t);
     const configPath = join(f.conf, 'raf.json');
     writeFileSync(configPath, JSON.stringify({ ...settings, secrets }));
-    await assert.rejects(openSecretsStore({ home: f.home, configPath }), /secrets|lockWaitTimeoutMs|pollIntervalMs/i);
+    const store = await openSecretsStore({ home: f.home, configPath });
+    await assert.rejects(store.merge([
+      { name: 'SYNTHETIC_KEY', kind: 'env', value: secretValue, source: 'synthetic-test', updatedAt: '2026-10-21T10:00:00.000Z' },
+    ]), /secrets|lockWaitTimeoutMs|pollIntervalMs/i);
     assert.ok(!existsSync(join(f.home, '.raf')));
     assert.ok(!existsSync(f.statePath));
     assert.ok(!existsSync(f.target));

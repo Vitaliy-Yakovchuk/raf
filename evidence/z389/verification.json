@@ -1,0 +1,94 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.389",
+  "implementationCommits": [
+    "925a07f264bf82ded82c94e83aef85dfdb0df742",
+    "205d200fe11ff102160642552f4660b864b3b8ba",
+    "31b2cf8c0daa63e46d9f8b948bfdc53185df0f65"
+  ],
+  "behavior": [
+    "prepareReport evaluates workspace trust before reported-commit baseline capture.",
+    "Denied launches carry empty repository scope and a durable denied marker; worker validates marker consistency.",
+    "Worker refuses denied launch at trust prompt/readiness before commit-contract verification and brief delivery.",
+    "Sandbox setup errors on denied launches yield RUNNER_WORKSPACE_UNTRUSTED before runner startup; trusted launches retain original setup failures."
+  ],
+  "testsChangedByThisAgent": false,
+  "staticChecks": [
+    {
+      "command": "node --check src/production-runtime.ts",
+      "cliExitCode": 0
+    },
+    {
+      "command": "node --check src/session-state.ts",
+      "cliExitCode": 0
+    },
+    {
+      "command": "node scripts/check-comments.ts",
+      "cliExitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "cliExitCode": 0
+    }
+  ],
+  "unitChannel": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/da436d08-f31a-4a9d-b338-22d8a8c31089/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/z389-trust-order --files test/workspace-trust.test.ts",
+    "result": "run-1-result.json",
+    "toolResult": "run-1-tool.json",
+    "cliMetadata": "run-1-cli.json",
+    "stderr": "run-1-stderr.txt",
+    "runId": "526148d9-ff47-4ec8-91ea-3902a78d7fea",
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "knownRedCount": 46,
+    "unexecutedCount": 0,
+    "unknownCount": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "limitation": "Main confirmed production/tmux tests cannot execute through this Codex sandbox channel. No later channel green is claimed; the same aggregate/HOME was not reset. Main accepted the separate clean-clone evidence."
+  },
+  "acceptedVerification": {
+    "source": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/z389-clean-205d200.log",
+    "snapshot": "main-clean-205d200.log",
+    "sha256": "f0885185c5d0e8d7dde45a871f6111ce4a51431f87888cc715cc241f0d4c6aee",
+    "testedHead": "205d200fe11ff102160642552f4660b864b3b8ba",
+    "workspace": "clean clone, reported by main",
+    "selection": {
+      "files": [
+        "test/workspace-trust.test.ts"
+      ],
+      "testIds": []
+    },
+    "passed": 46,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMs": 224118.05945,
+    "command": null,
+    "cliExitCode": null,
+    "runId": null,
+    "cleanup": null,
+    "timedOut": null,
+    "limitation": "Plain Node test reporter evidence, not TestRunResult. Main explicitly authorized assignment acceptance using this clean-clone log; full channel aggregate remains separately recorded.",
+    "runtimeEquivalentCommit": "31b2cf8c0daa63e46d9f8b948bfdc53185df0f65"
+  },
+  "relatedWork": [
+    {
+      "item": "Z.389.1",
+      "ownership": "separate test-scaffold agent",
+      "commit": "ae75997683f1e4a8e47347161debbfd26fda10ae",
+      "reason": "Deterministic resource snapshot; preceding clean clone failed all 46 at load admission."
+    },
+    {
+      "item": "Z.390",
+      "ownership": "main assigned separately",
+      "reason": "Unix probe socket paths of 107/spec versus 109/design bytes exceeded Linux sun_path capacity for design. This assignment retains trust refusal; it does not change probe socket paths."
+    }
+  ],
+  "completion": "Other tasks remain open; raf owns Z.389 checkbox; no archive performed."
+}

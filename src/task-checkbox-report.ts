@@ -1,5 +1,5 @@
 import { constants } from 'node:fs';
-import { lstat, realpath, open, readFile, writeFile, mkdtemp, rm } from 'node:fs/promises';
+import { lstat, realpath, open, readFile, writeFile, mkdtemp, rm, copyFile, rename } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join, relative, sep } from 'node:path';
 import { validAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
@@ -167,6 +167,44 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
         await ports.waitForIndex();
       }
     };
+    const withIndexLock = async (update: (env: Readonly<Record<string, string>>) => Promise<boolean>) => {
+      let handle: Awaited<ReturnType<typeof open>>;
+      for (;;) {
+        try { handle = await open(`${indexPath}.lock`, 'wx', 0o600); break; }
+        catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+          await waitIndex();
+        }
+      }
+      let published = false;
+      try {
+        const sharedIndex = join(scratch!, 'shared-index');
+        await copyFile(indexPath, sharedIndex);
+        if (!await update({ GIT_INDEX_FILE: sharedIndex })) return false;
+        await handle.writeFile(await readFile(sharedIndex));
+        await handle.sync();
+        await handle.close();
+        await rename(`${indexPath}.lock`, indexPath);
+        published = true;
+        return true;
+      } finally {
+        await handle.close();
+        if (!published) await rm(`${indexPath}.lock`);
+      }
+    };
+    const stageCheckbox = async (env: Readonly<Record<string, string>>, pathspec: string, item: string, description: string, originalLine: string) => {
+      const content = await git(['show', `:${pathspec}`], env);
+      const row = lineFor(content, item, description);
+      if (row[0] === checked(originalLine)) return;
+      if (row[0] !== originalLine) throw new Error('Task row conflict while updating shared index');
+      const entry = (await git(['ls-files', '--stage', '--', pathspec], env)).trim();
+      const mode = entry.split(' ')[0];
+      if (!['100644', '100755'].includes(mode)) throw new Error('Tasks index entry is not a regular tracked file');
+      const blobFile = join(scratch!, 'staged-tasks');
+      await writeFile(blobFile, content.slice(0, row.index!) + checked(row[0]) + content.slice(row.index! + row[0].length));
+      const blob = (await git(['hash-object', '-w', blobFile])).trim();
+      await git(['update-index', '--cacheinfo', mode, blob, pathspec], env);
+    };
     for (const change of request.assignment.changes) {
       const path = join(root, 'openspec', 'changes', change.id, 'tasks.md');
       try { await sourcePath(path); }
@@ -200,6 +238,10 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
           if (workLine[0] !== headLine[0] || (indexLine[0] !== headLine[0] && !(operation && indexLine[0] === operation.originalLine))) throw new Error('Committed task row differs from index or worktree');
           if (operation?.sha) {
             await verifyCommit(operation, pathspec, item.description);
+            await withIndexLock(async env => {
+              await stageCheckbox(env, pathspec, item.id, item.description, operation!.originalLine);
+              return true;
+            });
             commits.push({ ...current, sha: operation.sha });
           } else if (operation) {
             const history = (await git(['log', '--format=%H', `--fixed-strings`, `--grep=raf checkbox ${request.runId} ${change.id}:${item.id}`, '--', pathspec])).trim().split('\n').filter(Boolean);
@@ -207,6 +249,10 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
             operation = { ...operation, sha: history[0], phase: 'committed' };
             await verifyCommit(operation, pathspec, item.description);
             await save(operation);
+            await withIndexLock(async env => {
+              await stageCheckbox(env, pathspec, item.id, item.description, operation!.originalLine);
+              return true;
+            });
             commits.push({ ...current, sha: history[0] });
           }
           continue;
@@ -256,19 +302,25 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
           const tree = (await git(['write-tree'], env)).trim();
           const sha = (await git(['commit-tree', tree, '-p', commitParent, '-m', `raf checkbox ${request.runId} ${change.id}:${item.id}`])).trim();
           await checkpoint('before-ref-update', current);
-          await waitIndex();
-          await sourcePath(path);
-          const recheck = lineFor(await readFile(path, 'utf8'), item.id, item.description);
-          if (recheck[0] !== checked(headLine[0])) throw new Error('Task changed before commit');
-          if (await git(['show', `:${pathspec}`]) !== staged) throw new Error('Index changed before commit');
-          const latestParent = (await git(['rev-parse', 'HEAD'])).trim();
-          if (latestParent !== commitParent) { commitParent = latestParent; commitHead = await git(['show', `${commitParent}:${pathspec}`]); continue; }
-          try { await git(['update-ref', 'HEAD', sha, commitParent]); }
+          let committed: boolean;
+          try {
+            committed = await withIndexLock(async indexEnv => {
+              await sourcePath(path);
+              const recheck = lineFor(await readFile(path, 'utf8'), item.id, item.description);
+              if (recheck[0] !== checked(headLine[0])) throw new Error('Task changed before commit');
+              if (await git(['show', `:${pathspec}`], indexEnv) !== staged) throw new Error('Index changed before commit');
+              if ((await git(['rev-parse', 'HEAD'])).trim() !== commitParent) return false;
+              await stageCheckbox(indexEnv, pathspec, item.id, item.description, headLine[0]);
+              await git(['update-ref', 'HEAD', sha, commitParent]);
+              return true;
+            });
+          }
           catch (error) {
             const moved = (await git(['rev-parse', 'HEAD'])).trim();
-            if (moved === commitParent) throw error;
+            if (moved === commitParent || moved === sha) throw error;
             commitParent = moved; commitHead = await git(['show', `${commitParent}:${pathspec}`]); continue;
           }
+          if (!committed) { commitParent = (await git(['rev-parse', 'HEAD'])).trim(); commitHead = await git(['show', `${commitParent}:${pathspec}`]); continue; }
           operation = { ...operation, sha, phase: 'committed' };
           await save(operation);
           commits.push({ ...current, sha });

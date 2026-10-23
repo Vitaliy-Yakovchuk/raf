@@ -41,10 +41,12 @@ export async function eventually<T>(read: () => Promise<T> | T, predicate: (valu
   assert.fail(`${description}: ${JSON.stringify(last)}`);
 }
 
-export async function fixture(t: TestContext, options: { productionQa?: boolean } = {}) {
-  const root = await mkdtemp(join(tmpdir(), 'raf-prod-'));
+export async function fixture(t: TestContext, options: { productionQa?: boolean; externalHome?: boolean } = {}) {
+  const base = await mkdtemp(join(tmpdir(), 'raf-prod-'));
+  const root = options.externalHome ? join(base, 'orchestrator') : base;
+  if (options.externalHome) await mkdir(root);
   const confRoot = join(root, 'conf');
-  const home = join(root, 'home');
+  const home = join(options.externalHome ? base : root, 'home');
   const tmpRoot = options.productionQa ? join(home, '.raf', 'tmp') : join(root, 'tmp');
   const cwd = join(root, 'raf-develop');
   const statePath = join(home, '.raf', 'isolated.sqlite');
@@ -96,7 +98,7 @@ process.exit(result.status ?? 1);
         }
       }, exited => exited, `owned process ${pid} exited before fixture removal`)));
     } finally { store.close(); }
-    await rm(root, { recursive: true, force: true });
+    await rm(base, { recursive: true, force: true });
   });
   const git = spawnSync('git', ['init', '--quiet', '--initial-branch=develop', cwd], { encoding: 'utf8' });
   assert.equal(git.status, 0, git.stderr);

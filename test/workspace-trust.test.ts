@@ -123,9 +123,13 @@ setTimeout(() => process.exit(91), 20000);
 `;
 
 async function trustFixture(t: TestContext, runner: Runner, placement: Placement, sticky = false, rootTask?: 'spec' | 'design') {
-  const f = await fixture(t, { productionQa: true });
+  const f = await fixture(t, { productionQa: true, externalHome: rootTask !== undefined });
   const parameters = rootTask ? { ...f.params, type: rootTask, phase: rootTask, project: 'orchestrator' } : f.params;
   if (rootTask) {
+    assert.equal(dirname(f.home), dirname(f.root), 'root trust fixtures require sibling HOME and Orchestrator directories');
+    assert.notEqual(f.home, f.root);
+    assert.equal(f.statePath, join(f.home, '.raf', 'isolated.sqlite'));
+    assert.equal(f.tmpRoot, join(f.home, '.raf', 'tmp'));
     const initialized = spawnSync('git', ['init', '--quiet', '--initial-branch=main', f.root], { encoding: 'utf8' });
     assert.ifError(initialized.error);
     assert.equal(initialized.status, 0, initialized.stderr);

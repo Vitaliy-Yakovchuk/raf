@@ -21,7 +21,14 @@ export interface ResourceReservation {
   diskBytes: Record<string, number>;
 }
 
+export interface ResourceAdmissionEstimate {
+  status: 'KNOWN' | 'UNKNOWN';
+  sources: string[];
+  reason: string | null;
+}
+
 export interface ResourceAdmissionInput {
+  estimate?: ResourceAdmissionEstimate;
   measurement: ResourceMeasurement;
   requested: ResourceReservation;
   unusedReservations: ResourceReservation[];
@@ -29,6 +36,7 @@ export interface ResourceAdmissionInput {
 }
 
 export interface ResourceAdmission {
+  estimate?: ResourceAdmissionEstimate;
   level: 'ANY_RUN' | 'HOTFIX_ONLY' | 'NO_RESOURCES' | 'UNKNOWN';
   allowed: { normal: boolean; hotfix: boolean };
   reasons: string[];
@@ -39,9 +47,10 @@ export interface ResourceAdmission {
 export function evaluateResourceAdmission(input: ResourceAdmissionInput): ResourceAdmission {
   const policy = loadFlowPolicy().resources;
   const { measurement, requested, unusedReservations, requiredFileSystemIds } = input;
+  const estimate = input.estimate ? { estimate: structuredClone(input.estimate) } : {};
   const reasons: string[] = [];
   const validNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0;
-  const unknown = (): ResourceAdmission => ({ level: 'UNKNOWN', allowed: { normal: false, hotfix: false }, reasons, measurement, remaining: null });
+  const unknown = (): ResourceAdmission => ({ ...estimate, level: 'UNKNOWN', allowed: { normal: false, hotfix: false }, reasons, measurement, remaining: null });
   if (!measurement || typeof measurement.machineId !== 'string' || !measurement.machineId.trim()) reasons.push('Missing machine identity');
   if (!validNumber(measurement?.loadAverage1m)) reasons.push('Invalid load average');
   if (!validNumber(measurement?.availableCores) || measurement.availableCores <= 0) reasons.push('Invalid available cores');
@@ -86,7 +95,7 @@ export function evaluateResourceAdmission(input: ResourceAdmissionInput): Resour
   }
   const remaining = { ramBytes, diskBytes, normalizedLoad };
   if (measurement.memoryPressure === 'critical') {
-    return { level: 'NO_RESOURCES', allowed: { normal: false, hotfix: false }, reasons: ['Critical memory pressure'], measurement, remaining };
+    return { ...estimate, level: 'NO_RESOURCES', allowed: { normal: false, hotfix: false }, reasons: ['Critical memory pressure'], measurement, remaining };
   }
   const failures = (label: string, thresholds: ResourceThresholds) => {
     const result: string[] = [];
@@ -100,7 +109,7 @@ export function evaluateResourceAdmission(input: ResourceAdmissionInput): Resour
   const normal = failures('normal', policy.normal);
   const hotfix = failures('hotfix', policy.hotfix);
   return {
-    level: normal.length === 0 ? 'ANY_RUN' : hotfix.length === 0 ? 'HOTFIX_ONLY' : 'NO_RESOURCES',
+    ...estimate, level: normal.length === 0 ? 'ANY_RUN' : hotfix.length === 0 ? 'HOTFIX_ONLY' : 'NO_RESOURCES',
     allowed: { normal: normal.length === 0, hotfix: hotfix.length === 0 },
     reasons: normal.length === 0 ? ['All normal resource thresholds satisfied after reservations'] : [...normal, ...hotfix],
     measurement, remaining,

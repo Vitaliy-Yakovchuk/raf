@@ -1,4 +1,4 @@
-import type { ResourceAdmission, ResourceAdmissionInput, ResourceMeasurement, ResourceReservation } from './resource-admission.ts';
+import type { ResourceAdmission, ResourceAdmissionEstimate, ResourceAdmissionInput, ResourceMeasurement, ResourceReservation } from './resource-admission.ts';
 import type { PendingIntent, ProcessIdentity, SessionActivity, SessionLaunchContext, SessionRecord, SessionRepository, SessionTransaction } from './session-state.ts';
 
 export type LaunchMeasurement = {
@@ -14,6 +14,7 @@ export type ReserveLaunchRequest = {
   resource: string;
   amount: number;
   requested: ResourceReservation;
+  estimate?: ResourceAdmissionEstimate;
   requiredFileSystemIds: string[];
   mode: 'normal' | 'hotfix';
 };
@@ -37,7 +38,7 @@ export interface LaunchState {
 
 export function evaluateLaunchAdmissionInTransaction(
   tx: Pick<SessionTransaction, 'listReservations' | 'getSession'>,
-  request: Pick<ReserveLaunchRequest, 'requested' | 'requiredFileSystemIds'>,
+  request: Pick<ReserveLaunchRequest, 'requested' | 'requiredFileSystemIds' | 'estimate'>,
   measured: LaunchMeasurement,
   evaluateAdmission: LaunchStateDependencies['evaluateAdmission'],
 ): ResourceAdmission {
@@ -54,6 +55,7 @@ export function evaluateLaunchAdmissionInTransaction(
   for (const reservation of tx.listReservations()) {
     if (!reservation.resourceBundle || !reservation.resourceBundle.machineId) {
       return {
+        ...(request.estimate ? { estimate: copy(request.estimate) } : {}),
         level: 'UNKNOWN', allowed: { normal: false, hotfix: false },
         reasons: ['Existing reservation has no resource bundle or machine identity'],
         measurement: measured.measurement, remaining: null,
@@ -68,6 +70,7 @@ export function evaluateLaunchAdmissionInTransaction(
   return evaluateAdmission({
     measurement: measured.measurement,
     requested: copy(request.requested), unusedReservations,
+    ...(request.estimate ? { estimate: copy(request.estimate) } : {}),
     requiredFileSystemIds: copy(request.requiredFileSystemIds),
   });
 }

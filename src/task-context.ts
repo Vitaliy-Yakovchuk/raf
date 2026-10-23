@@ -1,3 +1,4 @@
+import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { startupContextAssessmentSchema } from './startup-context.ts';
 import { reportedCommitsSchema } from './reported-commits.ts';
 import { createHash } from 'node:crypto';
@@ -19,6 +20,7 @@ export interface TaskContextConfiguration {
   readonly projects: WorkspaceProjectsConfig;
   readonly reportStatuses: readonly { readonly id: string }[];
   readonly resources: unknown;
+  readonly resourceEstimates?: unknown;
 }
 
 export interface TaskContextRequest {
@@ -71,11 +73,13 @@ export interface KnownTaskResourceEstimate {
   readonly ramBytes: number;
   readonly diskBytesPerFileSystem: number;
   readonly source: string;
+  readonly sources: readonly string[];
 }
 
 export interface UnknownTaskResourceEstimate {
   readonly status: 'UNKNOWN';
   readonly reason: string;
+  readonly confPointer?: string;
 }
 
 export type TaskResourceEstimate = KnownTaskResourceEstimate | UnknownTaskResourceEstimate;
@@ -144,7 +148,7 @@ export async function loadTaskContextConfiguration(confRoot: string): Promise<Ta
   const [projects, constants, flow] = await Promise.all([readJson(join(confRoot, 'projects.json')), readJson(join(confRoot, 'raf-constants.json')), readJson(join(confRoot, 'flow.json'), true)]);
   if (!record(projects) || !record(projects.projects)) return contextFailure('CONFIGURATION_INVALID', 'conf/projects.json#/projects має бути об’єктом');
   if (!record(constants) || !Array.isArray(constants.reportStatuses) || !constants.reportStatuses.length || !constants.reportStatuses.every(row => record(row) && typeof row.id === 'string' && row.id)) return contextFailure('CONFIGURATION_INVALID', 'conf/raf-constants.json#/reportStatuses має містити статуси з id');
-  return { projects: projects as unknown as WorkspaceProjectsConfig, reportStatuses: constants.reportStatuses as { id: string }[], resources: record(flow) ? flow.resources : undefined };
+  return { projects: projects as unknown as WorkspaceProjectsConfig, reportStatuses: constants.reportStatuses as { id: string }[], resources: record(flow) ? flow.resources : undefined, resourceEstimates: record(flow) ? flow.resourceEstimates : undefined };
 }
 
 function branchFor(parameters: RuntimeRunParameters, projects: WorkspaceProjectsConfig): string {
@@ -213,18 +217,14 @@ async function deriveSources(root: string, selected: readonly { change: string; 
   return lines;
 }
 
-function deriveEstimate(type: string, resources: unknown): TaskResourceEstimate {
-  const tier: TaskResourceTier = type === 'hotfix' ? 'hotfix' : 'normal';
-  const pointer = `conf/flow.json#/resources/${tier}`;
-  const unknown = (path: string): TaskResourceEstimate => ({ status: 'UNKNOWN', reason: `оцінка резерву не налаштована: ${path} має бути додатним цілим числом байтів` });
-  if (!record(resources)) return unknown('conf/flow.json#/resources');
-  const level = resources[tier];
-  if (!record(level)) return unknown(pointer);
-  for (const key of ['minRamBytes', 'minDiskBytes']) {
-    const value = level[key];
-    if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0) return unknown(`${pointer}/${key}`);
-  }
-  return { status: 'KNOWN', tier, ramBytes: level.minRamBytes as number, diskBytesPerFileSystem: level.minDiskBytes as number, source: pointer };
+function deriveEstimate(parameters: RuntimeRunParameters, selected: readonly { change: string; item: { id: string } }[], configuration: TaskContextConfiguration): TaskResourceEstimate {
+  const tier: TaskResourceTier = parameters.type === 'hotfix' ? 'hotfix' : 'normal';
+  const result = resolveAgentResourceEstimate({
+    flow: { resourceEstimates: configuration.resourceEstimates }, type: parameters.type, project: parameters.project,
+    tasks: selected.map(({ change, item }) => ({ project: parameters.project, change, item: item.id })), fileSystemIds: ['estimate'],
+  });
+  if (result.status === 'UNKNOWN') return { status: 'UNKNOWN', reason: result.reason, confPointer: result.confPointer };
+  return { status: 'KNOWN', tier, ramBytes: result.reservation.ramBytes, diskBytesPerFileSystem: result.reservation.diskBytes.estimate, source: result.sources[0], sources: result.sources };
 }
 
 function reportSchema(statuses: readonly { readonly id: string }[]): TaskReportSchema {
@@ -249,7 +249,7 @@ export async function deriveTaskContext(request: TaskContextRequest): Promise<De
     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
     sources: await deriveSources(root, selected),
     reportSchema: reportSchema(configuration.reportStatuses),
-    estimate: deriveEstimate(parameters.type, configuration.resources),
+    estimate: deriveEstimate(parameters, selected, configuration),
   };
 }
 

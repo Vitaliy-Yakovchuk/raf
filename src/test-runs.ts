@@ -2,7 +2,7 @@ import { resourceEstimateInvalidPointer, type ResourceEstimateValues } from './r
 import { TestRunDiagnostics, diagnosticConfigurationFailure, rejectTestRunConfiguration, validateDiagnosticLimits, validateRunTemporaryConfiguration } from './test-run-diagnostics.ts';
 import type { DiagnosticLimits, DiagnosticAttachment, InlineDiagnostic, DiagnosticEnvironmentSummary, RunTemporaryConfiguration, RunTemporaryReservation } from './test-run-diagnostics.ts';
 import { parseCommandArguments } from './cli-arguments.ts';
-import { isAbsolute, resolve, sep } from 'node:path';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
 
 export type TestRunOutcome = 'passed' | 'assertions-failed' | 'setup-failed' | 'timed-out' | 'interrupted' | 'refused' | 'unverified-remainder';
 export type TestRunFailureKind = 'refusal' | 'setup' | 'assertions' | 'timeout' | 'interruption';
@@ -41,8 +41,8 @@ export interface TestRunProfile {
   executable: string;
   argv: string[];
   unitFiles: string[];
-  exactIds: 'node-test-name' | null;
-  resultAdapter: 'node-test-events';
+  exactIds: 'node-test-name' | 'vitest-test-name' | null;
+  resultAdapter: 'node-test-events' | 'vitest-events';
   environment: { isolatedHome: boolean; stateOrigin: boolean };
   checks: string[];
 }
@@ -102,7 +102,7 @@ export interface TestRunCommand {
   argv: string[];
   cwd: string;
   shell: false;
-  environment: { HOME: string; statePath: string; tmpPath: string; testIds?: TestId[]; TMPDIR?: string };
+  environment: { HOME: string; statePath: string; tmpPath: string; testIds?: TestId[]; TMPDIR?: string; vitestBatches?: TestRunCommand[] };
 }
 
 export interface TestRunPlan {
@@ -117,7 +117,8 @@ export type RunnerEvent =
   | { kind: 'discovered'; test: TestId; parent?: TestId }
   | { kind: 'container-complete'; test: TestId }
   | { kind: 'passed' | 'assertion-failed' | 'setup-failed'; test: TestId; diagnostic?: string; inlineDiagnostic?: InlineDiagnostic }
-  | { kind: 'complete'; expected: TestId[] }
+  | { kind: 'complete'; expected: TestId[]; adapter?: 'vitest-events' }
+  | { kind: 'file-setup-failed'; inlineDiagnostic?: InlineDiagnostic }
   | { kind: 'protocol-error'; diagnostic: string };
 
 export interface ChildExit {
@@ -260,7 +261,8 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
   for (const [projectId, project] of Object.entries(config.projects)) {
     if (!record(project) || !record(project.profiles) || !Object.keys(project.profiles).length || !record(project.groups)) invalid(`projects/${projectId}`);
     for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) {
-      if (!record(profile) || Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'exactIds', 'resultAdapter', 'environment', 'checks', 'resourceEstimate'].includes(key)) || !text(profile.cwd) || (profile.cwd !== '.' && !safeFile(profile.cwd)) || !text(profile.executable) || !strings(profile.argv) || !strings(profile.unitFiles) || !profile.unitFiles.length || profile.unitFiles.some((f: string) => !safeFile(f)) || new Set(profile.unitFiles).size !== profile.unitFiles.length || !['node-test-name', null].includes(profile.exactIds) || profile.resultAdapter !== 'node-test-events' || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) invalid(`projects/${projectId}/profiles/${id}`);
+      if (!record(profile) || Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'exactIds', 'resultAdapter', 'environment', 'checks', 'resourceEstimate'].includes(key)) || !text(profile.cwd) || (profile.cwd !== '.' && !safeFile(profile.cwd)) || !text(profile.executable) || !strings(profile.argv) || !strings(profile.unitFiles) || !profile.unitFiles.length || profile.unitFiles.some((f: string) => !safeFile(f)) || new Set(profile.unitFiles).size !== profile.unitFiles.length || !['node-test-name', 'vitest-test-name', null].includes(profile.exactIds) || !['node-test-events', 'vitest-events'].includes(profile.resultAdapter) || (profile.resultAdapter === 'vitest-events') !== (profile.exactIds === 'vitest-test-name') || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) invalid(`projects/${projectId}/profiles/${id}`);
+      if (profile.resultAdapter === 'vitest-events' && (profile.executable !== 'node' && !/\/node$/.test(profile.executable) || !profile.argv.includes('run') || profile.argv.includes('--passWithNoTests'))) invalid(`projects/${projectId}/profiles/${id}/command`);
       if (Object.hasOwn(profile, 'resourceEstimate')) {
         const problem = resourceEstimateInvalidPointer(profile.resourceEstimate, `conf/test-runs.json#/projects/${projectId.replaceAll('~', '~0').replaceAll('/', '~1')}/profiles/${id.replaceAll('~', '~0').replaceAll('/', '~1')}/resourceEstimate`);
         if (problem) invalid(problem);
@@ -289,6 +291,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   if (request.files?.length === 0 || request.only?.length === 0) failure('EMPTY_SELECTION');
   if (request.only?.some(id => !record(id) || !safeFile(id.file) || !text(id.name))) failure('INVALID_TEST_ID');
   const preset = project.groups[request.group] ?? project.groups[request.group.slice(request.group.indexOf('/') + 1)];
+  if (request.project === 'etchly' && !project.groups[request.group]) failure('CALLER_UNAUTHORIZED', `Group ${request.group} is not configured`);
   const files = [...new Set(request.files ?? request.only?.map(id => id.file) ?? preset?.files ?? [])];
   if (!files.length) failure('EMPTY_SELECTION');
   if (files.some(file => !safeFile(file))) failure('UNSAFE_SELECTION');
@@ -299,6 +302,9 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
     const pointers = Object.entries(project.profiles).filter(([, profile]) => profile.unitFiles.some(file => missing.includes(file)) || unexpected.length).map(([id]) => `conf/test-runs.json#/projects/${request.project}/profiles/${id}/unitFiles`);
     failure('INVENTORY_INCOMPLETE', `Unit inventory differs; missing: ${missing.join(', ') || 'none'}; unexpected: ${unexpected.join(', ') || 'none'}. Reconcile ${pointers.join(', ')} and conf/test-runs.json#/projects/${request.project}/groups with the intended unit files: restore missing files or remove stale entries; explicitly register intended new files. No automatic discovery or inventory edits were performed.`);
   }
+  if (!request.only && configuredInventory.length === files.length && configuredInventory.every(file => files.includes(file))) failure('FULL_SUITE_REFUSED');
+  for (const file of files) if (!configuredInventory.includes(file) || env.files[file]?.unit === false) failure('UNSAFE_SELECTION', `Non-unit file ${file}: excluded by unit include/classification; reconcile conf/test-runs.json#/projects/${request.project}/profiles`);
+  if (request.project === 'etchly' && files.some(file => !preset!.files.includes(file))) failure('CALLER_UNAUTHORIZED', `Selection is outside configured group ${request.group}: ${files.join(', ')}`);
   const profiles = Object.entries(project.profiles).filter(([, profile]) => files.every(file => profile.unitFiles.includes(file)));
   if (profiles.length !== 1) failure('PROFILE_AMBIGUOUS', 'Selection must belong to one configured profile');
   const [profileId, profile] = profiles[0];
@@ -306,19 +312,23 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   const cwd = resolve(context.workspace, profile.cwd);
   if (!inside(cwd, context.workspace)) failure('WORKSPACE_MISMATCH');
   if (profile.environment.isolatedHome && (!env.isolatedHome || context.home === context.operationalHome) || profile.environment.stateOrigin && !env.stateOriginAllowed) failure('STATE_CONTEXT_REFUSED');
-  const inventory = [...new Set(Object.values(project.profiles).flatMap(p => p.unitFiles.map(f => resolve(context.workspace, p.cwd, f))))];
-  const selected = files.map(f => resolve(cwd, f));
+  const inventory = [...new Set(Object.values(project.profiles).flatMap(p => p.unitFiles.map(f => resolve(context.workspace, f))))];
+  const selected = files.map(f => resolve(context.workspace, f));
   if (!request.only && inventory.length === selected.length && inventory.every(f => selected.includes(f))) failure('FULL_SUITE_REFUSED');
   for (const file of files) {
     const fact = env.files[file];
-    if (!fact || fact.kind !== 'file' || !fact.unit || !env.unitFiles.includes(file) || !inside(fact.realpath, cwd) || fact.realpath !== resolve(cwd, file)) failure('UNSAFE_SELECTION', file);
+    if (!fact || fact.kind !== 'file' || !fact.unit || !env.unitFiles.includes(file) || !inside(fact.realpath, cwd) || fact.realpath !== resolve(context.workspace, file)) failure('UNSAFE_SELECTION', `File ${file}: directory or symlink outside canonical workspace ${context.workspace}`);
   }
   const testIds = uniqueIds(request.only ?? []);
-  if (testIds.length && profile.exactIds !== 'node-test-name') failure('EXACT_IDS_UNSUPPORTED');
+  if (testIds.length && !['node-test-name', 'vitest-test-name'].includes(profile.exactIds ?? '')) failure('EXACT_IDS_UNSUPPORTED');
   const escape = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const argv = [...profile.argv];
-  if (testIds.length) argv.push(`--test-name-pattern=^(?:${testIds.map(id => escape(id.name)).join('|')})$`);
-  argv.push(...files);
+  if (testIds.length && profile.resultAdapter === 'node-test-events') argv.push(`--test-name-pattern=^(?:${testIds.map(id => escape(id.name)).join('|')})$`);
+  if (profile.resultAdapter === 'vitest-events') {
+    const run = argv.indexOf('run');
+    if (run < 0) failure('CONFIGURATION_INVALID', 'Vitest run required');
+    argv.splice(run + 1, 0, ...files.map(file => relative(cwd, resolve(context.workspace, file))));
+  } else argv.push(...files.map(file => relative(cwd, resolve(context.workspace, file))));
   return { request, workspace: context.workspace, profileId, selection: { files, testIds },
     command: { executable: profile.executable, argv, cwd, shell: false, environment: { HOME: context.home, statePath: context.statePath, tmpPath: context.tmpPath, ...(testIds.length ? { testIds } : {}) } } };
 }
@@ -326,13 +336,13 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
 export function classifyRunnerResult(events: readonly RunnerEvent[], exit: ChildExit): RunnerClassification {
   let passed: TestId[] = [], knownRed: TestId[] = [], unknown: TestId[] = [], expected: TestId[] = [];
   const completedContainers: TestId[] = [];
-  let complete = false, setup = false;
+  let complete = false, setup = false, vitest = false;
   for (const event of events) {
     if (event.kind === 'discovered') {
       expected = uniqueIds([...expected, event.test]);
     } else if (event.kind === 'container-complete') completedContainers.push(event.test);
-    else if (event.kind === 'complete') { complete = true; expected = uniqueIds([...expected, ...event.expected]); }
-    else if (event.kind === 'protocol-error') setup = true;
+    else if (event.kind === 'complete') { complete = true; vitest ||= event.adapter === 'vitest-events'; expected = uniqueIds([...expected, ...event.expected]); }
+    else if (event.kind === 'protocol-error' || event.kind === 'file-setup-failed') setup = true;
     else if (event.kind === 'passed') passed.push(event.test);
     else if (event.kind === 'assertion-failed') knownRed.push(event.test);
     else { setup = true; unknown.push(event.test); }
@@ -341,9 +351,9 @@ export function classifyRunnerResult(events: readonly RunnerEvent[], exit: Child
   passed = uniqueIds(passed).filter(id => !containsId(knownRed, id) && !containsId(unknown, id));
   unknown = uniqueIds(unknown);
   const unexecuted = expected.filter(id => !containsId([...passed, ...knownRed, ...unknown, ...completedContainers], id));
-  if (!complete || !expected.length || unexecuted.length || exit.exitCode !== 0 && !knownRed.length || exit.signal) setup = true;
+  if (!complete || !expected.length || unexecuted.length && !vitest || exit.exitCode !== 0 && !knownRed.length || exit.signal) setup = true;
   const failureKinds: TestRunFailureKind[] = [...(setup ? ['setup' as const] : []), ...(knownRed.length ? ['assertions' as const] : [])];
-  return { outcome: setup ? 'setup-failed' : knownRed.length ? 'assertions-failed' : 'passed', failureKinds, passed, knownRed, unexecuted, unknown };
+  return { outcome: setup ? 'setup-failed' : knownRed.length ? 'assertions-failed' : unexecuted.length ? 'unverified-remainder' : 'passed', failureKinds, passed, knownRed, unexecuted, unknown };
 }
 
 function unavailableEnvironment(context: TestRunContext): DiagnosticEnvironmentSummary {

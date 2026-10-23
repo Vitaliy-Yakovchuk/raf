@@ -196,6 +196,7 @@ export class TestRunDiagnostics {
     s = s.replace(/-----BEGIN [^-]*PRIVATE KEY-----[\s\S]*?(?:-----END [^-]*PRIVATE KEY-----|$)/g, '<redacted>');
     s = s.replace(/\b(cookie|set-cookie)\s*[:=][^\r\n]*/gi, '$1: <redacted>');
     s = s.replace(/\b(authorization|cookie|set-cookie|password|passwd|token|api[_-]?key|secret)\b(\s*[:=]\s*)(?:Bearer\s+)?[^\s,;]+/gi, '$1$2<redacted>');
+    s = s.replace(/\b(?:sk-(?:proj-|svcacct-)?|gh[pousr]_)[A-Za-z0-9_-]+/g, '<redacted>');
     for (const pattern of this.limits.redactionPatterns) s = s.replace(new RegExp(pattern, 'gu'), '<redacted>');
     let redacted = s !== value;
     s = s.replace(/https?:\/\/[^\s<>"']+|(?<![\w./<>-])(?:file:\/\/)?\/[^\s():<>"']+/g, value => {

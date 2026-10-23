@@ -115,7 +115,7 @@ export async function runSandboxTestCommand(
     const code = await runTestRunCli(argv.slice(2), { ...unit, context: { ...unit.context, agentId: assignment.agentId }, stdout: value => { stdout += value; }, stderr: value => { stderr += value; } });
     return { code, stdout, stderr };
   } catch (error) {
-    return { code: 1, stdout: '', stderr: `Sandbox raf command refused: ${error instanceof Error ? error.message : String(error)}; use agent message to main with the exact command; raf was not retried\n` };
+    return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${error instanceof Error ? error.message : String(error)}; use agent message to main with the exact command; raf was not retried\n` };
   }
 }
 

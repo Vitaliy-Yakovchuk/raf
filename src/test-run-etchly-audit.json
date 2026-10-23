@@ -1,0 +1,214 @@
+{
+  "sourceHashes": {
+    "package.json": "c688abefa18e4fe237818db9401affc13117926276a8c3654ed90751c5375b10",
+    "vitest.config.ts": "f6520abc2d5a3862853ba7d940af8126fd7b878380ccc1dd57f822ad06eeac65",
+    "app/vitest.config.ts": "5535fb7bb99d08daf1009bfaeadaaa3073ebf244e451b5e5d3949c9cbab8c088",
+    "worker/vitest.config.ts": "366ff16dedad7fcd23b5d6b8ff45976c093d157fd5c6ebe2239ba5c8b6868518",
+    "shared/assessment/vitest.config.ts": "054507a5634cc9ae50a46a49c15d7da0333049ea52d2ba904e5310700281e7a4",
+    "shared/domain/vitest.config.ts": "d80ef6348f433ca937b5521916d8ef9b7684757ad456c4bc3b020b24bf44a6b7",
+    "shared/i18n/vitest.config.ts": "2478c8ae4647657cdd6758d77798147e205d640c738dbd65254693cf2b6d99d3",
+    "shared/markdown/vitest.config.ts": "95b38705070ccaffd256e25efd471cc5389d2396a7456600446d6d9ffeeef02e",
+    "shared/ui-core/vitest.config.ts": "f138047101f9f8aae42025506c04491d27c64e0e76acd09444f96234c24683f5",
+    "test-support/vitest-project-files.ts": "1fcdd85cbaaff718056142161cb88dd2c7328f4d279e9a30471ee3bfa455c2c9",
+    "test-support/file-budget-runner.ts": "0bb55bea645c4290ae2a5eff104f40cdc9fa289fbe47e15a0b9d581530f3868d",
+    "scripts/shared-library-runtime.mjs": "eb907e3bdafe3cc6f5a2c34499e51cb48d7db14f11246dc6c96ee6d9e99f23d1",
+    "scripts/shared-library-aliases.ts": "372e98aa4471009720c7eeb05a8e264a94bd0303e3a468bfdcc8f03aa23e23cb",
+    "scripts/shared-libs-path.mjs": "2b67a7482c613ae710f454c5c254c5ee57672ce52872076a9ebcc2fed294ffc3",
+    "app/package.json": "534f6bc0a321fbf2a6fe506dd07d2449f04657dc76c90ee0bf8c55f9886cbf43",
+    "worker/package.json": "733024dd84b77912961851e905623d5a1d7f3d581540606227ce632d54fb1e56"
+  },
+  "nodeDecisions": [
+    {
+      "file": "scripts/critical-path-baseline.test.mjs",
+      "classification": "unit",
+      "reason": "Pure baselineErrors assertions; no process or provider.",
+      "sha256": "aeff4e5b53c09fcf6f50dbc3f889188d56139e31c6248cff2eacb1d30b941c64"
+    },
+    {
+      "file": "scripts/critical-path-ratchet.test.mjs",
+      "classification": "excluded",
+      "reason": "Creates Git repositories and commits through real git processes.",
+      "sha256": "13d9f6219984faefea528fe789edbb63242c72b1fc176619d6fd3e53c5bf2311"
+    },
+    {
+      "file": "scripts/critical-path.test.mjs",
+      "classification": "unit",
+      "reason": "Pure glob/baseline comparison and read-only local registry consistency; no runner invocation.",
+      "sha256": "ff5ca220f7e3499e7517dfc0772ff277415ce127e6a69249fd4dd7eb05a13cce"
+    },
+    {
+      "file": "scripts/dependency-lock.test.mjs",
+      "classification": "excluded",
+      "reason": "Real Git/submodule pin and installed semver/library manifest integration.",
+      "sha256": "1f9ee3dc206409d30982ca33ee9a4296cf9b7a3314f187a866bb1bea7d115c6d"
+    },
+    {
+      "file": "scripts/integ-run.test.mjs",
+      "classification": "excluded",
+      "reason": "Runs Bash/npm/Git orchestration and real fixture repositories.",
+      "sha256": "0a3602d4442ee32577a1ca9d94d471a1bdd79ae3e28b47ae39587214cc17f8ba"
+    },
+    {
+      "file": "scripts/integration-test-groups.test.mjs",
+      "classification": "unit",
+      "reason": "Registry validation and runGroup with injected run; no child runner is executed.",
+      "sha256": "81111c11df89c977068df960049ca01a0c5f1c23d6979b624dc8f388680ebecd"
+    },
+    {
+      "file": "scripts/limits-requirements-openspec.test.mjs",
+      "classification": "excluded",
+      "reason": "Validates real external orchestrator OpenSpec tree, not an isolated parser fixture.",
+      "sha256": "e1b8f54b5d27f285f328fac0c287ddb22490be951c577ab0aa2426fc58de8004"
+    },
+    {
+      "file": "scripts/limits-requirements.test.mjs",
+      "classification": "excluded",
+      "reason": "Mixed parser and real CLI subprocess scenarios; whole file is not unit-only.",
+      "sha256": "c216214997e2cd47fecfd9c7bb1a616e28f3c88822ecca5203e9cd314dea09b8"
+    },
+    {
+      "file": "scripts/live-worker-run.test.mjs",
+      "classification": "excluded",
+      "reason": "Spawns Vitest/live-worker fixtures; lifecycle integration.",
+      "sha256": "45d67e10561ae62c65fc33d9d29364dc07c46e82628203660131889df3a19486"
+    },
+    {
+      "file": "scripts/merge-branch.test.mjs",
+      "classification": "excluded",
+      "reason": "Executes Git/npm/Bash merge gates in real fixture repositories.",
+      "sha256": "b5d8ef74f7554834c6dbfe9c7d9a9721d11b2a45cef13d94f29f5d340f38bff6"
+    },
+    {
+      "file": "scripts/node-digest.test.mjs",
+      "classification": "unit",
+      "reason": "In-process digest/VM byte conversions; no provider or process.",
+      "sha256": "5ec78d5d993621924b1151dc5cc74e1161e0952eeca6136da11a42e83f60b143"
+    },
+    {
+      "file": "scripts/node-runtime.test.mjs",
+      "classification": "unit",
+      "reason": "Read-only local runtime declaration contract.",
+      "sha256": "9cf9612b75cddb1b5fe10caf7572efb033e289d7ca9ba9171789917dd5b9d96f"
+    },
+    {
+      "file": "scripts/orchestrator-paths.test.mjs",
+      "classification": "unit",
+      "reason": "Path resolver on private filesystem fixtures.",
+      "sha256": "807ce2e3444d32895ed91b9251320bd306d296f57b4b211dc03d2e62f37e6229"
+    },
+    {
+      "file": "scripts/qas-matrix.standalone.test.mjs",
+      "classification": "excluded",
+      "reason": "Mixed pure matrix checks and actual published external quality-attribute contract.",
+      "sha256": "433cfbbb5a41b82dd388fd010e81697a843803ab7a6ade0905f6236011f49b55"
+    },
+    {
+      "file": "scripts/quality-boundaries.test.mjs",
+      "classification": "unit",
+      "reason": "Static import boundary analysis on synthetic files/symlinks; no child process.",
+      "sha256": "20fa42085d3216435416944d7cc53e430a201b1f4f4664d8e85d523d848c1cee"
+    },
+    {
+      "file": "scripts/quality-course-cost.test.mjs",
+      "classification": "unit",
+      "reason": "Pure budget/event calculations and synthetic local inputs.",
+      "sha256": "436a624184c4417a5f9e4315b3a087f12698ad695f13b52193a61f8c6fcd98db"
+    },
+    {
+      "file": "scripts/quality-critical.test.mjs",
+      "classification": "excluded",
+      "reason": "Real watchdog/process tree and critical gate execution.",
+      "sha256": "f542444145511cde99cde1842345b5ccf3768f4aa08ccdb9bbcfa469edb688f3"
+    },
+    {
+      "file": "scripts/quality-header-release.test.mjs",
+      "classification": "excluded",
+      "reason": "Real Git release tree assembly and pin comparison.",
+      "sha256": "72c3e6fa1be6dd01684f777172403087a6195dd62de0bd8e8e3d529beaf9ada6"
+    },
+    {
+      "file": "scripts/quality-scenarios.test.mjs",
+      "classification": "excluded",
+      "reason": "Real HTTP/Chromium and CLI lifecycle; browser cache does not make it unit.",
+      "sha256": "580057f194361ffb02f2234d1e8f68ad5599413c3d85ac86345a7f8facfb2e58"
+    },
+    {
+      "file": "scripts/quality-size-free.test.mjs",
+      "classification": "excluded",
+      "reason": "Executes gate CLI subprocesses.",
+      "sha256": "63586c6d6e67368a7785645ca1c358d6309b41b5e48cf0c834d5f0c3dd7cbe84"
+    },
+    {
+      "file": "scripts/reconcile-window.test.mjs",
+      "classification": "excluded",
+      "reason": "Evaluates real multi-workspace Vitest configs and imported runtime dependencies.",
+      "sha256": "aacdc8a718926a508042f1077939a72486f9f1eeb40674f8987f549febc49d82"
+    },
+    {
+      "file": "scripts/security-guards-budget.test.mjs",
+      "classification": "excluded",
+      "reason": "Real Bash/Python/detached descendant metering and cleanup.",
+      "sha256": "0ec2166d9d224da3bd0b6bd48091ab81a4f0e5d44422c147839b70045ea5284a"
+    },
+    {
+      "file": "scripts/shared-file-dependencies.standalone.test.mjs",
+      "classification": "excluded",
+      "reason": "Physical shared-library resolution/import against installed dependency tree.",
+      "sha256": "cf9e5dac50b752a13fc887b6804f809bd1d7ca2fa0c0f846550448f1d4be0c8f"
+    },
+    {
+      "file": "scripts/shared-library-roots.test.mjs",
+      "classification": "excluded",
+      "reason": "sharedLibsFixture starts real Git processes and copies library catalog.",
+      "sha256": "354238a86af343c3798b6165fdbf5c66439eb5bdf20b844f633eeda51d380511"
+    },
+    {
+      "file": "scripts/shared-library-runtime.test.mjs",
+      "classification": "excluded",
+      "reason": "Executes native/build/development entrypoints and real Git fixtures.",
+      "sha256": "29c6615c47ca8c4f6736e27f435a65f8e13e0de65564e55c05b39baa5c319812"
+    },
+    {
+      "file": "scripts/shared-libs-helper-types.test.mjs",
+      "classification": "excluded",
+      "reason": "Starts real TypeScript compiler processes.",
+      "sha256": "5aa37abdb59521cfc7499db5eb52035c17533a1473888615f1bc627fc379c8c7"
+    },
+    {
+      "file": "scripts/shared-libs-path.test.mjs",
+      "classification": "excluded",
+      "reason": "Real Git branch/repository and native preload subprocess checks.",
+      "sha256": "4eeb37b5dedf1a11ad31c826fcf1d351c01aaf0e2b366de8d4da8a5e50400234"
+    },
+    {
+      "file": "scripts/test-file-budget.test.mjs",
+      "classification": "excluded",
+      "reason": "Executes Vitest child fixtures and hang/cleanup scenarios.",
+      "sha256": "1f693f192e479a907d38a56f86e9d35ff837ee11ebb23d58942f2455dfa14ee9"
+    },
+    {
+      "file": "scripts/typecheck.test.mjs",
+      "classification": "excluded",
+      "reason": "Contains real compiler/cache regression in addition to injected run unit cases.",
+      "sha256": "0ee7712890571f5e5cdba3450ebfb41984a9090147a13d36dd7f46bd64a48b7e"
+    },
+    {
+      "file": "scripts/vitest-startup.test.mjs",
+      "classification": "excluded",
+      "reason": "Measures actual Vitest forks, time and RSS.",
+      "sha256": "4550c1c4d14cb0fe57dd6a6af4be435da55f86e866ad3a293702f13461634115"
+    },
+    {
+      "file": "scripts/worker-indexeddb-dependency.test.mjs",
+      "classification": "unit",
+      "reason": "Read-only local dependency/lock contract.",
+      "sha256": "ec4d00c6d8db1ac9b92ac65841234c48754c9e68b26df56a3e7e67ddf3fdf79f"
+    },
+    {
+      "file": "scripts/worker-shared-startup.test.mjs",
+      "classification": "excluded",
+      "reason": "Real shared live-worker database/Vitest lifecycle.",
+      "sha256": "f661a034a11bddf2202c7bf94a32b15333a93f854b4653aa8ddbc4ff7486f524"
+    }
+  ]
+}

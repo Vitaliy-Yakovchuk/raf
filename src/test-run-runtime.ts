@@ -1,9 +1,11 @@
+import { etchlyBrowserRequirements, observeEtchlyInventory } from './test-run-etchly-inventory.ts';
+import { planVitestInvocations, prepareEtchlyEnvironment } from './test-run-etchly.ts';
 import { mkdtempSync, rmSync, writeFileSync, openSync, closeSync, fstatSync } from 'node:fs';
 import { StringDecoder } from 'node:string_decoder';
 import { TestRunDiagnostics, buildDiagnosticEnvironment, prepareRunTemporaryDirectory, cleanupRunTemporaryDirectory } from './test-run-diagnostics.ts';
 import type { RunTemporaryPorts, DiagnosticEnvironmentInput } from './test-run-diagnostics.ts';
 import { spawn, execFileSync } from 'node:child_process';
-import { constants, accessSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
+import { constants, accessSync, existsSync, globSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { userInfo } from 'node:os';
@@ -80,7 +82,35 @@ function checkChannel(context: StateContext, inherited: Readonly<Record<string, 
   return false;
 }
 
-export function createTestRunPorts(config: TestRunConfig, stateContext: StateContext, getStore: () => StateStore, inherited: Readonly<Record<string, string | undefined>> = process.env, configurationBytes?: DiagnosticEnvironmentInput['configurationBytes']): TestRunPorts {
+function verifyEtchlyDependencies(context: TestRunContext, profiles: import('./test-runs.ts').TestRunProfile[], files: string[], inherited: Readonly<Record<string, string | undefined>>): void {
+  const projects = JSON.parse(readFileSync(join(dirname(context.workspace), 'conf/projects.json'), 'utf8'));
+  const entries = Object.entries(projects.projects.etchly.branchPaths) as [string, string][];
+  const branch = entries.find(([, path]) => resolve(dirname(context.workspace), path) === context.workspace)?.[0];
+  const libraryPath = projects.projects['shared-libs']?.branchPaths?.[branch ?? ''];
+  const expected = libraryPath ? resolve(dirname(context.workspace), libraryPath) : '';
+  let actual: string | null = null, libraryBranch: string | null = null;
+  try { actual = realpathSync(join(context.workspace, 'shared-libs')); libraryBranch = execFileSync('git', ['branch', '--show-current'], { cwd: actual, encoding: 'utf8' }).trim(); } catch { }
+  const has = (file: string) => existsSync(resolve(context.workspace, file));
+  const browserEngines = etchlyBrowserRequirements(context.workspace, files);
+  const browserCache = inherited.PLAYWRIGHT_BROWSERS_PATH;
+  const browserAvailable = !!browserCache && browserCache !== '0' && isAbsolute(browserCache) && browserEngines.every(engine => {
+    try {
+      return globSync(engine === 'chromium' ? ['chromium-*/**/chrome', 'chromium_headless_shell-*/**/headless_shell'] : engine === 'firefox' ? ['firefox-*/**/firefox'] : ['webkit-*/**/pw_run.sh'], { cwd: browserCache }).some(path => {
+        try { accessSync(resolve(browserCache, path), constants.X_OK); return statSync(resolve(browserCache, path)).isFile(); } catch { return false; }
+      });
+    } catch { return false; }
+  });
+  const vitestVersion = has('node_modules/vitest/package.json') ? JSON.parse(readFileSync(resolve(context.workspace, 'node_modules/vitest/package.json'), 'utf8')).version : '';
+  const usesVitest = profiles.some(p => p.resultAdapter === 'vitest-events');
+  prepareEtchlyEnvironment({ workspace: context.workspace, branch: branch ?? '', expectedLibrary: expected, actualLibrary: actual, libraryBranch,
+    nodeAvailable: profiles.every(p => executableAvailable(p.executable, context.workspace)), vitestAvailable: !usesVitest || has('node_modules/vitest/vitest.mjs'), adapterCompatible: !usesVitest || /^4\./.test(vitestVersion),
+    preloadAvailable: has('scripts/shared-library-runtime.mjs'), aliasesAvailable: has('scripts/shared-library-aliases.ts') && has('scripts/shared-libs-path.mjs'), configAvailable: profiles.filter(p => p.resultAdapter === 'vitest-events').every(p => has(p.cwd + '/vitest.config.ts')),
+    happyDomRequired: profiles.some(p => p.checks.includes('node_modules/happy-dom/package.json')), happyDomAvailable: has('node_modules/happy-dom/package.json'), isolatedHome: context.home !== context.operationalHome, stateOrigin: true, privateTmpWritable: true,
+    browserRequired: browserEngines.length > 0, trustedBrowserCache: browserCache ?? null, requestedBrowserCache: browserCache ?? null, browserAvailable,
+  }, { home: context.home, tmp: context.tmpPath });
+}
+
+export function createTestRunPorts(config: TestRunConfig, stateContext: StateContext, getStore: () => StateStore, inherited: Readonly<Record<string, string | undefined>> = process.env, configurationBytes?: DiagnosticEnvironmentInput['configurationBytes'], request?: import('./test-runs.ts').ParsedTestRunArgs): TestRunPorts {
   let state: TestRunStatePort | undefined;
   const environment = stateContextEnvironment(stateContext, inherited);
   const readConfiguration = (name: string) => readFileSync(join(stateContext.orchestratorRoot, 'conf', name));
@@ -113,7 +143,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
   const ports: TestRunPorts = {
     diagnosticEnvironment: command => {
       const profile = Object.values(config.projects).flatMap(p => Object.values(p.profiles)).find(p => p.executable === command?.executable);
-      return buildDiagnosticEnvironment({ executable: command?.executable ?? process.execPath, runtimeVersion: process.version, adapter: profile?.resultAdapter ?? 'node-test-events', isolation: command?.argv.find(a => a.startsWith('--test-isolation='))?.split('=')[1] ?? 'process', configurationBytes: snapshot, tmpPath: command?.environment.TMPDIR ?? stateContext.tmpRoot, privateRunTmp: !!command?.environment.TMPDIR });
+      return buildDiagnosticEnvironment({ executable: command?.executable ?? process.execPath, runtimeVersion: process.version, adapter: command?.environment.vitestBatches ? 'vitest-events' : profile?.resultAdapter ?? 'node-test-events', isolation: command?.argv.find(a => a.startsWith('--test-isolation='))?.split('=')[1] ?? 'process', configurationBytes: snapshot, tmpPath: command?.environment.TMPDIR ?? stateContext.tmpRoot, privateRunTmp: !!command?.environment.TMPDIR });
     },
     prepareTemporary: (runId, context, save) => prepareRunTemporaryDirectory(config.temporaryArtifacts, { runId, uid: process.getuid!(), qaHome: context.home, statePath: context.statePath, stateTmpPath: context.tmpPath, workspace: context.workspace, workingStatePath: join(context.operationalHome, '.raf') }, { ...temporaryPorts, saveReservation: save }).then(p => p.reservation),
     cleanupTemporary: (reservation, terminated) => cleanupRunTemporaryDirectory(reservation, terminated, temporaryPorts),
@@ -121,28 +151,52 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
     clock: { now: Date.now, schedule: (deadline, callback) => { const timer = setTimeout(callback, Math.max(0, deadline - Date.now())); return () => clearTimeout(timer); } },
     newRunId: randomUUID,
     preflight: async context => {
-      const profiles = Object.values(config.projects[Object.keys(context.projectWorkspaces).find(project => context.projectWorkspaces[project].includes(context.workspace)) ?? '']?.profiles ?? {});
+      const projectId = Object.keys(context.projectWorkspaces).find(project => context.projectWorkspaces[project].includes(context.workspace)) ?? '';
+      const projectProfiles = config.projects[projectId]?.profiles ?? {};
+      const allProfiles = Object.values(projectProfiles);
+      const selectedFiles = projectId === 'etchly' && request ? request.files ?? request.only?.map(id => id.split('::')[0]) ?? config.projects[projectId].groups[request.group]?.files ?? [] : allProfiles.flatMap(p => p.unitFiles);
+      const profiles = projectId === 'etchly' && request ? allProfiles.filter(p => selectedFiles.some(file => p.unitFiles.includes(file))) : allProfiles;
+      const observed = projectId === 'etchly' ? await observeEtchlyInventory(context.workspace, projectProfiles) : null;
       const files: TestRunEnvironment['files'] = {};
-      const unitFiles = [...new Set(profiles.flatMap(profile => profile.unitFiles))];
-      for (const profile of profiles) for (const file of profile.unitFiles) {
-        try { const actual = realpathSync(resolve(context.workspace, profile.cwd, file)); files[file] = { kind: statSync(actual).isDirectory() ? 'directory' : 'file', realpath: actual, unit: true }; } catch { }
+      const unitFiles = [...new Set(allProfiles.flatMap(profile => profile.unitFiles))];
+      for (const profile of allProfiles) for (const file of profile.unitFiles) {
+        try { const actual = realpathSync(resolve(context.workspace, file)); files[file] = { kind: statSync(actual).isDirectory() ? 'directory' : 'file', realpath: actual, unit: true }; } catch { }
       }
+      if (projectId === 'etchly') verifyEtchlyDependencies(context, profiles, selectedFiles.filter(file => unitFiles.includes(file)), inherited);
       let gitIdentityMatches = false;
       try { gitIdentityMatches = realpathSync(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: context.cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()) === context.workspace; } catch { }
       const inheritedOperationalChannel = checkChannel(stateContext, inherited);
       if (!inheritedOperationalChannel) mkdirSync(stateContext.tmpRoot, { recursive: true });
       return { canonicalWorkspace: realpathSync(context.workspace), canonicalCwd: realpathSync(context.cwd), gitIdentityMatches,
         runtimeAvailable: profiles.every(p => executableAvailable(p.executable, resolve(context.workspace, p.cwd))),
-        localRunnerAvailable: profiles.every(p => p.resultAdapter === 'node-test-events'),
-        dependenciesAvailable: profiles.every(p => p.checks.every(path => existsSync(resolve(context.workspace, p.cwd, path)))),
-        resultAdapterAvailable: existsSync(fileURLToPath(new URL('./test-run-reporter.ts', import.meta.url))),
+        localRunnerAvailable: profiles.every(p => p.resultAdapter === 'node-test-events' || p.resultAdapter === 'vitest-events' && ['./test-run-vitest-runner.ts', '../scripts/test-run-vitest.ts'].every(path => existsSync(fileURLToPath(new URL(path, import.meta.url))))),
+        dependenciesAvailable: profiles.every(p => p.checks.every(path => existsSync(resolve(context.workspace, projectId === 'etchly' ? '.' : p.cwd, path)))),
+        resultAdapterAvailable: profiles.every(p => existsSync(fileURLToPath(new URL(p.resultAdapter === 'vitest-events' ? './test-run-vitest-reporter.ts' : './test-run-reporter.ts', import.meta.url)))),
         artifactsWritable: !inheritedOperationalChannel && (() => { try { accessSync(stateContext.tmpRoot, constants.W_OK); return true; } catch { return false; } })(),
         treeControlSupported: process.platform === 'linux' && existsSync('/proc/self/stat'), isolatedHome: stateContext.mode === 'qa', stateOriginAllowed: true,
         stateAliasesOperational: within(context.statePath, join(context.operationalHome, '.raf')), tmpAliasesOperational: within(context.tmpPath, join(context.operationalHome, '.raf')),
-        inheritedOperationalChannel, unitFiles: unitFiles.filter(file => files[file]?.kind === 'file'), files };
+        inheritedOperationalChannel, unitFiles: observed ? observed.filter(f => f.classification === 'unit').map(f => f.file) : unitFiles.filter(file => files[file]?.kind === 'file'), files };
     },
     spawn: async (command, onEvent): Promise<ManagedTestProcess> => {
-      const child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...environment, TMPDIR: command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []) }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+      const vitestProfile = Object.values(config.projects.etchly?.profiles ?? {}).find(p => p.resultAdapter === 'vitest-events' && command.argv[0] === p.argv[0] && command.argv.includes(p.argv[p.argv.indexOf('run') - 1]) && command.cwd.endsWith('/' + p.cwd) && (!p.argv.includes('--project') || command.argv[command.argv.indexOf('--project') + 1] === p.argv[p.argv.indexOf('--project') + 1]));
+      let vitestEnvironment: Record<string, string> = {};
+      if (vitestProfile) {
+        const workspace = resolve(command.cwd, relative(vitestProfile.cwd, '.'));
+        const run = command.argv.indexOf('run');
+        const options = command.argv.slice(run + 1);
+        const firstOption = options.findIndex(arg => arg.startsWith('-'));
+        const files = (firstOption < 0 ? options : options.slice(0, firstOption)).map(file => relative(workspace, resolve(command.cwd, file)));
+        const ids = command.environment.testIds ?? [];
+        const policy = JSON.parse(Buffer.from(snapshot.flow).toString('utf8')).unitTests;
+        const batches = planVitestInvocations({ workspace, selection: { files, testIds: ids }, command } as any, vitestProfile, policy, fileURLToPath(new URL('./test-run-vitest-reporter.ts', import.meta.url)), ids);
+        const localConfig = readFileSync(resolve(command.cwd, 'vitest.config.ts'), 'utf8');
+        const baseRunner = localConfig.match(/\brunner:\s*["']([^"']+)["']/)?.[1];
+        for (const batch of batches) batch.argv.push('--runner', fileURLToPath(new URL('./test-run-vitest-runner.ts', import.meta.url)));
+        command.environment.vitestBatches = batches;
+        vitestEnvironment = { RAF_TEST_RUN_VITEST_BATCHES: JSON.stringify(batches), RAF_TEST_RUN_WORKSPACE: workspace, RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(config.diagnostics), ...(baseRunner ? { RAF_TEST_RUN_BASE_RUNNER: resolve(command.cwd, baseRunner) } : {}) };
+        command.argv = [fileURLToPath(new URL('../scripts/test-run-vitest.ts', import.meta.url))];
+      }
+      const child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...environment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []) }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
       await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', fail); });
       const pid = child.pid!;
       const exited = new Promise<void>(done => child.once('exit', () => done()));
@@ -153,7 +207,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       const consume = (line: string) => {
         try {
           const event = JSON.parse(line);
-          if (!event || !['discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed', 'complete', 'protocol-error'].includes(event.kind) ||
+          if (!event || !['discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed', 'file-setup-failed', 'complete', 'protocol-error'].includes(event.kind) ||
               event.kind === 'complete' && (!Array.isArray(event.expected) || event.expected.some((id: any) => typeof id?.file !== 'string' || typeof id?.name !== 'string')) ||
               ['discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed'].includes(event.kind) && (typeof event.test?.file !== 'string' || typeof event.test?.name !== 'string') ||
               event.parent !== undefined && (typeof event.parent?.file !== 'string' || typeof event.parent?.name !== 'string')) throw new Error('Invalid runner event');
@@ -242,7 +296,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         const identity = lstatSync(owner);
         if (realpathSync(owner) !== owner || !identity.isDirectory() || identity.uid !== process.getuid?.() || (identity.mode & 0o077) !== 0) throw Object.assign(new Error('Unit HOME root is not private or has aliases'), { code: 'STATE_CONTEXT_REFUSED' });
         const home = join(owner, createHash('sha256').update(JSON.stringify([root, key.project, key.workspace])).digest('hex'));
-        const inherited = Object.fromEntries(Object.entries(process.env).filter(([name]) => ['PATH', 'LANG', 'TZ', 'SYSTEMROOT'].includes(name) || name.startsWith('LC_')));
+        const inherited = Object.fromEntries(Object.entries(process.env).filter(([name]) => ['PATH', 'LANG', 'TZ', 'SYSTEMROOT', 'PLAYWRIGHT_BROWSERS_PATH'].includes(name) || name.startsWith('LC_')));
         const unitEnvironment = { ...inherited, HOME: home, RAF_QA_HOME: home };
         const stateContext = productionStateContext(root, fileURLToPath(import.meta.url), home, 'cli', unitEnvironment);
         if (within(stateContext.homeDirectory, controlContext.homeDirectory) || within(controlContext.homeDirectory, stateContext.homeDirectory)) throw Object.assign(new Error('Unit HOME overlaps the control context'), { code: 'STATE_CONTEXT_REFUSED' });
@@ -252,7 +306,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         context = { cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, activeChanges: [...control.activeChanges],
           agentId: 'test-run', sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
           home, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome: userInfo().homedir };
-        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStateStore(stateContext.statePath, { context: stateContext }), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! });
+        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStateStore(stateContext.statePath, { context: stateContext }), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args);
         return { config, policy, context, runtime };
       },
     });

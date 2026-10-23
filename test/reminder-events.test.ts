@@ -4,7 +4,18 @@ import test from 'node:test';
 import { loadEventCatalog, validateEventId } from '../src/event-catalog.ts';
 import { commandFixture, constants, errorCode } from './reminder-fixture.ts';
 
-const validIds: Record<string, string> = { agentAddress: 'worker', changeId: 'add-raf-reminders', deploymentId: 'deploy-2026-10-22' };
+const idFixtures: Record<string, string> = {
+  agentAddress: 'worker',
+  reminderId: 'rem-1',
+  changeId: 'add-raf-reminders',
+  deploymentId: 'deploy-2026-10-22',
+  contextReviewId: '6e606289-2d0a-4a0a-8df8-6999242ead70',
+};
+const validIds: Record<string, string> = Object.fromEntries(Object.keys(constants.eventIdKinds).map(idKind => {
+  const id = idFixtures[idKind];
+  assert.ok(id, `No fixture ID for ${idKind}`);
+  return [idKind, id];
+}));
 const invalidIds: Record<string, string> = { agentAddress: 'bad/address', reminderId: 'bad id', changeId: 'Not_A_Change' };
 
 test('event catalog loader returns exactly the events and ID kinds configured in conf', async t => {
@@ -17,7 +28,7 @@ test('event catalog loader returns exactly the events and ID kinds configured in
 test('event IDs are validated by the idKind of their event from the conf catalog', async t => {
   const f = await commandFixture(t);
   for (const event of constants.events as { id: string; idKind: string }[]) {
-    const valid = event.idKind === 'reminderId' ? 'rem-1' : validIds[event.idKind];
+    const valid = validIds[event.idKind];
     assert.ok(valid, `No fixture ID for ${event.idKind}`);
     assert.equal(validateEventId(f.catalog, event.id, valid), true, `${event.id} rejected ${valid}`);
     const invalid = invalidIds[event.idKind];
@@ -33,6 +44,7 @@ test('every event kind from conf is accepted as a reminder binding by the direct
   const target = await handlers['reminder add']({ to: 'worker', at: new Date(f.now() + 60_000).toISOString(), text: 'Ціль' }) as { id: string };
   for (const event of constants.events as { id: string; idKind: string }[]) {
     const id = event.idKind === 'reminderId' ? target.id : validIds[event.idKind];
+    assert.ok(id, `No fixture ID for ${event.idKind}`);
     const created = await handlers['reminder add']({ to: 'worker', at: new Date(f.now() + 60_000).toISOString(), text: `Подія ${event.id}`,
       event: event.id, 'event-id': id, 'event-action': 'close' }) as { binding: unknown };
     assert.deepEqual(created.binding, { kind: event.id, id, action: 'close' });

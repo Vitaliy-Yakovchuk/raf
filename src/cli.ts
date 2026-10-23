@@ -29,7 +29,7 @@ export async function execute(
   if (helpRequested) {
     const matches = catalog.commands.filter(c => tokens.every((t, i) => c.path[i] === t));
     if (!matches.length) return fail('UNKNOWN_COMMAND', 'Невідомий шлях довідки.', { command: tokens.join(' '), received: tokens, found: catalog.commands.map(c => c.path.join(' ')), expected: catalog.commands.map(c => c.path.join(' ')) });
-    return ok(JSON.stringify({ commands: matches.map(c => ({ ...c, parameters: c.parameters.map(p => ({ ...p, required: p.required ?? false, multiple: p.multiple ?? false, requirement: p.required ? 'required' : 'optional' })) })), reportStatuses: catalog.reportStatuses }, null, 2));
+    return ok(JSON.stringify({ program: 'raf', commands: matches.map(c => ({ ...c, parameters: c.parameters.map(p => ({ ...p, required: p.required ?? false, multiple: p.multiple ?? false, requirement: p.required ? 'required' : 'optional' })) })), reportStatuses: catalog.reportStatuses }, null, 2));
   }
   const command = [...catalog.commands].sort((a, b) => b.path.length - a.path.length).find(c => c.path.every((t, i) => argv[i] === t));
   if (!command) return fail('UNKNOWN_COMMAND', 'Невідома команда.', { command: tokens.join(' '), received: tokens, found: catalog.commands.map(c => c.path.join(' ')), expected: catalog.commands.map(c => c.path.join(' ')) });

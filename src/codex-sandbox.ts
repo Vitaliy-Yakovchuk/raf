@@ -241,7 +241,7 @@ export async function prepareCodexSandbox(
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') unavailable(`cannot inspect writable path ${path}`);
       return null;
     });
-    if (info?.isFile()) { entries[path] = 'write'; fileWrites.push(path); }
+    if (info?.isFile()) fileWrites.push(path);
     else if (!info || info.isDirectory()) entries[path] = 'write';
     else unavailable(`writable path ${path} is not a file or directory`);
   }

@@ -186,15 +186,14 @@ export async function prepareCodexSandbox(
   const runDirectory = await canonical(request.runDirectory);
   const writable = new Set<string>([runDirectory]);
   const args: string[] = [];
-  const directoryArgs: { path: string; args: string[] }[] = [];
   const source = request.invocation.args;
   const end = source.indexOf('--');
   for (let i = 0; i < (end < 0 ? source.length : end); i++) {
     const arg = source[i];
     if (arg === '--sandbox' || arg === '-s') { i++; continue; }
-    if (arg === '--add-dir') { const value = source[++i] ?? unavailable('--add-dir without a directory'); const path = await canonical(value); writable.add(path); directoryArgs.push({ path, args: [arg, value] }); continue; }
+    if (arg === '--add-dir') { const value = source[++i] ?? unavailable('--add-dir without a directory'); writable.add(await canonical(value)); continue; }
     if (arg.startsWith('--sandbox=') || arg === '--full-auto') continue;
-    if (arg.startsWith('--add-dir=')) { const path = await canonical(arg.slice('--add-dir='.length)); writable.add(path); directoryArgs.push({ path, args: [arg] }); continue; }
+    if (arg.startsWith('--add-dir=')) { writable.add(await canonical(arg.slice('--add-dir='.length))); continue; }
     if ((arg === '-c' || arg === '--config') && /^\s*(?:sandbox_mode|default_permissions|permissions|sandbox_workspace_write)\b/u.test(source[i + 1] ?? '')) { i++; continue; }
     args.push(arg);
   }
@@ -245,7 +244,6 @@ export async function prepareCodexSandbox(
     else if (!info || info.isDirectory()) entries[path] = 'write';
     else unavailable(`writable path ${path} is not a file or directory`);
   }
-  for (const entry of directoryArgs) if (!fileWrites.includes(entry.path)) args.push(...entry.args);
   if (!writable.has(cwd)) entries[cwd] = 'read';
   const git = join(cwd, '.git');
   const gitEntry = await fs.lstat(git).catch(() => null);

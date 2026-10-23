@@ -170,10 +170,16 @@ for (const [metadata, worktree, missingQuestions] of [[true, false, false], [fal
     assert.ok(args.includes('sandbox_mode="workspace-write"') && !args.includes('--sandbox'), 'workspace-write is kept by the Codex permission profile, not the legacy --sandbox override');
     assert.ok(args.includes('default_permissions="linux"'));
     assert.equal(args[args.indexOf('--ask-for-approval') + 1], 'never');
-    const directories = args.flatMap((arg, index) => arg === '--add-dir' ? [args[index + 1]] : []);
+    assert.equal(args.some(arg => arg === '--add-dir' || arg.startsWith('--add-dir=')), false, 'permission profiles replace native directory flags');
+    const filesystemConfig = args.find(arg => arg.startsWith('permissions.linux.filesystem='));
+    assert.ok(filesystemConfig);
+    const filesystem: Record<string, string> = JSON.parse(filesystemConfig.slice(filesystemConfig.indexOf('=') + 1).replace(/("(?:[^"\\]|\\.)*")=/gu, '$1:'));
+    const directories = Object.entries(filesystem).filter(([path, access]) => path.startsWith('/') && access === 'write').map(([path]) => path);
     const expected = [await realpath(dirname(f.reportPath))];
     expected.push(await realpath(f.metadataDirectory), ...f.writableGitDirectories);
-    assert.deepEqual(directories.sort(), [...new Set(expected)].sort(), 'native --add-dir grants only declared directories, required git roots and own report directory');
+    if (metadata) expected.push(await realpath(f.cwd));
+    if (metadata && worktree) expected.push(join(await realpath(f.cwd), '.git'));
+    assert.deepEqual(directories.sort(), [...new Set(expected)].sort(), 'the profile grants only declared directories, required git roots and own report directory');
     assert.equal(directories.includes(await realpath(dirname(f.questionsPath))), false, 'an exact questions file bind must never grant its parent directory');
     assert.equal(directories.includes(await realpath(f.questionsPath)), false, 'file boundaries use exact binds rather than native directory arguments');
     assert.equal(directories.includes(await realpath(f.root)), false);

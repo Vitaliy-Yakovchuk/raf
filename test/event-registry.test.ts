@@ -72,6 +72,9 @@ const fact: PendingEvent = { key: 'run-1:closed', event: { kind: 'agent.closed',
 
 test('every approved event delegates its ID kind to the canonical validator', () => {
   const f = registryFixture();
+  assert.equal(constants.events.find(entry => entry.id === 'agent.report-rejected')?.idKind, 'agentAddress');
+  f.registry.validate({ kind: 'agent.report-rejected', id: 'worker' });
+  assert.deepEqual(f.validations.at(-1), ['agentAddress', 'worker']);
   const examples: Record<string, string> = { agentAddress: 'worker', reminderId: 'reminder-1', changeId: 'add-reminders', deploymentId: 'deployment-1' };
   for (const entry of constants.events) {
     const id = examples[entry.idKind];

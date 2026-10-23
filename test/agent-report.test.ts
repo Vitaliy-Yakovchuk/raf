@@ -44,21 +44,27 @@ function fixture() {
 }
 const path = '/workspace/tmp/run-one/implement-demo.json';
 
-test('[Z.354] completion diagnostic contains only assigned IDs, reason and report path', async () => {
+test('[Z.354] completion diagnostic contains only assigned IDs, reason and report path plus a separate snapshot', async () => {
   const f = fixture();
-  f.files.set(path, JSON.stringify(valid));
+  const rawReport = ` \n${JSON.stringify(valid)}\n `;
+  f.files.set(path, rawReport);
   f.setVerification({ ok: false, issues: [{ change: 'demo', requestedItems: ['1.1'], reason: 'Task 1.1 remains open',
     foundItems: Array.from({ length: 1000 }, (_, i) => ({ id: `9.${i}`, description: 'UNRELATED_TASK_PAYLOAD', done: false })), archives: [], remedy: 'Complete task' }] });
-  const calls: unknown[][] = [];
+  const calls: Parameters<AgentReportPorts['diagnostic']>[] = [];
   assert.equal(await readPendingAgentReport(request, { ...f.ports, diagnostic: async (...args) => { calls.push(args); } }), null);
   assert.equal(calls.length, 1);
-  const serialized = JSON.stringify(calls[0]);
+  const [reason, snapshot] = calls[0];
+  const serialized = JSON.stringify(reason);
   assert.ok(serialized.length < 1000, 'diagnostic must not serialize all tasks of the change');
   assert.match(serialized, /demo:1\.1/);
   assert.match(serialized, /Task 1\.1 remains open/);
   assert.ok(serialized.includes(path));
   assert.doesNotMatch(serialized, /foundItems|UNRELATED_TASK_PAYLOAD/);
-  assert.equal(calls[0].length, 1, 'raw verification is not passed to diagnostic transports');
+  assert.equal(calls[0].length, 2, 'the same-check snapshot is passed separately from diagnostic text');
+  assert.ok(snapshot?.bytes, 'a successfully read report supplies its raw bytes');
+  assert.deepEqual({ ...snapshot, bytes: new Uint8Array(snapshot.bytes) }, {
+    reportPath: path, bytes: new TextEncoder().encode(rawReport), reason,
+  }, 'the snapshot binds the exact report bytes and path to this rejection reason');
 });
 
 test('initial read accepts verified report with extensions and addresses the result event', async () => {

@@ -208,7 +208,6 @@ test('unknown group never gains a preset from a suffix or profile ID', () => {
 
 test('full project inventory includes node-root and every Vitest workspace', () => {
   const c = config(), files = Object.values(c.projects.etchly.profiles).flatMap(p => p.unitFiles);
-  c.projects.etchly.groups[group].files = files;
   refusal(() => planTestRun(request(files), c, context(), environment()), /full|entire|suite/i);
 });
 
@@ -536,8 +535,7 @@ for (const [label, profileId, preset, dom] of [
 for (const missing of ['runtimeAvailable', 'dependenciesAvailable', 'resultAdapterAvailable'] as const) {
   test(`full explicit Etchly inventory is refused before missing ${missing}`, () => {
     const c = config(), env = environment();
-    const files = c.projects.etchly.profiles['vitest-app'].unitFiles;
-    c.projects.etchly.groups[group].files = files;
+    const files = Object.values(c.projects.etchly.profiles).flatMap(profile => profile.unitFiles);
     env[missing] = false;
     assert.throws(() => planTestRun(request(files), c, context(), env), (error: any) => {
       assert.equal(error.code, 'UNSAFE_SELECTION');
@@ -550,8 +548,7 @@ for (const missing of ['runtimeAvailable', 'dependenciesAvailable', 'resultAdapt
 for (const fullSuite of [true, false]) {
   test(`${fullSuite ? 'full-suite-explicit refuses before' : 'valid subset retains'} Etchly browser-cache preflight failure`, async () => {
     const c = config();
-    const files = fullSuite ? c.projects.etchly.profiles['vitest-app'].unitFiles : [product];
-    c.projects.etchly.groups[group].files = files;
+    const files = fullSuite ? Object.values(c.projects.etchly.profiles).flatMap(profile => profile.unitFiles) : [product];
     const calls = { preflight: 0, spawn: 0, temporary: 0 };
     let stored: TestRunGroup | null = null;
     const ports: TestRunPorts = {

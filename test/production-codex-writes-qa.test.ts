@@ -204,7 +204,7 @@ for (const [metadata, worktree, missingQuestions] of [[true, false, false], [fal
       runId: `${f.runId}-write-probe`, invocation, cwd: f.cwd, runDirectory: probeDirectory, writableDirectories,
       environment: { ...process.env, HOME: f.home, PATH: f.binRoot + delimiter + (process.env.PATH ?? '') },
       timeoutMs: f.protocol.timeouts.overallMs,
-      scope: { hidden: [dirname(f.statePath)], readable: [runDirectory], tmuxDirectory: probeDirectory, excludedCommands: [] },
+      scope: { hidden: [f.statePath, `${f.statePath}-wal`, `${f.statePath}-shm`, join(dirname(f.statePath), 'secrets.json')], readable: [runDirectory], tmuxDirectory: probeDirectory, excludedCommands: [] },
     });
     t.after(() => prepared.cleanup());
     await writeFile(f.releasePath, JSON.stringify({ ...prepared.toolSandbox, environment: prepared.environment, timeoutMs: f.protocol.timeouts.overallMs }));

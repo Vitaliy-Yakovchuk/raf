@@ -5,15 +5,23 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { compileCatalog } from '../src/catalog.ts';
 import { openStateStore } from '../src/state-store.ts';
-import { runProductionCli, type ProductionEntryOptions } from '../src/production-entry.ts';
+import type { ProductionEntryOptions } from '../src/production-entry.ts';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import type { ExecutionResult } from '../src/cli.ts';
 
 const constants = JSON.parse(readFileSync(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
 const models = JSON.parse(readFileSync(new URL('../../conf/models.json', import.meta.url), 'utf8'));
 const settings = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
-const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), JSON.parse(readFileSync(new URL('../../conf/projects.json', import.meta.url), 'utf8')));
+const projects = JSON.parse(readFileSync(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
+const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), projects);
 
-function fixture(t: { after(action: () => void): void }) {
+function removeCatalogConfiguration(conf: string): void {
+  for (const name of readdirSync(conf)) {
+    if (!['projects.json', 'raf.json'].includes(name)) rmSync(join(conf, name), { recursive: true });
+  }
+}
+
+async function fixture(t: { after(action: () => void): void }) {
   const directory = mkdtempSync(join(tmpdir(), 'raf-production-entry-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const root = join(directory, 'orchestrator');
@@ -21,9 +29,10 @@ function fixture(t: { after(action: () => void): void }) {
   const home = join(directory, 'isolated-home');
   mkdirSync(conf, { recursive: true });
   mkdirSync(home);
-  for (const [name, data] of [['raf.json', settings], ['models.json', models], ['raf-constants.json', constants]] as const) writeFileSync(join(conf, name), JSON.stringify(data));
+  for (const [name, data] of [['raf.json', settings], ['models.json', models], ['raf-constants.json', constants], ['projects.json', projects]] as const) writeFileSync(join(conf, name), JSON.stringify(data));
   const artifactPath = join(directory, 'catalog.json');
   writeFileSync(artifactPath, JSON.stringify(catalog));
+  const runProductionCli = await prepareProductionQaFixture(t, { root, home });
   let clock = 0;
   const options: ProductionEntryOptions = { orchestratorRoot: root, homeDirectory: home, artifactPath, now: () => { clock += 10; return clock; } };
   return { directory, root, conf, home, options, statePath: join(home, '.raf', settings.state.fileName), run: (argv: string[]) => runProductionCli(argv, options) };
@@ -53,9 +62,9 @@ function records(value: unknown): Record<string, unknown>[] {
   return [value as Record<string, unknown>, ...Object.values(value).flatMap(records)];
 }
 
-test('production help uses compiled catalog without configuration or SQLite side effects', async t => {
-  const f = fixture(t);
-  rmSync(f.conf, { recursive: true });
+test('production help uses compiled catalog without catalog source configuration or SQLite side effects', async t => {
+  const f = await fixture(t);
+  removeCatalogConfiguration(f.conf);
   const ordinary = success(await f.run(['help', 'runner', 'list']));
   const option = success(await f.run(['runner', 'list', '--help']));
   assert.deepEqual(ordinary, option);
@@ -65,15 +74,15 @@ test('production help uses compiled catalog without configuration or SQLite side
 
 for (const argv of [['runner', 'list', '--invalid'], ['agent', 'run'], ['unknown-command']]) {
   test(`invalid CLI arguments do not create state: ${argv.join(' ')}`, async t => {
-    const f = fixture(t);
-    rmSync(f.conf, { recursive: true });
+    const f = await fixture(t);
+    removeCatalogConfiguration(f.conf);
     failure(await f.run(argv));
     assert.deepEqual(readdirSync(f.home), []);
   });
 }
 
 test('runner list reads actual conf and initializes one isolated shared SQLite file', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   const originalHome = process.env.HOME;
   const originalCwd = process.cwd();
   const output = records(success(await f.run(['runner', 'list'])));
@@ -96,7 +105,7 @@ test('runner list reads actual conf and initializes one isolated shared SQLite f
 });
 
 test('runner list preserves persisted switches and does not turn opaque quotas into availability', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   const store = openStateStore(f.statePath);
   const runner = models.runners[0].id;
   const quota = { unsupported: 'opaque persisted provider payload', token: 'synthetic-secret-do-not-print' };
@@ -121,7 +130,7 @@ test('runner list preserves persisted switches and does not turn opaque quotas i
 });
 
 test('command stats reads existing canonical timing from the same file and records its own invocation', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   const store = openStateStore(f.statePath);
   try { store.recordCommandDuration('runner list', 314, 0.37); } finally { store.close(); }
   const data = success(await f.run(['command', 'stats']));
@@ -136,7 +145,7 @@ test('command stats reads existing canonical timing from the same file and recor
 });
 
 test('fresh command stats does not fabricate measurements for commands that never ran', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   const data = success(await f.run(['command', 'stats']));
   assert.ok(!records(data).some(row => row.averageMs === 0));
   const store = openStateStore(f.statePath);
@@ -145,14 +154,14 @@ test('fresh command stats does not fabricate measurements for commands that neve
 
 for (const name of ['raf.json', 'models.json']) {
   test(`missing ${name} returns configuration failure before opening state`, async t => {
-    const f = fixture(t);
+    const f = await fixture(t);
     rmSync(join(f.conf, name));
     const error = failure(await f.run(['runner', 'list']));
     assert.ok(JSON.stringify(error).includes(name));
     assert.ok(!existsSync(f.statePath));
   });
   test(`unsupported ${name} version is rejected without silently selecting defaults`, async t => {
-    const f = fixture(t);
+    const f = await fixture(t);
     const file = join(f.conf, name);
     const data = JSON.parse(readFileSync(file, 'utf8'));
     data.version = 987654;
@@ -161,7 +170,7 @@ for (const name of ['raf.json', 'models.json']) {
     assert.ok(!existsSync(f.statePath));
   });
   test(`malformed ${name} does not open or recover a default database`, async t => {
-    const f = fixture(t);
+    const f = await fixture(t);
     writeFileSync(join(f.conf, name), '{ broken JSON');
     failure(await f.run(['command', 'stats']));
     assert.ok(!existsSync(f.statePath));
@@ -170,7 +179,7 @@ for (const name of ['raf.json', 'models.json']) {
 
 for (const malformed of [null, '{}', '{ broken JSON']) {
   test(`unavailable compiled catalog gives diagnostic without state: ${String(malformed)}`, async t => {
-    const f = fixture(t);
+    const f = await fixture(t);
     if (malformed === null) rmSync(f.options.artifactPath);
     else writeFileSync(f.options.artifactPath, malformed);
     assert.equal(failure(await f.run(['runner', 'list'])).code, 'CATALOG_UNAVAILABLE');
@@ -179,14 +188,14 @@ for (const malformed of [null, '{}', '{ broken JSON']) {
 }
 
 test('invalid EMA config is rejected before mutation of real SQLite state', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ ...settings, commandTiming: { ...settings.commandTiming, emaAlpha: 3 } }));
   failure(await f.run(['runner', 'list']));
   assert.ok(!existsSync(f.statePath));
 });
 
 test('corrupt SQLite returns structured failure and preserves the original file', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   mkdirSync(join(f.home, '.raf'));
   const contents = 'invalid sqlite fixture';
   writeFileSync(f.statePath, contents);
@@ -196,7 +205,7 @@ test('corrupt SQLite returns structured failure and preserves the original file'
 });
 
 test('blocked state directory is reported without fallback', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   writeFileSync(join(f.home, '.raf'), 'not a directory');
   failure(await f.run(['runner', 'list']));
   assert.equal(readFileSync(join(f.home, '.raf'), 'utf8'), 'not a directory');
@@ -207,7 +216,7 @@ for (const argv of [
   ['resource', 'wait', '--level', 'normal'],
 ]) {
   test(`unwired command is explicitly unavailable without state or external effects: ${argv.slice(0, 2).join(' ')}`, async t => {
-    const f = fixture(t);
+    const f = await fixture(t);
     const error = failure(await f.run(argv));
     assert.equal(error.code, 'COMMAND_UNAVAILABLE');
     assert.deepEqual(readdirSync(f.home), []);
@@ -216,7 +225,7 @@ for (const argv of [
 
 
 test('wired empty ps uses canonical shared state without creating an agent', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   assert.deepEqual(success(await f.run(['agent', 'ps'])), []);
   assert.deepEqual(success(await f.run(['agent', 'ps'])), []);
   const bin = join(f.directory, 'unverified-bin');
@@ -247,7 +256,7 @@ for (const argv of [
   ['runner', 'enable', '--runner', models.runners[0].id],
 ]) {
   test(`wired protected command rejects unregistered caller without mutation or launch: ${argv.slice(0, 2).join(' ')}`, async t => {
-    const f = fixture(t);
+    const f = await fixture(t);
     const before = openStateStore(f.statePath);
     before.initializeRunners(models.runners);
     before.setRunnerEnabled(models.runners[0].id, false);
@@ -269,7 +278,7 @@ for (const argv of [
 }
 
 test('default service entry rejects a missing configured main route before starting a child', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   writeFileSync(join(f.conf, 'projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', profile: 'raf', branchPaths: {} } } }));
   const error = failure(await f.run(['service', 'start']));
   assert.equal(error.code, 'SERVICE_OPERATION_FAILED');
@@ -280,7 +289,7 @@ test('default service entry rejects a missing configured main route before start
 });
 
 test('invalid service operational budget fails before state or child creation', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ ...settings, service: { ...settings.service, readinessTimeoutMs: 0 } }));
   const error = failure(await f.run(['service', 'start']));
   assert.equal(error.code, 'PRODUCTION_ENTRY_FAILED');
@@ -290,7 +299,7 @@ test('invalid service operational budget fails before state or child creation', 
 
 
 test('configured state basename is the single location used by all read-only invocations', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ ...settings, state: { fileName: 'shared-fixture.sqlite' } }));
   const path = join(f.home, '.raf', 'shared-fixture.sqlite');
   success(await f.run(['runner', 'list']));
@@ -306,9 +315,29 @@ test('configured state basename is the single location used by all read-only inv
 
 for (const fileName of ['', '..', '.', '../escaped.sqlite', '/absolute.sqlite', 'nested/state.sqlite']) {
   test(`state filename must be a basename: ${fileName}`, async t => {
-    const f = fixture(t);
+    const f = await fixture(t);
     writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ ...settings, state: { fileName } }));
     failure(await f.run(['runner', 'list']));
     assert.deepEqual(readdirSync(f.home), []);
   });
 }
+
+test('production-entry fixture refuses every entry before state creation without explicit QA context', async t => {
+  const f = await fixture(t);
+  delete process.env.RAF_QA_HOME;
+  for (const argv of [['help'], ['agent', 'ps'], ['runner', 'list'], ['runner', 'limits', '--runners', 'codex'], ['unknown-command'], ['runner', 'limits', '--runners']]) {
+    const error = failure(await f.run(argv));
+    assert.equal(error.code, 'STATE_CONTEXT_REFUSED', argv.join(' '));
+    assert.equal(existsSync(join(f.home, '.raf')), false);
+    assert.deepEqual(readdirSync(f.home), []);
+  }
+});
+
+test('production-entry fixture refuses help when code provenance configuration is missing', async t => {
+  const f = await fixture(t);
+  rmSync(join(f.conf, 'projects.json'));
+  const error = failure(await f.run(['help']));
+  assert.equal(error.code, 'STATE_CONTEXT_REFUSED');
+  assert.equal(existsSync(join(f.home, '.raf')), false);
+  assert.deepEqual(readdirSync(f.home), []);
+});

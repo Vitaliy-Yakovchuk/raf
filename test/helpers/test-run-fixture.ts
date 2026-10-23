@@ -27,6 +27,11 @@ export function fixtureConfig(): TestRunConfig {
       })) as TestRunConfig['phases'][string]['hints'],
     }])),
     hints,
+    diagnostics: {
+      maxEntries: 64, maxMessageBytes: 4096, maxStackFrames: 16, maxStackBytes: 8192,
+      maxTotalBytes: 65536, maxProtocolLineBytes: 65536, maxStderrBytes: 8192, redactionPatterns: [],
+    },
+    temporaryArtifacts: { root: '/tmp', minimumNestedSocketPathBytes: 80 },
     projects: { raf: {
       profiles: { node: {
         cwd: '.', executable: '/local/node', argv: ['--test'], unitFiles: [...files],

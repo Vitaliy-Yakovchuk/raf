@@ -85,6 +85,9 @@ export function validAgentReport(value: unknown, assignment: AssignmentSnapshot,
 const acceptanceQueues = new Map<string, Promise<unknown>>();
 const rejectedResults = new WeakMap<AgentReportResult, Set<string>>();
 const verifiedSnapshots = new WeakMap<AgentReportResult, { request: AgentReportRequest; content: string; bytes: Uint8Array; result: string }>();
+function reportDiagnosticText(request: AgentReportRequest, reason: string): string {
+  return `Agent: ${request.address}\nItems: ${request.assignment.changes.flatMap(change => change.items.map(item => `${change.id}:${item.id}`)).join(', ')}\nReport: ${join(request.tmpRoot, request.runId, `${request.address}.json`)}\nReason: ${reason}`;
+}
 async function sameReportBytes(path: string, bytes: Uint8Array, content: string, ports: PendingAgentReportPorts): Promise<boolean> {
   if (!ports.fs.readBytes) return await ports.fs.readText(path) === content;
   const current = await ports.fs.readBytes(path);
@@ -112,7 +115,8 @@ export async function rejectPendingAgentReport(request: AgentReportRequest, resu
   const snapshot = verifiedSnapshots.get(result);
   if (!result.report || !snapshot || snapshot.request !== request) return;
   if (rejectedResults.get(result)?.has(reason)) return;
-  await ports.diagnostic(reason, { reportPath: join(request.tmpRoot, request.runId, `${request.address}.json`), bytes: snapshot.bytes, reason });
+  const message = reportDiagnosticText(request, reason);
+  await ports.diagnostic(message, { reportPath: join(request.tmpRoot, request.runId, `${request.address}.json`), bytes: snapshot.bytes, reason: message });
   const reasons = rejectedResults.get(result) ?? new Set<string>();
   reasons.add(reason);
   rejectedResults.set(result, reasons);
@@ -137,7 +141,10 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
   if (!isAbsolute(request.tmpRoot) || !component(request.runId) || !component(request.address)) throw new Error('Invalid report directory, run ID or address');
   const path = join(request.tmpRoot, request.runId, `${request.address}.json`);
   let bytes: Uint8Array | null = null;
-  const diagnostic = (reason: string) => ports.diagnostic(reason, { reportPath: path, bytes, reason });
+  const diagnostic = (reason: string) => {
+    const message = reportDiagnosticText(request, reason);
+    return ports.diagnostic(message, { reportPath: path, bytes, reason: message });
+  };
   const issueText = (issues: AssignmentVerification['issues']) => issues.map(issue => `${issue.requestedItems.map(id => `${issue.change}:${id}`).join(', ')}: ${issue.reason}\nActual items: ${JSON.stringify(issue.foundItems.filter(item => issue.requestedItems.includes(item.id)))}\nArchives: ${JSON.stringify(issue.archives)}\nRemedy: ${issue.remedy}`).join('\n');
   let content: string | null;
   try {

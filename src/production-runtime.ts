@@ -137,7 +137,7 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
   directories.add(await fs.realpath(reportDirectory));
   return { directories: [...directories], workspace: [...inWorkspace] };
 }
-async function runnerSandboxScope(type: string | undefined, cwd: string, reportDirectory: string, statePath: string, tmpRoot: string) {
+async function runnerSandboxScope(type: string | undefined, cwd: string, reportDirectory: string, statePath: string, tmpRoot: string, sessionStore?: Pick<StateStore, 'sessionRepository'>) {
   const report = await fs.realpath(reportDirectory);
   const state = await fs.realpath(dirname(statePath));
   const temporary = await fs.realpath(tmpRoot);
@@ -145,10 +145,28 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
   const within = (root: string, path: string) => { const suffix = relative(root, path); return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`); };
   const stateRoots = [...new Set([dirname(statePath), state, tmpRoot, temporary])];
   if (stateRoots.some(root => [resolve(cwd), workspace].some(path => within(root, path) || within(path, root)))) fail('RUNNER_WRITE_SCOPE_INVALID', 'Runner workspace overlaps the RAF state directory hidden from its sandbox');
+  const ownedStore = sessionStore ? undefined : openStateStore(statePath, {
+    context: productionStateContext(fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'worker'),
+  });
+  const registeredSockets = new Set<string>();
+  try {
+    const sessions = (sessionStore ?? ownedStore!).sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state !== 'finished'));
+    for (const session of sessions) {
+      if (!session.process) continue;
+      const socket = session.process.evidence?.tmuxSocket;
+      if (socket === undefined && !text(session.process.tmuxSession)) continue;
+      if (!text(socket) || !isAbsolute(socket) || socket.includes('\0')) throw new CodexSandboxUnavailable(`Registered tmux session ${session.addressId} has no usable absolute socket address`);
+      registeredSockets.add(socket);
+      try { registeredSockets.add(await fs.realpath(socket)); }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new CodexSandboxUnavailable(`Cannot resolve registered tmux socket for ${session.addressId}`);
+      }
+    }
+  } finally { ownedStore?.close(); }
   const command = rafCommandFor();
   const subcommands = type === undefined ? [] : rafSubcommandsFor(type);
   return {
-    hidden: ['/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots],
+    hidden: ['/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots, ...registeredSockets],
     readable: [report], tmuxDirectory: report, excludedCommands: subcommands === null ? [`${command}:*`] : subcommands.map(subcommand => `${command} ${subcommand}:*`),
   };
 }
@@ -873,7 +891,10 @@ export async function runProductionWorker(
     let invocation = buildRunnerInvocation(settings, { ...request.selection, ...(assignedId ? { sessionId: assignedId } : {}) });
     const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath);
     invocation.args.push(...nativeWriteScopeArgs(settings, writable.directories, writable.workspace));
-    const scope = await runnerSandboxScope(session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot);
+    const scope = await runnerSandboxScope(session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store).catch(error => {
+      if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
+      throw error;
+    });
     invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
     if (settings.runner === 'codex' && codexInvocationSandboxMode(invocation.args) !== null) {
       try {

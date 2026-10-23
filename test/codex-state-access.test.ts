@@ -307,7 +307,7 @@ test('[codex-state-access] native Codex agent ps transports >128 KiB from 512 pr
   t.after(() => held.close());
   for (const path of stateFiles) assert.ok((await readFile(path)).length > 0, `host must verify existing fixture resource ${path}`);
   const directRead = `${quote(process.execPath)} -e ${quote(`const fs=require('node:fs'); let readable=0; for(const p of ${JSON.stringify(stateFiles)}) {try {fs.readFileSync(p);readable++;}catch{}} console.log('Z101_DIRECT_READABLE='+readable); process.exitCode=readable?19:0;`)}`;
-  const sibling = join(f.cwd, 'sibling-result');
+  const sibling = join(f.root, 'sibling-result');
   await mkdir(sibling);
   await writeFile(join(sibling, 'stdout'), 'Z101-SIBLING-HIDDEN');
   const siblingRead = `${quote(process.execPath)} -e ${quote(`try {process.stdout.write(require('node:fs').readFileSync(${JSON.stringify(join(sibling, 'stdout'))}));process.exitCode=19;}catch {console.log('Z101_SIBLING_DENIED');}`)}`;

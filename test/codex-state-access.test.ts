@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { prepareCodexRafCommandAccess } from '../src/codex-raf-command-access.ts';
 import type { PreparedCodexRafCommandAccess } from '../src/codex-raf-command-access.ts';
 import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
-import { buildRunnerInvocation, nativeSandboxArgs } from '../src/runner-protocols.ts';
+import { buildRunnerInvocation, nativeSandboxArgs, nativeWriteScopeArgs } from '../src/runner-protocols.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
 import { outputFixture } from './codex-command-output-fixture.ts';
 
@@ -292,7 +292,7 @@ for (const channelEnabled of [true, false]) {
 }
 
 test('[codex-state-access] native Codex agent ps transports >128 KiB from 512 production running sessions', { timeout }, async t => {
-  const f = await outputFixture(t, { production: true, scratchRoot: process.env.RAF_TEST_SCRATCH_ROOT ?? userInfo().homedir });
+  const f = await outputFixture(t, { production: true, scratchRoot: process.env.RAF_TEST_SCRATCH_ROOT ?? userInfo().homedir, runDirectoryInState: true });
   const host = await f.hostPs();
   assert.equal(host.code, 0, host.stderr.toString());
   assert.ok(host.stdout.length > 128 * 1024, `production fixture must cross the single-argument boundary: ${host.stdout.length}`);
@@ -311,8 +311,9 @@ test('[codex-state-access] native Codex agent ps transports >128 KiB from 512 pr
   await mkdir(sibling);
   await writeFile(join(sibling, 'stdout'), 'Z101-SIBLING-HIDDEN');
   const siblingRead = `${quote(process.execPath)} -e ${quote(`try {process.stdout.write(require('node:fs').readFileSync(${JSON.stringify(join(sibling, 'stdout'))}));process.exitCode=19;}catch {console.log('Z101_SIBLING_DENIED');}`)}`;
-  const request = { ...f.request, scope: { ...f.request.scope, hidden: [...f.request.scope.hidden, sibling] } };
-  request.invocation = { ...request.invocation, args: nativeSandboxArgs(settings, buildRunnerInvocation(settings, { model: 'gpt-6.1-sol', effort: 'high' }).args, request.scope) };
+  const request = { ...f.request, scope: { ...f.request.scope, hidden: [...f.request.scope.hidden, sibling], readable: [f.runDirectory], tmuxDirectory: f.runDirectory } };
+  const base = buildRunnerInvocation(settings, { model: 'gpt-6.1-sol', effort: 'high' });
+  request.invocation = { ...base, args: nativeSandboxArgs(settings, [...base.args, ...nativeWriteScopeArgs(settings, [f.runDirectory], [f.cwd])], request.scope) };
   const sandbox = await prepareCodexSandbox({
     ...request, runId: 'z101-native-output', writableDirectories: [f.cwd, f.runDirectory],
   });

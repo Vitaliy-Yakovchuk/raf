@@ -57,10 +57,11 @@ export function hookCommand(prepared: PreparedCodexRafCommandAccess): string {
   return JSON.parse(match[1]);
 }
 
-export async function outputFixture(t: TestContext, options: { production?: boolean; instrumentation?: boolean; rafExecutable?: string; scratchRoot?: string } = {}) {
+export async function outputFixture(t: TestContext, options: { production?: boolean; instrumentation?: boolean; rafExecutable?: string; scratchRoot?: string; runDirectoryInState?: boolean } = {}) {
   const root = await mkdtemp(join(options.scratchRoot ?? tmpdir(), 'raf-codex-output-'));
   const cwd = join(root, 'workspace'), home = join(root, 'home'), codexHome = join(root, 'codex-home');
-  const stateDirectory = join(home, '.raf'), runDirectory = join(cwd, 'run');
+  const stateDirectory = join(home, '.raf');
+  const runDirectory = options.runDirectoryInState ? join(stateDirectory, 'tmp', 'own-run') : join(cwd, 'run');
   const statePath = join(stateDirectory, 'state.sqlite'), controlPath = join(root, 'control.json');
   const commandPath = join(root, 'raf-command.mjs'), callsPath = join(root, 'calls.jsonl'), tracePath = join(root, 'spawn.jsonl');
   const observerPath = join(root, 'observe.mjs');

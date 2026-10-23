@@ -3,7 +3,8 @@ import { codexInvocationSandboxMode } from './codex-raf-command-access.ts';
 import { spawn } from 'node:child_process';
 import { promises as fs, constants } from 'node:fs';
 import { createServer, type Server } from 'node:net';
-import { delimiter, isAbsolute, join, relative, sep } from 'node:path';
+import { userInfo } from 'node:os';
+import { basename, delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 export interface CodexSandboxRequest {
   readonly runId: string;
@@ -40,7 +41,21 @@ const architectures: Partial<Record<string, { audit: number; socket: number; ioU
 
 async function canonical(path: string): Promise<string> {
   if (!isAbsolute(path)) unavailable(`path ${path} is not absolute`);
-  try { return await fs.realpath(path); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return path; throw error; }
+  const missing: string[] = [];
+  let ancestor = resolve(path);
+  for (;;) {
+    try { return resolve(await fs.realpath(ancestor), ...missing); }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') unavailable(`cannot resolve sandbox path ${path}`);
+      const entry = await fs.lstat(ancestor).catch(error => {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') unavailable(`cannot inspect sandbox path ${path}`);
+        return null;
+      });
+      if (entry?.isSymbolicLink() || dirname(ancestor) === ancestor) unavailable(`cannot resolve sandbox path ${path}`);
+      missing.unshift(basename(ancestor));
+      ancestor = dirname(ancestor);
+    }
+  }
 }
 
 async function executable(name: string, environment: Readonly<Record<string, string | undefined>>, exclude: string): Promise<string> {
@@ -168,8 +183,15 @@ export async function prepareCodexSandbox(
     args.push(arg);
   }
   for (const directory of request.writableDirectories) writable.add(await canonical(directory));
+  let accountHome: string;
+  try { accountHome = userInfo().homedir; }
+  catch { return unavailable('cannot determine account HOME for hidden RAF state'); }
+  if (!isAbsolute(accountHome)) unavailable('account HOME for hidden RAF state is not absolute');
+  const accountState = join(accountHome, '.raf');
+  const accountPaths = [accountState, join(accountState, 'tmp')];
+  const accountRoots = [...accountPaths, ...await Promise.all(accountPaths.map(canonical))];
   const hidden = new Set<string>();
-  for (const path of [...request.scope.hidden, ...socketAddresses(request.environment)]) {
+  for (const path of [...accountRoots, ...request.scope.hidden, ...socketAddresses(request.environment)]) {
     if (!isAbsolute(path)) unavailable(`hidden path ${path} is not absolute`);
     hidden.add(path);
     hidden.add(await canonical(path));
@@ -177,6 +199,10 @@ export async function prepareCodexSandbox(
   for (const path of hidden) {
     if (path === '/' || within(runDirectory, path)) unavailable(`hidden host resource ${path} overlaps the run directory`);
     if (within(path, cwd)) unavailable(`workspace ${cwd} lies inside hidden host resource ${path}`);
+    if (within(cwd, path) && (accountRoots.includes(path) || (await fs.stat(path).catch(error => {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') unavailable(`cannot inspect hidden host resource ${path}`);
+      return null;
+    }))?.isDirectory())) unavailable(`workspace ${cwd} overlaps hidden host state directory ${path}`);
     for (const directory of writable) if (within(path, directory) && !within(runDirectory, directory)) unavailable(`writable directory ${directory} lies inside hidden host resource ${path}`);
   }
   const directory = join(runDirectory, `codex-sandbox-${request.runId}`);
@@ -191,7 +217,7 @@ export async function prepareCodexSandbox(
   const gitEntry = await fs.lstat(git).catch(() => null);
   if (!gitEntry || gitEntry.isFile()) entries[git] = 'write';
   entries[directory] = 'read';
-  for (const path of hidden) if (![...hidden].some(other => other !== path && within(other, path))) entries[path] = 'none';
+  for (const path of hidden) entries[path] = 'none';
   const filesystem = `{${Object.entries(entries).map(([path, access]) => `${JSON.stringify(path)}=${JSON.stringify(access)}`).join(',')}}`;
   const policy = ['-c', 'sandbox_mode="workspace-write"', '-c', `default_permissions="${profile}"`, '-c', `permissions.${profile}.filesystem=${filesystem}`, '-c', `permissions.${profile}.network.enabled=true`];
   const shellEnvironment = [...scrubbed.flatMap(name => ['-c', `shell_environment_policy.set.${name}=""`]), ...Object.entries(toolVariables).flatMap(([name, value]) => ['-c', `shell_environment_policy.set.${name}=${JSON.stringify(value)}`])];

@@ -143,11 +143,12 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
   const temporary = await fs.realpath(tmpRoot);
   const workspace = await fs.realpath(cwd);
   const within = (root: string, path: string) => { const suffix = relative(root, path); return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`); };
-  if (within(state, workspace) || within(temporary, workspace)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Runner workspace lies inside the RAF state directory hidden from its sandbox');
+  const stateRoots = [...new Set([dirname(statePath), state, tmpRoot, temporary])];
+  if (stateRoots.some(root => [resolve(cwd), workspace].some(path => within(root, path) || within(path, root)))) fail('RUNNER_WRITE_SCOPE_INVALID', 'Runner workspace overlaps the RAF state directory hidden from its sandbox');
   const command = rafCommandFor();
   const subcommands = type === undefined ? [] : rafSubcommandsFor(type);
   return {
-    hidden: ['/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', state, ...(within(state, temporary) ? [] : [temporary])],
+    hidden: ['/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots],
     readable: [report], tmuxDirectory: report, excludedCommands: subcommands === null ? [`${command}:*`] : subcommands.map(subcommand => `${command} ${subcommand}:*`),
   };
 }

@@ -174,7 +174,15 @@ export class AgentControlService {
       const final = await this.dependencies.coordinator.finalize(session, this.events(session, 'ended'));
       return { closed: final.state === 'finished', unfinished: [], result: final.result?.status, forcedClose: final.result?.forcedClose };
     }
-    if (session.state !== 'running' || !session.process || (await this.inspect(session.process)).state !== 'alive') throw new Error(`Session is not confirmed alive: ${id}`);
+    if (session.state !== 'running' || !session.process) {
+      if (!options.force && session.state === 'exited') await this.reconcile(session);
+      throw new Error(`Session is not confirmed alive: ${id}`);
+    }
+    const observation = await this.inspect(session.process);
+    if (observation.state !== 'alive') {
+      if (!options.force && observation.state === 'exited') await this.reconcile(session, observation);
+      throw new Error(`Session is not confirmed alive: ${id}`);
+    }
     const selected = session;
     session = await this.dependencies.coordinator.acceptPendingReport(session);
     if (session.runId !== selected.runId || session.state !== 'running' || !session.process || !this.sameProcess(selected.process!, session.process)) throw new Error('Selected run changed during report acceptance');

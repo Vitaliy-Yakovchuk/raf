@@ -1,12 +1,13 @@
+import { pathToFileURL } from 'node:url';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { hostname, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { test, type TestContext } from 'node:test';
-import { createProductionServiceDependencies, createServicePorts } from '../src/production-service-ports.ts';
 import { openStateStore, type StateStore } from '../src/state-store.ts';
 import { createEventRegistry } from '../src/event-registry.ts';
 import { ReminderService } from '../src/reminders.ts';
@@ -24,12 +25,16 @@ const bundle = { ramBytes: 47 * 2 ** 30, diskBytes: { volume: 0 } };
 async function fixture(t: TestContext, interval = 80) {
   const root = await mkdtemp(join(tmpdir(), 'raf-host-qa-'));
   t.after(() => rm(root, { recursive: true, force: true }));
-  const context = { orchestratorRoot: join(root, 'orchestrator'), homeDirectory: join(root, 'home'), stateDirectory: join(root, 'home', '.raf'), socketPath: join(root, 'service.sock') };
+  const context = { orchestratorRoot: join(root, 'orchestrator'), homeDirectory: join(root, 'home'), stateDirectory: join(root, 'home', '.raf'), socketPath: join(root, 'home', '.raf', 'service.sock') };
   await mkdir(join(context.orchestratorRoot, 'conf'), { recursive: true });
   await mkdir(context.stateDirectory, { recursive: true });
   await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'shared.sqlite' }, service: { hostTickIntervalMs: 25 }, resourceWait: { grantIntervalMs: interval } }));
   await writeFile(join(context.orchestratorRoot, 'conf', 'raf-constants.json'), JSON.stringify(catalog));
-  return { root, context, path: join(context.stateDirectory, 'shared.sqlite'), paths: [context.orchestratorRoot, context.stateDirectory, root] };
+  await writeFile(join(context.orchestratorRoot, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
+  await prepareProductionQaFixture(t, { root: context.orchestratorRoot, home: context.homeDirectory });
+  const { createProductionServiceDependencies, createServicePorts }: typeof import('../src/production-service-ports.ts') = await import(pathToFileURL(join(context.orchestratorRoot, 'raf-develop', 'src', 'production-service-ports.ts')).href);
+  const { createServicePorts: createHostPorts }: typeof import('../src/service-host.ts') = await import(pathToFileURL(join(context.orchestratorRoot, 'raf-develop', 'src', 'service-host.ts')).href);
+  return { createProductionServiceDependencies, createServicePorts, createHostPorts, root, context, path: join(context.stateDirectory, 'shared.sqlite'), paths: [context.orchestratorRoot, context.stateDirectory, root] };
 }
 
 function snapshot(paths: string[]): ResourceSnapshot {
@@ -85,7 +90,7 @@ async function until(check: () => boolean | Promise<boolean>, message: string) {
 }
 
 test('qa reservation: running without observed identity remains an unused reservation', async t => {
-  const { context, path, paths } = await fixture(t);
+  const { createProductionServiceDependencies, context, path, paths } = await fixture(t);
   const store = openStateStore(path);
   t.after(() => store.close());
   seed(store, record(), true);
@@ -99,7 +104,7 @@ test('qa reservation: running without observed identity remains an unused reserv
 });
 
 test('qa reservation: successful scan with absent real child remains conservative', async t => {
-  const { context, path, paths } = await fixture(t);
+  const { createProductionServiceDependencies, context, path, paths } = await fixture(t);
   const process = await managed(t);
   await process.stop();
   const store = openStateStore(path);
@@ -112,7 +117,7 @@ test('qa reservation: successful scan with absent real child remains conservativ
 });
 
 test('qa reservation: OS scan failure stays UNKNOWN instead of consuming running reservation', async t => {
-  const { context, path, paths } = await fixture(t);
+  const { createProductionServiceDependencies, context, path, paths } = await fixture(t);
   const process = await managed(t);
   const store = openStateStore(path);
   t.after(() => store.close());
@@ -125,7 +130,7 @@ test('qa reservation: OS scan failure stays UNKNOWN instead of consuming running
 });
 
 test('qa reservation: verified live process is already measured and not subtracted twice', async t => {
-  const { context, path, paths } = await fixture(t);
+  const { createProductionServiceDependencies, context, path, paths } = await fixture(t);
   const process = await managed(t);
   const store = openStateStore(path);
   t.after(() => store.close());
@@ -138,7 +143,7 @@ test('qa reservation: verified live process is already measured and not subtract
 });
 
 test('qa sqlite: event apply and ack rollback, reopen, two handles and foreign pending cleanup', async t => {
-  const { context, path } = await fixture(t);
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
   let first = openStateStore(path);
   t.after(() => first.close());
   seed(first, record());
@@ -166,7 +171,7 @@ test('qa sqlite: event apply and ack rollback, reopen, two handles and foreign p
 });
 
 for (const succeeded of [false, true]) test(`qa process: real death closes once with ${succeeded ? 'accepted succeeded priority' : 'one failure and reminder transfer'}`, async t => {
-  const { context, path, paths } = await fixture(t);
+  const { createProductionServiceDependencies, createServicePorts, createHostPorts, context, path, paths } = await fixture(t);
   const process = await managed(t);
   const store = openStateStore(path);
   t.after(() => store.close());
@@ -192,7 +197,7 @@ for (const succeeded of [false, true]) test(`qa process: real death closes once 
     handle.sessionRepository.transaction = operation => transaction(tx => operation({ ...tx, applyEffects: effects => { domainCount += effects.length; tx.applyEffects(effects); } }));
     return { ...eventPorts, transaction: operation => eventPorts.transaction(tx => operation({ ...tx, applyReminderEvent: event => { if (event.kind === 'agent.failed') failureCount++; if (event.kind === 'agent.closed') closureCount++; return tx.applyReminderEvent(event); } })) };
   };
-  const host = await (await import('../src/service-host.ts')).createServicePorts(context, deps);
+  const host = await createHostPorts(context, deps);
   t.after(() => host.shutdown());
   await host.recover();
   assert.equal(store.sessionRepository.transaction(tx => tx.getSession('qa-run'))?.state, 'running');
@@ -228,7 +233,7 @@ for (const succeeded of [false, true]) test(`qa process: real death closes once 
 });
 
 test('qa scheduler: real deadlines activate reminders and cancellation stops callbacks and shutdown timers', async t => {
-  const { context, path, paths } = await fixture(t);
+  const { createProductionServiceDependencies, createServicePorts, context, path, paths } = await fixture(t);
   const store = openStateStore(path);
   t.after(() => store.close());
   seed(store, record());
@@ -267,7 +272,7 @@ test('qa scheduler: real deadlines activate reminders and cancellation stops cal
 });
 
 test('qa process: scan failure leaves live session and future reminder without death effects', async t => {
-  const { context, path, paths } = await fixture(t);
+  const { createServicePorts, context, path, paths } = await fixture(t);
   const process = await managed(t);
   const store = openStateStore(path);
   t.after(() => store.close());
@@ -290,7 +295,7 @@ test('qa process: scan failure leaves live session and future reminder without d
 
 test('qa queue: connection abort consumes no grant and global real scheduler interval survives restart', async t => {
   const interval = 180;
-  const { context, path, paths } = await fixture(t, interval);
+  const { createServicePorts, context, path, paths } = await fixture(t, interval);
   let allow = false;
   let reads = 0;
   const options = { resourcePaths: paths, resourceReader: { read: async () => { reads++; const result = snapshot(paths); if (!allow) result.measurement.memoryPressure = 'critical'; return result; } } };
@@ -330,7 +335,7 @@ test('qa queue: connection abort consumes no grant and global real scheduler int
 });
 
 test('qa sampler: real default OS result matches owner measurement or honest UNKNOWN reason', async t => {
-  const { context, path, paths } = await fixture(t);
+  const { createProductionServiceDependencies, context, path, paths } = await fixture(t);
   const store = openStateStore(path);
   t.after(() => store.close());
   const measured = await createResourceSnapshotReader({ machineId: hostname(), paths }).read();

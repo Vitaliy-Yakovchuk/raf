@@ -1,6 +1,7 @@
 import { resolve, join } from 'node:path';
 
 export interface WorkspaceProjectsConfig {
+  profiles?: Record<string, { development?: string | null }>;
   projects: Record<string, {
     path: string;
     profile: string;
@@ -19,9 +20,12 @@ export interface WorkspaceRoutingDependencies {
   pathKind(path: string): Promise<'directory' | 'symlink' | 'file' | 'missing'>;
   readLink(path: string): Promise<string>;
   currentBranch(cwd: string): Promise<string | null>;
+  realPath?(path: string): Promise<string>;
+  gitRoot?(cwd: string): Promise<string | null>;
 }
 
 export type WorkspaceRoutingErrorCode =
+  | 'CONFIGURATION_INVALID'
   | 'UNKNOWN_PROJECT'
   | 'NON_PRODUCT_PROJECT'
   | 'UNKNOWN_BRANCH'
@@ -46,27 +50,47 @@ function failure(code: WorkspaceRoutingErrorCode, message: string): WorkspaceRou
   return { ok: false, error: { code, message } };
 }
 
+export function resolveDevelopmentBranch(project: string, config: WorkspaceProjectsConfig): { ok: true; branch: string } | Extract<WorkspaceRouteResult, { ok: false }> {
+  const entry = Object.hasOwn(config.projects, project) ? config.projects[project] : undefined;
+  if (!entry) return { ok: false, error: { code: 'UNKNOWN_PROJECT', message: `Unknown project: ${project}.` } };
+  const profile = typeof entry.profile === 'string' && config.profiles && Object.hasOwn(config.profiles, entry.profile) ? config.profiles[entry.profile] : undefined;
+  const branch = profile?.development;
+  if (typeof branch !== 'string' || !branch.trim() || branch !== branch.trim()) return { ok: false, error: { code: 'CONFIGURATION_INVALID', message: `conf/projects.json#/profiles/${entry.profile}/development must name a development branch for project ${project}.` } };
+  return { ok: true, branch };
+}
+
+export function configuredWorkspaceRoute(request: WorkspaceRouteRequest, config: WorkspaceProjectsConfig): WorkspaceRouteResult {
+  const { root, project, branch } = request;
+  if (['learning', 'grok', 'startups'].includes(project)) return failure('NON_PRODUCT_PROJECT', `${project} is a non-product repository.`);
+  if (!Object.hasOwn(config.projects, project)) return failure('UNKNOWN_PROJECT', `Unknown project: ${project}.`);
+  const entry = config.projects[project];
+  const rootProject = project === 'orchestrator' && entry.path === '.';
+  const development = rootProject ? resolveDevelopmentBranch(project, config) : undefined;
+  if (development && !development.ok) return development;
+  const available = rootProject && development?.ok ? [development.branch] : Object.keys(entry.branchPaths ?? {});
+  const path = rootProject ? development?.ok && branch === development.branch ? '.' : undefined
+    : entry.branchPaths && Object.hasOwn(entry.branchPaths, branch) ? entry.branchPaths[branch] : undefined;
+  if (typeof path !== 'string' || !path.trim()) return failure('UNKNOWN_BRANCH', `conf/projects.json#/projects/${project}/branchPaths/${branch}: no workspace for project ${project}, profile ${entry.profile}, branch ${branch}; available routes: ${available.join(', ') || '(none)'}.`);
+  return { ok: true, project, branch, cwd: resolve(root, path) };
+}
+
 export async function resolveWorkspaceRoute(
   request: WorkspaceRouteRequest,
   config: WorkspaceProjectsConfig,
   dependencies: WorkspaceRoutingDependencies,
 ): Promise<WorkspaceRouteResult> {
   const { root, project, branch } = request;
-  if (['learning', 'grok', 'startups'].includes(project)) {
-    return failure('NON_PRODUCT_PROJECT', `${project} is a non-product repository.`);
-  }
-  if (!Object.hasOwn(config.projects, project)) {
-    return failure('UNKNOWN_PROJECT', `Unknown project: ${project}.`);
-  }
+  const configured = configuredWorkspaceRoute(request, config);
+  if (!configured.ok) return configured;
   const entry = config.projects[project];
-  if (!entry.branchPaths || !Object.hasOwn(entry.branchPaths, branch)) {
-    return failure('UNKNOWN_BRANCH', `No configured workspace for ${project} branch ${branch}.`);
-  }
-  const cwd = resolve(root, entry.branchPaths[branch]);
+  const rootProject = project === 'orchestrator' && entry.path === '.';
+  let cwd = configured.cwd;
   try {
+    if (rootProject && dependencies.realPath) cwd = await dependencies.realPath(cwd);
     if (await dependencies.pathKind(cwd) !== 'directory') {
       return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not an available directory.`);
     }
+    if (rootProject && dependencies.gitRoot && await dependencies.gitRoot(cwd) !== cwd) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not the Orchestrator Git root.`);
     const actual = await dependencies.currentBranch(cwd);
     if (actual !== branch) {
       return failure('BRANCH_MISMATCH', `Workspace ${cwd} is on ${actual ?? 'detached HEAD'}; expected ${branch}.`);

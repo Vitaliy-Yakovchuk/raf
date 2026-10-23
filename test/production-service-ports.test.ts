@@ -1,9 +1,10 @@
+import { pathToFileURL } from 'node:url';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createProductionServiceDependencies, createServicePorts } from '../src/production-service-ports.ts';
 import { openStateStore } from '../src/state-store.ts';
 import { ReminderService } from '../src/reminders.ts';
 import { createEventRegistry } from '../src/event-registry.ts';
@@ -33,12 +34,16 @@ const catalog = {
 async function fixture(t: TestContext) {
   const root = await mkdtemp(join(tmpdir(), 'raf-service-ports-'));
   t.after(() => rm(root, { recursive: true, force: true }));
-  const context: ServiceEntryContext = { orchestratorRoot: join(root, 'orchestrator'), homeDirectory: join(root, 'home'), stateDirectory: join(root, 'home', '.raf'), socketPath: join(root, 'service.sock') };
+  const context: ServiceEntryContext = { orchestratorRoot: join(root, 'orchestrator'), homeDirectory: join(root, 'home'), stateDirectory: join(root, 'home', '.raf'), socketPath: join(root, 'home', '.raf', 'service.sock') };
   await mkdir(join(context.orchestratorRoot, 'conf'), { recursive: true });
   await mkdir(context.stateDirectory, { recursive: true });
   await writeFile(join(context.orchestratorRoot, 'conf', 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'shared.sqlite' }, service: { hostTickIntervalMs: 15000 }, resourceWait: { grantIntervalMs: 15000 } }));
   await writeFile(join(context.orchestratorRoot, 'conf', 'raf-constants.json'), JSON.stringify(catalog));
-  return { context, path: join(context.stateDirectory, 'shared.sqlite') };
+  await writeFile(join(context.orchestratorRoot, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
+  await prepareProductionQaFixture(t, { root: context.orchestratorRoot, home: context.homeDirectory });
+  const { createProductionServiceDependencies, createServicePorts }: typeof import('../src/production-service-ports.ts') = await import(pathToFileURL(join(context.orchestratorRoot, 'raf-develop', 'src', 'production-service-ports.ts')).href);
+  const { createServicePorts: createHostPorts }: typeof import('../src/service-host.ts') = await import(pathToFileURL(join(context.orchestratorRoot, 'raf-develop', 'src', 'service-host.ts')).href);
+  return { createProductionServiceDependencies, createServicePorts, createHostPorts, context, path: join(context.stateDirectory, 'shared.sqlite') };
 }
 
 function seed(store: StateStore, record = session) {
@@ -58,7 +63,7 @@ function snapshot(paths: readonly string[]): ResourceSnapshot {
 }
 
 test('composition: default dependencies exist without required injected production ports', async t => {
-  const { context } = await fixture(t);
+  const { createProductionServiceDependencies, context } = await fixture(t);
   const dependencies = await createProductionServiceDependencies(context);
   for (const key of ['now', 'nextReminderId', 'observeProcesses', 'effectsForObservation', 'eventPorts', 'deliverReminder', 'schedule'] as const) assert.equal(typeof dependencies[key], 'function', key);
   for (const key of ['readSnapshot', 'isClientAlive', 'watchResources', 'schedule', 'loadLastGrant', 'saveLastGrant'] as const) assert.equal(typeof dependencies.resourceWait[key], 'function', key);
@@ -71,7 +76,7 @@ test('composition: default dependencies exist without required injected producti
 });
 
 test('composition: process scan failure stays unknown with supplied OS seam', async t => {
-  const { context } = await fixture(t);
+  const { createProductionServiceDependencies, context } = await fixture(t);
   let scans = 0;
   const dependencies = await createProductionServiceDependencies(context, { processScan: { execute: async () => { scans++; throw new Error('fixture scan unavailable'); }, now: () => new Date(at).toISOString() } });
   const observations = await dependencies.observeProcesses([identity]);
@@ -83,14 +88,14 @@ test('composition: process scan failure stays unknown with supplied OS seam', as
 });
 
 test('composition: alive and unknown observations have no failure or reminder effects', async t => {
-  const { context } = await fixture(t);
+  const { createProductionServiceDependencies, context } = await fixture(t);
   const dependencies = await createProductionServiceDependencies(context);
   const observations: ProcessObservation[] = [{ state: 'alive', identity, observedAt: new Date(at).toISOString() }, { state: 'unknown', error: 'scan unavailable', observedAt: new Date(at).toISOString() }];
   for (const observation of observations) assert.deepEqual(dependencies.effectsForObservation(session, observation), { pending: [], domain: [] });
 });
 
 test('composition: exit emits run-scoped failure, not final agent.closed or a resume intent', async t => {
-  const { context } = await fixture(t);
+  const { createProductionServiceDependencies, context } = await fixture(t);
   const dependencies = await createProductionServiceDependencies(context);
   const observation: ProcessObservation = { state: 'exited', observedAt: new Date(at).toISOString(), exitCode: 1, evidence: 'fixture process absent' };
   const effects = dependencies.effectsForObservation(session, observation);
@@ -105,7 +110,7 @@ test('composition: exit emits run-scoped failure, not final agent.closed or a re
 });
 
 test('composition: accepted succeeded survives nonzero process exit', async t => {
-  const { context } = await fixture(t);
+  const { createProductionServiceDependencies, context } = await fixture(t);
   const dependencies = await createProductionServiceDependencies(context);
   const successful = { ...session, result: { status: 'succeeded', response: 'verified earlier', proof: { fixture: true } } };
   const effects = dependencies.effectsForObservation(successful, { state: 'exited', observedAt: new Date(at).toISOString(), exitCode: 7, evidence: 'fixture exit' });
@@ -115,14 +120,14 @@ test('composition: accepted succeeded survives nonzero process exit', async t =>
 });
 
 test('composition: default validation rejects self-claimed main and work-result proofs', async t => {
-  const { context } = await fixture(t);
+  const { createProductionServiceDependencies, context } = await fixture(t);
   const dependencies = await createProductionServiceDependencies(context);
   assert.equal(dependencies.sessionValidation.verifyMainAuthority({ kind: 'main', verified: true }, identity), false);
   assert.equal(dependencies.sessionValidation.verifyWorkResult(session.runId, { status: 'succeeded', response: 'claim', proof: true }), false);
 });
 
 test('composition: unverified main transport returns honest unavailable', async t => {
-  const { context } = await fixture(t);
+  const { createProductionServiceDependencies, context } = await fixture(t);
   const dependencies = await createProductionServiceDependencies(context);
   const receipt = await dependencies.deliverReminder({ id: 'r1', createdFor: 'worker', assignedTo: 'main', text: 'deliver', at: new Date(at).toISOString(), binding: null, state: 'active', closedAt: null, closeReason: null });
   assert.equal(receipt.delivered, false);
@@ -131,7 +136,7 @@ test('composition: unverified main transport returns honest unavailable', async 
 });
 
 test('composition: shared delivery receives system sender, literal text and both addresses', async t => {
-  const { context } = await fixture(t);
+  const { createProductionServiceDependencies, context } = await fixture(t);
   const calls: unknown[] = [];
   const dependencies = await createProductionServiceDependencies(context, { sharedDelivery: async (request, sender) => { calls.push({ request, sender }); return { accepted: true, receiptId: 'verified-fixture-receipt' }; } });
   const text = 'literal $(do-not-run) `do-not-run`\nnext line';
@@ -149,7 +154,7 @@ test('composition: shared delivery receives system sender, literal text and both
 });
 
 test('composition: rejected or throwing shared delivery never yields delivered true', async t => {
-  const { context } = await fixture(t);
+  const { createProductionServiceDependencies, context } = await fixture(t);
   const reminder = { id: 'r1', createdFor: 'worker', assignedTo: 'main', text: 'hello', at: new Date(at).toISOString(), binding: null, state: 'active' as const, closedAt: null, closeReason: null };
   const rejected = await createProductionServiceDependencies(context, { sharedDelivery: async () => ({ accepted: false, reason: 'fixture target unavailable' }) });
   assert.deepEqual(await rejected.deliverReminder(reminder), { delivered: false, reason: 'fixture target unavailable' });
@@ -158,7 +163,7 @@ test('composition: rejected or throwing shared delivery never yields delivered t
 });
 
 test('composition: injected absolute scheduler and clock are shared by host and resource wait', async t => {
-  const { context } = await fixture(t);
+  const { createProductionServiceDependencies, context } = await fixture(t);
   const scheduled: number[] = [];
   let cancelled = 0;
   const schedule = (deadline: number, _wake: () => Promise<void>) => { scheduled.push(deadline); return () => { cancelled++; }; };
@@ -176,7 +181,7 @@ test('composition: injected absolute scheduler and clock are shared by host and 
 });
 
 test('sqlite: event pending facts survive reopen and apply through the shared reminder store', async t => {
-  const { context, path } = await fixture(t);
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
   let store = openStateStore(path);
   t.after(() => store.close());
   seed(store);
@@ -194,7 +199,7 @@ test('sqlite: event pending facts survive reopen and apply through the shared re
 });
 
 test('sqlite: event application and acknowledgement roll back together', async t => {
-  const { context, path } = await fixture(t);
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
   const store = openStateStore(path);
   t.after(() => store.close());
   seed(store);
@@ -211,7 +216,7 @@ test('sqlite: event application and acknowledgement roll back together', async t
 });
 
 test('sqlite: reminder emissions enter the same pending event transaction', async t => {
-  const { context, path } = await fixture(t);
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
   const store = openStateStore(path);
   t.after(() => store.close());
   seed(store);
@@ -224,7 +229,7 @@ test('sqlite: reminder emissions enter the same pending event transaction', asyn
 });
 
 test('sqlite: resource snapshot delegates admission including unused reservations and path IDs', async t => {
-  const { context, path } = await fixture(t);
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
   const store = openStateStore(path);
   t.after(() => store.close());
   const paths = [context.orchestratorRoot, context.stateDirectory, join(context.homeDirectory, 'tmp')];
@@ -242,7 +247,7 @@ test('sqlite: resource snapshot delegates admission including unused reservation
 });
 
 test('sqlite: resource wait checks disk only on the development tree volume', async t => {
-  const { context, path } = await fixture(t);
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
   const store = openStateStore(path);
   t.after(() => store.close());
   const measured = (devAvailable: number): ResourceSnapshot => ({
@@ -263,7 +268,7 @@ test('sqlite: resource wait checks disk only on the development tree volume', as
 });
 
 test('sqlite: failed resource probe and missing filesystem never become admission', async t => {
-  const { context, path } = await fixture(t);
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
   const store = openStateStore(path);
   t.after(() => store.close());
   const dependencies = await createProductionServiceDependencies(context, { resourceReader: { read: async () => { throw new Error('fixture sampler unavailable'); } } });
@@ -279,7 +284,7 @@ test('sqlite: failed resource probe and missing filesystem never become admissio
 });
 
 test('sqlite: resource grant timestamp persists across factory and store restart', async t => {
-  const { context, path } = await fixture(t);
+  const { createProductionServiceDependencies, context, path } = await fixture(t);
   let store = openStateStore(path);
   t.after(() => store.close());
   let dependencies = await createProductionServiceDependencies(context);
@@ -296,7 +301,7 @@ test('sqlite: resource grant timestamp persists across factory and store restart
 });
 
 test('composition: resource monitor uses configured cadence and releases its scheduled wake', async t => {
-  const { context } = await fixture(t);
+  const { createProductionServiceDependencies, context } = await fixture(t);
   const timers: { at: number; wake: () => Promise<void>; cancelled: boolean }[] = [];
   let wakes = 0;
   const dependencies = await createProductionServiceDependencies(context, { now: () => at, schedule: (deadline, wake) => { const timer = { at: deadline, wake, cancelled: false }; timers.push(timer); return () => { timer.cancelled = true; }; } });
@@ -311,7 +316,7 @@ test('composition: resource monitor uses configured cadence and releases its sch
 });
 
 test('sqlite: default host entry recovers and shuts down without injected production ports', async t => {
-  const { context, path } = await fixture(t);
+  const { createServicePorts, context, path } = await fixture(t);
   const ports = await createServicePorts(context);
   t.after(() => ports.shutdown());
   await ports.recover();
@@ -323,7 +328,7 @@ test('sqlite: default host entry recovers and shuts down without injected produc
 });
 
 test('sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery', async t => {
-  const { context, path } = await fixture(t);
+  const { createServicePorts, context, path } = await fixture(t);
   const store = openStateStore(path);
   seed(store);
   const reminder = reminders(store).add({ to: 'worker', text: 'unfinished', at: new Date(at + 60000).toISOString() });
@@ -348,7 +353,7 @@ test('sqlite: default host finalizes prior confirmed exit and transfers reminder
 });
 
 test('sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit', async t => {
-  const { context, path } = await fixture(t);
+  const { createServicePorts, context, path } = await fixture(t);
   const store = openStateStore(path);
   seed(store);
   const reminder = reminders(store).add({ to: 'worker', text: 'completed', at: new Date(at + 60000).toISOString() });
@@ -367,7 +372,7 @@ test('sqlite: default host closes reminders for persisted verified succeeded des
 });
 
 test('sqlite: default host tracks connected resource client and persists its actual permit', async t => {
-  const { context, path } = await fixture(t);
+  const { createProductionServiceDependencies, createServicePorts, context, path } = await fixture(t);
   const paths = [context.orchestratorRoot, context.stateDirectory];
   const ports = await createServicePorts(context, { now: () => at, resourcePaths: paths, resourceReader: { read: async () => snapshot(paths) } });
   t.after(() => ports.shutdown());

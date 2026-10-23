@@ -2,18 +2,16 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile, chmod } from 'node:fs/promises';
 import { promises as fs } from 'node:fs';
 import { delimiter, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test, type TestContext } from 'node:test';
-import { createProductionServices } from '../src/production-runtime.ts';
 import { launchPersistentWrapper } from '../src/launch-wrapper.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
 import type { RuntimeLaunch } from '../src/app-runtime.ts';
 import type { LaunchWrapperRequest } from '../src/launch-wrapper.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
-import { configuration, derivedLaunch, eventually, fixture, recordLaunchRunnerPath } from './production-fixture.ts';
+import { configuration, derivedLaunch, eventually, recordLaunchRunnerPath } from './production-fixture.ts';
+import { productionCodexQaFixture as fixture } from './production-codex-qa-fixture.ts';
 import { agentRunFixture, assertFailedLaunchCleaned, exists, until } from './agent-run-fixture.ts';
 
-const runtimeUrl = pathToFileURL(fileURLToPath(new URL('../src/production-runtime.ts', import.meta.url))).href;
 async function workerFixture(t: TestContext, prepareInFixture = true) {
   const f = await fixture(t);
   const runId = 'fixture-run-1';
@@ -69,7 +67,7 @@ const timer = setInterval(() => {
   const session = () => f.store.sessionRepository.transaction(tx => tx.getSession(runId));
   const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', ...request.selection, reason: 'synthetic fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
   if (prepareInFixture) {
-    const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+    const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
     const { task: descriptor, launch: derived } = await derivedLaunch(services, f, runtimeLaunch);
     const prepared = await services.prepareReport(derived);
     assert.equal(prepared.reportPath, reportPath);
@@ -87,7 +85,7 @@ const timer = setInterval(() => {
     assert.equal(f.store.sessionRepository.transaction(tx => tx.listReservations()).length, 1);
   }
   const launch = async () => {
-    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
+    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(f.runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
     f.trackProcess(started.wrapperPid);
     f.trackProcess(started.identity.pid);
     assert.equal(Number(await readFile(wrapperPidPath, 'utf8')), started.wrapperPid);
@@ -103,8 +101,10 @@ async function deliveryFixture(t: TestContext, mode = 'race') {
   f.settings.liveTaskVerified = false;
   f.settings.timeouts.transitionMs = 5000;
   f.settings.timeouts.pollMs = 30;
-  await writeFile(join(f.confRoot, 'raf.json'), JSON.stringify({ version: 1, runnerProtocols: [f.settings] }));
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const rafPath = join(f.confRoot, 'raf.json');
+  const raf = JSON.parse(await readFile(rafPath, 'utf8'));
+  await writeFile(rafPath, JSON.stringify({ ...raf, runnerProtocols: [f.settings] }));
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const { task: descriptor, launch: derived } = await derivedLaunch(services, f, f.runtimeLaunch);
   const prepared = await services.prepareReport(derived);
   const reservation = await services.reserve({ ...derived, reportPath: prepared.reportPath, requested: descriptor.requested, requiredFileSystemIds: [...descriptor.requiredFileSystemIds] });
@@ -229,7 +229,7 @@ for (const mode of ['unknown', 'menu-above-same-footer', 'stale-ready-menu', 'au
 }
 
 test('[production-codex-delivery-qa] readiness-unknown: agent run leaves no claims after unknown native readiness and the same task can be launched again', async t => {
-  const f = await agentRunFixture(t, 'readiness-unknown', { startupMs: 5000, transitionMs: 5000, overallMs: 30000 });
+  const f = await agentRunFixture(t, 'readiness-unknown', { startupMs: 5000, transitionMs: 5000, overallMs: 30000 }, 'codex', { productionQa: true });
   const failed = await f.run('readiness-agent');
   await assertFailedLaunchCleaned(f, failed, 'readiness-unknown');
   const inputs = (await fs.readdir(f.control)).filter(name => name.startsWith('input-'));

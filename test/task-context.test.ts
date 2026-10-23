@@ -321,7 +321,7 @@ test('[task-context] 5b. git-каталоги межі запису: worktree ra
 });
 
 for (const type of ['implement', 'spec'] as const) {
-  test(`[task-context] 5c. agent run ${type}: ${type === 'implement' ? 'тип із межею запису отримує git-dir, common-dir і git-каталог кореня в межах запису та обов’язок коміту в брифі' : 'тип без межі запису в робоче дерево не отримує git-каталогів і обов’язку коміту'}`, async t => {
+  test(`[task-context] 5c. agent run ${type}: коміт власних шляхів репозиторію з git-межами лише відповідного репозиторію`, async t => {
     const w = await workspace(t);
     const git = await writeGitWorktreeLayout(w.root);
     const gitDirectories = [git.worktreeGitDir, git.commonDir, git.rootGitDir];
@@ -357,9 +357,18 @@ for (const type of ['implement', 'spec'] as const) {
       assert.match(section, /хеш/i, 'бриф вимагає хеші комітів у звіті');
       assert.match(section, /push[^\n]*(?:не |без |лише )|(?:не |без )[^\n]*push/i, 'push не доручено за замовчуванням');
     } else {
-      for (const path of [...launched, ...briefed, ...declared]) assert.equal(gitDirectories.some(directory => path === directory || path.startsWith(`${directory}/`)), false, path);
-      assert.notEqual(composed[0].context.commitOwnWork, true);
-      assert.doesNotMatch(composed[0].brief, /коміт/i);
+      for (const paths of [launched, briefed, declared]) {
+        assert.ok(paths.includes(git.rootGitDir), 'OpenSpec потребує git-каталогу Orchestrator');
+        assert.equal(paths.includes(git.worktreeGitDir), false, 'git-dir коду не додається');
+        assert.equal(paths.includes(git.commonDir), false, 'common-dir коду не додається');
+        assert.equal(paths.includes(realpathSync(join(w.root, 'raf-develop'))), false, 'код лишається read-only');
+        assert.equal(paths.includes(realpathSync(w.root)), false, 'Orchestrator не стає writable цілком');
+      }
+      assert.equal(composed[0].context.commitOwnWork, true);
+      assert.match(section, /закоміт/i);
+      assert.ok(section.includes('parallel-development'));
+      assert.ok(section.includes('commits'));
+      assert.match(section, /push[^\n]*(?:не |без |лише )|(?:не |без )[^\n]*push/i);
     }
   });
 }

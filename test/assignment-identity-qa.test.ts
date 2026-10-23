@@ -74,7 +74,7 @@ test('[identity-qa-parser] normalized duplicates remain ambiguous and unrecogniz
   }
 });
 
-test('[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse', async t => {
+test('[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse', { skip: platform() === 'darwin' ? false : 'Requires macOS OpenSpec filesystem identity semantics (Darwin, filesystem type 26); unsupported platform.' }, async t => {
   const f = await fixture(t);
   const version = await f.ports.cli.exec(['--version'], f.root);
   assert.equal(version.exitCode, 0);

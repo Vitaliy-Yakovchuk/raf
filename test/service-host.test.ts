@@ -1,3 +1,5 @@
+import { pathToFileURL } from 'node:url';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, writeFile, realpath, rm } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -5,7 +7,7 @@ import { tmpdir } from 'node:os';
 import test, { type TestContext } from 'node:test';
 import { openStateStore } from '../src/state-store.ts';
 import { ReminderService } from '../src/reminders.ts';
-import { createServicePorts, type ServiceHostDependencies } from '../src/service-host.ts';
+import type { ServiceHostDependencies } from '../src/service-host.ts';
 import type { AdmissionSnapshot } from '../src/resource-wait.ts';
 import type { ProcessIdentity, ProcessObservation } from '../src/session-state.ts';
 import type { PendingEvent } from '../src/event-registry.ts';
@@ -29,8 +31,11 @@ async function fixture(t: TestContext) {
     writeFile(join(root, 'conf', 'raf-constants.json'), JSON.stringify(constants)),
     writeFile(join(root, 'conf', 'flow.json'), JSON.stringify(flow)),
   ]);
-  const context = { orchestratorRoot: root, homeDirectory, stateDirectory, socketPath: join(root, 'service.sock') };
+  const context = { orchestratorRoot: root, homeDirectory, stateDirectory, socketPath: join(stateDirectory, 'service.sock') };
   const path = join(stateDirectory, settings.state.fileName);
+  await writeFile(join(root, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
+  await prepareProductionQaFixture(t, { root, home: homeDirectory });
+  const { createServicePorts }: typeof import('../src/service-host.ts') = await import(pathToFileURL(join(root, 'raf-develop', 'src', 'service-host.ts')).href);
   const store = openStateStore(path);
   let now = Date.parse('2026-10-22T12:00:00.000Z');
   let sequence = 0;
@@ -85,6 +90,7 @@ async function fixture(t: TestContext) {
     await rm(root, { recursive: true, force: true });
   });
   return {
+    createServicePorts,
     root, context, store, reminders, deps, settings, observed, delivered, scheduled, eventPending, eventDelivered,
     now: () => now,
     time: (value: number) => { now = value; },
@@ -215,17 +221,17 @@ test('shutdown cancels monitors and waiters without closing agents or unfinished
 
 test('default production ports recover and shut down while incomplete explicit dependencies are rejected', async t => {
   const f = await fixture(t);
-  const ports = await createServicePorts(f.context);
+  const ports = await f.createServicePorts(f.context);
   try {
     await ports.recover();
     assert.deepEqual(await ports.handle({ operation: 'reminder.list', payload: {} }, { clientId: 'default-host', signal: new AbortController().signal }), []);
   } finally { await ports.shutdown(); }
-  await assert.rejects(createServicePorts(f.context, {} as ServiceHostDependencies), /dependenc|port|delivery|оброб|порт/i);
+  await assert.rejects(f.createServicePorts(f.context, {} as ServiceHostDependencies), /dependenc|port|delivery|оброб|порт/i);
 });
 
 test('missing configured host cadence is rejected instead of introducing a hidden default', async t => {
   const f = await fixture(t);
   delete f.settings.service.hostTickIntervalMs;
   await writeFile(join(f.root, 'conf', 'raf.json'), JSON.stringify(f.settings));
-  await assert.rejects(createServicePorts(f.context, f.deps), /hostTickIntervalMs/);
+  await assert.rejects(f.createServicePorts(f.context, f.deps), /hostTickIntervalMs/);
 });

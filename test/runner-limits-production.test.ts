@@ -5,7 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { compileCatalog } from '../src/catalog.ts';
-import { runProductionCli, type ProductionEntryOptions } from '../src/production-entry.ts';
+import type { ProductionEntryOptions } from '../src/production-entry.ts';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import { openStateStore } from '../src/state-store.ts';
 import type { ExecutionResult } from '../src/cli.ts';
 import { agyUsagePanel, claudeReady, claudeUsageDismissed, claudeUsagePanel, grokUsageModal } from './quota-frames.ts';
@@ -119,7 +120,7 @@ function codexReset(): { text: string; iso: string } {
   return { text, iso: instant.toISOString() };
 }
 
-function fixture(t: { after(action: () => void | Promise<void>): void }, behavior: StubBehavior | ClaudeBehavior) {
+async function fixture(t: { after(action: () => void | Promise<void>): void }, behavior: StubBehavior | ClaudeBehavior) {
   const directory = mkdtempSync(join(tmpdir(), 'raf-limits-'));
   const root = join(directory, 'orchestrator');
   const conf = join(root, 'conf');
@@ -149,6 +150,7 @@ function fixture(t: { after(action: () => void | Promise<void>): void }, behavio
     for (const pid of stubPids(logPath)) try { process.kill(pid, 'SIGKILL'); } catch {}
     rmSync(directory, { recursive: true, force: true });
   });
+  const runProductionCli = await prepareProductionQaFixture(t, { root, home });
   let clock = 0;
   const options: ProductionEntryOptions = { orchestratorRoot: root, homeDirectory: home, artifactPath, now: () => { clock += 10; return clock; } };
   return { root, home, socket, logPath, row: rows.find((row: { runner: string }) => row.runner === behavior.runner), statePath: join(home, '.raf', settings.state.fileName), run: (argv: string[]) => runProductionCli(argv, options) };
@@ -172,7 +174,7 @@ function records(value: unknown): Record<string, unknown>[] {
 function json(result: ExecutionResult, stream: 'stdout' | 'stderr'): unknown {
   return JSON.parse(result[stream]);
 }
-function assertProbeCleaned(f: ReturnType<typeof fixture>) {
+function assertProbeCleaned(f: Awaited<ReturnType<typeof fixture>>) {
   const sessions = spawnSync('tmux', ['-S', f.socket, 'list-sessions', '-F', '#{session_name}'], { encoding: 'utf8' });
   assert.ok(sessions.status !== 0 || sessions.stdout.trim() === '', `raf tmux still has sessions: ${sessions.stdout}`);
   const pids = stubPids(f.logPath);
@@ -186,7 +188,7 @@ function listRows(result: ExecutionResult, runner: string) {
 
 test('default CLI runner limits probes codex through owned tmux and runner list then reports exhausted codex models as unavailable', { timeout: 60000 }, async t => {
   const reset = codexReset();
-  const f = fixture(t, { runner: 'codex', loadingResponses: 1, codexReset: reset.text });
+  const f = await fixture(t, { runner: 'codex', loadingResponses: 1, codexReset: reset.text });
   const limits = await f.run(['runner', 'limits', '--runners', 'codex']);
   assert.equal(limits.exitCode, 0, limits.stderr);
   const output = records(json(limits, 'stdout'));
@@ -216,7 +218,7 @@ test('default CLI runner limits probes codex through owned tmux and runner list 
 });
 
 test('codex status that never leaves the loading block stays unknown: nonzero limits, no fabricated snapshot, list quota unknown', { timeout: 60000 }, async t => {
-  const f = fixture(t, { runner: 'codex', loadingResponses: -1, codexReset: codexReset().text });
+  const f = await fixture(t, { runner: 'codex', loadingResponses: -1, codexReset: codexReset().text });
   const limits = await f.run(['runner', 'limits', '--runners', 'codex']);
   assert.notEqual(limits.exitCode, 0);
   assert.ok(limits.stderr.includes('codex'), limits.stderr);
@@ -232,7 +234,7 @@ test('codex status that never leaves the loading block stays unknown: nonzero li
 });
 
 test('grok probe never presses Enter when the menu offers a different command than /usage', { timeout: 60000 }, async t => {
-  const f = fixture(t, { runner: 'grok', grokMenuItem: '❯ /statusline Configure the Grok Build status line.' });
+  const f = await fixture(t, { runner: 'grok', grokMenuItem: '❯ /statusline Configure the Grok Build status line.' });
   const limits = await f.run(['runner', 'limits', '--runners', 'grok']);
   assert.notEqual(limits.exitCode, 0);
   assert.deepEqual(events(f.logPath).filter(event => event.event === 'submitted'), []);
@@ -241,7 +243,7 @@ test('grok probe never presses Enter when the menu offers a different command th
 });
 
 test('grok probe without a native dialect still collects quota and list reports grok-4.7 exhausted', { timeout: 60000 }, async t => {
-  const f = fixture(t, { runner: 'grok', grokMenuItem: '❯ /usage                   View usage' });
+  const f = await fixture(t, { runner: 'grok', grokMenuItem: '❯ /usage                   View usage' });
   const limits = await f.run(['runner', 'limits', '--runners', 'grok']);
   assert.equal(limits.exitCode, 0, limits.stderr);
   assert.deepEqual(events(f.logPath).filter(event => event.event === 'submitted').map(event => event.command), ['/usage']);
@@ -254,7 +256,7 @@ test('grok probe without a native dialect still collects quota and list reports 
 });
 
 test('agy probe stores both pools and list reports every mapped agy model exhausted', { timeout: 60000 }, async t => {
-  const f = fixture(t, { runner: 'agy' });
+  const f = await fixture(t, { runner: 'agy' });
   const limits = await f.run(['runner', 'limits', '--runners', 'agy']);
   assert.equal(limits.exitCode, 0, limits.stderr);
   const output = records(json(limits, 'stdout'));
@@ -272,7 +274,7 @@ test('agy probe stores both pools and list reports every mapped agy model exhaus
 });
 
 test('claude quota probe in a fresh temporary directory stops at workspace_trust_required without answering the prompt', { timeout: 60000 }, async t => {
-  const f = fixture(t, { runner: 'claude', registeredRafMain: false });
+  const f = await fixture(t, { runner: 'claude', registeredRafMain: false });
   const limits = await f.run(['runner', 'limits', '--runners', 'claude']);
   assert.notEqual(limits.exitCode, 0);
   assert.match(limits.stdout + limits.stderr, /workspace_trust_required/);
@@ -286,7 +288,7 @@ test('claude quota probe in a fresh temporary directory stops at workspace_trust
 });
 
 test('claude quota probe in the registered raf branch directory confirms trust once and reports the all-model pool', { timeout: 60000 }, async t => {
-  const f = fixture(t, { runner: 'claude', registeredRafMain: true });
+  const f = await fixture(t, { runner: 'claude', registeredRafMain: true });
   const limits = await f.run(['runner', 'limits', '--runners', 'claude']);
   assert.equal(limits.exitCode, 0, limits.stderr);
   const output = records(json(limits, 'stdout'));
@@ -316,4 +318,18 @@ test('claude quota probe in the registered raf branch directory confirms trust o
     assert.equal(row.quota, 'available', String(row.model));
   }
   assert.equal(events(f.logPath).filter(event => event.event === 'start').length, 1, 'runner list reads SQLite without launching claude');
+});
+
+test('runner-limits fixture without explicit QA context refuses before state, socket or runner creation', async t => {
+  const f = await fixture(t, { runner: 'codex', loadingResponses: 0, codexReset: codexReset().text });
+  delete process.env.RAF_QA_HOME;
+  for (const argv of [['runner', 'limits', '--runners', 'codex'], ['runner', 'list']]) {
+    const result = await f.run(argv);
+    assert.notEqual(result.exitCode, 0);
+    assert.equal(result.stdout, '');
+    assert.equal((json(result, 'stderr') as { code: string }).code, 'STATE_CONTEXT_REFUSED');
+    assert.equal(existsSync(join(f.home, '.raf')), false);
+    assert.equal(existsSync(f.socket), false);
+    assert.deepEqual(events(f.logPath), []);
+  }
 });

@@ -10,6 +10,7 @@ import { buildCatalog } from '../src/bootstrap.ts';
 import { openStateStore } from '../src/state-store.ts';
 import type { Reminder } from '../src/reminders.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 
 const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const exec = promisify(execFile);
@@ -179,7 +180,7 @@ export function alive(pid: number) {
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ESRCH') return false; throw error; }
 }
 
-export async function agentRunFixture(t: any, mode: string, timeouts: { startupMs: number; transitionMs: number; overallMs: number }, runner: 'codex' | 'claude' = 'codex', options: { tasks?: number; commands?: readonly string[]; stages?: readonly string[] } = {}) {
+export async function agentRunFixture(t: any, mode: string, timeouts: { startupMs: number; transitionMs: number; overallMs: number }, runner: 'codex' | 'claude' = 'codex', options: { tasks?: number; commands?: readonly string[]; stages?: readonly string[]; productionQa?: boolean } = {}) {
   const directory = await fs.realpath(await fs.mkdtemp(join(tmpdir(), 'raf-lfc-')));
   const root = join(directory, 'orchestrator');
   const home = join(directory, 'home');
@@ -199,8 +200,9 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   const artifact = join(directory, 'catalog.json');
   const changeDir = join(root, 'openspec', 'changes', change);
   const marker = join(directory, 'fixture.json');
-  const cfg = { sourceRoot, root, home, artifact, control, statePath: join(home, '.raf', 'state.sqlite'), tmux: programs[1], tmuxLabel: `raf-lfc-${randomUUID().slice(0, 8)}`, commandPath: join(directory, 'command.mjs'), claudeVersion: claudeProtocol.version, claudeHangupExitMs: 750 };
+  const cfg = { sourceRoot: options.productionQa ? workspace : sourceRoot, root, home, artifact, control, statePath: join(home, '.raf', 'state.sqlite'), tmux: programs[1], tmuxLabel: `raf-lfc-${randomUUID().slice(0, 8)}`, commandPath: join(directory, 'command.mjs'), claudeVersion: claudeProtocol.version, claudeHangupExitMs: 750 };
   const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, PATH: `${bin}:${process.env.PATH}`, RAF_AGENT_RUN_FIXTURE: marker, TMPDIR: directory, TMUX_TMPDIR: directory };
+  if (options.productionQa) env.RAF_QA_HOME = home;
   delete env.TMUX;
   delete env.TMUX_PANE;
   const owned = async () => {
@@ -220,8 +222,15 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
     }
   };
   t.after(async () => {
-    for (const pid of await owned()) { try { process.kill(pid, 'SIGKILL'); } catch {} }
     await exec(cfg.tmux, ['-L', cfg.tmuxLabel, 'kill-server'], { env }).catch(() => undefined);
+    await until(async () => {
+      const pids = await owned();
+      for (const pid of pids) {
+        try { process.kill(pid, 'SIGKILL'); }
+        catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error; }
+      }
+      return pids;
+    }, pids => pids.length === 0, 'all fixture processes exited before directory removal');
     await fs.rm(directory, { recursive: true, force: true });
   });
   await writeJson(marker, cfg);
@@ -250,6 +259,10 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   await fs.writeFile(join(changeDir, 'design.md'), '## Context\nSynthetic runner.\n\n## Decisions\nPrivate temporary fixture.\n');
   await fs.writeFile(join(changeDir, 'specs', 'launch-fixture', 'spec.md'), '## ADDED Requirements\n\n### Requirement: Isolated fixture task\nThe fixture SHALL execute only selected temporary tasks.\n\n#### Scenario: Selected task\n- **WHEN** the fixture starts\n- **THEN** only the assigned item is touched\n');
   await fs.writeFile(join(changeDir, 'tasks.md'), `## 1. Fixture\n\n${Array.from({ length: options.tasks ?? 1 }, (_, index) => `- [ ] 1.${index + 1} ${description}${index ? ` ${index + 1}` : ''}\n`).join('')}`);
+  if (options.productionQa) {
+    await fs.copyFile(join(sourceRoot, '../conf/projects.json'), join(conf, 'projects.json'));
+    await prepareProductionQaFixture(t, { root, home });
+  }
   openStateStore(cfg.statePath).close();
   const command = async (argv: string[]) => {
     const child = spawn(process.execPath, [cfg.commandPath, marker, JSON.stringify(argv)], { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });

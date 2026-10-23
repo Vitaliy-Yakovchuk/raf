@@ -1,10 +1,11 @@
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { compileCatalog } from '../src/catalog.ts';
-import { runProductionCli, type ProductionEntryOptions } from '../src/production-entry.ts';
+import type { ProductionEntryOptions } from '../src/production-entry.ts';
 import { openSecretsStore } from '../src/secrets-store.ts';
 import { openStateStore } from '../src/state-store.ts';
 import type { ExecutionResult } from '../src/cli.ts';
@@ -17,7 +18,7 @@ const secretValue = 'SYNTHETIC_PRIVATE_PAYLOAD_7f4e\nsecond line';
 const fileValue = 'SYNTHETIC_FILE_PAYLOAD_8a9b\nтест';
 const updated = '2026-10-21T10:00:00.000Z';
 
-function fixture(t: { after(action: () => void): void }) {
+async function fixture(t: { after(action: () => void): void }) {
   const directory = mkdtempSync(join(tmpdir(), 'raf-production-secrets-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const root = join(directory, 'orchestrator');
@@ -35,8 +36,10 @@ function fixture(t: { after(action: () => void): void }) {
     SYNTHETIC_FILE: { kind: 'file', value: fileValue, source: 'synthetic-test', updated, path: bindingPath, mode: '600' },
   } };
   writeFileSync(sourcePath, JSON.stringify(source));
+  writeFileSync(join(conf, 'projects.json'), JSON.stringify(JSON.parse(readFileSync(new URL('../../conf/projects.json', import.meta.url), 'utf8'))));
+  const runProductionCli = await prepareProductionQaFixture(t, { root, home });
   const options: ProductionEntryOptions = { orchestratorRoot: root, homeDirectory: home, artifactPath };
-  return { directory, root, conf, home, source, sourcePath, bindingPath, options, target: join(home, '.raf', 'secrets.json'), statePath: join(home, '.raf', settings.state.fileName), run: (path = sourcePath) => runProductionCli(['secrets', 'import-conductor', '--file', path], options) };
+  return { runProductionCli, directory, root, conf, home, source, sourcePath, bindingPath, options, target: join(home, '.raf', 'secrets.json'), statePath: join(home, '.raf', settings.state.fileName), run: (path = sourcePath) => runProductionCli(['secrets', 'import-conductor', '--file', path], options) };
 }
 
 function noLeaks(result: ExecutionResult) {
@@ -65,7 +68,7 @@ function failure(result: ExecutionResult, sourceCode?: string) {
 }
 
 test('production secrets import writes synthetic env and file records to explicit home only', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   const original = readFileSync(f.sourcePath);
   const environment = { ...process.env };
   const result = success(await f.run());
@@ -84,7 +87,7 @@ test('production secrets import writes synthetic env and file records to explici
 });
 
 test('production repeat import reports unchanged names without rewriting records', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   success(await f.run());
   const original = readFileSync(f.target);
   const modifiedAt = statSync(f.target).mtimeMs;
@@ -96,7 +99,7 @@ test('production repeat import reports unchanged names without rewriting records
 });
 
 test('production conflict preserves entire destination and original source without partial additions', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   success(await f.run());
   const targetBefore = readFileSync(f.target);
   const source = { version: 1, secrets: {
@@ -113,33 +116,33 @@ test('production conflict preserves entire destination and original source witho
 });
 
 test('missing import argument remains a parser error with no destination state', async t => {
-  const f = fixture(t);
-  const result = await runProductionCli(['secrets', 'import-conductor'], f.options);
+  const f = await fixture(t);
+  const result = await f.runProductionCli(['secrets', 'import-conductor'], f.options);
   assert.equal(failure(result).code, 'MISSING_REQUIRED');
   assert.ok(!existsSync(join(f.home, '.raf')));
 });
 
 test('missing source returns source-unavailable and never creates secrets document', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   failure(await f.run(join(f.directory, 'missing.json')), 'source-unavailable');
   assert.ok(!existsSync(f.target));
 });
 
 test('directory source returns source-unavailable without a secrets document', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   failure(await f.run(f.directory), 'source-unavailable');
   assert.ok(!existsSync(f.target));
 });
 
 test('malformed source diagnostics omit raw JSON payload', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   writeFileSync(f.sourcePath, '{"secret": "' + secretValue);
   failure(await f.run(), 'malformed-source');
   assert.ok(!existsSync(f.target));
 });
 
 test('unsupported source version is explicit and leaves source unchanged', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   writeFileSync(f.sourcePath, JSON.stringify({ ...f.source, version: 987654 }));
   const before = readFileSync(f.sourcePath);
   failure(await f.run(), 'unsupported-version');
@@ -148,7 +151,7 @@ test('unsupported source version is explicit and leaves source unchanged', async
 });
 
 test('invalid source tail prevents importing valid earlier entries', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   writeFileSync(f.sourcePath, JSON.stringify({ version: 1, secrets: { ...f.source.secrets, INVALID_TAIL: { kind: 'env', value: '', source: 'synthetic-test', updated } } }));
   failure(await f.run(), 'invalid-record');
   assert.ok(!existsSync(f.target));
@@ -156,7 +159,7 @@ test('invalid source tail prevents importing valid earlier entries', async t => 
 
 for (const invalid of ['missing', 'malformed', 'unsupported-version']) {
   test(`invalid runtime config ${invalid} fails before secrets or SQLite creation`, async t => {
-    const f = fixture(t);
+    const f = await fixture(t);
     const path = join(f.conf, 'raf.json');
     if (invalid === 'missing') rmSync(path);
     if (invalid === 'malformed') writeFileSync(path, '{broken JSON');
@@ -167,11 +170,12 @@ for (const invalid of ['missing', 'malformed', 'unsupported-version']) {
   });
 }
 
-test('secrets help needs neither config nor source nor destination state', async t => {
-  const f = fixture(t);
-  rmSync(f.conf, { recursive: true });
+test('secrets help needs neither runtime config nor source nor destination state', async t => {
+  const f = await fixture(t);
+  for (const name of ['models.json', 'raf-constants.json', 'flow.json']) rmSync(join(f.conf, name));
+  writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ state: settings.state }));
   rmSync(f.sourcePath);
-  const result = await runProductionCli(['secrets', 'import-conductor', '--help'], f.options);
+  const result = await f.runProductionCli(['secrets', 'import-conductor', '--help'], f.options);
   assert.equal(result.exitCode, 0, result.stderr);
   assert.ok(result.stdout.includes('--file'));
   assert.ok(!existsSync(join(f.home, '.raf')));
@@ -180,7 +184,7 @@ test('secrets help needs neither config nor source nor destination state', async
 
 for (const outcome of ['success', 'source-error'] as const) {
   test(`secrets ${outcome} records one EMA measurement in configured shared SQLite`, async t => {
-    const f = fixture(t);
+    const f = await fixture(t);
     const fileName = 'secrets-command-timing.sqlite';
     const alpha = 0.25;
     writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ ...settings, state: { ...settings.state, fileName }, commandTiming: { ...settings.commandTiming, emaAlpha: alpha } }));
@@ -204,7 +208,7 @@ for (const outcome of ['success', 'source-error'] as const) {
 
 for (const secrets of [{ lockWaitTimeoutMs: 0, pollIntervalMs: 1 }, { lockWaitTimeoutMs: 5, pollIntervalMs: 6 }]) {
   test(`secrets lock config is validated from explicit orchestrator root: ${JSON.stringify(secrets)}`, async t => {
-    const f = fixture(t);
+    const f = await fixture(t);
     writeFileSync(join(f.conf, 'raf.json'), JSON.stringify({ ...settings, secrets }));
     failure(await f.run());
     assert.ok(!existsSync(f.target));
@@ -212,7 +216,7 @@ for (const secrets of [{ lockWaitTimeoutMs: 0, pollIntervalMs: 1 }, { lockWaitTi
 }
 
 test('production lock contention uses the explicit root budget before a foreign lock is released', async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   const configPath = join(f.conf, 'raf.json');
   writeFileSync(configPath, JSON.stringify({ ...settings, secrets: { lockWaitTimeoutMs: 30, pollIntervalMs: 5 } }));
   let release!: () => void;

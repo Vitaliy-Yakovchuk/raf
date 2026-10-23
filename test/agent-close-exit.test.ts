@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { agentRunFixture as fixture, alive, exists, runnerScript, until } from './agent-run-fixture.ts';
 
 test('[agent-close-exit] agent close waits for the runner process that outlives its tmux pane (t4-06: ≈750 ms after SIGHUP)', async t => {
-  const f = await fixture(t, 'close', { startupMs: 20000, transitionMs: 5000, overallMs: 30000 });
+  const f = await fixture(t, 'close', { startupMs: 20000, transitionMs: 5000, overallMs: 30000 }, 'codex', { productionQa: true });
   const lingering = runnerScript.replace('setInterval(() => {}, 1000);', "setInterval(() => {}, 1000);\nprocess.on('SIGHUP', () => setTimeout(() => process.exit(129), 750));");
   assert.notEqual(lingering, runnerScript);
   await fs.writeFile(join(f.directory, 'bin', 'codex'), `#!${process.execPath}\n${lingering}`, { mode: 0o700 });

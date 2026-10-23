@@ -2,15 +2,17 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { tmpdir, userInfo } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { prepareCodexRafCommandAccess } from '../src/codex-raf-command-access.ts';
 import type { PreparedCodexRafCommandAccess } from '../src/codex-raf-command-access.ts';
-import { buildRunnerInvocation, nativeSandboxArgs } from '../src/runner-protocols.ts';
+import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
+import { buildRunnerInvocation, nativeSandboxArgs, nativeWriteScopeArgs } from '../src/runner-protocols.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
+import { outputFixture } from './codex-command-output-fixture.ts';
 
 const confRoot = fileURLToPath(new URL('../../conf/', import.meta.url));
 const rafConfiguration = JSON.parse(await readFile(join(confRoot, 'raf.json'), 'utf8'));
@@ -141,7 +143,7 @@ function flattenTools(tools: readonly any[]): any[] {
   return tools.flatMap((tool: any) => tool.type === 'namespace' ? flattenTools(tool.tools ?? []) : [tool]);
 }
 
-function shellCall(body: any, callId: string, index: number, command: string): object {
+function shellCall(body: any, callId: string, index: number, command: string, maxOutputTokens?: number): object {
   const direct = flattenTools(body.tools ?? []).find((entry: any) => shellToolNames.includes(entry.name));
   if (direct) {
     return {
@@ -151,7 +153,7 @@ function shellCall(body: any, callId: string, index: number, command: string): o
         ? { command: ['bash', '-c', command] }
         : direct.name === 'shell_command'
           ? { command, login: false }
-          : { cmd: command, login: false, yield_time_ms: 10000 }),
+          : { cmd: command, login: false, yield_time_ms: 10000, ...(maxOutputTokens === undefined ? {} : { max_output_tokens: maxOutputTokens }) }),
     };
   }
   const additional = (body.input ?? []).filter((input: any) => input.type === 'additional_tools').flatMap((input: any) => flattenTools(input.tools ?? []));
@@ -160,7 +162,7 @@ function shellCall(body: any, callId: string, index: number, command: string): o
   const nested = ['exec_command', 'shell_command'].find(name => String(exec.description).includes(`${name}(`));
   assert.ok(nested, 'the code-mode exec tool must expose a nested shell execution tool');
   const args = nested === 'exec_command'
-    ? { cmd: command, login: false, yield_time_ms: 10000 }
+    ? { cmd: command, login: false, yield_time_ms: 10000, ...(maxOutputTokens === undefined ? {} : { max_output_tokens: maxOutputTokens }) }
     : { command, login: false };
   return {
     id: `ct_${index}`, type: 'custom_tool_call', status: 'completed', call_id: callId, name: exec.name,
@@ -175,7 +177,7 @@ function outputText(output: ToolOutput | undefined): string {
   return JSON.stringify(value);
 }
 
-async function scriptedProvider(commands: readonly string[]) {
+async function scriptedProvider(commands: readonly string[], maxOutputTokens?: number) {
   const outputs = new Map<string, ToolOutput>();
   const issued = new Set<string>();
   const failures: string[] = [];
@@ -189,7 +191,7 @@ async function scriptedProvider(commands: readonly string[]) {
       }
       const index = outputs.size;
       const callId = `x1-call-${index}`;
-      const item = index < commands.length ? shellCall(body, callId, index, commands[index]) : {
+      const item = index < commands.length ? shellCall(body, callId, index, commands[index], maxOutputTokens) : {
         id: 'msg_done', type: 'message', role: 'assistant', status: 'completed',
         content: [{ type: 'output_text', text: 'X.1 protocol fixture complete', annotations: [] }],
       };
@@ -288,3 +290,66 @@ for (const channelEnabled of [true, false]) {
     assert.deepEqual(f.database.prepare('SELECT text FROM deliveries').all().map(row => row.text), channelEnabled ? ['X.1 delivered from Codex'] : []);
   });
 }
+
+test('[codex-state-access] native Codex agent ps transports >128 KiB from 512 production running sessions', { timeout }, async t => {
+  const f = await outputFixture(t, { production: true, scratchRoot: process.env.RAF_TEST_SCRATCH_ROOT ?? userInfo().homedir, runDirectoryInState: true });
+  const host = await f.hostPs();
+  assert.equal(host.code, 0, host.stderr.toString());
+  assert.ok(host.stdout.length > 128 * 1024, `production fixture must cross the single-argument boundary: ${host.stdout.length}`);
+  const expected = JSON.stringify(JSON.parse(host.stdout.toString()));
+  assert.ok(f.runIds.length >= 512);
+  for (const runId of f.runIds) assert.ok(expected.includes(runId), `production fixture lost ${runId} before the channel`);
+  assert.ok(!expected.includes('z101-finished-must-stay-hidden'));
+  const stateFiles = [f.statePath, `${f.statePath}-wal`, `${f.statePath}-shm`, join(f.stateDirectory, 'secrets.json')];
+  const { DatabaseSync } = await import('node:sqlite');
+  const held = new DatabaseSync(f.statePath);
+  held.exec("PRAGMA journal_mode=WAL; PRAGMA wal_autocheckpoint=0; CREATE TABLE z101_fixture_canary(value TEXT); INSERT INTO z101_fixture_canary VALUES ('WAL PRESENT');");
+  t.after(() => held.close());
+  for (const path of stateFiles) assert.ok((await readFile(path)).length > 0, `host must verify existing fixture resource ${path}`);
+  const directRead = `${quote(process.execPath)} -e ${quote(`const fs=require('node:fs'); let readable=0; for(const p of ${JSON.stringify(stateFiles)}) {try {fs.readFileSync(p);readable++;}catch{}} console.log('Z101_DIRECT_READABLE='+readable); process.exitCode=readable?19:0;`)}`;
+  const sibling = join(f.root, 'sibling-result');
+  await mkdir(sibling);
+  await writeFile(join(sibling, 'stdout'), 'Z101-SIBLING-HIDDEN');
+  const siblingRead = `${quote(process.execPath)} -e ${quote(`try {process.stdout.write(require('node:fs').readFileSync(${JSON.stringify(join(sibling, 'stdout'))}));process.exitCode=19;}catch {console.log('Z101_SIBLING_DENIED');}`)}`;
+  const request = { ...f.request, scope: { ...f.request.scope, hidden: [...f.request.scope.hidden, sibling], readable: [f.runDirectory], tmuxDirectory: f.runDirectory } };
+  const base = buildRunnerInvocation(settings, { model: 'gpt-6.1-sol', effort: 'high' });
+  request.invocation = { ...base, args: nativeSandboxArgs(settings, [...base.args, ...nativeWriteScopeArgs(settings, [f.runDirectory], [f.cwd])], request.scope) };
+  const sandbox = await prepareCodexSandbox({
+    ...request, runId: 'z101-native-output', writableDirectories: [f.cwd, f.runDirectory],
+  });
+  let prepared: PreparedCodexRafCommandAccess | undefined;
+  t.after(async () => {
+    try { await prepared?.cleanup(); await prepared?.cleanup(); }
+    finally { await sandbox.cleanup(); await sandbox.cleanup(); }
+  });
+  prepared = await prepareCodexRafCommandAccess({ ...request, invocation: sandbox.invocation });
+  const commands = [`${f.rafCommand} agent ps`, directRead, siblingRead];
+  const provider = await scriptedProvider(commands, 100000);
+  t.after(() => provider.close());
+  const beforeConfig = await readFile(join(f.codexHome, 'config.toml'));
+  const args = [
+    ...prepared.invocation.args,
+    '-c', 'sandbox_workspace_write.exclude_tmpdir_env_var=true',
+    '-c', 'sandbox_workspace_write.exclude_slash_tmp=true',
+    '-c', 'features.plugins=false',
+    '-c', 'model_provider="raf_z101_fixture"',
+    '-c', `model_providers.raf_z101_fixture={name="Z.101 local fixture",base_url=${JSON.stringify(provider.url)},wire_api="responses",requires_openai_auth=false}`,
+    'exec', '--json', '--ephemeral', '--skip-git-repo-check',
+    'Execute the supplied protocol fixture tool calls.',
+  ];
+  const native = await execute(prepared.invocation.executable, args, f.cwd, prepared.environment);
+  assert.deepEqual(provider.failures, [], 'local API failures are fixture errors');
+  assert.equal(native.code, 0, `${native.stderr}\n${native.stdout}`);
+  assert.equal(provider.issued.size, commands.length);
+  assert.equal(provider.outputs.size, commands.length);
+  const ps = outputText(provider.outputs.get('x1-call-0'));
+  assert.match(ps, /(?:exit_code|Process exited with code|code)[^\d]*0/, 'native tool must report agent ps exit 0');
+  assert.ok(ps.includes(f.runIds[0]));
+  assert.ok(ps.includes(f.runIds.at(-1)!), 'final production runId must reach Codex after the large output');
+  assert.doesNotMatch(ps, /E2BIG|Argument list too long/);
+  assert.match(outputText(provider.outputs.get('x1-call-1')), /Z101_DIRECT_READABLE=0/);
+  assert.match(outputText(provider.outputs.get('x1-call-2')), /Z101_SIBLING_DENIED/);
+  assert.doesNotMatch(outputText(provider.outputs.get('x1-call-2')), /Z101-SIBLING-HIDDEN/);
+  assert.deepEqual(await f.calls(), [['agent', 'ps'], ['agent', 'ps']], 'one host control and one native request, with no direct sandbox access');
+  assert.deepEqual(await readFile(join(f.codexHome, 'config.toml')), beforeConfig);
+});

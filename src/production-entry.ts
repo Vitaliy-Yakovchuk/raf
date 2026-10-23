@@ -1,3 +1,4 @@
+import { productionStateContext } from './state-migration-guard.ts';
 import { createServiceHandlers } from './service-entry.ts';
 import { createProductionServices, rafSystemCaller } from './production-runtime.ts';
 import { fileURLToPath } from 'node:url';
@@ -40,8 +41,9 @@ function readConfiguration(root: string): { models: ModelCatalog; commandTiming:
   const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
   const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(text);
   const read = (name: string) => {
-    try { return JSON.parse(readFileSync(join(root, 'conf', name), 'utf8')); }
-    catch { throw failure('CONFIGURATION_INVALID', `Cannot read valid ${name}`, name); }
+    const path = join(root, 'conf', name);
+    try { return JSON.parse(readFileSync(path, 'utf8')); }
+    catch (error) { throw failure('CONFIGURATION_INVALID', `Cannot read valid ${path}: ${(error as NodeJS.ErrnoException).code ?? 'invalid JSON'}`, path); }
   };
   const settings = read('raf.json');
   if (!object(settings) || settings.version !== 1 || !object(settings.commandTiming) ||
@@ -82,8 +84,9 @@ function clock(options: ProductionEntryOptions): () => number {
 }
 
 function productionContext(options: ProductionEntryOptions, orchestratorRoot: string, fileName: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>) {
-  return { orchestratorRoot: orchestratorRoot, confRoot: join(orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
-    statePath: join(options.homeDirectory, '.raf', fileName), tmpRoot: join(options.homeDirectory, '.raf', 'tmp'),
+  const stateContext = productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
+  return { stateContext, orchestratorRoot: orchestratorRoot, confRoot: join(orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
+    statePath: stateContext.statePath, tmpRoot: stateContext.tmpRoot,
     mode: 'production' as const, commandStartedAtMs, resolveCaller };
 }
 
@@ -93,7 +96,7 @@ function runnerLimits(options: ProductionEntryOptions, orchestratorRoot: string,
     const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
     return runnerLimitsHandler(loaded.models.runners.map(runner => runner.id), async runners => {
       const context = productionContext(options, orchestratorRoot, loaded.fileName, commandStartedAtMs, async () => undefined);
-      const store = openStateStore(context.statePath);
+      const store = openStateStore(context.statePath, { context: context.stateContext });
       try {
         store.initializeRunners(loaded.models.runners);
         const services = await createProductionServices(store, { catalog, models: loaded.models, commandTiming: loaded.commandTiming }, context);
@@ -123,7 +126,7 @@ function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot
   return createAppRuntime(context, {
     additionalHandlers,
     now, loadConfiguration: async () => ({ catalog, models: loaded.models, commandTiming: loaded.commandTiming }),
-    openStore: async path => openStateStore(path), nextRunIdentity: () => ({ runId: randomUUID(), tmuxSession: randomUUID() }),
+    openStore: async path => openStateStore(path, { context: context.stateContext }), nextRunIdentity: () => ({ runId: randomUUID(), tmuxSession: randomUUID() }),
     createServices: createProductionServices, commandState: commandState(orchestratorRoot),
   });
 }
@@ -136,7 +139,7 @@ export async function withProductionRuntime<T>(options: ProductionEntryOptions, 
 }
 
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
-  const commandStartedAtMs = clock(options)();
+  const startedAtMs = performance.now();
   let runtime: AppRuntime | undefined;
   const unavailable = () => { throw failure('COMMAND_UNAVAILABLE', 'Production service for this operation is unavailable'); };
   const handlers = new Proxy(Object.create(null) as Record<string, Handler>, {
@@ -147,7 +150,10 @@ export async function runProductionCli(argv: readonly string[], options: Product
         'bug list', 'bug show', 'bug comment add', 'bug status set', 'bug attachment get'].includes(name)) return unavailable;
       return async (params: Record<string, unknown>) => {
         try {
+          const commandStartedAtMs = options.now?.() ?? startedAtMs;
           const orchestratorRoot = validatedRoot(options);
+          readConfiguration(orchestratorRoot);
+          productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
           if (name.startsWith('bug ')) {
             const [{ createBugHandlers }, { createProductionBugPorts }] = await Promise.all([import('./bug-cli.ts'), import('./bug-production.ts')]);
             return await createBugHandlers(createProductionBugPorts({ orchestratorRoot, homeDirectory: options.homeDirectory }))[name as BugCommand](params);

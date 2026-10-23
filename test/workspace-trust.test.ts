@@ -2,11 +2,10 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { chmod, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { basename, delimiter, dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test, type TestContext } from 'node:test';
-import { createProductionServices } from '../src/production-runtime.ts';
 import { launchPersistentWrapper } from '../src/launch-wrapper.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
+import { resolveGitWriteBoundaries } from '../src/task-context.ts';
 import type { RuntimeConfiguration, RuntimeLaunch } from '../src/app-runtime.ts';
 import type { LaunchWrapperRequest } from '../src/launch-wrapper.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
@@ -15,8 +14,9 @@ import { configuration as codexConfiguration, derivedLaunch, eventually, fixture
 type Runner = 'codex' | 'claude';
 type Placement = 'registered' | 'unregistered' | 'outside-symlink' | 'subdirectory';
 
-const runtimeUrl = pathToFileURL(fileURLToPath(new URL('../src/production-runtime.ts', import.meta.url))).href;
 const conf = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+const z12Timeout = JSON.parse(await readFile(new URL('../../conf/flow.json', import.meta.url), 'utf8')).unitTests.timeoutMs;
+assert.ok(Number.isSafeInteger(z12Timeout) && z12Timeout > 0);
 const configured = (runner: Runner): ProtocolSettings => {
   const rows = conf.runnerProtocols.filter((row: ProtocolSettings) => row.runner === runner);
   assert.equal(rows.length, 1, `conf/raf.json must define exactly one ${runner} protocol`);
@@ -33,13 +33,20 @@ const configuration: RuntimeConfiguration = {
 const selections = { codex: { runner: 'codex' as const, model: 'gpt-6.1-sol', effort: 'high' }, claude: { runner: 'claude' as const, model: 'claude-opus', effort: 'high' } };
 const alive = (pid: number) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 
-const stub = (runner: Runner, settings: ProtocolSettings, paths: { pid: string; input: string; accepted: string }, sticky: boolean) => String.raw`#!${process.execPath}
+const stub = (runner: Runner, settings: ProtocolSettings, paths: { pid: string; input: string; accepted: string }, sticky: boolean, sandboxExecutable: string | null) => String.raw`#!${process.execPath}
 import { appendFileSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 const runner = ${JSON.stringify(runner)};
 const sticky = ${JSON.stringify(sticky)};
 if (process.argv.includes('--version')) { console.log(runner === 'claude' ? ${JSON.stringify(`${settings.version} (Claude Code)`)} : ${JSON.stringify(`codex-cli ${settings.version}`)}); process.exit(0); }
 const argv = process.argv.slice(2);
+if (runner === 'codex' && argv[0] === 'sandbox') {
+  const result = spawnSync(${JSON.stringify(sandboxExecutable)}, argv, { stdio: 'inherit' });
+  if (result.error) throw result.error;
+  if (result.signal) process.kill(process.pid, result.signal);
+  else process.exit(result.status ?? 1);
+}
 writeFileSync(${JSON.stringify(paths.pid)}, String(process.pid));
 const sessionFlag = argv.indexOf('--session-id');
 const nativeId = runner === 'claude' ? argv[sessionFlag + 1] : randomUUID();
@@ -115,8 +122,32 @@ process.stdin.on('data', data => {
 setTimeout(() => process.exit(91), 20000);
 `;
 
-async function trustFixture(t: TestContext, runner: Runner, placement: Placement, sticky = false) {
-  const f = await fixture(t);
+async function trustFixture(t: TestContext, runner: Runner, placement: Placement, sticky = false, rootTask?: 'spec' | 'design') {
+  const f = await fixture(t, { productionQa: true, externalHome: rootTask !== undefined });
+  const parameters = rootTask ? { ...f.params, type: rootTask, phase: rootTask, project: 'orchestrator' } : f.params;
+  if (rootTask) {
+    assert.equal(dirname(f.home), dirname(f.root), 'root trust fixtures require sibling HOME and Orchestrator directories');
+    assert.notEqual(f.home, f.root);
+    assert.equal(f.statePath, join(f.home, '.raf', 'isolated.sqlite'));
+    assert.equal(f.tmpRoot, join(f.home, '.raf', 'tmp'));
+    const initialized = spawnSync('git', ['init', '--quiet', '--initial-branch=main', f.root], { encoding: 'utf8' });
+    assert.ifError(initialized.error);
+    assert.equal(initialized.status, 0, initialized.stderr);
+    await writeFile(join(f.root, 'z12-root-sentinel.txt'), 'Root fixture baseline\n');
+    for (const args of [['add', '--', 'z12-root-sentinel.txt'], ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '-m', 'Z12 root baseline']]) {
+      const committed = spawnSync('git', ['-C', f.root, ...args], { encoding: 'utf8' });
+      assert.ifError(committed.error);
+      assert.equal(committed.status, 0, committed.stderr);
+    }
+    const projectsPath = join(f.confRoot, 'projects.json');
+    const projects = JSON.parse(await readFile(projectsPath, 'utf8'));
+    projects.projects.orchestrator = { path: '.', profile: 'orchestrator' };
+    projects.profiles.orchestrator = { development: 'main', integration: 'main', production: 'main' };
+    await writeFile(projectsPath, JSON.stringify(projects));
+    const questions = join(f.root, 'questions', 'projects', 'orchestrator', 'questions.md');
+    await mkdir(dirname(questions), { recursive: true });
+    await writeFile(questions, '# Fixture questions\n');
+  }
   const base = configured(runner);
   const settings: ProtocolSettings = { ...base, timeouts: { ...base.timeouts, startupMs: 5000, transitionMs: 5000, overallMs: 15000, pollMs: 30 } };
   await writeFile(join(f.confRoot, 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'isolated.sqlite' }, commandTiming: configuration.commandTiming, runnerProtocols: [settings] }));
@@ -124,32 +155,42 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
   f.store.initializeRunners(configuration.models.runners);
   const cliConfigs = { [join(f.home, '.claude.json')]: '{"projects":{}}\n', [join(f.home, '.codex', 'config.toml')]: '# fixture codex config\n' };
   for (const [path, content] of Object.entries(cliConfigs)) { await mkdir(dirname(path), { recursive: true }); await writeFile(path, content); }
-  let cwd = f.cwd;
+  const registeredCwd = rootTask ? f.root : f.cwd;
+  let cwd = registeredCwd;
   if (placement === 'unregistered') {
     cwd = join(f.root, 'other-develop');
     assert.equal(spawnSync('git', ['init', '--quiet', '--initial-branch=develop', cwd], { encoding: 'utf8' }).status, 0);
   } else if (placement === 'subdirectory') {
-    cwd = join(f.cwd, 'nested');
+    cwd = join(registeredCwd, 'nested');
     await mkdir(cwd);
   } else if (placement === 'outside-symlink') {
     cwd = join(dirname(f.root), `${basename(f.root)}-link`);
-    await symlink(f.cwd, cwd);
+    await symlink(registeredCwd, cwd);
     t.after(() => rm(cwd, { force: true }));
   }
   const paths = { pid: join(f.root, `${runner}.pid`), input: join(f.root, `${runner}-input.jsonl`), accepted: join(f.root, `${runner}-accepted.json`) };
   f.trackPidFile(paths.pid);
   const executable = join(f.binRoot, runner);
-  await writeFile(executable, stub(runner, settings, paths, sticky), { mode: 0o700 });
+  let sandboxExecutable: string | null = null;
+  if (runner === 'codex') {
+    const lookup = spawnSync('which', ['codex'], { encoding: 'utf8' });
+    assert.ifError(lookup.error);
+    assert.equal(lookup.status, 0, lookup.stderr);
+    sandboxExecutable = lookup.stdout.trim();
+    assert.ok(sandboxExecutable.startsWith('/') && !sandboxExecutable.startsWith(f.binRoot + '/'));
+  }
+  await writeFile(executable, stub(runner, settings, paths, sticky, sandboxExecutable), { mode: 0o700 });
   await chmod(executable, 0o700);
-  const runId = `trust-${runner}-${placement}`;
+  const runId = `trust-${runner}-${placement}${rootTask ? `-${rootTask}` : ''}`;
   const address = f.params.id;
   const tmuxSession = `raf-trust-${runner}`;
   const selection = selections[runner];
   const brief = ['WORKSPACE_TRUST_QA', ...Array.from({ length: 12 }, (_, index) => `Рядок доручення ${index}`), 'BRIEF_END'].join('\n');
   const request: LaunchWrapperRequest = { tmpRoot: f.tmpRoot, runId, address, assignment: f.assignment, statePath: f.statePath, cwd, tmuxSession, selection, brief, readinessTimeoutMs: settings.timeouts.startupMs };
-  const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd }, assignment: f.assignment, selection: { status: 'selected', ...selection, reason: 'synthetic workspace trust fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
-  const { task, launch: derived } = await derivedLaunch(services, f, runtimeLaunch);
+  const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type: parameters.type, project: parameters.project, features: parameters.features, phase: parameters.phase, cwd }, assignment: f.assignment, selection: { status: 'selected', ...selection, reason: 'synthetic workspace trust fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const { task, launch: derived } = await derivedLaunch(services, f, runtimeLaunch, parameters);
+  if (rootTask) derived.writeBoundaries = [...new Set([...derived.writeBoundaries!, ...await resolveGitWriteBoundaries(cwd, f.root, derived.writeBoundaries)])];
   const prepared = await services.prepareReport(derived);
   const reservation = await services.reserve({ ...derived, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
   assert.equal(reservation.admitted, true, 'reason' in reservation ? reservation.reason : 'admitted');
@@ -159,7 +200,7 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
   const wrapperPidPath = join(f.root, 'wrapper.pid');
   f.trackPidFile(wrapperPidPath);
   const launch = async () => {
-    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
+    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(f.runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
     f.trackProcess(started.wrapperPid);
     f.trackProcess(started.identity.pid);
     return started;
@@ -168,7 +209,82 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
   const configsUnchanged = async () => {
     for (const [path, content] of Object.entries(cliConfigs)) assert.equal(await readFile(path, 'utf8'), content, `raf must not edit CLI configuration ${path}`);
   };
-  return { ...f, cwd, settings, request, runtimeLaunch, services, session, launch, inputs, paths, configsUnchanged, runId };
+  return { ...f, cwd, settings, request, runtimeLaunch, services, session, launch, inputs, paths, configsUnchanged, runId, task, derived };
+}
+
+for (const runner of ['codex', 'claude'] as const) {
+  for (const type of ['spec', 'design'] as const) {
+    test(`[workspace-trust] Z.12 ${runner}/${type}: verified Orchestrator main root is trusted once without expanding write scope`, { timeout: z12Timeout }, async t => {
+      const f = await trustFixture(t, runner, 'registered', false, type);
+      assert.equal(f.task.branch, 'main');
+      assert.equal(f.task.workspaceWritable, false);
+      assert.equal(f.derived.activity.cwd, f.root);
+      const route = await f.services.route({ root: f.root, project: 'orchestrator', branch: f.task.branch });
+      assert.deepEqual(route, { ok: true, project: 'orchestrator', branch: 'main', cwd: f.root });
+      const before = { conf: await readFile(join(f.confRoot, 'projects.json'), 'utf8'), head: await readFile(join(f.root, '.git', 'HEAD'), 'utf8'), boundaries: [...f.derived.writeBoundaries!] };
+      await f.launch();
+      const navigation = f.settings.navigation.find(row => row.state === 'workspace_trust_required');
+      assert.ok(navigation);
+      const answered = (await f.inputs()).filter(row => row.trusting).map(row => row.data).join('');
+      assert.equal(answered, navigation.keys.map(key => key === 'Enter' ? '\r' : key).join(''));
+      assert.equal(JSON.parse(await readFile(f.paths.accepted, 'utf8')).brief, f.request.brief);
+      assert.equal(f.session()?.state, 'running');
+      assert.deepEqual(f.derived.writeBoundaries, before.boundaries);
+      assert.deepEqual([...(f.session()?.launchContext?.writeBoundaries ?? [])].sort(), [...before.boundaries].sort(), 'durable worker scope must preserve the prepared document scope');
+      for (const denied of [f.root, f.confRoot, f.cwd + '/raf-develop', join(f.root, 'raf-develop/.git'), join(f.root, 'openspec/changes')]) assert.ok(!before.boundaries.includes(denied), denied);
+      assert.ok(before.boundaries.includes(join(f.root, 'openspec/changes/fixture-launch')));
+      assert.ok(before.boundaries.includes(join(f.root, '.git')), 'Z.11 document Git access is preserved');
+      assert.equal(await readFile(join(f.confRoot, 'projects.json'), 'utf8'), before.conf);
+      assert.equal(await readFile(join(f.root, '.git', 'HEAD'), 'utf8'), before.head);
+      await f.configsUnchanged();
+    });
+
+    test(`[workspace-trust] Z.12 ${runner}/${type}: sticky root prompt receives only one navigation answer`, { timeout: z12Timeout }, async t => {
+      const f = await trustFixture(t, runner, 'registered', true, type);
+      await assert.rejects(f.launch(), /RUNNER_WORKSPACE_UNTRUSTED/);
+      const navigation = f.settings.navigation.find(row => row.state === 'workspace_trust_required');
+      assert.ok(navigation);
+      assert.equal((await f.inputs()).map(row => row.data).join(''), navigation.keys.map(key => key === 'Enter' ? '\r' : key).join(''));
+      assert.equal(await readFile(f.paths.accepted, 'utf8').catch(() => null), null);
+      await f.configsUnchanged();
+    });
+
+    for (const placement of ['unregistered', 'subdirectory', 'outside-symlink'] as const) {
+      test(`[workspace-trust] Z.12 ${runner}/${type}: root exception rejects ${placement} without answering`, { timeout: z12Timeout }, async t => {
+        const f = await trustFixture(t, runner, placement, false, type);
+        await assert.rejects(f.launch(), /RUNNER_WORKSPACE_UNTRUSTED/);
+        assert.deepEqual(await f.inputs(), []);
+        assert.equal(await readFile(f.paths.accepted, 'utf8').catch(() => null), null);
+        await f.configsUnchanged();
+      });
+    }
+
+    for (const defect of ['changed-branch', 'detached-head', 'missing-navigation', 'unregistered-root'] as const) {
+      test(`[workspace-trust] Z.12 ${runner}/${type}: ${defect} at worker readiness cannot reuse an earlier trust decision`, { timeout: z12Timeout }, async t => {
+        const f = await trustFixture(t, runner, 'registered', false, type);
+        if (defect === 'changed-branch' || defect === 'detached-head') {
+          const args = defect === 'changed-branch' ? ['symbolic-ref', 'HEAD', 'refs/heads/other'] : ['checkout', '-q', '--detach'];
+          const changed = spawnSync('git', ['-C', f.root, ...args], { encoding: 'utf8' });
+          assert.ifError(changed.error);
+          assert.equal(changed.status, 0, changed.stderr);
+        } else if (defect === 'unregistered-root') {
+          const projectsPath = join(f.confRoot, 'projects.json');
+          const projects = JSON.parse(await readFile(projectsPath, 'utf8'));
+          delete projects.projects.orchestrator;
+          await writeFile(projectsPath, JSON.stringify(projects));
+        } else {
+          const settingsPath = join(f.confRoot, 'raf.json');
+          const settings = JSON.parse(await readFile(settingsPath, 'utf8'));
+          settings.runnerProtocols[0].navigation = settings.runnerProtocols[0].navigation.filter((row: { state: string }) => row.state !== 'workspace_trust_required');
+          await writeFile(settingsPath, JSON.stringify(settings));
+        }
+        await assert.rejects(f.launch(), /RUNNER_WORKSPACE_UNTRUSTED/);
+        assert.deepEqual(await f.inputs(), []);
+        assert.equal(await readFile(f.paths.accepted, 'utf8').catch(() => null), null);
+        await f.configsUnchanged();
+      });
+    }
+  }
 }
 
 for (const runner of ['codex', 'claude'] as const) {

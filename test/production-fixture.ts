@@ -4,6 +4,7 @@ import { mkdtemp, mkdir, readFile, writeFile, rename, rm } from 'node:fs/promise
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
+import { pathToFileURL } from 'node:url';
 import type { TestContext } from 'node:test';
 import { createProductionServices } from '../src/production-runtime.ts';
 import { executeCommand } from '../src/os-runtime.ts';
@@ -12,6 +13,7 @@ import { bindWorkspaceBoundaries } from '../src/task-context.ts';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeLaunch, RuntimeRunParameters, RuntimeServices } from '../src/app-runtime.ts';
 import type { AdapterCommand, AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import type { AssignmentSnapshot } from '../src/assignment.ts';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 
 export const configuration: RuntimeConfiguration = {
   catalog: { commands: [], reportStatuses: [{ id: 'succeeded' }, { id: 'failed' }] },
@@ -39,17 +41,19 @@ export async function eventually<T>(read: () => Promise<T> | T, predicate: (valu
   assert.fail(`${description}: ${JSON.stringify(last)}`);
 }
 
-export async function fixture(t: TestContext) {
-  const root = await mkdtemp(join(tmpdir(), 'raf-prod-'));
+export async function fixture(t: TestContext, options: { productionQa?: boolean; externalHome?: boolean } = {}) {
+  const base = await mkdtemp(join(tmpdir(), 'raf-prod-'));
+  const root = options.externalHome ? join(base, 'orchestrator') : base;
+  if (options.externalHome) await mkdir(root);
   const confRoot = join(root, 'conf');
-  const home = join(root, 'home');
-  const tmpRoot = join(root, 'tmp');
+  const home = join(options.externalHome ? base : root, 'home');
+  const tmpRoot = options.productionQa ? join(home, '.raf', 'tmp') : join(root, 'tmp');
   const cwd = join(root, 'raf-develop');
   const statePath = join(home, '.raf', 'isolated.sqlite');
   const binRoot = join(root, 'bin');
   const socket = join(root, 'tmux.sock');
   const questionsPath = join(root, 'questions', 'projects', 'raf', 'questions.md');
-  await Promise.all([mkdir(confRoot), mkdir(dirname(statePath), { recursive: true }), mkdir(tmpRoot), mkdir(cwd), mkdir(binRoot), mkdir(dirname(questionsPath), { recursive: true })]);
+  await Promise.all([mkdir(confRoot), mkdir(dirname(statePath), { recursive: true }), mkdir(tmpRoot, { recursive: true }), mkdir(cwd), mkdir(binRoot), mkdir(dirname(questionsPath), { recursive: true })]);
   await writeFile(questionsPath, '# Питання\n');
   const tmuxLookup = spawnSync('which', ['tmux'], { encoding: 'utf8' });
   assert.equal(tmuxLookup.status, 0, tmuxLookup.stderr);
@@ -94,7 +98,7 @@ process.exit(result.status ?? 1);
         }
       }, exited => exited, `owned process ${pid} exited before fixture removal`)));
     } finally { store.close(); }
-    await rm(root, { recursive: true, force: true });
+    await rm(base, { recursive: true, force: true });
   });
   const git = spawnSync('git', ['init', '--quiet', '--initial-branch=develop', cwd], { encoding: 'utf8' });
   assert.equal(git.status, 0, git.stderr);
@@ -159,7 +163,16 @@ else process.exit(result.status ?? 1);
   };
   store.initializeRunners(configuration.models.runners);
   const context: RuntimeContext = { orchestratorRoot: root, confRoot, artifactPath: join(root, 'catalog.json'), statePath, tmpRoot, mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined };
-  const services = await createProductionServices(store, configuration, context, { execute });
+  let createServices = createProductionServices;
+  let runtimeUrl = new URL('../src/production-runtime.ts', import.meta.url).href;
+  if (options.productionQa) {
+    const projects = JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
+    await writeFile(join(confRoot, 'projects.json'), JSON.stringify(projects));
+    await prepareProductionQaFixture(t, { root, home });
+    runtimeUrl = pathToFileURL(join(root, projects.projects.raf.branchPaths.develop, 'src', 'production-runtime.ts')).href;
+    createServices = (await import(runtimeUrl) as typeof import('../src/production-runtime.ts')).createProductionServices;
+  }
+  const services = await createServices(store, configuration, context, { execute });
   const validation = await services.assignment.validate({ root, selections: [{ change: 'fixture-launch', items: [{ id: '2.1' }] }] });
   if (!validation.ok) assert.fail(JSON.stringify(validation));
   const assignment: AssignmentSnapshot = validation.snapshot;
@@ -173,7 +186,7 @@ else process.exit(result.status ?? 1);
     await rename(staging, tasksPath);
     assert.equal(await readFile(tasksPath, 'utf8'), completed);
   };
-  return { root, confRoot, home, cwd, tmpRoot, statePath, binRoot, context, store, assignment, params, changeRoot, tasksPath, questionsPath, flowPath, writeFlowResources, legacyTaskContextPath, execute, calls, completeAssignment, cliCalls, openspecPath, socket, realTmuxPath, realOpenSpecPath, trackProcess, trackPidFile };
+  return { root, confRoot, home, cwd, tmpRoot, statePath, binRoot, context, store, createProductionServices: createServices, runtimeUrl, assignment, params, changeRoot, tasksPath, questionsPath, flowPath, writeFlowResources, legacyTaskContextPath, execute, calls, completeAssignment, cliCalls, openspecPath, socket, realTmuxPath, realOpenSpecPath, trackProcess, trackPidFile };
 }
 
 export type ProductionFixture = Awaited<ReturnType<typeof fixture>>;

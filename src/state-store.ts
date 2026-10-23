@@ -1,12 +1,15 @@
 import type { TaskReservationSet } from "./task-reservations.ts";
 import type { EventRegistryPorts, EventTransaction, PendingEvent } from "./event-registry.ts";
 import { DatabaseSync } from "node:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { existsSync, mkdirSync, statSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { canonicalStatePath, stateFailure, verifyStateContext } from "./state-migration-guard.ts";
+import { inspectStateSchema } from './state-schema.ts';
 import { ReminderService, type Reminder, type ReminderRepository, type ReminderTransaction } from "./reminders.ts";
 import type { ReminderSessionEffect } from "./reminder-repository.ts";
 import type { SessionRepository, SessionTransaction, SessionRecord, PendingIntent, AdmissionReservation } from "./session-state.ts";
 import { createResultNotice, type ResultNotice } from './launcher-notice.ts';
+import { settleStartupContextReview } from './startup-context.ts';
 
 export type RunnerInitialState = { id: string; initialEnabled: boolean };
 
@@ -38,6 +41,7 @@ export function reminderDeliveryKey(reminder: Pick<Reminder, 'assignedTo' | 'tex
 }
 
 export interface StateStore {
+  readonly startupContextDatabase: DatabaseSync;
   resultNotices: {
     list(): ResultNotice[];
     claim(id: string, owner: DeliveryClaimOwner, claimedAt: string, isOwnerAlive: DeliveryOwnerProbe): ResultNotice | undefined;
@@ -77,9 +81,49 @@ export interface StateStore {
   getCommandTiming(command: string): CommandTiming | undefined;
 }
 
-export function openStateStore(path: string): StateStore {
+export const STATE_SCHEMA_VERSION = 10;
+
+export function openStateStore(path: string, options?: import('./state-migration-guard.ts').StateStoreOpenOptions): StateStore {
   if (typeof path !== "string" || path.trim() === "") {
     throw new Error("An explicit database path is required");
+  }
+
+  const checkContext = () => {
+    if (!options?.context) return;
+    verifyStateContext(options.context);
+    if (path !== options.context.statePath || canonicalStatePath(path) !== path) {
+      throw stateFailure('STATE_CONTEXT_REFUSED', `State path ${path} differs from resolved context ${options.context.statePath}`);
+    }
+  };
+  checkContext();
+  const permit = options?.transfer;
+  if (permit && (permit.toVersion !== STATE_SCHEMA_VERSION || !Number.isSafeInteger(permit.fromVersion) ||
+      permit.fromVersion < 1 || permit.fromVersion >= permit.toVersion)) {
+    throw stateFailure('STATE_SCHEMA_UNSUPPORTED', 'Unsupported transfer versions or downgrade');
+  }
+  if (permit && (path === ':memory:' || permit.statePath !== path || !requireAbsolute(path))) {
+    throw stateFailure('STATE_MIGRATION_CONFLICT', 'Transfer permit must name this exact absolute state path');
+  }
+  function requireAbsolute(value: string) { return resolve(value) === value; }
+  const checkVersion = ({ version, objects }: { version: number; objects: unknown }) => {
+    if (!Number.isSafeInteger(version) || version < 0 || version > STATE_SCHEMA_VERSION || version === 0 && objects) {
+      throw stateFailure('STATE_SCHEMA_UNSUPPORTED', `Unsupported state schema at ${path}: version ${version}; target ${STATE_SCHEMA_VERSION}`);
+    }
+    if (permit && version !== permit.fromVersion && version !== permit.toVersion) {
+      throw stateFailure('STATE_MIGRATION_CONFLICT', `State ${path} is at ${version}; expected ${permit.fromVersion} or ${permit.toVersion}`);
+    }
+    if (!permit && version > 0 && version < STATE_SCHEMA_VERSION) {
+      throw stateFailure('STATE_MIGRATION_REQUIRED', `State ${path} is at version ${version}; explicit migration to ${STATE_SCHEMA_VERSION} required`);
+    }
+    return version;
+  };
+  const checkSchema = (database: DatabaseSync) => checkVersion({
+    version: Number(database.prepare('PRAGMA user_version').get()?.user_version),
+    objects: database.prepare("SELECT 1 FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' LIMIT 1").get(),
+  });
+  if (path !== ':memory:' && existsSync(path)) {
+    checkContext();
+    checkVersion(inspectStateSchema(path));
   }
 
 
@@ -100,7 +144,21 @@ export function openStateStore(path: string): StateStore {
   }
 
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
+  checkContext();
+  const beforeOpen = path !== ':memory:' && existsSync(path) ? statSync(path) : undefined;
   const db = operation("open", () => new DatabaseSync(path, { timeout: 250 }));
+  try {
+    checkContext();
+    if (options?.context) {
+      const openedPath = db.prepare('PRAGMA database_list').all().find(row => row.name === 'main')?.file;
+      const actual = statSync(String(openedPath));
+      if (canonicalStatePath(String(openedPath)) !== options.context.statePath ||
+          beforeOpen && (beforeOpen.dev !== actual.dev || beforeOpen.ino !== actual.ino)) {
+        throw stateFailure('STATE_CONTEXT_REFUSED', `Opened state identity differs from ${path}`);
+      }
+    }
+    checkSchema(db);
+  } catch (error) { db.close(); throw error; }
   function transaction<T>(action: () => T, immediate = true): T {
     db.exec(immediate ? "BEGIN IMMEDIATE" : "BEGIN");
     try {
@@ -118,25 +176,13 @@ export function openStateStore(path: string): StateStore {
     operation("initialize", () => {
 
 
-      for (let attempt = 0; ; attempt++) {
-        try {
-          const journal = db.prepare("PRAGMA journal_mode").get();
-          if (journal?.journal_mode !== "wal") db.exec("PRAGMA journal_mode = WAL");
-          break;
-        } catch (error) {
-          const code = (error as { errcode?: number }).errcode;
-          if (attempt >= 4 || (code !== 5 && code !== 6)) throw error;
-          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
-        }
-      }
-      db.exec("PRAGMA foreign_keys = ON; PRAGMA synchronous = FULL; PRAGMA wal_autocheckpoint = 1000; PRAGMA journal_size_limit = 4194304");
       const version = () => Number(db.prepare("PRAGMA user_version").get()?.user_version);
-      if (version() > 10) throw new Error("Unsupported state store schema version");
+      checkSchema(db);
       if (version() < 10) {
         transaction(() => {
 
-          const current = version();
-          if (current > 10) throw new Error("Unsupported state store schema version");
+          checkContext();
+          const current = checkSchema(db);
           if (current === 10) return;
           if (current === 0) {
           db.exec(`
@@ -158,8 +204,9 @@ export function openStateStore(path: string): StateStore {
             ) STRICT;
             PRAGMA user_version = 1;
           `);
+          options?.afterMigrationStep?.(1);
           }
-          if (current < 2) db.exec(`
+          if (current < 2) { db.exec(`
             CREATE TABLE sessions (
               run_id TEXT PRIMARY KEY NOT NULL,
               address_id TEXT NOT NULL,
@@ -178,8 +225,8 @@ export function openStateStore(path: string): StateStore {
               payload TEXT NOT NULL
             ) STRICT;
             PRAGMA user_version = 2;
-          `);
-          if (current < 3) db.exec(`
+          `); options?.afterMigrationStep?.(2); }
+          if (current < 3) { db.exec(`
             CREATE TABLE reminders (
               id TEXT PRIMARY KEY NOT NULL,
               created_for TEXT NOT NULL,
@@ -192,13 +239,13 @@ export function openStateStore(path: string): StateStore {
             CREATE INDEX reminders_due ON reminders(state, at);
             CREATE INDEX reminders_retention ON reminders(state, closed_at);
             PRAGMA user_version = 3;
-          `);
-          if (current < 4) db.exec(`
+          `); options?.afterMigrationStep?.(3); }
+          if (current < 4) { db.exec(`
             ALTER TABLE pending_intents ADD COLUMN run_id TEXT;
             UPDATE pending_intents SET run_id = json_extract(payload, '$.runId');
             PRAGMA user_version = 4;
-          `);
-          if (current < 5) db.exec(`
+          `); options?.afterMigrationStep?.(4); }
+          if (current < 5) { db.exec(`
             CREATE TABLE task_reservation_runs (
               run_id TEXT PRIMARY KEY NOT NULL REFERENCES sessions(run_id) ON DELETE CASCADE,
               address_id TEXT NOT NULL,
@@ -226,15 +273,15 @@ export function openStateStore(path: string): StateStore {
                 DELETE FROM task_reservation_runs WHERE run_id = NEW.run_id;
               END;
             PRAGMA user_version = 5;
-          `);
-          if (current < 6) db.exec(`
+          `); options?.afterMigrationStep?.(5); }
+          if (current < 6) { db.exec(`
             CREATE TABLE resource_wait_state (
               singleton INTEGER PRIMARY KEY CHECK(singleton = 1),
               last_grant REAL NOT NULL
             ) STRICT;
             PRAGMA user_version = 6;
-          `);
-          if (current < 7) db.exec(`
+          `); options?.afterMigrationStep?.(6); }
+          if (current < 7) { db.exec(`
             CREATE TABLE quota_leases (
               key TEXT PRIMARY KEY NOT NULL,
               token TEXT NOT NULL,
@@ -242,8 +289,8 @@ export function openStateStore(path: string): StateStore {
               expires_at TEXT NOT NULL
             ) STRICT;
             PRAGMA user_version = 7;
-          `);
-          if (current < 8) db.exec(`
+          `); options?.afterMigrationStep?.(7); }
+          if (current < 8) { db.exec(`
             CREATE TABLE reminder_deliveries (
               reminder_id TEXT PRIMARY KEY NOT NULL REFERENCES reminders(id) ON DELETE CASCADE,
               delivery_key TEXT NOT NULL,
@@ -261,8 +308,8 @@ export function openStateStore(path: string): StateStore {
             ) STRICT;
             CREATE INDEX closure_notices_undelivered ON closure_notices(delivered_at);
             PRAGMA user_version = 8;
-          `);
-          if (current < 9) db.exec(`
+          `); options?.afterMigrationStep?.(8); }
+          if (current < 9) { db.exec(`
             CREATE TABLE delivery_claims (
               target TEXT PRIMARY KEY NOT NULL,
               delivery_key TEXT NOT NULL,
@@ -272,7 +319,7 @@ export function openStateStore(path: string): StateStore {
               claimed_at TEXT NOT NULL
             ) STRICT;
             PRAGMA user_version = 9;
-          `);
+          `); options?.afterMigrationStep?.(9); }
           db.exec(`
             CREATE TABLE result_notices (
               id TEXT PRIMARY KEY NOT NULL,
@@ -281,8 +328,22 @@ export function openStateStore(path: string): StateStore {
             ) STRICT;
             PRAGMA user_version = 10;
           `);
+          options?.afterMigrationStep?.(10);
         });
       }
+      for (let attempt = 0; ; attempt++) {
+        try {
+          const journal = db.prepare("PRAGMA journal_mode").get();
+          if (journal?.journal_mode !== "wal") db.exec("PRAGMA journal_mode = WAL");
+          break;
+        } catch (error) {
+          const code = (error as { errcode?: number }).errcode;
+          if (attempt >= 4 || (code !== 5 && code !== 6)) throw error;
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+        }
+      }
+      db.exec("PRAGMA foreign_keys = ON; PRAGMA synchronous = FULL; PRAGMA wal_autocheckpoint = 1000; PRAGMA journal_size_limit = 4194304");
+
     });
   } catch (error) {
     try { db.close(); } catch {                                        }
@@ -373,6 +434,7 @@ export function openStateStore(path: string): StateStore {
       }),
       listSessions: () => access(() => db.prepare("SELECT payload FROM sessions").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
       putSession: session => access(() => {
+        if (session.state === 'finished') settleStartupContextReview(db, { reviewRunId: session.runId, status: session.result?.status ?? 'failed', finishedAt: session.finishedAt! });
         db.prepare(`INSERT INTO sessions(run_id, address_id, state, finished_at, payload) VALUES (?, ?, ?, ?, ?)
           ON CONFLICT(run_id) DO UPDATE SET address_id = excluded.address_id, state = excluded.state,
           finished_at = excluded.finished_at, payload = excluded.payload`).run(
@@ -466,6 +528,7 @@ export function openStateStore(path: string): StateStore {
       const tx: EventTransaction = {
         listPending: () => access(() => db.prepare("SELECT payload FROM pending_intents").all().flatMap(row => {
           const intent = JSON.parse(row.payload as string) as PendingIntent;
+          if (intent.event === 'context-review.due' && !(intent.payload as { mainDelivered?: boolean })?.mainDelivered) return [];
           const event = intent.payload as { kind?: unknown; id?: unknown } | null;
           if (!event || typeof event.kind !== 'string' || typeof event.id !== 'string' || intent.event !== event.kind) return [];
           return [{ key: intent.id, event: { kind: event.kind, id: event.id } }];
@@ -610,6 +673,7 @@ export function openStateStore(path: string): StateStore {
   };
 
   return {
+    startupContextDatabase: db,
     resultNotices,
     reminderDeliveries,
     closureNotices,

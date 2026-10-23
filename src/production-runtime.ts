@@ -1,7 +1,8 @@
+import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
 import { promises as fs, watch } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
 import { dirname, isAbsolute, join, basename, resolve, relative, sep } from 'node:path';
-import { platform, availableParallelism, loadavg, totalmem } from 'node:os';
+import { homedir, platform, availableParallelism, loadavg, totalmem } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
@@ -31,7 +32,10 @@ import type { RunnerId } from './runner-protocols.ts';
 import { NO_REPORT_REASON, NOTIFY_TARGET_INVALID } from './launcher-notice.ts';
 import { settleResultNotices, resultNoticeViews } from './reminder-cli.ts';
 import { readPendingAgentReport } from './agent-report.ts';
-import { prepareCodexRafCommandAccess, type PreparedCodexRafCommandAccess } from './codex-raf-command-access.ts';
+import { finalizeStartupContextRun, reserveStartupContextReview, cleanupStartupContextCompleted } from './startup-context-lifecycle.ts';
+import { startupContextRuntimeFiles, startupContextAcceptedReport } from './startup-context-runtime.ts';
+import { prepareCodexRafCommandAccess, codexInvocationSandboxMode, type PreparedCodexRafCommandAccess } from './codex-raf-command-access.ts';
+import { prepareCodexSandbox, CodexSandboxUnavailable, type PreparedCodexSandbox } from './codex-sandbox.ts';
 
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const object = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -83,17 +87,22 @@ function protocolFor(settings: readonly ProtocolSettings[], runner: string): Pro
   if (matches.length !== 1 || !found || typeof value.liveTaskVerified !== 'boolean' || !text(value.executable) || !text(value.version) || !Array.isArray(value.baseArgs) || !value.baseArgs.every(text) || !text(value.modelFlag) || !text(value.effortFlag) || !['literal', 'codex_config'].includes(value.effortFormat) || !object(value.modelAliases) || !Array.isArray(value.navigation) || !object(value.markers) || !strings(value.markers.ready) || !object(value.timeouts) || Object.values(value.timeouts).some(n => !Number.isFinite(n) || n <= 0) || !['startupMs', 'transitionMs', 'overallMs', 'pollMs'].every(key => Number.isFinite(value.timeouts[key]) && value.timeouts[key] > 0)) fail('RUNNER_PROTOCOL_UNAVAILABLE', `Runner ${runner} lacks a validated versioned invocation/readiness protocol and deadlines`);
   return value;
 }
-async function registeredBranchDirectory(orchestratorRoot: string, confRoot: string, cwd: string, gitRoot: string | undefined): Promise<boolean> {
+async function registeredBranchDirectory(orchestratorRoot: string, confRoot: string, cwd: string, gitRoot: string | undefined, task?: { type: string; project: string; branch: string }, execute: AdapterCommandExecutor = executeCommand): Promise<boolean> {
   const real = async (path: string) => fs.realpath(path).catch(() => undefined);
   const root = await real(orchestratorRoot);
   if (!root || !gitRoot || !isAbsolute(cwd)) return false;
   const projects = await json(join(confRoot, 'projects.json')).catch(() => undefined);
   const paths = object(projects?.projects) ? Object.values(projects.projects).flatMap(entry => object(entry) && object(entry.branchPaths) ? Object.values(entry.branchPaths).filter(text) : []) : [];
   const candidate = resolve(root, relative(orchestratorRoot, cwd));
-  if (!paths.some(path => resolve(root, path) === candidate)) return false;
-  return await real(candidate) === candidate && await real(cwd) === candidate && await real(gitRoot) === candidate;
+  if (await real(candidate) !== candidate || await real(cwd) !== candidate || await real(gitRoot) !== candidate) return false;
+  if (candidate === root) {
+    if (!task || !['spec', 'design'].includes(task.type) || task.project !== 'orchestrator' || !text(task.branch) || projects?.projects?.orchestrator?.path !== '.') return false;
+    const route = await resolveWorkspaceRoute({ root, project: task.project, branch: task.branch }, projects, createWorkspacePorts(execute));
+    return route.ok && route.cwd === candidate;
+  }
+  return paths.some(path => resolve(root, path) === candidate);
 }
-async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string): Promise<{ directories: string[]; workspace: string[] }> {
+async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string, exactFiles = false, orchestratorRoot?: string): Promise<{ directories: string[]; workspace: string[] }> {
   const workspace = await fs.realpath(cwd);
   const stateDirectory = await fs.realpath(dirname(statePath));
   const inside = (root: string, path: string) => {
@@ -109,23 +118,44 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
       const stat = await fs.stat(target);
       if (!stat.isDirectory() && !stat.isFile()) fail('RUNNER_WRITE_SCOPE_INVALID', 'Declared write boundary is not a file or directory');
       const canonical = await fs.realpath(target);
-      directory = stat.isDirectory() ? canonical : dirname(canonical);
+      directory = stat.isDirectory() || exactFiles ? canonical : dirname(canonical);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      const missingFile = exactFiles && !boundary.endsWith(sep);
+      const root = missingFile && orchestratorRoot ? await fs.realpath(orchestratorRoot) : undefined;
+      if (missingFile && (!root || !inside(resolve(orchestratorRoot!), target) || target === resolve(orchestratorRoot!))) fail('RUNNER_WRITE_SCOPE_INVALID', 'Missing file boundary must lie inside Orchestrator');
+      if (missingFile && await fs.lstat(target).catch(error => {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        return null;
+      })) fail('RUNNER_WRITE_SCOPE_INVALID', 'Missing file boundary must not be a dangling link');
       let parent = boundary.endsWith(sep) ? target : dirname(target);
       const missing: string[] = [];
       for (;;) {
         try { directory = resolve(await fs.realpath(parent), ...missing); break; }
         catch (error) {
           if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || dirname(parent) === parent) throw error;
+          if (missingFile && await fs.lstat(parent).catch(error => {
+            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+            return null;
+          })) fail('RUNNER_WRITE_SCOPE_INVALID', 'Missing file boundary has an unresolved ancestor');
           missing.unshift(basename(parent));
           parent = dirname(parent);
         }
       }
+      if (missingFile) {
+        const intended = join(directory, basename(target));
+        if (!inside(root!, directory) || inside(intended, workspace) || inside(intended, stateDirectory) || inside(stateDirectory, intended)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Missing file boundary exceeds the declared task scope');
+        await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+        const canonicalParent = await fs.realpath(directory);
+        if (!inside(root!, canonicalParent)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Missing file parent lies outside Orchestrator');
+        const file = await fs.open(join(canonicalParent, basename(target)), 'wx', 0o600);
+        await file.close();
+        directory = await fs.realpath(target);
+      }
     }
     if (inside(workspace, directory)) { inWorkspace.add(directory); continue; }
     if (inside(directory, workspace) || inside(directory, stateDirectory) || inside(stateDirectory, directory)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Declared write boundary would grant a workspace ancestor or RAF state directory');
-    await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+    if (!(await fs.stat(directory).catch(() => null))?.isFile()) await fs.mkdir(directory, { recursive: true, mode: 0o700 });
     const canonical = await fs.realpath(directory);
     if (inside(canonical, workspace) || inside(canonical, stateDirectory) || inside(stateDirectory, canonical)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Resolved write directory exceeds the declared task scope');
     directories.add(canonical);
@@ -133,32 +163,67 @@ async function runnerWritableDirectories(cwd: string, boundaries: readonly strin
   directories.add(await fs.realpath(reportDirectory));
   return { directories: [...directories], workspace: [...inWorkspace] };
 }
-async function runnerSandboxScope(type: string | undefined, cwd: string, reportDirectory: string, statePath: string, tmpRoot: string) {
+async function runnerSandboxScope(type: string | undefined, cwd: string, reportDirectory: string, statePath: string, tmpRoot: string, sessionStore?: Pick<StateStore, 'sessionRepository'>) {
   const report = await fs.realpath(reportDirectory);
   const state = await fs.realpath(dirname(statePath));
   const temporary = await fs.realpath(tmpRoot);
   const workspace = await fs.realpath(cwd);
   const within = (root: string, path: string) => { const suffix = relative(root, path); return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`); };
-  if (within(state, workspace) || within(temporary, workspace)) fail('RUNNER_WRITE_SCOPE_INVALID', 'Runner workspace lies inside the RAF state directory hidden from its sandbox');
+  const stateRoots = [...new Set([dirname(statePath), state, tmpRoot, temporary])];
+  if (stateRoots.some(root => [resolve(cwd), workspace].some(path => within(root, path) || within(path, root)))) fail('RUNNER_WRITE_SCOPE_INVALID', 'Runner workspace overlaps the RAF state directory hidden from its sandbox');
+  const ownedStore = sessionStore ? undefined : openStateStore(statePath, {
+    context: productionStateContext(fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'worker'),
+  });
+  const registeredSockets = new Set<string>();
+  try {
+    const sessions = (sessionStore ?? ownedStore!).sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state !== 'finished'));
+    for (const session of sessions) {
+      if (!session.process) continue;
+      const socket = session.process.evidence?.tmuxSocket;
+      if (socket === undefined && !text(session.process.tmuxSession)) continue;
+      if (!text(socket) || !isAbsolute(socket) || socket.includes('\0')) throw new CodexSandboxUnavailable(`Registered tmux session ${session.addressId} has no usable absolute socket address`);
+      registeredSockets.add(socket);
+      try { registeredSockets.add(await fs.realpath(socket)); }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new CodexSandboxUnavailable(`Cannot resolve registered tmux socket for ${session.addressId}`);
+      }
+    }
+  } finally { ownedStore?.close(); }
   const command = rafCommandFor();
   const subcommands = type === undefined ? [] : rafSubcommandsFor(type);
   return {
-    hidden: ['/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', state, ...(within(state, temporary) ? [] : [temporary])],
+    hidden: ['/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots, ...registeredSockets],
     readable: [report], tmuxDirectory: report, excludedCommands: subcommands === null ? [`${command}:*`] : subcommands.map(subcommand => `${command} ${subcommand}:*`),
   };
 }
-function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot'>, override?: AdapterCommandExecutor): AdapterCommandExecutor {
+function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, override?: AdapterCommandExecutor): AdapterCommandExecutor {
   if (override) return override;
   const directory = join(context.tmpRoot, 'tmux');
   const socketPath = join(directory, 'server.sock');
   return async command => {
-    if (command.executable !== 'tmux') return executeCommand(command);
+    const environment = context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env;
+    if (command.executable !== 'tmux') return executeCommand({ ...command, environment });
     await fs.mkdir(directory, { recursive: true, mode: 0o700 });
     const owner = await fs.lstat(directory);
     if (!owner.isDirectory() || owner.uid !== process.getuid?.() || (owner.mode & 0o077) !== 0) fail('TMUX_CONTEXT_INVALID', 'RAF tmux directory must be private and owned by the current user');
     try { const socket = await fs.lstat(socketPath); if (!socket.isSocket() || socket.uid !== process.getuid?.()) fail('TMUX_CONTEXT_INVALID', 'RAF tmux socket has foreign ownership or file type'); }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-    const result = await executeCommand({ ...command, args: ['-S', socketPath, ...command.args] });
+    if (context.stateContext?.mode === 'qa') {
+      try {
+        await fs.lstat(socketPath);
+        for (const key of ['HOME', 'RAF_QA_HOME']) {
+          const observed = await executeCommand({ executable: 'tmux', args: ['-S', socketPath, 'show-environment', '-g', key], environment });
+          if (observed.exitCode !== 0 || observed.stdout.trim() !== `${key}=${context.stateContext.homeDirectory}`) {
+            throw stateFailure('STATE_CONTEXT_REFUSED', `Existing QA tmux server has foreign ${key}; stop the stand server and retry`);
+          }
+        }
+      } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+    }
+    const args = [...command.args];
+    if (context.stateContext && args[0] === 'new-session') {
+      args.splice(1, 0, ...['HOME', 'RAF_QA_HOME'].flatMap(key => environment[key] === undefined ? [] : ['-e', `${key}=${environment[key]}`]));
+    }
+    const result = await executeCommand({ ...command, environment, args: ['-S', socketPath, ...args] });
     await fs.chmod(socketPath, 0o600).catch(error => { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; });
     return result;
   };
@@ -297,7 +362,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       diagnostic: async (reason, verification) => { process.stderr.write(`${session.runId}: ${reason}${verification ? `: ${JSON.stringify(verification)}` : ''}\n`); },
     });
     if (result) {
-      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at } };
+      const value: WorkResult = { status: result.status, response: result.report!.answer, proof: { runId: session.runId, at: result.at, context: result.report?.context } };
       verified.set(value, session.runId);
       state.acceptWorkResult(session.runId, value, { pending: [{ id: `${session.runId}:${result.event}`, runId: session.runId, event: result.event, payload: { kind: result.event, id: session.addressId } }], domain: [] });
     }
@@ -311,33 +376,42 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const finalize = async (session: SessionRecord, rows: readonly ActivityEvent[]) => {
     const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
     if (wrapper && wrapper.pid !== process.pid) { const observed = (await observeProcesses([wrapper], { execute }))[0]; if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId} before recovery finalization`); }
-    session = await acceptPendingReport(session);
-    if (session.state === 'finished') return session;
-    const at = now();
-    const effect: ReminderSessionEffect = { id: `${session.runId}:reminders:session-ended`, domain: 'reminders', payload: { operation: 'session-ended', runId: session.runId, at, end: { address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: true } } };
-    const pending = intents(rows);
-    if (!session.result) {
-      const result: WorkResult = { status: 'failed', response: NO_REPORT_REASON, proof: { runId: session.runId, at } };
-      verified.set(result, session.runId);
-      state.acceptWorkResult(session.runId, result, { pending: [{ id: `${session.runId}:agent.failed`, runId: session.runId, event: 'agent.failed', payload: { kind: 'agent.failed', id: session.addressId } }], domain: [] });
-      session = current(session.runId)!;
-    }
-    const lease = listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.lease;
-    if (lease) {
-      const released = await releaseTaskReservations(await reservationTools(store, context, execute, identityExecute), { lease, reason: session.result?.status === 'succeeded' ? 'succeeded' : 'failed', closeLaunch: tx => {
-        const row = tx.getSession(session.runId);
-        if (!row || row.state !== 'exited') throw new Error('Session changed before final closure');
-        closeSessionInTransaction(tx, row, at);
-        tx.applyEffects([effect]);
-        for (const intent of pending) tx.putPending(intent);
-      } });
-      if (!released) fail('LAUNCH_RECOVERABLE', 'Task reservation cannot be released before verified process exit');
-    } else state.finalizeSession(session.runId, session.revision, at, { pending, domain: [effect] });
+    const finished = await finalizeStartupContextRun(session.runId, {
+      ...startupContextRuntimeFiles(context.tmpRoot, dirname(dirname(context.statePath))), database: store.startupContextDatabase,
+      flowPath: join(context.confRoot, 'flow.json'), mainAddress: 'main', now,
+      sessions: {
+        get: current,
+        acceptReport: async row => startupContextAcceptedReport(await acceptPendingReport(row), context.tmpRoot, now),
+        cleanupCompleted: at => state.cleanupCompleted(at),
+        finish: async (row, at, startupPending) => {
+          session = row;
+          if (!session.result) {
+            const result: WorkResult = { status: 'failed', response: NO_REPORT_REASON, proof: { runId: session.runId, at } };
+            verified.set(result, session.runId);
+            state.acceptWorkResult(session.runId, result, { pending: [{ id: `${session.runId}:agent.failed`, runId: session.runId, event: 'agent.failed', payload: { kind: 'agent.failed', id: session.addressId } }], domain: [] });
+            session = current(session.runId)!;
+          }
+          const effect: ReminderSessionEffect = { id: `${session.runId}:reminders:session-ended`, domain: 'reminders', payload: { operation: 'session-ended', runId: session.runId, at, end: { address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: true } } };
+          const pending = [...intents(rows), ...startupPending];
+          const lease = listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.lease;
+          if (lease) {
+            const released = await releaseTaskReservations(await reservationTools(store, context, execute, identityExecute), { lease, reason: session.result?.status === 'succeeded' ? 'succeeded' : 'failed', closeLaunch: tx => {
+              const row = tx.getSession(session.runId);
+              if (!row || row.state !== 'exited') throw new Error('Session changed before final closure');
+              closeSessionInTransaction(tx, row, at);
+              tx.applyEffects([effect]);
+              for (const intent of pending) tx.putPending(intent);
+            } });
+            if (!released) fail('LAUNCH_RECOVERABLE', 'Task reservation cannot be released before verified process exit');
+          } else state.finalizeSession(session.runId, session.revision, at, { pending, domain: [effect] });
+          return current(session.runId)!;
+        },
+      },
+    });
     await deliverResults();
-    const directory = reportDirectory(session);
-    if (current(session.runId)?.state === 'finished' && directory) await fs.rm(directory, { recursive: true, force: true });
-    return current(session.runId)!;
+    return finished;
   };
+
   const launch = createLaunchState({ repository: store.sessionRepository, measure: async () => { throw new Error('Measurements must precede atomic reserve'); }, evaluateAdmission: evaluateResourceAdmission });
   const resolve = async (caller: unknown): Promise<VerifiedSender> => {
     if (caller === rafSystemCaller) return { kind: 'system' };
@@ -362,7 +436,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const types = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'type')?.values?.map(row => row.id) ?? [];
   const projects = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'project')?.values?.map(row => row.id) ?? [];
   const control = new AgentControlService({ repository: store.sessionRepository, scanner: { inspect: identity => observeIdentity(identity, execute) }, authority: { resolve }, reminders,
-    projects, agentTypes: types,
+    projects, agentTypes: types, agentPhases: configuration.catalog.commands.find(row => row.handlerName === 'agent update')?.parameters.find(row => row.name === 'phase')?.values?.map(row => row.id) ?? types,
     coordinator: {
       observe: async (session, observation) => {
         if (observation.state === 'exited') {
@@ -413,10 +487,20 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
       },
     },
   });
-  const deliverResults = () => settleResultNotices({ store, now: Date.now, deliver: (request, sender) => {
-    if (sender.kind !== 'system') throw new Error('Result notices require a system sender');
-    return control.message(request, rafSystemCaller);
-  } });
+  const deliverResults = async () => {
+    for (const intent of state.listPending().filter(row => row.event === 'context-review.due' && !(row.payload as any).mainDelivered)) {
+      const payload = intent.payload as { to: string; id: string; runIds: string[] };
+      try {
+        const receipt = await control.message({ to: payload.to, text: JSON.stringify({ event: intent.event, contextReviewId: intent.id, runIds: payload.runIds }) }, rafSystemCaller);
+        if (receipt.accepted) store.sessionRepository.transaction(tx => { tx.deletePending(intent.id); tx.putPending({ ...intent, payload: { ...payload, kind: intent.event, id: intent.id, mainDelivered: true } }); });
+      } catch {}
+    }
+    cleanupStartupContextCompleted(now(), { database: store.startupContextDatabase, flowPath: join(context.confRoot, 'flow.json'), sessions: state });
+    return settleResultNotices({ store, now: Date.now, deliver: (request, sender) => {
+      if (sender.kind !== 'system') throw new Error('Result notices require a system sender');
+      return control.message(request, rafSystemCaller);
+    } });
+  };
   const attachMain = async (): Promise<MainAttachment> => {
     const identity = await callerPane(execute, direct);
     const authority = {};
@@ -548,7 +632,7 @@ async function reservationTools(store: StateStore, context: RuntimeContext, exec
   const projects = await json(join(context.confRoot, 'projects.json'));
   const roots = Object.fromEntries(Object.keys(projects.projects).map(project => [project, context.orchestratorRoot]));
   const identity = createAssignmentIdentityAdapter(roots, identityExecute ? { execute: identityExecute } : {});
-  return { store, currentBoot: () => bootIdentity(execute), observe: async identity => (await observeProcesses([identity], { execute }))[0], resolveTasks: identity.resolveTasks, newFence: randomUUID };
+  return { store, deferAbandonedFinalization: true, currentBoot: () => bootIdentity(execute), observe: async identity => (await observeProcesses([identity], { execute }))[0], resolveTasks: identity.resolveTasks, newFence: randomUUID };
 }
 
 export async function createProductionServices(
@@ -638,7 +722,7 @@ export async function createProductionServices(
       const reportPath = join(directory, `${launch.addressId}.json`);
       try {
         await writeTaskContextFile(directory, { version: 1, runId: launch.runId, parameters: launch.taskContext.parameters, assignmentFingerprint: assignmentFingerprint(launch.assignment), context: launch.taskContext.context });
-        await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries }), { mode: 0o600, flag: 'wx' });
+        await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries, workspaceRoute: { type: launch.activity.type, project: launch.activity.project, branch: launch.taskContext.context.branch } }), { mode: 0o600, flag: 'wx' });
       } catch (error) { await fs.rm(directory, { recursive: true, force: true }); throw error; }
       prepared.set(launch.tmuxSession, { launch: structuredClone(launch), reportPath });
       return { reportPath, reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
@@ -674,11 +758,15 @@ export async function createProductionServices(
           }
           const result = reserveLaunchInTransaction(tx, request, measured, evaluateResourceAdmission);
           if (!result.reserved) { admissionReason = result.admission.reasons.join('; '); throw new Error('RESOURCE_UNAVAILABLE'); }
+          if (input.activity.phase === 'context-review') {
+            const review = reserveStartupContextReview({ runId: input.runId, phase: 'context-review', brief: '' }, { database: store.startupContextDatabase });
+            tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
+          }
           const launcher = caller ? tx.getSession(caller) : undefined;
           const launchedBy = launcher?.state === 'running' && launcher.activity?.type === 'coordinator'
             ? { addressId: launcher.addressId, runId: launcher.runId } : undefined;
-          if (!launchedBy && !input.notify) return result.session;
-          const session = { ...result.session, revision: result.session.revision + 1,
+          if (!launchedBy && !input.notify) return tx.getSession(input.runId)!;
+          const session = { ...tx.getSession(input.runId)!, revision: result.session.revision + 1,
             ...(launchedBy ? { launchedBy } : {}), ...(input.notify ? { notify: input.notify } : {}) };
           tx.putSession(session);
           return session;
@@ -693,6 +781,7 @@ export async function createProductionServices(
       if (!record || !isDeepStrictEqual({ runner: record.launch.selection.runner, model: record.launch.selection.model, effort: record.launch.selection.effort }, selection) || request.cwd !== record.launch.activity.cwd) fail('INVALID_CONTEXT', 'Unprepared worker launch');
       const session = readSession(record.launch.runId);
       if (session?.state !== 'reserved' || !leaseFor(record.launch.runId)) fail('TASK_CLAIM_REQUIRED', 'Durable launch and task claims required before spawn');
+      if (session.launchContext?.contextReview) request = { ...request, brief: request.brief + session.launchContext.contextReview.brief };
       const settings = protocolFor(await protocols(context.confRoot, options.protocolSettings), request.selection.runner);
       const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
       if (!availability.available) return fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
@@ -713,7 +802,7 @@ export async function createProductionServices(
       try {
         record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, assignment: record.launch.assignment, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
         timeoutMs: settings.timeouts.overallMs,
-        workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});await m.runProductionWorker();`], cwd: request.cwd },
+        workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});await m.runProductionWorker();`], cwd: request.cwd },
         });
       } catch (error) {
         record.wrapperFailure = (error as Partial<PersistentWrapperFailure>).wrapper;
@@ -780,7 +869,9 @@ export async function runProductionWorker(
     protocolSettings?: readonly ProtocolSettings[];
   } = {},
 ): Promise<void> {
+  const stateContext = productionStateContext(fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'worker');
   const channel = await consumeWrapperRequest();
+  if (channel.request.statePath !== stateContext.statePath || channel.request.tmpRoot !== stateContext.tmpRoot) throw stateFailure('STATE_CONTEXT_REFUSED', 'Worker state/tmp paths differ from selected HOME');
   const request = channel.request;
   process.stderr.write(`${now()} worker started run=${request.runId} pid=${process.pid} ppid=${process.ppid}\n`);
   if (platform() === 'linux') {
@@ -798,7 +889,7 @@ export async function runProductionWorker(
     manifest = await json(manifestPath);
   } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') fail('WORKER_CONTEXT_UNAVAILABLE', `Prepared worker runtime envelope is missing: ${manifestPath}`); throw error; }
   if (manifest.version !== 1 || manifest.context?.statePath !== request.statePath || manifest.context?.tmpRoot !== request.tmpRoot || manifest.context?.orchestratorRoot !== request.assignment.root || !isAbsolute(manifest.context?.confRoot ?? '')) fail('INVALID_CONTEXT', 'Worker runtime envelope mismatch');
-  const context: RuntimeContext = { ...manifest.context, resolveCaller: async () => undefined };
+  const context: RuntimeContext = { ...manifest.context, stateContext, resolveCaller: async () => undefined };
   const execute = runtimeExecution(context, options.execute);
   const configured = protocolFor(options.protocolSettings ?? manifest.protocolSettings ?? await protocols(context.confRoot), request.selection.runner);
   const resolution = await resolveRunnerExecutable(configured.runner, configured.executable, process.env);
@@ -806,8 +897,9 @@ export async function runProductionWorker(
   const settings = { ...configured, executable: manifest.runnerPath as string };
   const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
   if (!availability.available) fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
-  const store = openStateStore(request.statePath);
+  const store = openStateStore(request.statePath, { context: stateContext });
   let codexAccess: PreparedCodexRafCommandAccess | undefined;
+  let codexSandbox: PreparedCodexSandbox | undefined;
   try {
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings.timeouts, options.execute);
     const session = tools.current(request.runId);
@@ -823,10 +915,22 @@ export async function runProductionWorker(
     const identityCommand = native.identity.command;
     const assignedId = native.identity.source === 'assigned' ? randomUUID() : undefined;
     let invocation = buildRunnerInvocation(settings, { ...request.selection, ...(assignedId ? { sessionId: assignedId } : {}) });
-    const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath);
+    const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
     invocation.args.push(...nativeWriteScopeArgs(settings, writable.directories, writable.workspace));
-    const scope = await runnerSandboxScope(session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot);
+    const scope = await runnerSandboxScope(session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store).catch(error => {
+      if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
+      throw error;
+    });
     invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
+    if (settings.runner === 'codex' && codexInvocationSandboxMode(invocation.args) !== null) {
+      try {
+        codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], environment: process.env, timeoutMs: settings.timeouts.transitionMs });
+      } catch (error) {
+        if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
+        throw error;
+      }
+      invocation = codexSandbox.invocation;
+    }
     if (settings.runner === 'codex') {
       codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs });
       invocation = codexAccess.invocation;
@@ -886,7 +990,7 @@ export async function runProductionWorker(
     };
     const untrusted = async (): Promise<never> => {
       const gitRoot = await gitTopLevel() ?? 'unknown';
-      const answer = trustAnsweredAt === undefined ? 'raf answers it only for a registered branch directory from conf/projects.json branchPaths' : 'the prompt stayed after the protocol navigation keys';
+      const answer = trustAnsweredAt === undefined ? 'raf answers it only for a registered branch directory or a verified spec/design Orchestrator root from conf/projects.json' : 'the prompt stayed after the protocol navigation keys';
       const reason = `RUNNER_WORKSPACE_UNTRUSTED: runner ${settings.runner} asks to trust workspace ${request.cwd} (git root ${gitRoot}); ${answer}; raf does not edit CLI configuration`;
       const failure = { code: 'RUNNER_WORKSPACE_UNTRUSTED', reason, found: { cwd: request.cwd, gitRoot, runner: settings.runner }, remediation: [`Запускайте агента з каталогу гілки з conf/projects.json branchPaths; інший каталог ${gitRoot} власник довіряє вручну в діалозі ${settings.runner} CLI.`] };
       await fs.writeFile(launchFailurePath(request.tmpRoot, request.runId), JSON.stringify(failure), { mode: 0o600, flag: 'wx' }).catch(() => undefined);
@@ -897,7 +1001,9 @@ export async function runProductionWorker(
         if (Date.now() - trustAnsweredAt >= settings.timeouts.transitionMs) await untrusted();
         return;
       }
-      if (!await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, await gitTopLevel())) await untrusted();
+      const route = manifest.workspaceRoute;
+      const task = object(route) && route.type === session.activity?.type && route.project === session.activity?.project && text(route.branch) ? { type: route.type, project: route.project, branch: route.branch } : undefined;
+      if (!await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, await gitTopLevel(), task, execute)) await untrusted();
       const observation = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: null });
       const action = nextRunnerAction(settings, observation, { trustWorkspace: true });
       if (observation.state !== 'workspace_trust_required' || action.kind !== 'keys') await untrusted();
@@ -1043,7 +1149,7 @@ export async function runProductionWorker(
     const launched = runLaunchWrapper(request, {
       transport,
       report: {
-        fs: { mkdir: async path => { await fs.mkdir(path, { recursive: true, mode: 0o700 }); }, readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, removeTree: path => fs.rm(path, { recursive: true, force: true }) },
+        fs: { mkdir: async path => { await fs.mkdir(path, { recursive: true, mode: 0o700 }); }, readText: async path => { try { return await fs.readFile(path, 'utf8'); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; } }, removeTree: async () => {} },
         watch: (directory, listener) => { const watcher = watch(directory, (event, filename) => { if (filename) void listener(event === 'rename' ? 'rename' : 'modify', filename.toString()).catch(error => process.emitWarning(error)); }); watcher.on('error', error => process.stderr.write(`${request.runId}: Report watcher error: ${String(error)}\n`)); return () => watcher.close(); },
         now,
         verifyAssignmentCompletion: (assignment, archives) => verifyAssignmentCompletion(assignment, assignments, archives),
@@ -1059,7 +1165,7 @@ export async function runProductionWorker(
             const verification = await verifyAssignmentCompletion(request.assignment, assignments, Object.fromEntries(result.report.changes.filter(change => change.archive).map(change => [change.id, change.archive!])));
             if (!verification.ok) fail('REPORT_UNVERIFIED', 'OpenSpec completion changed before result acceptance');
           }
-          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at } };
+          const value: WorkResult = { status: result.status, response: result.report?.answer ?? `${NO_REPORT_REASON}: ${JSON.stringify(result.exit)}`, proof: { runId: request.runId, at: result.at, context: result.report?.context } };
           tools.verified.set(value, request.runId);
           const accepted = tools.state.acceptWorkResult(request.runId, value, { pending: [{ id: `${request.runId}:${result.event}`, runId: request.runId, event: result.event, payload: { kind: result.event, id: request.address } }], domain: [] });
           if (!accepted && !tools.current(request.runId)?.result) fail('REPORT_UNVERIFIED', 'Result could not be durably accepted for the running session');
@@ -1102,5 +1208,5 @@ export async function runProductionWorker(
       if (!handedOff) await discardFailedLaunch().catch(cleanup => process.stderr.write(`${request.runId}: failed launch cleanup: ${cleanup instanceof Error ? cleanup.message : String(cleanup)}\n`));
       throw error;
     }
-  } finally { try { await codexAccess?.cleanup(); } finally { store.close(); } }
+  } finally { try { await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); } finally { store.close(); } } }
 }

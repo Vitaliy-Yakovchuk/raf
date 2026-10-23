@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { lstat, readlink, readFile } from 'node:fs/promises';
+import { lstat, readlink, readFile, realpath } from 'node:fs/promises';
 import { availableParallelism, loadavg, totalmem, platform, hostname } from 'node:os';
 import { posix } from 'node:path';
 import type { AdapterCommandExecutor } from './agent-adapters.ts';
@@ -8,7 +8,7 @@ import type { ResourceMeasurement } from './resource-admission.ts';
 import type { ProcessIdentity, ProcessObservation } from './session-state.ts';
 
 export const executeCommand: AdapterCommandExecutor = command => new Promise((resolve, reject) => {
-  const child = spawn(command.executable, [...command.args], { cwd: command.cwd, shell: false, stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, LC_ALL: 'C' } });
+  const child = spawn(command.executable, [...command.args], { cwd: command.cwd, shell: false, stdio: ['pipe', 'pipe', 'pipe'], env: { ...(command.environment ?? process.env), LC_ALL: 'C' } });
   let stdout = '';
   let stderr = '';
   child.stdout.setEncoding('utf8').on('data', data => { stdout += data; });
@@ -42,6 +42,11 @@ export function createWorkspacePorts(execute: AdapterCommandExecutor = executeCo
       catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return 'missing'; throw error; }
     },
     readLink: readlink,
+    realPath: realpath,
+    async gitRoot(cwd) {
+      const result = await execute({ executable: 'git', args: ['-C', cwd, 'rev-parse', '--show-toplevel'] });
+      return result.exitCode === 0 && result.stdout.trim() ? realpath(result.stdout.trim()) : null;
+    },
     async currentBranch(cwd) {
       const result = await execute({ executable: 'git', args: ['symbolic-ref', '--quiet', '--short', 'HEAD'], cwd });
       if (result.exitCode === 1) return null;

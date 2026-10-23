@@ -17,6 +17,7 @@ import { createReminderHandlers, settleCommandState, type CommandStatePorts, typ
 import type { NotifyTarget } from './launcher-notice.ts';
 
 export interface RuntimeContext {
+  stateContext?: import('./state-migration-guard.ts').StateContext;
   orchestratorRoot: string;
   confRoot: string;
   artifactPath: string;
@@ -218,7 +219,8 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const route = await api.route({ root: context.orchestratorRoot, project: params.project, branch: task.branch });
       if (!route.ok) throw fail(route.error.code, 'workspace', route.error.message);
       const workspaceBoundaries = bindWorkspaceBoundaries(task, route.cwd);
-      const gitBoundaries = task.workspaceWritable ? await resolveGitWriteBoundaries(route.cwd, context.orchestratorRoot) : [];
+      const gitBoundaries = await resolveGitWriteBoundaries(route.cwd, context.orchestratorRoot, task.workspaceWritable ? undefined : workspaceBoundaries);
+      const commitOwnWork = task.workspaceWritable || gitBoundaries.length > 0;
       const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
       const selection = api.selectModel(loaded.models, await snapshot(), { complexity: params.complexity, role: params.type });
       if (selection.status === 'waiting') throw fail(selection.code, 'selection', selection.reason);
@@ -236,7 +238,9 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         const brief = await api.assignment.compose(assignment, { briefsRoot: join(context.confRoot, 'briefs'), runner: selection.runner,
           stage: params.phase, project: params.project, agentId: params.id, sessionName: launch.tmuxSession,
           features: params.features, phase: params.phase, outcome: task.outcome, writeBoundaries,
-          sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema, ...(task.workspaceWritable ? { commitOwnWork: true } : {}), rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type) ? { rafSubcommands: rafSubcommandsFor(params.type)! } : {}) });
+          sources: task.sources, reportPath: prepared.reportPath, reportSchema: task.reportSchema,
+          ...(commitOwnWork ? { commitOwnWork: true, commitPaths: workspaceBoundaries, commitRepositories: task.workspaceWritable ? [route.cwd, context.orchestratorRoot] : [context.orchestratorRoot], workspaceWritable: task.workspaceWritable } : {}),
+          rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type) ? { rafSubcommands: rafSubcommandsFor(params.type)! } : {}) });
         stage = 'reservation';
         const admission = await api.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
         if (!admission.admitted) throw fail('RESOURCE_UNAVAILABLE', stage, admission.reason);

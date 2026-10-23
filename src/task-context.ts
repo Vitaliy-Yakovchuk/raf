@@ -1,12 +1,16 @@
+import { startupContextAssessmentSchema } from './startup-context.ts';
 import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
 import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import { commandFailure } from './cli-contract.ts';
 import type { RuntimeRunParameters } from './app-runtime.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
 import type { WorkspaceProjectsConfig } from './workspace-routing.ts';
+import { configuredWorkspaceRoute, resolveDevelopmentBranch } from './workspace-routing.ts';
 
 export interface TaskContextConfiguration {
   readonly projects: WorkspaceProjectsConfig;
@@ -26,6 +30,7 @@ export interface TaskReportSchema {
   readonly required: readonly string[];
   readonly additionalProperties: true;
   readonly properties: {
+    readonly context: typeof startupContextAssessmentSchema;
     readonly status: { readonly enum: readonly string[] };
     readonly answer: { readonly type: 'string' };
     readonly changes: {
@@ -129,10 +134,14 @@ export async function loadTaskContextConfiguration(confRoot: string): Promise<Ta
 }
 
 function branchFor(parameters: RuntimeRunParameters, projects: WorkspaceProjectsConfig): string {
-  const branch = parameters.type === 'hotfix' ? 'main' : 'develop';
-  const entry = Object.hasOwn(projects.projects, parameters.project) ? projects.projects[parameters.project] : undefined;
-  if (!entry) return contextFailure('UNKNOWN_PROJECT', `Невідомий проєкт: ${parameters.project}`, parameters.project);
-  if (!entry.branchPaths || !Object.hasOwn(entry.branchPaths, branch)) return contextFailure('UNKNOWN_BRANCH', `conf/projects.json#/projects/${parameters.project}/branchPaths/${branch} не задано для типу ${parameters.type}`, parameters.project);
+  let branch = parameters.type === 'hotfix' ? 'main' : 'develop';
+  if (workspaceReadOnlyTypes.has(parameters.type)) {
+    const development = resolveDevelopmentBranch(parameters.project, projects);
+    if (!development.ok) return contextFailure(development.error.code, development.error.message, parameters.project);
+    branch = development.branch;
+  }
+  const route = configuredWorkspaceRoute({ root: '.', project: parameters.project, branch }, projects);
+  if (!route.ok) return contextFailure(route.error.code, route.error.message, parameters.project);
   return branch;
 }
 
@@ -199,7 +208,7 @@ function deriveEstimate(type: string, resources: unknown): TaskResourceEstimate 
 function reportSchema(statuses: readonly { readonly id: string }[]): TaskReportSchema {
   const values = statuses.map(status => status.id);
   return { type: 'object', required: ['status', 'answer', 'changes'], additionalProperties: true, properties: {
-    status: { enum: values }, answer: { type: 'string' },
+    context: startupContextAssessmentSchema, status: { enum: values }, answer: { type: 'string' },
     changes: { type: 'array', items: { type: 'object', required: ['id', 'items'], properties: { id: { type: 'string' }, archive: { type: 'string' },
       items: { type: 'array', items: { type: 'object', required: ['id', 'status'], properties: { id: { type: 'string' }, status: { enum: values }, reason: { type: 'string' } } } } } } },
   } };
@@ -248,15 +257,44 @@ async function gitDirectories(workspace: string): Promise<string[]> {
   return commonDir ? [gitDir, commonDir] : [gitDir];
 }
 
-export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: string): Promise<readonly string[]> {
+export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: string, writeBoundaries?: readonly string[]): Promise<readonly string[]> {
+  if (writeBoundaries) {
+    const root = await realOrNull(orchestratorRoot);
+    if (!root || !(await gitDirectories(root)).length) return [];
+    let directories: string[];
+    try {
+      const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
+      const result = await promisify(execFile)('git', ['-C', root, 'rev-parse', '--path-format=absolute', '--show-toplevel', '--git-dir', '--git-common-dir'], { env });
+      const [top, ...paths] = result.stdout.trim().split('\n');
+      if (await realOrNull(top) !== root || paths.length !== 2) return [];
+      const resolved = await Promise.all(paths.map(realOrNull));
+      if (resolved.some(path => path === null)) return [];
+      directories = [...new Set(resolved as string[])];
+    } catch { return []; }
+    for (const boundary of writeBoundaries) {
+      let ancestor = resolve(boundary);
+      for (;;) {
+        const actual = await realOrNull(ancestor);
+        if (actual) {
+          const suffix = relative(root, actual);
+          if (isAbsolute(suffix) || suffix === '..' || suffix.startsWith(`..${sep}`)) break;
+          if (actual === root) return directories;
+          if ((await gitDirectories(actual)).length) break;
+        }
+        const parent = resolve(ancestor, '..');
+        if (parent === ancestor) break;
+        ancestor = parent;
+      }
+    }
+    return [];
+  }
   const workspace = await realOrNull(cwd);
   if (!workspace) return [];
   const inside = (path: string) => {
     const suffix = relative(workspace, path);
     return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`);
   };
-  const rootGit = await realOrNull(join(orchestratorRoot, '.git'));
-  const candidates = [...await gitDirectories(workspace), ...(rootGit && (await stat(rootGit)).isDirectory() ? [rootGit] : [])];
+  const candidates = [...await gitDirectories(workspace), ...await gitDirectories(orchestratorRoot)];
   return [...new Set(candidates.filter(path => !inside(path)))];
 }
 

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { commandFixture, type CommandFixture, type Delivery } from './reminder-fixture.ts';
 import { createSessionState, type SessionRecord, type WorkResult } from '../src/session-state.ts';
@@ -14,14 +14,14 @@ type Launched = SessionRecord & SessionNotify & { reportPath: string };
 
 function launched(f: CommandFixture, address: string, setup: Setup = {}): Launched {
   const base = f.session(address);
-  const reportPath = join(f.root, 'tmp', base.runId, `${address}.json`);
+  const reportPath = join(dirname(f.statePath), 'tmp', base.runId, `${address}.json`);
   const record: SessionRecord & SessionNotify = {
     ...base,
     revision: base.revision + 1,
     launchContext: {
       assignment: { root: f.root, changes: [{ id: change, items: itemIds.map(id => ({ id, description: `Пункт ${id}` })) }], baselineArchives: [] },
       selection: { runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture' },
-      briefPath: join(f.root, 'tmp', base.runId, 'brief.md'),
+      briefPath: join(dirname(f.statePath), 'tmp', base.runId, 'brief.txt'),
       reportPath,
     },
     ...(setup.delegatedBy ? { delegatedBy: { ...setup.delegatedBy, fence: `fence-${setup.delegatedBy.runId}` } } : {}),

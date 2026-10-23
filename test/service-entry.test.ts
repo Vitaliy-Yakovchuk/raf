@@ -1,3 +1,6 @@
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
+import { pathToFileURL } from 'node:url';
+import { cp } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
 import { once } from 'node:events';
@@ -6,11 +9,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
 import { compileCatalog } from '../src/catalog.ts';
-import { execute, type ExecutionResult } from '../src/cli.ts';
-import { createServiceHandlers, runServiceEntry } from '../src/service-entry.ts';
-import { runProductionCli } from '../src/production-entry.ts';
+import type { ExecutionResult } from '../src/cli.ts';
+import { runServiceEntry } from '../src/service-entry.ts';
 
-const entryUrl = new URL('../src/service-entry.ts', import.meta.url).href;
 const constants = JSON.parse(await readFile(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
 const models = JSON.parse(await readFile(new URL('../../conf/models.json', import.meta.url), 'utf8'));
 const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8')));
@@ -27,6 +28,12 @@ async function fixture(t: TestContext, mode: 'valid' | 'absent' | 'broken' = 'va
   projects.projects.raf.path = 'configured-working-main';
   projects.projects.raf.branchPaths.main = 'configured-working-main';
   await writeFile(join(root, 'conf', 'projects.json'), JSON.stringify(projects));
+  const runProductionCli = await prepareProductionQaFixture(t, { root, home: homeDirectory });
+  await cp(join(develop, 'src'), join(main, 'src'), { recursive: true });
+  await writeFile(join(main, 'package.json'), '{"type":"module"}');
+  const entryUrl = pathToFileURL(join(main, 'src', 'service-entry.ts')).href;
+  const { createServiceHandlers }: typeof import('../src/service-entry.ts') = await import(pathToFileURL(join(develop, 'src', 'service-entry.ts')).href);
+  const { execute }: typeof import('../src/cli.ts') = await import(pathToFileURL(join(develop, 'src', 'cli.ts')).href);
   const log = join(root, 'service-events.jsonl');
   const modulePath = join(root, 'fixture-ports.ts');
   await writeFile(modulePath, `
@@ -91,7 +98,7 @@ await host.closed;
   });
   handlers = createServiceHandlers(options, dependencies);
   return {
-    root, main, develop, homeDirectory, options, dependencies, children, handlers, artifactPath,
+    createServiceHandlers, runProductionCli, root, main, develop, homeDirectory, options, dependencies, children, handlers, artifactPath,
     cli: (argv: string[]) => execute(argv, catalog, handlers!.handlers),
     events: async () => (await readFile(log, 'utf8')).trim().split('\n').map(line => JSON.parse(line)),
   };
@@ -148,7 +155,7 @@ test('help is lazy and remains usable with absent main and absent host ports', {
 
 test('service requests auto-start one configured worker and reuse it after command completion', { timeout: 10_000 }, async t => {
   const f = await fixture(t);
-  const other = createServiceHandlers(f.options, f.dependencies);
+  const other = f.createServiceHandlers(f.options, f.dependencies);
   const results = await Promise.all([
     f.handlers.request({ operation: 'fixture.echo', payload: 'first' }),
     other.request({ operation: 'fixture.echo', payload: 'second' }),
@@ -194,16 +201,16 @@ test('production CLI binds service handlers and passes the explicit host module 
     artifactPath: f.artifactPath,
     serviceHostModulePath: f.options.hostModulePath,
   };
-  assert.equal(success(await runProductionCli(['service', 'start'], options)).state, 'ready');
-  assert.equal(success(await runProductionCli(['service', 'status'], options)).mainPath, f.main);
-  assert.equal(success(await runProductionCli(['service', 'stop'], options)).state, 'stopped');
+  assert.equal(success(await f.runProductionCli(['service', 'start'], options)).state, 'ready');
+  assert.equal(success(await f.runProductionCli(['service', 'status'], options)).mainPath, f.main);
+  assert.equal(success(await f.runProductionCli(['service', 'stop'], options)).state, 'stopped');
   assert.equal((await f.events()).filter(event => event.event === 'recover').length, 1);
 });
 
-test('production help remains available before service wiring or main checkout is available', { timeout: 10_000 }, async t => {
+test('production help remains available before service wiring or the main service entry is available', { timeout: 10_000 }, async t => {
   const f = await fixture(t, 'absent');
-  await rm(f.main, { recursive: true });
-  const result = await runProductionCli(['service', 'start', '--help'], {
+  await rm(join(f.main, 'bin', 'service.ts'));
+  const result = await f.runProductionCli(['service', 'start', '--help'], {
     orchestratorRoot: f.root,
     homeDirectory: f.homeDirectory,
     artifactPath: f.artifactPath,

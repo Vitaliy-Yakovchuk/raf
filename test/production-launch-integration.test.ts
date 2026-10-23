@@ -1,3 +1,5 @@
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
+import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
@@ -9,9 +11,6 @@ import { createHash } from 'node:crypto';
 import { buildCatalog } from '../src/bootstrap.ts';
 import { openStateStore } from '../src/state-store.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
-import { createProductionServices } from '../src/production-runtime.ts';
-import { createServicePorts as productionPorts } from '../src/production-service-ports.ts';
-import { createServicePorts as defaultHost } from '../src/service-host.ts';
 import { observeProcesses } from '../src/os-runtime.ts';
 import type { RuntimeRunParameters } from '../src/app-runtime.ts';
 
@@ -204,9 +203,14 @@ async function fixture(t: any) {
   const artifact = join(directory, 'catalog.json');
   const changeDir = join(root, 'openspec', 'changes', change);
   const questionsPath = join(root, 'questions', 'projects', 'raf', 'questions.md');
-  const cfg = { sourceRoot, root, conf, home, stateDirectory, statePath: join(stateDirectory, 'state.sqlite'), tmpRoot, control, workspace, artifact, bin, change, changeDir, questionsPath, models,
+  await writeJson(join(conf, 'projects.json'), JSON.parse(await fs.readFile(join(sourceRoot, '../conf/projects.json'), 'utf8')));
+  await prepareProductionQaFixture(t, { root, home });
+  const { createProductionServices }: typeof import('../src/production-runtime.ts') = await import(pathToFileURL(join(workspace, 'src', 'production-runtime.ts')).href);
+  const { createServicePorts: productionPorts }: typeof import('../src/production-service-ports.ts') = await import(pathToFileURL(join(workspace, 'src', 'production-service-ports.ts')).href);
+  const { createServicePorts: defaultHost }: typeof import('../src/service-host.ts') = await import(pathToFileURL(join(workspace, 'src', 'service-host.ts')).href);
+  const cfg = { sourceRoot: workspace, root, conf, home, stateDirectory, statePath: join(stateDirectory, 'state.sqlite'), tmpRoot, control, workspace, artifact, bin, change, changeDir, questionsPath, models,
     tmux: programs[1], openspec: programs[0], tmuxSocket: join(directory, 'tmux.sock'), serviceSocket: join(stateDirectory, 'service.sock'), file: join(directory, 'fixture.json') };
-  const env = { ...process.env, HOME: home, PATH: `${bin}:${process.env.PATH}`, RAF_INTEGRATION_FIXTURE: cfg.file, TMPDIR: directory };
+  const env = { ...process.env, HOME: home, RAF_QA_HOME: home, PATH: `${bin}:${process.env.PATH}`, RAF_INTEGRATION_FIXTURE: cfg.file, TMPDIR: directory };
   const children: ReturnType<typeof spawn>[] = [];
   const ownedProcesses = new Map<number, any>();
   const ownedSockets = new Set<string>([cfg.tmuxSocket, join(tmpRoot, 'tmux', 'server.sock')]);
@@ -258,7 +262,6 @@ async function fixture(t: any) {
   for (const path of [...Object.keys(scripts).map(name => join(directory, name + '.mjs')), ...['codex', 'tmux', 'openspec'].map(name => join(bin, name))]) await exec(process.execPath, ['--check', path], { cwd: root, env });
   await writeJson(join(conf, 'models.json'), models);
   await writeJson(join(conf, 'raf-constants.json'), constants);
-  await writeJson(join(conf, 'projects.json'), { version: 1, projects: { raf: { path: 'raf-develop', profile: 'product', branchPaths: { develop: 'raf-develop' } } } });
   const flow = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/flow.json'), 'utf8'));
   await writeJson(join(conf, 'flow.json'), { ...flow, resources: Object.fromEntries(Object.entries(flow.resources).map(([tier, thresholds]) => [tier, { ...(thresholds as object), minRamBytes: 1, minDiskBytes: 1 }])) });
   await fs.mkdir(dirname(questionsPath), { recursive: true });
@@ -311,7 +314,7 @@ async function fixture(t: any) {
     await until(async () => ({ ready: await exists(join(control, label + '.ready')), output: worker.output(), code: worker.child.exitCode }), x => { assert.equal(x.code, null, JSON.stringify(x)); return x.ready; }, 'Default service recover має завершитися');
     return worker;
   }
-  return { ...cfg, directory, env, children, spawnChild, inspect, parameters, argv, run, launched, startService, gate: (name: string) => fs.writeFile(join(control, name), 'go'), brief: (id: string) => json(join(control, id + '.brief.json')) };
+  return { ...cfg, createProductionServices, productionPorts, defaultHost, directory, env, children, spawnChild, inspect, parameters, argv, run, launched, startService, gate: (name: string) => fs.writeFile(join(control, name), 'go'), brief: (id: string) => json(join(control, id + '.brief.json')) };
 }
 
 test('[production-launch] default entry derives task context, ignores a legacy context file and fences actual runner before first brief', async t => {
@@ -371,7 +374,7 @@ test('[production-launch] invalid assignment and assignment changed between deri
   assert.equal((await fs.readdir(f.control)).filter(x => x.startsWith('spawn-')).length, 0);
   const store = openStateStore(f.statePath);
   try {
-    const services = await createProductionServices(store, { catalog: await json(f.artifact), models: f.models, commandTiming: { emaAlpha: 0.1 } }, { orchestratorRoot: f.root, confRoot: f.conf, artifactPath: f.artifact, statePath: f.statePath, tmpRoot: f.tmpRoot, mode: 'test', commandStartedAtMs: Date.now(), resolveCaller: async () => ({ id: 'main', authority: true }) });
+    const services = await f.createProductionServices(store, { catalog: await json(f.artifact), models: f.models, commandTiming: { emaAlpha: 0.1 } }, { orchestratorRoot: f.root, confRoot: f.conf, artifactPath: f.artifact, statePath: f.statePath, tmpRoot: f.tmpRoot, mode: 'test', commandStartedAtMs: Date.now(), resolveCaller: async () => ({ id: 'main', authority: true }) });
     await assert.rejects(services.authorizeMain({ id: 'main', addressId: 'main', authority: true, proof: true }));
   } finally { store.close(); }
 });
@@ -504,7 +507,7 @@ test('[production-launch] incomplete persisted process evidence stays conservati
   } finally { store.close(); }
   const before = await f.inspect();
   const context = { orchestratorRoot: f.root, homeDirectory: f.home, stateDirectory: f.stateDirectory, socketPath: f.serviceSocket };
-  for (const create of [productionPorts, defaultHost]) {
+  for (const create of [f.productionPorts, f.defaultHost]) {
     const ports = await create(context);
     try {
       await assert.rejects(ports.recover(), /TASK_LIVENESS_UNKNOWN|unknown|identity|evidence|невідом/i);

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { commandFixture } from './reminder-fixture.ts';
+import { STATE_SCHEMA_VERSION } from '../src/state-store.ts';
 import { createSessionState } from '../src/session-state.ts';
 import { resultNoticeViews } from '../src/reminder-cli.ts';
 
@@ -81,7 +82,7 @@ test('[result-notice-durability] migration from the prior database preserves ses
   const { f, worker } = await setup(t);
   f.store.close();
   f.sql('DROP TABLE result_notices; PRAGMA user_version = 9');
-  const handle = f.separateProcess();
+  const handle = f.separateProcess({ transfer: { statePath: f.statePath, fromVersion: 9, toVersion: STATE_SCHEMA_VERSION } });
   assert.ok(handle.sessionRepository.transaction(tx => tx.getSession(worker.runId)?.launchContext));
   const state = createSessionState({ repository: handle.sessionRepository, verifyMainAuthority: () => true, verifyWorkResult: () => true });
   assert.equal(state.acceptWorkResult(worker.runId, { status: 'failed', response: 'After migration', proof: null }, { pending: [], domain: [] }), true);

@@ -1,3 +1,4 @@
+import { validStartupContextAssessment, type StartupContextAssessment } from './startup-context.ts';
 import { isAbsolute, join } from 'node:path';
 import type { AssignmentSnapshot, AssignmentVerification } from './assignment.ts';
 
@@ -5,6 +6,7 @@ export type AgentReportStatus = 'succeeded' | 'failed';
 export interface AgentReport {
   readonly status: AgentReportStatus;
   readonly answer: string;
+  readonly context?: StartupContextAssessment;
   readonly changes: readonly {
     readonly id: string;
     readonly items: readonly { readonly id: string; readonly status: AgentReportStatus; readonly reason?: string }[];
@@ -55,6 +57,7 @@ export async function readPendingAgentReport(request: AgentReportRequest, ports:
   const status = (value: unknown) => value === 'succeeded' || value === 'failed';
   const valid = (value: unknown): value is AgentReport => {
     if (!record(value) || !status(value.status) || typeof value.answer !== 'string' || !Array.isArray(value.changes) || value.changes.length !== request.assignment.changes.length) return false;
+    if (value.context !== undefined && !validStartupContextAssessment(value.context)) return false;
     const changes = new Set<string>();
     for (const change of value.changes) {
       if (!record(change) || typeof change.id !== 'string' || changes.has(change.id) || !Array.isArray(change.items) || (change.archive !== undefined && (typeof change.archive !== 'string' || !change.archive))) return false;

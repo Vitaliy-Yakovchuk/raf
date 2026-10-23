@@ -90,7 +90,7 @@ function psRow(listed: Awaited<ReturnType<AgentRunFixture['command']>>, address:
 }
 
 test('[report-orphan] after the worker is killed, a later valid report is accepted by agent ps, and agent close closes with it', { timeout: 180_000 }, async t => {
-  const f = await fixture(t, 'orphan-ps', timeouts, 'codex', { commands: ['agent ps'] });
+  const f = await fixture(t, 'orphan-ps', timeouts, 'codex', { productionQa: true, commands: ['agent ps'] });
   const { runId, reportPath } = await launchOrphan(f, 'orphan-agent');
   const watchers = seedResultWatchers(f, 'orphan-agent');
   await completeTask(f);
@@ -120,7 +120,7 @@ test('[report-orphan] after the worker is killed, a later valid report is accept
 });
 
 test('[report-orphan] agent close alone accepts a valid report left after the worker died', { timeout: 180_000 }, async t => {
-  const f = await fixture(t, 'orphan-close', timeouts, 'codex', { commands: ['agent ps'] });
+  const f = await fixture(t, 'orphan-close', timeouts, 'codex', { productionQa: true, commands: ['agent ps'] });
   const { runId, reportPath } = await launchOrphan(f, 'orphan-close');
   const watchers = seedResultWatchers(f, 'orphan-close');
   await completeTask(f);
@@ -138,7 +138,7 @@ test('[report-orphan] agent close alone accepts a valid report left after the wo
 });
 
 test('[report-orphan] an invalid or unverified report left after the worker died is not accepted; close records failure', { timeout: 180_000 }, async t => {
-  const f = await fixture(t, 'orphan-invalid', timeouts, 'codex', { commands: ['agent ps'] });
+  const f = await fixture(t, 'orphan-invalid', timeouts, 'codex', { productionQa: true, commands: ['agent ps'] });
   const { runId, reportPath } = await launchOrphan(f, 'orphan-invalid');
   const watchers = seedResultWatchers(f, 'orphan-invalid');
   await writeReport(reportPath, succeeded);

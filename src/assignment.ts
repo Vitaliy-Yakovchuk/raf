@@ -43,11 +43,15 @@ export interface AssignmentBriefContext {
   readonly rafCommand?: string;
   readonly rafSubcommands?: readonly string[];
   readonly commitOwnWork?: boolean;
+  readonly commitPaths?: readonly string[];
+  readonly commitRepositories?: readonly string[];
+  readonly workspaceWritable?: boolean;
 }
 export interface AssignmentVerification { readonly ok: boolean; readonly issues: readonly AssignmentIssue[]; }
 type Task = { id: string; description: string; done: boolean };
 type Change = { name: string; completedTasks: number; totalTasks: number };
 const safeName = (name: string) => typeof name === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name);
+const taskIdPattern = /^(?:[0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)+)$/;
 const matchingArchive = (name: string, id: string) => name === id || (/^\d{4}-\d{2}-\d{2}-/.test(name) && name.slice(11) === id);
 const issue = (change: string, items: readonly { id: string }[], reason: string, foundItems: Task[] = [], archives: string[] = []): AssignmentIssue => ({ change, requestedItems: items.map(item => item.id), reason, foundItems, archives, remedy: 'Уточніть доручення за актуальними даними OpenSpec і повторіть перевірку.' });
 async function json(ports: AssignmentPorts, root: string, args: string[]): Promise<any> {
@@ -65,7 +69,7 @@ async function tasks(ports: AssignmentPorts, root: string, change: string): Prom
   const data = await json(ports, root, ['instructions', 'apply', '--change', change, '--json']);
   if (!data || !Array.isArray(data.tasks) || data.tasks.some((task: Task) => !task || typeof task.id !== 'string' || !task.id || typeof task.description !== 'string' || !task.description || typeof task.done !== 'boolean')) throw new Error('OpenSpec instructions apply: malformed tasks');
   return data.tasks.map((task: Task, index: number) => {
-    const numbered = task.description.match(/^(\d+(?:\.\d+)+|[A-Z]\.\d+)\s+(.+)$/);
+    const numbered = task.description.match(/^([0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)+)\s+(.+)$/s);
     return numbered && task.id === String(index + 1) ? { id: numbered[1], description: numbered[2], done: task.done } : task;
   });
 }
@@ -94,8 +98,13 @@ export async function validateAssignment(request: AssignmentRequest, ports: Assi
     catch (error) { unavailable = true; issues.push(issue(selection.change, selection.items, errorText(error), [], archives)); continue; }
     const selected: { id: string; description: string }[] = [];
     for (const item of selection.items) {
+      if (!taskIdPattern.test(item.id)) {
+        issues.push(issue(selection.change, selection.items, `Пункт ${item.id} має некоректний формат ID.`, found, archives)); continue;
+      }
       const matches = found.filter(task => task.id === item.id);
-      if (matches.length !== 1 || (item.expectedDescription !== undefined && matches[0].description !== item.expectedDescription)) issues.push(issue(selection.change, selection.items, `Пункт ${item.id} відсутній, неоднозначний або змінив опис.`, found, archives));
+      if (matches.length === 0) issues.push(issue(selection.change, selection.items, `Пункт ${item.id} відсутній: точного ID не знайдено.`, found, archives));
+      else if (matches.length > 1) issues.push(issue(selection.change, selection.items, `Пункт ${item.id} неоднозначний: знайдено кілька пунктів із цим ID.`, found, archives));
+      else if (item.expectedDescription !== undefined && matches[0].description !== item.expectedDescription) issues.push(issue(selection.change, selection.items, `Пункт ${item.id} змінив опис.`, found, archives));
       else selected.push({ id: matches[0].id, description: matches[0].description });
     }
     changes.push({ id: selection.change, items: selected });
@@ -113,8 +122,9 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
   const raf = !context.rafCommand ? ''
     : context.rafSubcommands ? ` Для узгодження з іншими виконавцями виконуй лише ${context.rafSubcommands.map(subcommand => `\`raf_command ${subcommand} …\``).join(' і ')} ${simple}: лише такі команди виконуються поза пісочницею й мають доступ до стану raf; інших команд raf не виконуй.`
     : ` Команди raf виконуй через raf_command ${simple} (\`raf_command agent run …\`): лише така команда виконується поза пісочницею й має доступ до стану raf.`;
-  const commit = context.commitOwnWork ? ' Після перевірок сам закоміть свої зміни: додавай до коміту лише власні шляхи, чужі незакомічені правки в тому самому дереві не чіпай і не комітуй, перетини узгоджуй з іншими виконавцями за projects/orchestrator/parallel-development. Обов\'язок закомітити свою роботу входить у доручення; хеші створених комітів вкажи у звіті (поле commits). Push не виконуй: `git push` дозволено лише окремим дорученням, push визначає main.' : '';
-  return [...templates, '# Конкретне доручення\n\nПрацюй лише над дорученими пунктами. Відповідай власнику українською. Веди правдиві галочки й запиши JSON за report_path та report_schema.' + raf + commit + '\n\n' + JSON.stringify(assignment, null, 2)].join('\n\n');
+  const commitScope = context.commitOwnWork ? ` Репозиторії коміту: ${(context.commitRepositories ?? [snapshot.root]).join(', ')} (Orchestrator: ${snapshot.root}). Дозволені файлові шляхи: ${(context.commitPaths ?? context.writeBoundaries).join(', ')}; включно з власними галочками tasks.md доручених changes. Git-права не розширюють файлових меж.${context.workspaceWritable === false ? ' Коміть лише власні OpenSpec/документні шляхи в Orchestrator; код workspace і його git-каталоги залишаються read-only.' : ''}` : '';
+  const commit = context.commitOwnWork ? ' Після перевірок сам закоміть свої зміни до JSON-звіту: додавай до коміту лише власні шляхи, чужі незакомічені правки в тому самому дереві не чіпай і не комітуй, перетини й спільні незакомічені файли узгоджуй з іншими виконавцями за projects/orchestrator/parallel-development «Коміти в спільному робочому дереві». Зайнятий індекс очікуй, чужий index.lock не видаляй. Обов\'язок закомітити свою роботу входить у доручення; хеші створених комітів вкажи у звіті (поле commits). Push не виконуй: `git push` дозволено лише окремим дорученням, push визначає main.' + commitScope : '';
+  return [...templates, '# Конкретне доручення\n\nПрацюй лише над дорученими пунктами. Відповідай власнику українською. Веди правдиві галочки й запиши JSON за report_path та report_schema. Коротко заповни context: unnecessary (source, reason) і missing (description, foundAt); порожні масиви допустимі.' + raf + commit + '\n\n' + JSON.stringify(assignment, null, 2)].join('\n\n');
 }
 export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, ports: AssignmentPorts, archiveClaims: Readonly<Record<string, string>> = {}): Promise<AssignmentVerification> {
   const issues: AssignmentIssue[] = [];

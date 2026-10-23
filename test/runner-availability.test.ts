@@ -1,10 +1,10 @@
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import assert from 'node:assert/strict';
 import { chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { compileCatalog } from '../src/catalog.ts';
-import { runProductionCli } from '../src/production-entry.ts';
 import type { AdapterCommand, AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import { probeRunnerAvailability, resolveRunnerExecutable } from '../src/runner-availability.ts';
 
@@ -142,6 +142,8 @@ async function productionFixture(t: TestContext) {
   await Promise.all([['raf.json', settings], ['models.json', models], ['raf-constants.json', constants]].map(([name, data]) => writeFile(join(conf, name as string), JSON.stringify(data))));
   const artifactPath = join(s.root, 'catalog.json');
   await writeFile(artifactPath, JSON.stringify(compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), await readConf('projects.json'))));
+  await writeFile(join(conf, 'projects.json'), JSON.stringify(await readConf('projects.json')));
+  const runProductionCli = await prepareProductionQaFixture(t, { root, home });
   let clock = 0;
   const list = async () => {
     const result = await runProductionCli(['runner', 'list'], { orchestratorRoot: root, homeDirectory: home, artifactPath, now: () => { clock += 10; return clock; } });

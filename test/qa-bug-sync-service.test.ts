@@ -1,3 +1,5 @@
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
+import { type TestContext } from 'node:test';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
@@ -234,6 +236,7 @@ class FakeDash {
 interface Environment {
   readonly directory: string;
   readonly root: string;
+  readonly codeRoot: string;
   readonly home: string;
   readonly catalog: string;
   readonly cert: string;
@@ -246,7 +249,7 @@ interface DashEndpoint {
   readonly cert: string;
 }
 
-function prepare(dash: DashEndpoint, directory: string, overrides: Record<string, unknown> = {}): Environment {
+async function prepare(t: TestContext, dash: DashEndpoint, directory: string, overrides: Record<string, unknown> = {}): Promise<Environment> {
   const root = join(directory, 'root');
   const home = join(directory, 'home');
   cpSync(realConf, join(root, 'conf'), { recursive: true });
@@ -262,10 +265,14 @@ function prepare(dash: DashEndpoint, directory: string, overrides: Record<string
   writeFileSync(join(home, '.raf', 'secrets.json'), JSON.stringify({
     version: 1, records: [{ name: secretName, kind: 'env', value: dash.secret, source: 'qa', updatedAt: new Date().toISOString() }],
   }), { mode: 0o600 });
+  await prepareProductionQaFixture(t, { root, home });
+  const codeRoot = join(root, 'raf-main');
+  for (const name of ['src', 'bin', 'scripts', 'package.json']) cpSync(join(root, 'raf-develop', name), join(codeRoot, name), { recursive: true });
+  execFileSync('git', ['init', '-q', '--initial-branch=main', codeRoot]);
   const catalog = join(directory, 'catalog.json');
   const constants = JSON.parse(readFileSync(join(root, 'conf', 'raf-constants.json'), 'utf8'));
   buildCatalog(join(root, 'conf'), catalog, constants.commands.map((command: { path: string[] }) => command.path.join(' ')));
-  return { directory, root, home, catalog, cert: dash.cert, config };
+  return { directory, root, codeRoot, home, catalog, cert: dash.cert, config };
 }
 
 function cleanEnvironment(extra: Record<string, string>): NodeJS.ProcessEnv {
@@ -288,7 +295,7 @@ async function cli(environment: Environment, argv: readonly string[]): Promise<{
   const child = spawn(process.execPath, ['--no-warnings', '--input-type=module', '-e', cliRunner], {
     cwd: rafRoot, stdio: ['ignore', 'pipe', 'pipe'],
     env: cleanEnvironment({
-      HOME: environment.home, QA_ENTRY: join(rafRoot, 'src', 'production-entry.ts'), QA_ARGV: JSON.stringify(argv), QA_ROOT: environment.root,
+      HOME: environment.home, RAF_QA_HOME: environment.home, QA_ENTRY: join(environment.codeRoot, 'src', 'production-entry.ts'), QA_ARGV: JSON.stringify(argv), QA_ROOT: environment.root,
       QA_HOME: environment.home, QA_CATALOG: environment.catalog, NODE_EXTRA_CA_CERTS: environment.cert,
     }),
   });
@@ -325,13 +332,13 @@ class Service {
       rmSync(socket);
     }
     const log = openSync(join(this.environment.directory, `service-${this.starts}.log`), 'a');
-    this.child = spawn(process.execPath, [join(rafRoot, 'bin', 'service.ts')], {
+    this.child = spawn(process.execPath, [join(this.environment.codeRoot, 'bin', 'service.ts')], {
       cwd: rafRoot, stdio: ['ignore', log, log],
       env: cleanEnvironment({
-        HOME: this.environment.home, NODE_EXTRA_CA_CERTS: this.dash.cert,
+        HOME: this.environment.home, RAF_QA_HOME: this.environment.home, NODE_EXTRA_CA_CERTS: this.dash.cert,
         RAF_ORCHESTRATOR_ROOT: this.environment.root, RAF_HOME_DIRECTORY: this.environment.home, RAF_STATE_DIRECTORY: state,
-        RAF_SOCKET_PATH: join(state, 'service.sock'), RAF_MAIN_PATH: rafRoot,
-        RAF_SERVICE_HOST_MODULE_PATH: join(rafRoot, 'src', 'production-service-ports.ts'),
+        RAF_SOCKET_PATH: join(state, 'service.sock'), RAF_MAIN_PATH: this.environment.codeRoot,
+        RAF_SERVICE_HOST_MODULE_PATH: join(this.environment.codeRoot, 'src', 'production-service-ports.ts'),
       }),
     });
     closeSync(log);
@@ -423,7 +430,7 @@ test('QA 3.1: real bugs.sqlite, real raf service process and a controlled HTTPS 
   const directory = mkdtempSync(join(tmpdir(), 'qa-bs31-'));
   const dash = new FakeDash(directory);
   await dash.start();
-  const environment = prepare(dash, directory);
+  const environment = await prepare(t, dash, directory);
   const service = new Service(environment, dash);
   const socket = join(environment.home, '.raf', 'service.sock');
   t.after(async () => {
@@ -824,7 +831,7 @@ test('QA 3.1: paged pull resumes from the saved position after page failures, of
   dash.addBug('204', []);
   dash.addBug('205', ['205 first']);
   await dash.start();
-  const environment = prepare(dash, directory, { pageLimit: 2 });
+  const environment = await prepare(t, dash, directory, { pageLimit: 2 });
   const service = new Service(environment, dash);
   const all = ['201', '202', '203', '204', '205'];
   t.after(async () => {

@@ -1,3 +1,4 @@
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
@@ -21,6 +22,8 @@ async function fixture(t: test.TestContext) {
   await cp(new URL('../src', import.meta.url), join(app, 'src'), { recursive: true });
   await cp(new URL('../bin', import.meta.url), join(app, 'bin'), { recursive: true });
   await writeFile(join(app, 'package.json'), '{"type":"module"}');
+  await writeFile(join(conf, 'projects.json'), JSON.stringify(await readConfig('projects')));
+  await prepareProductionQaFixture(t, { root, home });
   const settings = await readConfig('raf');
   const models = await readConfig('models');
   const constants = await readConfig('raf-constants');
@@ -28,7 +31,7 @@ async function fixture(t: test.TestContext) {
   const catalog = compileCatalog(constants, models, constants.commands.map(command => command.path.join(' ')), await readConfig('projects'));
   await writeFile(join(app, 'dist', 'catalog.json'), JSON.stringify(catalog));
   const run = (args: string[]) => new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve, reject) => {
-    const child = spawn(process.execPath, [join(app, 'bin', 'raf.ts'), ...args], { cwd: root, env: { HOME: home, PATH: '', NODE_NO_WARNINGS: '1' }, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, [join(app, 'bin', 'raf.ts'), ...args], { cwd: root, env: { HOME: home, RAF_QA_HOME: home, PATH: '', NODE_NO_WARNINGS: '1' }, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '', stderr = '';
     child.stdout.on('data', value => stdout += value);
     child.stderr.on('data', value => stderr += value);
@@ -38,9 +41,9 @@ async function fixture(t: test.TestContext) {
   return { root, home, app, conf, settings, models, run };
 }
 
-test('QA real bin: lazy help and invalid args bypass config while wired ps rejects malformed root before DB', async t => {
+test('QA real bin: lazy help and invalid args bypass runtime config while wired ps rejects malformed root before DB', async t => {
   const f = await fixture(t);
-  await rm(f.conf, { recursive: true });
+  for (const name of ['raf.json', 'models.json', 'flow.json']) await rm(join(f.conf, name));
   const help = await f.run(['help', 'runner', 'list']);
   assert.equal(help.code, 0, help.stderr);
   const flag = await f.run(['runner', 'list', '--help']);
@@ -99,5 +102,5 @@ test('QA real bin: malformed configuration and blocked state path fail without f
   assert.equal(JSON.parse(blocked.stderr).code, 'HANDLER_FAILED');
   assert.equal(await readFile(join(f.home, '.raf'), 'utf8'), 'blocked fixture');
   assert.deepEqual(await readdir(f.home), ['.raf']);
-  assert.deepEqual((await readdir(f.root)).sort(), ['conf', 'home', 'raf-develop']);
+  assert.deepEqual((await readdir(f.root)).sort(), ['conf', 'home', 'raf-develop', 'raf-main']);
 });

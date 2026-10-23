@@ -1,3 +1,4 @@
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
@@ -19,7 +20,7 @@ const conflictPayload = 'QA_PRIVATE_CONFLICT_a315b3';
 const updated = '2026-10-21T10:00:00.000Z';
 const entry = (value: string) => ({ kind: 'env', value, source: 'synthetic-cli-qa', updated });
 
-function fixture(t: { after(action: () => void): void }) {
+async function fixture(t: { after(action: () => void): void }) {
   const directory = mkdtempSync(join(tmpdir(), 'raf-secrets-cli-qa-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const root = join(directory, 'orchestrator');
@@ -34,6 +35,8 @@ function fixture(t: { after(action: () => void): void }) {
   writeFileSync(join(checkout, 'package.json'), '{"type":"module"}');
   const configured = { ...settings, state: { ...settings.state, fileName: 'shared-cli-qa.sqlite' }, commandTiming: { ...settings.commandTiming, emaAlpha: 0.25 } };
   for (const [name, value] of [['raf.json', configured], ['models.json', models], ['raf-constants.json', constants]] as const) writeFileSync(join(root, 'conf', name), JSON.stringify(value));
+  writeFileSync(join(root, 'conf', 'projects.json'), JSON.stringify(JSON.parse(readFileSync(new URL('../../conf/projects.json', import.meta.url), 'utf8'))));
+  await prepareProductionQaFixture(t, { root, home });
   writeFileSync(join(checkout, 'dist/catalog.json'), JSON.stringify(catalog));
   const binding = join(directory, 'must-not-restore');
   const source = join(directory, 'synthetic-conductor.json');
@@ -44,7 +47,7 @@ function fixture(t: { after(action: () => void): void }) {
     let result: { stdout: string; stderr: string; code: number };
     try {
       const output = await execute(process.execPath, [join(checkout, 'bin/raf.ts'), ...args], {
-        cwd: directory, env: { HOME: home, PATH: '/usr/bin:/bin', LANG: 'C.UTF-8' }, timeout: 10_000, killSignal: 'SIGKILL', maxBuffer: 1_048_576,
+        cwd: directory, env: { HOME: home, RAF_QA_HOME: home, PATH: '/usr/bin:/bin', LANG: 'C.UTF-8' }, timeout: 10_000, killSignal: 'SIGKILL', maxBuffer: 1_048_576,
       });
       result = { ...output, code: 0 };
     } catch (error) {
@@ -74,7 +77,7 @@ function failure(result: { code: number; stdout: string; stderr: string }, code:
 }
 
 test('real CLI imports, preserves identical bytes, repairs permissions and records configured shared EMA without payloads', { timeout: 35_000 }, async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   const sourceBefore = readFileSync(f.source);
   const store = openStateStore(f.state);
   store.recordCommandDuration('secrets import-conductor', 1_000_000, 0.25);
@@ -107,7 +110,7 @@ test('real CLI imports, preserves identical bytes, repairs permissions and recor
 });
 
 test('real CLI conflict and malformed JSON fail without partial writes or changing source', { timeout: 35_000 }, async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   success(await f.run());
   const before = readFileSync(f.target);
   for (const [source, code] of [
@@ -122,7 +125,7 @@ test('real CLI conflict and malformed JSON fail without partial writes or changi
 });
 
 test('real concurrent CLI imports preserve both independent additions', { timeout: 25_000 }, async t => {
-  const f = fixture(t);
+  const f = await fixture(t);
   const second = join(f.directory, 'second-synthetic.json');
   writeFileSync(second, JSON.stringify({ version: 1, secrets: { SECOND_KEY: entry('synthetic-second') } }));
   const results = await Promise.all([f.run(), f.run(['secrets', 'import-conductor', '--file', second])]);

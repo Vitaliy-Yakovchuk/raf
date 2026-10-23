@@ -1,3 +1,5 @@
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
+import { cpSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
 import { createHash, createHmac } from 'node:crypto';
@@ -159,7 +161,7 @@ function writeConf(maxBytes: number): void {
 
 function start(args: readonly string[]): Running {
   const child = spawn(process.execPath, [driver, root, home, ...args], {
-    env: { ...process.env, NODE_EXTRA_CA_CERTS: certPath },
+    env: { ...process.env, HOME: home, RAF_QA_HOME: home, NODE_EXTRA_CA_CERTS: certPath },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   running.add(child);
@@ -303,6 +305,8 @@ async function until(condition: () => boolean, label: string, timeoutMs = 30_000
 before(async () => {
   mkdirSync(join(root, 'conf'), { recursive: true });
   mkdirSync(rafHome, { recursive: true, mode: 0o700 });
+  for (const name of ['projects', 'models', 'raf-constants']) cpSync(new URL(`../../conf/${name}.json`, import.meta.url), join(root, 'conf', `${name}.json`));
+  await prepareProductionQaFixture({ after }, { root, home });
   execFileSync('openssl', ['req', '-x509', '-newkey', 'ec', '-pkeyopt', 'ec_paramgen_curve:prime256v1', '-nodes', '-days', '1', '-subj', '/CN=127.0.0.1',
     '-addext', 'subjectAltName=IP:127.0.0.1,DNS:localhost', '-keyout', join(workspace, 'key.pem'), '-out', certPath], { stdio: 'ignore' });
   ids.forEach((id, index) => server.bodies.set(id, body(index + 1)));

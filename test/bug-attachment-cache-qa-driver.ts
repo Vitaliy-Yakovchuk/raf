@@ -1,7 +1,8 @@
-import { fileURLToPath } from 'node:url';
-import { runProductionCli } from '../src/production-entry.ts';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { join } from 'node:path';
 
 const [orchestratorRoot, homeDirectory, ...argv] = process.argv.slice(2);
+const { runProductionCli } = await import(pathToFileURL(join(orchestratorRoot!, 'raf-develop', 'src', 'production-entry.ts')).href);
 const result = await runProductionCli(argv, {
   orchestratorRoot: orchestratorRoot!,
   homeDirectory: homeDirectory!,

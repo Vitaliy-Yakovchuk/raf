@@ -1,3 +1,4 @@
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
@@ -29,7 +30,7 @@ async function writeJson(path: string, value: unknown) {
   await fs.writeFile(path, JSON.stringify(value), { mode: 0o600 });
 }
 
-async function fixture(t: { after(action: () => Promise<void>): void }) {
+async function fixture(t: { after(action: () => void | Promise<void>): void }) {
   const directory = await fs.realpath(await fs.mkdtemp(join(tmpdir(), 'raf-entry-root-')));
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
   const root = join(directory, 'orchestrator');
@@ -39,12 +40,12 @@ async function fixture(t: { after(action: () => Promise<void>): void }) {
   const workspace = join(root, 'raf-develop');
   for (const path of [join(root, 'conf'), join(workspace, 'bin'), join(workspace, 'dist'), home, bin]) await fs.mkdir(path, { recursive: true, mode: 0o700 });
   await fs.copyFile(join(sourceRoot, 'bin', 'raf.ts'), join(workspace, 'bin', 'raf.ts'));
-  await fs.symlink(join(sourceRoot, 'src'), join(workspace, 'src'));
   await fs.symlink(root, link);
   const flow = JSON.parse(readFileSync(join(sourceRoot, '../conf/flow.json'), 'utf8'));
-  const projects = { version: 1, projects: { raf: { path: 'raf-develop', profile: 'raf', branchPaths: { develop: 'raf-develop' } } } };
+  const projects = JSON.parse(readFileSync(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
   await writeJson(join(workspace, 'dist', 'catalog.json'), compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), projects));
   for (const [name, data] of [['raf.json', settings], ['models.json', models], ['raf-constants.json', constants], ['projects.json', projects], ['flow.json', flow]] as const) await writeJson(join(root, 'conf', name), data);
+  await prepareProductionQaFixture(t, { root, home });
   await fs.writeFile(join(bin, 'openspec'), `#!${process.execPath}\n${openspecScript}`, { mode: 0o700 });
   const parameters = { id: 'root-check', type: 'implement', project: 'raf', features: ['root-fixture'], phase: 'implement', complexity: 'decision', tasks: [`${change}:1.1`] };
   const argv = ['agent', 'run', '--id', parameters.id, '--type', parameters.type, '--project', parameters.project, '--features', ...parameters.features, '--phase', parameters.phase, '--complexity', parameters.complexity, '--tasks', ...parameters.tasks];
@@ -52,7 +53,7 @@ async function fixture(t: { after(action: () => Promise<void>): void }) {
     directory, root, link, workspace,
     legacyEnvelope: (assignmentRoot: string) => writeJson(join(home, '.raf', 'tmp', 'task-context', parameters.id + '.json'), { version: 1, parameters, assignment: { root: assignmentRoot, changes: [{ id: change, items: [{ id: '1.1', description: 'FOREIGN description' }] }], baselineArchives: [] }, context: { branch: 'main', outcome: 'FOREIGN', writeBoundaries: [assignmentRoot], sources: [], requested: { ramBytes: 1, diskBytes: {} }, requiredFileSystemIds: [], reportSchema: { type: 'object' } } }),
     run: async (entryRoot = root) => {
-      const result = await exec(process.execPath, [join(entryRoot, 'raf-develop', 'bin', 'raf.ts'), ...argv], { cwd: directory, env: { ...process.env, HOME: home, PATH: `${bin}:${process.env.PATH}` }, timeout: 60000 }).then(
+      const result = await exec(process.execPath, [join(entryRoot, 'raf-develop', 'bin', 'raf.ts'), ...argv], { cwd: directory, env: { ...process.env, HOME: home, RAF_QA_HOME: home, PATH: `${bin}:${process.env.PATH}` }, timeout: 60000 }).then(
         output => ({ exitCode: 0, stdout: output.stdout, stderr: output.stderr }),
         error => ({ exitCode: error.code as number, stdout: String(error.stdout), stderr: String(error.stderr) }));
       return { ...result, error: result.stderr ? JSON.parse(result.stderr) : undefined };

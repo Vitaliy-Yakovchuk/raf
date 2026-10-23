@@ -21,7 +21,7 @@ function launched(f: CommandFixture, address: string, setup: Setup = {}): Launch
     launchContext: {
       assignment: { root: f.root, changes: [{ id: change, items: itemIds.map(id => ({ id, description: `Пункт ${id}` })) }], baselineArchives: [] },
       selection: { runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture' },
-      briefPath: join(f.root, 'tmp', base.runId, 'brief.md'),
+      briefPath: join(f.root, 'tmp', base.runId, 'brief.txt'),
       reportPath,
     },
     ...(setup.delegatedBy ? { delegatedBy: { ...setup.delegatedBy, fence: `fence-${setup.delegatedBy.runId}` } } : {}),

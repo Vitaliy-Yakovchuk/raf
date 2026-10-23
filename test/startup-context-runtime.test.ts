@@ -1,10 +1,12 @@
+import { pathToFileURL } from 'node:url';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, writeFile, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
 import { openStateStore } from '../src/state-store.ts';
-import { createServicePorts, type ServiceHostDependencies } from '../src/service-host.ts';
+import type { ServiceHostDependencies } from '../src/service-host.ts';
 import { listStartupContextReviewEvents, readStartupContextTrace } from '../src/startup-context.ts';
 import { reserveStartupContextReview } from '../src/startup-context-lifecycle.ts';
 import { closeSessionInTransaction } from '../src/session-state.ts';
@@ -27,6 +29,9 @@ test('service recovery captures a persisted accepted report before removing its 
     writeFile(join(root, 'conf', 'flow.json'), JSON.stringify(flow)),
     writeFile(join(directory, 'brief.txt'), 'brief to measure before cleanup'),
   ]);
+  await writeFile(join(root, 'conf', 'projects.json'), await readFile(new URL('../../conf/projects.json', import.meta.url)));
+  await prepareProductionQaFixture(t, { root, home: homeDirectory });
+  const { createServicePorts }: typeof import('../src/service-host.ts') = await import(pathToFileURL(join(root, 'raf-develop', 'src', 'service-host.ts')).href);
   const store = openStateStore(join(stateDirectory, settings.state.fileName));
   let host: Awaited<ReturnType<typeof createServicePorts>> | undefined;
   t.after(async () => { await host?.shutdown(); store.close(); await rm(root, { recursive: true, force: true }); });

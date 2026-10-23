@@ -16,7 +16,7 @@ async function fixture(t: TestContext) {
   await mkdir(src, { recursive: true });
   await mkdir(join(root, 'conf'));
   await writeFile(join(root, 'package.json'), '{"type":"module"}');
-  for (const name of ['flow-policy', 'resource-admission', 'session-state', 'reminders', 'launcher-notice', 'state-store']) await copyFile(new URL(`../src/${name}.ts`, import.meta.url), join(src, `${name}.ts`));
+  for (const name of ['flow-policy', 'resource-admission', 'session-state', 'reminders', 'launcher-notice', 'state-store', 'state-migration-guard']) await copyFile(new URL(`../src/${name}.ts`, import.meta.url), join(src, `${name}.ts`));
   const configPath = join(root, 'conf', 'flow.json');
   const policy = structuredClone(configured);
   const save = () => writeFile(configPath, JSON.stringify(policy));

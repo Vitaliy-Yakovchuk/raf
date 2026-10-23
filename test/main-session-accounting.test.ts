@@ -1,3 +1,5 @@
+import { pathToFileURL } from 'node:url';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -7,7 +9,7 @@ import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { buildCatalog } from '../src/bootstrap.ts';
 import { openStateStore } from '../src/state-store.ts';
-import { sendSystemMessageToMain, NotImplementedError, type MainSessionContext } from '../src/main-session.ts';
+import type { MainSessionContext } from '../src/main-session.ts';
 import type { ProcessIdentity, SessionLaunchContext, SessionRecord } from '../src/session-state.ts';
 
 const readConf = (name: string) => JSON.parse(readFileSync(new URL(`../../conf/${name}`, import.meta.url), 'utf8'));
@@ -42,10 +44,10 @@ function processesMentioning(text: string): string[] {
   return found.status === 0 ? found.stdout.trim().split('\n').filter(Boolean) : [];
 }
 
-async function fixture(t: { after(action: () => Promise<void>): void }) {
+async function fixture(t: { after(action: () => void | Promise<void>): void }) {
   const directory = mkdtempSync(join(tmpdir(), 'raf-main-attach-'));
   const root = join(directory, 'orchestrator');
-  const checkout = join(root, 'raf');
+  const checkout = join(root, 'raf-develop');
   const home = join(directory, 'home');
   const tmuxTmp = join(directory, 'tmux-tmp');
   const stubs = join(directory, 'stubs');
@@ -57,6 +59,8 @@ async function fixture(t: { after(action: () => Promise<void>): void }) {
   cpSync(new URL('../src', import.meta.url), join(checkout, 'src'), { recursive: true });
   cpSync(new URL('../bin/raf.ts', import.meta.url), join(checkout, 'bin', 'raf.ts'));
   writeFileSync(join(checkout, 'package.json'), '{"type":"module"}');
+  await prepareProductionQaFixture(t, { root, home });
+  const { sendSystemMessageToMain, NotImplementedError }: typeof import('../src/main-session.ts') = await import(pathToFileURL(join(checkout, 'src', 'main-session.ts')).href);
   const artifactPath = join(checkout, 'dist', 'catalog.json');
   buildCatalog(join(root, 'conf'), artifactPath, constants.commands.map((command: { path: string[] }) => command.path.join(' ')));
   writeFileSync(stubLog, '');
@@ -65,7 +69,7 @@ async function fixture(t: { after(action: () => Promise<void>): void }) {
   const bin = join(checkout, 'bin', 'raf.ts');
   const socketName = `raf-main-attach-${process.pid}-${Math.random().toString(36).slice(2, 10)}`;
   const socketPath = join(tmuxTmp, `tmux-${process.getuid!()}`, socketName);
-  const env: Record<string, string> = { HOME: home, LANG: 'C.UTF-8', TMUX_TMPDIR: tmuxTmp, PATH: `${stubs}:${dirname(tmuxBinary)}:/usr/bin:/bin` };
+  const env: Record<string, string> = { HOME: home, RAF_QA_HOME: home, LANG: 'C.UTF-8', TMUX_TMPDIR: tmuxTmp, PATH: `${stubs}:${dirname(tmuxBinary)}:/usr/bin:/bin` };
   const tmux = (args: string[]) => spawnSync(tmuxBinary, ['-L', socketName, ...args], { encoding: 'utf8', env });
   const ownTmuxSocket = join(home, '.raf', 'tmp', 'tmux', 'server.sock');
   t.after(async () => {
@@ -94,7 +98,7 @@ async function fixture(t: { after(action: () => Promise<void>): void }) {
   ].join('\n'));
   const context: MainSessionContext = { orchestratorRoot: root, homeDirectory: home, artifactPath };
   return {
-    directory, root, home, bin, env, tmux, socketName, socketPath, stubLog, sentinels, workerScript, context, ownTmuxSocket,
+    sendSystemMessageToMain, NotImplementedError, directory, root, home, bin, env, tmux, socketName, socketPath, stubLog, sentinels, workerScript, context, ownTmuxSocket,
     statePath: join(home, '.raf', settings.state.fileName),
   };
 }
@@ -422,7 +426,7 @@ test('agent and raf messages to main reach exactly the registered pane', { timeo
   const inherited = { TMUX: process.env.TMUX, TMUX_PANE: process.env.TMUX_PANE };
   delete process.env.TMUX;
   delete process.env.TMUX_PANE;
-  try { system = await sendSystemMessageToMain(f.context, 'service notice'); }
+  try { system = await f.sendSystemMessageToMain(f.context, 'service notice'); }
   catch (error) { assert.fail(`system source outside tmux, as the raf service runs, must deliver to main: ${error instanceof Error ? error.message : String(error)}`); }
   finally { for (const [name, value] of Object.entries(inherited)) if (value !== undefined) process.env[name] = value; }
   assert.equal(system.accepted, true);
@@ -434,8 +438,8 @@ test('messages to main are not reported as delivered without a live registered m
   const f = await fixture(t);
   await initializeState(f);
   let accepted = false;
-  try { accepted = (await sendSystemMessageToMain(f.context, 'nobody home')).accepted; }
-  catch (error) { assert.ok(!(error instanceof NotImplementedError), String(error)); }
+  try { accepted = (await f.sendSystemMessageToMain(f.context, 'nobody home')).accepted; }
+  catch (error) { assert.ok(!(error instanceof f.NotImplementedError), String(error)); }
   assert.equal(accepted, false);
   const { main } = await startMainPane(f);
   await attach(f, main);

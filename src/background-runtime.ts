@@ -255,6 +255,7 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
   const releaseOwner = () => owner.release();
   const record: RecordState = { pid: process.pid, identity, token: randomUUID(), mainPath: process.env.RAF_MAIN_PATH ?? process.cwd(), state: 'starting', stopReason: null };
   const sockets = new Set<Socket>();
+  const resourceWaitSockets = new Set<Socket>();
   let resolveClosed!: () => void;
   const closed = new Promise<void>(resolve => { resolveClosed = resolve; });
   let closing: Promise<void> | undefined;
@@ -263,7 +264,7 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
     sockets.add(socket);
     const controller = new AbortController();
     socket.on('error', () => {});
-    socket.on('close', () => { sockets.delete(socket); controller.abort(); });
+    socket.on('close', () => { sockets.delete(socket); resourceWaitSockets.delete(socket); controller.abort(); });
     socket.on('end', () => controller.abort());
     let buffer = '';
     let handled = false;
@@ -275,12 +276,15 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
       handled = true;
       void (async () => {
         const message = JSON.parse(buffer.slice(0, end));
-        if (message.kind === 'resource-wait' && record.state === 'ready' && options.handlers.resourceWait) { await options.handlers.resourceWait(socket, message, controller.signal); }
+        if (message.kind === 'resource-wait' && !closing && record.state === 'ready' && options.handlers.resourceWait) {
+          resourceWaitSockets.add(socket);
+          await options.handlers.resourceWait(socket, message, controller.signal);
+        }
         else if (message.kind === 'status') socket.end(JSON.stringify(serviceStatus()) + '\n');
         else if (message.kind === 'stop') {
           await shutdown(false, socket);
           socket.end(JSON.stringify(serviceStatus()) + '\n');
-        } else if (message.kind === 'request' && record.state === 'ready') {
+        } else if (message.kind === 'request' && !closing && record.state === 'ready') {
           const value = await options.handlers.handle(message.request, { signal: controller.signal, clientId: randomUUID() });
           if (!controller.signal.aborted) socket.end(JSON.stringify({ exitCode: 0, value }) + '\n');
         } else socket.end(JSON.stringify(failure('Service not ready', record.state)) + '\n');
@@ -294,12 +298,13 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
       process.off('SIGTERM', onSignal);
       process.off('SIGINT', onSignal);
       server.close();
-      for (const socket of sockets) if (socket !== replySocket) socket.destroy();
+      for (const socket of sockets) if (socket !== replySocket && !resourceWaitSockets.has(socket)) socket.destroy();
       try {
         await options.handlers.shutdown();
         record.state = failed ? 'failed' : 'stopped';
         record.stopReason ??= failed ? 'Service failed' : 'Service stopped normally';
       } catch (error) { record.state = 'failed'; record.stopReason = String(error); }
+      finally { for (const socket of sockets) if (socket !== replySocket) socket.destroy(); }
       await writeRecord(options.stateDirectory, record);
       await releaseOwner();
       resolveClosed();

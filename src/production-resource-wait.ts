@@ -16,13 +16,26 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
   const boot = await readMachineBootIdentity();
   let epoch = '';
   const sockets = createResourceWaitSocketHost(() => protocol, () => epoch, options.deliveryTimeoutMs);
-  const sendFinal = async (id: string, frame: unknown) => {
+  const finalDeliveries = new Set<Promise<void>>();
+  const sendFinal = (id: string, frame: unknown) => {
     const connection = sockets.connections.get(id);
-    if (!connection) throw new Error('Resource wait connection closed before final result');
-    try {
-      await connection.send(frame);
-      connection.socket.end(() => connection.socket.destroy());
-    } catch (error) { connection.socket.destroy(); throw error; }
+    if (!connection) return Promise.reject(new Error('Resource wait connection closed before final result'));
+    const { socket } = connection;
+    const delivery = new Promise<void>((resolve, reject) => {
+      const finish = (error?: Error) => {
+        clearTimeout(timer);
+        socket.removeListener('error', finish);
+        socket.removeListener('close', closed);
+        if (error) reject(error); else resolve();
+      };
+      const closed = () => finish(new Error('Resource wait connection closed before final result'));
+      const timer = setTimeout(() => finish(new Error('Resource wait final result delivery timed out')), options.deliveryTimeoutMs);
+      socket.once('error', finish);
+      socket.once('close', closed);
+      void connection.send(frame).then(() => socket.end(() => finish()), finish);
+    }).finally(() => { finalDeliveries.delete(delivery); socket.destroy(); });
+    finalDeliveries.add(delivery);
+    return delivery;
   };
   const protocol = createResourceWaitProtocol(options, {
     monotonicNow: () => performance.now(), wallNow: now, bootIdentity: () => `${boot.machineId}/${boot.bootId}`, nextId: randomUUID,
@@ -74,6 +87,10 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
   return {
     start: async (serviceEpoch: string) => { epoch = serviceEpoch; getStore().claimResourceWaitEpoch(epoch); await protocol.start(epoch); },
     attach: sockets.attach,
-    stop: async () => { await protocol.stop('Service stopped'); for (const { socket } of sockets.connections.values()) socket.destroy(); },
+    stop: async () => {
+      await protocol.stop('Service stopped');
+      await Promise.allSettled([...finalDeliveries]);
+      for (const { socket } of sockets.connections.values()) socket.destroy();
+    },
   };
 }

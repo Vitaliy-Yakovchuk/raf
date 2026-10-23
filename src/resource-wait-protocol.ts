@@ -149,7 +149,7 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
 
   private async fail(entry: ResourceWaitPending, reason: string, details: string) {
     this.remove(entry);
-    void this.ports.sendError(entry.connectionId, entry, diagnostic(reason, details)).catch(() => {});
+    await this.ports.sendError(entry.connectionId, entry, diagnostic(reason, details)).catch(() => {});
   }
 
   private current(entry: ResourceWaitPending, offer?: ResourceWaitOffer) {
@@ -297,7 +297,7 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
 
   async stop(reason: string): Promise<void> {
     this.stopped = true; this.timer?.(); this.timer = undefined; this.cache = null;
-    for (const entry of [...this.pending.values()]) await this.fail(entry, 'service_stopped', reason);
+    await Promise.all([...this.pending.values()].map(entry => this.fail(entry, 'service_stopped', reason)));
   }
 
   inspect(): ReturnType<ResourceWaitProtocol['inspect']> {

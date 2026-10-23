@@ -153,12 +153,14 @@ async function liveFixture(t: TestContext, options: { tasks?: number; commands?:
 async function acceptReport(f: AgentRunFixture, session: SessionRecord, status: 'succeeded' | 'failed') {
   const tasksFile = 'openspec/changes/launch-failure-fixture/tasks.md';
   let before: string | undefined;
+  let indexBefore: string | undefined;
   let parent: string | undefined;
   if (status === 'succeeded') {
     before = await f.git('show', `HEAD:${tasksFile}`);
     assert.ok(before.includes(`- [ ] 1.1 ${description}`));
     assert.equal(await fs.readFile(join(session.launchContext!.assignment.root, tasksFile), 'utf8'), before);
-    assert.equal(await f.git('diff', '--cached', '--', tasksFile), '');
+    indexBefore = await f.git('show', `:${tasksFile}`);
+    assert.equal(indexBefore, before);
     parent = (await f.git('rev-parse', 'HEAD')).trim();
   }
   await atomicReport(session, report(status));
@@ -171,8 +173,7 @@ async function acceptReport(f: AgentRunFixture, session: SessionRecord, status: 
     const expected = before!.replace(`- [ ] 1.1 ${description}`, `- [x] 1.1 ${description}`);
     assert.equal(await f.git('show', `HEAD:${tasksFile}`), expected, 'raf commits the exact assigned checkbox');
     assert.equal(await fs.readFile(join(session.launchContext!.assignment.root, tasksFile), 'utf8'), expected);
-    assert.equal(await f.git('diff', '--', tasksFile), '');
-    assert.equal(await f.git('diff', '--cached', '--', tasksFile), '');
+    assert.equal(await f.git('show', `:${tasksFile}`), indexBefore, 'raf preserves the real index bytes while advancing HEAD');
     const commits = (await f.git('rev-list', `${parent}..HEAD`)).trim().split('\n');
     assert.equal(commits.length, 1, 'one raf checkbox commit precedes accepted success');
     assert.notEqual(commits[0], '');
@@ -223,10 +224,47 @@ async function assertPendingPreserves(f: AgentRunFixture, session: SessionRecord
 function eventReminder(session: SessionRecord, kind: string, id = 'event-witness') {
   return {
     id, createdFor: 'main', assignedTo: 'main',
-    text: 'Event witness', at: instant, state: 'pending' as const,
+    text: 'Event witness', at: new Date(Date.now() + policy.retention.finishedSessionsMs).toISOString(), state: 'pending' as const,
     binding: { kind, id: session.addressId, action: 'close' as const },
     closedAt: null, closeReason: null,
   };
+}
+
+type LiveSnapshot = ReturnType<AgentRunFixture['inspect']>;
+
+async function settledSnapshot(f: AgentRunFixture): Promise<LiveSnapshot> {
+  const outcome = await f.command(['agent', 'ps']);
+  assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));
+  return f.inspect();
+}
+
+function assertConsumedResultEvent(state: LiveSnapshot, session: SessionRecord, status: 'succeeded' | 'failed'): void {
+  const witness = state.reminders.find(reminder => reminder.id === 'event-witness');
+  assert.ok(witness, 'the applied event witness remains available until retention expires');
+  assert.equal(witness.state, 'closed');
+  assert.equal(witness.closeReason, `event ${statusEvent(status)}: ${session.addressId}`);
+  assert.ok(witness.closedAt);
+  assert.equal(new Date(witness.closedAt).toISOString(), witness.closedAt);
+  assert.equal(state.pending.some(event => event.runId === session.runId && event.event === statusEvent(status)), false);
+}
+
+async function consumedResultEvent(f: AgentRunFixture, session: SessionRecord, status: 'succeeded' | 'failed'): Promise<LiveSnapshot> {
+  const state = await until(
+    () => settledSnapshot(f),
+    state => state.reminders.some(reminder => reminder.id === 'event-witness' && reminder.state === 'closed') &&
+      !state.pending.some(event => event.runId === session.runId && event.event === statusEvent(status)),
+    'the public command applies and consumes the result event through its retained reminder effect',
+  );
+  assertConsumedResultEvent(state, session, status);
+  return state;
+}
+
+async function assertUnchangedEventWitnesses(f: AgentRunFixture, session: SessionRecord, expected: LiveSnapshot['reminders']): Promise<void> {
+  const state = await settledSnapshot(f);
+  assert.deepEqual(expected.map(reminder => state.reminders.find(value => value.id === reminder.id)), expected,
+    'result-event witnesses and pending/open sentinels retain their complete records without duplicate effects');
+  assert.deepEqual(state.pending.filter(event => event.runId === session.runId &&
+    [statusEvent('succeeded'), statusEvent('failed')].includes(event.event)), []);
 }
 
 test('public CLI keeps a committed live worker without a report alive, then accepts its atomic report', async t => {
@@ -272,19 +310,15 @@ for (const status of ['succeeded', 'failed'] as const) {
     f.seedReminder(eventReminder(session, statusEvent(status)));
     const accepted = await acceptReport(f, session, status);
     assert.equal(accepted!.result!.response, report(status).answer);
-    await until(
-      () => f.inspect(),
-      state => !state.reminders.some(reminder => reminder.id === 'event-witness') &&
-        !state.pending.some(event => event.runId === session.runId && event.event === statusEvent(status)),
-      'the result event is applied and consumed through its reminder effect',
-    );
-    f.seedReminder(eventReminder(session, statusEvent(status), 'duplicate-event-sentinel'));
+    const consumed = await consumedResultEvent(f, session, status);
+    const sentinel = eventReminder(session, statusEvent(status), 'duplicate-event-sentinel');
+    f.seedReminder(sentinel);
     const closed = await f.command(['agent', 'close', '--id', session.addressId]);
     assert.equal(closed.exitCode, 0, JSON.stringify(closed));
     const value = JSON.parse(closed.result.stdout);
     assert.equal(value.closed, true);
     assert.equal(value.result, status);
-    assert.ok(f.inspect().reminders.some(reminder => reminder.id === 'duplicate-event-sentinel'), 'close must not emit a second result event');
+    await assertUnchangedEventWitnesses(f, session, [...consumed.reminders, sentinel]);
     assert.equal(alive(session.process!.pid), false);
   });
 }
@@ -420,14 +454,15 @@ test('force without a report returns failed and a durable trimmed reason after c
   assert.deepEqual((saved.result as any).forcedClose, { reason });
   assert.deepEqual(f.inspect().claims, []);
   assert.deepEqual(f.inspect().admission, []);
-  assert.ok(!f.inspect().reminders.some(reminder => reminder.id === 'event-witness'), 'agent.failed is proved by its applied reminder effect');
+  const consumed = await consumedResultEvent(f, session, 'failed');
   assert.equal(await exists(session.launchContext!.reportPath), false, 'raf must not fabricate an executor report');
   const original = { finishedAt: saved.finishedAt, forcedClose: (saved.result as any).forcedClose };
-  f.seedReminder(eventReminder(session, statusEvent('failed'), 'duplicate-event-sentinel'));
+  const sentinel = eventReminder(session, statusEvent('failed'), 'duplicate-event-sentinel');
+  f.seedReminder(sentinel);
   await f.command(['agent', 'close', '--id', session.addressId, '--force', '--reason', 'A later reason']);
   const repeated = f.inspect().sessions.find(value => value.runId === session.runId)!;
   assert.deepEqual({ finishedAt: repeated.finishedAt, forcedClose: (repeated.result as any).forcedClose }, original);
-  assert.ok(f.inspect().reminders.some(reminder => reminder.id === 'duplicate-event-sentinel'));
+  await assertUnchangedEventWitnesses(f, session, [...consumed.reminders, sentinel]);
   const cfg = await json(join(f.directory, 'fixture.json'));
   const reopened = openStateStore(cfg.statePath);
   try {
@@ -442,8 +477,14 @@ test('force without a report returns failed and a durable trimmed reason after c
 for (const status of ['succeeded', 'failed'] as const) {
   test(`force preserves an already accepted ${status} result and adds only its reason`, async t => {
     const { f, session } = await liveFixture(t);
+    f.seedReminder(eventReminder(session, statusEvent(status)));
     await acceptReport(f, session, status);
-    f.seedReminder(eventReminder(session, statusEvent('failed'), 'unexpected-failed'));
+    const consumed = await consumedResultEvent(f, session, status);
+    const sentinels = [
+      eventReminder(session, statusEvent(status), 'duplicate-event-sentinel'),
+      eventReminder(session, statusEvent('failed'), 'unexpected-failed'),
+    ];
+    for (const sentinel of sentinels) f.seedReminder(sentinel);
     if (status === 'succeeded') f.seedReminder({
       ...eventReminder(session, statusEvent('failed'), 'success-unfinished'),
       createdFor: session.addressId, assignedTo: session.addressId,
@@ -455,13 +496,12 @@ for (const status of ['succeeded', 'failed'] as const) {
     assert.equal(result.result, status);
     assert.deepEqual(result.forcedClose, { reason: forced.reason });
     assert.equal(f.inspect().sessions.find(value => value.runId === session.runId)!.result!.status, status);
-    assert.ok(f.inspect().reminders.some(reminder => reminder.id === 'unexpected-failed'), 'already accepted results do not produce another failed event');
+    await assertUnchangedEventWitnesses(f, session, [...consumed.reminders, ...sentinels]);
     if (status === 'succeeded') {
       const reminder = f.inspect().reminders.find(reminder => reminder.id === 'success-unfinished');
-      if (reminder) {
-        assert.equal(reminder.state, 'closed');
-        assert.equal(reminder.closeReason, 'сесія закінчилась з success');
-      }
+      assert.ok(reminder, 'the successful session reminder is retained after close');
+      assert.equal(reminder.state, 'closed');
+      assert.equal(reminder.closeReason, 'сесія закінчилась з success');
     }
   });
 }
@@ -529,7 +569,7 @@ test('two simultaneous public forced closes retain one result, one first reason 
   assert.equal(alive(session.process!.pid), false);
   assert.deepEqual(f.inspect().claims, []);
   assert.deepEqual(f.inspect().admission, []);
-  assert.ok(!f.inspect().reminders.some(reminder => reminder.id === 'event-witness'));
+  const consumed = await consumedResultEvent(f, session, 'failed');
   for (const outcome of outcomes.filter(outcome => outcome.exitCode === 0)) {
     assert.deepEqual(JSON.parse(outcome.result.stdout).forcedClose, (saved.result as any).forcedClose);
   }
@@ -537,14 +577,17 @@ test('two simultaneous public forced closes retain one result, one first reason 
   const reopened = openStateStore(cfg.statePath);
   try {
     const pending = reopened.sessionRepository.transaction(tx => tx.listPending(), 'read');
-    assert.ok(pending.filter(event => event.runId === session.runId && event.event === statusEvent('failed')).length <= 1);
+    assert.equal(pending.filter(event => event.runId === session.runId && event.event === statusEvent('failed')).length, 0);
     const notices = reopened.closureNotices.listUndelivered().filter(notice => notice.runId === session.runId);
     assert.ok(notices.length <= 1);
   } finally { reopened.close(); }
+  const sentinel = eventReminder(session, statusEvent('failed'), 'duplicate-event-sentinel');
+  f.seedReminder(sentinel);
   await f.command(['agent', 'close', '--id', session.addressId, '--force', '--reason', 'Third reason']);
   const repeated = f.inspect().sessions.find(value => value.runId === session.runId)!;
   assert.equal(repeated.finishedAt, saved.finishedAt);
   assert.deepEqual((repeated.result as any).forcedClose, (saved.result as any).forcedClose);
+  await assertUnchangedEventWitnesses(f, session, [...consumed.reminders, sentinel]);
 });
 
 async function withinFixtureWait<T>(operation: Promise<T>, label: string): Promise<T> {

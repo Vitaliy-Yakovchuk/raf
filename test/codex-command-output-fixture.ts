@@ -76,7 +76,7 @@ export async function outputFixture(t: TestContext, options: { production?: bool
   await writeFile(observerPath, `import { appendFileSync } from 'node:fs'; appendFileSync(${JSON.stringify(tracePath)}, JSON.stringify({argv:process.argv,env:process.env})+'\\n');`);
   const environment: Record<string, string> = {
     PATH: process.env.PATH ?? '', HOME: home, RAF_QA_HOME: home, CODEX_HOME: codexHome,
-    TMPDIR: runDirectory, LANG: 'C.UTF-8',
+    TMPDIR: runDirectory, LANG: 'C.UTF-8', NODE_NO_WARNINGS: '1',
     ...(options.instrumentation ? { NODE_OPTIONS: `--import=${observerPath}` } : {}),
   };
   const fixtureConf = join(root, 'conf');

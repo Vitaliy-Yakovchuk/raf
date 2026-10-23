@@ -23,6 +23,12 @@ async function linkedWorktree(root: string, cwd: string) {
   await writeFile(join(linked, 'commondir'), '../..\n');
   await writeFile(join(linked, 'gitdir'), `${join(cwd, '.git')}\n`);
   await writeFile(join(cwd, '.git'), `gitdir: ${linked}\n`);
+  const index = spawnSync('git', ['-C', cwd, 'read-tree', 'HEAD'], { encoding: 'utf8' });
+  assert.ifError(index.error);
+  assert.equal(index.status, 0, index.stderr);
+  const staged = spawnSync('git', ['-C', cwd, 'diff', '--cached', '--exit-code', 'HEAD'], { encoding: 'utf8' });
+  assert.ifError(staged.error);
+  assert.equal(staged.status, 0, 'the linked worktree index must match its committed baseline');
   const probe = spawnSync('git', ['-C', cwd, 'rev-parse', '--show-toplevel', '--git-dir', '--git-common-dir'], { encoding: 'utf8' });
   assert.equal(probe.status, 0, probe.stderr);
   const directories = [await realpath(linked), await realpath(common), await realpath(join(root, '.git'))];

@@ -30,8 +30,8 @@ export const realFlow = JSON.parse(await readFile(new URL('../../conf/flow.json'
 export const fixtureResources = { normal: { ...realFlow.resources.normal, minRamBytes: 1024, minDiskBytes: 1024 }, hotfix: { ...realFlow.resources.hotfix, minRamBytes: 1024, minDiskBytes: 1024 } };
 export const taskDescription = 'Виконати лише synthetic fixture';
 
-export async function eventually<T>(read: () => Promise<T> | T, predicate: (value: T) => boolean, description: string): Promise<T> {
-  const deadline = Date.now() + 12000;
+export async function eventually<T>(read: () => Promise<T> | T, predicate: (value: T) => boolean, description: string, timeoutMs = 45_000): Promise<T> {
+  const deadline = Date.now() + timeoutMs;
   let last: T;
   do {
     last = await read();

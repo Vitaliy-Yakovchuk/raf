@@ -1,4 +1,4 @@
-import { realpathSync } from 'node:fs';
+import { promises as fs, realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import type { RuntimeServices, RuntimeContext, RuntimeReservationInput, RuntimeConfiguration } from './app-runtime.ts';
@@ -10,6 +10,7 @@ import { assignmentFingerprint } from './task-context.ts';
 import { waitForResources } from './resource-wait-command.ts';
 import { readWaitIdentity, observeWaitIdentity } from './resource-wait-identity.ts';
 import { failureContext } from './cli-contract.ts';
+import { validateHotfixTrust } from './hotfix-worktree.ts';
 
 export async function createProductionAgentQueue(input: RuntimeReservationInput, dependencies: {
   store: StateStore;
@@ -51,9 +52,17 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
         const task = await api.resolveTask(input.taskContext!.parameters, result.snapshot);
         const stable = ({ estimate: _estimate, requested: _requested, requiredFileSystemIds: _volumes, hotfix: _hotfix, ...rest }: typeof task) => input.taskContext?.context.hotfix ? { ...rest, writeBoundaries: [] } : rest;
         if (!isDeepStrictEqual(stable(task), stable(input.taskContext!.context))) return { ok: false, failure: failure('TASK_CONTEXT_CHANGED', 'Launch task context changed while waiting') };
-        const route = await api.route({ root: context.orchestratorRoot, project: input.activity.project, branch: task.branch,
-          ...(input.taskContext?.context.hotfix ? { hotfixRunId: input.runId } : {}) });
+        const route = await api.route({ root: context.orchestratorRoot, project: input.activity.project, branch: task.branch });
         if (!route.ok || route.cwd !== input.activity.cwd) return { ok: false, failure: failure('WORKSPACE_UNAVAILABLE', 'Workspace route changed while waiting') };
+        const hotfix = input.taskContext?.context.hotfix;
+        if (input.activity.type === 'hotfix' && input.activity.project === 'raf') {
+          if (!hotfix || hotfix.runId !== input.runId || task.branch !== 'hotfix' ||
+              !await validateHotfixTrust(context.orchestratorRoot, route.cwd, hotfix) ||
+              await fs.realpath(hotfix.ownershipPath) !== hotfix.ownershipPath ||
+              !isDeepStrictEqual(JSON.parse(await fs.readFile(hotfix.ownershipPath, 'utf8')), hotfix)) {
+            return { ok: false, failure: failure('WORKSPACE_UNAVAILABLE', 'Hotfix workspace ownership changed while waiting') };
+          }
+        }
         const selection = api.selectModel(dependencies.configuration.models, await api.routingSnapshot(), {
           role: input.activity.type, complexity: input.taskContext!.parameters.complexity });
         if (selection.status !== 'selected' || !isDeepStrictEqual({ runner: selection.runner, model: selection.model, effort: selection.effort },

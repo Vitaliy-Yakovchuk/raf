@@ -277,15 +277,19 @@ for (const argv of [
   });
 }
 
-test('default service entry rejects a missing configured main route before starting a child', async t => {
+test('default service entry refuses unproven state context before starting a child or creating state', async t => {
   const f = await fixture(t);
+  const childMarker = join(f.directory, 'unexpected-service-child');
+  f.options.serviceHostModulePath = join(f.directory, 'unexpected-service-host.mjs');
+  writeFileSync(f.options.serviceHostModulePath, `import { writeFileSync } from 'node:fs'; writeFileSync(${JSON.stringify(childMarker)}, 'started');`);
   writeFileSync(join(f.conf, 'projects.json'), JSON.stringify({ projects: { raf: { path: 'raf-main', profile: 'raf', branchPaths: {} } } }));
   const error = failure(await f.run(['service', 'start']));
-  assert.equal(error.code, 'SERVICE_OPERATION_FAILED');
-  assert.equal((error.details as Record<string, unknown>).source, 'background-runtime');
-  assert.match(String((error.details as Record<string, unknown>).reason), /UNKNOWN_BRANCH/);
+  assert.equal(error.code, 'STATE_CONTEXT_REFUSED');
+  assert.equal((error.details as Record<string, unknown>).source, 'state-store');
+  assert.equal((error.details as Record<string, unknown>).stage, 'state-preflight');
+  assert.ok(!existsSync(childMarker));
   assert.ok(!existsSync(f.statePath));
-  assert.deepEqual(readdirSync(join(f.home, '.raf')), []);
+  assert.deepEqual(readdirSync(f.home), []);
 });
 
 test('invalid service operational budget fails before state or child creation', async t => {

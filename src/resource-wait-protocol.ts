@@ -58,6 +58,7 @@ export type ResourceWaitProtocolPorts = {
   readSnapshot: (requests: readonly ResourceWaitPending[]) => Promise<ResourceWaitProbeSnapshot>;
   evaluateSnapshot: (snapshot: ResourceWaitProbeSnapshot, request: ResourceWaitPending) => AdmissionSnapshot;
   observeClient: (identity: ResourceWaitIdentity) => Promise<ResourceWaitClientObservation>;
+  observeClients?: (identities: readonly ResourceWaitIdentity[]) => Promise<ResourceWaitClientObservation[]>;
   isConnectionOpen: (connectionId: string) => boolean;
   sendOffer: (connectionId: string, offer: ResourceWaitOffer) => Promise<void>;
   sendResult: (connectionId: string, result: ResourceWaitWireResult) => Promise<void>;
@@ -184,9 +185,9 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
     return ticket;
   }
 
-  private async live(entry: ResourceWaitPending) {
+  private async live(entry: ResourceWaitPending, observed?: ResourceWaitClientObservation) {
     if (!this.current(entry)) { if (this.pending.has(entry.requestId)) await this.fail(entry, 'client_lost', 'Client connection closed or request cancelled'); return false; }
-    const observation = await this.ports.observeClient(entry.clientIdentity);
+    const observation = observed ?? await this.ports.observeClient(entry.clientIdentity);
     if (!this.current(entry)) return false;
     if (observation.state !== 'alive' || !sameIdentity(observation.identity, entry.clientIdentity)) {
       await this.fail(entry, observation.state === 'unknown' ? 'identity_unknown' : 'client_lost', observation.state === 'alive' ? 'Client PID was reused' : observation.reason);
@@ -209,8 +210,11 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
   }
 
   private async step() {
-    for (const entry of [...this.pending.values()]) {
-      if (!await this.live(entry)) continue;
+    const entries = [...this.pending.values()];
+    const observations = entries.length ? await this.ports.observeClients?.(entries.map(entry => entry.clientIdentity)) : undefined;
+    if (observations && observations.length !== entries.length) throw new Error('Client identity scan does not match the pending queue');
+    for (const [index, entry] of entries.entries()) {
+      if (!await this.live(entry, observations?.[index])) continue;
       if (entry.offer && this.ports.monotonicNow() >= entry.offer.deadline) await this.fail(entry, 'delivery_timeout', 'Client did not complete offer delivery within deliveryTimeoutMs');
     }
     if (this.stopped || !this.pending.size) return;

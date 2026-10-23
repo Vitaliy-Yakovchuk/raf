@@ -3,7 +3,7 @@ import { performance } from 'node:perf_hooks';
 import { homedir } from 'node:os';
 import { createResourceWaitProtocol, type ResourceWaitProtocolOptions, type ResourceWaitPending } from './resource-wait-protocol.ts';
 import { createResourceWaitSocketHost } from './resource-wait-transport.ts';
-import { observeWaitIdentity } from './resource-wait-identity.ts';
+import { observeWaitIdentity, observeWaitIdentities } from './resource-wait-identity.ts';
 import { createResourceSnapshotReader, observeProcesses, readMachineBootIdentity } from './os-runtime.ts';
 import { evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
 import { evaluateResourceAdmission } from './resource-admission.ts';
@@ -44,6 +44,7 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
       return { status: admission.level, reason: admission.reasons.join('; ') };
     },
     observeClient: observeWaitIdentity,
+    observeClients: observeWaitIdentities,
     isConnectionOpen: id => { const socket = sockets.connections.get(id)?.socket; return !!socket && !socket.destroyed && !socket.readableEnded; },
     sendOffer: async (id, offer) => { await sockets.connections.get(id)?.send({ kind: 'offer', offer }); },
     sendResult: async (id, result) => { await sockets.connections.get(id)?.send({ kind: 'result', result }); },

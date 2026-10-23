@@ -3,8 +3,10 @@ import { platform } from 'node:os';
 import { executeCommand, readMachineBootIdentity } from './os-runtime.ts';
 import type { ResourceWaitIdentity, ResourceWaitClientObservation } from './resource-wait-protocol.ts';
 
+let bootIdentity: ReturnType<typeof readMachineBootIdentity> | undefined;
+
 export async function readWaitIdentity(pid = process.pid): Promise<ResourceWaitIdentity> {
-  const boot = await readMachineBootIdentity();
+  const boot = await (bootIdentity ??= readMachineBootIdentity());
   let startedAt: string;
   if (platform() === 'linux') {
     const stat = await readFile(`/proc/${pid}/stat`, 'utf8');
@@ -15,9 +17,26 @@ export async function readWaitIdentity(pid = process.pid): Promise<ResourceWaitI
   } else if (platform() === 'darwin') {
     const result = await executeCommand({ executable: 'ps', args: ['-p', String(pid), '-o', 'lstart='] });
     if (result.exitCode !== 0 || !result.stdout.trim()) throw Object.assign(new Error('Client process absent'), { code: 'ESRCH' });
-    startedAt = result.stdout.trim();
+    startedAt = result.stdout.trim().replace(/\s+/g, ' ');
   } else throw new Error('Unsupported client identity platform');
   return { pid, startedAt, ...boot };
+}
+
+export async function observeWaitIdentities(identities: readonly ResourceWaitIdentity[]): Promise<ResourceWaitClientObservation[]> {
+  if (platform() !== 'darwin') return Promise.all(identities.map(observeWaitIdentity));
+  try {
+    const boot = await (bootIdentity ??= readMachineBootIdentity());
+    const result = await executeCommand({ executable: 'ps', args: ['-axo', 'pid=,lstart='] });
+    if (result.exitCode !== 0) throw new Error('Client identity scan failed');
+    const starts = new Map<number, string>();
+    for (const line of result.stdout.split('\n').filter(line => line.trim())) {
+      const row = line.match(/^\s*(\d+)\s+(.+?)\s*$/);
+      if (!row) throw new Error('Malformed client identity scan');
+      starts.set(Number(row[1]), row[2].replace(/\s+/g, ' '));
+    }
+    return identities.map(identity => starts.get(identity.pid) === identity.startedAt && identity.machineId === boot.machineId && identity.bootId === boot.bootId
+      ? { state: 'alive', identity } : { state: 'dead', reason: 'Client absent or process/boot identity changed' });
+  } catch (error) { return identities.map(() => ({ state: 'unknown', reason: error instanceof Error ? error.message : String(error) })); }
 }
 
 export async function observeWaitIdentity(identity: ResourceWaitIdentity): Promise<ResourceWaitClientObservation> {

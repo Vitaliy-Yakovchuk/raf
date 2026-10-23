@@ -148,7 +148,7 @@ export function createBackgroundRuntime(
     let lease: Awaited<ReturnType<typeof tryWaitLease>> = null;
     let child: ReturnType<typeof spawn> | undefined;
     const deadline = performance.now() + options.readinessTimeoutMs;
-    const remaining = () => { const time = deadline - performance.now(); if (time <= 0) throw new Error('Service readiness budget exhausted'); return time; };
+    const remaining = () => { const time = deadline - performance.now(); if (time <= 0) throw new Error('Service readiness budget exhausted'); return Math.ceil(time); };
     const within = <T>(work: Promise<T>): Promise<T> => new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('Service readiness budget exhausted')), remaining());
       work.then(value => { clearTimeout(timer); resolve(value); }, error => { clearTimeout(timer); reject(error); });

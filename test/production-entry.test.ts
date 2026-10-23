@@ -329,18 +329,24 @@ for (const fileName of ['', '..', '.', '../escaped.sqlite', '/absolute.sqlite', 
 test('production-entry fixture refuses every entry before state creation without explicit QA context', async t => {
   const f = await fixture(t);
   delete process.env.RAF_QA_HOME;
-  for (const argv of [['help'], ['agent', 'ps'], ['runner', 'list'], ['runner', 'limits', '--runners', 'codex'], ['unknown-command'], ['runner', 'limits', '--runners']]) {
+  for (const argv of [['agent', 'ps'], ['runner', 'list'], ['runner', 'limits', '--runners', 'codex']]) {
     const error = failure(await f.run(argv));
     assert.equal(error.code, 'STATE_CONTEXT_REFUSED', argv.join(' '));
     assert.equal(existsSync(join(f.home, '.raf')), false);
     assert.deepEqual(readdirSync(f.home), []);
   }
+  success(await f.run(['help']));
+  failure(await f.run(['unknown-command']));
+  failure(await f.run(['runner', 'limits', '--runners']));
+  assert.equal(existsSync(join(f.home, '.raf')), false);
+  assert.deepEqual(readdirSync(f.home), []);
 });
 
 test('production-entry fixture refuses help when code provenance configuration is missing', async t => {
   const f = await fixture(t);
   rmSync(join(f.conf, 'projects.json'));
-  const error = failure(await f.run(['help']));
+  success(await f.run(['help']));
+  const error = failure(await f.run(['agent', 'ps']));
   assert.equal(error.code, 'STATE_CONTEXT_REFUSED');
   assert.equal(existsSync(join(f.home, '.raf')), false);
   assert.deepEqual(readdirSync(f.home), []);

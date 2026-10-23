@@ -8,6 +8,7 @@ import { dirname, isAbsolute, join, basename, resolve, relative, sep } from 'nod
 import { homedir, platform, availableParallelism, loadavg, totalmem } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import { createConnection } from 'node:net';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
 import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
@@ -199,29 +200,41 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
     readable: [report], tmuxDirectory: report, excludedCommands: subcommands === null ? [`${command}:*`] : subcommands.map(subcommand => `${command} ${subcommand}:*`),
   };
 }
-function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, override?: AdapterCommandExecutor): AdapterCommandExecutor {
-  if (override) return override;
+async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, environment: NodeJS.ProcessEnv): Promise<string> {
   const directory = join(context.tmpRoot, 'tmux');
   const socketPath = join(directory, 'server.sock');
+  await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+  const owner = await fs.lstat(directory);
+  if (!owner.isDirectory() || owner.uid !== process.getuid?.() || (owner.mode & 0o077) !== 0) fail('TMUX_CONTEXT_INVALID', 'RAF tmux directory must be private and owned by the current user');
+  const socket = await fs.lstat(socketPath).catch(error => { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; });
+  if (socket && (!socket.isSocket() || socket.uid !== process.getuid?.())) fail('TMUX_CONTEXT_INVALID', 'RAF tmux socket has foreign ownership or file type');
+  if (context.stateContext?.mode === 'qa' && socket) {
+    const live = await new Promise<boolean>((resolve, reject) => {
+      const connection = createConnection(socketPath);
+      connection.once('connect', () => { connection.destroy(); resolve(true); });
+      connection.once('error', error => {
+        connection.destroy();
+        if (['ECONNREFUSED', 'ENOENT'].includes((error as NodeJS.ErrnoException).code ?? '')) resolve(false);
+        else reject(stateFailure('STATE_CONTEXT_REFUSED', 'Existing QA tmux server context cannot be verified; stop the stand server and retry'));
+      });
+    });
+    if (live) {
+      for (const key of ['HOME', 'RAF_QA_HOME']) {
+        const observed = await executeCommand({ executable: 'tmux', args: ['-S', socketPath, 'show-environment', '-g', key], environment });
+        if (observed.exitCode !== 0 || observed.stdout.trim() !== `${key}=${context.stateContext.homeDirectory}`) {
+          throw stateFailure('STATE_CONTEXT_REFUSED', `Existing QA tmux server has foreign ${key}; stop the stand server and retry`);
+        }
+      }
+    }
+  }
+  return socketPath;
+}
+function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, override?: AdapterCommandExecutor): AdapterCommandExecutor {
+  if (override) return override;
   return async command => {
     const environment = context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env;
     if (command.executable !== 'tmux') return executeCommand({ ...command, environment });
-    await fs.mkdir(directory, { recursive: true, mode: 0o700 });
-    const owner = await fs.lstat(directory);
-    if (!owner.isDirectory() || owner.uid !== process.getuid?.() || (owner.mode & 0o077) !== 0) fail('TMUX_CONTEXT_INVALID', 'RAF tmux directory must be private and owned by the current user');
-    try { const socket = await fs.lstat(socketPath); if (!socket.isSocket() || socket.uid !== process.getuid?.()) fail('TMUX_CONTEXT_INVALID', 'RAF tmux socket has foreign ownership or file type'); }
-    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-    if (context.stateContext?.mode === 'qa') {
-      try {
-        await fs.lstat(socketPath);
-        for (const key of ['HOME', 'RAF_QA_HOME']) {
-          const observed = await executeCommand({ executable: 'tmux', args: ['-S', socketPath, 'show-environment', '-g', key], environment });
-          if (observed.exitCode !== 0 || observed.stdout.trim() !== `${key}=${context.stateContext.homeDirectory}`) {
-            throw stateFailure('STATE_CONTEXT_REFUSED', `Existing QA tmux server has foreign ${key}; stop the stand server and retry`);
-          }
-        }
-      } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-    }
+    const socketPath = await runtimeTmuxSocket(context, environment);
     const args = [...command.args];
     if (context.stateContext && args[0] === 'new-session') {
       args.splice(1, 0, ...['HOME', 'RAF_QA_HOME'].flatMap(key => environment[key] === undefined ? [] : ['-e', `${key}=${environment[key]}`]));
@@ -826,6 +839,7 @@ export async function createProductionServices(
       }
       record.brief = request.brief;
       const modulePath = options.workerModulePath ?? fileURLToPath(import.meta.url);
+      if (!options.execute && context.stateContext?.mode === 'qa') await runtimeTmuxSocket(context, stateContextEnvironment(context.stateContext, process.env));
       record.spawnAttempted = true;
       try {
         record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, assignment: record.launch.assignment, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {

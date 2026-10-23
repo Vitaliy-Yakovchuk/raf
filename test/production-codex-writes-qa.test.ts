@@ -194,7 +194,7 @@ for (const [metadata, worktree, missingQuestions] of [[true, false, false], [fal
     if (missingQuestions) assert.equal(await readFile(f.questionsPath, 'utf8'), '', 'preflight creates only an empty questions file');
     assert.equal(listTaskReservations(f.store).length, 1);
     const runDirectory = dirname(f.reportPath);
-    const probeDirectory = join(runDirectory, 'write-probe');
+    const probeDirectory = join(f.tmpRoot, `${f.runId}-write-probe`);
     await mkdir(probeDirectory);
     const writableDirectories = [...durable, runDirectory];
     const model = configuration.models.models[0];

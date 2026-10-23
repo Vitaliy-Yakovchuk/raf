@@ -133,7 +133,7 @@ export function planVitestInvocations(
 export interface VitestBatchApi {
   parseCLI(argv: string[]): { filter: string[]; options: Record<string, any> };
   createVitest(mode: string, options: Record<string, any>): Promise<{
-    projects: { config: Record<string, any> }[];
+    projects: { config: Record<string, any>; vite?: { config: { server: { fs: { allow: string[] } } } } }[];
     start(files: string[]): Promise<unknown>;
     close(): Promise<unknown>;
   }>;
@@ -144,6 +144,9 @@ export async function runVitestBatch(api: VitestBatchApi, argv: string[], runner
   const vitest = await api.createVitest('test', { ...options, watch: false, runner });
   try {
     for (const project of vitest.projects) {
+      const allowed = project.vite?.config.server.fs.allow;
+      const runnerPath = runner.split(sep).join('/');
+      if (allowed && !allowed.includes(runnerPath)) allowed.push(runnerPath);
       project.config.runner = project.config.environment && project.config.environment !== 'node' ? pathToFileURL(runner).href : runner;
       project.config.hookTimeout = options.hookTimeout;
       if (options.testTimeout !== undefined) project.config.testTimeout = options.testTimeout;

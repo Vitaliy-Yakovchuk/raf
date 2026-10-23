@@ -199,7 +199,7 @@ async function fixture(t: any) {
   models.runners = models.runners.filter((x: any) => x.id === 'codex');
   assert.equal(models.models[0]?.effort, 'high');
   const constants = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/raf-constants.json'), 'utf8'));
-  constants.commands = constants.commands.filter((x: any) => ['agent run', 'agent close', 'agent interrupt', 'runner disable', 'test run', 'help'].includes(x.path.join(' ')));
+  constants.commands = constants.commands.filter((x: any) => ['agent run', 'agent close', 'agent interrupt', 'agent message', 'agent ps', 'runner disable', 'test run', 'help'].includes(x.path.join(' ')));
   const artifact = join(directory, 'catalog.json');
   const changeDir = join(root, 'openspec', 'changes', change);
   const questionsPath = join(root, 'questions', 'projects', 'raf', 'questions.md');

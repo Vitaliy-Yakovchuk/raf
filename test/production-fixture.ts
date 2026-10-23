@@ -119,7 +119,7 @@ process.exit(result.status ?? 1);
   await writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify({
     version: 1,
     agentPhases,
-    commands: commands.filter((command: { path: string[] }) => command.path.join(' ') === 'test run'),
+    commands: commands.filter((command: { path: string[] }) => ['agent message', 'agent ps', 'agent update', 'agent run', 'test run'].includes(command.path.join(' '))),
     agentTypes: [{ id: 'main', launchableByRaf: false }, { id: 'implement', launchableByRaf: true }, { id: 'spec', launchableByRaf: true }],
     reportStatuses: [{ id: 'succeeded', event: 'agent.succeeded' }, { id: 'failed', event: 'agent.failed' }],
     eventIdKinds: { agentAddress: 'Fixture agent address', reminderId: 'Fixture reminder ID' },

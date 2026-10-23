@@ -1,4 +1,4 @@
-import { parseTestRunArgs, runTestRun } from './test-runs.ts';
+import { parseTestRunArgs, runTestRun, testRunFailureResult } from './test-runs.ts';
 import type { TestId, TestRunContext, TestRunPorts, UnitTestPolicy } from './test-runs.ts';
 
 export interface TestRunCliPorts {
@@ -28,7 +28,8 @@ export async function runTestRunCli(argv: readonly string[], ports: TestRunCliPo
     ports.stdout(JSON.stringify(result) + '\n');
     return result.outcome === 'passed' ? 0 : 1;
   } catch (error) {
-    ports.stderr(JSON.stringify({ outcome: 'refused', failureKinds: ['refusal'], errorCode: (error as any)?.code ?? 'INVALID_ARGUMENT', reason: error instanceof Error ? error.message : String(error), exitCode: null }) + '\n');
+    const value = (option: string) => { const index = argv.indexOf(option); return index >= 0 ? argv[index + 1] ?? '' : ''; };
+    ports.stdout(JSON.stringify(testRunFailureResult({ project: value('--project'), phase: value('--phase'), group: value('--group') }, ports.context, ports.runtime.newRunId(), ports.runtime.clock.now(), ports.config, error)) + '\n');
     return 1;
   }
 }

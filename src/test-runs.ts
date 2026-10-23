@@ -95,7 +95,7 @@ export interface TestRunCommand {
   argv: string[];
   cwd: string;
   shell: false;
-  environment: { HOME: string; statePath: string; tmpPath: string };
+  environment: { HOME: string; statePath: string; tmpPath: string; testIds?: TestId[] };
 }
 
 export interface TestRunPlan {
@@ -199,7 +199,7 @@ export interface TestRunPorts {
   reconcile(processIdentity: string | null, deadlineMs: number): Promise<{ alive: boolean; deadlineReached: boolean; cleanup: TestRunCleanup }>;
 }
 
-const failure = (code: string, message = code): never => { throw Object.assign(new Error(message), { code }); };
+const failure = (code: string, message = code): never => { throw Object.assign(new Error(`${code}: ${message}`), { code }); };
 const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0 && !v.includes('\0');
 const strings = (v: unknown): v is string[] => Array.isArray(v) && v.every(text);
@@ -246,7 +246,7 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
   for (const [projectId, project] of Object.entries(config.projects)) {
     if (!record(project) || !record(project.profiles) || !Object.keys(project.profiles).length || !record(project.groups)) invalid(`projects/${projectId}`);
     for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) {
-      if (!record(profile) || !text(profile.cwd) || (profile.cwd !== '.' && !safeFile(profile.cwd)) || !text(profile.executable) || !strings(profile.argv) || !strings(profile.unitFiles) || !profile.unitFiles.length || profile.unitFiles.some((f: string) => !safeFile(f)) || new Set(profile.unitFiles).size !== profile.unitFiles.length || !['node-test-name', null].includes(profile.exactIds) || profile.resultAdapter !== 'node-test-events' || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) invalid(`projects/${projectId}/profiles/${id}`);
+      if (!record(profile) || Object.keys(profile).some(key => !['cwd', 'executable', 'argv', 'unitFiles', 'exactIds', 'resultAdapter', 'environment', 'checks'].includes(key)) || !text(profile.cwd) || (profile.cwd !== '.' && !safeFile(profile.cwd)) || !text(profile.executable) || !strings(profile.argv) || !strings(profile.unitFiles) || !profile.unitFiles.length || profile.unitFiles.some((f: string) => !safeFile(f)) || new Set(profile.unitFiles).size !== profile.unitFiles.length || !['node-test-name', null].includes(profile.exactIds) || profile.resultAdapter !== 'node-test-events' || !record(profile.environment) || typeof profile.environment.isolatedHome !== 'boolean' || typeof profile.environment.stateOrigin !== 'boolean' || !strings(profile.checks)) invalid(`projects/${projectId}/profiles/${id}`);
       if (/^(?:.*\/)?(?:sh|bash|dash|zsh|fish|cmd|powershell)$/.test(profile.executable) || profile.argv.some((arg: string) => ['-e', '--eval', '-c', '--command'].includes(arg))) invalid(`projects/${projectId}/profiles/${id}/command`);
     }
     for (const [id, preset] of Object.entries(project.groups) as [string, any][]) {
@@ -263,7 +263,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   if (!context.activeChanges.includes(request.group.split('/')[0])) failure('INACTIVE_CHANGE');
   const project = config.projects[request.project];
   if (!project || !context.projectWorkspaces[request.project]?.includes(context.workspace)) failure('UNKNOWN_PROJECT');
-  if (env.canonicalWorkspace !== context.workspace || env.canonicalCwd !== context.cwd || !env.gitIdentityMatches || !inside(context.cwd, context.workspace)) failure('WORKSPACE_MISMATCH');
+  if (env.canonicalWorkspace !== context.workspace || env.canonicalCwd !== context.cwd || !env.gitIdentityMatches || context.cwd !== context.workspace) failure('WORKSPACE_MISMATCH');
   for (const key of ['runtimeAvailable', 'localRunnerAvailable', 'dependenciesAvailable', 'resultAdapterAvailable', 'artifactsWritable', 'treeControlSupported'] as const) if (!env[key]) failure('ENVIRONMENT_INVALID', key);
   if (env.stateAliasesOperational || env.tmpAliasesOperational || env.inheritedOperationalChannel) failure('STATE_CONTEXT_REFUSED');
   if (request.files !== undefined && request.only !== undefined) failure('SELECTION_CONFLICT');
@@ -273,12 +273,14 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   const files = [...new Set(request.files ?? request.only?.map(id => id.file) ?? preset?.files ?? [])];
   if (!files.length) failure('EMPTY_SELECTION');
   if (files.some(file => !safeFile(file))) failure('UNSAFE_SELECTION');
+  const configuredInventory = [...new Set(Object.values(project.profiles).flatMap(p => p.unitFiles))];
+  if (env.unitFiles.length !== configuredInventory.length || env.unitFiles.some(file => !configuredInventory.includes(file))) failure('INVENTORY_INCOMPLETE');
   const profiles = Object.entries(project.profiles).filter(([, profile]) => files.every(file => profile.unitFiles.includes(file)));
   if (profiles.length !== 1) failure('PROFILE_AMBIGUOUS', 'Selection must belong to one configured profile');
   const [profileId, profile] = profiles[0];
   if (!request.files && !request.only && preset?.profileId !== profileId) failure('PROFILE_AMBIGUOUS');
   const cwd = resolve(context.workspace, profile.cwd);
-  if (cwd !== context.cwd || !inside(cwd, context.workspace)) failure('WORKSPACE_MISMATCH');
+  if (!inside(cwd, context.workspace)) failure('WORKSPACE_MISMATCH');
   if (profile.environment.isolatedHome && (!env.isolatedHome || context.home === context.operationalHome) || profile.environment.stateOrigin && !env.stateOriginAllowed) failure('STATE_CONTEXT_REFUSED');
   const inventory = [...new Set(Object.values(project.profiles).flatMap(p => p.unitFiles.map(f => resolve(context.workspace, p.cwd, f))))];
   const selected = files.map(f => resolve(cwd, f));
@@ -294,7 +296,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   if (testIds.length) argv.push(`--test-name-pattern=^(?:${testIds.map(id => escape(id.name)).join('|')})$`);
   argv.push(...files);
   return { request, workspace: context.workspace, profileId, selection: { files, testIds },
-    command: { executable: profile.executable, argv, cwd, shell: false, environment: { HOME: context.home, statePath: context.statePath, tmpPath: context.tmpPath } } };
+    command: { executable: profile.executable, argv, cwd, shell: false, environment: { HOME: context.home, statePath: context.statePath, tmpPath: context.tmpPath, ...(testIds.length ? { testIds } : {}) } } };
 }
 
 export function classifyRunnerResult(events: readonly RunnerEvent[], exit: ChildExit): RunnerClassification {
@@ -311,7 +313,7 @@ export function classifyRunnerResult(events: readonly RunnerEvent[], exit: Child
   passed = uniqueIds(passed).filter(id => !containsId(knownRed, id) && !containsId(unknown, id));
   unknown = uniqueIds(unknown);
   const unexecuted = expected.filter(id => !containsId([...passed, ...knownRed, ...unknown], id));
-  if (!complete || unexecuted.length || exit.exitCode !== 0 && !knownRed.length || exit.signal) setup = true;
+  if (!complete || !expected.length || unexecuted.length || exit.exitCode !== 0 && !knownRed.length || exit.signal) setup = true;
   const failureKinds: TestRunFailureKind[] = [...(setup ? ['setup' as const] : []), ...(knownRed.length ? ['assertions' as const] : [])];
   return { outcome: setup ? 'setup-failed' : knownRed.length ? 'assertions-failed' : 'passed', failureKinds, passed, knownRed, unexecuted, unknown };
 }
@@ -324,7 +326,7 @@ function emptyResult(request: TestRunRequest, context: TestRunContext, runId: st
 }
 function attachHints(result: TestRunResult, config: TestRunConfig | null): TestRunResult {
   const phase = config?.phases[result.phase];
-  result.hintIds = [...new Set(result.failureKinds.map(kind => phase?.hints[kind]).filter((v): v is string => !!v))];
+  result.hintIds = [...new Set(result.failureKinds.map(kind => phase?.hints?.[kind]).filter((v): v is string => typeof v === 'string' && typeof config?.hints[v] === 'string'))];
   result.hints = result.hintIds.map(id => config!.hints[id]);
   return result;
 }
@@ -343,7 +345,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     plan = planTestRun(request, config, context, await ports.preflight(context));
   } catch (error) {
     result.errorCode = (error as any)?.code ?? 'ENVIRONMENT_INVALID';
-    if (['ENVIRONMENT_INVALID', 'STATE_CONTEXT_REFUSED', 'CONFIGURATION_INVALID'].includes(result.errorCode!)) { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
+    if (['ENVIRONMENT_INVALID', 'STATE_CONTEXT_REFUSED'].includes(result.errorCode!)) { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
     result.evidence = [error instanceof Error ? error.message : String(error)];
     return attachHints(result, config);
   }
@@ -373,6 +375,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     });
   } catch (error) {
     result.errorCode = (error as any)?.code ?? 'STATE_FAILED';
+    if (result.errorCode === 'STATE_FAILED') { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
     if (result.errorCode === 'GROUP_IN_FLIGHT') { result.groupState = 'reconcile'; result.nextAction = 'reconcile'; }
     result.evidence = [error instanceof Error ? error.message : String(error)];
     return attachHints(result, config);
@@ -398,7 +401,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (typeof finished === 'string') reason = finished; else exit = finished;
     if (ports.clock.now() >= deadline && reason === 'exit') reason = 'timeout';
     result.cleanup = await child.cleanup(deadline, reason);
-    if (reason !== 'exit') exit = await child.wait();
+    if (reason !== 'exit' && result.cleanup.complete) exit = await child.wait();
   } catch (error) {
     events.push({ kind: 'protocol-error', diagnostic: error instanceof Error ? error.message : String(error) });
     if (child) {
@@ -416,10 +419,10 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     result.outcome = 'setup-failed'; result.failureKinds = [...new Set<TestRunFailureKind>([...result.failureKinds, 'setup'])];
     result.errorCode = 'CLEANUP_INCOMPLETE';
   }
-  await ports.state.transaction(tx => {
+  try { await ports.state.transaction(tx => {
     const group = tx.get(key);
     if (!group || group.inFlight?.runId !== result.runId) return;
-    group.knownRed = uniqueIds([...group.knownRed.filter(id => !containsId(result.passed, id)), ...result.knownRed]);
+    group.knownRed = uniqueIds([...group.knownRed.filter(id => !events.some(event => event.kind === 'complete') || events.some(event => event.kind === 'protocol-error') || !containsId(result.passed, id)), ...result.knownRed]);
     result.knownRed = group.knownRed;
     result.unexecuted = uniqueIds([...group.unexecuted.filter(id => !containsId([...result.passed, ...result.knownRed], id)), ...result.unexecuted, ...(request.only ?? []).filter(id => !containsId([...result.passed, ...classified.knownRed], id))]);
     group.unexecuted = result.unexecuted;
@@ -427,6 +430,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     result.timeoutCount = group.timeoutCount;
     result.groupState = !result.cleanup.complete ? 'reconcile' : groupState(group, policy);
     if (result.outcome === 'passed' && result.knownRed.length) { result.outcome = 'assertions-failed'; result.failureKinds.push('assertions'); }
+    if (result.outcome === 'passed' && (result.unexecuted.length || result.unknown.length)) { result.outcome = group.timeoutCount >= policy.maxGroupTimeouts ? 'unverified-remainder' : 'setup-failed'; }
     if (result.outcome === 'passed' && !result.unexecuted.length && !result.unknown.length && !result.knownRed.length) result.groupState = 'complete';
     if (!result.cleanup.complete) result.nextAction = 'reconcile';
     else if (result.failureKinds.includes('setup')) result.nextAction = 'fix-setup';
@@ -441,7 +445,13 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     group.state = result.groupState;
     if (result.cleanup.complete) group.inFlight = null;
     group.lastResult = result; tx.put(group);
-  });
+  }); } catch (error) {
+    result.outcome = 'setup-failed'; result.errorCode = 'STATE_FAILED';
+    result.failureKinds = [...new Set<TestRunFailureKind>([...result.failureKinds, 'setup'])];
+    result.groupState = 'reconcile'; result.nextAction = 'reconcile';
+    result.evidence.push(error instanceof Error ? error.message : String(error));
+    attachHints(result, config);
+  }
   return result;
 }
 
@@ -466,6 +476,16 @@ function validatePolicy(policy: UnitTestPolicy): void {
 }
 export async function cleanupClosedTestRunGroups(activeChanges: readonly string[], context: TestRunContext, ports: TestRunPorts): Promise<void> {
   await ports.state.transaction(tx => {
-    for (const group of tx.list('', context.workspace)) if (!activeChanges.includes(group.key.group.split('/')[0]) && !group.inFlight) tx.delete(group.key);
+    for (const project of Object.keys(context.projectWorkspaces)) {
+      for (const group of tx.list(project, context.workspace)) if (!activeChanges.includes(group.key.group.split('/')[0]) && !group.inFlight) tx.delete(group.key);
+    }
   });
+}
+
+export function testRunFailureResult(request: TestRunRequest, context: TestRunContext, runId: string, now: number, config: unknown, error: unknown): TestRunResult {
+  const result = emptyResult(request, context, runId, now);
+  result.errorCode = (error as any)?.code ?? 'INVALID_ARGUMENT';
+  result.evidence = [error instanceof Error ? error.message : String(error)];
+  const configured = record(config) && record(config.phases) && record(config.hints) ? config as unknown as TestRunConfig : null;
+  return attachHints(result, configured);
 }

@@ -12,7 +12,7 @@ import type { StateStore } from './state-store.ts';
 import type { ServiceEntryContext } from './service-entry.ts';
 import type { ResourceSnapshotReader } from './os-runtime.ts';
 
-export async function productionResourceWait(context: ServiceEntryContext, options: ResourceWaitProtocolOptions, getStore: () => StateStore, resourceReader?: ResourceSnapshotReader) {
+export async function productionResourceWait(context: ServiceEntryContext, options: ResourceWaitProtocolOptions, getStore: () => StateStore, resourceReader?: ResourceSnapshotReader, now: () => number = Date.now) {
   const boot = await readMachineBootIdentity();
   let epoch = '';
   const sockets = createResourceWaitSocketHost(() => protocol, () => epoch, options.deliveryTimeoutMs);
@@ -25,7 +25,7 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
     } catch (error) { connection.socket.destroy(); throw error; }
   };
   const protocol = createResourceWaitProtocol(options, {
-    monotonicNow: () => performance.now(), wallNow: Date.now, bootIdentity: () => `${boot.machineId}/${boot.bootId}`, nextId: randomUUID,
+    monotonicNow: () => performance.now(), wallNow: now, bootIdentity: () => `${boot.machineId}/${boot.bootId}`, nextId: randomUUID,
     schedule: (at, wake) => { const timer = setTimeout(() => { void wake().catch(error => process.emitWarning(error)); }, Math.max(0, at - performance.now())); timer.unref(); return () => clearTimeout(timer); },
     readSnapshot: async requests => {
       const observedAt = performance.now();

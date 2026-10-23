@@ -535,13 +535,14 @@ test('R07 concurrent own and regression execution delegates both to the identica
     return { code: 1, stdout: '{"outcome":"refused","errorCode":"GROUP_IN_FLIGHT"}', stderr: '' };
   };
   const foreign = executeRegressionRun(h.command(), h.ports);
+  void foreign.catch(() => {});
   const ownerPorts: RegressionExecutionPorts = { ...h.ports, async control() { return control(owner); } };
   const own = executeRegressionRun(h.command(), ownerPorts);
   try {
     assert.equal((await own).code, 1);
     assert.deepEqual(contexts, [h.context, h.context]);
     assert.deepEqual(h.keys, [{ project: 'raf', workspace, group }, { project: 'raf', workspace, group }]);
-  } finally { release(); }
+  } finally { release(); await foreign.catch(() => {}); }
   assert.equal((await foreign).code, 0);
 });
 

@@ -15,6 +15,14 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
   const boot = await readMachineBootIdentity();
   let epoch = '';
   const sockets = createResourceWaitSocketHost(() => protocol, () => epoch, options.deliveryTimeoutMs);
+  const sendFinal = async (id: string, frame: unknown) => {
+    const connection = sockets.connections.get(id);
+    if (!connection) throw new Error('Resource wait connection closed before final result');
+    try {
+      await connection.send(frame);
+      connection.socket.end(() => connection.socket.destroy());
+    } catch (error) { connection.socket.destroy(); throw error; }
+  };
   const protocol = createResourceWaitProtocol(options, {
     monotonicNow: () => performance.now(), wallNow: Date.now, bootIdentity: () => `${boot.machineId}/${boot.bootId}`, nextId: randomUUID,
     schedule: (at, wake) => { const timer = setTimeout(() => { void wake().catch(error => process.emitWarning(error)); }, Math.max(0, at - performance.now())); timer.unref(); return () => clearTimeout(timer); },
@@ -47,8 +55,8 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
     observeClients: observeWaitIdentities,
     isConnectionOpen: id => { const socket = sockets.connections.get(id)?.socket; return !!socket && !socket.destroyed && !socket.readableEnded; },
     sendOffer: async (id, offer) => { await sockets.connections.get(id)?.send({ kind: 'offer', offer }); },
-    sendResult: async (id, result) => { await sockets.connections.get(id)?.send({ kind: 'result', result }); },
-    sendError: async (id, ticket, diagnostic) => { await sockets.connections.get(id)?.send({ kind: 'result', result: { ...ticket, offerId: '', deadline: 0, kind: 'error', diagnostic } }); },
+    sendResult: async (id, result) => { await sendFinal(id, { kind: 'result', result }); },
+    sendError: async (id, ticket, diagnostic) => { await sendFinal(id, { kind: 'result', result: { ...ticket, offerId: '', deadline: 0, kind: 'error', diagnostic } }); },
     loadLastGrant: async () => getStore().readResourceWaitGrant(),
     commitLastGrant: async change => {
       try { return getStore().commitResourceWaitGrant(change); }

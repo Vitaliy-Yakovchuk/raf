@@ -15,9 +15,12 @@ export async function readWaitIdentity(pid = process.pid): Promise<ResourceWaitI
     startedAt = fields[19];
     if (!/^\d+$/.test(startedAt)) throw new Error('Invalid client start ticks');
   } else if (platform() === 'darwin') {
-    const result = await executeCommand({ executable: 'ps', args: ['-p', String(pid), '-o', 'lstart='] });
+    const result = await executeCommand({ executable: 'ps', args: ['-p', String(pid), '-o', 'stat=,lstart='] });
     if (result.exitCode !== 0 || !result.stdout.trim()) throw Object.assign(new Error('Client process absent'), { code: 'ESRCH' });
-    startedAt = result.stdout.trim().replace(/\s+/g, ' ');
+    const row = result.stdout.trim().match(/^(\S+)\s+(.+)$/);
+    if (!row) throw new Error('Invalid client process status');
+    if (/^[ZX]/.test(row[1])) throw Object.assign(new Error('Client process exited'), { code: 'ESRCH' });
+    startedAt = row[2].replace(/\s+/g, ' ');
   } else throw new Error('Unsupported client identity platform');
   return { pid, startedAt, ...boot };
 }
@@ -26,13 +29,13 @@ export async function observeWaitIdentities(identities: readonly ResourceWaitIde
   if (platform() !== 'darwin') return Promise.all(identities.map(observeWaitIdentity));
   try {
     const boot = await (bootIdentity ??= readMachineBootIdentity());
-    const result = await executeCommand({ executable: 'ps', args: ['-axo', 'pid=,lstart='] });
+    const result = await executeCommand({ executable: 'ps', args: ['-axo', 'pid=,stat=,lstart='] });
     if (result.exitCode !== 0) throw new Error('Client identity scan failed');
     const starts = new Map<number, string>();
     for (const line of result.stdout.split('\n').filter(line => line.trim())) {
-      const row = line.match(/^\s*(\d+)\s+(.+?)\s*$/);
+      const row = line.match(/^\s*(\d+)\s+(\S+)\s+(.+?)\s*$/);
       if (!row) throw new Error('Malformed client identity scan');
-      starts.set(Number(row[1]), row[2].replace(/\s+/g, ' '));
+      if (!/^[ZX]/.test(row[2])) starts.set(Number(row[1]), row[3].replace(/\s+/g, ' '));
     }
     return identities.map(identity => starts.get(identity.pid) === identity.startedAt && identity.machineId === boot.machineId && identity.bootId === boot.bootId
       ? { state: 'alive', identity } : { state: 'dead', reason: 'Client absent or process/boot identity changed' });

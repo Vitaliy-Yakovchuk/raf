@@ -29,7 +29,12 @@ const realProjects = JSON.parse(readFileSync(new URL('projects.json', realConf),
 const realFlow = readFileSync(new URL('flow.json', realConf), 'utf8');
 const flowResources = JSON.parse(realFlow).resources;
 const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), realProjects);
-const estimateReason = /оцінка резерву не налаштована/;
+const estimateReason = /resource estimate|оцінка резерву/i;
+const fixtureResourceEstimates = {
+  agentTypes: Object.fromEntries(constants.agentTypes.filter((type: { launchableByRaf: boolean }) => type.launchableByRaf).map((type: { id: string }) => [type.id, type.id === 'hotfix'
+    ? { ramBytes: 2048, diskBytesPerFileSystem: 3072 }
+    : { ramBytes: 4096, diskBytesPerFileSystem: 8192 }])),
+};
 
 const descriptions = {
   a11: 'Вивести контекст за conf/flow.json. Перевірка: node --test test/a.test.ts дає код 0.',
@@ -102,7 +107,7 @@ async function workspace(t: TestContext) {
     writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify(constants)),
     writeFile(join(confRoot, 'models.json'), JSON.stringify(models)),
     writeFile(join(confRoot, 'raf.json'), readFileSync(new URL('raf.json', realConf))),
-    writeFile(join(confRoot, 'flow.json'), realFlow),
+    writeFile(join(confRoot, 'flow.json'), JSON.stringify({ ...JSON.parse(realFlow), resourceEstimates: fixtureResourceEstimates })),
     writeFile(join(confRoot, 'test-runs.json'), readFileSync(new URL('test-runs.json', realConf))),
     writeFile(join(confRoot, 'stage-only-for-a12.json'), '{}'),
   ]);
@@ -130,7 +135,7 @@ async function workspace(t: TestContext) {
   await writeFile(join(root, 'openspec', 'specs', 'core', 'demo', 'spec.md'), '# demo\n');
   await mkdir(join(root, 'questions', 'projects', 'raf'), { recursive: true });
   await writeFile(join(root, 'questions', 'projects', 'raf', 'questions.md'), '# Питання\n');
-  const configuration: TaskContextConfiguration = { projects, reportStatuses: constants.reportStatuses, resources: structuredClone(flowResources) };
+  const configuration: TaskContextConfiguration = { projects, reportStatuses: constants.reportStatuses, resources: structuredClone(flowResources), resourceEstimates: structuredClone(fixtureResourceEstimates) };
   return { root, home, confRoot, tmpRoot, statePath, configuration };
 }
 
@@ -214,13 +219,13 @@ function refusingReserve(seen: ReserveInput[]) {
   });
 }
 
-async function writeFlowResources(w: Workspace, resources: unknown) {
+async function writeFlowResourceEstimates(w: Workspace, resourceEstimates: unknown) {
   const flow = JSON.parse(realFlow);
-  if (resources === undefined) delete flow.resources; else flow.resources = resources;
+  if (resourceEstimates === undefined) delete flow.resourceEstimates; else flow.resourceEstimates = resourceEstimates;
   await writeFile(join(w.confRoot, 'flow.json'), JSON.stringify(flow));
 }
 
-test('[task-context] 1. agent run без файла task-context/<id>.json виводить контекст і оцінку з порогів рівня', async t => {
+test('[task-context] 1. agent run без файла task-context/<id>.json виводить контекст і оцінку типу незалежно від порогів рівня', async t => {
   const w = await workspace(t);
   assert.equal(await exists(join(w.tmpRoot, 'task-context', `${baseParams.id}.json`)), false);
   const seen: ReserveInput[] = [];
@@ -232,19 +237,19 @@ test('[task-context] 1. agent run без файла task-context/<id>.json ви�
   assert.doesNotMatch(text, estimateReason);
   assert.match(text, /fixture admission refused/);
   assert.equal(seen.length, 1, 'запуск має дійти до резервування');
-  assert.equal(seen[0].requested.ramBytes, flowResources.normal.minRamBytes);
-  for (const id of seen[0].requiredFileSystemIds) assert.equal(seen[0].requested.diskBytes[id], flowResources.normal.minDiskBytes, id);
-  for (const value of Object.values(seen[0].requested.diskBytes)) assert.equal(value, flowResources.normal.minDiskBytes);
+  assert.equal(seen[0].requested.ramBytes, fixtureResourceEstimates.agentTypes.implement.ramBytes);
+  for (const id of seen[0].requiredFileSystemIds) assert.equal(seen[0].requested.diskBytes[id], fixtureResourceEstimates.agentTypes.implement.diskBytesPerFileSystem, id);
+  for (const value of Object.values(seen[0].requested.diskBytes)) assert.equal(value, fixtureResourceEstimates.agentTypes.implement.diskBytesPerFileSystem);
   assert.equal(h.calls.some(call => call.executable === 'tmux'), false);
   const derived = await deriveTaskContext({ root: w.root, parameters: baseParams, assignment: snapshotFor(w.root, baseParams.tasks), configuration: w.configuration });
   assert.equal(derived.branch, 'develop');
   assert.equal(derived.outcome, `change-a:1.1 — ${descriptions.a11}`);
-  assert.deepEqual(derived.estimate, { status: 'KNOWN', tier: 'normal', ramBytes: flowResources.normal.minRamBytes, diskBytesPerFileSystem: flowResources.normal.minDiskBytes, source: 'conf/flow.json#/resources/normal' });
+  assert.deepEqual(derived.estimate, { status: 'KNOWN', tier: 'normal', ramBytes: fixtureResourceEstimates.agentTypes.implement.ramBytes, diskBytesPerFileSystem: fixtureResourceEstimates.agentTypes.implement.diskBytesPerFileSystem, source: 'conf/flow.json#/resourceEstimates/agentTypes/implement', sources: ['conf/flow.json#/resourceEstimates/agentTypes/implement'] });
   const derive = (parameters: Partial<RuntimeRunParameters>) => deriveTaskContext({ root: w.root, parameters: { ...baseParams, ...parameters }, assignment: snapshotFor(w.root, baseParams.tasks), configuration: w.configuration });
   const qa = await derive({ type: 'qa', phase: 'qa' });
   assert.equal(qa.estimate.status === 'KNOWN' && qa.estimate.tier, 'normal');
   const hotfix = await derive({ type: 'hotfix' });
-  assert.deepEqual(hotfix.estimate, { status: 'KNOWN', tier: 'hotfix', ramBytes: flowResources.hotfix.minRamBytes, diskBytesPerFileSystem: flowResources.hotfix.minDiskBytes, source: 'conf/flow.json#/resources/hotfix' });
+  assert.deepEqual(hotfix.estimate, { status: 'KNOWN', tier: 'hotfix', ramBytes: fixtureResourceEstimates.agentTypes.hotfix.ramBytes, diskBytesPerFileSystem: fixtureResourceEstimates.agentTypes.hotfix.diskBytesPerFileSystem, source: 'conf/flow.json#/resourceEstimates/agentTypes/hotfix', sources: ['conf/flow.json#/resourceEstimates/agentTypes/hotfix'] });
 });
 
 test('[task-context] 2. старий чужий task-context/<id>.json ігнорується', async t => {
@@ -466,22 +471,24 @@ test('[task-context] 7. reportSchema будується з reportStatuses conf �
   assert.deepEqual(changed.properties.changes.items.properties.items.items.properties.status.enum, [...ids, 'fixture-status']);
 });
 
-const brokenThresholds: { name: string; tier: 'normal' | 'hotfix'; pointer: string; resources: () => unknown }[] = [
-  { name: 'без resources', tier: 'normal', pointer: '/resources', resources: () => undefined },
-  { name: 'без рівня normal', tier: 'normal', pointer: '/resources/normal', resources: () => ({ hotfix: flowResources.hotfix }) },
-  { name: 'без minRamBytes', tier: 'normal', pointer: '/resources/normal/minRamBytes', resources: () => ({ ...flowResources, normal: { ...flowResources.normal, minRamBytes: undefined } }) },
-  { name: 'рядковий minDiskBytes', tier: 'normal', pointer: '/resources/normal/minDiskBytes', resources: () => ({ ...flowResources, normal: { ...flowResources.normal, minDiskBytes: '10GiB' } }) },
-  { name: 'нульовий minRamBytes', tier: 'normal', pointer: '/resources/normal/minRamBytes', resources: () => ({ ...flowResources, normal: { ...flowResources.normal, minRamBytes: 0 } }) },
-  { name: 'від’ємний minDiskBytes', tier: 'normal', pointer: '/resources/normal/minDiskBytes', resources: () => ({ ...flowResources, normal: { ...flowResources.normal, minDiskBytes: -1 } }) },
-  { name: 'дробовий minRamBytes', tier: 'normal', pointer: '/resources/normal/minRamBytes', resources: () => ({ ...flowResources, normal: { ...flowResources.normal, minRamBytes: 1.5 } }) },
-  { name: 'без hotfix minDiskBytes', tier: 'hotfix', pointer: '/resources/hotfix/minDiskBytes', resources: () => ({ ...flowResources, hotfix: { ...flowResources.hotfix, minDiskBytes: null } }) },
+const brokenEstimates: { name: string; type: 'implement' | 'hotfix'; pointer: string; estimates: () => unknown }[] = [
+  { name: 'без resourceEstimates', type: 'implement', pointer: '/resourceEstimates', estimates: () => undefined },
+  { name: 'без типу implement', type: 'implement', pointer: '/resourceEstimates/agentTypes/implement', estimates: () => ({ agentTypes: { hotfix: fixtureResourceEstimates.agentTypes.hotfix } }) },
+  ...[
+    { name: 'без ramBytes', field: 'ramBytes', value: undefined },
+    { name: 'рядковий diskBytesPerFileSystem', field: 'diskBytesPerFileSystem', value: '10GiB' },
+    { name: 'від’ємний ramBytes', field: 'ramBytes', value: -1 },
+    { name: 'від’ємний diskBytesPerFileSystem', field: 'diskBytesPerFileSystem', value: -1 },
+    { name: 'дробовий ramBytes', field: 'ramBytes', value: 1.5 },
+  ].map(({ name, field, value }) => ({ name, type: 'implement' as const, pointer: `/resourceEstimates/agentTypes/implement/${field}`, estimates: () => ({ agentTypes: { ...fixtureResourceEstimates.agentTypes, implement: { ...fixtureResourceEstimates.agentTypes.implement, [field]: value } } }) })),
+  { name: 'неповна оцінка hotfix', type: 'hotfix', pointer: '/resourceEstimates/agentTypes/hotfix/diskBytesPerFileSystem', estimates: () => ({ agentTypes: { ...fixtureResourceEstimates.agentTypes, hotfix: { ramBytes: 2048 } } }) },
 ];
 
-for (const broken of brokenThresholds) {
-  test(`[task-context] 8. невалідні пороги (${broken.name}) дають UNKNOWN з причиною, без нуля, резерву й сесії`, async t => {
+for (const broken of brokenEstimates) {
+  test(`[task-context] 8. невалідні оцінки (${broken.name}) дають UNKNOWN з причиною, без нуля, резерву й сесії`, async t => {
     const w = await workspace(t);
-    await writeFlowResources(w, broken.resources());
-    const parameters: RuntimeRunParameters = { ...baseParams, type: broken.tier === 'hotfix' ? 'hotfix' : 'implement' };
+    await writeFlowResourceEstimates(w, broken.estimates());
+    const parameters: RuntimeRunParameters = { ...baseParams, type: broken.type };
     const seen: ReserveInput[] = [];
     const h = await harness(t, w, refusingReserve(seen));
     await assert.rejects(h.run(parameters), error => estimateReason.test(failureText(error)) && failureText(error).includes(broken.pointer));
@@ -499,15 +506,43 @@ for (const broken of brokenThresholds) {
   });
 }
 
-test('[task-context] 8. поломка порогів hotfix не зачіпає оцінку normal і навпаки', async t => {
+test('[task-context] 8. явний нуль оцінки валідний і доходить до резервування', async t => {
   const w = await workspace(t);
-  const derive = (resources: unknown, type: string) => deriveTaskContext({ root: w.root, parameters: { ...baseParams, type }, assignment: snapshotFor(w.root, baseParams.tasks), configuration: { ...w.configuration, resources } });
-  const brokenHotfix = { ...flowResources, hotfix: { ...flowResources.hotfix, minRamBytes: 'x' } };
+  await writeFlowResourceEstimates(w, { agentTypes: { ...fixtureResourceEstimates.agentTypes, implement: { ramBytes: 0, diskBytesPerFileSystem: 0 } } });
+  const seen: ReserveInput[] = [];
+  const h = await harness(t, w, refusingReserve(seen));
+  await assert.rejects(h.run(baseParams), /fixture admission refused/);
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].requested.ramBytes, 0);
+  assert.ok(seen[0].requiredFileSystemIds.length > 0);
+  for (const id of seen[0].requiredFileSystemIds) assert.equal(seen[0].requested.diskBytes[id], 0);
+  const configuration = await loadTaskContextConfiguration(w.confRoot);
+  const derived = await deriveTaskContext({ root: w.root, parameters: baseParams, assignment: snapshotFor(w.root, baseParams.tasks), configuration });
+  assert.deepEqual(derived.estimate, { status: 'KNOWN', tier: 'normal', ramBytes: 0, diskBytesPerFileSystem: 0, source: 'conf/flow.json#/resourceEstimates/agentTypes/implement', sources: ['conf/flow.json#/resourceEstimates/agentTypes/implement'] });
+});
+
+test('[task-context] 8. невалідна оцінка іншого типу не впливає на вибраний тип', async t => {
+  const w = await workspace(t);
+  const derive = (resourceEstimates: unknown, type: string) => deriveTaskContext({ root: w.root, parameters: { ...baseParams, type }, assignment: snapshotFor(w.root, baseParams.tasks), configuration: { ...w.configuration, resourceEstimates } });
+  const brokenHotfix = { agentTypes: { ...fixtureResourceEstimates.agentTypes, hotfix: { ramBytes: -1, diskBytesPerFileSystem: 3072 } } };
   assert.equal((await derive(brokenHotfix, 'hotfix')).estimate.status, 'UNKNOWN');
-  assert.deepEqual((await derive(brokenHotfix, 'implement')).estimate, { status: 'KNOWN', tier: 'normal', ramBytes: flowResources.normal.minRamBytes, diskBytesPerFileSystem: flowResources.normal.minDiskBytes, source: 'conf/flow.json#/resources/normal' });
-  const brokenNormal = { ...flowResources, normal: { ...flowResources.normal, minDiskBytes: 0 } };
-  assert.equal((await derive(brokenNormal, 'implement')).estimate.status, 'UNKNOWN');
-  assert.equal((await derive(brokenNormal, 'hotfix')).estimate.status, 'KNOWN');
+  assert.deepEqual((await derive(brokenHotfix, 'implement')).estimate, { status: 'KNOWN', tier: 'normal', ramBytes: 4096, diskBytesPerFileSystem: 8192, source: 'conf/flow.json#/resourceEstimates/agentTypes/implement', sources: ['conf/flow.json#/resourceEstimates/agentTypes/implement'] });
+  const brokenImplement = { agentTypes: { ...fixtureResourceEstimates.agentTypes, implement: { ramBytes: 4096 } } };
+  assert.equal((await derive(brokenImplement, 'implement')).estimate.status, 'UNKNOWN');
+  assert.equal((await derive(brokenImplement, 'hotfix')).estimate.status, 'KNOWN');
+});
+
+test('[task-context] 8. зміна порогів не змінює оцінки типу normal або hotfix', async t => {
+  const w = await workspace(t);
+  for (const type of ['implement', 'hotfix']) {
+    const input = { root: w.root, parameters: { ...baseParams, type }, assignment: snapshotFor(w.root, baseParams.tasks) };
+    const before = await deriveTaskContext({ ...input, configuration: w.configuration });
+    const changedResources = { ...flowResources, normal: { ...flowResources.normal, minRamBytes: 123456, minDiskBytes: 654321 }, hotfix: { ...flowResources.hotfix, minRamBytes: 234567, minDiskBytes: 765432 } };
+    const after = await deriveTaskContext({ ...input, configuration: { ...w.configuration, resources: changedResources } });
+    assert.equal(before.estimate.status, 'KNOWN');
+    assert.deepEqual(after.estimate, before.estimate);
+    assert.deepEqual(after.requested, before.requested);
+  }
 });
 
 test('[task-context] 9. атомарний запис: 0600 у каталозі 0700, без .tmp; збій перед rename не лишає валідного файла', async t => {
@@ -535,7 +570,7 @@ test('[task-context] 9. атомарний запис: 0600 у каталозі 
 test('[task-context] 10. помилка після prepareReport прибирає <tmpRoot>/<runId>/, однаковий --id дає різні каталоги', async t => {
   const w = await workspace(t);
   const seen: { runId: string; contextFile: unknown; mode: number }[] = [];
-  const fixedContext: RuntimeTaskContext = { branch: 'develop', outcome: `change-a:1.1 — ${descriptions.a11}`, writeBoundaries: [join(w.root, 'raf-develop'), join(w.root, 'openspec', 'changes', 'change-a')], sources: [join(w.root, 'openspec', 'changes', 'change-a', 'proposal.md') + ' — мета доручення; читати зараз'], requested: { ramBytes: flowResources.normal.minRamBytes, diskBytes: {} }, requiredFileSystemIds: [], reportSchema: { type: 'object' } };
+  const fixedContext: RuntimeTaskContext = { branch: 'develop', outcome: `change-a:1.1 — ${descriptions.a11}`, writeBoundaries: [join(w.root, 'raf-develop'), join(w.root, 'openspec', 'changes', 'change-a')], sources: [join(w.root, 'openspec', 'changes', 'change-a', 'proposal.md') + ' — мета доручення; читати зараз'], requested: { ramBytes: fixtureResourceEstimates.agentTypes.implement.ramBytes, diskBytes: {} }, requiredFileSystemIds: [], reportSchema: { type: 'object' } };
   const h = await harness(t, w, services => ({
     ...services,
     resolveTask: async () => structuredClone(fixedContext),

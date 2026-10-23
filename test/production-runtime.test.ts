@@ -11,7 +11,7 @@ import type { RuntimeLaunch } from '../src/app-runtime.ts';
 import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import type { LaunchWrapperRequest } from '../src/launch-wrapper.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
-import { configuration, derivedLaunch, eventually, fixture, fixtureResources, recordLaunchRunnerPath, taskDescription } from './production-fixture.ts';
+import { configuration, derivedLaunch, eventually, fixture, fixtureResourceEstimates, fixtureResources, recordLaunchRunnerPath, taskDescription } from './production-fixture.ts';
 
 async function workerFixture(t: TestContext, prepareInFixture = true, launchRunnerPath?: string | null) {
   const f = await fixture(t, { productionQa: true, tasks: 2 });
@@ -152,26 +152,50 @@ test('[production-factory] task context is derived from parameters, OpenSpec sna
   assert.equal(task.outcome, `fixture-launch:2.1 — ${taskDescription}`);
   assert.deepEqual(task.writeBoundaries, [f.changeRoot, f.questionsPath]);
   assert.deepEqual(task.sources.map(line => line.split(' — ')[0]), [join(f.changeRoot, 'proposal.md'), join(f.changeRoot, 'tasks.md')]);
-  assert.deepEqual(task.estimate, { status: 'KNOWN', tier: 'normal', ramBytes: fixtureResources.normal.minRamBytes, diskBytesPerFileSystem: fixtureResources.normal.minDiskBytes, source: 'conf/flow.json#/resources/normal' });
-  assert.equal(task.requested.ramBytes, fixtureResources.normal.minRamBytes);
+  assert.deepEqual(task.estimate, { status: 'KNOWN', tier: 'normal', ramBytes: fixtureResourceEstimates.agentTypes.implement.ramBytes, diskBytesPerFileSystem: fixtureResourceEstimates.agentTypes.implement.diskBytesPerFileSystem, source: 'conf/flow.json#/resourceEstimates/agentTypes/implement', sources: ['conf/flow.json#/resourceEstimates/agentTypes/implement'] });
+  assert.equal(task.requested.ramBytes, fixtureResourceEstimates.agentTypes.implement.ramBytes);
   assert.deepEqual((task.reportSchema as { required: string[] }).required, ['status', 'answer', 'changes', 'commits']);
   await assert.rejects(services.resolveTask({ ...f.params, tasks: ['fixture-launch:9.9'] }, f.assignment), /TASK_CONTEXT_MISMATCH|9\.9/);
   const changed = await services.resolveTask(f.params, { ...f.assignment, changes: [{ id: 'fixture-launch', items: [{ id: '2.1', description: 'Змінений зміст' }] }] });
   assert.equal(changed.outcome, 'fixture-launch:2.1 — Змінений зміст');
-  await f.writeFlowResources(undefined);
+  const changedThresholds = { ...fixtureResources, normal: { ...fixtureResources.normal, minRamBytes: 65536, minDiskBytes: 131072 } };
+  await f.writeFlowResources(changedThresholds);
+  const afterThresholdChange = await services.resolveTask(f.params, f.assignment);
+  assert.deepEqual(afterThresholdChange.estimate, task.estimate);
+  assert.deepEqual(afterThresholdChange.requested, task.requested);
+  await f.writeFlowResourceEstimates(undefined);
   const unknown = await services.resolveTask(f.params, f.assignment).then(() => undefined, error => error);
   assert.equal(failureContext(unknown)?.code ?? (unknown as { code?: string }).code, 'RESOURCE_ESTIMATE_UNKNOWN');
-  assert.match(String(unknown), /оцінка резерву не налаштована: conf\/flow\.json#\/resources/);
+  assert.match(String(unknown), /conf\/flow\.json#\/resourceEstimates/);
   assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
   assert.equal(f.calls.some(c => c.executable === 'tmux'), false);
 });
 
-test('[production-factory] unconfigured reserve threshold fails before any run directory or process', async t => {
+for (const invalid of [
+  { name: 'negative RAM', estimate: { ramBytes: -1, diskBytesPerFileSystem: 4096 }, pointer: '/ramBytes' },
+  { name: 'missing disk estimate', estimate: { ramBytes: 2048 }, pointer: '/diskBytesPerFileSystem' },
+]) {
+  test(`[production-factory] invalid resource estimate (${invalid.name}) fails before any run directory or process`, async t => {
+    const f = await fixture(t, { productionQa: true });
+    await f.writeFlowResourceEstimates({ agentTypes: { ...fixtureResourceEstimates.agentTypes, implement: invalid.estimate } });
+    const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+    await assert.rejects(services.resolveTask(f.params, f.assignment), error => String(error).includes(`conf/flow.json#/resourceEstimates/agentTypes/implement${invalid.pointer}`));
+    assert.deepEqual((await readdir(f.tmpRoot)).filter(name => name !== 'tmux'), []);
+    assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
+    assert.equal(f.calls.some(c => c.executable === 'tmux'), false);
+  });
+}
+
+test('[production-factory] explicit zero resource estimate is known independently of positive thresholds', async t => {
   const f = await fixture(t, { productionQa: true });
-  await f.writeFlowResources({ ...fixtureResources, normal: { ...fixtureResources.normal, minRamBytes: 0 } });
+  await f.writeFlowResourceEstimates({ agentTypes: { ...fixtureResourceEstimates.agentTypes, implement: { ramBytes: 0, diskBytesPerFileSystem: 0 } } });
   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
-  await assert.rejects(services.resolveTask(f.params, f.assignment), /оцінка резерву не налаштована: conf\/flow\.json#\/resources\/normal\/minRamBytes/);
-  assert.deepEqual((await readdir(f.tmpRoot)).filter(name => name !== 'tmux'), []);
+  const task = await services.resolveTask(f.params, f.assignment);
+  assert.deepEqual(task.estimate, { status: 'KNOWN', tier: 'normal', ramBytes: 0, diskBytesPerFileSystem: 0, source: 'conf/flow.json#/resourceEstimates/agentTypes/implement', sources: ['conf/flow.json#/resourceEstimates/agentTypes/implement'] });
+  assert.equal(task.requested.ramBytes, 0);
+  assert.ok(task.requiredFileSystemIds.length > 0);
+  for (const id of task.requiredFileSystemIds) assert.equal(task.requested.diskBytes[id], 0);
+  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listReservations()), []);
   assert.equal(f.calls.some(c => c.executable === 'tmux'), false);
 });
 
@@ -220,7 +244,7 @@ test('[production-factory] prepared reports belong to distinct run directories a
 
 test('[production-factory] impossible resource demand refuses without a session, reservation or tmux spawn', async t => {
   const f = await fixture(t, { productionQa: true });
-  await f.writeFlowResources({ ...fixtureResources, normal: { ...fixtureResources.normal, minRamBytes: Number.MAX_SAFE_INTEGER } });
+  await f.writeFlowResourceEstimates({ agentTypes: { ...fixtureResourceEstimates.agentTypes, implement: { ramBytes: Number.MAX_SAFE_INTEGER, diskBytesPerFileSystem: 4096 } } });
   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const base: RuntimeLaunch = { runId: 'denied-run', addressId: f.params.id, tmuxSession: 'denied-tmux', activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
   const { task: descriptor, launch } = await derivedLaunch(services, f, base);

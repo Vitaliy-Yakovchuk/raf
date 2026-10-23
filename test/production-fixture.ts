@@ -28,6 +28,17 @@ export const configuration: RuntimeConfiguration = {
 
 export const realFlow = JSON.parse(await readFile(new URL('../../conf/flow.json', import.meta.url), 'utf8'));
 export const fixtureResources = { normal: { ...realFlow.resources.normal, minRamBytes: 1024, minDiskBytes: 1024 }, hotfix: { ...realFlow.resources.hotfix, minRamBytes: 1024, minDiskBytes: 1024 } };
+export const fixtureResourceEstimates = {
+  agentTypes: {
+    implement: { ramBytes: 2048, diskBytesPerFileSystem: 4096 },
+    spec: { ramBytes: 2048, diskBytesPerFileSystem: 4096 },
+    design: { ramBytes: 2048, diskBytesPerFileSystem: 4096 },
+    'test-scaffold': { ramBytes: 2048, diskBytesPerFileSystem: 4096 },
+    coordinator: { ramBytes: 2048, diskBytesPerFileSystem: 4096 },
+    qa: { ramBytes: 2048, diskBytesPerFileSystem: 4096 },
+    hotfix: { ramBytes: 1024, diskBytesPerFileSystem: 2048 },
+  },
+};
 export const taskDescription = 'Виконати лише synthetic fixture';
 
 export async function eventually<T>(read: () => Promise<T> | T, predicate: (value: T) => boolean, description: string, timeoutMs = 45_000): Promise<T> {
@@ -112,7 +123,8 @@ process.exit(result.status ?? 1);
   await writeFile(join(root, 'catalog.json'), JSON.stringify(configuration.catalog));
   await writeFile(join(confRoot, 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'isolated.sqlite' }, commandTiming: configuration.commandTiming }));
   const flowPath = join(confRoot, 'flow.json');
-  const writeFlowResources = (resources: unknown) => writeFile(flowPath, JSON.stringify({ ...realFlow, resources }));
+  const writeFlowResources = (resources: unknown) => writeFile(flowPath, JSON.stringify({ ...realFlow, resources, resourceEstimates: fixtureResourceEstimates }));
+  const writeFlowResourceEstimates = (resourceEstimates: unknown) => writeFile(flowPath, JSON.stringify({ ...realFlow, resources: fixtureResources, resourceEstimates }));
   await writeFlowResources(fixtureResources);
   await writeFile(join(confRoot, 'test-runs.json'), await readFile(new URL('../../conf/test-runs.json', import.meta.url)));
   const { agentPhases, commands } = JSON.parse(await readFile(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
@@ -209,7 +221,7 @@ else process.exit(result.status ?? 1);
     repositoryGit(root, ['commit', '--quiet', '-m', 'fixture completed assigned item']);
     return { repository: root, sha: repositoryGit(root, ['rev-parse', 'HEAD']) };
   };
-  return { root, confRoot, home, cwd, tmpRoot, statePath, binRoot, context, store, createProductionServices: createServices, runtimeUrl, assignment, params, changeRoot, tasksPath, questionsPath, flowPath, writeFlowResources, legacyTaskContextPath, execute, calls, completeAssignment, cliCalls, openspecPath, socket, realTmuxPath, realOpenSpecPath, trackProcess, trackPidFile };
+  return { root, confRoot, home, cwd, tmpRoot, statePath, binRoot, context, store, createProductionServices: createServices, runtimeUrl, assignment, params, changeRoot, tasksPath, questionsPath, flowPath, writeFlowResources, writeFlowResourceEstimates, legacyTaskContextPath, execute, calls, completeAssignment, cliCalls, openspecPath, socket, realTmuxPath, realOpenSpecPath, trackProcess, trackPidFile };
 }
 
 export type ProductionFixture = Awaited<ReturnType<typeof fixture>>;

@@ -224,7 +224,7 @@ for (const argv of [['agent', 'ps'], ['runner', 'list'], ['runner', 'limits', '-
     const output = result.stdout + result.stderr;
     assert.match(output, /STATE_MIGRATION_REQUIRED/);
     assert.match(output, /7/);
-    assert.match(output, /10/);
+    assert.match(output, /explicit migration to 11 required/);
     assert.deepEqual(files(f.qaStatePath), before);
     assert.equal(existsSync(f.statePath), false);
   });
@@ -239,14 +239,14 @@ test('maintenance CLI is explicit, path-bound and does not grant migration to su
   const backupPath = join(f.root, 'maintenance-backup.sqlite');
   const program = { file: join(f.developTree, 'scripts', 'migrate-state.ts') };
   const env = { HOME: f.qaHome, RAF_QA_HOME: f.qaHome };
-  const result = await nodeProcess(f, program, ['--state', f.qaStatePath, '--from', '7', '--to', '10', '--backup', backupPath], env);
+  const result = await nodeProcess(f, program, ['--state', f.qaStatePath, '--from', '7', '--to', '11', '--backup', backupPath], env);
   assert.equal(result.code, 0, result.stderr);
   assert.deepEqual(logical(backupPath), before);
-  assert.equal(logical(f.qaStatePath).version, 10);
+  assert.equal(logical(f.qaStatePath).version, 11);
   assert.deepEqual(logical(f.qaStatePath).rows, before.rows);
   assert.ok(result.stdout.includes(f.qaStatePath));
   assert.match(result.stdout, /7/);
-  assert.match(result.stdout, /10/);
+  assert.match(result.stdout, /11/);
   assert.ok(!result.stdout.includes('preserve-fixture-payload'));
   const next = command(f, ['runner', 'list'], { env });
   assert.equal(next.status, 0, next.stdout + next.stderr);
@@ -266,7 +266,7 @@ test('develop maintenance cannot transfer the working state even with exact path
   assert.equal(existsSync(backupPath), false);
 });
 
-for (const version of [0, 11, 777]) {
+for (const version of [0, 12, 777]) {
   test(`public QA CLI refuses nonempty unknown schema ${version} without downgrade`, t => {
     const f = fixture(t);
     seedVersion(f, version, f.qaStatePath);

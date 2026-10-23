@@ -228,10 +228,12 @@ test('wired empty ps uses canonical shared state without creating an agent', asy
   const f = await fixture(t);
   assert.deepEqual(success(await f.run(['agent', 'ps'])), []);
   assert.deepEqual(success(await f.run(['agent', 'ps'])), []);
-  const bin = join(f.directory, 'unverified-bin');
+  const bin = join(f.directory, 'version-mismatch-bin');
+  const installedVersion = '0.0.0';
   mkdirSync(bin);
   for (const protocol of settings.runnerProtocols) {
-    writeFileSync(join(bin, protocol.executable), `#!/bin/sh\nprintf '%s\\n' '${protocol.runner}-cli 0.0.0-unverified-fixture'\n`);
+    assert.notEqual(protocol.version, installedVersion);
+    writeFileSync(join(bin, protocol.executable), `#!/bin/sh\nprintf '%s\\n' '${protocol.runner}-cli ${installedVersion}'\n`);
     chmodSync(join(bin, protocol.executable), 0o755);
   }
   const previousPath = process.env.PATH;
@@ -240,7 +242,19 @@ test('wired empty ps uses canonical shared state without creating an agent', asy
   let listed;
   try { listed = await f.run(['runner', 'list']); } finally { restorePath(); }
   const roster = records(success(listed));
-  for (const row of roster.filter(row => typeof row.model === 'string')) assert.equal(row.available, false, 'Unverified or unsupported protocols must be unavailable before selection');
+  const modelRows = roster.filter(row => typeof row.model === 'string');
+  assert.equal(modelRows.length, models.models.length);
+  for (const model of models.models) {
+    const row = modelRows.find(row => row.model === model.id);
+    assert.ok(row, `Missing runner list entry for ${model.id}`);
+    const runner = models.runners.find((runner: { id: string }) => runner.id === model.runner);
+    const protocol = settings.runnerProtocols.find((protocol: { runner: string }) => protocol.runner === model.runner);
+    assert.ok(runner);
+    assert.ok(protocol);
+    assert.equal(row.available, model.enabled && runner.initialEnabled, 'Version mismatch must preserve model and runner switches');
+    assert.deepEqual(row.warnings, [`версія ${installedVersion} не збігається з перевіреною ${protocol.version}, протокол не перевірено`]);
+    assert.equal(row.quota, 'unknown', 'A version warning must not imply measured quota');
+  }
   const store = openStateStore(f.statePath);
   try {
     assert.deepEqual(store.sessionRepository.transaction(tx => tx.listSessions()), []);

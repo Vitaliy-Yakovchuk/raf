@@ -10,12 +10,14 @@ import type { StateContextRequest } from '../src/state-migration-guard.ts';
 
 const sourceRoot = fileURLToPath(new URL('../', import.meta.url));
 const orchestratorRoot = resolve(sourceRoot, '..');
+const schema7ClientCommit = '084ff760f7690670d30dd4d5aa9cce23da1ba7ac';
 const fixtureConnections = new Map<string, Set<DatabaseSync>>();
 
 export interface MigrationFixture {
   root: string;
   mainTree: string;
   developTree: string;
+  schema7Tree: string;
   workingHome: string;
   qaHome: string;
   statePath: string;
@@ -38,6 +40,7 @@ export function fixture(t: TestContext): MigrationFixture {
   });
   const mainTree = join(root, 'raf-main');
   const developTree = join(root, 'raf-develop');
+  const schema7Tree = join(root, 'schema-7-client');
   const workingHome = join(root, 'working-home');
   const qaHome = join(root, 'qa-home');
   mkdirSync(workingHome);
@@ -69,6 +72,15 @@ syncBuiltinESMExports();
     NODE_OPTIONS: `--import=${preloadPath}`,
   };
   mkdirSync(env.TMPDIR);
+  mkdirSync(schema7Tree);
+  const archivePath = join(root, 'schema-7-client.tar');
+  const archived = spawnSync('git', ['-C', sourceRoot, 'archive', '--format=tar', '--output', archivePath, schema7ClientCommit, 'src', 'package.json'], { env, encoding: 'utf8' });
+  assert.equal(archived.error, undefined);
+  assert.equal(archived.status, 0, archived.stderr);
+  const extracted = spawnSync('tar', ['-xf', archivePath, '-C', schema7Tree], { env, encoding: 'utf8' });
+  assert.equal(extracted.error, undefined);
+  assert.equal(extracted.status, 0, extracted.stderr);
+  rmSync(archivePath);
   for (const [tree, branch] of [[root, 'main'], [mainTree, 'main'], [developTree, 'develop']]) {
     const initialized = spawnSync('git', ['init', '--quiet', '--initial-branch', branch, tree], { env, encoding: 'utf8' });
     assert.equal(initialized.error, undefined);
@@ -78,7 +90,7 @@ syncBuiltinESMExports();
   const statePath = join(workingHome, '.raf', config.state.fileName);
   const qaStatePath = join(qaHome, '.raf', config.state.fileName);
   return {
-    root, mainTree, developTree, workingHome, qaHome, statePath, qaStatePath, preloadPath, env,
+    root, mainTree, developTree, schema7Tree, workingHome, qaHome, statePath, qaStatePath, preloadPath, env,
     request(overrides = {}) {
       return {
         orchestratorRoot: root,
@@ -104,13 +116,13 @@ export function command(f: MigrationFixture, argv: readonly string[], options: {
 export function seedMain7(f: MigrationFixture, path = f.statePath): void {
   assert.ok(path.startsWith(f.root + '/'));
   mkdirSync(dirname(path), { recursive: true });
-  const program = `import { openStateStore } from ${JSON.stringify(new URL('src/state-store.ts', 'file://' + f.mainTree + '/').href)};
+  const program = `import { openStateStore } from ${JSON.stringify(new URL('src/state-store.ts', 'file://' + f.schema7Tree + '/').href)};
 const store = openStateStore(process.argv[1]); store.close();`;
   const result = spawnSync(process.execPath, ['--input-type=module', '-e', program, path], { env: f.env, encoding: 'utf8' });
   assert.equal(result.error, undefined);
   assert.equal(result.status, 0, result.stderr);
   const db = new DatabaseSync(path);
-  assert.equal(Number(db.prepare('PRAGMA user_version').get()!.user_version), 7, 'fixture must come from the compatible schema-7 client');
+  assert.equal(Number(db.prepare('PRAGMA user_version').get()!.user_version), 7, `fixture must come from the pinned schema-7 client ${schema7ClientCommit}`);
   db.exec("CREATE TABLE migration_sentinel(id TEXT PRIMARY KEY, payload TEXT NOT NULL); INSERT INTO migration_sentinel VALUES ('main', 'preserve-fixture-payload'); PRAGMA wal_checkpoint(TRUNCATE)");
   db.close();
 }
@@ -153,7 +165,7 @@ export function logical(path: string) {
 }
 
 export function compatibleMainCanOpen(f: MigrationFixture): void {
-  const program = `import { openStateStore } from ${JSON.stringify(new URL('src/state-store.ts', 'file://' + f.mainTree + '/').href)};
+  const program = `import { openStateStore } from ${JSON.stringify(new URL('src/state-store.ts', 'file://' + f.schema7Tree + '/').href)};
 const store = openStateStore(process.argv[1]); store.close();`;
   const result = spawnSync(process.execPath, ['--input-type=module', '-e', program, f.statePath], { env: f.env, encoding: 'utf8' });
   assert.equal(result.error, undefined);

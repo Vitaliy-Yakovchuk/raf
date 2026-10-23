@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { tmpdir, userInfo } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
@@ -292,7 +292,7 @@ for (const channelEnabled of [true, false]) {
 }
 
 test('[codex-state-access] native Codex agent ps transports >128 KiB from 512 production running sessions', { timeout }, async t => {
-  const f = await outputFixture(t, { production: true });
+  const f = await outputFixture(t, { production: true, scratchRoot: process.env.RAF_TEST_SCRATCH_ROOT ?? userInfo().homedir });
   const host = await f.hostPs();
   assert.equal(host.code, 0, host.stderr.toString());
   assert.ok(host.stdout.length > 128 * 1024, `production fixture must cross the single-argument boundary: ${host.stdout.length}`);

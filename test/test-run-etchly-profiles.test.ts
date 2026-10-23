@@ -30,7 +30,7 @@ function profiles(): Record<string, EtchlyTestRunProfile> {
       return [id, {
         cwd, executable: '/local/node',
         argv: ['--import', `${prefix}scripts/shared-library-runtime.mjs`, `${prefix}node_modules/vitest/vitest.mjs`, 'run', '--configLoader', 'runner', ...(project ? ['--project', project] : [])],
-        unitFiles: [file, `${cwd}/other.test.ts`], exactIds: 'vitest-test-name', resultAdapter: 'vitest-events',
+        unitFiles: [file, `${cwd}/${id}.other.test.ts`], exactIds: 'vitest-test-name', resultAdapter: 'vitest-events',
         environment: { isolatedHome: true, stateOrigin: true }, checks: ['vitest.config.ts'],
       } satisfies EtchlyTestRunProfile];
     }),
@@ -160,7 +160,8 @@ test('Node root adapter and raf cwd-dot profile retain their configured argv and
   c.projects.raf = { profiles: { node: c.projects.etchly.profiles['node-root'] }, groups: { 'add-raf-test-run/node': { profileId: 'node', files: [file] } } };
   ctx.workspace = ctx.cwd = '/work/raf-develop'; ctx.activeChanges = ['add-raf-test-run'];
   env.canonicalWorkspace = env.canonicalCwd = ctx.workspace;
-  for (const [f, fact] of Object.entries(env.files)) fact.realpath = `${ctx.workspace}/${f}`;
+  env.unitFiles = profiles()['node-root'].unitFiles;
+  env.files = Object.fromEntries(env.unitFiles.map(f => [f, { kind: 'file', realpath: `${ctx.workspace}/${f}`, unit: true }]));
   assert.equal(planTestRun({ project: 'raf', phase: 'red', group: 'add-raf-test-run/node' }, c, ctx, env).command.cwd, ctx.workspace);
 });
 

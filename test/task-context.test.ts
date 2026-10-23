@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, writeFile, readdir, rename, rm, stat, access } from 'node:fs/promises';
 import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -147,7 +148,35 @@ function fakeOpenSpec(args: readonly string[]) {
   return { exitCode: 2, stdout: '', stderr: `unexpected openspec ${args.join(' ')}` };
 }
 
+function fixtureGit(repository: string, args: readonly string[]): string {
+  const env: NodeJS.ProcessEnv = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+  for (const key of Object.keys(env)) if (key.startsWith('GIT_') && !['GIT_CONFIG_NOSYSTEM', 'GIT_CONFIG_GLOBAL'].includes(key)) delete env[key];
+  const result = spawnSync('git', ['-c', 'user.name=Task context fixture', '-c', 'user.email=task-context@example.invalid', '-c', 'commit.gpgSign=false', '-c', 'core.hooksPath=/dev/null', ...args], { cwd: repository, env, encoding: 'utf8' });
+  assert.equal(result.status, 0, `${repository}: git ${args.join(' ')}: ${result.stderr}`);
+  return result.stdout.trim();
+}
+
+async function writeCommittedGitWorktreeLayout(root: string) {
+  const commonDir = join(root, '.git', 'modules', 'raf');
+  const primary = join(root, 'raf-main');
+  fixtureGit(root, ['init', '--quiet', '--initial-branch=main']);
+  await mkdir(dirname(commonDir), { recursive: true });
+  fixtureGit(primary, ['init', '--quiet', '--initial-branch=main', `--separate-git-dir=${commonDir}`]);
+  fixtureGit(primary, ['commit', '--quiet', '--allow-empty', '-m', 'fixture main launch baseline']);
+  fixtureGit(primary, ['worktree', 'add', '--quiet', '-b', 'develop', join(root, 'raf-develop')]);
+  return {
+    rootGitDir: realpathSync(join(root, '.git')),
+    commonDir: realpathSync(commonDir),
+    worktreeGitDir: realpathSync(join(commonDir, 'worktrees', 'raf-develop')),
+  };
+}
+
 async function harness(t: TestContext, w: Workspace, override: (services: RuntimeServices) => RuntimeServices = services => services) {
+  for (const [repository, branch] of [[w.root, 'main'], [join(w.root, 'raf-develop'), 'develop']]) {
+    if (!(await exists(join(repository, '.git')))) fixtureGit(repository, ['init', '--quiet', `--initial-branch=${branch}`]);
+    fixtureGit(repository, ['commit', '--quiet', '--allow-empty', '-m', 'fixture task-context launch baseline']);
+    assert.equal(realpathSync(fixtureGit(repository, ['rev-parse', '--show-toplevel'])), realpathSync(repository));
+  }
   const calls: AdapterCommand[] = [];
   const execute: AdapterCommandExecutor = async command => {
     calls.push(structuredClone(command));
@@ -311,7 +340,7 @@ test('[task-context] 5a. координувальні типи отримуют�
 const realOrSame = (path: string) => { try { return realpathSync(path); } catch { return path; } };
 const assignmentSection = (brief: string) => brief.slice(brief.indexOf('# Конкретне доручення'));
 
-test('[task-context] 5b. git-каталоги межі запису: worktree raf-develop → свій git-dir, common-dir модуля й git-каталог кореня; raf-main → common-dir без дубля; без зовнішнього git — нічого', async t => {
+test('[task-context] 5b. точні git-межі: worktree git-dir/common-dir та Orchestrator; звичайний .git явно; без дублів і ширших меж', async t => {
   const w = await workspace(t);
   const git = await writeGitWorktreeLayout(w.root);
   assert.equal(git.worktreeGitDir, realpathSync(join(w.root, '.git', 'modules', 'raf', 'worktrees', 'raf-develop')));
@@ -330,14 +359,22 @@ test('[task-context] 5b. git-каталоги межі запису: worktree ra
   t.after(() => rm(plain, { recursive: true, force: true }));
   await Promise.all([mkdir(join(plain, 'solo-develop', '.git', 'objects'), { recursive: true }), mkdir(join(plain, 'solo-develop', '.git', 'refs'), { recursive: true }), mkdir(join(plain, 'bare-develop'))]);
   await writeFile(join(plain, 'solo-develop', '.git', 'HEAD'), 'ref: refs/heads/develop\n');
-  assert.deepEqual(await resolveGitWriteBoundaries(join(plain, 'solo-develop'), plain), [], 'git-dir усередині робочого дерева вже доступний як робоче дерево, а корінь без git нічого не додає');
+  const codeGitDir = realpathSync(join(plain, 'solo-develop', '.git'));
+  assert.deepEqual(await resolveGitWriteBoundaries(join(plain, 'solo-develop'), plain), [codeGitDir], 'Codex потребує явного дозволу на власний .git навіть усередині writable workspace');
   assert.deepEqual(await resolveGitWriteBoundaries(join(plain, 'bare-develop'), plain), [], 'каталог без .git не дає git-каталогів і не зриває запуск');
+  await Promise.all([mkdir(join(plain, '.git', 'objects'), { recursive: true }), mkdir(join(plain, '.git', 'refs'), { recursive: true })]);
+  await writeFile(join(plain, '.git', 'HEAD'), 'ref: refs/heads/main\n');
+  const rootGitDir = realpathSync(join(plain, '.git'));
+  const plainBoundaries = await resolveGitWriteBoundaries(join(plain, 'solo-develop'), plain);
+  assert.deepEqual([...plainBoundaries].sort(), [codeGitDir, rootGitDir].sort(), 'лише точні .git коду та Orchestrator, без workspace або батьківських тек');
+  assert.equal(new Set(plainBoundaries).size, plainBoundaries.length, 'git-dir і common-dir звичайного репозиторію не дублюються');
+  assert.deepEqual(await resolveGitWriteBoundaries(plain, plain), [rootGitDir], 'спільний корінь коду й Orchestrator дає один .git');
 });
 
 for (const type of ['implement', 'spec'] as const) {
   test(`[task-context] 5c. agent run ${type}: коміт власних шляхів репозиторію з git-межами лише відповідного репозиторію`, async t => {
     const w = await workspace(t);
-    const git = await writeGitWorktreeLayout(w.root);
+    const git = await writeCommittedGitWorktreeLayout(w.root);
     const gitDirectories = [git.worktreeGitDir, git.commonDir, git.rootGitDir];
     await writeFile(join(w.confRoot, 'briefs', 'tasks', `${type}.md`), 'FIXTURE_STAGE');
     const seen: ReserveInput[] = [];

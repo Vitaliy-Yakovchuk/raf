@@ -6,7 +6,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { TestContext } from 'node:test';
-import { buildCatalog } from '../src/bootstrap.ts';
 import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import { buildRunnerInvocation, nativeSandboxArgs } from '../src/runner-protocols.ts';
 import { prepareCodexRafCommandAccess } from '../src/codex-raf-command-access.ts';
@@ -103,12 +102,11 @@ export async function outputFixture(t: TestContext, options: { production?: bool
   }
   store.close();
   const artifactPath = join(root, 'catalog.json');
-  buildCatalog(fixtureConf, artifactPath, ['agent ps']);
   const productionScript = `
 const { openStateStore } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/state-store.ts')).href)});
 const { AgentControlService } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/agent-control.ts')).href)});
 const { createAppRuntime } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/app-runtime.ts')).href)});
-const { runCli } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/bootstrap.ts')).href)});
+const { buildCatalog, runCli } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/bootstrap.ts')).href)});
 const store = openStateStore(${JSON.stringify(statePath)});
 const repository = store.sessionRepository;
 const control = new AgentControlService({repository,
@@ -118,6 +116,7 @@ const control = new AgentControlService({repository,
  reminders:{sessionEnded:()=>{throw Error('unexpected end');}},projects:['raf'],agentTypes:['implement'],agentPhases:['implement']});
 const context={orchestratorRoot:${JSON.stringify(root)},confRoot:${JSON.stringify(fixtureConf)},artifactPath:${JSON.stringify(artifactPath)},statePath:${JSON.stringify(statePath)},tmpRoot:${JSON.stringify(join(stateDirectory, 'tmp'))},mode:'test',commandStartedAtMs:0,resolveCaller:async()=>undefined};
 const runtime=createAppRuntime(context,{loadConfiguration:async()=>({catalog:JSON.parse(readFileSync(${JSON.stringify(artifactPath)},'utf8')),models:JSON.parse(readFileSync(${JSON.stringify(join(fixtureConf, 'models.json'))},'utf8')),commandTiming:{emaAlpha:0.1}}),openStore:async()=>store,createServices:async()=>({control}),nextRunIdentity:()=>{throw Error('unexpected launch');},now:()=>0});
+buildCatalog(${JSON.stringify(fixtureConf)},${JSON.stringify(artifactPath)},Object.keys(runtime.handlers));
 try {const result=await runCli(process.argv.slice(2),${JSON.stringify(artifactPath)},runtime.handlers);process.stdout.write(result.stdout);process.stderr.write(result.stderr);process.exitCode=result.exitCode;} finally {await runtime.close();}
 `;
   await writeFile(commandPath, `import {appendFileSync,readFileSync} from 'node:fs';

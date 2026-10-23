@@ -10,8 +10,9 @@ import { evaluateResourceAdmission } from './resource-admission.ts';
 import { deriveResourceAdmissionVolumes } from './home-disk-admission.ts';
 import type { StateStore } from './state-store.ts';
 import type { ServiceEntryContext } from './service-entry.ts';
+import type { ResourceSnapshotReader } from './os-runtime.ts';
 
-export async function productionResourceWait(context: ServiceEntryContext, options: ResourceWaitProtocolOptions, getStore: () => StateStore) {
+export async function productionResourceWait(context: ServiceEntryContext, options: ResourceWaitProtocolOptions, getStore: () => StateStore, resourceReader?: ResourceSnapshotReader) {
   const boot = await readMachineBootIdentity();
   let epoch = '';
   const sockets = createResourceWaitSocketHost(() => protocol, () => epoch, options.deliveryTimeoutMs);
@@ -31,7 +32,7 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
       const paths = [...new Set([context.orchestratorRoot, homedir(), ...requests.map(request => request.developmentDirectory)])];
       const sessions = getStore().sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state === 'running' && session.process), 'read');
       const [snapshot, observations] = await Promise.all([
-        createResourceSnapshotReader({ machineId: boot.machineId, paths }).read(),
+        (resourceReader ?? createResourceSnapshotReader({ machineId: boot.machineId, paths })).read(),
         observeProcesses(sessions.map(session => session.process!)),
       ]);
       const unknown = observations.find(row => row.state === 'unknown');

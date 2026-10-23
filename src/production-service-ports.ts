@@ -206,7 +206,7 @@ export async function createServicePorts(
   let bugSync: Awaited<ReturnType<typeof startBugSyncService>>;
   try {
     const [constants, raf] = await Promise.all(['raf-constants.json', 'raf.json'].map(async name => JSON.parse(await readFile(join(context.orchestratorRoot, 'conf', name), 'utf8'))));
-    resource = await productionResourceWait(context, readResourceWaitProtocolOptions({ constants, raf }), () => { if (!resourceStore) throw new Error('Resource state not initialized'); return resourceStore; });
+    resource = await productionResourceWait(context, readResourceWaitProtocolOptions({ constants, raf }), () => { if (!resourceStore) throw new Error('Resource state not initialized'); return resourceStore; }, options?.resourceReader);
     bugSync = await startBugSyncService({
       orchestratorRoot: context.orchestratorRoot, homeDirectory: context.homeDirectory, stateDirectory: context.stateDirectory,
       now: dependencies.now, schedule: dependencies.schedule,

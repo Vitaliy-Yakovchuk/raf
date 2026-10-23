@@ -42,18 +42,23 @@ export interface AdmissionSnapshot {
 export interface AdmissionSnapshotRequest {
   input: {
     measurement: AdmissionMeasurement;
-    requested: ResourceReservation | null;
+    requested: ResourceReservation;
     unusedReservations: readonly ResourceReservation[];
     requiredFileSystemIds: readonly string[];
     homeFileSystemId?: string | null;
     estimate: ResourceAdmissionEstimate;
   };
-  policy: FlowPolicy | null;
+  policy: FlowPolicy;
   requestedTier: AdmissionTier;
   queueId: string;
 }
 
-export function buildAdmissionSnapshot(request: AdmissionSnapshotRequest): AdmissionSnapshot {
+type SnapshotRequest = Omit<AdmissionSnapshotRequest, 'input' | 'policy'> & {
+  input: Omit<AdmissionSnapshotRequest['input'], 'requested'> & { requested: ResourceReservation | null };
+  policy: FlowPolicy | null;
+};
+
+export function buildAdmissionSnapshot(request: SnapshotRequest): AdmissionSnapshot {
   const { input, policy, requestedTier, queueId } = request;
   const copy = <T>(value: T): T => structuredClone(value);
   const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0;

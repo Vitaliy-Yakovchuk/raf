@@ -429,7 +429,14 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   } catch (error) {
     result.errorCode = (error as any)?.code ?? 'STATE_FAILED';
     if (result.errorCode === 'STATE_FAILED') { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
-    if (result.errorCode === 'GROUP_IN_FLIGHT') { result.groupState = 'reconcile'; result.nextAction = 'reconcile'; }
+    if (result.errorCode === 'GROUP_IN_FLIGHT') {
+      result.groupState = 'reconcile'; result.nextAction = 'reconcile';
+      try { await reconcileTestRunGroup(key, policy, context, ports); }
+      catch (recoveryError) {
+        result.outcome = 'setup-failed'; result.failureKinds = ['setup']; result.errorCode = 'STATE_FAILED';
+        diagnostics?.preflight(recoveryError);
+      }
+    }
     diagnostics?.preflight(error);
     result.evidence = [];
     return attach();

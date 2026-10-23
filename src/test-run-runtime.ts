@@ -17,7 +17,7 @@ import { sandboxTestControlSnapshot } from './production-runtime.ts';
 import { productionStateContext, stateContextEnvironment, canonicalStatePath, type StateContext } from './state-migration-guard.ts';
 import { openStateStore } from './state-store.ts';
 import { loadFlowPolicy } from './flow-policy.ts';
-import { parseTestRunArgs, validateTestRunConfig, cleanupClosedTestRunGroups, reconcileTestRunGroup, testRunFailureResult } from './test-runs.ts';
+import { parseTestRunArgs, validateTestRunConfig, cleanupClosedTestRunGroups, testRunFailureResult } from './test-runs.ts';
 import { cleanupTestProcessGroup, reconcileTestRunProcess } from './test-run-processes.ts';
 import type { ChildExit, ManagedTestProcess, RunnerEvent, TestRunConfig, TestRunContext, TestRunEnvironment, TestRunGroup, TestRunGroupKey, TestRunPorts, TestRunStatePort, TestRunTransaction } from './test-runs.ts';
 import type { ExecutionResult } from './cli.ts';
@@ -169,7 +169,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       if (!inheritedOperationalChannel) mkdirSync(stateContext.tmpRoot, { recursive: true });
       return { canonicalWorkspace: realpathSync(context.workspace), canonicalCwd: realpathSync(context.cwd), gitIdentityMatches,
         runtimeAvailable: profiles.every(p => executableAvailable(p.executable, resolve(context.workspace, p.cwd))),
-        localRunnerAvailable: profiles.every(p => p.resultAdapter === 'node-test-events' || p.resultAdapter === 'vitest-events' && ['./test-run-vitest-runner.ts', '../scripts/test-run-vitest.ts'].every(path => existsSync(fileURLToPath(new URL(path, import.meta.url))))),
+        localRunnerAvailable: profiles.every(p => p.resultAdapter === 'node-test-events' || p.resultAdapter === 'vitest-events' && ['./test-run-vitest-runner.ts', '../scripts/test-run-vitest.ts', '../scripts/test-run-vitest-api.ts'].every(path => existsSync(fileURLToPath(new URL(path, import.meta.url))))),
         dependenciesAvailable: profiles.every(p => p.checks.every(path => existsSync(resolve(context.workspace, projectId === 'etchly' ? '.' : p.cwd, path)))),
         resultAdapterAvailable: profiles.every(p => existsSync(fileURLToPath(new URL(p.resultAdapter === 'vitest-events' ? './test-run-vitest-reporter.ts' : './test-run-reporter.ts', import.meta.url)))),
         artifactsWritable: !inheritedOperationalChannel && (() => { try { accessSync(stateContext.tmpRoot, constants.W_OK); return true; } catch { return false; } })(),
@@ -191,7 +191,6 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         const batches = planVitestInvocations({ workspace, selection: { files, testIds: ids }, command } as any, vitestProfile, policy, fileURLToPath(new URL('./test-run-vitest-reporter.ts', import.meta.url)), ids);
         const localConfig = readFileSync(resolve(command.cwd, 'vitest.config.ts'), 'utf8');
         const baseRunner = localConfig.match(/\brunner:\s*["']([^"']+)["']/)?.[1];
-        for (const batch of batches) batch.argv.push('--runner', fileURLToPath(new URL('./test-run-vitest-runner.ts', import.meta.url)));
         command.environment.vitestBatches = batches;
         vitestEnvironment = { RAF_TEST_RUN_VITEST_BATCHES: JSON.stringify(batches), RAF_TEST_RUN_WORKSPACE: workspace, RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(config.diagnostics), ...(baseRunner ? { RAF_TEST_RUN_BASE_RUNNER: resolve(command.cwd, baseRunner) } : {}) };
         command.argv = [fileURLToPath(new URL('../scripts/test-run-vitest.ts', import.meta.url))];
@@ -312,7 +311,6 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     });
     if (!reply.stdout) throw Object.assign(new Error(reply.stderr), { code: 'CALLER_UNAUTHORIZED' });
     if (store && runtime) {
-      if (JSON.parse(reply.stdout).errorCode === 'GROUP_IN_FLIGHT') await reconcileTestRunGroup({ project: args.project, workspace, group: args.group }, policy, context, runtime);
       await cleanupClosedTestRunGroups(context.activeChanges, context, runtime);
     }
     return { exitCode: reply.code, stdout: reply.stdout.trimEnd(), stderr: reply.stderr.trimEnd() };

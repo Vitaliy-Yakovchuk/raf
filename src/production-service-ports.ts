@@ -1,3 +1,5 @@
+import { productionStateContext } from './state-migration-guard.ts';
+import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { hostname } from 'node:os';
@@ -184,6 +186,7 @@ export async function createServicePorts(
   context: ServiceEntryContext,
   options?: Parameters<typeof createProductionServiceDependencies>[1],
 ): Promise<ComposedServicePorts> {
+  productionStateContext(context.orchestratorRoot, fileURLToPath(import.meta.url), context.homeDirectory, 'service-store');
   const clients = new Map<string, AbortSignal>();
   const dependencies = await createProductionServiceDependencies(context, {
     ...options, isClientAlive: id => {

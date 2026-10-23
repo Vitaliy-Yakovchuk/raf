@@ -1,3 +1,4 @@
+import { productionStateContext } from './state-migration-guard.ts';
 import { createServiceHandlers } from './service-entry.ts';
 import { createProductionServices, rafSystemCaller } from './production-runtime.ts';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +15,7 @@ import { runCli } from './bootstrap.ts';
 import { createAppRuntime, runnerLimitsHandler, type AppRuntime } from './app-runtime.ts';
 import { openStateStore } from './state-store.ts';
 import { type ModelCatalog } from './model-routing.ts';
-import { commandFailure, failureContext } from './cli-contract.ts';
+import { commandFailure, failureContext, redactDiagnostic } from './cli-contract.ts';
 import { loadEventCatalog } from './event-catalog.ts';
 import type { CommandStatePorts } from './reminder-cli.ts';
 import type { BugCommand } from './bug-cli.ts';
@@ -82,8 +83,9 @@ function clock(options: ProductionEntryOptions): () => number {
 }
 
 function productionContext(options: ProductionEntryOptions, orchestratorRoot: string, fileName: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>) {
-  return { orchestratorRoot: orchestratorRoot, confRoot: join(orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
-    statePath: join(options.homeDirectory, '.raf', fileName), tmpRoot: join(options.homeDirectory, '.raf', 'tmp'),
+  const stateContext = productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
+  return { stateContext, orchestratorRoot: orchestratorRoot, confRoot: join(orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
+    statePath: stateContext.statePath, tmpRoot: stateContext.tmpRoot,
     mode: 'production' as const, commandStartedAtMs, resolveCaller };
 }
 
@@ -93,7 +95,7 @@ function runnerLimits(options: ProductionEntryOptions, orchestratorRoot: string,
     const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
     return runnerLimitsHandler(loaded.models.runners.map(runner => runner.id), async runners => {
       const context = productionContext(options, orchestratorRoot, loaded.fileName, commandStartedAtMs, async () => undefined);
-      const store = openStateStore(context.statePath);
+      const store = openStateStore(context.statePath, { context: context.stateContext });
       try {
         store.initializeRunners(loaded.models.runners);
         const services = await createProductionServices(store, { catalog, models: loaded.models, commandTiming: loaded.commandTiming }, context);
@@ -123,7 +125,7 @@ function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot
   return createAppRuntime(context, {
     additionalHandlers,
     now, loadConfiguration: async () => ({ catalog, models: loaded.models, commandTiming: loaded.commandTiming }),
-    openStore: async path => openStateStore(path), nextRunIdentity: () => ({ runId: randomUUID(), tmuxSession: randomUUID() }),
+    openStore: async path => openStateStore(path, { context: context.stateContext }), nextRunIdentity: () => ({ runId: randomUUID(), tmuxSession: randomUUID() }),
     createServices: createProductionServices, commandState: commandState(orchestratorRoot),
   });
 }
@@ -136,6 +138,13 @@ export async function withProductionRuntime<T>(options: ProductionEntryOptions, 
 }
 
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
+  try { productionStateContext(validatedRoot(options), fileURLToPath(import.meta.url), options.homeDirectory, 'cli'); }
+  catch (error) {
+    const diagnostic = failureContext(error);
+    if (!diagnostic) return { exitCode: 1, stdout: '', stderr: JSON.stringify({ code: 'STATE_CONTEXT_REFUSED', message: 'Cannot prove state context', details: { stage: 'state-preflight' }, remediation: ['Verify the registered production tree or select a separate RAF_QA_HOME.'] }) };
+    const { code, message, remediation, secrets, ...details } = diagnostic;
+    return { exitCode: 1, stdout: '', stderr: JSON.stringify(redactDiagnostic({ code, message, details, remediation }, secrets)) };
+  }
   const commandStartedAtMs = clock(options)();
   let runtime: AppRuntime | undefined;
   const unavailable = () => { throw failure('COMMAND_UNAVAILABLE', 'Production service for this operation is unavailable'); };

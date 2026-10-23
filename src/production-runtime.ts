@@ -1,7 +1,8 @@
+import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
 import { promises as fs, watch } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
 import { dirname, isAbsolute, join, basename, resolve, relative, sep } from 'node:path';
-import { platform, availableParallelism, loadavg, totalmem } from 'node:os';
+import { homedir, platform, availableParallelism, loadavg, totalmem } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
@@ -150,18 +151,34 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
     readable: [report], tmuxDirectory: report, excludedCommands: subcommands === null ? [`${command}:*`] : subcommands.map(subcommand => `${command} ${subcommand}:*`),
   };
 }
-function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot'>, override?: AdapterCommandExecutor): AdapterCommandExecutor {
+function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, override?: AdapterCommandExecutor): AdapterCommandExecutor {
   if (override) return override;
   const directory = join(context.tmpRoot, 'tmux');
   const socketPath = join(directory, 'server.sock');
   return async command => {
-    if (command.executable !== 'tmux') return executeCommand(command);
+    const environment = context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env;
+    if (command.executable !== 'tmux') return executeCommand({ ...command, environment });
     await fs.mkdir(directory, { recursive: true, mode: 0o700 });
     const owner = await fs.lstat(directory);
     if (!owner.isDirectory() || owner.uid !== process.getuid?.() || (owner.mode & 0o077) !== 0) fail('TMUX_CONTEXT_INVALID', 'RAF tmux directory must be private and owned by the current user');
     try { const socket = await fs.lstat(socketPath); if (!socket.isSocket() || socket.uid !== process.getuid?.()) fail('TMUX_CONTEXT_INVALID', 'RAF tmux socket has foreign ownership or file type'); }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-    const result = await executeCommand({ ...command, args: ['-S', socketPath, ...command.args] });
+    if (context.stateContext?.mode === 'qa') {
+      try {
+        await fs.lstat(socketPath);
+        for (const key of ['HOME', 'RAF_QA_HOME']) {
+          const observed = await executeCommand({ executable: 'tmux', args: ['-S', socketPath, 'show-environment', '-g', key], environment });
+          if (observed.exitCode !== 0 || observed.stdout.trim() !== `${key}=${context.stateContext.homeDirectory}`) {
+            throw stateFailure('STATE_CONTEXT_REFUSED', `Existing QA tmux server has foreign ${key}; stop the stand server and retry`);
+          }
+        }
+      } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+    }
+    const args = [...command.args];
+    if (context.stateContext && args[0] === 'new-session') {
+      args.splice(1, 0, ...['HOME', 'RAF_QA_HOME'].flatMap(key => environment[key] === undefined ? [] : ['-e', `${key}=${environment[key]}`]));
+    }
+    const result = await executeCommand({ ...command, environment, args: ['-S', socketPath, ...args] });
     await fs.chmod(socketPath, 0o600).catch(error => { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; });
     return result;
   };
@@ -740,7 +757,7 @@ export async function createProductionServices(
       try {
         record.handshake = await launchPersistentWrapper({ tmpRoot: context.tmpRoot, statePath: context.statePath, cwd: request.cwd, runId: record.launch.runId, address: record.launch.addressId, assignment: record.launch.assignment, selection, tmuxSession: request.tmuxSession, brief: request.brief, readinessTimeoutMs: settings.timeouts.startupMs }, {
         timeoutMs: settings.timeouts.overallMs,
-        workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});await m.runProductionWorker();`], cwd: request.cwd },
+        workerCommand: { executable: process.execPath, environment: context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(modulePath).href)});await m.runProductionWorker();`], cwd: request.cwd },
         });
       } catch (error) {
         record.wrapperFailure = (error as Partial<PersistentWrapperFailure>).wrapper;
@@ -807,7 +824,9 @@ export async function runProductionWorker(
     protocolSettings?: readonly ProtocolSettings[];
   } = {},
 ): Promise<void> {
+  const stateContext = productionStateContext(fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'worker');
   const channel = await consumeWrapperRequest();
+  if (channel.request.statePath !== stateContext.statePath || channel.request.tmpRoot !== stateContext.tmpRoot) throw stateFailure('STATE_CONTEXT_REFUSED', 'Worker state/tmp paths differ from selected HOME');
   const request = channel.request;
   process.stderr.write(`${now()} worker started run=${request.runId} pid=${process.pid} ppid=${process.ppid}\n`);
   if (platform() === 'linux') {
@@ -825,7 +844,7 @@ export async function runProductionWorker(
     manifest = await json(manifestPath);
   } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') fail('WORKER_CONTEXT_UNAVAILABLE', `Prepared worker runtime envelope is missing: ${manifestPath}`); throw error; }
   if (manifest.version !== 1 || manifest.context?.statePath !== request.statePath || manifest.context?.tmpRoot !== request.tmpRoot || manifest.context?.orchestratorRoot !== request.assignment.root || !isAbsolute(manifest.context?.confRoot ?? '')) fail('INVALID_CONTEXT', 'Worker runtime envelope mismatch');
-  const context: RuntimeContext = { ...manifest.context, resolveCaller: async () => undefined };
+  const context: RuntimeContext = { ...manifest.context, stateContext, resolveCaller: async () => undefined };
   const execute = runtimeExecution(context, options.execute);
   const configured = protocolFor(options.protocolSettings ?? manifest.protocolSettings ?? await protocols(context.confRoot), request.selection.runner);
   const resolution = await resolveRunnerExecutable(configured.runner, configured.executable, process.env);
@@ -833,7 +852,7 @@ export async function runProductionWorker(
   const settings = { ...configured, executable: manifest.runnerPath as string };
   const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
   if (!availability.available) fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
-  const store = openStateStore(request.statePath);
+  const store = openStateStore(request.statePath, { context: stateContext });
   let codexAccess: PreparedCodexRafCommandAccess | undefined;
   let codexSandbox: PreparedCodexSandbox | undefined;
   try {

@@ -17,6 +17,7 @@ import { createReminderHandlers, settleCommandState, type CommandStatePorts, typ
 import type { NotifyTarget } from './launcher-notice.ts';
 
 export interface RuntimeContext {
+  stateContext?: import('./state-migration-guard.ts').StateContext;
   orchestratorRoot: string;
   confRoot: string;
   artifactPath: string;

@@ -8,7 +8,7 @@ import type { ResourceMeasurement } from './resource-admission.ts';
 import type { ProcessIdentity, ProcessObservation } from './session-state.ts';
 
 export const executeCommand: AdapterCommandExecutor = command => new Promise((resolve, reject) => {
-  const child = spawn(command.executable, [...command.args], { cwd: command.cwd, shell: false, stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, LC_ALL: 'C' } });
+  const child = spawn(command.executable, [...command.args], { cwd: command.cwd, shell: false, stdio: ['pipe', 'pipe', 'pipe'], env: { ...(command.environment ?? process.env), LC_ALL: 'C' } });
   let stdout = '';
   let stderr = '';
   child.stdout.setEncoding('utf8').on('data', data => { stdout += data; });

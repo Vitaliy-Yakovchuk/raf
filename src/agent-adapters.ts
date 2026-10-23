@@ -8,6 +8,7 @@ export interface AdapterCommand {
   args: readonly string[];
   cwd?: string;
   stdin?: string;
+  environment?: Readonly<Record<string, string | undefined>>;
 }
 export interface AdapterCommandResult {
   exitCode: number;

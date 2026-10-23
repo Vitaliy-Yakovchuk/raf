@@ -1,7 +1,8 @@
+import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
 import { spawn, execFile } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { createBackgroundRuntime, runServiceHost } from './background-runtime.ts';
 import { resolveWorkspaceRoute, type WorkspaceProjectsConfig } from './workspace-routing.ts';
@@ -39,6 +40,7 @@ export function createServiceHandlers(
   }
   if (!options.service || !Number.isFinite(options.service.readinessTimeoutMs) || options.service.readinessTimeoutMs <= 0 || typeof options.service.entryRelativePath !== 'string' || !options.service.entryRelativePath || isAbsolute(options.service.entryRelativePath)) throw new Error('Invalid configured service entryRelativePath or readinessTimeoutMs');
   if (options.hostModulePath !== undefined && !isAbsolute(options.hostModulePath)) throw new Error('Absolute service hostModulePath required');
+  const stateContext = productionStateContext(options.orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'service-store');
   const stateDirectory = join(options.homeDirectory, '.raf');
   const socketPath = join(stateDirectory, 'service.sock');
   const runtime = createBackgroundRuntime({ ...options.service, stateDirectory, socketPath }, {
@@ -58,7 +60,7 @@ export function createServiceHandlers(
     },
     nodeExecutable: dependencies?.nodeExecutable,
     spawn: ((command, args, settings) => {
-      const environment = { ...settings?.env, RAF_ORCHESTRATOR_ROOT: options.orchestratorRoot, RAF_HOME_DIRECTORY: options.homeDirectory } as NodeJS.ProcessEnv;
+      const environment = stateContextEnvironment(stateContext, { ...process.env, ...settings?.env }) as NodeJS.ProcessEnv;
       delete environment.RAF_SERVICE_HOST_MODULE_PATH;
       if (options.hostModulePath) environment.RAF_SERVICE_HOST_MODULE_PATH = options.hostModulePath;
       return (dependencies?.spawn ?? spawn)(command, args, { ...settings, env: environment });
@@ -90,6 +92,8 @@ export async function runServiceEntry(options?: {
     orchestratorRoot: await fs.realpath(required('RAF_ORCHESTRATOR_ROOT')).catch((error: NodeJS.ErrnoException) => { throw error.code === 'ENOENT' ? new Error(`Service bootstrap RAF_ORCHESTRATOR_ROOT does not exist: ${environment.RAF_ORCHESTRATOR_ROOT}`) : error; }), homeDirectory: required('RAF_HOME_DIRECTORY'),
     stateDirectory: required('RAF_STATE_DIRECTORY'), socketPath: required('RAF_SOCKET_PATH'),
   };
+  const stateContext = productionStateContext(context.orchestratorRoot, fileURLToPath(import.meta.url), context.homeDirectory, 'service-store', environment);
+  if (context.stateDirectory !== join(stateContext.homeDirectory, '.raf') || context.socketPath !== join(context.stateDirectory, 'service.sock')) throw stateFailure('STATE_CONTEXT_REFUSED', 'Service bootstrap paths differ from selected state context');
   required('RAF_MAIN_PATH');
   const modulePath = required('RAF_SERVICE_HOST_MODULE_PATH');
   const loadPorts = options?.loadPorts ?? (async (path: string, value: ServiceEntryContext): Promise<ServicePorts> => {

@@ -1,3 +1,6 @@
+import { productionStateContext, stateFailure } from './state-migration-guard.ts';
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { basename, isAbsolute, join } from 'node:path';
 import { openStateStore } from './state-store.ts';
@@ -37,6 +40,8 @@ export async function createServicePorts(
   context: ServiceEntryContext,
   dependencies?: ServiceHostDependencies,
 ): Promise<ComposedServicePorts> {
+  const stateContext = productionStateContext(context.orchestratorRoot, fileURLToPath(import.meta.url), context.homeDirectory, 'service-store');
+  if (context.stateDirectory !== dirname(stateContext.statePath) || context.socketPath !== join(context.stateDirectory, 'service.sock')) throw stateFailure('STATE_CONTEXT_REFUSED', 'Service paths differ from selected state context');
   if (!dependencies) return (await import('./production-service-ports.ts')).createServicePorts(context);
   const required = [dependencies.now, dependencies.nextReminderId, dependencies.observeProcesses, dependencies.effectsForObservation,
     dependencies.sessionValidation?.verifyMainAuthority, dependencies.sessionValidation?.verifyWorkResult, dependencies.eventPorts,
@@ -59,7 +64,7 @@ export async function createServicePorts(
     if (!Number.isFinite(value)) throw new Error('Service clock unavailable');
     return value;
   };
-  const store = openStateStore(join(context.stateDirectory, fileName));
+  const store = openStateStore(join(context.stateDirectory, fileName), { context: stateContext });
   let queue: ReturnType<typeof createResourceWaitQueue> | undefined;
   try {
     const sessions = createSessionState({ repository: store.sessionRepository, ...dependencies.sessionValidation });

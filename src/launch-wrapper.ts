@@ -208,7 +208,7 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
         cwd: command.cwd ?? request.cwd,
         detached: true,
         stdio: [command.stdin === undefined ? 'ignore' : 'pipe', log.fd, log.fd],
-        env: { ...process.env, RAF_WRAPPER_REQUEST_PATH: requestPath, RAF_WRAPPER_HANDSHAKE_SOCKET: socketPath },
+        env: { ...(command.environment ?? process.env), RAF_WRAPPER_REQUEST_PATH: requestPath, RAF_WRAPPER_HANDSHAKE_SOCKET: socketPath },
       });
       child.once('error', fail);
       child.once('exit', (code, signal) => fail(`Worker exited before readiness: code=${code}, signal=${signal}`));

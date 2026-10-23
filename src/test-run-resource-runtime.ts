@@ -1,4 +1,7 @@
-import { randomUUID } from 'node:crypto';
+import { runtimeResourceUsage } from './resource-usage-runtime.ts';
+import type { UsageContext, UsageFinishReason, UsageIdentity } from './resource-usage.ts';
+import { createHash, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildAdmissionSnapshot } from './admission-snapshot.ts';
 import { evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
@@ -12,9 +15,46 @@ import type { AdmissionReservation } from './session-state.ts';
 import type { TestRunResourceClaim, TestRunResourcePort } from './test-run-reservations.ts';
 
 export function createTestRunResourcePort(store: StateStore, options: {
-  root: string; workspace: string; home: string; machineId: string; config: unknown;
+  root: string; workspace: string; home: string; machineId: string; config: unknown; resultStatePath?: string; items?: UsageContext['items'];
 }): TestRunResourcePort & { bindSpawn(identity: string): void; spawnFailed(): void } {
   const ownerIdentity = testWrapperIdentity();
+  const usage = runtimeResourceUsage(store.startupContextDatabase, options.root);
+  let timer: ReturnType<typeof setInterval> | undefined;
+  let pendingReasons: string[] = [];
+  const usageIdentity = (claim: TestRunResourceClaim): UsageIdentity | null => {
+    const record = usage.repository.get({ kind: 'test', id: claim.testRunId });
+    return record?.context.identity.fence === claim.fence && record.context.identity.machineId === claim.machineId ? record.context.identity : null;
+  };
+  const sample = (claim: TestRunResourceClaim) => {
+    try {
+      const identity = usageIdentity(claim);
+      if (!identity?.root) return;
+      const at = Date.now();
+      let observation;
+      try { observation = usage.measurement.sample(identity, at); }
+      catch { observation = { identity, at, ram: null, disk: [], reasons: ['Test lifecycle measurement unavailable'] }; }
+      observation.reasons.push(...pendingReasons);
+      if (usage.tracker.observe(observation)) pendingReasons = [];
+    } catch { pendingReasons = ['A test usage sample could not be persisted']; }
+  };
+  const bindUsage = (claim: TestRunResourceClaim, processIdentity: string) => {
+    const identity = usageIdentity(claim);
+    if (!identity) return;
+    const root = JSON.parse(processIdentity);
+    if (!root.start || !Number.isSafeInteger(root.pid) || root.boot !== identity.bootId) return;
+    usage.tracker.started({ ...identity, root: { pid: root.pid, startTicks: root.start, bootId: root.boot } }, Date.now());
+    sample(claim);
+    if (!timer) {
+      const cadence = JSON.parse(readFileSync(join(options.root, 'conf/raf.json'), 'utf8')).service.hostTickIntervalMs;
+      timer = setInterval(() => sample(claim), cadence);
+      timer.unref();
+    }
+  };
+  const finishUsage = (claim: TestRunResourceClaim, reason: UsageFinishReason) => {
+    if (timer) { clearInterval(timer); timer = undefined; }
+    const identity = usageIdentity(claim);
+    if (identity) usage.tracker.finish(identity, { at: Date.now(), reason, verifiedComplete: false, reasons: [...pendingReasons, 'Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete'] });
+  };
   let ownClaim: TestRunResourceClaim | null = null;
   const paths = { orchestratorRoot: options.root, workspace: options.workspace, home: options.home };
   const match = (row: AdmissionReservation | undefined, claim: TestRunResourceClaim) => row?.testRun?.claim.fence === claim.fence
@@ -27,6 +67,17 @@ export function createTestRunResourcePort(store: StateStore, options: {
   });
   const snapshot = () => createResourceSnapshotReader({ machineId: options.machineId, paths: [...new Set(Object.values(paths))] }).read();
   return {
+    beforeSpawn: async (claim, paths) => {
+      const identity = usageIdentity(claim);
+      const record = identity && usage.repository.get(identity);
+      if (!identity || !record || record.startedAt !== null) return;
+      record.context.attributedPaths = [...new Set(paths)];
+      record.baseline = usage.measurement.baseline(record.context);
+      usage.repository.merge(identity, record);
+    },
+    sampleUsage: async claim => { sample(claim); },
+    finishUsage: async (claim, reason) => { finishUsage(claim, reason); },
+    resourceUsage: async claim => { const identity = usageIdentity(claim); return identity ? usage.repository.get(identity) : null; },
     spawnFailed: () => {
       if (!ownClaim) return;
       store.sessionRepository.transaction(tx => {
@@ -40,6 +91,7 @@ export function createTestRunResourcePort(store: StateStore, options: {
         const row = find(tx.listReservations(), ownClaim!);
         if (!row?.testRun?.committed) throw new Error('Resource claim lost at spawn');
         row.testRun.claim.processIdentity = identity; tx.putReservation(row);
+        bindUsage(ownClaim!, identity);
       });
     },
     markSpawning: async claim => { if (!await update(claim, row => { row.testRun!.spawning = true; })) throw new Error('Resource claim lost before spawn'); },
@@ -75,6 +127,12 @@ export function createTestRunResourcePort(store: StateStore, options: {
         const claim: TestRunResourceClaim = { machineId: options.machineId, testRunId: request.testRunId, fence: randomUUID(), groupKey: request.groupKey, deadlineMs: request.deadlineMs, processIdentity: null };
         tx.putReservation({ runId: request.testRunId, resource: 'test-run', amount: request.estimate.reservation!.ramBytes,
           resourceBundle: { machineId: options.machineId, resources: request.estimate.reservation! }, testRun: { claim, committed: false, ownerIdentity } });
+        usage.tracker.prepare({ identity: { kind: 'test', id: claim.testRunId, machineId: options.machineId, bootId: JSON.parse(ownerIdentity).boot, fence: claim.fence, root: null },
+          project: request.groupKey.project, agentType: null, testProfile: request.profileId ?? null, items: options.items ?? [],
+          requestedEstimate: { ...request.estimate.reservation!, sources: request.estimate.sources, confHash: createHash('sha256').update(JSON.stringify(options.config)).digest('hex') },
+          requiredFileSystems: volumes.requiredFileSystemIds.map(id => ({ id, paths: Object.values(paths).filter(path => measured.fileSystemByPath[path] === id) })),
+          resultStatePath: options.resultStatePath,
+        }, true, Date.now());
         ownClaim = structuredClone(claim);
         return { status: 'prepared' as const, claim: structuredClone(claim), admission };
       });
@@ -87,6 +145,7 @@ export function createTestRunResourcePort(store: StateStore, options: {
         row.testRun!.claim.processIdentity = identity;
       })) throw new Error('Resource claim lost before binding process');
       claim.processIdentity = identity;
+      bindUsage(claim, identity);
     },
     observeTree: async claim => {
       const row = store.sessionRepository.transaction(tx => find(tx.listReservations(), claim), 'read');
@@ -97,9 +156,12 @@ export function createTestRunResourcePort(store: StateStore, options: {
       const owner = observeReservedTestTree(row.testRun!.ownerIdentity);
       return { state: owner.state, processIdentity: null, consumed: null };
     },
-    accountUsage: async () => {},
+    accountUsage: async claim => { sample(claim); },
     release: async claim => store.sessionRepository.transaction(tx => {
       if (!find(tx.listReservations(), claim)) return false;
+      const identity = usageIdentity(claim);
+      const record = identity && usage.repository.get(identity);
+      if (record?.finishedAt === null) finishUsage(claim, record.startedAt === null ? 'spawn-failure' : 'death');
       tx.deleteReservation(claim.testRunId); return true;
     }),
     list: async machineId => store.sessionRepository.transaction(tx => tx.listReservations().flatMap(row => row.testRun?.claim.machineId === machineId ? [structuredClone(row.testRun.claim)] : []), 'read'),

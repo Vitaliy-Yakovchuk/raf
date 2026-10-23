@@ -30,7 +30,7 @@ export type AdmissionReservation = {
 
 export type ProcessObservation =
   | { state: 'alive'; observedAt: string; identity: ProcessIdentity }
-  | { state: 'exited'; observedAt: string; exitCode: number | null; evidence: string }
+  | { state: 'exited'; observedAt: string; exitCode: number | null; evidence: string; finishReason?: import('./resource-usage.ts').UsageFinishReason }
   | { state: 'unknown'; observedAt: string; error: string };
 
 export type WorkResult = { status: string; response: string; proof: unknown; forcedClose?: { reason: string } };
@@ -39,6 +39,7 @@ export type DomainEffect = { id: string; domain: string; payload: unknown };
 export type TransitionEffects = { pending: readonly PendingIntent[]; domain: readonly DomainEffect[]; reportAccepted?: boolean };
 
 export type SessionLaunchContext = {
+  resourceUsageContext?: import('./resource-usage.ts').UsageContext;
   agentQueue?: import('./agent-run-queue.ts').AgentQueueRecord;
   workspaceTrustDenied?: true;
   reportedCommits?: import('./reported-commits-contract.ts').ReportedCommitLaunchContext;

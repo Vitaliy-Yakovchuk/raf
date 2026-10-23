@@ -143,6 +143,7 @@ export interface TestRunCleanup {
 }
 
 export interface TestRunResult extends RunnerClassification {
+  resourceUsage?: import('./resource-usage.ts').ResourceUsageRecord | null;
   removed: TestId[];
   diagnostics: InlineDiagnostic[];
   diagnosticSummary: DiagnosticAttachment['diagnosticSummary'];

@@ -310,7 +310,10 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
           agentId: 'test-run', sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
           home, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome: userInfo().homedir };
         const boot = await readMachineBootIdentity();
-        const resources = createTestRunResourcePort(controlStore!, { root, workspace, home: context.operationalHome, machineId: boot.machineId, config });
+        const callerSession = control.ancestors.flatMap(ancestor => control.sessions.filter(session => session.state === 'running' && session.process.pid === ancestor.pid && session.process.startedAt === ancestor.startedAt))[0];
+        const session = callerSession && controlStore!.sessionRepository.transaction(tx => tx.getSession(callerSession.assignment.runId), 'read');
+        const items = session?.launchContext?.assignment.changes.flatMap(change => change.items.map(item => ({ project: session.activity?.project ?? args.project, change: change.id, item: item.id }))) ?? [];
+        const resources = createTestRunResourcePort(controlStore!, { root, workspace, home: context.operationalHome, machineId: boot.machineId, config, resultStatePath: stateContext.statePath, items });
         runtime = createTestRunPorts(config!, stateContext, () => store ??= openStateStore(stateContext.statePath, { context: stateContext }), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
         const reserved = Object.assign(runtime, { machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
         await reconcileTestRunResources(context, policy, reserved);
@@ -320,6 +323,17 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     if (!reply.stdout) throw Object.assign(new Error(reply.stderr), { code: 'CALLER_UNAUTHORIZED' });
     if (store && runtime) {
       await cleanupClosedTestRunGroups(context.activeChanges, context, runtime);
+      if (controlStore) {
+        const retained = new Set(store.startupContextDatabase.prepare('SELECT payload FROM test_run_groups').all().flatMap(row => {
+          const group: TestRunGroup = JSON.parse(String(row.payload));
+          return [group.lastResult?.runId, group.inFlight?.runId].filter(Boolean);
+        }));
+        const db = controlStore.startupContextDatabase;
+        for (const row of db.prepare("SELECT run_id, payload FROM resource_usage WHERE kind = 'test'").all()) {
+          const record = JSON.parse(String(row.payload));
+          if (record.context.resultStatePath === context.statePath && record.finishedAt !== null && !retained.has(String(row.run_id))) db.prepare("DELETE FROM resource_usage WHERE kind = 'test' AND run_id = ? AND payload = ?").run(String(row.run_id), String(row.payload));
+        }
+      }
     }
     return { exitCode: reply.code, stdout: reply.stdout.trimEnd(), stderr: reply.stderr.trimEnd() };
   } catch (error) {

@@ -1,3 +1,5 @@
+import { initializeResourceUsage } from './resource-usage.ts';
+import { accountSessionUsage } from './resource-usage-runtime.ts';
 import type { LaunchQueueTransaction, LaunchQueueState } from './launch-queue-events.ts';
 import type { ResourceWaitLastGrant } from './resource-wait-protocol.ts';
 import type { ReportRejectionSnapshot } from './report-rejection.ts';
@@ -89,8 +91,8 @@ export interface StateStore {
   getCommandTiming(command: string): CommandTiming | undefined;
 }
 
-export const STATE_SCHEMA_VERSION = 14;
-export const STATE_SCHEMA_SUPPORTED_VERSIONS = [12, 13, 14] as const;
+export const STATE_SCHEMA_VERSION = 15;
+export const STATE_SCHEMA_SUPPORTED_VERSIONS = [12, 13, 14, 15] as const;
 
 export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
@@ -137,7 +139,7 @@ export function openStateStore(path: string, options?: import('./state-migration
     if (permit && version !== permit.fromVersion && version !== permit.toVersion) {
       throw stateFailure('STATE_MIGRATION_CONFLICT', `State ${path} is at ${version}; expected ${permit.fromVersion} or ${permit.toVersion}`);
     }
-    if (!permit && version > 0 && !STATE_SCHEMA_SUPPORTED_VERSIONS.includes(version as 12 | 13 | 14)) {
+    if (!permit && version > 0 && !STATE_SCHEMA_SUPPORTED_VERSIONS.includes(version as 12 | 13 | 14 | 15)) {
       throw stateFailure('STATE_MIGRATION_REQUIRED', `State ${path} is at version ${version}; explicit migration to ${STATE_SCHEMA_VERSION} required`);
     }
     return version;
@@ -403,6 +405,11 @@ export function openStateStore(path: string, options?: import('./state-migration
             PRAGMA user_version = 14;
           `);
           options?.afterMigrationStep?.(14); }
+          if (current < 15) {
+            initializeResourceUsage(db);
+            db.exec("PRAGMA user_version = 15");
+            options?.afterMigrationStep?.(15);
+          }
         });
       }
       for (let attempt = 0; ; attempt++) {
@@ -508,6 +515,7 @@ export function openStateStore(path: string, options?: import('./state-migration
       }),
       listSessions: () => access(() => db.prepare("SELECT payload FROM sessions").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
       putSession: session => access(() => {
+        if (Number(db.prepare("PRAGMA user_version").get()?.user_version) >= 15) accountSessionUsage(db, session, options?.context?.orchestratorRoot);
         if (session.state === 'finished') settleStartupContextReview(db, { reviewRunId: session.runId, status: session.result?.status ?? 'failed', finishedAt: session.finishedAt! });
         db.prepare(`INSERT INTO sessions(run_id, address_id, state, finished_at, payload) VALUES (?, ?, ?, ?, ?)
           ON CONFLICT(run_id) DO UPDATE SET address_id = excluded.address_id, state = excluded.state,
@@ -523,7 +531,10 @@ export function openStateStore(path: string, options?: import('./state-migration
         }
         if (session.state === 'finished') db.prepare("UPDATE result_notices SET payload = json_set(payload, '$.source.state', 'finished', '$.source.revision', ?, '$.source.finishedAt', ?) WHERE run_id = ?").run(session.revision, session.finishedAt ?? null, session.runId);
       }),
-      deleteSession: runId => access(() => { db.prepare("DELETE FROM sessions WHERE run_id = ?").run(runId); }),
+      deleteSession: runId => access(() => {
+        if (Number(db.prepare("PRAGMA user_version").get()?.user_version) >= 15) db.prepare("DELETE FROM resource_usage WHERE kind = 'agent' AND run_id = ?").run(runId);
+        db.prepare("DELETE FROM sessions WHERE run_id = ?").run(runId);
+      }),
       listReservations: () => access(() => db.prepare("SELECT payload FROM admission_reservations").all().map(row => JSON.parse(row.payload as string) as AdmissionReservation)),
       putReservation: reservation => access(() => {
         db.prepare(`INSERT INTO admission_reservations(run_id, payload) VALUES (?, ?)

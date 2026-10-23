@@ -1,3 +1,4 @@
+import { runtimeResourceUsage } from './resource-usage-runtime.ts';
 import { productionStateContext, stateFailure } from './state-migration-guard.ts';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
@@ -168,6 +169,7 @@ export async function createServicePorts(
     };
     const cycle = async () => {
       try {
+        runtimeResourceUsage(store.startupContextDatabase, context.orchestratorRoot).tracker.hostTick(clock());
         await reconcile();
         cleanupStartupContextCompleted(new Date(clock()).toISOString(), { database: store.startupContextDatabase, flowPath: join(context.orchestratorRoot, 'conf', 'flow.json'), sessions });
         if (closed) return;

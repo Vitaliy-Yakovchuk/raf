@@ -1,3 +1,4 @@
+import type { ResourceUsageRecord, UsageFinishReason } from './resource-usage.ts';
 import type { ResourceEstimateResolution, ResourceReservationEstimate } from './resource-estimates.ts';
 import { observeReservedTestTree } from './test-run-resource-process.ts';
 import { runTestRun, reconcileTestRunGroup, testRunFailureResult } from './test-runs.ts';
@@ -14,6 +15,7 @@ export interface TestRunResourceClaim {
 
 export interface TestRunResourceRequest {
   testRunId: string;
+  profileId?: string;
   groupKey: TestRunGroupKey;
   requestedTier: 'normal' | 'hotfix';
   estimate: ResourceEstimateResolution;
@@ -31,6 +33,10 @@ export interface TestRunTreeObservation {
 }
 
 export interface TestRunResourcePort {
+  beforeSpawn?(claim: TestRunResourceClaim, paths: string[]): Promise<void>;
+  sampleUsage?(claim: TestRunResourceClaim): Promise<void>;
+  finishUsage?(claim: TestRunResourceClaim, reason: UsageFinishReason): Promise<void>;
+  resourceUsage?(claim: TestRunResourceClaim): Promise<ResourceUsageRecord | null>;
   markSpawning?(claim: TestRunResourceClaim): Promise<void>;
   estimateProfile(project: string, profileId: string): Promise<ResourceEstimateResolution>;
   prepare(request: TestRunResourceRequest): Promise<TestRunResourcePreparation>;
@@ -102,7 +108,7 @@ export async function runResourceReservedTestRun(
         owned = acquired;
         try {
           const estimate = await ports.resources.estimateProfile(request.project, plan!.profileId);
-          const prepared = await ports.resources.prepare({ testRunId: runId, groupKey: key,
+          const prepared = await ports.resources.prepare({ testRunId: runId, profileId: plan!.profileId, groupKey: key,
             requestedTier: request.phase === 'hotfix' ? 'hotfix' : 'normal', estimate,
             deadlineMs: (owned as TestRunGroup | null)!.inFlight!.deadlineMs });
           admission = prepared.admission;
@@ -135,15 +141,18 @@ export async function runResourceReservedTestRun(
       if (!claim || !await ports.resources.current(claim)) throw lost();
       const group = await ports.state.transaction(tx => tx.get(key));
       if (group?.inFlight?.runId !== runId) throw lost();
+      await ports.resources.beforeSpawn?.(claim, command.environment.TMPDIR ? [command.environment.TMPDIR] : []);
       await ports.resources.markSpawning?.(claim);
       const child = await ports.spawn(command, onEvent);
       try { await ports.resources.bindProcess(claim, child.identity); }
       catch (error) { await child.cleanup(owned!.inFlight!.deadlineMs, 'interruption'); throw error; }
       return { ...child, cleanup: async (deadline, reason) => {
+        await ports.resources.sampleUsage?.(claim!);
         const cleanup = await child.cleanup(deadline, reason);
         const observed = await ports.resources.observeTree(claim!);
         if (observed.consumed) await ports.resources.accountUsage(claim!, observed.consumed);
         if (observed.state !== 'dead') return { ...cleanup, complete: false };
+        await ports.resources.finishUsage?.(claim!, reason === 'interruption' ? 'signal' : reason === 'recovery' ? 'death' : reason);
         if (cleanup.complete && !cleanup.remainingPids.length) { released = await ports.resources.release(claim!); if (!released) return { ...cleanup, complete: false }; }
         return cleanup;
       } };
@@ -175,6 +184,7 @@ export async function runResourceReservedTestRun(
         });
       }
     }
+    result.resourceUsage = claim ? await ports.resources.resourceUsage?.(claim) ?? null : null;
     if (!refusal) await ports.state.transaction(tx => {
       const group = tx.get(key);
       if (group?.lastResult?.runId === result!.runId) { group.lastResult = result!; tx.put(group); }
@@ -184,6 +194,7 @@ export async function runResourceReservedTestRun(
   } catch (error) {
     result ??= { ...testRunFailureResult(request, context, runId, started, configInput, error), admission };
     result.admission = admission;
+    result.resourceUsage = claim ? await ports.resources.resourceUsage?.(claim) ?? null : null;
     result.outcome = 'setup-failed'; result.failureKinds = ['setup']; result.errorCode = 'RESOURCE_RECONCILIATION_REQUIRED';
     result.cleanup.complete = false; result.groupState = 'reconcile'; result.nextAction = 'reconcile';
     result.durationMs = ports.clock.now() - started;
@@ -214,7 +225,11 @@ export async function reconcileTestRunResources(
         });
       }
     }
-    if (await ports.resources.release(claim)) released.push(claim); else retained.push(claim);
+    if (await ports.resources.release(claim)) {
+      released.push(claim);
+      const summary = await ports.resources.resourceUsage?.(claim) ?? null;
+      await ports.state.transaction(tx => { const current = tx.get(claim.groupKey); if (current?.lastResult?.runId === claim.testRunId) { current.lastResult.resourceUsage = summary; tx.put(current); } });
+    } else retained.push(claim);
   }
   const claims = [...released, ...retained];
   const groups = await ports.state.transaction(tx => Object.keys(context.projectWorkspaces).flatMap(project => tx.list(project, context.workspace)));

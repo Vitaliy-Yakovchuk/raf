@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { loadEventCatalog } from './event-catalog.ts';
 import { createStoredLaunchQueueEvents } from './stored-launch-queue-events.ts';
 import { createProductionAgentQueue } from './production-agent-queue.ts';
@@ -1044,7 +1045,15 @@ export async function createProductionServices(
         if (wait) return { admitted: false, waiting: true, reason: admission.reasons.join('; ') || 'Existing launch queue requires a resource permit', admission: admissionSnapshot! };
       }
       const testAssignment = record.testAssignment;
-      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { ...(input.queueClaim ? { agentQueue: input.queueClaim.record } : {}), ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
+      const resourceUsageContext = {
+        identity: { kind: 'agent' as const, id: input.runId, machineId: boot.machineId, bootId: boot.bootId, fence: randomUUID(), root: null },
+        project: input.activity.project, agentType: input.activity.type, testProfile: null,
+        items: input.assignment.changes.flatMap(change => change.items.map(item => ({ project: input.activity.project, change: change.id, item: item.id }))),
+        requestedEstimate: { ...requested, sources: resolution.sources, confHash: createHash('sha256').update(JSON.stringify({ resources: taskConfiguration.resources, resourceEstimates: taskConfiguration.resourceEstimates })).digest('hex') },
+        requiredFileSystems: requiredFileSystemIds.map(id => ({ id, paths: paths.filter(path => resourceSnapshot.fileSystemByPath[path] === id) })),
+        attributedPaths: [join(input.tmpRoot, input.runId)],
+      };
+      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { resourceUsageContext, ...(input.queueClaim ? { agentQueue: input.queueClaim.record } : {}), ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
       const caller = await (async () => {
         try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }
@@ -1577,7 +1586,7 @@ export async function runProductionWorker(
         },
         finish: async (handshake, exit) => {
           let current = tools.current(request.runId)!;
-          tools.state.commitObservation(request.runId, current.revision, { state: 'exited', observedAt: now(), exitCode: exit.code, evidence: `Owned tmux runner exit ${exit.signal ?? exit.code}` }, effects);
+          tools.state.commitObservation(request.runId, current.revision, { state: 'exited', observedAt: now(), exitCode: exit.code, evidence: `Owned tmux runner exit ${exit.signal ?? exit.code}`, finishReason: exit.signal ? 'signal' : 'exit' }, effects);
           current = tools.current(request.runId)!;
           await tools.finalize(current, current.activity ? [{ kind: 'ended', session: current, project: current.activity.project }] : []);
           if ((await adapter.inspect(adapterSession)).status === 'exited') await adapter.stop(adapterSession);

@@ -27,6 +27,8 @@ export type ResourceEstimateResolution =
 
 export interface AgentResourceEstimateInput {
   flow: unknown;
+  type: string;
+  project: string;
   tasks: readonly ResourceTaskReference[];
   fileSystemIds: readonly string[];
 }

@@ -297,7 +297,7 @@ const context = JSON.parse(process.argv[2]);
 openStateStore(context.statePath, { context, transfer: { statePath: context.statePath, fromVersion: 7, toVersion: 10 }, afterMigrationStep: version => appendFileSync(process.argv[3], version + '\\n') }).close();`;
   const results = await Promise.all([nodeProcess(f, program, [barrier, JSON.stringify(context), stepsPath]), nodeProcess(f, program, [barrier, JSON.stringify(context), stepsPath])]);
   for (const result of results) assert.equal(result.code, 0, result.stderr);
-  assert.deepEqual(readFileSync(stepsPath, 'utf8').trim().split('\n').map(Number).sort(), [8, 9, 10]);
+  assert.deepEqual(readFileSync(stepsPath, 'utf8').trim().split('\n').map(Number).sort((a, b) => a - b), [8, 9, 10]);
   assert.equal(logical(f.qaStatePath).version, 10);
   assert.equal(logical(f.qaStatePath).integrity, 'ok');
 });

@@ -253,7 +253,6 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   await writeJson(join(conf, 'raf-constants.json'), constants);
   await writeJson(join(conf, 'projects.json'), { version: 1, projects: { raf: { path: 'raf-develop', profile: 'product', branchPaths: { develop: 'raf-develop' } } } });
   const flow = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/flow.json'), 'utf8'));
-  // Report and lifecycle scenarios must not depend on the host's current CPU load.
   await writeJson(join(conf, 'flow.json'), { ...flow, resources: Object.fromEntries(Object.entries(flow.resources).map(([tier, thresholds]) => [tier, { ...(thresholds as object), maxNormalizedLoad: Number.MAX_VALUE, minRamBytes: 1, minDiskBytes: 1 }])) });
   await fs.mkdir(join(root, 'questions', 'projects', 'raf'), { recursive: true });
   await fs.writeFile(join(root, 'questions', 'projects', 'raf', 'questions.md'), '# Питання\n');

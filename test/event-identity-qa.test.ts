@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { openStateStore } from '../src/state-store.ts';
+import { openStateStore, STATE_SCHEMA_VERSION } from '../src/state-store.ts';
 import type { PendingIntent } from '../src/session-state.ts';
 
 for (const finishedMain of [false, true]) test(`QA integration: inactive main event survives complete database close/reopen (${finishedMain})`, async () => {
@@ -51,7 +51,7 @@ test('QA integration: version 3 pending payload survives migration and coexists 
       old.exec('ALTER TABLE pending_intents DROP COLUMN run_id; PRAGMA user_version = 3');
       old.prepare('INSERT INTO pending_intents(id, payload) VALUES (?, ?)').run(legacy.id, JSON.stringify(legacy));
     } finally { old.close(); }
-    const upgraded = openStateStore(path);
+    const upgraded = openStateStore(path, { transfer: { statePath: path, fromVersion: 3, toVersion: STATE_SCHEMA_VERSION } });
     try {
       assert.deepEqual(upgraded.sessionRepository.transaction(tx => tx.listPending()), [legacy]);
       upgraded.sessionRepository.transaction(tx => tx.putPending(pending));
@@ -65,7 +65,7 @@ test('QA integration: version 3 pending payload survives migration and coexists 
     } finally { reopened.close(); }
     const db = new DatabaseSync(path);
     try {
-      assert.equal(db.prepare('PRAGMA user_version').get()!.user_version, 4);
+      assert.equal(db.prepare('PRAGMA user_version').get()!.user_version, STATE_SCHEMA_VERSION);
       const row = db.prepare('SELECT run_id, payload FROM pending_intents WHERE id = ?').get(legacy.id)!;
       assert.equal(row.run_id, legacy.runId);
       assert.equal(row.payload, JSON.stringify(legacy));

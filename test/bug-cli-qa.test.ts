@@ -1,17 +1,17 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import { buildCatalog } from '../src/bootstrap.ts';
 import { BugServerError, startBugSyncService, type BugMcpTool, type BugSyncService, type MainNotice, type MainNotifier, type ServerAuth } from '../src/bug-sync.ts';
 import { ACTOR, FakeBugServer, revisionConflict, serverKey, storageUnavailable } from './bug-sync-fixture.ts';
 
-const rafDevelop = fileURLToPath(new URL('../', import.meta.url));
 const realConf = fileURLToPath(new URL('../../conf/', import.meta.url));
 const constants = JSON.parse(readFileSync(join(realConf, 'raf-constants.json'), 'utf8'));
 const APPROVED = ['bug list', 'bug show', 'bug comment add', 'bug status set', 'bug attachment get'];
@@ -43,7 +43,7 @@ interface CliResult {
   readonly stderr: string;
 }
 
-function workspace(): Workspace {
+async function workspace(t: TestContext): Promise<Workspace> {
   const base = mkdtempSync(join(tmpdir(), 'raf-qa34-'));
   const root = join(base, 'root');
   const home = join(base, 'home');
@@ -52,11 +52,14 @@ function workspace(): Workspace {
   mkdirSync(rafHome, { recursive: true, mode: 0o700 });
   const develop = join(root, 'raf-develop');
   mkdirSync(develop);
-  for (const entry of readdirSync(rafDevelop)) if (entry !== 'dist') symlinkSync(join(rafDevelop, entry), join(develop, entry));
   buildCatalog(realConf, join(develop, 'dist', 'catalog.json'), constants.commands.map((command: { path: string[] }) => command.path.join(' ')));
   const settings = JSON.parse(readFileSync(join(realConf, 'raf.json'), 'utf8'));
   settings.bugs = { ...settings.bugs, attachmentCacheMaxBytes: 1_000_000, requestTimeoutMs: REQUEST_TIMEOUT_MS, sections: [ETCHLY, CRM] };
   writeFileSync(join(root, 'conf', 'raf.json'), JSON.stringify(settings, null, 2));
+  for (const name of ['projects.json', 'raf-constants.json', 'models.json']) {
+    writeFileSync(join(root, 'conf', name), readFileSync(join(realConf, name)));
+  }
+  await prepareProductionQaFixture(t, { root, home });
   const secrets = [ETCHLY, CRM].map(section => ({
     name: section.secret, kind: 'env', value: `qa34-${section.secret}-${'x'.repeat(40)}`, source: 'qa34', updatedAt: '2026-10-22T00:00:00.000Z',
   }));
@@ -84,13 +87,13 @@ function cliArgs(ws: Workspace, argv: readonly string[]): string[] {
 }
 
 function cli(ws: Workspace, argv: readonly string[], input?: string, timeout = 60_000): CliResult {
-  const result = spawnSync(process.execPath, cliArgs(ws, argv), { env: { ...process.env, HOME: ws.home, QA_FETCH_LOG: ws.fetchLog }, input: input ?? '', encoding: 'utf8', timeout });
+  const result = spawnSync(process.execPath, cliArgs(ws, argv), { env: { ...process.env, HOME: ws.home, RAF_QA_HOME: ws.home, QA_FETCH_LOG: ws.fetchLog }, input: input ?? '', encoding: 'utf8', timeout });
   return { code: result.status, stdout: result.stdout.trim(), stderr: result.stderr.trim() };
 }
 
 async function cliWithDash(ws: Workspace, dash: McpDash, argv: readonly string[], input?: string): Promise<CliResult> {
   const child = spawn(process.execPath, cliArgs(ws, argv), {
-    env: { ...process.env, HOME: ws.home, QA_FETCH_LOG: ws.fetchLog, QA_MCP_URL: dash.url }, stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
+    env: { ...process.env, HOME: ws.home, RAF_QA_HOME: ws.home, QA_FETCH_LOG: ws.fetchLog, QA_MCP_URL: dash.url }, stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
   });
   if (input !== undefined) child.stdin!.end(input);
   let stdout = '';
@@ -254,7 +257,7 @@ async function serviceCycle(ws: Workspace, server: FakeBugServer, inbox: MainInb
 }
 
 test('QA 3.4: approved bug commands through the real CLI with an isolated HOME and test conf', async t => {
-  const ws = workspace();
+  const ws = await workspace(t);
   const server = new FakeBugServer();
   const dash = new McpDash(server, ws.secrets);
   await dash.start();

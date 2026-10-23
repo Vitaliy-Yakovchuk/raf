@@ -7,27 +7,27 @@ import { agentRunFixture as fixture, assertFailedLaunchCleaned, exists, until } 
 const failureBudget = { startupMs: 20000, transitionMs: 5000, overallMs: 30000 };
 
 test('[launch-failure-cleanup] trust prompt: LAUNCH_FAILED stops own runner and tmux session, removes launch directory, releases claims', async t => {
-  const f = await fixture(t, 'trust', failureBudget);
+  const f = await fixture(t, 'trust', failureBudget, 'codex', { productionQa: true });
   await assertFailedLaunchCleaned(f, await f.run('trust-agent'), 'trust');
 });
 
 test('[launch-failure-cleanup] silent runner: worker readiness timeout cleans its own launch', async t => {
-  const f = await fixture(t, 'silent', { ...failureBudget, startupMs: 1500 });
+  const f = await fixture(t, 'silent', { ...failureBudget, startupMs: 1500 }, 'codex', { productionQa: true });
   await assertFailedLaunchCleaned(f, await f.run('silent-agent'), 'silent');
 });
 
 test('[launch-failure-cleanup] parent handshake timeout terminates own worker and its tmux session', async t => {
-  const f = await fixture(t, 'parent-timeout', { ...failureBudget, overallMs: 3000 });
+  const f = await fixture(t, 'parent-timeout', { ...failureBudget, overallMs: 3000 }, 'codex', { productionQa: true });
   await assertFailedLaunchCleaned(f, await f.run('timeout-agent'), 'parent-timeout');
 });
 
 test('[launch-failure-cleanup] brief delivery failure cleans its own launch', async t => {
-  const f = await fixture(t, 'delivery', failureBudget);
+  const f = await fixture(t, 'delivery', failureBudget, 'codex', { productionQa: true });
   await assertFailedLaunchCleaned(f, await f.run('delivery-agent'), 'delivery');
 });
 
 test('[launch-failure-cleanup] agent close without report exits 0 after confirmed closure and reports failed result', async t => {
-  const f = await fixture(t, 'close', failureBudget);
+  const f = await fixture(t, 'close', failureBudget, 'codex', { productionQa: true });
   const launched = await f.run('close-agent');
   assert.equal(launched.exitCode, 0, JSON.stringify(launched));
   const runId = JSON.parse(launched.result.stdout).runId;
@@ -58,7 +58,7 @@ test('[launch-failure-cleanup] agent close without report exits 0 after confirme
 });
 
 test('[launch-failure-cleanup] claude screen failure after Enter: the delivery cause leads the error, a runner that exits after its hangup delay is confirmed dead and claims are released', async t => {
-  const f = await fixture(t, 'claude-unknown-after-enter', failureBudget, 'claude');
+  const f = await fixture(t, 'claude-unknown-after-enter', failureBudget, 'claude', { productionQa: true });
   const outcome = await f.run('claude-screen-agent');
   const failure = JSON.parse(outcome.result.stderr);
   const message = String(failure.message);

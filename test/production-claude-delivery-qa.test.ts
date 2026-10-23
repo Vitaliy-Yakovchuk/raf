@@ -3,9 +3,8 @@ import { spawnSync } from 'node:child_process';
 import { chmod, readFile, writeFile } from 'node:fs/promises';
 import { delimiter, dirname, join } from 'node:path';
 import { realpathSync } from 'node:fs';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { test, type TestContext } from 'node:test';
-import { createProductionServices } from '../src/production-runtime.ts';
 import { launchPersistentWrapper } from '../src/launch-wrapper.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
 import type { RuntimeConfiguration, RuntimeLaunch } from '../src/app-runtime.ts';
@@ -13,7 +12,6 @@ import type { LaunchWrapperRequest } from '../src/launch-wrapper.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
 import { configuration as codexConfiguration, derivedLaunch, eventually, fixture, recordLaunchRunnerPath } from './production-fixture.ts';
 
-const runtimeUrl = pathToFileURL(fileURLToPath(new URL('../src/production-runtime.ts', import.meta.url))).href;
 const conf = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
 const configured: ProtocolSettings | undefined = conf.runnerProtocols.find((row: ProtocolSettings) => row.runner === 'claude');
 const configuration: RuntimeConfiguration = {
@@ -30,7 +28,7 @@ const alive = (pid: number) => { try { process.kill(pid, 0); return true; } catc
 type LiveMode = 'live' | 'live-pending-hold' | 'live-enter-lost' | 'live-finished-fast';
 async function claudeFixture(t: TestContext, mode: 'accepted' | 'trust' | 'status-mismatch' | 'startup-banner' | 'startup-stuck' | 'startup-unknown' | LiveMode, type = 'implement') {
   assert.ok(configured, 'conf/raf.json#/runnerProtocols must define the claude protocol');
-  const f = await fixture(t);
+  const f = await fixture(t, { productionQa: true });
   const runId = 'claude-fixture-run';
   const address = f.params.id;
   const tmuxSession = 'raf-claude-fixture';
@@ -142,7 +140,7 @@ setTimeout(() => process.exit(91), 20000);
   const selection = { runner: 'claude' as const, model: 'claude-opus', effort: 'high' };
   const request: LaunchWrapperRequest = { tmpRoot: f.tmpRoot, runId, address, assignment: f.assignment, statePath: f.statePath, cwd, tmuxSession, selection, brief, readinessTimeoutMs: settings.timeouts.startupMs };
   const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type, project: 'raf', features: f.params.features, phase: type, cwd }, assignment: f.assignment, selection: { status: 'selected', ...selection, reason: 'synthetic claude fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const { task, launch: derived } = await derivedLaunch(services, f, runtimeLaunch, { ...f.params, type, phase: type });
   const prepared = await services.prepareReport(derived);
   const reservation = await services.reserve({ ...derived, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
@@ -153,7 +151,7 @@ setTimeout(() => process.exit(91), 20000);
   const wrapperPidPath = join(f.root, 'wrapper.pid');
   f.trackPidFile(wrapperPidPath);
   const launch = async () => {
-    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
+    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(f.runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
     f.trackProcess(started.wrapperPid);
     f.trackProcess(started.identity.pid);
     return started;
@@ -201,7 +199,7 @@ test('[claude-delivery-qa] executor launch edits its workspace by a path-scoped 
   assert.deepEqual(settings.sandbox.filesystem.allowRead, [report]);
   assert.deepEqual(settings.env, { TMUX_TMPDIR: report, TMUX: '' });
   assert.equal(settings.sandbox.allowUnsandboxedCommands, false);
-  const raf = `node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}`;
+  const raf = `node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', f.runtimeUrl)))}`;
   assert.deepEqual(settings.sandbox.excludedCommands, [`${raf} agent message:*`, `${raf} agent ps:*`], 'an executor runs only raf message and ps outside its sandbox');
 });
 
@@ -209,7 +207,7 @@ test('[claude-delivery-qa] coordinator launch runs only the exact raf command of
   const f = await claudeFixture(t, 'accepted', 'coordinator');
   await f.launch();
   const settings = sandboxOf(JSON.parse(await readFile(f.argvPath, 'utf8')));
-  assert.deepEqual(settings.sandbox.excludedCommands, [`node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', import.meta.url)))}:*`]);
+  assert.deepEqual(settings.sandbox.excludedCommands, [`node ${realpathSync(fileURLToPath(new URL('../bin/raf.ts', f.runtimeUrl)))}:*`]);
   assert.ok(settings.sandbox.filesystem.denyRead.includes(realpathSync(dirname(f.statePath))), 'raf state stays hidden from sandboxed coordinator commands');
 });
 

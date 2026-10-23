@@ -2,9 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { chmod, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { basename, delimiter, dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test, type TestContext } from 'node:test';
-import { createProductionServices } from '../src/production-runtime.ts';
 import { launchPersistentWrapper } from '../src/launch-wrapper.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
 import type { RuntimeConfiguration, RuntimeLaunch } from '../src/app-runtime.ts';
@@ -15,7 +13,6 @@ import { configuration as codexConfiguration, derivedLaunch, eventually, fixture
 type Runner = 'codex' | 'claude';
 type Placement = 'registered' | 'unregistered' | 'outside-symlink' | 'subdirectory';
 
-const runtimeUrl = pathToFileURL(fileURLToPath(new URL('../src/production-runtime.ts', import.meta.url))).href;
 const conf = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
 const configured = (runner: Runner): ProtocolSettings => {
   const rows = conf.runnerProtocols.filter((row: ProtocolSettings) => row.runner === runner);
@@ -116,7 +113,7 @@ setTimeout(() => process.exit(91), 20000);
 `;
 
 async function trustFixture(t: TestContext, runner: Runner, placement: Placement, sticky = false) {
-  const f = await fixture(t);
+  const f = await fixture(t, { productionQa: true });
   const base = configured(runner);
   const settings: ProtocolSettings = { ...base, timeouts: { ...base.timeouts, startupMs: 5000, transitionMs: 5000, overallMs: 15000, pollMs: 30 } };
   await writeFile(join(f.confRoot, 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'isolated.sqlite' }, commandTiming: configuration.commandTiming, runnerProtocols: [settings] }));
@@ -148,7 +145,7 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
   const brief = ['WORKSPACE_TRUST_QA', ...Array.from({ length: 12 }, (_, index) => `Рядок доручення ${index}`), 'BRIEF_END'].join('\n');
   const request: LaunchWrapperRequest = { tmpRoot: f.tmpRoot, runId, address, assignment: f.assignment, statePath: f.statePath, cwd, tmuxSession, selection, brief, readinessTimeoutMs: settings.timeouts.startupMs };
   const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd }, assignment: f.assignment, selection: { status: 'selected', ...selection, reason: 'synthetic workspace trust fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const { task, launch: derived } = await derivedLaunch(services, f, runtimeLaunch);
   const prepared = await services.prepareReport(derived);
   const reservation = await services.reserve({ ...derived, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
@@ -159,7 +156,7 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
   const wrapperPidPath = join(f.root, 'wrapper.pid');
   f.trackPidFile(wrapperPidPath);
   const launch = async () => {
-    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
+    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(f.runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
     f.trackProcess(started.wrapperPid);
     f.trackProcess(started.identity.pid);
     return started;

@@ -24,7 +24,7 @@ const live = (f: AgentRunFixture, id: string) => {
 const occurrences = (text: string, needle: string) => text.split(needle).length - 1;
 
 test('[result-notice-run] agent run rejects --notify with an unknown or closed agent ID before creating a session', { timeout: 120_000 }, async t => {
-  const f = await fixture(t, 'notify-invalid', timeouts, 'codex', { tasks: 2 });
+  const f = await fixture(t, 'notify-invalid', timeouts, 'codex', { productionQa: true, tasks: 2 });
   const store = openStateStore(join(f.directory, 'home', '.raf', 'state.sqlite'));
   try {
     store.sessionRepository.transaction(tx => tx.putSession({
@@ -47,7 +47,7 @@ test('[result-notice-run] agent run rejects --notify with an unknown or closed a
 });
 
 test('[result-notice-run] accepted report of a --notify launch reaches only the named live agent without polling', { timeout: 180_000 }, async t => {
-  const f = await fixture(t, 'notify-result', timeouts, 'codex', { tasks: 3 });
+  const f = await fixture(t, 'notify-result', timeouts, 'codex', { productionQa: true, tasks: 3 });
   for (const [id, task] of [['observer', '1.1'], ['bystander', '1.2']] as const) {
     const outcome = await f.run(id, 'implement', [task]);
     assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));

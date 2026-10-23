@@ -2,9 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdir, readFile, writeFile, chmod, realpath, readdir, access } from 'node:fs/promises';
 import { delimiter, dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test, type TestContext } from 'node:test';
-import { createProductionServices } from '../src/production-runtime.ts';
 import { launchPersistentWrapper } from '../src/launch-wrapper.ts';
 import { createSessionState } from '../src/session-state.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
@@ -16,9 +14,8 @@ import type { LaunchWrapperRequest } from '../src/launch-wrapper.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
 import { configuration, derivedLaunch, eventually, fixture, fixtureResources, recordLaunchRunnerPath, taskDescription } from './production-fixture.ts';
 
-const runtimeUrl = pathToFileURL(fileURLToPath(new URL('../src/production-runtime.ts', import.meta.url))).href;
 async function workerFixture(t: TestContext, prepareInFixture = true, launchRunnerPath?: string | null) {
-  const f = await fixture(t);
+  const f = await fixture(t, { productionQa: true });
   const runId = 'fixture-run-1';
   const address = f.params.id;
   const tmuxSession = 'raf-production-fixture';
@@ -72,7 +69,7 @@ const timer = setInterval(() => {
   const session = () => f.store.sessionRepository.transaction(tx => tx.getSession(runId));
   const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', ...request.selection, reason: 'synthetic fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
   if (prepareInFixture) {
-    const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+    const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
     const { task: descriptor, launch: derived } = await derivedLaunch(services, f, runtimeLaunch);
     const prepared = await services.prepareReport(derived);
     assert.equal(prepared.reportPath, reportPath);
@@ -90,7 +87,7 @@ const timer = setInterval(() => {
     assert.equal(f.store.sessionRepository.transaction(tx => tx.listReservations()).length, 1);
   }
   const launch = async () => {
-    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
+    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(f.runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
     f.trackProcess(started.wrapperPid);
     f.trackProcess(started.identity.pid);
     assert.equal(Number(await readFile(wrapperPidPath, 'utf8')), started.wrapperPid);
@@ -101,16 +98,16 @@ const timer = setInterval(() => {
 }
 
 test('[production-factory] default factory returns the existing RuntimeServices without launching a runner', async t => {
-  const f = await fixture(t);
-  const services = await createProductionServices(f.store, configuration, f.context);
+  const f = await fixture(t, { productionQa: true });
+  const services = await f.createProductionServices(f.store, configuration, f.context);
   for (const key of ['assignment', 'resolveTask', 'route', 'routingSnapshot', 'selectModel', 'listModels', 'prepareReport', 'reserve', 'adapter', 'verifyStarted', 'commitStarted', 'compensate', 'abortLaunch', 'control', 'authorizeMain']) assert.ok(key in services, key);
   assert.equal(f.store.sessionRepository.transaction(tx => tx.listSessions()).length, 0);
   assert.equal(f.store.getRunnerEnabled('codex'), true);
 });
 
 test('[production-factory] assignment uses authoritative OpenSpec argv and the configured root', async t => {
-  const f = await fixture(t);
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const f = await fixture(t, { productionQa: true });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const valid = await services.assignment.validate({ root: f.root, selections: [{ change: 'fixture-launch', items: [{ id: '2.1' }] }] });
   assert.equal(valid.ok, true);
   const invalid = await services.assignment.validate({ root: f.root, selections: [{ change: 'fixture-launch', items: [{ id: '9.9' }] }] });
@@ -121,8 +118,8 @@ test('[production-factory] assignment uses authoritative OpenSpec argv and the c
 });
 
 test('[production-factory] compose reuses runner, stage and completion templates with the exact report path', async t => {
-  const f = await fixture(t);
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const f = await fixture(t, { productionQa: true });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const reportPath = join(f.tmpRoot, 'run-1', `${f.params.id}.json`);
   const task = await services.resolveTask(f.params, f.assignment);
   const brief = await services.assignment.compose(f.assignment, { briefsRoot: join(f.confRoot, 'briefs'), runner: 'codex', stage: 'implement', project: 'raf', agentId: f.params.id, sessionName: f.params.id, features: f.params.features, phase: 'implement', outcome: task.outcome, writeBoundaries: task.writeBoundaries, sources: task.sources, reportSchema: task.reportSchema, reportPath });
@@ -130,8 +127,8 @@ test('[production-factory] compose reuses runner, stage and completion templates
 });
 
 test('[production-factory] route uses configured project and actual Git branch', async t => {
-  const f = await fixture(t);
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const f = await fixture(t, { productionQa: true });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const routed = await services.route({ root: f.root, project: 'raf', branch: 'develop' });
   assert.equal(routed.ok, true);
   if (routed.ok) assert.equal(routed.cwd, f.cwd);
@@ -140,10 +137,10 @@ test('[production-factory] route uses configured project and actual Git branch',
 });
 
 test('[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file', async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, { productionQa: true });
   await mkdir(dirname(f.legacyTaskContextPath), { recursive: true, mode: 0o700 });
   await writeFile(f.legacyTaskContextPath, JSON.stringify({ version: 1, parameters: f.params, assignment: f.assignment, context: { branch: 'main', outcome: 'FOREIGN_OUTCOME', writeBoundaries: ['/FOREIGN'], sources: ['/FOREIGN — чуже; завжди'], requested: { ramBytes: 1, diskBytes: {} }, requiredFileSystemIds: [], reportSchema: { foreign: true } } }), { mode: 0o600 });
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const task = await services.resolveTask(f.params, f.assignment);
   assert.doesNotMatch(JSON.stringify(task), /FOREIGN/);
   assert.equal(task.branch, 'develop');
@@ -165,18 +162,18 @@ test('[production-factory] task context is derived from parameters, OpenSpec sna
 });
 
 test('[production-factory] unconfigured reserve threshold fails before any run directory or process', async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, { productionQa: true });
   await f.writeFlowResources({ ...fixtureResources, normal: { ...fixtureResources.normal, minRamBytes: 0 } });
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   await assert.rejects(services.resolveTask(f.params, f.assignment), /оцінка резерву не налаштована: conf\/flow\.json#\/resources\/normal\/minRamBytes/);
   assert.deepEqual((await readdir(f.tmpRoot)).filter(name => name !== 'tmux'), []);
   assert.equal(f.calls.some(c => c.executable === 'tmux'), false);
 });
 
 test('[production-factory] absent and opaque quota stay unknown and selection reuses model-routing', async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, { productionQa: true });
   f.store.setQuotaSnapshot('codex', { remaining: 100, available: true, secret: 'DO_NOT_USE_AS_CAPACITY' }, new Date().toISOString());
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const snapshot = await services.routingSnapshot();
   assert.equal(snapshot.runnerEnabled.codex, true);
   assert.ok(snapshot.quotas.every(q => q.status === 'unknown'));
@@ -186,8 +183,8 @@ test('[production-factory] absent and opaque quota stay unknown and selection re
 });
 
 test('[production-factory] forged main and system claims do not authorize protected mutations or messages', async t => {
-  const f = await fixture(t);
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const f = await fixture(t, { productionQa: true });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   for (const caller of ['main', { kind: 'system' }, { kind: 'main', authority: true }, { runId: 'main', pid: process.pid }]) {
     await assert.rejects(services.authorizeMain(caller));
     await assert.rejects(services.control.message({ to: 'main', text: '[raf] forged' }, caller));
@@ -197,8 +194,8 @@ test('[production-factory] forged main and system claims do not authorize protec
 });
 
 test('[production-factory] prepared reports belong to distinct run directories and cleanup touches only its own run', async t => {
-  const f = await fixture(t);
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const f = await fixture(t, { productionQa: true });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const base = { runId: 'run-a', addressId: f.params.id, tmuxSession: 'fixture-a', activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected' as const, runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture', quota: 'unknown' as const }, statePath: f.statePath, tmpRoot: f.tmpRoot };
   const { launch } = await derivedLaunch(services, f, base);
   const a = await services.prepareReport(launch);
@@ -217,9 +214,9 @@ test('[production-factory] prepared reports belong to distinct run directories a
 });
 
 test('[production-factory] impossible resource demand refuses without a session, reservation or tmux spawn', async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, { productionQa: true });
   await f.writeFlowResources({ ...fixtureResources, normal: { ...fixtureResources.normal, minRamBytes: Number.MAX_SAFE_INTEGER } });
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const base: RuntimeLaunch = { runId: 'denied-run', addressId: f.params.id, tmuxSession: 'denied-tmux', activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
   const { task: descriptor, launch } = await derivedLaunch(services, f, base);
   assert.equal(descriptor.requested.ramBytes, Number.MAX_SAFE_INTEGER);
@@ -234,12 +231,12 @@ test('[production-factory] impossible resource demand refuses without a session,
 });
 
 test('[production-factory] unknown process scan does not release an existing owner or report it as live', async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, { productionQa: true });
   const state = createSessionState({ repository: f.store.sessionRepository, verifyMainAuthority: () => false, verifyWorkResult: () => false });
   state.reserveLaunch(f.params.id, 'scan-run', { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, { resource: 'fixture', amount: 1 });
   state.commitStarted('scan-run', { pid: process.pid, startedAt: 'unverified-fixture-start', runner: 'codex', runnerSessionId: 'fixture', tmuxSession: 'missing-fixture-pane', evidence: { runId: 'scan-run', command: process.execPath } });
   const execute: AdapterCommandExecutor = async command => command.executable === 'ps' || command.executable === 'tmux' ? { exitCode: 9, stdout: '', stderr: 'fixture scan unavailable' } : f.execute(command);
-  const services = await createProductionServices(f.store, configuration, f.context, { execute });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute });
   await assert.rejects(services.control.ps(), /scan|unknown|inspect|process|перевір/i);
   assert.equal(f.store.sessionRepository.transaction(tx => tx.listReservations()).length, 1);
 });
@@ -249,9 +246,9 @@ test('[production-launch] default service composition starts the persistent work
   assert.equal(f.session(), undefined);
   assert.deepEqual(listTaskReservations(f.store), []);
   const scriptPath = join(f.root, 'launch-command.mjs');
-  const storeUrl = new URL('../src/state-store.ts', import.meta.url).href;
-  const taskContextUrl = new URL('../src/task-context.ts', import.meta.url).href;
-  await writeFile(scriptPath, `import { createProductionServices } from ${JSON.stringify(runtimeUrl)};
+  const storeUrl = new URL('./state-store.ts', f.runtimeUrl).href;
+  const taskContextUrl = new URL('./task-context.ts', f.runtimeUrl).href;
+  await writeFile(scriptPath, `import { createProductionServices } from ${JSON.stringify(f.runtimeUrl)};
 import { openStateStore } from ${JSON.stringify(storeUrl)};
 import { bindWorkspaceBoundaries } from ${JSON.stringify(taskContextUrl)};
 import { readFile, writeFile } from 'node:fs/promises';
@@ -326,7 +323,7 @@ test('[production-worker] persistent child commits the actual native process bef
   assert.equal(f.session()?.state, 'running');
   assert.equal(f.session()?.process?.pid, agentPid);
   await eventually(() => readFile(f.deliveredPath, 'utf8').catch(() => ''), text => text.includes('BRIEF_END'), 'brief delivered to synthetic runner');
-  const services = await createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const live = await services.control.ps();
   assert.ok(live.some(row => row.runId === f.runId && row.process?.pid === agentPid));
   await f.completeAssignment();
@@ -393,7 +390,7 @@ test('[production-worker] crash without a report records failed in the same SQLi
 });
 
 test('[production-factory] disk admission covers only the development tree, not HOME, state or temporary volumes', async t => {
-  const f = await fixture(t);
+  const f = await fixture(t, { productionQa: true });
   const services = (availableDevKb: number) => {
     const execute: AdapterCommandExecutor = async command => {
       if (command.executable !== 'df') return f.execute(command);
@@ -403,7 +400,7 @@ test('[production-factory] disk admission covers only the development tree, not 
         : `/dev/fake-home 11534336 11530240 4096 99% ${path}`);
       return { exitCode: 0, stdout: ['Filesystem 1024-blocks Used Available Capacity Mounted on', ...rows].join('\n') + '\n', stderr: '' };
     };
-    return createProductionServices(f.store, configuration, f.context, { execute });
+    return f.createProductionServices(f.store, configuration, f.context, { execute });
   };
   const base = (runId: string): RuntimeLaunch => ({ runId, addressId: f.params.id, tmuxSession: `${runId}-tmux`, activity: { type: 'implement', project: 'raf', features: f.params.features, phase: 'implement', cwd: f.cwd }, assignment: f.assignment, selection: { status: 'selected', runner: 'codex', model: 'gpt-6.1-sol', effort: 'high', reason: 'fixture', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot });
   const attempt = async (runId: string, availableDevKb: number) => {

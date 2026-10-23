@@ -162,11 +162,12 @@ else process.exit(result.status ?? 1);
   store.initializeRunners(configuration.models.runners);
   const context: RuntimeContext = { orchestratorRoot: root, confRoot, artifactPath: join(root, 'catalog.json'), statePath, tmpRoot, mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined };
   let createServices = createProductionServices;
+  let runtimeUrl = new URL('../src/production-runtime.ts', import.meta.url).href;
   if (options.productionQa) {
     const projects = JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
     await writeFile(join(confRoot, 'projects.json'), JSON.stringify(projects));
     await prepareProductionQaFixture(t, { root, home });
-    const runtimeUrl = pathToFileURL(join(root, projects.projects.raf.branchPaths.develop, 'src', 'production-runtime.ts')).href;
+    runtimeUrl = pathToFileURL(join(root, projects.projects.raf.branchPaths.develop, 'src', 'production-runtime.ts')).href;
     createServices = (await import(runtimeUrl) as typeof import('../src/production-runtime.ts')).createProductionServices;
   }
   const services = await createServices(store, configuration, context, { execute });
@@ -183,7 +184,7 @@ else process.exit(result.status ?? 1);
     await rename(staging, tasksPath);
     assert.equal(await readFile(tasksPath, 'utf8'), completed);
   };
-  return { root, confRoot, home, cwd, tmpRoot, statePath, binRoot, context, store, assignment, params, changeRoot, tasksPath, questionsPath, flowPath, writeFlowResources, legacyTaskContextPath, execute, calls, completeAssignment, cliCalls, openspecPath, socket, realTmuxPath, realOpenSpecPath, trackProcess, trackPidFile };
+  return { root, confRoot, home, cwd, tmpRoot, statePath, binRoot, context, store, createProductionServices: createServices, runtimeUrl, assignment, params, changeRoot, tasksPath, questionsPath, flowPath, writeFlowResources, legacyTaskContextPath, execute, calls, completeAssignment, cliCalls, openspecPath, socket, realTmuxPath, realOpenSpecPath, trackProcess, trackPidFile };
 }
 
 export type ProductionFixture = Awaited<ReturnType<typeof fixture>>;

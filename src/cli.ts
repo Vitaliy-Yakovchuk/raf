@@ -21,6 +21,7 @@ export interface CommandFailureContext {
   retrySafe: boolean | null;
   remediation: readonly string[];
   secrets?: readonly string[];
+  admission?: import('./admission-snapshot.ts').AdmissionSnapshot | null;
 }
 
 const failures = new WeakMap<Error, CommandFailureContext>();
@@ -66,7 +67,7 @@ export async function execute(
     exitCode: 1, stdout: '', stderr: JSON.stringify(redactDiagnostic({ code, message, details: {
       command: null, stage: 'arguments', source: 'cli', sourceCode: null,
       reason: message, received: null, expected: null, found: null,
-      completed: [], pending: [], retrySafe: true, ...details,
+      completed: [], pending: [], retrySafe: true, ...(details.command === 'agent run' ? { admission: null } : {}), ...details,
     }, remediation: [...(remediation.length ? remediation : [typeof details.example === 'string' ? `Виправте виклик: ${details.example}` : details.stage === 'handler' ? 'Перевірте фактичний стан операції перед повторним викликом.' : 'Перевірте параметри та доступність команди за довідкою.']), `raf help${typeof details.command === 'string' && details.command ? ` ${details.command}` : ''}`] }, secrets)),
   });
   const helpRequested = argv[0] === 'help' || argv.includes('--help') || argv.length === 0;

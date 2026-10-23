@@ -9,6 +9,7 @@ import type { WorkspaceRouteRequest, WorkspaceRouteResult } from './workspace-ro
 import type { ModelCatalog, ModelRequest, ModelSelection, ModelAvailability, RoutingSnapshot } from './model-routing.ts';
 import type { AdapterStartRequest, AdapterSession, ReportWrapper } from './agent-adapters.ts';
 import type { DeliveryReceipt, CloseResult, MainAttachment } from './agent-control.ts';
+import type { AdmissionSnapshot } from './admission-snapshot.ts';
 import type { ResourceReservation } from './resource-admission.ts';
 import { validateQuotaRunners, type CollectionResult } from './quota-collection.ts';
 import type { RunnerId } from './runner-protocols.ts';
@@ -89,7 +90,7 @@ export interface RuntimeServices {
   selectModel(catalog: ModelCatalog, snapshot: RoutingSnapshot, request: ModelRequest): ModelSelection;
   listModels(catalog: ModelCatalog, snapshot: RoutingSnapshot): ModelAvailability[];
   prepareReport(launch: RuntimeLaunch): Promise<PreparedRuntimeReport>;
-  reserve(input: RuntimeLaunch & { reportPath: string; requested: ResourceReservation; requiredFileSystemIds: string[] }): Promise<{ admitted: true } | { admitted: false; reason: string }>;
+  reserve(input: RuntimeLaunch & { reportPath: string; requested: ResourceReservation; requiredFileSystemIds: string[] }): Promise<{ admitted: true; admission?: AdmissionSnapshot | null } | { admitted: false; reason: string; admission?: AdmissionSnapshot | null }>;
   adapter: { start(request: AdapterStartRequest): Promise<AdapterSession> };
   verifyStarted(launch: RuntimeLaunch, session: AdapterSession): Promise<ProcessIdentity>;
   commitStarted(runId: string, identity: ProcessIdentity): Promise<boolean>;
@@ -161,7 +162,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
   let closed = false;
   const fail = (code: string, stage: string, reason: string, facts: Partial<CommandFailureContext> = {}) => commandFailure({
     code, message: reason, stage, source: 'app-runtime', sourceCode: null, reason,
-    received: null, expected: null, found: null, completed: [], pending: [], retrySafe: true,
+    received: null, expected: null, found: null, completed: [], pending: [], retrySafe: true, admission: null,
     remediation: ['Виправте причину та повторіть команду.'], ...facts,
   });
   const describe = (error: unknown) => error instanceof Error ? error.message : String(error);
@@ -239,6 +240,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       let reserved = false;
       let startAttempted = false;
       let stage = 'report';
+      let admissionSnapshot: AdmissionSnapshot | null = null;
       try {
         prepared = await api.prepareReport(launch);
         stage = 'brief';
@@ -252,7 +254,8 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         if (hotfix) brief += `\nHotfix raf: постійне спільне дерево ${route.cwd}, гілка hotfix, спільний індекс і HEAD; main включений до baseCommit ${route.hotfix?.baseCommit}. Кожен виконавець комітить лише власні явні шляхи; спільні файли та staged hunks узгоджуй через agent message за projects/orchestrator/parallel-development. Чужий index.lock очікуй, не видаляй. Коміт не активує main; push і активацію виконує лише main за окремими повноваженнями. Код hotfix запускай лише з ізольованим QA HOME. Коміт коду виконай довіреним портом: node ${join(context.tmpRoot, launch.runId, 'hotfix-commit.mjs')} --message <повідомлення> <власні відносні шляхи>. Cleanup прибирає лише власний запуск, спільне raf-hotfix зберігається.\n`;
         stage = 'reservation';
         const admission = await api.reserve({ ...launch, reportPath: prepared.reportPath, requested: task.requested, requiredFileSystemIds: [...task.requiredFileSystemIds] });
-        if (!admission.admitted) throw fail('RESOURCE_UNAVAILABLE', stage, admission.reason);
+        admissionSnapshot = admission.admission ?? null;
+        if (!admission.admitted) throw fail('RESOURCE_UNAVAILABLE', stage, admission.reason, { admission: admissionSnapshot });
         reserved = true;
         stage = 'start';
         startAttempted = true;
@@ -262,7 +265,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         stage = 'commit';
         if (!await api.commitStarted(launch.runId, identity)) throw fail('START_COMMIT_CONFLICT', stage, 'Started process could not be committed');
         return { runId: launch.runId, addressId: launch.addressId, tmuxSession: launch.tmuxSession,
-          cwd: route.cwd, ...selection, status: 'running', selection, process: identity, reportPath: prepared.reportPath, warnings: [...new Set(session.warnings ?? [])] };
+          cwd: route.cwd, admission: admissionSnapshot, ...selection, status: 'running', selection, process: identity, reportPath: prepared.reportPath, warnings: [...new Set(session.warnings ?? [])] };
       } catch (error) {
         let safe = !startAttempted;
         const pending: string[] = [];
@@ -281,7 +284,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         const supplied = failureContext(error);
         throw fail(supplied?.code ?? 'LAUNCH_FAILED', stage, supplied?.reason ?? describe(error), {
           ...supplied, message: `${supplied?.message ?? describe(error)} (runId: ${launch.runId})`, received: { runId: launch.runId, ...(supplied?.received ? { input: supplied.received } : {}) },
-          completed: reserved ? ['reservation'] : [], pending, retrySafe: safe,
+          completed: reserved ? ['reservation'] : [], pending, retrySafe: safe, admission: admissionSnapshot,
         });
       }
     },

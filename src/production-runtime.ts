@@ -32,7 +32,9 @@ import { createSessionState, closeSessionInTransaction, type ProcessIdentity, ty
 import { AgentControlService, MainAttachedElsewhereError, type VerifiedSender, type ActivityEvent, type MainAttachment } from './agent-control.ts';
 import { ReminderService, type SessionEnd } from './reminders.ts';
 import { loadEventCatalog } from './event-catalog.ts';
-import { evaluateResourceAdmission } from './resource-admission.ts';
+import { evaluateResourceAdmission, type ResourceAdmission, type ResourceAdmissionInput } from './resource-admission.ts';
+import { buildAdmissionSnapshot, type AdmissionSnapshot } from './admission-snapshot.ts';
+import { loadFlowPolicy, type FlowPolicy } from './flow-policy.ts';
 import { deriveResourceAdmissionVolumes } from './home-disk-admission.ts';
 import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
 import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership, type PersistentWrapperFailure } from './launch-wrapper.ts';
@@ -820,6 +822,7 @@ export async function createProductionServices(
   options: {
     execute?: AdapterCommandExecutor;
     loadAverage1m?: () => number;
+    admissionQueueId?: (identity: { stateDomain: string; machineId: string }) => string;
     protocolSettings?: readonly ProtocolSettings[];
     workerModulePath?: string;
   } = {},
@@ -940,21 +943,47 @@ export async function createProductionServices(
       const paths = [...new Set(Object.values(volumePaths))];
       const resourceSnapshot = await measureResources(paths, boot.machineId, execute, options.loadAverage1m ?? (() => loadavg()[0]));
       const { requiredFileSystemIds, homeFileSystemId, reasons } = deriveResourceAdmissionVolumes(volumePaths, resourceSnapshot.fileSystemByPath);
-      if (reasons.length) return { admitted: false, reason: reasons.join('; ') };
+      const requestedTier = input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const;
+      const queueId = options.admissionQueueId?.({ stateDomain: await fs.realpath(context.statePath), machineId: boot.machineId }) ?? '';
+      let policy: FlowPolicy | null = null;
+      try { policy = loadFlowPolicy(join(context.confRoot, 'flow.json')); }
+      catch (error) { reasons.push(error instanceof Error ? error.message : String(error)); }
+      const unavailable = (reason: string, sources: string[] = []) => {
+        const admission = buildAdmissionSnapshot({ input: { measurement: resourceSnapshot.measurement, requested: null, unusedReservations: [], requiredFileSystemIds, homeFileSystemId,
+          estimate: { status: 'UNKNOWN', sources, reason } }, policy, requestedTier, queueId });
+        return { admitted: false as const, reason: admission.reasons.join('; '), admission };
+      };
+      if (reasons.length) return unavailable(reasons.join('; '));
       const taskConfiguration = await loadTaskContextConfiguration(context.confRoot);
       const resolution = resolveAgentResourceEstimate({
         flow: { resourceEstimates: taskConfiguration.resourceEstimates }, type: input.activity.type, project: input.activity.project,
         tasks: input.assignment.changes.flatMap(change => change.items.map(item => ({ project: input.activity.project, change: change.id, item: item.id }))),
         fileSystemIds: requiredFileSystemIds,
       });
-      if (resolution.status === 'UNKNOWN') return { admitted: false, reason: resolution.reason };
+      if (resolution.status === 'UNKNOWN') return unavailable(resolution.reason, resolution.sources);
       const requested = resolution.reservation;
       const estimate = { status: 'KNOWN' as const, sources: resolution.sources, reason: null };
       const candidates = tools.state.listReconciliationCandidates().filter(session => session.process);
       const observed = await observeProcesses(candidates.map(session => session.process!), { execute });
       const measured = { measurement: resourceSnapshot.measurement, observedProcesses: candidates.flatMap((session, index) => observed[index].state === 'alive' ? [{ runId: session.runId, identity: session.process! }] : []) };
-      const admission = store.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, { requested, requiredFileSystemIds, homeFileSystemId, estimate }, measured, evaluateResourceAdmission), 'read');
-      if (!admission.allowed[input.activity.type === 'hotfix' ? 'hotfix' : 'normal']) return { admitted: false, reason: admission.reasons.join('; ') };
+      let admissionSnapshot: AdmissionSnapshot | undefined;
+      const evaluate = (value: ResourceAdmissionInput): ResourceAdmission => {
+        admissionSnapshot = buildAdmissionSnapshot({ input: { ...value, estimate }, policy, requestedTier, queueId });
+        return { level: admissionSnapshot.level, allowed: {
+          normal: admissionSnapshot.level === 'ANY_RUN',
+          hotfix: admissionSnapshot.level === 'ANY_RUN' || admissionSnapshot.level === 'HOTFIX_ONLY',
+        }, reasons: admissionSnapshot.reasons, measurement: value.measurement, remaining: admissionSnapshot.remaining, estimate };
+      };
+      const synchronize = (decision: ResourceAdmission) => {
+        if (!admissionSnapshot || decision.level === 'UNKNOWN' && admissionSnapshot.level !== 'UNKNOWN') {
+          admissionSnapshot = buildAdmissionSnapshot({ input: { measurement: measured.measurement, requested, unusedReservations: [], requiredFileSystemIds, homeFileSystemId,
+            estimate: { status: 'UNKNOWN', sources: estimate.sources, reason: decision.reasons.join('; ') } }, policy, requestedTier, queueId });
+        }
+        return admissionSnapshot;
+      };
+      const admission = store.sessionRepository.transaction(tx => evaluateLaunchAdmissionInTransaction(tx, { requested, requiredFileSystemIds, homeFileSystemId, estimate }, measured, evaluate), 'read');
+      synchronize(admission);
+      if (!admission.allowed[requestedTier]) return { admitted: false, reason: admission.reasons.join('; '), admission: admissionSnapshot! };
       const record = prepared.get(input.tmuxSession);
       if (!record || record.reportPath !== input.reportPath || input.assignment.root !== context.orchestratorRoot || !isDeepStrictEqual(record.launch.assignment, input.assignment) || !isDeepStrictEqual(record.launch.writeBoundaries ?? [], input.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Prepared launch context mismatch');
       const identityAdapter = createAssignmentIdentityAdapter({ [input.activity.project]: context.orchestratorRoot }, options.execute ? { execute: options.execute } : {});
@@ -972,7 +1001,8 @@ export async function createProductionServices(
             const target = tx.getSession(input.notify.runId);
             if (target?.state !== 'running' || target.addressId !== input.notify.addressId) fail(NOTIFY_TARGET_INVALID, `Notify target is no longer active: ${input.notify.addressId}`);
           }
-          const result = reserveLaunchInTransaction(tx, request, measured, evaluateResourceAdmission);
+          const result = reserveLaunchInTransaction(tx, request, measured, evaluate);
+          synchronize(result.admission);
           if (!result.reserved) { admissionReason = result.admission.reasons.join('; '); throw new Error('RESOURCE_UNAVAILABLE'); }
           if (input.activity.phase === 'context-review') {
             const review = reserveStartupContextReview({ runId: input.runId, phase: 'context-review', brief: '' }, { database: store.startupContextDatabase });
@@ -988,8 +1018,8 @@ export async function createProductionServices(
           return session;
         }, resolveDelegator: async () => caller });
         if (!claimed.reserved) fail('TASK_RESERVED', JSON.stringify(claimed.conflicts));
-        return { admitted: true };
-      } catch (error) { if (admissionReason) return { admitted: false, reason: admissionReason }; throw error; }
+        return { admitted: true, admission: admissionSnapshot! };
+      } catch (error) { if (admissionReason) return { admitted: false, reason: admissionReason, admission: admissionSnapshot! }; throw error; }
     },
     adapter: { start: async request => {
       const selection = { runner: request.selection.runner, model: request.selection.model, effort: request.selection.effort };

@@ -173,7 +173,8 @@ async function acceptReport(f: AgentRunFixture, session: SessionRecord, status: 
     const expected = before!.replace(`- [ ] 1.1 ${description}`, `- [x] 1.1 ${description}`);
     assert.equal(await f.git('show', `HEAD:${tasksFile}`), expected, 'raf commits the exact assigned checkbox');
     assert.equal(await fs.readFile(join(session.launchContext!.assignment.root, tasksFile), 'utf8'), expected);
-    assert.equal(await f.git('show', `:${tasksFile}`), indexBefore, 'raf preserves the real index bytes while advancing HEAD');
+    assert.equal(await f.git('show', `:${tasksFile}`), expected, 'a task index matching the previous HEAD follows the committed checkbox');
+    assert.equal(await f.git('diff', '--cached', 'HEAD', '--', tasksFile), '', 'the checkbox leaves no staged reversal against the new HEAD');
     const commits = (await f.git('rev-list', `${parent}..HEAD`)).trim().split('\n');
     assert.equal(commits.length, 1, 'one raf checkbox commit precedes accepted success');
     assert.notEqual(commits[0], '');

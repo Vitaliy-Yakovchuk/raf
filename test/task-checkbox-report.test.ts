@@ -279,20 +279,23 @@ test('[checkbox-git] selecting a parent never checks its descendants', async t =
   assert.equal(await f.text(), openTasks.replace('[ ] B.2 Parent', '[x] B.2 Parent'));
 });
 
-test('[checkbox-git] staged and unstaged foreign hunks and index bytes survive exactly', async t => {
+test('[checkbox-git] foreign staged and unstaged hunks survive while the index gains the committed checkbox', async t => {
   const f = await gitFixture(t);
   await f.edit(openTasks.replace('[ ] A.10', '[x] A.10') + '  - staged executor evidence\n');
   await writeFile(join(f.root, 'other.txt'), 'foreign staged\n');
   await f.git('add', '--', f.paths[0], 'other.txt');
   await f.edit((await f.text()).replace('[ ] C.1', '[x] C.1') + '  - unstaged other author evidence\n');
   await writeFile(join(f.root, 'other.txt'), 'foreign staged\nforeign unstaged\n');
-  const indexBefore = await readFile(join(f.root, '.git/index'));
-  const stagedBefore = await f.git('diff', '--cached', f.baseline, '--', f.paths[0], 'other.txt');
+  const indexedTasksBefore = await f.git('show', ':' + f.paths[0]);
+  const indexedOtherBefore = await f.git('show', ':other.txt');
+  const patchContent = (diff: string) => diff.split('\n').filter(line => !line.startsWith('index ')).join('\n');
+  const stagedBefore = patchContent(await f.git('diff', '--cached', '--unified=0', 'HEAD', '--', f.paths[0], 'other.txt'));
   const treeBefore = await f.text();
   const otherBefore = await readFile(join(f.root, 'other.txt'));
   await assertCheckboxCommits(f, await f.confirm(), [['sample', 'A.1']]);
-  assert.deepEqual(await readFile(join(f.root, '.git/index')), indexBefore);
-  assert.equal(await f.git('diff', '--cached', f.baseline, '--', f.paths[0], 'other.txt'), stagedBefore);
+  assert.equal(await f.git('show', ':' + f.paths[0]), indexedTasksBefore.replace('[ ] A.1 ', '[x] A.1 '));
+  assert.equal(await f.git('show', ':other.txt'), indexedOtherBefore);
+  assert.equal(patchContent(await f.git('diff', '--cached', '--unified=0', 'HEAD', '--', f.paths[0], 'other.txt')), stagedBefore);
   assert.equal(await f.text(), treeBefore.replace('[ ] A.1 ', '[x] A.1 '));
   assert.deepEqual(await readFile(join(f.root, 'other.txt')), otherBefore);
 });

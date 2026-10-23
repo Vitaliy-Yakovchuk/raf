@@ -312,6 +312,12 @@ for (const foreignEnvironment of [false, true]) {
       await hostControl(f);
       await prepared?.cleanup();
       await prepared?.cleanup();
+      if (prepared) {
+        for (const path of prepared.policyPaths) await assert.rejects(fs.stat(path), { code: 'ENOENT' }, 'cleanup removes only own policy');
+        for (const directory of [f.workspace, f.runDirectory]) {
+          assert.deepEqual(JSON.parse(await fs.readFile(join(directory, 'result.json'), 'utf8')), { status: 'succeeded' }, 'cleanup preserves assignment results');
+        }
+      }
       await hostControl(f);
       assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listSessions()), before, 'scope/cleanup must not reconcile or mutate sessions');
     }

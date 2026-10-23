@@ -127,6 +127,7 @@ const header = '[Screen Reader Mode: on via flag]\nClaude Code v' + c.claudeVers
 const ready = "don't ask on (shift+tab to cycle)";
 const focusHint = "tmux focus-events off · add 'set -g focus-events on' to ~/.tmux.conf and\nreattach for focus tracking";
 const screen = (modeLine, input) => header + '\nyou: /status\nSettings dialog dismissed\n' + modeLine + '\n' + focusHint + '\n$' + input;
+process.stdout.write('\x1b[?2004h');
 render(header + '\n' + ready + '\neffort: high · /effort\n$');
 process.stdin.setEncoding('utf8');
 if (process.stdin.isTTY) process.stdin.setRawMode(true);
@@ -152,8 +153,19 @@ process.stdin.on('data', data => {
     rest = rest.slice(1);
     if (key !== '\r' && key !== '\n') { typed += key; if (pasted === null) render(header + '\n/status                         Show Claude Code status including version,\n$  ' + typed); continue; }
     if (pasted !== null) {
+      const submitted = pasted;
       pasted = null;
-      if (mode === 'claude-unknown-after-enter') setTimeout(() => render(header + '\nUnrecognized native dialog after submission'), 110);
+      typed = '';
+      if (mode === 'claude-unknown-after-enter') {
+        setTimeout(() => render(header + '\nUnrecognized native dialog after submission'), 110);
+        continue;
+      }
+      const offset = submitted.search(/\{\s*"project"\s*:/);
+      if (offset < 0) throw new Error('Claude mock received no assignment JSON');
+      const assignment = JSON.parse(submitted.slice(offset).trim());
+      if (!assignment.agent_id || !assignment.report_path || !assignment.assignments?.length) throw new Error('Claude mock received an incomplete brief');
+      writeFileSync(c.control + '/' + assignment.agent_id + '.brief', String(process.pid));
+      render(screen(ready + '\nWorking…', ''));
       continue;
     }
     if (typed === '/status') { panel = true; typed = ''; render(header + '\nyou: /status\nSettings  Status   Config   Usage   Stats\nVersion: ' + c.claudeVersion + '\nSession ID: ' + assigned + '\nSession kind: interactive\nEsc to cancel'); continue; }

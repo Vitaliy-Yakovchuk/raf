@@ -170,20 +170,6 @@ async function productionFixture(t: Parameters<typeof agentRunFixture>[0], runne
     await writeFile(executable, script.replaceAll('raf-synthetic-1', checked.codex));
     protocol.version = checked.codex;
     await putJson(confPath, configuration);
-  } else {
-    const script = await readFile(executable, 'utf8');
-    const pendingSubmission = "    if (pasted !== null) {\n      pasted = null;";
-    assert.equal(script.split(pendingSubmission).length, 2, 'one documented Claude mock submission branch');
-    const acceptedSubmission = String.raw`    if (pasted !== null) {
-      const submitted = pasted;
-      pasted = null;
-      const offset = submitted.search(/\{\s*"project"\s*:/);
-      if (offset < 0) throw new Error('Claude mock received no assignment JSON');
-      const assignment = JSON.parse(submitted.slice(offset).trim());
-      if (!assignment.agent_id || !assignment.report_path || !assignment.assignments?.length) throw new Error('Claude mock received an incomplete brief');
-      writeFileSync(c.control + '/' + assignment.agent_id + '.brief', String(process.pid));
-      render(screen(ready + '\nWorking…', ''));`;
-    await writeFile(executable, script.replace(pendingSubmission, acceptedSubmission));
   }
   const modelsPath = join(root, 'conf', 'models.json');
   const models = await json(modelsPath);
@@ -216,10 +202,14 @@ function commandResult(outcome: Awaited<ReturnType<ProductionFixture['run']>>) {
   return { exitCode: envelope.exitCode, result: payload ? JSON.parse(payload) : null, stderr: envelope.stderr };
 }
 
-async function assertBriefDelivered(fixture: ProductionFixture, id: string, reportPath: string) {
+async function assertBriefDelivered(fixture: ProductionFixture, id: string, reportPath: string, runner: Runner) {
   const marker = (await readFile(join(fixture.control, `${id}.brief`), 'utf8')).trim();
   assert.match(marker, /^[1-9]\d*$/, 'brief marker records the accepting runner PID');
   const raw = await readFile(join(fixture.control, `input-${marker}.log`), 'utf8');
+  if (runner === 'claude') {
+    assert.match(raw, /\x1b\[200~/, 'Claude requested bracketed paste before brief delivery');
+    assert.match(raw, /\x1b\[201~[\r\n]/, 'Claude received a complete paste followed by submission');
+  }
   const input = raw.replace(/\x1b\[(?:200|201)~/g, '').replace(/\r/g, '\n');
   const offset = input.search(/\{\s*"project"\s*:/);
   assert.ok(offset >= 0, 'the accepting runner received the raw assignment JSON');
@@ -249,7 +239,7 @@ for (const runner of ['codex', 'claude'] as const) {
       assert.ok(outcome.result.reportPath);
       assert.equal(outcome.result.process.runner, runner);
       assert.ok(outcome.result.process.runnerSessionId, 'native identity was established before the brief');
-      await assertBriefDelivered(fixture, id, outcome.result.reportPath);
+      await assertBriefDelivered(fixture, id, outcome.result.reportPath, runner);
       assert.deepEqual(await confDigest(fixture), before, 'all conf bytes, version, operationalEvidence and liveTaskVerified stay unchanged');
     });
   }
@@ -277,7 +267,7 @@ for (const runner of ['codex', 'claude'] as const) {
     const first = commandResult(await fixture.run(`version-before-update-${runner}`));
     assert.equal(first.exitCode, 0, JSON.stringify(first));
     assert.deepEqual(first.result.warnings, [warning(installed, older[runner])]);
-    await assertBriefDelivered(fixture, `version-before-update-${runner}`, first.result.reportPath);
+    await assertBriefDelivered(fixture, `version-before-update-${runner}`, first.result.reportPath, runner);
     if (runner === 'codex') {
       const script = await readFile(executable, 'utf8');
       assert.ok(script.includes(installed));
@@ -292,7 +282,7 @@ for (const runner of ['codex', 'claude'] as const) {
     assert.equal(outcome.exitCode, 0, JSON.stringify(outcome));
     assert.equal(outcome.result.status, 'running');
     assert.deepEqual(outcome.result.warnings, [warning(newer[runner], older[runner])]);
-    await assertBriefDelivered(fixture, `version-updated-${runner}`, outcome.result.reportPath);
+    await assertBriefDelivered(fixture, `version-updated-${runner}`, outcome.result.reportPath, runner);
     assert.deepEqual(await confDigest(fixture), before);
   });
 

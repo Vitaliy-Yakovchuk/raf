@@ -4,6 +4,7 @@ import { mkdtemp, mkdir, readFile, writeFile, rename, rm } from 'node:fs/promise
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
+import { pathToFileURL } from 'node:url';
 import type { TestContext } from 'node:test';
 import { createProductionServices } from '../src/production-runtime.ts';
 import { executeCommand } from '../src/os-runtime.ts';
@@ -12,6 +13,7 @@ import { bindWorkspaceBoundaries } from '../src/task-context.ts';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeLaunch, RuntimeRunParameters, RuntimeServices } from '../src/app-runtime.ts';
 import type { AdapterCommand, AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import type { AssignmentSnapshot } from '../src/assignment.ts';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 
 export const configuration: RuntimeConfiguration = {
   catalog: { commands: [], reportStatuses: [{ id: 'succeeded' }, { id: 'failed' }] },
@@ -39,11 +41,11 @@ export async function eventually<T>(read: () => Promise<T> | T, predicate: (valu
   assert.fail(`${description}: ${JSON.stringify(last)}`);
 }
 
-export async function fixture(t: TestContext, options: { tmpRootInHome?: boolean } = {}) {
+export async function fixture(t: TestContext, options: { productionQa?: boolean } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'raf-prod-'));
   const confRoot = join(root, 'conf');
   const home = join(root, 'home');
-  const tmpRoot = options.tmpRootInHome ? join(home, '.raf', 'tmp') : join(root, 'tmp');
+  const tmpRoot = options.productionQa ? join(home, '.raf', 'tmp') : join(root, 'tmp');
   const cwd = join(root, 'raf-develop');
   const statePath = join(home, '.raf', 'isolated.sqlite');
   const binRoot = join(root, 'bin');
@@ -159,7 +161,15 @@ else process.exit(result.status ?? 1);
   };
   store.initializeRunners(configuration.models.runners);
   const context: RuntimeContext = { orchestratorRoot: root, confRoot, artifactPath: join(root, 'catalog.json'), statePath, tmpRoot, mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined };
-  const services = await createProductionServices(store, configuration, context, { execute });
+  let createServices = createProductionServices;
+  if (options.productionQa) {
+    const projects = JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
+    await writeFile(join(confRoot, 'projects.json'), JSON.stringify(projects));
+    await prepareProductionQaFixture(t, { root, home });
+    const runtimeUrl = pathToFileURL(join(root, projects.projects.raf.branchPaths.develop, 'src', 'production-runtime.ts')).href;
+    createServices = (await import(runtimeUrl) as typeof import('../src/production-runtime.ts')).createProductionServices;
+  }
+  const services = await createServices(store, configuration, context, { execute });
   const validation = await services.assignment.validate({ root, selections: [{ change: 'fixture-launch', items: [{ id: '2.1' }] }] });
   if (!validation.ok) assert.fail(JSON.stringify(validation));
   const assignment: AssignmentSnapshot = validation.snapshot;

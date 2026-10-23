@@ -965,7 +965,7 @@ export async function createProductionServices(
             tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
           }
           const launcher = caller ? tx.getSession(caller) : undefined;
-          const launchedBy = launcher?.state === 'running' && launcher.activity?.type === 'coordinator'
+          const launchedBy = launcher?.state === 'running'
             ? { addressId: launcher.addressId, runId: launcher.runId } : undefined;
           if (!launchedBy && !input.notify) return tx.getSession(input.runId)!;
           const session = { ...tx.getSession(input.runId)!, revision: result.session.revision + 1,

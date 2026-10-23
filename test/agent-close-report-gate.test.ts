@@ -53,9 +53,12 @@ async function atomicReport(session: SessionRecord, report: unknown): Promise<vo
   await fs.rename(`${path}.new`, path);
 }
 
-function report(status: 'succeeded' | 'failed') {
+type FixtureCommit = { repository: string; sha: string };
+
+function report(status: 'succeeded' | 'failed', commits: FixtureCommit[] = []) {
   return {
     status, answer: `Результат fixture: ${status}`,
+    commits,
     context: { unnecessary: [], missing: [] },
     changes: [{ id: 'launch-failure-fixture', items: [{
       id: '1.1', status, ...(status === 'failed' ? { reason: 'Контрольована невдача fixture' } : {}),
@@ -150,7 +153,7 @@ async function liveFixture(t: TestContext, options: { tasks?: number; commands?:
   return { f, session };
 }
 
-async function acceptReport(f: AgentRunFixture, session: SessionRecord, status: 'succeeded' | 'failed') {
+async function acceptReport(f: AgentRunFixture, session: SessionRecord, status: 'succeeded' | 'failed', commits: FixtureCommit[] = []) {
   const tasksFile = 'openspec/changes/launch-failure-fixture/tasks.md';
   let before: string | undefined;
   let indexBefore: string | undefined;
@@ -163,7 +166,7 @@ async function acceptReport(f: AgentRunFixture, session: SessionRecord, status: 
     assert.equal(indexBefore, before);
     parent = (await f.git('rev-parse', 'HEAD')).trim();
   }
-  await atomicReport(session, report(status));
+  await atomicReport(session, report(status, commits));
   const accepted = await until(
     () => f.inspect().sessions.find(value => value.runId === session.runId),
     value => value?.result?.status === status,
@@ -274,8 +277,9 @@ test('public CLI keeps a committed live worker without a report alive, then acce
   await fs.writeFile(join(workspace, 'work.txt'), 'Committed work is not a report.\n');
   await exec('git', ['-C', workspace, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'add', '--', 'work.txt']);
   await exec('git', ['-C', workspace, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'fixture work before report']);
+  const sha = (await exec('git', ['-C', workspace, 'rev-parse', 'HEAD'])).stdout.trim();
   await assertPendingPreserves(f, session);
-  await acceptReport(f, session, 'failed');
+  await acceptReport(f, session, 'failed', [{ repository: workspace, sha }]);
   const closed = await f.command(['agent', 'close', '--id', session.addressId]);
   assert.equal(closed.exitCode, 0, JSON.stringify(closed));
   assert.equal(JSON.parse(closed.result.stdout).closed, true);

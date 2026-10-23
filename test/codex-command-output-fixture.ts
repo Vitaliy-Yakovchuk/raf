@@ -106,6 +106,7 @@ export async function outputFixture(t: TestContext, options: { production?: bool
 const { openStateStore } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/state-store.ts')).href)});
 const { AgentControlService } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/agent-control.ts')).href)});
 const { createAppRuntime } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/app-runtime.ts')).href)});
+const { createServiceHandlers } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/service-entry.ts')).href)});
 const { buildCatalog, runCli } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/bootstrap.ts')).href)});
 const store = openStateStore(${JSON.stringify(statePath)});
 const repository = store.sessionRepository;
@@ -115,7 +116,8 @@ const control = new AgentControlService({repository,
  authority:{resolve:async()=>({kind:'system'})}, transport:{deliver:async()=>{throw Error('unexpected delivery');},close:async()=>{throw Error('unexpected close');},interrupt:async()=>{throw Error('unexpected interrupt');}},
  reminders:{sessionEnded:()=>{throw Error('unexpected end');}},projects:['raf'],agentTypes:['implement'],agentPhases:['implement']});
 const context={orchestratorRoot:${JSON.stringify(root)},confRoot:${JSON.stringify(fixtureConf)},artifactPath:${JSON.stringify(artifactPath)},statePath:${JSON.stringify(statePath)},tmpRoot:${JSON.stringify(join(stateDirectory, 'tmp'))},mode:'test',commandStartedAtMs:0,resolveCaller:async()=>undefined};
-const runtime=createAppRuntime(context,{loadConfiguration:async()=>({catalog:JSON.parse(readFileSync(${JSON.stringify(artifactPath)},'utf8')),models:JSON.parse(readFileSync(${JSON.stringify(join(fixtureConf, 'models.json'))},'utf8')),commandTiming:{emaAlpha:0.1}}),openStore:async()=>store,createServices:async()=>({control}),nextRunIdentity:()=>{throw Error('unexpected launch');},now:()=>0});
+const serviceHandlers=createServiceHandlers({orchestratorRoot:${JSON.stringify(root)},homeDirectory:${JSON.stringify(home)},service:${JSON.stringify(configuration.service)}});
+const runtime=createAppRuntime(context,{additionalHandlers:serviceHandlers.handlers,loadConfiguration:async()=>({catalog:JSON.parse(readFileSync(${JSON.stringify(artifactPath)},'utf8')),models:JSON.parse(readFileSync(${JSON.stringify(join(fixtureConf, 'models.json'))},'utf8')),commandTiming:{emaAlpha:0.1}}),openStore:async()=>store,createServices:async()=>({control}),nextRunIdentity:()=>{throw Error('unexpected launch');},now:()=>0});
 buildCatalog(${JSON.stringify(fixtureConf)},${JSON.stringify(artifactPath)},Object.keys(runtime.handlers));
 try {const result=await runCli(process.argv.slice(2),${JSON.stringify(artifactPath)},runtime.handlers);process.stdout.write(result.stdout);process.stderr.write(result.stderr);process.exitCode=result.exitCode;} finally {await runtime.close();}
 `;

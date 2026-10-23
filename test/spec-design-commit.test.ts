@@ -3,6 +3,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import { readFileSync, realpathSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { userInfo } from 'node:os';
+import { Server } from 'node:net';
 import { dirname, join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import {
@@ -307,3 +308,88 @@ for (const type of ['spec', 'design']) {
     assert.equal(await readFile(join(f.root, 'README.md'), 'utf8'), '# Foreign uncommitted edit\n');
   });
 }
+
+for (const type of ['spec', 'design']) {
+  for (const runner of ['codex', 'claude'] as const) {
+    for (const linked of [false, true]) {
+      test(`Z.321 ${type}/${runner}: empty sandbox git masks preserve Orchestrator commit profile (${linked ? 'linked' : 'ordinary'})`, { timeout }, async t => {
+        const f = await fixture(t, linked);
+        await mkdir(join(f.change, '.git'));
+        await mkdir(join(dirname(f.questions), '.git'));
+        const captured = await captureLaunch(t, f, type, runner);
+        assert.deepEqual([...captured.reserved.writeBoundaries!].sort(), documentBoundaries(f));
+        assert.equal(captured.context.commitOwnWork, true);
+        const settings = protocols.find(protocol => protocol.runner === runner)!;
+        const writableDirectories = [...captured.reserved.writeBoundaries!, join(f.tmpRoot, `profile-${type}-${runner}`)];
+        const runDirectory = writableDirectories.at(-1)!;
+        await mkdir(runDirectory);
+        const invocation = buildRunnerInvocation(settings, { model: 'fixture-model', effort: 'high' });
+        invocation.args.push(...nativeWriteScopeArgs(settings, writableDirectories));
+        if (runner === 'claude') {
+          for (const directory of new Set([f.rootGitDir, f.rootCommonDir])) {
+            assert.ok(invocation.args.includes(directory));
+            assert.ok(invocation.args.includes(`Edit(/${directory}/**)`));
+          }
+          for (const path of [f.cwd, f.moduleGitDir, f.moduleCommonDir]) {
+            assert.equal(invocation.args.includes(path), false);
+            assert.equal(invocation.args.includes(`Edit(/${path}/**)`), false);
+          }
+          return;
+        }
+        t.mock.method(Server.prototype, 'listen', function (_port, _host, ready) { ready(); return this; });
+        t.mock.method(Server.prototype, 'address', () => ({ port: 0 }));
+        t.mock.method(Server.prototype, 'close', function (closed) { closed(); return this; });
+        const bin = join(f.base, 'bin');
+        await mkdir(bin);
+        for (const name of ['codex', 'bwrap']) await writeFile(join(bin, name), '#!/bin/sh\nexit 0\n', { mode: 0o700 });
+        const prepared = await prepareCodexSandbox({
+          runId: `profile-${type}`, invocation, cwd: f.cwd, runDirectory, writableDirectories,
+          environment: { ...gitEnvironment, HOME: f.home, PATH: bin }, timeoutMs: timeout,
+          scope: { hidden: [join(f.home, '.raf')], readable: [runDirectory], tmuxDirectory: runDirectory, excludedCommands: [] },
+        });
+        t.after(() => prepared.cleanup());
+        const config = prepared.invocation.args.find(arg => arg.startsWith('permissions.linux.filesystem='))!;
+        const profile = JSON.parse(config.slice(config.indexOf('=') + 1).replace(/("(?:[^"\\]|\\.)*")=/gu, '$1:'));
+        for (const path of new Set([f.rootGitDir, f.rootCommonDir])) assert.equal(profile[path], 'write', path);
+        for (const path of [f.cwd, f.moduleGitDir, f.moduleCommonDir]) assert.equal(profile[path], 'read', path);
+        assert.equal(profile[f.root], undefined);
+        assert.equal(prepared.invocation.args.includes('--add-dir'), false);
+      });
+    }
+  }
+}
+
+for (const type of ['spec', 'design']) {
+  test(`Z.321 ${type}: a real nested repository does not grant Orchestrator git access`, { timeout }, async t => {
+    const f = await fixture(t);
+    git(f.change, 'init', '-q', '-b', 'main');
+    const captured = await captureLaunch(t, f, type, 'codex', { writeBoundaries: [f.change] });
+    assert.deepEqual(captured.reserved.writeBoundaries, [f.change]);
+    assert.notEqual(captured.context.commitOwnWork, true);
+  });
+}
+
+test('Z.321 root cwd: explicit Orchestrator git stays writable while module git stays read-only', { timeout }, async t => {
+  const f = await fixture(t);
+  const captured = await captureLaunch(t, f, 'spec', 'codex');
+  t.mock.method(Server.prototype, 'listen', function (_port, _host, ready) { ready(); return this; });
+  t.mock.method(Server.prototype, 'address', () => ({ port: 0 }));
+  t.mock.method(Server.prototype, 'close', function (closed) { closed(); return this; });
+  const bin = join(f.base, 'bin');
+  const runDirectory = join(f.tmpRoot, 'root-profile');
+  await mkdir(bin);
+  await mkdir(runDirectory);
+  for (const name of ['codex', 'bwrap']) await writeFile(join(bin, name), '#!/bin/sh\nexit 0\n', { mode: 0o700 });
+  const prepared = await prepareCodexSandbox({
+    runId: 'root-profile', cwd: f.root, runDirectory,
+    invocation: { executable: join(bin, 'codex'), args: ['--sandbox', 'workspace-write'], liveTaskVerified: true },
+    writableDirectories: [...captured.reserved.writeBoundaries!, runDirectory],
+    environment: { HOME: f.home, PATH: bin }, timeoutMs: timeout,
+    scope: { hidden: [], readable: [], tmuxDirectory: runDirectory, excludedCommands: [] },
+  });
+  t.after(() => prepared.cleanup());
+  const policy = JSON.parse(await readFile(join(prepared.policyPaths[0], 'policy.json'), 'utf8'));
+  assert.equal(policy.filesystem[f.rootGitDir], 'write');
+  assert.equal(policy.filesystem[f.root], 'read');
+  assert.equal(policy.filesystem[join(f.rootGitDir, 'modules')], 'read');
+});

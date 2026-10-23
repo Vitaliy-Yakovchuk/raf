@@ -250,10 +250,27 @@ export async function prepareCodexSandbox(
   if (writable.has(cwd)) {
     if (!gitEntry || gitEntry.isFile()) entries[git] = 'write';
   } else {
-    for (const path of await workspaceGitPaths(cwd)) entries[path] = 'read';
+    for (const path of await workspaceGitPaths(cwd)) entries[path] = writable.has(path) ? 'write' : 'read';
+    for (const path of writable) {
+      const modules = join(path, 'modules');
+      if ((await fs.stat(modules).catch(() => null))?.isDirectory()) entries[modules] = 'read';
+    }
   }
   entries[directory] = 'read';
   for (const path of masked) entries[path] = 'none';
+  const mountpoints: { path: string; parent: string; dev: number; ino: number }[] = [];
+  for (const path of writable) {
+    const parent = await fs.stat(path).catch(() => null);
+    if (!parent?.isDirectory()) continue;
+    for (const name of ['.git', '.codex', '.agents', '.aws']) {
+      const target = join(path, name);
+      const existing = await fs.lstat(target).catch(error => {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        return null;
+      });
+      if (!existing) mountpoints.push({ path: target, parent: path, dev: parent.dev, ino: parent.ino });
+    }
+  }
   const filesystem = `{${Object.entries(entries).map(([path, access]) => `${JSON.stringify(path)}=${JSON.stringify(access)}`).join(',')}}`;
   const policy = ['-c', 'sandbox_mode="workspace-write"', '-c', `default_permissions="${profile}"`, '-c', `permissions.${profile}.filesystem=${filesystem}`, '-c', `permissions.${profile}.network.enabled=true`];
   const shellEnvironment = [...scrubbed.flatMap(name => ['-c', `shell_environment_policy.set.${name}=""`]), ...Object.entries(toolVariables).flatMap(([name, value]) => ['-c', `shell_environment_policy.set.${name}=${JSON.stringify(value)}`])];
@@ -267,6 +284,13 @@ export async function prepareCodexSandbox(
   const cleanup = async () => {
     await fs.rm(probeSocket, { force: true });
     if (created) await fs.rm(directory, { recursive: true, force: true });
+    for (const mountpoint of mountpoints.splice(0)) {
+      const parent = await fs.lstat(mountpoint.parent).catch(() => null);
+      if (!parent?.isDirectory() || parent.dev !== mountpoint.dev || parent.ino !== mountpoint.ino) continue;
+      await fs.rmdir(mountpoint.path).catch(error => {
+        if (!['ENOENT', 'ENOTEMPTY', 'EEXIST', 'ENOTDIR', 'EBUSY', 'EACCES', 'EPERM'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error;
+      });
+    }
   };
   try {
     await fs.mkdir(runDirectory, { recursive: true, mode: 0o700 });

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile, lstat, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { Server } from 'node:net';
 import { join } from 'node:path';
@@ -22,6 +22,9 @@ for (const workspaceWritable of [false, true]) {
     const questions = join(root, 'questions.md');
     await Promise.all([cwd, runDirectory, change, bin].map(path => mkdir(path)));
     await writeFile(questions, '');
+    await mkdir(join(change, '.codex'));
+    const foreign = join(root, 'foreign');
+    await mkdir(foreign);
     await Promise.all(['codex', 'bwrap'].map(name => writeFile(join(bin, name), '#!/bin/sh\nexit 0\n', { mode: 0o700 })));
     const preserved = ['--model', 'selected-model', '-c', 'model_reasoning_effort="high"', '--ask-for-approval', 'never'];
     const tail = ['--', 'literal prompt with --add-dir=unchanged'];
@@ -53,5 +56,18 @@ for (const workspaceWritable of [false, true]) {
     assert.equal(policy.filesystem[questions], undefined);
     assert.equal(policy.filesystem[root], undefined, 'the questions parent never becomes writable');
     assert.ok((await readFile(join(prepared.policyPaths[0], 'bwrap'), 'utf8')).includes(`--bind '${questions}' '${questions}'`));
+    await mkdir(join(change, '.git'));
+    await mkdir(join(change, '.aws'));
+    await writeFile(join(change, '.aws', 'own.txt'), 'retained');
+    await symlink(foreign, join(change, '.agents'));
+    await prepared.cleanup();
+    await assert.rejects(lstat(join(change, '.git')), { code: 'ENOENT' }, 'remove empty mountpoints created during this session');
+    assert.ok((await lstat(join(change, '.codex'))).isDirectory(), 'preserve preexisting empty directories');
+    assert.equal(await readFile(join(change, '.aws', 'own.txt'), 'utf8'), 'retained', 'preserve nonempty directories');
+    assert.ok((await lstat(join(change, '.agents'))).isSymbolicLink(), 'preserve replacement symlinks');
+    assert.ok((await lstat(foreign)).isDirectory());
+    await mkdir(join(change, '.git'));
+    await prepared.cleanup();
+    assert.ok((await lstat(join(change, '.git'))).isDirectory(), 'repeat cleanup must preserve later directories');
   });
 }

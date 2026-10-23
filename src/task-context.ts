@@ -254,7 +254,9 @@ async function gitDirectories(workspace: string): Promise<string[]> {
   if (!gitDir) return [];
   const common = await pointer(join(gitDir, 'commondir'), '');
   const commonDir = common ? await realOrNull(resolve(gitDir, common)) : gitDir;
-  return commonDir ? [gitDir, commonDir] : [gitDir];
+  if (!commonDir || !(await stat(join(gitDir, 'HEAD')).catch(() => null))?.isFile()
+    || !(await stat(join(commonDir, 'objects')).catch(() => null))?.isDirectory()) return [];
+  return [gitDir, commonDir];
 }
 
 export async function resolveGitWriteBoundaries(cwd: string, orchestratorRoot: string, writeBoundaries?: readonly string[]): Promise<readonly string[]> {

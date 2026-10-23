@@ -148,11 +148,14 @@ async function main(): Promise<void> {
     assert.equal(readFileSync(join(output, 'clone-head.stdout'), 'utf8').trim(), options.ref);
     for (const name of ['flow.json', 'test-runs.json']) copyFileSync(join(source, '..', 'conf', name), join(stand, 'conf', name));
     const fileBudget = JSON.parse(readFileSync(join(stand, 'conf/flow.json'), 'utf8')).unitTests.timeoutMs;
+    const diagnosticLimits = JSON.parse(readFileSync(join(stand, 'conf/test-runs.json'), 'utf8')).diagnostics;
+    assert(diagnosticLimits && typeof diagnosticLimits === 'object', 'Missing configured diagnostic limits');
     assert(Number.isSafeInteger(fileBudget) && fileBudget > 0, 'Missing configured adapter file budget');
     const runner = join(raf, 'src/test-run-vitest-runner.ts');
     const reporter = join(raf, 'src/test-run-vitest-reporter.ts');
     const bridge = join(raf, 'scripts/test-run-vitest-api.ts');
-    for (const path of [runner, reporter, bridge]) assert(existsSync(path), `Missing trusted adapter artifact: ${path}`);
+    const wrapper = join(raf, 'scripts/test-run-vitest.ts');
+    for (const path of [runner, reporter, bridge, wrapper]) assert(existsSync(path), `Missing trusted adapter artifact: ${path}`);
     assert(!runner.startsWith(`${workspace}/`));
     assert.equal(dirname(raf), dirname(workspace));
     symlinkSync(dependencies, join(workspace, 'node_modules'), 'dir');
@@ -215,8 +218,14 @@ async function main(): Promise<void> {
       const directBodies = bodies(directTrace);
       const directPassed = direct.exitCode === 0 && direct.cleanup && report?.success === true
         && report.numPassedTests === expectedNames.length && JSON.stringify(directBodies) === JSON.stringify(expectedNames);
-      const wrapped = await child(`${selected.label}.wrapped`, process.execPath,
-        ['--import', preload, bridge, ...cli, '--reporter', reporter], cwd, { RAF_STAND_TRACE: wrappedTrace });
+      const batches = [{
+        executable: process.execPath, argv: ['--import', preload, `${relative}node_modules/vitest/vitest.mjs`, ...cli, '--reporter', reporter],
+        cwd, shell: false, environment: { HOME: home, statePath: join(home, '.raf/state.sqlite'), tmpPath: join(home, '.raf/tmp'), TMPDIR: privateTmp },
+      }];
+      const wrapped = await child(`${selected.label}.wrapped`, process.execPath, [wrapper], cwd, {
+        RAF_STAND_TRACE: wrappedTrace, RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(diagnosticLimits),
+        RAF_TEST_RUN_IDS: '[]', RAF_TEST_RUN_VITEST_BATCHES: JSON.stringify(batches),
+      });
       const wrappedBodies = bodies(wrappedTrace);
       const wrappedText = readFileSync(join(output, wrapped.stdout), 'utf8') + readFileSync(join(output, wrapped.stderr), 'utf8');
       const wrappedPassed = wrapped.exitCode === 0 && wrapped.cleanup && JSON.stringify(wrappedBodies) === JSON.stringify(expectedNames);
@@ -233,7 +242,7 @@ async function main(): Promise<void> {
       outcome = 'passed';
     } else if (results.some(result => result.environment === 'happy-dom' && !result.wrappedPassed && result.missingExternalRunner)) {
       outcome = 'assertions-failed';
-      failure = 'Direct Vitest passed, but the real raf bridge cannot import its external trusted runner in happy-dom';
+      failure = 'Direct Vitest passed, but the real raf wrapper cannot import its external trusted runner in happy-dom';
     } else {
       failure = 'Wrapped execution failed without the targeted external runner signature; inspect setup before claiming red';
     }

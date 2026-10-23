@@ -1,30 +1,14 @@
-import { execFile } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
-import { promisify } from 'node:util';
+import { createAtomicHotfixSwitch } from './hotfix-activation.ts';
 import type { MainLayoutPublicationProvider } from './main-layout.ts';
 
-const execute = promisify(execFile);
-const exchangeScript = `import ctypes, errno, os, sys
-libc = ctypes.CDLL(None, use_errno=True)
-try:
-    exchange = libc.renameat2
-except AttributeError:
-    print('ENOTSUP: libc has no renameat2', file=sys.stderr)
-    sys.exit(1)
-exchange.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
-exchange.restype = ctypes.c_int
-if exchange(-100, os.fsencode(sys.argv[1]), -100, os.fsencode(sys.argv[2]), 2) != 0:
-    code = ctypes.get_errno()
-    print(errno.errorcode.get(code, str(code)) + ': ' + os.strerror(code), file=sys.stderr)
-    sys.exit(1)
-`;
-
 async function exchange(left: string, right: string) {
-  try { await execute('python3', ['-c', exchangeScript, left, right]); }
+  try { await createAtomicHotfixSwitch().exchange(left, right); }
   catch (error: any) {
+    if (error.code === 'ENOENT') throw Object.assign(new Error('Atomic raf-main conversion requires python3 on PATH for the existing Linux renameat2 exchange provider; install python3 before retrying start. No non-atomic fallback is available.'), { code: 'ENOTSUP' });
     const detail = String(error.stderr || error.message);
-    throw Object.assign(new Error('Atomic raf-main directory publication unsupported or failed: ' + detail), { code: /EXDEV/.test(detail) ? 'EXDEV' : 'ENOTSUP' });
+    throw Object.assign(new Error('Atomic raf-main directory publication unsupported or failed: ' + detail), { code: /EXDEV|\[Errno 18\]/.test(detail) ? 'EXDEV' : 'ENOTSUP' });
   }
 }
 

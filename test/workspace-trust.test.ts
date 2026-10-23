@@ -187,7 +187,7 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
   const selection = selections[runner];
   const brief = ['WORKSPACE_TRUST_QA', ...Array.from({ length: 12 }, (_, index) => `Рядок доручення ${index}`), 'BRIEF_END'].join('\n');
   const runtimeLaunch: RuntimeLaunch = { runId, addressId: address, tmuxSession, activity: { type: parameters.type, project: parameters.project, features: parameters.features, phase: parameters.phase, cwd }, assignment: f.assignment, selection: { status: 'selected', ...selection, reason: 'synthetic workspace trust fixture only', quota: 'unknown' }, statePath: f.statePath, tmpRoot: f.tmpRoot };
-  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute, loadAverage1m: () => 0 });
   const { task, launch: derived } = await derivedLaunch(services, f, runtimeLaunch, parameters);
   if (rootTask) derived.writeBoundaries = [...new Set([...derived.writeBoundaries!, ...await resolveGitWriteBoundaries(cwd, f.root, derived.writeBoundaries)])];
   const prepared = await services.prepareReport(derived);

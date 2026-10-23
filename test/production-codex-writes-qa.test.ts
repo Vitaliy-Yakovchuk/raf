@@ -142,7 +142,7 @@ process.stdin.on('data', data => {
 const timer = setInterval(() => {
   if (!assignment) return;
   if (!reported && existsSync(${JSON.stringify(releasePath)})) {
-    const report = { status: metadata ? 'succeeded' : 'failed', answer: 'Scoped synthetic writes', changes: assignment.assignments.map(change => ({ id: change.id, items: change.items.map(item => ({ id: item.id, status: metadata ? 'succeeded' : 'failed', ...(metadata ? {} : { reason: 'Synthetic report-only scope keeps task unfinished' }) })) })) };
+    const report = { status: metadata ? 'succeeded' : 'failed', answer: 'Scoped synthetic writes', changes: assignment.assignments.map(change => ({ id: change.id, items: change.items.map(item => ({ id: item.id, status: metadata ? 'succeeded' : 'failed', ...(metadata ? {} : { reason: 'Synthetic report-only scope keeps task unfinished' }) })) })), commits: [] };
     const launcher = JSON.parse(readFileSync(${JSON.stringify(releasePath)}, 'utf8'));
     const probe = spawnSync(launcher.executable, [...launcher.args, process.execPath, '--input-type=module', '-e', ${JSON.stringify(writeProbe)}, JSON.stringify({ targets, denied: ${JSON.stringify(denied)}, reportPath: assignment.report_path, report })], { encoding: 'utf8', env: launcher.environment, timeout: launcher.timeoutMs });
     writeFileSync(${JSON.stringify(writeEvidence)}, JSON.stringify({ status: probe.status, stdout: probe.stdout, stderr: probe.stderr, error: probe.error?.message }));

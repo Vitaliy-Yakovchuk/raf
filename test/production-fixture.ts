@@ -41,7 +41,7 @@ export async function eventually<T>(read: () => Promise<T> | T, predicate: (valu
   assert.fail(`${description}: ${JSON.stringify(last)}`);
 }
 
-export async function fixture(t: TestContext, options: { productionQa?: boolean; externalHome?: boolean } = {}) {
+export async function fixture(t: TestContext, options: { productionQa?: boolean; externalHome?: boolean; tasks?: number } = {}) {
   const base = await mkdtemp(join(tmpdir(), 'raf-prod-'));
   const root = options.externalHome ? join(base, 'orchestrator') : base;
   if (options.externalHome) await mkdir(root);
@@ -138,7 +138,7 @@ process.exit(result.status ?? 1);
   await mkdir(specRoot, { recursive: true });
   const tasksPath = join(changeRoot, 'tasks.md');
   await Promise.all([
-    writeFile(tasksPath, `## 2. Fixture\n\n- [ ] 2.1 ${taskDescription}\n`),
+    writeFile(tasksPath, `## 2. Fixture\n\n${Array.from({ length: options.tasks ?? 1 }, (_, index) => `- [ ] 2.${index + 1} ${taskDescription}${index ? ` ${index + 1}` : ''}\n`).join('')}`),
     writeFile(join(changeRoot, 'proposal.md'), '# Fixture launch\n\n## Why\n\nVerify isolated production composition.\n\n## What Changes\n\nRun a synthetic executable only.\n'),
     writeFile(join(changeRoot, 'design.md'), '# Fixture design\n\nUse the production composition with an isolated home and owned tmux socket.\n'),
     writeFile(join(specRoot, 'spec.md'), '## ADDED Requirements\n\n### Requirement: Synthetic execution\n\nThe fixture SHALL run only its synthetic executable.\n\n#### Scenario: Owned launch\n\n- **WHEN** the fixture starts\n- **THEN** its report belongs to the reserved run\n'),
@@ -176,6 +176,22 @@ else process.exit(result.status ?? 1);
     runtimeUrl = pathToFileURL(join(root, projects.projects.raf.branchPaths.develop, 'src', 'production-runtime.ts')).href;
     createServices = (await import(runtimeUrl) as typeof import('../src/production-runtime.ts')).createProductionServices;
   }
+  const gitEnv: NodeJS.ProcessEnv = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+  for (const key of Object.keys(gitEnv)) if (key.startsWith('GIT_') && !['GIT_CONFIG_NOSYSTEM', 'GIT_CONFIG_GLOBAL'].includes(key)) delete gitEnv[key];
+  const repositoryGit = (repository: string, args: string[]) => {
+    const result = spawnSync('git', ['-c', 'user.name=Production fixture', '-c', 'user.email=production@example.invalid', '-c', 'commit.gpgSign=false', '-c', 'core.hooksPath=/dev/null', ...args], { cwd: repository, env: gitEnv, encoding: 'utf8' });
+    assert.ifError(result.error);
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout.trim();
+  };
+  if (options.productionQa) {
+    repositoryGit(root, ['init', '--quiet', '--initial-branch=main']);
+    repositoryGit(root, ['add', '--', 'openspec', 'questions']);
+    repositoryGit(root, ['commit', '--quiet', '-m', 'fixture OpenSpec launch baseline']);
+    await writeFile(join(cwd, 'fixture-seed.txt'), 'production fixture launch baseline\n');
+    repositoryGit(cwd, ['add', '--', 'fixture-seed.txt']);
+    repositoryGit(cwd, ['commit', '--quiet', '-m', 'fixture code launch baseline']);
+  }
   const services = await createServices(store, configuration, context, { execute });
   const validation = await services.assignment.validate({ root, selections: [{ change: 'fixture-launch', items: [{ id: '2.1' }] }] });
   if (!validation.ok) assert.fail(JSON.stringify(validation));
@@ -189,6 +205,9 @@ else process.exit(result.status ?? 1);
     await writeFile(staging, completed, { mode: 0o600, flag: 'wx' });
     await rename(staging, tasksPath);
     assert.equal(await readFile(tasksPath, 'utf8'), completed);
+    repositoryGit(root, ['add', '--', 'openspec/changes/fixture-launch/tasks.md']);
+    repositoryGit(root, ['commit', '--quiet', '-m', 'fixture completed assigned item']);
+    return { repository: root, sha: repositoryGit(root, ['rev-parse', 'HEAD']) };
   };
   return { root, confRoot, home, cwd, tmpRoot, statePath, binRoot, context, store, createProductionServices: createServices, runtimeUrl, assignment, params, changeRoot, tasksPath, questionsPath, flowPath, writeFlowResources, legacyTaskContextPath, execute, calls, completeAssignment, cliCalls, openspecPath, socket, realTmuxPath, realOpenSpecPath, trackProcess, trackPidFile };
 }
@@ -197,7 +216,8 @@ export type ProductionFixture = Awaited<ReturnType<typeof fixture>>;
 
 export async function derivedLaunch(services: RuntimeServices, f: Pick<ProductionFixture, 'params' | 'assignment'>, launch: RuntimeLaunch, parameters: RuntimeRunParameters = f.params) {
   const task = await services.resolveTask(parameters, launch.assignment);
-  return { task, launch: { ...launch, writeBoundaries: bindWorkspaceBoundaries(task, launch.activity.cwd), taskContext: { parameters, context: task } } satisfies RuntimeLaunch };
+  const commitRepositories = parameters.type === 'spec' || parameters.type === 'design' ? [launch.assignment.root] : [launch.assignment.root, launch.activity.cwd];
+  return { task, launch: { ...launch, commitRepositories, writeBoundaries: bindWorkspaceBoundaries(task, launch.activity.cwd), taskContext: { parameters, context: task } } satisfies RuntimeLaunch };
 }
 
 export async function recordLaunchRunnerPath(tmpRoot: string, runId: string, runnerPath: string) {

@@ -33,6 +33,7 @@ async function completeTask(f: AgentRunFixture) {
   await fs.writeFile(tasks, (await fs.readFile(tasks, 'utf8')).replace('- [ ] 1.1 ', '- [x] 1.1 '));
   await f.git('add', '--', `openspec/changes/${change}/tasks.md`);
   await f.git('commit', '-qm', 'fixture previously completed exact item');
+  return { repository: join(f.directory, 'orchestrator'), sha: (await f.git('rev-parse', 'HEAD')).trim() };
 }
 
 async function writeReport(reportPath: string, report: unknown) {
@@ -41,7 +42,7 @@ async function writeReport(reportPath: string, report: unknown) {
   await fs.rename(staging, reportPath);
 }
 
-const succeeded = { status: 'succeeded', answer, changes: [{ id: change, items: [{ id: '1.1', status: 'succeeded' }] }] };
+const succeeded = { status: 'succeeded', answer, changes: [{ id: change, items: [{ id: '1.1', status: 'succeeded' }] }], commits: [] };
 
 async function closeAsAgent(f: AgentRunFixture, id: string) {
   await fs.writeFile(join(f.control, `${id}.close`), 'close');
@@ -137,9 +138,9 @@ test('[report-orphan] agent close alone accepts a valid report left after the wo
   const f = await fixture(t, 'orphan-close', timeouts, 'codex', { productionQa: true, tasks: 2, commands: ['agent ps'] });
   const { runId, reportPath } = await launchOrphan(f, 'orphan-close');
   const watchers = seedResultWatchers(f, 'orphan-close');
-  await completeTask(f);
+  const commit = await completeTask(f);
   const completedHead = await f.git('rev-parse', 'HEAD');
-  await writeReport(reportPath, succeeded);
+  await writeReport(reportPath, { ...succeeded, commits: [commit] });
   const closed = await closeAsAgent(f, 'orphan-close');
   assert.equal(closed.closed, true);
   assert.equal(closed.result, 'succeeded');

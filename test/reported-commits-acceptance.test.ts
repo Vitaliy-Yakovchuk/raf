@@ -100,7 +100,7 @@ function repository(root: string, format: 'sha1' | 'sha256' = 'sha1') {
 }
 
 type Repo = ReturnType<typeof repository>;
-type Report = AgentReport & { commits?: unknown };
+type Report = Omit<AgentReport, 'commits'> & { commits?: unknown };
 type Request = AgentReportRequest & ReportedCommitRequestContext;
 type Ports = AgentReportPorts & ReportedCommitAcceptancePorts;
 
@@ -560,19 +560,14 @@ function assertCommitSchema(schema: Readonly<Record<string, unknown>>) {
 
 test(`${prefix} new production task schema and every runner brief describe the same typed commits`, async t => {
   const f = await fixture(t, { productionQa: true });
-  git(f.root, ['init', '--quiet', '--initial-branch=main']);
-  git(f.root, ['add', '--', 'openspec', 'questions']);
-  git(f.root, ['commit', '--quiet', '-m', 'orchestrator baseline']);
-  put(f.cwd, 'code-seed.txt', 'code baseline\n');
-  git(f.cwd, ['add', '--', 'code-seed.txt']);
-  git(f.cwd, ['commit', '--quiet', '-m', 'code baseline']);
   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const task = await services.resolveTask(f.params, f.assignment);
   assertCommitSchema(task.reportSchema);
+  writeFileSync(join(f.confRoot, 'models.json'), readFileSync(new URL('../../conf/models.json', import.meta.url)));
   const realBriefs = resolve(import.meta.dirname, '../../conf/briefs');
   for (const runner of ['codex', 'claude', 'grok', 'agy']) {
     const brief = await services.assignment.compose(f.assignment, {
-      cwd: f.cwd, briefsRoot: realBriefs, runner, stage: 'implement', project: 'raf', agentId: f.params.id, sessionName: f.params.id,
+      cwd: f.cwd, rafCommand: `node ${join(f.cwd, 'bin', 'raf.ts')}`, briefsRoot: realBriefs, runner, stage: 'implement', project: 'raf', agentId: f.params.id, sessionName: f.params.id,
       features: f.params.features, phase: 'implement', outcome: task.outcome, writeBoundaries: [...task.writeBoundaries, f.cwd], sources: task.sources,
       reportSchema: task.reportSchema, reportPath: join(f.tmpRoot, 'brief-run', `${f.params.id}.json`),
       commitOwnWork: true, commitRepositories: [f.root, f.cwd], workspaceWritable: true,
@@ -600,7 +595,8 @@ async function production(t: TestContext, path: 'worker' | 'reconciliation', opt
   git(root, ['commit', '--quiet', '-m', 'launch root baseline']);
   if (options.skipSpecs) {
     put(root, `openspec/changes/${change}/.openspec.yaml`, 'schema: spec-driven\ncreated: 2026-10-23\nskip_specs: true\n');
-    git(root, ['add', '--', `openspec/changes/${change}/.openspec.yaml`]);
+    rmSync(join(root, 'openspec', 'changes', change, 'specs'), { recursive: true });
+    git(root, ['add', '--', `openspec/changes/${change}/.openspec.yaml`, `openspec/changes/${change}/specs`]);
     git(root, ['commit', '--quiet', '-m', 'skip specs fixture']);
   }
   const rootBaseline = git(root, ['rev-parse', 'HEAD']);

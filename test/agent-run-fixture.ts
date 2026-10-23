@@ -291,6 +291,9 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   await git('config', 'core.hooksPath', '/dev/null');
   await git('add', '--', 'openspec');
   await git('commit', '-qm', 'fixture OpenSpec source');
+  await fs.writeFile(join(workspace, 'fixture-seed.txt'), 'agent run fixture launch baseline\n');
+  await git('-C', workspace, 'add', '--', 'fixture-seed.txt');
+  await git('-C', workspace, 'commit', '-qm', 'fixture code launch baseline');
   openStateStore(cfg.statePath).close();
   const command = async (argv: string[]) => {
     const child = spawn(process.execPath, [cfg.commandPath, marker, JSON.stringify(argv)], { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });

@@ -14,7 +14,7 @@ import type { ProtocolSettings } from '../src/runner-protocols.ts';
 import { configuration, derivedLaunch, eventually, fixture, fixtureResources, recordLaunchRunnerPath, taskDescription } from './production-fixture.ts';
 
 async function workerFixture(t: TestContext, prepareInFixture = true, launchRunnerPath?: string | null) {
-  const f = await fixture(t, { productionQa: true });
+  const f = await fixture(t, { productionQa: true, tasks: 2 });
   const runId = 'fixture-run-1';
   const address = f.params.id;
   const tmuxSession = 'raf-production-fixture';
@@ -92,7 +92,7 @@ const timer = setInterval(() => {
     assert.equal(Number(await readFile(wrapperPidPath, 'utf8')), started.wrapperPid);
     return started;
   };
-  const report = { status: 'succeeded', answer: 'Виконано лише доручену fixture.', changes: [{ id: 'fixture-launch', items: [{ id: '2.1', status: 'succeeded' }] }] };
+  const report = { status: 'succeeded', answer: 'Виконано лише доручену fixture.', changes: [{ id: 'fixture-launch', items: [{ id: '2.1', status: 'succeeded' }] }], commits: [] as { repository: string; sha: string }[] };
   return { ...f, runId, address, reportPath, releasePath, exitGatePath, deliveredPath, pidPath, wrapperPidPath, nativeId, executable, settings, request, runtimeLaunch, launch, session, report };
 }
 
@@ -121,8 +121,9 @@ test('[production-factory] compose reuses runner, stage and completion templates
   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const reportPath = join(f.tmpRoot, 'run-1', `${f.params.id}.json`);
   const task = await services.resolveTask(f.params, f.assignment);
-  const brief = await services.assignment.compose(f.assignment, { briefsRoot: join(f.confRoot, 'briefs'), runner: 'codex', stage: 'implement', project: 'raf', agentId: f.params.id, sessionName: f.params.id, features: f.params.features, phase: 'implement', outcome: task.outcome, writeBoundaries: task.writeBoundaries, sources: task.sources, reportSchema: task.reportSchema, reportPath });
-  for (const part of ['FIXTURE_CODEX_RUNNER', 'FIXTURE_IMPLEMENT_STAGE', 'FIXTURE_COMPLETION', reportPath, '2.1', f.questionsPath, join(f.changeRoot, 'design.md')]) assert.ok(brief.includes(part), part);
+  const rafCommand = `node ${join(f.cwd, 'bin', 'raf.ts')}`;
+  const brief = await services.assignment.compose(f.assignment, { cwd: f.cwd, rafCommand, briefsRoot: join(f.confRoot, 'briefs'), runner: 'codex', stage: 'implement', project: 'raf', agentId: f.params.id, sessionName: f.params.id, features: f.params.features, phase: 'implement', outcome: task.outcome, writeBoundaries: task.writeBoundaries, sources: task.sources, reportSchema: task.reportSchema, reportPath });
+  for (const part of ['FIXTURE_CODEX_RUNNER', 'FIXTURE_IMPLEMENT_STAGE', 'FIXTURE_COMPLETION', reportPath, '2.1', f.questionsPath, join(f.changeRoot, 'tasks.md'), f.cwd, rafCommand]) assert.ok(brief.includes(part), part);
 });
 
 test('[production-factory] route uses configured project and actual Git branch', async t => {
@@ -146,10 +147,10 @@ test('[production-factory] task context is derived from parameters, OpenSpec sna
   assert.equal(task.branch, 'develop');
   assert.equal(task.outcome, `fixture-launch:2.1 — ${taskDescription}`);
   assert.deepEqual(task.writeBoundaries, [f.changeRoot, f.questionsPath]);
-  assert.deepEqual(task.sources.map(line => line.split(' — ')[0]), [join(f.changeRoot, 'proposal.md'), join(f.changeRoot, 'design.md'), join(f.changeRoot, 'specs', 'projects', 'raf', 'agent-run', 'spec.md')]);
+  assert.deepEqual(task.sources.map(line => line.split(' — ')[0]), [join(f.changeRoot, 'proposal.md'), join(f.changeRoot, 'tasks.md')]);
   assert.deepEqual(task.estimate, { status: 'KNOWN', tier: 'normal', ramBytes: fixtureResources.normal.minRamBytes, diskBytesPerFileSystem: fixtureResources.normal.minDiskBytes, source: 'conf/flow.json#/resources/normal' });
   assert.equal(task.requested.ramBytes, fixtureResources.normal.minRamBytes);
-  assert.deepEqual((task.reportSchema as { required: string[] }).required, ['status', 'answer', 'changes']);
+  assert.deepEqual((task.reportSchema as { required: string[] }).required, ['status', 'answer', 'changes', 'commits']);
   await assert.rejects(services.resolveTask({ ...f.params, tasks: ['fixture-launch:9.9'] }, f.assignment), /TASK_CONTEXT_MISMATCH|9\.9/);
   const changed = await services.resolveTask(f.params, { ...f.assignment, changes: [{ id: 'fixture-launch', items: [{ id: '2.1', description: 'Змінений зміст' }] }] });
   assert.equal(changed.outcome, 'fixture-launch:2.1 — Змінений зміст');
@@ -265,7 +266,7 @@ if (!route.ok) throw new Error(JSON.stringify(route));
 const snapshot = await services.routingSnapshot();
 const selection = services.selectModel(configuration.models, snapshot, { complexity: 'decision', role: 'implement' });
 if (selection.status !== 'selected') throw new Error(JSON.stringify(selection));
-const launch = { ...${JSON.stringify(f.runtimeLaunch)}, assignment: validation.snapshot, selection, activity: { ...${JSON.stringify(f.runtimeLaunch.activity)}, cwd: route.cwd }, writeBoundaries: bindWorkspaceBoundaries(descriptor, route.cwd), taskContext: { parameters: ${JSON.stringify(f.params)}, context: descriptor } };
+const launch = { ...${JSON.stringify(f.runtimeLaunch)}, assignment: validation.snapshot, selection, activity: { ...${JSON.stringify(f.runtimeLaunch.activity)}, cwd: route.cwd }, commitRepositories: [context.orchestratorRoot, route.cwd], writeBoundaries: bindWorkspaceBoundaries(descriptor, route.cwd), taskContext: { parameters: ${JSON.stringify(f.params)}, context: descriptor } };
 const prepared = await services.prepareReport(launch);
 const reservation = await services.reserve({ ...launch, reportPath: prepared.reportPath, requested: descriptor.requested, requiredFileSystemIds: [...descriptor.requiredFileSystemIds] });
 if (!reservation.admitted) throw new Error(reservation.reason);
@@ -293,7 +294,7 @@ console.log(JSON.stringify({ identity, reportPath: prepared.reportPath, selectio
   assert.equal(claims.length, 1);
   assert.equal(claims[0].lease.owner.runId, f.runId);
   assert.ok(claims[0].lease.owner.fence.length > 0);
-  await f.completeAssignment();
+  f.report.commits.push(await f.completeAssignment());
   await writeFile(f.releasePath, JSON.stringify({ report: f.report, exitCode: 17 }));
   const accepted = await eventually(f.session, row => row?.state === 'running' && row.result?.status === 'succeeded', 'report accepted while the runner is held alive');
   assert.equal(accepted?.result?.response, f.report.answer);
@@ -326,7 +327,7 @@ test('[production-worker] persistent child commits the actual native process bef
   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
   const live = await services.control.ps();
   assert.ok(live.some(row => row.runId === f.runId && row.process?.pid === agentPid));
-  await f.completeAssignment();
+  f.report.commits.push(await f.completeAssignment());
   await writeFile(f.releasePath, JSON.stringify({ report: f.report, exitCode: 17 }));
   const accepted = await eventually(f.session, row => row?.state === 'running' && row.result?.status === 'succeeded', 'verified report accepted before process exit');
   assert.equal(accepted?.result?.response, f.report.answer);
@@ -365,6 +366,8 @@ for (const variant of ['missing', 'different'] as const) {
 test('[production-worker] unconfirmed OpenSpec success becomes failed after exit and never auto-resumes', async t => {
   const f = await workerFixture(t);
   await f.launch();
+  const pendingTasks = await readFile(f.tasksPath, 'utf8');
+  await writeFile(f.tasksPath, pendingTasks.replace('- [ ] 2.1 ', '- [x] 2.1 '));
   await writeFile(f.releasePath, JSON.stringify({ report: f.report, exitCode: 17 }));
   await writeFile(f.exitGatePath, 'exit');
   const done = await eventually(f.session, row => row?.state === 'finished', 'unconfirmed result finalization');

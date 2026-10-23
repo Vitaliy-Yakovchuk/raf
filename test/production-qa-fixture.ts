@@ -11,7 +11,9 @@ type ProductionCli = typeof import('../src/production-entry.ts').runProductionCl
 export async function prepareProductionQaFixture(t: FixtureLifecycle, location: FixtureLocation): Promise<ProductionCli> {
   const projects = JSON.parse(readFileSync(join(location.root, 'conf', 'projects.json'), 'utf8'));
   mkdirSync(join(location.root, projects.projects.raf.path), { recursive: true });
-  cpSync(new URL('../../conf/flow.json', import.meta.url), join(location.root, 'conf', 'flow.json'), { force: false });
+  for (const name of ['flow.json', 'test-runs.json']) {
+    cpSync(new URL(`../../conf/${name}`, import.meta.url), join(location.root, 'conf', name), { force: false });
+  }
   const codeRoot = join(location.root, projects.projects.raf.branchPaths.develop);
   for (const name of ['src', 'bin', 'scripts', 'package.json']) {
     cpSync(new URL(`../${name}`, import.meta.url), join(codeRoot, name), { recursive: true });

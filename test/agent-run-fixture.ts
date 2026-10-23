@@ -253,6 +253,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   await fs.writeFile(join(control, 'mode'), mode);
   await writeJson(join(conf, 'models.json'), models);
   await writeJson(join(conf, 'raf-constants.json'), constants);
+  await fs.copyFile(join(sourceRoot, '../conf/test-runs.json'), join(conf, 'test-runs.json'));
   await writeJson(join(conf, 'projects.json'), { version: 1, projects: { raf: { path: 'raf-develop', profile: 'product', branchPaths: { develop: 'raf-develop' } } } });
   const flow = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/flow.json'), 'utf8'));
   await writeJson(join(conf, 'flow.json'), { ...flow, resources: Object.fromEntries(Object.entries(flow.resources).map(([tier, thresholds]) => [tier, { ...(thresholds as object), maxNormalizedLoad: Number.MAX_VALUE, minRamBytes: 1, minDiskBytes: 1 }])) });

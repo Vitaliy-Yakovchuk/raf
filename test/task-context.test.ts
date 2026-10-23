@@ -100,6 +100,7 @@ async function workspace(t: TestContext) {
     writeFile(join(confRoot, 'projects.json'), JSON.stringify(projects)),
     writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify(constants)),
     writeFile(join(confRoot, 'flow.json'), realFlow),
+    writeFile(join(confRoot, 'test-runs.json'), readFileSync(new URL('test-runs.json', realConf))),
     writeFile(join(confRoot, 'stage-only-for-a12.json'), '{}'),
   ]);
   await Promise.all([mkdir(join(confRoot, 'briefs', 'runners'), { recursive: true }), mkdir(join(confRoot, 'briefs', 'tasks'), { recursive: true })]);

@@ -69,6 +69,7 @@ export async function z12Fixture(t: TestContext) {
     writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Prepare assigned documents\n'),
     writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify(constants)),
     writeFile(join(confRoot, 'flow.json'), JSON.stringify(flow)),
+    writeFile(join(confRoot, 'test-runs.json'), JSON.stringify(json('test-runs.json'))),
     writeFile(join(confRoot, 'models.json'), JSON.stringify(models)),
     writeFile(join(confRoot, 'raf.json'), JSON.stringify(json('raf.json'))),
   ]);

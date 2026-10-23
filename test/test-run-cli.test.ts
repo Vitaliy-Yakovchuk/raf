@@ -276,3 +276,82 @@ test('canonical path with a common textual workspace prefix still cannot escape'
   environment.files[files[0]].realpath = '/work/raf-develop-evil/test/alpha.test.ts';
   assert.throws(() => planTestRun(fixtureRequest(), fixtureConfig(), fixtureContext(), environment), error => error instanceof Error && error.message !== 'NotImplemented');
 });
+
+test('cleanup observes process exit before judging pending SIGKILL as a survivor', async () => {
+  const runtime = await import('../src/test-run-processes.ts');
+  assert.equal(typeof runtime.cleanupTestProcessGroup, 'function');
+  let running = true;
+  const signals: number[] = [];
+  const result = await runtime.cleanupTestProcessGroup(41, {
+    tree: () => running ? [{ pid: 41, start: 'birth' }, { pid: 42, start: 'child' }] : [],
+    start: pid => running ? pid === 41 ? 'birth' : 'child' : null,
+    kill: pid => { signals.push(pid); },
+    settle: async () => { running = false; },
+  });
+  assert.deepEqual(result, { complete: true, remainingPids: [] });
+  assert.deepEqual(signals, [42, 41, -41]);
+});
+
+test('recovery counts an elapsed deadline after killed processes disappear', async () => {
+  const runtime = await import('../src/test-run-processes.ts');
+  assert.equal(typeof runtime.reconcileTestRunProcess, 'function');
+  const observation = await runtime.reconcileTestRunProcess(JSON.stringify({ pid: 41, start: 'birth', boot: 'boot' }), 90, {
+    now: () => 100, boot: () => 'boot', start: () => null, tree: () => [],
+    cleanup: async () => ({ complete: true, remainingPids: [] }),
+  });
+  assert.equal(observation.deadlineReached, true);
+  assert.equal(observation.alive, false);
+});
+
+test('recovery preserves an unprovable reservation without a published process identity', async () => {
+  const runtime = await import('../src/test-run-processes.ts');
+  assert.equal(typeof runtime.reconcileTestRunProcess, 'function');
+  const observation = await runtime.reconcileTestRunProcess(null, 90, {
+    now: () => 100, boot: () => 'boot', start: () => null, tree: () => [],
+    cleanup: async () => ({ complete: true, remainingPids: [] }),
+  });
+  assert.deepEqual(observation, { alive: true, deadlineReached: true, cleanup: { complete: false, remainingPids: [] } });
+});
+
+test('recovery never signals a replacement process with a reused PID', async () => {
+  const runtime = await import('../src/test-run-processes.ts');
+  assert.equal(typeof runtime.reconcileTestRunProcess, 'function');
+  let cleaned = false;
+  const observation = await runtime.reconcileTestRunProcess(JSON.stringify({ pid: 41, start: 'old', boot: 'boot' }), 90, {
+    now: () => 100, boot: () => 'boot', start: () => 'new', tree: () => [{ pid: 41, start: 'new' }],
+    cleanup: async () => { cleaned = true; return { complete: true, remainingPids: [] }; },
+  });
+  assert.equal(cleaned, false);
+  assert.equal(observation.alive, false);
+});
+
+test('discovered test identities remain unexecuted when the runner times out', async () => {
+  const { classifyRunnerResult } = await import('../src/test-runs.ts');
+  const result = classifyRunnerResult([{ kind: 'discovered', test: alpha } as any], { exitCode: null, signal: 'SIGKILL', stderr: '' });
+  assert.deepEqual(result.unexecuted, [alpha]);
+  assert.deepEqual(result.unknown, []);
+});
+
+test('reporter streams a declared test identity before any outcome arrives', async () => {
+  const { default: report } = await import('../src/test-run-reporter.ts');
+  const data = { name: 'pending', file: `${process.cwd()}/test/alpha.test.ts`, entryFile: `${process.cwd()}/test/alpha.test.ts`, testId: 1, parentId: 0, nesting: 0, type: 'test' };
+  async function* source() { yield { type: 'test:enqueue', data }; }
+  const lines = [];
+  for await (const line of report(source())) lines.push(JSON.parse(line));
+  assert.deepEqual(lines[0], { kind: 'discovered', test: { file: 'test/alpha.test.ts', name: 'pending' } });
+});
+
+test('cleanup waits for every signalled descendant identity after the root exits', async () => {
+  const runtime = await import('../src/test-run-processes.ts');
+  let descendants = [{ pid: 41, start: 'birth' }, { pid: 42, start: 'detached' }];
+  const result = await runtime.cleanupTestProcessGroup(41, {
+    tree: () => descendants,
+    start: pid => descendants.find(row => row.pid === pid)?.start ?? null,
+    kill: () => {},
+    settle: async (_root: boolean, signalled?: { pid: number; start: string }[]) => {
+      assert.deepEqual(signalled, [{ pid: 42, start: 'detached' }, { pid: 41, start: 'birth' }]);
+      descendants = [];
+    },
+  });
+  assert.equal(result.complete, true);
+});

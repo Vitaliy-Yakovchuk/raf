@@ -107,6 +107,7 @@ export interface TestRunPlan {
 }
 
 export type RunnerEvent =
+  | { kind: 'discovered'; test: TestId; parent?: TestId }
   | { kind: 'passed' | 'assertion-failed' | 'setup-failed'; test: TestId; diagnostic?: string }
   | { kind: 'complete'; expected: TestId[] }
   | { kind: 'protocol-error'; diagnostic: string };
@@ -303,7 +304,9 @@ export function classifyRunnerResult(events: readonly RunnerEvent[], exit: Child
   let passed: TestId[] = [], knownRed: TestId[] = [], unknown: TestId[] = [], expected: TestId[] = [];
   let complete = false, setup = false;
   for (const event of events) {
-    if (event.kind === 'complete') { complete = true; expected = uniqueIds([...expected, ...event.expected]); }
+    if (event.kind === 'discovered') {
+      expected = uniqueIds([...expected.filter(id => !event.parent || !containsId([event.parent], id)), event.test]);
+    } else if (event.kind === 'complete') { complete = true; expected = uniqueIds([...expected, ...event.expected]); }
     else if (event.kind === 'protocol-error') setup = true;
     else if (event.kind === 'passed') passed.push(event.test);
     else if (event.kind === 'assertion-failed') knownRed.push(event.test);

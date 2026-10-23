@@ -4,9 +4,19 @@ import { isAbsolute, relative } from 'node:path';
 export default async function* report(source: AsyncIterable<any>, selected?: TestId[]): AsyncGenerator<string> {
   const expected: TestId[] = [];
   const parents = new Map<number, string>();
+  const declared = new Map<string, { test: TestId; type: string }>();
   let protocolFailed = false;
   for await (const event of source) {
     const data = event.data;
+    if (event.type === 'test:enqueue' && data.entryFile) {
+      const file = relative(process.cwd(), data.file);
+      const parent = declared.get(`${file}:${data.parentId}`);
+      const test = { file, name: parent ? `${parent.test.name} ${data.name}` : data.name };
+      declared.set(`${file}:${data.testId}`, { test, type: data.type });
+      if (data.type !== 'suite' && (!selected || selected.some(id => id.file === test.file && id.name === test.name))) {
+        yield JSON.stringify({ kind: 'discovered', test, ...(parent?.type === 'test' ? { parent: parent.test } : {}) }) + '\n';
+      }
+    }
     if (event.type === 'test:start') {
       for (const depth of parents.keys()) if (depth >= data.nesting) parents.delete(depth);
       parents.set(data.nesting, data.name);

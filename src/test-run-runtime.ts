@@ -8,6 +8,7 @@ import { productionStateContext, stateContextEnvironment, canonicalStatePath, ty
 import { openStateStore } from './state-store.ts';
 import { loadFlowPolicy } from './flow-policy.ts';
 import { parseTestRunArgs, validateTestRunConfig, cleanupClosedTestRunGroups, reconcileTestRunGroup, testRunFailureResult } from './test-runs.ts';
+import { cleanupTestProcessGroup, reconcileTestRunProcess } from './test-run-processes.ts';
 import { runTestRunCli } from './test-run-cli.ts';
 import type { ChildExit, ManagedTestProcess, RunnerEvent, TestRunConfig, TestRunContext, TestRunEnvironment, TestRunGroup, TestRunGroupKey, TestRunPorts, TestRunStatePort, TestRunTransaction } from './test-runs.ts';
 import type { ExecutionResult } from './cli.ts';
@@ -44,14 +45,21 @@ function processTree(pgid: number): { pid: number; start: string }[] {
   for (let size = -1; size !== owned.size;) { size = owned.size; for (const row of rows) if (owned.has(row.ppid)) owned.add(row.pid); }
   return rows.filter(row => owned.has(row.pid));
 }
-async function cleanGroup(pid: number): Promise<{ complete: boolean; remainingPids: number[] }> {
-  const owned = processTree(pid);
-  for (const row of owned.reverse()) if (processStart(row.pid) === row.start) { try { process.kill(row.pid, 'SIGKILL'); } catch { } }
-  try { process.kill(-pid, 'SIGKILL'); } catch { }
-  await new Promise<void>(done => setImmediate(done));
-  const remainingPids = [...new Set([...processTree(pid).map(row => row.pid), ...owned.filter(row => processStart(row.pid) === row.start).map(row => row.pid)])];
-  return { complete: remainingPids.length === 0, remainingPids };
+
+async function settleKilledProcesses(signalled: { pid: number; start: string }[]): Promise<void> {
+  for (const row of signalled) while (processStart(row.pid) === row.start) {
+    try {
+      const raw = readFileSync(`/proc/${row.pid}/stat`, 'utf8');
+      if (raw.slice(raw.lastIndexOf(')') + 2).split(' ')[0] === 'D') break;
+    } catch { break; }
+    await new Promise<void>(done => setTimeout(done));
+  }
 }
+
+async function cleanGroup(pid: number): Promise<{ complete: boolean; remainingPids: number[] }> {
+  return cleanupTestProcessGroup(pid, { tree: processTree, start: processStart, kill: target => process.kill(target, 'SIGKILL'), settle: (_root, signalled) => settleKilledProcesses(signalled) });
+}
+
 function executableAvailable(executable: string, cwd: string): boolean {
   const paths = isAbsolute(executable) ? [executable] : executable.includes('/') ? [resolve(cwd, executable)] : (process.env.PATH ?? '').split(':').map(path => join(path, executable));
   return paths.some(path => { try { accessSync(path, constants.X_OK); return statSync(path).isFile(); } catch { return false; } });
@@ -97,38 +105,43 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       const child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...environment, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []) }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
       await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', fail); });
       const pid = child.pid!;
+      const exited = new Promise<void>(done => child.once('exit', () => done()));
       const identity = JSON.stringify({ pid, start: processStart(pid), boot: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });
       let buffer = '', protocolBad = false, stderr = '';
       const consume = (line: string) => {
         try {
           const event = JSON.parse(line);
-          if (!event || !['passed', 'assertion-failed', 'setup-failed', 'complete', 'protocol-error'].includes(event.kind) ||
+          if (!event || !['discovered', 'passed', 'assertion-failed', 'setup-failed', 'complete', 'protocol-error'].includes(event.kind) ||
               event.kind === 'complete' && (!Array.isArray(event.expected) || event.expected.some((id: any) => typeof id?.file !== 'string' || typeof id?.name !== 'string')) ||
-              ['passed', 'assertion-failed', 'setup-failed'].includes(event.kind) && (typeof event.test?.file !== 'string' || typeof event.test?.name !== 'string')) throw new Error('Invalid runner event');
+              ['discovered', 'passed', 'assertion-failed', 'setup-failed'].includes(event.kind) && (typeof event.test?.file !== 'string' || typeof event.test?.name !== 'string') ||
+              event.parent !== undefined && (typeof event.parent?.file !== 'string' || typeof event.parent?.name !== 'string')) throw new Error('Invalid runner event');
           onEvent(event as RunnerEvent);
         } catch { if (!protocolBad) onEvent({ kind: 'protocol-error', diagnostic: 'Invalid JSON runner protocol' }); protocolBad = true; }
       };
       child.stdout!.on('data', chunk => { buffer += chunk.toString(); let newline: number; while ((newline = buffer.indexOf('\n')) >= 0) { consume(buffer.slice(0, newline)); buffer = buffer.slice(newline + 1); } });
       child.stderr!.on('data', chunk => { stderr += chunk.toString(); });
       const waited = new Promise<ChildExit>(done => child.once('close', (exitCode, signal) => { if (buffer.length) { onEvent({ kind: 'protocol-error', diagnostic: 'Truncated JSON runner protocol' }); } done({ exitCode, signal, stderr }); }));
-      return { identity, wait: () => waited, cleanup: async (_deadline, reason) => { const cleaned = await cleanGroup(pid); if (reason !== 'exit') { child.stdout!.destroy(); child.stderr!.destroy(); } return cleaned; } };
+      return { identity, wait: () => waited, cleanup: async (_deadline, reason) => {
+        const cleaned = await cleanupTestProcessGroup(pid, {
+          tree: processTree, start: processStart, kill: target => process.kill(target, 'SIGKILL'),
+          settle: async (_rootSignalled, signalled) => {
+            await settleKilledProcesses(signalled);
+            if (processStart(pid) === null) await exited;
+          },
+        });
+        if (reason !== 'exit') { child.stdout!.destroy(); child.stderr!.destroy(); }
+        return cleaned;
+      } };
     },
     subscribeInterruption: callback => {
       const term = () => callback('SIGTERM'), int = () => callback('SIGINT');
       process.on('SIGTERM', term); process.on('SIGINT', int);
       return () => { process.off('SIGTERM', term); process.off('SIGINT', int); };
     },
-    reconcile: async (identity, deadline) => {
-      if (!identity) return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } };
-      const processId = JSON.parse(identity);
-      const sameBoot = processId.boot === readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
-      const alive = sameBoot && processId.start !== null && processStart(processId.pid) === processId.start;
-      const remainingPids = sameBoot ? processTree(processId.pid).map(row => row.pid) : [];
-      if (!alive && !remainingPids.length) return { alive: false, deadlineReached: false, cleanup: { complete: true, remainingPids: [] } };
-      if (Date.now() < deadline) return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids } };
-      const cleanup = await cleanGroup(processId.pid);
-      return { alive: !cleanup.complete, deadlineReached: true, cleanup };
-    },
+    reconcile: (identity, deadline) => reconcileTestRunProcess(identity, deadline, {
+      now: Date.now, boot: () => readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
+      start: processStart, tree: processTree, cleanup: cleanGroup,
+    }),
   };
   return ports;
 }

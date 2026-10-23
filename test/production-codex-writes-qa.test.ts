@@ -202,7 +202,7 @@ for (const [metadata, worktree, missingQuestions] of [[true, false, false], [fal
     const invocation = { ...baseInvocation, args: [...baseInvocation.args, ...nativeWriteScopeArgs(f.protocol, writableDirectories, [])] };
     const prepared = await prepareCodexSandbox({
       runId: `${f.runId}-write-probe`, invocation, cwd: f.cwd, runDirectory: probeDirectory, writableDirectories,
-      environment: { ...process.env, HOME: f.home, PATH: f.binRoot + delimiter + (process.env.PATH ?? '') },
+      environment: { ...process.env, HOME: f.home, PATH: process.env.PATH ?? '' },
       timeoutMs: f.protocol.timeouts.overallMs,
       scope: { hidden: [f.statePath, `${f.statePath}-wal`, `${f.statePath}-shm`, join(dirname(f.statePath), 'secrets.json')], readable: [runDirectory], tmuxDirectory: probeDirectory, excludedCommands: [] },
     });

@@ -52,7 +52,7 @@ async function fixture(t: TestContext, linkedOrchestrator = false) {
   const root = linkedOrchestrator ? join(base, 'orchestrator-develop') : primary;
   if (linkedOrchestrator) git(primary, 'worktree', 'add', '-q', '-b', 'develop', root);
   const [rootGitDir, rootCommonDir] = git(root, 'rev-parse', '--path-format=absolute', '--git-dir', '--git-common-dir')
-    .split('\n').map(realpathSync);
+    .split('\n').map(path => realpathSync(path));
   const modulePrimary = join(root, 'raf-main');
   const moduleCommon = join(rootCommonDir, 'modules', 'raf');
   await mkdir(dirname(moduleCommon), { recursive: true });
@@ -63,7 +63,7 @@ async function fixture(t: TestContext, linkedOrchestrator = false) {
   const cwd = join(root, 'raf-develop');
   git(modulePrimary, 'worktree', 'add', '-q', '-b', 'develop', cwd);
   const [moduleGitDir, moduleCommonDir] = git(cwd, 'rev-parse', '--path-format=absolute', '--git-dir', '--git-common-dir')
-    .split('\n').map(realpathSync);
+    .split('\n').map(path => realpathSync(path));
   const change = join(root, 'openspec', 'changes', 'document-only');
   const questions = join(root, 'questions', 'projects', 'raf', 'questions.md');
   const spec = join(change, 'specs', 'projects', 'raf', 'agent-adapters', 'spec.md');

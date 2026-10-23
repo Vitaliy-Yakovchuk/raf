@@ -30,13 +30,20 @@ const configuration: RuntimeConfiguration = {
 const selections = { codex: { runner: 'codex' as const, model: 'gpt-6.1-sol', effort: 'high' }, claude: { runner: 'claude' as const, model: 'claude-opus', effort: 'high' } };
 const alive = (pid: number) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 
-const stub = (runner: Runner, settings: ProtocolSettings, paths: { pid: string; input: string; accepted: string }, sticky: boolean) => String.raw`#!${process.execPath}
+const stub = (runner: Runner, settings: ProtocolSettings, paths: { pid: string; input: string; accepted: string }, sticky: boolean, sandboxExecutable: string | null) => String.raw`#!${process.execPath}
 import { appendFileSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 const runner = ${JSON.stringify(runner)};
 const sticky = ${JSON.stringify(sticky)};
 if (process.argv.includes('--version')) { console.log(runner === 'claude' ? ${JSON.stringify(`${settings.version} (Claude Code)`)} : ${JSON.stringify(`codex-cli ${settings.version}`)}); process.exit(0); }
 const argv = process.argv.slice(2);
+if (runner === 'codex' && argv[0] === 'sandbox') {
+  const result = spawnSync(${JSON.stringify(sandboxExecutable)}, argv, { stdio: 'inherit' });
+  if (result.error) throw result.error;
+  if (result.signal) process.kill(process.pid, result.signal);
+  else process.exit(result.status ?? 1);
+}
 writeFileSync(${JSON.stringify(paths.pid)}, String(process.pid));
 const sessionFlag = argv.indexOf('--session-id');
 const nativeId = runner === 'claude' ? argv[sessionFlag + 1] : randomUUID();
@@ -136,7 +143,15 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
   const paths = { pid: join(f.root, `${runner}.pid`), input: join(f.root, `${runner}-input.jsonl`), accepted: join(f.root, `${runner}-accepted.json`) };
   f.trackPidFile(paths.pid);
   const executable = join(f.binRoot, runner);
-  await writeFile(executable, stub(runner, settings, paths, sticky), { mode: 0o700 });
+  let sandboxExecutable: string | null = null;
+  if (runner === 'codex') {
+    const lookup = spawnSync('which', ['codex'], { encoding: 'utf8' });
+    assert.ifError(lookup.error);
+    assert.equal(lookup.status, 0, lookup.stderr);
+    sandboxExecutable = lookup.stdout.trim();
+    assert.ok(sandboxExecutable.startsWith('/') && !sandboxExecutable.startsWith(f.binRoot + '/'));
+  }
+  await writeFile(executable, stub(runner, settings, paths, sticky, sandboxExecutable), { mode: 0o700 });
   await chmod(executable, 0o700);
   const runId = `trust-${runner}-${placement}`;
   const address = f.params.id;

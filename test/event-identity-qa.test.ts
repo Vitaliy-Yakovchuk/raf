@@ -1,11 +1,56 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { openStateStore, STATE_SCHEMA_VERSION } from '../src/state-store.ts';
 import type { PendingIntent } from '../src/session-state.ts';
+
+const schema2ClientCommit = 'c2a14864fe5062905c998f2f7d13ced3a3e151bd';
+const schema3MigrationCommit = '952eefcd96f9a1bcc3840de0dcc7209ed6f694ce';
+
+async function seedVersion3(directory: string, path: string): Promise<void> {
+  const clientTree = join(directory, 'schema-2-client');
+  const archivePath = join(directory, 'schema-2-client.tar');
+  await mkdir(clientTree);
+  const archived = spawnSync('git', ['-C', fileURLToPath(new URL('../', import.meta.url)), 'archive', '--format=tar', '--output', archivePath, schema2ClientCommit, 'src', 'package.json'], { encoding: 'utf8' });
+  assert.ifError(archived.error);
+  assert.equal(archived.status, 0, archived.stderr);
+  const extracted = spawnSync('tar', ['-xf', archivePath, '-C', clientTree], { encoding: 'utf8' });
+  assert.ifError(extracted.error);
+  assert.equal(extracted.status, 0, extracted.stderr);
+  await rm(archivePath);
+  const program = `import { openStateStore } from ${JSON.stringify(pathToFileURL(join(clientTree, 'src', 'state-store.ts')).href)}; const store = openStateStore(process.argv[1]); store.close();`;
+  const seeded = spawnSync(process.execPath, ['--input-type=module', '-e', program, path], { encoding: 'utf8' });
+  assert.ifError(seeded.error);
+  assert.equal(seeded.status, 0, seeded.stderr);
+  const old = new DatabaseSync(path);
+  try {
+    assert.equal(old.prepare('PRAGMA user_version').get()!.user_version, 2, schema2ClientCommit);
+    old.exec(`
+      BEGIN IMMEDIATE;
+      CREATE TABLE reminders (
+        id TEXT PRIMARY KEY NOT NULL,
+        created_for TEXT NOT NULL,
+        assigned_to TEXT NOT NULL,
+        at TEXT NOT NULL,
+        state TEXT NOT NULL CHECK(state IN ('pending', 'active', 'closed')),
+        closed_at TEXT,
+        payload TEXT NOT NULL
+      ) STRICT;
+      CREATE INDEX reminders_due ON reminders(state, at);
+      CREATE INDEX reminders_retention ON reminders(state, closed_at);
+      PRAGMA user_version = 3;
+      COMMIT;
+    `);
+    assert.equal(old.prepare('PRAGMA user_version').get()!.user_version, 3, schema3MigrationCommit);
+    assert.deepEqual(old.prepare('PRAGMA table_info(pending_intents)').all().map(row => row.name), ['id', 'payload']);
+    assert.deepEqual(old.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all().map(row => row.name), ['admission_reservations', 'command_timings', 'pending_intents', 'quotas', 'reminders', 'runners', 'sessions']);
+  } finally { old.close(); }
+}
 
 for (const finishedMain of [false, true]) test(`QA integration: inactive main event survives complete database close/reopen (${finishedMain})`, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'raf-event-identity-qa-'));
@@ -44,11 +89,9 @@ test('QA integration: version 3 pending payload survives migration and coexists 
   const legacy: PendingIntent = { id: 'legacy-intent', runId: 'completed-run', event: 'session.finished', payload: { address: 'worker', id: 'work-item', nested: { value: 'unchanged' } } };
   const pending: PendingIntent = { id: 'new-intent', runId: null, event: 'reminder.active', payload: { address: 'main', id: 'new-reminder' } };
   try {
-    const initial = openStateStore(path);
-    initial.close();
+    await seedVersion3(directory, path);
     const old = new DatabaseSync(path);
     try {
-      old.exec('ALTER TABLE pending_intents DROP COLUMN run_id; PRAGMA user_version = 3');
       old.prepare('INSERT INTO pending_intents(id, payload) VALUES (?, ?)').run(legacy.id, JSON.stringify(legacy));
     } finally { old.close(); }
     const upgraded = openStateStore(path, { transfer: { statePath: path, fromVersion: 3, toVersion: STATE_SCHEMA_VERSION } });

@@ -222,8 +222,15 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
     }
   };
   t.after(async () => {
-    for (const pid of await owned()) { try { process.kill(pid, 'SIGKILL'); } catch {} }
     await exec(cfg.tmux, ['-L', cfg.tmuxLabel, 'kill-server'], { env }).catch(() => undefined);
+    await until(async () => {
+      const pids = await owned();
+      for (const pid of pids) {
+        try { process.kill(pid, 'SIGKILL'); }
+        catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error; }
+      }
+      return pids;
+    }, pids => pids.length === 0, 'all fixture processes exited before directory removal');
     await fs.rm(directory, { recursive: true, force: true });
   });
   await writeJson(marker, cfg);

@@ -7,7 +7,6 @@ import { launchPersistentWrapper } from '../src/launch-wrapper.ts';
 import { createSessionState } from '../src/session-state.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
 import { selectModel, listModelAvailability } from '../src/model-routing.ts';
-import { failureContext } from '../src/cli-contract.ts';
 import type { RuntimeLaunch } from '../src/app-runtime.ts';
 import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import type { LaunchWrapperRequest } from '../src/launch-wrapper.ts';
@@ -138,6 +137,7 @@ test('[production-factory] route uses configured project and actual Git branch',
 
 test('[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file', async t => {
   const f = await fixture(t, { productionQa: true });
+  const { failureContext } = await import(new URL('./cli-contract.ts', f.runtimeUrl).href) as typeof import('../src/cli-contract.ts');
   await mkdir(dirname(f.legacyTaskContextPath), { recursive: true, mode: 0o700 });
   await writeFile(f.legacyTaskContextPath, JSON.stringify({ version: 1, parameters: f.params, assignment: f.assignment, context: { branch: 'main', outcome: 'FOREIGN_OUTCOME', writeBoundaries: ['/FOREIGN'], sources: ['/FOREIGN — чуже; завжди'], requested: { ramBytes: 1, diskBytes: {} }, requiredFileSystemIds: [], reportSchema: { foreign: true } } }), { mode: 0o600 });
   const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });

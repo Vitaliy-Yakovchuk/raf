@@ -1,0 +1,13 @@
+{
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "stderrCapture": "The CLI replay exposed a merged tool stream containing only TestRunResult JSON; no additional stderr bytes were observed. Separate original stderr is unavailable through exec_command.",
+  "testedHead": "bd63501076704bd95f89461b59dbe10b22607f26",
+  "uncommittedChanges": [
+    {
+      "path": "src/production-runtime.ts",
+      "description": "Initial implementation: reject untrusted workspace in prepareReport before baseline capture and in worker before commit-contract validation; 20 insertions, 6 deletions. Replaced after test-fixture audit and explicit main guidance."
+    }
+  ],
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/da436d08-f31a-4a9d-b338-22d8a8c31089/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/z389-trust-order --files test/workspace-trust.test.ts"
+}

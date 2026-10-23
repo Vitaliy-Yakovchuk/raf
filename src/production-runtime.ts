@@ -123,6 +123,20 @@ async function registeredBranchDirectory(orchestratorRoot: string, confRoot: str
   }
   return paths.some(path => resolve(root, path) === candidate);
 }
+async function runnerWorkspaceUntrusted(request: { cwd: string; tmpRoot: string; runId: string }, runner: string, gitRoot: string | undefined, answered = false): Promise<never> {
+  const root = gitRoot ?? 'unknown';
+  const answer = answered ? 'the prompt stayed after the protocol navigation keys' : 'raf answers it only for a registered branch directory or a verified spec/design Orchestrator root from conf/projects.json';
+  const reason = `RUNNER_WORKSPACE_UNTRUSTED: runner ${runner} asks to trust workspace ${request.cwd} (git root ${root}); ${answer}; raf does not edit CLI configuration`;
+  const failure = { code: 'RUNNER_WORKSPACE_UNTRUSTED', reason, found: { cwd: request.cwd, gitRoot: root, runner }, remediation: [`Запускайте агента з каталогу гілки з conf/projects.json branchPaths; інший каталог ${root} власник довіряє вручну в діалозі ${runner} CLI.`] };
+  await fs.writeFile(launchFailurePath(request.tmpRoot, request.runId), JSON.stringify(failure), { mode: 0o600, flag: 'wx' }).catch(() => undefined);
+  return fail(failure.code, reason);
+}
+async function runnerWorkspaceTrusted(context: Pick<RuntimeContext, 'orchestratorRoot' | 'confRoot'>, cwd: string, runner: string, task: { type: string; project: string; branch: string } | undefined, hotfix: Parameters<typeof validateHotfixTrust>[2] | undefined, execute: AdapterCommandExecutor): Promise<boolean> {
+  if (!['codex', 'claude'].includes(runner)) return true;
+  const top = await execute({ executable: 'git', args: ['-C', cwd, 'rev-parse', '--show-toplevel'] }).catch(() => undefined);
+  const gitRoot = top?.exitCode === 0 && top.stdout.trim() ? top.stdout.trim() : undefined;
+  return hotfix ? await validateHotfixTrust(context.orchestratorRoot, cwd, hotfix) : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, cwd, gitRoot, task, execute);
+}
 async function runnerWritableDirectories(cwd: string, boundaries: readonly string[], reportDirectory: string, statePath: string, exactFiles = false, orchestratorRoot?: string): Promise<{ directories: string[]; workspace: string[] }> {
   const workspace = await fs.realpath(cwd);
   const stateDirectory = await fs.realpath(dirname(statePath));
@@ -833,7 +847,7 @@ export async function createProductionServices(
   const budgetFor = async (runner: string) => protocolFor(await protocols(context.confRoot, options.protocolSettings), runner).timeouts;
   const tools = sessionTools(store, execute, configuration, context, budgetFor, options.execute);
   const assignments = assignmentPorts(execute);
-  const prepared = new Map<string, { launch: RuntimeLaunch; reportPath: string; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
+  const prepared = new Map<string, { launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;
   const leaseFor = (runId: string) => listTaskReservations(store).find(set => set.lease.owner.runId === runId)?.lease;
   const release = async (runId: string, reason: 'cancelled' | 'failed' | 'succeeded') => {
@@ -923,16 +937,20 @@ export async function createProductionServices(
       await fs.mkdir(directory, { mode: 0o700 });
       const reportPath = join(directory, `${launch.addressId}.json`);
       let reportedCommits: ReportedCommitLaunchContext | undefined;
+      let workspaceTrustDenied: boolean;
       try {
+        workspaceTrustDenied = !await runnerWorkspaceTrusted(context, launch.activity.cwd, launch.selection.runner, { type: launch.activity.type, project: launch.activity.project, branch: launch.taskContext.context.branch }, launch.taskContext.context.hotfix, execute);
         const required = launch.taskContext.context.reportSchema.required;
         if (Array.isArray(required) && required.includes('commits')) {
           if (!launch.commitRepositories) throw new Error('Authorized commit repositories are missing');
-          reportedCommits = await captureReportedCommitLaunchContext(launch.runId, reportPath, launch.commitRepositories, writeBoundaries);
+          reportedCommits = workspaceTrustDenied
+            ? { contract: 'reported-commits-v1', runId: launch.runId, reportPath, repositories: [], writeBoundaries: [...writeBoundaries] }
+            : await captureReportedCommitLaunchContext(launch.runId, reportPath, launch.commitRepositories, writeBoundaries);
         }
         await writeTaskContextFile(directory, { version: 1, runId: launch.runId, parameters: launch.taskContext.parameters, assignmentFingerprint: assignmentFingerprint(launch.assignment), ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), context: launch.taskContext.context });
-        await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries, workspaceRoute: { type: launch.activity.type, project: launch.activity.project, branch: launch.taskContext.context.branch, ...(launch.taskContext.context.hotfix ? { hotfix: launch.taskContext.context.hotfix } : {}) } }), { mode: 0o600, flag: 'wx' });
+        await fs.writeFile(join(directory, 'runtime.json'), JSON.stringify({ version: 1, workspaceTrustDenied, ...(launch.taskContext.context.hotfix ? { workspace: launch.taskContext.context.hotfix } : {}), configuration, context: { ...context, resolveCaller: undefined }, protocolSettings: options.protocolSettings, writeBoundaries, workspaceRoute: { type: launch.activity.type, project: launch.activity.project, branch: launch.taskContext.context.branch, ...(launch.taskContext.context.hotfix ? { hotfix: launch.taskContext.context.hotfix } : {}) } }), { mode: 0o600, flag: 'wx' });
       } catch (error) { await fs.rm(directory, { recursive: true, force: true }); throw error; }
-      prepared.set(launch.tmuxSession, { launch: structuredClone(launch), reportPath, reportedCommits });
+      prepared.set(launch.tmuxSession, { launch: structuredClone(launch), reportPath, reportedCommits, workspaceTrustDenied });
       return { reportPath, reportedCommits, reportWrapper: { wrap: command => command }, cleanupUnstarted: async () => { if (readSession(launch.runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch'); await fs.rm(directory, { recursive: true, force: true }); prepared.delete(launch.tmuxSession); } };
     },
     reserve: async input => {
@@ -989,7 +1007,7 @@ export async function createProductionServices(
       const identityAdapter = createAssignmentIdentityAdapter({ [input.activity.project]: context.orchestratorRoot }, options.execute ? { execute: options.execute } : {});
       const tasks = await identityAdapter.capture(input.activity.project, input.assignment);
       const testAssignment: SandboxTestAssignment = { runId: input.runId, agentId: input.addressId, type: input.activity.type, phase: input.activity.phase, project: input.activity.project, workspace: input.activity.cwd, branch: input.taskContext!.context.branch, changes: input.assignment.changes.map(change => change.id) };
-      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
+      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
       const caller = await (async () => {
         try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }
@@ -1163,9 +1181,8 @@ export async function runProductionWorker(
       hotfixCommitPort = await startHotfixCommitPort({ orchestratorRoot: context.orchestratorRoot, qaHome: stateContext.homeDirectory, environment: {}, sandboxExecutable: 'codex' }, hotfix, dirname(session.launchContext.reportPath));
     }
     const writeBoundaries = manifest.writeBoundaries ?? [];
-    const reportRequired = session!.launchContext!.reportSchema?.required;
-    if (Array.isArray(reportRequired) && reportRequired.includes('commits') && !session!.launchContext!.reportedCommits) fail('INVALID_CONTEXT', 'Reported commit launch metadata is missing');
-    if (!isDeepStrictEqual(request.reportedCommits, session!.launchContext!.reportedCommits)) fail('INVALID_CONTEXT', 'Worker reported commit contract does not match durable launch context');
+    const workspaceTrustDenied = session.launchContext.workspaceTrustDenied === true;
+    if ((manifest.workspaceTrustDenied === true) !== workspaceTrustDenied) fail('INVALID_CONTEXT', 'Worker workspace trust decision does not match durable launch context');
     if (!Array.isArray(writeBoundaries) || !writeBoundaries.every(text) || !isDeepStrictEqual(writeBoundaries, session.launchContext.writeBoundaries ?? [])) fail('INVALID_CONTEXT', 'Worker write boundaries do not match durable launch context');
     const dependencies = await reservationTools(store, context, execute, options.execute);
     let lease: TaskReservationLease | null | undefined = listTaskReservations(store).find(set => set.lease.owner.runId === request.runId)?.lease;
@@ -1259,12 +1276,7 @@ export async function runProductionWorker(
       return workspaceGitRoot ?? undefined;
     };
     const untrusted = async (): Promise<never> => {
-      const gitRoot = await gitTopLevel() ?? 'unknown';
-      const answer = trustAnsweredAt === undefined ? 'raf answers it only for a registered branch directory or a verified spec/design Orchestrator root from conf/projects.json' : 'the prompt stayed after the protocol navigation keys';
-      const reason = `RUNNER_WORKSPACE_UNTRUSTED: runner ${settings.runner} asks to trust workspace ${request.cwd} (git root ${gitRoot}); ${answer}; raf does not edit CLI configuration`;
-      const failure = { code: 'RUNNER_WORKSPACE_UNTRUSTED', reason, found: { cwd: request.cwd, gitRoot, runner: settings.runner }, remediation: [`Запускайте агента з каталогу гілки з conf/projects.json branchPaths; інший каталог ${gitRoot} власник довіряє вручну в діалозі ${settings.runner} CLI.`] };
-      await fs.writeFile(launchFailurePath(request.tmpRoot, request.runId), JSON.stringify(failure), { mode: 0o600, flag: 'wx' }).catch(() => undefined);
-      return fail(failure.code, reason);
+      return runnerWorkspaceUntrusted(request, settings.runner, await gitTopLevel(), trustAnsweredAt !== undefined);
     };
     const answerTrust = async (): Promise<void> => {
       if (trustAnsweredAt !== undefined) {
@@ -1273,7 +1285,7 @@ export async function runProductionWorker(
       }
       const route = manifest.workspaceRoute;
       const task = object(route) && route.type === session.activity?.type && route.project === session.activity?.project && text(route.branch) ? { type: route.type, project: route.project, branch: route.branch } : undefined;
-      if (!(route?.hotfix ? await validateHotfixTrust(context.orchestratorRoot, request.cwd, route.hotfix) : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, await gitTopLevel(), task, execute))) await untrusted();
+      if (workspaceTrustDenied || !(route?.hotfix ? await validateHotfixTrust(context.orchestratorRoot, request.cwd, route.hotfix) : await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, request.cwd, await gitTopLevel(), task, execute))) await untrusted();
       const observation = observeRunnerScreen(settings, { text: screen, version: availability.version, requestedCommand: null });
       const action = nextRunnerAction(settings, observation, { trustWorkspace: true });
       if (observation.state !== 'workspace_trust_required' || action.kind !== 'keys') await untrusted();
@@ -1294,7 +1306,10 @@ export async function runProductionWorker(
         previous = polledAt;
         const observed = await adapter.inspect(adapterSession);
         trustShown = observed.status === 'failed' && observed.reason === 'workspace_trust_required';
-        if (observed.status === 'ready' && observed.cliSessionId) return { state: 'ready', runnerSessionId: observed.cliSessionId };
+        if (observed.status === 'ready' && observed.cliSessionId) {
+          if (workspaceTrustDenied) await untrusted();
+          return { state: 'ready', runnerSessionId: observed.cliSessionId };
+        }
         if (observed.status === 'exited') return { state: 'exited', reason: 'Runner exited before native identity' };
         if (trustShown) {
           await answerTrust();
@@ -1413,6 +1428,9 @@ export async function runProductionWorker(
       fail('RUNNER_DELIVERY_UNAVAILABLE', 'Native initial brief acceptance timed out');
     };
     transport.deliver = async brief => {
+      const reportRequired = session.launchContext.reportSchema?.required;
+      if (Array.isArray(reportRequired) && reportRequired.includes('commits') && !session.launchContext.reportedCommits) fail('INVALID_CONTEXT', 'Reported commit launch metadata is missing');
+      if (!isDeepStrictEqual(request.reportedCommits, session.launchContext.reportedCommits)) fail('INVALID_CONTEXT', 'Worker reported commit contract does not match durable launch context');
       try { await deliverInitialBrief(brief); }
       catch (error) {
         const context = failureContext(error);

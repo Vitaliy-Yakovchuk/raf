@@ -38,6 +38,7 @@ export type DomainEffect = { id: string; domain: string; payload: unknown };
 export type TransitionEffects = { pending: readonly PendingIntent[]; domain: readonly DomainEffect[]; reportAccepted?: boolean };
 
 export type SessionLaunchContext = {
+  workspaceTrustDenied?: true;
   reportedCommits?: import('./reported-commits-contract.ts').ReportedCommitLaunchContext;
   reportSchema?: Readonly<Record<string, unknown>>;
   testAssignment?: import('./sandbox-test-run.ts').SandboxTestAssignment;

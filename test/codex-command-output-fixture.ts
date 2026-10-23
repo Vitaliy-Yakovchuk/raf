@@ -4,17 +4,16 @@ import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { TestContext } from 'node:test';
 import { buildCatalog } from '../src/bootstrap.ts';
-import { openStateStore } from '../src/state-store.ts';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import { buildRunnerInvocation, nativeSandboxArgs } from '../src/runner-protocols.ts';
 import { prepareCodexRafCommandAccess } from '../src/codex-raf-command-access.ts';
 import type { PreparedCodexRafCommandAccess } from '../src/codex-raf-command-access.ts';
 import type { ProcessIdentity, SessionRecord } from '../src/session-state.ts';
 
 const confRoot = fileURLToPath(new URL('../../conf/', import.meta.url));
-const sourceRoot = fileURLToPath(new URL('../', import.meta.url));
 const configuration = JSON.parse(await readFile(join(confRoot, 'raf.json'), 'utf8'));
 export const outputTimeout = JSON.parse(await readFile(join(confRoot, 'flow.json'), 'utf8')).unitTests.timeoutMs;
 assert.ok(Number.isSafeInteger(outputTimeout) && outputTimeout > 0);
@@ -81,8 +80,14 @@ export async function outputFixture(t: TestContext, options: { production?: bool
     TMPDIR: runDirectory, LANG: 'C.UTF-8',
     ...(options.instrumentation ? { NODE_OPTIONS: `--import=${observerPath}` } : {}),
   };
-  const context = { mode: 'qa' as const, orchestratorRoot: root, codeRoot: sourceRoot, homeDirectory: home, statePath, tmpRoot: join(stateDirectory, 'tmp'), tmuxSocketPath: join(stateDirectory, 'tmp/tmux/server.sock') };
-  const store = openStateStore(statePath, { context });
+  const fixtureConf = join(root, 'conf');
+  await mkdir(fixtureConf);
+  for (const name of ['raf-constants.json', 'models.json', 'flow.json', 'raf.json']) await writeFile(join(fixtureConf, name), await readFile(join(confRoot, name)));
+  await writeFile(join(fixtureConf, 'projects.json'), JSON.stringify({ version: 1, projects: { raf: { path: 'raf-main', profile: 'raf', branchPaths: { main: 'raf-main', develop: 'raf-develop' }, usesSharedLibs: false } }, profiles: { raf: { development: 'develop', integration: 'main', production: 'main' } } }));
+  await prepareProductionQaFixture(t, { root, home });
+  const codeRoot = join(root, 'raf-develop');
+  const { openStateStore } = await import(pathToFileURL(join(codeRoot, 'src/state-store.ts')).href);
+  const store = openStateStore(statePath);
   const runIds: string[] = [];
   if (options.production) {
     store.sessionRepository.transaction(tx => {
@@ -97,24 +102,21 @@ export async function outputFixture(t: TestContext, options: { production?: bool
     });
   }
   store.close();
-  const fixtureConf = join(root, 'conf');
-  await mkdir(fixtureConf);
-  for (const name of ['raf-constants.json', 'models.json', 'projects.json', 'flow.json', 'raf.json']) await writeFile(join(fixtureConf, name), await readFile(join(confRoot, name)));
   const artifactPath = join(root, 'catalog.json');
   buildCatalog(fixtureConf, artifactPath, ['agent ps']);
   const productionScript = `
-const { openStateStore } = await import(${JSON.stringify(new URL('../src/state-store.ts', import.meta.url).href)});
-const { AgentControlService } = await import(${JSON.stringify(new URL('../src/agent-control.ts', import.meta.url).href)});
-const { createAppRuntime } = await import(${JSON.stringify(new URL('../src/app-runtime.ts', import.meta.url).href)});
-const { runCli } = await import(${JSON.stringify(new URL('../src/bootstrap.ts', import.meta.url).href)});
-const store = openStateStore(${JSON.stringify(statePath)}, {context:${JSON.stringify(context)}});
+const { openStateStore } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/state-store.ts')).href)});
+const { AgentControlService } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/agent-control.ts')).href)});
+const { createAppRuntime } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/app-runtime.ts')).href)});
+const { runCli } = await import(${JSON.stringify(pathToFileURL(join(codeRoot, 'src/bootstrap.ts')).href)});
+const store = openStateStore(${JSON.stringify(statePath)});
 const repository = store.sessionRepository;
 const control = new AgentControlService({repository,
  scanner:{inspect:async identity=>({state:'alive',identity,observedAt:'2026-10-23T00:00:00.000Z'})},
  coordinator:{acceptPendingReport:async s=>s,observe:async(s,o)=>{const next={...s,observation:o};repository.transaction(tx=>tx.putSession(next));return next;},publish:async()=>{},updateActivity:async()=>{throw Error('unexpected update');},finalize:async()=>{throw Error('unexpected finalize');}},
  authority:{resolve:async()=>({kind:'system'})}, transport:{deliver:async()=>{throw Error('unexpected delivery');},close:async()=>{throw Error('unexpected close');},interrupt:async()=>{throw Error('unexpected interrupt');}},
  reminders:{sessionEnded:()=>{throw Error('unexpected end');}},projects:['raf'],agentTypes:['implement'],agentPhases:['implement']});
-const context={orchestratorRoot:${JSON.stringify(root)},confRoot:${JSON.stringify(fixtureConf)},artifactPath:${JSON.stringify(artifactPath)},statePath:${JSON.stringify(statePath)},tmpRoot:${JSON.stringify(context.tmpRoot)},mode:'test',commandStartedAtMs:0,resolveCaller:async()=>undefined};
+const context={orchestratorRoot:${JSON.stringify(root)},confRoot:${JSON.stringify(fixtureConf)},artifactPath:${JSON.stringify(artifactPath)},statePath:${JSON.stringify(statePath)},tmpRoot:${JSON.stringify(join(stateDirectory, 'tmp'))},mode:'test',commandStartedAtMs:0,resolveCaller:async()=>undefined};
 const runtime=createAppRuntime(context,{loadConfiguration:async()=>({catalog:JSON.parse(readFileSync(${JSON.stringify(artifactPath)},'utf8')),models:JSON.parse(readFileSync(${JSON.stringify(join(fixtureConf, 'models.json'))},'utf8')),commandTiming:{emaAlpha:0.1}}),openStore:async()=>store,createServices:async()=>({control}),nextRunIdentity:()=>{throw Error('unexpected launch');},now:()=>0});
 try {const result=await runCli(process.argv.slice(2),${JSON.stringify(artifactPath)},runtime.handlers);process.stdout.write(result.stdout);process.stderr.write(result.stderr);process.exitCode=result.exitCode;} finally {await runtime.close();}
 `;

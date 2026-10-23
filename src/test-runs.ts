@@ -362,6 +362,9 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   try {
     await ports.state.transaction(tx => {
       let group = tx.get(key);
+      if (group) {
+        result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
+      }
       for (const other of tx.list(key.project, key.workspace)) {
         if (other.key.group === key.group || other.key.group.split('/')[0] !== key.group.split('/')[0]) continue;
         if (plan.selection.files.some(file => other.selection.files.includes(file))) failure('GROUP_RENAME_REFUSED');

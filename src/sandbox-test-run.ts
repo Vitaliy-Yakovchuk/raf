@@ -86,6 +86,7 @@ export async function runSandboxTestCommand(
     const communication = argv[0] === 'agent' && ['message', 'ps'].includes(argv[1]);
     if (!communication && !(argv[0] === 'test' && argv[1] === 'run')) throw new Error('Command is not allowed through the sandbox channel');
     const control = await ports.control(ports.caller);
+    if (![ports.caller, ...control.ancestors, ...control.sessions.map(row => row.process)].every(identity => Number.isSafeInteger(identity.pid) && identity.pid > 0 && Number.isFinite(Date.parse(identity.startedAt)))) throw new Error('Process identity is invalid');
     if (!control.ancestors.some(identity => sameProcess(identity, ports.caller))) throw new Error('Caller process identity is not observable');
     let session: SandboxTestSession | undefined;
     for (const ancestor of control.ancestors) {

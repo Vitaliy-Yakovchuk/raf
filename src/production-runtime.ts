@@ -199,7 +199,7 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
     }
   } finally { ownedStore?.close(); }
   const command = rafCommandFor();
-  const phases = confRoot ? await loadSandboxTestPhases(confRoot) : undefined;
+  const phases = confRoot && ['implement', 'qa', 'hotfix'].includes(phase ?? type ?? '') ? await loadSandboxTestPhases(confRoot) : undefined;
   const subcommands = type === undefined ? [] : rafSubcommandsFor(type, phase ?? type, phases);
   return {
     hidden: ['/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots, ...registeredSockets],
@@ -803,9 +803,9 @@ export async function createProductionServices(
     },
     assignment: { validate: request => validateAssignment(request, assignments), compose: (snapshot, input) => composeAssignmentBrief(snapshot, { ...input, sessionName: input.agentId }, assignments.fs) },
     resolveTask: async (parameters, assignment) => {
-      configuration.sandboxTestPhases = await loadSandboxTestPhases(context.confRoot);
       const task = await deriveTaskContext({ root: context.orchestratorRoot, parameters, assignment, configuration: await loadTaskContextConfiguration(context.confRoot) });
       if (task.estimate.status !== 'KNOWN') return fail('RESOURCE_ESTIMATE_UNKNOWN', task.estimate.reason);
+      configuration.sandboxTestPhases = ['implement', 'qa', 'hotfix'].includes(parameters.phase) ? await loadSandboxTestPhases(context.confRoot) : undefined;
       return { ...task, estimate: task.estimate, requested: { ramBytes: task.estimate.ramBytes, diskBytes: {} }, requiredFileSystemIds: [] };
     },
     route: async request => {
@@ -1078,7 +1078,7 @@ export async function runProductionWorker(
     if (hotfix && settings.runner === 'codex') invocation.args.push('-C', request.cwd);
     const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
     invocation.args.push(...nativeWriteScopeArgs(settings, hotfix ? [...new Set([...writable.directories, ...writable.workspace])] : writable.directories, writable.workspace));
-    const scope = await runnerSandboxScope(session.launchContext.testAssignment?.type ?? session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store, session.launchContext.testAssignment?.phase ?? session.activity?.phase, context.confRoot).catch(error => {
+    const scope = await runnerSandboxScope(session?.launchContext?.testAssignment?.type ?? session.activity?.type, request.cwd, dirname(session.launchContext.reportPath), request.statePath, request.tmpRoot, store, session?.launchContext?.testAssignment?.phase ?? session?.activity?.phase, context.confRoot).catch(error => {
       if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
       throw error;
     });

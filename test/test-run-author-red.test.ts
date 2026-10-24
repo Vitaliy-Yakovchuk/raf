@@ -192,7 +192,7 @@ test('AR06 composed test-scaffold assignment includes test run in raf_subcommand
   const brief = await composeAssignmentBrief({ root, changes: [{ id: 'add-raf-test-run', items: [{ id: '6.3', description: '[test-scaffold] Author red' }] }], baselineArchives: [] }, {
     cwd: key.workspace, briefsRoot: `${root}/conf/briefs`, runner: 'codex', stage: 'test-scaffold',
     project: 'raf', agentId: 'author', sessionName: 'author', features: ['add-raf-test-run'], phase: 'test-scaffold',
-    outcome: 'Prepare author red tests', writeBoundaries: [], sources: [], reportPath: '/tmp/author.json', reportSchema: {},
+    outcome: 'Prepare author red tests', writeBoundaries: [fileURLToPath(new URL('../', import.meta.url))], sources: [], reportPath: '/tmp/author.json', reportSchema: {},
     rafCommand: entrypoint.join(' '), rafSubcommands: subcommands,
   }, { readText: path => readFile(path, 'utf8') });
   const payload = JSON.parse(brief.slice(brief.lastIndexOf('\n{') + 1));

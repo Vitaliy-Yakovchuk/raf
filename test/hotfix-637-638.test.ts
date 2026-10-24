@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import type { TestContext } from 'node:test';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 import childProcess from 'node:child_process';
@@ -17,14 +18,14 @@ import type { RunnerEvent, TestRunCommand, TestRunConfig, TestRunContext } from 
 const confRoot = new URL('../../conf/', import.meta.url);
 const readConfig = (name: string) => JSON.parse(readFileSync(new URL(name, confRoot), 'utf8'));
 
-function fixture(t: Parameters<Parameters<typeof test>[1]>[0], cwd = 'bugs-api') {
+function fixture(t: TestContext, cwd = 'bugs-api') {
   const root = mkdtempSync(join(tmpdir(), 'hotfix-637-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const write = (file: string, data: string) => {
     mkdirSync(dirname(join(root, file)), { recursive: true });
     writeFileSync(join(root, file), data);
   };
-  write('conf/projects.json', JSON.stringify({ projects: { raf: { path: 'raf-main', branchPaths: { main: 'raf-main' }, branchProfile: 'raf' } }, branchProfiles: { raf: { production: 'main', environments: { runtime: 'main' } } } }));
+  write('conf/projects.json', JSON.stringify({ version: 1, projects: { raf: { path: 'raf-main', branchPaths: { main: 'raf-main' }, profile: 'raf' } }, profiles: { raf: { production: 'main', environments: { runtime: 'main' } } } }));
   write('conf/raf.json', JSON.stringify({ version: 1, state: { fileName: 'state.sqlite' } }));
   write('raf-main/src/state-store.ts', '');
   write('shared-libs/bugs-api/src/pull.test.ts', '');

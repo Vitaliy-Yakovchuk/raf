@@ -161,6 +161,7 @@ try {
   fs.mkdirSync(path.join(main, 'qa'), { recursive: true });
   fs.copyFileSync(path.join(here, 'z4044-live-worker.mjs'), path.join(main, 'qa/z331-worker.mjs'));
   fs.copyFileSync(path.join(here, 'z4044-live-boundaries.mjs'), path.join(main, 'qa/z4044-live-boundaries.mjs'));
+  fs.copyFileSync(path.join(here, 'z404-tmux-shutdown.ts'), path.join(main, 'qa/z404-tmux-shutdown.ts'));
   const runnerProtocol = JSON.parse(fs.readFileSync(path.join(root, 'conf/raf.json'), 'utf8')).runnerProtocols.find(entry => entry.runner === 'codex');
   Object.assign(liveBoundaryConfig, { transitionMs: runnerProtocol.timeouts.transitionMs, pollMs: runnerProtocol.timeouts.pollMs });
   for (const host of ['127.0.0.1', '::1']) {

@@ -18,7 +18,7 @@ test('worker report confirmation reuses its verified environment across checkbox
     assert.equal(result.status, 0, result.stderr);
     return result.stdout.trim();
   };
-  git('init', '-q'); git('add', 'openspec'); git('commit', '-qm', 'Launch baseline');
+  git('init', '-q'); git('config', 'user.name', 'Worker fixture'); git('config', 'user.email', 'worker@example.invalid'); git('add', 'openspec'); git('commit', '-qm', 'Launch baseline');
   const projectsPath = join(f.confRoot, 'projects.json');
   await writeFile(projectsPath, JSON.stringify({ version: 1, projects: { raf: { path: 'raf-main', profile: 'raf', branchPaths: { main: 'raf-main', develop: 'raf-develop' } } }, profiles: { raf: { production: 'main', environments: { runtime: 'main' } } } }));
   await mkdir(join(f.root, 'raf-main', 'src'), { recursive: true });

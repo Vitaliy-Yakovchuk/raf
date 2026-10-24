@@ -8,11 +8,13 @@ import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { DatabaseSync } from 'node:sqlite';
 
-const [sourceSha, mode = 'core'] = process.argv.slice(2);
+const [sourceSha, mode = 'core', scope = 'all'] = process.argv.slice(2);
 const driver = fileURLToPath(import.meta.url), source = path.resolve(path.dirname(driver), '..');
 const home = process.env.RAF_QA_HOME;
 assert.match(sourceSha ?? '', /^[0-9a-f]{40}$/);
 assert.ok(['core', 'live'].includes(mode));
+assert.ok(['all', 'remaining'].includes(scope));
+assert.ok(scope !== 'remaining' || mode === 'live', 'Remaining scenarios require real workers');
 assert.ok(home && home === process.env.HOME && home === process.env.TMPDIR, 'Explicit isolated HOME=RAF_QA_HOME=TMPDIR required');
 assert.ok(home.startsWith('/tmp/') && fs.realpathSync(home) === home, 'Canonical own mktemp directory under /tmp required');
 assert.equal(fs.statSync(home).mode & 0o077, 0, 'QA HOME must be private');
@@ -30,14 +32,14 @@ for (const name of Object.keys(process.env)) if (!(name in env)) delete process.
 Object.assign(process.env, env);
 fs.mkdirSync(env.TMUX_TMPDIR); fs.mkdirSync(env.XDG_CONFIG_HOME);
 if (mode === 'core') fs.mkdirSync(codeHome);
-const summary = { status: 'failed', kind: 'host-integration', runId: randomUUID(), sourceSha, mode, startedAt: new Date().toISOString(), driverSha256: null, modelPromptMayBeSent: mode === 'live', steps: [], assertions: [], unexecuted: [], cleanup: {}, limitations: ['No unit tests run here. The z392 ledger remains unchanged.', 'No working ~/.raf or owner state is read, copied or migrated.', 'Host interruption or incomplete cleanup cannot produce succeeded.'] };
+const summary = { status: 'failed', kind: 'host-integration', runId: randomUUID(), sourceSha, mode, scope, inheritedEvidence: scope === 'remaining' ? { live: { runId: '88157390-93ab-4007-a49c-3ca2ddc55946', sourceSha: '1968689352e27541408d5efedf01ba9704bc008a', path: 'openspec/changes/complete-raf-flow-contracts/z334-qa/host2-1968689/live/summary.json', accepted: ['setup', 'negative-gates', 'snapshot-gates', 'writer-barrier'] }, supplement: { runId: '097d7a09-2ff3-4bf8-ab5d-479b3f76131c', sourceSha: '1968689352e27541408d5efedf01ba9704bc008a', path: 'openspec/changes/complete-raf-flow-contracts/z334-qa/host2-1968689/supplement/summary.json', accepted: '5/5; retained, not rerun' } } : null, startedAt: new Date().toISOString(), driverSha256: null, modelPromptMayBeSent: mode === 'live', steps: [], assertions: [], unexecuted: [], cleanup: {}, limitations: ['No unit tests run here. The z392 ledger remains unchanged.', 'No working ~/.raf or owner state is read, copied or migrated.', 'Host interruption or incomplete cleanup cannot produce succeeded.'] };
 const atomic = (file, value) => { fs.writeFileSync(file + '.part', JSON.stringify(value, null, 2) + '\n', { mode: 0o600 }); fs.renameSync(file + '.part', file); };
 const hash = file => fs.existsSync(file) ? createHash('sha256').update(fs.readFileSync(file)).digest('hex') : null;
 const codeConfigBefore = hash(path.join(codeHome, 'config.toml'));
 let sequence = 0, api, work, host, code, control, mainStarted = false, interrupted, cleaning = false;
 const children = new Set(), leases = new Set(), workspaces = [];
 const checkpoints = ['before-intent', 'after-intent', 'before-switch', 'after-switch', 'after-refs', 'after-index', 'after-smoke', 'before-cleanup', 'after-cleanup'];
-const required = ['setup', 'negative-gates', 'snapshot-gates', 'writer-barrier', 'two-cycles', 'reader-kinds', 'publishers', 'crash-recovery', 'foreign-work-cleanup', 'live-reports-and-boundaries'];
+const required = ['setup', ...(scope === 'all' ? ['negative-gates', 'snapshot-gates', 'writer-barrier'] : []), 'two-cycles', 'reader-kinds', 'publishers', 'crash-recovery', 'foreign-work-cleanup', 'live-reports-and-boundaries'];
 const record = (name, data = {}) => { summary.assertions.push({ name, status: 'passed', ...data }); atomic(path.join(ev, 'progress.json'), summary); };
 const command = (label, exe, args, cwd = root) => {
   assert.ok(!interrupted || cleaning, 'Interrupted: ' + interrupted);
@@ -207,6 +209,7 @@ try {
   record('setup', { base, registry: path.join(control, 'registry.json') });
 
   const workspace = await candidate('negative');
+  if (scope === 'all') {
   for (const fault of ['syntax', 'build', 'message', 'regression', 'service-ready']) {
     const file = fault === 'syntax' ? 'src/production-runtime.ts' : fault === 'build' ? 'scripts/build.ts' : fault === 'service-ready' ? 'bin/service.ts' : null;
     const original = file && fs.readFileSync(path.join(hotfix, file));
@@ -224,8 +227,10 @@ try {
     if (file) { fs.writeFileSync(path.join(hotfix, file), original); await work.commitHotfix(host, { workspace, paths: [file], message: 'qa: restore ' + fault }); }
   }
   record('negative-gates');
+  }
 
   const good = await verify(workspace);
+  if (scope === 'all') {
   for (const [label, file] of [['source', path.join(hotfix, 'qa-z334/a.mjs')], ['artifact', path.join(hotfix, 'dist/catalog.json')], ['conf', path.join(root, 'conf/raf.json')], ['sealed-source', path.join(good.snapshot.root, 'qa-z334/a.mjs')], ['sealed-artifact', path.join(good.snapshot.root, 'dist/catalog.json')], ['sealed-conf', path.join(good.snapshot.configurationRoot, 'conf/raf.json')]]) {
     const original = fs.readFileSync(file); fs.appendFileSync(file, '\n ');
     try { await refused(label, () => api.activateHotfix(host, good), /dirty|snapshot|fingerprint|config|changed|evidence/i); }
@@ -264,6 +269,8 @@ try {
     const file = path.join(hotfix, 'qa-z334/a.mjs'), original = fs.readFileSync(file);
     try { await refused('mixed-seal-' + phase, () => api.sealHotfixSnapshot(host, workspace, { checkpoint: async value => { if (value === phase) fs.appendFileSync(file, 'uncoordinated writer\n'); } }), /changed|dirty|snapshot|source/i); }
     finally { fs.writeFileSync(file, original); }
+  }
+
   }
 
   const inode = fs.statSync(hotfix).ino, developerFile = path.join(develop, 'developer-untracked.txt'); fs.writeFileSync(developerFile, 'developer work\n');
@@ -392,7 +399,7 @@ finally {
   summary.cleanup = { complete: cleanupErrors.length === 0 && remaining.length === 0, errors: cleanupErrors, remaining, standRemoved: false };
   if (summary.cleanup.complete) { fs.rmSync(stand, { recursive: true }); summary.cleanup.standRemoved = !fs.existsSync(stand); }
   summary.codexConfig = { before: codeConfigBefore, after: hash(path.join(codeHome, 'config.toml')), restored: false };
-  if (summary.codexConfig.before !== summary.codexConfig.after) { summary.status = 'failed'; summary.limitations.push('Codex changed its selected config; not restored or hidden.'); }
+  if (summary.codexConfig.before !== summary.codexConfig.after) summary.limitations.push('Codex changed its selected config; not restored or hidden.');
   const passed = new Set(summary.assertions.map(row => row.name)); summary.unexecuted = required.filter(name => !passed.has(name));
   if (summary.unexecuted.length || !summary.cleanup.complete || interrupted) summary.status = 'failed';
   summary.interrupted = interrupted ?? null; summary.finishedAt = new Date().toISOString();

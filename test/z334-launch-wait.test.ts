@@ -177,7 +177,7 @@ test('Z334.S08 a result published on the interruption poll cannot be accepted as
   assert.equal(f.summary.steps.length, 0);
 });
 
-test('Z334.S09 completed cleanup cannot suppress the owner config guard or unexecuted gates', async () => {
+test('Z334.S09 records Codex config changes and still rejects unexecuted gates', async () => {
   const f = fixture();
   f.summary.assertions = [];
   f.context.hash = () => 'changed-owner-config';
@@ -190,4 +190,18 @@ test('Z334.S09 completed cleanup cannot suppress the owner config guard or unexe
   assert.equal(f.summary.codexConfig.after, 'changed-owner-config');
   assert.equal(f.summary.codexConfig.restored, false);
   assert.ok(f.summary.limitations.includes('Codex changed its selected config; not restored or hidden.'));
+});
+
+
+test('Z334.S10 Codex trust changes are recorded without failing a complete run (Z383)', async () => {
+  const f = fixture();
+  f.context.hash = () => 'changed-owner-config';
+  f.context.request = async () => success;
+  await f.cleanup();
+  assert.equal(f.summary.codexConfig.before, 'unchanged');
+  assert.equal(f.summary.codexConfig.after, 'changed-owner-config');
+  assert.equal(f.summary.codexConfig.restored, false);
+  assert.equal(f.summary.status, 'succeeded');
+  assert.equal(f.context.process.exitCode, 0);
+  assert.deepEqual(Array.from(f.summary.unexecuted), []);
 });

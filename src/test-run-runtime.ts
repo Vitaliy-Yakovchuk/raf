@@ -295,7 +295,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const reply = await runSandboxTestCommand({ command: [...entrypoint, 'test', 'run', ...argv].map(literal).join(' '), cwd }, {
       caller, entrypoint, control: async () => control,
       communicate: async () => { throw new Error('Unexpected communication request in the test entrypoint'); },
-      unitContext: async key => {
+      unitContext: async (key, assignment) => {
         const owner = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`);
         mkdirSync(owner, { recursive: true, mode: 0o700 });
         const identity = lstatSync(owner);
@@ -309,11 +309,10 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         const homeIdentity = lstatSync(home);
         if (!homeIdentity.isDirectory() || homeIdentity.uid !== process.getuid?.() || (homeIdentity.mode & 0o077) !== 0) throw Object.assign(new Error('Unit HOME is not private'), { code: 'STATE_CONTEXT_REFUSED' });
         context = { integrationTests, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, activeChanges: [...control.activeChanges],
-          agentId: 'test-run', sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
+          agentId: assignment.agentId, callerPhase: assignment.phase, sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
           home, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome: userInfo().homedir };
         const boot = await readMachineBootIdentity();
-        const callerSession = control.ancestors.flatMap(ancestor => control.sessions.filter(session => session.state === 'running' && session.process.pid === ancestor.pid && session.process.startedAt === ancestor.startedAt))[0];
-        const session = callerSession && controlStore!.sessionRepository.transaction(tx => tx.getSession(callerSession.assignment.runId), 'read');
+        const session = controlStore!.sessionRepository.transaction(tx => tx.getSession(assignment.runId), 'read');
         const items = session?.launchContext?.assignment.changes.flatMap(change => change.items.map(item => ({ project: session.activity?.project ?? args.project, change: change.id, item: item.id }))) ?? [];
         const resources = createTestRunResourcePort(controlStore!, { root, workspace, home: context.operationalHome, machineId: boot.machineId, config, resultStatePath: stateContext.statePath, items });
         runtime = createTestRunPorts(config!, stateContext, () => store ??= openStateStore(stateContext.statePath, { context: stateContext }), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
@@ -322,7 +321,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         return { config, policy, context, runtime: reserved };
       },
     });
-    if (!reply.stdout) throw Object.assign(new Error(reply.stderr), { code: 'CALLER_UNAUTHORIZED' });
+    if (!reply.stdout) throw Object.assign(new Error(reply.stderr.trim()), { code: 'CALLER_UNAUTHORIZED' });
     if (store && runtime) {
       await cleanupClosedTestRunGroups(context.activeChanges, context, runtime);
       if (controlStore) {
@@ -345,6 +344,6 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
       const hintId = config?.phases[result.phase]?.hints.setup;
       result.hintIds = hintId ? [hintId] : []; result.hints = hintId ? [config!.hints[hintId]] : [];
     }
-    return { exitCode: 1, stdout: JSON.stringify(result), stderr: '' };
+    return { exitCode: 1, stdout: JSON.stringify(result), stderr: result.errorCode === 'CALLER_UNAUTHORIZED' && error instanceof Error ? error.message : '' };
   } finally { store?.close(); controlStore?.close(); }
 }

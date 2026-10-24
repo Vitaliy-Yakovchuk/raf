@@ -1,4 +1,6 @@
 import { runTestRunCli, type TestRunCliPorts } from './test-run-cli.ts';
+import { resolveSandboxTestCaller, SandboxCallerRefusal } from './sandbox-test-caller.ts';
+import type { SandboxCallerSnapshot } from './sandbox-test-caller.ts';
 import { authorizeRegressionRun } from './test-regression-groups.ts';
 import type { RegressionGrant, RegressionAuthorization } from './test-regression-groups.ts';
 import { parseTestRunArgs } from './test-runs.ts';
@@ -29,6 +31,7 @@ export interface SandboxTestSession {
 }
 
 export interface SandboxTestControlSnapshot {
+  readonly callerEvidence?: SandboxCallerSnapshot;
   readonly ancestors: readonly SandboxProcessIdentity[];
   readonly sessions: readonly SandboxTestSession[];
   readonly workspaces: readonly {
@@ -59,7 +62,7 @@ export interface SandboxTestRunPorts {
   readonly caller: SandboxProcessIdentity;
   readonly entrypoint: readonly string[];
   control(caller: SandboxProcessIdentity): Promise<SandboxTestControlSnapshot>;
-  unitContext(key: TestRunGroupKey): Promise<SandboxUnitContext>;
+  unitContext(key: TestRunGroupKey, assignment: SandboxTestAssignment): Promise<SandboxUnitContext>;
   wrapper?(request: TestRunRequest, context: SandboxUnitContext): Promise<SandboxCommandReply>;
   evidence?(authorization: RegressionAuthorization, reply: SandboxCommandReply): Promise<void>;
   communicate(argv: readonly string[], caller: SandboxTestAssignment): Promise<SandboxCommandReply>;
@@ -86,55 +89,72 @@ export async function runSandboxTestCommand(
   ports: SandboxTestRunPorts,
 ): Promise<SandboxCommandReply> {
   let executingWrapper = false;
+  let selectingUnit = false;
   try {
     const words = parseSandboxCommand(request.command);
-    if (!ports.entrypoint.length || !words || !ports.entrypoint.every((word, index) => words[index] === word)) throw new Error('Untrusted entrypoint or non-simple command');
+    if (!ports.entrypoint.length || !words || !ports.entrypoint.every((word, index) => words[index] === word)) throw new SandboxCallerRefusal('Untrusted entrypoint or non-simple command');
     const argv = words.slice(ports.entrypoint.length);
     const communication = argv[0] === 'agent' && ['message', 'ps'].includes(argv[1]);
-    if (!communication && !(argv[0] === 'test' && argv[1] === 'run')) throw new Error('Command is not allowed through the sandbox channel');
+    if (!communication && !(argv[0] === 'test' && argv[1] === 'run')) throw new SandboxCallerRefusal('Command is not allowed through the sandbox channel');
     const control = await ports.control(ports.caller);
-    if (![ports.caller, ...control.ancestors, ...control.sessions.map(row => row.process)].every(identity => Number.isSafeInteger(identity.pid) && identity.pid > 0 && typeof identity.startedAt === 'string' && identity.startedAt.length > 0)) throw new Error('Process identity is invalid');
-    if (!control.ancestors.some(identity => sameProcess(identity, ports.caller))) throw new Error('Caller process identity is not observable');
-    let session: SandboxTestSession | undefined;
-    for (const ancestor of control.ancestors) {
-      const registered = control.sessions.filter(row => row.process.pid === ancestor.pid);
-      if (!registered.length) continue;
-      session = registered.find(row => sameProcess(row.process, ancestor));
-      if (!session || session.state !== 'running') throw new Error('Nearest registered caller is closed or has a reused process identity');
-      break;
+    let assignment: SandboxTestAssignment;
+    if (control.callerEvidence) {
+      if (!sameProcess(control.callerEvidence.caller, ports.caller)) throw new SandboxCallerRefusal('Caller identity differs from the trusted host snapshot');
+      assignment = resolveSandboxTestCaller(control.callerEvidence);
+    } else {
+      if (![ports.caller, ...control.ancestors].every(identity => Number.isSafeInteger(identity.pid) && identity.pid > 0 && typeof identity.startedAt === 'string' && identity.startedAt.length > 0)) throw new SandboxCallerRefusal('Process identity is invalid');
+      if (!control.ancestors.length || !sameProcess(control.ancestors[0], ports.caller)) throw new SandboxCallerRefusal('Caller process ancestry is not observable');
+      let session: SandboxTestSession | undefined;
+      for (const ancestor of control.ancestors) {
+        const registered = control.sessions.filter(row => row.process.pid === ancestor.pid);
+        if (!registered.length) continue;
+        const current = registered.filter(row => sameProcess(row.process, ancestor) && row.state === 'running');
+        if (current.length > 1) throw new SandboxCallerRefusal('Ambiguous caller: conflicting live run claims');
+        if (!current.length) throw new SandboxCallerRefusal(registered.some(row => sameProcess(row.process, ancestor)) ? 'Nearest registered caller run is closed' : 'Caller process identity mismatch: PID reused');
+        session = current[0];
+        break;
+      }
+      if (!session) throw new SandboxCallerRefusal('Unknown caller ancestry: no registered live caller');
+      if (!session.assignment?.runId) throw new SandboxCallerRefusal('Caller immutable assignment is missing');
+      assignment = session.assignment;
     }
-    if (!session) throw new Error('No registered live caller');
-    const assignment = session.assignment;
     if (communication) return await ports.communicate(argv, assignment);
     const args = parseTestRunArgs(argv.slice(2));
     const coordinating = assignment.type === 'main' || assignment.type === 'coordinator' && assignment.delegatedByMain === true;
-    if (!coordinating && (!executorTypes.has(assignment.type) || !executorPhases.has(assignment.phase) || (args.phase !== assignment.phase && args.phase !== 'integration') || !coordinating && assignment.type !== 'agent' && assignment.type !== assignment.phase)) throw new Error('Caller assignment does not authorize the requested phase');
-    if (coordinating && args.phase !== 'red' && args.phase !== 'integration' && args.phase !== assignment.phase) throw new Error('Coordinator phase is not authorized');
-    if (assignment.project !== args.project || request.cwd !== assignment.workspace) throw new Error('Project or workspace differs from the immutable assignment');
-    if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch && row.actualBranch === assignment.branch)) throw new Error('Registered workspace or branch differs from the assignment');
+    if (assignment.type === 'coordinator' && !coordinating) throw new SandboxCallerRefusal('Coordinator requires explicit main delegation in its immutable assignment');
+    if (!coordinating && (!executorTypes.has(assignment.type) || !executorPhases.has(assignment.phase) || (args.phase !== assignment.phase && args.phase !== 'integration') || !coordinating && assignment.type !== 'agent' && assignment.type !== assignment.phase)) throw new SandboxCallerRefusal('Caller assignment does not authorize the requested phase');
+    if (coordinating && args.phase !== 'red' && args.phase !== 'integration' && args.phase !== assignment.phase) throw new SandboxCallerRefusal('Coordinator phase is not authorized');
+    if (assignment.project !== args.project || request.cwd !== assignment.workspace) throw new SandboxCallerRefusal('Project or workspace differs from the immutable assignment');
+    if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch && row.actualBranch === assignment.branch)) throw new SandboxCallerRefusal('Registered workspace or branch differs from the assignment');
     const { only, ...selectionArgs } = args;
     const requestArgs: TestRunRequest = { ...selectionArgs, ...(only ? { only: only.map(value => {
       const separator = value.indexOf('::');
       const id = value.startsWith('{') ? JSON.parse(value) : { file: value.slice(0, separator), name: value.slice(separator + 2) };
-      if ((!value.startsWith('{') && separator < 1) || !id || typeof id.file !== 'string' || typeof id.name !== 'string' || !id.name.length) throw new Error('Invalid exact test-id');
+      if ((!value.startsWith('{') && separator < 1) || !id || typeof id.file !== 'string' || typeof id.name !== 'string' || !id.name.length) throw new SandboxCallerRefusal('Invalid exact test-id');
       return id;
     }) } : {}) };
     const change = args.group.split('/')[0];
-    if (!args.group.includes('/') || !control.activeChanges.includes(change)) throw new Error('Group change is outside the active assignment');
+    if (!args.group.includes('/') || !control.activeChanges.includes(change)) throw new SandboxCallerRefusal('Group change is outside the active assignment');
     let authorization: RegressionAuthorization | undefined;
-    if (control.config) authorization = authorizeRegressionRun(requestArgs, assignment, { ...control, config: control.config });
-    else if (!assignment.changes.includes(change)) throw new Error('Group change is outside the active assignment; no trusted regression catalog');
-    if (args.phase === 'integration' && !control.config) throw new Error('Integration requires a trusted preset catalog');
+    if (control.config) {
+      try { authorization = authorizeRegressionRun(requestArgs, assignment, { ...control, config: control.config }); }
+      catch { throw new SandboxCallerRefusal('Regression grant, profile or selection differs from the immutable assignment'); }
+    }
+    else if (!assignment.changes.includes(change)) throw new SandboxCallerRefusal('Group change is outside the active assignment; no trusted regression catalog');
+    if (args.phase === 'integration' && !control.config) throw new SandboxCallerRefusal('Integration requires a trusted preset catalog');
     const key = { project: args.project, workspace: assignment.workspace, group: args.group };
-    if ((!control.config || !ports.wrapper) && !control.groups.some(row => row.project === key.project && row.workspace === key.workspace && row.group === key.group)) throw new Error('Group is not configured for this workspace');
-    const unit = await ports.unitContext(key);
+    if ((!control.config || !ports.wrapper) && !control.groups.some(row => row.project === key.project && row.workspace === key.workspace && row.group === key.group)) throw new SandboxCallerRefusal('Group is not configured for this workspace');
+    selectingUnit = true;
+    const selectedUnit = await ports.unitContext(key, assignment);
+    selectingUnit = false;
+    const unit = control.callerEvidence && ports.wrapper ? { ...selectedUnit, context: { ...selectedUnit.context, agentId: assignment.agentId, callerPhase: assignment.phase } } : selectedUnit;
     if (ports.wrapper) {
       executingWrapper = true;
       const reply = await ports.wrapper(requestArgs, unit);
       if (authorization && ports.evidence) await ports.evidence(authorization, reply);
       return reply;
     }
-    if (unit.context.workspace !== key.workspace || unit.context.cwd !== request.cwd || !unit.context.projectWorkspaces[key.project]?.includes(key.workspace)) throw new Error('Unit context workspace differs from the authorized workspace');
+    if (unit.context.workspace !== key.workspace || unit.context.cwd !== request.cwd || !unit.context.projectWorkspaces[key.project]?.includes(key.workspace)) throw new SandboxCallerRefusal('Unit context workspace differs from the authorized workspace');
     let stdout = '', stderr = '';
     const code = await runTestRunCli(argv.slice(2), { ...unit, context: { ...unit.context, agentId: assignment.agentId, callerPhase: assignment.phase }, stdout: value => { stdout += value; }, stderr: value => { stderr += value; } });
     const reply = { code, stdout, stderr };
@@ -142,7 +162,8 @@ export async function runSandboxTestCommand(
     return reply;
   } catch (error) {
     if (executingWrapper) throw error;
-    return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${error instanceof Error ? error.message : String(error)}; use agent message to main with the exact command; raf was not retried\n` };
+    const reason = error instanceof SandboxCallerRefusal ? error.message : selectingUnit ? 'QA channel unavailable: unit context could not be verified' : 'Trusted caller channel or request could not be verified';
+    return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${reason}; use agent message to main with the exact command, runId and sanitized reason to restore the trusted channel or issue a new verified assignment with the required phase and grants; main may run only its authorized phase, never repeat another caller's implement/qa/hotfix command; do not retry blindly; raf was not retried\n` };
   }
 }
 
@@ -189,8 +210,8 @@ export function sandboxRafCommandAccess(
   entrypoint: readonly string[],
   phases: TestRunConfig['phases'],
 ): SandboxRafCommandAccess {
-  if (!entrypoint.length || entrypoint.some(word => !word || /[\n\r\0]/.test(word))) throw new Error('Invalid trusted raf entrypoint');
-  if (runner !== 'codex' && runner !== 'claude') throw new Error('Unsupported sandbox runner');
+  if (!entrypoint.length || entrypoint.some(word => !word || /[\n\r\0]/.test(word))) throw new SandboxCallerRefusal('Invalid trusted raf entrypoint');
+  if (runner !== 'codex' && runner !== 'claude') throw new SandboxCallerRefusal('Unsupported sandbox runner');
   const raf_command = entrypoint.map(shellLiteral).join(' ');
   const raf_subcommands = ['agent message', 'agent ps'];
   const coordinating = assignment.type === 'main' || assignment.type === 'coordinator' && assignment.delegatedByMain === true;
@@ -209,7 +230,7 @@ export function formatSandboxTestRunEvidence(evidence: SandboxTestRunEvidence): 
     if (!result || typeof result !== 'object' || !['passed', 'assertions-failed', 'setup-failed', 'timed-out', 'interrupted', 'refused', 'unverified-remainder'].includes(result.outcome)
       || !['runId', 'project', 'workspace', 'phase', 'group', 'groupState', 'nextAction'].every(field => typeof result[field] === 'string')
       || !['knownRed', 'unexecuted', 'unknown'].every(field => Array.isArray(result[field])) || !result.selection || !result.cleanup || typeof result.cleanup.complete !== 'boolean'
-      || !Array.isArray(result.cleanup.remainingPids) || typeof result.timedOut !== 'boolean' || typeof result.timeoutCount !== 'number') throw new Error('Incomplete TestRunResult');
+      || !Array.isArray(result.cleanup.remainingPids) || typeof result.timedOut !== 'boolean' || typeof result.timeoutCount !== 'number') throw new SandboxCallerRefusal('Incomplete TestRunResult');
   } catch { return escalation('missing, malformed or truncated TestRunResult JSON'); }
   const validPass = result.outcome === 'passed' && evidence.reply.code === 0 && result.cleanup.complete && !result.cleanup.remainingPids.length && !result.timedOut && !result.knownRed.length && !result.unexecuted.length && !result.unknown.length;
   return `${context}\nCLI code: ${evidence.reply.code}; child exitCode: ${result.exitCode}\nrunId: ${result.runId}\nproject: ${result.project}; phase: ${result.phase}; group: ${result.group}\nselection: ${JSON.stringify(result.selection)}\noutcome: ${result.outcome}; verified pass: ${validPass}\ntimedOut: ${result.timedOut}; cleanup: ${JSON.stringify(result.cleanup)}\nknownRed: ${JSON.stringify(result.knownRed)}\nunexecuted: ${JSON.stringify(result.unexecuted)}\nunknown: ${JSON.stringify(result.unknown)}\ntimeoutCount: ${result.timeoutCount}; groupState: ${result.groupState}; nextAction: ${result.nextAction}\nstderr: ${evidence.reply.stderr}${result.outcome === 'passed' && !validPass ? '\nUnverified result; use agent message to main; no green claim.' : ''}`;

@@ -12,6 +12,7 @@ import type { ReportedCommitLaunchContext } from './reported-commits-contract.ts
 import { prepareAgentClose } from './agent-close-preparation.ts';
 import { snapshotRegressionAssignment } from './test-regression-groups.ts';
 import { validateTestRunConfig } from './test-runs.ts';
+import type { SandboxCallerControlSnapshot } from './sandbox-test-caller.ts';
 import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
 import { retainHotfixGeneration } from './hotfix-activation.ts';
 import { prepareHotfixWorktree, validateHotfixTrust, startHotfixCommitPort } from './hotfix-worktree.ts';
@@ -245,8 +246,9 @@ export async function loadSandboxTestPhases(confRoot: string) {
   return validateTestRunConfig(config, constants.agentPhases.map((row: { id: string }) => row.id), flow.unitTests, flow.integrationTests).phases;
 }
 
-export async function sandboxTestControlSnapshot(store: StateStore, root: string, project: string, group: string): Promise<SandboxTestControlSnapshot> {
+export async function sandboxTestControlSnapshot(store: StateStore, root: string, project: string, group: string): Promise<SandboxCallerControlSnapshot> {
   const { rows, chain } = await ancestry(executeCommand);
+  const boot = await readMachineBootIdentity();
   const sessions = store.sessionRepository.transaction(tx => tx.listSessions(), 'read');
   const activeChanges = (await fs.readdir(join(root, 'openspec/changes'), { withFileTypes: true })).filter(row => row.isDirectory() && row.name !== 'archive').map(row => row.name);
   const projects = JSON.parse(await fs.readFile(join(root, 'conf/projects.json'), 'utf8')).projects;
@@ -261,21 +263,31 @@ export async function sandboxTestControlSnapshot(store: StateStore, root: string
       if (actual.exitCode === 0) workspaces.push({ project: id, workspace, branch, actualBranch: actual.stdout.trim() });
     } catch {}
   }
-  const observed = await Promise.all(sessions.map(async session => {
-    if (!session.process || !chain.includes(session.process.pid)) return null;
-    if ((await observeIdentity(session.process, executeCommand)).state !== 'alive') return { process: session.process, state: 'finished' as const, assignment: session.launchContext?.testAssignment! };
-    let assignment = session.launchContext?.testAssignment;
+  const claims = sessions.filter(session => session.process && chain.includes(session.process.pid)).map(session => {
+    const identity = session.process!;
+    let assignment = session.launchContext?.testAssignment ?? null;
     if (session.addressId === 'main' && session.activity?.type === 'main') {
       const workspace = workspaces.find(row => row.workspace === process.cwd());
       if (workspace) assignment = { runId: session.runId, agentId: session.addressId, type: 'main', phase: 'main', project, workspace: workspace.workspace, branch: workspace.branch, changes: activeChanges };
     }
-    if (!assignment) return { process: session.process, state: 'finished' as const, assignment: {} as SandboxTestAssignment };
-    const delegatedByMain = session.delegatedBy?.addressId === 'main' && sessions.some(row => row.runId === session.delegatedBy!.runId && row.addressId === 'main');
-    return { process: session.process, state: session.state === 'running' ? 'running' as const : 'finished' as const, assignment: { ...assignment, delegatedByMain } };
-  }));
+    if (assignment) {
+      const delegatedByMain = session.delegatedBy?.addressId === 'main' && sessions.some(row => row.runId === session.delegatedBy!.runId && row.addressId === 'main');
+      assignment = { ...assignment, delegatedByMain };
+    }
+    return { process: { pid: identity.pid, startedAt: identity.startedAt, machineId: identity.evidence.machineId ?? '', bootId: identity.evidence.bootId ?? '' }, state: session.state === 'running' ? 'running' as const : 'finished' as const, runId: session.runId, assignment };
+  });
+  const ancestors = chain.flatMap(pid => {
+    const row = rows.find(row => row.pid === pid);
+    if (!row) return [];
+    const registered = sessions.filter(session => session.process?.pid === pid && Date.parse(session.process.startedAt) === Date.parse(row.startedAt) && session.state === 'running');
+    return [{ pid, startedAt: row.startedAt, parentPid: row.ppid || null, ...boot, originVerified: registered.every(session => session.process!.evidence.command === row.command) }];
+  });
+  const caller = ancestors.find(row => row.pid === process.pid);
+  if (!caller) throw new Error('Host CLI ancestry is unavailable');
   return {
     ancestors: chain.flatMap(pid => { const row = rows.find(row => row.pid === pid); return row ? [{ pid, startedAt: row.startedAt }] : []; }),
-    sessions: observed.filter((row): row is NonNullable<typeof row> => row !== null), workspaces, activeChanges,
+    callerEvidence: { caller: { pid: caller.pid, startedAt: caller.startedAt }, ...boot, ancestors, claims },
+    sessions: claims.map(claim => ({ process: claim.process, state: claim.state, assignment: claim.assignment! })), workspaces, activeChanges,
     config,
     groups: workspaces.flatMap(row => config.projects?.[row.project]?.groups?.[group] ? [{ project: row.project, workspace: row.workspace, group }] : []),
   };

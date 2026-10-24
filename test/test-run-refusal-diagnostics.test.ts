@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { runTestRun } from '../src/test-runs.ts';
 import type { TestId, TestRunResult } from '../src/test-runs.ts';
+import { acknowledgeTestRunDelivery } from '../src/test-run-state-recovery.ts';
 import {
   alpha, beta, files, fixtureGroup, fixtureRequest, flushMicrotasks, key, policy, RunHarness,
 } from './helpers/test-run-fixture.ts';
@@ -29,7 +30,9 @@ for (const phase of ['red', 'implement', 'qa', 'hotfix']) {
     assert.equal(result.errorCode, 'INVENTORY_INCOMPLETE');
     assert.equal(harness.spawns.length, 0);
     assert.equal(result.exitCode, null);
-    assert.equal(result.timeoutCount, 0);
+    assert.equal(result.groupSnapshot, 'unavailable', 'state-open-recovery S02/S03: preflight has not read the unit group');
+    assert.equal(result.groupState, null, 'an unread group cannot be reported as idle');
+    assert.equal(result.timeoutCount, null, 'an unread group cannot be reported with a zero timeout budget');
     const diagnostic = result.diagnostics.find(entry => entry.kind === 'preflight' && entry.errorCode === 'INVENTORY_INCOMPLETE');
     assert.ok(diagnostic, 'the inventory refusal must retain its inline preflight reason');
     assert.equal(diagnostic.test, null);
@@ -102,7 +105,14 @@ test('a complete selected-file collection removes stale knownRed IDs, marks them
   assert.equal(saved.state, 'complete');
   assert.deepEqual(removed(saved.lastResult), [removedAlpha, removedBeta], 'lastResult must persist the same removal evidence');
 
+  const replay = await execute(harness, { phase: 'qa' });
+  assert.deepEqual(replay, result, 'state-open-recovery S08: an unacknowledged result must be replayed unchanged');
+  assert.equal(harness.spawns.length, 1, 'pending delivery must not spawn another test run');
+
+  await acknowledgeTestRunDelivery(result, harness.ports.state);
   const next = await execute(harness, { phase: 'qa' });
+  assert.notEqual(next.runId, result.runId, 'confirmed receipt permits a fresh run');
+  assert.equal(harness.spawns.length, 2);
   assert.equal(next.outcome, 'passed');
   assert.deepEqual(removed(next) ?? [], [], 'a later run must not re-emit historical removal as fresh evidence');
 });

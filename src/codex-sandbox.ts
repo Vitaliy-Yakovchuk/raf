@@ -1,4 +1,4 @@
-import { rafSocketRoot } from './raf-temporary-socket.ts';
+import { rafSocketRoot, socketPathFits } from './raf-temporary-socket.ts';
 import type { Invocation, NativeSandboxScope } from './runner-protocols.ts';
 import { codexInvocationSandboxMode } from './codex-raf-command-access.ts';
 import { spawn } from 'node:child_process';
@@ -238,7 +238,8 @@ export async function prepareCodexSandbox(
   const filter = networkFilter();
   const sharedTmp = !within('/tmp', directory);
   const entries: Record<string, string> = { ':root': 'read', ...(sharedTmp ? { ':slash_tmp': 'write' } : {}) };
-  const toolTmux = '/tmp/raf-tool-tmux';
+  const compactToolTmux = !socketPathFits(join(runDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default'));
+  const toolTmux = compactToolTmux ? '/tmp/raf-tool-tmux' : runDirectory;
   const toolVariables: Record<string, string> = { TMUX_TMPDIR: toolTmux, ...(sharedTmp ? {} : { TMPDIR: runDirectory }) };
   entries[toolTmux] = 'write';
   const fileWrites: string[] = [];
@@ -305,7 +306,7 @@ export async function prepareCodexSandbox(
     await fs.mkdir(directory, { mode: 0o700 });
     created = true;
     await fs.writeFile(join(directory, 'network.bpf'), filter, { mode: 0o400 });
-    const tmuxSockets = toolTmux;
+    const tmuxSockets = join(toolTmux, `tmux-${process.getuid?.() ?? 0}`);
     await fs.writeFile(join(directory, 'bwrap'), [
       '#!/bin/sh',
       'mounted=0',

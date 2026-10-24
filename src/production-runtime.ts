@@ -299,7 +299,7 @@ async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stat
   await fs.mkdir(directory, { recursive: true, mode: 0o700 });
   const owner = await fs.lstat(directory);
   if (!owner.isDirectory() || owner.uid !== process.getuid?.() || (owner.mode & 0o077) !== 0) fail('TMUX_CONTEXT_INVALID', 'RAF tmux directory must be private and owned by the current user');
-  const socketPath = join(rafSocketDirectory(directory), 'server.sock');
+  const socketPath = socketPathFits(logicalSocket) ? logicalSocket : join(rafSocketDirectory(directory), 'server.sock');
   const socket = await fs.lstat(logicalSocket).catch(error => { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; });
   if (socket && (!socket.isSocket() || socket.uid !== process.getuid?.())) fail('TMUX_CONTEXT_INVALID', 'RAF tmux socket has foreign ownership or file type');
   if (context.stateContext?.mode === 'qa' && socket) {
@@ -834,7 +834,9 @@ function quotaTransport(context: Pick<RuntimeContext, 'tmpRoot' | 'orchestratorR
       const workspace = await quotaProbeWorkspace(context, execute);
       const directory = await fs.mkdtemp(join(root, `${settings.runner}-`));
       const cwd = workspace ?? directory;
-      const invocation = quotaProbeInvocation({ ...settings, executable: availability.path }, directory);
+      const compact = settings.quota.args.some(value => value.includes('{probeDirectory}') && !socketPathFits(value.replaceAll('{probeDirectory}', directory))) ? rafSocketDirectory(directory) : directory;
+      const cleanupSocket = async () => { if (compact !== directory) await releaseRafSocketDirectory(directory, compact); };
+      const invocation = quotaProbeInvocation({ ...settings, executable: availability.path }, compact);
       const command = { executable: 'env', args: [...Object.entries(invocation.env).map(([key, value]) => `${key}=${value}`), invocation.executable, ...invocation.args], cwd };
       const probe: RunnerProtocol = { invocation: () => command, observe: () => ({ status: 'starting' }) };
       const adapter = new TmuxAgentAdapter({ execute, protocols: { [settings.runner]: probe } as Record<AgentRunner, RunnerProtocol> });
@@ -843,12 +845,12 @@ function quotaTransport(context: Pick<RuntimeContext, 'tmpRoot' | 'orchestratorR
       try { session = await adapter.startWithoutInput({ selection: { runner: settings.runner as AgentRunner, model: '', effort: '' }, tmuxSession, cwd, reportWrapper: { wrap: value => value } }); }
       catch (error) {
         await discardOwnedTmuxSession(execute, tmuxSession, settings.timeouts).catch(() => false);
-        await invocation.cleanupSocket();
+        await cleanupSocket();
         await fs.rm(directory, { recursive: true, force: true });
         throw error;
       }
       const token = randomUUID();
-      owned.set(token, { session, directory, cleanupSocket: invocation.cleanupSocket, version: availability.version, settings, adapter });
+      owned.set(token, { session, directory, cleanupSocket, version: availability.version, settings, adapter });
       return { socket: join(context.tmpRoot, 'tmux', 'server.sock'), session: tmuxSession, ownershipToken: token, trustWorkspace: workspace !== undefined };
     },
     captureOwned: async probe => {

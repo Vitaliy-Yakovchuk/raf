@@ -1,0 +1,121 @@
+{
+  "assignment": "add-raf-test-run:6.3.12",
+  "codeCommit": "b6460b8834f4ff548ea7b00f66173c3f6a002793",
+  "priorOwnCommits": [
+    "6570c3be489474474f3a7f6f9843f47f1d41c343",
+    "a32fe834469ff313b91df769c2d1b5e1778cde62",
+    "63a1b388641149e29d047add51f44155eb20c8a6",
+    "b6460b8834f4ff548ea7b00f66173c3f6a002793"
+  ],
+  "verifiedArtifacts": [
+    {
+      "label": "red-refused",
+      "runId": "0f548c0e-1f6c-4dd5-bb25-76c6a3d588db",
+      "stdoutSha256": "c205a25c453d8d6fd0968edd6e13fe21365d268cf5d0c5f7f50d8f5a1ba52580",
+      "stderrSha256": "d5341a517c2efd7e844a5a7df0fe8bf5a06e415c38c8a22aa9153869a0c11d41",
+      "completeRawReplayMatches": true
+    },
+    {
+      "label": "red",
+      "runId": "e14205fd-f009-4df2-9198-342109f15fda",
+      "stdoutSha256": "d9cbee8daa54eb204d322a465cc7d870fd2d1b7296c9e1f0b72ebe5113eaebe7",
+      "stderrSha256": "2d992fd8418939d3e2759848bd385a82d7cc0d5d919fb357ebbb0b0dc8126ca9",
+      "completeRawReplayMatches": true
+    },
+    {
+      "label": "hotfix-1",
+      "runId": "8faa5cb0-a55a-4c65-a065-81d35bc9ba1a",
+      "stdoutSha256": "6c2e9e98d847744a6f06d30d3102683e988792ae8e43e3adfdffece96dbe7f3a",
+      "stderrSha256": "5cc0ca964a17930ae614d061c10a93936a5b5ec34c5de4f83b87fa437d417008",
+      "completeRawReplayMatches": true
+    },
+    {
+      "label": "hotfix-2",
+      "runId": "fd867c19-57a2-4972-aba6-082d32f819c3",
+      "stdoutSha256": "af5cdc68c2a4a9afb1f94a21b775c62d655d262705c2ac0a3e4cba4c517172dc",
+      "stderrSha256": "ea7238221d314237cb138d1ffc0f4d8b58748cd45896a1241ec6fc98091e3193",
+      "completeRawReplayMatches": true
+    },
+    {
+      "label": "hotfix-expanded",
+      "runId": "0ebab2fc-f2dd-4d81-9d87-e6dc52d80053",
+      "stdoutSha256": "23a6b383985c813d2f131d330bd5fedb7c70cbea1b47b839d18d596573e903c9",
+      "stderrSha256": "4f5ab7b16b0706e3531d5c4f8e5e92642a0f1d0049e28e79ffc863bb52c1f7de",
+      "completeRawReplayMatches": true
+    }
+  ],
+  "staticChecks": [
+    {
+      "command": "git diff --check",
+      "result": {
+        "chunk_id": "717bb9",
+        "wall_time_seconds": 0.13798294,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "command": "node scripts/check-comments.ts",
+      "result": {
+        "chunk_id": "b8851c",
+        "wall_time_seconds": 3.6974668250000002,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    }
+  ],
+  "postCommitChecks": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "466a7e",
+        "wall_time_seconds": 0.123690802,
+        "exit_code": 0,
+        "original_token_count": 4,
+        "output": "?? node_modules\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "a029ea",
+        "wall_time_seconds": 0.14267263,
+        "exit_code": 0,
+        "original_token_count": 109,
+        "output": "b6460b8834f4ff548ea7b00f66173c3f6a002793 fix(codex): preserve trusted RAF command ownership through admission\n63a1b388641149e29d047add51f44155eb20c8a6 test(raf): honor the hook protocol synchronous default\na32fe834469ff313b91df769c2d1b5e1778cde62 test(raf): reproduce native hook timeout fallback without external services\n6570c3be489474474f3a7f6f9843f47f1d41c343 test(raf): cover hook lifetime and unavailable command channel (6.3.12)\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "93b395",
+        "wall_time_seconds": 0.14805032,
+        "exit_code": 0,
+        "original_token_count": 322,
+        "output": " evidence/add-raf-test-run-6.3.12/hotfix-1.cli.json |   8 +\n evidence/add-raf-test-run-6.3.12/hotfix-1.stderr   |   1 +\n .../add-raf-test-run-6.3.12/hotfix-1.stdout.json   |   1 +\n .../add-raf-test-run-6.3.12/hotfix-1.tool.json     |  17 ++\n evidence/add-raf-test-run-6.3.12/hotfix-2.cli.json |  13 ++\n evidence/add-raf-test-run-6.3.12/hotfix-2.stderr   |   1 +\n .../add-raf-test-run-6.3.12/hotfix-2.stdout.json   |   1 +\n .../add-raf-test-run-6.3.12/hotfix-2.tool.json     |  17 ++\n .../hotfix-expanded.cli.json                       |  15 ++\n .../add-raf-test-run-6.3.12/hotfix-expanded.stderr |   1 +\n .../hotfix-expanded.stdout.json                    |   1 +\n .../hotfix-expanded.tool.json                      |  19 ++\n .../add-raf-test-run-6.3.12/investigation.json     |  78 +++++++\n evidence/add-raf-test-run-6.3.12/red.cli.json      |   8 +\n evidence/add-raf-test-run-6.3.12/red.stderr        |   1 +\n evidence/add-raf-test-run-6.3.12/red.stdout.json   |   1 +\n evidence/add-raf-test-run-6.3.12/red.tool.json     |  17 ++\n evidence/add-raf-test-run-6.3.12/summary.json      | 251 +++++++++++++++++++++\n src/codex-raf-command-access.ts                    |   7 +-\n test/codex-raf-command-lifetime.test.ts            |   6 +-\n 20 files changed, 459 insertions(+), 5 deletions(-)\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "eeb4fe",
+        "wall_time_seconds": 0.076023006,
+        "exit_code": 0,
+        "original_token_count": 21,
+        "output": "b520748d8ff8492c35f260689e9eef79755ff73f\n0fb006ea0def9504d7f3a700349d7a95c3c0c868\n"
+      }
+    }
+  ],
+  "sourceBlobs": {
+    "src/codex-raf-command-access.ts": "b520748d8ff8492c35f260689e9eef79755ff73f",
+    "test/codex-raf-command-lifetime.test.ts": "0fb006ea0def9504d7f3a700349d7a95c3c0c868"
+  },
+  "forbiddenSourceVerification": {
+    "command": "git diff bd0d7eed993311d5fd637703010662e50977353e -- src/test-runs.ts src/agent-report.ts src/production-runtime.ts src/hotfix-origin.ts src/state-migration-guard.ts",
+    "exitCode": 0,
+    "output": ""
+  },
+  "reportDelivery": "Atomic succeeded JSON follows this evidence commit. Other tasks remain open, so no archive."
+}

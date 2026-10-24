@@ -56,6 +56,11 @@ function configuration(): TestRunConfig {
       hints: { refusal: 'refusal', setup: 'setup', assertions: 'assertions', timeout: 'timeout', interruption: 'interruption' },
     }])),
     hints,
+    diagnostics: {
+      maxEntries: 64, maxMessageBytes: 4096, maxStackFrames: 16, maxStackBytes: 8192,
+      maxTotalBytes: 65536, maxProtocolLineBytes: 65536, maxStderrBytes: 8192, redactionPatterns: [],
+    },
+    temporaryArtifacts: { root: '/tmp', minimumNestedSocketPathBytes: 80 },
     projects: {
       raf: {
         profiles: {
@@ -287,7 +292,9 @@ for (const mode of ['unknown', 'finished', 'reused-pid', 'unobservable']) {
     const f = fixture();
     if (mode === 'unknown') (f.snapshot.sessions as unknown[]).length = 0;
     if (mode === 'finished') Object.assign(f.snapshot.sessions[0], { state: 'finished' });
-    if (mode === 'reused-pid') Object.assign(f.snapshot.sessions[0].process, { startedAt: 'old-process' });
+    if (mode === 'reused-pid') Object.assign(f.snapshot.sessions[0], {
+      process: { ...f.snapshot.sessions[0].process, startedAt: '2026-10-23T09:58:00Z' },
+    });
     if (mode === 'unobservable') f.controlFailure = 'process identity unavailable';
     await refused(f);
     assert.equal(f.keys.length, 0);

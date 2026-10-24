@@ -90,7 +90,7 @@ function checkChannel(context: StateContext, inherited: Readonly<Record<string, 
   return false;
 }
 
-function verifyEtchlyDependencies(context: TestRunContext, profiles: import('./test-runs.ts').TestRunProfile[], files: string[], inherited: Readonly<Record<string, string | undefined>>): void {
+export function verifyEtchlyDependencies(context: TestRunContext, profiles: import('./test-runs.ts').TestRunProfile[], files: string[], inherited: Readonly<Record<string, string | undefined>>): void {
   const projects = JSON.parse(readFileSync(join(dirname(context.workspace), 'conf/projects.json'), 'utf8'));
   const entries = Object.entries(projects.projects.etchly.branchPaths) as [string, string][];
   const branch = entries.find(([, path]) => resolve(dirname(context.workspace), path) === context.workspace)?.[0];

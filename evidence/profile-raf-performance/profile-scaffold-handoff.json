@@ -1,0 +1,212 @@
+{
+  "change": "profile-raf-performance",
+  "item": "2.1",
+  "phase": "test-scaffold",
+  "sourceSha": "5fd3125c6885137b2319c674d96610577b8bf0c6",
+  "scope": "Тільки тести та каркас. Нові функції у src/raf-cost-profile.ts кидають Error('NotImplemented'); production runtime та tasks.md не змінено.",
+  "audit": {
+    "current": true,
+    "requirements": "openspec/changes/profile-raf-performance/specs/projects/raf/command-timing/spec.md: Профіль витрат raf; Перегляд профілю чинною command stats; Профіль не змінює семантику runtime",
+    "precedence": "Чинний brief і add-raf-test-run feature-test-authoring вимагають авторський --phase red; старий blind-mode/test-scaffold запуск у tasks.md не застосовано. Main повідомлено.",
+    "relatedWork": "Профіль не реалізовано в поточному command stats; базовий EMA та worker polling не дублювалися."
+  },
+  "selection": {
+    "project": "raf",
+    "group": "profile-raf-performance/profile",
+    "files": [
+      "test/raf-cost-profile.test.ts"
+    ],
+    "initialPhase": "red",
+    "nextPhases": [
+      "implement",
+      "qa"
+    ],
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/5213cd2c-4a65-4d5e-a479-7b406b7c3ad0/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts"
+  },
+  "configuration": {
+    "owner": "main",
+    "repository": "/srv/dev/work/orchestrator",
+    "registrationCommit": "41f8ae5de271ad0215404f75f781224741b7616b",
+    "unitFiles": {
+      "path": "conf/test-runs.json#/projects/raf/profiles/node/unitFiles",
+      "append": [
+        "test/raf-cost-profile.test.ts"
+      ]
+    },
+    "groups": {
+      "path": "conf/test-runs.json#/projects/raf/groups",
+      "entries": {
+        "profile-raf-performance/profile": {
+          "profileId": "node",
+          "files": [
+            "test/raf-cost-profile.test.ts"
+          ]
+        }
+      }
+    },
+    "prerequisites": {
+      "runtime": "Node >=25.4.0; observed v26.12.1",
+      "cwd": ".",
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts"
+      ],
+      "checks": [
+        "node_modules/typescript/package.json",
+        "src/test-run-reporter.ts",
+        "scripts/test-run-node.ts"
+      ],
+      "environment": {
+        "isolatedHome": true,
+        "stateOrigin": true
+      },
+      "accounting": "Зберегти workspace/group/ledger і QA HOME з TestRunResult на наступних стадіях; бюджети лише conf/flow.json#/unitTests."
+    }
+  },
+  "api": {
+    "aggregation": "aggregateRafCostSample(previous, sample): RafCostRow; arithmetic totals and means, null/partial CPU, explicit source",
+    "profiler": "createRafCostProfiler(identity, ports): RafCostProfiler; start/transition/recordChild/finish/snapshot",
+    "finalization": "withRafCostProfile<T>(profiler, stage, action, reportStorageError): Promise<T>",
+    "stateReadPort": "RafCostProfileState.readCostProfile(): RafCostProfileSnapshot; адаптер основної SQLite має реалізувати implement.",
+    "stats": "RafCommandStatsResult {commands: RafCommandTimingRow[], profile}; budgetMs:number|null у DTO для застосовного базового budget.",
+    "constants": "Словник stages у unit-fixture є сценарними даними. Production-словник stages/джерела політики й нові сталі implement має брати з conf; нових CLI-параметрів немає."
+  },
+  "invariants": [
+    "samples=cpuSamples+cpuUnavailableSamples; CPU means divide by cpuSamples, wall mean by samples.",
+    "Wall uses monotonic deltas; process CPU counters are converted from microseconds to ms.",
+    "Self stages partition one process; helper CPU is separate; instrumented raf and payload are excluded from parent child CPU.",
+    "Concurrent process wall totals describe consumed process time, never calendar-window duration.",
+    "Only completed stages are persisted; readAt does not refresh updatedAt; unfinished intervals are not invented after a crash.",
+    "Only scope/command/stage/executor form keys; args/PID/address/runId/pane/brief/secrets are discarded.",
+    "Errors in SQLite stay explicit; finalization reports its own failure without hiding the primary runtime error.",
+    "No new profiler timer/poll/spawn; no service startup from stats; help/parser paths do not open SQLite."
+  ],
+  "unitBoundary": "Unit використовує незалежні керовані лічильники й атомарний in-memory repository-порт. Restart означає новий recorder зі спільними завершеними рядами; concurrency — детерміноване чергування незалежних recorder. Це не доказ реальної SQLite/ОС або production hooks.",
+  "liveQaStillRequired": [
+    "Основна SQLite: атомарні SQL-внески кількох реальних процесів, crash/restart із дисковим збереженням.",
+    "Фактичний OS CPU self/helper, виключення runner/model/test payload, production служба/worker/CLI точки вимірювання.",
+    "Довгоживучий worker і служба без нового polling/spawn; відсутність секретів у реальній базі.",
+    "Оновлення всіх прямих споживачів commands; профіль поточного command stats з'являється наступному читанню."
+  ],
+  "verification": {
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "outcome": "assertions-failed",
+    "durationMs": 51830,
+    "timedOut": false,
+    "knownRedCount": 28,
+    "passedCount": 3,
+    "unexecuted": [],
+    "unknown": [],
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "fullTestRunResult": "evidence/profile-raf-performance/profile-red-result.json",
+    "queueEvents": [
+      {
+        "kind": "launch-queue.waiting",
+        "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+        "requestId": "8ae93c75-d2e4-400d-8757-233a27691f12",
+        "testRunId": "3083131f-4aa4-49af-8bf2-22399720b7e8",
+        "admission": {
+          "level": "NO_RESOURCES",
+          "requestedTier": "normal",
+          "allowed": false,
+          "reasons": [
+            "normal: normalized load exceeds 1.2",
+            "hotfix: normalized load exceeds 1.5"
+          ],
+          "measurement": {
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "loadAverage1m": 12.32,
+            "availableCores": 8,
+            "totalRamBytes": 32852041728,
+            "availableRamBytes": 21203841024,
+            "memoryPressure": "normal",
+            "fileSystems": [
+              {
+                "id": "/dev/mapper/data-dev",
+                "totalBytes": 190143823872,
+                "availableBytes": 179325911040
+              },
+              {
+                "id": "/dev/mapper/home-dev",
+                "totalBytes": 11499937792,
+                "availableBytes": 8557645824
+              }
+            ]
+          },
+          "thresholds": {
+            "normal": {
+              "maxNormalizedLoad": 1.2,
+              "minRamFraction": 0.2,
+              "minRamBytes": 2147483648,
+              "minDiskFraction": 0.1,
+              "minDiskBytes": 10737418240
+            },
+            "hotfix": {
+              "maxNormalizedLoad": 1.5,
+              "minRamFraction": 0.1,
+              "minRamBytes": 1073741824,
+              "minDiskFraction": 0.05,
+              "minDiskBytes": 5368709120
+            },
+            "home": {
+              "minDiskBytes": 524288000
+            }
+          },
+          "reservation": {
+            "requested": {
+              "ramBytes": 2147483648,
+              "diskBytes": {
+                "/dev/mapper/data-dev": 10737418240
+              }
+            },
+            "unused": {
+              "ramBytes": 0,
+              "diskBytes": {}
+            }
+          },
+          "remaining": {
+            "ramBytes": 19056357376,
+            "diskBytes": {
+              "/dev/mapper/data-dev": 168588492800,
+              "/dev/mapper/home-dev": 8557645824
+            },
+            "normalizedLoad": 1.54
+          },
+          "estimate": {
+            "status": "KNOWN",
+            "sources": [
+              "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+            ],
+            "reason": null
+          },
+          "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+        }
+      }
+    ],
+    "redReason": "25 падінь каркаса/валідації обмеженого словника та 3 цільові assertions нового command stats; structured runner класифікував усі як test-body/assertions, setup/import немає.",
+    "checks": [
+      {
+        "command": "node --check src/raf-cost-profile.ts",
+        "exitCode": 0
+      },
+      {
+        "command": "node --check test/raf-cost-profile.test.ts",
+        "exitCode": 0
+      },
+      {
+        "command": "node scripts/check-comments.ts",
+        "exitCode": 0
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0
+      }
+    ]
+  },
+  "handoff": "Main має перевірити source SHA, точний selection і повний TestRunResult у 2.2; наступний implement зберігає ту саму групу. Інші задачі відкриті; архівація не виконується."
+}

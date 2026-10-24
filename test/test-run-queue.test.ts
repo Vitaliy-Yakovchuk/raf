@@ -170,6 +170,30 @@ test('test-queue waiting stderr carries stable identifiers and admission without
   }
 });
 
+test('test-queue signal during waiting cancels only its fence without spending the unit budget', async () => {
+  const f = fixture(); const before = f.seed();
+  const snapshot = { level: 'NO_RESOURCES', requestedTier: 'normal' };
+  f.shared.setSnapshot(snapshot); f.shared.setRefusal('unavailable');
+  const running = f.run();
+  try {
+    await expectWaiting(f, running);
+    f.signal();
+    const result = await running;
+    assert.notEqual(result.outcome, 'passed'); assert.equal(result.exitCode, null);
+    assert.equal(result.timedOut, false); assert.equal(result.timeoutCount, before.timeoutCount);
+    assert.deepEqual(result.knownRed, before.knownRed); assert.deepEqual(result.admission, snapshot);
+    assert.equal(result.failureKinds.includes('assertions'), false);
+    assert.equal(f.spawned.length, 0); assert.equal(f.shared.claims.size, 0);
+    assert.equal(f.group()?.inFlight ?? null, null);
+    assert.equal(f.testQueue.records.length, 1); assert.equal(f.testQueue.finishes.length, 1);
+    assert.deepEqual(f.testQueue.finishes[0].record, f.testQueue.records[0]);
+    assert.equal(f.testQueue.finishes[0].outcome, 'cancelled');
+  } finally {
+    f.testQueue.waits.forEach((_, i) => f.testQueue.grant(i));
+    await running;
+  }
+});
+
 for (const phase of ['red', 'qa', 'hotfix']) {
   test(`test-queue trusted hotfix workspace uses hotfix thresholds for ${phase}`, async () => {
     const f = fixture(undefined, { ...context, cwd: '/qa/hotfix', workspace: '/qa/hotfix', projectWorkspaces: { raf: ['/qa/hotfix'] } });

@@ -228,7 +228,13 @@ export function queueFixture() {
     },
     async waitForResources(input) {
       const gate = latch<import('../../src/resource-wait-protocol.ts').ResourceWaitCommandResult>();
-      waits.push({ input, gate }); entered.resolve(); return gate.promise;
+      const abort = () => gate.resolve({ kind: 'error', exitCode: 1, diagnostic: { reason: 'cancelled', details: 'waiting client interrupted', remediation: 'reconcile', received: null, expected: 'permit', completed: ['enqueue'], pending: ['permit'] } });
+      waits.push({ input, gate });
+      input.signal?.addEventListener('abort', abort, { once: true });
+      if (input.signal?.aborted) abort();
+      entered.resolve();
+      try { return await gate.promise; }
+      finally { input.signal?.removeEventListener('abort', abort); }
     },
     async transition(record, phase) { transitions.push({ record, phase }); return true; },
     async started(record, identity) { starts.push({ record, identity }); return true; },

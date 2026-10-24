@@ -17,6 +17,7 @@ import type {
   RegressionTestAssignment,
 } from '../src/test-regression-groups.ts';
 import type { SandboxCommandReply, SandboxUnitContext } from '../src/sandbox-test-run.ts';
+import { acknowledgeTestRunDelivery } from '../src/test-run-state-recovery.ts';
 import type { TestRunConfig, TestRunGroupKey, TestRunRequest } from '../src/test-runs.ts';
 import { cleanupClosedTestRunGroups, runTestRun } from '../src/test-runs.ts';
 import type {
@@ -702,6 +703,12 @@ function sharedWrapper() {
       const result = await runTestRun(r, config, policy, context, ports);
       return { code: result.outcome === 'passed' ? 0 : 1, stdout: JSON.stringify(result), stderr: '' };
     };
+    return async (command = h.command()): Promise<SandboxCommandReply> => {
+      const reply = await executeRegressionRun(command, h.ports);
+      const result = JSON.parse(reply.stdout) as TestRunResult;
+      if (result.groupSnapshot === 'loaded') await acknowledgeTestRunDelivery(result, ports.state);
+      return reply;
+    };
   }
   return {
     policy, context, ports, groups, keyOf, connect,
@@ -719,10 +726,10 @@ test('R06 real injected wrapper accumulates owner and foreign timeouts without r
       agentId: `regression-agent-${count}`, runId: `source-run-${count}`, type: 'qa', phase: 'qa', regressionGroups: [grant()],
     });
     const h = harness(a);
-    shared.connect(h);
+    const execute = shared.connect(h);
     shared.context.agentId = a.agentId;
     shared.context.sha = `changed-sha-${count}`;
-    const result = JSON.parse((await executeRegressionRun(h.command(), h.ports)).stdout) as TestRunResult;
+    const result = JSON.parse((await execute()).stdout) as TestRunResult;
     assert.equal(result.outcome, 'timed-out');
     assert.equal(result.timeoutCount, count);
     assert.deepEqual(result.knownRed, [{ file: files[0], name: 'target red' }]);
@@ -732,15 +739,15 @@ test('R06 real injected wrapper accumulates owner and foreign timeouts without r
     assert.equal(shared.context.home, '/qa/stable-target');
   }
   const foreign = harness();
-  shared.connect(foreign);
+  const execute = shared.connect(foreign);
   const before = shared.counts().spawned;
-  const blocked = await executeRegressionRun(foreign.command(), foreign.ports);
+  const blocked = await execute();
   assert.notEqual(blocked.code, 0);
   assert.equal(shared.counts().spawned, before);
   assert.equal(shared.groups.get(shared.keyOf(key))!.timeoutCount, shared.policy.maxGroupTimeouts);
   shared.pass();
   const red = { file: files[0], name: 'target red' };
-  const confirmed = JSON.parse((await executeRegressionRun(foreign.command(`test run --project raf --phase implement --group ${group} --only '${JSON.stringify(red)}'`), foreign.ports)).stdout) as TestRunResult;
+  const confirmed = JSON.parse((await execute(foreign.command(`test run --project raf --phase implement --group ${group} --only '${JSON.stringify(red)}'`))).stdout) as TestRunResult;
   assert.equal(confirmed.knownRed.length, 0);
   assert.equal(confirmed.timeoutCount, shared.policy.maxGroupTimeouts);
   assert.ok(confirmed.unexecuted.some(id => id.name === 'target pending'));
@@ -750,9 +757,9 @@ test('R06 real injected wrapper accumulates owner and foreign timeouts without r
 test('R07 real wrapper recovers the existing target reservation once and source closure cannot clean its aggregate', async () => {
   const shared = sharedWrapper();
   const h = harness();
-  shared.connect(h);
+  const execute = shared.connect(h);
   const key = { project: 'raf', workspace, group };
-  const first = JSON.parse((await executeRegressionRun(h.command(), h.ports)).stdout) as TestRunResult;
+  const first = JSON.parse((await execute()).stdout) as TestRunResult;
   const stored = shared.groups.get(shared.keyOf(key))!;
   const initialTimeouts = stored.timeoutCount;
   stored.inFlight = { runId: first.runId, deadlineMs: 0, processIdentity: 'already-accounted-dead-tree' };
@@ -760,7 +767,7 @@ test('R07 real wrapper recovers the existing target reservation once and source 
   shared.groups.set(shared.keyOf(key), stored);
   shared.pass();
   const red = { file: files[0], name: 'target red' };
-  await executeRegressionRun(h.command(`test run --project raf --phase implement --group ${group} --only '${JSON.stringify(red)}'`), h.ports);
+  await execute(h.command(`test run --project raf --phase implement --group ${group} --only '${JSON.stringify(red)}'`));
   assert.equal(shared.counts().recoveries, 1);
   assert.equal(shared.groups.get(shared.keyOf(key))!.timeoutCount, initialTimeouts);
   const before = structuredClone(shared.groups.get(shared.keyOf(key)));

@@ -15,6 +15,7 @@ import type { WorkspaceProjectsConfig } from './workspace-routing.ts';
 import { configuredWorkspaceRoute, resolveDevelopmentBranch } from './workspace-routing.ts';
 import { sandboxRafCommandAccess } from './sandbox-test-run.ts';
 import type { TestRunConfig } from './test-runs.ts';
+import { descriptionSourceReferences } from './task-source-references.ts';
 
 export interface TaskContextConfiguration {
   readonly projects: WorkspaceProjectsConfig;
@@ -110,7 +111,7 @@ export interface TaskContextFileOperations {
 export const TASK_CONTEXT_FILE_NAME = 'task-context.json';
 
 const contextFailure = (code: string, reason: string, received: unknown = null): never => {
-  throw commandFailure({ code, message: reason, reason, stage: 'task-context', source: 'task-context', sourceCode: null, received, expected: null, found: null, completed: [], pending: [], retrySafe: true, remediation: ['Виправте доручення, OpenSpec або conf і повторіть запуск.'] });
+  throw Object.assign(commandFailure({ code, message: reason, reason, stage: 'task-context', source: 'task-context', sourceCode: null, received, expected: null, found: null, completed: [], pending: [], retrySafe: true, remediation: ['Виправте доручення, OpenSpec або conf і повторіть запуск.'] }), { code });
 };
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const readJson = async (path: string, optional = false): Promise<unknown> => {
@@ -121,8 +122,8 @@ const readJson = async (path: string, optional = false): Promise<unknown> => {
   }
 };
 const exists = async (path: string) => { try { await stat(path); return true; } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT' || (error as NodeJS.ErrnoException).code === 'ENOTDIR') return false; throw error; } };
-function explicitReferences(text: string) {
-  const matches = [...text.matchAll(/(?<![A-Za-z0-9._\/-])(?:openspec|conf|skills|specs)\/[A-Za-z0-9._\/-]+(?:#[A-Za-z0-9_~\/-]+)?/g)];
+function stageSourceReferences(text: string) {
+  const matches = [...text.matchAll(/(?<![\p{L}\p{N}._\/-])(?:openspec|conf|skills|specs)\/[\p{L}\p{N}._\/-]+(?:#[\p{L}\p{N}._~\/-]+)?/gu)];
   const tails = matches.map((match, index) => text.slice(match.index! + match[0].length, matches[index + 1]?.index ?? text.length));
   return matches.map((match, index) => ({
     path: match[0].replace(/[.]+$/, ''),
@@ -175,7 +176,12 @@ function selectedItems(parameters: RuntimeRunParameters, assignment: AssignmentS
 
 function stageSourceLine(tasks: string, item: string): string {
   const section = tasks.split(/^## /m).find(part => part.startsWith('Джерела за етапом'));
-  return section?.split('\n').filter(line => line.replace(/^\s*-\s*/, '').startsWith(`${item}:`)).join('\n') ?? '';
+  return section?.split('\n').filter(line => {
+    const content = line.replace(/^\s*-\s*/, '');
+    if (content.startsWith(`${item}:`)) return true;
+    const label = /^\*\*[^*]+?:\*\*/.exec(content)?.[0];
+    return label?.match(/[A-Za-z]+(?:\.\d+)+|\d+(?:\.\d+)*/g)?.includes(item) ?? false;
+  }).join('\n') ?? '';
 }
 
 async function changeSources(root: string, change: string, hasExplicitSources: boolean): Promise<string[]> {
@@ -187,26 +193,29 @@ async function changeSources(root: string, change: string, hasExplicitSources: b
 
 async function deriveSources(root: string, selected: readonly { change: string; item: { id: string; description: string } }[]): Promise<string[]> {
   const lines: string[] = [];
-  const explicit = new Map<string, string>();
+  const explicit = new Map<string, { path: string; details: string }>();
   for (const change of [...new Set(selected.map(row => row.change))]) {
     const tasks = await readFile(join(root, 'openspec', 'changes', change, 'tasks.md'), 'utf8').catch(() => '');
     let allItemsHaveExplicitSources = true;
     for (const { item } of selected.filter(row => row.change === change)) {
       const stage = stageSourceLine(tasks, item.id);
       let hasExplicitSources = false;
-      for (const [text, reason] of [[item.description, `пункт ${change}:${item.id}`], [stage, `«Джерела за етапом» для ${change}:${item.id}`]]) {
-        for (const { path, details: selector } of explicitReferences(text)) {
+      for (const [references, reason] of [[descriptionSourceReferences(item.description), `пункт ${change}:${item.id}`], [stageSourceReferences(stage), `«Джерела за етапом» для ${change}:${item.id}`]] as const) {
+        for (const { path, details: selector } of references) {
           hasExplicitSources = true;
           const canonical = path.startsWith('specs/') ? `openspec/${path}` : path;
-          const details = `${reason}${selector ? `: ${selector}` : '; читати для виконання пункту'}; повну релевантну вимогу зі сценаріями`;
-          explicit.set(canonical, explicit.has(canonical) ? `${explicit.get(canonical)}; ${details}` : details);
+          const file = canonical.split('#')[0];
+          const fragment = canonical.slice(file.length);
+          const details = `${reason}${fragment ? ` (${fragment})` : ''}${selector ? `: ${selector}` : '; читати для виконання пункту'}; повну релевантну вимогу зі сценаріями`;
+          const existing = explicit.get(file);
+          explicit.set(file, { path: existing?.path ?? canonical, details: existing ? `${existing.details}; ${details}` : details });
         }
       }
       allItemsHaveExplicitSources &&= hasExplicitSources;
     }
     lines.push(...await changeSources(root, change, allItemsHaveExplicitSources));
   }
-  for (const [path, reason] of explicit) {
+  for (const { path, details: reason } of explicit.values()) {
     const absolute = join(root, path);
     if (!await exists(absolute.split('#')[0])) contextFailure('TASK_SOURCE_MISSING', `Джерело доручення не існує: ${absolute}`, path);
     const line = `${absolute} — ${reason}`;

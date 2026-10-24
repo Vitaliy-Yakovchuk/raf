@@ -36,6 +36,7 @@ export async function connectResourceWait(endpoint: ResourceWaitEndpoint): Promi
       const { signal, ...payload } = request;
       await channel.send({ kind: 'resource-wait', epoch: endpoint.serviceEpoch, request: payload });
       const reply = await channel.receive();
+      if (request.workload === 'test' && reply.workload !== 'test') throw new Error('Resource wait service does not support test workload priority');
       if (reply.kind !== 'ticket') throw new Error(reply.details ?? reply.reason ?? 'Resource wait handshake rejected');
       return reply.ticket;
     },
@@ -62,7 +63,7 @@ export function createResourceWaitSocketHost(getProtocol: () => ResourceWaitProt
       signal.addEventListener('abort', disconnect, { once: true });
       try {
         const ticket = protocol.enqueue({ ...input.request, connectionId: id, signal });
-        await channel.send({ kind: 'ticket', ticket });
+        await channel.send({ kind: 'ticket', ticket, workload: input.request.workload ?? 'agent' });
         for (;;) {
           const frame = await channel.receive();
           if (frame.kind === 'closed') break;

@@ -16,7 +16,7 @@ import { openStateStore } from './state-store.ts';
 import { type ModelCatalog } from './model-routing.ts';
 import { commandFailure, failureContext } from './cli-contract.ts';
 import { loadEventCatalog } from './event-catalog.ts';
-import type { CommandStatePorts } from './reminder-cli.ts';
+import { settleCommandState, type CommandStatePorts } from './reminder-cli.ts';
 import type { BugCommand } from './bug-cli.ts';
 import type { StateStore } from './state-store.ts';
 import type { RuntimeServices } from './app-runtime.ts';
@@ -142,7 +142,15 @@ export async function withProductionRuntime<T>(options: ProductionEntryOptions, 
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
   if (argv[0] === 'test' && argv[1] === 'run' && !argv.includes('--help')) {
     const { runConfiguredTestRun } = await import('./test-run-runtime.ts');
-    return runConfiguredTestRun(argv.slice(2), options);
+    let services: Promise<RuntimeServices> | undefined;
+    return runConfiguredTestRun(argv.slice(2), { ...options, settle: async store => {
+      const root = canonicalRoot(options.orchestratorRoot);
+      const loaded = readConfiguration(root);
+      const context = productionContext(options, root, loaded.fileName, performance.now(), async () => rafSystemCaller);
+      await settleCommandState(commandState(root)(store, () => services ??= createProductionServices(store, {
+        catalog: JSON.parse(readFileSync(options.artifactPath, 'utf8')), models: loaded.models, commandTiming: loaded.commandTiming,
+      }, context)));
+    } });
   }
   const startedAtMs = performance.now();
   let runtime: AppRuntime | undefined;

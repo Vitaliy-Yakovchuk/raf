@@ -1,3 +1,4 @@
+import { createStoredLaunchQueueEvents, storedLaunchQueueIdentity } from './stored-launch-queue-events.ts';
 import { runtimeResourceUsage } from './resource-usage-runtime.ts';
 import type { UsageContext, UsageFinishReason, UsageIdentity } from './resource-usage.ts';
 import { createHash, randomUUID } from 'node:crypto';
@@ -18,6 +19,8 @@ export function createTestRunResourcePort(store: StateStore, options: {
   root: string; workspace: string; home: string; machineId: string; config: unknown; resultStatePath?: string; items?: UsageContext['items'];
 }): TestRunResourcePort & { bindSpawn(identity: string): void; spawnFailed(): void } {
   const ownerIdentity = testWrapperIdentity();
+  const queueIdentity = storedLaunchQueueIdentity(store, options.machineId);
+  const queueEvents = createStoredLaunchQueueEvents(store, queueIdentity);
   const usage = runtimeResourceUsage(store.startupContextDatabase, options.root);
   let timer: ReturnType<typeof setInterval> | undefined;
   let pendingReasons: string[] = [];
@@ -66,6 +69,11 @@ export function createTestRunResourcePort(store: StateStore, options: {
     operation(row); tx.putReservation(row); return true;
   });
   const snapshot = () => createResourceSnapshotReader({ machineId: options.machineId, paths: [...new Set(Object.values(paths))] }).read();
+  const bindPending = (testRunId: string, processIdentity: string) => store.eventRepository.transaction(tx => {
+    const state = tx.loadQueue(queueIdentity)!;
+    tx.saveQueue(queueIdentity, { ...state, pendingTests: state.pendingTests?.map(test =>
+      test.testRunId === testRunId && test.ownerIdentity === ownerIdentity ? { ...test, processIdentity } : test) });
+  });
   return {
     beforeSpawn: async (claim, paths) => {
       const identity = usageIdentity(claim);
@@ -91,6 +99,7 @@ export function createTestRunResourcePort(store: StateStore, options: {
         const row = find(tx.listReservations(), ownClaim!);
         if (!row?.testRun?.committed) throw new Error('Resource claim lost at spawn');
         row.testRun.claim.processIdentity = identity; tx.putReservation(row);
+        bindPending(ownClaim!.testRunId, identity);
         bindUsage(ownClaim!, identity);
       });
     },
@@ -112,17 +121,19 @@ export function createTestRunResourcePort(store: StateStore, options: {
           reason: [...measured.reasons, ...volumes.reasons, ...(request.estimate.reason ? [request.estimate.reason] : [])].join('; ') || null };
         if (estimate.reason) estimate.status = 'UNKNOWN';
         let admission = buildAdmissionSnapshot({ input: { measurement: measured.measurement, requested: request.estimate.reservation,
-          unusedReservations: [], ...volumes, estimate }, policy, requestedTier: request.requestedTier, queueId: '' });
+          unusedReservations: [], ...volumes, estimate }, policy, requestedTier: request.requestedTier, queueId: queueEvents.queueId() });
         if (request.estimate.status === 'KNOWN' && estimate.status === 'KNOWN') {
           const decision = evaluateLaunchAdmissionInTransaction(tx, { requested: request.estimate.reservation, ...volumes, estimate }, { measurement: measured.measurement, observedProcesses }, input => {
-            admission = buildAdmissionSnapshot({ input: { ...input, estimate }, policy, requestedTier: request.requestedTier, queueId: '' });
+            admission = buildAdmissionSnapshot({ input: { ...input, estimate }, policy, requestedTier: request.requestedTier, queueId: queueEvents.queueId() });
             return { level: admission.level, allowed: { normal: admission.level === 'ANY_RUN', hotfix: ['ANY_RUN', 'HOTFIX_ONLY'].includes(admission.level) }, reasons: admission.reasons, measurement: input.measurement, remaining: admission.remaining };
           });
           if (decision.level === 'UNKNOWN' && admission.level !== 'UNKNOWN') admission = buildAdmissionSnapshot({ input: {
             measurement: measured.measurement, requested: null, unusedReservations: [], ...volumes,
-            estimate: { ...estimate, status: 'UNKNOWN', reason: decision.reasons.join('; ') } }, policy, requestedTier: request.requestedTier, queueId: '' });
+            estimate: { ...estimate, status: 'UNKNOWN', reason: decision.reasons.join('; ') } }, policy, requestedTier: request.requestedTier, queueId: queueEvents.queueId() });
         }
         if (!admission.allowed) return { status: 'refused' as const, claim: null, admission, nextAction: admission.level === 'UNKNOWN' ? 'fix-setup' as const : 'retry' as const };
+        if (request.deferReservation || !request.queuePermit && store.eventRepository.transaction(events => events.loadQueue(queueIdentity)!.entries.length > 0) ||
+            !request.queuePermit && store.startupContextDatabase.prepare('SELECT 1 FROM agent_launch_queue_entries LIMIT 1').get()) return { status: 'refused' as const, claim: null, admission, nextAction: 'retry' as const };
         if (tx.listReservations().some(row => row.runId === request.testRunId)) throw new Error('Test run identity already reserved');
         const claim: TestRunResourceClaim = { machineId: options.machineId, testRunId: request.testRunId, fence: randomUUID(), groupKey: request.groupKey, deadlineMs: request.deadlineMs, processIdentity: null };
         tx.putReservation({ runId: request.testRunId, resource: 'test-run', amount: request.estimate.reservation!.ramBytes,
@@ -137,12 +148,13 @@ export function createTestRunResourcePort(store: StateStore, options: {
         return { status: 'prepared' as const, claim: structuredClone(claim), admission };
       });
     },
-    commit: claim => update(claim, row => { row.testRun!.committed = true; }),
+    commit: claim => update(claim, row => { row.testRun!.committed = true; row.testRun!.claim.deadlineMs = claim.deadlineMs; }),
     current: async claim => store.sessionRepository.transaction(tx => !!find(tx.listReservations(), claim), 'read'),
     bindProcess: async (claim, identity) => {
       if (!await update(claim, row => {
         if (!row.testRun!.committed) throw new Error('Uncommitted resource claim');
         row.testRun!.claim.processIdentity = identity;
+        bindPending(claim.testRunId, identity);
       })) throw new Error('Resource claim lost before binding process');
       claim.processIdentity = identity;
       bindUsage(claim, identity);

@@ -12,6 +12,7 @@ import { waitForResources } from './resource-wait-command.ts';
 import { readWaitIdentity, observeWaitIdentity } from './resource-wait-identity.ts';
 import { failureContext } from './cli-contract.ts';
 import { validateHotfixTrust } from './hotfix-worktree.ts';
+import { reconcilePendingTestQueues } from './test-run-queue-runtime.ts';
 
 export async function reconcileFinishedAgentQueues(dependencies: {
   store: StateStore;
@@ -19,6 +20,7 @@ export async function reconcileFinishedAgentQueues(dependencies: {
   observe(identity: ProcessIdentity): Promise<ProcessObservation>;
   cleanReport(runId: string): Promise<void>;
 }): Promise<void> {
+  reconcilePendingTestQueues(dependencies.store);
   const state = createAgentQueueState(dependencies.store);
   for (const entry of state.transaction(() => state.list())) {
     const session = dependencies.current(entry.record.owner.runId);

@@ -11,6 +11,7 @@ export async function waitForResources(input: {
   homeDirectory: string;
   developmentDirectory?: string;
   level: string;
+  workload?: 'test' | 'agent';
   hostModulePath?: string;
   signal?: AbortSignal;
 }) {
@@ -25,7 +26,7 @@ export async function waitForResources(input: {
     const directory = input.developmentDirectory ?? process.cwd();
     if (!isAbsolute(directory)) throw new Error('Absolute resource wait development directory required');
     const service = createServiceHandlers({ ...input, service: raf.service, hostModulePath: input.hostModulePath ?? fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)) });
-    return await runResourceWaitCommand({ level: input.level, developmentDirectory: directory, clientIdentity: await readWaitIdentity(), connectionId: '', signal: controller.signal }, options, {
+    return await runResourceWaitCommand({ level: input.level, workload: input.workload ?? 'agent', developmentDirectory: directory, clientIdentity: await readWaitIdentity(), connectionId: '', signal: controller.signal }, options, {
       ensureReady: service.ensureResourceReady,
       connect: connectResourceWait,
       recordDuration: () => {},

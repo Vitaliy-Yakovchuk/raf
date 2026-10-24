@@ -452,7 +452,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   result.testKind = plan.testKind ?? 'unit'; result.timeoutPolicy = testRunTimeoutPolicy(result.testKind, { unitTests: policy, integrationTests: context.integrationTests });
   result.profileId = plan.profileId; result.selection = plan.selection; result.command = plan.command;
   const key = { project: request.project, workspace: context.workspace, group: request.group };
-  const deadline = started + result.timeoutPolicy.timeoutMs;
+  let deadline = started + result.timeoutPolicy.timeoutMs;
   let reserved: TestRunGroup | null = null;
   let pendingResult: TestRunResult | null = null;
   try {
@@ -506,6 +506,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     return attach();
   }
   if (!reserved) return pendingResult ?? attach();
+  deadline = (reserved as TestRunGroup).inFlight!.deadlineMs;
   const events: RunnerEvent[] = [];
   let temporary: RunTemporaryReservation | undefined;
   const onEvent = (event: RunnerEvent) => {

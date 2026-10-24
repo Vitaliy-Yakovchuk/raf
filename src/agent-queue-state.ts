@@ -51,6 +51,16 @@ export function createAgentQueueState(store: StateStore) {
   return {
     transaction: <T>(action: (tx: Parameters<Parameters<StateStore['taskReservationRepository']['transaction']>[0]>[0]) => T): T => store.taskReservationRepository.transaction(action),
     list, get, save, remove,
+    hasPendingTests(machineId: string): boolean {
+      return store.eventRepository.transaction(tx => {
+        const queues = database.prepare('SELECT state_domain FROM agent_launch_queues WHERE machine_id=?').all(machineId);
+        return queues.some(row => {
+          const state = tx.loadQueue({ stateDomain: row.state_domain as string, machineId });
+          return state?.pendingTests?.some(test => test.handle && state.entries.some(entry =>
+            entry.requestId === test.handle!.requestId && entry.fence === test.fence));
+        });
+      });
+    },
     confirmReady(tx: Parameters<Parameters<StateStore['taskReservationRepository']['transaction']>[0]>[0], record: AgentQueueRecord): boolean {
       const entry = get(record);
       const session = tx.getSession(record.owner.runId);

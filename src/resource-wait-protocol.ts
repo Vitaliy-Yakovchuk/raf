@@ -138,7 +138,7 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
 
   private ordered() {
     const priorities = new Map(this.options.levels.map(level => [level.id, level.priority]));
-    return [...this.pending.values()].sort((a, b) => priorities.get(a.level!)! - priorities.get(b.level!)! || a.sequence - b.sequence);
+    return [...this.pending.values()].sort((a, b) => priorities.get(a.level!)! - priorities.get(b.level!)! || Number(a.workload !== 'test') - Number(b.workload !== 'test') || a.sequence - b.sequence);
   }
 
   private remove(entry: ResourceWaitPending) {
@@ -173,6 +173,7 @@ export class ResourceWaitProtocolService implements ResourceWaitProtocol {
     const ticket = { requestId: this.ports.nextId(), serviceEpoch: this.epoch };
     if (this.stopped) throw new Error('Resource wait service is not ready');
     if (!this.options.levels.some(level => level.id === request.level)) throw new Error(`Invalid resource wait level; allowed: ${this.options.levels.map(level => level.id).join(', ')}`);
+    if (request.workload !== undefined && request.workload !== 'agent' && request.workload !== 'test') throw new Error('Invalid resource wait workload');
     if (!validIdentity(request.clientIdentity) || !request.connectionId || !request.developmentDirectory) throw new Error('Missing resource wait client identity or development directory');
     const entry: ResourceWaitPending = { ...request, ...ticket, sequence: ++this.sequence, phase: 'waiting', offer: null };
     this.pending.set(ticket.requestId, entry);

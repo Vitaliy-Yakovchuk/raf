@@ -1,3 +1,6 @@
+import { isDeepStrictEqual } from 'node:util';
+import { resolveSandboxTestCaller } from './sandbox-test-caller.ts';
+import { createTestRunQueuePort } from './test-run-queue-runtime.ts';
 import { acknowledgeTestRunDelivery, recoverTestRun, stateOpenFailure } from './test-run-state-recovery.ts';
 import type { RecoveryStatePort } from './test-run-state-recovery.ts';
 import { observeReservedTestTree } from './test-run-resource-process.ts';
@@ -262,7 +265,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
   return ports;
 }
 
-export async function runConfiguredTestRun(argv: readonly string[], options: { orchestratorRoot: string; homeDirectory: string }): Promise<ExecutionResult> {
+export async function runConfiguredTestRun(argv: readonly string[], options: { orchestratorRoot: string; homeDirectory: string; settle?: (store: StateStore) => Promise<void> }): Promise<ExecutionResult> {
   let store: StateStore | undefined, controlStore: StateStore | undefined;
   let config: TestRunConfig | undefined;
   let resultContext: StateContext | undefined;
@@ -330,7 +333,25 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         const resources = createTestRunResourcePort(controlStore!, { root, workspace, home: context.operationalHome, machineId: boot.machineId, config, resultStatePath: stateContext.statePath, items });
         resultContext = stateContext;
         runtime = createTestRunPorts(config!, stateContext, () => store ??= openStore('unit', stateContext), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
-        const reserved = Object.assign(runtime, { deferDelivery: true, machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
+        const originalPreflight = runtime.preflight;
+        runtime.preflight = async value => {
+          const current = await sandboxTestControlSnapshot(controlStore!, root, args.project, args.group);
+          if (!isDeepStrictEqual(resolveSandboxTestCaller(current.callerEvidence), assignment) ||
+              !current.activeChanges.includes(args.group.split('/')[0]) ||
+              !current.workspaces.some(row => row.workspace === workspace && row.branch === assignment.branch && row.actualBranch === assignment.branch)) {
+            throw Object.assign(new Error('Test authorization changed while waiting'), { code: 'CALLER_UNAUTHORIZED' });
+          }
+          for (const [name, bytes] of configuration) if (!bytes.equals(readFileSync(join(root, 'conf', name)))) {
+            throw Object.assign(new Error('Test configuration changed while waiting'), { code: 'CONFIGURATION_INVALID' });
+          }
+          if (!flowBytes.equals(readFileSync(join(root, 'conf/flow.json')))) throw Object.assign(new Error('Flow configuration changed while waiting'), { code: 'CONFIGURATION_INVALID' });
+          return originalPreflight(value);
+        };
+        const resourceRoute = { branchPaths: Object.fromEntries(Object.entries(projects[args.project].branchPaths ?? { main: projects[args.project].path })
+          .map(([branch, path]) => [branch, resolve(root, String(path))])) };
+        const queue = createTestRunQueuePort(controlStore!, { root, workspace, home: controlContext.homeDirectory,
+          machineId: boot.machineId, settle: async () => { await options.settle?.(controlStore!); } });
+        const reserved = Object.assign(runtime, { resourceRoute, queue, deferDelivery: true, machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
         runtime.recoverGroup = async groupKey => {
           const recovery = await recoverTestRun({ key: groupKey, authorized: true, nowMs: Date.now() }, {
             state: runtime!.state as RecoveryStatePort,

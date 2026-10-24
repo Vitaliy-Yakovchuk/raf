@@ -1110,7 +1110,7 @@ export async function createProductionServices(
           if (!claim.rechecking && own) fail('LAUNCH_FENCE_LOST', 'Queue claim already exists');
           const entry = { ...own, record: claim.record, phase: 'waiting' as const, tasks, fingerprint: claim.validation.fingerprint };
           queueState!.assertClaim(tx, entry, claim.validation);
-          const predecessors = queueState!.list().some(other => other.record.clientIdentity.machineId === claim.record.clientIdentity.machineId && other.record.requestId !== claim.record.requestId);
+          const predecessors = queueState!.hasPendingTests(claim.record.clientIdentity.machineId) || queueState!.list().some(other => other.record.clientIdentity.machineId === claim.record.clientIdentity.machineId && other.record.requestId !== claim.record.requestId);
           const waiting = !admission.allowed[requestedTier] || !claim.rechecking && predecessors;
           queueState!.save({ ...entry, phase: waiting ? 'waiting' : 'starting' });
           return waiting;

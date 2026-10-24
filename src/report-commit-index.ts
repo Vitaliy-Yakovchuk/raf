@@ -1,3 +1,4 @@
+import { ConfirmationBudgetExhaustedError, ConfirmationTransientError } from './report-confirmation-retry.ts';
 import { watch } from 'node:fs';
 import { copyFile, lstat, mkdtemp, open, readFile, rename, rm } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join } from 'node:path';
@@ -10,6 +11,7 @@ export interface ReportCommitIndexRequest {
 
 export async function reconcileReportedCommitIndex(
   request: ReportCommitIndexRequest,
+  control?: { deadline: number; pollMs: number; beforeWrite?: () => Promise<void> },
 ): Promise<void> {
   if (!request.commits.length) return;
   const environment = { ...process.env };
@@ -49,7 +51,8 @@ export async function reconcileReportedCommitIndex(
   const indexResult = (await git(['rev-parse', '--git-path', 'index'])).trim();
   const indexPath = isAbsolute(indexResult) ? indexResult : join(request.repositoryRoot, indexResult);
   const lockPath = `${indexPath}.lock`;
-  const waitForIndex = () => new Promise<void>((resolve, reject) => {
+  const checkBudget = () => { if (control && performance.now() >= control.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached waiting for Git index.lock'); };
+  const waitForIndex = () => control ? (async () => { checkBudget(); await new Promise(resolve => setTimeout(resolve, Math.min(control.pollMs, Math.max(0, control.deadline - performance.now())))); checkBudget(); })() : new Promise<void>((resolve, reject) => {
     const watcher = watch(dirname(indexPath), (_event, name) => {
       if (name === null || name.toString() === basename(indexPath) || name.toString() === basename(lockPath)) { watcher.close(); resolve(); }
     });
@@ -58,8 +61,9 @@ export async function reconcileReportedCommitIndex(
   });
   let lock: Awaited<ReturnType<typeof open>>;
   for (;;) {
+    checkBudget();
     try { lock = await open(lockPath, 'wx', 0o600); break; }
-    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; await waitForIndex(); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; if (control) throw new ConfirmationTransientError('index-busy', 'Git index.lock is busy; retain foreign lock'); await waitForIndex(); }
   }
   let scratch: string | undefined;
   let published = false;
@@ -78,6 +82,7 @@ export async function reconcileReportedCommitIndex(
     }
     const equal = (left: Entry | undefined, right: Entry | undefined) => left?.oid === right?.oid && left?.mode === right?.mode;
     for (;;) {
+      checkBudget();
       const head = (await git(['rev-parse', 'HEAD'])).trim();
       for (const commit of commits) await git(['merge-base', '--is-ancestor', commit, head]);
       const current = await tree(head);
@@ -91,6 +96,9 @@ export async function reconcileReportedCommitIndex(
       try { await copyFile(indexPath, temporaryIndex); }
       catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; await rm(temporaryIndex, { force: true }); }
       await git(['update-index', '-z', '--index-info'], temporaryIndex, updates);
+      if ((await git(['rev-parse', 'HEAD'])).trim() !== head) continue;
+      await control?.beforeWrite?.();
+      checkBudget();
       if ((await git(['rev-parse', 'HEAD'])).trim() !== head) continue;
       await lock.writeFile(await readFile(temporaryIndex));
       await lock.sync();

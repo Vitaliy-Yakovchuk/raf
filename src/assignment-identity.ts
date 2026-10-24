@@ -1,3 +1,4 @@
+import { ConfirmationTransientError, confirmationTransient } from './report-confirmation-retry.ts';
 import { createHash } from 'node:crypto';
 import { constants, type BigIntStats, type BigIntStatsFs } from 'node:fs';
 import { lstat, statfs, realpath, open, readdir, mkdtemp, mkdir, writeFile, readFile, rm, type FileHandle } from 'node:fs/promises';
@@ -63,6 +64,10 @@ export function createAssignmentIdentityAdapter(
     const absent = new Set<string>();
     const contained = (path: string) => { const part = relative(root, path); if (part === '..' || part.startsWith(`..${sep}`) || isAbsolute(part)) throw new Error(`Path outside canonical root: ${path}`); };
     const observed = new Map<string, BigIntStats>();
+    const reinspect = async (path: string) => {
+      try { return await inspect(path); }
+      catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new ConfirmationTransientError('source-read-race', `Observed source disappeared while reading: ${path}`); throw error; }
+    };
     async function probe(path: string, optional = false): Promise<BigIntStats | undefined> {
       contained(path);
       const known = guards.get(path)?.stat ?? observed.get(path);
@@ -85,9 +90,11 @@ export function createAssignmentIdentityAdapter(
       if (known) return known.stat;
       const stat = await probe(path, optional);
       if (!stat) return undefined;
-      const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | (stat.isDirectory() ? constants.O_DIRECTORY : 0));
+      let handle: FileHandle;
+      try { handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | (stat.isDirectory() ? constants.O_DIRECTORY : 0)); }
+      catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new ConfirmationTransientError('source-read-race', `Observed source disappeared while opening: ${path}`); throw error; }
       try {
-        if (!unchanged(stat, await handle.stat({ bigint: true })) || !unchanged(stat, await inspect(path))) throw new Error(`Source changed while opening: ${path}`);
+        if (!unchanged(stat, await handle.stat({ bigint: true })) || !unchanged(stat, await reinspect(path))) throw new ConfirmationTransientError('source-read-race', `Source changed while opening: ${path}`);
         guards.set(path, { path, stat, handle });
       } catch (error) { await handle.close(); throw error; }
       return stat;
@@ -97,7 +104,7 @@ export function createAssignmentIdentityAdapter(
       if (!stat?.isDirectory()) throw new Error(`Expected source directory: ${path}`);
       const guard = guards.get(path)!;
       const names = (await readdir(path)).sort();
-      if (guard.entries && JSON.stringify(guard.entries) !== JSON.stringify(names)) throw new Error(`Directory entries changed: ${path}`);
+      if (guard.entries && JSON.stringify(guard.entries) !== JSON.stringify(names)) throw new ConfirmationTransientError('source-read-race', `Directory entries changed: ${path}`);
       guard.entries = names;
       return [...names];
     }
@@ -109,13 +116,13 @@ export function createAssignmentIdentityAdapter(
     }
     async function verify(): Promise<void> {
       for (const guard of guards.values()) {
-        if (!unchanged(guard.stat, await guard.handle.stat({ bigint: true })) || !unchanged(guard.stat, await inspect(guard.path))) throw new Error(`Source read race: ${guard.path}`);
-        if (guard.entries && JSON.stringify((await readdir(guard.path)).sort()) !== JSON.stringify(guard.entries)) throw new Error(`Directory read race: ${guard.path}`);
+        if (!unchanged(guard.stat, await guard.handle.stat({ bigint: true })) || !unchanged(guard.stat, await reinspect(guard.path))) throw new ConfirmationTransientError('source-read-race', `Source read race: ${guard.path}`);
+        if (guard.entries && JSON.stringify((await readdir(guard.path)).sort()) !== JSON.stringify(guard.entries)) throw new ConfirmationTransientError('source-read-race', `Directory read race: ${guard.path}`);
       }
-      for (const [path, stat] of observed) if (!guards.has(path) && !unchanged(stat, await inspect(path))) throw new Error(`Source candidate race: ${path}`);
+      for (const [path, stat] of observed) if (!guards.has(path) && !unchanged(stat, await reinspect(path))) throw new ConfirmationTransientError('source-read-race', `Source candidate race: ${path}`);
       for (const path of absent) {
         try { await inspect(path); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue; throw error; }
-        throw new Error(`Previously absent source input appeared: ${path}`);
+        throw new ConfirmationTransientError('source-read-race', `Previously absent source input appeared: ${path}`);
       }
     }
     try {
@@ -260,7 +267,7 @@ export function createAssignmentIdentityAdapter(
               if (instance(root, stat) !== task.changeInstance) { if (relevant) replacement = true; return; }
               const opened = await access.inspectPath(path);
               const identity = instance(root, opened!);
-              if (identity !== task.changeInstance) throw new Error(`Source changed while opening: ${path}`);
+              if (identity !== task.changeInstance) throw new ConfirmationTransientError('source-read-race', `Source changed while opening: ${path}`);
               matches.push({ path, instance: identity, location });
             };
             await consider(active, 'active', true, true);
@@ -289,7 +296,7 @@ export function createAssignmentIdentityAdapter(
           });
           results.push(resolution);
         } catch (error) {
-          results.push({ state: (error as { code?: string }).code === 'TASK_IDENTITY_INVALID' ? 'mismatch' : 'unknown', requested: task, reason: `${context}: ${message(error)}; main must verify the source and retry` });
+          results.push({ state: (error as { code?: string }).code === 'TASK_IDENTITY_INVALID' ? 'mismatch' : 'unknown', requested: task, reason: `${context}: ${message(error)}; main must verify the source and retry`, ...(confirmationTransient(error) ? { transient: 'source-read-race' as const } : {}) });
         }
       }
       return Object.freeze(results);

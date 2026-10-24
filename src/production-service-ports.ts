@@ -1,3 +1,4 @@
+import { reconcileProductionReports } from './production-runtime.ts';
 import { storedLaunchQueueIdentity, validateStoredQueueId } from './stored-launch-queue-events.ts';
 import { productionResourceWait } from './production-resource-wait.ts';
 import { readResourceWaitProtocolOptions } from './resource-wait-protocol.ts';
@@ -79,11 +80,19 @@ export async function createProductionServiceDependencies(
       const handle = boundStore();
       const currentBoot = () => readMachineBootIdentity(options?.processScan?.execute);
       const retained = new Set<string>();
+      const reports = handle.sessionRepository.transaction(tx => tx.listSessions().some(row => !row.result && ['running', 'exited'].includes(row.state) && row.launchContext?.reportPath), 'read');
+      if (reports) {
+        const stateContext = productionStateContext(context.orchestratorRoot, fileURLToPath(import.meta.url), context.homeDirectory, 'service-store');
+        const artifactPath = fileURLToPath(new URL('../dist/catalog.json', import.meta.url));
+        const catalog = JSON.parse(await readFile(artifactPath, 'utf8'));
+        for (const runId of await reconcileProductionReports(handle, { stateContext, orchestratorRoot: context.orchestratorRoot, confRoot: join(context.orchestratorRoot, 'conf'), artifactPath,
+          statePath: stateContext.statePath, tmpRoot: stateContext.tmpRoot, mode: 'production', commandStartedAtMs: performance.now(), resolveCaller: async () => undefined }, catalog)) retained.add(runId);
+      }
       if (listTaskReservations(handle).length) {
         const projects = JSON.parse(await readFile(join(context.orchestratorRoot, 'conf', 'projects.json'), 'utf8'));
         if (projects.version !== 1 || !projects.projects || typeof projects.projects !== 'object' || Array.isArray(projects.projects)) throw new Error('Invalid recovery project configuration');
         const identity = createAssignmentIdentityAdapter(Object.fromEntries(Object.keys(projects.projects).map(project => [project, context.orchestratorRoot])));
-        const result = await reconcileTaskReservations({ store: handle, currentBoot, deferAbandonedFinalization: true,
+        const result = await reconcileTaskReservations({ store: handle, currentBoot, deferAbandonedFinalization: true, retainPendingConfirmation: async runId => retained.has(runId),
           observe: async process => (await observeProcesses([process], options?.processScan))[0],
           resolveTasks: identity.resolveTasks, newFence: randomUUID });
         for (const lease of result.retained) retained.add(lease.owner.runId);

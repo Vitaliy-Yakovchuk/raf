@@ -46,7 +46,7 @@ export type TaskReservationSet = {
 
 export type ReservedTaskResolution =
   | { readonly state: 'open' | 'completed'; readonly task: ReservedTaskSnapshot; readonly location: 'active' | 'archive' }
-  | { readonly state: 'mismatch' | 'unknown'; readonly requested: ReservedTaskSnapshot; readonly reason: string };
+  | { readonly state: 'mismatch' | 'unknown'; readonly requested: ReservedTaskSnapshot; readonly reason: string; readonly transient?: 'source-read-race' };
 
 export type TaskReservationError = Error & {
   readonly code: 'TASK_LIVENESS_UNKNOWN' | 'TASK_IDENTITY_MISMATCH' | 'TASK_SOURCE_UNKNOWN' | 'TASK_NOT_COMPLETED' | 'TASK_IDENTITY_INVALID';
@@ -54,6 +54,7 @@ export type TaskReservationError = Error & {
 
 export type TaskReservationDependencies = {
   readonly deferAbandonedFinalization?: boolean;
+  readonly retainPendingConfirmation?: (runId: string) => Promise<boolean>;
   readonly store: StateStore;
   readonly currentBoot: () => Promise<MachineBootIdentity>;
   readonly observe: (identity: ProcessIdentity) => Promise<ProcessObservation>;
@@ -194,13 +195,15 @@ const guard = (set: TaskReservationSet): ReservationProcessIdentity | undefined 
 
 async function checkReservations(dependencies: TaskReservationDependencies, boot: MachineBootIdentity) {
   const sets = listTaskReservations(dependencies.store);
-  const observations: ({ set: TaskReservationSet } & Awaited<ReturnType<typeof observeProcess>>)[] = [];
+  const observations: ({ set: TaskReservationSet; pending: boolean } & Awaited<ReturnType<typeof observeProcess>>)[] = [];
   for (const set of sets) {
     let observation = await observeProcess(dependencies, guard(set), set.lease.owner.runId, boot, set.boot);
     if (!observation.alive && set.stage === 'running') {
       observation = await observeProcess(dependencies, set.wrapper, set.lease.owner.runId, boot, set.boot);
     }
-    observations.push({ set, ...observation });
+    const session = dependencies.store.sessionRepository.transaction(tx => tx.getSession(set.lease.owner.runId), 'read');
+    const pending = !observation.alive && !!session && !session.result && ['running', 'exited'].includes(session.state) && !!await dependencies.retainPendingConfirmation?.(set.lease.owner.runId);
+    observations.push({ set, ...observation, pending });
   }
   return observations;
 }
@@ -212,8 +215,8 @@ function observationsCurrent(tx: ReservationTransaction, observations: Awaited<R
 }
 
 function closeAbandoned(tx: ReservationTransaction, observations: Awaited<ReturnType<typeof checkReservations>>, deferFinalization = false): void {
-  for (const { set, alive, at } of observations) {
-    if (alive) continue;
+  for (const { set, alive, at, pending } of observations) {
+    if (alive || pending) continue;
     const session = tx.getSession(set.lease.owner.runId);
     if (!session || session.addressId !== set.lease.owner.addressId) {
       throw failure('TASK_IDENTITY_INVALID', 'Reservation session identity mismatch', set.lease);
@@ -382,8 +385,8 @@ export async function reconcileTaskReservations(dependencies: TaskReservationDep
     const result = dependencies.store.taskReservationRepository.transaction(tx => {
       if (!observationsCurrent(tx, observations)) return null;
       closeAbandoned(tx, observations, dependencies.deferAbandonedFinalization);
-      return { retained: observations.filter(item => item.alive).map(item => copy(item.set.lease)),
-        released: observations.filter(item => !item.alive).map(item => copy(item.set.lease.owner)) };
+      return { retained: observations.filter(item => item.alive || item.pending).map(item => copy(item.set.lease)),
+        released: observations.filter(item => !item.alive && !item.pending).map(item => copy(item.set.lease.owner)) };
     });
     if (result) return result;
   }

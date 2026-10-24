@@ -1,3 +1,4 @@
+import { ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, type ConfirmationBudget } from './report-confirmation-retry.ts';
 import { constants } from 'node:fs';
 import { lstat, realpath, open, readFile, writeFile, mkdtemp, rm, copyFile, rename } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -15,6 +16,8 @@ export interface TaskCheckboxCommit {
 export interface TaskCheckboxConfirmation extends AssignmentVerification {
   readonly commits: readonly TaskCheckboxCommit[];
   readonly awaitingArchive: boolean;
+  readonly budgetExhausted?: boolean;
+  readonly transient?: 'writer-busy' | 'source-read-race' | 'index-busy';
 }
 
 export interface TaskCheckboxOperation {
@@ -39,10 +42,12 @@ export interface TaskCheckboxPorts {
   checkpoint?(phase: TaskCheckboxCheckpoint, item: Readonly<{ change: string; item: string }> | null): Promise<void>;
   executeGit?(args: readonly string[], options: Readonly<{ cwd: string; env?: Readonly<Record<string, string>> }>): Promise<Readonly<{ code: number; stdout: string; stderr: string }>>;
   waitForIndex?(): Promise<void>;
+  beforeWrite?(): Promise<void>;
+  budget?: ConfirmationBudget;
 }
 
 export interface TaskCheckboxReportPort {
-  confirmTaskCheckboxes(request: AgentReportRequest, report: AgentReport, verifiedSource?: AssignmentVerification): Promise<TaskCheckboxConfirmation>;
+  confirmTaskCheckboxes(request: AgentReportRequest, report: AgentReport, verifiedSource?: AssignmentVerification, budget?: ConfirmationBudget, beforeWrite?: () => Promise<void>): Promise<TaskCheckboxConfirmation>;
 }
 
 const queues = new Map<string, Promise<unknown>>();
@@ -53,6 +58,7 @@ const errorText = (error: unknown) => error instanceof Error ? error.message : S
 
 export async function prepareReportedTaskCheckboxes(request: AgentReportRequest, report: AgentReport, ports: TaskCheckboxPorts): Promise<TaskCheckboxConfirmation> {
   const previous = queues.get(request.assignment.root) ?? Promise.resolve();
+  if (queues.has(request.assignment.root) && ports.budget) return { ok: false, issues: [], commits: [], awaitingArchive: false, transient: 'writer-busy' };
   const next = previous.catch(() => {}).then(() => prepare(request, report, ports));
   queues.set(request.assignment.root, next);
   try { return await next; } finally { if (queues.get(request.assignment.root) === next) queues.delete(request.assignment.root); }
@@ -132,7 +138,13 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
       const before = await lstat(lockPath);
       const owner = JSON.parse(await readFile(lockPath, 'utf8'));
       if (owner.kind !== 'raf-task-checkbox-lock' || !Number.isSafeInteger(owner.pid) || owner.pid <= 0) throw new Error('Task checkbox writer has unknown ownership');
-      try { process.kill(owner.pid, 0); throw new Error('Task checkbox writer is busy; retry confirmation'); }
+      if (!before.isFile() || before.isSymbolicLink()) throw new Error('Task checkbox writer has unknown ownership');
+      try {
+        process.kill(owner.pid, 0);
+        const after = await lstat(lockPath);
+        if (before.ino !== after.ino || before.mtimeMs !== after.mtimeMs || before.dev !== after.dev) throw new Error('Task checkbox writer lock changed');
+        throw new ConfirmationTransientError('writer-busy', 'Task checkbox writer is busy; retry confirmation');
+      }
       catch (probe) { if ((probe as NodeJS.ErrnoException).code !== 'ESRCH') throw probe; }
       const after = await lstat(lockPath);
       if (before.ino !== after.ino || before.mtimeMs !== after.mtimeMs) throw new Error('Task checkbox writer lock changed');
@@ -183,6 +195,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
         const sharedIndex = join(scratch!, 'shared-index');
         await copyFile(indexPath, sharedIndex);
         if (!await update({ GIT_INDEX_FILE: sharedIndex })) return false;
+        await ports.beforeWrite?.();
         await handle.writeFile(await readFile(sharedIndex));
         await handle.sync();
         await handle.close();
@@ -276,7 +289,9 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
         if (workLine[0] !== headLine[0] && !ownWritten) throw new Error('Task row conflict between HEAD and worktree; uncommitted checkbox has unknown ownership');
         operation = { runId: request.runId, ...current, originalLine: headLine[0], parent, phase: ownWritten ? 'written' : 'prepared' };
         await save(operation);
+        await ports.beforeWrite?.();
         await checkpoint('before-write', current);
+        await ports.beforeWrite?.();
         await sourcePath(path);
         const latest = await readFile(path, 'utf8');
         const latestLine = lineFor(latest, item.id, item.description);
@@ -315,7 +330,9 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
           await git(['update-index', '--add', '--cacheinfo', mode, blob, pathspec], env);
           const tree = (await git(['write-tree'], env)).trim();
           const sha = (await git(['commit-tree', tree, '-p', commitParent, '-m', `raf checkbox ${request.runId} ${change.id}:${item.id}`])).trim();
+          await ports.beforeWrite?.();
           await checkpoint('before-ref-update', current);
+          await ports.beforeWrite?.();
           let committed: boolean;
           try {
             committed = await withIndexLock(async indexEnv => {
@@ -353,7 +370,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
     await checkpoint('after-verification', null);
     for (const operation of operations) if (operation.runId === request.runId && operation.sha) await save({ ...operation, phase: 'verified' });
     return { ...verification, commits, awaitingArchive };
-  } catch (error) { if (checkpointError === error) throw error; return reject(errorText(error)); }
+  } catch (error) { if (checkpointError === error) throw error; return { ...reject(errorText(error)), ...(error instanceof ConfirmationBudgetExhaustedError ? { budgetExhausted: true } : {}), ...(confirmationTransient(error) ? { transient: error.cause } : {}) }; }
   finally {
     if (scratch) await rm(scratch, { recursive: true, force: true });
     if (lock) { await lock.close(); await rm(lockPath!); }

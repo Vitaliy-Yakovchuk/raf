@@ -234,8 +234,10 @@ async function until(predicate: () => boolean): Promise<void> {
 async function directWrapper(f: ReturnType<typeof fixture>): Promise<SandboxCommandReply> {
   let stdout = '';
   let stderr = '';
-  const code = await runTestRunCli(['--project', 'raf', '--phase', f.snapshot.sessions[0].assignment.phase, '--group', group, '--files', file], {
-    config: f.config, policy: f.policy, context: f.context, runtime: f.runtime,
+  const actor = f.snapshot.sessions[0].assignment;
+  const code = await runTestRunCli(['--project', 'raf', '--phase', actor.phase, '--group', group, '--files', file], {
+    config: f.config, policy: f.policy,
+    context: { ...f.context, agentId: actor.agentId, callerPhase: actor.phase }, runtime: f.runtime,
     stdout: value => { stdout += value; }, stderr: value => { stderr += value; },
   });
   return { code, stdout, stderr };
@@ -580,6 +582,7 @@ for (const [script, expected, code] of [
     assert.equal(value.project, 'raf');
     assert.equal(value.workspace, workspace);
     assert.equal(value.group, group);
+    assert.equal(value.callerPhase, f.snapshot.sessions[0].assignment.phase);
     assert.equal(typeof value.runId, 'string');
     if (script === 'assertion') assert.deepEqual(value.knownRed, [testId]);
     if (script === 'import') assert.deepEqual(value.knownRed, []);

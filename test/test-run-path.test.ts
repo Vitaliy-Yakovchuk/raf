@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, delimiter, join, resolve } from 'node:path';
 import { test } from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { openStateStore } from '../src/state-store.ts';
 import type { TestRunResult } from '../src/test-runs.ts';
 
@@ -39,6 +39,34 @@ function fixture() {
     const home = join(stand, 'control-home');
     temporary = mkdtempSync('/tmp/p-');
     const observation = join(workspace, 'child-environment.json');
+    const resourceObservation = join(stand, 'resource-observation.json');
+    const resourcePreload = join(stand, 'resource-preload.mjs');
+    writeFileSync(resourcePreload, `
+import { mock } from 'node:test';
+import { writeFileSync } from 'node:fs';
+import * as original from ${JSON.stringify(pathToFileURL(join(code, 'src/os-runtime.ts')).href)};
+mock.module(${JSON.stringify(pathToFileURL(join(code, 'src/os-runtime.ts')).href)}, {
+  namedExports: {
+    ...original,
+    createResourceSnapshotReader: ({ machineId, paths }) => ({
+      read: async () => {
+        const snapshot = {
+          measurement: {
+            machineId, loadAverage1m: 0, availableCores: 8,
+            totalRamBytes: 2 ** 40, availableRamBytes: 2 ** 39,
+            memoryPressure: 'normal',
+            fileSystems: [{ id: 'unit-path-volume', totalBytes: 2 ** 40, availableBytes: 2 ** 39 }],
+          },
+          reasons: [],
+          fileSystemByPath: Object.fromEntries(paths.map(path => [path, 'unit-path-volume'])),
+        };
+        writeFileSync(${JSON.stringify(resourceObservation)}, JSON.stringify(snapshot));
+        return snapshot;
+      },
+    }),
+  },
+});
+`);
     for (const path of [join(root, 'conf'), join(root, 'openspec/changes/add-raf-test-run'), workspace, home, temporary]) {
       mkdirSync(path, { recursive: true });
     }
@@ -113,7 +141,7 @@ function fixture() {
       store.close();
     }
     return {
-      stand, root, workspace, home, observation,
+      stand, root, workspace, home, observation, resourcePreload, resourceObservation,
       close: () => {
         rmSync(stand, { recursive: true, force: true });
         rmSync(temporary!, { recursive: true, force: true });
@@ -127,7 +155,7 @@ function fixture() {
 }
 
 async function childEnvironment(f: ReturnType<typeof fixture>, entries: string[]): Promise<Record<string, string>> {
-  const argv = [join(code, 'bin/raf.ts'), 'test', 'run', '--project', 'raf', '--phase', 'qa', '--group', group, '--files', probe];
+  const argv = ['--experimental-test-module-mocks', '--import', f.resourcePreload, join(code, 'bin/raf.ts'), 'test', 'run', '--project', 'raf', '--phase', 'qa', '--group', group, '--files', probe];
   const child = spawn(process.execPath, argv, {
     cwd: f.workspace,
     env: { ...preserved, PATH: entries.join(delimiter), HOME: f.home, RAF_QA_HOME: f.home, RAF_ORCHESTRATOR_ROOT: f.root, TMUX: '', TMUX_PANE: '' },
@@ -149,6 +177,7 @@ async function childEnvironment(f: ReturnType<typeof fixture>, entries: string[]
   assert.equal(result.timedOut, false);
   assert.deepEqual(result.cleanup, { complete: true, remainingPids: [] });
   assert.deepEqual(result.selection.files, [probe]);
+  assert.ok(existsSync(f.resourceObservation), 'the nested CLI must use the isolated resource reader');
   assert.ok(existsSync(f.observation), 'the configured unit child must actually execute');
   return readJson(f.observation);
 }

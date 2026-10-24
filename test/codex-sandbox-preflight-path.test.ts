@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
-import { userInfo } from 'node:os';
+import { endianness, userInfo } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { test } from 'node:test';
 import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
@@ -8,6 +8,10 @@ import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
 const linuxSunPathBytes = 108;
 
 async function fixture() {
+  const socketSyscall = new Map([['x64', 41], ['arm64', 198]]).get(process.arch);
+  assert.equal(process.platform, 'linux', 'Z390 fixture requires Linux seccomp');
+  assert.equal(endianness(), 'LE', 'Z390 fixture requires little-endian seccomp instructions');
+  assert.ok(socketSyscall !== undefined, 'Z390 fixture supports x64/arm64 socket syscalls');
   const root = await mkdtemp('/tmp/z390-');
   const bin = join(root, 'bin');
   const home = join(root, 'home');
@@ -22,6 +26,32 @@ async function fixture() {
   const longTmp = join(longBase, 'temporary-artifacts/TMPDIR');
   const witness = join(root, 'listening.jsonl');
   await Promise.all([bin, accountRoot, cwd, shortRun, shortTmp, longRun, longTmp].map(path => mkdir(path, { recursive: true })));
+  const loadWordAbsolute = 0x20;
+  const jumpEqual = 0x15;
+  const returnConstant = 0x06;
+  const denyWithEperm = 0x00050001;
+  const allow = 0x7fff0000;
+  const syscallOffset = 0;
+  const firstArgumentOffset = 16;
+  const afInet = 2;
+  const afInet6 = 10;
+  const instructions: [number, number, number, number][] = [
+    [loadWordAbsolute, 0, 0, syscallOffset],
+    [jumpEqual, 0, 4, socketSyscall],
+    [loadWordAbsolute, 0, 0, firstArgumentOffset],
+    [jumpEqual, 1, 0, afInet],
+    [jumpEqual, 0, 1, afInet6],
+    [returnConstant, 0, 0, denyWithEperm],
+    [returnConstant, 0, 0, allow],
+  ];
+  const seccomp = Buffer.alloc(instructions.length * 8);
+  for (const [index, [code, jumpTrue, jumpFalse, value]] of instructions.entries()) {
+    seccomp.writeUInt16LE(code, index * 8);
+    seccomp.writeUInt8(jumpTrue, index * 8 + 2);
+    seccomp.writeUInt8(jumpFalse, index * 8 + 3);
+    seccomp.writeUInt32LE(value, index * 8 + 4);
+  }
+  await writeFile(join(bin, 'deny-tcp.bpf'), seccomp);
   await writeFile(join(accountRoot, 'fixture-marker'), 'z390-account-root');
   await writeFile(join(bin, 'socket-witness.cjs'), `
 const fs = require('node:fs');
@@ -41,6 +71,7 @@ net.Server.prototype.emit = function(event, ...args) {
 `);
   await writeFile(join(bin, 'codex'), `#!${process.execPath}
 const { spawnSync } = require('node:child_process');
+const { openSync, closeSync } = require('node:fs');
 const { join } = require('node:path');
 const args = process.argv.slice(2);
 const separator = args.indexOf('--');
@@ -48,16 +79,19 @@ if (args[0] !== 'sandbox' || separator < 0 || !args[separator + 1]) {
   process.stderr.write('Z390 fixture expects codex sandbox -- executable args');
   process.exit(97);
 }
+const seccompFd = openSync(join(__dirname, 'deny-tcp.bpf'), 'r');
 const child = spawnSync('/usr/bin/bwrap', [
-  '--die-with-parent', '--unshare-user', '--unshare-pid',
+  '--die-with-parent', '--unshare-user', '--unshare-pid', '--unshare-net',
+  '--seccomp', '3',
   '--ro-bind', '/', '/', '--bind', '/tmp', '/tmp', '--dev', '/dev', '--proc', '/proc',
   ...${JSON.stringify(accountHomes)}.flatMap(home => ['--tmpfs', home]),
   '--', args[separator + 1], '--require', join(__dirname, 'socket-witness.cjs'), ...args.slice(separator + 2)
 ], {
-  stdio: 'inherit', env: process.env
+  stdio: ['inherit', 'inherit', 'inherit', seccompFd], env: process.env
 });
-if (child.error) { process.stderr.write('Z390 fixture requires /usr/bin/bwrap and user namespaces: ' + child.error.message); process.exit(98); }
-if (child.status !== 0) process.stderr.write('Z390 fixture isolated probe failed; /usr/bin/bwrap and user namespaces are required\\n');
+closeSync(seccompFd);
+if (child.error) { process.stderr.write('Z390 fixture requires /usr/bin/bwrap, seccomp, and user/pid/mount/network namespaces: ' + child.error.message); process.exit(98); }
+if (child.status !== 0) process.stderr.write('\\nZ390 fixture isolated probe failed; /usr/bin/bwrap, seccomp, and user/pid/mount/network namespaces are required\\n');
 process.exit(child.status ?? 99);
 `, { mode: 0o700 });
   await symlink('/usr/bin/bwrap', join(bin, 'bwrap'));

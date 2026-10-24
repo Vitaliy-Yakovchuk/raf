@@ -36,7 +36,11 @@ async function setup() {
     const root = await mkdtemp(join(tmpdir(), 'raf-z393-progress-'));
     setupRoot = root;
     const tasksPath = join(root, 'openspec', 'changes', change, 'tasks.md');
-    const schemaPath = join(root, 'openspec', 'schemas', 'spec-driven');
+    const packageSchema = JSON.parse(execFileSync('openspec', ['schema', 'which', 'spec-driven', '--json'], {
+        cwd: root,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+    }));
     const runId = randomUUID();
     const address = 'z393-progress';
     const tmpRoot = join(root, 'runs', runId);
@@ -49,29 +53,10 @@ async function setup() {
     }).trim();
     try {
         await mkdir(dirname(tasksPath), { recursive: true });
-        await mkdir(join(schemaPath, 'templates'), { recursive: true });
         await mkdir(tmpRoot, { recursive: true });
         await writeFile(tasksPath, originalTasks);
         await writeFile(join(dirname(tasksPath), 'proposal.md'), '## Why\nIsolated confirmation fixture.\n');
         await writeFile(join(root, 'openspec', 'config.yaml'), 'schema: spec-driven\n');
-        await writeFile(join(schemaPath, 'schema.yaml'), [
-            'name: spec-driven',
-            'version: 1',
-            'description: Isolated confirmation fixture',
-            'artifacts:',
-            '  - id: tasks',
-            '    generates: tasks.md',
-            '    description: Confirmation tasks',
-            '    template: tasks.md',
-            '    instruction: Confirm the assigned task',
-            '    requires: []',
-            'apply:',
-            '  requires: [tasks]',
-            '  tracks: tasks.md',
-            '  instruction: Confirm the assigned task',
-            '',
-        ].join('\n'));
-        await writeFile(join(schemaPath, 'templates', 'tasks.md'), originalTasks);
         git(['init', '-q', '-b', 'main']);
         git(['config', 'user.name', 'Confirmation fixture']);
         git(['config', 'user.email', 'confirmation@example.invalid']);
@@ -92,7 +77,7 @@ async function setup() {
         if (args.length === 1 && args[0] === '--version') return { exitCode: 0, stdout: '1.14.3\n', stderr: '' };
         if (args[0] === 'schema' && args[1] === 'which' && args[2] === 'spec-driven' && args.includes('--json')) return {
             exitCode: 0,
-            stdout: JSON.stringify({ name: 'spec-driven', source: 'project', path: schemaPath, shadows: [] }),
+            stdout: JSON.stringify({ name: 'spec-driven', source: 'package', path: packageSchema.path, shadows: [] }),
             stderr: '',
         };
         if (args.includes('list') && args.includes('--archived')) return { exitCode: 0, stdout: JSON.stringify({ changes: [], root }), stderr: '' };

@@ -140,6 +140,7 @@ export function fixture(shared = machine(), qa = context) {
   let interrupt: ((signal: string) => void) | null = null;
   let deadlineCallback: (() => void) | null = null;
   let waiting: ReturnType<typeof latch<ChildExit>> | null = null;
+  let finishEvents: (() => void) | null = null;
   let cleanup = { complete: true, remainingPids: [] as number[] };
   const started = latch<void>();
   const environment: TestRunEnvironment = {
@@ -176,12 +177,14 @@ export function fixture(shared = machine(), qa = context) {
       if (spawnFailure) throw new Error('runner executable unavailable');
       spawned.push(copy(command)); started.resolve();
       const events: RunnerEvent[] = [{ kind: 'discovered', test: selected }, { kind: 'passed', test: selected }, { kind: 'complete', expected: [selected] }];
-      if (!waiting) events.forEach(onEvent);
+      if (waiting) finishEvents = () => events.forEach(onEvent);
+      else events.forEach(onEvent);
       return {
         identity: `tree-${owner.testRunId}`,
         async wait() { return waiting ? waiting.promise : { exitCode: 0, signal: null, stderr: '' }; },
         async cleanup(deadline, reason) {
           cleanupCalls.push({ deadline, reason });
+          finishEvents = null;
           waiting?.resolve({ exitCode: null, signal: reason === 'interruption' ? 'SIGTERM' : 'SIGKILL', stderr: '' });
           return copy(cleanup);
         },
@@ -195,7 +198,11 @@ export function fixture(shared = machine(), qa = context) {
     group: () => groups.get(key({ project: request.project, workspace: qa.workspace, group: request.group })),
     advance(ms: number) { now += ms; }, now: () => now,
     hold() { waiting = latch<ChildExit>(); },
-    finish() { waiting?.resolve({ exitCode: 0, signal: null, stderr: '' }); },
+    finish() {
+      const deliver = finishEvents; finishEvents = null;
+      deliver?.();
+      waiting?.resolve({ exitCode: 0, signal: null, stderr: '' });
+    },
     signal() { assert.ok(interrupt); interrupt('SIGTERM'); },
     deadline() { assert.ok(deadlineCallback); now = deadlines.at(-1)!; deadlineCallback(); },
     failSpawn() { spawnFailure = true; }, failGroup() { groupFailure = true; },

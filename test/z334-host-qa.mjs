@@ -52,7 +52,7 @@ const command = (label, exe, args, cwd = root) => {
 const must = result => { assert.equal(result.error, null); assert.equal(result.signal, null); assert.equal(result.cliExitCode, 0, result.stderr); return result.stdout.trim(); };
 const git = (cwd, ...args) => must(command('git-' + (++sequence), 'git', ['-C', cwd, ...args], cwd));
 const wait = async (label, read, budget) => {
-  const end = Date.now() + budget;
+  const end = budget === undefined ? Infinity : Date.now() + budget;
   while (Date.now() < end) { assert.ok(!interrupted || cleaning, 'Interrupted: ' + interrupted); const result = read(); if (result) return result; await delay(100); }
   throw Error('Incomplete host scenario: ' + label);
 };
@@ -61,7 +61,7 @@ const request = async (label, args) => {
   const resultPath = path.join(stand, 'pane', label + '.json');
   assert.ok(!fs.existsSync(resultPath));
   atomic(path.join(stand, 'commands', String(++sequence).padStart(6, '0') + '.json'), { label, args });
-  await wait('CLI ' + label, () => fs.existsSync(resultPath), readiness);
+  await wait('CLI ' + label, () => fs.existsSync(resultPath), args[0] === 'agent' && args[1] === 'run' ? undefined : readiness);
   const r = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
   summary.steps.push({ label, ...r });
   return { ...r, stdout: fs.readFileSync(path.join(stand, 'pane', label + '.stdout'), 'utf8'), stderr: fs.readFileSync(path.join(stand, 'pane', label + '.stderr'), 'utf8') };
@@ -344,23 +344,35 @@ try {
 } catch (error) { summary.error = { message: error.message, stack: error.stack }; }
 finally {
   cleaning = true;
-  for (const lease of leases) await lease.release().catch(() => {});
-  for (const child of children) if (child.exitCode === null && child.signalCode === null) { const exited = once(child, 'exit'); child.kill('SIGKILL'); await exited; }
   const cleanupErrors = [];
-  try {
-    if (mainStarted) {
-      for (const row of state().filter(row => row.addressId !== 'main' && row.state !== 'finished')) {
+  for (const lease of leases) {
+    try { await lease.release(); } catch (error) { cleanupErrors.push('lease: ' + error.message); }
+  }
+  for (const child of children) if (child.exitCode === null && child.signalCode === null) {
+    try { const exited = once(child, 'exit'); child.kill('SIGKILL'); await exited; }
+    catch (error) { cleanupErrors.push('child: ' + error.message); }
+  }
+  if (mainStarted) {
+    let active = [];
+    try { active = state().filter(row => row.addressId !== 'main' && row.state !== 'finished'); }
+    catch (error) { cleanupErrors.push('sessions: ' + error.message); }
+    for (const row of active) {
+      try {
         saveRun(row);
         const result = await request('cleanup-close-' + row.addressId, ['agent', 'close', '--id', row.addressId, '--force', '--reason', 'Z334 owns this isolated fixture; evidence preserved']);
         if (result.cliExitCode !== 0) cleanupErrors.push('close ' + row.addressId);
-      }
+      } catch (error) { cleanupErrors.push('close ' + row.addressId + ': ' + error.message); }
+    }
+    try {
       const stop = await request('cleanup-service-stop', ['service', 'stop']); if (stop.cliExitCode !== 0) cleanupErrors.push('service-stop');
-      for (const [label, endpoint] of [['agents', path.join(home, '.raf/tmp/tmux/server.sock')], ['main', socket]]) {
+    } catch (error) { cleanupErrors.push('service-stop: ' + error.message); }
+    for (const [label, endpoint] of [['agents', path.join(home, '.raf/tmp/tmux/server.sock')], ['main', socket]]) {
+      try {
         const result = command('cleanup-tmux-' + label, 'tmux', ['-S', endpoint, 'kill-server']);
         if (result.cliExitCode !== 0 && !/no server|No such file/i.test(result.stderr)) cleanupErrors.push('tmux ' + label);
-      }
+      } catch (error) { cleanupErrors.push('tmux ' + label + ': ' + error.message); }
     }
-  } catch (error) { cleanupErrors.push(error.message); }
+  }
   if (fs.existsSync(path.join(stand, 'pane'))) fs.cpSync(path.join(stand, 'pane'), path.join(ev, 'pane'), { recursive: true });
   if (control && fs.existsSync(control)) {
     const verifications = path.join(control, 'verification');

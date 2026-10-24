@@ -3,7 +3,7 @@ import * as fs from 'node:fs/promises';
 import { readFileSync, writeSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { createServer, connect } from 'node:net';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const input = JSON.parse(process.argv[2]);
@@ -97,21 +97,31 @@ if (input.child) {
   const literal = value => "'" + value.replaceAll("'", "'\\''") + "'";
   for (const kind of ['default', 'named']) {
     const args = kind === 'named' ? ['-L', `z404-${input.token}`] : [];
-    const execute = more => {
+    const execute = (more, timeoutMs = input.transitionMs) => {
       progress(`tmux:${kind}:command:before`, { command: more[0] === '-f' ? 'new-session' : more[0] });
-      const result = spawnSync('tmux', [...args, ...more], { env: process.env, encoding: 'utf8', timeout: input.transitionMs });
+      const result = spawnSync('tmux', [...args, ...more], { env: process.env, encoding: 'utf8', timeout: timeoutMs });
       progress(`tmux:${kind}:command:after`, { command: more[0] === '-f' ? 'new-session' : more[0], pid: result.pid,
         status: result.status, signal: result.signal, errorCode: result.error?.code ?? null });
       return result;
     };
     const good = result => { assert.equal(result.error, undefined); assert.equal(result.status, 0, result.stderr); return result.stdout.trim(); };
     const output = join(input.runDirectory, `tmux-${kind}.payload`);
-    let started = false, address;
+    let started = false, address, socketIdentity, directoryIdentity;
     try {
       good(execute(['-f', '/dev/null', 'new-session', '-d', '-s', 'probe', '/bin/sh']));
       started = true;
       address = good(execute(['display-message', '-p', '#{socket_path}']));
       assert.ok(Buffer.byteLength(address) < 108, 'actual default/named tmux address fits sun_path');
+      const socketName = kind === 'named' ? `z404-${input.token}` : 'default';
+      assert.equal(address, resolve(address), 'own tmux socket path is absolute and normalized');
+      assert.equal(address, join(dirname(address), socketName), 'own tmux socket path matches its selection');
+      socketIdentity = await fs.lstat(address);
+      assert.ok(socketIdentity.isSocket(), 'own tmux endpoint is a socket, never a symlink');
+      assert.equal(socketIdentity.uid, process.getuid(), 'own tmux socket owner');
+      directoryIdentity = await fs.lstat(dirname(address));
+      assert.ok(directoryIdentity.isDirectory(), 'own tmux socket parent is a directory, never a symlink');
+      assert.equal(directoryIdentity.uid, process.getuid(), 'own tmux socket directory owner');
+      assert.equal(directoryIdentity.mode & 0o022, 0, 'own tmux socket directory is not writable by other users');
       progress(`tmux:${kind}:payload:before`);
       const command = [process.execPath, '-e', `require('node:fs').writeFileSync(process.argv[1],process.argv[2])`, output, input.payload].map(literal).join(' ');
       good(execute(['send-keys', '-t', 'probe', '-l', command])); good(execute(['send-keys', '-t', 'probe', 'Enter']));
@@ -130,6 +140,43 @@ if (input.child) {
       }
     }
     const cleanupDeadline = Date.now() + input.transitionMs;
+    progress(`tmux:${kind}:server-exit:before`);
+    while (true) {
+      const remainingMs = cleanupDeadline - Date.now();
+      assert.ok(remainingMs > 0, 'own tmux server must exit before cleanup deadline');
+      const listed = execute(['list-sessions'], remainingMs);
+      assert.equal(listed.error, undefined, 'own tmux server exit check must execute');
+      assert.equal(listed.signal, null, 'own tmux server exit check must complete');
+      if (listed.status === 1) {
+        assert.equal(listed.stdout.trim(), '', 'no server produces no sessions');
+        const diagnostic = listed.stderr.trim();
+        if (diagnostic === `error connecting to ${address} (No such file or directory)`) {
+          await assert.rejects(fs.lstat(address), { code: 'ENOENT' }, 'missing own socket confirms no server');
+        } else {
+          assert.equal(diagnostic, `no server running on ${address}`, 'only no-server refusal confirms server exit');
+        }
+        break;
+      }
+      assert.equal(listed.status, 0, listed.stderr);
+      assert.ok(Date.now() < cleanupDeadline, 'own tmux server must exit before cleanup deadline');
+      await delay(Math.min(input.pollMs, Math.max(0, cleanupDeadline - Date.now())));
+    }
+    progress(`tmux:${kind}:server-exit:after`);
+    let residual;
+    try { residual = await fs.lstat(address); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    if (residual) {
+      assert.ok(Date.now() < cleanupDeadline, 'own tmux socket cleanup retains its deadline');
+      assert.ok(residual.isSocket(), 'residual own tmux endpoint must still be a socket');
+      for (const field of ['dev', 'ino', 'uid']) assert.equal(residual[field], socketIdentity[field], `own tmux socket ${field} identity retained`);
+      const directory = await fs.lstat(dirname(address));
+      assert.ok(directory.isDirectory(), 'own tmux socket directory must not be replaced by a symlink');
+      for (const field of ['dev', 'ino', 'uid', 'mode']) assert.equal(directory[field], directoryIdentity[field], `own tmux socket directory ${field} identity retained`);
+      progress(`tmux:${kind}:socket-unlink:before`, { address });
+      try { await fs.unlink(address); }
+      catch (error) { if (error.code !== 'ENOENT') throw error; }
+      progress(`tmux:${kind}:socket-unlink:after`, { address });
+    }
     while (true) {
       try { await fs.lstat(address); }
       catch (error) { if (error.code === 'ENOENT') break; throw error; }

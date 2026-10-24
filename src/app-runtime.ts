@@ -277,13 +277,13 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
                 session = await api.adapter.start({ selection: { runner: selection.runner as AdapterStartRequest['selection']['runner'], model: selection.model, effort: selection.effort }, tmuxSession: launch.tmuxSession, cwd: route.cwd, brief, reportWrapper: prepared!.reportWrapper });
                 processIdentity = await api.verifyStarted(launch, session);
                 return { pid: processIdentity.pid, startedAt: processIdentity.startedAt, machineId: processIdentity.evidence.machineId,
-                  bootId: processIdentity.evidence.bootId, runnerSessionId: processIdentity.runnerSessionId };
+                  bootId: processIdentity.evidence.bootId, runnerSessionId: processIdentity.runnerSessionId, runner: processIdentity.runner, ...(processIdentity.nativeIdentity ? { nativeIdentity: processIdentity.nativeIdentity } : {}) };
               },
               verifyReady: async () => {
                 stage = 'identity';
                 processIdentity = await api.verifyStarted(launch, session!);
                 return { pid: processIdentity.pid, startedAt: processIdentity.startedAt,
-                  machineId: processIdentity.evidence.machineId, bootId: processIdentity.evidence.bootId, runnerSessionId: processIdentity.runnerSessionId };
+                  machineId: processIdentity.evidence.machineId, bootId: processIdentity.evidence.bootId, runnerSessionId: processIdentity.runnerSessionId, runner: processIdentity.runner, ...(processIdentity.nativeIdentity ? { nativeIdentity: processIdentity.nativeIdentity } : {}) };
               },
             });
             const value = JSON.parse(result.exitCode === 0 ? result.stdout : result.stderr);

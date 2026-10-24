@@ -1,3 +1,5 @@
+import type { NativeIdentity } from './agy-session-start.ts';
+import { hasValidNativeIdentity } from './process-identity.ts';
 import { failureContext, redactDiagnostic } from './cli-contract.ts';
 import type { AdmissionSnapshot, AdmissionTier } from './admission-snapshot.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
@@ -56,7 +58,18 @@ export interface AgentQueueProcess {
   startedAt: string;
   machineId: string;
   bootId: string;
-  runnerSessionId: string;
+  runnerSessionId: string | null;
+  runner?: string;
+  nativeIdentity?: NativeIdentity;
+}
+
+export function sameQueueNativeIdentity(left: AgentQueueProcess, right: AgentQueueProcess): boolean {
+  if (left.runner !== right.runner) return false;
+  if (left.runner === 'agy' && left.nativeIdentity && right.nativeIdentity) {
+    const valid = (value: AgentQueueProcess) => hasValidNativeIdentity({ ...value, runner: value.runner ?? '' });
+    return valid(left) && valid(right) && (left.nativeIdentity.state === 'pending' || right.nativeIdentity.state === 'pending' || left.runnerSessionId === right.runnerSessionId);
+  }
+  return typeof left.runnerSessionId === 'string' && !!left.runnerSessionId.trim() && left.runnerSessionId === right.runnerSessionId;
 }
 
 export interface AgentQueueCleanup {
@@ -179,7 +192,7 @@ export async function runAgentWithQueue(
     stage = 'readiness';
     checkSignal();
     const ready = await ports.verifyReady(record!, process);
-    if (process.pid !== ready.pid || process.startedAt !== ready.startedAt || process.machineId !== ready.machineId || process.bootId !== ready.bootId || process.runnerSessionId !== ready.runnerSessionId) reject(failure('PROCESS_IDENTITY_UNAVAILABLE', 'Runner identity changed before readiness'));
+    if (process.pid !== ready.pid || process.startedAt !== ready.startedAt || process.machineId !== ready.machineId || process.bootId !== ready.bootId || !sameQueueNativeIdentity(process, ready)) reject(failure('PROCESS_IDENTITY_UNAVAILABLE', 'Runner identity changed before readiness'));
     checkSignal();
     stage = 'handoff';
     if (!await ports.commitReady(record!, ready)) reject(failure('START_COMMIT_CONFLICT', 'Ready agent ownership could not be committed'));

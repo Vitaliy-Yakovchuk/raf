@@ -1,3 +1,4 @@
+import { sameProcessOwnership } from './process-identity.ts';
 import { stripVTControlCharacters } from 'node:util';
 import type { ProcessIdentity, ProcessObservation, SessionActivity, SessionRecord, SessionRepository, WorkResult } from './session-state.ts';
 import type { SessionCloseCheck, SessionEnd } from './reminders.ts';
@@ -70,10 +71,7 @@ export class AgentControlService {
   }
 
   private sameProcess(expected: ProcessIdentity, actual: ProcessIdentity): boolean {
-    return expected.pid === actual.pid && expected.startedAt === actual.startedAt &&
-      expected.runner === actual.runner && expected.runnerSessionId === actual.runnerSessionId &&
-      expected.tmuxSession === actual.tmuxSession &&
-      Object.entries(expected.evidence).every(([key, value]) => actual.evidence[key] === value);
+    return sameProcessOwnership(expected, actual);
   }
 
   private events(session: SessionRecord, kind: ActivityEvent['kind']): ActivityEvent[] {

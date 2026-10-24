@@ -23,7 +23,7 @@ export type ProtocolSettings = {
   native?: NativeDialect;
 };
 export type NativeDialect = {
-  identity: { source: 'status' | 'assigned'; command: string; pattern: string; dismissKeys: string[] };
+  identity: { source: 'status' | 'assigned'; command: string; pattern: string; dismissKeys: string[] } | { source: 'session_start' };
   composer: string;
   pendingPaste: { pattern: string; unit: 'characters' | 'newlines' };
   working: string;
@@ -190,7 +190,7 @@ export function readNativeComposer(settings: ProtocolSettings, screen: string): 
   const lines = screen.split('\n');
   for (let line = lines.length - 1; line >= 0; line--) {
     const marker = lines[line].match(composer);
-    if (marker) return { line, input: lines[line].slice(marker[0].length).trim() };
+    if (marker) return { line, input: (marker[1] ?? lines[line].slice(marker[0].length)).trim() };
   }
   return null;
 }
@@ -206,7 +206,8 @@ export function matchPendingBrief(settings: ProtocolSettings, input: string, bri
   return input === '' ? 'none' : 'mismatch';
 }
 export function readNativeSessionId(settings: ProtocolSettings, screen: string): string | null {
-  return screen.match(new RegExp(dialect(settings).identity.pattern, 'iu'))?.[1] ?? null;
+  const identity = dialect(settings).identity;
+  return identity.source === 'session_start' ? null : screen.match(new RegExp(identity.pattern, 'iu'))?.[1] ?? null;
 }
 export function isNativeWorking(settings: ProtocolSettings, screen: string): boolean {
   return new RegExp(dialect(settings).working, 'mu').test(screen);

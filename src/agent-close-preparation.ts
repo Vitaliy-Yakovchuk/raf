@@ -1,5 +1,5 @@
 import type { CompiledCatalog } from './catalog.ts';
-import { isDeepStrictEqual } from 'node:util';
+import { sameProcessOwnership } from './process-identity.ts';
 import { commandFailure } from './cli-contract.ts';
 import { forceCloseInTransaction } from './session-state.ts';
 import type { SessionRecord, SessionRepository, SessionTransaction } from './session-state.ts';
@@ -30,7 +30,7 @@ export async function prepareAgentClose(
   if (!options.force) await dependencies.acceptPendingReport(session);
   return dependencies.repository.transaction(tx => {
     const current = tx.getSession(session.runId);
-    if (!current || current.addressId !== session.addressId || current.state !== 'running' || !current.process || !session.process || !isDeepStrictEqual(current.process, session.process)) throw new Error(`Run ${session.runId} is no longer the selected live session`);
+    if (!current || current.addressId !== session.addressId || current.state !== 'running' || !current.process || !session.process || !sameProcessOwnership(current.process, session.process)) throw new Error(`Run ${session.runId} is no longer the selected live session`);
     const fact = dependencies.acceptedReport(tx, current);
     const ready = !!current.result && fact?.runId === current.runId && fact.status === current.result.status && fact.eventRecorded;
     if (!options.force && !ready) {

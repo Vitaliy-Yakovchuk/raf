@@ -1,3 +1,5 @@
+import { sameProcessOwnership } from './process-identity.ts';
+import type { NativeIdentity } from './agy-session-start.ts';
 import type { AssignmentSnapshot } from './assignment.ts';
 import { loadFlowPolicy } from './flow-policy.ts';
 import type { ResourceReservation } from './resource-admission.ts';
@@ -7,7 +9,8 @@ export type ProcessIdentity = {
   pid: number;
   startedAt: string;
   runner: string;
-  runnerSessionId: string;
+  runnerSessionId: string | null;
+  nativeIdentity?: NativeIdentity;
   tmuxSession: string;
   evidence: Readonly<Record<string, string>>;
 };
@@ -47,6 +50,7 @@ export type SessionLaunchContext = {
   testAssignment?: import('./sandbox-test-run.ts').SandboxTestAssignment;
   contextReview?: { contextReviewId: string; runIds: readonly string[]; brief: string };
   wrapper?: ProcessIdentity;
+  sessionStart?: { workspace: string; writerGeneration: string };
   assignment: AssignmentSnapshot;
   selection: { runner: string; model: string; effort: string; reason: string };
   briefPath: string;
@@ -201,12 +205,9 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
         if (!session || session.revision !== expectedRevision || session.state !== 'running') return false;
         if (observation.state === 'alive') {
           const identity = session.process;
-          if (!identity || identity.pid !== observation.identity.pid || identity.startedAt !== observation.identity.startedAt ||
-              identity.runner !== observation.identity.runner || identity.runnerSessionId !== observation.identity.runnerSessionId ||
-              identity.tmuxSession !== observation.identity.tmuxSession ||
-              Object.entries(identity.evidence).some(([key, value]) => observation.identity.evidence[key] !== value)) return false;
+          if (!identity || !sameProcessOwnership(identity, observation.identity)) return false;
         }
-        tx.putSession({ ...session, revision: session.revision + 1, state: observation.state === 'exited' ? 'exited' : 'running', observation: copy(observation) });
+        tx.putSession({ ...session, revision: session.revision + 1, state: observation.state === 'exited' ? 'exited' : 'running', observation: copy(observation.state === 'alive' ? { ...observation, identity: session.process! } : observation) });
         if (observation.state !== 'unknown') apply(tx, effects);
         return true;
       });
@@ -216,8 +217,13 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
       return repository.transaction(tx => {
         const session = tx.getSession(runId);
         if (!session || (session.state !== 'running' && session.state !== 'exited') || session.result) return false;
-        const event = effects.pending.find(intent => intent.runId === runId && intent.event.length > 0);
-        if (effects.reportAccepted && !event) throw new Error('Accepted report requires its result event in the same transaction');
+        let event = effects.pending.find(intent => intent.runId === runId && intent.event.length > 0);
+        if (effects.reportAccepted && !event) {
+          if (result.status !== 'succeeded' && result.status !== 'failed') throw new Error('Accepted report requires a valid result status');
+          const name = `agent.${result.status}`;
+          event = { id: `${runId}:${name}`, runId, event: name, payload: { kind: name, id: session.addressId } };
+          effects = { ...effects, pending: [...effects.pending, event] };
+        }
         tx.putSession({ ...session, revision: session.revision + 1, result: copy(result), ...(effects.reportAccepted ? { reportAcceptance: { runId, status: result.status, event: event!.event } } : {}) });
         apply(tx, effects);
         return true;

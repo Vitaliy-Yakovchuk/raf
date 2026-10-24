@@ -1,3 +1,5 @@
+import type { NativeIdentity } from './agy-session-start.ts';
+import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
 import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { createServer, createConnection, type Socket } from 'node:net';
@@ -20,7 +22,7 @@ export interface LaunchWrapperRequest extends AgentReportRequest {
 }
 export type LaunchReadiness =
   | { state: 'starting' }
-  | { state: 'ready'; runnerSessionId: string }
+  | { state: 'ready'; runnerSessionId: string | null; nativeIdentity?: NativeIdentity }
   | { state: 'auth_required' | 'permission_required' | 'unknown_screen' | 'timeout' | 'exited'; reason: string };
 export type LaunchOwnership =
   | { state: 'owned'; identity: ProcessIdentity; processKind: 'agent' | 'runner-owned' }
@@ -61,15 +63,13 @@ export type PersistentWrapperFailure = Error & { readonly wrapper: { terminate()
 const validIdentity = (identity: ProcessIdentity, request: LaunchWrapperRequest): boolean =>
   identity !== null && typeof identity === 'object' && Number.isSafeInteger(identity.pid) && identity.pid > 0 &&
   typeof identity.startedAt === 'string' && identity.startedAt.trim().length > 0 &&
-  identity.runner === request.selection.runner && typeof identity.runnerSessionId === 'string' && identity.runnerSessionId.trim().length > 0 &&
+  identity.runner === request.selection.runner && hasValidNativeIdentity(identity) &&
+  (identity.nativeIdentity === undefined || !!identity.evidence?.machineId && !!identity.evidence?.bootId && !!identity.evidence?.tmuxSocket && !!identity.evidence?.tmuxPane && identity.evidence?.cwd === request.cwd && isAbsolute(identity.evidence?.executable ?? '')) &&
   identity.tmuxSession === request.tmuxSession && identity.evidence !== null && typeof identity.evidence === 'object' &&
   Object.keys(identity.evidence).length > 0 && Object.values(identity.evidence).every(value => typeof value === 'string' && value.length > 0) &&
-  identity.evidence.runId === request.runId && typeof identity.evidence.command === 'string' && identity.evidence.command.trim().length > 0;
+  (identity.evidence.runId === request.runId || identity.evidence.runId === undefined && identity.nativeIdentity !== undefined && identity.evidence.cwd === request.cwd && isAbsolute(identity.evidence.executable ?? '') && !!identity.evidence.tmuxSocket && !!identity.evidence.tmuxPane) && typeof identity.evidence.command === 'string' && identity.evidence.command.trim().length > 0;
 
-const sameIdentity = (left: ProcessIdentity, right: ProcessIdentity): boolean =>
-  left.pid === right.pid && left.startedAt === right.startedAt && left.runner === right.runner &&
-  left.runnerSessionId === right.runnerSessionId && left.tmuxSession === right.tmuxSession &&
-  Object.entries(left.evidence).every(([key, value]) => right.evidence[key] === value);
+const sameIdentity = sameProcessOwnership;
 
 async function within<T>(operation: Promise<T>, timeoutMs: number, stage: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -105,10 +105,16 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
     if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);
     const ownership = await ports.transport.ownership();
     if (ownership.state !== 'owned') throw new Error(`Runner ownership ${ownership.state}: ${ownership.reason}`);
-    if (!['agent', 'runner-owned'].includes(ownership.processKind) || !validIdentity(ownership.identity, request) || ownership.identity.runnerSessionId !== readiness.runnerSessionId) throw new Error('Runner identity does not match the ready native session and launch');
+    if (!['agent', 'runner-owned'].includes(ownership.processKind) || !validIdentity(ownership.identity, request) || !(ownership.identity.runnerSessionId === readiness.runnerSessionId || request.selection.runner === 'agy' && ownership.identity.nativeIdentity !== undefined && readiness.runnerSessionId === null && readiness.nativeIdentity?.state === 'pending' && readiness.nativeIdentity.id === null && !!readiness.nativeIdentity.reason?.trim())) throw new Error('Runner identity does not match the ready native session and launch');
     identity = structuredClone(ownership.identity);
     const handshake: LaunchHandshake = { runId: request.runId, address: request.address, reportPath: watcher.path, identity };
     await ports.transport.deliver(request.brief);
+    const deliveredOwner = await ports.transport.ownership();
+    if (deliveredOwner.state === 'owned') {
+      if (!validIdentity(deliveredOwner.identity, request) || !sameIdentity(identity, deliveredOwner.identity)) throw new Error('Runner ownership changed during delivery');
+      identity = structuredClone(deliveredOwner.identity);
+      Object.assign(handshake, { identity });
+    } else if (deliveredOwner.state !== 'exited') throw new Error('Runner ownership unavailable after delivery');
     await ports.lifecycle.started(handshake);
     await ports.handshake(handshake);
     const exit = await ports.transport.waitExit();

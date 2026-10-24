@@ -1,3 +1,4 @@
+import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
 import type { ProcessIdentity, ProcessObservation, SessionRecord, SessionTransaction } from './session-state.ts';
 import type { StateStore } from './state-store.ts';
 import { closeSessionInTransaction } from './session-state.ts';
@@ -136,7 +137,7 @@ function validateTasks(tasks: readonly ReservedTaskSnapshot[]): void {
 
 function validProcess(identity: ProcessIdentity | undefined): identity is ReservationProcessIdentity {
   return !!identity && Number.isSafeInteger(identity.pid) && identity.pid > 0 && text(identity.startedAt) &&
-    Number.isFinite(Date.parse(identity.startedAt)) && text(identity.runner) && text(identity.runnerSessionId) && text(identity.tmuxSession) &&
+    Number.isFinite(Date.parse(identity.startedAt)) && text(identity.runner) && hasValidNativeIdentity(identity) && text(identity.tmuxSession) &&
     !!identity.evidence && [identity.evidence.machineId, identity.evidence.bootId, identity.evidence.runId].every(text) &&
     Object.values(identity.evidence).every(text);
 }
@@ -147,12 +148,7 @@ function validateProcess(identity: ReservationProcessIdentity, runId: string, bo
   }
 }
 
-function sameProcess(left: ProcessIdentity, right: ProcessIdentity): boolean {
-  return left.pid === right.pid && left.startedAt === right.startedAt && left.runner === right.runner &&
-    left.runnerSessionId === right.runnerSessionId && left.tmuxSession === right.tmuxSession &&
-    Object.keys(left.evidence).length === Object.keys(right.evidence).length &&
-    Object.entries(left.evidence).every(([key, value]) => right.evidence[key] === value);
-}
+const sameProcess = sameProcessOwnership;
 
 async function currentBoot(dependencies: TaskReservationDependencies): Promise<MachineBootIdentity> {
   try {

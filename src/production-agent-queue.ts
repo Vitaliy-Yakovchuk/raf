@@ -1,3 +1,4 @@
+import { sameQueueNativeIdentity } from './agent-run-queue.ts';
 import { promises as fs, realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
@@ -115,7 +116,7 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
     commitReady: async (record, process) => {
       const session = current(record.owner.runId);
       if (!session?.process || session.process.pid !== process.pid || session.process.startedAt !== process.startedAt ||
-          session.process.runnerSessionId !== process.runnerSessionId || session.process.evidence.machineId !== process.machineId || session.process.evidence.bootId !== process.bootId) return false;
+          !sameQueueNativeIdentity({ ...session.process, machineId: session.process.evidence.machineId, bootId: session.process.evidence.bootId, ...(process.runner === undefined ? { runner: undefined } : {}) }, process) || session.process.evidence.machineId !== process.machineId || session.process.evidence.bootId !== process.bootId) return false;
       if (!await api.commitStarted(record.owner.runId, session.process)) return false;
       return state.transaction(tx => {
         const entry = state.get(record);

@@ -1,5 +1,8 @@
+import type { NativeIdentity } from './agy-session-start.ts';
+import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
 import { randomUUID } from 'node:crypto';
 import { startupContextRunnerEnvironment } from './startup-context-journal.ts';
+import type { ProcessIdentity } from './session-state.ts';
 import type { LaunchOwnership, LaunchWrapperPorts } from './launch-wrapper.ts';
 
 export type AgentRunner = 'codex' | 'grok' | 'agy' | 'claude';
@@ -23,10 +26,11 @@ export interface AdapterSelection {
 }
 export type RunnerObservation =
   | { status: 'starting' }
-  | { status: 'ready'; cliSessionId?: string }
+  | { status: 'ready'; cliSessionId?: string | null; nativeIdentity?: NativeIdentity }
   | { status: 'limited'; reason: string; retryAt?: string }
   | { status: 'failed'; reason: string };
 export interface RunnerProtocol {
+  readonly nativeIdentitySource?: 'status' | 'assigned' | 'session_start';
   invocation(selection: AdapterSelection): AdapterCommand;
   observe(paneText: string): RunnerObservation;
 }
@@ -63,7 +67,9 @@ export class TmuxAgentAdapter {
     const now = options.now ?? Date.now;
     const delay = options.delay ?? (milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)));
     let session: AdapterSession | undefined;
-    let readyId: string | undefined;
+    let readyId: string | null | undefined;
+    let delivered = false;
+    let ownershipAnchor: ProcessIdentity | undefined;
     let stopped = false;
     let exit: { code: number | null; signal: string | null } | undefined;
     const current = () => { if (!session) throw new Error('Launch has not started'); return session; };
@@ -77,13 +83,26 @@ export class TmuxAgentAdapter {
         readyId = undefined;
         const deadline = now() + timeoutMs;
         while (now() < deadline) {
-          const observation = await this.inspect(current());
+          let observation = await this.inspect(current());
+          if (observation.status === 'exited' && observation.exitCode === null && current().selection.runner === 'agy' && this.dependencies.protocols.agy.nativeIdentitySource === 'session_start') {
+            const owner = await options.inspectOwnership(current());
+            if (owner.state === 'owned' && hasValidNativeIdentity(owner.identity) && owner.identity.nativeIdentity !== undefined && owner.identity.runner === 'agy' && owner.identity.tmuxSession === current().tmuxSession && Number.isSafeInteger(owner.identity.pid) && owner.identity.pid > 0 && !!owner.identity.startedAt && !!owner.identity.evidence.machineId && !!owner.identity.evidence.bootId && !!owner.identity.evidence.command && !!owner.identity.evidence.tmuxSocket && !!owner.identity.evidence.tmuxPane) {
+              ownershipAnchor ??= structuredClone(owner.identity);
+              const pane = await this.dependencies.execute({ executable: 'tmux', args: ['capture-pane', '-p', '-t', this.target(current())] });
+              if (pane.exitCode === 0) observation = this.dependencies.protocols.agy.observe(pane.stdout);
+            }
+          }
           if (observation.status === 'exited') {
             exit = { code: observation.exitCode, signal: null };
             return { state: 'exited', reason: 'Runner exited before readiness' };
           }
           if (observation.status === 'ready') {
-            if (!observation.cliSessionId?.trim()) return { state: 'unknown_screen', reason: 'Ready screen has no native session identity' };
+            const deferred = current().selection.runner === 'agy' && this.dependencies.protocols.agy.nativeIdentitySource === 'session_start';
+            if (!observation.cliSessionId?.trim()) {
+              if (!deferred || observation.cliSessionId !== null && observation.cliSessionId !== undefined) return { state: 'unknown_screen', reason: 'Ready screen has no native session identity' };
+              readyId = null;
+              return { state: 'ready', runnerSessionId: null, nativeIdentity: { state: 'pending', id: null, reason: 'Awaiting owned SessionStart conversationId' } };
+            }
             readyId = observation.cliSessionId;
             return { state: 'ready', runnerSessionId: readyId };
           }
@@ -92,9 +111,16 @@ export class TmuxAgentAdapter {
         }
         return { state: 'timeout', reason: 'Runner readiness timed out' };
       },
-      ownership: () => options.inspectOwnership(current()),
+      ownership: async () => {
+        const owned = await options.inspectOwnership(current());
+        if (owned.state === 'owned') ownershipAnchor ??= structuredClone(owned.identity);
+        return owned;
+      },
       deliver: async brief => {
-        if (!readyId || exit || stopped) throw new Error('Runner readiness and native session identity are required');
+        if (readyId === undefined || exit || stopped || delivered) throw new Error('Runner readiness and a single initial delivery are required');
+        const owned = await options.inspectOwnership(current());
+        if (owned.state !== 'owned' || !['agent', 'runner-owned'].includes(owned.processKind) || !hasValidNativeIdentity(owned.identity) || ownershipAnchor !== undefined && !sameProcessOwnership(ownershipAnchor, owned.identity) || owned.identity.nativeIdentity !== undefined && (!Number.isSafeInteger(owned.identity.pid) || owned.identity.pid <= 0 || !Number.isFinite(Date.parse(owned.identity.startedAt)) || !owned.identity.evidence.machineId || !owned.identity.evidence.bootId || !owned.identity.evidence.command || !owned.identity.evidence.tmuxSocket || !owned.identity.evidence.tmuxPane) || owned.identity.runner !== current().selection.runner || owned.identity.tmuxSession !== current().tmuxSession || (readyId === null ? owned.identity.nativeIdentity === undefined : owned.identity.runnerSessionId !== readyId)) throw new Error('Verified runner ownership is required before input');
+        delivered = true;
         await this.deliver(current(), brief);
       },
       waitExit: async () => {
@@ -110,8 +136,7 @@ export class TmuxAgentAdapter {
         const ownership = await options.inspectOwnership(current());
         if (ownership.state !== 'owned') throw new Error('Runner ownership cannot be verified');
         const actual = ownership.identity;
-        if (actual.pid !== identity.pid || actual.startedAt !== identity.startedAt || actual.runner !== identity.runner || actual.runnerSessionId !== identity.runnerSessionId || actual.tmuxSession !== identity.tmuxSession ||
-            Object.keys(actual.evidence).length !== Object.keys(identity.evidence).length || Object.entries(identity.evidence).some(([key, value]) => actual.evidence[key] !== value)) throw new Error('Runner ownership identity mismatch');
+        if (!sameProcessOwnership(actual, identity)) throw new Error('Runner ownership identity mismatch');
         if (actual.tmuxSession !== current().tmuxSession || actual.runner !== current().selection.runner) throw new Error('Runner identity belongs to another launch');
         if (exit) return;
         await this.stop(current());

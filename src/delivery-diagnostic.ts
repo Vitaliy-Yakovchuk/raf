@@ -54,7 +54,7 @@ export function deliveryDiagnostic(settings: ProtocolSettings, frame: DeliveryFr
   while (JSON.stringify(screen).length > 2048) screen = screen.slice(Math.max(1, Math.ceil((JSON.stringify(screen).length - 2048) / 6)));
   return {
     runner: settings.runner, phase: frame.phase,
-    observation: observeRunnerScreen(settings, { text: frame.screen, version: settings.version, requestedCommand: settings.native!.identity.command }).state,
+    observation: observeRunnerScreen(settings, { text: frame.screen, version: settings.version, requestedCommand: settings.native!.identity.source === 'session_start' ? null : settings.native!.identity.command }).state,
     composer: kind, pending: input === undefined ? 'none' : matchPendingBrief(settings, input, frame.brief),
     retried: frame.retried, truncated, screen,
   };

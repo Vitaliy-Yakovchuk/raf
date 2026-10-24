@@ -1,3 +1,4 @@
+import { sameProcessOwnership } from './process-identity.ts';
 import { observeReservedTestTree } from './test-run-resource-process.ts';
 import type { ResourceAdmission, ResourceAdmissionEstimate, ResourceAdmissionInput, ResourceMeasurement, ResourceReservation } from './resource-admission.ts';
 import type { PendingIntent, ProcessIdentity, SessionActivity, SessionLaunchContext, SessionRecord, SessionRepository, SessionTransaction } from './session-state.ts';
@@ -47,12 +48,8 @@ export function evaluateLaunchAdmissionInTransaction(
   const copy = <T>(value: T): T => structuredClone(value);
   const sameIdentity = (left: ProcessIdentity, right: ProcessIdentity): boolean =>
     Number.isInteger(left.pid) && left.pid > 0 && Number.isFinite(Date.parse(left.startedAt)) &&
-    !!left.runner && !!left.runnerSessionId && !!left.tmuxSession &&
-    left.pid === right.pid && left.startedAt === right.startedAt && left.runner === right.runner &&
-    left.runnerSessionId === right.runnerSessionId && left.tmuxSession === right.tmuxSession &&
-    !!left.evidence && !!right.evidence && Object.keys(left.evidence).length > 0 &&
-    Object.keys(left.evidence).length === Object.keys(right.evidence).length &&
-    Object.entries(left.evidence).every(([key, value]) => typeof value === 'string' && right.evidence[key] === value);
+    !!left.runner && !!left.tmuxSession && !!left.evidence && Object.keys(left.evidence).length > 0 &&
+    sameProcessOwnership(left, right);
   const unusedReservations: ResourceReservation[] = [];
   for (const reservation of tx.listReservations()) {
     if (!reservation.resourceBundle || !reservation.resourceBundle.machineId) {

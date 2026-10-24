@@ -18,7 +18,7 @@ export function startupContextRuntimeFiles(tmpRoot: string, homeDirectory = home
     diagnostic: reason => { process.stderr.write(`${reason}\n`); },
     collectJournal: async session => {
       const runner = session.process?.runner;
-      if (runner !== 'claude' && runner !== 'codex') return { events: [], unavailableReason: 'Native runner identity unavailable' };
+      if (runner !== 'claude' && runner !== 'codex' || typeof session.process?.runnerSessionId !== 'string') return { events: [], unavailableReason: 'Native runner identity unavailable' };
       return collectStartupContextJournal({ runner, runnerSessionId: session.process!.runnerSessionId, homeDirectory, environment: process.env });
     },
     readBriefParts: async session => { directory(session); return [{ source: 'brief.txt', text: await fs.readFile(session.launchContext!.briefPath, 'utf8') }]; },

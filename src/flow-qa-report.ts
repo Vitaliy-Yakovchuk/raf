@@ -127,7 +127,7 @@ function schemaIssues(value: any, schema: any, path: string): { field: string; e
     if (matches && branch.then) problems.push(...schemaIssues(value, branch.then, path));
     if (!matches && branch.else) problems.push(...schemaIssues(value, branch.else, path));
   }
-  if (schema.required && !schema.type && object(value)) for (const key of schema.required) if (!Object.hasOwn(value, key)) fail('required ' + key);
+  if (schema.required && !schema.type && object(value)) for (const key of schema.required) if (!Object.hasOwn(value, key)) problems.push({ field: path + '.' + key, received: undefined, expected: 'required field' });
   if (schema.properties && !schema.type && object(value)) for (const key of Object.keys(schema.properties)) if (Object.hasOwn(value, key)) problems.push(...schemaIssues(value[key], schema.properties[key], path + '.' + key));
   if (schema.not && schemaIssues(value, schema.not, path).length === 0) fail('forbidden field combination');
   return problems;
@@ -139,7 +139,11 @@ export async function validateFlowQaReport(input: FlowQaReportInput, ports: Flow
   const { trusted } = input;
   const issues: FlowIssue[] = [], warnings: FlowIssue[] = [], files: FlowVerifiedSnapshot['files'][number][] = [], testRuns: FlowTestRunFact[] = [], unverifiedRemainder: TestId[] = [];
   let manualEvidence = false;
-  const issue = (field: string, received: unknown, expected: string, address?: Partial<FlowScenarioAddress>) => issues.push({ change: address?.change ?? trusted.assignment.changes[0]?.id ?? '', item: address?.item ?? trusted.assignment.changes[0]?.items[0]?.id ?? '', field, requirement: flowQaRequirement, received, expected, remediation: 'Виправте звіт і докази власного QA у цьому самому запуску; не передавайте виправлення іншому агенту.', path: input.reportPath });
+  const issue = (field: string, received: unknown, expected: string, address?: Partial<FlowScenarioAddress> & { sourceItem?: string }) => {
+    const change = trusted.assignment.changes.find(change => change.id === address?.change) ?? trusted.assignment.changes[0];
+    const item = change?.items.find(item => item.id === address?.sourceItem) ?? change?.items.find(item => item.id === address?.item) ?? change?.items[0];
+    issues.push({ change: change?.id ?? '', item: item?.id ?? '', field, requirement: flowQaRequirement, received, expected, remediation: 'Виправте звіт і докази власного QA у цьому самому запуску; не передавайте виправлення іншому агенту.', path: input.reportPath });
+  };
   const result = (): FlowCheckResult => ({ ok: issues.length === 0, issues, warnings, manualEvidence, unverifiedRemainder, ...(issues.length ? {} : { snapshot: { reportDigest: flowDigest(JSON.stringify(input.report)), files, testRuns } }) });
   if (!flowContractEnabled(trusted)) return result();
   const report = input.report as any;
@@ -183,7 +187,7 @@ export async function validateFlowQaReport(input: FlowQaReportInput, ports: Flow
       let permitted = false;
       for (const root of trusted.allowedEvidenceRoots) if (inside(resolve(path), resolve(root)) && inside(canonical, await ports.realpath(root))) permitted = true;
       if (!permitted) { issue(field, path, 'realpath within allowed evidence roots'); return null; }
-      const text = await ports.readText(path);
+      const text = await ports.readText(canonical);
       if (text === null) { issue(field, path, 'available evidence'); return null; }
       if (await ports.realpath(path) !== canonical) { issue(field, path, 'stable realpath'); return null; }
       files.push({ path, realpath: canonical, digest: flowDigest(text) });
@@ -254,7 +258,7 @@ export async function validateFlowQaReport(input: FlowQaReportInput, ports: Flow
     const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
     const redIds = red.selection.testIds.length ? red.selection.testIds : red.knownRed;
     const greenIds = green.selection.testIds;
-    if (!same([...red.selection.files].sort(), [...green.selection.files].sort()) || (greenIds.length ? !same(ids(redIds), ids(greenIds)) : red.selection.testIds.length > 0)) issue(field + '.regression', { red: red.selection, green: green.selection }, 'same targeted regression, no wider green selection', row);
+    if (red.profileId !== green.profileId || !same([...red.selection.files].sort(), [...green.selection.files].sort()) || (greenIds.length ? !same(ids(redIds), ids(greenIds)) : red.selection.testIds.length > 0)) issue(field + '.regression', { red: red.selection, green: green.selection }, 'same profile and targeted regression, no wider green selection', row);
     if (regression.kind === 'integration') {
       const profile = ports.integrationProfiles?.find(profile => profile.profileId === red.profileId && profile.profileId === green.profileId && profile.group === regression.group);
       if (!profile || red.testKind !== 'integration' || green.testKind !== 'integration' || !same([...profile.files].sort(), [...red.selection.files].sort()) || red.timeoutPolicy?.timeoutMs !== profile.timeoutMs || green.timeoutPolicy?.timeoutMs !== profile.timeoutMs) issue(field + '.regression', regression, 'configured integration profile and timeout', row);

@@ -285,13 +285,13 @@ export async function prepareCodexSandbox(
     await fs.rm(probeSocket, { force: true });
     if (toolDirectory) { await toolDirectory.cleanup(); toolDirectory = undefined; }
     if (identity) {
-      const current = await fs.lstat(directory);
-      if (!current.isDirectory() || current.dev !== identity.dev || current.ino !== identity.ino) throw new Error('Codex sandbox cleanup directory identity mismatch');
+      const current = await fs.lstat(directory).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
+      if (current && (!current.isDirectory() || current.dev !== identity.dev || current.ino !== identity.ino)) throw new Error('Codex sandbox cleanup directory identity mismatch');
       if (helperAlias) {
         await releaseRafSocketDirectory(directory, helperAlias);
         helperAlias = undefined;
       }
-      await fs.rm(directory, { recursive: true });
+      if (current) await fs.rm(directory, { recursive: true });
       identity = undefined;
     }
     for (const mountpoint of mountpoints.splice(0)) {

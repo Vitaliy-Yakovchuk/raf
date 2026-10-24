@@ -92,7 +92,7 @@ export function rafSocketDirectory(directory: string, purpose: 'host' | 'tool' =
 }
 
 export async function releaseRafSocketDirectory(directory: string, alias: string): Promise<void> {
-  const target = await fs.realpath(directory);
+  const target = await fs.realpath(directory).catch(error => { if (error.code === 'ENOENT') return directory; throw error; });
   const stat = await fs.lstat(alias).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
   if (!stat) return;
   if (!stat.isSymbolicLink() || stat.uid !== process.getuid?.() || await fs.readlink(alias) !== target) throw new Error('RAF socket cleanup alias identity mismatch');

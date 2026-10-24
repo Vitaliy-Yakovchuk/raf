@@ -166,8 +166,11 @@ for (const [id, where] of [['S02', 'source-before-final'], ['S03', 'accept']] as
     const f = await fixture(t);
     let injected = 0;
     let confirmed = false;
+    let deadline = 0;
+    let clock = performance.now();
+    if (where === 'accept') t.mock.method(performance, 'now', () => clock);
     const confirm = f.ports.confirmTaskCheckboxes!;
-    f.ports.confirmTaskCheckboxes = async (...args) => { const result = await confirm(...args); confirmed = result.ok; return result; };
+    f.ports.confirmTaskCheckboxes = async (...args) => { deadline = args[3]!.deadline; const result = await confirm(...args); confirmed = result.ok; return result; };
     if (where === 'source-before-final') {
       const source = f.ports.verifyAssignmentSourceIdentity!;
       f.ports.verifyAssignmentSourceIdentity = async (...args) => {
@@ -177,12 +180,14 @@ for (const [id, where] of [['S02', 'source-before-final'], ['S03', 'accept']] as
     } else {
       const accept = f.ports.acceptResult!;
       f.ports.acceptResult = async result => {
-        if (injected++ === 0) throw sqliteFailure(5, 'taskReservationTransaction');
+        if (injected++ === 0) { clock = deadline; throw sqliteFailure(5, 'taskReservationTransaction'); }
         await accept(result);
       };
     }
     await f.watch();
     assert.ok(injected > 0, 'Exercise the structured SQLite 5 failure');
+    const stop = Date.now() + f.protocol.timeouts.transitionMs;
+    while (!f.state.accepted.length && isAgentReportConfirmationPending(f.request) && Date.now() < stop) await pause(f.protocol.timeouts.pollMs);
     await f.accepted();
   });
 }

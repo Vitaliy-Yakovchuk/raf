@@ -7,6 +7,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as productionRuntime from '../src/production-runtime.ts';
 import { resolveStateContext } from '../src/state-migration-guard.ts';
+import { isNativeBriefEcho, matchPendingBrief, matchesNativeDeliveryContext, nativeDeliveryContext, observeRunnerScreen, readNativeComposer, type ProtocolSettings } from '../src/runner-protocols.ts';
+import { deliveryDiagnostic } from '../src/delivery-diagnostic.ts';
+import { tmuxExitFixture } from './helpers/tmux-exit-fixture.ts';
+import { codexPastedBriefFixture } from './codex-pasted-brief-fixture.ts';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
@@ -21,6 +25,32 @@ import {
 
 const runners: AgentRunner[] = ['codex', 'grok', 'agy', 'claude'];
 const ok = (stdout = ''): AdapterCommandResult => ({ exitCode: 0, stdout, stderr: '' });
+const codex: ProtocolSettings = JSON.parse(nodeFs.readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8')).runnerProtocols.find((row: ProtocolSettings) => row.runner === 'codex');
+const deliveryContext = (settings: ProtocolSettings, screen: string) => nativeDeliveryContext(settings, screen.split('\n'), readNativeComposer(settings, screen)!.line);
+
+for (const [label, characters, queued] of [['brief fragment with blank lines', 20177, false], ['native header and queue footer', 19146, true]] as const) {
+  test(`agent-adapters: Z.4.1 ${label} preserves the expected pending brief context`, () => {
+    const f = codexPastedBriefFixture(characters, queued);
+    assert.equal([...f.brief].length, characters);
+    assert.equal(observeRunnerScreen(codex, { text: f.pending(), version: codex.version, requestedCommand: '/status' }).state, 'unknown_screen');
+    assert.equal(matchPendingBrief(codex, readNativeComposer(codex, f.pending())!.input, f.brief), 'pending');
+    assert.equal(matchesNativeDeliveryContext(codex, deliveryContext(codex, f.before), deliveryContext(codex, f.pending()), f.brief), true);
+  });
+}
+
+test('agent-adapters: Z.4.1 unrelated menus and footer changes keep their refusal frame', () => {
+  const f = codexPastedBriefFixture(20177);
+  for (const screen of [f.pending().replace('› ', 'Choose an unknown action\nEnter to approve\n› '), f.pending().replace(f.footer, 'Unknown footer action')]) {
+    assert.equal(matchesNativeDeliveryContext(codex, deliveryContext(codex, f.before), deliveryContext(codex, screen), f.brief), false);
+    const diagnostic = deliveryDiagnostic(codex, { screen, brief: f.brief, phase: 'awaiting_acceptance', retried: false });
+    assert.equal(diagnostic.pending, 'pending');
+    assert.match(diagnostic.screen, /Choose an unknown action|Unknown footer action/);
+    assert.equal(diagnostic.retried, false);
+  }
+  assert.equal(isNativeBriefEcho(f.brief, ''), false);
+  assert.equal(isNativeBriefEcho(f.brief, 'Choose an unknown action\nEnter to approve'), false);
+});
+
 function fixture(runner: AgentRunner = 'codex') {
   const commands: AdapterCommand[] = [];
   const selections: AdapterSelection[] = [];
@@ -261,4 +291,25 @@ test('worker-idle: concurrent transport exit waiters share one event subscriptio
   assert.equal(subscriptions, 1);
   resolveExit({ code: 0, signal: null });
   assert.deepEqual(await Promise.all([first, second]), [{ code: 0, signal: null }, { code: 0, signal: null }]);
+});
+
+test('worker-exit: session removal wakes its waiter after session hooks have disappeared', async () => {
+  const f = fixture();
+  const events = tmuxExitFixture(f.session.tmuxSession);
+  const adapter = new TmuxAgentAdapter({ execute: events.execute, protocols: {} as Record<AgentRunner, RunnerProtocol> });
+  const waiting = adapter.waitForExit(f.session);
+  await events.waiting;
+  try {
+    assert.equal([...events.hooks].filter(([name, hook]) => name.startsWith('pane-') && !hook.global).length, 2, 'natural pane exits retain their target context');
+    assert.equal([...events.hooks].filter(([name, hook]) => name.startsWith('session-closed[') && hook.global).length, 1, 'session closure survives deletion of session hooks');
+    const count = events.commands.length;
+    events.close('unrelated-session');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(events.commands.length, count, 'unrelated session closure must not wake this worker');
+    events.close();
+    const result = await Promise.race([waiting, new Promise(resolve => setImmediate(() => resolve('still waiting')))]);
+    assert.deepEqual(result, { code: null, signal: null }, 'destroying a session must notify the worker without another poll');
+    assert.equal(events.hooks.size, 0, 'owned hooks must be removed even after the session is gone');
+    assert.equal(events.commands.filter(command => command.args[0] === 'capture-pane').length, 0);
+  } finally { events.release(); await waiting; }
 });

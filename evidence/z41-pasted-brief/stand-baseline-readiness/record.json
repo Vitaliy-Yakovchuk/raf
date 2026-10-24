@@ -1,0 +1,25 @@
+{
+  "executor": "main",
+  "sha": "630496d048f6297a7f4c3ac1f9b153d3c7c1c768",
+  "command": "node --test --test-name-pattern=readiness-unknown test/production-codex-delivery-qa.test.ts",
+  "commandSource": "Main reported selector and test file; normalized shell form.",
+  "cleanClone": true,
+  "separateIsolatedHome": true,
+  "cliExitCode": 1,
+  "childExitCode": null,
+  "childExitCodeNote": "Direct external Node stand; no separate child exit or TestRunResult supplied.",
+  "tests": 1,
+  "passedCount": 0,
+  "failedCount": 1,
+  "outcome": "assertions-failed",
+  "reason": "retried agent closed; last observation: \"1\"",
+  "classification": "Pre-existing failure before product fix, outside Z.4.1. Same assertion as full-file post-fix stand.",
+  "likelyCause": "Main hypothesis: ordinary agent close before a report requires --force --reason under the owner-approved contract. close.err was removed with fixture tmp, so exact reason is unverified.",
+  "cleanup": {
+    "source": "main message",
+    "fixtureTmpRemoved": true,
+    "closeLogsAvailable": false
+  },
+  "stdoutSha256": "899d3bbc0a9803b0568c6e267377eae8be3d4136d142b1be259ca957ef8963b2",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

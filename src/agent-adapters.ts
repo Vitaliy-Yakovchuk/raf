@@ -232,7 +232,9 @@ export class TmuxAgentAdapter {
     const target = this.target(session);
     const channel = `raf-exit-${randomUUID()}`;
     const index = Number.parseInt(randomUUID().slice(0, 8), 16) >>> 1;
-    const hooks = ['pane-died', 'pane-exited', 'session-closed'].map(name => `${name}[${index}]`);
+    const hooks = ['pane-died', 'pane-exited', 'session-closed'].map(name => ({
+      name: `${name}[${index}]`, scope: name === 'session-closed' ? ['-g'] : ['-t', target],
+    }));
     const status = async () => {
       const result = await this.dependencies.execute({ executable: 'tmux', args: ['display-message', '-p', '-t', target, '#{pane_dead}|#{pane_dead_status}'] });
       if (result.exitCode !== 0) return { code: null, signal: null };
@@ -241,7 +243,8 @@ export class TmuxAgentAdapter {
       return { code: dead === '1' && code !== undefined && /^\d+$/.test(code) ? Number(code) : null, signal: null };
     };
     try {
-      const installed = await this.dependencies.execute({ executable: 'tmux', args: hooks.flatMap((hook, i) => [...(i ? [';'] : []), 'set-hook', '-t', target, hook, `wait-for -S ${channel}`]) });
+      const notify = `if-shell -F '#{==:#{hook_session_name},${session.tmuxSession}}' 'wait-for -S ${channel}'`;
+      const installed = await this.dependencies.execute({ executable: 'tmux', args: hooks.flatMap((hook, i) => [...(i ? [';'] : []), 'set-hook', ...hook.scope, hook.name, hook.scope.includes('-g') ? notify : `wait-for -S ${channel}`]) });
       const initial = await status();
       if (initial) return initial;
       if (installed.exitCode !== 0) throw new Error(`tmux exit subscription failed: ${installed.stderr}`);
@@ -252,7 +255,7 @@ export class TmuxAgentAdapter {
         if (notified.exitCode !== 0) throw new Error(`tmux exit notification failed: ${notified.stderr}`);
       }
     } finally {
-      for (const hook of hooks) await this.dependencies.execute({ executable: 'tmux', args: ['set-hook', '-u', '-t', target, hook] }).catch(() => undefined);
+      for (const hook of hooks) await this.dependencies.execute({ executable: 'tmux', args: ['set-hook', '-u', ...hook.scope, hook.name] }).catch(() => undefined);
       await this.dependencies.execute({ executable: 'tmux', args: ['wait-for', '-S', channel, ';', 'wait-for', channel] }).catch(() => undefined);
     }
   }

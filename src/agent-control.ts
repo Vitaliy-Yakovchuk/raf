@@ -1,5 +1,6 @@
 import { sameProcessOwnership } from './process-identity.ts';
 import { stripVTControlCharacters } from 'node:util';
+import { failureContext } from './cli-contract.ts';
 import type { ProcessIdentity, ProcessObservation, SessionActivity, SessionRecord, SessionRepository, WorkResult } from './session-state.ts';
 import type { SessionCloseCheck, SessionEnd } from './reminders.ts';
 
@@ -57,6 +58,7 @@ export class MainAttachedElsewhereError extends Error {
 }
 export type CloseOptions = { force?: boolean; reason?: string };
 export type CloseResult = { forcedClose?: { reason: string }; closed: boolean; unfinished: SessionCloseCheck['unfinished']; result?: WorkResult['status'] };
+export type AgentPsSession = SessionRecord & { reconciliation?: { code: 'WORKER_RESULT_PENDING'; reason: string } };
 
 export class AgentControlService {
   private dependencies: AgentControlDependencies;
@@ -114,12 +116,19 @@ export class AgentControlService {
     return session;
   }
 
-  async ps(): Promise<SessionRecord[]> {
-    const sessions: SessionRecord[] = [];
+  async ps(): Promise<AgentPsSession[]> {
+    const sessions: AgentPsSession[] = [];
     for (const candidate of this.sessions()) {
       if (candidate.state === 'finished') continue;
-      const session = await this.reconcile(candidate);
-      if (session.state === 'running') sessions.push(session);
+      try {
+        const session = await this.reconcile(candidate);
+        if (session.state === 'running') sessions.push(session);
+      } catch (error) {
+        const failure = failureContext(error);
+        if (failure?.code !== 'WORKER_RESULT_PENDING') throw error;
+        const current = this.sessions().find(row => row.runId === candidate.runId) ?? candidate;
+        sessions.push({ ...current, ...(current.process ? { observation: await this.inspect(current.process) } : {}), reconciliation: { code: 'WORKER_RESULT_PENDING', reason: failure.reason ?? failure.message } });
+      }
     }
     return sessions;
   }
@@ -179,17 +188,17 @@ export class AgentControlService {
 
   private async closeSelected(session: SessionRecord, options: CloseOptions): Promise<CloseResult> {
     const id = session.addressId;
-    if (session.state === 'exited' && session.result?.forcedClose && options.force) {
-      const final = await this.dependencies.coordinator.finalize(session, this.events(session, 'ended'));
-      return { closed: final.state === 'finished', unfinished: [], result: final.result?.status, forcedClose: final.result?.forcedClose };
-    }
+    const closeExited = async (observation?: ProcessObservation): Promise<CloseResult> => {
+      const final = await this.reconcile(session, observation);
+      return { closed: final.state === 'finished', unfinished: [], ...(final.result ? { result: final.result.status, ...(final.result.forcedClose ? { forcedClose: final.result.forcedClose } : {}) } : {}) };
+    };
+    if (session.state === 'exited') return closeExited();
     if (session.state !== 'running' || !session.process) {
-      if (!options.force && session.state === 'exited') await this.reconcile(session);
       throw new Error(`Session is not confirmed alive: ${id}`);
     }
     const observation = await this.inspect(session.process);
     if (observation.state !== 'alive') {
-      if (!options.force && observation.state === 'exited') await this.reconcile(session, observation);
+      if (observation.state === 'exited') return closeExited(observation);
       throw new Error(`Session is not confirmed alive: ${id}`);
     }
     const selected = session;

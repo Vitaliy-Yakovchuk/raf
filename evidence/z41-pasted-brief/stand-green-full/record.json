@@ -1,0 +1,26 @@
+{
+  "executor": "main",
+  "project": "raf",
+  "phase": "external synthetic stand, not a unit aggregate",
+  "command": "node --test test/production-codex-delivery-qa.test.ts",
+  "sha": "3c1097e589453307726e63a57b2f50b79cb230a3",
+  "cleanClone": true,
+  "environment": {
+    "HOME": "separate isolated HOME (main confirmed)",
+    "TMPDIR": "separate isolated TMPDIR (main confirmed)",
+    "LC_ALL": "C"
+  },
+  "cliExitCode": 1,
+  "stdoutSha256": "e5efd78061eff3a84376cd3085b30e683d8d8ada0bece177d8a12aea04d96be5",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "cleanup": {
+    "source": "main message 2026-10-24",
+    "complete": true,
+    "description": "HOME/TMPDIR empty, no remaining owned processes; secret scan clean"
+  },
+  "outcome": "assertions-failed",
+  "passedCount": 18,
+  "failedCount": 1,
+  "note": "Both target positive and all negative tests pass. Full file remains code1, 18/19: readiness-unknown closure expected0 observed1. Same failure independently reproduced before product fix at630496d; outside Z.4.1. Not a full-file pass.",
+  "baseline": "../stand-baseline-readiness/record.json"
+}

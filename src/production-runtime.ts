@@ -34,7 +34,7 @@ import { createConnection } from 'node:net';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
 import { deliveryDiagnostic, type DeliveryFrame } from './delivery-diagnostic.ts';
-import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
+import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, isNativeBriefEcho, matchesNativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
 import { openStateStore, retryStateOperation, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
 import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
@@ -1622,11 +1622,7 @@ export async function runProductionWorker(
       const beforeInput = beforeNative?.input;
       if (beforeInput === undefined || beforeInput !== '' && !settings.markers.ready?.includes(beforeInput)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input before initial brief submission');
       const beforeContext = beforeComposer < 0 ? undefined : nativeDeliveryContext(settings, beforeLines, beforeComposer);
-      const briefText = brief.replace(/\s+/gu, '');
-      const echoesBrief = (text: string) => {
-        const rendered = text.replace(/\s+/gu, '');
-        return rendered !== '' && briefText.endsWith(rendered);
-      };
+      const echoesBrief = (text: string) => isNativeBriefEcho(brief, text);
       deliveryPhase = 'submitting';
       await adapter.deliver(adapterSession, brief);
       deliveryPhase = 'awaiting_acceptance';
@@ -1653,8 +1649,7 @@ export async function runProductionWorker(
           return;
         }
         const context = composerIndex < 0 ? undefined : nativeDeliveryContext(settings, lines, composerIndex);
-        const sameContext = beforeContext !== undefined && context !== undefined && (isDeepStrictEqual(context, beforeContext)
-          || settings.runner === 'codex' && context.footer === beforeContext.footer && echoesBrief(context.header));
+        const sameContext = beforeContext !== undefined && context !== undefined && matchesNativeDeliveryContext(settings, beforeContext, context, brief);
         const repainting = settings.runner === 'codex' && input === undefined && state === 'unknown_screen' && echoesBrief(screen);
         if (pending && (state === 'ready' || state === 'unknown_screen') && sameContext) {
           if (!retried && previousPending === input) {

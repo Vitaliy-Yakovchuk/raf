@@ -1,0 +1,323 @@
+{
+  "revision": "workspace",
+  "sha": "346506087cc401f0992245af2f39b134a276649d",
+  "dirty": "M src/agent-adapters.ts\n M src/agent-control.ts\n M test/agent-adapters.test.ts\n M test/agent-control.test.ts\n M test/launch-wrapper.test.ts\n?? node_modules\n?? scripts/qa-tmux-worker-exit.ts\n?? scripts/qa-worker-exit.ts\n?? test/helpers/tmux-exit-fixture.ts",
+  "timeouts": {
+    "startupMs": 10000,
+    "transitionMs": 10000,
+    "overallMs": 30000,
+    "pollMs": 100
+  },
+  "results": [
+    {
+      "mode": "kill-session",
+      "idleCommandCount": 0,
+      "unrelatedWakeCommands": 0,
+      "unrelatedExit": false,
+      "exit": {
+        "code": null,
+        "signal": null
+      },
+      "transitionMs": 50,
+      "passed": true,
+      "remainingHooks": "after-bind-key\nafter-capture-pane\nafter-copy-mode\nafter-display-message\nafter-display-panes\nafter-kill-pane\nafter-list-buffers\nafter-list-clients\nafter-list-keys\nafter-list-panes\nafter-list-sessions\nafter-list-windows\nafter-load-buffer\nafter-lock-server\nafter-new-session\nafter-new-window\nafter-paste-buffer\nafter-pipe-pane\nafter-queue\nafter-refresh-client\nafter-rename-session\nafter-rename-window\nafter-resize-pane\nafter-resize-window\nafter-save-buffer\nafter-select-layout\nafter-select-pane\nafter-select-window\nafter-send-keys\nafter-set-buffer\nafter-set-environment\nafter-set-hook\nafter-set-option\nafter-show-environment\nafter-show-messages\nafter-show-options\nafter-split-window\nafter-unbind-key\nalert-activity\nalert-bell\nalert-silence\nclient-active\nclient-attached\nclient-detached\nclient-focus-in\nclient-focus-out\nclient-resized\nclient-session-changed\nclient-light-theme\nclient-dark-theme\ncommand-error\nsession-closed\nsession-created\nsession-renamed\nsession-window-changed\nwindow-linked\nwindow-unlinked\n",
+      "commands": [
+        {
+          "args": [
+            "set-hook",
+            "-t",
+            "=owned:0.0",
+            "pane-died[1298243638]",
+            "wait-for -S raf-exit-c02f74df-e346-4892-b0f0-16fe4f2ac0b5",
+            ";",
+            "set-hook",
+            "-t",
+            "=owned:0.0",
+            "pane-exited[1298243638]",
+            "wait-for -S raf-exit-c02f74df-e346-4892-b0f0-16fe4f2ac0b5",
+            ";",
+            "set-hook",
+            "-g",
+            "session-closed[1298243638]",
+            "if-shell -F '#{==:#{hook_session_name},owned}' 'wait-for -S raf-exit-c02f74df-e346-4892-b0f0-16fe4f2ac0b5'"
+          ],
+          "at": 1792874263642
+        },
+        {
+          "args": [
+            "display-message",
+            "-p",
+            "-t",
+            "=owned:0.0",
+            "#{pane_dead}|#{pane_dead_status}"
+          ],
+          "at": 1792874263649
+        },
+        {
+          "args": [
+            "wait-for",
+            "raf-exit-c02f74df-e346-4892-b0f0-16fe4f2ac0b5"
+          ],
+          "at": 1792874263656
+        },
+        {
+          "args": [
+            "display-message",
+            "-p",
+            "-t",
+            "=owned:0.0",
+            "#{pane_dead}|#{pane_dead_status}"
+          ],
+          "at": 1792874264787
+        },
+        {
+          "args": [
+            "set-hook",
+            "-u",
+            "-t",
+            "=owned:0.0",
+            "pane-died[1298243638]"
+          ],
+          "at": 1792874264796
+        },
+        {
+          "args": [
+            "set-hook",
+            "-u",
+            "-t",
+            "=owned:0.0",
+            "pane-exited[1298243638]"
+          ],
+          "at": 1792874264804
+        },
+        {
+          "args": [
+            "set-hook",
+            "-u",
+            "-g",
+            "session-closed[1298243638]"
+          ],
+          "at": 1792874264812
+        },
+        {
+          "args": [
+            "wait-for",
+            "-S",
+            "raf-exit-c02f74df-e346-4892-b0f0-16fe4f2ac0b5",
+            ";",
+            "wait-for",
+            "raf-exit-c02f74df-e346-4892-b0f0-16fe4f2ac0b5"
+          ],
+          "at": 1792874264821
+        }
+      ]
+    },
+    {
+      "mode": "kill-pane",
+      "idleCommandCount": 0,
+      "unrelatedWakeCommands": 0,
+      "unrelatedExit": false,
+      "exit": {
+        "code": null,
+        "signal": null
+      },
+      "transitionMs": 52,
+      "passed": true,
+      "remainingHooks": "after-bind-key\nafter-capture-pane\nafter-copy-mode\nafter-display-message\nafter-display-panes\nafter-kill-pane\nafter-list-buffers\nafter-list-clients\nafter-list-keys\nafter-list-panes\nafter-list-sessions\nafter-list-windows\nafter-load-buffer\nafter-lock-server\nafter-new-session\nafter-new-window\nafter-paste-buffer\nafter-pipe-pane\nafter-queue\nafter-refresh-client\nafter-rename-session\nafter-rename-window\nafter-resize-pane\nafter-resize-window\nafter-save-buffer\nafter-select-layout\nafter-select-pane\nafter-select-window\nafter-send-keys\nafter-set-buffer\nafter-set-environment\nafter-set-hook\nafter-set-option\nafter-show-environment\nafter-show-messages\nafter-show-options\nafter-split-window\nafter-unbind-key\nalert-activity\nalert-bell\nalert-silence\nclient-active\nclient-attached\nclient-detached\nclient-focus-in\nclient-focus-out\nclient-resized\nclient-session-changed\nclient-light-theme\nclient-dark-theme\ncommand-error\nsession-closed\nsession-created\nsession-renamed\nsession-window-changed\nwindow-linked\nwindow-unlinked\n",
+      "commands": [
+        {
+          "args": [
+            "set-hook",
+            "-t",
+            "=owned:0.0",
+            "pane-died[83103555]",
+            "wait-for -S raf-exit-37fe2ef8-43a4-42bd-8d2d-144799499088",
+            ";",
+            "set-hook",
+            "-t",
+            "=owned:0.0",
+            "pane-exited[83103555]",
+            "wait-for -S raf-exit-37fe2ef8-43a4-42bd-8d2d-144799499088",
+            ";",
+            "set-hook",
+            "-g",
+            "session-closed[83103555]",
+            "if-shell -F '#{==:#{hook_session_name},owned}' 'wait-for -S raf-exit-37fe2ef8-43a4-42bd-8d2d-144799499088'"
+          ],
+          "at": 1792874264902
+        },
+        {
+          "args": [
+            "display-message",
+            "-p",
+            "-t",
+            "=owned:0.0",
+            "#{pane_dead}|#{pane_dead_status}"
+          ],
+          "at": 1792874264909
+        },
+        {
+          "args": [
+            "wait-for",
+            "raf-exit-37fe2ef8-43a4-42bd-8d2d-144799499088"
+          ],
+          "at": 1792874264917
+        },
+        {
+          "args": [
+            "display-message",
+            "-p",
+            "-t",
+            "=owned:0.0",
+            "#{pane_dead}|#{pane_dead_status}"
+          ],
+          "at": 1792874266053
+        },
+        {
+          "args": [
+            "set-hook",
+            "-u",
+            "-t",
+            "=owned:0.0",
+            "pane-died[83103555]"
+          ],
+          "at": 1792874266065
+        },
+        {
+          "args": [
+            "set-hook",
+            "-u",
+            "-t",
+            "=owned:0.0",
+            "pane-exited[83103555]"
+          ],
+          "at": 1792874266072
+        },
+        {
+          "args": [
+            "set-hook",
+            "-u",
+            "-g",
+            "session-closed[83103555]"
+          ],
+          "at": 1792874266080
+        },
+        {
+          "args": [
+            "wait-for",
+            "-S",
+            "raf-exit-37fe2ef8-43a4-42bd-8d2d-144799499088",
+            ";",
+            "wait-for",
+            "raf-exit-37fe2ef8-43a4-42bd-8d2d-144799499088"
+          ],
+          "at": 1792874266087
+        }
+      ]
+    },
+    {
+      "mode": "pane-died",
+      "idleCommandCount": 0,
+      "unrelatedWakeCommands": 0,
+      "unrelatedExit": false,
+      "exit": {
+        "code": 27,
+        "signal": null
+      },
+      "transitionMs": 75,
+      "passed": true,
+      "remainingHooks": "after-bind-key\nafter-capture-pane\nafter-copy-mode\nafter-display-message\nafter-display-panes\nafter-kill-pane\nafter-list-buffers\nafter-list-clients\nafter-list-keys\nafter-list-panes\nafter-list-sessions\nafter-list-windows\nafter-load-buffer\nafter-lock-server\nafter-new-session\nafter-new-window\nafter-paste-buffer\nafter-pipe-pane\nafter-queue\nafter-refresh-client\nafter-rename-session\nafter-rename-window\nafter-resize-pane\nafter-resize-window\nafter-save-buffer\nafter-select-layout\nafter-select-pane\nafter-select-window\nafter-send-keys\nafter-set-buffer\nafter-set-environment\nafter-set-hook\nafter-set-option\nafter-show-environment\nafter-show-messages\nafter-show-options\nafter-split-window\nafter-unbind-key\nalert-activity\nalert-bell\nalert-silence\nclient-active\nclient-attached\nclient-detached\nclient-focus-in\nclient-focus-out\nclient-resized\nclient-session-changed\nclient-light-theme\nclient-dark-theme\ncommand-error\nsession-closed\nsession-created\nsession-renamed\nsession-window-changed\nwindow-linked\nwindow-unlinked\n",
+      "commands": [
+        {
+          "args": [
+            "set-hook",
+            "-t",
+            "=owned:0.0",
+            "pane-died[969969687]",
+            "wait-for -S raf-exit-19c94d00-835b-4bb3-9532-f11d0e6a7f4b",
+            ";",
+            "set-hook",
+            "-t",
+            "=owned:0.0",
+            "pane-exited[969969687]",
+            "wait-for -S raf-exit-19c94d00-835b-4bb3-9532-f11d0e6a7f4b",
+            ";",
+            "set-hook",
+            "-g",
+            "session-closed[969969687]",
+            "if-shell -F '#{==:#{hook_session_name},owned}' 'wait-for -S raf-exit-19c94d00-835b-4bb3-9532-f11d0e6a7f4b'"
+          ],
+          "at": 1792874266147
+        },
+        {
+          "args": [
+            "display-message",
+            "-p",
+            "-t",
+            "=owned:0.0",
+            "#{pane_dead}|#{pane_dead_status}"
+          ],
+          "at": 1792874266159
+        },
+        {
+          "args": [
+            "wait-for",
+            "raf-exit-19c94d00-835b-4bb3-9532-f11d0e6a7f4b"
+          ],
+          "at": 1792874266169
+        },
+        {
+          "args": [
+            "display-message",
+            "-p",
+            "-t",
+            "=owned:0.0",
+            "#{pane_dead}|#{pane_dead_status}"
+          ],
+          "at": 1792874267308
+        },
+        {
+          "args": [
+            "set-hook",
+            "-u",
+            "-t",
+            "=owned:0.0",
+            "pane-died[969969687]"
+          ],
+          "at": 1792874267328
+        },
+        {
+          "args": [
+            "set-hook",
+            "-u",
+            "-t",
+            "=owned:0.0",
+            "pane-exited[969969687]"
+          ],
+          "at": 1792874267339
+        },
+        {
+          "args": [
+            "set-hook",
+            "-u",
+            "-g",
+            "session-closed[969969687]"
+          ],
+          "at": 1792874267346
+        },
+        {
+          "args": [
+            "wait-for",
+            "-S",
+            "raf-exit-19c94d00-835b-4bb3-9532-f11d0e6a7f4b",
+            ";",
+            "wait-for",
+            "raf-exit-19c94d00-835b-4bb3-9532-f11d0e6a7f4b"
+          ],
+          "at": 1792874267354
+        }
+      ]
+    }
+  ],
+  "cleanup": "owned tmux servers stopped and fixture removed"
+}

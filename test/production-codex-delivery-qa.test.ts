@@ -11,6 +11,7 @@ import type { ProtocolSettings } from '../src/runner-protocols.ts';
 import { configuration, derivedLaunch, eventually, recordLaunchRunnerPath } from './production-fixture.ts';
 import { productionCodexQaFixture as fixture } from './production-codex-qa-fixture.ts';
 import { agentRunFixture, assertFailedLaunchCleaned, exists, until } from './agent-run-fixture.ts';
+import { codexPastedBriefFixture } from './codex-pasted-brief-fixture.ts';
 
 async function workerFixture(t: TestContext, prepareInFixture = true) {
   const f = await fixture(t);
@@ -97,6 +98,8 @@ const timer = setInterval(() => {
 
 async function deliveryFixture(t: TestContext, mode = 'race') {
   const f = await workerFixture(t, false);
+  const pastedFrame = mode.startsWith('brief-fragment') || mode.startsWith('queue-footer') ? codexPastedBriefFixture(mode.startsWith('queue-footer') ? 19146 : 20177, mode.startsWith('queue-footer')) : undefined;
+  if (pastedFrame) f.request.brief = pastedFrame.brief;
   f.settings.version = '0.160.0';
   f.settings.liveTaskVerified = false;
   f.settings.timeouts.transitionMs = 5000;
@@ -124,11 +127,12 @@ process.stdin.setEncoding('utf8');
 const mode = ${JSON.stringify(mode)};
 const brief = ${JSON.stringify(f.request.brief)};
 const nativeId = ${JSON.stringify(f.nativeId)};
-const render = text => process.stdout.write('\x1b[2J\x1b[H' + text);
-const header = 'OpenAI Codex (v0.160.0)';
-const footer = 'GPT-6.1-Sol high fast · ~/Documents/orchestrator/raf-develop';
-const nativeScreen = (input, extra = '') => header + (hasStatus ? '\r\nSession: ' + nativeId : '') + extra + '\r\n› ' + input + '\r\n' + footer;
-const ready = () => render(header + '\r\n› Ask Codex to do anything\r\n' + footer);
+const render = text => process.stdout.write('\x1b[2J\x1b[H' + text.replace(/\r?\n/g, '\r\n'));
+const header = ${JSON.stringify(pastedFrame?.header ?? 'OpenAI Codex (v0.160.0)')};
+const footer = ${JSON.stringify(pastedFrame?.footer ?? 'GPT-6.1-Sol high fast · ~/Documents/orchestrator/raf-develop')};
+const pastedFrame = ${JSON.stringify(pastedFrame ? { header: pastedFrame.pendingHeader, footer: pastedFrame.pendingFooter } : null)};
+const nativeScreen = (input, extra = '') => header + (hasStatus && !pastedFrame ? '\r\nSession: ' + nativeId : '') + extra + '\r\n› ' + input + '\r\n' + footer;
+const ready = () => render(header.replace(/\nSession: [^\n]+/u, '') + '\r\n› Ask Codex to do anything\r\n' + footer);
 ready();
 let buffer = '';
 let pending = false;
@@ -140,6 +144,7 @@ const renderPending = () => {
   const id = mode === 'native-mismatch' ? '22222222-2222-4222-8222-222222222222' : nativeId;
   const heading = mode === 'auth' ? '\r\nFIXTURE_AUTH_REQUIRED' : mode === 'permission' ? '\r\nFIXTURE_PERMISSION_REQUIRED' : mode === 'unknown' || mode === 'menu-above-same-footer' ? '\r\nChoose an unknown action\r\nEnter to approve' : '';
   const nativeHeader = header + '\r\nSession: ' + id;
+  if (pastedFrame) { render(pastedFrame.header.replaceAll('\n', '\r\n') + (mode.endsWith('-menu') ? '\r\nChoose an unknown action\r\nEnter to approve' : '') + '\r\n› [Pasted Content ' + count + ' chars]\r\n\r\n  ' + pastedFrame.footer); return; }
   if (mode === 'scrolled-paste') { render(brief.slice(-400) + '\r\n\r\n› [Pasted Content ' + count + ' chars]\r\n' + footer); return; }
   render(nativeHeader + heading + '\r\n› [Pasted Content ' + count + ' chars]' + (mode === 'stale-ready-menu' ? '\r\nAsk Codex to do anything\r\nChoose an unknown action\r\nEnter to approve' : '') + '\r\n' + footer);
 };
@@ -202,7 +207,7 @@ const timer = setInterval(() => {
   return { ...f, acceptedPath, inputLog, release, launch };
 }
 
-for (const mode of ['native-placeholder-replaced', 'race', 'immediate', 'scrolled-paste', 'repainting-paste']) {
+for (const mode of ['native-placeholder-replaced', 'race', 'immediate', 'scrolled-paste', 'repainting-paste', 'brief-fragment', 'queue-footer']) {
   test(`[production-codex-delivery-qa] ${mode}: parent handshake follows native acceptance`, async t => {
     const f = await deliveryFixture(t, mode);
     if (mode === 'native-placeholder-replaced') assert.equal([...f.request.brief].length, 6579);
@@ -219,7 +224,7 @@ for (const mode of ['native-placeholder-replaced', 'race', 'immediate', 'scrolle
   });
 }
 
-for (const mode of ['unknown', 'menu-above-same-footer', 'stale-ready-menu', 'auth', 'permission', 'wrong-count', 'native-mismatch', 'vanished-unknown', 'pending-forever']) {
+for (const mode of ['unknown', 'menu-above-same-footer', 'stale-ready-menu', 'auth', 'permission', 'wrong-count', 'native-mismatch', 'vanished-unknown', 'pending-forever', 'brief-fragment-menu', 'queue-footer-menu']) {
   test(`[production-codex-delivery-qa] ${mode}: no false handshake or blind submission`, async t => {
     const f = await deliveryFixture(t, mode);
     await assert.rejects(f.launch(), mode === 'pending-forever' ? /Native initial brief acceptance timed out/ : /delivery|accept|submission|identity|screen|protocol/i);

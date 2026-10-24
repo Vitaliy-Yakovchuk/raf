@@ -1,0 +1,56 @@
+✖ [production-codex-delivery-qa] brief-fragment: parent handshake follows native acceptance (6567.549143ms)
+ℹ {"mode":"brief-fragment","accepted":false,"input":[{"chars":7,"pending":false,"absorbed":false},{"chars":1,"pending":false,"absorbed":false},{"chars":2413,"pending":false,"absorbed":false},{"chars":2332,"pending":false,"absorbed":false},{"chars":2332,"pending":false,"absorbed":false},{"chars":2339,"pending":false,"absorbed":false},{"chars":2342,"pending":false,"absorbed":false},{"chars":2347,"pending":false,"absorbed":false},{"chars":2343,"pending":false,"absorbed":false},{"chars":2343,"pending":false,"absorbed":false},{"chars":4,"pending":false,"absorbed":false},{"chars":1382,"pending":false,"absorbed":false},{"chars":1,"pending":true,"absorbed":false}]}
+✖ [production-codex-delivery-qa] queue-footer: parent handshake follows native acceptance (6026.905658ms)
+ℹ {"mode":"queue-footer","accepted":false,"input":[{"chars":7,"pending":false,"absorbed":false},{"chars":1,"pending":false,"absorbed":false},{"chars":2413,"pending":false,"absorbed":false},{"chars":2332,"pending":false,"absorbed":false},{"chars":2040,"pending":false,"absorbed":false},{"chars":2340,"pending":false,"absorbed":false},{"chars":2344,"pending":false,"absorbed":false},{"chars":2342,"pending":false,"absorbed":false},{"chars":2346,"pending":false,"absorbed":false},{"chars":2344,"pending":false,"absorbed":false},{"chars":645,"pending":false,"absorbed":false},{"chars":1,"pending":true,"absorbed":false}]}
+✔ [production-codex-delivery-qa] brief-fragment-menu: no false handshake or blind submission (6480.502196ms)
+ℹ {"mode":"brief-fragment-menu","accepted":false,"input":[{"chars":7,"pending":false,"absorbed":false},{"chars":1,"pending":false,"absorbed":false},{"chars":2413,"pending":false,"absorbed":false},{"chars":2332,"pending":false,"absorbed":false},{"chars":2332,"pending":false,"absorbed":false},{"chars":1753,"pending":false,"absorbed":false},{"chars":2347,"pending":false,"absorbed":false},{"chars":2343,"pending":false,"absorbed":false},{"chars":2343,"pending":false,"absorbed":false},{"chars":2346,"pending":false,"absorbed":false},{"chars":1968,"pending":false,"absorbed":false},{"chars":1,"pending":true,"absorbed":false}]}
+✔ [production-codex-delivery-qa] queue-footer-menu: no false handshake or blind submission (6237.664256ms)
+ℹ {"mode":"queue-footer-menu","accepted":false,"input":[{"chars":7,"pending":false,"absorbed":false},{"chars":1,"pending":false,"absorbed":false},{"chars":2413,"pending":false,"absorbed":false},{"chars":2332,"pending":false,"absorbed":false},{"chars":2332,"pending":false,"absorbed":false},{"chars":2339,"pending":false,"absorbed":false},{"chars":2342,"pending":false,"absorbed":false},{"chars":2347,"pending":false,"absorbed":false},{"chars":2343,"pending":false,"absorbed":false},{"chars":2343,"pending":false,"absorbed":false},{"chars":355,"pending":false,"absorbed":false},{"chars":1,"pending":true,"absorbed":false}]}
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25619.76048
+
+✖ failing tests:
+
+test at test/production-codex-delivery-qa.test.ts:211:3
+✖ [production-codex-delivery-qa] brief-fragment: parent handshake follows native acceptance (6567.549143ms)
+  Error: Wrapper launch fixture-run-1 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-24T20:17:27.347Z worker started run=fixture-run-1 pid=691383 ppid=690925
+  fixture-run-1: worker process group=691383 session=691383 pidNamespace=pid:[4026531836]
+  file:///srv/dev/z41-stand-red3/tmp/raf-prod-QOCilk/raf-develop/src/cli.ts:31
+    const error = new Error(context.message);
+                  ^
+  
+  Error: Unknown native input or screen during initial brief submission; delivery={"runner":"codex","phase":"awaiting_acceptance","observation":"unknown_screen","composer":"paste","pending":"pending","retried":false,"truncated":false,"screen":"[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n\n[redacted-brief]\n[redacted-brief]\n[redacted-brief]\n\n\n› [Pasted Content 20178 chars]\n\n  GPT-6.1-Sol high · [redacted-path]\n"}
+      at commandFailure (file:///srv/dev/z41-stand-red3/tmp/raf-prod-QOCilk/raf-develop/src/cli.ts:31:17)
+      at transport.deliver (file:///srv/dev/z41-stand-red3/tmp/raf-prod-QOCilk/raf-develop/src/production-runtime.ts:1664:25)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async runLaunchWrapper (file:///srv/dev/z41-stand-red3/tmp/raf-prod-QOCilk/raf-develop/src/launch-wrapper.ts:111:5)
+      at async runProductionWorker (file:///srv/dev/z41-stand-red3/tmp/raf-prod-QOCilk/raf-develop/src/production-runtime.ts:1767:11)
+      at async file:///srv/dev/z41-stand-red3/tmp/raf-prod-QOCilk/raf-develop/[eval1]:1:434
+  
+  Node.js v26.12.1; verify runner readiness and recover this run before retrying
+      at file:///srv/dev/z41-stand-red3/raf/src/launch-wrapper.ts:196:81
+
+test at test/production-codex-delivery-qa.test.ts:211:3
+✖ [production-codex-delivery-qa] queue-footer: parent handshake follows native acceptance (6026.905658ms)
+  Error: Wrapper launch fixture-run-1 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-24T20:17:33.526Z worker started run=fixture-run-1 pid=692974 ppid=690925
+  fixture-run-1: worker process group=692974 session=692974 pidNamespace=pid:[4026531836]
+  file:///srv/dev/z41-stand-red3/tmp/raf-prod-N2GMri/raf-develop/src/cli.ts:31
+    const error = new Error(context.message);
+                  ^
+  
+  Error: Unknown native input or screen during initial brief submission; delivery={"runner":"codex","phase":"awaiting_acceptance","observation":"unknown_screen","composer":"paste","pending":"pending","retried":false,"truncated":false,"screen":"Tip: You can resume a previous conversation by running codex resume\n\n>_ OpenAI Codex (v0.163.0)\n\nModel: GPT-6.1-Sol (reasoning high, summaries auto)\nSession: [redacted-id]\n› [Pasted Content 19147 chars]\n\n  tab to queue message                                       100% context left\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"}
+      at commandFailure (file:///srv/dev/z41-stand-red3/tmp/raf-prod-N2GMri/raf-develop/src/cli.ts:31:17)
+      at transport.deliver (file:///srv/dev/z41-stand-red3/tmp/raf-prod-N2GMri/raf-develop/src/production-runtime.ts:1664:25)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async runLaunchWrapper (file:///srv/dev/z41-stand-red3/tmp/raf-prod-N2GMri/raf-develop/src/launch-wrapper.ts:111:5)
+      at async runProductionWorker (file:///srv/dev/z41-stand-red3/tmp/raf-prod-N2GMri/raf-develop/src/production-runtime.ts:1767:11)
+      at async file:///srv/dev/z41-stand-red3/tmp/raf-prod-N2GMri/raf-develop/[eval1]:1:434
+  
+  Node.js v26.12.1; verify runner readiness and recover this run before retrying
+      at file:///srv/dev/z41-stand-red3/raf/src/launch-wrapper.ts:196:81

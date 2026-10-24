@@ -1,0 +1,84 @@
+{
+  "revision": "workspace",
+  "sha": "6ea5bf9f617f6bb247c022c12c51f9cc4958e42b",
+  "count": 3,
+  "cleanup": "fixture cleanups completed",
+  "driver": "scripts/qa-worker-delivery.ts",
+  "sourceWorkspace": "?? node_modules\n",
+  "selection": {
+    "runner": "codex",
+    "model": "gpt-6.1-sol",
+    "effort": "high"
+  },
+  "results": [
+    {
+      "index": 0,
+      "outcome": "accepted",
+      "durationMs": 8106,
+      "identity": {
+        "pid": 922477,
+        "startedAt": "2026-10-24T20:49:17.000Z",
+        "runner": "codex",
+        "runnerSessionId": "01a16fac-d6aa-7811-ae7f-8dc78d2ff1dc",
+        "tmuxSession": "delivery-0"
+      }
+    },
+    {
+      "index": 1,
+      "outcome": "accepted",
+      "durationMs": 8254,
+      "identity": {
+        "pid": 922475,
+        "startedAt": "2026-10-24T20:49:17.000Z",
+        "runner": "codex",
+        "runnerSessionId": "01a16fac-d5d6-7271-849c-99c91d176bbe",
+        "tmuxSession": "delivery-1"
+      }
+    },
+    {
+      "index": 2,
+      "outcome": "accepted",
+      "durationMs": 8290,
+      "identity": {
+        "pid": 922418,
+        "startedAt": "2026-10-24T20:49:17.000Z",
+        "runner": "codex",
+        "runnerSessionId": "01a16fac-d5c0-77f2-ae1a-c1e32a069bb9",
+        "tmuxSession": "delivery-2"
+      }
+    }
+  ],
+  "cliExitCode": 0,
+  "hostSource": "/srv/dev/f912-stand2/parallel3",
+  "command": [
+    "node",
+    "scripts/qa-worker-delivery.ts",
+    "workspace",
+    "/srv/dev/f912-stand2/parallel3/evidence",
+    "3",
+    "synthetic-z41"
+  ],
+  "omitted": "Raw live Codex frames and expanded native invocation are private; only selected result fields are copied.",
+  "sourceFiles": [
+    {
+      "path": "/srv/dev/f912-stand2/parallel3/stdout",
+      "sha256": "1aeaa6fbff4a3bde84efd543250f2b884c37d0e239808d7c907ac96f22352f8d",
+      "bytes": 162
+    },
+    {
+      "path": "/srv/dev/f912-stand2/parallel3/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/srv/dev/f912-stand2/parallel3/code",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    {
+      "path": "/srv/dev/f912-stand2/parallel3/evidence/summary.json",
+      "sha256": "643d3c4a829a280a0def633863c6170df8a5abe5ae48e4c25a621cf1c87c429f",
+      "bytes": 42330
+    }
+  ]
+}

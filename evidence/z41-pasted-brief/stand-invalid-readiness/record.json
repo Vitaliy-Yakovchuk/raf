@@ -1,0 +1,8 @@
+{
+  "executor": "main",
+  "sha": "e1d3dab9364b475a6cbf8e2b069537dd5e253691",
+  "command": "node --test --test-name-pattern=\"^\\[production-codex-delivery-qa\\] (brief-fragment|queue-footer):\" test/production-codex-delivery-qa.test.ts",
+  "cliExitCode": 1,
+  "outcome": "invalid-red",
+  "reason": "Both cases timed out in readiness; no delivery input observed. Corrected by fixture-only commit630496d. Not counted as a regression red."
+}

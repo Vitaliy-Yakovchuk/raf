@@ -5,7 +5,7 @@ import { basename } from 'node:path';
 import { deliveryDiagnostic } from '../src/delivery-diagnostic.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
 
-export function traceWorkerCommands(path: string, settings: ProtocolSettings, brief: string) {
+export function traceWorkerCommands(path: string, settings: ProtocolSettings, brief: string, retainSyntheticFrames = false) {
   const spawn = childProcess.spawn;
   let sequence = 0;
   childProcess.spawn = function (...args: Parameters<typeof spawn>) {
@@ -18,6 +18,7 @@ export function traceWorkerCommands(path: string, settings: ProtocolSettings, br
     let screen = '';
     if (tmux && operation === 'capture-pane') child.stdout?.on('data', data => { screen += data; });
     child.once('close', (code, signal) => {
+      if (screen && retainSyntheticFrames) appendFileSync(path + '.synthetic-frames.jsonl', JSON.stringify({ id, screen }) + '\n', { mode: 0o600 });
       appendFileSync(path, JSON.stringify({ id, operation, startedAt, durationMs: Date.now() - startedAt, code, signal,
         ...(screen ? { frame: deliveryDiagnostic(settings, { screen, brief, phase: 'awaiting_acceptance', retried: false }) } : {}),
       }) + '\n');

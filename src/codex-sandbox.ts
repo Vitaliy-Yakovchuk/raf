@@ -1,4 +1,4 @@
-import { rafSocketRoot, socketPathFits } from './raf-temporary-socket.ts';
+import { rafSocketDirectory, rafSocketRoot, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
 import type { Invocation, NativeSandboxScope } from './runner-protocols.ts';
 import { codexInvocationSandboxMode } from './codex-raf-command-access.ts';
 import { spawn } from 'node:child_process';
@@ -239,9 +239,6 @@ export async function prepareCodexSandbox(
   const sharedTmp = !within('/tmp', directory);
   const entries: Record<string, string> = { ':root': 'read', ...(sharedTmp ? { ':slash_tmp': 'write' } : {}) };
   const compactToolTmux = !socketPathFits(join(runDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default'));
-  const toolTmux = compactToolTmux ? '/tmp/raf-tool-tmux' : runDirectory;
-  const toolVariables: Record<string, string> = { TMUX_TMPDIR: toolTmux, ...(sharedTmp ? {} : { TMPDIR: runDirectory }) };
-  entries[toolTmux] = 'write';
   const fileWrites: string[] = [];
   for (const path of writable) {
     const info = await fs.stat(path).catch(error => {
@@ -280,6 +277,11 @@ export async function prepareCodexSandbox(
       if (!existing) mountpoints.push({ path: target, parent: path, dev: parent.dev, ino: parent.ino });
     }
   }
+  await fs.mkdir(runDirectory, { recursive: true, mode: 0o700 });
+  let toolAlias = compactToolTmux ? rafSocketDirectory(runDirectory, 'tool') : undefined;
+  const toolTmux = toolAlias ?? runDirectory;
+  const toolVariables: Record<string, string> = { TMUX_TMPDIR: toolTmux, ...(sharedTmp ? {} : { TMPDIR: runDirectory }) };
+  entries[toolTmux] = 'write';
   const filesystem = `{${Object.entries(entries).map(([path, access]) => `${JSON.stringify(path)}=${JSON.stringify(access)}`).join(',')}}`;
   const policy = ['-c', 'sandbox_mode="workspace-write"', '-c', `default_permissions="${profile}"`, '-c', `permissions.${profile}.filesystem=${filesystem}`, '-c', `permissions.${profile}.network.enabled=true`];
   const shellEnvironment = [...scrubbed.flatMap(name => ['-c', `shell_environment_policy.set.${name}=""`]), ...Object.entries(toolVariables).flatMap(([name, value]) => ['-c', `shell_environment_policy.set.${name}=${JSON.stringify(value)}`])];
@@ -293,6 +295,10 @@ export async function prepareCodexSandbox(
   const cleanup = async () => {
     await fs.rm(probeSocket, { force: true });
     if (created) await fs.rm(directory, { recursive: true, force: true });
+    if (toolAlias) {
+      await releaseRafSocketDirectory(runDirectory, toolAlias);
+      toolAlias = undefined;
+    }
     for (const mountpoint of mountpoints.splice(0)) {
       const parent = await fs.lstat(mountpoint.parent).catch(() => null);
       if (!parent?.isDirectory() || parent.dev !== mountpoint.dev || parent.ino !== mountpoint.ino) continue;
@@ -306,7 +312,7 @@ export async function prepareCodexSandbox(
     await fs.mkdir(directory, { mode: 0o700 });
     created = true;
     await fs.writeFile(join(directory, 'network.bpf'), filter, { mode: 0o400 });
-    const tmuxSockets = join(toolTmux, `tmux-${process.getuid?.() ?? 0}`);
+    const tmuxSockets = join(runDirectory, `tmux-${process.getuid?.() ?? 0}`);
     await fs.writeFile(join(directory, 'bwrap'), [
       '#!/bin/sh',
       'mounted=0',

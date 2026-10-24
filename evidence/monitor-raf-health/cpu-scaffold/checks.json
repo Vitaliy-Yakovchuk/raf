@@ -1,0 +1,47 @@
+{
+  "scaffoldTypes": {
+    "command": "node node_modules/typescript/bin/tsc --noEmit --strict --allowImportingTsExtensions --target esnext --module nodenext src/health-cpu.ts",
+    "chunk_id": "ad164d",
+    "wall_time_seconds": 2.407582351,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  },
+  "syntax": {
+    "commands": [
+      "node --check src/health-cpu.ts",
+      "node --check test/health-cpu.test.ts",
+      "TypeScript transpileModule with reportDiagnostics for src/health-cpu.ts and test/health-cpu.test.ts"
+    ],
+    "chunk_id": "e8ce3d",
+    "wall_time_seconds": 0.998498231,
+    "exit_code": 0,
+    "original_token_count": 16,
+    "output": "src/health-cpu.ts: syntax OK\ntest/health-cpu.test.ts: syntax OK\n"
+  },
+  "comments": {
+    "command": "npm run check:comments",
+    "chunk_id": "6d6d08",
+    "wall_time_seconds": 3.82982727,
+    "exit_code": 0,
+    "original_token_count": 13,
+    "output": "\n> check:comments\n> node scripts/check-comments.ts\n\n"
+  },
+  "unit": {
+    "runId": "ed45b4d3-889c-41f6-a8db-d80a11bce5a2",
+    "outcome": "refused",
+    "cliExitCode": 1,
+    "childExitCode": null,
+    "knownRed": [],
+    "unexecuted": [],
+    "selection": {
+      "files": [],
+      "testIds": []
+    },
+    "timedOut": false
+  },
+  "limitations": [
+    "Unit child was not spawned; no test assertion executed and no behavioral red established.",
+    "Test syntax checked; strict semantic type check covers scaffold and its imported production types. Node test typings are not installed."
+  ]
+}

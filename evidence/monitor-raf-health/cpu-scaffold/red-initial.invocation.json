@@ -1,0 +1,7 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/cpu --files test/health-cpu.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": null,
+  "behavioralRedConfirmed": false,
+  "reason": "Sandbox raf command refused (CALLER_UNAUTHORIZED): Group is not configured for this workspace; restore the trusted channel or obtain a new verified assignment with the required phase and grants; the executor must run its own authorized tests; do not delegate the run to main or coordinator; do not retry blindly; raf was not retried"
+}

@@ -1,0 +1,86 @@
+{
+  "requirement": "Власний CPU за профілем raf",
+  "unitFile": "test/health-cpu.test.ts",
+  "group": "monitor-raf-health/cpu",
+  "rows": [
+    {
+      "scenario": "Поріг перевищено / рівність",
+      "tests": "strict threshold; observed window; threshold and window come from supplied policy",
+      "invariant": "CPU delta 999/1000/1001; строго >, рівність без події, policy без default"
+    },
+    {
+      "scenario": "Паралельні процеси",
+      "tests": "parallel service worker command and helper; exclusive stages",
+      "invariant": "Σ self/helper CPU / один фактичний wall; розподіл service/worker/command; не lifetime means"
+    },
+    {
+      "scenario": "Подвійний CPU",
+      "tests": "raf child already counted as self and duplicate helper attribution",
+      "invariant": "Self інструментованого child і helper входять один раз"
+    },
+    {
+      "scenario": "Payload",
+      "tests": "runner/model; agent-code; test-payload",
+      "invariant": "Чужий CPU і process wall не входять у оцінку чи джерела"
+    },
+    {
+      "scenario": "Межі вікна",
+      "tests": "actual delayed window; not-yet-due; UTC clock moves; new aggregate wholly inside",
+      "invariant": "Фактичний wall, точні межі; baseline не просувається до due"
+    },
+    {
+      "scenario": "Неповні дані",
+      "tests": "no initial snapshot; partial/unavailable; empty snapshots; invalid measured counter",
+      "invariant": "Null з причиною й межами; ні нуля, ні доведеного перевищення"
+    },
+    {
+      "scenario": "Coverage",
+      "tests": "no-coverage/open-own-interval/outside-window/overlapping-self/unknown-attribution/starts-before-window/ends-after-window/stale-coverage",
+      "invariant": "Lifetime aggregate й readAt не доводять завершення вікна"
+    },
+    {
+      "scenario": "Історичний partial",
+      "tests": "historical missing samples",
+      "invariant": "Повнота поточного приросту залежить від нових пропусків, не лише lifetime availability"
+    },
+    {
+      "scenario": "Скидання",
+      "tests": "new-epoch/unknown-epoch/counter-reset/lost-row/clock-reset; profile reset establishes a new baseline",
+      "invariant": "Різні накопичення не з'єднуються; подальше повне вікно працює"
+    },
+    {
+      "scenario": "Дедуплікація",
+      "tests": "concurrent observers repeated reads and restart; adjacent high windows",
+      "invariant": "Один факт на domain/bounds; сусідні повні вікна можуть мати окремі факти без cooldown"
+    },
+    {
+      "scenario": "Атомарність",
+      "tests": "event and boundary commit atomically",
+      "invariant": "Помилка outbox не просуває baseline, повтор дає один факт"
+    },
+    {
+      "scenario": "Подія",
+      "tests": "event carries domain bounds CPU wall threshold source and all scopes",
+      "invariant": "Перевіряється повний payload погодженої події без секретів/args"
+    },
+    {
+      "scenario": "Конфігурація",
+      "tests": "invalid cpuWindowMs/cpuThresholdCores; missing health object; zero duration; valid zero threshold",
+      "invariant": "Точний pointer; finite/range/type/missing; без fallback"
+    },
+    {
+      "scenario": "Незалежність runtime",
+      "tests": "profile/delivery/configuration failure; original runtime rejection; help/parse; disabled",
+      "invariant": "Незмінний основний результат/помилка; без health I/O на help/parse; ≤1 opportunistic read"
+    },
+    {
+      "scenario": "Незмінність профілю",
+      "tests": "strict threshold snapshot comparison",
+      "invariant": "Input profile й EMA не змінюються"
+    }
+  ],
+  "limits": [
+    "Живе приймання 2.4 не замінюється unit fixtures.",
+    "Через refused до spawn ці інваріанти ще не виконувалися."
+  ]
+}

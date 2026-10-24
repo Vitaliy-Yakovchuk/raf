@@ -1,0 +1,105 @@
+{
+  "assignment": "monitor-raf-health:2.1",
+  "author": "raf-mrh21-scaffold",
+  "state": "scaffold-ready; author-red-refused-before-spawn",
+  "answer": "Каркас, unit-тести та матрицю підготовлено без реалізації фічі. Типи каркаса, синтаксис обох файлів і check:comments перевірено з кодом 0. Первинний red автора повернув refused/CALLER_UNAUTHORIZED: група ще не налаштована. Поведінковий red не підтверджений; main має зареєструвати файл і групу, після чого автор сам повторює той самий дозволений red. agent ps відмовляє WORKER_RESULT_PENDING, тому перевіреної адреси main для agent message не отримано.",
+  "files": {
+    "test": "test/health-cpu.test.ts",
+    "scaffold": "src/health-cpu.ts",
+    "evidence": "evidence/monitor-raf-health/cpu-scaffold"
+  },
+  "stableSelection": {
+    "project": "raf",
+    "group": "monitor-raf-health/cpu",
+    "profileId": "node",
+    "files": [
+      "test/health-cpu.test.ts"
+    ]
+  },
+  "authorRedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/cpu --files test/health-cpu.test.ts",
+  "subsequentCommands": {
+    "implement": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase implement --group monitor-raf-health/cpu --files test/health-cpu.test.ts",
+    "qa": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase qa --group monitor-raf-health/cpu --files test/health-cpu.test.ts"
+  },
+  "configuration": {
+    "owner": "main; conf поза дозволеними шляхами запису виконавця",
+    "source": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "exactAdditionsFile": "conf-test-runs.patch.json",
+    "pointers": {
+      "/projects/raf/profiles/node/unitFiles/-": "test/health-cpu.test.ts",
+      "/projects/raf/groups/monitor-raf-health~1cpu": {
+        "profileId": "node",
+        "files": [
+          "test/health-cpu.test.ts"
+        ]
+      }
+    },
+    "prerequisites": [
+      "Main перевіряє статичний unit-інвентар та відсутність перетину з іншими групами, застосовує два точні записи після коміту нового файла.",
+      "Чинний Node-профіль: cwd=., executable=node, argv=[./scripts/test-run-node.ts], exactIds=node-test-name, resultAdapter=node-test-events; новий профіль не потрібен.",
+      "Node >=25.4.0, встановлений TypeScript, src/test-run-reporter.ts і scripts/test-run-node.ts; спостережений runtime v26.12.1.",
+      "Довірений канал має відповідати цій живій test-scaffold сесії та дозволяти її власний --phase red для дорученої change/group.",
+      "Ізольований QA HOME/state/tmp та state-origin guard забезпечує wrapper; не підставляти інший HOME, workspace або назву групи.",
+      "Бюджети й timeoutCount/knownRed залишаються за conf/flow.json#/unitTests і чинним агрегатом; числові unit-бюджети не дублюються.",
+      "Читання чинних числових health-параметрів і реєстрація погоджених подій у production належать 2.3, цей каркас їх не вмикає."
+    ]
+  },
+  "profileOwnerHandoff": {
+    "currentApi": "src/raf-cost-profile.ts: RafCostProfileSnapshot містить schemaVersion/readAt/rows з lifetime-агрегатами; поточний API не доводить повноту довільного вікна.",
+    "proposedBoundary": "src/health-cpu.ts: RafHealthCpuProfileReading — споживчий контракт атомарного читання наявного профілю з метаданими повноти. Це каркас порта, не другий профайлер і не реалізація зміни profile-raf-performance.",
+    "mainMustCoordinateBeforeImplementation": [
+      "Єдиний accumulationId для незмінного початку накопичення; скидання ID/лічильника або втрата рядка робить поточне вікно недоведеним.",
+      "monotonicMs має спільний домен часу між читачами й рестартами в межах накопичення; process-local performance.now() різних процесів без такого домену непридатний.",
+      "coverage описує тільки власні внески після baseline: фактичні межі, незавершені/позавіконні інтервали, невзаємовиключні self та повноту атрибуції. lifetime firstSampleStartedAt або readAt самі цього не доводять.",
+      "attributions зв'язує bounded aggregate key з self/helper/raf/payload та duplicateOf. CPU інструментованого raf child і повтор helper не додаються вдруге, payload не бере участі.",
+      "Метадані мають надходити атомарно з того самого власника профілю, без читання нових процесних лічильників, PID/runId-ключів або довічної історії інтервалів.",
+      "Якщо власник профілю не може довести coverage/attribution, health повертає unavailable з причиною, а не створює власний збирач чи прирівнює відсутність до нуля."
+    ],
+    "accountingInvariants": [
+      "CPU user/system — різниця сум завершених внесків між знімками, не середні й не сума process wall.",
+      "Фактичний monotonic wall у вікні є єдиним знаменником для service/worker/command/helper.",
+      "Завершене вікно точно покриває baseline..current; коротке читання baseline не просуває.",
+      "Нова aggregate row усередині вікна дає власні totals за доведеної coverage; історичні partial counters не псують вікно без нових пропущених зразків.",
+      "Профіль/EMA не мутуються; нова baseline після reset не з'єднується зі старим накопиченням."
+    ]
+  },
+  "runtimeContract": {
+    "functions": [
+      "evaluateRafHealthCpuWindow(baseline, current, policy)",
+      "observeRafHealthCpu(context, ports)",
+      "withRafHealthCpu<T>(context, ports, operation)"
+    ],
+    "bodies": "Кожне нове тіло production-функції кидає Error('NotImplemented'). Реалізації фічі й production wiring немає.",
+    "transaction": "Стан baseline/lastAssessment і факт наявного event-registry/outbox змінюються атомарно. Порт transaction прив'язаний до відповідного health-домену основної SQLite. Fake у тесті не дедуплікує події за реалізатора.",
+    "eventIdentity": [
+      "raf.cpu-exceeded",
+      "rafInstanceId",
+      "startedAt",
+      "completedAt"
+    ],
+    "diagnostics": "CONFIGURATION_INVALID має точний pointer conf/raf.json#/health/cpuWindowMs або cpuThresholdCores. Форма нового внутрішнього assessment описана каркасом.",
+    "policyValidation": "cpuWindowMs: скінченне додатне число; cpuThresholdCores: скінченне невід'ємне число. Нульовий поріг є явною політикою. Числа у fixtures — вхід тесту, не production defaults.",
+    "isolation": "Помилка profile/outbox/config не підміняє результат чи помилку основної операції. Help/parse та disabled не відкривають profile/state. Живі admission/delivery інтеграції лишаються в 2.4."
+  },
+  "audit": {
+    "sources": [
+      "/srv/dev/work/orchestrator/openspec/changes/monitor-raf-health/proposal.md",
+      "/srv/dev/work/orchestrator/openspec/changes/monitor-raf-health/specs/projects/raf/health-monitoring/spec.md#власний-cpu-за-профілем-raf",
+      "/srv/dev/work/orchestrator/openspec/changes/monitor-raf-health/design.md#вікно-cpu-та-підсумок",
+      "/srv/dev/work/orchestrator/openspec/changes/profile-raf-performance/specs/projects/raf/command-timing/spec.md",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/core/process/feature-test-authoring/spec.md"
+    ],
+    "finding": "Доручення актуальне; 1.2 позначено виконаним з рішенням власника. Наданих lifetime profile rows недостатньо для повного CPU-вікна; вузьку пропозицію metadata винесено main до реалізації.",
+    "supersededLocalText": "tasks.md «Правила передачі для нових груп» і design «Приймання й межі» містять стару заборону читати код/тести та старий порядок запуску red. Для 2.1 застосовано прямий актуальний бриф і контракт «Агент тестів і каркаса» з рішенням 2026-10-24; tasks.md не редагувався.",
+    "archive": "Не виконується: решта пунктів зміни відкрита."
+  },
+  "primaryRunResult": "red-initial.result.json",
+  "primaryRunInvocation": "red-initial.invocation.json",
+  "checks": "checks.json",
+  "nextRequiredActions": [
+    "Main реєструє точні unitFiles/groups, відновлює можливість адресного agent ps/message й повідомляє цього автора.",
+    "Автор повторює ту саму red-команду через довірений канал після усунення конкретної причини, зберігає повний новий TestRunResult і власний commit доказів.",
+    "Main незалежно перевіряє assertions-failed цільової поведінки або допустимий первинний timeout; поточна відмова нічого не доводить про assertions.",
+    "Інший implement-агент отримує ту саму групу після підтвердженого red та узгодження metadata з власником профілю."
+  ]
+}

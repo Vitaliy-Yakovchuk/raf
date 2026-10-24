@@ -73,6 +73,7 @@ export interface RuntimeLaunch {
 }
 
 export interface PreparedRuntimeReport {
+  warnings?: readonly string[];
   reportedCommits?: import('./reported-commits-contract.ts').ReportedCommitLaunchContext;
   reportPath: string;
   reportWrapper: ReportWrapper;
@@ -295,7 +296,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
             reserved = true;
             return { runId: launch.runId, addressId: launch.addressId, tmuxSession: launch.tmuxSession,
               cwd: route.cwd, admission: admissionSnapshot, queue: value.queue, ...selection, status: 'running', selection,
-              process: processIdentity, reportPath: prepared.reportPath, warnings: [...new Set(session?.warnings ?? [])] };
+              process: processIdentity, reportPath: prepared.reportPath, warnings: [...new Set([...(session?.warnings ?? []), ...(prepared.warnings ?? [])])] };
           } finally {
             process.off('SIGINT', abort);
             process.off('SIGTERM', abort);
@@ -313,7 +314,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         stage = 'commit';
         if (!await api.commitStarted(launch.runId, identity)) throw fail('START_COMMIT_CONFLICT', stage, 'Started process could not be committed');
         return { runId: launch.runId, addressId: launch.addressId, tmuxSession: launch.tmuxSession,
-          cwd: route.cwd, admission: admissionSnapshot, ...selection, status: 'running', selection, process: identity, reportPath: prepared.reportPath, warnings: [...new Set(session.warnings ?? [])] };
+          cwd: route.cwd, admission: admissionSnapshot, ...selection, status: 'running', selection, process: identity, reportPath: prepared.reportPath, warnings: [...new Set([...(session.warnings ?? []), ...(prepared.warnings ?? [])])] };
       } catch (error) {
         let safe = !startAttempted;
         const pending: string[] = [];

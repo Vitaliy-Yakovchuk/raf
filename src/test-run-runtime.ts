@@ -1,3 +1,5 @@
+import { recordFlowTestRun } from './flow-qa-report.ts';
+import { flowTestRunStore } from './flow-runtime.ts';
 import { isDeepStrictEqual } from 'node:util';
 import { resolveSandboxTestCaller } from './sandbox-test-caller.ts';
 import { createTestRunQueuePort } from './test-run-queue-runtime.ts';
@@ -266,6 +268,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
 }
 
 export async function runConfiguredTestRun(argv: readonly string[], options: { orchestratorRoot: string; homeDirectory: string; settle?: (store: StateStore) => Promise<void> }): Promise<ExecutionResult> {
+  const flowOwnedTestIds = new Set<string>();
   let store: StateStore | undefined, controlStore: StateStore | undefined;
   let config: TestRunConfig | undefined;
   let resultContext: StateContext | undefined;
@@ -333,6 +336,8 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         const resources = createTestRunResourcePort(controlStore!, { root, workspace, home: context.operationalHome, machineId: boot.machineId, config, resultStatePath: stateContext.statePath, items });
         resultContext = stateContext;
         runtime = createTestRunPorts(config!, stateContext, () => store ??= openStore('unit', stateContext), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
+        const newTestRunId = runtime.newRunId;
+        runtime.newRunId = () => { const id = newTestRunId(); flowOwnedTestIds.add(id); return id; };
         const originalPreflight = runtime.preflight;
         runtime.preflight = async value => {
           const current = await sandboxTestControlSnapshot(controlStore!, root, args.project, args.group);
@@ -401,6 +406,8 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
       }
     }
     const output = JSON.parse(reply.stdout);
+    const flowCaller = resolveSandboxTestCaller(control.callerEvidence);
+    if (flowCaller.phase === 'qa' && flowOwnedTestIds.has(output.runId)) await recordFlowTestRun(flowCaller, output, reply.stderr.trimEnd() ? reply.stderr.trimEnd() + '\n' : '', reply.code, flowTestRunStore(controlStore!));
     const stateForDelivery = resultContext;
     return { exitCode: reply.code, stdout: reply.stdout.trimEnd(), stderr: reply.stderr.trimEnd(),
       afterDelivery: stateForDelivery && output.groupSnapshot === 'loaded' ? async () => {

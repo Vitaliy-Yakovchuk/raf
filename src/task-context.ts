@@ -1,3 +1,4 @@
+import { flowQaSchema } from './flow-qa-report.ts';
 import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { startupContextAssessmentSchema } from './startup-context.ts';
 import { reportedCommitsSchema } from './reported-commits.ts';
@@ -239,9 +240,10 @@ function deriveEstimate(parameters: RuntimeRunParameters, selected: readonly { c
   return { status: 'KNOWN', tier, ramBytes: result.reservation.ramBytes, diskBytesPerFileSystem: result.reservation.diskBytes.estimate, source: result.sources[0], sources: result.sources };
 }
 
-function reportSchema(statuses: readonly { readonly id: string }[]): TaskReportSchema {
+function reportSchema(statuses: readonly { readonly id: string }[], qa = false): TaskReportSchema {
   const values = statuses.map(status => status.id);
-  return { type: 'object', required: ['status', 'answer', 'changes', 'commits'], additionalProperties: true, properties: {
+  return { type: 'object', required: ['status', 'answer', 'changes', 'commits', ...(qa ? ['qa'] : [])], additionalProperties: true, properties: {
+    ...(qa ? { qa: flowQaSchema } : {}),
     commits: reportedCommitsSchema,
     context: startupContextAssessmentSchema, status: { enum: values }, answer: { type: 'string' },
     changes: { type: 'array', items: { type: 'object', required: ['id', 'items'], properties: { id: { type: 'string' }, archive: { type: 'string' },
@@ -260,7 +262,7 @@ export async function deriveTaskContext(request: TaskContextRequest): Promise<De
     writeBoundaries: [...changes.map(change => join(root, 'openspec', 'changes', change)), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
     sources: await deriveSources(root, selected),
-    reportSchema: reportSchema(configuration.reportStatuses),
+    reportSchema: reportSchema(configuration.reportStatuses, parameters.phase === 'qa'),
     estimate: deriveEstimate(parameters, selected, configuration),
   };
 }

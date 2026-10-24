@@ -42,6 +42,9 @@ export type DomainEffect = { id: string; domain: string; payload: unknown };
 export type TransitionEffects = { pending: readonly PendingIntent[]; domain: readonly DomainEffect[]; reportAccepted?: boolean };
 
 export type SessionLaunchContext = {
+  flowQa?: import('./flow-qa-report.ts').FlowQaLaunchContext;
+  flowPlan?: readonly import('./flow-task-plan.ts').FlowPlanDocument[];
+  flowTestRuns?: readonly import('./flow-qa-report.ts').FlowTestRunFact[];
   resourceUsageContext?: import('./resource-usage.ts').UsageContext;
   agentQueue?: import('./agent-run-queue.ts').AgentQueueRecord;
   workspaceTrustDenied?: true;

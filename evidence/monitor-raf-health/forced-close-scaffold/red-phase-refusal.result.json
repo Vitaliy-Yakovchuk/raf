@@ -1,0 +1,85 @@
+{
+  "testKind": null,
+  "timeoutPolicy": null,
+  "callerPhase": null,
+  "diagnostics": [
+    {
+      "kind": "preflight",
+      "test": null,
+      "errorName": "Error",
+      "errorCode": "PHASE_NOT_ALLOWED",
+      "message": "Phase does not permit test execution",
+      "location": null,
+      "stack": [
+        "    at runConfiguredTestRun (<external>/test-run-runtime.ts:298:98)",
+        "    at runProductionCli (<external>/production-entry.ts:146:12)",
+        "    at async Module.runPublicCli (<external>/cli.ts:160:14)",
+        "    at async <external>/raf.ts:6:5"
+      ],
+      "redacted": true,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 1,
+    "retainedEntries": 1,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "/opt/dev/node/bin/node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "unavailable",
+    "isolation": "unavailable",
+    "configurationFingerprints": {
+      "flow": "",
+      "testRuns": "",
+      "projects": ""
+    },
+    "tmpPathBytes": 0,
+    "privateRunTmp": false
+  },
+  "runId": "41e79e06-b591-47da-872b-15fa7e0f4c9d",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "test-scaffold",
+  "group": "monitor-raf-health/forced-close",
+  "profileId": null,
+  "selection": {
+    "files": [],
+    "testIds": []
+  },
+  "command": null,
+  "startedAt": "2026-10-24T21:16:52.986Z",
+  "durationMs": 0,
+  "exitCode": null,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "refused",
+  "failureKinds": [
+    "refusal"
+  ],
+  "passed": [],
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "unavailable",
+  "groupState": null,
+  "timeoutCount": null,
+  "nextAction": "fix-setup",
+  "hintIds": [
+    "refusal"
+  ],
+  "hints": [
+    "Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін."
+  ],
+  "evidence": [],
+  "errorCode": "PHASE_NOT_ALLOWED"
+}

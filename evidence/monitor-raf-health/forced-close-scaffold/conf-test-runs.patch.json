@@ -1,0 +1,17 @@
+[
+  {
+    "op": "add",
+    "path": "/projects/raf/profiles/node/unitFiles/-",
+    "value": "test/forced-close-metrics.test.ts"
+  },
+  {
+    "op": "add",
+    "path": "/projects/raf/groups/monitor-raf-health~1forced-close",
+    "value": {
+      "profileId": "node",
+      "files": [
+        "test/forced-close-metrics.test.ts"
+      ]
+    }
+  }
+]

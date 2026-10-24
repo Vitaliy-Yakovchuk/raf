@@ -1,0 +1,74 @@
+{
+  "assignment": "monitor-raf-health:5.1",
+  "artifactStatus": "prepared",
+  "verificationStatus": "behavioral-red-confirmed",
+  "sourceCommit": "ef42c5d88f57af032b83ab1c758e612202f8d9ae",
+  "files": [
+    "src/forced-close-metrics.ts",
+    "test/forced-close-metrics.test.ts"
+  ],
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/forced-close --files test/forced-close-metrics.test.ts",
+  "stableGroup": "monitor-raf-health/forced-close",
+  "profilePatch": "conf-test-runs.patch.json",
+  "prerequisites": {
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-develop",
+    "profileId": "node",
+    "cwd": ".",
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts"
+    ],
+    "checks": [
+      "node_modules/typescript/package.json",
+      "src/test-run-reporter.ts",
+      "scripts/test-run-node.ts"
+    ],
+    "exactIds": "node-test-name",
+    "resultAdapter": "node-test-events",
+    "environment": {
+      "isolatedHome": true,
+      "stateOrigin": true
+    },
+    "routing": "Verified raf develop workspace and branch from conf/projects.json; preserve the same QA HOME/group aggregate across phases",
+    "authorization": "Trusted test-scaffold assignment/channel permitting phase red and this exact configured group; restore it after registration without impersonating main",
+    "policy": "conf/flow.json#/unitTests only; do not reset timeoutCount/knownRed or use direct node --test",
+    "registration": "Both exact entries were registered by main in conf/test-runs.json (reported commit c5f03e64ea). Do not reapply the historical patch; preserve the same profile/group."
+  },
+  "integrationPoints": [
+    "Wire finalization aggregate through the existing fresh-state guard and primary SQLite transaction used by closeSessionInTransaction/createSessionState.finalizeSession and production finalization. Preparing a force reason is not a completion.",
+    "Initialize an accounting start for newly instrumented primary state; expose absent historical data as completed=null/since=null/unavailableReason, never a fabricated zero.",
+    "Record current refusal codes at the existing command/authorization/gate boundary, preserving current gates and diagnostics. Do not invent new policy codes.",
+    "Use retained cumulative aggregate for command stats health; use forcedCloseMetricsPeriod for summary deltas. Keep reason retention in the existing session result.",
+    "Keep Z.393 retry ownership unchanged; do not implement another retry or automatic force."
+  ],
+  "unit": {
+    "testRunResultFile": "red-confirmed.result.json",
+    "runId": "82b119ff-6432-48b4-9d8a-b95c8d8a6b26",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "behavioralRedConfirmed": true,
+    "knownRedCount": 26,
+    "unexecuted": [],
+    "unknown": [],
+    "setupImportFailures": 0,
+    "explanation": "All 26 cases execute and fail at target NotImplemented functions (24 direct errors, two expected-error assertions). Independent behavioral review remains main item 5.2."
+  },
+  "coordination": {
+    "recipient": "main",
+    "verifiedBy": "Successful raf agent ps after earlier WORKER_RESULT_PENDING cleared",
+    "messageSent": true,
+    "confirmationReceipt": "29bb0f13-4d58-4468-8217-7a88d1d9e0aa",
+    "configuration": "Main registered forced-close; later summary registration invalidated the waiting run; main confirmed stability and authorized identical retry.",
+    "historicalRefusals": [
+      "red-initial.result.json",
+      "red-phase-refusal.result.json",
+      "red-config-invalidated.result.json"
+    ]
+  },
+  "nextAction": "Main independently checks 5.2 for behavior-specific red, then passes the same monitor-raf-health/forced-close group and exact file to implement 5.3. No resetting group history or changing the selection.",
+  "audit": {
+    "current": true,
+    "reason": "Metric requirement is absent from current production state and remains assigned; owner approval is recorded under task 1.2. Stale blind-mode/no-run wording in tasks.md is superseded by the explicit current assignment and add-raf-test-run feature-test-authoring contract."
+  }
+}

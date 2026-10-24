@@ -1,0 +1,40 @@
+{
+  "scaffoldTypes": {
+    "command": "node node_modules/typescript/bin/tsc --noEmit --strict --allowImportingTsExtensions --target esnext --module nodenext src/forced-close-metrics.ts",
+    "chunk_id": "846c40",
+    "wall_time_seconds": 2.394784768,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  },
+  "syntax": {
+    "command": "node --check src/forced-close-metrics.ts && node --check test/forced-close-metrics.test.ts",
+    "chunk_id": "8283ec",
+    "wall_time_seconds": 0.381515856,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  },
+  "commentsAndDiff": {
+    "command": "npm run check:comments && git diff --check",
+    "chunk_id": "372a85",
+    "wall_time_seconds": 4.221347342,
+    "exit_code": 0,
+    "original_token_count": 13,
+    "output": "\n> check:comments\n> node scripts/check-comments.ts\n\n"
+  },
+  "limitations": [
+    "Node typings are not installed; strict semantic type checking covers the standalone scaffold, while Node --check and TypeScript transpileModule check test syntax. The unit run verified runtime imports/setup.",
+    "Two stale reconciliation candidates share the isolated repository; cross-process contention and live force/gate behavior remain QA 5.4. Authorization refusal is checked at the metric storage boundary with existing codes."
+  ],
+  "unit": {
+    "runId": "82b119ff-6432-48b4-9d8a-b95c8d8a6b26",
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "knownRed": 26,
+    "unexecuted": 0,
+    "unknown": 0,
+    "cleanupComplete": true,
+    "resultFile": "red-confirmed.result.json"
+  }
+}

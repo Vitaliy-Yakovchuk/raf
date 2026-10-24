@@ -1,0 +1,54 @@
+{
+  "assignment": "monitor-raf-health:5.1",
+  "unitGroup": "monitor-raf-health/forced-close",
+  "expandedTests": 26,
+  "source": "openspec/changes/monitor-raf-health/specs/projects/raf/agent-control/spec.md",
+  "scenarios": [
+    {
+      "requirement": "Примусове закриття фіналізовано",
+      "cases": [
+        "Force before accepted report produces failed and exactly one completion",
+        "Force after accepted succeeded preserves status and produces one completion",
+        "Reason is durable before exit; repeated preparation preserves first reason",
+        "Two stale reconciliation candidates plus a later retry contribute once; finishedAt is unchanged",
+        "Finalization storage hook rejects calls outside the SQLite transaction",
+        "Running/finished/non-force state transitions cannot contribute"
+      ]
+    },
+    {
+      "requirement": "Запит відмовив або процес ще не вийшов",
+      "cases": [
+        "Main protection",
+        "Missing, blank and orphan reason parameter gates",
+        "Unfinished reminders block transport",
+        "Mismatched process identity blocks transport",
+        "Unknown observation, durable reason and exited-but-unfinalized run count zero",
+        "Normal closure and spontaneous process exit count zero",
+        "Refusal storage groups original CALLER_UNAUTHORIZED and SESSION_UNAVAILABLE codes separately",
+        "Refusal transaction rollback"
+      ]
+    },
+    {
+      "requirement": "Retention та часові межі",
+      "cases": [
+        "Finalization transaction rollback preserves exited session, reservation, pending and aggregate",
+        "Retention deletes sessions while persisted aggregate and since survive reopening",
+        "New run with reused address increments independently after cleanup",
+        "Snapshots contain neither reasons nor run IDs",
+        "Adjacent summary deltas are 2 then 0, with first period beginning at since",
+        "Missing accounting, reset epoch, counter regression and reversed time are unavailable, not zero"
+      ]
+    }
+  ],
+  "invariants": [
+    "Only the authoritative exited-to-finished transition contributes in its own primary SQLite transaction",
+    "No sidecar database, per-request journal or permanent dedup runId ledger",
+    "Refusal storage is separate from completion storage",
+    "No report acceptance retry loop or automatic force is added"
+  ],
+  "limits": [
+    "Gates exercise the existing service/preparation boundary with isolated ports; authorization-code storage is tested at the refusal hook, not by a live authorized CLI.",
+    "Two reconciliation candidates share an SQLite repository and run as scheduled microtasks; cross-process writer contention remains QA 5.4.",
+    "Command stats and summary must consume these snapshots/deltas in their respective implementation items; this scaffold does not implement those features."
+  ]
+}

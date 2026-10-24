@@ -1,0 +1,195 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "preflight",
+      "test": null,
+      "errorName": "Error",
+      "errorCode": "CONFIGURATION_INVALID",
+      "message": "Test configuration changed while waiting",
+      "location": null,
+      "stack": [
+        "    at runtime.preflight (<external>/test-run-runtime.ts:348:33)",
+        "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+        "    at async Object.transaction (<external>/test-run-reservations.ts:177:33)",
+        "    at async runTestRun (<external>/test-runs.ts:461:5)",
+        "    at async runResourceReservedTestRun (<external>/test-run-reservations.ts:246:18)",
+        "    at async runTestRunCli (<external>/test-run-cli.ts:31:20)",
+        "    at async runSandboxTestCommand (<external>/sandbox-test-run.ts:161:18)",
+        "    at async runConfiguredTestRun (<external>/test-run-runtime.ts:314:19)",
+        "    at async Module.runPublicCli (<external>/cli.ts:160:14)",
+        "    at async <external>/raf.ts:6:5"
+      ],
+      "redacted": true,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 1,
+    "retainedEntries": 1,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "34636e00082226eb8a1ae440e7fad48638862edf5bd0f870a7d1cf96f97f3ac6",
+      "testRuns": "1674dde402e2a5cbe3cdd34a0c6abc929b74314c1413e834bfd3190de0e18b68",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 92,
+    "privateRunTmp": false
+  },
+  "runId": "4a7e73c9-5665-4b10-9cb6-5b28b4d7c49e",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "monitor-raf-health/forced-close",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/forced-close-metrics.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/forced-close-metrics.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp"
+    }
+  },
+  "startedAt": "2026-10-24T21:17:16.298Z",
+  "durationMs": 78040,
+  "exitCode": null,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "refused",
+  "failureKinds": [
+    "refusal"
+  ],
+  "passed": [],
+  "knownRed": [],
+  "unexecuted": [
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "*"
+    }
+  ],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "absent",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "fix-setup",
+  "hintIds": [
+    "refusal"
+  ],
+  "hints": [
+    "Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін."
+  ],
+  "evidence": [],
+  "errorCode": "CONFIGURATION_INVALID",
+  "admission": {
+    "level": "NO_RESOURCES",
+    "requestedTier": "normal",
+    "allowed": false,
+    "reasons": [
+      "normal: normalized load exceeds 1.2",
+      "hotfix: normalized load exceeds 1.5"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 13.26,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 21424795648,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 178781229056
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 8535138304
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 0,
+        "diskBytes": {}
+      }
+    },
+    "remaining": {
+      "ramBytes": 19277312000,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 168043810816,
+        "/dev/mapper/home-dev": 8535138304
+      },
+      "normalizedLoad": 1.6575
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": null,
+  "queue": {
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+    "waited": true
+  }
+}

@@ -1,0 +1,1047 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: finalized force before report preserves failed contributes once"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:82:20)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: finalized force after accepted succeeded preserves success contributes once"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:82:20)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: durable reason, pending exit and unknown observation are not completed force"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:103:18)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: two independent reconciliation candidates and later retry add one contribution"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:125:18)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: transaction rollback removes session finalization, aggregate and pending event together"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:151:18)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: deletion of retained sessions and reopening preserve aggregate without run history"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at Object.metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:162:20)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: normal-close does not increment completed"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:183:20)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: crash does not increment completed"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:183:20)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: main gate cannot create a completed force"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:226:20)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: missing-reason gate cannot create a completed force"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:226:20)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: blank-reason gate cannot create a completed force"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:226:20)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: reason-without-force gate cannot create a completed force"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:226:20)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: reminders gate cannot create a completed force"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:226:20)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: identity gate cannot create a completed force"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at metrics (test/forced-close-metrics.test.ts:64:42)",
+        "    at Object.count (test/forced-close-metrics.test.ts:66:22)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:226:20)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: refused authorization is separate, grouped by original code without reason text"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 45,
+        "column": 9
+      },
+      "stack": [
+        "    at recordForcedCloseRefusalInTransaction (src/forced-close-metrics.ts:45:9)",
+        "    at test/forced-close-metrics.test.ts:234:36",
+        "    at withSessionTransaction (src/state-store.ts:624:18)",
+        "    at src/state-store.ts:630:38",
+        "    at transaction (src/state-store.ts:200:22)",
+        "    at src/state-store.ts:630:20",
+        "    at operation (src/state-store.ts:164:14)",
+        "    at Object.transaction (src/state-store.ts:628:36)",
+        "    at Object.transaction (test/forced-close-metrics.test.ts:29:63)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:234:18)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: a refusal transaction rolls back independently of successful completions"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (throws)",
+      "location": {
+        "file": "test/forced-close-metrics.test.ts",
+        "line": 247,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:247:10)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: finalization storage hook requires the existing SQLite transaction"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (throws)",
+      "location": {
+        "file": "test/forced-close-metrics.test.ts",
+        "line": 257,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:257:10)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: storage ignores running with forced=true"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 37,
+        "column": 9
+      },
+      "stack": [
+        "    at recordForcedCloseFinalizationInTransaction (src/forced-close-metrics.ts:37:9)",
+        "    at test/forced-close-metrics.test.ts:270:36",
+        "    at withSessionTransaction (src/state-store.ts:624:18)",
+        "    at src/state-store.ts:630:38",
+        "    at transaction (src/state-store.ts:200:22)",
+        "    at src/state-store.ts:630:20",
+        "    at operation (src/state-store.ts:164:14)",
+        "    at Object.transaction (src/state-store.ts:628:36)",
+        "    at Object.transaction (test/forced-close-metrics.test.ts:29:63)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:270:18)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: storage ignores finished with forced=true"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 37,
+        "column": 9
+      },
+      "stack": [
+        "    at recordForcedCloseFinalizationInTransaction (src/forced-close-metrics.ts:37:9)",
+        "    at test/forced-close-metrics.test.ts:270:36",
+        "    at withSessionTransaction (src/state-store.ts:624:18)",
+        "    at src/state-store.ts:630:38",
+        "    at transaction (src/state-store.ts:200:22)",
+        "    at src/state-store.ts:630:20",
+        "    at operation (src/state-store.ts:164:14)",
+        "    at Object.transaction (src/state-store.ts:628:36)",
+        "    at Object.transaction (test/forced-close-metrics.test.ts:29:63)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:270:18)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: storage ignores exited with forced=false"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 37,
+        "column": 9
+      },
+      "stack": [
+        "    at recordForcedCloseFinalizationInTransaction (src/forced-close-metrics.ts:37:9)",
+        "    at test/forced-close-metrics.test.ts:270:36",
+        "    at withSessionTransaction (src/state-store.ts:624:18)",
+        "    at src/state-store.ts:630:38",
+        "    at transaction (src/state-store.ts:200:22)",
+        "    at src/state-store.ts:630:20",
+        "    at operation (src/state-store.ts:164:14)",
+        "    at Object.transaction (src/state-store.ts:628:36)",
+        "    at Object.transaction (test/forced-close-metrics.test.ts:29:63)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:270:18)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: a database without historical accounting reports unavailable instead of zero"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 52,
+        "column": 9
+      },
+      "stack": [
+        "    at readForcedCloseMetrics (src/forced-close-metrics.ts:52:9)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:280:18)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: adjacent summaries contain only new completed force with accounting start"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 59,
+        "column": 9
+      },
+      "stack": [
+        "    at forcedCloseMetricsPeriod (src/forced-close-metrics.ts:59:9)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:295:20)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: missing-history is explicitly unavailable, never a fabricated zero"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 59,
+        "column": 9
+      },
+      "stack": [
+        "    at forcedCloseMetricsPeriod (src/forced-close-metrics.ts:59:9)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:316:20)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: new-accounting-start is explicitly unavailable, never a fabricated zero"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 59,
+        "column": 9
+      },
+      "stack": [
+        "    at forcedCloseMetricsPeriod (src/forced-close-metrics.ts:59:9)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:316:20)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: counter-regressed is explicitly unavailable, never a fabricated zero"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 59,
+        "column": 9
+      },
+      "stack": [
+        "    at forcedCloseMetricsPeriod (src/forced-close-metrics.ts:59:9)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:316:20)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/forced-close-metrics.test.ts",
+        "name": "forced-close metrics: time-regressed is explicitly unavailable, never a fabricated zero"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented",
+      "location": {
+        "file": "src/forced-close-metrics.ts",
+        "line": 59,
+        "column": 9
+      },
+      "stack": [
+        "    at forcedCloseMetricsPeriod (src/forced-close-metrics.ts:59:9)",
+        "    at TestContext.<anonymous> (test/forced-close-metrics.test.ts:316:20)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 26,
+    "retainedEntries": 26,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "34636e00082226eb8a1ae440e7fad48638862edf5bd0f870a7d1cf96f97f3ac6",
+      "testRuns": "90967ae77e226af1bbc4399d732c70ac958b8f13c6e9b1f20d3bb3c25c0d5a38",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "82b119ff-6432-48b4-9d8a-b95c8d8a6b26",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "monitor-raf-health/forced-close",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/forced-close-metrics.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/forced-close-metrics.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-gF71xG"
+    }
+  },
+  "startedAt": "2026-10-24T21:18:51.038Z",
+  "durationMs": 14263,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [],
+  "knownRed": [
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: finalized force before report preserves failed contributes once"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: finalized force after accepted succeeded preserves success contributes once"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: durable reason, pending exit and unknown observation are not completed force"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: two independent reconciliation candidates and later retry add one contribution"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: transaction rollback removes session finalization, aggregate and pending event together"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: deletion of retained sessions and reopening preserve aggregate without run history"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: normal-close does not increment completed"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: crash does not increment completed"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: main gate cannot create a completed force"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: missing-reason gate cannot create a completed force"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: blank-reason gate cannot create a completed force"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: reason-without-force gate cannot create a completed force"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: reminders gate cannot create a completed force"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: identity gate cannot create a completed force"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: refused authorization is separate, grouped by original code without reason text"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: a refusal transaction rolls back independently of successful completions"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: finalization storage hook requires the existing SQLite transaction"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: storage ignores running with forced=true"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: storage ignores finished with forced=true"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: storage ignores exited with forced=false"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: a database without historical accounting reports unavailable instead of zero"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: adjacent summaries contain only new completed force with accounting start"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: missing-history is explicitly unavailable, never a fabricated zero"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: new-accounting-start is explicitly unavailable, never a fabricated zero"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: counter-regressed is explicitly unavailable, never a fabricated zero"
+    },
+    {
+      "file": "test/forced-close-metrics.test.ts",
+      "name": "forced-close metrics: time-regressed is explicitly unavailable, never a fabricated zero"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 8.67,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 21112909824,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 178780581888
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 8534618112
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 0,
+        "diskBytes": {}
+      }
+    },
+    "remaining": {
+      "ramBytes": 18965426176,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 168043163648,
+        "/dev/mapper/home-dev": 8534618112
+      },
+      "normalizedLoad": 1.08375
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "82b119ff-6432-48b4-9d8a-b95c8d8a6b26",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "b09bb135-8747-48f4-b2c7-4e7dc01ee87e",
+        "root": {
+          "pid": 1136392,
+          "startTicks": "21942674",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "monitor-raf-health",
+          "item": "5.1"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "1a84a661f425010103abfc681915ec7f466083f64f5dac5d53ede0208c3240e7"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-gF71xG"
+      ]
+    },
+    "preparedAt": 1792876744618,
+    "baseline": {
+      "at": 1792876744648,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1792876744692,
+    "lastObservedAt": 1792876745259,
+    "finishedAt": 1792876745286,
+    "finishReason": "exit",
+    "peakRamBytes": 65196032,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 65196032,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Process scan could not establish every process identity",
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Root process identity is unavailable or changed",
+      "RAM measurement unavailable",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": {
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+    "waited": true
+  }
+}

@@ -1,4 +1,4 @@
-import { createRafToolSocketDirectory, rafSocketDirectory, rafSocketRoot, rafToolSocketRoot, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
+import { createRafToolSocketDirectory, rafSocketRoot, rafToolSocketRoot, socketPathFits } from './raf-temporary-socket.ts';
 import type { Invocation, NativeSandboxScope } from './runner-protocols.ts';
 import { codexInvocationSandboxMode } from './codex-raf-command-access.ts';
 import { spawn } from 'node:child_process';
@@ -234,7 +234,7 @@ export async function prepareCodexSandbox(
   const masked = existingHidden.filter(path => !existingHidden.some(other => other !== path && within(other, path)));
   const directory = join(runDirectory, `codex-sandbox-${request.runId}`);
   const codex = await executable(request.invocation.executable, request.environment, directory);
-  const bwrap = await executable('bwrap', request.environment, directory);
+  const bwrap = await executable('/usr/bin/bwrap', request.environment, directory);
   const filter = networkFilter();
   const sharedTmp = !within('/tmp', directory);
   const entries: Record<string, string> = { ':root': 'read', ...(sharedTmp ? { ':slash_tmp': 'write' } : {}) };
@@ -279,7 +279,6 @@ export async function prepareCodexSandbox(
   }
   const probeSocket = join(runDirectory, `.codex-sandbox-probe-${process.pid}.sock`);
   let identity: { dev: number; ino: number } | undefined;
-  let helperAlias: string | undefined;
   let toolDirectory: Awaited<ReturnType<typeof createRafToolSocketDirectory>> | undefined;
   const cleanup = async () => {
     await fs.rm(probeSocket, { force: true });
@@ -287,10 +286,6 @@ export async function prepareCodexSandbox(
     if (identity) {
       const current = await fs.lstat(directory).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
       if (current && (!current.isDirectory() || current.dev !== identity.dev || current.ino !== identity.ino)) throw new Error('Codex sandbox cleanup directory identity mismatch');
-      if (helperAlias) {
-        await releaseRafSocketDirectory(directory, helperAlias);
-        helperAlias = undefined;
-      }
       if (current) await fs.rm(directory, { recursive: true });
       identity = undefined;
     }
@@ -306,7 +301,7 @@ export async function prepareCodexSandbox(
     await fs.mkdir(runDirectory, { recursive: true, mode: 0o700 });
     await fs.mkdir(directory, { mode: 0o700 });
     identity = await fs.lstat(directory);
-    const helperDirectory = socketPathFits(join(directory, 'bwrap')) ? directory : (helperAlias = rafSocketDirectory(directory, 'tool'));
+    const helperDirectory = directory;
     if (compactToolTmux) toolDirectory = await createRafToolSocketDirectory();
     const toolTmux = toolDirectory?.directory ?? runDirectory;
     const tmuxSockets = toolDirectory?.directory ?? join(runDirectory, `tmux-${process.getuid?.() ?? 0}`);
@@ -319,11 +314,11 @@ export async function prepareCodexSandbox(
     const shellEnvironment = [...scrubbed.flatMap(name => ['-c', `shell_environment_policy.set.${name}=""`]), ...Object.entries(toolVariables).flatMap(([name, value]) => ['-c', `shell_environment_policy.set.${name}=${JSON.stringify(value)}`])];
     const launcher = join(helperDirectory, 'codex');
     const invocation: Invocation = { ...request.invocation, executable: launcher, args: [...args, ...policy, ...shellEnvironment, ...(end < 0 ? [] : source.slice(end))] };
-    const toolSandbox: Invocation = { executable: launcher, args: ['sandbox', '-C', cwd, '-P', profile, ...policy, '--'], liveTaskVerified: request.invocation.liveTaskVerified };
+    const toolSandbox: Invocation = { executable: launcher, args: [...(args.includes('--no-daemon') ? ['--no-daemon'] : []), 'sandbox', '-C', cwd, '-P', profile, ...policy, '--'], liveTaskVerified: request.invocation.liveTaskVerified };
     const environment = Object.fromEntries(Object.entries(request.environment).filter((entry): entry is [string, string] => entry[1] !== undefined && !scrubbed.includes(entry[0])));
     Object.assign(environment, toolVariables);
-    await fs.writeFile(join(directory, 'network.bpf'), filter, { mode: 0o400 });
-    await fs.writeFile(join(directory, 'bwrap'), [
+    await fs.writeFile(join(helperDirectory, 'network.bpf'), filter, { mode: 0o400 });
+    await fs.writeFile(join(helperDirectory, 'bwrap'), [
       '#!/bin/sh',
       'mounted=0',
       'for argument do',
@@ -333,8 +328,8 @@ export async function prepareCodexSandbox(
       `exec ${literal(bwrap)} --unshare-net --add-seccomp-fd 9 "$@" 9<${literal(join(helperDirectory, 'network.bpf'))}`,
       '',
     ].join('\n'), { mode: 0o500 });
-    await fs.writeFile(join(directory, 'codex'), `#!/bin/sh\nPATH=${literal(helperDirectory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
-    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: ['AF_UNIX'], ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
+    await fs.writeFile(join(helperDirectory, 'codex'), `#!/bin/sh\nPATH=${literal(helperDirectory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
+    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', helperDirectory, verification: 'preflight Unix IPC, TCP denial and hidden paths' }, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: ['AF_UNIX'], ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
     const visible: string[] = [];
     for (const path of masked) if (await fs.access(path, constants.R_OK).then(() => true, () => false)) visible.push(path);
     await probe(toolSandbox, environment, cwd, probeSocket, visible, request.timeoutMs);

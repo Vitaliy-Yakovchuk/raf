@@ -1,0 +1,18 @@
+{
+  "sha": "1d825818208844d53cdc1610ac2cd5ae7b69a77a",
+  "command": "node --test --test-name-pattern=\"scrolled-paste|repainting-paste\" test/production-codex-delivery-qa.test.ts",
+  "executor": "main host; clean git clone; isolated QA HOME (exact path not supplied)",
+  "outcome": "assertions-failed",
+  "cliExitCode": 1,
+  "tests": 2,
+  "failed": 2,
+  "durationSeconds": 20.1,
+  "scrolled-paste": "unknown_screen, composer=paste, pending=pending",
+  "repainting-paste": "unknown_screen, composer=missing, pending=none",
+  "cleanup": "TestContext fixture cleanup; main to confirm no remaining processes",
+  "stdout": "stdout",
+  "stderr": "stderr",
+  "stderrProvenance": "Main confirmed stderr empty",
+  "type": "Production worker integration stand, not unit run; no unit group/aggregate change",
+  "secretScan": "Main confirmed clean"
+}

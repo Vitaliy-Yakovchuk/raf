@@ -1,0 +1,78 @@
+{
+  "driverSha": "d2ddf6711574b2439a082d4bce4d7e3929cad283",
+  "source": "Main host3 handoff 2026-10-24",
+  "concurrency": "3 production Codex workers per revision; revisions sequential; deterministic fixture admission independent of host load; main gated outer run normally",
+  "selection": {
+    "runner": "codex",
+    "model": "gpt-6.1-sol",
+    "effort": "high"
+  },
+  "results": [
+    {
+      "sha": "3847327ba1a5720f9ee589564cf783c6c03ecc02",
+      "command": "HOME=/tmp/fla911b-host-home-3847327-3 RAF_QA_HOME=/tmp/fla911b-host-home-3847327-3 node scripts/qa-worker-delivery.ts 3847327 /tmp/fla911b-host3-3847327 3",
+      "cliExitCode": 0,
+      "runs": [
+        {
+          "index": 1,
+          "outcome": "accepted",
+          "durationMs": 6989
+        },
+        {
+          "index": 2,
+          "outcome": "accepted",
+          "durationMs": 7257
+        },
+        {
+          "index": 0,
+          "outcome": "accepted",
+          "durationMs": 7289
+        }
+      ],
+      "cleanup": "fixture cleanups completed",
+      "evidence": "host3/3847327/summary.json",
+      "stdout": "host3/3847327.stdout",
+      "stderr": "host3/3847327.stderr",
+      "runIds": [
+        "delivery-0",
+        "delivery-1",
+        "delivery-2"
+      ],
+      "selection": "default three launches, each isolated fixture HOME/state/tmp/socket; no own unit group"
+    },
+    {
+      "sha": "309a19e1789e4aa6698588a8ef1222c0feed2b0d",
+      "command": "HOME=/tmp/fla911b-host-home-309a19e-3 RAF_QA_HOME=/tmp/fla911b-host-home-309a19e-3 node scripts/qa-worker-delivery.ts 309a19e /tmp/fla911b-host3-309a19e 3",
+      "cliExitCode": 0,
+      "runs": [
+        {
+          "index": 2,
+          "outcome": "accepted",
+          "durationMs": 7732
+        },
+        {
+          "index": 0,
+          "outcome": "accepted",
+          "durationMs": 7900
+        },
+        {
+          "index": 1,
+          "outcome": "accepted",
+          "durationMs": 8211
+        }
+      ],
+      "cleanup": "fixture cleanups completed",
+      "evidence": "host3/309a19e/summary.json",
+      "stdout": "host3/309a19e.stdout",
+      "stderr": "host3/309a19e.stderr",
+      "runIds": [
+        "delivery-0",
+        "delivery-1",
+        "delivery-2"
+      ],
+      "selection": "default three launches, each isolated fixture HOME/state/tmp/socket; no own unit group"
+    }
+  ],
+  "limitation": "No unknown_screen reproduced in this 3x3 live comparison; causality of 9.1 remains unproven. Main authorized stand regression instead of load reproduction.",
+  "commandProvenance": "Normalized known driver invocation reconstructed from main handoff; full outer shell invocation not yet supplied."
+}

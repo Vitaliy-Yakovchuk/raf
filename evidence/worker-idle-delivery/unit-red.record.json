@@ -1,0 +1,90 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/5213cd2c-4a65-4d5e-a479-7b406b7c3ad0/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-load-admission/worker-idle --files test/agent-adapters.test.ts",
+  "sha": "1d825818208844d53cdc1610ac2cd5ae7b69a77a",
+  "workspaceAtRun": {
+    "modified": [
+      "test/agent-adapters.test.ts",
+      "evidence/worker-idle-delivery/plan.json"
+    ],
+    "untracked": [
+      "evidence/worker-idle-delivery/reproduction-status.json",
+      "node_modules (local dependency symlink)"
+    ],
+    "productSourceModified": false
+  },
+  "stdout": "unit-red.stdout",
+  "stderr": "unit-red.stderr",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "result": "Full unchanged TestRunResult JSON in stdout; separate streams captured read-only from own command channel before replay cleanup; no rerun.",
+  "runId": "9feb14ca-3dc1-42be-85ae-326ca14b5e32",
+  "phase": "red",
+  "group": "fix-raf-load-admission/worker-idle",
+  "selection": {
+    "files": [
+      "test/agent-adapters.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "assertions-failed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "worker-idle: exit observation has a bounded process count at startup poll 1 ms"
+    },
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "worker-idle: exit observation has a bounded process count at startup poll 10 ms"
+    },
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "worker-idle: exit observation has a bounded process count at startup poll 100 ms"
+    },
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "worker-idle: verified worker environment is resolved once across repeated child commands"
+    },
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "worker-idle: subscribes before inspecting an already exited or missing pane (1|0)"
+    },
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "worker-idle: subscribes before inspecting an already exited or missing pane (1|17)"
+    },
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "worker-idle: subscribes before inspecting an already exited or missing pane (missing)"
+    },
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "worker-idle: unrelated pane notifications rearm the event wait without screen polling"
+    },
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "worker-idle: subscribe failure for a live pane is explicit and removes owned hooks"
+    },
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "worker-idle: notification failure for a live pane is explicit and removes owned hooks"
+    },
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "worker-idle: concurrent transport exit waiters share one event subscription"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "firstThreeRegressions": "Real process-count assertions: got 10001/1001/101 commands; bound 12. Additional API behavior tests fail in test body, no import/setup failure.",
+  "workspacePatch": "unit-red.workspace.patch",
+  "workspacePatchSha256": "afd776912965b6247bf0a6093f61fe7b979afa4dccadf1bbef0a56afd9e1291d"
+}

@@ -11,10 +11,18 @@
       "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md",
       "openspec/specs/projects/orchestrator/parallel-development/spec.md",
       "openspec/specs/projects/orchestrator/autonomous-development/spec.md#Аудит-та-вилучення-неактуальних-змін"
-    ]
+    ],
+    "newEvidence": {
+      "source": "original-diagnostics/provenance.json; main 2026-10-24 diagnostic handoff",
+      "finding": "Failure also occurred on 309a19e+8bfbd5d without 9.1, with missing composer. Causality of 9.1 is unproven; task remains current because bounded worker overhead and initial-delivery compatibility are both required.",
+      "overlap": "Main confirmed Z.4.1 has no active executor and authorized delivery guard changes within 9.1.1. Do not report or tick Z.4.1.",
+      "pending": "Stand behavioral red confirmed 2/2 failures on 1d82581; delivery guard now implemented. Worker-only unit hotfix passed 26/26; post-guard unit repeat refused due concurrent foreign inventory drift; main notified. Unit aggregate and QA HOME retained."
+    }
   },
   "unitGroup": "fix-raf-load-admission/worker-idle",
-  "unitFiles": ["test/agent-adapters.test.ts"],
+  "unitFiles": [
+    "test/agent-adapters.test.ts"
+  ],
   "unitPolicy": "Retain the 9.1 group and its aggregate/QA HOME; initial own assertion failure via phase red, then phase hotfix. Do not treat setup failures or incomplete output as red/pass.",
   "livePlan": "Exact archived source revisions 3847327 and 309a19e, then workspace, in parallel full production workers with isolated QA HOME/state/tmp and real installed codex. Live checks have separate budgets and do not count as unit tests.",
   "sandboxSetupAttempt": {

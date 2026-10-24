@@ -1,0 +1,34 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/5213cd2c-4a65-4d5e-a479-7b406b7c3ad0/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle --files test/agent-adapters.test.ts",
+  "sha": "1d825818208844d53cdc1610ac2cd5ae7b69a77a",
+  "workspacePatch": "unit-hotfix.workspace.patch",
+  "workspacePatchSha256": "268ceeaca0255a0918f6e17110ffd946655bc7b0627725d6148dddd727993289",
+  "otherWorkspaceChanges": "Evidence only; untracked node_modules dependency symlink",
+  "stdout": "unit-hotfix.stdout",
+  "stderr": "unit-hotfix.stderr",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "passedCount": 26,
+  "runId": "dbefde0a-0b70-4f70-bf45-6c042bf8e6da",
+  "phase": "hotfix",
+  "group": "fix-raf-load-admission/worker-idle",
+  "selection": {
+    "files": [
+      "test/agent-adapters.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "timeoutCount": 0,
+  "nextAction": "complete"
+}

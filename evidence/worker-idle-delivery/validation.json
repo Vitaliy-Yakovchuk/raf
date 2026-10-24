@@ -1,0 +1,11 @@
+{
+  "build": {
+    "command": "HOME=/tmp/fla911b-static-home RAF_QA_HOME=/tmp/fla911b-static-home node scripts/build.ts",
+    "exitCode": 0,
+    "result": "Catalog and repository comment policy passed"
+  },
+  "diffCheck": {
+    "command": "git diff --check",
+    "exitCode": 0
+  }
+}

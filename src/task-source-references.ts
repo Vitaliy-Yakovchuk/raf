@@ -1,3 +1,5 @@
+import { posix } from 'node:path';
+
 interface SourceReference {
   readonly path: string;
   readonly details: string;
@@ -10,6 +12,13 @@ interface ReferenceToken {
 }
 
 const sourcePath = /^(?:openspec|conf|skills|specs)\/[\p{L}\p{N}._~\/-]+(?:#[\p{L}\p{N}._~\/-]+)?$/u;
+const relativeDeltaPath = /^\.\.\/(?!\.{1,2}\/)([\p{L}\p{N}._~-]+)\/specs\/[\p{L}\p{N}._~\/-]+(?:#[\p{L}\p{N}._~\/-]+)?$/u;
+
+function isSourcePath(path: string): boolean {
+  if (sourcePath.test(path)) return true;
+  const delta = relativeDeltaPath.exec(path);
+  return !!delta && posix.normalize(path.split('#')[0]).startsWith(`../${delta[1]}/specs/`);
+}
 
 function withoutFencedCode(text: string): string {
   let fence: { marker: string; length: number } | undefined;
@@ -63,7 +72,7 @@ function linkAt(text: string, start: number): { path?: string; end: number } | u
   const target = text.slice(labelEnd + 2, targetEnd).trim();
   const destination = /^(?:<([^<>\n]+)>|([^\s]+))(?:\s+(?:"[^"\n]*"|'[^'\n]*'|\([^\n]*\)))?$/.exec(target);
   const path = destination?.[1] ?? destination?.[2];
-  return { path: path && sourcePath.test(path) ? path : undefined, end: targetEnd + 1 };
+  return { path: path && isSourcePath(path) ? path : undefined, end: targetEnd + 1 };
 }
 
 export function descriptionSourceReferences(description: string): readonly SourceReference[] {
@@ -82,7 +91,7 @@ export function descriptionSourceReferences(description: string): readonly Sourc
     if (text[index] === '`') {
       const span = spanEnd(text, index);
       if (span) {
-        if (sourcePath.test(span.content)) references.push({ path: span.content, start: index, end: span.end });
+        if (isSourcePath(span.content)) references.push({ path: span.content, start: index, end: span.end });
         index = span.end;
         continue;
       }

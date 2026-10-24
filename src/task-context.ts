@@ -203,7 +203,10 @@ async function deriveSources(root: string, selected: readonly { change: string; 
       for (const [references, reason] of [[descriptionSourceReferences(item.description), `пункт ${change}:${item.id}`], [stageSourceReferences(stage), `«Джерела за етапом» для ${change}:${item.id}`]] as const) {
         for (const { path, details: selector } of references) {
           hasExplicitSources = true;
-          const canonical = path.startsWith('specs/') ? `openspec/${path}` : path;
+          const referenceFile = path.split('#')[0];
+          const canonical = path.startsWith('../')
+            ? `${join('openspec', 'changes', change, referenceFile)}${path.slice(referenceFile.length)}`
+            : path.startsWith('specs/') ? `openspec/${path}` : path;
           const file = canonical.split('#')[0];
           const fragment = canonical.slice(file.length);
           const details = `${reason}${fragment ? ` (${fragment})` : ''}${selector ? `: ${selector}` : '; читати для виконання пункту'}; повну релевантну вимогу зі сценаріями`;

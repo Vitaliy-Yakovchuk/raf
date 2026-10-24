@@ -205,3 +205,47 @@ test('Z334.S10 Codex trust changes are recorded without failing a complete run (
   assert.equal(f.context.process.exitCode, 0);
   assert.deepEqual(Array.from(f.summary.unexecuted), []);
 });
+
+
+function reportFixture(results: Array<CliResult & { stdout: string; stderr: string }>) {
+  const f = fixture();
+  const row = { runId: 'own-run', result: { status: 'succeeded' }, reportAcceptance: { status: 'succeeded' } };
+  f.context.session = () => row;
+  f.context.fs.writeFileSync = () => {};
+  f.context.saveRun = () => {};
+  const calls: string[] = [];
+  f.context.closeRequest = async (label: string) => {
+    calls.push(label);
+    return label.startsWith('start-report-service') ? { ...success, stdout: '', stderr: '' } : results.shift() ?? results.at(-1);
+  };
+  vm.runInContext('globalThis.complete = ((request) => {' + declaration('completeReport') + ';return completeReport;})(globalThis.closeRequest);', f.context);
+  return { ...f, calls, complete: () => f.context.complete('neighbor') as Promise<unknown> };
+}
+const pendingWorker = { cliExitCode: 1, signal: null, error: null, stdout: '', stderr: JSON.stringify({ code: 'WORKER_RESULT_PENDING', details: { retrySafe: true } }) };
+
+test('Z334.S11 accepted report waits for retry-safe worker completion before close', async () => {
+  const f = reportFixture([pendingWorker, { ...success, stdout: '', stderr: '' }]);
+  await f.complete();
+  assert.deepEqual(f.calls, ['start-report-service-neighbor', 'close-neighbor', 'close-neighbor-retry-1']);
+  assert.equal(f.now(), 100);
+});
+
+test('Z334.S12 close never retries another failure, unsafe pending, transport error or malformed JSON', async () => {
+  for (const result of [
+    { ...pendingWorker, stderr: JSON.stringify({ code: 'CALLER_UNVERIFIED', details: { retrySafe: true } }) },
+    { ...pendingWorker, stderr: JSON.stringify({ code: 'WORKER_RESULT_PENDING', details: { retrySafe: false } }) },
+    { ...pendingWorker, signal: 'SIGTERM' },
+    { ...pendingWorker, error: 'spawn failed' },
+    { ...pendingWorker, stderr: 'broken JSON' }
+  ]) {
+    const f = reportFixture([result]);
+    await assert.rejects(f.complete());
+    assert.deepEqual(f.calls, ['start-report-service-neighbor', 'close-neighbor']);
+  }
+});
+
+test('Z334.S13 repeated worker-pending cannot exceed its independent readiness budget', async () => {
+  const f = reportFixture(Array(20).fill(pendingWorker));
+  await assert.rejects(f.complete(), /Incomplete host scenario: worker close neighbor/);
+  assert.equal(f.now(), f.readiness);
+});

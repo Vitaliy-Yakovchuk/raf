@@ -1,0 +1,164 @@
+diff --git a/test/z334-host-qa.mjs b/test/z334-host-qa.mjs
+index 11590e9..04099dc 100644
+--- a/test/z334-host-qa.mjs
++++ b/test/z334-host-qa.mjs
+@@ -13,8 +13,8 @@ const driver = fileURLToPath(import.meta.url), source = path.resolve(path.dirnam
+ const home = process.env.RAF_QA_HOME;
+ assert.match(sourceSha ?? '', /^[0-9a-f]{40}$/);
+ assert.ok(['core', 'live'].includes(mode));
+-assert.ok(['all', 'remaining'].includes(scope));
+-assert.ok(scope !== 'remaining' || mode === 'live', 'Remaining scenarios require real workers');
++assert.ok(['all', 'remaining', 'recovery'].includes(scope));
++assert.ok(scope === 'all' || mode === 'live', 'Resumed scenarios require live mode');
+ assert.ok(home && home === process.env.HOME && home === process.env.TMPDIR, 'Explicit isolated HOME=RAF_QA_HOME=TMPDIR required');
+ assert.ok(home.startsWith('/tmp/') && fs.realpathSync(home) === home, 'Canonical own mktemp directory under /tmp required');
+ assert.equal(fs.statSync(home).mode & 0o077, 0, 'QA HOME must be private');
+@@ -32,14 +32,15 @@ for (const name of Object.keys(process.env)) if (!(name in env)) delete process.
+ Object.assign(process.env, env);
+ fs.mkdirSync(env.TMUX_TMPDIR); fs.mkdirSync(env.XDG_CONFIG_HOME);
+ if (mode === 'core') fs.mkdirSync(codeHome);
+-const summary = { status: 'failed', kind: 'host-integration', runId: randomUUID(), sourceSha, mode, scope, inheritedEvidence: scope === 'remaining' ? { live: { runId: '88157390-93ab-4007-a49c-3ca2ddc55946', sourceSha: '1968689352e27541408d5efedf01ba9704bc008a', path: 'openspec/changes/complete-raf-flow-contracts/z334-qa/host2-1968689/live/summary.json', accepted: ['setup', 'negative-gates', 'snapshot-gates', 'writer-barrier'] }, supplement: { runId: '097d7a09-2ff3-4bf8-ab5d-479b3f76131c', sourceSha: '1968689352e27541408d5efedf01ba9704bc008a', path: 'openspec/changes/complete-raf-flow-contracts/z334-qa/host2-1968689/supplement/summary.json', accepted: '5/5; retained, not rerun' } } : null, startedAt: new Date().toISOString(), driverSha256: null, modelPromptMayBeSent: mode === 'live', steps: [], assertions: [], unexecuted: [], cleanup: {}, limitations: ['No unit tests run here. The z392 ledger remains unchanged.', 'No working ~/.raf or owner state is read, copied or migrated.', 'Host interruption or incomplete cleanup cannot produce succeeded.'] };
++const summary = { status: 'failed', kind: 'host-integration', runId: randomUUID(), sourceSha, mode, scope, inheritedEvidence: scope !== 'all' ? { live: { runId: '88157390-93ab-4007-a49c-3ca2ddc55946', sourceSha: '1968689352e27541408d5efedf01ba9704bc008a', path: 'openspec/changes/complete-raf-flow-contracts/z334-qa/host2-1968689/live/summary.json', accepted: ['setup', 'negative-gates', 'snapshot-gates', 'writer-barrier'] }, supplement: { runId: '097d7a09-2ff3-4bf8-ab5d-479b3f76131c', sourceSha: '1968689352e27541408d5efedf01ba9704bc008a', path: 'openspec/changes/complete-raf-flow-contracts/z334-qa/host2-1968689/supplement/summary.json', accepted: '5/5; retained, not rerun' } } : null, startedAt: new Date().toISOString(), driverSha256: null, modelPromptMayBeSent: mode === 'live' && scope !== 'recovery', steps: [], assertions: [], unexecuted: [], cleanup: {}, limitations: ['No unit tests run here. The z392 ledger remains unchanged.', 'No working ~/.raf or owner state is read, copied or migrated.', 'Host interruption or incomplete cleanup cannot produce succeeded.'] };
++if (scope === 'recovery') summary.inheritedEvidence.resumedLive = { runId: 'c8722281-57a6-41e9-ba3f-96bd4cf552c8', sourceSha: '3037efa34f199a2fd63185398b5726617e7f6d33', path: 'openspec/changes/complete-raf-flow-contracts/z334-resumed-qa/live-c8722281/z334-evidence/summary.json', accepted: ['two-cycles', 'reader-kinds', 'publishers', 'live-reports-and-boundaries'], reportAudit: 'openspec/changes/complete-raf-flow-contracts/z334-resumed-qa/live-c8722281/accepted-reports-audit.json', note: 'All three reports and boundary probes accepted; worker close returned retry-safe pending. No successful neighbor close claimed.' };
+ const atomic = (file, value) => { fs.writeFileSync(file + '.part', JSON.stringify(value, null, 2) + '\n', { mode: 0o600 }); fs.renameSync(file + '.part', file); };
+ const hash = file => fs.existsSync(file) ? createHash('sha256').update(fs.readFileSync(file)).digest('hex') : null;
+ const codeConfigBefore = hash(path.join(codeHome, 'config.toml'));
+ let sequence = 0, api, work, host, code, control, mainStarted = false, interrupted, cleaning = false;
+ const children = new Set(), leases = new Set(), workspaces = [];
+ const checkpoints = ['before-intent', 'after-intent', 'before-switch', 'after-switch', 'after-refs', 'after-index', 'after-smoke', 'before-cleanup', 'after-cleanup'];
+-const required = ['setup', ...(scope === 'all' ? ['negative-gates', 'snapshot-gates', 'writer-barrier'] : []), 'two-cycles', 'reader-kinds', 'publishers', 'crash-recovery', 'foreign-work-cleanup', 'live-reports-and-boundaries'];
++const required = ['setup', ...(scope === 'all' ? ['negative-gates', 'snapshot-gates', 'writer-barrier'] : []), ...(scope === 'recovery' ? [] : ['two-cycles', 'reader-kinds', 'publishers', 'live-reports-and-boundaries']), 'crash-recovery', 'foreign-work-cleanup'];
+ const record = (name, data = {}) => { summary.assertions.push({ name, status: 'passed', ...data }); atomic(path.join(ev, 'progress.json'), summary); };
+ const command = (label, exe, args, cwd = root) => {
+   assert.ok(!interrupted || cleaning, 'Interrupted: ' + interrupted);
+@@ -59,11 +60,11 @@ const wait = async (label, read, budget) => {
+   throw Error('Incomplete host scenario: ' + label);
+ };
+ let readiness;
+-const request = async (label, args) => {
++const request = async (label, args, budget = readiness) => {
+   const resultPath = path.join(stand, 'pane', label + '.json');
+   assert.ok(!fs.existsSync(resultPath));
+   atomic(path.join(stand, 'commands', String(++sequence).padStart(6, '0') + '.json'), { label, args });
+-  await wait('CLI ' + label, () => fs.existsSync(resultPath), args[0] === 'agent' && args[1] === 'run' ? undefined : readiness);
++  await wait('CLI ' + label, () => fs.existsSync(resultPath), args[0] === 'agent' && args[1] === 'run' ? undefined : budget);
+   const r = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
+   summary.steps.push({ label, ...r });
+   return { ...r, stdout: fs.readFileSync(path.join(stand, 'pane', label + '.stdout'), 'utf8'), stderr: fs.readFileSync(path.join(stand, 'pane', label + '.stderr'), 'utf8') };
+@@ -142,7 +143,16 @@ const completeReport = async actor => {
+   must(await request('start-report-service-' + actor, ['service', 'start']));
+   const accepted = await wait('accepted real report ' + actor, () => { const current = session(actor); return current?.result && current.reportAcceptance ? current : undefined; }, readiness);
+   saveRun(accepted); assert.equal(accepted.result.status, 'succeeded'); assert.equal(accepted.reportAcceptance.status, 'succeeded');
+-  must(await request('close-' + actor, ['agent', 'close', '--id', row.addressId]));
++  const closeDeadline = Date.now() + readiness;
++  for (let attempt = 0; ; attempt++) {
++    assert.ok(Date.now() < closeDeadline, 'Incomplete host scenario: worker close ' + actor);
++    const result = await request('close-' + actor + (attempt ? '-retry-' + attempt : ''), ['agent', 'close', '--id', row.addressId], closeDeadline - Date.now());
++    if (result.cliExitCode === 0) { must(result); break; }
++    let failure;
++    try { failure = JSON.parse(result.stderr); } catch {}
++    if (result.cliExitCode !== 1 || result.signal !== null || result.error !== null || failure?.code !== 'WORKER_RESULT_PENDING' || failure.details?.retrySafe !== true) must(result);
++    await delay(100);
++  }
+   return accepted;
+ };
+ const launch = async actor => {
+@@ -208,6 +218,8 @@ try {
+   const initial = await api.recoverHotfixActivation(host); summary.initial = { base, initial, identity: liveIdentity() };
+   record('setup', { base, registry: path.join(control, 'registry.json') });
+ 
++  let good;
++  if (scope !== 'recovery') {
+   const workspace = await candidate('negative');
+   if (scope === 'all') {
+   for (const fault of ['syntax', 'build', 'message', 'regression', 'service-ready']) {
+@@ -229,7 +241,7 @@ try {
+   record('negative-gates');
+   }
+ 
+-  const good = await verify(workspace);
++  good = await verify(workspace);
+   if (scope === 'all') {
+   for (const [label, file] of [['source', path.join(hotfix, 'qa-z334/a.mjs')], ['artifact', path.join(hotfix, 'dist/catalog.json')], ['conf', path.join(root, 'conf/raf.json')], ['sealed-source', path.join(good.snapshot.root, 'qa-z334/a.mjs')], ['sealed-artifact', path.join(good.snapshot.root, 'dist/catalog.json')], ['sealed-conf', path.join(good.snapshot.configurationRoot, 'conf/raf.json')]]) {
+     const original = fs.readFileSync(file); fs.appendFileSync(file, '\n ');
+@@ -273,16 +285,17 @@ try {
+ 
+   }
+ 
++  }
+   const inode = fs.statSync(hotfix).ino, developerFile = path.join(develop, 'developer-untracked.txt'); fs.writeFileSync(developerFile, 'developer work\n');
+   let neighbor;
+-  if (mode === 'live') {
++  if (mode === 'live' && scope !== 'recovery') {
+     must(command('version-codex', 'codex', ['--version']));
+     must(await request('runner-list', ['runner', 'list']));
+     must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
+     neighbor = await launch('neighbor');
+   }
+   const cycles = [];
+-  for (const marker of ['one', 'two']) {
++  for (const marker of scope === 'recovery' ? [] : ['one', 'two']) {
+     let ws;
+     if (mode === 'live') { await launch(marker); ws = JSON.parse(fs.readFileSync(path.join(home, '.raf/tmp', session(marker).runId, 'runtime.json'), 'utf8')).workspaceRoute.hotfix; workspaces.push(ws); await completeReport(marker); }
+     else ws = await candidate(marker);
+@@ -317,7 +330,7 @@ try {
+     if (neighbor) { assert.equal(session('neighbor').runId, neighbor.runId); assert.equal(session('neighbor').state, 'running'); }
+     assert.equal((await api.activateHotfix(host, verified)).status, 'already-active');
+   }
+-  record('two-cycles', { cycles }); record('reader-kinds'); record('publishers');
++  if (scope !== 'recovery') { record('two-cycles', { cycles }); record('reader-kinds'); record('publishers'); }
+   if (neighbor) { await completeReport('neighbor'); record('live-reports-and-boundaries', { accepted: ['one', 'two', 'neighbor'] }); }
+ 
+   for (const phase of checkpoints) {
+diff --git a/test/z334-launch-wait.test.ts b/test/z334-launch-wait.test.ts
+index 2a5d7f9..84f9780 100644
+--- a/test/z334-launch-wait.test.ts
++++ b/test/z334-launch-wait.test.ts
+@@ -205,3 +205,47 @@ test('Z334.S10 Codex trust changes are recorded without failing a complete run (
+   assert.equal(f.context.process.exitCode, 0);
+   assert.deepEqual(Array.from(f.summary.unexecuted), []);
+ });
++
++
++function reportFixture(results: Array<CliResult & { stdout: string; stderr: string }>) {
++  const f = fixture();
++  const row = { runId: 'own-run', result: { status: 'succeeded' }, reportAcceptance: { status: 'succeeded' } };
++  f.context.session = () => row;
++  f.context.fs.writeFileSync = () => {};
++  f.context.saveRun = () => {};
++  const calls: string[] = [];
++  f.context.closeRequest = async (label: string) => {
++    calls.push(label);
++    return label.startsWith('start-report-service') ? { ...success, stdout: '', stderr: '' } : results.shift() ?? results.at(-1);
++  };
++  vm.runInContext('globalThis.complete = ((request) => {' + declaration('completeReport') + ';return completeReport;})(globalThis.closeRequest);', f.context);
++  return { ...f, calls, complete: () => f.context.complete('neighbor') as Promise<unknown> };
++}
++const pendingWorker = { cliExitCode: 1, signal: null, error: null, stdout: '', stderr: JSON.stringify({ code: 'WORKER_RESULT_PENDING', details: { retrySafe: true } }) };
++
++test('Z334.S11 accepted report waits for retry-safe worker completion before close', async () => {
++  const f = reportFixture([pendingWorker, { ...success, stdout: '', stderr: '' }]);
++  await f.complete();
++  assert.deepEqual(f.calls, ['start-report-service-neighbor', 'close-neighbor', 'close-neighbor-retry-1']);
++  assert.equal(f.now(), 100);
++});
++
++test('Z334.S12 close never retries another failure, unsafe pending, transport error or malformed JSON', async () => {
++  for (const result of [
++    { ...pendingWorker, stderr: JSON.stringify({ code: 'CALLER_UNVERIFIED', details: { retrySafe: true } }) },
++    { ...pendingWorker, stderr: JSON.stringify({ code: 'WORKER_RESULT_PENDING', details: { retrySafe: false } }) },
++    { ...pendingWorker, signal: 'SIGTERM' },
++    { ...pendingWorker, error: 'spawn failed' },
++    { ...pendingWorker, stderr: 'broken JSON' }
++  ]) {
++    const f = reportFixture([result]);
++    await assert.rejects(f.complete());
++    assert.deepEqual(f.calls, ['start-report-service-neighbor', 'close-neighbor']);
++  }
++});
++
++test('Z334.S13 repeated worker-pending cannot exceed its independent readiness budget', async () => {
++  const f = reportFixture(Array(20).fill(pendingWorker));
++  await assert.rejects(f.complete(), /Incomplete host scenario: worker close neighbor/);
++  assert.equal(f.now(), f.readiness);
++});

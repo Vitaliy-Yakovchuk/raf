@@ -68,8 +68,7 @@ async function setup() {
         const cost = chargeCost ? openSpecSubprocessMs : 0;
         openSpecCalls.push({ args: [...args], at: chargeCost ? performance.now() : 0, cost });
         if (cost) mock.timers.tick(cost);
-        if (args.includes('list')) return { exitCode: 0, stdout: JSON.stringify({ changes: [] }), stderr: '' };
-        assert.ok(args.includes('instructions') && args.includes('apply'), 'Unexpected OpenSpec fixture request');
+        if (args.includes('list') && args.includes('--archived')) return { exitCode: 0, stdout: JSON.stringify({ changes: [], root }), stderr: '' };
         const text = await readFile(tasksPath, 'utf8');
         const tasks = [...text.matchAll(/^- \[([ x])\] (.+)$/gm)].map((match, index) => ({
             id: String(index + 1),
@@ -78,6 +77,21 @@ async function setup() {
             sourcePath: tasksPath,
             line: index + 1,
         }));
+        if (args.includes('list')) return {
+            exitCode: 0,
+            stdout: JSON.stringify({
+                root,
+                changes: [{
+                    name: change,
+                    completedTasks: tasks.filter(task => task.done).length,
+                    totalTasks: tasks.length,
+                    lastModified: (await stat(tasksPath)).mtime.toISOString(),
+                    status: tasks.every(task => task.done) ? 'complete' : 'in-progress',
+                }],
+            }),
+            stderr: '',
+        };
+        assert.ok(args.includes('instructions') && args.includes('apply'), 'Unexpected OpenSpec fixture request');
         return {
             exitCode: 0,
             stdout: JSON.stringify({

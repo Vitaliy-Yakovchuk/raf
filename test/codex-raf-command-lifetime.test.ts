@@ -115,7 +115,7 @@ test('[codex-command-lifetime] queued admission beyond the execution budget pres
 test('[codex-command-lifetime] unavailable hook protocol refuses launch before the original RAF command can enter the sandbox', options, async t => {
   const f = await outputFixture(t);
   const executable = join(f.root, 'no-hooks');
-  await writeFile(executable, '#!/bin/sh\nexit 0\n', { mode: 0o700 });
+  await writeFile(executable, `#!${process.execPath}\nprocess.stdin.resume(); process.stdout.write('not app-server protocol\\n');\n`, { mode: 0o700 });
   await assert.rejects(async () => {
     const prepared = await prepareCodexRafCommandAccess({ ...f.request, invocation: { ...f.request.invocation, executable } });
     try {
@@ -207,12 +207,12 @@ test('[codex-command-lifetime] native timeout control kills the waiting owner an
   t.after(async () => { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); });
   const address = server.address();
   assert.ok(address && typeof address === 'object');
-  args.push('-c', 'features.plugins=false', '-c', 'model_provider="raf_timeout_fixture"', '-c', `model_providers.raf_timeout_fixture={name="local hook timeout control",base_url="http://127.0.0.1:${address.port}/v1",wire_api="responses",requires_openai_auth=false}`, 'exec', '--json', '--ephemeral', '--skip-git-repo-check', 'Execute the supplied protocol fixture tool call.');
+  args.push('-c', 'sandbox_workspace_write.exclude_tmpdir_env_var=true', '-c', 'sandbox_workspace_write.exclude_slash_tmp=true', '-c', 'features.plugins=false', '-c', 'model_provider="raf_timeout_fixture"', '-c', `model_providers.raf_timeout_fixture={name="local hook timeout control",base_url="http://127.0.0.1:${address.port}/v1",wire_api="responses",requires_openai_auth=false}`, 'exec', '--json', '--ephemeral', '--skip-git-repo-check', 'Execute the supplied protocol fixture tool call.');
   const result = await capture(prepared.invocation.executable, args, f.cwd, prepared.environment);
   assert.deepEqual(failures, []);
   assert.equal(result.code, 0, result.stderr.toString());
   assert.ok(issued);
-  assert.match(JSON.stringify(output), /EROFS|EACCES|EPERM|Read-only file system|Permission denied/iu, 'Codex actually attempted the original command in its native sandbox after the hook timed out');
+  assert.match(JSON.stringify(output), /EROFS|EACCES|EPERM|Read-only file system|Permission denied/iu, `Codex actually attempted the original command in its native sandbox after the hook timed out: ${JSON.stringify(output)}; stderr=${result.stderr.toString()}`);
   assert.doesNotMatch(JSON.stringify(output), /original wrapper completed/u);
   const pid = JSON.parse(await readFile(owner, 'utf8')).pid;
   const state = await readFile(`/proc/${pid}/stat`, 'utf8').catch((error: NodeJS.ErrnoException) => { if (error.code === 'ENOENT') return ''; throw error; });

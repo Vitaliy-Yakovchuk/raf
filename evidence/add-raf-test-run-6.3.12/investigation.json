@@ -1,0 +1,78 @@
+{
+  "assignment": "add-raf-test-run:6.3.12",
+  "audit": {
+    "current": true,
+    "conflicts": [],
+    "sources": [
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/proposal.md",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/tasks.md#6.3.12",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md#Загальний-дедлайн-та-завершення-дерева",
+      "/srv/dev/work/orchestrator/openspec/specs/core/process/test-first/spec.md",
+      "/srv/dev/work/orchestrator/openspec/specs/core/process/unit-test-runs/spec.md",
+      "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/autonomous-development/spec.md#Аудит-та-вилучення-неактуальних-змін"
+    ],
+    "recheckedAfterImplementation": true,
+    "result": "The assigned bug remains current and consistent with wrapper-owned deadline/cleanup. No unrelated items were implemented; other tasks remain open."
+  },
+  "incident": {
+    "sourceCommit": "e0c203ae94a81575ddb0a58e557165796799db00",
+    "recovery": "evidence/profile-raf-performance-5.1-continuation/z393-recovery.stdout.json",
+    "entryFailure": "evidence/profile-raf-performance-5.1-continuation/z393-entry-failed.cli.json",
+    "originalHookStartAndTimeoutTrace": "unavailable; the recovery result alone cannot establish the original hook's exact lifetime or prove a unique cause"
+  },
+  "implementationFindings": [
+    "The trusted RAF command runs synchronously as a child of the Codex PreToolUse hook, which previously omitted timeout. Codex's default hook timeout is independent of the configured test-run execution deadline and includes admission waiting.",
+    "On command-hook timeout Codex terminates the hook process group, including its waiting RAF wrapper, then proceeds with the original native tool input. This explains a mechanism for both owner loss and the subsequent sandbox reader-lease write failure.",
+    "prepareCodexRafCommandAccess previously returned the original sandbox invocation when app-server hook protocol was unavailable. It also accepted an inspected definition without checking effective timeoutSec or async delivery."
+  ],
+  "externalContractSources": [
+    {
+      "url": "https://learn.chatgpt.com/docs/hooks",
+      "supports": "Default PreToolUse timeout and fail-open behavior on hook errors/timeouts."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openai/codex/main/codex-rs/hooks/src/engine/command_runner.rs",
+      "supports": "The timeout covers waiting for hook process output; dropping the process-tree guard terminates the Unix process group."
+    }
+  ],
+  "regressions": [
+    {
+      "name": "queued admission",
+      "method": "Read the unchanged effective definition through installed Codex hooks/list. Spawn the actual generated hook and a gated wrapper fixture. Advance the external lifecycle contract's clock beyond two configured unit execution budgets; when the effective hook deadline has expired, apply its process-group kill. Assert owner survival, exact stdout/stderr/code delivery through result replay, and one wrapper invocation. Virtual time avoids a ten-minute unit test."
+    },
+    {
+      "name": "missing hook protocol",
+      "method": "An executable which emits invalid app-server protocol while keeping stdin open must cause prepare rejection, rather than returning an invocation which can execute the original RAF command in the sandbox."
+    },
+    {
+      "name": "unsafe effective deadline",
+      "method": "An initialized app-server which exposes the exact hook command but reports a short effective timeout must cause prepare rejection."
+    },
+    {
+      "name": "native timeout control",
+      "method": "Real installed Codex, an isolated local scripted HTTP provider, and the production hook command with a deliberate one-second external hook timeout. Verify actual original-wrapper death and actual original-command sandbox fallback write refusal. The compressed deadline is a fixture control, not production configuration or a change to the unit execution policy."
+    }
+  ],
+  "boundaries": {
+    "forbiddenSourcesUnmodified": [
+      "src/test-runs.ts",
+      "src/agent-report.ts",
+      "src/production-runtime.ts",
+      "src/hotfix-origin.ts",
+      "src/state-migration-guard.ts"
+    ],
+    "taskCheckboxes": "Owned by raf; not edited by this executor.",
+    "activationAndPush": "Owned by main; not performed by this executor."
+  },
+  "appliedFix": {
+    "hookTimeout": "Number.MAX_SAFE_INTEGER seconds is a protocol representation of no independent transport budget; it is not a unit, integration, admission, or cleanup policy. The wrapper continues to own execution deadline and cleanup from conf. Main explicitly confirmed this interpretation in this session.",
+    "inspection": "Require the effective hook lifetime and synchronous delivery before trusting the inspected definition.",
+    "unavailable": "Refuse launch when the trusted hook protocol is unavailable."
+  },
+  "nativeControlResult": "Passed in fd867c19 and 0ebab2fc: installed Codex actually killed the waiting owner and attempted the original command in its native sandbox, where the activation-lock fixture write was refused.",
+  "fixtureCorrections": [
+    "Initial native control permitted writes to /tmp and therefore reproduced fallback without the expected EROFS. The corrected control excludes both TMPDIR and /tmp from native sandbox writes.",
+    "Initial no-protocol executable exited immediately and could race stdin writes with EPIPE. The corrected fixture emits invalid protocol and keeps stdin open."
+  ],
+  "deliveryLimit": "Existing already-launched sessions retain their immutable hook definition. Main must deploy/activate the committed fix for new launches; this executor did not activate or push."
+}

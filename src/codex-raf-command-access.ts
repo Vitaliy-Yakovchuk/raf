@@ -23,6 +23,8 @@ export interface PreparedCodexRafCommandAccess {
 
 class HookProtocolUnavailable extends Error {}
 
+const commandHookTimeoutSeconds = Number.MAX_SAFE_INTEGER;
+
 const replayProgram = String.raw`
 const fs = await import('node:fs/promises');
 const { constants, createReadStream } = await import('node:fs');
@@ -239,6 +241,7 @@ async function hookIdentity(executable: string, args: string[], cwd: string, env
           const hooks = message.result?.data?.flatMap((entry: { hooks: unknown[] }) => entry.hooks) ?? [];
           const matches = hooks.filter((hook: Record<string, unknown>) => hook.source === 'sessionFlags' && hook.eventName === 'preToolUse' && hook.command === command);
           if (matches.length !== 1 || typeof matches[0].key !== 'string' || typeof matches[0].currentHash !== 'string') return finish(new Error('Codex did not expose the exact RAF hook definition'));
+          if (matches[0].timeoutSec !== commandHookTimeoutSeconds || matches[0].async === true) return finish(new Error('Codex RAF hook lifetime requires no independent timeout budget and synchronous result delivery'));
           finish(undefined, matches[0]);
         }
       } catch (error) { finish(error instanceof Error ? error : new Error(String(error))); }
@@ -302,7 +305,7 @@ export async function prepareCodexRafCommandAccess(
     } finally { await root.close(); }
     const source = `const access = ${JSON.stringify({ commands, cwd: request.cwd, results, node: process.execPath, reader: replayProgram })};\n${hookProgram}`;
     const command = `${literal(process.execPath)} --input-type=module -e ${literal(source)}`;
-    const hook = `hooks.PreToolUse=[{matcher="^Bash$",hooks=[{type="command",command=${JSON.stringify(command)}}]}]`;
+    const hook = `hooks.PreToolUse=[{matcher="^Bash$",hooks=[{type="command",timeout=${commandHookTimeoutSeconds},async=false,command=${JSON.stringify(command)}}]}]`;
     const configuration: string[] = [];
     for (let i = 0; i < invocation.args.length; i++) {
       if (['-c', '--config'].includes(invocation.args[i])) configuration.push('-c', invocation.args[++i]);
@@ -315,7 +318,7 @@ export async function prepareCodexRafCommandAccess(
     } catch (error) {
       await cleanup();
       if (!(error instanceof HookProtocolUnavailable)) throw error;
-      return { invocation, environment, unavailable: `RAF command channel unavailable: ${error.message}; permitted raf commands stay inside the native sandbox`, cleanup: async () => {} };
+      throw new Error(`RAF command channel unavailable: ${error.message}; refusing to launch without the trusted RAF command hook`, { cause: error });
     }
     const end = invocation.args.indexOf('--');
     invocation.args.splice(end < 0 ? invocation.args.length : end, 0, '-c', hook, '-c', `hooks.state={${JSON.stringify(identity.key)}={trusted_hash=${JSON.stringify(identity.currentHash)}}}`);

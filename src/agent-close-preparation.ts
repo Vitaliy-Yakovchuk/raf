@@ -1,3 +1,4 @@
+import type { CompiledCatalog } from './catalog.ts';
 import { isDeepStrictEqual } from 'node:util';
 import { commandFailure } from './cli-contract.ts';
 import { forceCloseInTransaction } from './session-state.ts';
@@ -12,6 +13,7 @@ export type AcceptedCloseReport = {
 };
 
 export interface AgentClosePreparationDependencies {
+  compiledCatalog?: CompiledCatalog;
   repository: SessionRepository;
   acceptPendingReport(session: SessionRecord): Promise<SessionRecord>;
   acceptedReport(transaction: SessionTransaction, session: SessionRecord): AcceptedCloseReport | null;

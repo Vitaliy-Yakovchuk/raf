@@ -78,7 +78,7 @@ export type DiagnosticRunFacts = {
   knownRed: DiagnosticTestId[];
   unexecuted: DiagnosticTestId[];
   unknown: DiagnosticTestId[];
-  timeoutCount: number;
+  timeoutCount: number | null;
   timedOut: boolean;
   cleanup: unknown;
   evidence: string[];
@@ -193,6 +193,15 @@ export class TestRunDiagnostics {
   }
   private clean(value: string): { text: string; redacted: boolean } {
     let s = value.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '').replace(/[\x00-\x08\x0b-\x1f\x7f]/g, '');
+    s = s.replace(/https?:\/\/[^\s<>"']+/g, value => {
+      try {
+        const url = new URL(value);
+        if (!url.username && !url.password && !url.search) return value;
+        url.username = ''; url.password = '';
+        if (url.search) url.search = '?<redacted>';
+        return url.toString();
+      } catch { return '<redacted-url>'; }
+    });
     s = s.replace(/-----BEGIN [^-]*PRIVATE KEY-----[\s\S]*?(?:-----END [^-]*PRIVATE KEY-----|$)/g, '<redacted>');
     s = s.replace(/\b(cookie|set-cookie)\s*[:=][^\r\n]*/gi, '$1: <redacted>');
     s = s.replace(/\b(authorization|cookie|set-cookie|password|passwd|token|api[_-]?key|secret)\b(\s*[:=]\s*)(?:Bearer\s+)?[^\s,;]+/gi, '$1$2<redacted>');

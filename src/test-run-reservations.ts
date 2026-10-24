@@ -90,7 +90,7 @@ export async function runResourceReservedTestRun(
   const resourcePorts: TestRunPorts = {
     ...ports,
     newRunId: () => runId = ports.newRunId(),
-    reconcile: async (identity, deadline) => ({ alive: true, deadlineReached: ports.clock.now() >= deadline, cleanup: { complete: false, remainingPids: [] } }),
+    reconcile: async () => ({ alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } }),
     state: { transaction: async operation => {
       let acquired: TestRunGroup | null = null;
       const value = await ports.state.transaction(tx => operation({
@@ -98,7 +98,7 @@ export async function runResourceReservedTestRun(
         put: group => {
           if (group.inFlight?.runId === runId && !tx.get(key)?.inFlight) {
             previous = structuredClone(tx.get(key));
-            if (ports.wrapperIdentity) Object.assign(group.inFlight!, { wrapperIdentity: ports.wrapperIdentity });
+            if (ports.wrapperIdentity) Object.assign(group.inFlight!, { wrapperIdentity: ports.wrapperIdentity, ownerIdentity: ports.wrapperIdentity });
             acquired = structuredClone(group);
           }
           tx.put(group);
@@ -160,8 +160,11 @@ export async function runResourceReservedTestRun(
   };
   let result: ResourceReservedTestRunResult | undefined;
   try {
-    result = { ...await runTestRun(request, configInput, policy, context, resourcePorts), admission };
+    const base = await runTestRun(request, configInput, policy, context, resourcePorts);
+    if (base.runId !== runId) return base as ResourceReservedTestRunResult;
+    result = { ...base, admission };
     result.admission = admission;
+    if (result.stateAccess) return result;
     const original = previous as TestRunGroup | null;
     if (refusal) {
       result.outcome = 'refused'; result.failureKinds = ['refusal']; result.errorCode = 'RESOURCE_UNAVAILABLE';
@@ -185,16 +188,17 @@ export async function runResourceReservedTestRun(
       }
     }
     result.resourceUsage = claim ? await ports.resources.resourceUsage?.(claim) ?? null : null;
+    if (result.runId === runId) result.durationMs = ports.clock.now() - started;
     if (!refusal) await ports.state.transaction(tx => {
       const group = tx.get(key);
       if (group?.lastResult?.runId === result!.runId) { group.lastResult = result!; tx.put(group); }
     });
-    result.durationMs = ports.clock.now() - started;
     return result;
   } catch (error) {
     result ??= { ...testRunFailureResult(request, context, runId, started, configInput, error), admission };
     result.admission = admission;
     result.resourceUsage = claim ? await ports.resources.resourceUsage?.(claim) ?? null : null;
+    if ((error as any)?.stateAccess) { result.stateAccess = (error as any).stateAccess; result.errorCode = (error as any).code; return result; }
     result.outcome = 'setup-failed'; result.failureKinds = ['setup']; result.errorCode = 'RESOURCE_RECONCILIATION_REQUIRED';
     result.cleanup.complete = false; result.groupState = 'reconcile'; result.nextAction = 'reconcile';
     result.durationMs = ports.clock.now() - started;
@@ -216,6 +220,7 @@ export async function reconcileTestRunResources(
       retained.push(claim); continue;
     }
     if (group?.inFlight?.runId === claim.testRunId) {
+      if (ports.recoverGroup) { retained.push(claim); continue; }
       if (group.inFlight.processIdentity) {
         if (observed.state === 'unknown' && (observed.processIdentity !== group.inFlight.processIdentity || claim.processIdentity !== group.inFlight.processIdentity || !await ports.resources.current(claim))) {
           retained.push(claim); continue;
@@ -242,6 +247,7 @@ export async function reconcileTestRunResources(
   const claims = [...released, ...retained];
   const groups = await ports.state.transaction(tx => Object.keys(context.projectWorkspaces).flatMap(project => tx.list(project, context.workspace)));
   for (const group of groups) {
+    if (ports.recoverGroup) continue;
     if (!group.inFlight || claims.some(claim => claim.groupKey.project === group.key.project && claim.groupKey.workspace === group.key.workspace && claim.groupKey.group === group.key.group)) continue;
     if (group.inFlight.processIdentity) {
       await reconcileTestRunGroup(group.key, policy, context, ports);

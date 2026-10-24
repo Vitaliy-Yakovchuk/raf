@@ -24,11 +24,14 @@ export async function reconcileTestRunProcess(identity: string | null, deadline:
   cleanup(pid: number): Promise<{ complete: boolean; remainingPids: number[] }>;
 }): Promise<{ alive: boolean; deadlineReached: boolean; cleanup: { complete: boolean; remainingPids: number[] } }> {
   const deadlineReached = ports.now() >= deadline;
-  const gone = { alive: false, deadlineReached, cleanup: { complete: true, remainingPids: [] } };
+  const gone = { alive: false, deadlineReached: false, cleanup: { complete: true, remainingPids: [] } };
   if (!identity) return { alive: true, deadlineReached, cleanup: { complete: false, remainingPids: [] } };
-  const processId = JSON.parse(identity);
+  let processId: any;
+  try { processId = JSON.parse(identity); } catch { return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } }; }
+  if (!Number.isSafeInteger(processId?.pid) || processId.pid <= 0 || typeof processId.start !== 'string' || typeof processId.boot !== 'string') return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } };
   const start = ports.start(processId.pid);
-  if (processId.boot !== ports.boot() || start !== null && start !== processId.start) return gone;
+  if (processId.boot !== ports.boot()) return gone;
+  if (start !== null && start !== processId.start) return { alive: true, deadlineReached: false, cleanup: { complete: false, remainingPids: [] } };
   const alive = start !== null && start === processId.start;
   const remainingPids = ports.tree(processId.pid).map(row => row.pid);
   if (!alive && !remainingPids.length) return gone;

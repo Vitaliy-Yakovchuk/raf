@@ -1,3 +1,4 @@
+import { acknowledgeTestRunDelivery } from './test-run-state-recovery.ts';
 import { runResourceReservedTestRun } from './test-run-reservations.ts';
 import type { ResourceReservedTestRunPorts } from './test-run-reservations.ts';
 import { parseTestRunArgs, runTestRun, testRunFailureResult } from './test-runs.ts';
@@ -29,6 +30,7 @@ export async function runTestRunCli(argv: readonly string[], ports: TestRunCliPo
     const run = 'resources' in ports.runtime ? runResourceReservedTestRun : runTestRun;
     const result = await run({ ...args, only }, ports.config, ports.policy, ports.context, ports.runtime as ResourceReservedTestRunPorts);
     ports.stdout(JSON.stringify(result) + '\n');
+    if (!ports.runtime.deferDelivery && result.groupSnapshot === 'loaded') await acknowledgeTestRunDelivery(result, ports.runtime.state);
     return result.outcome === 'passed' ? 0 : 1;
   } catch (error) {
     const value = (option: string) => { const index = argv.indexOf(option); return index >= 0 ? argv[index + 1] ?? '' : ''; };

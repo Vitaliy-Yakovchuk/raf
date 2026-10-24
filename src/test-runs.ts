@@ -1,3 +1,4 @@
+import type { StateAccessFailure, RecoveryDelivery } from './test-run-state-recovery.ts';
 import { profileFiles, profileTestKind, prepareTestRunProfile, testRunTimeoutPolicy, validateProfileInventories } from './test-run-integration-profiles.ts';
 import type { TestKind, TimeoutPolicy } from './test-run-integration-profiles.ts';
 import { resourceEstimateInvalidPointer, type ResourceEstimateValues } from './resource-estimates.ts';
@@ -175,8 +176,10 @@ export interface TestRunResult extends RunnerClassification {
   signal: string | null;
   timedOut: boolean;
   cleanup: TestRunCleanup;
-  groupState: 'idle' | 'running' | 'optimize' | 'confirm-known-red' | 'unverified-remainder' | 'reconcile' | 'complete' | 'incomplete';
-  timeoutCount: number;
+  stateAccess: StateAccessFailure | null;
+  groupSnapshot: 'unavailable' | 'absent' | 'loaded';
+  groupState: 'idle' | 'running' | 'optimize' | 'confirm-known-red' | 'unverified-remainder' | 'reconcile' | 'complete' | 'incomplete' | null;
+  timeoutCount: number | null;
   nextAction: TestRunNextAction;
   hintIds: string[];
   hints: string[];
@@ -195,12 +198,13 @@ export interface TestRunGroup {
   profileId?: string;
   key: TestRunGroupKey;
   timeoutCount: number;
-  state: TestRunResult['groupState'];
+  state: NonNullable<TestRunResult['groupState']>;
+  delivery?: RecoveryDelivery | null;
   selection: TestRunPlan['selection'];
   knownRed: TestId[];
   unexecuted: TestId[];
   unknown?: TestId[];
-  inFlight: { runId: string; deadlineMs: number; startedAtMs?: number; timeoutPolicy?: TimeoutPolicy; callerPhase?: string | null; processIdentity: string | null; temporary?: RunTemporaryReservation } | null;
+  inFlight: { runId: string; deadlineMs: number; startedAtMs?: number; timeoutPolicy?: TimeoutPolicy; callerPhase?: string | null; processIdentity: string | null; wrapperIdentity?: string; ownerIdentity?: string | null; recoveryReleasePending?: boolean; phase?: string | null; selection?: TestRunPlan['selection']; command?: TestRunCommand | null; testKind?: TestKind | null; startedAt?: string | null; finishedAtMs?: number | null; deadlineObservedAtMs?: number | null; temporary?: RunTemporaryReservation } | null;
   lastResult: TestRunResult | null;
 }
 
@@ -222,6 +226,8 @@ export interface ManagedTestProcess {
 }
 
 export interface TestRunPorts {
+  deferDelivery?: boolean;
+  recoverGroup?: (key: TestRunGroupKey) => Promise<TestRunResult | null>;
   diagnosticEnvironment?: (command: TestRunCommand | null) => DiagnosticEnvironmentSummary;
   prepareTemporary?: (runId: string, context: TestRunContext, save: (reservation: RunTemporaryReservation) => Promise<void>) => Promise<RunTemporaryReservation>;
   cleanupTemporary?: (reservation: RunTemporaryReservation, treeTerminated: boolean) => Promise<{ cleanup: 'complete' | 'incomplete'; diagnostic: InlineDiagnostic | null }>;
@@ -402,7 +408,7 @@ function emptyResult(request: TestRunRequest, context: TestRunContext, runId: st
   return { testKind: null, timeoutPolicy: null, callerPhase: context.callerPhase ?? null, diagnostics: [], diagnosticSummary: { totalEntries: 0, retainedEntries: 0, omittedEntries: 0, truncated: false, redacted: false }, environmentSummary: unavailableEnvironment(context), runId, project: request.project, workspace: context.workspace, phase: request.phase, group: request.group, profileId: null,
     selection: { files: request.files ?? [], testIds: request.only ?? [] }, command: null, startedAt: new Date(now).toISOString(), durationMs: 0,
     exitCode: null, signal: null, timedOut: false, cleanup: { complete: true, remainingPids: [] }, outcome: 'refused', failureKinds: ['refusal'],
-    passed: [], knownRed: [], unexecuted: [], unknown: [], removed: [], groupState: 'idle', timeoutCount: 0, nextAction: 'fix-setup', hintIds: [], hints: [], evidence: [] };
+    passed: [], knownRed: [], unexecuted: [], unknown: [], removed: [], stateAccess: null, groupSnapshot: 'unavailable', groupState: null, timeoutCount: null, nextAction: 'fix-setup', hintIds: [], hints: [], evidence: [] };
 }
 function attachHints(result: TestRunResult, config: TestRunConfig | null): TestRunResult {
   const phase = config?.phases[result.phase];
@@ -410,7 +416,7 @@ function attachHints(result: TestRunResult, config: TestRunConfig | null): TestR
   result.hints = result.hintIds.map(id => config!.hints[id]);
   return result;
 }
-function groupState(group: TestRunGroup, policy: UnitTestPolicy): TestRunResult['groupState'] {
+function groupState(group: TestRunGroup, policy: UnitTestPolicy): NonNullable<TestRunResult['groupState']> {
   return group.timeoutCount >= policy.maxGroupTimeouts ? group.knownRed.length ? 'confirm-known-red' : 'unverified-remainder' : group.timeoutCount >= policy.optimizeAfterTimeouts ? 'optimize' : 'idle';
 }
 
@@ -444,9 +450,13 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   const key = { project: request.project, workspace: context.workspace, group: request.group };
   const deadline = started + result.timeoutPolicy.timeoutMs;
   let reserved: TestRunGroup | null = null;
+  let pendingResult: TestRunResult | null = null;
   try {
+    const recovered = await ports.recoverGroup?.(key);
+    if (recovered) return recovered;
     await ports.state.transaction(tx => {
       let group = tx.get(key);
+      result.groupSnapshot = group ? 'loaded' : 'absent'; result.groupState = group?.state ?? 'idle'; result.timeoutCount = group?.timeoutCount ?? 0;
       if (group) {
         result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
       }
@@ -457,6 +467,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
         if (overlap.length) failure('GROUP_RENAME_REFUSED', `Files ${overlap.join(', ')} already belong to ${other.key.group}. Continue with --group ${other.key.group}. To release or reassign the selection, ask main to reconcile the existing group's selection, preserving timeoutCount and knownRed; do not rename the group or reset its state.`);
       }
       if (group && ((group.testKind ?? 'unit') !== result.testKind || (group.profileId ?? group.lastResult?.profileId ?? plan.profileId) !== plan.profileId)) failure('GROUP_PROFILE_MISMATCH');
+      if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) { pendingResult = structuredClone(group.lastResult); return; }
       if (group?.inFlight) failure('GROUP_IN_FLIGHT');
       if (request.only && (!group || plan.selection.testIds.some(id => !containsId(group!.knownRed, id)))) failure('UNKNOWN_RED_TEST');
       group ??= { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: 0, state: 'idle', selection: plan.selection, knownRed: [], unexecuted: [], inFlight: null, lastResult: null };
@@ -467,7 +478,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
         else { result.errorCode = 'GROUP_BUDGET_EXHAUSTED'; result.nextAction = 'confirm-known-red'; }
         return;
       }
-      group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null };
+      group.testKind = result.testKind!; group.profileId = plan.profileId; group.selection = plan.selection; group.state = 'running'; group.inFlight = { runId: result.runId, deadlineMs: deadline, startedAtMs: started, timeoutPolicy: result.timeoutPolicy!, callerPhase: result.callerPhase, processIdentity: null, phase: request.phase, selection: plan.selection, command: plan.command, testKind: result.testKind, startedAt: result.startedAt, finishedAtMs: null, deadlineObservedAtMs: null };
       tx.put(group); reserved = group;
     });
   } catch (error) {
@@ -475,17 +486,18 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (result.errorCode === 'STATE_FAILED') { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
     if (result.errorCode === 'GROUP_IN_FLIGHT') {
       result.groupState = 'reconcile'; result.nextAction = 'reconcile';
-      try { await reconcileTestRunGroup(key, policy, context, ports); }
+      try { if (!ports.recoverGroup) await reconcileTestRunGroup(key, policy, context, ports); }
       catch (recoveryError) {
         result.outcome = 'setup-failed'; result.failureKinds = ['setup']; result.errorCode = 'STATE_FAILED';
         diagnostics?.preflight(recoveryError);
       }
     }
+    result.stateAccess = (error as any)?.stateAccess ?? null;
     diagnostics?.preflight(error);
     result.evidence = [];
     return attach();
   }
-  if (!reserved) return attach();
+  if (!reserved) return pendingResult ?? attach();
   const events: RunnerEvent[] = [];
   let temporary: RunTemporaryReservation | undefined;
   const onEvent = (event: RunnerEvent) => {
@@ -519,7 +531,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     });
     const finished = await Promise.race([child.wait(), stopped]);
     if (typeof finished === 'string') reason = finished; else exit = finished;
-    if (ports.clock.now() >= deadline && reason === 'exit') reason = 'timeout';
+    await ports.state.transaction(tx => { const group = tx.get(key); if (group?.inFlight?.runId !== result.runId) return; if (reason === 'exit') group.inFlight.finishedAtMs = ports.clock.now(); else if (reason === 'timeout') group.inFlight.deadlineObservedAtMs = ports.clock.now(); tx.put(group); });
     result.cleanup = await child.cleanup(deadline, reason);
     if (reason !== 'exit' && result.cleanup.complete) exit = await child.wait();
     }
@@ -592,10 +604,11 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     else result.nextAction = result.timedOut ? 'retry' : 'fix-implementation';
     if (result.testKind === 'integration' && result.outcome !== 'passed') { result.groupState = 'incomplete'; result.nextAction = 'complete-integration'; }
     attachHints(result, config);
-    group.state = result.groupState;
+    result.groupSnapshot = 'loaded';
+    group.state = result.groupState!;
     if (result.cleanup.complete) group.inFlight = null;
     attach();
-    group.lastResult = result; tx.put(group);
+    group.lastResult = result; group.delivery = { runId: result.runId, pending: true, receiptId: null, returned: false, forwardedToMain: false }; tx.put(group);
   }); } catch (error) {
     result.outcome = 'setup-failed'; result.errorCode = 'STATE_FAILED';
     result.failureKinds = [...new Set<TestRunFailureKind>([...result.failureKinds, 'setup'])];
@@ -620,14 +633,16 @@ export async function reconcileTestRunGroup(key: TestRunGroupKey, policy: UnitTe
     const complete = observed.cleanup.complete && temporaryCleanup?.cleanup !== 'incomplete';
     const flight = current.inFlight;
     const recorded = current.lastResult?.runId === flight.runId;
-    if (observed.deadlineReached && !recorded) current.timeoutCount++;
-    const result = recorded ? current.lastResult! : emptyResult({ project: key.project, phase: 'recovery', group: key.group, files: current.selection.files }, context, flight.runId, flight.startedAtMs ?? flight.deadlineMs - (flight.timeoutPolicy?.timeoutMs ?? policy.timeoutMs));
+    const timedOut = observed.deadlineReached && !(flight.finishedAtMs != null && flight.finishedAtMs < flight.deadlineMs);
+    if (timedOut && !recorded) current.timeoutCount++;
+    const result = recorded ? current.lastResult! : emptyResult({ project: key.project, phase: flight.phase ?? 'recovery', group: key.group, files: current.selection.files }, context, flight.runId, flight.startedAtMs ?? flight.deadlineMs - (flight.timeoutPolicy?.timeoutMs ?? policy.timeoutMs));
     result.testKind = current.testKind ?? 'unit'; result.timeoutPolicy = flight.timeoutPolicy ?? testRunTimeoutPolicy('unit', { unitTests: policy }); result.callerPhase = flight.callerPhase ?? null;
     if (result.testKind === 'integration') result.phase = 'integration';
     if (!recorded) {
-      result.outcome = observed.deadlineReached ? 'timed-out' : 'setup-failed';
-      result.timedOut = observed.deadlineReached;
-      result.failureKinds = observed.deadlineReached ? ['timeout'] : ['setup'];
+      result.outcome = timedOut ? 'timed-out' : 'setup-failed';
+      result.timedOut = timedOut;
+      result.failureKinds = timedOut ? ['timeout'] : ['setup'];
+      result.command = flight.command ?? null; result.startedAt = flight.startedAt ?? result.startedAt;
       result.knownRed = current.knownRed;
       result.unexecuted = current.unexecuted;
       result.unknown = current.unknown ?? current.lastResult?.unknown ?? [];
@@ -642,10 +657,12 @@ export async function reconcileTestRunGroup(key: TestRunGroupKey, policy: UnitTe
       result.outcome = 'setup-failed';
       result.failureKinds = [...new Set<TestRunFailureKind>([...result.failureKinds, 'setup'])];
     } else result.cleanup = observed.cleanup;
+    result.groupSnapshot = 'loaded';
     result.timeoutCount = current.timeoutCount;
     result.groupState = 'reconcile'; result.nextAction = 'reconcile';
     if (result.testKind === 'integration') { result.groupState = 'incomplete'; result.nextAction = 'complete-integration'; }
-    current.lastResult = result; current.state = result.groupState;
+    if (!recorded) { current.lastResult = result; current.delivery = { runId: result.runId, pending: true, receiptId: null, returned: false, forwardedToMain: false }; }
+    current.state = result.groupState!;
     if (complete) current.inFlight = null;
     tx.put(current); return current;
   });
@@ -656,7 +673,7 @@ function validatePolicy(policy: UnitTestPolicy): void {
 export async function cleanupClosedTestRunGroups(activeChanges: readonly string[], context: TestRunContext, ports: TestRunPorts): Promise<void> {
   await ports.state.transaction(tx => {
     for (const project of Object.keys(context.projectWorkspaces)) {
-      for (const group of tx.list(project, context.workspace)) if (!activeChanges.includes(group.key.group.split('/')[0]) && !group.inFlight) tx.delete(group.key);
+      for (const group of tx.list(project, context.workspace)) if (!activeChanges.includes(group.key.group.split('/')[0]) && !group.inFlight && !group.delivery?.pending) tx.delete(group.key);
     }
   });
 }
@@ -664,6 +681,7 @@ export async function cleanupClosedTestRunGroups(activeChanges: readonly string[
 export function testRunFailureResult(request: TestRunRequest, context: TestRunContext, runId: string, now: number, config: unknown, error: unknown): TestRunResult {
   const result = emptyResult(request, context, runId, now);
   result.errorCode = (error as any)?.code ?? 'INVALID_ARGUMENT';
+  result.stateAccess = (error as any)?.stateAccess ?? null;
   result.evidence = [];
   const configured = record(config) && record(config.phases) && record(config.hints) ? config as unknown as TestRunConfig : null;
   if (configured) {

@@ -1,3 +1,6 @@
+import { acknowledgeTestRunDelivery, recoverTestRun, stateOpenFailure } from './test-run-state-recovery.ts';
+import type { RecoveryStatePort } from './test-run-state-recovery.ts';
+import { observeReservedTestTree } from './test-run-resource-process.ts';
 import { profileFiles, profileTestKind } from './test-run-integration-profiles.ts';
 import { testWrapperIdentity } from './test-run-resource-process.ts';
 import { createTestRunResourcePort } from './test-run-resource-runtime.ts';
@@ -260,6 +263,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
 export async function runConfiguredTestRun(argv: readonly string[], options: { orchestratorRoot: string; homeDirectory: string }): Promise<ExecutionResult> {
   let store: StateStore | undefined, controlStore: StateStore | undefined;
   let config: TestRunConfig | undefined;
+  let resultContext: StateContext | undefined;
   let context: TestRunContext = { cwd: process.cwd(), workspace: '', projectWorkspaces: {}, agentPhases: [], activeChanges: [], agentId: 'test-run', sha: '', home: options.homeDirectory, statePath: '', tmpPath: '', operationalHome: userInfo().homedir };
   const value = (option: string) => { const index = argv.indexOf(option); return index >= 0 ? argv[index + 1] ?? '' : ''; };
   let request = { project: value('--project'), phase: value('--phase'), group: value('--group') };
@@ -285,7 +289,14 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     context = { ...context, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, integrationTests };
     if (!phases.includes(args.phase) || !config.phases[args.phase]?.allowed) throw Object.assign(new Error('Phase does not permit test execution'), { code: 'PHASE_NOT_ALLOWED' });
     const controlContext = productionStateContext(root, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
-    controlStore = openStateStore(controlContext.statePath, { context: controlContext });
+    const openStore = (role: 'control' | 'unit', state: StateContext): StateStore => {
+      try { return openStateStore(state.statePath, { context: state }); }
+      catch (error) {
+        if ((error as any)?.operation === 'open' || (error as any)?.code?.startsWith('ERR_SQLITE') && !(error as any)?.operation) Object.assign(error as object, { stateAccess: stateOpenFailure(role, state.statePath, error, config!.diagnostics) });
+        throw error;
+      }
+    };
+    controlStore = openStore('control', controlContext);
     const control = await sandboxTestControlSnapshot(controlStore, root, args.project, args.group);
     const caller = control.ancestors.find(row => row.pid === process.pid);
     if (!caller) throw Object.assign(new Error('Current caller identity is unavailable'), { code: 'CALLER_UNVERIFIED' });
@@ -315,8 +326,38 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         const session = controlStore!.sessionRepository.transaction(tx => tx.getSession(assignment.runId), 'read');
         const items = session?.launchContext?.assignment.changes.flatMap(change => change.items.map(item => ({ project: session.activity?.project ?? args.project, change: change.id, item: item.id }))) ?? [];
         const resources = createTestRunResourcePort(controlStore!, { root, workspace, home: context.operationalHome, machineId: boot.machineId, config, resultStatePath: stateContext.statePath, items });
-        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStateStore(stateContext.statePath, { context: stateContext }), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
-        const reserved = Object.assign(runtime, { machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
+        resultContext = stateContext;
+        runtime = createTestRunPorts(config!, stateContext, () => store ??= openStore('unit', stateContext), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
+        const reserved = Object.assign(runtime, { deferDelivery: true, machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
+        runtime.recoverGroup = async groupKey => {
+          const recovery = await recoverTestRun({ key: groupKey, authorized: true, nowMs: Date.now() }, {
+            state: runtime!.state as RecoveryStatePort,
+            observe: async flight => {
+              const owner = observeReservedTestTree(flight.ownerIdentity ?? flight.wrapperIdentity ?? null);
+              const tree = observeReservedTestTree(flight.processIdentity);
+              return { owner: owner.state === 'dead' ? 'lost' : owner.state === 'alive' ? 'alive' : 'unknown', tree: tree.state, identity: tree.processIdentity, finishedAtMs: flight.finishedAtMs ?? null, deadlineObservedAtMs: flight.deadlineObservedAtMs ?? null, interrupted: false };
+            },
+            cleanup: async flight => {
+              const cleanup = (await runtime!.reconcile(flight.processIdentity, flight.deadlineMs)).cleanup;
+              if (flight.temporary && runtime!.cleanupTemporary) {
+                const temporary = await runtime!.cleanupTemporary(flight.temporary, cleanup.complete);
+                if (temporary.cleanup !== 'complete') cleanup.complete = false;
+              }
+              return cleanup;
+            },
+            release: async (runId, identity) => {
+              const claims = (await resources.list(boot.machineId)).filter(claim => claim.testRunId === runId);
+              for (const claim of claims) {
+                if (identity && claim.processIdentity !== identity) return false;
+                if ((await resources.observeTree(claim)).state !== 'dead' || !await resources.release(claim)) return false;
+              }
+              return true;
+            },
+            returnResult: async () => ({ returned: false }),
+            messageMain: async () => ({ accepted: false, receiptId: null, forwarded: false }),
+          });
+          return recovery.result;
+        };
         await reconcileTestRunResources(context, policy, reserved);
         return { config, policy, context, runtime: reserved };
       },
@@ -336,7 +377,13 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         }
       }
     }
-    return { exitCode: reply.code, stdout: reply.stdout.trimEnd(), stderr: reply.stderr.trimEnd() };
+    const output = JSON.parse(reply.stdout);
+    const stateForDelivery = resultContext;
+    return { exitCode: reply.code, stdout: reply.stdout.trimEnd(), stderr: reply.stderr.trimEnd(),
+      afterDelivery: stateForDelivery && output.groupSnapshot === 'loaded' ? async () => {
+        const deliveredStore = openStore('unit', stateForDelivery);
+        try { await acknowledgeTestRunDelivery(output, sqliteTestRunState(deliveredStore)); } finally { deliveredStore.close(); }
+      } : undefined };
   } catch (error) {
     const result = testRunFailureResult(request, context, randomUUID(), Date.now(), config, error);
     if (!config || ['STATE_CONTEXT_REFUSED', 'STATE_SCHEMA_MISMATCH', 'HANDLER_FAILED'].includes(result.errorCode!)) {

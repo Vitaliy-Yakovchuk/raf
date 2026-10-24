@@ -1,3 +1,4 @@
+import { validateStateRecoveryResult } from './test-run-state-recovery.ts';
 import { runTestRunCli, type TestRunCliPorts } from './test-run-cli.ts';
 import { resolveSandboxTestCaller, SandboxCallerRefusal } from './sandbox-test-caller.ts';
 import type { SandboxCallerSnapshot } from './sandbox-test-caller.ts';
@@ -228,10 +229,11 @@ export function formatSandboxTestRunEvidence(evidence: SandboxTestRunEvidence): 
   try {
     result = JSON.parse(evidence.reply.stdout);
     if (!result || typeof result !== 'object' || !['passed', 'assertions-failed', 'setup-failed', 'timed-out', 'interrupted', 'refused', 'unverified-remainder'].includes(result.outcome)
-      || !['runId', 'project', 'workspace', 'phase', 'group', 'groupState', 'nextAction'].every(field => typeof result[field] === 'string')
+      || !['runId', 'project', 'workspace', 'phase', 'group', 'nextAction'].every(field => typeof result[field] === 'string')
       || !['knownRed', 'unexecuted', 'unknown'].every(field => Array.isArray(result[field])) || !result.selection || !result.cleanup || typeof result.cleanup.complete !== 'boolean'
-      || !Array.isArray(result.cleanup.remainingPids) || typeof result.timedOut !== 'boolean' || typeof result.timeoutCount !== 'number') throw new SandboxCallerRefusal('Incomplete TestRunResult');
+      || !Array.isArray(result.cleanup.remainingPids) || typeof result.timedOut !== 'boolean') throw new SandboxCallerRefusal('Incomplete TestRunResult');
+    validateStateRecoveryResult(result);
   } catch { return escalation('missing, malformed or truncated TestRunResult JSON'); }
-  const validPass = result.outcome === 'passed' && evidence.reply.code === 0 && result.cleanup.complete && !result.cleanup.remainingPids.length && !result.timedOut && !result.knownRed.length && !result.unexecuted.length && !result.unknown.length;
-  return `${context}\nCLI code: ${evidence.reply.code}; child exitCode: ${result.exitCode}\nrunId: ${result.runId}\nproject: ${result.project}; phase: ${result.phase}; group: ${result.group}\nselection: ${JSON.stringify(result.selection)}\noutcome: ${result.outcome}; verified pass: ${validPass}\ntimedOut: ${result.timedOut}; cleanup: ${JSON.stringify(result.cleanup)}\nknownRed: ${JSON.stringify(result.knownRed)}\nunexecuted: ${JSON.stringify(result.unexecuted)}\nunknown: ${JSON.stringify(result.unknown)}\ntimeoutCount: ${result.timeoutCount}; groupState: ${result.groupState}; nextAction: ${result.nextAction}\nstderr: ${evidence.reply.stderr}${result.outcome === 'passed' && !validPass ? '\nUnverified result; use agent message to main; no green claim.' : ''}`;
+  const validPass = result.groupSnapshot === 'loaded' && result.outcome === 'passed' && evidence.reply.code === 0 && result.cleanup.complete && !result.cleanup.remainingPids.length && !result.timedOut && !result.knownRed.length && !result.unexecuted.length && !result.unknown.length;
+  return `${context}\nCLI code: ${evidence.reply.code}; child exitCode: ${result.exitCode}\nrunId: ${result.runId}\nproject: ${result.project}; phase: ${result.phase}; group: ${result.group}\nselection: ${JSON.stringify(result.selection)}\noutcome: ${result.outcome}; verified pass: ${validPass}\ntimedOut: ${result.timedOut}; cleanup: ${JSON.stringify(result.cleanup)}\nknownRed: ${JSON.stringify(result.knownRed)}\nunexecuted: ${JSON.stringify(result.unexecuted)}\nunknown: ${JSON.stringify(result.unknown)}\nstateAccess: ${JSON.stringify(result.stateAccess)}; groupSnapshot: ${result.groupSnapshot}\ntimeoutCount: ${result.timeoutCount}; groupState: ${result.groupState}; nextAction: ${result.nextAction}\nstderr: ${evidence.reply.stderr}${result.outcome === 'passed' && !validPass ? '\nUnverified result; use agent message to main; no green claim.' : ''}`;
 }

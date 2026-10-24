@@ -53,6 +53,7 @@ export function redactDiagnostic(value: unknown, secrets: readonly string[] = []
 export type Handler = (params: Record<string, unknown>) => unknown | Promise<unknown>;
 
 export interface ExecutionResult {
+  afterDelivery?: () => Promise<void>;
   exitCode: number;
   stdout: string;
   stderr: string;

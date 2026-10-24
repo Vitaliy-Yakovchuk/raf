@@ -69,14 +69,49 @@ export async function hotfixRoute(host: HotfixHost): Promise<{ cwd: string; gitD
   const gitDirectory = await fs.realpath(await git(cwd, 'rev-parse', '--path-format=absolute', '--git-dir'));
   return { cwd, gitDirectory };
 }
+async function claimLock(lock: string): Promise<void> {
+  const prepared = lock + '.owner-' + randomUUID();
+  await fs.mkdir(prepared);
+  try {
+    await durable(join(prepared, 'owner.json'), { pid: process.pid, start: await processStart(process.pid) });
+    await fs.rename(prepared, lock);
+  } catch (error) {
+    await fs.rm(prepared, { recursive: true, force: true });
+    if (error.code === 'ENOTEMPTY') error.code = 'EEXIST';
+    throw error;
+  }
+}
+async function reclaimDeadLock(lock: string): Promise<void> {
+  await execute('python3', ['-c', `import fcntl,json,os,shutil,sys,uuid
+lock=sys.argv[1]
+with open(lock+'.reaper', 'a') as guard:
+ fcntl.flock(guard, fcntl.LOCK_EX)
+ try:
+  with open(os.path.join(lock,'owner.json')) as file: owner=json.load(file)
+ except FileNotFoundError: sys.exit(0)
+ try:
+  with open('/proc/'+str(owner['pid'])+'/stat') as file: stat=file.read()
+  active=stat[stat.rfind(')')+2:].split()[19]==owner['start']
+ except FileNotFoundError: active=False
+ if not active:
+  stale=lock+'.stale-'+str(uuid.uuid4())
+  os.rename(lock,stale)
+  shutil.rmtree(stale)
+`, lock]);
+}
 export async function withHotfixWriter<T>(host: HotfixHost, use: () => Promise<T>): Promise<T> {
   const route = await hotfixRoute(host);
   const lock = join(route.gitDirectory, 'raf-writer.lock');
   const deadline = Date.now() + await timeoutMs(host);
   for (;;) {
-    try { await fs.mkdir(lock); break; }
+    try {
+      await claimLock(lock);
+      break;
+    }
     catch (error: any) {
       if (error.code !== 'EEXIST') throw error;
+      const owner = await json(join(lock, 'owner.json')).catch(() => null);
+      if (owner && !await alive(owner.pid, owner.start)) { await reclaimDeadLock(lock); continue; }
       if (Date.now() >= deadline) throw new Error('Hotfix writer lock timeout; coordinate writers with main');
       await new Promise(resolve => setTimeout(resolve, 10));
     }
@@ -87,7 +122,7 @@ export async function withHotfixWriter<T>(host: HotfixHost, use: () => Promise<T
       await new Promise(resolve => setTimeout(resolve, 10));
     }
     return await use();
-  } finally { await fs.rmdir(lock); }
+  } finally { await fs.rm(lock, { recursive: true }); }
 }
 export async function inventory(root: string, omit = new Set(['.git', 'node_modules'])): Promise<{ path: string; sha256: string; mode: number }[]> {
   const files: { path: string; sha256: string; mode: number }[] = [];
@@ -129,11 +164,11 @@ export async function locked<T>(host: HotfixHost, use: (route: Awaited<ReturnTyp
   const budget = budgets.length ? Math.min(...budgets) : await timeoutMs(host);
   const deadline = Date.now() + budget;
   for (;;) {
-    try { await fs.mkdir(lock); await durable(join(lock, 'owner.json'), { pid: process.pid, start: await processStart(process.pid) }); break; }
+    try { await claimLock(lock); break; }
     catch (error: any) {
       if (error.code !== 'EEXIST') throw error;
       const owner = await json(join(lock, 'owner.json')).catch(() => null);
-      if (owner && !await alive(owner.pid, owner.start)) { await fs.rm(lock, { recursive: true }); continue; }
+      if (owner && !await alive(owner.pid, owner.start)) { await reclaimDeadLock(lock); continue; }
       if (failIfBusy) throw new Error('Hotfix activation busy; reader admission refused');
       if (Date.now() >= deadline) throw new Error('Hotfix activation lock timeout');
       await new Promise(resolve => setTimeout(resolve, 10));

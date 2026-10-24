@@ -146,9 +146,14 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[]): P
     if (resolve(orchestratorRoot, main) === codeRoot || owner?.root === codeRoot) {
       if (resolve(orchestratorRoot, main) === codeRoot && execFileSync('git', ['-C', codeRoot, 'symbolic-ref', '--short', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() !== 'main') throw new Error('Registered raf main Git branch required');
       verifyBootstrap();
-      const { acquireHotfixReader } = await import(pathToFileURL(join(codeRoot, 'src/hotfix-activation.ts')).href);
+      const { acquireHotfixReader, retainHotfixGeneration } = await import(pathToFileURL(join(codeRoot, 'src/hotfix-activation.ts')).href);
       verifyBootstrap();
-      lease = await acquireHotfixReader({ orchestratorRoot, qaHome: homedir(), environment: {}, sandboxExecutable: 'codex' }, 'cli');
+      const host = { orchestratorRoot, qaHome: homedir(), environment: {}, sandboxExecutable: 'codex' };
+      if (owner?.root === codeRoot) {
+        const retained = await retainHotfixGeneration(host, codeRoot);
+        if (!retained) throw new Error('Production generation reader registration missing');
+        lease = { generationRoot: codeRoot, release: () => retained.release() };
+      } else lease = await acquireHotfixReader(host, 'cli');
     }
     const root = lease?.generationRoot ?? codeRoot;
     const { runProductionCli } = await import(pathToFileURL(join(root, 'src/production-entry.ts')).href);

@@ -1,0 +1,67 @@
+{
+  "change": "monitor-raf-health",
+  "item": "7.1",
+  "stage": "test-scaffold",
+  "inventory": [
+    "src/health-summary.ts",
+    "test/health-summary.test.ts",
+    "evidence/monitor-raf-health/summary-scaffold"
+  ],
+  "publicSurface": [
+    "settleRafHealthSummary(context, ports): Promise<HealthSummaryResult>",
+    "readRafHealthSummary(context, ports): Promise<RafHealthView>",
+    "withRafHealthSummary<T>(context, ports, operation): Promise<T>",
+    "extendRafCommandStats<T extends {commands: unknown; profile: unknown}>(stats, context, ports): Promise<T & {health: RafHealthView}>"
+  ],
+  "ports": {
+    "transaction": "Adapt to existing primary SQLite guard/migration and atomic fact/outbox storage. readSources uses requested actual bounds; state carries persisted domain ID, accounting start, completed boundary, force baseline and last summary. No separate database.",
+    "deliverPendingToCurrentMain": "Adapt only to existing event-registry/add-raf-reminders receipt transport. No secondary bus, timers, retry policy or service duties.",
+    "reportUnavailable": "Existing safe health diagnostics; independent primary success/error must remain unchanged."
+  },
+  "registrationPatch": "conf-test-runs.patch.json",
+  "profilePrerequisites": {
+    "profileId": "node",
+    "cwd": ".",
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts"
+    ],
+    "exactIds": "node-test-name",
+    "resultAdapter": "node-test-events",
+    "environment": {
+      "isolatedHome": true,
+      "stateOrigin": true
+    },
+    "checks": [
+      "node_modules/typescript/package.json",
+      "src/test-run-reporter.ts",
+      "scripts/test-run-node.ts"
+    ],
+    "required": "Main verifies route/worktree, exact unitFiles/groups registration and trusted caller channel. Raf provides verified isolated QA HOME/state/tmp and current budgets from conf/flow.json#/unitTests. No policy reset or copied timeout."
+  },
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/summary --files test/health-summary.test.ts",
+  "followingStages": {
+    "group": "monitor-raf-health/summary",
+    "selection": [
+      "test/health-summary.test.ts"
+    ],
+    "coordinator": "Inspect complete author TestRunResult and confirm behavior red; 7.2 remains main-owned.",
+    "implement": "Another agent owns 7.3; wire existing production command/worker hooks, primary SQLite, approved event catalog and configured interval. Requires CPU 2.3, force 5.3 and accepted profile source. Do not edit tests.",
+    "qa": "7.4 remains open for live runtime proof."
+  },
+  "audit": {
+    "result": "Доручення актуальне, еквівалентної summary-поверхні не виявлено. Нова поведінка дозволена task 1.2; production gate та числові значення додає implement.",
+    "sources": [
+      "proposal.md Why/What Changes/Non-goals",
+      "tasks.md 1.2, 7.1–7.4",
+      "health-monitoring spec: Підсумок стану для main",
+      "design: Архітектура та стан; Вікно CPU та підсумок",
+      "background-runtime: Межі служби raf; Механізми поза службою",
+      "event-registry: Затверджені події й ID",
+      "reminders: Доставка активного нагадування"
+    ],
+    "staleInstructions": "tasks.md старе правило сліпого режиму/заборони автору запускати тести перекрите явним брифом та add-raf-test-run feature-test-authoring delta; tasks.md не редагував."
+  },
+  "initialRun": "Awaiting main registration after scaffold commit. Full TestRunResult and CLI exit will be added separately.",
+  "archive": "Not applicable: other change items remain open; no checkboxes edited."
+}

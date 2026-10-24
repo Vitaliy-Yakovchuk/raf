@@ -1,0 +1,48 @@
+{
+  "checks": [
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit --strict --allowImportingTsExtensions --target esnext --module nodenext --typeRoots /usr/share/nodejs/@types --types node --skipLibCheck src/health-summary.ts test/health-summary.test.ts",
+      "chunk_id": "f0c0ef",
+      "wall_time_seconds": 1.75676279,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "command": "node --check src/health-summary.ts",
+      "chunk_id": "469e53",
+      "wall_time_seconds": 0.252993382,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "command": "node --check test/health-summary.test.ts",
+      "chunk_id": "003cb2",
+      "wall_time_seconds": 0.28644774,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "command": "npm run check:comments",
+      "chunk_id": "e19404",
+      "wall_time_seconds": 4.256306464,
+      "exit_code": 0,
+      "original_token_count": 13,
+      "output": "\n> check:comments\n> node scripts/check-comments.ts\n\n"
+    },
+    {
+      "command": "git diff --check",
+      "chunk_id": "2351a4",
+      "wall_time_seconds": 0.245137485,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ],
+  "limitations": [
+    "Node typings were read from /usr/share/nodejs/@types; skipLibCheck skips ambient dependency declarations only.",
+    "No unit execution is claimed by syntax/type checks. Behavioral red awaits main profile registration."
+  ]
+}

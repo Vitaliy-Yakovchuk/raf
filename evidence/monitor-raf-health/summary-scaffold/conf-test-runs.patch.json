@@ -1,0 +1,17 @@
+[
+  {
+    "op": "add",
+    "path": "/projects/raf/profiles/node/unitFiles/-",
+    "value": "test/health-summary.test.ts"
+  },
+  {
+    "op": "add",
+    "path": "/projects/raf/groups/monitor-raf-health~1summary",
+    "value": {
+      "profileId": "node",
+      "files": [
+        "test/health-summary.test.ts"
+      ]
+    }
+  }
+]

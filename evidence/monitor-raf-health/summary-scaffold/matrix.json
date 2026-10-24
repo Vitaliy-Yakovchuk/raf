@@ -1,0 +1,64 @@
+{
+  "change": "monitor-raf-health",
+  "item": "7.1",
+  "group": "monitor-raf-health/summary",
+  "file": "test/health-summary.test.ts",
+  "basis": "health-monitoring «Підсумок стану для main», усі сценарії; design «Архітектура та стан», «Вікно CPU та підсумок»",
+  "coverage": [
+    {
+      "scenario": "Настав строк підсумку",
+      "cases": [
+        "worker/runtime at due, before due, supplied interval",
+        "concurrent observers and retry: one fact and accepted delivery",
+        "identity includes stable SQLite domain and both period boundaries",
+        "outbox write failure rolls back boundary and force baseline"
+      ]
+    },
+    {
+      "scenario": "Main або виконавці були відсутні",
+      "cases": [
+        "multiple skipped intervals collapse to one delayed actual period with original scheduledAt",
+        "successive actual observations create adjacent nonoverlapping periods",
+        "offline/receipt refusal remains pending; current replacement main receives once",
+        "restart reuses persisted domain boundary and pending fact",
+        "delivery failure keeps committed event; retry uses existing outbox",
+        "several observed periods offline retain pending facts independently"
+      ]
+    },
+    {
+      "scenario": "Читання й доставка чинним транспортом",
+      "cases": [
+        "commands/profile and future fields preserved with cumulative health",
+        "health before first event has dueAt but no invented delivery",
+        "events by type and refusals by code/stage",
+        "queue states count oldestAt and oldestAgeMs from resource-wait source",
+        "CPU copied from authoritative assessment with completeness/bounds/reason",
+        "force completed delta per committed period differs from cumulative stats",
+        "known zero versus unavailable force baseline/reset/new accounting epoch",
+        "source partial/unavailable is explicit and does not block other aggregates",
+        "own summary event excluded from previous period, present in next period",
+        "allowlisted aggregate projection excludes raw frames/briefs/secret canaries",
+        "existing transport port alone handles accepted receipts and current main"
+      ]
+    },
+    {
+      "scenario": "Невалідні параметри",
+      "cases": [
+        "missing/null/zero/negative/string/NaN/Infinity interval: CONFIGURATION_INVALID with exact pointer",
+        "invalid health policy visible in stats; commands/profile preserved",
+        "disabled/service/help/parse do not open state or invoke transport",
+        "independent operation success and error preserved under config/storage/outbox/transport failures"
+      ]
+    }
+  ],
+  "invariants": [
+    "fact insertion and boundary/force baseline advancement are one transaction",
+    "no delivery receipt means no delivered marker",
+    "one summary per observed actual interval; no synthetic hourly snapshots",
+    "source aggregation receives [startedAt, completedAt) before insertion",
+    "force period completed is a delta; stats completed is cumulative",
+    "no feature logic in scaffold methods: all throw Error(NotImplemented)"
+  ],
+  "testDoubles": "In-memory serialized transaction with rollback and persisted state, aggregate reader, existing outbox/receipt transport. These are unit boundaries, not live SQLite/worker/tmux proof.",
+  "qaRemaining": "Task 7.4 owns real worker/SQLite/service-off and main-offline/restart delivery checks; this scaffold does not close it."
+}

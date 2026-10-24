@@ -217,7 +217,7 @@ async function concurrent(input: CaseInput) {
     assert.match(sharedLive.stdout, /shared/);
     assert.equal(await readFile(join(directoryFor(aInput), '.z390-caller-owned'), 'utf8'), 'caller-owned');
     assert.equal(process.cwd(), before.cwd);
-    assert.deepEqual(process.env, before.env);
+    assert.deepEqual({ ...process.env }, before.env);
     return { a: a.bind, b: b.bind, shared: shared.connect, sharedRuntimeAlive: true, stillAlive: true, isolated: true };
   } finally {
     await Promise.all([serverA.close(), serverB.close()]);

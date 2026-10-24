@@ -11,16 +11,18 @@
     "exitCode": 0
   },
   "externalHostStatus": {
-    "state": "waiting-resource-admission",
-    "source": "Main handoff 2026-10-24",
-    "waitingSince": "19:43 UTC",
-    "gate": "raf resource wait --level normal",
-    "reason": "Host load about 10–13/8 from existing workers",
-    "sequence": [
-      "same-pattern stand green",
-      "negative guards",
-      "3 parallel live fixed deliveries"
-    ],
-    "expected": "/srv/dev/fla911b-stand-green/{green,guards}.{stdout,stderr,code}"
-  }
+    "state": "complete",
+    "source": "Main final host handoff 2026-10-24; full evidence copied without alteration",
+    "standDelivery": "stand-green/record.json",
+    "negativeGuards": "guards-green/record.json",
+    "fixedLive": "fixed-live.record.json",
+    "secretScan": "Main clean for all final host results",
+    "cleanup": "Owned fixture tmux/process cleanup completed; shared workspace retained"
+  },
+  "fixtureSyntax": {
+    "command": "node --check test/production-codex-delivery-qa.test.ts",
+    "exitCode": 0,
+    "sourceSha": "2ea717eee51ae7e2c46cd85d855d26ac74588321"
+  },
+  "unitEvidenceIntegrity": "unit-evidence-integrity.json"
 }

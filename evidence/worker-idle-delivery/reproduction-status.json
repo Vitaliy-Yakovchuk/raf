@@ -45,9 +45,12 @@
   ],
   "next": {
     "standRed": "stand-red/record.json: both scrolled-paste/repainting-paste fail behaviorally before delivery fix",
-    "standGreen": "stand-green/record.json: same-pattern 2/2 passed, CLI 0; negative guards running; live fixed pending",
+    "standGreen": "stand-green/record.json: 2/2 pass, CLI 0 on 58b1057",
     "unitGreen": "unit-hotfix.record.json: worker-only passed 26/26",
-    "unitAfterDeliveryGuard": "unit-hotfix-reconciled.record.json: passed 26/26 on 0a1d1ed, all knownRed resolved; same group/QA HOME. Prior inventory refusal retained separately."
+    "unitAfterDeliveryGuard": "unit-hotfix-reconciled.record.json: passed 26/26 on 0a1d1ed, all knownRed resolved; same group/QA HOME. Prior inventory refusal retained separately.",
+    "negativeGuards": "guards-green/record.json: 12/12 pass, CLI 0 on 2ea717e",
+    "fixedLive": "fixed-live.record.json: 3/3 accepted, CLI 0 on 2ea717e, owned fixture cleanup complete",
+    "nextAction": "Complete 9.1.1; main transfers code and ticks assigned item"
   },
   "authorization": "Main 2026-10-24: proceed 9.1.1 after host3, reproduce delivery defect with stand test; do not attempt load reproduction."
 }

@@ -211,7 +211,7 @@ export async function prepareCodexSandbox(
   const accountPaths = [accountState, join(accountState, 'tmp')];
   const accountRoots = [...accountPaths, ...await Promise.all(accountPaths.map(canonical))];
   const hidden = new Set<string>();
-  for (const path of [...accountRoots, rafSocketRoot(), rafToolSocketRoot(), ...request.scope.hidden, ...socketAddresses(request.environment)]) {
+  for (const path of [...accountRoots, rafSocketRoot(), rafToolSocketRoot(), '/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...request.scope.hidden, ...socketAddresses(request.environment)]) {
     if (!isAbsolute(path)) unavailable(`hidden path ${path} is not absolute`);
     hidden.add(path);
     hidden.add(await canonical(path));

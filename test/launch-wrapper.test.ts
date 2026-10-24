@@ -273,6 +273,7 @@ test('same address in a later run gets a distinct report path and cannot consume
 test('delivery failure rechecks ownership before stopping and retains recoverable state if identity changed', async t => {
   const f = await fixture(t);
   f.ports.transport.deliver = async () => {
+    f.events.push('deliver');
     f.setOwnership({ state: 'mismatch', reason: 'PID was reused after readiness' });
     throw new Error('delivery failed');
   };

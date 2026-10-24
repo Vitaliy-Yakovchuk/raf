@@ -129,7 +129,10 @@ function networkFilter(): Buffer {
 const probeProgram = String.raw`
 const net = require('node:net');
 const fs = require('node:fs');
-const [socket, port, ...hidden] = JSON.parse(process.argv[1]);
+const path = require('node:path');
+const [socketPath, port, ...hidden] = JSON.parse(process.argv[1]);
+process.chdir(path.dirname(socketPath));
+const socket = path.basename(socketPath);
 const fail = (code, message) => { process.stderr.write(message); process.exit(code); };
 const leaks = [];
 for (const path of hidden) {

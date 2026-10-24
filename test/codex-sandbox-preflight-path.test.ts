@@ -25,6 +25,7 @@ async function fixture() {
   const longRun = join(longBase, 'runner/run-directory');
   const longTmp = join(longBase, 'temporary-artifacts/TMPDIR');
   const witness = join(root, 'listening.jsonl');
+  const invocations = join(root, 'codex-invocations.jsonl');
   await Promise.all([bin, accountRoot, cwd, shortRun, shortTmp, longRun, longTmp].map(path => mkdir(path, { recursive: true })));
   const loadWordAbsolute = 0x20;
   const jumpEqual = 0x15;
@@ -71,9 +72,15 @@ net.Server.prototype.emit = function(event, ...args) {
 `);
   await writeFile(join(bin, 'codex'), `#!${process.execPath}
 const { spawnSync } = require('node:child_process');
-const { openSync, closeSync, statSync } = require('node:fs');
+const { appendFileSync, openSync, closeSync, statSync } = require('node:fs');
 const { join } = require('node:path');
-const args = process.argv.slice(2);
+const argv = process.argv.slice(2);
+const knownGlobalOptions = new Set(['--no-daemon']);
+let commandIndex = 0;
+while (knownGlobalOptions.has(argv[commandIndex])) commandIndex++;
+const globalOptions = argv.slice(0, commandIndex);
+const args = argv.slice(commandIndex);
+appendFileSync(${JSON.stringify(invocations)}, JSON.stringify({ argv, globalOptions, args }) + '\\n');
 const separator = args.indexOf('--');
 if (args[0] !== 'sandbox' || separator < 0 || !args[separator + 1]) {
   process.stderr.write('Z390 fixture expects codex sandbox -- executable args');
@@ -124,7 +131,7 @@ if (child.status !== 0) process.stderr.write('\\nZ390 fixture isolated probe fai
 process.exit(child.status ?? 99);
 `, { mode: 0o700 });
   await symlink('/usr/bin/bwrap', join(bin, 'bwrap'));
-  return { root, bin, home, accountRoot, cwd, shortRun, shortTmp, longRun, longTmp, witness };
+  return { root, bin, home, accountRoot, cwd, shortRun, shortTmp, longRun, longTmp, witness, invocations };
 }
 
 const scenarios = [
@@ -156,6 +163,14 @@ for (const scenario of scenarios) {
         timeoutMs: flow.unitTests.timeoutMs,
       });
       try {
+        const invocations = (await readFile(f.invocations, 'utf8')).trim().split('\n')
+          .map(line => JSON.parse(line) as { argv: string[]; globalOptions: string[]; args: string[] });
+        assert.ok(invocations.length > 0, 'preflight must invoke codex sandbox');
+        for (const invocation of invocations) {
+          assert.ok(invocation.globalOptions.includes('--no-daemon'), 'preflight must disable the shared Codex daemon before the sandbox subcommand');
+          assert.equal(invocation.args[0], 'sandbox');
+          assert.deepEqual(invocation.argv, [...invocation.globalOptions, ...invocation.args]);
+        }
         const observations = (await readFile(f.witness, 'utf8')).trim().split('\n')
           .map(line => JSON.parse(line) as { address: string });
         assert.ok(observations.length > 0, 'preflight must actually listen on a Unix socket, rather than skip the probe');

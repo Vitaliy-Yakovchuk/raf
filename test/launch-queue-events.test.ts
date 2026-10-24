@@ -225,7 +225,7 @@ test('queue-event: initially empty state and command reconciliation never emit d
 for (const input of [
   { kind: 'agent-run', waited: false },
   { kind: 'resource-wait', waited: true },
-  { kind: 'test-run', waited: true },
+  { kind: 'test-run', waited: false },
 ] as const) {
   test(`queue-event: ${input.kind} waited=${input.waited} cannot start a generation`, () => {
     const fixture = memoryDatabase();
@@ -530,17 +530,90 @@ for (const failure of ['failSavePending', 'failSaveQueue'] as const) {
   }
 }
 
-test('queue-event: active external wait and test-run never delay a queued agent drained fact', () => {
+test('queue-event: standalone resource wait and unqueued test never delay a queued agent drained fact', () => {
   const fixture = memoryDatabase();
   const queue = fixture.connect();
   const handle = enqueue(queue);
   for (const kind of ['resource-wait', 'test-run'] as const) {
-    assert.equal(queue.record({ kind, waited: true, requestId: kind, fence: kind }), null);
+    assert.equal(queue.record({ kind, waited: kind === 'resource-wait', requestId: kind, fence: kind }), null);
   }
   ready(queue, handle);
   assert.equal(fixture.facts().length, 1);
   assertFact(fixture.facts()[0], handle);
   assert.deepEqual(fixture.state()?.entries, []);
+});
+
+test('queue-event: queued test retains the generation through permit and reservation until confirmed tree spawn', () => {
+  const fixture = memoryDatabase();
+  const queue = fixture.connect();
+  const handle = queue.record({ kind: 'test-run', waited: true, requestId: 'test-request', fence: 'test-fence' });
+  assert.ok(handle, 'a queued test must join the launch generation');
+  for (const stage of ['waiting', 'rechecking', 'starting'] as const) {
+    queue.transition(handle, stage);
+    assert.deepEqual(fixture.state()?.entries, [{ ...handle, stage }]);
+    assertCounters(fixture.state(), { started: 0, cancelled: 0, failed: 0 });
+    assert.deepEqual(fixture.facts(), []);
+  }
+  queue.confirmReady(handle);
+  assert.equal(fixture.facts().length, 1);
+  assertFact(fixture.facts()[0], handle);
+  assert.deepEqual(fixture.state()?.entries, []);
+});
+
+test('queue-event: queued agent and test share counters and drain after the last confirmed spawn without completion', () => {
+  const fixture = memoryDatabase();
+  const queue = fixture.connect();
+  const agent = enqueue(queue);
+  const queuedTest = queue.record({ kind: 'test-run', waited: true, requestId: 'test-request', fence: 'test-fence' });
+  assert.ok(queuedTest, 'the queued test must delay the shared drained fact');
+  assert.equal(queuedTest.queueId, agent.queueId);
+  assert.equal(queuedTest.generation, agent.generation);
+  ready(queue, agent);
+  assertCounters(fixture.state(), { started: 1, cancelled: 0, failed: 0 });
+  assert.deepEqual(fixture.facts(), []);
+  assert.deepEqual(fixture.state()?.entries.map(entry => entry.requestId), ['test-request']);
+  ready(fixture.connect(), queuedTest);
+  assert.equal(fixture.facts().length, 1);
+  assertFact(fixture.facts()[0], queuedTest, { started: 2, cancelled: 0, failed: 0 });
+});
+
+for (const reason of ['cancelled', 'client-died', 'launch-failed'] as const) {
+  test(`queue-event: queued test ${reason} drains once with the corresponding terminal counter`, () => {
+    const fixture = memoryDatabase();
+    const queue = fixture.connect();
+    const agent = enqueue(queue);
+    const queuedTest = queue.record({ kind: 'test-run', waited: true, requestId: 'test-request', fence: 'test-fence' });
+    assert.ok(queuedTest, 'the queued test must be a tracked terminal obligation');
+    ready(queue, agent);
+    assert.deepEqual(fixture.facts(), []);
+    const restarted = fixture.connect();
+    restarted.fail(queuedTest, reason);
+    restarted.fail(queuedTest, reason);
+    restarted.confirmReady(queuedTest);
+    const delta = totalsFor(reason);
+    const totals = { started: 1, cancelled: delta.cancelled, failed: delta.failed };
+    assert.equal(fixture.facts().length, 1);
+    assertFact(fixture.facts()[0], queuedTest, totals);
+    assertCounters(fixture.state(), totals);
+    assert.deepEqual(fixture.state()?.entries, []);
+  });
+}
+
+test('queue-event: queued test resource loss retains its identity and generation without counting a spawn', () => {
+  const fixture = memoryDatabase();
+  const queue = fixture.connect();
+  const input = { kind: 'test-run', waited: true, requestId: 'test-request', fence: 'test-fence' } as const;
+  const handle = queue.record(input);
+  assert.ok(handle, 'a queued test must retain its fenced launch obligation');
+  queue.transition(handle, 'rechecking');
+  queue.transition(handle, 'waiting');
+  assert.deepEqual(fixture.connect().record(input), handle);
+  assert.equal(fixture.state()?.entries.length, 1);
+  assertCounters(fixture.state(), { started: 0, cancelled: 0, failed: 0 });
+  assert.deepEqual(fixture.facts(), []);
+  ready(fixture.connect(), handle);
+  assert.equal(fixture.facts().length, 1);
+  assertFact(fixture.facts()[0], handle);
 });
 
 for (const action of ['activate', 'close'] as const) {

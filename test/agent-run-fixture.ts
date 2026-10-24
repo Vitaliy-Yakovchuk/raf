@@ -206,7 +206,8 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
   for (const path of [conf, tmpRoot, control, bin, workspace]) await fs.mkdir(path, { recursive: true, mode: 0o700 });
   const programs = await Promise.all(['openspec', 'tmux'].map(async name => (await exec('/bin/sh', ['-c', 'command -v "$1"', 'fixture', name])).stdout.trim()));
   const models = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/models.json'), 'utf8'));
-  const claudeProtocol = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/raf.json'), 'utf8')).runnerProtocols.find((x: any) => x.runner === 'claude');
+  const rafConfiguration = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/raf.json'), 'utf8'));
+  const claudeProtocol = rafConfiguration.runnerProtocols.find((x: any) => x.runner === 'claude');
   models.models = models.models.filter((x: any) => runner === 'claude' ? x.id === 'claude-opus' : x.id === 'gpt-6.1-sol');
   models.runners = models.runners.filter((x: any) => x.id === runner).map((x: any) => ({ ...x, initialEnabled: true }));
   const constants = JSON.parse(await fs.readFile(join(sourceRoot, '../conf/raf-constants.json'), 'utf8'));
@@ -263,7 +264,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
     runner: 'codex', executable: 'codex', version: '0.0.1', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null, quotaCommand: '/status', navigation: [], markers: { ready: ['RAF SYNTHETIC READY'] }, quotaParser: 'codex_status', modelPools: {}, quotaReliable: false, liveTaskVerified: true,
     timeouts: { ...timeouts, pollMs: 25 }, collection: { intervalMs: 300000, failureBackoffMs: 60000, staleAfterMs: 60000 },
   }];
-  await writeJson(join(conf, 'raf.json'), { version: 1, state: { fileName: 'state.sqlite' }, commandTiming: { emaAlpha: 0.1 }, runnerProtocols: protocols });
+  await writeJson(join(conf, 'raf.json'), { version: 1, state: { fileName: 'state.sqlite' }, commandTiming: { emaAlpha: 0.1 }, runnerProtocols: protocols, service: rafConfiguration.service });
   for (const path of [`runners/${runner}.md`, ...['implement', ...(options.stages ?? [])].map(stage => `tasks/${stage}.md`), 'completion.md']) { await fs.mkdir(dirname(join(conf, 'briefs', path)), { recursive: true }); await fs.writeFile(join(conf, 'briefs', path), 'Synthetic launch failure fixture.\n'); }
   buildCatalog(conf, artifact, constants.commands.map((x: any) => x.path.join(' ')));
   await exec('git', ['init', '-b', 'develop', workspace], { env });

@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from 'node:util';
+import type { TestRunQueueRecord } from './test-run-queue.ts';
 import type { ResourceUsageRecord, UsageFinishReason } from './resource-usage.ts';
 import type { ResourceEstimateResolution, ResourceReservationEstimate } from './resource-estimates.ts';
 import type { TestRunQueuePort, TestRunResourceRoute } from './test-run-queue.ts';
@@ -21,6 +23,8 @@ export interface TestRunResourceRequest {
   requestedTier: 'normal' | 'hotfix';
   estimate: ResourceEstimateResolution;
   deadlineMs: number;
+  queuePermit?: boolean;
+  deferReservation?: boolean;
 }
 
 export type TestRunResourcePreparation =
@@ -68,6 +72,8 @@ export interface TestRunResourceReconciliation {
   retained: TestRunResourceClaim[];
 }
 
+const pendingGroups = new WeakMap<object, Map<string, string>>();
+
 export async function runResourceReservedTestRun(
   request: TestRunRequest,
   configInput: unknown,
@@ -84,6 +90,26 @@ export async function runResourceReservedTestRun(
   let owned: TestRunGroup | null = null;
   let plan: TestRunPlan | null = null;
   let runId = '';
+  let record: TestRunQueueRecord | null = null;
+  let queueStarted = false;
+  let pendingOwned = false;
+  let accepted = false;
+  let waitError: string | null = null;
+  let interrupted: string | null = null;
+  const controller = new AbortController();
+  let unsubscribe = () => {};
+  let requestedTier: 'normal' | 'hotfix' = 'normal';
+  const pendingKey = JSON.stringify([request.project, context.workspace, request.group]);
+  const pending = pendingGroups.get(ports.state) ?? new Map<string, string>();
+  pendingGroups.set(ports.state, pending);
+  const fail = (code: string, message = code): never => { throw Object.assign(new Error(message), { code }); };
+  const checkPending = () => { if (pending.has(pendingKey) && pending.get(pendingKey) !== runId) fail('GROUP_IN_FLIGHT'); };
+  const checkSignal = () => { if (controller.signal.aborted) fail('INTERRUPTED', interrupted ?? 'Interrupted while waiting'); };
+  const releasePrepared = async () => {
+    if (!claim || released) return;
+    const observed = await ports.resources.observeTree(claim);
+    if (observed.state === 'dead') released = await ports.resources.release(claim);
+  };
   const key = { project: request.project, workspace: context.workspace, group: request.group };
   const lost = () => Object.assign(new Error('Resource reservation fence lost'), { code: 'RESERVATION_LOST' });
   const restore = async () => ports.state.transaction(tx => {
@@ -99,39 +125,83 @@ export async function runResourceReservedTestRun(
       let acquired: TestRunGroup | null = null;
       const value = await ports.state.transaction(tx => operation({
         ...tx,
+        get: key => structuredClone(tx.get(key)),
         put: group => {
           if (group.inFlight?.runId === runId && !tx.get(key)?.inFlight) {
+            checkPending();
             previous = structuredClone(tx.get(key));
             if (ports.wrapperIdentity) Object.assign(group.inFlight!, { wrapperIdentity: ports.wrapperIdentity, ownerIdentity: ports.wrapperIdentity });
-            acquired = structuredClone(group);
-          }
-          tx.put(group);
+            acquired = group;
+            pending.set(pendingKey, runId);
+            pendingOwned = true;
+          } else tx.put(group);
         },
       }));
-      if (acquired) {
-        owned = acquired;
+      const acquiredGroup = acquired as TestRunGroup | null;
+      if (acquiredGroup) {
+        owned = acquiredGroup;
         try {
-          const estimate = await ports.resources.estimateProfile(request.project, plan!.profileId);
-          const prepared = await ports.resources.prepare({ testRunId: runId, profileId: plan!.profileId, groupKey: key,
-            requestedTier: request.phase === 'hotfix' ? 'hotfix' : 'normal', estimate,
-            deadlineMs: (owned as TestRunGroup | null)!.inFlight!.deadlineMs });
-          admission = prepared.admission;
-          if (prepared.status === 'refused') {
-            refusal = prepared.nextAction;
-            throw Object.assign(new Error('Resource admission refused'), { code: 'RESOURCE_UNAVAILABLE' });
+          if (ports.queue?.claimGroup && !await ports.queue.claimGroup(runId, key)) fail('GROUP_IN_FLIGHT');
+          unsubscribe = ports.subscribeInterruption(signal => { interrupted = signal; controller.abort(); });
+          let permit = false;
+          let mustWait = await ports.queue?.hasPending() ?? false;
+          for (;;) {
+            checkSignal();
+            {
+              const estimate = await ports.resources.estimateProfile(request.project, plan!.profileId);
+              const prepared = await ports.resources.prepare({ testRunId: runId, profileId: plan!.profileId, groupKey: key,
+                requestedTier, estimate, queuePermit: permit, deferReservation: mustWait, deadlineMs: ports.clock.now() + acquiredGroup.inFlight!.timeoutPolicy!.timeoutMs });
+              admission = prepared.admission;
+              if (prepared.status === 'prepared') {
+                claim = prepared.claim;
+                released = false;
+                if (!mustWait) break;
+                await releasePrepared();
+                if (!released) throw lost();
+                claim = null;
+              }
+              if (prepared.status === 'refused' && prepared.nextAction === 'fix-setup') {
+                refusal = 'fix-setup';
+                fail('RESOURCE_UNAVAILABLE', 'Resource admission is unknown');
+              }
+            }
+            if (!ports.queue) fail('RESOURCE_WAIT_UNAVAILABLE', 'Resource queue is unavailable');
+            if (!record) record = await ports.queue!.enqueue({ testRunId: runId, groupKey: key, requestedTier, admission });
+            if (!await ports.queue!.transition(record, 'waiting')) throw lost();
+            ports.queue!.writeStderr(JSON.stringify({ kind: 'launch-queue.waiting', queueId: record.queueId,
+              requestId: record.requestId, testRunId: runId, admission }) + '\n');
+            const waited = await ports.queue!.waitForResources({ record, level: requestedTier, workload: 'test', signal: controller.signal });
+            checkSignal();
+            if (waited.kind === 'error') fail('RESOURCE_WAIT_FAILED', waited.diagnostic.details);
+            if (!await ports.queue!.transition(record, 'rechecking')) throw lost();
+            const environment = await ports.preflight(context);
+            const { planTestRun, validateTestRunConfig } = await import('./test-runs.ts');
+            const updated = planTestRun(request, validateTestRunConfig(configInput, context.agentPhases, policy, context.integrationTests), context, environment);
+            if (!isDeepStrictEqual(plan, updated)) fail('TEST_RUN_PLAN_CHANGED');
+            const routes = ports.resourceRoute?.branchPaths;
+            if (routes && (!Object.values(routes).includes(environment.canonicalWorkspace) ||
+                (routes.hotfix === environment.canonicalWorkspace ? 'hotfix' : 'normal') !== requestedTier)) fail('WORKSPACE_MISMATCH');
+            permit = true;
+            mustWait = false;
           }
-          claim = prepared.claim;
-          if (!await ports.resources.commit(claim) || !await ports.resources.current(claim)) throw lost();
-          const current = await ports.state.transaction(tx => tx.get(key));
-          if (current?.inFlight?.runId !== runId) throw lost();
+          checkSignal();
+          const deadline = ports.clock.now() + acquiredGroup.inFlight!.timeoutPolicy!.timeoutMs;
+          claim!.deadlineMs = deadline;
+          acquiredGroup.inFlight!.deadlineMs = deadline;
+          acquiredGroup.inFlight!.startedAtMs = ports.clock.now();
+          if (!await ports.resources.commit(claim!) || !await ports.resources.current(claim!)) throw lost();
+          if (record && !await ports.queue!.transition(record, 'starting')) throw lost();
+          await ports.state.transaction(tx => {
+            if (!isDeepStrictEqual(tx.get(key), previous)) throw lost();
+            tx.put(owned!);
+          });
+          accepted = true;
         } catch (error) {
-          if (claim) {
-            const observed = await ports.resources.observeTree(claim);
-            if (observed.state === 'dead') released = await ports.resources.release(claim);
-          }
+          waitError = (error as any)?.code ?? 'RESOURCE_WAIT_FAILED';
+          await releasePrepared();
           await restore();
           throw error;
-        }
+        } finally { unsubscribe(); unsubscribe = () => {}; }
       }
       return value;
     } },
@@ -139,6 +209,9 @@ export async function runResourceReservedTestRun(
       const environment = await ports.preflight(value);
       const { planTestRun, validateTestRunConfig } = await import('./test-runs.ts');
       plan = planTestRun(request, validateTestRunConfig(configInput, context.agentPhases, policy, context.integrationTests), context, environment);
+      if (!ports.resourceRoute || !Object.values(ports.resourceRoute.branchPaths).includes(environment.canonicalWorkspace)) fail('WORKSPACE_MISMATCH', 'A trusted canonical resource route is required');
+      requestedTier = ports.resourceRoute!.branchPaths.hotfix === environment.canonicalWorkspace ? 'hotfix' : 'normal';
+      checkPending();
       return environment;
     },
     spawn: async (command, onEvent) => {
@@ -150,6 +223,12 @@ export async function runResourceReservedTestRun(
       const child = await ports.spawn(command, onEvent);
       try { await ports.resources.bindProcess(claim, child.identity); }
       catch (error) { await child.cleanup(owned!.inFlight!.deadlineMs, 'interruption'); throw error; }
+      if (record) {
+        try {
+          if (!await ports.queue!.started(record, child.identity)) throw lost();
+          queueStarted = true;
+        } catch (error) { await child.cleanup(owned!.inFlight!.deadlineMs, 'interruption'); throw error; }
+      }
       return { ...child, cleanup: async (deadline, reason) => {
         await ports.resources.sampleUsage?.(claim!);
         const cleanup = await child.cleanup(deadline, reason);
@@ -170,9 +249,11 @@ export async function runResourceReservedTestRun(
     result.admission = admission;
     if (result.stateAccess) return result;
     const original = previous as TestRunGroup | null;
-    if (refusal) {
-      result.outcome = 'refused'; result.failureKinds = ['refusal']; result.errorCode = 'RESOURCE_UNAVAILABLE';
-      result.exitCode = null; result.timedOut = false; result.nextAction = refusal;
+    if (owned && !accepted) {
+      if (result.outcome !== 'setup-failed') { result.outcome = 'refused'; result.failureKinds = ['refusal']; }
+      result.errorCode = refusal ? 'RESOURCE_UNAVAILABLE' : waitError ?? result.errorCode;
+      result.exitCode = null; result.timedOut = false; result.nextAction = 'fix-setup';
+      if (interrupted) { result.outcome = 'interrupted'; result.failureKinds = ['interruption']; result.signal = interrupted; }
       result.groupState = original?.state ?? 'idle';
       result.timeoutCount = original?.timeoutCount ?? 0; result.knownRed = original?.knownRed ?? [];
       result.unexecuted = result.selection.testIds.length ? result.selection.testIds : result.selection.files.map(file => ({ file, name: '*' }));
@@ -193,6 +274,8 @@ export async function runResourceReservedTestRun(
     }
     result.resourceUsage = claim ? await ports.resources.resourceUsage?.(claim) ?? null : null;
     if (result.runId === runId) result.durationMs = ports.clock.now() - started;
+    const queueRecord = record as TestRunQueueRecord | null;
+    result.queue = queueRecord ? { queueId: queueRecord.queueId, waited: true } : null;
     if (!refusal && owned) await ports.state.transaction(tx => {
       const group = tx.get(key);
       if (group?.lastResult?.runId === result!.runId) { group.lastResult = result!; tx.put(group); }
@@ -201,12 +284,25 @@ export async function runResourceReservedTestRun(
   } catch (error) {
     result ??= { ...testRunFailureResult(request, context, runId, started, configInput, error), admission };
     result.admission = admission;
+    const queueRecord = record as TestRunQueueRecord | null;
+    result.queue = queueRecord ? { queueId: queueRecord.queueId, waited: true } : null;
     result.resourceUsage = claim ? await ports.resources.resourceUsage?.(claim) ?? null : null;
     if ((error as any)?.stateAccess) { result.stateAccess = (error as any).stateAccess; result.errorCode = (error as any).code; return result; }
     result.outcome = 'setup-failed'; result.failureKinds = ['setup']; result.errorCode = 'RESOURCE_RECONCILIATION_REQUIRED';
     result.cleanup.complete = false; result.groupState = 'reconcile'; result.nextAction = 'reconcile';
     result.durationMs = ports.clock.now() - started;
     return result;
+  } finally {
+    unsubscribe();
+    if (record && !queueStarted) {
+      try { await ports.queue!.finish(record, interrupted ? 'cancelled' : 'failed', waitError ?? 'launch-failed'); }
+      catch { if (result) { result.cleanup.complete = false; result.nextAction = 'reconcile'; result.groupState = 'reconcile'; result.outcome = 'setup-failed'; result.failureKinds = ['setup']; } }
+    }
+    if (pendingOwned) {
+      try { await ports.queue?.releaseGroup?.(runId, key); }
+      catch { if (result) { result.cleanup.complete = false; result.nextAction = 'reconcile'; result.groupState = 'reconcile'; result.outcome = 'setup-failed'; result.failureKinds = ['setup']; } }
+      if (pending.get(pendingKey) === runId) pending.delete(pendingKey);
+    }
   }
 }
 

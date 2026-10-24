@@ -14,6 +14,8 @@ export interface TestRunQueueRecord {
 }
 
 export interface TestRunQueuePort {
+  claimGroup?(testRunId: string, groupKey: TestRunGroupKey): Promise<boolean>;
+  releaseGroup?(testRunId: string, groupKey: TestRunGroupKey): Promise<void>;
   hasPending(): Promise<boolean>;
   enqueue(input: {
     testRunId: string;

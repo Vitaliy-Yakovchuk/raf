@@ -132,7 +132,11 @@ export async function recoverTestRun(
     if (flight) {
       const observed = await ports.observe(flight);
       const identityMatches = !!flight.processIdentity && observed.identity === flight.processIdentity;
-      if (observed.owner !== 'lost' || !identityMatches || ['unknown', 'pid-reused'].includes(observed.tree)) {
+      const legacyOwner = flight.ownerIdentity == null && flight.wrapperIdentity == null;
+      const ownerRecoverable = legacyOwner
+        ? observed.owner !== 'alive' && observed.tree === 'dead' && Number.isFinite(flight.deadlineMs) && input.nowMs >= flight.deadlineMs
+        : observed.owner === 'lost';
+      if (!ownerRecoverable || !identityMatches || ['unknown', 'pid-reused'].includes(observed.tree)) {
         reply.recovery.reason = 'Owner or process identity requires reconcile'; reply.recovery.needsMain = true;
         return forward(reply, ports);
       }
@@ -160,7 +164,7 @@ export async function recoverTestRun(
         if (observed.tree === 'alive' && input.nowMs >= saved.deadlineMs) saved.deadlineObservedAtMs ??= input.nowMs;
         const recorded = current.lastResult?.runId === saved.runId;
         if (!recorded) {
-          const timeout = saved.deadlineObservedAtMs !== null && saved.deadlineObservedAtMs >= saved.deadlineMs && !(saved.finishedAtMs !== null && saved.finishedAtMs < saved.deadlineMs);
+          const timeout = saved.deadlineObservedAtMs != null && saved.deadlineObservedAtMs >= saved.deadlineMs && !(saved.finishedAtMs != null && saved.finishedAtMs < saved.deadlineMs);
           if (timeout) current.timeoutCount++;
           current.lastResult = lostResult(current, saved, timeout, observed.interrupted, cleanup, input.nowMs);
         }
@@ -269,9 +273,10 @@ async function forward(reply: RecoveryReply, ports: StateRecoveryPorts): Promise
   return reply;
 }
 function lostResult(group: RecoveryGroup, flight: RecoveryInFlight, timeout: boolean, interrupted: boolean, cleanup: TestRunResult['cleanup'], now: number): StateRecoveryResult {
-  const integration = flight.testKind === 'integration';
+  const testKind = flight.testKind ?? group.testKind ?? 'unit';
+  const integration = testKind === 'integration';
   const startedAt = flight.startedAt ?? (flight.startedAtMs !== undefined ? new Date(flight.startedAtMs).toISOString() : '');
-  return { runId: flight.runId, project: group.key.project, workspace: group.key.workspace, group: group.key.group, phase: flight.phase ?? 'recovery', callerPhase: flight.callerPhase, testKind: flight.testKind, timeoutPolicy: flight.timeoutPolicy,
+  return { runId: flight.runId, project: group.key.project, workspace: group.key.workspace, group: group.key.group, phase: flight.phase ?? 'recovery', callerPhase: flight.callerPhase ?? null, testKind, timeoutPolicy: flight.timeoutPolicy ?? null,
     profileId: group.profileId ?? null, selection: flight.selection ?? group.selection, command: flight.command ?? null, startedAt, durationMs: flight.startedAtMs === undefined ? 0 : Math.max(0, (flight.finishedAtMs ?? now) - flight.startedAtMs),
     outcome: timeout ? 'timed-out' : interrupted ? 'interrupted' : 'setup-failed', failureKinds: timeout ? ['timeout'] : interrupted ? ['interruption'] : ['setup'], exitCode: null, signal: null, timedOut: timeout, cleanup,
     passed: [], knownRed: group.knownRed, unexecuted: group.unexecuted, unknown: group.unknown ?? [], removed: [], groupState: integration ? 'incomplete' : 'reconcile', timeoutCount: group.timeoutCount, nextAction: integration ? 'complete-integration' : 'reconcile',

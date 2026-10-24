@@ -185,6 +185,7 @@ export interface TestRunResult extends RunnerClassification {
   hintIds: string[];
   hints: string[];
   evidence: string[];
+  inFlight?: { runId: string; deadlineMs: number; processIdentity: string | null };
   errorCode?: string;
 }
 
@@ -471,7 +472,11 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
       }
       if (group && ((group.testKind ?? 'unit') !== result.testKind || (group.profileId ?? group.lastResult?.profileId ?? plan.profileId) !== plan.profileId)) failure('GROUP_PROFILE_MISMATCH');
       if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) { pendingResult = structuredClone(group.lastResult); return; }
-      if (group?.inFlight) failure('GROUP_IN_FLIGHT');
+      if (group?.inFlight) {
+        const { runId, deadlineMs, processIdentity } = group.inFlight;
+        result.inFlight = { runId, deadlineMs, processIdentity };
+        failure('GROUP_IN_FLIGHT', `Group ${key.group} retains inFlight runId ${runId}, deadlineMs ${deadlineMs}; reconcile the original tree before retrying.`);
+      }
       if (request.only && (!group || plan.selection.testIds.some(id => !containsId(group!.knownRed, id)))) failure('UNKNOWN_RED_TEST');
       group ??= { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: 0, state: 'idle', selection: plan.selection, knownRed: [], unexecuted: [], inFlight: null, lastResult: null };
       result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;

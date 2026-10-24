@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
+import { checkBoundaries } from './z4044-live-boundaries.mjs';
 
 const [actor, reportPath] = process.argv.slice(2);
 if (!['a', 'b'].includes(actor) || !path.isAbsolute(reportPath)) throw Error('Expected actor a/b and assigned report_path');
@@ -13,6 +14,8 @@ const run = (exe, args, timeout = 20000) => {
 };
 const atomic = (file, value) => { fs.writeFileSync(file + '.part', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(file + '.part', file); };
 const probe = { actor, cwd, runId: path.basename(own), env: { HOME: process.env.HOME, RAF_QA_HOME: process.env.RAF_QA_HOME }, git: {}, boundaries: {} };
+try { probe.liveBoundaries = await checkBoundaries(own, actor); }
+catch (error) { atomic(path.join(own, 'live-boundary-failure.json'), { actor, message: error.message, stack: error.stack }); throw error; }
 for (const [key, args] of Object.entries({ head: ['rev-parse', 'HEAD'], branch: ['branch', '--show-current'], top: ['rev-parse', '--show-toplevel'], gitDir: ['rev-parse', '--absolute-git-dir'], common: ['rev-parse', '--path-format=absolute', '--git-common-dir'] })) probe.git[key] = run('git', args);
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop');
 const common = probe.git.common.stdout.trim();

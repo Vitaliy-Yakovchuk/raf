@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import { createServer, connect } from 'node:net';
 
 const driverFile = fileURLToPath(import.meta.url);
 const here = path.dirname(driverFile);
@@ -35,6 +36,8 @@ for (const name of ['TMUX', 'TMUX_PANE', 'CLAUDE_CONFIG_DIR', 'RAF_ORCHESTRATOR_
 const deadline = Date.now() + 1500000;
 const summary = { status: 'failed', stand, standPrefix, sourceSha, driverSha256: createHash('sha256').update(fs.readFileSync(driverFile)).digest('hex'), longPathPreflight: [], startedAt: new Date().toISOString(), scenarios: {}, commands: [], cleanup: [], unitRuns: [], limitations: ['Host watchdog is not a unit timeout or a pass criterion.', 'Atomic activation belongs to Z.334.', 'No access to the working ~/.raf; live state schema is not inspected.'] };
 let paneStarted = false, syntaxOriginal, fixtureMergeTarget;
+const listeners = [], ports = [];
+const liveBoundaryConfig = { endpoints: [mainSocket, path.join(stand, '.raf/tmp/tmux/server.sock')], denyReads: ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm'].map(name => path.join(stand, '.raf', name)), ports };
 const atomic = (file, value) => { fs.writeFileSync(file + '.part', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(file + '.part', file); };
 const hash = file => fs.existsSync(file) ? createHash('sha256').update(fs.readFileSync(file)).digest('hex') : null;
 const command = (label, exe, args, cwd = root, budget = 120000) => {
@@ -95,7 +98,7 @@ const copyRun = (actor, record) => {
       (summary.evidenceCopyErrors ??= []).push({ from, to, code: error.code, message: error.message });
     }
   };
-  for (const name of [`z331-${actor}.json`, 'probe.json', 'commit-result.json', 'worker-ready.json', 'hotfix-commit.mjs', 'brief.md']) copy(path.join(directory, name), path.join(destination, name));
+  for (const name of [`z331-${actor}.json`, 'probe.json', 'live-boundary-failure.json', 'commit-result.json', 'worker-ready.json', 'hotfix-commit.mjs', 'brief.md']) copy(path.join(directory, name), path.join(destination, name));
   if (record.launchContext?.briefPath) copy(record.launchContext.briefPath, path.join(destination, 'delivered-brief.md'));
   atomic(path.join(destination, 'session.json'), record);
 };
@@ -108,8 +111,32 @@ const recordLongPreflight = record => {
   summary.longPathPreflight.push(evidence);
 };
 const gate = (record, name) => fs.writeFileSync(path.join(stand, '.raf/tmp', record.runId, name), name);
+const probeReady = record => {
+  const own = path.join(stand, '.raf/tmp', record.runId);
+  const failure = path.join(own, 'live-boundary-failure.json');
+  if (fs.existsSync(failure)) throw Error(fs.readFileSync(failure, 'utf8'));
+  return fs.existsSync(path.join(own, 'probe.json'));
+};
 const actorArgs = (actor, item) => ['agent', 'run', '--id', `z331-${actor}`, '--type', 'hotfix', '--project', 'raf', '--features', 'z331-live-fixture', '--phase', 'hotfix', '--complexity', 'mechanical', '--tasks', `z331-live-fixture:${item}`];
 const ownerSnapshot = () => ({ source: { head: must(command(`owner-source-${++seq}`, 'git', ['-C', source, 'rev-parse', 'HEAD'], source)), sourceHash: hash(path.join(source, 'src/production-runtime.ts')) } });
+async function hostControls() {
+  const observations = { ports: [], endpoints: [], stateFiles: [] };
+  for (const address of ports) {
+    const payload = await new Promise((done, reject) => {
+      let value = ''; const socket = connect(address);
+      socket.setTimeout(30000, () => socket.destroy(new Error('host control deadline')));
+      socket.on('error', reject); socket.on('data', bytes => value += bytes); socket.on('end', () => done(value));
+    });
+    assert.equal(payload, 'z4044-host-sentinel'); observations.ports.push({ ...address, payload });
+  }
+  for (const endpoint of liveBoundaryConfig.endpoints) {
+    must(command('host-tmux-control-' + (++seq), 'tmux', ['-S', endpoint, 'list-sessions']));
+    observations.endpoints.push({ endpoint, socket: fs.lstatSync(endpoint).isSocket() });
+  }
+  for (const file of liveBoundaryConfig.denyReads) observations.stateFiles.push({ file, exists: fs.existsSync(file) });
+  assert.ok(observations.stateFiles.every(item => item.exists), 'state sentinels exist before claiming deny');
+  return observations;
+}
 console.log(JSON.stringify({ stand, evidence: ev, sourceSha }));
 try {
   assert.ok(path.isAbsolute(gitConfig) && fs.existsSync(gitConfig), 'Existing absolute Git identity selector required');
@@ -133,6 +160,21 @@ try {
   must(command('build', 'npm', ['run', 'build'], main));
   fs.mkdirSync(path.join(main, 'qa'), { recursive: true });
   fs.copyFileSync(path.join(here, 'z4044-live-worker.mjs'), path.join(main, 'qa/z331-worker.mjs'));
+  fs.copyFileSync(path.join(here, 'z4044-live-boundaries.mjs'), path.join(main, 'qa/z4044-live-boundaries.mjs'));
+  const runnerProtocol = JSON.parse(fs.readFileSync(path.join(root, 'conf/raf.json'), 'utf8')).runnerProtocols.find(entry => entry.runner === 'codex');
+  Object.assign(liveBoundaryConfig, { transitionMs: runnerProtocol.timeouts.transitionMs, pollMs: runnerProtocol.timeouts.pollMs });
+  for (const host of ['127.0.0.1', '::1']) {
+    const server = createServer(socket => socket.end('z4044-host-sentinel'));
+    try {
+      await new Promise((done, reject) => { server.once('error', reject); server.listen({ host, port: 0 }, done); });
+      listeners.push(server); ports.push({ host, port: server.address().port });
+    } catch (error) {
+      if (host !== '::1' || !['EAFNOSUPPORT', 'EADDRNOTAVAIL'].includes(error.code)) throw error;
+      summary.ipv6Unavailable = error.code;
+    }
+  }
+  fs.writeFileSync(path.join(main, 'qa/z4044-boundaries.json'), JSON.stringify(liveBoundaryConfig, null, 2) + '\n');
+  fs.symlinkSync(mainSocket, path.join(main, 'qa/z4044-main-alias.sock'));
   fs.writeFileSync(path.join(main, 'qa/conflict.txt'), 'baseline\n');
   git(main, 'add', '--', 'qa'); git(main, 'commit', '-m', 'qa: prepare Z331 isolated worker');
   git(root, 'init', '-b', 'main');
@@ -158,16 +200,17 @@ try {
   must(await request('runner-list', ['runner', 'list']));
   must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
   must(await request('service-start', ['service', 'start']));
+  summary.liveHostControlsBefore = await hostControls();
   const launchA = await request('launch-a', actorArgs('a', '1.1')); must(launchA);
   const a = await wait('session A', () => session('a'));
-  await wait('worker A probe', () => fs.existsSync(path.join(stand, '.raf/tmp', a.runId, 'probe.json')));
+  await wait('worker A probe', () => probeReady(a));
   recordLongPreflight(a);
   summary.scenarios.refresh = { base, refreshTarget, hotfixHead: git(hotfix, 'rev-parse', 'HEAD'), included: command('refresh-ancestor', 'git', ['-C', hotfix, 'merge-base', '--is-ancestor', refreshTarget, 'HEAD']).cliExitCode === 0 };
   assert.equal(summary.scenarios.refresh.included, true);
   const ownAHash = hash(path.join(hotfix, 'qa/own-a.json')), headBeforeB = git(hotfix, 'rev-parse', 'HEAD');
   must(await request('launch-b', actorArgs('b', '1.2')));
   const b = await wait('session B', () => session('b'));
-  await wait('worker B probe', () => fs.existsSync(path.join(stand, '.raf/tmp', b.runId, 'probe.json')));
+  await wait('worker B probe', () => probeReady(b));
   recordLongPreflight(b);
   summary.scenarios.parallel = { a, b, sameCwd: a.activity?.cwd === b.activity?.cwd && a.activity.cwd === hotfix, distinctRunIds: a.runId !== b.runId, distinctSessions: a.process?.runnerSessionId !== b.process?.runnerSessionId, distinctReports: a.launchContext?.reportPath !== b.launchContext?.reportPath };
   summary.scenarios.noop = { headBeforeB, headAfterB: git(hotfix, 'rev-parse', 'HEAD'), ownAUnchanged: ownAHash === hash(path.join(hotfix, 'qa/own-a.json')) };
@@ -230,11 +273,13 @@ try {
   assert.ok(Object.values(summary.scenarios.parallel).filter(x => typeof x === 'boolean').every(Boolean));
   assert.equal(summary.scenarios.noop.headBeforeB, summary.scenarios.noop.headAfterB); assert.ok(summary.scenarios.noop.ownAUnchanged);
   assert.ok(Object.entries(summary.scenarios.syntaxIsolation).filter(([k]) => k !== 'syntaxCode').every(([, v]) => v === 0));
+  summary.liveHostControlsAfter = await hostControls();
   summary.status = 'succeeded';
 } catch (error) {
   summary.error = error.stack || String(error);
   console.error(summary.error);
 } finally {
+  await Promise.all(listeners.map(server => new Promise(done => server.close(done))));
   if (syntaxOriginal) fs.writeFileSync(path.join(hotfix, 'src/production-runtime.ts'), syntaxOriginal);
   if (fixtureMergeTarget) {
     const pending = command('cleanup-fixture-merge-head', 'git', ['-C', hotfix, 'rev-parse', '--verify', 'MERGE_HEAD']);

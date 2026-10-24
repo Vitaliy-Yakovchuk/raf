@@ -20,7 +20,7 @@ fs.mkdirSync(evidence, { recursive: true, mode: 0o700 });
 const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' };
 for (const key of ['TMUX', 'TMUX_PANE', 'RAF_ORCHESTRATOR_ROOT', 'RAF_STATE_DIRECTORY', 'RAF_SOCKET_PATH', 'ALLOW_MIGRATIONS', 'GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR', 'GIT_OBJECT_DIRECTORY', 'GIT_ALTERNATE_OBJECT_DIRECTORIES']) delete env[key];
 const root = path.join(home, 'source-root'), clone = path.join(root, 'raf-develop');
-const summary = { mode, sourceSha, startedAt: new Date().toISOString(), status: 'failed', steps: [], modelPromptSent: mode === 'live', source, evidence, selectors: {}, cleanup: {} };
+const summary = { mode, sourceSha, startedAt: new Date().toISOString(), status: 'failed', steps: [], modelPromptMayBeSent: mode === 'live', source, evidence, selectors: {}, cleanup: {} };
 const atomic = (file, value) => { fs.writeFileSync(file + '.part', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(file + '.part', file); };
 const hash = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const run = (label, executable, args, cwd = source, timeout = 120000) => {

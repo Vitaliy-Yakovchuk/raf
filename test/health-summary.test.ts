@@ -427,8 +427,13 @@ test('summary: invalid health policy is visible in stats while commands and prof
   assert.deepEqual(f.calls(), { transactionCount: 0, deliveryCalls: 0, sourceCalls: 0 });
 });
 
-for (const configuration of [{}, { health: {} }, { health: { summaryIntervalMs: null } }, { health: { summaryIntervalMs: 0 } }, { health: { summaryIntervalMs: -1 } }, { health: { summaryIntervalMs: '1000' } }, { health: { summaryIntervalMs: Number.NaN } }, { health: { summaryIntervalMs: Number.POSITIVE_INFINITY } }]) {
-  test(`summary: invalid policy ${JSON.stringify(configuration)} reports exact pointer without fallback`, async () => {
+for (const [label, configuration] of [
+  ['missing-health', {}], ['missing-interval', { health: {} }],
+  ['null', { health: { summaryIntervalMs: null } }], ['zero', { health: { summaryIntervalMs: 0 } }],
+  ['negative', { health: { summaryIntervalMs: -1 } }], ['string', { health: { summaryIntervalMs: '1000' } }],
+  ['NaN', { health: { summaryIntervalMs: Number.NaN } }], ['Infinity', { health: { summaryIntervalMs: Number.POSITIVE_INFINITY } }],
+] as const) {
+  test(`summary: invalid policy ${label} reports exact pointer without fallback`, async () => {
     const f = fixture();
     const result = await settleRafHealthSummary({ ...f.context, configuration }, f.ports);
     assert.equal(result.status, 'unavailable');

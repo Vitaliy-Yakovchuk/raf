@@ -1,0 +1,38 @@
+{
+  "checks": [
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit --strict --allowImportingTsExtensions --target esnext --module nodenext --typeRoots /usr/share/nodejs/@types --types node --skipLibCheck src/health-summary.ts test/health-summary.test.ts",
+      "chunk_id": "56379c",
+      "wall_time_seconds": 2.152574959,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "command": "node --check test/health-summary.test.ts",
+      "chunk_id": "7d1fcc",
+      "wall_time_seconds": 0.244910984,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "command": "npm run check:comments",
+      "chunk_id": "3419dd",
+      "wall_time_seconds": 4.663894637,
+      "exit_code": 1,
+      "original_token_count": 56,
+      "output": "\n> check:comments\n> node scripts/check-comments.ts\n\ntest/helpers/z4044-host-tmux.mjs:3:1: коментар у власному коді.\ntest/helpers/z4044-host-tmux.mjs:4:1: коментар у власному коді.\n"
+    },
+    {
+      "command": "git diff --check",
+      "chunk_id": "d9a280",
+      "wall_time_seconds": 0.383202335,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ],
+  "change": "Only unique labels for invalid-policy test IDs; JSON.stringify(NaN/Infinity) previously collided with null. Expected behavior unchanged.",
+  "foreignFailure": "Repository comment check now fails on test/helpers/z4044-host-tmux.mjs:3,4, which is outside this agent's changes. Initial scaffold comment check was 0."
+}

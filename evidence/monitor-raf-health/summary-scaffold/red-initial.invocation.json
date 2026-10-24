@@ -1,0 +1,17 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/summary --files test/health-summary.test.ts",
+  "sourceCommit": "1881a78cc1cf61bd474157e80d234a629eb9c84b",
+  "registrationReportedByMain": "034b258400",
+  "registeredGroup": {
+    "profileId": "node",
+    "files": [
+      "test/health-summary.test.ts"
+    ]
+  },
+  "fileInUnitFiles": true,
+  "filesSha256": {
+    "src/health-summary.ts": "16f28cda3fbec5c2b7a02ab4eb1db7c6dfcf2c5b5994e3a60b1fedcf61505b96",
+    "test/health-summary.test.ts": "00c761d44a7e3dbc63307394813989c9f20c9e21d05640f8700b85e955c26347"
+  },
+  "workingTree": "?? evidence/monitor-raf-health/forced-close-scaffold/\n"
+}

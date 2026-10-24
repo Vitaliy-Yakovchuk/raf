@@ -1,0 +1,73 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/73424305-29fe-412f-b084-53d39d203c29/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-test-run/browser-cache --files test/test-run-browser-cache.test.ts",
+  "phase": "red",
+  "sha": "5066c4361d459271943e31b4c7ae43eb2432d54a",
+  "dirtyPaths": [
+    "?? evidence/test-run-browser-cache/",
+    "?? evidence/z411/",
+    "?? node_modules"
+  ],
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "runId": "259da4ba-ae24-47c8-8aaf-64a079ea6fdb",
+  "group": "add-raf-test-run/browser-cache",
+  "selection": {
+    "files": [
+      "test/test-run-browser-cache.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "assertions-failed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [
+    {
+      "file": "test/test-run-browser-cache.test.ts",
+      "name": "browser cache: codex launch supplies host default with no tmux server environment"
+    },
+    {
+      "file": "test/test-run-browser-cache.test.ts",
+      "name": "browser cache: codex launch carries the explicit trusted host path as one tmux argument"
+    },
+    {
+      "file": "test/test-run-browser-cache.test.ts",
+      "name": "browser cache: claude launch supplies host default with no tmux server environment"
+    },
+    {
+      "file": "test/test-run-browser-cache.test.ts",
+      "name": "browser cache: claude launch carries the explicit trusted host path as one tmux argument"
+    },
+    {
+      "file": "test/test-run-browser-cache.test.ts",
+      "name": "browser cache: grok launch supplies host default with no tmux server environment"
+    },
+    {
+      "file": "test/test-run-browser-cache.test.ts",
+      "name": "browser cache: grok launch carries the explicit trusted host path as one tmux argument"
+    },
+    {
+      "file": "test/test-run-browser-cache.test.ts",
+      "name": "browser cache: agy launch supplies host default with no tmux server environment"
+    },
+    {
+      "file": "test/test-run-browser-cache.test.ts",
+      "name": "browser cache: agy launch carries the explicit trusted host path as one tmux argument"
+    },
+    {
+      "file": "test/test-run-browser-cache.test.ts",
+      "name": "browser cache: Linux launch respects the host XDG cache directory despite isolated HOME"
+    },
+    {
+      "file": "test/test-run-browser-cache.test.ts",
+      "name": "browser cache: preflight accepts executable chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "idle",
+  "nextAction": "implement",
+  "timeoutCount": 0
+}

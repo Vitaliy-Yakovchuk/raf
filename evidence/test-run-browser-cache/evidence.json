@@ -1,0 +1,137 @@
+{
+  "assignment": "add-raf-test-run:6.3.11",
+  "audit": {
+    "applicable": true,
+    "sources": [
+      "openspec/changes/add-raf-test-run/proposal.md (Why/What Changes/Non-goals)",
+      "openspec/changes/add-raf-test-run/tasks.md:6.3.11",
+      "openspec/changes/add-raf-test-run/etchly-profile.md (Середовище, залежності й результат)",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md (Unit-профілі монорепозиторію etchly, Правдивий структурований результат)",
+      "openspec/changes/add-raf-test-run/specs/core/process/unit-test-runs/spec.md"
+    ],
+    "finding": "Both defects were present in the assigned hotfix workspace. The requested fix preserves unit isolation and setup refusal; no conflicting or obsolete requirement was found."
+  },
+  "changes": [
+    "TmuxAgentAdapter supplies PLAYWRIGHT_BROWSERS_PATH with a session-local tmux -e argument on every launch, including respawn; no global server environment mutation. Explicit trusted host setting wins. Otherwise resolve the standard host cache using OS account home (not QA HOME), Linux XDG_CACHE_HOME, or platform cache location.",
+    "Etchly preflight recognizes executable chromium_headless_shell-*/**/chrome-headless-shell in addition to legacy headless_shell and full chrome. Executable regular-file, absolute cache, correct engine and missing-cache guards remain active.",
+    "Export existing verifyEtchlyDependencies for direct unit testing; no preflight behavior changed before the target red."
+  ],
+  "hostCacheSource": {
+    "requirement": "etchly-profile.md requires a trusted host cache and forbids hardcoded /home/dev or executor override. It does not specify a unique default path discovery algorithm.",
+    "resolution": "Use the host process setting when present; otherwise infer the normal Playwright cache from OS account home/platform cache. Owner main confirmed no host PLAYWRIGHT_BROWSERS_PATH and the standard /home/dev/.cache/ms-playwright layout on 2026-10-24. No new conf values were added.",
+    "trustBoundary": "Resolve in the host launch adapter before the CLI starts; sandbox raf command access and runtime inherit that host environment. Existing prepareEtchlyEnvironment mismatch refusal remains unchanged."
+  },
+  "group": "add-raf-test-run/browser-cache",
+  "selection": [
+    "test/test-run-browser-cache.test.ts"
+  ],
+  "aggregate": "The same configured group, selection and isolated QA HOME were used for all three runs, with no aggregate reset. Target red was repeated only to fix a diagnosed regression fixture issue before production changes. All ten known red IDs were confirmed green. timeoutCount stayed 0.",
+  "runs": [
+    {
+      "name": "red-fixture",
+      "result": "evidence/test-run-browser-cache/red-fixture.result.json",
+      "stderr": "evidence/test-run-browser-cache/red-fixture.stderr",
+      "cliCode": "evidence/test-run-browser-cache/red-fixture.cli-code",
+      "metadata": "evidence/test-run-browser-cache/red-fixture.metadata.json",
+      "runId": "706e1489-a588-4514-bce2-8f3d877fa0b5",
+      "outcome": "assertions-failed",
+      "passed": 10,
+      "knownRed": 10,
+      "unexecuted": 0,
+      "unknown": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "name": "red",
+      "result": "evidence/test-run-browser-cache/red.result.json",
+      "stderr": "evidence/test-run-browser-cache/red.stderr",
+      "cliCode": "evidence/test-run-browser-cache/red.cli-code",
+      "metadata": "evidence/test-run-browser-cache/red.metadata.json",
+      "runId": "259da4ba-ae24-47c8-8aaf-64a079ea6fdb",
+      "outcome": "assertions-failed",
+      "passed": 10,
+      "knownRed": 10,
+      "unexecuted": 0,
+      "unknown": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "name": "hotfix",
+      "result": "evidence/test-run-browser-cache/hotfix.result.json",
+      "stderr": "evidence/test-run-browser-cache/hotfix.stderr",
+      "cliCode": "evidence/test-run-browser-cache/hotfix.cli-code",
+      "metadata": "evidence/test-run-browser-cache/hotfix.metadata.json",
+      "runId": "44f28d4b-2910-4fbc-bcff-3fba83c79b89",
+      "outcome": "passed",
+      "passed": 20,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    }
+  ],
+  "fixtureCorrection": "First run 706e1489 used unsupported t.mock.env in the transport cases; it is not accepted as transport defect red. Replaced that helper with explicit per-test restoration. Target red 259da4ba contains only assertion diagnostics for all ten failures, followed by production implementation.",
+  "verification": {
+    "tmuxSmoke": {
+      "command": "node evidence/test-run-browser-cache/tmux-smoke.mjs",
+      "result": "evidence/test-run-browser-cache/tmux-smoke.result.json",
+      "stderr": "evidence/test-run-browser-cache/tmux-smoke.stderr",
+      "cliCode": "evidence/test-run-browser-cache/tmux-smoke.cli-code",
+      "outcome": "passed",
+      "scenarios": [
+        "fresh server without cache env",
+        "server restarted without cache env",
+        "existing server has stale cache, current host explicit path includes spaces and shell metacharacters"
+      ],
+      "cleanup": "Each own server killed; private fixture directory removed. HOME and RAF_QA_HOME isolated. No live model or browser launched."
+    },
+    "build": {
+      "command": "node scripts/build.ts",
+      "stdout": "evidence/test-run-browser-cache/build.stdout",
+      "stderr": "evidence/test-run-browser-cache/build.stderr",
+      "cliCode": "evidence/test-run-browser-cache/build.cli-code",
+      "outcome": "passed",
+      "environment": "Temporary isolated HOME and RAF_QA_HOME created and removed by the capture script."
+    }
+  },
+  "limits": [
+    "Actual etchly product group deterministic-anonymous-quizzes/edge-deployment was not run: this assignment is project raf, has no foreign product grant, and rollout belongs to main. Unit regressions verify the real preflight with controlled filesystem fixtures; actual tmux smoke verifies transport through respawn.",
+    "Standard platform default branches for macOS/Windows are coded but not process-tested on this Linux host.",
+    "Other add-raf-test-run items remain open. No task checkboxes, other items, sync/archive, push, main activation, or shared tmux server settings were changed."
+  ],
+  "commitsBeforeEvidence": [
+    "454bbba03edc16b5b11b1f3b41800f77a6afed73",
+    "5066c4361d459271943e31b4c7ae43eb2432d54a",
+    "53f3c90a89710018dccbbab5edf8167d0165b2dc"
+  ],
+  "finalWorkspaceObservation": {
+    "sha": "12152fba33fe2c16fde0dd2a5ccf4e0b8785d1f8",
+    "status": [
+      "?? evidence/test-run-browser-cache/",
+      "?? evidence/z411/",
+      "?? node_modules"
+    ],
+    "ownSourcePathsClean": true
+  }
+}

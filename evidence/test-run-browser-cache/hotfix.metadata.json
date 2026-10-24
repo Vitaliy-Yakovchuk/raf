@@ -1,0 +1,38 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/73424305-29fe-412f-b084-53d39d203c29/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/browser-cache --files test/test-run-browser-cache.test.ts",
+  "sha": "53f3c90a89710018dccbbab5edf8167d0165b2dc",
+  "dirtyObservation": "git status immediately after the run; foreign work can change concurrently. Own code/test paths were committed and unchanged.",
+  "dirtyPaths": [
+    " M src/background-runtime.ts",
+    " M src/production-service-ports.ts",
+    " M src/report-commit-index.ts",
+    " M src/service-host.ts",
+    " M src/task-checkbox-report.ts",
+    "?? evidence/test-run-browser-cache/",
+    "?? evidence/z411/",
+    "?? node_modules",
+    "?? src/owned-writer-lock.ts"
+  ],
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "runId": "44f28d4b-2910-4fbc-bcff-3fba83c79b89",
+  "group": "add-raf-test-run/browser-cache",
+  "selection": {
+    "files": [
+      "test/test-run-browser-cache.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "complete",
+  "nextAction": "complete",
+  "timeoutCount": 0
+}

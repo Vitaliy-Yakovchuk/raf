@@ -1,0 +1,245 @@
+{
+  "item": "complete-raf-flow-contracts:Z.411",
+  "group": "complete-raf-flow-contracts/z411",
+  "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+  "runs": [
+    {
+      "name": "refused-inventory",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/73424305-29fe-412f-b084-53d39d203c29/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z411 --files test/service-recovery-z411.test.ts test/writer-lock-z411.test.ts",
+      "result": "refused-inventory.stdout.json",
+      "stderr": null,
+      "cli": "refused-inventory.cli.json",
+      "stdoutSha256": "adb26e4b9a739b9ec8af1558c52ab9262caccfc81d211d559f9414d8cf3ae959",
+      "runId": "4951aab4-02c4-46a3-8b97-561c86eef35e",
+      "outcome": "refused",
+      "childExitCode": null,
+      "cliExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "unavailable",
+      "groupState": null,
+      "timeoutCount": null,
+      "nextAction": "fix-setup",
+      "selection": {
+        "files": [
+          "test/service-recovery-z411.test.ts",
+          "test/writer-lock-z411.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-24T18:39:22.194Z"
+    },
+    {
+      "name": "refused-resource",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/73424305-29fe-412f-b084-53d39d203c29/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z411 --files test/service-recovery-z411.test.ts test/writer-lock-z411.test.ts",
+      "result": "refused-resource.stdout.json",
+      "stderr": "refused-resource.stderr",
+      "cli": "refused-resource.cli.json",
+      "stdoutSha256": "3e99af291955e7767fe8844939930243245b293257bf83844d8ae3a633bfd183",
+      "runId": "afedf6f4-215e-4c5b-9048-25b9194091a7",
+      "outcome": "refused",
+      "childExitCode": null,
+      "cliExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [
+        {
+          "file": "test/service-recovery-z411.test.ts",
+          "name": "*"
+        },
+        {
+          "file": "test/writer-lock-z411.test.ts",
+          "name": "*"
+        }
+      ],
+      "unknown": [],
+      "groupSnapshot": "absent",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "retry",
+      "selection": {
+        "files": [
+          "test/service-recovery-z411.test.ts",
+          "test/writer-lock-z411.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-24T18:42:07.300Z"
+    },
+    {
+      "name": "red-initial",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/73424305-29fe-412f-b084-53d39d203c29/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z411 --files test/service-recovery-z411.test.ts test/writer-lock-z411.test.ts",
+      "result": "red-initial.stdout.json",
+      "stderr": "red-initial.stderr",
+      "cli": "red-initial.cli.json",
+      "stdoutSha256": "57296eb52b71e3c32c9a662cd414b956556472467f06209a9216a71e5e3d5558",
+      "runId": "7e0e9f82-3183-4482-8a2d-4104a4557687",
+      "outcome": "assertions-failed",
+      "childExitCode": 1,
+      "cliExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/service-recovery-z411.test.ts",
+          "name": "Z411.S02 service recovery does not reconfirm reports or block readiness on exhausted pending runs"
+        },
+        {
+          "file": "test/writer-lock-z411.test.ts",
+          "name": "Z411.S03 timeout releases the service owned Git writer lock"
+        },
+        {
+          "file": "test/writer-lock-z411.test.ts",
+          "name": "Z411.S05 exit releases the service owned Git writer lock"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "selection": {
+        "files": [
+          "test/service-recovery-z411.test.ts",
+          "test/writer-lock-z411.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-24T18:44:05.302Z"
+    },
+    {
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/73424305-29fe-412f-b084-53d39d203c29/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z411 --files test/service-recovery-z411.test.ts test/writer-lock-z411.test.ts",
+      "result": "red.stdout.json",
+      "stderr": "red.stderr",
+      "cli": "red.cli.json",
+      "stdoutSha256": "503626d1612bfeccc0876fb111d5ca3a75d141aa8aa23e5f36976f6a2bad700b",
+      "runId": "2daa0402-d816-4fda-a5d9-28820a2b1e73",
+      "outcome": "assertions-failed",
+      "childExitCode": 1,
+      "cliExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/service-recovery-z411.test.ts",
+          "name": "Z411.S02 service recovery does not reconfirm reports or block readiness on exhausted pending runs"
+        },
+        {
+          "file": "test/writer-lock-z411.test.ts",
+          "name": "Z411.S03 timeout releases the service owned Git writer lock"
+        },
+        {
+          "file": "test/writer-lock-z411.test.ts",
+          "name": "Z411.S05 exit releases the service owned Git writer lock"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "selection": {
+        "files": [
+          "test/service-recovery-z411.test.ts",
+          "test/writer-lock-z411.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-24T18:44:42.302Z"
+    },
+    {
+      "name": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/73424305-29fe-412f-b084-53d39d203c29/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z411 --files test/service-recovery-z411.test.ts test/writer-lock-z411.test.ts",
+      "result": "hotfix.stdout.json",
+      "stderr": "hotfix.stderr",
+      "cli": "hotfix.cli.json",
+      "stdoutSha256": "18110bebacd41b92b9cf75c3743d388391bdc9dbc49309a66a4e664880e14cc9",
+      "runId": "88014f0d-78a9-4e1f-aff9-482953eef062",
+      "outcome": "passed",
+      "childExitCode": 0,
+      "cliExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "selection": {
+        "files": [
+          "test/service-recovery-z411.test.ts",
+          "test/writer-lock-z411.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-24T18:45:49.777Z"
+    }
+  ],
+  "source": {
+    "red": {
+      "sourceEquivalentCommit": "8c5d2d16fe4e5f988074de4de1f1d1d83cad994f",
+      "headReconstructedFromCommitTimeline": "454bbba03edc16b5b11b1f3b41800f77a6afed73",
+      "uncommitted": [
+        "test/service-recovery-z411.test.ts"
+      ],
+      "note": "Contemporaneous HEAD was not separately captured; the test-only commit 8c5d2d1 immediately after red contains the exact corrected fixture and unchanged production source used by red."
+    },
+    "hotfix": {
+      "head": "53f3c90a89710018dccbbab5edf8167d0165b2dc",
+      "implementationCommit": "12152fba33fe2c16fde0dd2a5ccf4e0b8785d1f8",
+      "uncommitted": [
+        "src/background-runtime.ts",
+        "src/production-service-ports.ts",
+        "src/report-commit-index.ts",
+        "src/service-host.ts",
+        "src/task-checkbox-report.ts",
+        "src/owned-writer-lock.ts"
+      ],
+      "workspace": "workspace.json",
+      "patch": "hotfix-workspace.patch",
+      "newFile": "hotfix-new-owned-writer-lock.txt"
+    }
+  },
+  "staticChecks": {
+    "command": "node scripts/build.ts",
+    "exitCode": 0,
+    "stdout": "Каталог зібрано. Операційні команди ще не реалізовані.\n",
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  },
+  "limitations": [
+    "Live production service was not started or activated by this executor.",
+    "Initial inventory refusal has full JSON and CLI status; separate stderr was not captured by that initial tool transport and remains unavailable. Later red and hotfix have exact separate stdout/stderr/CLI metadata.",
+    "Resource usage sampling is partial, as reported unchanged in TestRunResult."
+  ],
+  "archive": {
+    "performed": false,
+    "reason": "137 task checkboxes remain open in the change; raf owns the Z.411 checkbox."
+  }
+}

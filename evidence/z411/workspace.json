@@ -1,0 +1,21 @@
+{
+  "capturedAt": "2026-10-24T18:48:05.580316+00:00",
+  "headAtCapture": "53f3c90a89710018dccbbab5edf8167d0165b2dc",
+  "sourceBase": "8c5d2d16fe4e5f988074de4de1f1d1d83cad994f",
+  "trackedOwnPatch": "hotfix-workspace.patch",
+  "newFileSnapshot": "hotfix-new-owned-writer-lock.txt",
+  "files": {
+    "src/background-runtime.ts": "3c64d6af9f0d8308e2e07034a632352d50c8d3c4dc88cfffe731baa97141b66c",
+    "src/production-service-ports.ts": "3a56571825b2ba302fa5722306ef7968642c1643ec423324c3681f29d1be296a",
+    "src/report-commit-index.ts": "82c321eb53ade9ebe698a8a97d1a372df748d58c63bc01b62038fe84548e512d",
+    "src/service-host.ts": "49ede9d0d5fd7fa6ad02b52848a3552e62adfe08da82a74beae59658c1e38fc2",
+    "src/task-checkbox-report.ts": "2820d87136c9ad2ce492373c0c3abc82e7619e32b8e358b1960fe0c920ba6376",
+    "src/owned-writer-lock.ts": "1af1c6dc1418e5af8c02d2502e3b20c8bdab9346d76898e76f2b55b4992fddeb",
+    "test/service-recovery-z411.test.ts": "7e02ddb97b8022429fef0deb05e93564bd4a241ee859111c2e4e92847b878dd7",
+    "test/writer-lock-z411.test.ts": "10313f4b834fc93f86a0517317f4c891ddfd99f71371af0e9bc3abfa5fd6bfb7"
+  },
+  "statusAtCapture": " M src/background-runtime.ts\n M src/production-service-ports.ts\n M src/report-commit-index.ts\n M src/service-host.ts\n M src/task-checkbox-report.ts\n?? evidence/test-run-browser-cache/\n?? evidence/z411/\n?? node_modules\n?? src/owned-writer-lock.ts\n",
+  "note": "Shared hotfix HEAD can advance through other writers. Foreign commits and artifacts are not part of Z.411. Exact own source bytes verified here match the completed hotfix run; no own source changed between run and capture.",
+  "captureTimeCorrection": "Timestamp recorded while finalizing provenance; source snapshot created immediately before implementation commit.",
+  "implementationCommit": "12152fba33fe2c16fde0dd2a5ccf4e0b8785d1f8"
+}

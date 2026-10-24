@@ -253,12 +253,12 @@ test('D3 real invalid diagnostic configuration names the field before spawn', as
   noInventedExit(result);
 });
 
-test('D3 stale inventory names the missing configured file before spawn', async () => {
+test('D3 stale inventory names the missing selected file before spawn', async () => {
   const harness = new RunHarness();
   const missing = harness.config.projects.raf.profiles.node.unitFiles.at(-1)!;
   delete harness.environment.files[missing];
   harness.environment.unitFiles = harness.environment.unitFiles.filter(file => file !== missing);
-  const result = await runTestRun(fixtureRequest(), harness.config, policy, harness.context, harness.ports);
+  const result = await runTestRun(fixtureRequest({ files: [missing] }), harness.config, policy, harness.context, harness.ports);
   assert.equal(harness.spawns.length, 0);
   assert.equal(result.outcome, 'refused');
   assert.equal(result.errorCode, 'INVENTORY_INCOMPLETE');

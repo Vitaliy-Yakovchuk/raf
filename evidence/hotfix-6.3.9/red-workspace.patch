@@ -1,0 +1,93 @@
+diff --git a/test/test-run-diagnostics-sanitize.test.ts b/test/test-run-diagnostics-sanitize.test.ts
+index c5eb269..d024e15 100644
+--- a/test/test-run-diagnostics-sanitize.test.ts
++++ b/test/test-run-diagnostics-sanitize.test.ts
+@@ -253,12 +253,12 @@ test('D3 real invalid diagnostic configuration names the field before spawn', as
+   noInventedExit(result);
+ });
+ 
+-test('D3 stale inventory names the missing configured file before spawn', async () => {
++test('D3 stale inventory names the missing selected file before spawn', async () => {
+   const harness = new RunHarness();
+   const missing = harness.config.projects.raf.profiles.node.unitFiles.at(-1)!;
+   delete harness.environment.files[missing];
+   harness.environment.unitFiles = harness.environment.unitFiles.filter(file => file !== missing);
+-  const result = await runTestRun(fixtureRequest(), harness.config, policy, harness.context, harness.ports);
++  const result = await runTestRun(fixtureRequest({ files: [missing] }), harness.config, policy, harness.context, harness.ports);
+   assert.equal(harness.spawns.length, 0);
+   assert.equal(result.outcome, 'refused');
+   assert.equal(result.errorCode, 'INVENTORY_INCOMPLETE');
+diff --git a/test/test-run-refusal-diagnostics.test.ts b/test/test-run-refusal-diagnostics.test.ts
+index 85c591b..5330bd5 100644
+--- a/test/test-run-refusal-diagnostics.test.ts
++++ b/test/test-run-refusal-diagnostics.test.ts
+@@ -19,12 +19,12 @@ function execute(harness: RunHarness, overrides: Parameters<typeof fixtureReques
+ }
+ 
+ for (const phase of ['red', 'implement', 'qa', 'hotfix']) {
+-  test(`INVENTORY_INCOMPLETE names every absent configured file and the conf repair before spawn in ${phase}`, async () => {
++  test(`INVENTORY_INCOMPLETE names every absent selected file and the conf repair before spawn in ${phase}`, async () => {
+     const harness = new RunHarness();
+     const missing = ['test/resource-wait-runtime.test.ts', 'test/secrets-import.test.ts'];
+     harness.config.projects.raf.profiles.node.unitFiles.push(...missing);
+     const beforeConfig = structuredClone(harness.config);
+-    const result = await execute(harness, { phase });
++    const result = await execute(harness, { phase, files: missing });
+ 
+     assert.equal(result.outcome, 'refused');
+     assert.equal(result.errorCode, 'INVENTORY_INCOMPLETE');
+@@ -45,6 +45,54 @@ for (const phase of ['red', 'implement', 'qa', 'hotfix']) {
+   });
+ }
+ 
++for (const [workspace, otherWorkspace] of [['raf-develop', 'raf-hotfix'], ['raf-hotfix', 'raf-develop']]) {
++  function workspaceHarness(): RunHarness {
++    const harness = new RunHarness();
++    harness.context.workspace = harness.context.cwd = `/work/${workspace}`;
++    harness.environment.canonicalWorkspace = harness.environment.canonicalCwd = harness.context.workspace;
++    for (const [file, fact] of Object.entries(harness.environment.files)) fact.realpath = `${harness.context.workspace}/${file}`;
++    harness.config.projects.raf.profiles.node.unitFiles.push(`test/only-in-${otherWorkspace}.test.ts`);
++    return harness;
++  }
++
++  for (const selection of ['files', 'preset'] as const) {
++    test(`raf inventory: ${workspace} runs ${selection} while an unselected test exists only in ${otherWorkspace}`, async () => {
++      const harness = workspaceHarness();
++      const beforeConfig = structuredClone(harness.config);
++      const result = await execute(harness, { phase: 'hotfix', ...(selection === 'preset' ? { files: undefined } : {}) });
++
++      assert.equal(result.outcome, 'passed');
++      assert.equal(harness.spawns.length, 1);
++      assert.deepEqual(result.selection.files, files.slice(0, 2));
++      assert.deepEqual(result.knownRed, []);
++      assert.deepEqual(result.unexecuted, []);
++      assert.deepEqual(result.unknown, []);
++      assert.deepEqual(harness.config, beforeConfig, 'the shared inventory must remain unchanged');
++    });
++  }
++
++  test(`raf inventory: ${workspace} refuses a selected file present only in ${otherWorkspace}`, async () => {
++    const harness = workspaceHarness();
++    const missing = `test/only-in-${otherWorkspace}.test.ts`;
++    harness.config.projects.raf.groups[key.group].files = [missing];
++    const result = await execute(harness, { files: undefined });
++
++    assert.equal(result.outcome, 'refused');
++    assert.equal(result.errorCode, 'INVENTORY_INCOMPLETE');
++    assert.equal(harness.spawns.length, 0);
++    assert.ok(result.diagnostics.some(entry => entry.message.includes(missing)));
++  });
++
++  test(`raf inventory: ${workspace} refuses its full local suite despite tests present only in ${otherWorkspace}`, async () => {
++    const harness = workspaceHarness();
++    const result = await execute(harness, { files: [...files] });
++
++    assert.equal(result.outcome, 'refused');
++    assert.equal(result.errorCode, 'UNSAFE_SELECTION');
++    assert.equal(harness.spawns.length, 0);
++  });
++}
++
+ test('INVENTORY_INCOMPLETE also identifies a selected file absent from the environment and preserves the aggregate', async () => {
+   const harness = new RunHarness();
+   harness.environment.unitFiles = files.filter(file => file !== alpha.file);

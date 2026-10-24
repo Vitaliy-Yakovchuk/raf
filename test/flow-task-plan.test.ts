@@ -37,7 +37,7 @@ for (const phase of ['launch', 'report'] as const) {
 
 test('renamed action targeting an accepted finding in another selected change still rejects fix transfer', async () => {
   const input = fixture();
-  input.assignment.changes.push({ id: 'followup-change', items: [{ id: '1.1', description: 'Repair' }] });
+  input.assignment = { ...input.assignment, changes: [...input.assignment.changes, { id: 'followup-change', items: [{ id: '1.1', description: 'Repair' }] }] };
   input.current = [...input.current, { change: 'followup-change', path: `${root}/openspec/changes/followup-change/tasks.md`, text: `- [ ] 1.1 [implement] Виправити іншим агентом; source ${change}:2.3; scenario "${scenario}"; evidence ${evidencePath}\n` }];
   const checked = await validateFlowTaskPlan(input);
   assert.equal(checked.ok, false);

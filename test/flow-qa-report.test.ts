@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { ConfirmationTransientError } from '../src/report-confirmation-retry.ts';
 import { createAgentReportWatcher, readPendingAgentReport, type AgentReportPorts, type AgentReportRequest } from '../src/agent-report.ts';
 import { cleanupFlowTestRuns, recordFlowTestRun, validateFlowQaReport, verifyFlowQaSnapshot, type FlowCheckResult, type FlowQaEvidencePorts, type FlowQaLaunchContext, type FlowTestRunFact } from '../src/flow-qa-report.ts';
 import { address, change, digest, evidenceRoot, memoryFactStore, noFindingsReport, qaFixture, reportPath, requirement, result, root, scenario, sha, testId, workspace } from './helpers/flow-checks-fixture.ts';
@@ -30,6 +31,7 @@ for (const kind of ['no-findings', 'fixed'] as const) test(`new QA accepts ${kin
 
 const malformed: [string, (report: any) => void, RegExp][] = [
   ['missing qa', r => { delete r.qa; }, /^qa$/],
+  ['spoofed report phase', r => { delete r.qa; r.phase = 'implement'; }, /^qa$/],
   ['missing findings', r => { delete r.qa.findings; }, /findings/],
   ['missing scenarios', r => { delete r.qa.scenarios; }, /scenarios/],
   ['missing followUps', r => { delete r.qa.followUps; }, /followUps/],
@@ -180,6 +182,9 @@ for (const mainCase of ['develop', 'fixture', 'main-word-only', 'verified-main']
   const mainWorkspace = f.input.trusted.workingMain.workspace;
   const finding = { ...address, requirement, fixed: false, reason: 'Working raf defect', evidence: [`${evidenceRoot}/stand.md`], mainHotfix: { workspace: mainCase === 'verified-main' ? mainWorkspace : workspace, branch: 'main', requirement: 'openspec/specs/projects/orchestrator/flow-approval/spec.md', evidence: [`${evidenceRoot}/stand.md`] } };
   f.input.report.qa.findings = [finding];
+  if (mainCase === 'develop') finding.mainHotfix.branch = 'develop';
+  if (mainCase === 'fixture') { f.input.trusted.workspace = `${root}/raf-stand`; finding.mainHotfix.workspace = `${root}/raf-stand`; }
+  if (mainCase === 'main-word-only') { finding.mainHotfix.workspace = mainWorkspace; f.files.set(`${evidenceRoot}/stand.md`, 'main'); }
   if (mainCase === 'verified-main') { f.input.trusted.workspace = mainWorkspace; f.input.trusted.branch = 'main'; }
   rejected(await validateFlowQaReport(f.input, f.ports), /findings/);
 });
@@ -276,10 +281,43 @@ for (const kind of ['passed', 'timeout', 'unit-disguise', 'unconfigured'] as con
 
 test('every assigned QA base item is checked, even when an earlier item is valid', async () => {
   const f = qaFixture();
-  f.input.trusted.assignment.changes[0].items.push({ id: '2.5', description: 'Second required scenario' });
+  f.input.trusted.assignment = { ...f.input.trusted.assignment, changes: [{ id: change, items: [...f.input.trusted.assignment.changes[0].items, { id: '2.5', description: 'Second required scenario' }] }] };
   f.input.trusted.scenarios = [...f.input.trusted.scenarios, { change, item: '2.5', scenario: 'Second required scenario' }];
   f.input.report.changes[0].items.push({ id: '2.5', status: 'succeeded' });
   const checked = await validateFlowQaReport(f.input, f.ports);
   assert.equal(checked.ok, false);
   assert.ok(checked.issues.some(issue => issue.item === '2.5' && /scenarios/.test(issue.field)));
+});
+
+for (const cause of ['writer-busy', 'source-read-race'] as const) test(`${cause} while reading proof retains existing temporary-wait semantics`, async () => {
+  const f = qaFixture();
+  f.ports.readText = async () => { throw new ConfirmationTransientError(cause, 'Evidence temporarily unavailable'); };
+  await assert.rejects(() => validateFlowQaReport(f.input, f.ports), error => {
+    assert.ok(error instanceof ConfirmationTransientError);
+    assert.equal(error.cause, cause);
+    return true;
+  });
+});
+
+test('unchanged snapshot passes pre-write verification without changing original failed scenario', async () => {
+  const f = qaFixture();
+  const checked = await validateFlowQaReport(f.input, f.ports); assert.ok(checked.snapshot);
+  assert.equal((await verifyFlowQaSnapshot(checked.snapshot, f.input, f.ports)).ok, true);
+  assert.equal(f.input.report.qa.scenarios[0].status, 'failed');
+});
+
+test('watcher delivers one rejection for unchanged bytes and reason, then rechecks a corrected report', async () => {
+  const h = acceptanceFixture();
+  let notify: Parameters<AgentReportPorts['watch']>[1] | undefined;
+  h.ports.watch = (_directory, listener) => { notify = listener; return () => {}; };
+  const watcher = await createAgentReportWatcher(h.request, h.ports);
+  assert.ok(notify);
+  await notify('modify', 'qa-worker.json'); await notify('rename', 'qa-worker.json');
+  assert.equal(h.diagnostics.filter(text => text.includes('proposedTasks')).length, 1);
+  assert.deepEqual(h.results, []);
+  delete h.f.input.report.proposedTasks;
+  await notify('modify', 'qa-worker.json');
+  assert.equal(h.results.length, 1);
+  assert.equal((h.results[0] as any).status, 'succeeded');
+  await watcher.dispose();
 });

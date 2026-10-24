@@ -104,7 +104,8 @@ for (const missing of ['test-run-channel', 'write-boundaries'] as const) test(`m
 });
 
 test('required base scenarios cover every assigned QA item and preserve literal descriptions', () => {
-  const input = fixture(); input.assignment.changes[0].items.push({ id: '2.5', description: 'Другий точний сценарій' });
+  const input = fixture();
+  input.assignment = { ...input.assignment, changes: [{ id: change, items: [...input.assignment.changes[0].items, { id: '2.5', description: 'Другий точний сценарій' }] }] };
   const prepared = prepareFlowBrief(input);
   assert.deepEqual(prepared.qa?.scenarios, [{ change, item: '2.3', scenario }, { change, item: '2.5', scenario: 'Другий точний сценарій' }]);
 });

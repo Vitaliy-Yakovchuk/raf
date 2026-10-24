@@ -1,0 +1,19 @@
+{
+  "sourceSha": "58b10574aa3f6f3614031d64b69f86f7a7758d87",
+  "sourceWorkspace": "Clean main host clone /srv/dev/fla911b-stand-green/raf; separate conf and node_modules from raf-develop",
+  "command": "node --test --test-name-pattern=\"scrolled-paste|repainting-paste\" test/production-codex-delivery-qa.test.ts",
+  "environment": "Isolated mode 0700 HOME=TMPDIR inside /srv/dev/fla911b-stand-green; TMUX/CLAUDE_*/SSH_* unset; LC_ALL=C (main setup handoff)",
+  "cliExitCode": 0,
+  "outcome": "passed",
+  "tests": 2,
+  "passed": 2,
+  "failed": 0,
+  "cancelled": 0,
+  "skipped": 0,
+  "durationMs": 24328.893489,
+  "stdout": "stdout",
+  "stderr": "stderr",
+  "code": "code",
+  "cleanup": "TestContext fixture cleanup removes owned tmux/processes; final main confirmation pending",
+  "type": "Production worker integration stand; same selection as behavioral red; not unit group or live Codex."
+}

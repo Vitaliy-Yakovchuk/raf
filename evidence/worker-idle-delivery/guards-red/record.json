@@ -1,0 +1,20 @@
+{
+  "sourceSha": "58b10574aa3f6f3614031d64b69f86f7a7758d87",
+  "command": "node --test --test-name-pattern=\"^\\[production-codex-delivery-qa\\] (native-placeholder-replaced|race|immediate|unknown|menu-above-same-footer|stale-ready-menu|auth|permission|wrong-count|native-mismatch|vanished-unknown|pending-forever):\" test/production-codex-delivery-qa.test.ts",
+  "executor": "Main clean host clone /srv/dev/fla911b-stand-green/raf; HOME=TMPDIR=/srv/dev/fla911b-stand-green/home, TMUX/CLAUDE_*/SSH_* unset, LC_ALL=C",
+  "outcome": "assertions-failed",
+  "cliExitCode": 1,
+  "tests": 12,
+  "passed": 11,
+  "failed": 1,
+  "durationMs": 110658.341552,
+  "failedTest": "pending-forever: no false handshake or blind submission",
+  "reason": "Outer readiness handshake 10000ms deadline fired before worker completed native transition timeout; actual no acceptance and exactly one extra Enter are present in diagnostics. Assertion expects native delivery failure. Do not count as pass.",
+  "remediation": "Increase only integration-fixture parent budget to permit bootstrap + readiness + delivery, require specific native acceptance timeout for pending-forever; product timeouts unchanged.",
+  "stdout": "stdout",
+  "stderr": "stderr",
+  "code": "code",
+  "cleanup": "Main reports fixture cleanup; tests remove owned tmux/processes",
+  "secretScan": "Main clean",
+  "notUnit": "No group/QA aggregate mutation"
+}

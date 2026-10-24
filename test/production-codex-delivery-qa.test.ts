@@ -101,6 +101,7 @@ async function deliveryFixture(t: TestContext, mode = 'race') {
   f.settings.liveTaskVerified = false;
   f.settings.timeouts.transitionMs = 5000;
   f.settings.timeouts.pollMs = 30;
+  f.settings.timeouts.overallMs = 30000;
   const rafPath = join(f.confRoot, 'raf.json');
   const raf = JSON.parse(await readFile(rafPath, 'utf8'));
   const completeRaf = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
@@ -221,7 +222,7 @@ for (const mode of ['native-placeholder-replaced', 'race', 'immediate', 'scrolle
 for (const mode of ['unknown', 'menu-above-same-footer', 'stale-ready-menu', 'auth', 'permission', 'wrong-count', 'native-mismatch', 'vanished-unknown', 'pending-forever']) {
   test(`[production-codex-delivery-qa] ${mode}: no false handshake or blind submission`, async t => {
     const f = await deliveryFixture(t, mode);
-    await assert.rejects(f.launch(), /delivery|accept|submission|identity|screen|protocol/i);
+    await assert.rejects(f.launch(), mode === 'pending-forever' ? /Native initial brief acceptance timed out/ : /delivery|accept|submission|identity|screen|protocol/i);
     const accepted = await readFile(f.acceptedPath, 'utf8').catch(() => null);
     assert.equal(accepted, null);
     const rows = (await readFile(f.inputLog, 'utf8')).trim().split('\n').map(line => JSON.parse(line));

@@ -125,6 +125,7 @@ export interface TestRunPlan {
 }
 
 export type RunnerEvent =
+  | { kind: 'diagnostic'; diagnostics: InlineDiagnostic[]; diagnosticSummary?: DiagnosticAttachment['diagnosticSummary']; evidence: string[] }
   | { kind: 'discovered'; test: TestId; parent?: TestId }
   | { kind: 'container-complete'; test: TestId }
   | { kind: 'passed' | 'assertion-failed' | 'setup-failed'; test: TestId; diagnostic?: string; inlineDiagnostic?: InlineDiagnostic }
@@ -503,6 +504,12 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   const events: RunnerEvent[] = [];
   let temporary: RunTemporaryReservation | undefined;
   const onEvent = (event: RunnerEvent) => {
+    if (event.kind === 'diagnostic') {
+      for (const entry of event.diagnostics) diagnostics?.inline(entry);
+      if (event.diagnosticSummary) diagnostics?.omitted(event.diagnosticSummary.omittedEntries, event.diagnosticSummary.redacted, event.diagnosticSummary.truncated);
+      result.evidence = [...new Set([...result.evidence, ...event.evidence])];
+      return;
+    }
     if ('inlineDiagnostic' in event && event.inlineDiagnostic) diagnostics?.inline(event.inlineDiagnostic);
     else if (event.kind === 'protocol-error') diagnostics?.protocolError(event.diagnostic);
     else if (event.kind === 'assertion-failed' || event.kind === 'setup-failed') diagnostics?.failure({ test: event.test, origin: event.kind === 'assertion-failed' ? 'test-body' : 'unknown', error: event.diagnostic });

@@ -76,7 +76,7 @@ async function workspaceGitPaths(cwd: string): Promise<string[]> {
 }
 
 async function executable(name: string, environment: Readonly<Record<string, string | undefined>>, exclude: string): Promise<string> {
-  const candidates = isAbsolute(name) ? [name] : (environment.PATH ?? '').split(delimiter).filter(directory => isAbsolute(directory) && directory !== exclude).map(directory => join(directory, name));
+  const candidates = isAbsolute(name) ? [name] : (environment.PATH ?? '').split(delimiter).filter(directory => isAbsolute(directory) && directory !== exclude && !directory.split(sep).some(part => part.startsWith('codex-sandbox-'))).map(directory => join(directory, name));
   for (const candidate of candidates) {
     try {
       await fs.access(candidate, constants.X_OK);

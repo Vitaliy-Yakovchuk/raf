@@ -13,6 +13,41 @@ export default async function* report(source: AsyncIterable<any>, selected?: Tes
   let protocolFailed = false;
   for await (const event of source) {
     const data = event.data;
+    if (event.type === 'test:diagnostic' && typeof data.message === 'string') {
+      if (process.env.RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL !== '1') continue;
+      let details: any;
+      try { details = JSON.parse(data.message); } catch { continue; }
+      if (!details || typeof details !== 'object') continue;
+      const evidence = Array.isArray(details.evidence) ? details.evidence.filter((path: unknown) => typeof path === 'string' && isAbsolute(path) && !path.includes('\0')) : [];
+      const entries = Array.isArray(details.diagnostics) ? details.diagnostics : [];
+      const diagnostics = new TestRunDiagnostics(limits, { workspace: process.cwd(), qaHome: process.env.HOME ?? '', fixtureRoots: process.env.TMPDIR ? [process.env.TMPDIR] : [] });
+      if (details.schema === 'raf-test-evidence-v1' && typeof details.test?.file === 'string' && typeof details.test?.name === 'string' && typeof details.phase === 'string') {
+        diagnostics.inline({ kind: 'runner', test: details.test, message: `Case ${typeof details.caseRunId === 'string' ? details.caseRunId : 'unknown'}: ${details.phase}`, location: null, stack: [], redacted: false, truncated: false });
+      }
+      for (const entry of entries) {
+        if (entry && typeof entry.kind === 'string' && typeof entry.message === 'string' && Array.isArray(entry.stack) && entry.stack.every((line: unknown) => typeof line === 'string')) diagnostics.inline(entry);
+      }
+      const summary = details.diagnosticSummary;
+      if (summary && Number.isSafeInteger(summary.omittedEntries) && summary.omittedEntries >= 0) diagnostics.omitted(summary.omittedEntries, summary.redacted === true, summary.truncated === true);
+      const attachment = diagnostics.attach({ runId: '', outcome: '', failureKinds: [], knownRed: [], unexecuted: [], unknown: [], timeoutCount: 0, timedOut: false, cleanup: '', evidence: [] }, {} as any);
+      const output: Extract<RunnerEvent, { kind: 'diagnostic' }> = { kind: 'diagnostic', diagnostics: attachment.diagnostics, diagnosticSummary: attachment.diagnosticSummary, evidence: [] };
+      while (output.diagnostics.length && Buffer.byteLength(JSON.stringify(output)) + 1 > limits.maxProtocolLineBytes) {
+        output.diagnostics.pop(); output.diagnosticSummary!.retainedEntries--; output.diagnosticSummary!.omittedEntries++; output.diagnosticSummary!.truncated = true;
+      }
+      if (output.diagnosticSummary!.totalEntries) yield JSON.stringify(output) + '\n';
+      let paths: string[] = [];
+      for (const path of evidence) {
+        const line = JSON.stringify({ kind: 'diagnostic', diagnostics: [], evidence: [...paths, path] }) + '\n';
+        if (Buffer.byteLength(line) > limits.maxProtocolLineBytes) {
+          if (paths.length) yield JSON.stringify({ kind: 'diagnostic', diagnostics: [], evidence: paths }) + '\n';
+          paths = [];
+          if (Buffer.byteLength(JSON.stringify({ kind: 'diagnostic', diagnostics: [], evidence: [path] })) + 1 > limits.maxProtocolLineBytes) { yield JSON.stringify({ kind: 'protocol-error', diagnostic: 'Evidence locator exceeds configured protocol byte limit' }) + '\n'; continue; }
+        }
+        paths.push(path);
+      }
+      if (paths.length) yield JSON.stringify({ kind: 'diagnostic', diagnostics: [], evidence: paths }) + '\n';
+      continue;
+    }
     if (event.type === 'test:stderr' && data.file && typeof data.message === 'string' && stderrBytes < limits.maxStderrBytes) {
       const file = resolve(process.cwd(), data.file);
       let collector = stderr.get(file);

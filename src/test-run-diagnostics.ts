@@ -178,6 +178,7 @@ export class TestRunDiagnostics {
   private entries: InlineDiagnostic[] = [];
   private total = 0;
   private omittedRedacted = false;
+  private omittedTruncated = false;
   private state: DiagnosticReadState = { protocolBufferedBytes: 0, stderrBufferedBytes: 0, protocolRejected: false, stderrTruncated: false };
   private protocol = '';
   private stderr = '';
@@ -255,7 +256,7 @@ export class TestRunDiagnostics {
     if (!location && input.location) location = { ...input.location, file: this.path(input.location.file) };
     const safeField = (v: unknown) => typeof v === 'string' ? clip(this.clean(v).text, this.limits.maxMessageBytes) : undefined;
     return { kind, test: input.test, ...(safeField(error?.name) ? { errorName: safeField(error.name) } : {}), ...(safeField(error?.code) ? { errorCode: safeField(error.code) } : {}), message: clip(clean.text, this.limits.maxMessageBytes), location, stack, redacted, truncated,
-      ...(!object(error) && typeof error !== 'string' ? { unavailableReason: 'Runner supplied no safe error details' } : !location && !stack.length ? { unavailableReason: 'Runner supplied no location or stack' } : {}), ...(input.origin === 'unknown' ? { unavailableReason: 'Error origin is unknown' } : {}), ...(input.unavailableReason ? { unavailableReason: this.clean(input.unavailableReason).text } : {}) };
+      ...(!object(error) && typeof error !== 'string' ? { unavailableReason: 'Runner supplied no safe error details' } : !stack.length ? { unavailableReason: location ? 'Runner supplied no stack' : 'Runner supplied no location or stack' } : {}), ...(input.origin === 'unknown' ? { unavailableReason: 'Error origin is unknown' } : {}), ...(input.unavailableReason ? { unavailableReason: this.clean(input.unavailableReason).text } : {}) };
   }
   failure(input: DiagnosticFailure): DiagnosticDisposition {
     const body = input.origin === 'test-body';
@@ -284,6 +285,11 @@ export class TestRunDiagnostics {
   }
   protocolError(message: string): void { this.add(this.diagnostic('protocol', { test: null, origin: 'unknown', error: new Error(message) })); }
   markStderrTruncated(): void { this.state.stderrTruncated = true; }
+  omitted(count: number, redacted: boolean, truncated: boolean): void {
+    if (Number.isSafeInteger(count) && count > 0) this.total += count;
+    this.omittedRedacted ||= redacted;
+    this.omittedTruncated ||= truncated;
+  }
   stderrText(): string { return this.stderr; }
   stderrChunk(chunk: Uint8Array): void {
     const remaining = this.limits.maxStderrBytes - bytes(this.stderr);
@@ -292,12 +298,13 @@ export class TestRunDiagnostics {
   }
   childExit(input: { exitCode: number | null; signal: string | null; validProtocol: boolean }): void {
     if (!input.validProtocol) { if (!this.state.protocolRejected) this.add({ ...this.diagnostic('protocol', { test: null, origin: 'unknown', error: new Error('Runner exited without valid protocol') }), unavailableReason: 'Valid runner protocol unavailable' }); this.add({ ...this.diagnostic('runner', { test: null, origin: 'unknown', error: this.stderr ? new Error(this.stderr) : null }), truncated: this.state.stderrTruncated }); }
+    else if (this.stderr) this.add({ ...this.diagnostic('runner', { test: null, origin: 'unknown', error: this.stderr }), truncated: this.state.stderrTruncated });
   }
   recoveredDetailsUnavailable(reason: string): void { this.add({ ...this.diagnostic('runner', { test: null, origin: 'unknown', error: null }), unavailableReason: this.clean(reason).text }); }
   readState(): DiagnosticReadState { return { ...this.state }; }
   attach<T extends DiagnosticRunFacts>(facts: T, environment: DiagnosticEnvironmentSummary): T & DiagnosticAttachment {
     let diagnostics = this.entries.map(e => ({ ...e, stack: [...e.stack] }));
-    const summary = (): DiagnosticSummary => ({ totalEntries: this.total, retainedEntries: diagnostics.length, omittedEntries: this.total - diagnostics.length, truncated: this.state.stderrTruncated || diagnostics.length < this.total || diagnostics.some(e => e.truncated), redacted: this.omittedRedacted || this.entries.some(e => e.redacted) });
+    const summary = (): DiagnosticSummary => ({ totalEntries: this.total, retainedEntries: diagnostics.length, omittedEntries: this.total - diagnostics.length, truncated: this.omittedTruncated || this.state.stderrTruncated || diagnostics.length < this.total || diagnostics.some(e => e.truncated), redacted: this.omittedRedacted || this.entries.some(e => e.redacted) });
     while (diagnostics.length && bytes(JSON.stringify({ diagnostics, diagnosticSummary: summary() })) > this.limits.maxTotalBytes) diagnostics.pop();
     return { ...facts, diagnostics, diagnosticSummary: summary(), environmentSummary: environment };
   }
@@ -366,7 +373,7 @@ export async function prepareRunTemporaryDirectory(configuration: RunTemporaryCo
     if (!inspected || inspected.symlink || ['path', 'realpath', 'device', 'inode', 'uid', 'mode'].some(key => (inspected as any)[key] !== (created as any)[key])) tmpError('Created temporary identity changed before reservation');
     await ports.saveReservation(reservation);
   } catch (error) {
-    if (privateChild) await cleanupRunTemporaryDirectory(reservation, true, ports);
+    if (privateChild && created.uid === context.uid) await cleanupRunTemporaryDirectory(reservation, true, ports);
     throw error;
   }
   return { reservation, environment: { HOME: context.qaHome, RAF_QA_HOME: context.qaHome, TMPDIR: created.path }, statePath: context.statePath, stateTmpPath: context.stateTmpPath };

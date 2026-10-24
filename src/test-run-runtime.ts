@@ -204,7 +204,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         vitestEnvironment = { RAF_TEST_RUN_VITEST_BATCHES: JSON.stringify(batches), RAF_TEST_RUN_WORKSPACE: workspace, RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(config.diagnostics), ...(baseRunner ? { RAF_TEST_RUN_BASE_RUNNER: resolve(command.cwd, baseRunner) } : {}) };
         command.argv = [fileURLToPath(new URL('../scripts/test-run-vitest.ts', import.meta.url))];
       }
-      const child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...environment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []) }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+      const child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...environment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '1' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
       await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', error => { spawnFailed?.(); fail(error); }); });
       const pid = child.pid!;
       const exited = new Promise<void>(done => child.once('exit', () => done()));
@@ -216,7 +216,8 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       const consume = (line: string) => {
         try {
           const event = JSON.parse(line);
-          if (!event || !['discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed', 'file-setup-failed', 'complete', 'protocol-error'].includes(event.kind) ||
+          if (!event || !['diagnostic', 'discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed', 'file-setup-failed', 'complete', 'protocol-error'].includes(event.kind) ||
+              event.kind === 'diagnostic' && (!Array.isArray(event.diagnostics) || !Array.isArray(event.evidence) || event.evidence.some((path: unknown) => typeof path !== 'string')) ||
               event.kind === 'complete' && (!Array.isArray(event.expected) || event.expected.some((id: any) => typeof id?.file !== 'string' || typeof id?.name !== 'string')) ||
               ['discovered', 'container-complete', 'passed', 'assertion-failed', 'setup-failed'].includes(event.kind) && (typeof event.test?.file !== 'string' || typeof event.test?.name !== 'string') ||
               event.parent !== undefined && (typeof event.parent?.file !== 'string' || typeof event.parent?.name !== 'string')) throw new Error('Invalid runner event');

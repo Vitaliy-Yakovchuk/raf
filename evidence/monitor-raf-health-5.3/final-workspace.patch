@@ -1,0 +1,198 @@
+diff --git a/src/agent-control.ts b/src/agent-control.ts
+index 3571c1d..a3ba3d9 100644
+--- a/src/agent-control.ts
++++ b/src/agent-control.ts
+@@ -80,7 +80,7 @@ export class AgentControlService {
+     return session.activity ? [{ kind, session: structuredClone(session), project: session.activity.project }] : [];
+   }
+ 
+-  private async inspect(identity: ProcessIdentity): Promise<ProcessObservation> {
++  private async inspect(identity: ProcessIdentity, requireOwnership = false): Promise<ProcessObservation> {
+     let observation: ProcessObservation;
+     try {
+       observation = await this.dependencies.scanner.inspect(identity);
+@@ -88,6 +88,7 @@ export class AgentControlService {
+       observation = { state: 'unknown', observedAt: new Date().toISOString(), error: String(error) };
+     }
+     if (observation.state === 'alive' && !this.sameProcess(identity, observation.identity)) {
++      if (requireOwnership) throw new Error('Session is not confirmed alive: process ownership changed');
+       observation = { state: 'exited', observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity no longer belongs to this run' };
+     }
+     return observation;
+@@ -196,7 +197,7 @@ export class AgentControlService {
+     if (session.state !== 'running' || !session.process) {
+       throw new Error(`Session is not confirmed alive: ${id}`);
+     }
+-    const observation = await this.inspect(session.process);
++    const observation = await this.inspect(session.process, true);
+     if (observation.state !== 'alive') {
+       if (observation.state === 'exited') return closeExited(observation);
+       throw new Error(`Session is not confirmed alive: ${id}`);
+diff --git a/src/app-runtime.ts b/src/app-runtime.ts
+index 39c5197..5b9639b 100644
+--- a/src/app-runtime.ts
++++ b/src/app-runtime.ts
+@@ -375,7 +375,8 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+       const state = await store();
+       const budget = loaded.commandTiming.sqliteOnlyMeanBudgetMs;
+       if (!Number.isFinite(budget) || budget! <= 0) throw fail('CONFIGURATION_INVALID', 'configuration', 'Invalid commandTiming.sqliteOnlyMeanBudgetMs');
+-      return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile() };
++      const forcedClose = state.readForcedCloseMetrics(new Date(dependencies.now()).toISOString());
++      return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile(), health: { readAt: forcedClose.readAt, since: forcedClose.since, forcedClose } };
+     },
+   };
+   if (dependencies.commandState) for (const name of reminderCommands) builtins[name] = async params => createReminderHandlers(await statePorts())[name](params);
+@@ -401,6 +402,10 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+       return await handler(params);
+     } catch (error) {
+       original = error;
++      if (name === 'agent close' && (params.force === true || params.reason !== undefined) && opening) {
++        try { (await opening).recordForcedCloseRefusal(failureContext(error)?.code ?? 'HANDLER_FAILED', new Date(dependencies.now()).toISOString()); }
++        catch { }
++      }
+       if (failureContext(error)) throw error;
+       throw fail('HANDLER_FAILED', 'handler', describe(error), { sourceCode: (error as { code?: string })?.code ?? null });
+     } finally {
+diff --git a/src/forced-close-metrics.ts b/src/forced-close-metrics.ts
+index cb1401e..42a9d6f 100644
+--- a/src/forced-close-metrics.ts
++++ b/src/forced-close-metrics.ts
+@@ -30,11 +30,38 @@ export type ForcedCloseFinalization = {
+   finishedAt: string;
+ };
+ 
++function timestamp(value: string): number {
++  const time = Date.parse(value);
++  if (!Number.isFinite(time)) throw new Error('Invalid forced close metric timestamp');
++  return time;
++}
++
++function requireTransaction(database: ForcedCloseMetricsDatabase): void {
++  if (!database.isTransaction) throw new Error('Forced close metrics require an active transaction');
++}
++
++export function initializeForcedCloseMetricsInTransaction(database: ForcedCloseMetricsDatabase, since: string): void {
++  requireTransaction(database);
++  timestamp(since);
++  database.exec(`CREATE TABLE IF NOT EXISTS raf_forced_close_metrics (
++    singleton INTEGER PRIMARY KEY CHECK(singleton = 1),
++    since TEXT NOT NULL,
++    completed INTEGER NOT NULL CHECK(completed >= 0),
++    refusals_json TEXT NOT NULL
++  ) STRICT`);
++  database.prepare('INSERT INTO raf_forced_close_metrics(singleton, since, completed, refusals_json) VALUES (1, ?, 0, ?) ON CONFLICT(singleton) DO NOTHING').run(since, '{}');
++}
++
+ export function recordForcedCloseFinalizationInTransaction(
+   database: ForcedCloseMetricsDatabase,
+   finalization: ForcedCloseFinalization,
+ ): void {
+-  throw new Error('NotImplemented');
++  requireTransaction(database);
++  if (!finalization.runId.trim()) throw new Error('Forced close finalization requires a runId');
++  timestamp(finalization.finishedAt);
++  if (!finalization.forced || finalization.previousState !== 'exited') return;
++  initializeForcedCloseMetricsInTransaction(database, finalization.finishedAt);
++  database.prepare('UPDATE raf_forced_close_metrics SET completed = completed + 1 WHERE singleton = 1').run();
+ }
+ 
+ export function recordForcedCloseRefusalInTransaction(
+@@ -42,19 +69,42 @@ export function recordForcedCloseRefusalInTransaction(
+   code: string,
+   observedAt: string,
+ ): void {
+-  throw new Error('NotImplemented');
++  requireTransaction(database);
++  if (!code.trim()) throw new Error('Forced close refusal requires a code');
++  initializeForcedCloseMetricsInTransaction(database, observedAt);
++  const current = readForcedCloseMetrics(database, observedAt);
++  if (current.unavailableReason) throw new Error(current.unavailableReason);
++  const refusals = { ...current.refusalsByCode };
++  refusals[code] = (Object.hasOwn(refusals, code) ? refusals[code] : 0) + 1;
++  database.prepare('UPDATE raf_forced_close_metrics SET refusals_json = ? WHERE singleton = 1').run(JSON.stringify(refusals));
+ }
+ 
+ export function readForcedCloseMetrics(
+   database: ForcedCloseMetricsDatabase,
+   readAt: string,
+ ): ForcedCloseMetricsSnapshot {
+-  throw new Error('NotImplemented');
++  timestamp(readAt);
++  try {
++    const row = database.prepare('SELECT since, completed, refusals_json FROM raf_forced_close_metrics WHERE singleton = 1').get();
++    if (!row) throw new Error('Forced close accounting has not started; historical totals are unavailable');
++    const since = String(row.since);
++    timestamp(since);
++    if (!Number.isSafeInteger(row.completed) || Number(row.completed) < 0) throw new Error('Invalid forced close completed aggregate');
++    const refusals: unknown = JSON.parse(String(row.refusals_json));
++    if (!refusals || typeof refusals !== 'object' || Array.isArray(refusals) || Object.values(refusals).some(value => !Number.isSafeInteger(value) || Number(value) < 0)) throw new Error('Invalid forced close refusal aggregate');
++    return { readAt, since, completed: Number(row.completed), refusalsByCode: refusals as Record<string, number>, unavailableReason: null };
++  } catch (error) {
++    return { readAt, since: null, completed: null, refusalsByCode: {}, unavailableReason: error instanceof Error ? error.message : String(error) };
++  }
+ }
+ 
+ export function forcedCloseMetricsPeriod(
+   previous: ForcedCloseMetricsSnapshot | null,
+   current: ForcedCloseMetricsSnapshot,
+ ): ForcedCloseMetricsPeriod {
+-  throw new Error('NotImplemented');
++  const completedAt = timestamp(current.readAt);
++  let unavailableReason = current.unavailableReason;
++  if (!unavailableReason && (current.completed === null || !current.since || previous && (previous.unavailableReason || previous.completed === null || previous.since !== current.since))) unavailableReason = 'A matching forced close accounting baseline is unavailable; historical totals are unknown';
++  if (!unavailableReason && previous && (timestamp(previous.readAt) > completedAt || current.completed! < previous.completed!)) unavailableReason = 'Forced close accounting interval or cumulative total regressed';
++  return { startedAt: previous?.readAt ?? current.since, completedAt: current.readAt, since: current.since, completed: unavailableReason ? null : current.completed! - (previous?.completed ?? 0), unavailableReason };
+ }
+diff --git a/src/state-store.ts b/src/state-store.ts
+index 2020b3d..db0853e 100644
+--- a/src/state-store.ts
++++ b/src/state-store.ts
+@@ -1,4 +1,5 @@
+ import { aggregateRafCostSample, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
++import { initializeForcedCloseMetricsInTransaction, recordForcedCloseFinalizationInTransaction, recordForcedCloseRefusalInTransaction, readForcedCloseMetrics, type ForcedCloseMetricsSnapshot } from './forced-close-metrics.ts';
+ import { readRafCostPolicy } from './raf-cost-runtime.ts';
+ import { initializeResourceUsage } from './resource-usage.ts';
+ import { accountSessionUsage } from './resource-usage-runtime.ts';
+@@ -94,6 +95,8 @@ export interface StateStore {
+   costProfileRepository: RafCostProfileRepository;
+   recordCostSample(sample: RafCostSample): void;
+   readCostProfile(): RafCostProfileSnapshot;
++  readForcedCloseMetrics(readAt?: string): ForcedCloseMetricsSnapshot;
++  recordForcedCloseRefusal(code: string, observedAt: string): void;
+ }
+ 
+ export const STATE_SCHEMA_VERSION = 17;
+@@ -462,6 +465,9 @@ export function openStateStore(path: string, options?: import('./state-migration
+         }
+       }
+       db.exec("PRAGMA foreign_keys = ON; PRAGMA synchronous = FULL; PRAGMA wal_autocheckpoint = 1000; PRAGMA journal_size_limit = 4194304");
++      if (!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'raf_forced_close_metrics'").get()) {
++        transaction(() => initializeForcedCloseMetricsInTransaction(db, new Date().toISOString()));
++      }
+ 
+     });
+   } catch (error) {
+@@ -569,6 +575,10 @@ export function openStateStore(path: string, options?: import('./state-migration
+       }),
+       listSessions: () => access(() => db.prepare("SELECT payload FROM sessions").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
+       putSession: session => access(() => {
++        const previous = tx.getSession(session.runId);
++        if (session.state === 'finished' && previous && previous.state !== 'finished') {
++          recordForcedCloseFinalizationInTransaction(db, { runId: session.runId, previousState: previous.state, forced: !!previous.result?.forcedClose, finishedAt: session.finishedAt! });
++        }
+         if (Number(db.prepare("PRAGMA user_version").get()?.user_version) >= 15) accountSessionUsage(db, session, options?.context?.orchestratorRoot);
+         if (session.state === 'finished') settleStartupContextReview(db, { reviewRunId: session.runId, status: session.result?.status ?? 'failed', finishedAt: session.finishedAt! });
+         db.prepare(`INSERT INTO sessions(run_id, address_id, state, finished_at, payload) VALUES (?, ?, ?, ?, ?)
+@@ -969,6 +979,12 @@ export function openStateStore(path: string, options?: import('./state-migration
+     readCostProfile() {
+       return { schemaVersion: profilePolicy().schemaVersion, readAt: new Date().toISOString(), rows: costProfileRepository.readRows() };
+     },
++    readForcedCloseMetrics(readAt = new Date().toISOString()) {
++      return operation('readForcedCloseMetrics', () => readForcedCloseMetrics(db, readAt));
++    },
++    recordForcedCloseRefusal(code, observedAt) {
++      operation('recordForcedCloseRefusal', () => transaction(() => recordForcedCloseRefusalInTransaction(db, code, observedAt)));
++    },
+     recordCommandDuration(command, durationMs, alpha) {
+       if (!Number.isFinite(durationMs) || durationMs < 0) throw new Error("Duration must be finite and nonnegative");
+       if (!Number.isFinite(alpha) || alpha <= 0 || alpha > 1) throw new Error("Alpha must be in (0, 1]");

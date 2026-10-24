@@ -1,0 +1,108 @@
+{
+  "assignment": "monitor-raf-health:5.3",
+  "sourceCommit": "39f3098c87f15d4e62146b1fb3da8f03185b425b",
+  "status": "failed",
+  "independentImplementation": {
+    "completedBeforeReadingTests": true,
+    "testsModified": false,
+    "retryModified": false
+  },
+  "schema": {
+    "target": 18,
+    "supported": [
+      17,
+      18
+    ],
+    "existing17": "No DDL; forced-close historical accounting unavailable until explicit migration.",
+    "migration": "Existing guarded transfer with backup/client checks; no production migration performed.",
+    "compatibility": "Does not claim original exact-v17 generation can read v18; main/switch must verify staged rollout."
+  },
+  "tests": [
+    {
+      "result": "initial.result.json",
+      "invocation": "initial-invocation.json",
+      "workspacePatch": "initial-workspace.patch",
+      "runId": "4be52d4a-b058-4d7b-a788-d57d45260db6",
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 24,
+      "knownRed": 2,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation"
+    },
+    {
+      "result": "retry-refused.result.json",
+      "invocation": "final-invocation.json",
+      "workspacePatch": "final-workspace.patch",
+      "runId": "9765c5d5-b8ac-4775-8eeb-7e2f3e16c054",
+      "outcome": "refused",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "knownRed": "unknown: group snapshot unavailable, do not overwrite previous aggregate",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": null,
+      "nextAction": "fix-setup"
+    },
+    {
+      "result": "authorized-repeat.result.json",
+      "invocation": "authorized-repeat-invocation.json",
+      "workspacePatch": "migrated-workspace.patch",
+      "runId": "0b040dd3-1503-4f77-831e-8f920f29759c",
+      "outcome": "refused",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "command": null,
+      "groupSnapshot": "unavailable",
+      "groupState": null,
+      "timeoutCount": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": "Unknown aggregate: unavailable snapshot, previous loaded snapshot had 2 knownRed before implementation fixes. Empty current result arrays do not clear aggregate.",
+      "unexecuted": "No test child started; empty result arrays do not establish execution.",
+      "unknown": "Final implementation not verified by required unit group.",
+      "nextAction": "fix-setup"
+    }
+  ],
+  "redBaseline": {
+    "result": "../monitor-raf-health/forced-close-scaffold/red-confirmed.result.json",
+    "runId": "82b119ff-6432-48b4-9d8a-b95c8d8a6b26",
+    "knownRed": 26,
+    "stableGroup": "monitor-raf-health/forced-close",
+    "sameQaHomeAsImplement": true
+  },
+  "checks": [
+    "migrated-build.json",
+    "migrated-check-comments.json"
+  ],
+  "nextAction": "Main restores trusted test channel/new authorized launch before another exact implement forced-close run; resource-wait migration regression is deferred to main after forced-close passed. No further executor retry, QA HOME reset, regression, checkboxes or archive performed.",
+  "scope": {
+    "tasksEdited": false,
+    "archive": false,
+    "reason": "Other change items and QA 5.4 remain open."
+  },
+  "reason": "Required implement passed was not obtained: main-authorized repeat was refused before child startup by known runner hook/channel defect 6.3.12. Implementation and checks are committed/ready; final implementation remains unit-unverified.",
+  "catalogue": "Main confirmed command stats health.forcedClose catalogue update before authorized repeat. No conf changes made by this executor.",
+  "completedAt": "2026-10-24T23:31:17.389846+00:00",
+  "whitespaceVerification": {
+    "sourceCommitDiffCheckExitCode": 0,
+    "rawEvidenceStagedDiffCheckExitCode": 2,
+    "reason": "Verbatim git diff patches contain space-prefixed empty context lines; npm stdout ends with an empty line. Raw evidence retained unchanged rather than normalized."
+  }
+}

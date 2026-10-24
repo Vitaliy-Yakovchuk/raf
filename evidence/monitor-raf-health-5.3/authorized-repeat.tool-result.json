@@ -1,0 +1,16 @@
+{
+  "launch": {
+    "chunk_id": "73cbee",
+    "wall_time_seconds": 1.001195384,
+    "session_id": 40211,
+    "original_token_count": 0,
+    "output": ""
+  },
+  "completion": {
+    "chunk_id": "f9803c",
+    "wall_time_seconds": 0.000012349,
+    "exit_code": 1,
+    "original_token_count": 525,
+    "output": "{\"testKind\":null,\"timeoutPolicy\":null,\"callerPhase\":null,\"diagnostics\":[{\"kind\":\"preflight\",\"test\":null,\"errorName\":\"Error\",\"errorCode\":\"ERR_SQLITE_ERROR\",\"message\":\"unable to open database file\",\"location\":null,\"stack\":[\"    at <external>/state-store.ts:176:38\",\"    at operation (<external>/state-store.ts:159:14)\",\"    at openStateStore (<external>/state-store.ts:176:14)\",\"    at openStore (<external>/test-run-runtime.ts:301:20)\",\"    at runConfiguredTestRun (<external>/test-run-runtime.ts:307:20)\",\"    at runProductionCli (<external>/production-entry.ts:146:12)\",\"    at async Module.runPublicCli (<external>/cli.ts:160:14)\",\"    at async <external>/raf.ts:6:5\"],\"redacted\":true,\"truncated\":false}],\"diagnosticSummary\":{\"totalEntries\":1,\"retainedEntries\":1,\"omittedEntries\":0,\"truncated\":false,\"redacted\":true},\"environmentSummary\":{\"executable\":\"/opt/dev/node/bin/node\",\"runtimeVersion\":\"v26.12.1\",\"adapter\":\"unavailable\",\"isolation\":\"unavailable\",\"configurationFingerprints\":{\"flow\":\"\",\"testRuns\":\"\",\"projects\":\"\"},\"tmpPathBytes\":0,\"privateRunTmp\":false},\"runId\":\"0b040dd3-1503-4f77-831e-8f920f29759c\",\"project\":\"raf\",\"workspace\":\"/srv/dev/work/orchestrator/raf-develop\",\"phase\":\"implement\",\"group\":\"monitor-raf-health/forced-close\",\"profileId\":null,\"selection\":{\"files\":[],\"testIds\":[]},\"command\":null,\"startedAt\":\"2026-10-24T23:29:58.480Z\",\"durationMs\":0,\"exitCode\":null,\"signal\":null,\"timedOut\":false,\"cleanup\":{\"complete\":true,\"remainingPids\":[]},\"outcome\":\"refused\",\"failureKinds\":[\"refusal\"],\"passed\":[],\"knownRed\":[],\"unexecuted\":[],\"unknown\":[],\"removed\":[],\"stateAccess\":{\"store\":\"control\",\"operation\":\"open\",\"path\":\"/home/dev/.raf/state.sqlite\",\"errorCode\":\"ERR_SQLITE_ERROR\",\"sqliteCode\":14,\"message\":\"unable to open database file\"},\"groupSnapshot\":\"unavailable\",\"groupState\":null,\"timeoutCount\":null,\"nextAction\":\"fix-setup\",\"hintIds\":[\"refusal\"],\"hints\":[\"Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін.\"],\"evidence\":[],\"errorCode\":\"ERR_SQLITE_ERROR\"}\n"
+  }
+}

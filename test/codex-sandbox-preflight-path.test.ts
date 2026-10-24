@@ -71,7 +71,7 @@ net.Server.prototype.emit = function(event, ...args) {
 `);
   await writeFile(join(bin, 'codex'), `#!${process.execPath}
 const { spawnSync } = require('node:child_process');
-const { openSync, closeSync } = require('node:fs');
+const { openSync, closeSync, statSync } = require('node:fs');
 const { join } = require('node:path');
 const args = process.argv.slice(2);
 const separator = args.indexOf('--');
@@ -79,17 +79,46 @@ if (args[0] !== 'sandbox' || separator < 0 || !args[separator + 1]) {
   process.stderr.write('Z390 fixture expects codex sandbox -- executable args');
   process.exit(97);
 }
+const filesystemKey = 'permissions.linux.filesystem=';
+const filesystemConfigs = args.slice(0, separator).flatMap((arg, index) =>
+  arg === '-c' && args[index + 1]?.startsWith(filesystemKey) ? [args[index + 1].slice(filesystemKey.length)] : []);
+if (filesystemConfigs.length !== 1) throw new Error('Z390 fixture requires one filesystem permissions table');
+const table = filesystemConfigs[0];
+if (!table.startsWith('{') || !table.endsWith('}')) throw new Error('Z390 fixture requires an inline filesystem permissions table');
+const body = table.slice(1, -1);
+const entries = [...body.matchAll(/("(?:[^"\\\\]|\\\\.)*")=("(?:[^"\\\\]|\\\\.)*")/g)];
+if (entries.map(entry => entry[0]).join(',') !== body) throw new Error('Z390 fixture cannot parse filesystem permissions');
+const denied = entries.flatMap(([, key, value]) => {
+  const path = JSON.parse(key);
+  const access = JSON.parse(value);
+  if (!['none', 'read', 'write'].includes(access)) throw new Error('Z390 fixture received an unknown filesystem access');
+  if (access !== 'none') return [];
+  if (!path.startsWith('/') || path === '/') throw new Error('Z390 fixture requires absolute deny paths below /');
+  return [path];
+});
+const masks = [...${JSON.stringify(accountHomes)}];
+const denyMounts = [];
+for (const path of [...new Set(denied)].sort((left, right) => left.length - right.length)) {
+  if (masks.some(parent => path === parent || path.startsWith(parent + '/'))) continue;
+  const stat = statSync(path, { throwIfNoEntry: false });
+  if (!stat) continue;
+  denyMounts.push('--perms', '000', ...(stat.isDirectory() ? ['--tmpfs', path] : ['--ro-bind-data', '4', path]));
+  masks.push(path);
+}
 const seccompFd = openSync(join(__dirname, 'deny-tcp.bpf'), 'r');
+const emptyFd = openSync('/dev/null', 'r');
 const child = spawnSync('/usr/bin/bwrap', [
   '--die-with-parent', '--unshare-user', '--unshare-pid', '--unshare-net',
   '--seccomp', '3',
   '--ro-bind', '/', '/', '--bind', '/tmp', '/tmp', '--dev', '/dev', '--proc', '/proc',
   ...${JSON.stringify(accountHomes)}.flatMap(home => ['--tmpfs', home]),
+  ...denyMounts,
   '--', args[separator + 1], '--require', join(__dirname, 'socket-witness.cjs'), ...args.slice(separator + 2)
 ], {
-  stdio: ['inherit', 'inherit', 'inherit', seccompFd], env: process.env
+  stdio: ['inherit', 'inherit', 'inherit', seccompFd, emptyFd], env: process.env
 });
 closeSync(seccompFd);
+closeSync(emptyFd);
 if (child.error) { process.stderr.write('Z390 fixture requires /usr/bin/bwrap, seccomp, and user/pid/mount/network namespaces: ' + child.error.message); process.exit(98); }
 if (child.status !== 0) process.stderr.write('\\nZ390 fixture isolated probe failed; /usr/bin/bwrap, seccomp, and user/pid/mount/network namespaces are required\\n');
 process.exit(child.status ?? 99);

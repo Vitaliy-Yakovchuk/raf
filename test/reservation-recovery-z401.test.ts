@@ -39,6 +39,15 @@ function identity(runId: string, overrides: Partial<ReservationProcessIdentity> 
   };
 }
 
+function wrapperIdentity(runId: string): ReservationProcessIdentity {
+  const process = identity(runId);
+  return {
+    ...process, pid: process.pid + 100000,
+    runnerSessionId: `wrapper-${runId}`, tmuxSession: `wrapper-${runId}`,
+    evidence: { ...process.evidence, command: `z401-wrapper-${runId}` },
+  };
+}
+
 function catalog(options: readonly string[]): CompiledCatalog {
   return {
     commands: [{
@@ -106,7 +115,8 @@ function fixture(t: TestContext) {
   function seed(runId = oldRun, tasks: readonly ReservedTaskSnapshot[] = [task('A')], addressId = 'old-agent'): TaskReservationLease {
     const lease = { owner: { addressId, runId, fence: `seed-${runId}` }, revision: 1 };
     const value: TaskReservationSet = {
-      lease, tasks, boot, stage: 'running', starter: identity(runId), agent: identity(runId),
+      lease, tasks, boot, stage: 'running', starter: identity(runId),
+      wrapper: wrapperIdentity(runId), agent: identity(runId),
     };
     store.taskReservationRepository.transaction(tx => {
       tx.putSession(session(runId, addressId));
@@ -603,7 +613,7 @@ for (const parentAlive of [true, false]) {
     const child = await f.claim('child-run', [task('A')], 'parent-run');
     assert.equal(child.reserved, true);
     if (!child.reserved) return;
-    const handed = await handoffTaskReservations(f.dependencies, { lease: child.lease, wrapper: identity('child-run') });
+    const handed = await handoffTaskReservations(f.dependencies, { lease: child.lease, wrapper: wrapperIdentity('child-run') });
     assert.ok(handed);
     const started = await startTaskReservations(f.dependencies, { lease: handed, agent: identity('child-run') });
     assert.ok(started);

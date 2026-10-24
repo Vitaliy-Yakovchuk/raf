@@ -1,4 +1,5 @@
 import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { TestRunDiagnostics } from './test-run-diagnostics.ts';
 import type { ChildExit, RunnerClassification, TestId, TestRunCommand, TestRunPlan, TestRunProfile, UnitTestPolicy } from './test-runs.ts';
@@ -154,6 +155,17 @@ export async function runVitestBatch(api: VitestBatchApi, argv: string[], runner
     await vitest.start(filter);
   } finally {
     await vitest.close();
+  }
+}
+
+export async function runVitestBatchFromSource(api: VitestBatchApi, argv: string[], source: string, temporary: string): Promise<void> {
+  const directory = mkdtempSync(resolve(temporary, 'vitest-runner-'));
+  try {
+    const runner = resolve(directory, 'test-run-vitest-runner.ts');
+    copyFileSync(source, runner);
+    await runVitestBatch(api, argv, runner);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
   }
 }
 

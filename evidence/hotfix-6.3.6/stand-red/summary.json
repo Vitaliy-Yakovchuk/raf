@@ -1,0 +1,48 @@
+{
+  "phase": "red",
+  "failure": null,
+  "fixture": "/tmp/raf-generation-stand-IB6Fog",
+  "isolatedHome": "/tmp/raf-generation-stand-IB6Fog/home",
+  "temporary": "/tmp/raf-generation-stand-IB6Fog/tmp",
+  "timeoutMs": 1200000,
+  "source": "/srv/dev/work/orchestrator/raf-hotfix",
+  "sha": "032580ec15c2d1cdb96b48cd71b96aceec6e31c9",
+  "dirty": " M test/test-run-etchly-profiles.test.ts\n?? evidence/hotfix-6.3.6/\n?? node_modules\n?? scripts/qa-test-run-generation-stand.ts\n",
+  "fixtureRemoved": true,
+  "results": [
+    {
+      "label": "generation-happy-dom-direct",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/tmp/raf-generation-stand-IB6Fog/etchly/node_modules/vitest/vitest.mjs",
+        "run",
+        "probe.test.ts",
+        "--configLoader",
+        "runner"
+      ],
+      "cwd": "/tmp/raf-generation-stand-IB6Fog/etchly",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": true
+    },
+    {
+      "label": "generation-happy-dom-wrapped",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/tmp/raf-generation-stand-IB6Fog/.git/modules/raf/hotfix/generations/one/raf-main/scripts/test-run-vitest-api.ts",
+        "run",
+        "probe.test.ts",
+        "--configLoader",
+        "runner",
+        "--reporter",
+        "/tmp/raf-generation-stand-IB6Fog/.git/modules/raf/hotfix/generations/one/raf-main/src/test-run-vitest-reporter.ts"
+      ],
+      "cwd": "/tmp/raf-generation-stand-IB6Fog/etchly",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": true
+    }
+  ]
+}

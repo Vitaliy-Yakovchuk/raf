@@ -10,7 +10,7 @@ import type { EtchlyEnvironmentFacts, EtchlyInventoryFact, EtchlyTestRunProfile,
 import type { DiagnosticLimits } from '../src/test-run-diagnostics.ts';
 import * as etchlyAdapter from '../src/test-run-etchly.ts';
 import { observeEtchlyInventory } from '../src/test-run-etchly-inventory.ts';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -584,5 +584,49 @@ for (const fullSuite of [true, false]) {
     assert.deepEqual(result.knownRed, []);
     assert.deepEqual(result.passed, []);
     assert.deepEqual(result.cleanup, { complete: true, remainingPids: [] });
+  });
+}
+
+for (const fails of [false, true]) {
+  test(`generation runner is staged outside .git and cleaned after ${fails ? 'failure' : 'success'}`, async () => {
+    const run = (etchlyAdapter as any).runVitestBatchFromSource;
+    assert.equal(typeof run, 'function', 'The trusted bridge must stage its runner outside Vite denied generation paths');
+    const root = mkdtempSync(join(tmpdir(), 'raf-generation-runner-'));
+    const generation = join(root, '.git', 'modules', 'raf', 'generations', 'one', 'src');
+    const temporary = join(root, 'private-tmp');
+    mkdirSync(generation, { recursive: true });
+    mkdirSync(temporary, { mode: 0o700 });
+    const source = join(generation, 'test-run-vitest-runner.ts');
+    const bytes = "export default class Runner {}\n";
+    writeFileSync(source, bytes);
+    let staged = '', closed = false, started = false;
+    const project = { config: { environment: 'happy-dom', runner: '' }, vite: { config: { server: { fs: { allow: [] as string[], deny: ['**/.git/**'] } } } } };
+    const api = {
+      parseCLI: () => ({ filter: ['value.test.ts'], options: { hookTimeout: 123 } }),
+      async createVitest(_mode: string, options: any) {
+        staged = options.runner;
+        assert.ok(staged.startsWith(temporary + '/'));
+        assert.equal(staged.includes('/.git/'), false);
+        assert.equal(readFileSync(staged, 'utf8'), bytes);
+        if (fails) throw new Error('create failure');
+        return { projects: [project], async start(files: string[]) {
+          started = true;
+          assert.deepEqual(files, ['value.test.ts']);
+          assert.equal(fileURLToPath(project.config.runner), staged);
+          assert.ok(project.vite.config.server.fs.allow.includes(staged));
+          assert.deepEqual(project.vite.config.server.fs.deny, ['**/.git/**']);
+          assert.equal(readFileSync(staged, 'utf8'), bytes);
+        }, async close() { closed = true; } };
+      },
+    };
+    try {
+      if (fails) await assert.rejects(run(api, ['run', 'value.test.ts'], source, temporary), /create failure/);
+      else await run(api, ['run', 'value.test.ts'], source, temporary);
+      assert.equal(started, !fails);
+      assert.equal(closed, !fails);
+      assert.equal(existsSync(staged), false);
+      assert.deepEqual(readdirSync(temporary), []);
+      assert.equal(readFileSync(source, 'utf8'), bytes);
+    } finally { rmSync(root, { recursive: true, force: true }); }
   });
 }

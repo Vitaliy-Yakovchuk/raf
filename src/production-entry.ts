@@ -1,3 +1,4 @@
+import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
 import { storedLaunchQueueIdentity, validateStoredQueueId } from './stored-launch-queue-events.ts';
 import { readMachineBootIdentity } from './os-runtime.ts';
 import { productionStateContext } from './state-migration-guard.ts';
@@ -26,6 +27,7 @@ export interface ProductionEntryOptions {
   homeDirectory: string;
   artifactPath: string;
   now?: () => number;
+  costStartedAt?: RafCostBoundary;
   runIdentity?: { runId: string; tmuxSession: string };
   serviceHostModulePath?: string;
 }
@@ -36,7 +38,7 @@ function failure(code: string, reason: string, source = 'production-entry'): Err
     remediation: ['Перевірте конфігурацію та доступність потрібного компонента.'] });
 }
 
-function readConfiguration(root: string): { models: ModelCatalog; commandTiming: { emaAlpha: number }; fileName: string } {
+function readConfiguration(root: string): { models: ModelCatalog; commandTiming: { emaAlpha: number; sqliteOnlyMeanBudgetMs: number }; fileName: string } {
   const object = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
   const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
   const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(text);
@@ -66,7 +68,7 @@ function readConfiguration(root: string): { models: ModelCatalog; commandTiming:
       new Set(models.models.map((model: any) => model.id)).size !== models.models.length) {
     throw failure('CONFIGURATION_INVALID', 'Invalid models.json configuration or version', 'models.json');
   }
-  return { models: models as unknown as ModelCatalog, commandTiming: { emaAlpha: settings.commandTiming.emaAlpha }, fileName: settings.state.fileName };
+  return { models: models as unknown as ModelCatalog, commandTiming: { emaAlpha: settings.commandTiming.emaAlpha, sqliteOnlyMeanBudgetMs: settings.commandTiming.sqliteOnlyMeanBudgetMs }, fileName: settings.state.fileName };
 }
 
 function canonicalRoot(path: string): string {
@@ -140,10 +142,11 @@ export async function withProductionRuntime<T>(options: ProductionEntryOptions, 
 }
 
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
+  const costStartedAt = options.costStartedAt ?? rafCostBoundary();
   if (argv[0] === 'test' && argv[1] === 'run' && !argv.includes('--help')) {
     const { runConfiguredTestRun } = await import('./test-run-runtime.ts');
     let services: Promise<RuntimeServices> | undefined;
-    return runConfiguredTestRun(argv.slice(2), { ...options, settle: async store => {
+    return runConfiguredTestRun(argv.slice(2), { ...options, costStartedAt, settle: async store => {
       const root = canonicalRoot(options.orchestratorRoot);
       const loaded = readConfiguration(root);
       const context = productionContext(options, root, loaded.fileName, performance.now(), async () => rafSystemCaller);
@@ -162,11 +165,18 @@ export async function runProductionCli(argv: readonly string[], options: Product
         'reminder add', 'reminder list', 'reminder update', 'reminder activate', 'reminder close', 'reminder reassign', 'reminder close-all',
         'bug list', 'bug show', 'bug comment add', 'bug status set', 'bug attachment get'].includes(name)) return unavailable;
       return async (params: Record<string, unknown>) => {
+        let profileStore: StateStore | undefined;
+        let profile: RafCostRuntime | undefined;
+        let original: unknown;
         try {
           const commandStartedAtMs = options.now?.() ?? startedAtMs;
           const orchestratorRoot = validatedRoot(options);
           readConfiguration(orchestratorRoot);
-          productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
+          const profileContext = productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
+          const sqliteStartedAt = rafCostBoundary();
+          profileStore = openStateStore(profileContext.statePath, { context: profileContext });
+          profile = new RafCostRuntime(profileStore, { scope: 'command', command: name }, orchestratorRoot, 'handler', costStartedAt, sqliteStartedAt);
+          profile.install();
           if (name.startsWith('bug ')) {
             const [{ createBugHandlers }, { createProductionBugPorts }] = await Promise.all([import('./bug-cli.ts'), import('./bug-production.ts')]);
             return await createBugHandlers(createProductionBugPorts({ orchestratorRoot, homeDirectory: options.homeDirectory }))[name as BugCommand](params);
@@ -191,9 +201,14 @@ export async function runProductionCli(argv: readonly string[], options: Product
           await runtime.close();
           return result;
         } catch (error) {
+          original = error;
           try { await runtime?.close(); } catch {}
           if (failureContext(error)) throw error;
           throw failure('PRODUCTION_ENTRY_FAILED', error instanceof Error ? error.message : String(error));
+        } finally {
+          try { profile?.stage('finalization'); profile?.finish(); }
+          catch (error) { if (original === undefined) throw error; process.emitWarning(error instanceof Error ? error : String(error)); }
+          finally { profileStore?.close(); }
         }
       };
     },

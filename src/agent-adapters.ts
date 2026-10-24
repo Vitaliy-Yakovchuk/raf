@@ -1,3 +1,4 @@
+import { measureRafCost } from './raf-cost-runtime.ts';
 import type { NativeIdentity } from './agy-session-start.ts';
 import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
 import { randomUUID } from 'node:crypto';
@@ -206,6 +207,10 @@ export class TmuxAgentAdapter {
   }
 
   async inspect(session: AdapterSession): Promise<AdapterObservation> {
+    return measureRafCost('runner-observation', () => this.inspectRunner(session));
+  }
+
+  private async inspectRunner(session: AdapterSession): Promise<AdapterObservation> {
     const target = this.target(session);
     const state = await this.dependencies.execute({ executable: 'tmux', args: ['display-message', '-p', '-t', target, '#{pane_dead}|#{pane_dead_status}'] });
     if (state.exitCode !== 0) return { status: 'exited', exitCode: null };

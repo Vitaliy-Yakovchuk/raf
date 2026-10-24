@@ -1,3 +1,4 @@
+import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
 import { recordFlowTestRun } from './flow-qa-report.ts';
 import { flowTestRunStore } from './flow-runtime.ts';
 import { isDeepStrictEqual } from 'node:util';
@@ -270,7 +271,10 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
   return ports;
 }
 
-export async function runConfiguredTestRun(argv: readonly string[], options: { orchestratorRoot: string; homeDirectory: string; settle?: (store: StateStore) => Promise<void> }): Promise<ExecutionResult> {
+export async function runConfiguredTestRun(argv: readonly string[], options: { orchestratorRoot: string; homeDirectory: string; costStartedAt?: RafCostBoundary; settle?: (store: StateStore) => Promise<void> }): Promise<ExecutionResult> {
+  const costStartedAt = options.costStartedAt ?? rafCostBoundary();
+  let costProfile: RafCostRuntime | undefined;
+  let execution: ExecutionResult | undefined;
   const flowOwnedTestIds = new Set<string>();
   let store: StateStore | undefined, controlStore: StateStore | undefined;
   let config: TestRunConfig | undefined;
@@ -307,7 +311,10 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         throw error;
       }
     };
+    const sqliteStartedAt = rafCostBoundary();
     controlStore = openStore('control', controlContext);
+    costProfile = new RafCostRuntime(controlStore, { scope: 'command', command: 'test run' }, root, 'handler', costStartedAt, sqliteStartedAt);
+    costProfile.install();
     const control = await sandboxTestControlSnapshot(controlStore, root, args.project, args.group);
     const caller = control.ancestors.find(row => row.pid === process.pid);
     if (!caller) throw Object.assign(new Error('Current caller identity is unavailable'), { code: 'CALLER_UNVERIFIED' });
@@ -412,7 +419,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const flowCaller = resolveSandboxTestCaller(control.callerEvidence);
     if (flowCaller.phase === 'qa' && flowOwnedTestIds.has(output.runId)) await recordFlowTestRun(flowCaller, output, reply.stderr.trimEnd() ? reply.stderr.trimEnd() + '\n' : '', reply.code, flowTestRunStore(controlStore!));
     const stateForDelivery = resultContext;
-    return { exitCode: reply.code, stdout: reply.stdout.trimEnd(), stderr: reply.stderr.trimEnd(),
+    return execution = { exitCode: reply.code, stdout: reply.stdout.trimEnd(), stderr: reply.stderr.trimEnd(),
       afterDelivery: stateForDelivery && output.groupSnapshot === 'loaded' ? async () => {
         const deliveredStore = openStore('unit', stateForDelivery);
         try { await acknowledgeTestRunDelivery(output, sqliteTestRunState(deliveredStore)); } finally { deliveredStore.close(); }
@@ -424,6 +431,14 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
       const hintId = config?.phases[result.phase]?.hints.setup;
       result.hintIds = hintId ? [hintId] : []; result.hints = hintId ? [config!.hints[hintId]] : [];
     }
-    return { exitCode: 1, stdout: JSON.stringify(result), stderr: result.errorCode === 'CALLER_UNAUTHORIZED' && error instanceof Error ? error.message : '' };
-  } finally { store?.close(); controlStore?.close(); }
+    return execution = { exitCode: 1, stdout: JSON.stringify(result), stderr: result.errorCode === 'CALLER_UNAUTHORIZED' && error instanceof Error ? error.message : '' };
+  } finally {
+    try { costProfile?.stage('finalization'); costProfile?.finish(); }
+    catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (execution) { execution.exitCode = execution.exitCode || 1; execution.stderr = [execution.stderr, `Cost profile storage failed: ${message}`].filter(Boolean).join('\n'); }
+      else process.emitWarning(error instanceof Error ? error : String(error));
+    }
+    finally { store?.close(); controlStore?.close(); }
+  }
 }

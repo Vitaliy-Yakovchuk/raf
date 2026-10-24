@@ -1,3 +1,4 @@
+import { RafCostRuntime, rafCostBoundary, measureRafCost } from './raf-cost-runtime.ts';
 import { runtimeResourceUsage } from './resource-usage-runtime.ts';
 import { productionStateContext, stateFailure } from './state-migration-guard.ts';
 import { fileURLToPath } from 'node:url';
@@ -45,6 +46,7 @@ export async function createServicePorts(
 ): Promise<ComposedServicePorts> {
   const stateContext = productionStateContext(context.orchestratorRoot, fileURLToPath(import.meta.url), context.homeDirectory, 'service-store');
   if (context.stateDirectory !== dirname(stateContext.statePath) || context.socketPath !== join(context.stateDirectory, 'service.sock')) throw stateFailure('STATE_CONTEXT_REFUSED', 'Service paths differ from selected state context');
+  const costStartedAt = rafCostBoundary();
   if (!dependencies) return (await import('./production-service-ports.ts')).createServicePorts(context);
   const required = [dependencies.now, dependencies.nextReminderId, dependencies.observeProcesses, dependencies.effectsForObservation,
     dependencies.sessionValidation?.verifyMainAuthority, dependencies.sessionValidation?.verifyWorkResult, dependencies.eventPorts,
@@ -67,9 +69,13 @@ export async function createServicePorts(
     if (!Number.isFinite(value)) throw new Error('Service clock unavailable');
     return value;
   };
+  const sqliteStartedAt = rafCostBoundary();
   const store = openStateStore(join(context.stateDirectory, fileName), { context: stateContext });
+  let profile: RafCostRuntime | undefined;
   let queue: ReturnType<typeof createResourceWaitQueue> | undefined;
   try {
+    profile = new RafCostRuntime(store, { scope: 'service', command: null }, context.orchestratorRoot, 'wait', costStartedAt, sqliteStartedAt);
+    profile.install();
     const sessions = createSessionState({ repository: store.sessionRepository, ...dependencies.sessionValidation });
     const reminders = new ReminderService({ repository: store.reminderRepository, now: () => new Date(clock()).toISOString(), nextId: dependencies.nextReminderId, approvedEventKinds: catalog.events.map((event: { id: string }) => event.id) });
     const eventPorts = dependencies.eventPorts(store);
@@ -172,7 +178,7 @@ export async function createServicePorts(
       try {
         runtimeResourceUsage(store.startupContextDatabase, context.orchestratorRoot).tracker.hostTick(clock());
         if (!dependencies.preserveSessionState) {
-          await reconcile();
+          await measureRafCost('reconciliation', reconcile);
           cleanupStartupContextCompleted(new Date(clock()).toISOString(), { database: store.startupContextDatabase, flowPath: join(context.orchestratorRoot, 'conf', 'flow.json'), sessions });
         }
         if (closed) return;
@@ -197,10 +203,10 @@ export async function createServicePorts(
           const receipt = await dependencies.deliverReminder(reminder);
           if (receipt?.delivered === true) delivered.set(reminder.id, key);
         }
-        await resourceQueue?.pump();
+        await measureRafCost('resource-queue', async () => resourceQueue?.pump());
       } finally { arm(); }
     };
-    const refresh = () => serial(cycle);
+    const refresh = () => serial(() => measureRafCost('handler', cycle));
     const recover = (): Promise<void> => {
       if (closed) return Promise.reject(new Error('Service host is closed'));
       if (!recovery) recovery = refresh().then(() => { recovered = true; });
@@ -222,7 +228,7 @@ export async function createServicePorts(
           const result = await resourceQueue.enqueue({ clientId: client.clientId, level: input.level, signal: client.signal }).result;
           return result;
         }
-        return serial(async () => {
+        return serial(() => measureRafCost('handler', async () => {
           if (client.signal.aborted) throw new Error('Service request cancelled');
           const input = payload(request.payload);
           let result: unknown;
@@ -239,7 +245,7 @@ export async function createServicePorts(
           }
           await cycle();
           return result;
-        });
+        }));
       },
       shutdown: () => {
         if (!shutdown) {
@@ -249,7 +255,7 @@ export async function createServicePorts(
             cancelWake = undefined;
             resourceQueue?.close('Service stopped');
             await tail;
-            store.close();
+            try { profile?.stage('finalization'); profile?.finish(); } finally { store.close(); }
           })();
         }
         return shutdown;
@@ -257,6 +263,7 @@ export async function createServicePorts(
     };
   } catch (error) {
     queue?.close('Service initialization failed');
+    try { profile?.finish(); } catch (failure) { process.emitWarning(failure instanceof Error ? failure : String(failure)); }
     store.close();
     throw error;
   }

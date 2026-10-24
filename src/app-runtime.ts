@@ -1,3 +1,4 @@
+import { measureRafCost } from './raf-cost-runtime.ts';
 import { runAgentWithQueue, type AgentQueueRecord, type AgentQueueValidation, type AgentQueueRequest, type AgentRunQueuePorts } from './agent-run-queue.ts';
 import { isAbsolute, join } from 'node:path';
 import { commandFailure, failureContext, type CommandFailureContext } from './cli-contract.ts';
@@ -35,7 +36,7 @@ export interface RuntimeConfiguration {
   sandboxTestPhases?: import('./test-runs.ts').TestRunConfig['phases'];
   catalog: CompiledCatalog;
   models: ModelCatalog;
-  commandTiming: { emaAlpha: number };
+  commandTiming: { emaAlpha: number; sqliteOnlyMeanBudgetMs?: number };
 }
 
 export interface RuntimeRunParameters {
@@ -340,7 +341,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         });
       }
     },
-    'agent ps': async () => (await service()).control.ps(),
+    'agent ps': async () => measureRafCost('reconciliation', async () => (await service()).control.ps()),
     'agent update': async params => {
       const patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>> = {};
       for (const key of ['project', 'features', 'phase'] as const) {
@@ -372,7 +373,9 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
     'command stats': async () => {
       const loaded = await config();
       const state = await store();
-      return loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) }));
+      const budget = loaded.commandTiming.sqliteOnlyMeanBudgetMs;
+      if (!Number.isFinite(budget) || budget! <= 0) throw fail('CONFIGURATION_INVALID', 'configuration', 'Invalid commandTiming.sqliteOnlyMeanBudgetMs');
+      return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile() };
     },
   };
   if (dependencies.commandState) for (const name of reminderCommands) builtins[name] = async params => createReminderHandlers(await statePorts())[name](params);

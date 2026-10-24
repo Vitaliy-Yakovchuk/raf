@@ -30,10 +30,13 @@ function fixture() {
   let clock = 100;
   const switches = new Map<string, boolean>();
   const context: RuntimeContext = { orchestratorRoot: '/sandbox/orchestrator', confRoot: '/sandbox/orchestrator/conf', artifactPath: '/sandbox/catalog.json', statePath: '/sandbox/state.sqlite', tmpRoot: '/sandbox/tmp', mode: 'test', commandStartedAtMs: 10, resolveCaller: async () => { note('caller'); return { verifiedRun: 'main-1' }; } };
-  const config: RuntimeConfiguration = { catalog, models, commandTiming: { emaAlpha: 0.37 } };
+  const config: RuntimeConfiguration = { catalog, models, commandTiming: { emaAlpha: 0.37, sqliteOnlyMeanBudgetMs: 100 } };
   const store: StateStore = {
     sessionRepository: { transaction: () => { throw new Error('Runtime must use owner ports'); } },
     reminderRepository: { transaction: () => { throw new Error('Runtime must use owner ports'); } },
+    costProfileRepository: { update: () => { throw new Error('Runtime must use owner ports'); }, readRows: () => [] },
+    recordCostSample: () => { throw new Error('Runtime must use owner ports'); },
+    readCostProfile: () => ({ schemaVersion: 1, readAt: identity.startedAt, rows: [] }),
     close: () => note('store.close'),
     getRunnerEnabled: id => { note('getRunnerEnabled', id); return switches.get(id); },
     initializeRunners: entries => { note('initialize', entries); for (const entry of entries) if (!switches.has(entry.id)) switches.set(entry.id, entry.initialEnabled); },

@@ -1,3 +1,4 @@
+import { activeRafCost, measureRafCost } from './raf-cost-runtime.ts';
 import type { NativeIdentity } from './agy-session-start.ts';
 import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
 import { spawn } from 'node:child_process';
@@ -100,15 +101,16 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
       result: result => ports.lifecycle.acceptReport(result),
     });
     attempted = true;
-    await ports.transport.startWithoutInput(request, watcher.path);
+    await measureRafCost('preparation', () => ports.transport.startWithoutInput(request, watcher!.path));
+    activeRafCost()?.stage('runner-wait');
     const readiness = await within(ports.transport.waitReady(request.readinessTimeoutMs), request.readinessTimeoutMs, 'Runner readiness');
     if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);
-    const ownership = await ports.transport.ownership();
+    const ownership = await measureRafCost('runner-observation', () => ports.transport.ownership());
     if (ownership.state !== 'owned') throw new Error(`Runner ownership ${ownership.state}: ${ownership.reason}`);
     if (!['agent', 'runner-owned'].includes(ownership.processKind) || !validIdentity(ownership.identity, request) || !(ownership.identity.runnerSessionId === readiness.runnerSessionId || request.selection.runner === 'agy' && ownership.identity.nativeIdentity !== undefined && readiness.runnerSessionId === null && readiness.nativeIdentity?.state === 'pending' && readiness.nativeIdentity.id === null && !!readiness.nativeIdentity.reason?.trim())) throw new Error('Runner identity does not match the ready native session and launch');
     identity = structuredClone(ownership.identity);
     const handshake: LaunchHandshake = { runId: request.runId, address: request.address, reportPath: watcher.path, identity };
-    await ports.transport.deliver(request.brief);
+    await measureRafCost('delivery', () => ports.transport.deliver(request.brief));
     const deliveredOwner = await ports.transport.ownership();
     if (deliveredOwner.state === 'owned') {
       if (!validIdentity(deliveredOwner.identity, request) || !sameIdentity(identity, deliveredOwner.identity)) throw new Error('Runner ownership changed during delivery');
@@ -118,6 +120,7 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
     await ports.lifecycle.started(handshake);
     await ports.handshake(handshake);
     const exit = await ports.transport.waitExit();
+    activeRafCost()?.stage('completion');
     ended = true;
     await watcher.finish(exit);
     await ports.lifecycle.finish(handshake, exit);

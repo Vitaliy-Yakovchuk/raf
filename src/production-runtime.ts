@@ -1,3 +1,4 @@
+import { RafCostRuntime, rafCostBoundary } from './raf-cost-runtime.ts';
 import { prepareFlowBrief } from './flow-brief.ts';
 import { flowSources, flowEvidencePorts, checkFlowPlan, acceptedFlowEvidence } from './flow-runtime.ts';
 import { sameProcessOwnership } from './process-identity.ts';
@@ -1298,6 +1299,7 @@ export async function runProductionWorker(
     prepareSessionStartChannel?: PrepareSessionStartChannel;
   } = {},
 ): Promise<void> {
+  const costStartedAt = rafCostBoundary();
   const stateContext = productionStateContext(process.env.RAF_ORCHESTRATOR_ROOT ?? fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'worker');
   const generationLease = await retainHotfixGeneration({ orchestratorRoot: stateContext.orchestratorRoot, qaHome: homedir(), environment: {}, sandboxExecutable: 'codex' }, fileURLToPath(new URL('../', import.meta.url)).replace(/\/$/, ''));
   const channel = await consumeWrapperRequest();
@@ -1327,7 +1329,10 @@ export async function runProductionWorker(
   const settings = { ...configured, executable: manifest.runnerPath as string };
   const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
   if (!availability.available) fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
+  const sqliteStartedAt = rafCostBoundary();
   const store = openStateStore(request.statePath, { context: stateContext });
+  let costProfile: RafCostRuntime | undefined;
+  let workerFailure: unknown;
   let sessionStartChannel: OwnedSessionStartChannel | undefined;
   let unsubscribeSessionStart: (() => void) | undefined;
   let sessionStartWork: Promise<void> = Promise.resolve();
@@ -1336,6 +1341,8 @@ export async function runProductionWorker(
   let codexSandbox: PreparedCodexSandbox | undefined;
   let toolTmuxDirectory: Awaited<ReturnType<typeof createRafToolSocketDirectory>> | undefined;
   try {
+    costProfile = new RafCostRuntime(store, { scope: 'worker', command: null }, context.orchestratorRoot, 'preparation', costStartedAt, sqliteStartedAt);
+    costProfile.install();
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings.timeouts, options.execute);
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
@@ -1778,7 +1785,8 @@ export async function runProductionWorker(
       if (!handedOff) await discardFailedLaunch().catch(cleanup => process.stderr.write(`${request.runId}: failed launch cleanup: ${cleanup instanceof Error ? cleanup.message : String(cleanup)}\n`));
       throw error;
     }
-  } finally { try { unsubscribeSessionStart?.(); await sessionStartWork; await sessionStartChannel?.close(); } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxDirectory) await toolTmuxDirectory.cleanup(async socket => {
+  } catch (error) { workerFailure = error; throw error; }
+  finally { try { unsubscribeSessionStart?.(); await sessionStartWork; await sessionStartChannel?.close(); } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxDirectory) await toolTmuxDirectory.cleanup(async socket => {
         await executeCommand({ executable: 'tmux', args: ['-S', socket, 'kill-server'], environment: stateContextEnvironment(stateContext, process.env) });
         await new Promise<void>((resolve, reject) => {
           const connection = createConnection(socket);
@@ -1786,5 +1794,5 @@ export async function runProductionWorker(
           connection.once('connect', () => { clearTimeout(timer); connection.destroy(); reject(new Error('Own tool tmux server is still live')); });
           connection.once('error', error => { clearTimeout(timer); connection.destroy(); if (['ENOENT', 'ECONNREFUSED'].includes((error as NodeJS.ErrnoException).code ?? '')) resolve(); else reject(error); });
         });
-      }); } finally { store.close(); await generationLease?.release(); } } } }
+      }); } finally { try { costProfile?.stage('completion'); costProfile?.finish(); } catch (error) { if (workerFailure === undefined) throw error; process.emitWarning(error instanceof Error ? error : String(error)); } finally { store.close(); await generationLease?.release(); } } } } }
 }

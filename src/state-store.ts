@@ -1,3 +1,5 @@
+import { aggregateRafCostSample, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
+import { readRafCostPolicy } from './raf-cost-runtime.ts';
 import { initializeResourceUsage } from './resource-usage.ts';
 import { accountSessionUsage } from './resource-usage-runtime.ts';
 import type { LaunchQueueTransaction, LaunchQueueState } from './launch-queue-events.ts';
@@ -89,10 +91,13 @@ export interface StateStore {
   releaseQuotaLease(key: string, token: string): void;
   recordCommandDuration(command: string, durationMs: number, alpha: number): void;
   getCommandTiming(command: string): CommandTiming | undefined;
+  costProfileRepository: RafCostProfileRepository;
+  recordCostSample(sample: RafCostSample): void;
+  readCostProfile(): RafCostProfileSnapshot;
 }
 
-export const STATE_SCHEMA_VERSION = 16;
-export const STATE_SCHEMA_SUPPORTED_VERSIONS = [16] as const;
+export const STATE_SCHEMA_VERSION = 17;
+export const STATE_SCHEMA_SUPPORTED_VERSIONS = [17] as const;
 
 export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
@@ -429,6 +434,20 @@ export function openStateStore(path: string, options?: import('./state-migration
             `);
             options?.afterMigrationStep?.(16);
           }
+          if (current < 17) {
+            db.exec(`
+              CREATE TABLE raf_cost_profile (
+                scope TEXT NOT NULL,
+                command TEXT NOT NULL,
+                stage TEXT NOT NULL,
+                executor TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                PRIMARY KEY (scope, command, stage, executor)
+              ) STRICT;
+              PRAGMA user_version = 17;
+            `);
+            options?.afterMigrationStep?.(17);
+          }
         });
       }
       for (let attempt = 0; ; attempt++) {
@@ -449,6 +468,22 @@ export function openStateStore(path: string, options?: import('./state-migration
     try { db.close(); } catch {                                        }
     throw error;
   }
+
+  let costPolicy: ReturnType<typeof readRafCostPolicy> | undefined;
+  const profilePolicy = () => costPolicy ??= readRafCostPolicy(options?.context?.orchestratorRoot);
+  const costProfileRepository: RafCostProfileRepository = {
+    update(key, change) {
+      operation('costProfile.update', () => transaction(() => {
+        const previous = db.prepare('SELECT payload FROM raf_cost_profile WHERE scope = ? AND command = ? AND stage = ? AND executor = ?').get(key.scope, key.command ?? '', key.stage, key.executor);
+        const next = change(previous ? JSON.parse(String(previous.payload)) : undefined);
+        db.prepare(`INSERT INTO raf_cost_profile (scope, command, stage, executor, payload) VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(scope, command, stage, executor) DO UPDATE SET payload = excluded.payload`).run(key.scope, key.command ?? '', key.stage, key.executor, JSON.stringify(next));
+      }));
+    },
+    readRows() {
+      return operation('costProfile.read', () => db.prepare('SELECT payload FROM raf_cost_profile ORDER BY scope, command, stage, executor').all().map(row => JSON.parse(String(row.payload)) as RafCostRow));
+    },
+  };
 
   function withReminderTransaction<T>(action: (tx: ReminderTransaction) => T): T {
     let active = true;
@@ -924,6 +959,15 @@ export function openStateStore(path: string, options?: import('./state-migration
           error: row.error as string | null,
         };
       });
+    },
+    costProfileRepository,
+    recordCostSample(sample) {
+      const policy = profilePolicy();
+      if (!policy.stages.includes(sample.stage) || (sample.scope === 'command' && !policy.commands.includes(sample.command ?? ''))) throw new Error('Unknown cost profile key');
+      costProfileRepository.update(sample, previous => aggregateRafCostSample(previous, sample));
+    },
+    readCostProfile() {
+      return { schemaVersion: profilePolicy().schemaVersion, readAt: new Date().toISOString(), rows: costProfileRepository.readRows() };
     },
     recordCommandDuration(command, durationMs, alpha) {
       if (!Number.isFinite(durationMs) || durationMs < 0) throw new Error("Duration must be finite and nonnegative");

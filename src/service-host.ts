@@ -22,6 +22,7 @@ import type { ReminderSessionEffect } from './reminder-repository.ts';
 export type ServiceHostDependencies = {
   deliverStartupContextEvent?: (intent: PendingIntent) => Promise<boolean>;
   disableLegacyResourceWait?: boolean;
+  preserveSessionState?: boolean;
   now: () => number;
   reconcileLaunches?: () => Promise<readonly string[]>;
   nextReminderId: () => string;
@@ -170,8 +171,10 @@ export async function createServicePorts(
     const cycle = async () => {
       try {
         runtimeResourceUsage(store.startupContextDatabase, context.orchestratorRoot).tracker.hostTick(clock());
-        await reconcile();
-        cleanupStartupContextCompleted(new Date(clock()).toISOString(), { database: store.startupContextDatabase, flowPath: join(context.orchestratorRoot, 'conf', 'flow.json'), sessions });
+        if (!dependencies.preserveSessionState) {
+          await reconcile();
+          cleanupStartupContextCompleted(new Date(clock()).toISOString(), { database: store.startupContextDatabase, flowPath: join(context.orchestratorRoot, 'conf', 'flow.json'), sessions });
+        }
         if (closed) return;
         for (const intent of sessions.listPending().filter(row => row.event === 'context-review.due' && !(row.payload as any).mainDelivered)) {
           try {

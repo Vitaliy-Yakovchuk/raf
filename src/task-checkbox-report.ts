@@ -6,6 +6,7 @@ import { isAbsolute, join, relative, sep } from 'node:path';
 import { validAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
 import type { AssignmentSnapshot, AssignmentVerification, AssignmentIssue } from './assignment.ts';
 import { executeCommand } from './os-runtime.ts';
+import { trackOwnedWriterLock } from './owned-writer-lock.ts';
 
 export interface TaskCheckboxCommit {
   readonly change: string;
@@ -117,6 +118,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
   };
   let lock: Awaited<ReturnType<typeof open>> | undefined;
   let lockPath: string | undefined;
+  let ownership: ReturnType<typeof trackOwnedWriterLock> | undefined;
   let scratch: string | undefined;
   try {
     const identity = await ports.verifySourceIdentity(request.assignment, archives);
@@ -232,6 +234,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
       throw contention();
     }
     if (!lock) throw contention();
+    ownership = trackOwnedWriterLock(lockPath, lock);
     await lock.writeFile(JSON.stringify({ kind: 'raf-task-checkbox-lock', pid: process.pid }));
     await lock.sync();
     scratch = await mkdtemp(join(tmpdir(), 'raf-checkbox-'));
@@ -258,21 +261,24 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
           await waitIndex();
         }
       }
-      let published = false;
+      const indexOwnership = trackOwnedWriterLock(`${indexPath}.lock`, handle);
       try {
         const sharedIndex = join(scratch!, 'shared-index');
         await copyFile(indexPath, sharedIndex);
         if (!await update({ GIT_INDEX_FILE: sharedIndex })) return false;
         if (!validatesPublication) await ports.beforeWrite?.();
-        await handle.writeFile(await readFile(sharedIndex));
+        const contents = await readFile(sharedIndex);
+        ownership!.assertOwned();
+        indexOwnership.assertOwned();
+        await handle.writeFile(contents);
         await handle.sync();
         await handle.close();
+        ownership!.assertOwned();
+        indexOwnership.assertOwned();
         await rename(`${indexPath}.lock`, indexPath);
-        published = true;
         return true;
       } finally {
-        await handle.close();
-        if (!published) await rm(`${indexPath}.lock`);
+        try { await handle.close(); } finally { indexOwnership.release(); }
       }
     };
     const stageCheckbox = async (env: Readonly<Record<string, string>>, pathspec: string, item: string, description: string, originalLine: string) => {
@@ -442,6 +448,6 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
   } catch (caught) { if (checkpointError === caught) throw caught; const error = confirmationStateTransient(caught) ?? caught; return { ...reject(errorText(error)), ...(error instanceof ConfirmationBudgetExhaustedError ? { budgetExhausted: true } : {}), ...(confirmationTransient(error) ? { transient: error.cause } : {}) }; }
   finally {
     if (scratch) await rm(scratch, { recursive: true, force: true });
-    if (lock) { await lock.close(); await rm(lockPath!); }
+    if (lock) { try { await lock.close(); } finally { ownership?.release(); } }
   }
 }

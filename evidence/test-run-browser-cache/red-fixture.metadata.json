@@ -1,0 +1,12 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/73424305-29fe-412f-b084-53d39d203c29/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-test-run/browser-cache --files test/test-run-browser-cache.test.ts",
+  "phase": "red",
+  "sha": "454bbba03edc16b5b11b1f3b41800f77a6afed73",
+  "dirtyPaths": [
+    "?? evidence/z411/",
+    "?? node_modules"
+  ],
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "initialRunNote": "Chromium regression reproduces target assertion; launch regressions have fixture TypeError (unsupported t.mock.env). Fix test support and repeat red in the same group before implementation."
+}

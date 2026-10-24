@@ -1,0 +1,117 @@
+{
+  "outcome": "passed",
+  "observations": [
+    {
+      "cycle": "fresh-server",
+      "observed": {
+        "home": "/tmp/raf-browser-smoke-zAws2w/qa-home",
+        "cache": "/home/dev/.cache/ms-playwright"
+      },
+      "commands": [
+        [
+          "new-session",
+          "-e",
+          "PLAYWRIGHT_BROWSERS_PATH=/home/dev/.cache/ms-playwright",
+          "-d",
+          "-s",
+          "cache-smoke",
+          "-c",
+          "/tmp/raf-browser-smoke-zAws2w",
+          "sh",
+          "-c",
+          "read -r _",
+          ";",
+          "set-option",
+          "-p",
+          "-t",
+          "=cache-smoke:0.0",
+          "remain-on-exit",
+          "on",
+          ";",
+          "respawn-pane",
+          "-k",
+          "-t",
+          "=cache-smoke:0.0",
+          "/opt/dev/node/bin/node",
+          "-e",
+          "require('node:fs').writeFileSync(\"/tmp/raf-browser-smoke-zAws2w/fresh-server.json\", JSON.stringify({home:process.env.HOME,cache:process.env.PLAYWRIGHT_BROWSERS_PATH}))"
+        ]
+      ]
+    },
+    {
+      "cycle": "restarted-server",
+      "observed": {
+        "home": "/tmp/raf-browser-smoke-zAws2w/qa-home",
+        "cache": "/home/dev/.cache/ms-playwright"
+      },
+      "commands": [
+        [
+          "new-session",
+          "-e",
+          "PLAYWRIGHT_BROWSERS_PATH=/home/dev/.cache/ms-playwright",
+          "-d",
+          "-s",
+          "cache-smoke",
+          "-c",
+          "/tmp/raf-browser-smoke-zAws2w",
+          "sh",
+          "-c",
+          "read -r _",
+          ";",
+          "set-option",
+          "-p",
+          "-t",
+          "=cache-smoke:0.0",
+          "remain-on-exit",
+          "on",
+          ";",
+          "respawn-pane",
+          "-k",
+          "-t",
+          "=cache-smoke:0.0",
+          "/opt/dev/node/bin/node",
+          "-e",
+          "require('node:fs').writeFileSync(\"/tmp/raf-browser-smoke-zAws2w/restarted-server.json\", JSON.stringify({home:process.env.HOME,cache:process.env.PLAYWRIGHT_BROWSERS_PATH}))"
+        ]
+      ]
+    },
+    {
+      "cycle": "stale-server",
+      "observed": {
+        "home": "/tmp/raf-browser-smoke-zAws2w/qa-home",
+        "cache": "/trusted/host cache/$literal;value"
+      },
+      "commands": [
+        [
+          "new-session",
+          "-e",
+          "PLAYWRIGHT_BROWSERS_PATH=/trusted/host cache/$literal;value",
+          "-d",
+          "-s",
+          "cache-smoke",
+          "-c",
+          "/tmp/raf-browser-smoke-zAws2w",
+          "sh",
+          "-c",
+          "read -r _",
+          ";",
+          "set-option",
+          "-p",
+          "-t",
+          "=cache-smoke:0.0",
+          "remain-on-exit",
+          "on",
+          ";",
+          "respawn-pane",
+          "-k",
+          "-t",
+          "=cache-smoke:0.0",
+          "/opt/dev/node/bin/node",
+          "-e",
+          "require('node:fs').writeFileSync(\"/tmp/raf-browser-smoke-zAws2w/stale-server.json\", JSON.stringify({home:process.env.HOME,cache:process.env.PLAYWRIGHT_BROWSERS_PATH}))"
+        ]
+      ]
+    }
+  ],
+  "cleanup": "all owned tmux servers stopped; private fixture directory removed in finally"
+}

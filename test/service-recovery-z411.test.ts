@@ -14,7 +14,7 @@ import type { SessionRecord } from '../src/session-state.ts';
 async function fixture(t: TestContext) {
   const root = await fs.mkdtemp(join(tmpdir(), 'raf-z411-recovery-'));
   const confRoot = join(root, 'conf');
-  const tmpRoot = join(root, 'reports');
+  const tmpRoot = join(root, 'home', '.raf', 'tmp');
   await fs.mkdir(confRoot);
   await fs.copyFile(new URL('../../conf/raf.json', import.meta.url), join(confRoot, 'raf.json'));
   const catalog = JSON.parse(await fs.readFile(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
@@ -27,6 +27,7 @@ async function fixture(t: TestContext) {
     await fs.writeFile(reportPath, JSON.stringify({ status: 'failed', answer: 'Retained report', changes: [{ id: 'demo', items: [{ id: 'A.1', status: 'failed' }] }] }));
     await fs.writeFile(join(tmpRoot, runId, 'report-confirmation-pending.json'), JSON.stringify({ runId, exhausted: true }));
     const row = { runId, addressId: runId, state, revision: 1,
+      observation: { state: 'exited', observedAt: new Date().toISOString(), exitCode: 0, evidence: 'Fixture runner exited' },
       ...(accepted ? { result: { status: 'succeeded', response: 'Accepted', proof: {} } } : {}),
       launchContext: { reportPath, assignment: { root, baselineArchives: [], changes: [{ id: 'demo', items: [{ id: 'A.1', description: 'Work' }] }] }, selection: { runner: 'codex' } },
     } as SessionRecord;
@@ -93,7 +94,7 @@ test('Z411.S02 service recovery does not reconfirm reports or block readiness on
   } finally {
     if (reportReads) serviceStore.sessionRepository.transaction(tx => { for (const row of rows) tx.putSession({ ...row, revision: 2, state: 'finished' }); });
     gate.resolve();
-    await recovery;
+    await recovery.catch(() => {});
     await ports.shutdown();
     serviceStore.close();
   }

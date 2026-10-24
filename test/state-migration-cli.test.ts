@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { resolveStateContext, stateContextEnvironment } from '../src/state-migration-guard.ts';
-import { command, compatibleMainCanOpen, copyMain7, directoryFiles, files, fixture, logical, nodeProcess, quietWal, seedMain7, seedVersion } from './state-migration-fixture.ts';
+import { STATE_SCHEMA_VERSION } from '../src/state-store.ts';
+import { command, compatibleMainCanOpen, copyMain7, directoryFiles, files, fixture, logical, nodeProcess, quietWal, seedMain7, seedMain10, seedVersion } from './state-migration-fixture.ts';
 
 const commands = [
   ['help'],
@@ -72,7 +73,7 @@ for (const version of [10, 'missing'] as const) {
   for (const argv of commands) {
     test(`develop ${argv.join(' ')} leaves ${version} state untouched`, t => {
       const f = fixture(t);
-      if (version === 10) seedVersion(f, 10);
+      if (version === 10) seedMain10(f);
       const before = files(f.statePath);
       const beforeHome = directoryFiles(f.workingHome);
       const result = command(f, argv);
@@ -232,7 +233,7 @@ for (const argv of [['agent', 'ps'], ['runner', 'list'], ['runner', 'limits', '-
     const output = result.stdout + result.stderr;
     assert.match(output, /STATE_MIGRATION_REQUIRED/);
     assert.match(output, /7/);
-    assert.match(output, /explicit migration to 12 required/);
+    assert.ok(output.includes(`explicit migration to ${STATE_SCHEMA_VERSION} required`));
     assert.deepEqual(files(f.qaStatePath), before);
     assert.equal(existsSync(f.statePath), false);
   });
@@ -247,14 +248,14 @@ test('maintenance CLI is explicit, path-bound and does not grant migration to su
   const backupPath = join(f.root, 'maintenance-backup.sqlite');
   const program = { file: join(f.developTree, 'scripts', 'migrate-state.ts') };
   const env = { HOME: f.qaHome, RAF_QA_HOME: f.qaHome };
-  const result = await nodeProcess(f, program, ['--state', f.qaStatePath, '--from', '7', '--to', '12', '--backup', backupPath], env);
+  const result = await nodeProcess(f, program, ['--state', f.qaStatePath, '--from', '7', '--to', String(STATE_SCHEMA_VERSION), '--backup', backupPath], env);
   assert.equal(result.code, 0, result.stderr);
   assert.deepEqual(logical(backupPath), before);
-  assert.equal(logical(f.qaStatePath).version, 12);
+  assert.equal(logical(f.qaStatePath).version, STATE_SCHEMA_VERSION);
   assert.deepEqual(logical(f.qaStatePath).rows, before.rows);
   assert.ok(result.stdout.includes(f.qaStatePath));
   assert.match(result.stdout, /7/);
-  assert.match(result.stdout, /12/);
+  assert.equal(JSON.parse(result.stdout).toVersion, STATE_SCHEMA_VERSION);
   assert.ok(!result.stdout.includes('preserve-fixture-payload'));
   const next = command(f, ['runner', 'list'], { env });
   assert.equal(next.status, 0, next.stdout + next.stderr);
@@ -267,14 +268,14 @@ test('develop maintenance cannot transfer the working state even with exact path
   const before = files(f.statePath);
   const backupPath = join(f.root, 'must-not-exist.sqlite');
   const program = { file: join(f.developTree, 'scripts', 'migrate-state.ts') };
-  const result = await nodeProcess(f, program, ['--state', f.statePath, '--from', '7', '--to', '10', '--backup', backupPath]);
+  const result = await nodeProcess(f, program, ['--state', f.statePath, '--from', '7', '--to', String(STATE_SCHEMA_VERSION), '--backup', backupPath]);
   assert.notEqual(result.code, 0);
   assert.match(result.stdout + result.stderr, /STATE_CONTEXT_REFUSED/);
   assert.deepEqual(files(f.statePath), before);
   assert.equal(existsSync(backupPath), false);
 });
 
-for (const version of [0, 13, 777]) {
+for (const version of [0, STATE_SCHEMA_VERSION + 1, STATE_SCHEMA_VERSION + 1000]) {
   test(`public QA CLI refuses nonempty unknown schema ${version} without downgrade`, t => {
     const f = fixture(t);
     seedVersion(f, version, f.qaStatePath);

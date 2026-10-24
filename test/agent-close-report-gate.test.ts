@@ -607,12 +607,13 @@ async function withinFixtureWait<T>(operation: Promise<T>, label: string): Promi
   }
 }
 
-function barrier() {
+function barrier(participants = 1) {
   let entered!: () => void;
   let release!: () => void;
+  let arrivals = 0;
   const reached = new Promise<void>(resolve => { entered = resolve; });
   const released = new Promise<void>(resolve => { release = resolve; });
-  return { reached, release, wait: async () => { entered(); await released; } };
+  return { reached, release, wait: async () => { if (++arrivals === participants) entered(); await released; } };
 }
 
 async function preparationFixture(t: TestContext) {
@@ -700,7 +701,7 @@ test('a valid report awaiting its atomic event transition cannot authorize trans
 
 type PreparationFixture = Awaited<ReturnType<typeof preparationFixture>>;
 
-function controlFixture(f: PreparationFixture) {
+function controlFixture(f: PreparationFixture, preparationBarrier?: ReturnType<typeof barrier>) {
   const closed: string[] = [];
   const finalized: string[] = [];
   const interrupted: string[] = [];
@@ -718,7 +719,10 @@ function controlFixture(f: PreparationFixture) {
     repository: f.store.sessionRepository,
     coordinator: {
       acceptPendingReport: session => f.dependencies.acceptPendingReport(session),
-      prepareClose: (session, options) => prepareAgentClose(f.dependencies, session, options),
+      prepareClose: async (session, options) => {
+        if (preparationBarrier) await preparationBarrier.wait();
+        return prepareAgentClose(f.dependencies, session, options);
+      },
       observe: async (session, observation) => {
         f.store.sessionRepository.transaction(tx => {
           const current = tx.getSession(session.runId)!;
@@ -796,9 +800,11 @@ test('watcher wins the acceptance race while force is awaiting preparation: acce
   const f = await preparationFixture(t);
   const gate = barrier();
   t.after(gate.release);
-  f.dependencies.acceptPendingReport = async selected => { await gate.wait(); return selected; };
-  const preparing = prepareAgentClose(f.dependencies, f.session, forced);
-  await withinFixtureWait(gate.reached, 'watcher race reached report preparation');
+  const control = controlFixture(f, gate);
+  f.dependencies.acceptPendingReport = async () => { throw new Error('force must bypass the source-mismatch report gate'); };
+  const preparing = control.dependencies.coordinator.prepareClose(f.session, forced);
+  await withinFixtureWait(gate.reached, 'watcher race reached the boundary before force preparation');
+  assert.equal(f.read()!.result, undefined);
   const result = f.accept('succeeded');
   gate.release();
   const prepared = await preparing;
@@ -824,13 +830,16 @@ test('force wins before a late watcher report: the selected failed result cannot
 
 test('two forced close preparations preserve one first reason and one failed event', async t => {
   const f = await preparationFixture(t);
-  const gate = barrier();
+  const gate = barrier(2);
   t.after(gate.release);
-  f.dependencies.acceptPendingReport = async selected => { await gate.wait(); return selected; };
-  const first = prepareAgentClose(f.dependencies, f.session, { force: true, reason: 'First reason' });
-  const second = prepareAgentClose(f.dependencies, f.session, { force: true, reason: 'Second reason' });
+  const control = controlFixture(f, gate);
+  f.dependencies.acceptPendingReport = async () => { throw new Error('force must bypass the source-mismatch report gate'); };
+  const first = control.dependencies.coordinator.prepareClose(f.session, { force: true, reason: 'First reason' });
+  const second = control.dependencies.coordinator.prepareClose(f.session, { force: true, reason: 'Second reason' });
   const settled = Promise.allSettled([first, second]);
-  await withinFixtureWait(gate.reached, 'concurrent preparations reached report acceptance');
+  await withinFixtureWait(gate.reached, 'both closes reached the boundary before force preparation');
+  assert.equal(f.read()!.result, undefined);
+  assert.deepEqual(f.pending(), []);
   gate.release();
   const outcomes = await withinFixtureWait(settled, 'concurrent preparations finished');
   assert.ok(outcomes.some(value => value.status === 'fulfilled'));
@@ -847,10 +856,16 @@ test('a stale close never switches to a new run reusing the same address', async
   const f = await preparationFixture(t);
   const gate = barrier();
   t.after(gate.release);
-  const control = controlFixture(f);
-  f.dependencies.acceptPendingReport = async selected => { await gate.wait(); return selected; };
+  const control = controlFixture(f, gate);
+  let reportGateCalls = 0;
+  f.dependencies.acceptPendingReport = async () => {
+    reportGateCalls++;
+    throw new Error('force must bypass the source-mismatch report gate');
+  };
   const closing = control.close(forced).catch(() => undefined);
-  await withinFixtureWait(gate.reached, 'stale close reached report preparation');
+  await withinFixtureWait(gate.reached, 'stale close reached the boundary before force preparation');
+  assert.deepEqual(control.closed, []);
+  assert.deepEqual(control.finalized, []);
   const replacement: SessionRecord = {
     ...f.session, runId: 'replacement-run', revision: 1,
     process: { ...f.session.process!, pid: 456, runnerSessionId: 'replacement-native' },
@@ -861,6 +876,7 @@ test('a stale close never switches to a new run reusing the same address', async
   });
   gate.release();
   await withinFixtureWait(closing, 'stale close finished after address reuse');
+  assert.equal(reportGateCalls, 0);
   assert.deepEqual(f.read(replacement.runId), replacement);
   assert.ok(!control.closed.includes('replacement-native'));
   assert.ok(!control.finalized.includes(replacement.runId));

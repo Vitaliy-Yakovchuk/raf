@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { prepareHostHome, verifyPreparedHostHome, assertOwnedDirectory } from './helpers/trt633-host-home.ts';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
@@ -142,16 +143,12 @@ if (process.argv[1]?.endsWith('/bin/raf.ts') && process.argv[2] === 'test' && pr
 async function host(sourceSha, evidence) {
   assert.match(sourceSha ?? '', /^[0-9a-f]{40}$/);
   assert.ok(evidence && path.isAbsolute(evidence));
-  const home = process.env.HOME;
-  assert.ok(home === process.env.RAF_QA_HOME && home === process.env.TMPDIR, 'HOME=RAF_QA_HOME=TMPDIR must be the same explicit mktemp');
-  assert.ok(home?.startsWith('/tmp/') && fs.realpathSync(home) === home);
-  assert.ok(!fs.existsSync(path.join(home, '.raf')), 'fresh isolated HOME required');
-  assert.ok(!fs.existsSync(evidence), 'never overwrite evidence or repeat an unknown result');
-  assert.ok(!evidence.startsWith(home + '/'), 'evidence must survive removal of the stand');
-  assert.ok(process.env.CODEX_HOME && path.isAbsolute(process.env.CODEX_HOME), 'explicit existing CODEX_HOME selector required; no auth copy');
-  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { interrupted = signal; });
   const source = path.resolve(path.dirname(self), '..'), ownerRoot = path.dirname(source);
-  const stand = fs.mkdtempSync(path.join(home, 'trt633-'));
+  const prepared = verifyPreparedHostHome({ env: process.env, source, ownerRoot, evidence });
+  const stand = prepared.home;
+  const auth = spawnSync('codex', ['login', 'status'], { env: { ...process.env, CODEX_HOME: prepared.codexHome }, encoding: 'utf8', timeout: 30000 });
+  assert.ok(auth.status === 0 && !auth.error, 'TRT633 setup: own CODEX_HOME is not authorized; QA host must authorize it with supported Codex login before host launch');
+  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { interrupted = signal; });
   const root = path.join(stand, 'root'), main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
   const ev = path.join(stand, 'ev'), capture = path.join(ev, 'channels'), mainSocket = path.join(stand, 'main.sock');
   const unitHomes = [develop, hotfix].map(workspace => path.join(`/tmp/raf-unit-${process.getuid()}`, createHash('sha256').update(JSON.stringify([root, 'raf', workspace])).digest('hex')));
@@ -169,7 +166,7 @@ async function host(sourceSha, evidence) {
     runner: 'real codex CLI; provider prompts are sent; model and effort selected by copied raf routing',
     launchWaitPolicy: 'Only raf decides resource admission; agent run waits in its queue without a host timeout. SIGINT/SIGTERM interrupt the host as failed/incomplete and clean up owned launches.',
     instrumentation: 'NODE_OPTIONS preload tees only CLI test run stdout/stderr and records process ancestry/exit; no production source/auth/parser/runner replacement',
-    stand, evidence, steps: [], scenarios: [], failures: [], cleanup: [],
+    stand, evidence, selectedEnvironment: prepared, codexAuthorization: { selector: prepared.codexHome, command: ['codex', 'login', 'status'], exitCode: auth.status, credentialOrigin: 'separate QA-host authorization; no owner auth/config copied or linked' }, steps: [], scenarios: [], failures: [], cleanup: [],
   };
   let sequence = 0, startedPane = false;
   const checked = row => { assert.equal(row.error, null); assert.equal(row.signal, null); assert.equal(row.cliExitCode, 0, `see ${row.label}.stderr`); return row; };
@@ -373,6 +370,7 @@ async function host(sourceSha, evidence) {
         }
         summary.cleanup.push({ step: 'remove-own-unit-home', path: unitHome, complete: !fs.existsSync(unitHome) });
       }
+      assertOwnedDirectory(stand, prepared.provenance);
       fs.rmSync(stand, { recursive: true });
       summary.cleanup.push({ step: 'remove-owned-stand', complete: !fs.existsSync(stand) });
     } else summary.cleanup.push({ step: 'retain-owned-stand', stand });
@@ -383,7 +381,11 @@ async function host(sourceSha, evidence) {
 }
 
 const [mode, ...args] = process.argv.slice(2);
-if (mode === 'host') await host(...args);
+if (mode === 'prepare') {
+  const source = path.resolve(path.dirname(self), '..');
+  console.log(JSON.stringify(prepareHostHome({ env: process.env, source, ownerRoot: path.dirname(source), evidence: args[0] })));
+}
+else if (mode === 'host') await host(...args);
 else if (mode === 'pane') await pane(...args);
 else if (mode === 'worker') await worker(...args);
-else throw Error('host <full source SHA> <new absolute evidence directory> | pane <stand> | worker prepare|fix|finish <role> <report_path>');
+else throw Error('prepare <new absolute evidence directory> | host <full source SHA> <new absolute evidence directory> | pane <stand> | worker prepare|fix|finish <role> <report_path>');

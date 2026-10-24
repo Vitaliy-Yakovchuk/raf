@@ -4,11 +4,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
 
 const repository = fileURLToPath(new URL('../', import.meta.url));
 
-function fixture(t: Parameters<Parameters<typeof test>[1]>[0]) {
+function fixture(t: TestContext) {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'trt633-guards-'));
   const source = path.join(base, 'owner/raf-develop');
   fs.mkdirSync(path.join(source, 'test/helpers'), { recursive: true });
@@ -116,4 +116,31 @@ test('TRT633 H07 prepared HOME cannot be prepared again or silently reused witho
   assert.match(result.stderr, /TRT633 setup:.*authoriz/);
   assert.equal(fs.existsSync(f.evidence), false);
   assert.equal(fs.existsSync(path.join(f.home, 'root')), false);
+});
+
+for (const kind of ['uid', 'inode', 'device', 'missing-marker', 'unexpected-entry', 'codex-symlink', 'auth-symlink', 'auth-hardlink', 'config-hardlink', 'keyring-config']) test(`TRT633 H08 refuses ${kind} after explicit preparation before any live launch`, t => {
+  const f = fixture(t);
+  const prepared = f.run();
+  assert.equal(prepared.status, 0, prepared.stderr);
+  const codexHome = path.join(f.home, '.codex');
+  const auth = path.join(codexHome, 'auth.json');
+  fs.writeFileSync(auth, '{}\n', { mode: 0o600 });
+  const marker = path.join(f.home, '.trt633-prepared.json');
+  if (['uid', 'inode', 'device'].includes(kind)) {
+    const provenance = JSON.parse(fs.readFileSync(marker, 'utf8'));
+    provenance.provenance[kind] += 1;
+    fs.writeFileSync(marker, JSON.stringify(provenance));
+  }
+  if (kind === 'missing-marker') fs.unlinkSync(marker);
+  if (kind === 'unexpected-entry') fs.mkdirSync(path.join(f.home, 'root'));
+  if (kind === 'codex-symlink') { const moved = path.join(f.base, 'other-codex'); fs.renameSync(codexHome, moved); fs.symlinkSync(moved, codexHome); }
+  if (kind === 'auth-symlink') { const moved = path.join(f.base, 'other-auth'); fs.renameSync(auth, moved); fs.symlinkSync(moved, auth); }
+  if (kind === 'auth-hardlink') fs.linkSync(auth, path.join(f.base, 'linked-auth'));
+  if (kind === 'config-hardlink') fs.linkSync(path.join(codexHome, 'config.toml'), path.join(f.base, 'linked-config'));
+  if (kind === 'keyring-config') fs.writeFileSync(path.join(codexHome, 'config.toml'), 'cli_auth_credentials_store = "keyring"\n');
+  const result = f.run('host');
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /TRT633 setup:/);
+  assert.equal(fs.existsSync(f.evidence), false);
+  assert.equal(fs.existsSync(path.join(f.home, '.raf')), false);
 });

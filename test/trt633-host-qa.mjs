@@ -143,7 +143,7 @@ if (process.argv[1]?.endsWith('/bin/raf.ts') && process.argv[2] === 'test' && pr
 async function host(sourceSha, evidence) {
   assert.match(sourceSha ?? '', /^[0-9a-f]{40}$/);
   assert.ok(evidence && path.isAbsolute(evidence));
-  const source = path.resolve(path.dirname(self), '..'), ownerRoot = path.dirname(source);
+  const source = fs.realpathSync(path.resolve(path.dirname(self), '..')), ownerRoot = path.dirname(source);
   const prepared = verifyPreparedHostHome({ env: process.env, source, ownerRoot, evidence });
   const stand = prepared.home;
   const auth = spawnSync('codex', ['login', 'status'], { env: { ...process.env, CODEX_HOME: prepared.codexHome }, encoding: 'utf8', timeout: 30000 });
@@ -162,7 +162,7 @@ async function host(sourceSha, evidence) {
   const env = { ...process.env, HOME: stand, RAF_QA_HOME: stand, TMPDIR: stand, XDG_CONFIG_HOME: path.join(stand, '.config'), GIT_CONFIG_GLOBAL: gitConfig, GIT_CONFIG_NOSYSTEM: '1', NODE_OPTIONS: `--import=${observer}`, TRT633_CAPTURE: capture };
   for (const key of Object.keys(env)) if (/^GIT_(DIR|WORK_TREE|INDEX_FILE|COMMON_DIR|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES)$/.test(key) || /^RAF_/.test(key) && key !== 'RAF_QA_HOME' || ['TMUX', 'TMUX_PANE', 'ALLOW_MIGRATIONS', 'CLAUDE_CONFIG_DIR'].includes(key)) delete env[key];
   const summary = {
-    status: 'failed', source, sourceSha, driverSha256: hash(self), startedAt: new Date().toISOString(),
+    status: 'failed', source, sourceSha, driverSha256: hash(self), homeGuardSha256: hash(fileURLToPath(new URL('./helpers/trt633-host-home.ts', import.meta.url))), startedAt: new Date().toISOString(),
     runner: 'real codex CLI; provider prompts are sent; model and effort selected by copied raf routing',
     launchWaitPolicy: 'Only raf decides resource admission; agent run waits in its queue without a host timeout. SIGINT/SIGTERM interrupt the host as failed/incomplete and clean up owned launches.',
     instrumentation: 'NODE_OPTIONS preload tees only CLI test run stdout/stderr and records process ancestry/exit; no production source/auth/parser/runner replacement',
@@ -382,7 +382,7 @@ async function host(sourceSha, evidence) {
 
 const [mode, ...args] = process.argv.slice(2);
 if (mode === 'prepare') {
-  const source = path.resolve(path.dirname(self), '..');
+  const source = fs.realpathSync(path.resolve(path.dirname(self), '..'));
   console.log(JSON.stringify(prepareHostHome({ env: process.env, source, ownerRoot: path.dirname(source), evidence: args[0] })));
 }
 else if (mode === 'host') await host(...args);

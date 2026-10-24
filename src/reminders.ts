@@ -65,11 +65,13 @@ export interface SessionEnd {
 
 export class ReminderError extends Error {
   readonly code: string;
+  readonly details: Record<string, unknown> | null;
 
-  constructor(code: string, message: string) {
+  constructor(code: string, message: string, details: Record<string, unknown> | null = null) {
     super(message);
     this.name = 'ReminderError';
     this.code = code;
+    this.details = details;
   }
 }
 
@@ -169,6 +171,10 @@ export class ReminderService {
     if (input.binding != null) this.binding(input.binding);
     return this.options.repository.transaction(tx => {
       const reminder = this.open(tx, id);
+      if (reminder.state === 'active' && input.at !== undefined) {
+        throw new ReminderError('REMINDER_ACTIVE', 'Нагадування вже спрацювало (active); його час змінювати не можна.',
+          { id: reminder.id, state: reminder.state, assignedTo: reminder.assignedTo });
+      }
       const changed = { ...reminder,
         at: input.at === undefined ? reminder.at : input.at,
         text: input.text === undefined ? reminder.text : input.text,

@@ -47,19 +47,27 @@ const remediation: Record<string, string> = {
   SESSION_NOT_ACTIVE: 'Оберіть адресата з активних сесій raf agent ps, включно з main.',
   REMINDER_NOT_FOUND: 'Перевірте ID за raf reminder list.',
   REMINDER_CLOSED: 'Закрите нагадування не змінюється; створіть нове через raf reminder add.',
+  REMINDER_ACTIVE: 'Закрийте спрацьоване нагадування через raf reminder close --id <ID> --reason <причина>, потім створіть нове через raf reminder add --to <поточний адресний ID> --at <новий час> --text <текст>; за потреби додайте повну трійку прив’язки події.',
   REMINDER_DUPLICATE: 'Повторіть команду: ID нагадування згенеровано повторно.',
 };
 
 function reminderFailure(code: string, message: string, received: unknown = null): Error {
+  let step = remediation[code] ?? 'Виправте причину та повторіть команду.';
+  if (code === 'REMINDER_ACTIVE' && received && typeof received === 'object' && 'id' in received && 'assignedTo' in received
+      && typeof received.id === 'string' && typeof received.assignedTo === 'string') {
+    const argument = (value: string) => /^[\w.:/@-]+$/.test(value) ? value : "'" + value.replaceAll("'", "'\\''") + "'";
+    const { id, assignedTo } = received;
+    step = step.replace('<ID>', () => argument(id)).replace('<поточний адресний ID>', () => argument(assignedTo));
+  }
   return Object.assign(commandFailure({ code, message, stage: 'reminder', source: 'reminder-cli', sourceCode: code, reason: message,
     received, expected: null, found: null, completed: [], pending: [], retrySafe: true,
-    remediation: [remediation[code] ?? 'Виправте причину та повторіть команду.'] }), { code });
+    remediation: [step] }), { code });
 }
 
 function translated<T>(action: () => T): T {
   try { return action(); }
   catch (error) {
-    if (error instanceof ReminderError) throw reminderFailure(error.code, error.message);
+    if (error instanceof ReminderError) throw reminderFailure(error.code, error.message, error.details);
     throw error;
   }
 }

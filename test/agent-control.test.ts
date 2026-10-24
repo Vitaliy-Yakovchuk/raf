@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { AgentControlService } from '../src/agent-control.ts';
+import { commandFailure } from '../src/cli-contract.ts';
 import type { ActivityEvent, AgentControlDependencies, DeliveryReceipt, VerifiedSender } from '../src/agent-control.ts';
 import type { ProcessIdentity, ProcessObservation, SessionRecord, WorkResult } from '../src/session-state.ts';
 import type { SessionCloseCheck, SessionEnd } from '../src/reminders.ts';
@@ -81,7 +82,7 @@ function fixture() {
     projects: ['raf', 'other'], agentTypes: ['main', 'implement', 'review'],
   };
   const service = new AgentControlService(dependencies);
-  return { service, records, observations, scans, deliveries, closed, interrupted, events, ends, observed, trustedCaller, pendingChecks, pendingReports,
+  return { service, dependencies, records, observations, scans, deliveries, closed, interrupted, events, ends, observed, trustedCaller, pendingChecks, pendingReports,
     sender(value: VerifiedSender) { identity = value; }, receipt(value: DeliveryReceipt) { receipt = value; },
     closeCheck(value: SessionCloseCheck) { closeCheck = value; } };
 }
@@ -101,6 +102,46 @@ test('empty ps succeeds', async () => {
   f.records.clear();
   assert.deepEqual(await f.service.ps(), []);
 });
+
+test('worker-exit: ps lists a pending worker and other agents without finalizing or controlling it', async () => {
+  const f = fixture();
+  const before = structuredClone(f.records.get('run-A'));
+  f.observations.set('cli-A', { state: 'exited', observedAt: time, exitCode: null, evidence: 'runner gone' });
+  const observe = f.dependencies.coordinator.observe;
+  f.dependencies.coordinator.observe = async (row, observation) => {
+    if (row.runId === 'run-A') throw commandFailure({ code: 'WORKER_RESULT_PENDING', message: 'Worker still processing run-A', reason: 'Worker still processing run-A', stage: 'production-runtime', source: 'production-runtime', sourceCode: null, received: null, expected: null, found: null, completed: [], pending: [], retrySafe: true, remediation: [] });
+    return observe(row, observation);
+  };
+  const rows = await f.service.ps();
+  assert.deepEqual(rows.map(row => row.addressId).sort(), ['A', 'B', 'main']);
+  const pending = rows.find(row => row.addressId === 'A') as any;
+  assert.deepEqual(pending.reconciliation, { code: 'WORKER_RESULT_PENDING', reason: 'Worker still processing run-A' });
+  assert.equal(pending.observation.state, 'exited');
+  assert.deepEqual(f.records.get('run-A'), before, 'ps must retain the worker reservation and durable session');
+  assert.deepEqual(f.closed, []);
+  assert.deepEqual(f.events, []);
+});
+
+test('worker-exit: ps does not swallow unrelated reconciliation failures', async () => {
+  const f = fixture();
+  f.dependencies.coordinator.observe = async () => { throw new Error('unexpected database failure'); };
+  await assert.rejects(f.service.ps(), /unexpected database failure/);
+});
+
+for (const state of ['running', 'exited'] as const) for (const force of [false, true]) {
+  test(`worker-exit: close finalizes a dead ${state} session with force=${force} after its worker is gone`, async () => {
+    const f = fixture();
+    f.records.get('run-A')!.state = state;
+    f.observations.set('cli-A', { state: 'exited', observedAt: time, exitCode: null, evidence: 'runner and worker gone' });
+    f.records.get('run-A')!.result = { status: 'failed', response: 'retained failed report', proof: { runId: 'run-A' } };
+    const before = structuredClone(f.records.get('run-A')!.result);
+    assert.deepEqual(await f.service.close('A', force ? { force: true, reason: 'recover dead worker' } : {}), { closed: true, unfinished: [], result: 'failed' });
+    assert.equal(f.records.get('run-A')?.state, 'finished');
+    assert.deepEqual(f.records.get('run-A')?.result, before);
+    assert.deepEqual(f.closed, [], 'already dead processes need no tmux transport');
+    assert.deepEqual(f.events.map(event => event.kind), ['ended']);
+  });
+}
 
 test('confirmed process death delegates observation and final closure before ps returns', async () => {
   const f = fixture();

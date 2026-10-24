@@ -8,6 +8,8 @@ import { spawn } from 'node:child_process';
 import { connect } from 'node:net';
 import { once } from 'node:events';
 import { runLaunchWrapper } from '../src/launch-wrapper.ts';
+import { TmuxAgentAdapter } from '../src/agent-adapters.ts';
+import { tmuxExitFixture } from './helpers/tmux-exit-fixture.ts';
 import type { LaunchWrapperRequest, LaunchWrapperPorts, LaunchReadiness, LaunchOwnership } from '../src/launch-wrapper.ts';
 
 const deferred = <T>() => {
@@ -64,8 +66,33 @@ async function fixture(t: test.TestContext) {
     setReady: (value: LaunchReadiness) => { ready = value; },
     setOwnership: (value: LaunchOwnership) => { ownership = value; },
     setValid: (value: boolean) => { valid = value; },
-    writeReport: () => writeFile(reportPath, JSON.stringify({ status: 'succeeded', answer: 'Done', changes: [{ id: 'change-one', items: [{ id: '1.1', status: 'succeeded' }] }] })),
+    writeReport: (status = 'succeeded') => writeFile(reportPath, JSON.stringify({ status, answer: 'Done', changes: [{ id: 'change-one', items: [{ id: '1.1', status, ...(status === 'failed' ? { reason: 'assigned work failed' } : {}) }] }] })),
   };
+}
+
+for (const report of [true, false]) {
+  test(`worker-exit: vanished runner and tmux session finalize ${report ? 'a failed report' : 'without a report'} without polling`, async t => {
+    const f = await fixture(t);
+    const events = tmuxExitFixture(f.request.tmuxSession);
+    const adapter = new TmuxAgentAdapter({ execute: events.execute, protocols: {} as any });
+    f.ports.transport.waitExit = () => adapter.waitForExit({ tmuxSession: f.request.tmuxSession, selection: f.request.selection });
+    const running = runLaunchWrapper(f.request, f.ports);
+    await events.waiting;
+    if (report) await f.writeReport('failed');
+    events.close();
+    try {
+      const outcome = await Promise.race([running.then(() => 'finished'), new Promise(resolve => setTimeout(() => resolve('still waiting'), f.request.readinessTimeoutMs))]);
+      assert.equal(outcome, 'finished', 'worker must finalize within the existing transition budget after session destruction');
+      assert.equal(f.results.length, 1);
+      const result = f.results[0] as { status: string; report?: unknown; exit?: unknown };
+      assert.equal(result.status, 'failed');
+      assert.equal(!!result.report, report);
+      assert.equal(!!result.exit, !report);
+      assert.ok(f.events.includes('finish'));
+      assert.ok(f.events.includes('cleanup'));
+      assert.equal(events.commands.filter(command => command.args[0] === 'wait-for' && command.args.length === 2).length, 1);
+    } finally { events.release(); await running; }
+  });
 }
 
 test('known readiness and verified native process precede literal brief, committed start and handshake', async t => {

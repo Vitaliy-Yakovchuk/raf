@@ -9,6 +9,7 @@ import * as productionRuntime from '../src/production-runtime.ts';
 import { resolveStateContext } from '../src/state-migration-guard.ts';
 import { isNativeBriefEcho, matchPendingBrief, matchesNativeDeliveryContext, nativeDeliveryContext, observeRunnerScreen, readNativeComposer, type ProtocolSettings } from '../src/runner-protocols.ts';
 import { deliveryDiagnostic } from '../src/delivery-diagnostic.ts';
+import { tmuxExitFixture } from './helpers/tmux-exit-fixture.ts';
 import { codexPastedBriefFixture } from './codex-pasted-brief-fixture.ts';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -290,4 +291,25 @@ test('worker-idle: concurrent transport exit waiters share one event subscriptio
   assert.equal(subscriptions, 1);
   resolveExit({ code: 0, signal: null });
   assert.deepEqual(await Promise.all([first, second]), [{ code: 0, signal: null }, { code: 0, signal: null }]);
+});
+
+test('worker-exit: session removal wakes its waiter after session hooks have disappeared', async () => {
+  const f = fixture();
+  const events = tmuxExitFixture(f.session.tmuxSession);
+  const adapter = new TmuxAgentAdapter({ execute: events.execute, protocols: {} as Record<AgentRunner, RunnerProtocol> });
+  const waiting = adapter.waitForExit(f.session);
+  await events.waiting;
+  try {
+    assert.equal([...events.hooks].filter(([name, hook]) => name.startsWith('pane-') && !hook.global).length, 2, 'natural pane exits retain their target context');
+    assert.equal([...events.hooks].filter(([name, hook]) => name.startsWith('session-closed[') && hook.global).length, 1, 'session closure survives deletion of session hooks');
+    const count = events.commands.length;
+    events.close('unrelated-session');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(events.commands.length, count, 'unrelated session closure must not wake this worker');
+    events.close();
+    const result = await Promise.race([waiting, new Promise(resolve => setImmediate(() => resolve('still waiting')))]);
+    assert.deepEqual(result, { code: null, signal: null }, 'destroying a session must notify the worker without another poll');
+    assert.equal(events.hooks.size, 0, 'owned hooks must be removed even after the session is gone');
+    assert.equal(events.commands.filter(command => command.args[0] === 'capture-pane').length, 0);
+  } finally { events.release(); await waiting; }
 });

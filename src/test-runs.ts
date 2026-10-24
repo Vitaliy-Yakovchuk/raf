@@ -352,9 +352,13 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
   if (profile.environment.isolatedHome && (!env.isolatedHome || context.home === context.operationalHome) || profile.environment.stateOrigin && !env.stateOriginAllowed) failure('STATE_CONTEXT_REFUSED');
   for (const file of files) {
     const fact = env.files[file];
-    if (!fact || fact.kind !== 'file' || !fact.unit || !env.unitFiles.includes(file) || !inside(fact.realpath, cwd) || fact.realpath !== resolve(context.workspace, file)) failure('UNSAFE_SELECTION', `File ${file}: directory or symlink outside canonical workspace ${context.workspace}`);
+    const canonicalFile = fact ? relative(context.workspace, fact.realpath) : '';
+    if (!fact || fact.kind !== 'file' || !fact.unit || !env.unitFiles.includes(file) || !inside(fact.realpath, cwd) || !profile.unitFiles?.includes(canonicalFile) || !env.unitFiles.includes(canonicalFile)) failure('UNSAFE_SELECTION', `File ${file}: directory or symlink outside canonical workspace or unit inventory ${context.workspace}`);
   }
-  const testIds = uniqueIds(request.only ?? []);
+  files.splice(0, files.length, ...new Set(files.map(file => relative(context.workspace, env.files[file].realpath))));
+  const canonicalInventory = [...new Set(configuredInventory.map(file => env.files[file]?.realpath).filter((file): file is string => !!file))];
+  if (!request.only && canonicalInventory.length === files.length && canonicalInventory.every(file => files.includes(relative(context.workspace, file)))) failure('UNSAFE_SELECTION', 'Full unit suite selection is refused; select a targeted subset');
+  const testIds = uniqueIds((request.only ?? []).map(id => ({ ...id, file: relative(context.workspace, env.files[id.file].realpath) })));
   if (testIds.length && !['node-test-name', 'vitest-test-name'].includes(profile.exactIds ?? '')) failure('EXACT_IDS_UNSUPPORTED');
   const escape = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const argv = [...profile.argv];
@@ -413,7 +417,7 @@ function groupState(group: TestRunGroup, policy: UnitTestPolicy): TestRunResult[
 export async function runTestRun(request: TestRunRequest, configInput: unknown, policy: UnitTestPolicy, context: TestRunContext, ports: TestRunPorts): Promise<TestRunResult> {
   const started = ports.clock.now();
   const result = emptyResult(request, context, ports.newRunId(), started);
-  let config: TestRunConfig | null = null, plan: TestRunPlan;
+  let config: TestRunConfig | null = null, plan: TestRunPlan, environment: TestRunEnvironment;
   let diagnostics: TestRunDiagnostics | null = null;
   const attach = () => {
     if (diagnostics) Object.assign(result, diagnostics.attach(result, ports.diagnosticEnvironment?.(result.command) ?? result.environmentSummary));
@@ -425,7 +429,8 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if (!context.agentPhases.includes(request.phase)) failure('UNKNOWN_PHASE');
     if (!config.phases[request.phase].allowed) failure('PHASE_NOT_ALLOWED');
     refuseFullUnitSuite(request, config);
-    plan = planTestRun(request, config, context, await ports.preflight(context));
+    environment = await ports.preflight(context);
+    plan = planTestRun(request, config, context, environment);
   } catch (error) {
     result.errorCode = (error as any)?.code ?? 'ENVIRONMENT_INVALID';
     if (['ENVIRONMENT_INVALID', 'STATE_CONTEXT_REFUSED'].includes(result.errorCode!)) { result.outcome = 'setup-failed'; result.failureKinds = ['setup']; }
@@ -446,13 +451,14 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
         result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
       }
       for (const other of tx.list(key.project, key.workspace)) {
-        if (other.key.group === key.group || other.key.group.split('/')[0] !== key.group.split('/')[0]) continue;
-        const overlap = plan.selection.files.filter(file => other.selection.files.includes(file));
+        if (other.key.project !== key.project || other.key.workspace !== key.workspace || other.key.group === key.group || other.key.group.split('/')[0] !== key.group.split('/')[0]) continue;
+        const acceptedFiles = new Set(other.selection.files.map(file => environment.files[file]?.realpath ?? resolve(key.workspace, file)));
+        const overlap = plan.selection.files.filter(file => acceptedFiles.has(resolve(key.workspace, file)));
         if (overlap.length) failure('GROUP_RENAME_REFUSED', `Files ${overlap.join(', ')} already belong to ${other.key.group}. Continue with --group ${other.key.group}. To release or reassign the selection, ask main to reconcile the existing group's selection, preserving timeoutCount and knownRed; do not rename the group or reset its state.`);
       }
       if (group && ((group.testKind ?? 'unit') !== result.testKind || (group.profileId ?? group.lastResult?.profileId ?? plan.profileId) !== plan.profileId)) failure('GROUP_PROFILE_MISMATCH');
       if (group?.inFlight) failure('GROUP_IN_FLIGHT');
-      if (request.only && (!group || request.only.some(id => !containsId(group!.knownRed, id)))) failure('UNKNOWN_RED_TEST');
+      if (request.only && (!group || plan.selection.testIds.some(id => !containsId(group!.knownRed, id)))) failure('UNKNOWN_RED_TEST');
       group ??= { key, testKind: result.testKind!, profileId: plan.profileId, timeoutCount: 0, state: 'idle', selection: plan.selection, knownRed: [], unexecuted: [], inFlight: null, lastResult: null };
       result.timeoutCount = group.timeoutCount; result.knownRed = group.knownRed; result.unexecuted = group.unexecuted;
       if (result.testKind === 'unit' && group.timeoutCount >= policy.maxGroupTimeouts && !request.only) {
@@ -552,7 +558,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     result.removed = uniqueIds([...group.knownRed, ...group.unexecuted].filter(removed));
     group.knownRed = uniqueIds([...group.knownRed.filter(id => !removed(id) && (!events.some(event => event.kind === 'complete') || events.some(event => event.kind === 'protocol-error') || !containsId(result.passed, id))), ...result.knownRed]);
     result.knownRed = group.knownRed;
-    result.unexecuted = uniqueIds([...group.unexecuted.filter(id => !removed(id) && !containsId([...result.passed, ...result.knownRed], id)), ...result.unexecuted, ...(request.only ?? []).filter(id => !containsId([...result.passed, ...classified.knownRed], id))]);
+    result.unexecuted = uniqueIds([...group.unexecuted.filter(id => !removed(id) && !containsId([...result.passed, ...result.knownRed], id)), ...result.unexecuted, ...plan.selection.testIds.filter(id => !containsId([...result.passed, ...classified.knownRed], id))]);
     if (result.testKind === 'integration') {
       const confirmed = reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
       const confirmedPassed = confirmed ? result.passed : [];

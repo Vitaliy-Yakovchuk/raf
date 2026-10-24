@@ -58,7 +58,6 @@ export interface AdapterLaunchTransportOptions {
   reportWrapper: ReportWrapper;
   inspectOwnership(session: AdapterSession): Promise<LaunchOwnership>;
   pollIntervalMs: number;
-  waitForExit?(session: AdapterSession): Promise<{ code: number | null; signal: string | null }>;
   now?: () => number;
   delay?: (milliseconds: number) => Promise<void>;
 }
@@ -73,7 +72,6 @@ export class TmuxAgentAdapter {
     let ownershipAnchor: ProcessIdentity | undefined;
     let stopped = false;
     let exit: { code: number | null; signal: string | null } | undefined;
-    let exitWait: Promise<{ code: number | null; signal: string | null }> | undefined;
     const current = () => { if (!session) throw new Error('Launch has not started'); return session; };
     return {
       startWithoutInput: async request => {
@@ -126,10 +124,6 @@ export class TmuxAgentAdapter {
         await this.deliver(current(), brief);
       },
       waitExit: async () => {
-        if (!exit && options.waitForExit) {
-          exitWait ??= options.waitForExit(current()).then(value => exit = value);
-          return exitWait;
-        }
         while (!exit) {
           const observation = await this.inspect(current());
           if (observation.status === 'exited') exit = { code: observation.exitCode, signal: null };
@@ -215,35 +209,6 @@ export class TmuxAgentAdapter {
     const pane = await this.dependencies.execute({ executable: 'tmux', args: ['capture-pane', '-p', '-t', target] });
     if (pane.exitCode !== 0) return { status: 'exited', exitCode: null };
     return this.dependencies.protocols[session.selection.runner].observe(pane.stdout);
-  }
-
-  async waitForExit(session: AdapterSession): Promise<{ code: number | null; signal: string | null }> {
-    const target = this.target(session);
-    const channel = `raf-exit-${randomUUID()}`;
-    const index = Number.parseInt(randomUUID().slice(0, 8), 16) >>> 1;
-    const hooks = ['pane-died', 'pane-exited', 'session-closed'].map(name => `${name}[${index}]`);
-    const status = async () => {
-      const result = await this.dependencies.execute({ executable: 'tmux', args: ['display-message', '-p', '-t', target, '#{pane_dead}|#{pane_dead_status}'] });
-      if (result.exitCode !== 0) return { code: null, signal: null };
-      const [dead, code] = result.stdout.trim().split(/[|\t]/);
-      if (dead === '0') return undefined;
-      return { code: dead === '1' && code !== undefined && /^\d+$/.test(code) ? Number(code) : null, signal: null };
-    };
-    try {
-      const installed = await this.dependencies.execute({ executable: 'tmux', args: hooks.flatMap((hook, i) => [...(i ? [';'] : []), 'set-hook', '-t', target, hook, `wait-for -S ${channel}`]) });
-      const initial = await status();
-      if (initial) return initial;
-      if (installed.exitCode !== 0) throw new Error(`tmux exit subscription failed: ${installed.stderr}`);
-      for (;;) {
-        const notified = await this.dependencies.execute({ executable: 'tmux', args: ['wait-for', channel] });
-        const exited = await status();
-        if (exited) return exited;
-        if (notified.exitCode !== 0) throw new Error(`tmux exit notification failed: ${notified.stderr}`);
-      }
-    } finally {
-      for (const hook of hooks) await this.dependencies.execute({ executable: 'tmux', args: ['set-hook', '-u', '-t', target, hook] }).catch(() => undefined);
-      await this.dependencies.execute({ executable: 'tmux', args: ['wait-for', '-S', channel, ';', 'wait-for', channel] }).catch(() => undefined);
-    }
   }
 
   async capture(session: AdapterSession): Promise<{ exited: boolean; exitCode: number | null; text: string }> {

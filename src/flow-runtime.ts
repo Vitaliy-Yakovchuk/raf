@@ -56,19 +56,19 @@ export function flowEvidencePorts(store: StateStore, root: string): FlowQaEviden
 }
 import { readFileSync } from 'node:fs';
 const requireText = (path: string) => readFileSync(path, 'utf8');
-export async function checkFlowPlan(store: StateStore, assignment: AssignmentSnapshot, phase: 'launch' | 'report', initial: readonly FlowPlanDocument[], workingMain: { project: string; workspace: string; branch: string }) {
+export async function checkFlowPlan(store: StateStore, assignment: AssignmentSnapshot, phase: 'launch' | 'report', initial: readonly FlowPlanDocument[], workingMain: { project: string; workspace: string; branch: string }, verifiedEvidence: readonly { path: string; digest: string }[] = []) {
   const current = await flowPlanDocuments(assignment);
   const evidence: FlowPlanEvidence[] = [];
   const accepted = store.sessionRepository.transaction(tx => tx.listSessions().flatMap(session => {
     const proof = session.result?.proof as { flowEvidence?: { path: string; digest: string }[] } | undefined;
     return proof?.flowEvidence ?? [];
-  }), 'read');
+  }), 'read').concat(verifiedEvidence);
   for (const document of current) {
     const links = [...document.text.matchAll(/\]\(([^)]+\.json)\)|(?:^|\s)([^\s`]+\.json)(?=[`\s]|$)/gm)].map(match => match[1] ?? match[2]);
     for (const link of new Set(links)) {
       const path = resolve(link.startsWith('openspec/') ? assignment.root : dirname(document.path), link);
-      const changeRoot = join(assignment.root, 'openspec/changes', document.change);
-      const within = (value: string) => { const suffix = relative(changeRoot, value); return !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith('..' + sep); };
+      const roots = assignment.changes.map(change => join(assignment.root, 'openspec/changes', change.id));
+      const within = (value: string) => roots.some(root => { const suffix = relative(root, value); return !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith('..' + sep); });
       if (!within(path)) continue;
       try {
         if (!within(await fs.realpath(path))) continue;
@@ -76,7 +76,9 @@ export async function checkFlowPlan(store: StateStore, assignment: AssignmentSna
         const report = JSON.parse(bytes);
         const qa = report.qa ?? report;
         if (!Array.isArray(qa.scenarios) || !Array.isArray(qa.findings)) continue;
-        evidence.push({ path: link, digest: flowDigest(bytes), acceptedDigest: accepted.find(row => row.path === path)?.digest ?? null, agentRunId: report.runId ?? '', scenarios: qa.scenarios.map((row: any) => ({ ...row, executed: row.status === 'succeeded' || qa.findings.some((finding: any) => finding.change === row.change && finding.item === row.item && finding.scenario === row.scenario) })), findings: qa.findings });
+        const acceptedDigest = accepted.find(row => row.path === path)?.digest ?? null;
+        const hotfix = qa.findings.find((finding: any) => finding.fixed === false && finding.mainHotfix?.workspace === workingMain.workspace && finding.mainHotfix?.branch === workingMain.branch);
+        evidence.push({ ...(acceptedDigest === flowDigest(bytes) && hotfix ? { workingMainHotfix: { verified: true, ...workingMain } } : {}), path: link, digest: flowDigest(bytes), acceptedDigest, agentRunId: report.runId ?? '', scenarios: qa.scenarios.map((row: any) => ({ ...row, executed: row.status === 'succeeded' || qa.findings.some((finding: any) => finding.change === row.change && finding.item === row.item && finding.scenario === row.scenario) })), findings: qa.findings });
       } catch (error) { if ((error as NodeJS.ErrnoException).code && !['ENOENT', 'ENOTDIR'].includes((error as NodeJS.ErrnoException).code!)) throw error; }
     }
   }

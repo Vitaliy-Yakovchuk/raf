@@ -46,7 +46,7 @@ export interface ReportConfirmationRetryPorts {
 }
 export interface AgentReportPorts extends Partial<TaskCheckboxReportPort>, Partial<ReportedCommitAcceptancePorts> {
   readonly flowQaEvidence?: FlowQaEvidencePorts;
-  readonly flow?: { trusted?: FlowQaLaunchContext; evidence: FlowQaEvidencePorts; checkPlan?(): Promise<{ ok: boolean; issues: readonly FlowIssue[]; warnings: readonly FlowIssue[] }> };
+  readonly flow?: { trusted?: FlowQaLaunchContext; evidence: FlowQaEvidencePorts; checkPlan?(report: AgentReport): Promise<{ ok: boolean; issues: readonly FlowIssue[]; warnings: readonly FlowIssue[] }> };
   readonly acceptResult?: (result: AgentReportResult) => Promise<void>;
   readonly fs: {
     mkdir(path: string): Promise<void>;
@@ -130,15 +130,18 @@ function reportFlowPorts(request: AgentReportRequest, ports: PendingAgentReportP
 }
 async function checkReportFlow(report: AgentReport, path: string, ports: PendingAgentReportPorts, snapshot?: FlowVerifiedSnapshot): Promise<FlowVerifiedSnapshot | undefined> {
   if (!ports.flow) return undefined;
-  const plan = await ports.flow.checkPlan?.();
+  let verified: FlowVerifiedSnapshot | undefined;
+  if (ports.flow.trusted) {
+    const input = { report, reportPath: path, trusted: ports.flow.trusted };
+    const checked = snapshot ? await verifyFlowQaSnapshot(snapshot, input, ports.flow.evidence) : await validateFlowQaReport(input, ports.flow.evidence);
+    if (!checked.ok) throw new Error('Flow QA: ' + JSON.stringify(checked.issues));
+    if (checked.warnings.length) await ports.diagnostic('Flow QA evidence boundary for main: ' + JSON.stringify(checked.warnings));
+    verified = checked.snapshot;
+  }
+  const plan = await ports.flow.checkPlan?.(report);
   if (plan && !plan.ok) throw new Error('Flow plan: ' + JSON.stringify(plan.issues));
   if (plan?.warnings.length) await ports.diagnostic('Flow plan warning for main: ' + JSON.stringify(plan.warnings));
-  if (!ports.flow.trusted) return undefined;
-  const input = { report, reportPath: path, trusted: ports.flow.trusted };
-  const checked = snapshot ? await verifyFlowQaSnapshot(snapshot, input, ports.flow.evidence) : await validateFlowQaReport(input, ports.flow.evidence);
-  if (!checked.ok) throw new Error('Flow QA: ' + JSON.stringify(checked.issues));
-  if (checked.warnings.length) await ports.diagnostic('Flow QA evidence boundary for main: ' + JSON.stringify(checked.warnings));
-  return checked.snapshot;
+  return verified;
 }
 function reportDiagnosticText(request: AgentReportRequest, reason: string): string {
   return `Agent: ${request.address}\nItems: ${request.assignment.changes.flatMap(change => change.items.map(item => `${change.id}:${item.id}`)).join(', ')}\nReport: ${join(request.tmpRoot, request.runId, `${request.address}.json`)}\nReason: ${reason}`;

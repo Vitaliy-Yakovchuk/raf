@@ -357,8 +357,21 @@ export async function activateHotfix(host: HotfixHost, candidate: VerifiedHotfix
     const state = await registry(host, route);
     const head = await git(route.cwd, 'rev-parse', 'HEAD');
     if (await git(route.cwd, 'status', '--porcelain', '--untracked-files=all') || await git(route.cwd, 'diff', '--cached', '--name-only')) throw new Error('Dirty main target');
-    const current = state.generations[state.current];
-    if (current?.commit !== head || await treeIdentity(route.cwd) !== current.fingerprint || await treeIdentity(current.root) !== current.fingerprint) throw new Error('Live main differs from registered generation');
+    let current = state.generations[state.current];
+    if (!current || await treeIdentity(current.root) !== current.fingerprint) throw new Error('Live main differs from registered generation');
+    if (current.commit !== head) {
+      if (head !== candidate.workspace.baseCommit) throw new Error('Stale hotfix base commit');
+      await git(route.cwd, 'merge-base', '--is-ancestor', current.commit, head);
+      const liveTree = await treeIdentity(route.cwd);
+      const refreshed = await generation(host, route, route.cwd, head);
+      await assertMainWriterGate(host, route.cwd);
+      if (await git(route.cwd, 'rev-parse', 'HEAD') !== head || await git(route.cwd, 'status', '--porcelain', '--untracked-files=all') || await treeIdentity(route.cwd) !== liveTree || refreshed.fingerprint !== liveTree) throw new Error('Main changed while registering refreshed generation');
+      state.generations[refreshed.root] = refreshed;
+      state.current = refreshed.root;
+      await durable(join(route.control, 'registry.json'), state);
+      current = refreshed;
+    }
+    if (await treeIdentity(route.cwd) !== current.fingerprint) throw new Error('Live main differs from registered generation');
     if (head === candidate.commit) {
       if (current.fingerprint !== hash(JSON.stringify(candidate.files))) throw new Error('Active main differs from verified snapshot');
       await updateGitlink(host, route.cwd, head, [head]);

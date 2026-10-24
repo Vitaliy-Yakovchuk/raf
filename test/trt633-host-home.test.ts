@@ -5,6 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test, { type TestContext } from 'node:test';
+import { verifyPreparedHostHome } from './helpers/trt633-host-home.ts';
 
 const repository = fileURLToPath(new URL('../', import.meta.url));
 
@@ -17,25 +18,30 @@ function fixture(t: TestContext) {
   if (fs.existsSync(helper)) fs.copyFileSync(helper, path.join(source, 'test/helpers/trt633-host-home.ts'));
   const home = fs.mkdtempSync(path.join(base, 'TRT633-'));
   const evidence = path.join(base, 'evidence');
-  const env = { ...process.env, HOME: home, RAF_QA_HOME: home, TMPDIR: home, CODEX_HOME: path.join(home, '.codex') };
+  const codexHome = path.join(base, 'owner-codex');
+  fs.mkdirSync(codexHome, { mode: 0o700 });
+  fs.writeFileSync(path.join(codexHome, 'config.toml'), '[projects."/ordinary/project"]\ntrust_level = "trusted"\n');
+  const env = { ...process.env, HOME: home, RAF_QA_HOME: home, TMPDIR: home, CODEX_HOME: codexHome };
   t.after(() => fs.rmSync(base, { recursive: true, force: true }));
   const run = (mode = 'prepare') => spawnSync(process.execPath, [path.join(source, 'test/trt633-host-qa.mjs'), mode, ...(mode === 'host' ? ['a'.repeat(40)] : []), evidence], { env, encoding: 'utf8', timeout: 10000 });
-  return { base, source, home, evidence, env, run };
+  return { base, source, home, evidence, codexHome, env, run };
 }
 
-test('TRT633 H01 prepare accepts a fresh owned canonical mktemp HOME and creates only private Codex state', t => {
-  const f = fixture(t), result = f.run();
+test('TRT633 H01 prepare isolates HOME and leaves ordinary owner Codex configuration untouched', t => {
+  const f = fixture(t);
+  const config = fs.readFileSync(path.join(f.codexHome, 'config.toml'), 'utf8');
+  const result = f.run();
   assert.equal(result.status, 0, result.stderr);
   const prepared = JSON.parse(result.stdout);
   assert.equal(prepared.home, f.home);
   assert.equal(prepared.tmpdir, f.home);
-  assert.equal(prepared.codexHome, path.join(f.home, '.codex'));
+  assert.equal(prepared.codexHome, f.codexHome);
   assert.equal(prepared.provenance.uid, process.getuid!());
   assert.equal(prepared.provenance.emptyAtPreparation, true);
   assert.equal(prepared.provenance.canonicalHome, f.home);
-  assert.equal(fs.statSync(prepared.codexHome).mode & 0o777, 0o700);
-  assert.equal(fs.readFileSync(path.join(prepared.codexHome, 'config.toml'), 'utf8'), 'cli_auth_credentials_store = "file"\n');
-  assert.equal(fs.existsSync(path.join(prepared.codexHome, 'auth.json')), false);
+  assert.deepEqual(fs.readdirSync(f.home), ['.trt633-prepared.json']);
+  assert.equal(fs.readFileSync(path.join(f.codexHome, 'config.toml'), 'utf8'), config);
+  assert.deepEqual(fs.readdirSync(f.codexHome), ['config.toml']);
   assert.equal(fs.existsSync(f.evidence), false);
 });
 
@@ -43,7 +49,7 @@ test('TRT633 H02 selected filesystem may be /srv/dev rather than /tmp', t => {
   const f = fixture(t);
   const selected = fs.mkdtempSync(path.join(repository, 'TRT633-'));
   t.after(() => fs.rmSync(selected, { recursive: true, force: true }));
-  Object.assign(f.env, { HOME: selected, RAF_QA_HOME: selected, TMPDIR: selected, CODEX_HOME: path.join(selected, '.codex') });
+  Object.assign(f.env, { HOME: selected, RAF_QA_HOME: selected, TMPDIR: selected });
   const result = f.run();
   assert.equal(result.status, 0, result.stderr);
   const prepared = JSON.parse(result.stdout);
@@ -76,7 +82,7 @@ for (const kind of ['symlink', 'ancestor-symlink', 'relative', 'noncanonical', '
   if (kind === 'source') { selected = path.join(f.source, 'TRT633-source'); fs.mkdirSync(selected); }
   if (kind === 'operational') selected = '/proc/TRT633-unsafe';
   if (kind === 'long-socket') { const parent = path.join(f.base, 'x'.repeat(100)); fs.mkdirSync(parent); selected = fs.mkdtempSync(path.join(parent, 'TRT633-')); }
-  Object.assign(f.env, { HOME: selected, RAF_QA_HOME: selected, TMPDIR: selected, CODEX_HOME: path.join(selected, '.codex') });
+  Object.assign(f.env, { HOME: selected, RAF_QA_HOME: selected, TMPDIR: selected });
   const before = fs.readdirSync(f.home);
   const result = f.run();
   assert.notEqual(result.status, 0);
@@ -98,35 +104,35 @@ for (const kind of ['inside-home', 'same-home', 'existing', 'symlink-parent', 'd
   assert.deepEqual(fs.readdirSync(f.home), []);
 });
 
-test('TRT633 H06 refuses shared CODEX_HOME without reading or changing it', t => {
+for (const selector of ['inherited', 'unset']) test(`TRT633 H06 uses ordinary Codex with ${selector} CODEX_HOME without separate login`, t => {
   const f = fixture(t);
-  f.env.CODEX_HOME = '/home/dev/.codex';
+  if (selector === 'unset') delete f.env.CODEX_HOME;
   const result = f.run();
-  assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /TRT633 setup:.*CODEX_HOME/);
-  assert.deepEqual(fs.readdirSync(f.home), []);
+  assert.equal(result.status, 0, result.stderr);
+  const prepared = verifyPreparedHostHome({ env: f.env, source: f.source, ownerRoot: path.dirname(f.source), evidence: f.evidence });
+  assert.equal(prepared.codexHome, selector === 'inherited' ? f.codexHome : path.join(os.userInfo().homedir, '.codex'));
+  assert.deepEqual(fs.readdirSync(f.home), ['.trt633-prepared.json']);
+  assert.deepEqual(fs.readdirSync(f.codexHome), ['config.toml']);
 });
 
-test('TRT633 H07 prepared HOME cannot be prepared again or silently reused without authorization', t => {
+test('TRT633 H07 prepared HOME cannot be prepared again or silently reused with a missing provenance marker', t => {
   const f = fixture(t);
   assert.equal(f.run().status, 0);
   const repeated = f.run();
   assert.notEqual(repeated.status, 0);
   assert.match(repeated.stderr, /TRT633 setup:.*empty/);
+  fs.unlinkSync(path.join(f.home, '.trt633-prepared.json'));
   const result = f.run('host');
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /TRT633 setup:.*authoriz/);
+  assert.match(result.stderr, /TRT633 setup:.*preparation/);
   assert.equal(fs.existsSync(f.evidence), false);
   assert.equal(fs.existsSync(path.join(f.home, 'root')), false);
 });
 
-for (const kind of ['uid', 'inode', 'device', 'missing-marker', 'unexpected-entry', 'codex-symlink', 'auth-symlink', 'auth-hardlink', 'config-hardlink', 'keyring-config']) test(`TRT633 H08 refuses ${kind} after explicit preparation before any live launch`, t => {
+for (const kind of ['uid', 'inode', 'device', 'missing-marker', 'unexpected-entry', 'marker-symlink', 'marker-hardlink', 'marker-public', 'codex-selector']) test(`TRT633 H08 refuses ${kind} after explicit preparation before any live launch`, t => {
   const f = fixture(t);
   const prepared = f.run();
   assert.equal(prepared.status, 0, prepared.stderr);
-  const codexHome = path.join(f.home, '.codex');
-  const auth = path.join(codexHome, 'auth.json');
-  fs.writeFileSync(auth, '{}\n', { mode: 0o600 });
   const marker = path.join(f.home, '.trt633-prepared.json');
   if (['uid', 'inode', 'device'].includes(kind)) {
     const provenance = JSON.parse(fs.readFileSync(marker, 'utf8'));
@@ -135,14 +141,69 @@ for (const kind of ['uid', 'inode', 'device', 'missing-marker', 'unexpected-entr
   }
   if (kind === 'missing-marker') fs.unlinkSync(marker);
   if (kind === 'unexpected-entry') fs.mkdirSync(path.join(f.home, 'root'));
-  if (kind === 'codex-symlink') { const moved = path.join(f.base, 'other-codex'); fs.renameSync(codexHome, moved); fs.symlinkSync(moved, codexHome); }
-  if (kind === 'auth-symlink') { const moved = path.join(f.base, 'other-auth'); fs.renameSync(auth, moved); fs.symlinkSync(moved, auth); }
-  if (kind === 'auth-hardlink') fs.linkSync(auth, path.join(f.base, 'linked-auth'));
-  if (kind === 'config-hardlink') fs.linkSync(path.join(codexHome, 'config.toml'), path.join(f.base, 'linked-config'));
-  if (kind === 'keyring-config') fs.writeFileSync(path.join(codexHome, 'config.toml'), 'cli_auth_credentials_store = "keyring"\n');
+  if (kind === 'marker-symlink') { const moved = path.join(f.base, 'other-marker'); fs.renameSync(marker, moved); fs.symlinkSync(moved, marker); }
+  if (kind === 'marker-hardlink') fs.linkSync(marker, path.join(f.base, 'linked-marker'));
+  if (kind === 'marker-public') fs.chmodSync(marker, 0o644);
+  if (kind === 'codex-selector') f.env.CODEX_HOME = path.join(f.base, 'changed-selector');
   const result = f.run('host');
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /TRT633 setup:/);
   assert.equal(fs.existsSync(f.evidence), false);
   assert.equal(fs.existsSync(path.join(f.home, '.raf')), false);
+});
+
+test('TRT633 H09 preparation does not inspect or impose a credentials store on ordinary Codex', t => {
+  const f = fixture(t);
+  fs.writeFileSync(path.join(f.codexHome, 'config.toml'), 'cli_auth_credentials_store = "keyring"\n');
+  fs.symlinkSync(path.join(f.base, 'unavailable-auth'), path.join(f.codexHome, 'auth.json'));
+  const result = f.run();
+  assert.equal(result.status, 0, result.stderr);
+  assert.doesNotThrow(() => verifyPreparedHostHome({ env: f.env, source: f.source, ownerRoot: path.dirname(f.source), evidence: f.evidence }));
+  assert.equal(fs.readFileSync(path.join(f.codexHome, 'config.toml'), 'utf8'), 'cli_auth_credentials_store = "keyring"\n');
+  assert.equal(fs.lstatSync(path.join(f.codexHome, 'auth.json')).isSymbolicLink(), true);
+});
+
+test('TRT633 H10 host passes ordinary Codex selector with isolated HOME and never invokes login', t => {
+  const f = fixture(t);
+  fs.appendFileSync(path.join(f.codexHome, 'config.toml'), '[model_providers.fixture]\ntoken = "fixture-private-setting"\n');
+  const config = fs.readFileSync(path.join(f.codexHome, 'config.toml'), 'utf8');
+  const trustAddedByCodex = '[projects."/new/stand/cwd"]\ntrust_level = "trusted"\n';
+  const bin = path.join(f.base, 'bin'), calls = path.join(f.base, 'calls.jsonl');
+  fs.mkdirSync(bin);
+  const executable = '#!' + process.execPath + '\n' + `
+import fs from 'node:fs';
+import path from 'node:path';
+const tool = path.basename(process.argv[1]);
+const args = process.argv.slice(2);
+fs.appendFileSync(${JSON.stringify(calls)}, JSON.stringify({ tool, args, HOME: process.env.HOME, RAF_QA_HOME: process.env.RAF_QA_HOME, TMPDIR: process.env.TMPDIR, CODEX_HOME: process.env.CODEX_HOME }) + '\\n');
+if (tool === 'codex') {
+  fs.appendFileSync(path.join(process.env.CODEX_HOME, 'config.toml'), ${JSON.stringify(trustAddedByCodex)});
+  process.exit(23);
+}
+if (tool === 'git' && args.includes('rev-parse')) console.log('a'.repeat(40));
+`;
+  for (const tool of ['git', 'node', 'tmux', 'codex', 'uname']) fs.writeFileSync(path.join(bin, tool), executable, { mode: 0o700 });
+  f.env.PATH = bin;
+  assert.equal(f.run().status, 0);
+  const result = f.run('host');
+  assert.notEqual(result.status, 0, 'controlled version probe ends fixture before a live runner');
+  assert.equal(result.error, undefined, result.error?.message);
+  const rows = fs.readFileSync(calls, 'utf8').trim().split('\n').map(line => JSON.parse(line));
+  assert.deepEqual(rows.filter(row => row.tool === 'codex').map(row => row.args), [['--version']]);
+  for (const row of rows) {
+    assert.equal(row.HOME, f.home);
+    assert.equal(row.RAF_QA_HOME, f.home);
+    assert.equal(row.TMPDIR, f.home);
+    assert.equal(row.CODEX_HOME, f.codexHome);
+  }
+  const summary = JSON.parse(fs.readFileSync(path.join(f.evidence, 'summary.json'), 'utf8'));
+  assert.equal(summary.status, 'failed', 'mock version refusal is setup evidence, never live QA');
+  assert.equal(summary.selectedEnvironment.codexHome, f.codexHome);
+  assert.equal(summary.codexAuthorization.credentialOrigin, 'ordinary owner Codex; no separate login');
+  assert.equal(summary.codexTrust.before.configPath, path.join(f.codexHome, 'config.toml'));
+  assert.deepEqual(summary.codexTrust.before.entries, ['[projects."/ordinary/project"]', 'trust_level = "trusted"']);
+  assert.deepEqual(summary.codexTrust.after.entries, [...summary.codexTrust.before.entries, '[projects."/new/stand/cwd"]', 'trust_level = "trusted"']);
+  assert.equal(JSON.stringify(summary.codexTrust).includes('fixture-private-setting'), false);
+  assert.equal(fs.readFileSync(path.join(f.codexHome, 'config.toml'), 'utf8'), config + trustAddedByCodex, 'host observes Codex trust additions without restoring config');
+  assert.equal(fs.existsSync(path.join(f.home, '.codex')), false);
 });

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { prepareHostHome, verifyPreparedHostHome, assertOwnedDirectory } from './helpers/trt633-host-home.ts';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -146,8 +146,6 @@ async function host(sourceSha, evidence) {
   const source = fs.realpathSync(path.resolve(path.dirname(self), '..')), ownerRoot = path.dirname(source);
   const prepared = verifyPreparedHostHome({ env: process.env, source, ownerRoot, evidence });
   const stand = prepared.home;
-  const auth = spawnSync('codex', ['login', 'status'], { env: { ...process.env, CODEX_HOME: prepared.codexHome }, encoding: 'utf8', timeout: 30000 });
-  assert.ok(auth.status === 0 && !auth.error, 'TRT633 setup: own CODEX_HOME is not authorized; QA host must authorize it with supported Codex login before host launch');
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { interrupted = signal; });
   const root = path.join(stand, 'root'), main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
   const ev = path.join(stand, 'ev'), capture = path.join(ev, 'channels'), mainSocket = path.join(stand, 'main.sock');
@@ -159,15 +157,31 @@ async function host(sourceSha, evidence) {
   fs.writeFileSync(observer, observerProgram);
   const gitConfig = path.join(stand, 'gitconfig');
   fs.writeFileSync(gitConfig, '[user]\n name = TRT633 QA\n email = trt633@example.invalid\n');
-  const env = { ...process.env, HOME: stand, RAF_QA_HOME: stand, TMPDIR: stand, XDG_CONFIG_HOME: path.join(stand, '.config'), GIT_CONFIG_GLOBAL: gitConfig, GIT_CONFIG_NOSYSTEM: '1', NODE_OPTIONS: `--import=${observer}`, TRT633_CAPTURE: capture };
+  const env = { ...process.env, CODEX_HOME: prepared.codexHome, HOME: stand, RAF_QA_HOME: stand, TMPDIR: stand, XDG_CONFIG_HOME: path.join(stand, '.config'), GIT_CONFIG_GLOBAL: gitConfig, GIT_CONFIG_NOSYSTEM: '1', NODE_OPTIONS: `--import=${observer}`, TRT633_CAPTURE: capture };
   for (const key of Object.keys(env)) if (/^GIT_(DIR|WORK_TREE|INDEX_FILE|COMMON_DIR|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES)$/.test(key) || /^RAF_/.test(key) && key !== 'RAF_QA_HOME' || ['TMUX', 'TMUX_PANE', 'ALLOW_MIGRATIONS', 'CLAUDE_CONFIG_DIR'].includes(key)) delete env[key];
   const summary = {
     status: 'failed', source, sourceSha, driverSha256: hash(self), homeGuardSha256: hash(fileURLToPath(new URL('./helpers/trt633-host-home.ts', import.meta.url))), startedAt: new Date().toISOString(),
     runner: 'real codex CLI; provider prompts are sent; model and effort selected by copied raf routing',
     launchWaitPolicy: 'Only raf decides resource admission; agent run waits in its queue without a host timeout. SIGINT/SIGTERM interrupt the host as failed/incomplete and clean up owned launches.',
     instrumentation: 'NODE_OPTIONS preload tees only CLI test run stdout/stderr and records process ancestry/exit; no production source/auth/parser/runner replacement',
-    stand, evidence, selectedEnvironment: prepared, codexAuthorization: { selector: prepared.codexHome, command: ['codex', 'login', 'status'], exitCode: auth.status, credentialOrigin: 'separate QA-host authorization; no owner auth/config copied or linked' }, steps: [], scenarios: [], failures: [], cleanup: [],
+    stand, evidence, selectedEnvironment: prepared, codexAuthorization: { selector: prepared.codexHome, credentialOrigin: 'ordinary owner Codex; no separate login' }, codexTrust: { policy: 'observe project trust entries only; never edit or restore owner configuration' }, steps: [], scenarios: [], failures: [], cleanup: [],
   };
+  const trustEvidence = () => {
+    const configPath = path.join(prepared.codexHome, 'config.toml');
+    try {
+      const entries = [];
+      let project = null;
+      for (const line of fs.readFileSync(configPath, 'utf8').split('\n')) {
+        if (/^\s*\[/.test(line)) project = /^\s*\[projects\./.test(line) ? line.trim() : null;
+        else if (project && /^\s*trust_level\s*=/.test(line)) {
+          const level = line.match(/^\s*trust_level\s*=\s*["'](trusted|untrusted)["']\s*(?:#.*)?$/)?.[1];
+          if (level) entries.push(project, `trust_level = "${level}"`);
+        }
+      }
+      return { configPath, entries };
+    } catch (error) { return { configPath, entries: [], unavailable: error.code ?? 'READ_FAILED' }; }
+  };
+  summary.codexTrust.before = trustEvidence();
   let sequence = 0, startedPane = false;
   const checked = row => { assert.equal(row.error, null); assert.equal(row.signal, null); assert.equal(row.cliExitCode, 0, `see ${row.label}.stderr`); return row; };
   const command = async (label, executable, argv, cwd = root, budget = 120000) => {
@@ -359,6 +373,7 @@ async function host(sourceSha, evidence) {
     summary.sourceHeadAfter = await git(source, 'rev-parse', 'HEAD');
     summary.sourceDirtyAfter = await git(source, 'status', '--porcelain=v1');
     if (summary.failures.length) summary.status = 'failed';
+    summary.codexTrust.after = trustEvidence();
     summary.finishedAt = new Date().toISOString();
     atomic(path.join(ev, 'summary.json'), summary);
     fs.cpSync(ev, evidence, { recursive: true });

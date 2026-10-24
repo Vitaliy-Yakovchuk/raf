@@ -292,14 +292,14 @@ test('cleanup observes process exit before judging pending SIGKILL as a survivor
   assert.deepEqual(signals, [42, 41, -41]);
 });
 
-test('recovery counts an elapsed deadline after killed processes disappear', async () => {
+test('recovery does not infer a timeout after processes disappear without a recorded finish time', async () => {
   const runtime = await import('../src/test-run-processes.ts');
   assert.equal(typeof runtime.reconcileTestRunProcess, 'function');
   const observation = await runtime.reconcileTestRunProcess(JSON.stringify({ pid: 41, start: 'birth', boot: 'boot' }), 90, {
     now: () => 100, boot: () => 'boot', start: () => null, tree: () => [],
     cleanup: async () => ({ complete: true, remainingPids: [] }),
   });
-  assert.equal(observation.deadlineReached, true);
+  assert.equal(observation.deadlineReached, false, 'delta «Завершення до дедлайну й пізня звірка», S06: late now is not timeout evidence');
   assert.equal(observation.alive, false);
 });
 
@@ -322,7 +322,8 @@ test('recovery never signals a replacement process with a reused PID', async () 
     cleanup: async () => { cleaned = true; return { complete: true, remainingPids: [] }; },
   });
   assert.equal(cleaned, false);
-  assert.equal(observation.alive, false);
+  assert.equal(observation.alive, true, 'delta «Невідома identity або повторна звірка», S05: PID reuse retains the unverified fence');
+  assert.deepEqual(observation.cleanup, { complete: false, remainingPids: [] });
 });
 
 test('discovered test identities remain unexecuted when the runner times out', async () => {

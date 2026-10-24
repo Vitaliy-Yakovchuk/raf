@@ -129,7 +129,9 @@ for (const [field, value] of environmentFailures) {
     assert.equal(result.outcome, 'setup-failed');
     assert.equal(result.nextAction, 'fix-setup');
     assert.equal(result.exitCode, null);
-    assert.equal(result.timeoutCount, 0);
+    assert.equal(result.groupSnapshot, 'unavailable', 'state-open-recovery-spec.md S02/S03: group has not been read');
+    assert.equal(result.groupState, null, 'delta «Адресна відмова відкриття стану»: unavailable has no confirmed state');
+    assert.equal(result.timeoutCount, null, 'state-open-recovery-spec.md S02/S03: unavailable must not invent a zero budget');
     assert.equal(harness.state.transactionCount, 0);
     assert.equal(harness.spawns.length, 0);
   });

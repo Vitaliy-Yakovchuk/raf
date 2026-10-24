@@ -1,0 +1,33 @@
+{
+  "revision": "3847327",
+  "sha": "3847327ba1a5720f9ee589564cf783c6c03ecc02",
+  "count": 3,
+  "results": [
+    {
+      "index": 0,
+      "outcome": "failed",
+      "error": "Error: EACCES: permission denied, mkdtemp '/tmp/raf-ipc-1000/rw-5S1Vcq'",
+      "durationMs": 0
+    },
+    {
+      "index": 1,
+      "outcome": "failed",
+      "error": "Error: EACCES: permission denied, mkdtemp '/tmp/raf-ipc-1000/rw-GlYqEm'",
+      "durationMs": 1
+    },
+    {
+      "index": 2,
+      "outcome": "failed",
+      "error": "Error: EACCES: permission denied, mkdtemp '/tmp/raf-ipc-1000/rw-89nL1h'",
+      "durationMs": 1
+    }
+  ],
+  "cleanup": "fixture cleanups completed",
+  "driver": "scripts/qa-worker-delivery.ts",
+  "sourceWorkspace": "?? node_modules\n?? scripts/qa-worker-delivery.ts\n",
+  "selection": {
+    "runner": "codex",
+    "model": "gpt-6.1-sol",
+    "effort": "high"
+  }
+}

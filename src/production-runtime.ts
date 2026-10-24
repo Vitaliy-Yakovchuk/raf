@@ -324,10 +324,11 @@ async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stat
   }
   return socketPath;
 }
-function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, override?: AdapterCommandExecutor): AdapterCommandExecutor {
+export function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, override?: AdapterCommandExecutor, snapshotEnvironment = false): AdapterCommandExecutor {
   if (override) return override;
+  const preparedEnvironment = snapshotEnvironment ? { ...(context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env) } : undefined;
   return async command => {
-    const environment = context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env;
+    const environment = preparedEnvironment ?? (context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env);
     if (command.executable !== 'tmux') return executeCommand({ ...command, environment });
     const socketPath = await runtimeTmuxSocket(context, environment);
     const args = [...command.args];
@@ -1322,7 +1323,7 @@ export async function runProductionWorker(
   } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') fail('WORKER_CONTEXT_UNAVAILABLE', `Prepared worker runtime envelope is missing: ${manifestPath}`); throw error; }
   if (manifest.version !== 1 || manifest.context?.statePath !== request.statePath || manifest.context?.tmpRoot !== request.tmpRoot || manifest.context?.orchestratorRoot !== request.assignment.root || !isAbsolute(manifest.context?.confRoot ?? '')) fail('INVALID_CONTEXT', 'Worker runtime envelope mismatch');
   const context: RuntimeContext = { ...manifest.context, stateContext, resolveCaller: async () => undefined };
-  const execute = runtimeExecution(context, options.execute);
+  const execute = runtimeExecution(context, options.execute, true);
   const configured = protocolFor(options.protocolSettings ?? manifest.protocolSettings ?? await protocols(context.confRoot), request.selection.runner);
   const resolution = await resolveRunnerExecutable(configured.runner, configured.executable, process.env);
   if (resolution.status !== 'resolved' || !text(manifest.runnerPath) || resolution.path !== manifest.runnerPath) fail('RUNNER_PROTOCOL_UNAVAILABLE', resolution.status === 'resolved' ? `Worker runner path ${resolution.path} differs from launch runner path ${manifest.runnerPath ?? 'missing'}` : resolution.reason);
@@ -1466,7 +1467,7 @@ export async function runProductionWorker(
       actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, ...(deferred ? { nativeIdentity: { state: 'pending' as const, id: null, reason: 'Awaiting owned SessionStart conversationId' } } : {}), tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, ...deferredEvidence, ...await dependencies.currentBoot(), ...(!options.execute ? { tmuxSocket: await runtimeTmuxSocket(context, stateContextEnvironment(stateContext, process.env)) } : {}) } };
       return { state: 'owned', identity: actual, processKind: 'agent' };
     };
-    const transport = adapter.createLaunchTransport({ reportWrapper: { wrap: command => command }, inspectOwnership: ownership, pollIntervalMs: settings.timeouts.pollMs });
+    const transport = adapter.createLaunchTransport({ reportWrapper: { wrap: command => command }, inspectOwnership: ownership, pollIntervalMs: settings.timeouts.pollMs, waitForExit: session => adapter.waitForExit(session) });
     let requestedStatus = false;
     let submittedStatus = false;
     let retriedStatus = false;
@@ -1621,6 +1622,11 @@ export async function runProductionWorker(
       const beforeInput = beforeNative?.input;
       if (beforeInput === undefined || beforeInput !== '' && !settings.markers.ready?.includes(beforeInput)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input before initial brief submission');
       const beforeContext = beforeComposer < 0 ? undefined : nativeDeliveryContext(settings, beforeLines, beforeComposer);
+      const briefText = brief.replace(/\s+/gu, '');
+      const echoesBrief = (text: string) => {
+        const rendered = text.replace(/\s+/gu, '');
+        return rendered !== '' && briefText.endsWith(rendered);
+      };
       deliveryPhase = 'submitting';
       await adapter.deliver(adapterSession, brief);
       deliveryPhase = 'awaiting_acceptance';
@@ -1646,7 +1652,10 @@ export async function runProductionWorker(
           await verifyOwner();
           return;
         }
-        const sameContext = beforeContext !== undefined && isDeepStrictEqual(nativeDeliveryContext(settings, lines, composerIndex), beforeContext);
+        const context = composerIndex < 0 ? undefined : nativeDeliveryContext(settings, lines, composerIndex);
+        const sameContext = beforeContext !== undefined && context !== undefined && (isDeepStrictEqual(context, beforeContext)
+          || settings.runner === 'codex' && context.footer === beforeContext.footer && echoesBrief(context.header));
+        const repainting = settings.runner === 'codex' && input === undefined && state === 'unknown_screen' && echoesBrief(screen);
         if (pending && (state === 'ready' || state === 'unknown_screen') && sameContext) {
           if (!retried && previousPending === input) {
             const pendingScreen = screen;
@@ -1661,7 +1670,7 @@ export async function runProductionWorker(
           previousPending = input;
         } else {
           previousPending = undefined;
-          if (paste || state !== 'ready' && !isNativeWorking(settings, screen)) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input or screen during initial brief submission');
+          if (paste || state !== 'ready' && !isNativeWorking(settings, screen) && !repainting) fail('RUNNER_DELIVERY_UNAVAILABLE', 'Unknown native input or screen during initial brief submission');
         }
         await new Promise(resolve => setTimeout(resolve, Math.min(settings.timeouts.pollMs, Math.max(0, deadline - Date.now()))));
       }

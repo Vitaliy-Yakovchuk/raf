@@ -1,0 +1,28 @@
+{
+  "build": {
+    "command": "HOME=/tmp/fla911b-static-home RAF_QA_HOME=/tmp/fla911b-static-home node scripts/build.ts",
+    "exitCode": 0,
+    "result": "Catalog and repository comment policy passed",
+    "verifiedAgainAfterInventoryPort": true,
+    "sourceSha": "0a1d1ed29a432614cd066877b6c96b52d72761b4"
+  },
+  "diffCheck": {
+    "command": "git diff --check",
+    "exitCode": 0
+  },
+  "externalHostStatus": {
+    "state": "complete",
+    "source": "Main final host handoff 2026-10-24; full evidence copied without alteration",
+    "standDelivery": "stand-green/record.json",
+    "negativeGuards": "guards-green/record.json",
+    "fixedLive": "fixed-live.record.json",
+    "secretScan": "Main clean for all final host results",
+    "cleanup": "Owned fixture tmux/process cleanup completed; shared workspace retained"
+  },
+  "fixtureSyntax": {
+    "command": "node --check test/production-codex-delivery-qa.test.ts",
+    "exitCode": 0,
+    "sourceSha": "2ea717eee51ae7e2c46cd85d855d26ac74588321"
+  },
+  "unitEvidenceIntegrity": "unit-evidence-integrity.json"
+}

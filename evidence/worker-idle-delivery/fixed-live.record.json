@@ -1,0 +1,51 @@
+{
+  "sourceSha": "2ea717eee51ae7e2c46cd85d855d26ac74588321",
+  "driverSha": "2ea717eee51ae7e2c46cd85d855d26ac74588321",
+  "command": "HOME=/tmp/fla911b-host-home-fixed-2ea717e RAF_QA_HOME=/tmp/fla911b-host-home-fixed-2ea717e node scripts/qa-worker-delivery.ts 2ea717eee51ae7e2c46cd85d855d26ac74588321 /tmp/fla911b-host-fixed-2ea717e 3",
+  "executor": "Main host after normal resource admission",
+  "workspaceAtRun": " M evidence/worker-idle-delivery/plan.json\n M evidence/worker-idle-delivery/validation.json\n?? evidence/worker-idle-delivery/unit-evidence-integrity.json\n?? node_modules\n",
+  "sourceIsolation": "Driver archives exact requested revision into worker source. Dirty paths in driver workspace are only evidence and local node_modules symlink.",
+  "qaHome": "/tmp/fla911b-host-home-fixed-2ea717e",
+  "selection": {
+    "runner": "codex",
+    "model": "gpt-6.1-sol",
+    "effort": "high"
+  },
+  "parallelDeliveries": 3,
+  "outcome": "passed",
+  "cliExitCode": 0,
+  "results": [
+    {
+      "index": 2,
+      "outcome": "accepted",
+      "durationMs": 6826,
+      "runnerSessionId": "01a16f7d-4a65-7110-b21b-705c05abb834"
+    },
+    {
+      "index": 1,
+      "outcome": "accepted",
+      "durationMs": 6996,
+      "runnerSessionId": "01a16f7d-4a99-75f2-a1e1-d6bbf23396d7"
+    },
+    {
+      "index": 0,
+      "outcome": "accepted",
+      "durationMs": 7126,
+      "runnerSessionId": "01a16f7d-4c0f-7043-a355-9fc68cf3f173"
+    }
+  ],
+  "cleanup": "fixture cleanups completed",
+  "timedOut": false,
+  "unknown": [],
+  "unexecuted": [],
+  "knownRed": [],
+  "group": "Not unit; stable unit aggregate unchanged",
+  "nextAction": "Complete 9.1.1; no archive because other items remain open",
+  "stdout": "fixed-live.stdout",
+  "stderr": "fixed-live.stderr",
+  "code": "fixed-live.code",
+  "summary": "fixed-live/summary.json",
+  "traces": "fixed-live/trace-{0,1,2}.jsonl",
+  "secretScan": "Main clean",
+  "comparison": "Baseline 309a19e 3/3 accepted, old 3847327 3/3 accepted, fixed 2ea717e 3/3 accepted. No degradation observed in these small samples; causal production failure not reproduced."
+}

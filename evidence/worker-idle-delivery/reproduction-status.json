@@ -1,0 +1,56 @@
+{
+  "sourceItem": "fix-raf-load-admission:9.1.1",
+  "liveReproduced": false,
+  "productSourceModified": true,
+  "attempts": [
+    {
+      "kind": "sandbox",
+      "evidence": "sandbox-stand-setup.json",
+      "outcome": "setup-failed",
+      "reason": "Explicit IPC deny before worker spawn. No sandbox bypass attempted."
+    },
+    {
+      "kind": "host",
+      "driverSha": "uncommitted initial driver",
+      "evidence": "host-setup",
+      "outcome": "setup-failed",
+      "reason": "3847327 fixture configuration lacked raf.service; 309a19e fixture admission read real host load."
+    },
+    {
+      "kind": "host2",
+      "driverSha": "c8375116e8245fc0101bd13ca9e4083c39cb4bbc",
+      "evidence": "host-setup2",
+      "outcome": "setup-failed",
+      "cliExitCodes": {
+        "3847327": 1,
+        "309a19e": 1
+      },
+      "reason": "Both revisions refused before adapter.deliver because launch request omitted durable reportedCommits."
+    },
+    {
+      "kind": "host3",
+      "driverSha": "d2ddf6711574b2439a082d4bce4d7e3929cad283",
+      "evidence": "host3",
+      "outcome": "all-accepted",
+      "cliExitCodes": {
+        "3847327": 0,
+        "309a19e": 0
+      },
+      "perRevision": {
+        "3847327": "3/3 accepted",
+        "309a19e": "3/3 accepted"
+      },
+      "reason": "Main host run reached initial delivery on both revisions. No live failure reproduced in this small sample."
+    }
+  ],
+  "next": {
+    "standRed": "stand-red/record.json: both scrolled-paste/repainting-paste fail behaviorally before delivery fix",
+    "standGreen": "stand-green/record.json: 2/2 pass, CLI 0 on 58b1057",
+    "unitGreen": "unit-hotfix.record.json: worker-only passed 26/26",
+    "unitAfterDeliveryGuard": "unit-hotfix-reconciled.record.json: passed 26/26 on 0a1d1ed, all knownRed resolved; same group/QA HOME. Prior inventory refusal retained separately.",
+    "negativeGuards": "guards-green/record.json: 12/12 pass, CLI 0 on 2ea717e",
+    "fixedLive": "fixed-live.record.json: 3/3 accepted, CLI 0 on 2ea717e, owned fixture cleanup complete",
+    "nextAction": "Complete 9.1.1; main transfers code and ticks assigned item"
+  },
+  "authorization": "Main 2026-10-24: proceed 9.1.1 after host3, reproduce delivery defect with stand test; do not attempt load reproduction."
+}

@@ -1,0 +1,24 @@
+{
+  "sourceCommit": "5fd3125c6885137b2319c674d96610577b8bf0c6",
+  "portCommit": "0a1d1ed29a432614cd066877b6c96b52d72761b4",
+  "authorization": "Main explicit handoff: transfer exactly these two scaffold files and repeat own group",
+  "directCherryPick": {
+    "command": "git cherry-pick 5fd3125c6885137b2319c674d96610577b8bf0c6",
+    "exitCode": 128,
+    "reason": "Read-only Git metadata: unable to create index.lock; no mutation; no lock removal"
+  },
+  "fallback": "git show exact blobs written in workspace, committed via required trusted hotfix-commit.mjs port",
+  "files": [
+    {
+      "path": "src/raf-cost-profile.ts",
+      "sourceBlob": "d94ec29aaad8e33916431cceaafad4ba7ae58b59",
+      "portBlob": "d94ec29aaad8e33916431cceaafad4ba7ae58b59"
+    },
+    {
+      "path": "test/raf-cost-profile.test.ts",
+      "sourceBlob": "8a0f473162bd2bea7d93f866e47b25acdbe33be1",
+      "portBlob": "8a0f473162bd2bea7d93f866e47b25acdbe33be1"
+    }
+  ],
+  "scope": "No cost-profile implementation or foreign unit execution; these files remain unchanged scaffolds."
+}

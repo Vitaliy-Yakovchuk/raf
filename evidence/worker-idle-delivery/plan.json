@@ -1,0 +1,49 @@
+{
+  "sourceItem": "fix-raf-load-admission:9.1.1",
+  "audit": {
+    "current": true,
+    "reason": "9.1 implementation was reverted by 309a19e after initial brief failures; current HEAD 8bfbd5d still polls pane state and revalidates worker environment per command. The requested fix remains applicable. No conflicting requirements found.",
+    "sources": [
+      "openspec/changes/fix-raf-load-admission/proposal.md",
+      "openspec/changes/fix-raf-load-admission/tasks.md#9.1.1",
+      "openspec/specs/core/process/test-first/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md",
+      "openspec/specs/projects/orchestrator/parallel-development/spec.md",
+      "openspec/specs/projects/orchestrator/autonomous-development/spec.md#Аудит-та-вилучення-неактуальних-змін"
+    ],
+    "newEvidence": {
+      "source": "original-diagnostics/provenance.json; main 2026-10-24 diagnostic handoff",
+      "finding": "Failure also occurred on 309a19e+8bfbd5d without 9.1, with missing composer. Causality of 9.1 is unproven; task remains current because bounded worker overhead and initial-delivery compatibility are both required.",
+      "overlap": "Main confirmed Z.4.1 has no active executor and authorized delivery guard changes within 9.1.1. Do not report or tick Z.4.1.",
+      "pending": "All required checks complete: own unit 26/26, same stand regression 2/2, guards 12/12 and fixed live 3/3. Original live failure not reproduced; main authorized stand behavioral regression after 3x3 A/B.",
+      "finalAudit": {
+        "current": true,
+        "conflicts": [],
+        "openItemIdsBeforeRafTicks": [
+          "4.3",
+          "7.1",
+          "9.1.1"
+        ],
+        "checkboxes": "Not modified by executor; raf owns assigned item ticking",
+        "archive": "Not applicable: other items remain open"
+      }
+    }
+  },
+  "unitGroup": "fix-raf-load-admission/worker-idle",
+  "unitFiles": [
+    "test/agent-adapters.test.ts"
+  ],
+  "unitPolicy": "Retain the 9.1 group and its aggregate/QA HOME; initial own assertion failure via phase red, then phase hotfix. Do not treat setup failures or incomplete output as red/pass.",
+  "livePlan": "Exact archived source revisions 3847327 and 309a19e, then workspace, in parallel full production workers with isolated QA HOME/state/tmp and real installed codex. Live checks have separate budgets and do not count as unit tests.",
+  "sandboxSetupAttempt": {
+    "command": "env -u RAF_ORCHESTRATOR_ROOT -u RAF_STATE_DIRECTORY -u RAF_HOME_DIRECTORY -u RAF_SOCKET_PATH -u RAF_WRAPPER_REQUEST_PATH -u RAF_WRAPPER_HANDSHAKE_SOCKET HOME=/tmp/fla911b-stand-home RAF_QA_HOME=/tmp/fla911b-stand-home node scripts/qa-worker-delivery.ts 3847327 /tmp/fla911b-live-3847327 3",
+    "cliExitCode": 0,
+    "childStarted": false,
+    "outcome": "setup-failed",
+    "reason": "All three wrapper launch attempts failed before child spawn with EACCES on the explicitly denied /tmp/raf-ipc-1000/rw-* directory. Driver originally returned 0 on failed scenarios; corrected its exit status before asking main to run it on host.",
+    "summary": "sandbox-stand-setup.json",
+    "nextAction": "Main host execution of the prepared live driver; do not bypass denied IPC paths. Product implementation remains unchanged until reproduction."
+  },
+  "archive": "Not applicable: 4.3 and 7.1 remain open in the change; this executor owns only 9.1.1."
+}

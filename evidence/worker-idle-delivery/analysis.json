@@ -1,0 +1,29 @@
+{
+  "sourceItem": "fix-raf-load-admission:9.1.1",
+  "scope": "Restore worker idle optimization and preserve Codex initial delivery; delivery evidence also addresses Z.4.1 condition as authorized by main; only 9.1.1 is reported by this executor.",
+  "observations": [
+    "Five original optimized-generation failures had unknown_screen plus correctly matched pending paste, with scrolled header consisting of own brief text. One baseline generation also failed with missing composer. Original pre-submission frames/timing are unavailable.",
+    "Live host3 reached 3/3 accepted on 3847327 and 3/3 on 309a19e, so no causal live regression was reproduced. Main explicitly replaced load reproduction with deterministic stand regression.",
+    "Clean stand clone 1d82581 reproduced both scrolled-paste and repainting-paste behavior failures. Matching pending paste did not suffice because exact previous header/footer comparison rejected the brief echo after scroll; missing composer also triggered immediate unknown-screen refusal.",
+    "Worker waitExit hooks are installed after deliverInitialBrief and parent handshake; they do not directly alter delivery. Environment snapshot removes repeated configuration/Git validation; exposing a latent timing sensitivity is plausible, not established by available evidence."
+  ],
+  "fix": [
+    "Worker runtime captures a validated child environment once; ordinary runtime executors continue to revalidate per command.",
+    "Worker exit wait subscribes before status inspection, then uses tmux wait-for. Dead/missing pane, spurious other-pane notifications, cleanup, subscription failure and concurrent waiters are covered. No periodic screen capture while waiting.",
+    "Codex pending paste may use a scrolled context only when the header is a whitespace-normalized suffix of the submitted brief and footer equals the verified pre-submit footer. Count/dialect/identity/ownership/stable-screen checks remain required before a single retry.",
+    "A composer-less unknown frame containing only a suffix of the submitted brief waits within existing transitionMs without input. Auth/permission/unrecognized menu/wrong count/changed identity still fail; empty input plus new native working/finished remains necessary for handshake."
+  ],
+  "limits": [
+    "Small 3x3 A/B samples do not prove statistical non-regression or causality.",
+    "Different footer, arbitrary unknown screen, or text that cannot be verified as the submitted brief remains an explicit failure. No blind Enter is added."
+  ],
+  "verification": {
+    "ownUnitRed": "unit-red.record.json",
+    "ownUnitGreen": "unit-hotfix-reconciled.record.json",
+    "standRed": "stand-red/record.json",
+    "oldLiveAB": "host3.record.json",
+    "standGreen": "stand-green/record.json: same selection 2/2 passed, CLI 0 on clean 58b1057 clone",
+    "fixedLive": "fixed-live.record.json: 3 parallel real Codex deliveries accepted, CLI 0 on exact 2ea717e source; cleanup complete",
+    "negativeGuards": "guards-green/record.json: 12/12 pass, CLI 0 on 2ea717e; fixture-budget red retained in guards-red"
+  }
+}

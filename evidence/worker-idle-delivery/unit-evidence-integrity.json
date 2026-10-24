@@ -1,0 +1,89 @@
+{
+  "method": "SHA-256 of full separately retained command-channel stdout/stderr bytes, no transformation of TestRunResult; CLI exit status retained in transport and record, distinct from child exitCode.",
+  "runs": [
+    {
+      "record": "unit-hotfix-final.record.json",
+      "runId": "82c23e23-e583-4253-82ea-e0aee96b33e7",
+      "fullJsonParsed": true,
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "streams": [
+        {
+          "kind": "stdout",
+          "file": "unit-hotfix-final.stdout",
+          "bytes": 2823,
+          "sha256": "b319848c5728af3f0e87ecd6151a9816b9aa66498f367b879dfec42473b49a2e"
+        },
+        {
+          "kind": "stderr",
+          "file": "unit-hotfix-final.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "record": "unit-hotfix-reconciled.record.json",
+      "runId": "398d73b8-7153-406c-b607-d4c9216a22c6",
+      "fullJsonParsed": true,
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "streams": [
+        {
+          "kind": "stdout",
+          "file": "unit-hotfix-reconciled.stdout",
+          "bytes": 9270,
+          "sha256": "3240c2df373f6e583d93e0b084fc8233cb0748d8e44c9226e95079f1b5873b32"
+        },
+        {
+          "kind": "stderr",
+          "file": "unit-hotfix-reconciled.stderr",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    {
+      "record": "unit-hotfix.record.json",
+      "runId": "dbefde0a-0b70-4f70-bf45-6c042bf8e6da",
+      "fullJsonParsed": true,
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "streams": [
+        {
+          "kind": "stdout",
+          "file": "unit-hotfix.stdout",
+          "bytes": 9370,
+          "sha256": "fab9edb1d0015f103363f476054ffa7605d7d6028252893719ffc423ec9f2a03"
+        },
+        {
+          "kind": "stderr",
+          "file": "unit-hotfix.stderr",
+          "bytes": 1470,
+          "sha256": "bae888ace42d0e52ce106b14c88305a8e1d2d3a69dc36a7feb7e12590409ec3c"
+        }
+      ]
+    },
+    {
+      "record": "unit-red.record.json",
+      "runId": "9feb14ca-3dc1-42be-85ae-326ca14b5e32",
+      "fullJsonParsed": true,
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "streams": [
+        {
+          "kind": "stdout",
+          "file": "unit-red.stdout",
+          "bytes": 17824,
+          "sha256": "6ec63d66a7da91813f9ae67992a715dedd3aba4c893517b182e6d39af42e0b52"
+        },
+        {
+          "kind": "stderr",
+          "file": "unit-red.stderr",
+          "bytes": 1489,
+          "sha256": "134b04975207c1431c0a26cf7b60e3eb76fc3874c8286a8a7a1b666a372934e2"
+        }
+      ]
+    }
+  ]
+}

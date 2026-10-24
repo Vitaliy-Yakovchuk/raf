@@ -1,0 +1,19 @@
+{
+  "sourceSha": "2ea717eee51ae7e2c46cd85d855d26ac74588321",
+  "command": "node --test --test-name-pattern=\"^\\[production-codex-delivery-qa\\] (native-placeholder-replaced|race|immediate|unknown|menu-above-same-footer|stale-ready-menu|auth|permission|wrong-count|native-mismatch|vanished-unknown|pending-forever):\" test/production-codex-delivery-qa.test.ts",
+  "executor": "Main clean host clone /srv/dev/fla911b-stand-green/raf on 2ea717e; HOME=TMPDIR=/srv/dev/fla911b-stand-green/home; TMUX/CLAUDE_*/SSH_* unset, LC_ALL=C",
+  "outcome": "passed",
+  "cliExitCode": 0,
+  "tests": 12,
+  "passed": 12,
+  "failed": 0,
+  "durationMs": 101523.564814,
+  "stdout": "stdout",
+  "stderr": "stderr",
+  "code": "code",
+  "cleanup": "Fixture removes owned tmux/processes in after cleanup; main completed run",
+  "secretScan": "Main clean",
+  "notUnit": "No group/QA aggregate mutation",
+  "red": "../guards-red/record.json",
+  "correction": "Only integration parent budget changed to 30000ms; pending-forever requires native acceptance timeout rather than accepting parent handshake timeout. Product timeouts unchanged."
+}

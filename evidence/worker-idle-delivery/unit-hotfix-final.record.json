@@ -1,0 +1,32 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/5213cd2c-4a65-4d5e-a479-7b406b7c3ad0/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle --files test/agent-adapters.test.ts",
+  "sha": "1d825818208844d53cdc1610ac2cd5ae7b69a77a",
+  "workspace": "Worker patch plus delivery guard uncommitted; exact diff in unit-hotfix-final.workspace.patch; evidence edits and local node_modules symlink also present",
+  "stdout": "unit-hotfix-final.stdout",
+  "stderr": "unit-hotfix-final.stderr",
+  "cliExitCode": 1,
+  "childExitCode": null,
+  "refusal": "Parent inventory changed concurrently: test/raf-cost-profile.test.ts registered but absent in hotfix. No test child started; no blind retry; main notified to reconcile. Help consulted.",
+  "runId": "82c23e23-e583-4253-82ea-e0aee96b33e7",
+  "phase": "hotfix",
+  "group": "fix-raf-load-admission/worker-idle",
+  "selection": {
+    "files": [
+      "test/agent-adapters.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "refused",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupSnapshot": "unavailable",
+  "groupState": null,
+  "timeoutCount": null,
+  "nextAction": "fix-setup"
+}

@@ -130,14 +130,17 @@ function memoryState(initial: TestRunGroup[] = []): {
   snapshot: () => TestRunGroup[];
   get: (group: string) => TestRunGroup | null;
   transactions: string[][];
+  firstChildBound: Promise<void>;
 } {
   let rows = new Map(initial.map(row => [encodeKey(row.key), clone(row)]));
   let tail: Promise<unknown> = Promise.resolve();
   const transactions: string[][] = [];
+  const firstChildBound = deferred<void>();
   return {
     snapshot: () => clone([...rows.values()].sort((a, b) => encodeKey(a.key).localeCompare(encodeKey(b.key)))),
     get: group => clone(rows.get(encodeKey(key(group))) ?? null),
     transactions,
+    firstChildBound: firstChildBound.promise,
     port: {
       transaction<T>(operation: (transaction: TestRunTransaction) => T): Promise<T> {
         const pending = tail.then(() => {
@@ -158,6 +161,7 @@ function memoryState(initial: TestRunGroup[] = []): {
           });
           rows = draft;
           transactions.push(operations);
+          if ([...rows.values()].some(row => row.inFlight?.processIdentity)) firstChildBound.resolve();
           return result;
         });
         tail = pending.catch(() => undefined);
@@ -282,7 +286,10 @@ test('Z399 S02 original A still runs after its own refused expansion without res
   await h.run(groupA, [files[0], files[1]]);
   assert.deepEqual(h.state.snapshot(), before);
   const retried = await h.runRequest({ project: 'raf', phase: 'implement', group: groupA, only: a.knownRed });
-  assert.equal(retried.outcome, 'passed');
+  assert.equal(retried.outcome, 'setup-failed');
+  assert.ok(retried.failureKinds.includes('setup'));
+  assert.deepEqual(retried.passed, a.knownRed);
+  assert.deepEqual(retried.unexecuted, a.unexecuted);
   assert.equal(retried.timeoutCount, a.timeoutCount);
   assert.deepEqual(retried.selection.testIds, a.knownRed);
   assert.equal(h.commands.length, 1);
@@ -309,6 +316,12 @@ test('Z399 S03 concurrent overlapping groups reserve atomically and the loser ca
     const winnerSnapshot = h.state.snapshot();
     assert.equal(winnerSnapshot.length, 1);
     assert.ok(winnerSnapshot[0].inFlight);
+    winnerSnapshot[0].inFlight.processIdentity = 'fixture-child-1';
+    await Promise.race([
+      h.state.firstChildBound,
+      Promise.all([left, right]).then(() => assert.fail('the winner must bind its child identity')),
+    ]);
+    assert.deepEqual(h.state.snapshot(), winnerSnapshot);
     const loser = await Promise.race([left, right]);
     assert.equal(loser.outcome, 'refused');
     assert.equal(loser.errorCode, 'GROUP_RENAME_REFUSED');

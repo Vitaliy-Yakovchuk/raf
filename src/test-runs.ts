@@ -575,7 +575,10 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     result.timeoutCount = group.timeoutCount;
     result.groupState = !result.cleanup.complete ? 'reconcile' : groupState(group, policy);
     if (result.outcome === 'passed' && result.knownRed.length) { result.outcome = 'assertions-failed'; result.failureKinds.push('assertions'); }
-    if (result.outcome === 'passed' && (result.unexecuted.length || result.unknown.length)) { result.outcome = result.testKind === 'unit' && group.timeoutCount >= policy.maxGroupTimeouts ? 'unverified-remainder' : 'setup-failed'; }
+    if (result.outcome === 'passed' && (result.unexecuted.length || result.unknown.length)) {
+      result.outcome = result.testKind === 'unit' && group.timeoutCount >= policy.maxGroupTimeouts ? 'unverified-remainder' : 'setup-failed';
+      if (result.outcome === 'setup-failed') result.failureKinds.push('setup');
+    }
     if (result.testKind === 'integration' && result.outcome === 'passed' && !plan.selection.files.every(file => result.passed.some(id => id.file === file))) { result.outcome = 'setup-failed'; result.failureKinds.push('setup'); }
     if (result.outcome === 'passed' && !result.unexecuted.length && !result.unknown.length && !result.knownRed.length) result.groupState = 'complete';
     if (!result.cleanup.complete) result.nextAction = 'reconcile';

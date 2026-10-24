@@ -212,8 +212,14 @@ export async function reconcileTestRunResources(
     let observed = await ports.resources.observeTree(claim);
     if (observed.consumed) await ports.resources.accountUsage(claim, observed.consumed);
     const group = await ports.state.transaction(tx => tx.get(claim.groupKey));
+    if (observed.state !== 'dead' && (!group?.inFlight || group.inFlight.runId !== claim.testRunId || ports.clock.now() < group.inFlight.deadlineMs)) {
+      retained.push(claim); continue;
+    }
     if (group?.inFlight?.runId === claim.testRunId) {
       if (group.inFlight.processIdentity) {
+        if (observed.state === 'unknown' && (observed.processIdentity !== group.inFlight.processIdentity || claim.processIdentity !== group.inFlight.processIdentity || !await ports.resources.current(claim))) {
+          retained.push(claim); continue;
+        }
         const reconciled = await reconcileTestRunGroup(claim.groupKey, policy, { ...context, workspace: claim.groupKey.workspace }, ports);
         if (reconciled?.inFlight) { retained.push(claim); continue; }
         observed = await ports.resources.observeTree(claim);

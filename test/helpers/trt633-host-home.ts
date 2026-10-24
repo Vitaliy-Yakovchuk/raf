@@ -40,7 +40,7 @@ function layout({ env, source, ownerRoot, evidence }: Input) {
   check(typeof evidence === 'string' && path.isAbsolute(evidence) && path.resolve(evidence) === evidence, 'evidence must be an absolute canonical path');
   check(!within(evidence, home) && !within(home, evidence), 'evidence must be outside HOME');
   check(fs.existsSync(path.dirname(evidence)), 'evidence parent must exist');
-  check(!fs.existsSync(evidence) && !fs.lstatSync(path.dirname(evidence)).isSymbolicLink() && fs.realpathSync(path.dirname(evidence)) === path.dirname(evidence), 'evidence must be new with an existing canonical parent');
+  check(!fs.lstatSync(evidence, { throwIfNoEntry: false }) && !fs.lstatSync(path.dirname(evidence)).isSymbolicLink() && fs.realpathSync(path.dirname(evidence)) === path.dirname(evidence), 'evidence must be new with an existing canonical parent');
   return { home, tmpdir: home, codexHome, evidence, stat };
 }
 

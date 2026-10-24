@@ -61,7 +61,7 @@ for (const key of ['HOME', 'RAF_QA_HOME', 'TMPDIR']) test(`TRT633 H03 refuses un
   assert.equal(fs.existsSync(f.evidence), false);
 });
 
-for (const kind of ['symlink', 'ancestor-symlink', 'relative', 'noncanonical', 'missing', 'file', 'nonempty', 'prefix', 'source', 'operational', 'long-socket']) test(`TRT633 H04 refuses ${kind} HOME before creating stand state`, t => {
+for (const kind of ['symlink', 'ancestor-symlink', 'relative', 'noncanonical', 'missing', 'file', 'nonempty', 'shared', 'prefix', 'source', 'operational', 'long-socket']) test(`TRT633 H04 refuses ${kind} HOME before creating stand state`, t => {
   const f = fixture(t);
   let selected = f.home;
   if (kind === 'symlink') { selected = path.join(f.base, 'TRT633-link01'); fs.symlinkSync(f.home, selected); }
@@ -70,6 +70,7 @@ for (const kind of ['symlink', 'ancestor-symlink', 'relative', 'noncanonical', '
   if (kind === 'noncanonical') selected += '/';
   if (kind === 'missing') selected = path.join(f.base, 'TRT633-absent');
   if (kind === 'file') { selected = path.join(f.base, 'TRT633-file00'); fs.writeFileSync(selected, 'sentinel'); }
+  if (kind === 'shared') fs.chmodSync(selected, 0o755);
   if (kind === 'nonempty') fs.writeFileSync(path.join(selected, 'sentinel'), 'keep');
   if (kind === 'prefix') { selected = path.join(f.base, 'unrelated'); fs.mkdirSync(selected); }
   if (kind === 'source') { selected = path.join(f.source, 'TRT633-source'); fs.mkdirSync(selected); }
@@ -84,11 +85,12 @@ for (const kind of ['symlink', 'ancestor-symlink', 'relative', 'noncanonical', '
   assert.equal(fs.existsSync(f.evidence), false);
 });
 
-for (const kind of ['inside-home', 'same-home', 'existing', 'symlink-parent']) test(`TRT633 H05 refuses ${kind} evidence`, t => {
+for (const kind of ['inside-home', 'same-home', 'existing', 'symlink-parent', 'dangling-symlink']) test(`TRT633 H05 refuses ${kind} evidence`, t => {
   const f = fixture(t);
   if (kind === 'inside-home') f.evidence = path.join(f.home, 'evidence');
   if (kind === 'same-home') f.evidence = f.home;
   if (kind === 'existing') fs.mkdirSync(f.evidence);
+  if (kind === 'dangling-symlink') fs.symlinkSync(path.join(f.base, 'missing-target'), f.evidence);
   if (kind === 'symlink-parent') { fs.symlinkSync(f.base, path.join(f.base, 'link')); f.evidence = path.join(f.base, 'link/evidence'); }
   const result = spawnSync(process.execPath, [path.join(f.source, 'test/trt633-host-qa.mjs'), 'prepare', f.evidence], { env: f.env, encoding: 'utf8', timeout: 10000 });
   assert.notEqual(result.status, 0);

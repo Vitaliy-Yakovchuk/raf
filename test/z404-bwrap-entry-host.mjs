@@ -10,8 +10,8 @@ import { resolveRunnerExecutable } from '../src/runner-availability.ts';
 import { checkPrerequisites, stand, command, ok, ownCompactAliases, transitionMs, pollMs, rawSandboxPrefix } from './helpers/z404-host-fixture.ts';
 
 const [mode, target, selectedCase, ...extra] = process.argv.slice(2);
-assert.ok(['setup', 'verify'].includes(mode) && target, 'usage: node test/z404-bwrap-entry-host.mjs setup|verify <own-evidence-directory> [short/native]');
-assert.ok(extra.length === 0 && (!selectedCase || (mode === 'verify' && selectedCase === 'short/native')), 'only the explicit short/native diagnostic selection is supported');
+assert.ok(['setup', 'verify'].includes(mode) && target, 'usage: node test/z404-bwrap-entry-host.mjs setup|verify <own-evidence-directory> [short/native|short/npm]');
+assert.ok(extra.length === 0 && (!selectedCase || (mode === 'verify' && ['short/native', 'short/npm'].includes(selectedCase))), 'only the explicit short/native diagnostic or short/npm continuation selection is supported');
 const evidenceDirectory = resolve(target);
 await fs.mkdir(evidenceDirectory, { recursive: true });
 const summary = { stage: 'setup', cases: [], startedAt: new Date().toISOString(), modelPromptSent: false, selectedCase: selectedCase ?? 'all' };
@@ -470,15 +470,18 @@ try {
   const dirty = await command('git', ['status', '--porcelain=v1', '--untracked-files=normal'], dirname(fileURLToPath(import.meta.url)), process.env); ok(dirty, 'source dirty context');
   summary.sourceStatus = dirty.stdout.split('\n').filter(Boolean);
   if (mode === 'verify') {
-    const control = await rawBypass(prerequisites);
-    summary.cases.push(control);
-    if (!control.passed || !control.cleaned) throw new Error('Z404_SETUP: H02 raw control failed; product assertions not started');
-    summary.stage = 'assertions';
-    const traced = await tracedPreparation(prerequisites);
-    summary.cases.push(traced);
-    if (!traced.passed && traced.failureKind !== 'product-compatibility') {
-      throw new Error('Z404_SETUP: H03 setup/capability/control/trace failure is not a confirmed product red');
+    if (selectedCase !== 'short/npm') {
+      const control = await rawBypass(prerequisites);
+      summary.cases.push(control);
+      if (!control.passed || !control.cleaned) throw new Error('Z404_SETUP: H02 raw control failed; product assertions not started');
+      summary.stage = 'assertions';
+      const traced = await tracedPreparation(prerequisites);
+      summary.cases.push(traced);
+      if (!traced.passed && traced.failureKind !== 'product-compatibility') {
+        throw new Error('Z404_SETUP: H03 setup/capability/control/trace failure is not a confirmed product red');
+      }
     }
+    summary.stage = 'assertions';
     for (const layout of ['short', 'long']) for (const entry of ['bare', 'npm', 'native', 'configured']) {
       if (selectedCase && `${layout}/${entry}` !== selectedCase) continue;
       summary.cases.push(await positive(prerequisites, layout, entry));

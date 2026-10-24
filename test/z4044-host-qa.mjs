@@ -5,8 +5,9 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
-const [mode, sourceSha, evidence] = process.argv.slice(2);
+const [mode, sourceSha, evidence, selectedCase, ...extra] = process.argv.slice(2);
 assert.ok(['direct', 'live'].includes(mode), 'mode direct|live');
+assert.ok(extra.length === 0 && (!selectedCase || (mode === 'direct' && selectedCase === 'short/npm')), 'only direct short/npm continuation is supported');
 assert.match(sourceSha ?? '', /^[0-9a-f]{40}$/);
 assert.ok(evidence && path.isAbsolute(evidence), 'absolute private evidence directory required');
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -20,7 +21,7 @@ fs.mkdirSync(evidence, { recursive: true, mode: 0o700 });
 const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1' };
 for (const key of ['TMUX', 'TMUX_PANE', 'RAF_ORCHESTRATOR_ROOT', 'RAF_STATE_DIRECTORY', 'RAF_SOCKET_PATH', 'ALLOW_MIGRATIONS', 'GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR', 'GIT_OBJECT_DIRECTORY', 'GIT_ALTERNATE_OBJECT_DIRECTORIES']) delete env[key];
 const root = path.join(home, 'source-root'), clone = path.join(root, 'raf-develop');
-const summary = { mode, sourceSha, startedAt: new Date().toISOString(), status: 'failed', steps: [], modelPromptMayBeSent: mode === 'live', source, evidence, selectors: {}, cleanup: {} };
+const summary = { mode, sourceSha, selectedCase: selectedCase ?? 'all', startedAt: new Date().toISOString(), status: 'failed', steps: [], modelPromptMayBeSent: mode === 'live', source, evidence, selectors: {}, cleanup: {} };
 const atomic = (file, value) => { fs.writeFileSync(file + '.part', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(file + '.part', file); };
 const hash = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const run = (label, executable, args, cwd = source, timeout = 120000) => {
@@ -50,10 +51,10 @@ try {
     env.XDG_CONFIG_HOME = path.join(home, '.config'); fs.mkdirSync(env.XDG_CONFIG_HOME);
     summary.modelPromptSent = false;
     must(run('setup', process.execPath, ['test/z404-bwrap-entry-host.mjs', 'setup', path.join(evidence, 'setup')], clone));
-    const verify = run('verify', process.execPath, ['test/z404-bwrap-entry-host.mjs', 'verify', path.join(evidence, 'verify')], clone, 1200000);
+    const verify = run('verify', process.execPath, ['test/z404-bwrap-entry-host.mjs', 'verify', path.join(evidence, 'verify'), ...(selectedCase ? [selectedCase] : [])], clone, 1200000);
     summary.matrix = JSON.parse(fs.readFileSync(path.join(evidence, 'verify/summary.json'), 'utf8'));
     must(verify); assert.equal(summary.matrix.passed, true);
-    assert.equal(summary.matrix.cases.length, 11);
+    assert.equal(summary.matrix.cases.length, selectedCase ? 1 : 11);
   } else {
     assert.ok(env.CODEX_HOME && path.isAbsolute(env.CODEX_HOME), 'live needs an explicit existing CODEX_HOME selector, never copy auth');
     summary.codeHomeSelector = env.CODEX_HOME;

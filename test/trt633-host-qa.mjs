@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
@@ -15,11 +15,13 @@ const atomic = (file, data) => {
 const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 const hash = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const roles = ['test-scaffold', 'qa', 'hotfix'];
+let interrupted = null;
 const group = role => `add-raf-test-run/trt633-${role}`;
 const testFile = role => `test/trt633-${role}.test.ts`;
-const wait = async (label, probe, budget) => {
-  const end = Date.now() + budget;
+const wait = async (label, probe, budget, interruptible = true) => {
+  const end = budget === null ? Infinity : Date.now() + budget;
   while (Date.now() < end) {
+    if (interruptible && interrupted) throw Error(`Host interrupted by ${interrupted}; result is incomplete`);
     const value = probe();
     if (value) return value;
     await delay(300);
@@ -60,26 +62,46 @@ async function worker(action, role, report) {
 
 async function pane(stand) {
   const cli = path.join(stand, 'root/raf-main/bin/raf.ts');
-  const run = (label, args, budget = 240000) => {
-    const result = spawnSync(process.execPath, [cli, ...args], {
-      cwd: path.dirname(path.dirname(cli)), env: process.env, encoding: 'utf8', timeout: budget, maxBuffer: 32 * 1024 * 1024,
-    });
-    const row = { command: [process.execPath, cli, ...args], cliExitCode: result.status, signal: result.signal, error: result.error?.message ?? null };
-    fs.writeFileSync(path.join(stand, 'ev', label + '.stdout'), result.stdout ?? '');
-    fs.writeFileSync(path.join(stand, 'ev', label + '.stderr'), result.stderr ?? '');
+  const active = new Map();
+  const run = async (label, args, budget = 240000) => {
+    const out = fs.openSync(path.join(stand, 'ev', label + '.stdout'), 'wx', 0o600);
+    const err = fs.openSync(path.join(stand, 'ev', label + '.stderr'), 'wx', 0o600);
+    const command = [process.execPath, cli, ...args];
+    const child = spawn(command[0], command.slice(1), { cwd: path.dirname(path.dirname(cli)), env: process.env, stdio: ['ignore', out, err], detached: true });
+    let error = null, hostDeadlineReached = false;
+    child.once('error', cause => { error = cause.message; });
+    const closed = new Promise(resolve => child.once('close', (...result) => resolve(result)));
+    active.set(label, { child, args, closed });
+    atomic(path.join(stand, 'ev', label + '.started.json'), { command, pid: child.pid ?? null, budgetMs: budget, startedAt: new Date().toISOString() });
+    const timer = budget === null ? null : setTimeout(() => {
+      hostDeadlineReached = true;
+      try { process.kill(-child.pid, 'SIGKILL'); } catch {}
+    }, budget);
+    const [code, signal] = await closed;
+    if (timer !== null) clearTimeout(timer);
+    active.delete(label); fs.closeSync(out); fs.closeSync(err);
+    const row = { command, cliExitCode: code, signal, error, hostDeadlineReached };
     atomic(path.join(stand, 'ev', label + '.json'), row);
     return row;
   };
   process.stdin.setRawMode?.(true);
   process.stdin.resume();
   process.stdin.on('data', data => fs.appendFileSync(path.join(stand, 'ev/main-inbox.bin'), data));
-  atomic(path.join(stand, 'main-ready.json'), run('main-attach', ['main', 'attach']));
-  setInterval(() => {
+  atomic(path.join(stand, 'main-ready.json'), await run('main-attach', ['main', 'attach']));
+  setInterval(async () => {
     for (const name of fs.readdirSync(path.join(stand, 'commands')).filter(name => name.endsWith('.json')).sort()) {
       const file = path.join(stand, 'commands', name), request = read(file);
       fs.renameSync(file, file + '.running');
-      run(request.label, request.args, request.budget);
-      fs.renameSync(file + '.running', file + '.done');
+      if (request.cancelPending) {
+        const cancelled = [], closed = [];
+        for (const [label, { child, args, closed: finished }] of active) if (args[0] === 'agent' && args[1] === 'run') {
+          try { process.kill(-child.pid, 'SIGKILL'); cancelled.push({ label, pid: child.pid }); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+          closed.push(finished);
+        }
+        await Promise.all(closed);
+        atomic(path.join(stand, 'ev', request.label + '.json'), { command: null, cliExitCode: 0, signal: null, error: null, cancelled });
+        fs.renameSync(file + '.running', file + '.done');
+      } else void run(request.label, request.args, request.budget).then(() => fs.renameSync(file + '.running', file + '.done'));
     }
   }, 100);
 }
@@ -127,6 +149,7 @@ async function host(sourceSha, evidence) {
   assert.ok(!fs.existsSync(evidence), 'never overwrite evidence or repeat an unknown result');
   assert.ok(!evidence.startsWith(home + '/'), 'evidence must survive removal of the stand');
   assert.ok(process.env.CODEX_HOME && path.isAbsolute(process.env.CODEX_HOME), 'explicit existing CODEX_HOME selector required; no auth copy');
+  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { interrupted = signal; });
   const source = path.resolve(path.dirname(self), '..'), ownerRoot = path.dirname(source);
   const stand = fs.mkdtempSync(path.join(home, 'trt633-'));
   const root = path.join(stand, 'root'), main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
@@ -144,6 +167,7 @@ async function host(sourceSha, evidence) {
   const summary = {
     status: 'failed', source, sourceSha, driverSha256: hash(self), startedAt: new Date().toISOString(),
     runner: 'real codex CLI; provider prompts are sent; model and effort selected by copied raf routing',
+    launchWaitPolicy: 'Only raf decides resource admission; agent run waits in its queue without a host timeout. SIGINT/SIGTERM interrupt the host as failed/incomplete and clean up owned launches.',
     instrumentation: 'NODE_OPTIONS preload tees only CLI test run stdout/stderr and records process ancestry/exit; no production source/auth/parser/runner replacement',
     stand, evidence, steps: [], scenarios: [], failures: [], cleanup: [],
   };
@@ -173,11 +197,11 @@ async function host(sourceSha, evidence) {
     try { return db.prepare('SELECT payload FROM sessions').all().map(row => JSON.parse(row.payload)); }
     finally { db.close(); }
   };
-  const request = async (label, args, budget = 240000) => {
+  const request = async (label, args, budget = 240000, cancelPending = false) => {
     const result = path.join(ev, label + '.json');
     assert.ok(!fs.existsSync(result));
-    atomic(path.join(stand, 'commands', `${String(++sequence).padStart(4, '0')}.json`), { label, args, budget });
-    const row = await wait(label, () => fs.existsSync(result) && read(result), budget + 10000);
+    atomic(path.join(stand, 'commands', `${String(++sequence).padStart(4, '0')}.json`), { label, args, budget, cancelPending });
+    const row = await wait(label, () => fs.existsSync(result) && read(result), budget === null ? null : budget + 10000, !label.startsWith('cleanup-'));
     summary.steps.push({ label, ...row }); return row;
   };
   const channelRows = () => fs.readdirSync(capture).filter(name => /^\d+\.json$/.test(name)).map(name => {
@@ -223,6 +247,11 @@ async function host(sourceSha, evidence) {
     await git(root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './raf-main', 'raf-main'); await git(root, 'submodule', 'absorbgitdirs');
     const fixtureSha = await git(main, 'rev-parse', 'HEAD'); summary.fixtureSha = fixtureSha;
     await git(main, 'worktree', 'add', '-B', 'develop', develop, fixtureSha); await git(main, 'worktree', 'add', '-b', 'hotfix', hotfix, fixtureSha);
+    for (const workspace of [develop, hotfix]) {
+      fs.cpSync(path.join(main, 'node_modules'), path.join(workspace, 'node_modules'), { recursive: true, dereference: true });
+      assert.ok(fs.statSync(path.join(workspace, 'node_modules')).isDirectory());
+      summary.steps.push({ label: 'worktree-dependencies', workspace, source: path.join(main, 'node_modules'), complete: true });
+    }
     const change = path.join(root, 'openspec/changes/add-raf-test-run'); fs.mkdirSync(change, { recursive: true });
     fs.writeFileSync(path.join(root, 'openspec/config.yaml'), 'schema: spec-driven\n');
     fs.writeFileSync(path.join(change, '.openspec.yaml'), 'schema: spec-driven\nskip_specs: true\n');
@@ -247,7 +276,7 @@ async function host(sourceSha, evidence) {
     for (const [index, role] of roles.entries()) {
       let record;
       try {
-        checked(await request('launch-' + role, ['agent', 'run', '--id', 'trt633-' + role, '--type', role, '--project', 'raf', '--features', 'add-raf-test-run', '--phase', role, '--complexity', 'mechanical', '--tasks', `add-raf-test-run:${index + 1}.1`]));
+        checked(await request('launch-' + role, ['agent', 'run', '--id', 'trt633-' + role, '--type', role, '--project', 'raf', '--features', 'add-raf-test-run', '--phase', role, '--complexity', 'mechanical', '--tasks', `add-raf-test-run:${index + 1}.1`], null));
         record = await wait(role + ' live identity', () => sessions().find(row => row.addressId === 'trt633-' + role && row.process), 60000);
         assert.equal(record.process.runner, 'codex'); assert.equal(record.launchContext.testAssignment.phase, role);
         const own = path.dirname(record.launchContext.reportPath);
@@ -292,6 +321,7 @@ async function host(sourceSha, evidence) {
           atomic(path.join(ev, role + '-failed-session.json'), record);
         }
       }
+      if (interrupted) break;
       if (record) {
         const own = path.dirname(record.launchContext.reportPath), destination = path.join(ev, role + '-run');
         fs.mkdirSync(destination);
@@ -306,6 +336,8 @@ async function host(sourceSha, evidence) {
   } catch (error) { summary.failures.push({ stage: 'host', reason: error.stack ?? String(error) }); }
   finally {
     if (startedPane) {
+      try { checked(await request('cleanup-cancel-pending', [], 60000, true)); }
+      catch (error) { summary.failures.push({ stage: 'cleanup', reason: String(error) }); }
       for (const record of sessions().filter(row => row.addressId !== 'main' && row.state !== 'finished')) {
         try { summary.cleanup.push({ step: 'agent-close', id: record.addressId, result: await request('cleanup-close-' + record.addressId, ['agent', 'close', '--id', record.addressId, '--force', '--reason', 'TRT633 own stand cleanup'], 60000) }); }
         catch (error) { summary.failures.push({ stage: 'cleanup', reason: String(error) }); }

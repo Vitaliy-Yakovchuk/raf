@@ -103,7 +103,7 @@ export function verifyEtchlyDependencies(context: TestRunContext, profiles: impo
   const browserCache = inherited.PLAYWRIGHT_BROWSERS_PATH;
   const browserAvailable = !!browserCache && browserCache !== '0' && isAbsolute(browserCache) && browserEngines.every(engine => {
     try {
-      return globSync(engine === 'chromium' ? ['chromium-*/**/chrome', 'chromium_headless_shell-*/**/headless_shell'] : engine === 'firefox' ? ['firefox-*/**/firefox'] : ['webkit-*/**/pw_run.sh'], { cwd: browserCache }).some(path => {
+      return globSync(engine === 'chromium' ? ['chromium-*/**/chrome', 'chromium_headless_shell-*/**/headless_shell', 'chromium_headless_shell-*/**/chrome-headless-shell'] : engine === 'firefox' ? ['firefox-*/**/firefox'] : ['webkit-*/**/pw_run.sh'], { cwd: browserCache }).some(path => {
         try { accessSync(resolve(browserCache, path), constants.X_OK); return statSync(resolve(browserCache, path)).isFile(); } catch { return false; }
       });
     } catch { return false; }

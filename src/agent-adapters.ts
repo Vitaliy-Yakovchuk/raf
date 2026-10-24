@@ -1,6 +1,8 @@
 import type { NativeIdentity } from './agy-session-start.ts';
 import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
 import { randomUUID } from 'node:crypto';
+import { userInfo } from 'node:os';
+import { join } from 'node:path';
 import { startupContextRunnerEnvironment } from './startup-context-journal.ts';
 import type { ProcessIdentity } from './session-state.ts';
 import type { LaunchOwnership, LaunchWrapperPorts } from './launch-wrapper.ts';
@@ -177,8 +179,12 @@ export class TmuxAgentAdapter {
     const environment = startupContextRunnerEnvironment(request.selection.runner, {});
     if (environment.CLAUDE_CODE_FORCE_SESSION_PERSISTENCE) invocation = ['env', 'CLAUDE_CODE_FORCE_SESSION_PERSISTENCE=1', ...invocation];
     const session: AdapterSession = { tmuxSession: request.tmuxSession, selection: { ...request.selection } };
+    const hostHome = userInfo().homedir;
+    const browserCache = process.env.PLAYWRIGHT_BROWSERS_PATH || (process.platform === 'darwin' ? join(hostHome, 'Library', 'Caches', 'ms-playwright')
+      : process.platform === 'win32' ? join(process.env.LOCALAPPDATA || join(hostHome, 'AppData', 'Local'), 'ms-playwright')
+        : join(process.env.XDG_CACHE_HOME || join(hostHome, '.cache'), 'ms-playwright'));
     await this.tmux([
-      'new-session', '-d', '-s', request.tmuxSession, '-c', command.cwd ?? request.cwd, 'sh', '-c', 'read -r _',
+      'new-session', '-e', `PLAYWRIGHT_BROWSERS_PATH=${browserCache}`, '-d', '-s', request.tmuxSession, '-c', command.cwd ?? request.cwd, 'sh', '-c', 'read -r _',
       ';', 'set-option', '-p', '-t', this.target(session), 'remain-on-exit', 'on',
       ';', 'respawn-pane', '-k', '-t', this.target(session),
       ...invocation.map(value => value.endsWith(';') ? `${value.slice(0, -1)}\\;` : value),

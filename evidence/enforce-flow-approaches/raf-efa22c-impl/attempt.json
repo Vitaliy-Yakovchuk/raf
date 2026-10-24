@@ -1,0 +1,78 @@
+{
+  "assignment": "enforce-flow-approaches:2.2",
+  "agentRunId": "a4392a06-7dcf-4d66-860b-8c2a007d6ed1",
+  "agentId": "raf-efa22c-impl",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/f09ff368-16a8-4c83-bf22-fc05bc6781f3/raf-main/bin/raf.ts test run --project raf --phase implement --group enforce-flow-approaches/flow-checks --files test/flow-qa-report.test.ts test/flow-task-plan.test.ts test/flow-brief.test.ts",
+  "sourceItem": "enforce-flow-approaches:2.2",
+  "targetGroup": "enforce-flow-approaches/flow-checks",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "sha": "d4e8df37ffc1976102866f9932127785e040f12f",
+  "dirtyPathsAtAttempt": [
+    "src/flow-task-plan.ts"
+  ],
+  "laterChanges": "Exact change:item token boundaries were added after the refused attempt; no unit execution is claimed for either revision.",
+  "selection": {
+    "files": [
+      "test/flow-qa-report.test.ts",
+      "test/flow-task-plan.test.ts",
+      "test/flow-brief.test.ts"
+    ],
+    "testIds": []
+  },
+  "cliCode": 1,
+  "childExitCode": null,
+  "runId": null,
+  "resultPath": null,
+  "outcome": "production-entry-failed; no TestRunResult",
+  "cleanup": null,
+  "timedOut": null,
+  "knownRed": null,
+  "unexecuted": null,
+  "unknown": null,
+  "groupState": null,
+  "nextAction": "Main must restore the trusted generation/channel and arrange the same executor's authorized implement run with the unchanged group and QA HOME. No blind retry, raw runner, or replacement executable.",
+  "streams": {
+    "tool": "exec_command exposes merged output",
+    "stdoutPath": "test-run.stdout",
+    "stderrPath": "test-run.stderr",
+    "separation": "Installed bin/raf.ts and src/cli.ts:114 diagnostic verified: this failure emits stdout='' and the full diagnostic plus newline on stderr; original merged tool result retained."
+  },
+  "communication": {
+    "command": "raf_command agent message --to main",
+    "cliCode": 1,
+    "error": {
+      "code": "PRODUCTION_ENTRY_FAILED",
+      "message": "Unregistered or changed production generation"
+    },
+    "helpRead": true
+  },
+  "initialImplementation": {
+    "inheritedCommit": "6da6312f3c4eca2e4fdd9f29568087d67b78f94e",
+    "inheritedCommitIsOwn": false,
+    "testsReadAfterIndependentReviewAndInitialFix": true,
+    "testsChanged": false
+  },
+  "checks": [
+    {
+      "command": "node --check src/flow-task-plan.ts",
+      "chunk_id": "57555a",
+      "wall_time_seconds": 0.10414614,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    {
+      "command": "git diff --check",
+      "chunk_id": "3da381",
+      "wall_time_seconds": 0.086274013,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ],
+  "inventory": {
+    "profileId": "node",
+    "groupConfigured": true,
+    "allThreeFilesInUnitFiles": true
+  }
+}

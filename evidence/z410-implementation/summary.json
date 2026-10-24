@@ -1,0 +1,98 @@
+{
+  "assignment": {
+    "change": "complete-raf-flow-contracts",
+    "item": "Z.410.1",
+    "agent": "raf-z4101-impl"
+  },
+  "audit": {
+    "current": true,
+    "reason": "Чинний Z.410 і red на 724290e підтверджують ту саму перевірку owner до observation дерева; суперечностей із deadline/identity/cleanup/timeout контрактами не виявлено.",
+    "sources": [
+      "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md#Z.410",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md#Відновлення результату після втрати CLI"
+    ]
+  },
+  "independentImplementation": {
+    "completedBeforeReadingTests": true,
+    "implementationCommit": "3452c7504cc3aee003a24f9a4b4f59dbd2f0cc66",
+    "changedTests": [],
+    "preparedTestFirstRead": "Після завершення реалізації та успішного npm run build; до цільового unit-прогону."
+  },
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/b72b9cb2-1336-49c8-af1e-6e31c663eefb/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/z410 --files test/test-run-legacy-in-flight.test.ts",
+  "workspace": {
+    "path": "/srv/dev/work/orchestrator/raf-develop",
+    "sha": "3452c7504cc3aee003a24f9a4b4f59dbd2f0cc66",
+    "preRun": "git status перед commit: лише два власні src-файли; обидва закомічені. Tracked-правок під час unit не виявлено.",
+    "postRunUntracked": [
+      "evidence/z410-implementation/ (власні артефакти, створені після unit)",
+      "test/helpers/z404-tmux-shutdown.ts (чужий файл; виявлений після unit, час появи в межах прогону не встановлений; не читав і не змінював)"
+    ]
+  },
+  "wrapper": {
+    "generation": "b72b9cb2-1336-49c8-af1e-6e31c663eefb",
+    "entrySha256": "28f299dcc066b9d7e6f7dce8ad62fbec3a56d1fe1b2d81a81727747424428926",
+    "runtimeSha256": "b2b1ac9171e5fb375079e55015ec5cfa6163c17fd34bf162f263526e87bc0137"
+  },
+  "run": {
+    "runId": "972ec07b-b420-4e86-a10e-0a77a7a29e03",
+    "selection": {
+      "files": [
+        "test/test-run-legacy-in-flight.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "durationMs": 492,
+    "passed": 23,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+    "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+    "configurationFingerprints": {
+      "flow": "34636e00082226eb8a1ae440e7fad48638862edf5bd0f870a7d1cf96f97f3ac6",
+      "testRuns": "116e82e9c63b1341ce74eab1d0f00763c47ebc0ab89e2debf8cf30a2b021a010",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    }
+  },
+  "baseline": {
+    "sha": "724290e46f105b22ef52bf8968c67ffcc52f8cbc",
+    "runId": "31ecd90f-9eee-49b0-9460-dd8ea07eab54",
+    "source": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/z410-scaffold/red-724290e.json",
+    "knownRed": 10,
+    "passed": 13,
+    "homeUnchanged": true,
+    "groupUnchanged": true
+  },
+  "checks": {
+    "build": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "includesCommentPolicy": true
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  },
+  "configuration": {
+    "requiredChanges": [],
+    "reason": "unitFiles і groups для test/test-run-legacy-in-flight.test.ts та complete-raf-flow-contracts/z410 уже зареєстровані main у conf/test-runs.json; write conf не доручено."
+  },
+  "limits": {
+    "otherRegressionGroupsRun": false,
+    "liveQA": false,
+    "archive": false,
+    "remaining": "Z.410.2 та інші пункти зміни відкриті. Після перенесення raf — qa 6.8.2 agent-queue за дорученням QA."
+  }
+}

@@ -29,7 +29,7 @@ async function fixture(t: TestContext, waited: boolean) {
     requested: { ramBytes: 8, diskBytes: { fixture: 16 } }, requiredFileSystemIds: ['fixture'],
   };
   const calls = { start: 0, commit: 0, compensate: 0, abort: 0, cleanReport: 0 };
-  const api = {
+  const api: Pick<RuntimeServices, 'commitStarted' | 'compensate' | 'abortLaunch' | 'reserve'> = {
     commitStarted: async (runId: string, identity: ProcessIdentity) => {
       calls.commit++;
       const session = current(runId);
@@ -37,13 +37,14 @@ async function fixture(t: TestContext, waited: boolean) {
     },
     compensate: async () => { calls.compensate++; return { stopped: false, reason: 'fixture keeps the verified live worker' }; },
     abortLaunch: async () => { calls.abort++; },
-  } as RuntimeServices;
+    reserve: async () => ({ admitted: true, admission }),
+  };
   const dependencies: Parameters<typeof createProductionAgentQueue>[1] = {
     store, context: {
       orchestratorRoot: directory, confRoot: directory, artifactPath: directory, statePath,
       tmpRoot: directory, mode: 'test', commandStartedAtMs: Date.now(), resolveCaller: async () => undefined,
     } satisfies RuntimeContext,
-    api, configuration: {} as RuntimeConfiguration, current, caller: async () => undefined,
+    api: api as RuntimeServices, configuration: {} as RuntimeConfiguration, current, caller: async () => undefined,
     observe: async identity => ({ state: 'alive', identity, observedAt: '2026-10-24T00:00:00Z' }),
     reconcile: async () => {}, cleanReport: async () => { calls.cleanReport++; },
   };
@@ -65,7 +66,7 @@ async function fixture(t: TestContext, waited: boolean) {
     measurement: { machineId: process.machineId, loadAverage1m: null, availableCores: null,
       totalRamBytes: null, availableRamBytes: null, memoryPressure: null, fileSystems: [] },
     thresholds: null, remaining: null, reservation: { requested: input.requested, unused: { ramBytes: 0, diskBytes: {} } },
-    estimate: { status: 'KNOWN', sources: ['unit-fixture'], reason: null }, queueId: null,
+    estimate: { status: 'KNOWN', sources: ['unit-fixture'], reason: null }, queueId: queue.queueId(statePath, process.machineId),
   };
   const ports: AgentRunQueuePorts = {
     ...production.ports,
@@ -104,7 +105,6 @@ async function fixture(t: TestContext, waited: boolean) {
     verifyReady: async () => process,
     writeStderr: () => {},
   };
-  api.reserve = async () => ({ admitted: true, reason: 'unit admission', admission });
   const facts = () => ({
     session: current(input.runId),
     resources: store.sessionRepository.transaction(tx => tx.listReservations(), 'read'),
@@ -134,7 +134,7 @@ function assertRunning(result: Awaited<ReturnType<typeof runAgentWithQueue>>, f:
 
 for (const waited of [false, true]) {
   const path = waited ? 'queued' : 'fast';
-  test(`start-result ${path}: ready launch returns running without concurrent cleanup`, async t => {
+  test(`start-result ${path}: ready launch returns running without concurrent cleanup`, async (t: TestContext) => {
     const f = await fixture(t, waited);
     assertRunning(await runAgentWithQueue(f.production.request, f.ports), f, waited);
     assert.equal(f.queue.get(f.record()), undefined);
@@ -142,7 +142,7 @@ for (const waited of [false, true]) {
   });
 
   for (const cleaner of ['ps', 'next-launch'] as const) {
-    test(`start-result ${path}: ${cleaner} removing a ready queue entry cannot turn running into START_COMMIT_CONFLICT`, async t => {
+    test(`start-result ${path}: ${cleaner} removing a ready queue entry cannot turn running into START_COMMIT_CONFLICT`, async (t: TestContext) => {
       const f = await fixture(t, waited);
       let before!: ReturnType<typeof f.facts>;
       f.ports.verifyReady = async () => {
@@ -172,7 +172,7 @@ for (const waited of [false, true]) {
 }
 
 for (const field of ['pid', 'startedAt', 'machineId', 'bootId', 'runnerSessionId', 'runner'] as const) {
-  test(`start-result removed entry: a different ${field} cannot acknowledge the running owner`, async t => {
+  test(`start-result removed entry: a different ${field} cannot acknowledge the running owner`, async (t: TestContext) => {
     const f = await fixture(t, false);
     await f.ports.claimAndAdmit({ request: f.production.request, validation: {
       assignment: f.input.assignment, fingerprint: 'start-result-assignment', requested: f.input.requested, requiredFileSystemIds: ['fixture'],
@@ -188,7 +188,7 @@ for (const field of ['pid', 'startedAt', 'machineId', 'bootId', 'runnerSessionId
 }
 
 for (const state of ['reserved', 'exited', 'finished'] as const) {
-  test(`start-result removed entry: ${state} cannot be reported as a confirmed running launch`, async t => {
+  test(`start-result removed entry: ${state} cannot be reported as a confirmed running launch`, async (t: TestContext) => {
     const f = await fixture(t, false);
     await runAgentWithQueue(f.production.request, f.ports);
     f.queue.transaction(tx => {
@@ -202,7 +202,7 @@ for (const state of ['reserved', 'exited', 'finished'] as const) {
 }
 
 for (const field of ['fence', 'requestId', 'queueId', 'agentId', 'runId'] as const) {
-  test(`start-result removed entry: a stale ${field} cannot acknowledge or mutate another launch`, async t => {
+  test(`start-result removed entry: a stale ${field} cannot acknowledge or mutate another launch`, async (t: TestContext) => {
     const f = await fixture(t, true);
     await runAgentWithQueue(f.production.request, f.ports);
     const before = structuredClone(f.facts());

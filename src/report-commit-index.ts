@@ -3,6 +3,7 @@ import { watch } from 'node:fs';
 import { copyFile, lstat, mkdtemp, open, readFile, rename, rm } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 import { executeCommand } from './os-runtime.ts';
+import { trackOwnedWriterLock } from './owned-writer-lock.ts';
 
 export interface ReportCommitIndexRequest {
   repositoryRoot: string;
@@ -45,8 +46,8 @@ export async function reconcileReportedCommitIndex(
     try { lock = await open(lockPath, 'wx', 0o600); break; }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; if (control) throw new ConfirmationTransientError('index-busy', 'Git index.lock is busy; retain foreign lock'); await waitForIndex(); }
   }
+  const ownership = trackOwnedWriterLock(lockPath, lock);
   let scratch: string | undefined;
-  let published = false;
   try {
     const clean = await executeCommand({ executable: 'git', args: ['diff', '--cached', '--quiet', 'HEAD'], cwd: request.repositoryRoot, environment });
     checkBudget();
@@ -108,16 +109,17 @@ export async function reconcileReportedCommitIndex(
       await control?.beforeWrite?.();
       checkBudget();
       if ((await git(['rev-parse', 'HEAD'])).trim() !== head) continue;
-      await lock.writeFile(await readFile(temporaryIndex));
+      const contents = await readFile(temporaryIndex);
+      ownership.assertOwned();
+      await lock.writeFile(contents);
       await lock.sync();
       await lock.close();
+      ownership.assertOwned();
       await rename(lockPath, indexPath);
-      published = true;
       return;
     }
   } finally {
-    await lock.close();
-    if (!published) await rm(lockPath, { force: true });
+    try { await lock.close(); } finally { ownership.release(); }
     if (scratch) await rm(scratch, { recursive: true, force: true });
   }
 }

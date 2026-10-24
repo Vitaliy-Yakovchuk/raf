@@ -6,6 +6,7 @@ import { promises as fs, writeFileSync, renameSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createConnection, createServer, type Socket } from 'node:net';
 import { randomUUID } from 'node:crypto';
+import { releaseOwnedWriterLocks } from './owned-writer-lock.ts';
 
 export type ServiceFailure = {
   exitCode: 1;
@@ -212,7 +213,11 @@ export function createBackgroundRuntime(
       throw new Error(`Service PID ${child.pid} did not complete recovery and readiness within ${options.readinessTimeoutMs} ms`);
     } catch (error) {
       if (child?.pid && child.exitCode === null && child.signalCode === null) {
-        child.kill('SIGKILL');
+        const processToStop = child;
+        const exited = new Promise<void>(resolve => processToStop.once('exit', () => resolve()));
+        processToStop.kill('SIGTERM');
+        const escalation = setTimeout(() => processToStop.kill('SIGKILL'), options.readinessTimeoutMs);
+        try { await exited; } finally { clearTimeout(escalation); }
       }
       const log = await fs.readFile(join(options.stateDirectory, 'service.log'), 'utf8').catch(() => '');
       const persisted = await readRecord(options.stateDirectory).catch(() => null);
@@ -294,6 +299,7 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
   const shutdown = (failed = false, replySocket?: Socket): Promise<void> => {
     if (closing) return closing;
     closing = (async () => {
+      releaseOwnedWriterLocks();
       process.off('exit', onExit);
       process.off('SIGTERM', onSignal);
       process.off('SIGINT', onSignal);

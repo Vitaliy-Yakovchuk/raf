@@ -129,7 +129,6 @@ test('integration runtime: resource recovery terminates an expired crashed tree 
     inFlight: { runId: claim.testRunId, startedAtMs, deadlineMs, processIdentity,
       timeoutPolicy: { source: 'conf/flow.json#/integrationTests/timeoutMs', timeoutMs: budget }, callerPhase: 'qa' },
   }));
-  // A changed conf must not grant an abandoned reservation a fresh budget.
   h.context.integrationTests = { timeoutMs: budget * 10 };
   let alive = true;
   let released = false;

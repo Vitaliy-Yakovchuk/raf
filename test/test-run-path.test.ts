@@ -64,6 +64,7 @@ function fixture() {
             cwd: '.', executable: process.execPath, argv: [join(code, 'scripts/test-run-node.ts')],
             unitFiles: [probe, sentinel], exactIds: 'node-test-name', resultAdapter: 'node-test-events',
             environment: { isolatedHome: true, stateOrigin: true }, checks: [],
+            resourceEstimate: { ramBytes: 2147483648, diskBytesPerFileSystem: 10737418240 },
           },
         },
         groups: { [group]: { profileId: 'node', files: [probe] } },

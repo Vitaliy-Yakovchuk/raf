@@ -302,7 +302,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
     scheduleAutomaticPass: async () => {},
     finishNoReport: async () => {},
   }, deadline);
-  if (outcome.kind === 'superseded' && (!ports.isCurrentReport || await ports.isCurrentReport(request.runId, path)) && !await sameReportBytes(path, bytes, content, ports)) return readRetryReport(request, ports, deadline);
+  if (outcome.kind === 'superseded' && !await sameReportBytes(path, bytes, content, ports)) return readRetryReport(request, ports, deadline);
   if (outcome.kind !== 'pending') { pendingConfirmations.delete(path); await retry.retainPending?.(null); }
   if (outcome.kind === 'configuration-error') throw new Error(`Invalid report confirmation budget at ${outcome.pointer}`);
   if (outcome.kind === 'awaiting-archive') {

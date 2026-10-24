@@ -237,7 +237,8 @@ async function setup() {
         while (!condition() && performance.now() < deadline) {
             await waitForIo();
             if (condition()) break;
-            mock.timers.tick(Math.min(protocol.timeouts.pollMs, deadline - performance.now()));
+            const remaining = deadline - performance.now();
+            if (remaining > 0) mock.timers.tick(Math.min(protocol.timeouts.pollMs, remaining));
         }
         await waitForIo();
         if (initialEventError) throw initialEventError;

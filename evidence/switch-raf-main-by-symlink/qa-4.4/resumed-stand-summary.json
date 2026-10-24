@@ -1,0 +1,318 @@
+{
+  "status": "passed",
+  "environment": {
+    "os": "linux",
+    "node": "v26.12.1",
+    "source": "0a253a4f3c3fc4d0143e88b6291bd9b092e3547e",
+    "dirty": "M scripts/qa-main-symlink-release.ts\n M src/main-symlink-release.ts\n?? evidence/switch-raf-main-by-symlink/qa-4.4/resumed-intent-qa.cli-code.txt\n?? evidence/switch-raf-main-by-symlink/qa-4.4/resumed-intent-qa.combined.txt\n?? evidence/switch-raf-main-by-symlink/qa-4.4/resumed-intent-qa.command.txt\n?? evidence/switch-raf-main-by-symlink/qa-4.4/resumed-intent-qa.json\n?? evidence/switch-raf-main-by-symlink/qa-4.4/resumed-intent-qa.stderr.txt\n?? evidence/switch-raf-main-by-symlink/qa-4.4/resumed-intent-qa.tool.json\n?? evidence/switch-raf-main-by-symlink/qa-4.4/resumed-intent-red.cli-code.txt\n?? evidence/switch-raf-main-by-symlink/qa-4.4/resumed-intent-red.combined.txt\n?? evidence/switch-raf-main-by-symlink/qa-4.4/resumed-intent-red.command.txt\n?? evidence/switch-raf-main-by-symlink/qa-4.4/resumed-intent-red.json\n?? evidence/switch-raf-main-by-symlink/qa-4.4/resumed-intent-red.stderr.txt\n?? evidence/switch-raf-main-by-symlink/qa-4.4/resumed-intent-red.tool.json\n?? evidence/switch-raf-main-by-symlink/qa-4.4/stand-7/",
+    "root": "/tmp/hf-SABNXF"
+  },
+  "cleanup": {
+    "children": 0,
+    "fixtureRemoved": true
+  },
+  "reusedRefusals": {
+    "source": "stand-6/result.json",
+    "markers": [
+      "build-refusal",
+      "smoke-refusal"
+    ]
+  },
+  "transitions": [
+    {
+      "marker": "cycle-1-B",
+      "before": "a",
+      "after": "b",
+      "commit": "46e0c8c1eb349368297dc15452d32babe3a7e322",
+      "result": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "marker": "cycle-1-A",
+      "before": "b",
+      "after": "a",
+      "commit": "18f2af4abce3c75657b1500ef6472c0b5da4a311",
+      "result": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "marker": "cycle-2-B",
+      "before": "a",
+      "after": "b",
+      "commit": "04ab78a9c99c0e28cc2ec5a20c1737d2839afbda",
+      "result": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "marker": "cycle-2-A",
+      "before": "b",
+      "after": "a",
+      "commit": "af03e0025c7128524129bcf503b160cc4e225a1e",
+      "result": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "marker": "rollback-keeps-SQLite-write",
+      "before": "a",
+      "after": "b",
+      "commit": "04ab78a9c99c0e28cc2ec5a20c1737d2839afbda",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "rows": [
+        {
+          "version": "B-write"
+        }
+      ]
+    },
+    {
+      "marker": "two-publishers-one-stale-loser",
+      "after": "a",
+      "commit": "db98ffcfd86538103584e7bd10e39c5f6cc4f1aa",
+      "results": [
+        {
+          "code": 0,
+          "signal": null,
+          "stderr": "HEAD is now at 04ab78a cycle-2-B\n"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stderr": "Error: Stale main base: active\n    at failure (file:///srv/dev/work/orchestrator/raf-develop/src/main-symlink-release.ts:86:73)\n    at assertBase (file:///srv/dev/work/orchestrator/raf-develop/src/main-symlink-release.ts:99:51)\n    at file:///srv/dev/work/orchestrator/raf-develop/src/main-symlink-release.ts:142:7\n    at async Object.withPublicationLock (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-main-symlink-release.ts:79:20)\n    at async file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-main-symlink-release.ts:277:63\n"
+        }
+      ]
+    }
+  ],
+  "readers": [
+    {
+      "pid": 3903,
+      "pinned": "/tmp/hf-SABNXF/raf-main-a",
+      "marker": "old",
+      "helpExitCodes": [
+        0,
+        0
+      ]
+    },
+    {
+      "pid": 3904,
+      "pinned": "/tmp/hf-SABNXF/raf-main-a",
+      "marker": "old",
+      "helpExitCodes": [
+        0,
+        0
+      ]
+    },
+    {
+      "pid": 3910,
+      "pinned": "/tmp/hf-SABNXF/raf-main-a",
+      "marker": "old",
+      "helpExitCodes": [
+        0,
+        0
+      ]
+    },
+    {
+      "pid": 7708,
+      "pinned": "/tmp/hf-SABNXF/raf-main-b",
+      "marker": "cycle-1-B",
+      "helpExitCodes": [
+        0,
+        0
+      ]
+    },
+    {
+      "pid": 7709,
+      "pinned": "/tmp/hf-SABNXF/raf-main-b",
+      "marker": "cycle-1-B",
+      "helpExitCodes": [
+        0,
+        0
+      ]
+    },
+    {
+      "pid": 7715,
+      "pinned": "/tmp/hf-SABNXF/raf-main-b",
+      "marker": "cycle-1-B",
+      "helpExitCodes": [
+        0,
+        0
+      ]
+    },
+    {
+      "pid": 12182,
+      "pinned": "/tmp/hf-SABNXF/raf-main-a",
+      "marker": "cycle-1-A",
+      "helpExitCodes": [
+        0,
+        0
+      ]
+    },
+    {
+      "pid": 12183,
+      "pinned": "/tmp/hf-SABNXF/raf-main-a",
+      "marker": "cycle-1-A",
+      "helpExitCodes": [
+        0,
+        0
+      ]
+    },
+    {
+      "pid": 12189,
+      "pinned": "/tmp/hf-SABNXF/raf-main-a",
+      "marker": "cycle-1-A",
+      "helpExitCodes": [
+        0,
+        0
+      ]
+    },
+    {
+      "pid": 16654,
+      "pinned": "/tmp/hf-SABNXF/raf-main-b",
+      "marker": "cycle-2-B",
+      "helpExitCodes": [
+        0,
+        0
+      ]
+    },
+    {
+      "pid": 16655,
+      "pinned": "/tmp/hf-SABNXF/raf-main-b",
+      "marker": "cycle-2-B",
+      "helpExitCodes": [
+        0,
+        0
+      ]
+    },
+    {
+      "pid": 16661,
+      "pinned": "/tmp/hf-SABNXF/raf-main-b",
+      "marker": "cycle-2-B",
+      "helpExitCodes": [
+        0,
+        0
+      ]
+    }
+  ],
+  "crashes": [
+    {
+      "at": "before-intent",
+      "killedSignal": "SIGKILL",
+      "recoveryCode": 0,
+      "repeatCode": 0,
+      "active": "b",
+      "commit": "04ab78a9c99c0e28cc2ec5a20c1737d2839afbda"
+    },
+    {
+      "at": "after-intent",
+      "killedSignal": "SIGKILL",
+      "recoveryCode": 0,
+      "repeatCode": 0,
+      "active": "b",
+      "commit": "04ab78a9c99c0e28cc2ec5a20c1737d2839afbda"
+    },
+    {
+      "at": "before-switch",
+      "killedSignal": "SIGKILL",
+      "recoveryCode": 0,
+      "repeatCode": 0,
+      "active": "b",
+      "commit": "04ab78a9c99c0e28cc2ec5a20c1737d2839afbda"
+    },
+    {
+      "at": "after-switch",
+      "killedSignal": "SIGKILL",
+      "recoveryCode": 0,
+      "repeatCode": 0,
+      "active": "a",
+      "commit": "db98ffcfd86538103584e7bd10e39c5f6cc4f1aa"
+    },
+    {
+      "at": "git-refs",
+      "killedSignal": "SIGKILL",
+      "recoveryCode": 0,
+      "repeatCode": 0,
+      "active": "a",
+      "commit": "db98ffcfd86538103584e7bd10e39c5f6cc4f1aa"
+    },
+    {
+      "at": "git-index",
+      "killedSignal": "SIGKILL",
+      "recoveryCode": 0,
+      "repeatCode": 0,
+      "active": "a",
+      "commit": "db98ffcfd86538103584e7bd10e39c5f6cc4f1aa"
+    },
+    {
+      "at": "after-index",
+      "killedSignal": "SIGKILL",
+      "recoveryCode": 0,
+      "repeatCode": 0,
+      "active": "a",
+      "commit": "db98ffcfd86538103584e7bd10e39c5f6cc4f1aa"
+    }
+  ],
+  "foreignBefore": [
+    "100644 9667b58b1d112058f664bddc4e435d2239276991 0\tconf/README.md",
+    "100644 ce1e4101ef3edc8ac16163a5cdda90ac9e3eec73 0\tconf/briefs/README.md",
+    "100644 2cd4a2fb0071696bb2515f81f8f6c7aeb2f2c8c0 0\tconf/briefs/completion.md",
+    "100644 1ac4d728f76680b78f7247b967a7340a9fe0d3a7 0\tconf/briefs/runners/agy.md",
+    "100644 64660e390de3bcadfc42c8d01be047cbdccdb1bc 0\tconf/briefs/runners/claude.md",
+    "100644 d59d09039bbc7a95ca229e28c6da48adb8bacf85 0\tconf/briefs/runners/codex.md",
+    "100644 65b5bc4b3ed389318088800dd4d1a3d150d0a4e7 0\tconf/briefs/runners/grok.md",
+    "100644 a067604bfa503927bf2ea603899c266a1da1f2e6 0\tconf/briefs/tasks/context-review.md",
+    "100644 5f452b821d018852e86b258f04b993190c8f50ba 0\tconf/briefs/tasks/coordinator.md",
+    "100644 aaafad2eaacdb84c30190c02d32913b85c27ec2a 0\tconf/briefs/tasks/design.md",
+    "100644 f69ef29baf03cfc05a6c7c76832fb03732c4c4e5 0\tconf/briefs/tasks/hotfix.md",
+    "100644 c51e2a2c089f88f4482ae6b2925a7767fcbadfe9 0\tconf/briefs/tasks/implement.md",
+    "100644 2854f21743319372b83e8571bc9f337ed1d1505c 0\tconf/briefs/tasks/main.md",
+    "100644 3bd74cd9425e5597ccab61a0fdb282bc0474ac02 0\tconf/briefs/tasks/qa.md",
+    "100644 12a20a05bb9c4afa68f742a03051398f7c8175fa 0\tconf/briefs/tasks/spec.md",
+    "100644 a57fece8ea322480456a6e0992538effe0340fed 0\tconf/briefs/tasks/test-scaffold.md",
+    "100644 13f91adea4482aa839c72edc10756c7e107b4d36 0\tconf/flow.json",
+    "100644 e92a8b96813a6bf38ef923e315f1181cbd7c4445 0\tconf/models.json",
+    "100644 badd15a9f29afbb4e6c0b452f33b7eebc300475c 0\tconf/project-priorities.json",
+    "100644 ca85a6087319d7a132046daef10e765eb009a214 0\tconf/projects.json",
+    "100644 a2f628ee994c4d9a60eb407bfad40ac721bb1e06 0\tconf/raf-constants.json",
+    "100644 35900067cde32695648e8a84881c782412e980c3 0\tconf/raf.json",
+    "100644 b436441e484f3361adaa113a3475c1cce993b3fe 0\tconf/temporary-exceptions.json",
+    "100644 841f31ed042e570b2d5b0f769f77c20ab32cb939 0\tconf/test-runs.json",
+    "100644 9b9227e5281dcc24cd588b28a4f0f2f93498d767 0\tforeign.txt"
+  ],
+  "foreignAfter": [
+    "100644 9667b58b1d112058f664bddc4e435d2239276991 0\tconf/README.md",
+    "100644 ce1e4101ef3edc8ac16163a5cdda90ac9e3eec73 0\tconf/briefs/README.md",
+    "100644 2cd4a2fb0071696bb2515f81f8f6c7aeb2f2c8c0 0\tconf/briefs/completion.md",
+    "100644 1ac4d728f76680b78f7247b967a7340a9fe0d3a7 0\tconf/briefs/runners/agy.md",
+    "100644 64660e390de3bcadfc42c8d01be047cbdccdb1bc 0\tconf/briefs/runners/claude.md",
+    "100644 d59d09039bbc7a95ca229e28c6da48adb8bacf85 0\tconf/briefs/runners/codex.md",
+    "100644 65b5bc4b3ed389318088800dd4d1a3d150d0a4e7 0\tconf/briefs/runners/grok.md",
+    "100644 a067604bfa503927bf2ea603899c266a1da1f2e6 0\tconf/briefs/tasks/context-review.md",
+    "100644 5f452b821d018852e86b258f04b993190c8f50ba 0\tconf/briefs/tasks/coordinator.md",
+    "100644 aaafad2eaacdb84c30190c02d32913b85c27ec2a 0\tconf/briefs/tasks/design.md",
+    "100644 f69ef29baf03cfc05a6c7c76832fb03732c4c4e5 0\tconf/briefs/tasks/hotfix.md",
+    "100644 c51e2a2c089f88f4482ae6b2925a7767fcbadfe9 0\tconf/briefs/tasks/implement.md",
+    "100644 2854f21743319372b83e8571bc9f337ed1d1505c 0\tconf/briefs/tasks/main.md",
+    "100644 3bd74cd9425e5597ccab61a0fdb282bc0474ac02 0\tconf/briefs/tasks/qa.md",
+    "100644 12a20a05bb9c4afa68f742a03051398f7c8175fa 0\tconf/briefs/tasks/spec.md",
+    "100644 a57fece8ea322480456a6e0992538effe0340fed 0\tconf/briefs/tasks/test-scaffold.md",
+    "100644 13f91adea4482aa839c72edc10756c7e107b4d36 0\tconf/flow.json",
+    "100644 e92a8b96813a6bf38ef923e315f1181cbd7c4445 0\tconf/models.json",
+    "100644 badd15a9f29afbb4e6c0b452f33b7eebc300475c 0\tconf/project-priorities.json",
+    "100644 ca85a6087319d7a132046daef10e765eb009a214 0\tconf/projects.json",
+    "100644 a2f628ee994c4d9a60eb407bfad40ac721bb1e06 0\tconf/raf-constants.json",
+    "100644 35900067cde32695648e8a84881c782412e980c3 0\tconf/raf.json",
+    "100644 b436441e484f3361adaa113a3475c1cce993b3fe 0\tconf/temporary-exceptions.json",
+    "100644 841f31ed042e570b2d5b0f769f77c20ab32cb939 0\tconf/test-runs.json",
+    "100644 9b9227e5281dcc24cd588b28a4f0f2f93498d767 0\tforeign.txt"
+  ],
+  "assertions": "All settled snapshots have matching main ref/HEAD/gitlink/.gitmodules/readlink, retain foreign staged bytes, and cleanup is complete."
+}

@@ -171,7 +171,9 @@ export class MainSymlinkRelease {
         const current = await storage.inspect();
         assertLayout(current, storage.logicalPath);
         assertBase(previous, current);
-        if (requireFree) assertFree(current, destination);
+        const pending = await storage.readIntent();
+        if (pending && !same(pending, intent)) throw failure('MAIN_RECOVERY_REQUIRED', 'Another publication intent requires recovery');
+        if (requireFree) assertFree(pending ? { ...current, activationComplete: true } : current, destination);
       },
       writeIntent: () => storage.writeIntent(intent),
       reconcileGit: () => storage.reconcileGit(intent, destination),

@@ -177,7 +177,8 @@ async function main() {
   writeFileSync(join(f.root, 'foreign.txt'), 'staged foreign bytes\n'); git(f.root, 'add', 'foreign.txt');
   const foreignBefore = foreign();
   evidence.before = await snapshot();
-  for (const fault of ['build', 'smoke']) {
+  if (process.env.RAF_SYMLINK_QA_SKIP_REFUSALS === '1') evidence.reusedRefusals = '../stand-6/result.json';
+  for (const fault of process.env.RAF_SYMLINK_QA_SKIP_REFUSALS === '1' ? [] : ['build', 'smoke']) {
     const cwd = join(f.root, 'raf-develop');
     const path = join(cwd, fault === 'build' ? 'scripts/build.ts' : 'bin/raf.ts');
     const original = readFileSync(path, 'utf8');

@@ -1,0 +1,232 @@
+{
+  "source": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/z334-resumed-qa/recovery-1a9b5fd0/z334-evidence/summary.json",
+  "status": "succeeded",
+  "runId": "1a9b5fd0-9812-4f17-9508-90e65e3516e1",
+  "sourceSha": "91afad5b6b9dda7eb1e721c8d04abd4481d0aaad",
+  "scope": "recovery",
+  "inheritedEvidence": {
+    "live": {
+      "runId": "88157390-93ab-4007-a49c-3ca2ddc55946",
+      "sourceSha": "1968689352e27541408d5efedf01ba9704bc008a",
+      "path": "openspec/changes/complete-raf-flow-contracts/z334-qa/host2-1968689/live/summary.json",
+      "accepted": [
+        "setup",
+        "negative-gates",
+        "snapshot-gates",
+        "writer-barrier"
+      ]
+    },
+    "supplement": {
+      "runId": "097d7a09-2ff3-4bf8-ab5d-479b3f76131c",
+      "sourceSha": "1968689352e27541408d5efedf01ba9704bc008a",
+      "path": "openspec/changes/complete-raf-flow-contracts/z334-qa/host2-1968689/supplement/summary.json",
+      "accepted": "5/5; retained, not rerun"
+    },
+    "resumedLive": {
+      "runId": "c8722281-57a6-41e9-ba3f-96bd4cf552c8",
+      "sourceSha": "3037efa34f199a2fd63185398b5726617e7f6d33",
+      "path": "openspec/changes/complete-raf-flow-contracts/z334-resumed-qa/live-c8722281/z334-evidence/summary.json",
+      "accepted": [
+        "two-cycles",
+        "reader-kinds",
+        "publishers",
+        "live-reports-and-boundaries"
+      ],
+      "reportAudit": "openspec/changes/complete-raf-flow-contracts/z334-resumed-qa/live-c8722281/accepted-reports-audit.json",
+      "note": "All three reports and boundary probes accepted; worker close returned retry-safe pending. No successful neighbor close claimed."
+    }
+  },
+  "assertions": [
+    {
+      "name": "setup",
+      "status": "passed",
+      "base": "ff96cfb3e7619ffc5e321cb6b2cfc80512dc5db1",
+      "registry": "/tmp/z334-r91afad5-recovery/stand/root/.git/modules/raf-main/raf-hotfix/registry.json"
+    },
+    {
+      "name": "crash-before-intent",
+      "status": "passed",
+      "killed": [
+        null,
+        "SIGKILL"
+      ],
+      "recovery": {
+        "status": "idle",
+        "commit": "ff96cfb3e7619ffc5e321cb6b2cfc80512dc5db1",
+        "fingerprint": "17342a6e04262629c1088155bebadeab9f0e50d1c1f036719659781c114c05dd",
+        "pending": false
+      },
+      "base": "ff96cfb3e7619ffc5e321cb6b2cfc80512dc5db1",
+      "target": "f3c6e91e0084d9c6f92677ddfc17b98b2f0bc784",
+      "fingerprint": "665b45cf8679ce5837d570df79c274e3f21745ced396e0d6524fa7335e200cae"
+    },
+    {
+      "name": "crash-after-intent",
+      "status": "passed",
+      "killed": [
+        null,
+        "SIGKILL"
+      ],
+      "recovery": {
+        "status": "recovered",
+        "commit": "f3c6e91e0084d9c6f92677ddfc17b98b2f0bc784",
+        "fingerprint": "2931af789c4c0dcd5001afb7f29541394ba3080a1d63315a21d59b9051d9adff",
+        "pending": false
+      },
+      "base": "f3c6e91e0084d9c6f92677ddfc17b98b2f0bc784",
+      "target": "210906f731ebdcd2a6963e2780c14eb4d537f9d6",
+      "fingerprint": "f8c1bdd3da1d848dff511d64e5a4e0dbfd7fcfa4ff4d1563d32bab93906028d8"
+    },
+    {
+      "name": "crash-before-switch",
+      "status": "passed",
+      "killed": [
+        null,
+        "SIGKILL"
+      ],
+      "recovery": {
+        "status": "recovered",
+        "commit": "210906f731ebdcd2a6963e2780c14eb4d537f9d6",
+        "fingerprint": "a3a766eff32b10551d53bcb33e6eb70790b4e168dc2aecc0bf3eb7adf4f18c7c",
+        "pending": false
+      },
+      "base": "210906f731ebdcd2a6963e2780c14eb4d537f9d6",
+      "target": "c31b40c8d20913987863ded616dd7f091ef10d80",
+      "fingerprint": "e1ec012ff63f4b5d993f43060fa46b92d2370065c657ffdaf98c64949e53f636"
+    },
+    {
+      "name": "crash-after-switch",
+      "status": "passed",
+      "killed": [
+        null,
+        "SIGKILL"
+      ],
+      "recovery": {
+        "status": "recovered",
+        "commit": "799dfe815d94dba4a1348589b1784c29c5e8e3a4",
+        "fingerprint": "17cb55549dbbf7207093ca369755f7a8512a4dec23d190a47a0f3c72e01ad76f",
+        "pending": false
+      },
+      "base": "c31b40c8d20913987863ded616dd7f091ef10d80",
+      "target": "799dfe815d94dba4a1348589b1784c29c5e8e3a4",
+      "fingerprint": "ac80bed32a9b81c515a36d5cc8ba5989d339453bef9c82c5130ecff7c7f1c65c"
+    },
+    {
+      "name": "crash-after-refs",
+      "status": "passed",
+      "killed": [
+        null,
+        "SIGKILL"
+      ],
+      "recovery": {
+        "status": "recovered",
+        "commit": "629e14a4ee5bc2ebcf1f88f6603990144f68ef7c",
+        "fingerprint": "f30d561f8b7dd10523fa2096a4652112686838242e3f323e73d96f3d6bc519c5",
+        "pending": false
+      },
+      "base": "799dfe815d94dba4a1348589b1784c29c5e8e3a4",
+      "target": "629e14a4ee5bc2ebcf1f88f6603990144f68ef7c",
+      "fingerprint": "ec553345e1ab8f8f937bd9e060315c3451554fe151220a5f46fc96731f0ac24c"
+    },
+    {
+      "name": "crash-after-index",
+      "status": "passed",
+      "killed": [
+        null,
+        "SIGKILL"
+      ],
+      "recovery": {
+        "status": "recovered",
+        "commit": "d4a549df04bbcac87e2bde33433e8a10f094a512",
+        "fingerprint": "657401bb68941b498cfcc68b1ebdd64c39ad47498f8d0c4537067d03ed93bc4d",
+        "pending": false
+      },
+      "base": "629e14a4ee5bc2ebcf1f88f6603990144f68ef7c",
+      "target": "d4a549df04bbcac87e2bde33433e8a10f094a512",
+      "fingerprint": "75b419a3bbfa63ddc5628a80c1fb6975b07bebbabcbbb460db74996ded7c32c1"
+    },
+    {
+      "name": "crash-after-smoke",
+      "status": "passed",
+      "killed": [
+        null,
+        "SIGKILL"
+      ],
+      "recovery": {
+        "status": "recovered",
+        "commit": "7fc7449e3f943db03dcd90e73f9524a2a17e2426",
+        "fingerprint": "84cc19a28222c5b4e5b236a31d17550adf0d75831f104fe618a6ef3bc1dd8b07",
+        "pending": false
+      },
+      "base": "d4a549df04bbcac87e2bde33433e8a10f094a512",
+      "target": "7fc7449e3f943db03dcd90e73f9524a2a17e2426",
+      "fingerprint": "7b5513dc85b1dfa8ad92539bdbd3ca992cb928320127ac9ae082ba53a3a9fc2f"
+    },
+    {
+      "name": "crash-before-cleanup",
+      "status": "passed",
+      "killed": [
+        null,
+        "SIGKILL"
+      ],
+      "recovery": {
+        "status": "idle",
+        "commit": "4b73ee77063a716e504bb41fa9e04c2111399c01",
+        "fingerprint": "fbaa002106e2326179e7b4d56357f3560e997feca8e1d8b7bb7cb6551353ed8f",
+        "pending": false
+      },
+      "base": "7fc7449e3f943db03dcd90e73f9524a2a17e2426",
+      "target": "4b73ee77063a716e504bb41fa9e04c2111399c01",
+      "fingerprint": "2d254bb7b2b0e14261e4696039f3d4613920e90eb7048f033aed45236395bd3e"
+    },
+    {
+      "name": "crash-after-cleanup",
+      "status": "passed",
+      "killed": [
+        null,
+        "SIGKILL"
+      ],
+      "recovery": {
+        "status": "idle",
+        "commit": "61d7754e0509b1a3958ca0478d549f73e5d58078",
+        "fingerprint": "bb7eab5c331f995c191d2b92a8c8de246001e8fbd54a9f185d040e732535e529",
+        "pending": false
+      },
+      "base": "4b73ee77063a716e504bb41fa9e04c2111399c01",
+      "target": "61d7754e0509b1a3958ca0478d549f73e5d58078",
+      "fingerprint": "141234c063cddcf5f5b1c2feaf0af8da910f6fb3fe375d98fc2a89d73d8da0f5"
+    },
+    {
+      "name": "crash-recovery",
+      "status": "passed"
+    },
+    {
+      "name": "foreign-work-cleanup",
+      "status": "passed",
+      "later": "35da97b4-4168-4bf8-95bc-3a139f0fa45a",
+      "foreign": {
+        "head": "87829b507804c5bca8b3a87f578e32c9402d3289",
+        "tree": "87536a050c1843099b827eea156606099a84b177",
+        "index": "aa8f80ea14cc224c36ebd604ed83591cefd7cd3cfebfbaea24881dfa4328910a",
+        "status": "M  qa-z334/a.mjs\n M qa-z334/b.mjs\n?? qa-z334/foreign.txt",
+        "inode": 27844446,
+        "markers": [
+          "f6eda94ec9abcf4a0b154c048a124ee28fbd24b55168c8538e907b50cc2ad8c8",
+          "a78c93fa11b5ccccb08eb40d63712f5fb615d54bf66fd694d018b889f1c1b1ac"
+        ]
+      }
+    }
+  ],
+  "unexecuted": [],
+  "cleanup": {
+    "complete": true,
+    "errors": [],
+    "remaining": [],
+    "standRemoved": true
+  },
+  "limitations": [
+    "No unit tests run here. The z392 ledger remains unchanged.",
+    "No working ~/.raf or owner state is read, copied or migrated.",
+    "Host interruption or incomplete cleanup cannot produce succeeded."
+  ]
+}

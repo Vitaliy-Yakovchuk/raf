@@ -1,0 +1,71 @@
+{
+  "workspaceSha": "0a253a4f3c3fc4d0143e88b6291bd9b092e3547e",
+  "redTrackedDirty": [],
+  "qaTrackedDirty": [
+    "src/main-symlink-release.ts"
+  ],
+  "note": "Full untracked evidence inventory not captured before QA; unchanged regression came from 35a8720. Same group and QA HOME retained. Independent stderr unavailable from exec_command.",
+  "results": [
+    {
+      "name": "resumed-intent-red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/release --files test/main-symlink-release.test.ts",
+      "cliExitCode": 1,
+      "runId": "e00708e1-8179-4952-aa72-8b5cf1f9a1a3",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/main-symlink-release.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 63,
+      "knownRed": [
+        {
+          "file": "test/main-symlink-release.test.ts",
+          "name": "publication admits its own durable intent during the common engine second snapshot check"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "rawSha256": "ab965e903278e6140ee5d87a68d110f8dc77ea8f5b296f8ad600683ed39d4224"
+    },
+    {
+      "name": "resumed-intent-qa",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/release --files test/main-symlink-release.test.ts",
+      "cliExitCode": 0,
+      "runId": "7121b403-728a-49ea-b2fa-22fee5c5f2a0",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/main-symlink-release.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 64,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "rawSha256": "ecab2c9e011865468cbe55ad829affb4c60bccad9cc4f56514e51eafb235332a"
+    }
+  ]
+}

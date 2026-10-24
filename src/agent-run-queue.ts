@@ -193,9 +193,12 @@ export async function runAgentWithQueue(
       try { cleanup = await ports.cleanup(record, request.signal?.aborted ? 'cancelled' : 'launch-failed', context.reason ?? context.message); }
       catch (cause) { cleanup = { state: 'unknown', reason: cause instanceof Error ? cause.message : String(cause), completed: [], pending: ['launch cleanup'] }; }
     }
+    const pending = [...new Set([...context.pending, ...cleanup.pending])];
+    const retrySafe = cleanup.state === 'released' && pending.length === 0 &&
+      (supplied ? context.retrySafe === true : record !== null);
     return { exitCode: 1, stdout: '', stderr: JSON.stringify(redactDiagnostic({ code: context.code, message: context.message,
       details: { ...context, admission, cleanup, completed: [...new Set([...context.completed, ...cleanup.completed])],
-        pending: [...new Set([...context.pending, ...cleanup.pending])], retrySafe: cleanup.state === 'released' && context.retrySafe === true },
+        pending, retrySafe },
       remediation: context.remediation }, context.secrets)) };
   }
 }

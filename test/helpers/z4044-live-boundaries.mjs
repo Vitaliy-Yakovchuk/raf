@@ -6,7 +6,9 @@ import { spawnSync } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { observeOwnTmuxShutdown } from './z404-tmux-shutdown.ts';
 
-export async function checkBoundaries(own, actor) {
+export async function checkBoundaries(own, actor, runtimeAlias) {
+  assert.equal(runtimeAlias, `qa/z4044-main-alias-${actor}.sock`, 'actor-specific runtime alias required');
+  assert.ok(Buffer.byteLength(runtimeAlias) <= 107, 'runtime alias connect address fits sun_path');
   const config = JSON.parse(await fs.readFile('qa/z4044-boundaries.json', 'utf8'));
   const result = { runId: path.basename(own), actor, denied: [], ipc: [], tmux: [] };
   const deadline = config.transitionMs;
@@ -23,7 +25,7 @@ export async function checkBoundaries(own, actor) {
     socket.on('error', reject); socket.on('connect', () => { socket.destroy(); done(); });
   });
   for (const target of config.denyReads) await denied('read:' + target, () => fs.readFile(target), ['EACCES', 'EPERM', 'ENOENT', 'ENOTDIR']);
-  for (const target of [...config.endpoints, path.resolve('qa/z4044-main-alias.sock')]) await denied('unix:' + target, () => transport(target), ['EACCES', 'EPERM', 'ENOENT', 'ENOTDIR']);
+  for (const target of [...config.endpoints, runtimeAlias]) await denied('unix:' + target, () => transport(target), ['EACCES', 'EPERM', 'ENOENT', 'ENOTDIR']);
   for (const target of config.ports) await denied('tcp:' + target.host, () => transport(target), ['EACCES', 'EPERM', 'ENETUNREACH', 'EHOSTUNREACH']);
   const payload = `z4044-${actor}-${path.basename(own)}`;
   const old = process.cwd();

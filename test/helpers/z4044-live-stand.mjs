@@ -161,6 +161,7 @@ try {
   fs.mkdirSync(path.join(main, 'qa'), { recursive: true });
   fs.copyFileSync(path.join(here, 'z4044-live-worker.mjs'), path.join(main, 'qa/z331-worker.mjs'));
   fs.copyFileSync(path.join(here, 'z4044-live-boundaries.mjs'), path.join(main, 'qa/z4044-live-boundaries.mjs'));
+  fs.copyFileSync(path.join(here, 'z4044-runtime-alias.mjs'), path.join(main, 'qa/z4044-runtime-alias.mjs'));
   fs.copyFileSync(path.join(here, 'z404-tmux-shutdown.ts'), path.join(main, 'qa/z404-tmux-shutdown.ts'));
   const runnerProtocol = JSON.parse(fs.readFileSync(path.join(root, 'conf/raf.json'), 'utf8')).runnerProtocols.find(entry => entry.runner === 'codex');
   Object.assign(liveBoundaryConfig, { transitionMs: runnerProtocol.timeouts.transitionMs, pollMs: runnerProtocol.timeouts.pollMs });
@@ -175,7 +176,6 @@ try {
     }
   }
   fs.writeFileSync(path.join(main, 'qa/z4044-boundaries.json'), JSON.stringify(liveBoundaryConfig, null, 2) + '\n');
-  fs.symlinkSync(mainSocket, path.join(main, 'qa/z4044-main-alias.sock'));
   fs.writeFileSync(path.join(main, 'qa/conflict.txt'), 'baseline\n');
   git(main, 'add', '--', 'qa'); git(main, 'commit', '-m', 'qa: prepare Z331 isolated worker');
   git(root, 'init', '-b', 'main');
@@ -202,6 +202,7 @@ try {
   must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
   must(await request('service-start', ['service', 'start']));
   summary.liveHostControlsBefore = await hostControls();
+  assert.equal(git(hotfix, 'status', '--porcelain'), '', 'initial hotfix launch requires a clean fixture tree');
   const launchA = await request('launch-a', actorArgs('a', '1.1')); must(launchA);
   const a = await wait('session A', () => session('a'));
   await wait('worker A probe', () => probeReady(a));

@@ -273,7 +273,7 @@ for (const phase of ['implement', 'qa', 'hotfix']) {
 }
 
 for (const phase of ['test-scaffold', 'spec', 'design']) {
-  for (const requestedPhase of ['red', 'implement', 'qa', 'hotfix', phase]) {
+  for (const requestedPhase of [...(phase === 'test-scaffold' ? [] : ['red']), 'implement', 'qa', 'hotfix', phase]) {
     test(`T02 ${phase} cannot obtain ${requestedPhase} rights from command or edited brief`, async () => {
       const f = fixture(phase);
       await refused(f, f.command(`--files ${file}`, requestedPhase));
@@ -633,7 +633,7 @@ for (const runner of ['codex', 'claude'] as const) {
   for (const phase of ['implement', 'qa', 'hotfix', 'test-scaffold', 'spec', 'design']) {
     test(`T13 ${runner}/${phase} brief and actual host allowlist agree`, () => {
       const access = sandboxRafCommandAccess(assignment(phase), runner, entrypoint, configuration().phases);
-      const allowed = ['implement', 'qa', 'hotfix'].includes(phase);
+      const allowed = ['implement', 'qa', 'hotfix', 'test-scaffold'].includes(phase);
       assert.equal(access.raf_subcommands.includes('test run'), allowed);
       assert.equal(access.hostCommands.includes(`${access.raf_command} test run`), allowed);
       assert.ok(access.raf_subcommands.includes('agent message'));

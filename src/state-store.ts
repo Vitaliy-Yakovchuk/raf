@@ -1,4 +1,5 @@
 import { aggregateRafCostSample, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
+import { initializeForcedCloseMetricsInTransaction, recordForcedCloseFinalizationInTransaction, recordForcedCloseRefusalInTransaction, readForcedCloseMetrics, type ForcedCloseMetricsSnapshot } from './forced-close-metrics.ts';
 import { readRafCostPolicy } from './raf-cost-runtime.ts';
 import { initializeResourceUsage } from './resource-usage.ts';
 import { accountSessionUsage } from './resource-usage-runtime.ts';
@@ -94,10 +95,12 @@ export interface StateStore {
   costProfileRepository: RafCostProfileRepository;
   recordCostSample(sample: RafCostSample): void;
   readCostProfile(): RafCostProfileSnapshot;
+  readForcedCloseMetrics(readAt?: string): ForcedCloseMetricsSnapshot;
+  recordForcedCloseRefusal(code: string, observedAt: string): void;
 }
 
-export const STATE_SCHEMA_VERSION = 17;
-export const STATE_SCHEMA_SUPPORTED_VERSIONS = [17] as const;
+export const STATE_SCHEMA_VERSION = 18;
+export const STATE_SCHEMA_SUPPORTED_VERSIONS = [17, 18] as const;
 
 export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
@@ -448,6 +451,11 @@ export function openStateStore(path: string, options?: import('./state-migration
             `);
             options?.afterMigrationStep?.(17);
           }
+          if (current < 18) {
+            initializeForcedCloseMetricsInTransaction(db, new Date().toISOString());
+            db.exec('PRAGMA user_version = 18');
+            options?.afterMigrationStep?.(18);
+          }
         });
       }
       for (let attempt = 0; ; attempt++) {
@@ -569,6 +577,10 @@ export function openStateStore(path: string, options?: import('./state-migration
       }),
       listSessions: () => access(() => db.prepare("SELECT payload FROM sessions").all().map(row => JSON.parse(row.payload as string) as SessionRecord)),
       putSession: session => access(() => {
+        const previous = tx.getSession(session.runId);
+        if (session.state === 'finished' && previous && previous.state !== 'finished' && Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) {
+          recordForcedCloseFinalizationInTransaction(db, { runId: session.runId, previousState: previous.state, forced: !!previous.result?.forcedClose, finishedAt: session.finishedAt! });
+        }
         if (Number(db.prepare("PRAGMA user_version").get()?.user_version) >= 15) accountSessionUsage(db, session, options?.context?.orchestratorRoot);
         if (session.state === 'finished') settleStartupContextReview(db, { reviewRunId: session.runId, status: session.result?.status ?? 'failed', finishedAt: session.finishedAt! });
         db.prepare(`INSERT INTO sessions(run_id, address_id, state, finished_at, payload) VALUES (?, ?, ?, ?, ?)
@@ -968,6 +980,12 @@ export function openStateStore(path: string, options?: import('./state-migration
     },
     readCostProfile() {
       return { schemaVersion: profilePolicy().schemaVersion, readAt: new Date().toISOString(), rows: costProfileRepository.readRows() };
+    },
+    readForcedCloseMetrics(readAt = new Date().toISOString()) {
+      return operation('readForcedCloseMetrics', () => readForcedCloseMetrics(db, readAt));
+    },
+    recordForcedCloseRefusal(code, observedAt) {
+      operation('recordForcedCloseRefusal', () => transaction(() => recordForcedCloseRefusalInTransaction(db, code, observedAt)));
     },
     recordCommandDuration(command, durationMs, alpha) {
       if (!Number.isFinite(durationMs) || durationMs < 0) throw new Error("Duration must be finite and nonnegative");

@@ -375,7 +375,8 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const state = await store();
       const budget = loaded.commandTiming.sqliteOnlyMeanBudgetMs;
       if (!Number.isFinite(budget) || budget! <= 0) throw fail('CONFIGURATION_INVALID', 'configuration', 'Invalid commandTiming.sqliteOnlyMeanBudgetMs');
-      return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile() };
+      const forcedClose = state.readForcedCloseMetrics(new Date(dependencies.now()).toISOString());
+      return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile(), health: { readAt: forcedClose.readAt, since: forcedClose.since, forcedClose } };
     },
   };
   if (dependencies.commandState) for (const name of reminderCommands) builtins[name] = async params => createReminderHandlers(await statePorts())[name](params);
@@ -401,6 +402,10 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       return await handler(params);
     } catch (error) {
       original = error;
+      if (name === 'agent close' && (params.force === true || params.reason !== undefined) && opening) {
+        try { (await opening).recordForcedCloseRefusal(failureContext(error)?.code ?? 'HANDLER_FAILED', new Date(dependencies.now()).toISOString()); }
+        catch { }
+      }
       if (failureContext(error)) throw error;
       throw fail('HANDLER_FAILED', 'handler', describe(error), { sourceCode: (error as { code?: string })?.code ?? null });
     } finally {

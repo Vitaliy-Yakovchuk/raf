@@ -80,7 +80,7 @@ export class AgentControlService {
     return session.activity ? [{ kind, session: structuredClone(session), project: session.activity.project }] : [];
   }
 
-  private async inspect(identity: ProcessIdentity): Promise<ProcessObservation> {
+  private async inspect(identity: ProcessIdentity, requireOwnership = false): Promise<ProcessObservation> {
     let observation: ProcessObservation;
     try {
       observation = await this.dependencies.scanner.inspect(identity);
@@ -88,6 +88,7 @@ export class AgentControlService {
       observation = { state: 'unknown', observedAt: new Date().toISOString(), error: String(error) };
     }
     if (observation.state === 'alive' && !this.sameProcess(identity, observation.identity)) {
+      if (requireOwnership) throw new Error('Session is not confirmed alive: process ownership changed');
       observation = { state: 'exited', observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity no longer belongs to this run' };
     }
     return observation;
@@ -196,7 +197,7 @@ export class AgentControlService {
     if (session.state !== 'running' || !session.process) {
       throw new Error(`Session is not confirmed alive: ${id}`);
     }
-    const observation = await this.inspect(session.process);
+    const observation = await this.inspect(session.process, true);
     if (observation.state !== 'alive') {
       if (observation.state === 'exited') return closeExited(observation);
       throw new Error(`Session is not confirmed alive: ${id}`);

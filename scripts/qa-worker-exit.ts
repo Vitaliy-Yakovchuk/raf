@@ -47,6 +47,7 @@ for (const hasReport of [true, false]) {
     const executable = join(f.binRoot, 'codex');
     const frame = codexPastedBriefFixture(20177);
     const acceptedPath = join(f.root, 'native-accepted.json');
+    const waitingPath = join(f.root, 'worker-waiting.json');
     await fs.writeFile(executable, String.raw`#!${process.execPath}
 import { writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -107,7 +108,7 @@ process.stdin.on('data', text => {
     delete environment.TMUX; delete environment.TMUX_PANE;
     const started = await launchPersistentWrapper({ tmpRoot: f.tmpRoot, runId, address: f.params.id, assignment: f.assignment, reportedCommits: session()!.launchContext!.reportedCommits, statePath: f.statePath, cwd: f.cwd, tmuxSession, selection, brief, reportPath: prepared.reportPath, readinessTimeoutMs: settings.timeouts.startupMs }, {
       timeoutMs: settings.timeouts.overallMs,
-      workerCommand: { executable: process.execPath, environment, args: ['--input-type=module', '-e', `const trace=await import(${JSON.stringify(pathToFileURL(join(source, 'scripts/qa-worker-trace.ts')).href)});trace.traceWorkerCommands(${JSON.stringify(trace)},${JSON.stringify(settings)},${JSON.stringify(brief)});const m=await import(${JSON.stringify(f.runtimeUrl)});await m.runProductionWorker();`] },
+      workerCommand: { executable: process.execPath, environment, args: ['--input-type=module', '-e', `const trace=await import(${JSON.stringify(pathToFileURL(join(source, 'scripts/qa-worker-trace.ts')).href)});trace.traceWorkerCommands(${JSON.stringify(trace)},${JSON.stringify(settings)},${JSON.stringify(brief)});const cp=await import('node:child_process');const fs=await import('node:fs');const mod=await import('node:module');const spawn=cp.default.spawn;cp.default.spawn=function(...args){const argv=args[1];const i=Array.isArray(argv)?argv.indexOf('wait-for'):-1;if(i>=0&&argv[i+1]?.startsWith('raf-exit-'))fs.writeFileSync(${JSON.stringify(waitingPath)},JSON.stringify({pid:process.pid,startedAt:Date.now()}));return Reflect.apply(spawn,this,args);};mod.syncBuiltinESMExports();const m=await import(${JSON.stringify(f.runtimeUrl)});await m.runProductionWorker();`] },
     });
     workerPid = started.wrapperPid; runnerPid = started.identity.pid;
     row.delivery = JSON.parse(await fs.readFile(acceptedPath, 'utf8'));
@@ -120,11 +121,17 @@ process.stdin.on('data', text => {
       return result.stdout;
     };
     await tmux(['new-session', '-d', '-s', 'stand-keeper', 'sleep', '600']);
+    const waitingDeadline = Date.now() + settings.timeouts.startupMs;
+    while (!(await fs.stat(waitingPath).catch(() => null))) {
+      assert.ok(Date.now() < waitingDeadline, 'worker did not enter event wait before idle measurement');
+      await delay(settings.timeouts.pollMs);
+    }
+    row.eventWait = JSON.parse(await fs.readFile(waitingPath, 'utf8'));
     await delay(settings.timeouts.pollMs * 2);
     const ticks = async () => (await fs.readFile(`/proc/${workerPid}/stat`, 'utf8')).split(') ')[1].split(' ').slice(11, 13).map(Number).reduce((a, b) => a + b);
     const before = { at: Date.now(), ticks: await ticks(), commands: (await fs.readFile(trace, 'utf8')).trim().split('\n').length };
     await delay(settings.timeouts.pollMs * 10);
-    row.idle = { durationMs: Date.now() - before.at, cpuTicks: await ticks() - before.ticks, completedCommands: (await fs.readFile(trace, 'utf8')).trim().split('\n').length - before.commands };
+    row.idle = { startedAt: before.at, durationMs: Date.now() - before.at, cpuTicks: await ticks() - before.ticks, completedCommands: (await fs.readFile(trace, 'utf8')).trim().split('\n').length - before.commands };
     if (hasReport) await fs.writeFile(prepared.reportPath, JSON.stringify({ status: 'failed', answer: 'Synthetic failed report retained', changes: [{ id: 'fixture-launch', items: [{ id: '2.1', status: 'failed', reason: 'Synthetic failure' }] }], commits: [] }));
     const removedAt = Date.now();
     await tmux(['kill-session', '-t', '=' + tmuxSession]);

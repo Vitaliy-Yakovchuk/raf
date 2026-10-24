@@ -1,4 +1,4 @@
-import { ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, type ConfirmationBudget } from './report-confirmation-retry.ts';
+import { ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, confirmationStateTransient, readConfirmationJournal, type ConfirmationBudget } from './report-confirmation-retry.ts';
 import { constants } from 'node:fs';
 import { lstat, realpath, open, readFile, writeFile, mkdtemp, rm, copyFile, rename } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -133,7 +133,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
       for (const item of change.items) { current = { change: change.id, item: item.id }; lineFor(content, item.id, item.description); }
     }
     await checkpoint('validated', null);
-    const recorded = await ports.operations.read(request.runId);
+    const recorded = await readConfirmationJournal(() => ports.operations.read(request.runId));
     if (!Array.isArray(recorded)) throw new Error('Invalid checkbox operation journal');
     let operations = [...recorded];
     if (operations.some(row => row.runId !== request.runId || !request.assignment.changes.some(change => change.id === row.change && change.items.some(item => item.id === row.item)))) throw new Error('Operation journal differs from launch assignment');
@@ -190,7 +190,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
     const gitDirectory = (await git(['rev-parse', '--absolute-git-dir'])).trim();
     lockPath = join(gitDirectory, 'raf-task-checkbox.lock');
     const contention = () => new ConfirmationTransientError('writer-busy', 'Task checkbox writer changed or is busy; retry confirmation');
-    let turnover = false;
+    let contended = false;
     try { lock = await open(lockPath, 'wx', 0o600); }
     catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
@@ -205,20 +205,22 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
         try { process.kill(owner.pid, 0); }
         catch (probe) { if ((probe as NodeJS.ErrnoException).code !== 'ESRCH') throw probe; alive = false; }
         const after = await lstat(lockPath);
-        turnover = before.ino !== after.ino || before.mtimeMs !== after.mtimeMs || before.dev !== after.dev;
-        if (!turnover) {
-          if (alive) throw contention();
-          await rm(lockPath);
-          try { lock = await open(lockPath, 'wx', 0o600); }
-          catch (acquire) { if ((acquire as NodeJS.ErrnoException).code === 'EEXIST') throw contention(); throw acquire; }
+        contended = before.ino !== after.ino || before.mtimeMs !== after.mtimeMs || before.dev !== after.dev;
+        if (!contended) {
+          if (alive) contended = true;
+          else {
+            await rm(lockPath);
+            try { lock = await open(lockPath, 'wx', 0o600); }
+            catch (acquire) { if ((acquire as NodeJS.ErrnoException).code === 'EEXIST') throw contention(); throw acquire; }
+          }
         }
       } catch (probe) {
         if ((probe as NodeJS.ErrnoException).code !== 'ENOENT') throw probe;
         if (!knownOwner) throw contention();
-        turnover = true;
+        contended = true;
       }
     }
-    if (turnover) {
+    if (contended) {
       if (await completed()) {
         for (const operation of operations) commits.push({ change: operation.change, item: operation.item, sha: operation.sha! });
         const identityAfter = await ports.verifySourceIdentity(request.assignment, archives);
@@ -437,7 +439,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
     await checkpoint('after-verification', null);
     for (const operation of operations) if (operation.runId === request.runId && operation.sha) await save({ ...operation, phase: 'verified' });
     return { ...verification, commits, awaitingArchive };
-  } catch (error) { if (checkpointError === error) throw error; return { ...reject(errorText(error)), ...(error instanceof ConfirmationBudgetExhaustedError ? { budgetExhausted: true } : {}), ...(confirmationTransient(error) ? { transient: error.cause } : {}) }; }
+  } catch (caught) { if (checkpointError === caught) throw caught; const error = confirmationStateTransient(caught) ?? caught; return { ...reject(errorText(error)), ...(error instanceof ConfirmationBudgetExhaustedError ? { budgetExhausted: true } : {}), ...(confirmationTransient(error) ? { transient: error.cause } : {}) }; }
   finally {
     if (scratch) await rm(scratch, { recursive: true, force: true });
     if (lock) { await lock.close(); await rm(lockPath!); }

@@ -1,4 +1,4 @@
-import { confirmReportWithRetry, ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, type ConfirmationBudget, type ConfirmationStepResult, type PendingConfirmation } from './report-confirmation-retry.ts';
+import { confirmReportWithRetry, ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, confirmationStateTransient, readConfirmationJournal, type ConfirmationBudget, type ConfirmationStepResult, type PendingConfirmation } from './report-confirmation-retry.ts';
 import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import { validStartupContextAssessment, type StartupContextAssessment } from './startup-context.ts';
 import { isAbsolute, join } from 'node:path';
@@ -138,10 +138,12 @@ export async function verifyPendingAgentReportFreshness(request: AgentReportRequ
     if (!await sameReportBytes(path, snapshot.bytes, snapshot.content, ports)) throw new Error('Report snapshot changed before durable worker acceptance; retry the complete report');
     await verifyCurrentReport(request, path, ports);
     if (!ports.readTaskCheckboxCommits) throw new Error('Reported commit acceptance ports are unavailable');
-    await validateReportedCommitGroups(request.reportedCommits!, result.report!.commits!, await ports.readTaskCheckboxCommits(request.runId));
+    await validateReportedCommitGroups(request.reportedCommits!, result.report!.commits!, await readConfirmationJournal(() => ports.readTaskCheckboxCommits!(request.runId)));
     if (snapshot.deadline !== undefined && performance.now() >= snapshot.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before durable acceptance');
   } catch (error) {
     if (error instanceof ConfirmationBudgetExhaustedError || confirmationTransient(error)) throw error;
+    const transient = confirmationStateTransient(error);
+    if (transient) throw transient;
     await rejectPendingAgentReport(request, result, ports, error instanceof Error ? error.message : String(error));
     throw error;
   }
@@ -208,7 +210,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
   const rejectStep = (reason: string): ConfirmationStepResult => ({ kind: 'rejected', failure: { code: 'REPORT_UNVERIFIED', reason } });
   const runStep = async (operation: () => Promise<ConfirmationStepResult>): Promise<ConfirmationStepResult> => {
     try { return await operation(); }
-    catch (error) { return error instanceof ConfirmationBudgetExhaustedError ? { kind: 'budget-exhausted', reason: error.message } : confirmationTransient(error) ? { kind: 'transient', cause: error.cause, reason: error.message } : rejectStep(error instanceof Error ? error.message : String(error)); }
+    catch (caught) { const error = confirmationStateTransient(caught) ?? caught; return error instanceof ConfirmationBudgetExhaustedError ? { kind: 'budget-exhausted', reason: error.message } : confirmationTransient(error) ? { kind: 'transient', cause: error.cause, reason: error.message } : rejectStep(error instanceof Error ? error.message : String(error)); }
   };
   const source = async (): Promise<ConfirmationStepResult> => {
     if (!ports.verifyAssignmentSourceIdentity) return request.reportedCommits ? rejectStep('Assignment source verification is unavailable') : { kind: 'ok' };
@@ -227,7 +229,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
     if (!request.reportedCommits) return [];
     await verifyCurrentReport(request, path, ports);
     if (!ports.readTaskCheckboxCommits || !ports.reconcileReportedCommitIndex) throw new Error('Reported commit acceptance ports are unavailable');
-    return validateReportedCommitGroups(request.reportedCommits, report.commits!, await ports.readTaskCheckboxCommits(request.runId));
+    return validateReportedCommitGroups(request.reportedCommits, report.commits!, await readConfirmationJournal(() => ports.readTaskCheckboxCommits!(request.runId)));
   };
   const outcome = await confirmReportWithRetry({ runId: request.runId, reportPath: path, runner: retry.runner,
     route: 'reconciliation', trigger: 'snapshot', launchIdentity: JSON.stringify(request.assignment) }, {
@@ -345,11 +347,11 @@ async function readReportSnapshot(request: AgentReportRequest, ports: PendingAge
       if (!verifiedSource?.ok) throw new Error(`Assignment source identity changed or is unavailable: ${verifiedSource ? issueText(verifiedSource.issues) : 'source verification is unavailable'}`);
       if (request.reportedCommits) {
         if (!ports.readTaskCheckboxCommits || !ports.reconcileReportedCommitIndex) throw new Error('Reported commit acceptance ports are unavailable');
-        const checkbox = await ports.readTaskCheckboxCommits(request.runId);
+        const checkbox = await readConfirmationJournal(() => ports.readTaskCheckboxCommits!(request.runId));
         const groups = await validateReportedCommitGroups(request.reportedCommits, report.commits!, checkbox);
         for (const group of groups) {
           await verifyCurrentReport(request, path, ports);
-          await validateReportedCommitGroups(request.reportedCommits, report.commits!, await ports.readTaskCheckboxCommits(request.runId));
+          await validateReportedCommitGroups(request.reportedCommits, report.commits!, await readConfirmationJournal(() => ports.readTaskCheckboxCommits!(request.runId)));
           await ports.reconcileReportedCommitIndex(group);
         }
       }

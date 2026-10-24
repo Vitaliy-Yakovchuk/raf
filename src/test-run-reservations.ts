@@ -189,7 +189,7 @@ export async function runResourceReservedTestRun(
     }
     result.resourceUsage = claim ? await ports.resources.resourceUsage?.(claim) ?? null : null;
     if (result.runId === runId) result.durationMs = ports.clock.now() - started;
-    if (!refusal) await ports.state.transaction(tx => {
+    if (!refusal && owned) await ports.state.transaction(tx => {
       const group = tx.get(key);
       if (group?.lastResult?.runId === result!.runId) { group.lastResult = result!; tx.put(group); }
     });

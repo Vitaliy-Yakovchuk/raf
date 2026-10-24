@@ -125,7 +125,7 @@ export async function recoverTestRun(
     const pending = group.delivery?.pending && group.lastResult?.runId === group.delivery.runId;
     if (!flight && !pending) return reply;
     if (flight && group.lastResult?.runId === flight.runId && group.lastResult.cleanup.complete && !flight.recoveryReleasePending) {
-      group = await ports.state.transaction(tx => { const current = tx.get(input.key); if (current?.inFlight?.runId !== flight!.runId || current.lastResult?.runId !== flight!.runId) return null; current.delivery ??= delivery(flight!.runId); tx.put(current); return current; });
+      group = await ports.state.transaction(tx => { const current = tx.get(input.key); if (current?.inFlight?.runId !== flight!.runId || current.lastResult?.runId !== flight!.runId) return null; current.delivery ??= delivery(flight!.runId); current.inFlight = null; current.state = current.lastResult.groupState!; tx.put(current); return current; });
       if (!group) return reply;
       flight = null;
     }
@@ -261,7 +261,7 @@ async function forward(reply: RecoveryReply, ports: StateRecoveryPorts): Promise
   try {
     const receipt = await ports.messageMain(reply);
     if (reply.delivery) {
-      reply.delivery.receiptId = receipt.receiptId;
+      if (receipt.accepted && receipt.receiptId) reply.delivery.receiptId = receipt.receiptId;
       reply.delivery.forwardedToMain = receipt.accepted && receipt.forwarded;
       if (reply.delivery.forwardedToMain) reply.delivery.pending = false;
     }

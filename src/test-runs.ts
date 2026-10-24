@@ -432,6 +432,8 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   try {
     diagnostics = new TestRunDiagnostics((configInput as TestRunConfig)?.diagnostics, { workspace: context.workspace, qaHome: context.home, fixtureRoots: [] });
     config = validateTestRunConfig(configInput, context.agentPhases, policy, context.integrationTests);
+    const configuredProfile = config.projects[request.project]?.profiles[config.projects[request.project]?.groups[request.group]?.profileId];
+    if (configuredProfile) { result.testKind = profileTestKind(configuredProfile); result.timeoutPolicy = testRunTimeoutPolicy(result.testKind, { unitTests: policy, integrationTests: context.integrationTests }); }
     if (!context.agentPhases.includes(request.phase)) failure('UNKNOWN_PHASE');
     if (!config.phases[request.phase].allowed) failure('PHASE_NOT_ALLOWED');
     refuseFullUnitSuite(request, config);

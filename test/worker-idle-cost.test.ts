@@ -66,7 +66,7 @@ test('worker report confirmation reuses its verified environment across checkbox
   assert.equal(repeated.ok, true, JSON.stringify(repeated));
   assert.deepEqual(repeated.commits, first.commits, 'rechecking a report preserves checkbox provenance');
   assert.ok(commands.length > 0, 'fresh Git verification remains enabled');
-  t.diagnostic(JSON.stringify({ firstGitCommands, repeatedGitCommands: commands.length, originRevalidations: validations }));
+  t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', test: { file: 'test/worker-idle-cost.test.ts', name: t.name }, message: JSON.stringify({ firstGitCommands, repeatedGitCommands: commands.length, originRevalidations: validations }), location: null, stack: [], redacted: false, truncated: false }] }));
   assert.equal(validations, 0, 'waiting worker must not revalidate its origin inventory per checkbox Git operation');
   assert.match(await readFile(f.tasksPath, 'utf8'), /\[x\] 2\.1/);
   assert.match(await readFile(f.tasksPath, 'utf8'), /\[ \] 2\.2/);

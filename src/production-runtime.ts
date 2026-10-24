@@ -325,7 +325,7 @@ export function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stat
   if (override) return override;
   const preparedEnvironment = snapshotEnvironment ? { ...(context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env) } : undefined;
   return async command => {
-    const environment = preparedEnvironment ?? (context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env);
+    const environment = { ...(preparedEnvironment ?? (context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env)), ...command.environment };
     if (command.executable !== 'tmux') return executeCommand({ ...command, environment });
     const socketPath = await runtimeTmuxSocket(context, environment);
     const args = [...command.args];
@@ -519,7 +519,7 @@ export async function confirmReportedTasks(store: StateStore, context: RuntimeCo
         finally { await fs.rm(temporary, { force: true }); }
       },
     },
-    executeGit: async (args, options) => { const environment = context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env; const result = await (identityExecute ?? executeCommand)({ executable: 'git', args, cwd: options.cwd, environment: { ...environment, ...options.env } }); return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr }; },
+    executeGit: async (args, options) => { const result = await execute({ executable: 'git', args, cwd: options.cwd, environment: options.env }); return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr }; },
     beforeWrite: async () => {
       if (performance.now() >= indexDeadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before checkbox write');
       if (beforeWrite) await beforeWrite();

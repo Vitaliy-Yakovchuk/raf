@@ -1,0 +1,11 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts",
+  "sha": "9a8c851bed373bd78bd62858449b946bd73fc0fc",
+  "workspaceChanges": [
+    "untracked evidence/profile-raf-performance-5.1",
+    "preexisting untracked node_modules"
+  ],
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "streamCapture": "Tool output contains result then stderr queue notice; separated without changing JSON result"
+}

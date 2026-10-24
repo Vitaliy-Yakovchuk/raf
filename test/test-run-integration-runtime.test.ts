@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runTestRun, reconcileTestRunGroup } from '../src/test-runs.ts';
 import type { TestRunRequest } from '../src/test-runs.ts';
-import { RunHarness, policy, flushMicrotasks } from './helpers/test-run-fixture.ts';
+import { RunHarness, policy, flushMicrotasks, fixtureGroup } from './helpers/test-run-fixture.ts';
+import { reconcileTestRunResources, type ResourceReservedTestRunPorts, type TestRunResourceClaim } from '../src/test-run-reservations.ts';
 import { runSandboxTestCommand } from '../src/sandbox-test-run.ts';
 import type { SandboxTestAssignment, SandboxTestRunPorts } from '../src/sandbox-test-run.ts';
 
@@ -111,6 +112,64 @@ test('integration runtime: cleanup failure retains reservation, original budget 
   await reconcileTestRunGroup(groupKey(h), policy, h.context, h.ports);
   assert.equal(h.reconcileCalls, 1);
   assert.equal(h.spawns.length, 1);
+});
+
+test('integration runtime: resource recovery terminates an expired crashed tree with its saved budget exactly once', async () => {
+  const h = harness();
+  const startedAtMs = h.clock.now();
+  const deadlineMs = startedAtMs + budget;
+  const processIdentity = 'verified-crashed-tree';
+  const claim: TestRunResourceClaim = {
+    machineId: 'machine', testRunId: 'crashed-run', fence: 'original-fence',
+    groupKey: groupKey(h), deadlineMs, processIdentity,
+  };
+  h.state.seed(fixtureGroup({
+    key: groupKey(h), testKind: 'integration', profileId: 'integration', state: 'running',
+    selection: { files: [file], testIds: [] },
+    inFlight: { runId: claim.testRunId, startedAtMs, deadlineMs, processIdentity,
+      timeoutPolicy: { source: 'conf/flow.json#/integrationTests/timeoutMs', timeoutMs: budget }, callerPhase: 'qa' },
+  }));
+  // A changed conf must not grant an abandoned reservation a fresh budget.
+  h.context.integrationTests = { timeoutMs: budget * 10 };
+  let alive = true;
+  let released = false;
+  let recoveries = 0;
+  const unexpected = async () => assert.fail('recovery must not reserve or spawn a new run');
+  const ports: ResourceReservedTestRunPorts = {
+    ...h.ports, machineId: claim.machineId,
+    async reconcile(identity, deadline) {
+      recoveries++;
+      assert.equal(identity, processIdentity);
+      assert.equal(deadline, deadlineMs);
+      alive = false;
+      return { alive: false, deadlineReached: true, cleanup: { complete: true, remainingPids: [] } };
+    },
+    resources: {
+      estimateProfile: unexpected, prepare: unexpected, commit: unexpected, current: unexpected, bindProcess: unexpected,
+      async list() { return released ? [] : [claim]; },
+      async observeTree() { return { state: alive ? 'alive' : 'dead', processIdentity, consumed: null }; },
+      accountUsage: unexpected,
+      async release() { assert.equal(alive, false, 'capacity is released only after verified termination'); released = true; return true; },
+    },
+  };
+  assert.deepEqual((await reconcileTestRunResources(h.context, policy, ports)).retained, [claim]);
+  assert.equal(recoveries, 0, 'a live tree before its saved deadline stays reserved');
+  h.clock.advance(budget);
+  const recovered = await reconcileTestRunResources(h.context, policy, ports);
+  assert.equal(recoveries, 1, 'expired verified trees must reach process reconciliation');
+  assert.deepEqual(recovered, { released: [claim], retained: [] });
+  const aggregate = h.state.get(groupKey(h))!;
+  assert.equal(aggregate.inFlight, null);
+  assert.equal(aggregate.timeoutCount, 1);
+  assert.equal(aggregate.lastResult?.runId, claim.testRunId);
+  assert.equal(aggregate.lastResult?.timeoutPolicy?.timeoutMs, budget);
+  assert.equal(aggregate.lastResult?.callerPhase, 'qa');
+  assert.equal(aggregate.lastResult?.nextAction, 'complete-integration');
+  assert.equal(aggregate.lastResult?.cleanup.complete, true);
+  await reconcileTestRunResources(h.context, policy, ports);
+  assert.equal(h.state.get(groupKey(h))!.timeoutCount, 1);
+  assert.equal(recoveries, 1);
+  assert.equal(h.spawns.length, 0);
 });
 
 test('integration runtime: group kind/profile are pinned across reclassification', async () => {

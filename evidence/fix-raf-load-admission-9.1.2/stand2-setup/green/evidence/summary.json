@@ -1,0 +1,25 @@
+{
+  "revision": "workspace",
+  "sha": "6ea5bf9f617f6bb247c022c12c51f9cc4958e42b",
+  "dirty": "?? node_modules",
+  "timeoutSource": "conf/raf.json#/runnerProtocols/codex/timeouts/transitionMs",
+  "timeoutMs": 10000,
+  "results": [
+    {
+      "hasReport": true,
+      "sha": "6ea5bf9f617f6bb247c022c12c51f9cc4958e42b",
+      "revision": "workspace",
+      "error": "Error: Wrapper launch exit-report failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-24T20:48:43.066Z worker started run=exit-report pid=917628 ppid=917273\nexit-report: worker process group=917628 session=917628 pidNamespace=pid:[4026531836]\nfile:///tmp/f912-2Zfx/raf-prod-8V011B/raf-develop/src/cli.ts:31\n  const error = new Error(context.message);\n                ^\n\nError: Codex sandbox isolation unavailable: preflight probe exited 1: 11B/bin/codex:4\nprocess.stdin.setRawMode(true);\n              ^\n\nTypeError: process.stdin.setRawMode is not a function\n    at file:///tmp/f912-2Zfx/raf-prod-8V011B/bin/codex:4:15\n    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)\n    at async node:internal/modules/esm/loader:650:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)\n\nNode.js v26.12.1\n    at commandFailure (file:///tmp/f912-2Zfx/raf-prod-8V011B/raf-develop/src/cli.ts:31:17)\n    at fail (file:///tmp/f912-2Zfx/raf-prod-8V011B/raf-develop/src/production-runtime.ts:77:81)\n    at Module.runProductionWorker (file:///tmp/f912-2Zfx/raf-prod-8V011B/raf-develop/src/production-runtime.ts:1376:57)\n    at async file:///tmp/f912-2Zfx/raf-prod-8V011B/raf-develop/[eval1]:1:23656\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "passed": false,
+      "cleanup": "owned fixture processes stopped and fixture removed"
+    },
+    {
+      "hasReport": false,
+      "sha": "6ea5bf9f617f6bb247c022c12c51f9cc4958e42b",
+      "revision": "workspace",
+      "error": "Error: Wrapper launch exit-missing failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-24T20:48:46.647Z worker started run=exit-missing pid=918009 ppid=917273\nexit-missing: worker process group=918009 session=918009 pidNamespace=pid:[4026531836]\nfile:///tmp/f912-2Zfx/raf-prod-yCVvbK/raf-develop/src/cli.ts:31\n  const error = new Error(context.message);\n                ^\n\nError: Codex sandbox isolation unavailable: preflight probe exited 1: vbK/bin/codex:4\nprocess.stdin.setRawMode(true);\n              ^\n\nTypeError: process.stdin.setRawMode is not a function\n    at file:///tmp/f912-2Zfx/raf-prod-yCVvbK/bin/codex:4:15\n    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)\n    at async node:internal/modules/esm/loader:650:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)\n\nNode.js v26.12.1\n    at commandFailure (file:///tmp/f912-2Zfx/raf-prod-yCVvbK/raf-develop/src/cli.ts:31:17)\n    at fail (file:///tmp/f912-2Zfx/raf-prod-yCVvbK/raf-develop/src/production-runtime.ts:77:81)\n    at Module.runProductionWorker (file:///tmp/f912-2Zfx/raf-prod-yCVvbK/raf-develop/src/production-runtime.ts:1376:57)\n    at async file:///tmp/f912-2Zfx/raf-prod-yCVvbK/raf-develop/[eval1]:1:23657\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "passed": false,
+      "cleanup": "owned fixture processes stopped and fixture removed"
+    }
+  ]
+}

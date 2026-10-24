@@ -1,0 +1,119 @@
+{
+  "revision": "067daa42511199744cea2eb5ec869484f1ba3600",
+  "sha": "067daa42511199744cea2eb5ec869484f1ba3600",
+  "dirty": "?? node_modules",
+  "timeoutSource": "conf/raf.json#/runnerProtocols/codex/timeouts/transitionMs",
+  "timeoutMs": 10000,
+  "results": [
+    {
+      "hasReport": true,
+      "sha": "067daa42511199744cea2eb5ec869484f1ba3600",
+      "revision": "067daa42511199744cea2eb5ec869484f1ba3600",
+      "delivery": {
+        "enters": 2,
+        "briefCharacters": 20177
+      },
+      "eventWait": {
+        "pid": 1056523,
+        "startedAt": 1792876065529
+      },
+      "idle": {
+        "startedAt": 1792876065770,
+        "durationMs": 1003,
+        "cpuTicks": 0,
+        "completedCommands": 0
+      },
+      "transitionMs": 2840,
+      "workerExited": true,
+      "runnerExited": true,
+      "session": {
+        "runId": "exit-report",
+        "addressId": "worker-fixture",
+        "revision": 7,
+        "state": "finished",
+        "process": {
+          "pid": 1056636,
+          "startedAt": "2026-10-24T21:07:37.000Z",
+          "runner": "codex",
+          "runnerSessionId": "11111111-1111-4111-8111-111111111111",
+          "tmuxSession": "exit-report",
+          "evidence": {
+            "command": "/opt/dev/node/bin/node /tmp/f912-Hm7T/raf-prod-77ecdv/bin/codex --no-daemon --no-alt-screen --ask-for-approval never --model gpt-6.1-sol -c model_reasoning_effort=\"high\" -c sandbox_mode=\"workspace-write\" -c default_permissions=\"linux\" -c permissions.linux.filesystem={\":root\"=\"read\",\"/tmp/f912-Hm7T/raf-prod-77ecdv/home/.raf/tmp/exit-report\"=\"write\",\"/tmp/f912-Hm7T/raf-prod-77ecdv/openspec/changes/fixture-launch\"=\"write\",\"/tmp/f912-Hm7T/raf-prod-77ecdv/raf-develop\"=\"write\",\"/tmp/f912-Hm7T/raf-prod-77ecdv/raf-develop/.git\"=\"write\",\"/tmp/f912-Hm7T/raf-prod-77ecdv/home/.raf/tmp/exit-report/codex-sandbox-exit-report\"=\"read\",\"/home/dev/.raf\"=\"none\",\"/tmp/raf-ipc-1000\"=\"none\",\"/tmp/raf-tools-1000\"=\"none\",\"/run\"=\"none\",\"/tmp/tmux-1000\"=\"none\",\"/tmp/cc-socks\"=\"none\",\"/tmp/f912-Hm7T/raf-prod-77ecdv/home/.raf\"=\"none\",\"/tmp/f912-Hm7T/raf-prod-77ecdv/home/.raf/tmp/exit-report/tmux-1000\"=\"write\"} -c permissions.linux.network.enabled=true -c shell_environment_policy.set.TMUX=\"\" -c shell_environment_policy.set.TMUX_PANE=\"\" -c shell_environment_policy.set.SSH_AUTH_SOCK=\"\" -c shell_environment_policy.set.SSH_AGENT_PID=\"\" -c shell_environment_policy.set.DBUS_SESSION_BUS_ADDRESS=\"\" -c shell_environment_policy.set.XDG_RUNTIME_DIR=\"\" -c shell_environment_policy.set.TMUX_TMPDIR=\"/tmp/f912-Hm7T/raf-prod-77ecdv/home/.raf/tmp/exit-report\" -c shell_environment_policy.set.TMPDIR=\"/tmp/f912-Hm7T/raf-prod-77ecdv/home/.raf/tmp/exit-report\"",
+            "runId": "exit-report",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+            "tmuxSocket": "/tmp/f912-Hm7T/raf-prod-77ecdv/home/.raf/tmp/tmux/server.sock"
+          }
+        },
+        "result": {
+          "status": "failed",
+          "response": "",
+          "proof": null
+        },
+        "finishedAt": "2026-10-24T21:07:49.197Z",
+        "abortReason": "tmux kill-session failed: can't find session: exit-report\n"
+      },
+      "reservations": [],
+      "admission": [],
+      "hooks": "after-bind-key\nafter-capture-pane\nafter-copy-mode\nafter-display-message\nafter-display-panes\nafter-kill-pane\nafter-list-buffers\nafter-list-clients\nafter-list-keys\nafter-list-panes\nafter-list-sessions\nafter-list-windows\nafter-load-buffer\nafter-lock-server\nafter-new-session\nafter-new-window\nafter-paste-buffer\nafter-pipe-pane\nafter-queue\nafter-refresh-client\nafter-rename-session\nafter-rename-window\nafter-resize-pane\nafter-resize-window\nafter-save-buffer\nafter-select-layout\nafter-select-pane\nafter-select-window\nafter-send-keys\nafter-set-buffer\nafter-set-environment\nafter-set-hook\nafter-set-option\nafter-show-environment\nafter-show-messages\nafter-show-options\nafter-split-window\nafter-unbind-key\nalert-activity\nalert-bell\nalert-silence\nclient-active\nclient-attached\nclient-detached\nclient-focus-in\nclient-focus-out\nclient-resized\nclient-session-changed\nclient-light-theme\nclient-dark-theme\ncommand-error\nsession-closed\nsession-created\nsession-renamed\nsession-window-changed\nwindow-linked\nwindow-unlinked\n",
+      "workerLog": "",
+      "passed": true,
+      "cleanup": "owned fixture processes stopped and fixture removed"
+    },
+    {
+      "hasReport": false,
+      "sha": "067daa42511199744cea2eb5ec869484f1ba3600",
+      "revision": "067daa42511199744cea2eb5ec869484f1ba3600",
+      "delivery": {
+        "enters": 2,
+        "briefCharacters": 20177
+      },
+      "eventWait": {
+        "pid": 1059916,
+        "startedAt": 1792876080689
+      },
+      "idle": {
+        "startedAt": 1792876080939,
+        "durationMs": 1002,
+        "cpuTicks": 0,
+        "completedCommands": 0
+      },
+      "transitionMs": 1216,
+      "workerExited": true,
+      "runnerExited": true,
+      "session": {
+        "runId": "exit-missing",
+        "addressId": "worker-fixture",
+        "revision": 7,
+        "state": "finished",
+        "process": {
+          "pid": 1060062,
+          "startedAt": "2026-10-24T21:07:52.000Z",
+          "runner": "codex",
+          "runnerSessionId": "11111111-1111-4111-8111-111111111111",
+          "tmuxSession": "exit-missing",
+          "evidence": {
+            "command": "/opt/dev/node/bin/node /tmp/f912-Hm7T/raf-prod-nWnWpz/bin/codex --no-daemon --no-alt-screen --ask-for-approval never --model gpt-6.1-sol -c model_reasoning_effort=\"high\" -c sandbox_mode=\"workspace-write\" -c default_permissions=\"linux\" -c permissions.linux.filesystem={\":root\"=\"read\",\"/tmp/f912-Hm7T/raf-prod-nWnWpz/home/.raf/tmp/exit-missing\"=\"write\",\"/tmp/f912-Hm7T/raf-prod-nWnWpz/openspec/changes/fixture-launch\"=\"write\",\"/tmp/f912-Hm7T/raf-prod-nWnWpz/raf-develop\"=\"write\",\"/tmp/f912-Hm7T/raf-prod-nWnWpz/raf-develop/.git\"=\"write\",\"/tmp/f912-Hm7T/raf-prod-nWnWpz/home/.raf/tmp/exit-missing/codex-sandbox-exit-missing\"=\"read\",\"/home/dev/.raf\"=\"none\",\"/tmp/raf-ipc-1000\"=\"none\",\"/tmp/raf-tools-1000\"=\"none\",\"/run\"=\"none\",\"/tmp/tmux-1000\"=\"none\",\"/tmp/cc-socks\"=\"none\",\"/tmp/f912-Hm7T/raf-prod-nWnWpz/home/.raf\"=\"none\",\"/tmp/f912-Hm7T/raf-prod-nWnWpz/home/.raf/tmp/exit-missing/tmux-1000\"=\"write\"} -c permissions.linux.network.enabled=true -c shell_environment_policy.set.TMUX=\"\" -c shell_environment_policy.set.TMUX_PANE=\"\" -c shell_environment_policy.set.SSH_AUTH_SOCK=\"\" -c shell_environment_policy.set.SSH_AGENT_PID=\"\" -c shell_environment_policy.set.DBUS_SESSION_BUS_ADDRESS=\"\" -c shell_environment_policy.set.XDG_RUNTIME_DIR=\"\" -c shell_environment_policy.set.TMUX_TMPDIR=\"/tmp/f912-Hm7T/raf-prod-nWnWpz/home/.raf/tmp/exit-missing\" -c shell_environment_policy.set.TMPDIR=\"/tmp/f912-Hm7T/raf-prod-nWnWpz/home/.raf/tmp/exit-missing\"",
+            "runId": "exit-missing",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+            "tmuxSocket": "/tmp/f912-Hm7T/raf-prod-nWnWpz/home/.raf/tmp/tmux/server.sock"
+          }
+        },
+        "result": {
+          "status": "failed",
+          "response": "",
+          "proof": null
+        },
+        "finishedAt": "2026-10-24T21:08:02.750Z",
+        "abortReason": "tmux kill-session failed: can't find session: exit-missing\n"
+      },
+      "reservations": [],
+      "admission": [],
+      "hooks": "after-bind-key\nafter-capture-pane\nafter-copy-mode\nafter-display-message\nafter-display-panes\nafter-kill-pane\nafter-list-buffers\nafter-list-clients\nafter-list-keys\nafter-list-panes\nafter-list-sessions\nafter-list-windows\nafter-load-buffer\nafter-lock-server\nafter-new-session\nafter-new-window\nafter-paste-buffer\nafter-pipe-pane\nafter-queue\nafter-refresh-client\nafter-rename-session\nafter-rename-window\nafter-resize-pane\nafter-resize-window\nafter-save-buffer\nafter-select-layout\nafter-select-pane\nafter-select-window\nafter-send-keys\nafter-set-buffer\nafter-set-environment\nafter-set-hook\nafter-set-option\nafter-show-environment\nafter-show-messages\nafter-show-options\nafter-split-window\nafter-unbind-key\nalert-activity\nalert-bell\nalert-silence\nclient-active\nclient-attached\nclient-detached\nclient-focus-in\nclient-focus-out\nclient-resized\nclient-session-changed\nclient-light-theme\nclient-dark-theme\ncommand-error\nsession-closed\nsession-created\nsession-renamed\nsession-window-changed\nwindow-linked\nwindow-unlinked\n",
+      "workerLog": "",
+      "passed": true,
+      "cleanup": "owned fixture processes stopped and fixture removed"
+    }
+  ]
+}

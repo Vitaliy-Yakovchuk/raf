@@ -1,0 +1,31 @@
+import {readFile,writeFile,mkdtemp,rm} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+import {setTimeout as delay} from 'node:timers/promises';
+import {codexPastedBriefFixture} from '/srv/dev/work/orchestrator/raf-hotfix/test/codex-pasted-brief-fixture.ts';
+const root=await mkdtemp('/tmp/f912-ui-');
+const socket=root+'/tmux.sock', frame=codexPastedBriefFixture(20177), accepted=root+'/accepted.json';
+const source=await readFile('/srv/dev/work/orchestrator/raf-hotfix/scripts/qa-worker-exit.ts','utf8');
+const literal=source.slice(source.indexOf('String.raw`')+11,source.indexOf('`, { mode: 0o700 }'));
+const code=Function('sandboxCodex','settings','frame','acceptedPath','nativeId','return String.raw`'+literal+'`')('/opt/dev/bin/codex',{version:'0.163.0'},frame,accepted,'11111111-1111-4111-8111-111111111111');
+await writeFile(root+'/codex.mjs',code);
+const tmux=(args)=>{const r=spawnSync('tmux',['-S',socket,...args],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);return r.stdout;};
+const capture=()=>tmux(['capture-pane','-p','-t','=ui:0.0']);
+const wait=async(fn)=>{let n=0;while(!await fn()){assert.ok(n++<30,'UI transition timed out');await delay(50)}};
+try {
+ tmux(['new-session','-d','-s','ui','-x','200','-y','50',process.execPath,root+'/codex.mjs']);
+ await wait(()=>capture().includes('Ask Codex'));
+ tmux(['send-keys','-t','=ui:0.0','-l','/status']);
+ await wait(()=>capture().includes('› /status'));
+ tmux(['send-keys','-t','=ui:0.0','Enter']);
+ await wait(()=>capture().includes('Session:'));
+ await writeFile(root+'/brief',frame.brief);
+ tmux(['load-buffer',root+'/brief']);tmux(['paste-buffer','-t','=ui:0.0']);
+ await wait(()=>capture().includes('20177 chars'));
+ tmux(['send-keys','-t','=ui:0.0','Enter']);
+ await wait(()=>capture().includes('20178 chars'));
+ tmux(['send-keys','-t','=ui:0.0','Enter']);
+ await wait(()=>capture().includes('Working'));
+ const row=JSON.parse(await readFile(accepted,'utf8'));assert.equal(row.enters,2);
+ console.log(JSON.stringify({outcome:'passed',nativeStatus:true,pastedCharacters:row.briefCharacters,enters:row.enters,cleanup:'own tmux server and fixture removed'}));
+}finally{spawnSync('tmux',['-S',socket,'kill-server']);await rm(root,{recursive:true,force:true})}

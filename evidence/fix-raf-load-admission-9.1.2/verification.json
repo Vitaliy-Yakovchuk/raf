@@ -1,0 +1,241 @@
+{
+  "assignment": "fix-raf-load-admission:9.1.2",
+  "audit": "current; remaining tasks 4.3 and 7.1 open, no archive",
+  "productCommit": "944fa92a9f61bc55fee2e20d199d37f01458d29a",
+  "fixtureCommits": [
+    "6ea5bf9f617f6bb247c022c12c51f9cc4958e42b",
+    "bc0fbbe0fbedee4cc4289519063884540978fa61",
+    "d1473ec087b362350553878f337f405006504cd8",
+    "067daa42511199744cea2eb5ec869484f1ba3600"
+  ],
+  "sourceHead": "067daa42511199744cea2eb5ec869484f1ba3600",
+  "workingTreeCode": "clean; only foreign node_modules and own ignored evidence",
+  "units": [
+    {
+      "result": "red.json",
+      "capture": "red.capture.json",
+      "stderr": "red.stderr",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase red --group fix-raf-load-admission/worker-idle --files test/agent-adapters.test.ts test/agent-control.test.ts test/launch-wrapper.test.ts",
+      "workspaceSha": "346506087cc401f0992245af2f39b134a276649d",
+      "workspaceDiff": "red.workspace.patch",
+      "runId": "7ffa27f8-12bb-4606-8c28-61d844950737",
+      "selection": {
+        "files": [
+          "test/agent-adapters.test.ts",
+          "test/agent-control.test.ts",
+          "test/launch-wrapper.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRedCount": 8,
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "result": "hotfix-first.json",
+      "capture": "hotfix-first.capture.json",
+      "stderr": "hotfix-first.stderr",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle --files test/agent-adapters.test.ts test/agent-control.test.ts test/launch-wrapper.test.ts",
+      "workspaceSha": "346506087cc401f0992245af2f39b134a276649d",
+      "workspaceDiff": "hotfix-first.workspace.patch",
+      "runId": "429dac54-aa2d-4df2-8954-1dbdd0e537a5",
+      "selection": {
+        "files": [
+          "test/agent-adapters.test.ts",
+          "test/agent-control.test.ts",
+          "test/launch-wrapper.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRedCount": 4,
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "hotfix.json",
+      "capture": "hotfix.capture.json",
+      "stderr": "hotfix.stderr",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle --files test/agent-adapters.test.ts test/agent-control.test.ts test/launch-wrapper.test.ts",
+      "workspaceSha": "346506087cc401f0992245af2f39b134a276649d",
+      "workspaceDiff": "hotfix.workspace.patch",
+      "runId": "33aa893c-d96b-4245-90f3-cd3d602510c8",
+      "selection": {
+        "files": [
+          "test/agent-adapters.test.ts",
+          "test/agent-control.test.ts",
+          "test/launch-wrapper.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRedCount": 0,
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    },
+    {
+      "result": "hotfix-pane-scope.json",
+      "capture": "hotfix-pane-scope.capture.json",
+      "stderr": "hotfix-pane-scope.stderr",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle --files test/agent-adapters.test.ts test/agent-control.test.ts test/launch-wrapper.test.ts",
+      "workspaceSha": "346506087cc401f0992245af2f39b134a276649d",
+      "workspaceDiff": "hotfix-pane-scope.workspace.patch",
+      "runId": "9e8282d9-83b8-41f6-a836-c50af42dc799",
+      "selection": {
+        "files": [
+          "test/agent-adapters.test.ts",
+          "test/agent-control.test.ts",
+          "test/launch-wrapper.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRedCount": 0,
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    },
+    {
+      "result": "hotfix-final.json",
+      "capture": "hotfix-final.capture.json",
+      "stderr": "hotfix-final.stderr",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle --files test/agent-adapters.test.ts test/agent-control.test.ts test/launch-wrapper.test.ts",
+      "workspaceSha": "346506087cc401f0992245af2f39b134a276649d",
+      "workspaceDiff": "hotfix-final.workspace.patch",
+      "runId": "abd78b5d-9cc1-4124-88b9-78dedd15b17c",
+      "selection": {
+        "files": [
+          "test/agent-adapters.test.ts",
+          "test/agent-control.test.ts",
+          "test/launch-wrapper.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRedCount": 0,
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    }
+  ],
+  "productAndUnitSourcesUnchangedSinceProductCommit": true,
+  "processStand": {
+    "driverCommit": "067daa42511199744cea2eb5ec869484f1ba3600",
+    "commandForm": [
+      "node",
+      "/srv/dev/f912-stand5/clone/scripts/qa-worker-exit.ts",
+      "<revision>",
+      "/srv/dev/f912-stand5/<phase>/evidence"
+    ],
+    "host": "main",
+    "environment": {
+      "HOME": "separate /tmp HOME for each phase",
+      "RAF_QA_HOME": "same as HOME",
+      "LC_ALL": "C"
+    },
+    "configuration": "stand5-conf.json",
+    "red": {
+      "revision": "346506087cc401f0992245af2f39b134a276649d",
+      "cliExitCode": 1,
+      "summary": "stand5/red/evidence/summary.json",
+      "workerExited": [
+        false,
+        false
+      ],
+      "transitionMs": [
+        10078,
+        10048
+      ],
+      "idleCpuTicks": [
+        0,
+        0
+      ],
+      "idleCompletedCommands": [
+        0,
+        0
+      ]
+    },
+    "green": {
+      "revision": "067daa42511199744cea2eb5ec869484f1ba3600",
+      "cliExitCode": 0,
+      "summary": "stand5/green/evidence/summary.json",
+      "workerExited": [
+        true,
+        true
+      ],
+      "runnerExited": [
+        true,
+        true
+      ],
+      "transitionMs": [
+        2840,
+        1216
+      ],
+      "idleCpuTicks": [
+        0,
+        0
+      ],
+      "idleCompletedCommands": [
+        0,
+        0
+      ],
+      "cleanup": "owned fixture processes stopped and fixture removed"
+    },
+    "outcome": "red then passed",
+    "runIds": [
+      "exit-report",
+      "exit-missing"
+    ],
+    "timeoutMs": 10000,
+    "timeoutSource": "conf/raf.json#/runnerProtocols/codex/timeouts/transitionMs"
+  }
+}

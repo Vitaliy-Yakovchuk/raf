@@ -1,0 +1,25 @@
+{
+  "revision": "346506087cc401f0992245af2f39b134a276649d",
+  "sha": "346506087cc401f0992245af2f39b134a276649d",
+  "dirty": "M test/agent-adapters.test.ts\n M test/agent-control.test.ts\n M test/launch-wrapper.test.ts\n?? node_modules\n?? scripts/qa-worker-exit.ts\n?? test/helpers/tmux-exit-fixture.ts",
+  "timeoutSource": "conf/raf.json#/runnerProtocols/codex/timeouts/transitionMs",
+  "timeoutMs": 10000,
+  "results": [
+    {
+      "hasReport": true,
+      "sha": "346506087cc401f0992245af2f39b134a276649d",
+      "revision": "346506087cc401f0992245af2f39b134a276649d",
+      "error": "Error: EACCES: permission denied, mkdtemp '/tmp/raf-ipc-1000/rw-nLteyf'",
+      "passed": false,
+      "cleanup": "owned fixture processes stopped and fixture removed"
+    },
+    {
+      "hasReport": false,
+      "sha": "346506087cc401f0992245af2f39b134a276649d",
+      "revision": "346506087cc401f0992245af2f39b134a276649d",
+      "error": "Error: EACCES: permission denied, mkdtemp '/tmp/raf-ipc-1000/rw-NPJATA'",
+      "passed": false,
+      "cleanup": "owned fixture processes stopped and fixture removed"
+    }
+  ]
+}

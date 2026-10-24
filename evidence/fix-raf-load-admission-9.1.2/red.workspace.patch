@@ -1,0 +1,153 @@
+diff --git a/test/agent-adapters.test.ts b/test/agent-adapters.test.ts
+index 2e1a51a..4322bbd 100644
+--- a/test/agent-adapters.test.ts
++++ b/test/agent-adapters.test.ts
+@@ -9,6 +9,7 @@ import * as productionRuntime from '../src/production-runtime.ts';
+ import { resolveStateContext } from '../src/state-migration-guard.ts';
+ import { isNativeBriefEcho, matchPendingBrief, matchesNativeDeliveryContext, nativeDeliveryContext, observeRunnerScreen, readNativeComposer, type ProtocolSettings } from '../src/runner-protocols.ts';
+ import { deliveryDiagnostic } from '../src/delivery-diagnostic.ts';
++import { tmuxExitFixture } from './helpers/tmux-exit-fixture.ts';
+ import { codexPastedBriefFixture } from './codex-pasted-brief-fixture.ts';
+ import assert from 'node:assert/strict';
+ import { test } from 'node:test';
+@@ -291,3 +292,22 @@ test('worker-idle: concurrent transport exit waiters share one event subscriptio
+   resolveExit({ code: 0, signal: null });
+   assert.deepEqual(await Promise.all([first, second]), [{ code: 0, signal: null }, { code: 0, signal: null }]);
+ });
++
++test('worker-exit: session removal wakes its waiter after session hooks have disappeared', async () => {
++  const f = fixture();
++  const events = tmuxExitFixture(f.session.tmuxSession);
++  const adapter = new TmuxAgentAdapter({ execute: events.execute, protocols: {} as Record<AgentRunner, RunnerProtocol> });
++  const waiting = adapter.waitForExit(f.session);
++  await events.waiting;
++  try {
++    const count = events.commands.length;
++    events.close('unrelated-session');
++    await new Promise(resolve => setImmediate(resolve));
++    assert.equal(events.commands.length, count, 'unrelated session closure must not wake this worker');
++    events.close();
++    const result = await Promise.race([waiting, new Promise(resolve => setImmediate(() => resolve('still waiting')))]);
++    assert.deepEqual(result, { code: null, signal: null }, 'destroying a session must notify the worker without another poll');
++    assert.equal(events.hooks.size, 0, 'owned hooks must be removed even after the session is gone');
++    assert.equal(events.commands.filter(command => command.args[0] === 'capture-pane').length, 0);
++  } finally { events.release(); await waiting; }
++});
+diff --git a/test/agent-control.test.ts b/test/agent-control.test.ts
+index 894900e..3827a32 100644
+--- a/test/agent-control.test.ts
++++ b/test/agent-control.test.ts
+@@ -1,6 +1,7 @@
+ import assert from 'node:assert/strict';
+ import { test } from 'node:test';
+ import { AgentControlService } from '../src/agent-control.ts';
++import { commandFailure } from '../src/cli-contract.ts';
+ import type { ActivityEvent, AgentControlDependencies, DeliveryReceipt, VerifiedSender } from '../src/agent-control.ts';
+ import type { ProcessIdentity, ProcessObservation, SessionRecord, WorkResult } from '../src/session-state.ts';
+ import type { SessionCloseCheck, SessionEnd } from '../src/reminders.ts';
+@@ -81,7 +82,7 @@ function fixture() {
+     projects: ['raf', 'other'], agentTypes: ['main', 'implement', 'review'],
+   };
+   const service = new AgentControlService(dependencies);
+-  return { service, records, observations, scans, deliveries, closed, interrupted, events, ends, observed, trustedCaller, pendingChecks, pendingReports,
++  return { service, dependencies, records, observations, scans, deliveries, closed, interrupted, events, ends, observed, trustedCaller, pendingChecks, pendingReports,
+     sender(value: VerifiedSender) { identity = value; }, receipt(value: DeliveryReceipt) { receipt = value; },
+     closeCheck(value: SessionCloseCheck) { closeCheck = value; } };
+ }
+@@ -102,6 +103,46 @@ test('empty ps succeeds', async () => {
+   assert.deepEqual(await f.service.ps(), []);
+ });
+ 
++test('worker-exit: ps lists a pending worker and other agents without finalizing or controlling it', async () => {
++  const f = fixture();
++  const before = structuredClone(f.records.get('run-A'));
++  f.observations.set('cli-A', { state: 'exited', observedAt: time, exitCode: null, evidence: 'runner gone' });
++  const observe = f.dependencies.coordinator.observe;
++  f.dependencies.coordinator.observe = async (row, observation) => {
++    if (row.runId === 'run-A') throw commandFailure({ code: 'WORKER_RESULT_PENDING', message: 'Worker still processing run-A', reason: 'Worker still processing run-A', stage: 'production-runtime', source: 'production-runtime', sourceCode: null, received: null, expected: null, found: null, completed: [], pending: [], retrySafe: true, remediation: [] });
++    return observe(row, observation);
++  };
++  const rows = await f.service.ps();
++  assert.deepEqual(rows.map(row => row.addressId).sort(), ['A', 'B', 'main']);
++  const pending = rows.find(row => row.addressId === 'A') as any;
++  assert.deepEqual(pending.reconciliation, { code: 'WORKER_RESULT_PENDING', reason: 'Worker still processing run-A' });
++  assert.equal(pending.observation.state, 'exited');
++  assert.deepEqual(f.records.get('run-A'), before, 'ps must retain the worker reservation and durable session');
++  assert.deepEqual(f.closed, []);
++  assert.deepEqual(f.events, []);
++});
++
++test('worker-exit: ps does not swallow unrelated reconciliation failures', async () => {
++  const f = fixture();
++  f.dependencies.coordinator.observe = async () => { throw new Error('unexpected database failure'); };
++  await assert.rejects(f.service.ps(), /unexpected database failure/);
++});
++
++for (const state of ['running', 'exited'] as const) for (const force of [false, true]) {
++  test(`worker-exit: close finalizes a dead ${state} session with force=${force} after its worker is gone`, async () => {
++    const f = fixture();
++    f.records.get('run-A')!.state = state;
++    f.observations.set('cli-A', { state: 'exited', observedAt: time, exitCode: null, evidence: 'runner and worker gone' });
++    f.records.get('run-A')!.result = { status: 'failed', response: 'retained failed report', proof: { runId: 'run-A' } };
++    const before = structuredClone(f.records.get('run-A')!.result);
++    assert.deepEqual(await f.service.close('A', force ? { force: true, reason: 'recover dead worker' } : {}), { closed: true, unfinished: [], result: 'failed' });
++    assert.equal(f.records.get('run-A')?.state, 'finished');
++    assert.deepEqual(f.records.get('run-A')?.result, before);
++    assert.deepEqual(f.closed, [], 'already dead processes need no tmux transport');
++    assert.deepEqual(f.events.map(event => event.kind), ['ended']);
++  });
++}
++
+ test('confirmed process death delegates observation and final closure before ps returns', async () => {
+   const f = fixture();
+   f.observations.set('cli-A', { state: 'exited', observedAt: time, exitCode: 1, evidence: 'process absent' });
+diff --git a/test/launch-wrapper.test.ts b/test/launch-wrapper.test.ts
+index 971d858..2055d0e 100644
+--- a/test/launch-wrapper.test.ts
++++ b/test/launch-wrapper.test.ts
+@@ -8,6 +8,8 @@ import { spawn } from 'node:child_process';
+ import { connect } from 'node:net';
+ import { once } from 'node:events';
+ import { runLaunchWrapper } from '../src/launch-wrapper.ts';
++import { TmuxAgentAdapter } from '../src/agent-adapters.ts';
++import { tmuxExitFixture } from './helpers/tmux-exit-fixture.ts';
+ import type { LaunchWrapperRequest, LaunchWrapperPorts, LaunchReadiness, LaunchOwnership } from '../src/launch-wrapper.ts';
+ 
+ const deferred = <T>() => {
+@@ -64,10 +66,35 @@ async function fixture(t: test.TestContext) {
+     setReady: (value: LaunchReadiness) => { ready = value; },
+     setOwnership: (value: LaunchOwnership) => { ownership = value; },
+     setValid: (value: boolean) => { valid = value; },
+-    writeReport: () => writeFile(reportPath, JSON.stringify({ status: 'succeeded', answer: 'Done', changes: [{ id: 'change-one', items: [{ id: '1.1', status: 'succeeded' }] }] })),
++    writeReport: (status = 'succeeded') => writeFile(reportPath, JSON.stringify({ status, answer: 'Done', changes: [{ id: 'change-one', items: [{ id: '1.1', status, ...(status === 'failed' ? { reason: 'assigned work failed' } : {}) }] }] })),
+   };
+ }
+ 
++for (const report of [true, false]) {
++  test(`worker-exit: vanished runner and tmux session finalize ${report ? 'a failed report' : 'without a report'} without polling`, async t => {
++    const f = await fixture(t);
++    const events = tmuxExitFixture(f.request.tmuxSession);
++    const adapter = new TmuxAgentAdapter({ execute: events.execute, protocols: {} as any });
++    f.ports.transport.waitExit = () => adapter.waitForExit({ tmuxSession: f.request.tmuxSession, selection: f.request.selection });
++    const running = runLaunchWrapper(f.request, f.ports);
++    await events.waiting;
++    if (report) await f.writeReport('failed');
++    events.close();
++    try {
++      const outcome = await Promise.race([running.then(() => 'finished'), new Promise(resolve => setTimeout(() => resolve('still waiting'), f.request.readinessTimeoutMs))]);
++      assert.equal(outcome, 'finished', 'worker must finalize within the existing transition budget after session destruction');
++      assert.equal(f.results.length, 1);
++      const result = f.results[0] as { status: string; report?: unknown; exit?: unknown };
++      assert.equal(result.status, 'failed');
++      assert.equal(!!result.report, report);
++      assert.equal(!!result.exit, !report);
++      assert.ok(f.events.includes('finish'));
++      assert.ok(f.events.includes('cleanup'));
++      assert.equal(events.commands.filter(command => command.args[0] === 'wait-for' && command.args.length === 2).length, 1);
++    } finally { events.release(); await running; }
++  });
++}
++
+ test('known readiness and verified native process precede literal brief, committed start and handshake', async t => {
+   const f = await fixture(t);
+   const running = runLaunchWrapper(f.request, f.ports);

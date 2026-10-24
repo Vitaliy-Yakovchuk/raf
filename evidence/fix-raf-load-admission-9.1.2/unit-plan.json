@@ -1,0 +1,14 @@
+{
+  "group": "fix-raf-load-admission/worker-idle",
+  "files": [
+    "test/agent-adapters.test.ts",
+    "test/agent-control.test.ts",
+    "test/launch-wrapper.test.ts"
+  ],
+  "sourceItem": "fix-raf-load-admission:9.1.2",
+  "note": "Stable existing worker-idle aggregate retained; own new regressions added before implementation",
+  "phases": [
+    "red",
+    "hotfix"
+  ]
+}

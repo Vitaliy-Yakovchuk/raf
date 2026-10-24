@@ -179,7 +179,10 @@ export function createAssignmentIdentityAdapter(
         }
         await copySpecs(join(source.path, 'specs'), join(target, 'specs'));
         await access.verify();
-        const version = await execute({ executable: 'openspec', args: ['--version'], cwd: view });
+        const [version, resolution] = await checkedTogether([
+          execute({ executable: 'openspec', args: ['--version'], cwd: view }),
+          ...(options.execute === undefined ? [execute({ executable: 'openspec', args: ['schema', 'which', 'spec-driven', '--json'], cwd: view })] : []),
+        ]);
         if (version.exitCode !== 0 || version.stdout.trim() !== '1.14.3') throw new Error('Unverified OpenSpec version; the supported read plan requires 1.14.3');
         const readRows = async () => {
           const digest = inputs.digest('hex');
@@ -210,9 +213,8 @@ export function createAssignmentIdentityAdapter(
         };
         let rows: Awaited<ReturnType<typeof readAssignmentTasks>>;
         if (options.execute === undefined) {
-          const resolution = await execute({ executable: 'openspec', args: ['schema', 'which', 'spec-driven', '--json'], cwd: view });
-          if (resolution.exitCode !== 0) throw new Error(`Cannot verify package schema: ${resolution.stderr || resolution.stdout}`);
-          const schema = JSON.parse(resolution.stdout);
+          if (resolution!.exitCode !== 0) throw new Error(`Cannot verify package schema: ${resolution!.stderr || resolution!.stdout}`);
+          const schema = JSON.parse(resolution!.stdout);
           if (schema.source !== 'package' || schema.name !== 'spec-driven' || typeof schema.path !== 'string' || !isAbsolute(schema.path)) throw new Error('Unverified user or external schema override; only the package spec-driven read plan is supported');
           const schemaRoot = await realpath(schema.path);
           rows = await guarded(schemaRoot, async schemaAccess => {

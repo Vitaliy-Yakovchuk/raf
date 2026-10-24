@@ -478,15 +478,22 @@ async function verifyReportedAssignmentSource(store: StateStore, context: Runtim
   const set = listTaskReservations(store).find(set => set.lease.owner.runId === runId);
   if (!set || assignment.changes.some(change => change.items.some(item => !set.tasks.some(task => task.key.changeId === change.id && task.key.taskId === item.id)))) throw new Error('Launch task source identity is unavailable');
   const dependencies = await reservationTools(store, context, execute, identityExecute);
-  const resolutions = await dependencies.resolveTasks(set.tasks);
+  const completionChecks = assignment.changes.map(change => Object.hasOwn(archives, change.id)
+    ? verifyAssignmentCompletion({ ...assignment, changes: [change] }, assignments, archives)
+    : Promise.resolve(undefined));
+  const [resolved, ...completions] = await Promise.allSettled([dependencies.resolveTasks(set.tasks), ...completionChecks] as const);
+  if (resolved.status === 'rejected') throw resolved.reason;
+  const resolutions = resolved.value;
   const invalid = resolutions.filter(row => row.state === 'mismatch' || row.state === 'unknown');
   if (resolutions.length === set.tasks.length && invalid.length && invalid.every(row => row.state === 'unknown' && row.transient === 'source-read-race')) throw new ConfirmationTransientError('source-read-race', invalid.map(row => 'reason' in row ? row.reason : row.state).join('; '));
   if (invalid.length || resolutions.length !== set.tasks.length) throw new Error(`Launch task source identity changed: ${invalid.map(row => 'reason' in row ? row.reason : row.state).join('; ')}`);
-  for (const change of assignment.changes) {
+  for (const [index, change] of assignment.changes.entries()) {
     const subset = { ...assignment, changes: [change] };
     const archived = set.tasks.filter(task => task.key.changeId === change.id).every(task => resolutions.some(row => (row.state === 'open' || row.state === 'completed') && row.task.key.changeId === task.key.changeId && row.task.key.taskId === task.key.taskId && row.location === 'archive'));
     if (!archived) continue;
-    const checked = await verifyAssignmentCompletion(subset, assignments, archives);
+    const completion = completions[index];
+    if (completion.status === 'rejected') throw completion.reason;
+    const checked = completion.value ?? await verifyAssignmentCompletion(subset, assignments, archives);
     if (!checked.ok) return { ok: false, issues: checked.issues };
   }
   return { ok: true, issues: [] };

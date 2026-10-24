@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import * as fs from 'node:fs/promises';
+import { readdirSync, readFileSync, readlinkSync, writeFileSync, renameSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import { dirname, join, resolve, delimiter, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -7,14 +9,100 @@ import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
 import { resolveRunnerExecutable } from '../src/runner-availability.ts';
 import { checkPrerequisites, stand, command, ok, ownCompactAliases, transitionMs, pollMs, rawSandboxPrefix } from './helpers/z404-host-fixture.ts';
 
-const [mode, target] = process.argv.slice(2);
-assert.ok(['setup', 'verify'].includes(mode) && target, 'usage: node test/z404-bwrap-entry-host.mjs setup|verify <own-evidence-directory>');
+const [mode, target, selectedCase, ...extra] = process.argv.slice(2);
+assert.ok(['setup', 'verify'].includes(mode) && target, 'usage: node test/z404-bwrap-entry-host.mjs setup|verify <own-evidence-directory> [short/native]');
+assert.ok(extra.length === 0 && (!selectedCase || (mode === 'verify' && selectedCase === 'short/native')), 'only the explicit short/native diagnostic selection is supported');
 const evidenceDirectory = resolve(target);
 await fs.mkdir(evidenceDirectory, { recursive: true });
-const summary = { stage: 'setup', cases: [], startedAt: new Date().toISOString(), modelPromptSent: false };
+const summary = { stage: 'setup', cases: [], startedAt: new Date().toISOString(), modelPromptSent: false, selectedCase: selectedCase ?? 'all' };
 async function save(name, data) {
   const path = join(evidenceDirectory, name), temporary = `${path}.${randomUUID()}.tmp`;
   await fs.writeFile(temporary, JSON.stringify(data, null, 2) + '\n'); await fs.rename(temporary, path);
+}
+
+function processTree(rootPid, knownPipes = []) {
+  if (!rootPid) return { rootPid: null, processes: [] };
+  try {
+    const processes = [];
+    for (const name of readdirSync('/proc').filter(name => /^\d+$/.test(name))) {
+      try {
+        const stat = readFileSync(`/proc/${name}/stat`, 'utf8');
+        const fields = stat.slice(stat.lastIndexOf(')') + 2).trim().split(/\s+/);
+        const pipes = [0, 1, 2].flatMap(fd => {
+          try {
+            const target = readlinkSync(`/proc/${name}/fd/${fd}`);
+            return /^pipe:\[\d+\]$/.test(target) ? [{ fd, target }] : [];
+          } catch { return []; }
+        });
+        const namespacePids = readFileSync(`/proc/${name}/status`, 'utf8').match(/^NSpid:\s+(.+)$/m)?.[1].trim().split(/\s+/).map(Number) ?? [];
+        processes.push({ namespacePids, pid: Number(name), state: fields[0], ppid: Number(fields[1]),
+          processGroup: Number(fields[2]), session: Number(fields[3]), startTicks: fields[19], pipes });
+      } catch {}
+    }
+    const own = new Set([rootPid]);
+    const pipes = new Set([...knownPipes, ...(processes.find(item => item.pid === rootPid)?.pipes ?? []).map(item => item.target)]);
+    let added;
+    do {
+      added = false;
+      for (const item of processes) {
+        if (!own.has(item.pid) && (own.has(item.ppid) || item.processGroup === rootPid || item.pipes.some(pipe => pipes.has(pipe.target)))) {
+          own.add(item.pid); added = true;
+        }
+      }
+    } while (added);
+    return { rootPid, observedAt: new Date().toISOString(), processes: processes.filter(item => own.has(item.pid)) };
+  } catch (error) { return { rootPid, diagnosticError: error.code ?? error.message }; }
+}
+
+function progressMarkers(stderr) {
+  return stderr.split('\n').filter(line => line.startsWith('Z404_PROGRESS ')).flatMap(line => {
+    try { return [JSON.parse(line.slice('Z404_PROGRESS '.length))]; } catch { return []; }
+  });
+}
+
+async function toolCommand(executable, args, cwd, environment, timeoutEvidence) {
+  const child = spawn(executable, [...args], { cwd, env: environment, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  let stdout = '', stderr = '', timedOut = false, spawnError, exitEvent, timeoutIdentity;
+  let startedIdentity, pipes = [];
+  child.stdout.on('data', chunk => { stdout += chunk; });
+  child.stderr.on('data', chunk => { stderr += chunk; });
+  child.once('exit', (code, signal) => { exitEvent = { code, signal, observedAt: new Date().toISOString() }; });
+  const terminate = () => {
+    if (child.pid) {
+      try { process.kill(-child.pid, 'SIGKILL'); } catch (error) {
+        if (error.code !== 'ESRCH') throw error;
+      }
+    }
+  };
+  const timer = setTimeout(() => {
+    timedOut = true;
+    timeoutIdentity = { ...processTree(child.pid, pipes), exitEvent: exitEvent ?? null,
+      stdoutClosed: child.stdout.closed, stderrClosed: child.stderr.closed };
+    try {
+      const markers = progressMarkers(stderr);
+      const path = join(evidenceDirectory, timeoutEvidence), temporary = `${path}.${randomUUID()}.tmp`;
+      writeFileSync(temporary, JSON.stringify({ stdout, stderr, spawnError: spawnError ? { name: spawnError.name, message: spawnError.message, code: spawnError.code } : null,
+        code: exitEvent?.code ?? null, signal: exitEvent?.signal ?? null, timedOut, startedIdentity, timeoutIdentity,
+        lastMarker: markers.at(-1) ?? null, markers, beforeTermination: true }, null, 2) + '\n');
+      renameSync(temporary, path);
+    } catch (error) { timeoutIdentity.evidenceError = error.code ?? error.message; }
+    finally { terminate(); }
+  }, transitionMs);
+  startedIdentity = processTree(child.pid);
+  pipes = (startedIdentity.processes?.find(item => item.pid === child.pid)?.pipes ?? []).map(item => item.target);
+  try {
+    const exit = await new Promise(done => {
+      child.once('error', error => { spawnError = error; });
+      child.once('close', (code, signal) => done({ code, signal }));
+    });
+    clearTimeout(timer);
+    const markers = progressMarkers(stderr);
+    const result = { ...exit, stdout, stderr, timedOut, spawnError: spawnError ? { name: spawnError.name, message: spawnError.message, code: spawnError.code } : undefined,
+      startedIdentity, timeoutIdentity: timeoutIdentity ?? null, exitEvent: exitEvent ?? null,
+      lastMarker: markers.at(-1) ?? null, markers };
+    await save(timeoutEvidence.replace(/-timeout\.json$/, '-tool.json'), { ...result, spawnError: result.spawnError ?? null });
+    return result;
+  } finally { clearTimeout(timer); terminate(); }
 }
 
 function effective(invocation) {
@@ -162,8 +250,10 @@ async function positive(prerequisites, layout, entry, poison = false) {
       payload: `z404-${randomUUID()}`, token: randomUUID(), transitionMs, pollMs,
     };
     const probeFile = fileURLToPath(new URL('./helpers/z404-tool-probe.mjs', import.meta.url));
-    const result = await command(prepared.toolSandbox.executable, [...prepared.toolSandbox.args, process.execPath, probeFile, JSON.stringify(probe)], f.workspace, prepared.environment);
-    record.toolExit = { code: result.code, signal: result.signal, timedOut: result.timedOut };
+    const result = await toolCommand(prepared.toolSandbox.executable, [...prepared.toolSandbox.args, process.execPath, probeFile, JSON.stringify(probe)], f.workspace, prepared.environment, `${layout}-${entry}${poison ? '-unselected' : ''}-timeout.json`);
+    record.toolExit = { code: result.code, signal: result.signal, timedOut: result.timedOut, spawnError: result.spawnError ?? null };
+    record.toolResult = { ...result, spawnError: result.spawnError ?? null };
+    await save(`${layout}-${entry}${poison ? '-unselected' : ''}.json`, record);
     ok(result, `${id}: positive tool start and complete assertions, never expected rejection`);
     record.observations = JSON.parse(result.stdout);
     assert.equal(record.observations.ownIpc.length, 2);
@@ -390,10 +480,11 @@ try {
       throw new Error('Z404_SETUP: H03 setup/capability/control/trace failure is not a confirmed product red');
     }
     for (const layout of ['short', 'long']) for (const entry of ['bare', 'npm', 'native', 'configured']) {
+      if (selectedCase && `${layout}/${entry}` !== selectedCase) continue;
       summary.cases.push(await positive(prerequisites, layout, entry));
       await save('summary.json', summary);
     }
-    summary.cases.push(await positive(prerequisites, 'long', 'native', true));
+    if (!selectedCase) summary.cases.push(await positive(prerequisites, 'long', 'native', true));
     summary.passed = summary.cases.every(record => record.passed && record.cleaned);
     if (!summary.passed) process.exitCode = 1;
   } else summary.passed = true;

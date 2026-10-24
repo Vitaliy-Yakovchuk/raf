@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import * as fs from 'node:fs/promises';
+import { readFileSync, writeSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { createServer, connect } from 'node:net';
 import { join, dirname } from 'node:path';
@@ -9,12 +10,26 @@ const input = JSON.parse(process.argv[2]);
 const deniedCodes = ['EACCES', 'EPERM', 'ENOENT', 'ENOTDIR', 'EROFS'];
 const observations = [];
 
+function progress(marker, details = {}) {
+  const identity = { pid: process.pid, ppid: process.ppid, role: input.child ? 'child' : 'parent' };
+  try {
+    const stat = readFileSync('/proc/self/stat', 'utf8');
+    const fields = stat.slice(stat.lastIndexOf(')') + 2).trim().split(/\s+/);
+    Object.assign(identity, { state: fields[0], processGroup: Number(fields[2]), session: Number(fields[3]), startTicks: fields[19] });
+  } catch (error) { identity.diagnosticError = error.code ?? error.message; }
+  writeSync(2, 'Z404_PROGRESS ' + JSON.stringify({ marker, observedAt: new Date().toISOString(), identity, ...details }) + '\n');
+}
+progress('probe:begin');
+process.once('exit', code => progress('probe:exit', { code }));
+
 async function denied(action, label, codes = deniedCodes) {
+  progress('deny:before', { label });
   let failure;
   try { await action(); } catch (error) { failure = error; }
   assert.ok(failure, `${label}: unexpectedly permitted`);
   assert.ok(codes.includes(failure.code), `${label}: ${failure.code} is not isolation`);
   observations.push({ label, code: failure.code });
+  progress('deny:after', { label, code: failure.code });
 }
 
 async function connectOnce(address) {
@@ -37,6 +52,8 @@ for (const address of input.ports) await denied(() => connectOnce(address), `tcp
 async function unixPayload() {
   const ownIpc = [];
   for (const directory of [input.workspace, input.runDirectory]) {
+    const location = directory === input.workspace ? 'workspace' : 'run';
+    progress(`unix:${location}:before`);
     const original = process.cwd();
     process.chdir(directory);
     const path = input.child ? 'z404-child.sock' : 'z404-own.sock';
@@ -55,6 +72,7 @@ async function unixPayload() {
     } finally {
       if (server.listening) await new Promise(done => server.close(done));
       await fs.rm(path, { force: true }); process.chdir(original);
+      progress(`unix:${location}:after`);
     }
   }
   return ownIpc;
@@ -63,7 +81,10 @@ async function unixPayload() {
 if (input.child) {
   process.stdout.write(JSON.stringify({ observations, ownIpc: await unixPayload() }));
 } else {
+  progress('child:before');
   const child = spawnSync(process.execPath, [process.argv[1], JSON.stringify({ ...input, child: true })], { env: process.env, encoding: 'utf8', timeout: input.transitionMs });
+  writeSync(2, child.stderr ?? '');
+  progress('child:after', { pid: child.pid, status: child.status, signal: child.signal, errorCode: child.error?.code ?? null });
   assert.equal(child.error, undefined, 'child must execute; startup failure is not denial');
   assert.equal(child.status, 0, child.stderr);
   const childOutput = JSON.parse(child.stdout);
@@ -76,7 +97,13 @@ if (input.child) {
   const literal = value => "'" + value.replaceAll("'", "'\\''") + "'";
   for (const kind of ['default', 'named']) {
     const args = kind === 'named' ? ['-L', `z404-${input.token}`] : [];
-    const execute = more => spawnSync('tmux', [...args, ...more], { env: process.env, encoding: 'utf8', timeout: input.transitionMs });
+    const execute = more => {
+      progress(`tmux:${kind}:command:before`, { command: more[0] === '-f' ? 'new-session' : more[0] });
+      const result = spawnSync('tmux', [...args, ...more], { env: process.env, encoding: 'utf8', timeout: input.transitionMs });
+      progress(`tmux:${kind}:command:after`, { command: more[0] === '-f' ? 'new-session' : more[0], pid: result.pid,
+        status: result.status, signal: result.signal, errorCode: result.error?.code ?? null });
+      return result;
+    };
     const good = result => { assert.equal(result.error, undefined); assert.equal(result.status, 0, result.stderr); return result.stdout.trim(); };
     const output = join(input.runDirectory, `tmux-${kind}.payload`);
     let started = false, address;
@@ -85,6 +112,7 @@ if (input.child) {
       started = true;
       address = good(execute(['display-message', '-p', '#{socket_path}']));
       assert.ok(Buffer.byteLength(address) < 108, 'actual default/named tmux address fits sun_path');
+      progress(`tmux:${kind}:payload:before`);
       const command = [process.execPath, '-e', `require('node:fs').writeFileSync(process.argv[1],process.argv[2])`, output, input.payload].map(literal).join(' ');
       good(execute(['send-keys', '-t', 'probe', '-l', command])); good(execute(['send-keys', '-t', 'probe', 'Enter']));
       const deadline = Date.now() + input.transitionMs;
@@ -93,7 +121,9 @@ if (input.child) {
         catch (error) { if (error.code !== 'ENOENT' || Date.now() >= deadline) throw error; await delay(input.pollMs); }
       }
       tmux.push({ kind, address, payload: await fs.readFile(output, 'utf8') });
+      progress(`tmux:${kind}:payload:after`);
     } finally {
+      progress(`tmux:${kind}:cleanup:before`);
       if (started) {
         const killed = execute(['kill-server']);
         assert.equal(killed.error, undefined); assert.equal(killed.status, 0, killed.stderr);
@@ -107,12 +137,15 @@ if (input.child) {
       await delay(input.pollMs);
     }
     await fs.rm(output);
+    progress(`tmux:${kind}:cleanup:after`);
   }
   await fs.writeFile(input.questions, 'question-updated-in-place');
   await fs.writeFile(join(input.workspace, 'allowed.txt'), input.payload);
   await fs.writeFile(join(input.runDirectory, 'report.json'), JSON.stringify({ status: 'succeeded', payload: input.payload }));
   for (const args of [['add', 'allowed.txt'], ['-c', 'user.name=Z404', '-c', 'user.email=z404@example.invalid', 'commit', '-m', 'own sandbox commit']]) {
+    progress('git:before', { command: args[0] === '-c' ? 'commit' : args[0] });
     const result = spawnSync('git', args, { cwd: input.workspace, env: process.env, encoding: 'utf8', timeout: input.transitionMs });
+    progress('git:after', { command: args[0] === '-c' ? 'commit' : args[0], pid: result.pid, status: result.status, signal: result.signal, errorCode: result.error?.code ?? null });
     assert.equal(result.error, undefined); assert.equal(result.status, 0, result.stderr);
   }
   const sibling = join(dirname(input.questions), 'replacement.md');

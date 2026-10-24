@@ -320,8 +320,9 @@ export function createAssignmentIdentityAdapter(
             return matches[0];
           }, (source, rows): ReservedTaskResolution => {
             const matches = rows.filter(row => row.id === task.key.taskId);
-            if (matches.length !== 1 || fingerprint(task.key.project, root, task.key.changeId, task.changeInstance, task.key.taskId, matches[0].description) !== task.fingerprint) return { state: 'mismatch', requested: task, reason: `${context}: task number/description/fingerprint changed; main must reconcile the original assignment` };
-            if (source.location === 'archive' && (!rows.length || rows.some(row => !row.done) || new Set(rows.map(row => row.id)).size !== rows.length)) return { state: 'mismatch', requested: task, reason: `${context}: archive contains open or ambiguous tasks; main must reconcile` };
+            const recovery = 'main must inspect the original assignment and owner/runId with raf agent ps; consult raf help agent close for this generation. Close requires report acceptance or a supported explicit force with a nonempty reason; reservation release requires confirmed exit and finalization';
+            if (matches.length !== 1 || fingerprint(task.key.project, root, task.key.changeId, task.changeInstance, task.key.taskId, matches[0].description) !== task.fingerprint) return { state: 'mismatch', requested: task, reason: `${context}: task number/description/fingerprint changed; ${recovery}` };
+            if (source.location === 'archive' && (!rows.length || rows.some(row => !row.done) || new Set(rows.map(row => row.id)).size !== rows.length)) return { state: 'mismatch', requested: task, reason: `${context}: archive contains open or ambiguous tasks; ${recovery}` };
             return { state: matches[0].done ? 'completed' : 'open', task, location: source.location };
           });
           results.push(resolution);

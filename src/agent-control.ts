@@ -59,6 +59,7 @@ export type CloseResult = { forcedClose?: { reason: string }; closed: boolean; u
 
 export class AgentControlService {
   private dependencies: AgentControlDependencies;
+  private closing = new Map<string, Promise<CloseResult>>();
 
   constructor(dependencies: AgentControlDependencies) {
     this.dependencies = dependencies;
@@ -169,7 +170,17 @@ export class AgentControlService {
     if (id === 'main') throw new Error('Main cannot be closed');
     const candidates = this.sessions().filter(row => row.addressId === id && row.state !== 'finished');
     if (candidates.length !== 1) throw new Error(`Unknown or ambiguous session: ${id}`);
-    let session = candidates[0];
+    const session = candidates[0];
+    const pending = this.closing.get(session.runId);
+    if (pending) return pending;
+    const closing = this.closeSelected(session, options);
+    this.closing.set(session.runId, closing);
+    try { return await closing; }
+    finally { if (this.closing.get(session.runId) === closing) this.closing.delete(session.runId); }
+  }
+
+  private async closeSelected(session: SessionRecord, options: CloseOptions): Promise<CloseResult> {
+    const id = session.addressId;
     if (session.state === 'exited' && session.result?.forcedClose && options.force) {
       const final = await this.dependencies.coordinator.finalize(session, this.events(session, 'ended'));
       return { closed: final.state === 'finished', unfinished: [], result: final.result?.status, forcedClose: final.result?.forcedClose };
@@ -184,7 +195,7 @@ export class AgentControlService {
       throw new Error(`Session is not confirmed alive: ${id}`);
     }
     const selected = session;
-    session = await this.dependencies.coordinator.acceptPendingReport(session);
+    if (!options.force) session = await this.dependencies.coordinator.acceptPendingReport(session);
     if (session.runId !== selected.runId || session.state !== 'running' || !session.process || !this.sameProcess(selected.process!, session.process)) throw new Error('Selected run changed during report acceptance');
     if (!options.force) session = await this.dependencies.coordinator.prepareClose(session, {});
     const check = this.dependencies.reminders.sessionEnded({ address: session.addressId, confirmedSucceeded: session.result?.status === 'succeeded', crashed: false });

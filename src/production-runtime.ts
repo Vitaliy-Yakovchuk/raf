@@ -667,6 +667,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     projects, agentTypes: types, agentPhases: configuration.catalog.commands.find(row => row.handlerName === 'agent update')?.parameters.find(row => row.name === 'phase')?.values?.map(row => row.id) ?? types,
     coordinator: {
       prepareClose: (session, options) => prepareAgentClose({
+        compiledCatalog: configuration.catalog,
         repository: store.sessionRepository,
         acceptPendingReport,
         acceptedReport: (_tx, row) => {

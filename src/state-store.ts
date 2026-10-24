@@ -91,8 +91,8 @@ export interface StateStore {
   getCommandTiming(command: string): CommandTiming | undefined;
 }
 
-export const STATE_SCHEMA_VERSION = 15;
-export const STATE_SCHEMA_SUPPORTED_VERSIONS = [12, 13, 14, 15] as const;
+export const STATE_SCHEMA_VERSION = 16;
+export const STATE_SCHEMA_SUPPORTED_VERSIONS = [16] as const;
 
 export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
@@ -139,7 +139,7 @@ export function openStateStore(path: string, options?: import('./state-migration
     if (permit && version !== permit.fromVersion && version !== permit.toVersion) {
       throw stateFailure('STATE_MIGRATION_CONFLICT', `State ${path} is at ${version}; expected ${permit.fromVersion} or ${permit.toVersion}`);
     }
-    if (!permit && version > 0 && !STATE_SCHEMA_SUPPORTED_VERSIONS.includes(version as 12 | 13 | 14 | 15)) {
+    if (!permit && version > 0 && !STATE_SCHEMA_SUPPORTED_VERSIONS.some(supported => supported === version)) {
       throw stateFailure('STATE_MIGRATION_REQUIRED', `State ${path} is at version ${version}; explicit migration to ${STATE_SCHEMA_VERSION} required`);
     }
     return version;
@@ -409,6 +409,25 @@ export function openStateStore(path: string, options?: import('./state-migration
             initializeResourceUsage(db);
             db.exec("PRAGMA user_version = 15");
             options?.afterMigrationStep?.(15);
+          }
+          if (current < 16) {
+            db.exec(`
+              CREATE TABLE task_reservations_v16 (
+                project TEXT NOT NULL,
+                change_instance TEXT NOT NULL,
+                task_id TEXT NOT NULL,
+                change_id TEXT NOT NULL,
+                fingerprint TEXT NOT NULL,
+                run_id TEXT NOT NULL REFERENCES task_reservation_runs(run_id) ON DELETE CASCADE,
+                PRIMARY KEY(project, change_id, change_instance, task_id)
+              ) STRICT;
+              INSERT INTO task_reservations_v16 SELECT project, change_instance, task_id, change_id, fingerprint, run_id FROM task_reservations;
+              DROP TABLE task_reservations;
+              ALTER TABLE task_reservations_v16 RENAME TO task_reservations;
+              CREATE INDEX task_reservations_run ON task_reservations(run_id);
+              PRAGMA user_version = 16;
+            `);
+            options?.afterMigrationStep?.(16);
           }
         });
       }

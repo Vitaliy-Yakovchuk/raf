@@ -110,8 +110,7 @@ type ReservationTransaction = Parameters<Parameters<StateStore['taskReservationR
 
 const copy = <T>(value: T): T => structuredClone(value);
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
-const taskKey = (task: ReservedTaskSnapshot): string => JSON.stringify([task.key.project, task.changeInstance, task.key.taskId]);
-const sourceOf = (task: ReservedTaskSnapshot): string => JSON.stringify([task.key.project, task.key.changeId]);
+const taskKey = (task: ReservedTaskSnapshot): string => JSON.stringify([task.key.project, task.key.changeId, task.changeInstance, task.key.taskId]);
 const sameTask = (left: ReservedTaskSnapshot, right: ReservedTaskSnapshot): boolean =>
   taskKey(left) === taskKey(right) && left.key.changeId === right.key.changeId && left.fingerprint === right.fingerprint;
 const sameLease = (left: TaskReservationLease, right: TaskReservationLease): boolean =>
@@ -302,11 +301,18 @@ export async function claimTaskReservations(dependencies: TaskReservationDepende
     const starter = await observeProcess(dependencies, request.starter, request.runId, boot, boot);
     if (!starter.alive) throw failure('TASK_IDENTITY_INVALID', 'Starter is no longer alive', { runId: request.runId });
     const observations = await checkReservations(dependencies, boot);
-    const sources = new Set(request.tasks.map(sourceOf));
-    const assigned = observations.flatMap(({ set }) => set.tasks.filter(task => sources.has(sourceOf(task))));
-    if (assigned.length) await resolveTasks(dependencies, assigned, 'retained');
-    await resolveTasks(dependencies, request.tasks, 'claim');
     const requested = new Set(request.tasks.map(taskKey));
+    for (const { set, alive, pending } of observations) {
+      if (!alive && !pending) continue;
+      const assigned = set.tasks.filter(task => requested.has(taskKey(task)));
+      if (!assigned.length) continue;
+      try { await resolveTasks(dependencies, assigned, 'retained'); }
+      catch (cause) {
+        const code = (cause as TaskReservationError).code;
+        throw failure(code, 'Reserved assignment could not be verified; reservation retained. Main must inspect the owner with raf agent ps and raf help agent close; close requires an accepted report or a supported explicit force with a nonempty reason. Release requires confirmed exit and finalization', { owner: set.lease.owner, tasks: assigned }, cause);
+      }
+    }
+    await resolveTasks(dependencies, request.tasks, 'claim');
     const delegator = request.resolveDelegator && observations.some(({ set }) => set.tasks.some(task => requested.has(taskKey(task))))
       ? await request.resolveDelegator() : undefined;
     const result = dependencies.store.taskReservationRepository.transaction<ClaimTasksResult | null>(tx => {
@@ -431,6 +437,7 @@ export async function releaseTaskReservations(dependencies: TaskReservationDepen
   return dependencies.store.taskReservationRepository.transaction(tx => {
     const current = findLease(tx, request.lease);
     if (!current) return false;
+    const selectedSession = tx.getSession(request.lease.owner.runId);
     request.closeLaunch(tx);
     const session = tx.getSession(request.lease.owner.runId);
     if (!session || session.addressId !== request.lease.owner.addressId || session.state !== 'finished' ||
@@ -438,7 +445,7 @@ export async function releaseTaskReservations(dependencies: TaskReservationDepen
       throw failure('TASK_IDENTITY_INVALID', 'Close participant did not close the requested launch', request.lease);
     }
     tx.deleteTaskReservation(request.lease.owner.runId);
-    returnDelegated(tx, session, current.tasks);
+    returnDelegated(tx, selectedSession, current.tasks);
     return true;
   });
 }

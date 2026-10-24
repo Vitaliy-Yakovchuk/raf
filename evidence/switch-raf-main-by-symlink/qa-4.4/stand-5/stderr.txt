@@ -1,0 +1,16 @@
+Migrating git directory of 'raf-main' from
+'/tmp/hf-aStGOY/raf-main/.git' to
+'/tmp/hf-aStGOY/.git/modules/raf-main'
+Preparing worktree (new branch 'develop')
+Preparing worktree (new branch 'hotfix')
+Previous HEAD position was f9e5cec isolated raf baseline
+HEAD is now at cdf2814 refused-build
+Previous HEAD position was cdf2814 refused-build
+HEAD is now at 0174762 refused-smoke
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /help.*failed|smoke.*failed/i. Input:
+
+'Error: Hotfix gate build failed: Error: Hotfix snapshot fingerprint changed'
+
+    at main (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-main-symlink-release.ts:184:12)
+    at async file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-main-symlink-release.ts:272:10
+error connecting to /tmp/hf-aStGOY/q/.raf/tmp/tmux/server.sock (No such file or directory)

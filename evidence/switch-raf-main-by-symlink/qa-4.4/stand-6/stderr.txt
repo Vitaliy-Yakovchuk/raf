@@ -1,0 +1,27 @@
+Migrating git directory of 'raf-main' from
+'/tmp/hf-2ZNLUi/raf-main/.git' to
+'/tmp/hf-2ZNLUi/.git/modules/raf-main'
+Preparing worktree (new branch 'develop')
+Preparing worktree (new branch 'hotfix')
+Previous HEAD position was 4d5a433 build catalog for isolated stand configuration
+HEAD is now at 7ee79a7 refused-build
+Previous HEAD position was 7ee79a7 refused-build
+HEAD is now at 1ba6949 refused-smoke
+Previous HEAD position was 1ba6949 refused-smoke
+HEAD is now at 0a451c4 cycle-1-B
+AssertionError [ERR_ASSERTION]: Error: Inactive main slot busy: activation, handover or readers pending
+    at failure (file:///srv/dev/work/orchestrator/raf-develop/src/main-symlink-release.ts:86:73)
+    at assertFree (file:///srv/dev/work/orchestrator/raf-develop/src/main-symlink-release.ts:94:136)
+    at Object.assertSnapshot (file:///srv/dev/work/orchestrator/raf-develop/src/main-symlink-release.ts:174:26)
+    at async publishHotfixSnapshot (file:///srv/dev/work/orchestrator/raf-develop/src/hotfix-activation.ts:388:3)
+    at async MainSymlinkRelease.activate (file:///srv/dev/work/orchestrator/raf-develop/src/main-symlink-release.ts:180:20)
+    at async Object.withPublicationLock (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-main-symlink-release.ts:79:20)
+    at async file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-main-symlink-release.ts:276:63
+
+
+1 !== 0
+
+    at main (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-main-symlink-release.ts:209:14)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-main-symlink-release.ts:280:10
+error connecting to /tmp/hf-2ZNLUi/q/.raf/tmp/tmux/server.sock (No such file or directory)

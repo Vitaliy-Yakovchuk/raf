@@ -1,0 +1,14 @@
+Migrating git directory of 'raf-main' from
+'/tmp/hf-mWTYhE/raf-main/.git' to
+'/tmp/hf-mWTYhE/.git/modules/raf-main'
+Preparing worktree (new branch 'develop')
+Preparing worktree (new branch 'hotfix')
+Previous HEAD position was bff2dd4 isolated raf baseline
+HEAD is now at 444b9b5 refused-build
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /build.*failed/i. Input:
+
+'TypeError: shared.verify is not a function'
+
+    at main (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-main-symlink-release.ts:183:12)
+    at async file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-main-symlink-release.ts:267:10
+error connecting to /tmp/hf-mWTYhE/q/.raf/tmp/tmux/server.sock (No such file or directory)

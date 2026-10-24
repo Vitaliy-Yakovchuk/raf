@@ -1,4 +1,5 @@
 import { hotfixModuleOrigin } from './hotfix-origin.ts';
+import { execFileSync } from 'node:child_process';
 import { lstatSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { userInfo } from 'node:os';
@@ -56,6 +57,26 @@ function contextFailure(code: 'CONFIGURATION_INVALID' | 'HANDLER_FAILED', reason
 }
 const inside = (path: string, root: string) => path === root || path.startsWith(root + sep);
 const proofs = new WeakMap<StateContext, { request: StateContextRequest; workingHome: string }>();
+
+function activeMainOrigin(root: string, project: any, productionRoot: string, modulePath: string): string | undefined {
+  const copies = project.mainCopies;
+  if (!Array.isArray(copies) || copies.length !== 2 || new Set(copies).size !== 2 || !inside(modulePath, productionRoot)) return;
+  try {
+    if (!lstatSync(resolve(root, project.path)).isSymbolicLink()) return;
+    if (!copies.every(path => typeof path === 'string' && path && !isAbsolute(path) &&
+      relative(root, resolve(root, path)) === path && realpathSync(resolve(root, path)) === resolve(root, path))) return;
+    const active = copies.find(path => resolve(root, path) === productionRoot);
+    if (!active) return;
+    const environment = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
+    const git = (cwd: string, ...args: string[]) => execFileSync('git', ['--no-optional-locks', '-C', cwd, ...args],
+      { encoding: 'utf8', env: environment, stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    const commit = git(productionRoot, 'rev-parse', 'HEAD');
+    if (git(productionRoot, 'symbolic-ref', 'HEAD') !== 'refs/heads/main' || git(productionRoot, 'rev-parse', 'refs/heads/main') !== commit) return;
+    if (git(root, 'config', '-f', '.gitmodules', '--get', 'submodule.raf-main.path') !== active ||
+      git(root, 'ls-files', '--stage', '--', active) !== `160000 ${commit} 0\t${active}`) return;
+    return productionRoot;
+  } catch { return; }
+}
 
 export function canonicalStatePath(path: string): string {
   if (typeof path !== 'string' || !isAbsolute(path) || path.includes('\0')) refuse(`Absolute state context path required: ${path}`);
@@ -124,7 +145,8 @@ export function resolveStateContext(request: StateContextRequest): StateContext 
     if (statSync(modulePath).nlink !== 1) refuse(`Module origin has hardlink aliases: ${modulePath}`);
     const roots = Object.values(project.branchPaths).filter((path): path is string => typeof path === 'string')
       .map(path => resolve(orchestratorRoot, path));
-    const codeRoot = roots.find(root => { try { return realpathSync(root) === root && inside(modulePath, root); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false; throw error; } }) ?? hotfixModuleOrigin(orchestratorRoot, productionRoot, modulePath, request.environment.RAF_QA_HOME !== undefined);
+    const codeRoot = roots.find(root => { try { return realpathSync(root) === root && inside(modulePath, root); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false; throw error; } }) ??
+      activeMainOrigin(orchestratorRoot, project, productionRoot, modulePath) ?? hotfixModuleOrigin(orchestratorRoot, productionRoot, modulePath, request.environment.RAF_QA_HOME !== undefined);
     if (!codeRoot || !['src', 'bin', 'scripts'].includes(relative(codeRoot, modulePath).split(sep)[0])) refuse(`Unregistered module origin: ${modulePath}`);
     const settingsPath = join(orchestratorRoot, 'conf', 'raf.json');
     let settings;

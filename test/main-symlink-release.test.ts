@@ -292,6 +292,28 @@ test("prepare forwards all common verification inputs with isolated QA host", as
   assertOrdered(f.events, ["inspect", "prepare:b", "shared-verify"]);
 });
 
+test('publication admits its own durable intent during the common engine second snapshot check', async () => {
+  const f = fixture();
+  const inspect = f.storage.inspect.bind(f.storage);
+  f.storage.inspect = async () => ({ ...await inspect(), activationComplete: !await f.storage.readIntent() });
+  f.ports.shared.activate = async (_host, candidate, options = {}) => {
+    const publication = options.publication!;
+    await publication.assertSnapshot();
+    await publication.writeIntent();
+    assert.equal((await f.storage.inspect()).activationComplete, false);
+    await publication.assertSnapshot();
+    await options.switchProvider!.exchange(publication.currentDirectory, publication.preparedDirectory);
+    await publication.reconcileGit();
+    await publication.clearIntent();
+    return { status: 'activated', commit: candidate.commit, fingerprint: candidate.fingerprint, generationRoot: publication.preparedDirectory };
+  };
+  const api = createMainSymlinkRelease(f.ports);
+  const result = await api.publish(await api.prepare(f.request));
+  assert.equal(result.active, 'b');
+  assert.equal(f.state.active, 'b');
+  assert.equal(await f.storage.readIntent(), undefined);
+});
+
 for (const blocker of ["activation", "handover", "cli", "worker", "imports", "legacy-agent-channel"] as const) {
   test(`inactive slot is preserved before any write while ${blocker} remains`, async () => {
     const f = fixture();
@@ -613,4 +635,46 @@ test("retired slot name and old fingerprint no longer prove production origin", 
   await api.publish(await api.prepare(f.request));
   f.retire("a");
   await assert.rejects(() => api.resolveProduction(`${root}/raf-main-a`, fingerprint("a")), { code: "MAIN_GENERATION_UNPUBLISHED" });
+});
+
+test('registered active main symlink admits its physical module in QA and production without admitting an unregistered target', async t => {
+  const { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { execFileSync } = await import('node:child_process');
+  const { join } = await import('node:path');
+  const { resolveStateContext } = await import('../src/state-migration-guard.ts');
+  const root = mkdtempSync(join(tmpdir(), 'main-origin-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  for (const name of ['conf', 'raf-main-a/src', 'raf-main-b/src', 'foreign/src', 'account', 'qa']) mkdirSync(join(root, name), { recursive: true });
+  for (const slot of ['raf-main-a', 'raf-main-b', 'foreign']) writeFileSync(join(root, slot, 'src/production-entry.ts'), 'export {};\n');
+  for (const slot of ['raf-main-a', 'raf-main-b', 'foreign']) execFileSync('git', ['init', '--quiet', join(root, slot)]);
+  const git = (cwd: string, ...args: string[]) => execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8' }).trim();
+  git(root, 'init', '--quiet');
+  for (const slot of ['raf-main-a', 'raf-main-b']) {
+    git(join(root, slot), 'add', '.');
+    git(join(root, slot), '-c', 'user.name=QA', '-c', 'user.email=qa@example.invalid', 'commit', '--quiet', '-m', 'initial');
+    git(join(root, slot), 'branch', '-M', 'main');
+  }
+  const commit = git(join(root, 'raf-main-a'), 'rev-parse', 'HEAD');
+  git(root, 'update-index', '--add', '--cacheinfo', '160000', commit, 'raf-main-a');
+  git(root, 'config', '-f', '.gitmodules', 'submodule.raf-main.path', 'raf-main-a');
+  const config = { version: 1, profiles: { raf: { production: 'main', environments: { runtime: 'main' } } },
+    projects: { raf: { profile: 'raf', path: 'raf-main', branchPaths: { main: 'raf-main' }, mainCopies: ['raf-main-a', 'raf-main-b'] } } };
+  writeFileSync(join(root, 'conf/projects.json'), JSON.stringify(config));
+  writeFileSync(join(root, 'conf/raf.json'), JSON.stringify({ version: 1, state: { fileName: 'state.sqlite' } }));
+  symlinkSync('raf-main-a', join(root, 'raf-main'));
+  for (const mode of ['qa', 'production']) {
+    const home = join(root, mode === 'qa' ? 'qa' : 'account');
+    const context = resolveStateContext({ orchestratorRoot: root, modulePath: join(root, 'raf-main-a/src/production-entry.ts'),
+      homeDirectory: home, operatingSystemHome: join(root, 'account'), entryPoint: 'cli',
+      environment: { HOME: home, ...(mode === 'qa' ? { RAF_QA_HOME: home } : {}) } });
+    assert.equal(context.codeRoot, join(root, 'raf-main-a'));
+    assert.equal(context.mode, mode);
+  }
+  for (const target of ['raf-main-b', 'foreign']) {
+  rmSync(join(root, 'raf-main')); symlinkSync(target, join(root, 'raf-main'));
+  assert.throws(() => resolveStateContext({ orchestratorRoot: root, modulePath: join(root, target, 'src/production-entry.ts'),
+    homeDirectory: join(root, 'qa'), operatingSystemHome: join(root, 'account'), entryPoint: 'cli',
+    environment: { HOME: join(root, 'qa'), RAF_QA_HOME: join(root, 'qa') } }), { code: 'STATE_CONTEXT_REFUSED' });
+  }
 });

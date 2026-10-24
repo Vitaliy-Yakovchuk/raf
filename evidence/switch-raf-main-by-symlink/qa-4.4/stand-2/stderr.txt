@@ -1,0 +1,18 @@
+Migrating git directory of 'raf-main' from
+'/tmp/hf-WpVtw1/raf-main/.git' to
+'/tmp/hf-WpVtw1/.git/modules/raf-main'
+Preparing worktree (new branch 'develop')
+Preparing worktree (new branch 'hotfix')
+AssertionError [ERR_ASSERTION]: ERROR {"code":"PRODUCTION_ENTRY_FAILED","message":"Invalid conf/raf.json#/costProfile/helperExecutables","details":{"command":"main attach","stage":"startup","source":"production-entry","sourceCode":null,"reason":"Invalid conf/raf.json#/costProfile/helperExecutables","received":null,"expected":null,"found":null,"completed":[],"pending":[],"retrySafe":true},"remediation":["Перевірте конфігурацію та доступність потрібного компонента.","raf help main attach"]}
+
++ actual - expected
+
++ 'ERROR {"code":"PRODUCTION_ENTRY_FAILED","message":"Invalid conf/raf.json#/costProfile/helperExecutables","details":{"command":"main attach","stage":"startup","source":"production-entry","sourceCode":null,"reason":"Invalid conf/raf.json#/costProfile/helperExecutables","received":null,"expected":null,"found":null,"completed":[],"pending":[],"retrySafe":true},"remediation":["Перевірте конфігурацію та доступність потрібного компонента.","raf help main attach"]}\n'
+- 'ready'
+
+    at Object.startMain (file:///srv/dev/work/orchestrator/raf-develop/test/hotfix-fixture.ts:219:12)
+    at async main (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-main-symlink-release.ts:169:3)
+    at async file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-main-symlink-release.ts:267:10
+{"code":"PRODUCTION_ENTRY_FAILED","message":"Invalid conf/raf.json#/costProfile/helperExecutables","details":{"command":"service stop","stage":"startup","source":"production-entry","sourceCode":null,"reason":"Invalid conf/raf.json#/costProfile/helperExecutables","received":null,"expected":null,"found":null,"completed":[],"pending":[],"retrySafe":true},"remediation":["Перевірте конфігурацію та доступність потрібного компонента.","raf help service stop"]}
+no server running on /tmp/hf-WpVtw1/q/main.sock
+error connecting to /tmp/hf-WpVtw1/q/.raf/tmp/tmux/server.sock (No such file or directory)

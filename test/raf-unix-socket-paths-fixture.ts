@@ -10,7 +10,7 @@ import { createRafTemporarySocketEndpoint, type RafTemporarySocketEndpoint, type
 import { hotfixCommitClientCommand } from '../src/hotfix-commit-client-command.ts';
 import { prepareHotfixWorktree, startHotfixCommitPort, type HotfixHost } from '../src/hotfix-worktree.ts';
 import { consumeWrapperRequest, launchPersistentWrapper, type LaunchWrapperRequest } from '../src/launch-wrapper.ts';
-import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
+import { prepareCodexSandbox, type CodexSandboxRequest } from '../src/codex-sandbox.ts';
 import { readMachineBootIdentity } from '../src/os-runtime.ts';
 
 export interface CaseInput {
@@ -382,9 +382,30 @@ async function sandboxIngress(input: CaseInput) {
   const secret = join(input.root, 'hidden-state', 'secret');
   await mkdir(dirname(secret), { recursive: true });
   await writeFile(secret, 'state-secret');
+  const request: CodexSandboxRequest = {
+    runId: input.runId,
+    invocation: { executable: 'codex', args: ['--sandbox', 'workspace-write'], liveTaskVerified: false },
+    scope: {
+      hidden: [dirname(secret), registered],
+      readable: [input.workspace],
+      tmuxDirectory: input.runDirectory,
+      excludedCommands: [],
+    },
+    cwd: input.workspace,
+    runDirectory: input.runDirectory,
+    writableDirectories: [input.workspace, input.runDirectory, input.tmpdir],
+    environment: {
+      ...process.env,
+      HOME: input.home,
+      TMPDIR: input.tmpdir,
+      TMUX: `${join(input.root, 'foreign-tmux.sock')},1,0`,
+      TMUX_PANE: '%99',
+    },
+    timeoutMs: input.budgetMs,
+  };
   phase = 'sandbox-preflight';
   let policy;
-  try { policy = await prepareCodexSandbox({ runId: input.runId, invocation: { executable: process.execPath, args: ['--sandbox', 'workspace-write', '-e', 'process.exit(0)'], liveTaskVerified: true }, scope: { hidden: [dirname(secret), registered], readable: [input.workspace], tmuxDirectory: input.runDirectory, excludedCommands: [] }, cwd: input.workspace, runDirectory: input.runDirectory, writableDirectories: [input.workspace, input.runDirectory], environment: { ...process.env, HOME: input.home, TMPDIR: input.tmpdir, TMUX: `${join(input.root, "foreign-tmux.sock")},1,0`, TMUX_PANE: '%99' }, timeoutMs: input.budgetMs }); } catch (error) {
+  try { policy = await prepareCodexSandbox(request); } catch (error) {
     await new Promise<void>(yes => foreign.close(() => yes()));
     throw error;
   }

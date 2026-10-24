@@ -190,6 +190,54 @@ test('test-queue phase hotfix cannot elevate a trusted develop workspace', async
   else { assert.equal(f.spawned.length, 0); assert.notEqual(result.outcome, 'passed'); }
 });
 
+test('test-queue a workspace absent from trusted branch paths is refused before resources', async () => {
+  const f = fixture();
+  f.ports.resourceRoute = { branchPaths: { develop: '/qa/other-develop', hotfix: '/qa/hotfix' } };
+  const result = await f.run();
+  assert.notEqual(result.outcome, 'passed');
+  assert.equal(f.shared.calls.length, 0); assert.equal(f.testQueue.records.length, 0);
+  assert.equal(f.spawned.length, 0); assert.equal(result.admission, null);
+});
+
+test('test-queue repeats preflight after permit and fails changed prerequisites without spawn', async () => {
+  const f = fixture(); f.shared.setRefusal('unavailable');
+  const running = f.run();
+  try {
+    await expectWaiting(f, running);
+    f.environment.runtimeAvailable = false; f.shared.setRefusal(null); f.testQueue.grant();
+    const result = await running;
+    assert.notEqual(result.outcome, 'passed'); assert.equal(f.spawned.length, 0);
+    assert.equal(result.timedOut, false); assert.equal(result.timeoutCount, 0);
+    assert.equal(f.shared.claims.size, 0); assert.equal(f.testQueue.waits.length, 1);
+    assert.ok(f.timeline.filter(entry => entry === 'preflight').length >= 2);
+  } finally {
+    f.testQueue.waits.forEach((_, i) => f.testQueue.grant(i)); await running;
+  }
+});
+
+test('test-queue permit is not test success and actual assertion result retains queue and admission', async () => {
+  const f = fixture(); f.shared.setRefusal('unavailable');
+  const snapshot = { level: 'ANY_RUN', requestedTier: 'normal', allowed: true };
+  const spawn = f.ports.spawn;
+  f.ports.spawn = async (command, onEvent) => {
+    const child = await spawn(command, event => onEvent(event.kind === 'passed' ? { kind: 'assertion-failed', test: event.test } : event));
+    return { ...child, wait: async () => ({ exitCode: 1, signal: null, stderr: '' }) };
+  };
+  const running = f.run();
+  try {
+    await expectWaiting(f, running);
+    f.shared.setRefusal(null); f.shared.setSnapshot(snapshot); f.testQueue.grant();
+    const result = await running;
+    assert.equal(result.outcome, 'assertions-failed'); assert.equal(result.exitCode, 1);
+    assert.deepEqual(result.admission, snapshot);
+    assert.deepEqual(result.queue, { queueId: f.testQueue.records[0].queueId, waited: true });
+    assert.equal(result.knownRed.length, 1); assert.equal(f.spawned.length, 1);
+  } finally {
+    f.shared.setRefusal(null);
+    f.testQueue.waits.forEach((_, i) => f.testQueue.grant(i)); await running;
+  }
+});
+
 for (const missing of ['UNKNOWN', 'phase', 'preflight'] as const) {
   test(`test-queue ${missing} fails before queue and spawn`, async () => {
     const f = fixture();

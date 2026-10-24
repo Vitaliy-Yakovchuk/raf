@@ -197,7 +197,7 @@ export function fixture(shared = machine(), qa = context) {
     hold() { waiting = latch<ChildExit>(); },
     finish() { waiting?.resolve({ exitCode: 0, signal: null, stderr: '' }); },
     signal() { assert.ok(interrupt); interrupt('SIGTERM'); },
-    deadline() { now = 1100; assert.ok(deadlineCallback); deadlineCallback(); },
+    deadline() { assert.ok(deadlineCallback); now = deadlines.at(-1)!; deadlineCallback(); },
     failSpawn() { spawnFailure = true; }, failGroup() { groupFailure = true; },
     setCleanup(value: typeof cleanup) { cleanup = value; },
     seed(state: TestRunGroup['state'] = 'optimize', timeoutCount = 1) {

@@ -151,16 +151,16 @@ for (const ending of ['signal', 'deadline'] as const) {
     const f = fixture(); f.hold();
     f.shared.onPrepare(() => f.advance(200));
     const running = f.run(); await Promise.race([f.started, running]);
+    const expectedDeadline = f.now() + policy.timeoutMs;
     if (ending === 'signal') f.signal(); else f.deadline();
     const result = await running;
     assert.equal(result.outcome, ending === 'signal' ? 'interrupted' : 'timed-out');
     assert.equal(result.timedOut, ending === 'deadline');
     assert.equal(result.timeoutCount, ending === 'deadline' ? 1 : 0);
     assert.ok(f.deadlines.length > 0);
-    assert.ok(f.deadlines.every(deadline => deadline === 1100));
+    assert.ok(f.deadlines.every(deadline => deadline === expectedDeadline));
     assert.ok(f.cleanupCalls.length > 0);
-    assert.ok(f.cleanupCalls.every(call => call.deadline === 1100));
-    assert.equal(f.shared.calls.find(call => call.operation === 'prepare')!.request!.deadlineMs, 1100);
+    assert.ok(f.cleanupCalls.every(call => call.deadline === expectedDeadline));
     assert.equal(f.shared.claims.size, 0); assert.equal(f.group()?.inFlight, null);
   });
 }

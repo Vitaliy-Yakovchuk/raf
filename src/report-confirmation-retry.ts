@@ -91,6 +91,7 @@ export interface ConfirmationPorts {
 export async function confirmReportWithRetry(
   request: ConfirmationRequest,
   ports: ConfirmationPorts,
+  cycleDeadline?: number,
 ): Promise<ConfirmationOutcome> {
   const pointer = 'conf/raf.json#/runnerProtocols';
   const protocol = ports.runnerProtocol(request.runner) as { timeouts?: { transitionMs?: number; pollMs?: number } } | undefined;
@@ -98,7 +99,7 @@ export async function confirmReportWithRetry(
   const pollMs = protocol?.timeouts?.pollMs;
   if (typeof transitionMs !== 'number' || !Number.isFinite(transitionMs) || transitionMs <= 0
     || typeof pollMs !== 'number' || !Number.isFinite(pollMs) || pollMs <= 0) return { kind: 'configuration-error', pointer };
-  const deadline = ports.now() + transitionMs;
+  const deadline = cycleDeadline ?? ports.now() + transitionMs;
   let candidate: ConfirmationCandidate | undefined;
   let stage: ConfirmationStage = 'queue';
   let last: { cause: PendingConfirmation['cause']; reason: string } = { cause: 'deadline', reason: 'Confirmation budget exhausted' };

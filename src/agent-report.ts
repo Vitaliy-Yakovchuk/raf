@@ -157,8 +157,19 @@ export async function rejectPendingAgentReport(request: AgentReportRequest, resu
   rejectedResults.set(result, reasons);
 }
 
+class ReportReadError extends Error {}
 export async function readPendingAgentReport(request: AgentReportRequest, ports: PendingAgentReportPorts): Promise<AgentReportResult | null> {
-  if (ports.confirmationRetry) return readRetryReport(request, ports);
+  if (ports.confirmationRetry) {
+    try { return await readRetryReport(request, ports); }
+    catch (error) {
+      if (!(error instanceof ReportReadError)) throw error;
+      const reason = reportDiagnosticText(request, error.message);
+      await ports.diagnostic(reason, { reportPath: join(request.tmpRoot, request.runId, `${request.address}.json`), bytes: null, reason });
+      pendingConfirmations.delete(join(request.tmpRoot, request.runId, `${request.address}.json`));
+      await ports.confirmationRetry.retainPending?.(null);
+      return null;
+    }
+  }
   const key = request.assignment.root;
   const diagnostics: { reason: string; snapshot?: ReportRejectionSnapshot }[] = [];
   const previous = acceptanceQueues.get(key) ?? Promise.resolve();
@@ -177,11 +188,13 @@ const pendingConfirmations = new Map<string, PendingConfirmation>();
 export function isAgentReportConfirmationPending(request: AgentReportRequest): boolean {
   return pendingConfirmations.has(join(request.tmpRoot, request.runId, `${request.address}.json`));
 }
-async function readRetryReport(request: AgentReportRequest, ports: PendingAgentReportPorts): Promise<AgentReportResult | null> {
+async function readRetryReport(request: AgentReportRequest, ports: PendingAgentReportPorts, cycleDeadline?: number): Promise<AgentReportResult | null> {
   const path = join(request.tmpRoot, request.runId, `${request.address}.json`);
   if (!isAbsolute(request.tmpRoot) || ![request.runId, request.address].every(value => /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value))) throw new Error('Invalid report directory, run ID or address');
   const retry = ports.confirmationRetry!;
   const protocol = await retry.protocol();
+  const configuredTransition = (protocol as { timeouts?: { transitionMs?: number } } | undefined)?.timeouts?.transitionMs;
+  const deadline = cycleDeadline ?? (typeof configuredTransition === 'number' ? performance.now() + configuredTransition : undefined);
   let content = '';
   let report: AgentReport;
   let bytes = new Uint8Array();
@@ -222,7 +235,9 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
     runnerProtocol: () => protocol,
     currentRun: async () => ({ runId: request.runId, state: !ports.isCurrentReport || await ports.isCurrentReport(request.runId, path) ? 'open' : 'closed' }),
     readReport: async () => {
-      const raw = ports.fs.readBytes ? await ports.fs.readBytes(path) : await ports.fs.readText(path).then(text => text === null ? null : Buffer.from(text));
+      let raw: Uint8Array | null;
+      try { raw = ports.fs.readBytes ? await ports.fs.readBytes(path) : await ports.fs.readText(path).then(text => text === null ? null : Buffer.from(text)); }
+      catch (error) { throw new ReportReadError(`Cannot read report: ${String(error)}`); }
       if (raw === null) return { kind: 'absent' };
       const text = Buffer.from(raw).toString('utf8');
       let value: unknown;
@@ -288,7 +303,8 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
     },
     scheduleAutomaticPass: async () => {},
     finishNoReport: async () => {},
-  });
+  }, deadline);
+  if (outcome.kind === 'superseded' && (!ports.isCurrentReport || await ports.isCurrentReport(request.runId, path)) && !await sameReportBytes(path, bytes, content, ports)) return readRetryReport(request, ports, deadline);
   if (outcome.kind !== 'pending') { pendingConfirmations.delete(path); await retry.retainPending?.(null); }
   if (outcome.kind === 'configuration-error') throw new Error(`Invalid report confirmation budget at ${outcome.pointer}`);
   if (outcome.kind === 'awaiting-archive') {

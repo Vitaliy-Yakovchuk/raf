@@ -1613,18 +1613,20 @@ export async function runProductionWorker(
           tools.verified.set(value, request.runId);
           const accepted = tools.state.acceptWorkResult(request.runId, value, { pending: [{ id: `${request.runId}:${result.event}`, runId: request.runId, event: result.event, payload: { kind: result.event, id: request.address } }], domain: [], reportAccepted: !!result.report });
           if (!accepted && !tools.current(request.runId)?.result) fail('REPORT_UNVERIFIED', 'Result could not be durably accepted for the running session');
-          await tools.deliverResults();
-          if (result.report && lease) {
-            const succeeded = new Set(result.report.changes.flatMap(change => change.items.filter(item => item.status === 'succeeded').map(item => JSON.stringify([change.id, item.id]))));
-            const subset = { ...request.assignment, changes: request.assignment.changes.map(change => ({ ...change, items: change.items.filter(item => succeeded.has(JSON.stringify([change.id, item.id]))) })).filter(change => change.items.length) };
-            if (subset.changes.length && (await verifyAssignmentCompletion(subset, assignments, Object.fromEntries(result.report.changes.filter(change => change.archive).map(change => [change.id, change.archive!])))).ok) {
-              const set = listTaskReservations(store).find(set => set.lease.owner.runId === request.runId);
-              if (set && set.lease.owner.fence === lease.owner.fence) {
-                const tasks = set.tasks.filter(task => succeeded.has(JSON.stringify([task.key.changeId, task.key.taskId])));
-                if (tasks.length) { const completed = await completeTaskReservations(dependencies, { lease: set.lease, tasks }); if (completed.applied) lease = completed.lease; }
+          try {
+            await tools.deliverResults();
+            if (result.report && lease) {
+              const succeeded = new Set(result.report.changes.flatMap(change => change.items.filter(item => item.status === 'succeeded').map(item => JSON.stringify([change.id, item.id]))));
+              const subset = { ...request.assignment, changes: request.assignment.changes.map(change => ({ ...change, items: change.items.filter(item => succeeded.has(JSON.stringify([change.id, item.id]))) })).filter(change => change.items.length) };
+              if (subset.changes.length && (await verifyAssignmentCompletion(subset, assignments, Object.fromEntries(result.report.changes.filter(change => change.archive).map(change => [change.id, change.archive!])))).ok) {
+                const set = listTaskReservations(store).find(set => set.lease.owner.runId === request.runId);
+                if (set && set.lease.owner.fence === lease.owner.fence) {
+                  const tasks = set.tasks.filter(task => succeeded.has(JSON.stringify([task.key.changeId, task.key.taskId])));
+                  if (tasks.length) { const completed = await completeTaskReservations(dependencies, { lease: set.lease, tasks }); if (completed.applied) lease = completed.lease; }
+                }
               }
             }
-          }
+          } catch (error) { process.stderr.write(`${request.runId}: accepted report follow-up: ${String(error)}\n`); }
         },
         finish: async (handshake, exit) => {
           let current = tools.current(request.runId)!;

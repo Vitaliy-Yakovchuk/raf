@@ -16,6 +16,10 @@ const evidence = resolve(destination);
 await fs.mkdir(evidence, { recursive: true });
 const source = resolve(import.meta.dirname, '..');
 const inherited = { ...process.env };
+const sandboxLookup = spawnSync('which', ['codex'], { encoding: 'utf8', env: inherited });
+assert.equal(sandboxLookup.status, 0, sandboxLookup.stderr);
+const sandboxCodex = sandboxLookup.stdout.trim();
+assert.ok(sandboxCodex.startsWith('/'), 'installed Codex sandbox executable required');
 const conf = JSON.parse(await fs.readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
 const settings = conf.runnerProtocols.find((row: any) => row.runner === 'codex');
 const git = (args: string[]) => {
@@ -45,7 +49,15 @@ for (const hasReport of [true, false]) {
     const acceptedPath = join(f.root, 'native-accepted.json');
     await fs.writeFile(executable, String.raw`#!${process.execPath}
 import { writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+if (process.argv.includes('sandbox')) {
+  const result = spawnSync(${JSON.stringify(sandboxCodex)}, process.argv.slice(2), { stdio: 'inherit' });
+  if (result.error) throw result.error;
+  process.exit(result.status ?? 1);
+}
+if (process.argv.includes('app-server')) process.exit(1);
 if (process.argv.includes('--version')) { console.log('codex-cli ${settings.version}'); process.exit(0); }
+if (!process.stdin.isTTY) { console.error('Synthetic native UI requires a TTY'); process.exit(2); }
 process.stdin.setRawMode(true);
 process.stdin.setEncoding('utf8');
 const frame = ${JSON.stringify({ header: frame.header, footer: frame.footer, before: frame.before, pending: frame.pending() })};

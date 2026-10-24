@@ -1,0 +1,78 @@
+{
+  "assignment": "monitor-raf-health:2.1",
+  "author": "raf-mrh21b-scaffold",
+  "state": "author-red-confirmed; awaiting-independent-main-review",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/cpu --files test/health-cpu.test.ts",
+  "scaffoldCommit": "be1382c248324f4b26057bc5d999745ff0e418e7",
+  "result": "red.result.json",
+  "toolResult": "red.tool-result.json",
+  "runId": "18e77cd3-f433-4a7a-8dde-651ad7f725d5",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "outcome": "assertions-failed",
+  "selection": {
+    "files": [
+      "test/health-cpu.test.ts"
+    ],
+    "testIds": []
+  },
+  "knownRedCount": 66,
+  "passedCount": 0,
+  "unexecuted": [],
+  "unknown": [],
+  "timedOut": false,
+  "timeoutCount": 0,
+  "durationMs": 78940,
+  "diagnosticSummary": {
+    "totalEntries": 66,
+    "retainedEntries": 64,
+    "omittedEntries": 2,
+    "truncated": true,
+    "redacted": true
+  },
+  "failureAssessment": "66 виконаних тестів цільової поведінки впали через NotImplemented у evaluateRafHealthCpuWindow/observeRafHealthCpu/withRafHealthCpu або assertion збереження первинної помилки. Preflight/setup/import failure відсутні. Main має незалежно перевірити цей висновок перед implement.",
+  "transport": {
+    "note": "exec_command об'єднав stdout TestRunResult зі stderr launch-queue.waiting усередині JSON-рядка resourceUsage.reasons. Повний tool-result збережено дослівно; red.result.json отримано вилученням єдиного збалансованого JSON notice і наступного newline, без зміни полів TestRunResult.",
+    "notice": "red.queue-notice.json",
+    "diagnosticLimit": "Runner retained 64 of 66 diagnostics; complete returned TestRunResult and all 66 knownRed IDs preserved."
+  },
+  "priorAttempts": [
+    {
+      "result": "phase-refusal.result.json",
+      "runId": "3944f508-0248-49fa-9fb3-69c128ec15ef",
+      "outcome": "refused",
+      "errorCode": "PHASE_NOT_ALLOWED",
+      "resolution": "Main підтвердив --phase red."
+    },
+    {
+      "result": "inventory-refusal.result.json",
+      "runId": "3730038f-776b-4b55-b119-4da07971cc4c",
+      "outcome": "refused",
+      "errorCode": "INVENTORY_INCOMPLETE",
+      "resolution": "Main повідомив про додавання test/worker-idle-cost.test.ts у eb78634; повторено ту саму red-команду."
+    }
+  ],
+  "configuration": {
+    "source": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "status": "Main зареєстрував group/files; у red profileId=node, groupSnapshot=loaded.",
+    "additions": "../cpu-scaffold/conf-test-runs.patch.json",
+    "prerequisites": "../cpu-scaffold/handoff.json#/configuration/prerequisites",
+    "isolatedQaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+    "stateAccess": null,
+    "privateRunTmp": true
+  },
+  "handoff": {
+    "stableGroup": "monitor-raf-health/cpu",
+    "files": [
+      "test/health-cpu.test.ts"
+    ],
+    "nextAction": "implement",
+    "main": "Незалежно перевірити падіння цільової поведінки; передати ту саму групу іншому implement-агенту.",
+    "profileOwnerPrerequisite": "До реалізації узгодити metadata coverage/attribution з власником profile-raf-performance, як описано ../cpu-scaffold/handoff.json#/profileOwnerHandoff."
+  },
+  "audit": {
+    "current": "Задача 2.1 актуальна: gate 1.2 виконано; тести/каркас уже закомічені. На продовженні main звузив роботу до власного red. Тести й production-код не змінювалися.",
+    "archive": "Не виконується: інші пункти monitor-raf-health відкриті.",
+    "superseded": "Старі заборони автору запускати red в tasks/design замінені прямим брифом, підтвердженням main і feature-test-authoring."
+  }
+}

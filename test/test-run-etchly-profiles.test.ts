@@ -549,10 +549,11 @@ for (const fullSuite of [true, false]) {
   test(`${fullSuite ? 'full-suite-explicit refuses before' : 'valid subset retains'} Etchly browser-cache preflight failure`, async () => {
     const c = config();
     const files = fullSuite ? Object.values(c.projects.etchly.profiles).flatMap(profile => profile.unitFiles) : [product];
-    const calls = { preflight: 0, spawn: 0, temporary: 0 };
+    const calls = { preflight: 0, spawn: 0, temporary: 0, state: 0 };
     let stored: TestRunGroup | null = null;
     const ports: TestRunPorts = {
       state: { async transaction(operation) {
+        calls.state++;
         return operation({ get: () => stored, list: () => stored ? [stored] : [],
           put: value => { stored = structuredClone(value); }, delete: () => { stored = null; } });
       } },
@@ -571,10 +572,15 @@ for (const fullSuite of [true, false]) {
     assert.equal(result.outcome, fullSuite ? 'refused' : 'setup-failed');
     assert.equal(result.errorCode, fullSuite ? 'UNSAFE_SELECTION' : 'ENVIRONMENT_INVALID');
     assert.deepEqual(result.failureKinds, [fullSuite ? 'refusal' : 'setup']);
-    assert.deepEqual(calls, { preflight: fullSuite ? 0 : 1, spawn: 0, temporary: 0 });
+    assert.deepEqual(calls, { preflight: fullSuite ? 0 : 1, spawn: 0, temporary: 0, state: 0 });
     assert.equal(result.command, null);
+    assert.equal(result.exitCode, null);
     assert.equal(result.timedOut, false);
-    assert.equal(result.timeoutCount, 0);
+    assert.equal(result.groupSnapshot, 'unavailable', 'preflight has not read the unit group');
+    assert.equal(result.groupState, null, 'an unread group cannot be reported as idle');
+    assert.equal(result.timeoutCount, null, 'an unread group has no confirmed timeout budget');
+    assert.equal(result.stateAccess, null);
+    assert.equal(stored, null);
     assert.deepEqual(result.knownRed, []);
     assert.deepEqual(result.passed, []);
     assert.deepEqual(result.cleanup, { complete: true, remainingPids: [] });

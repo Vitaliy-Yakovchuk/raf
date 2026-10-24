@@ -1,0 +1,14 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/d15b4d4f-5ba2-412a-afd8-19ec921e71e4/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/hotfix-637-638 --files test/hotfix-637-638.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": null,
+  "sourceHead": "90e5e72cda5c476b4e9f684be715af077b7f8a3a",
+  "workspaceChanges": "Admission refused before spawn.",
+  "stderrCapture": "exec_command combines stdout/stderr. Output is one complete TestRunResult JSON with no other text; empty stderr observation is not independent FD capture.",
+  "toolMetadata": {
+    "chunk_id": "2ec1ef",
+    "wall_time_seconds": 0,
+    "exit_code": 1,
+    "original_token_count": 1050
+  }
+}

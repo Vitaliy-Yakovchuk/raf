@@ -56,5 +56,13 @@ export function parseCommandArguments(rest: readonly string[], command: Pick<Com
     if (command.handlerName === 'agent run' && parameter.name === 'type' && [params[parameter.name]].flat().some(value => parameter.values?.find(v => v.id === value)?.launchableByRaf === false)) return fail('TYPE_NOT_LAUNCHABLE', 'Цей тип агента обліковується, але не запускається raf.', { ...context, parameter: parameter.option, received: params[parameter.name] });
     if (parameter.required && (params[parameter.name] === undefined || (Array.isArray(params[parameter.name]) && !(params[parameter.name] as unknown[]).length))) return fail('MISSING_REQUIRED', 'Не задано обов’язковий параметр.', { ...context, parameter: parameter.option });
   }
+  if (command.handlerName === 'agent run' && typeof params.phase === 'string') {
+    const types = command.parameters.find(parameter => parameter.name === 'type')?.values;
+    const phases = command.parameters.find(parameter => parameter.name === 'phase')?.values;
+    if (types && phases) {
+      const expected = phases.filter(phase => types.some(type => type.id === phase.id) || phase.id === 'context-review' && params.type === 'spec').map(phase => phase.id);
+      if (!expected.includes(params.phase)) return fail('INVALID_VALUE', 'Фаза не підтримує запуск цього типу агента.', { ...context, parameter: '--phase', received: params.phase, expected }, ['Використайте фазу запуску агента; початковий unit-red виконуйте командою raf test run.']);
+    }
+  }
   return { params };
 }

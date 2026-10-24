@@ -1,0 +1,27 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.4.1",
+  "baseline": "f365a1403978dc944a59d69bb9a499613d511bc7",
+  "sources": [
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/proposal.md Why/What Changes",
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md Z.4/Z.4.1",
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/specs/projects/raf/agent-adapters/spec.md: Рядок вводу після вставки / Прийняття брифа за маркерами протоколу / Відмова запуску зберігає справжню причину",
+    "/srv/dev/work/orchestrator/openspec/specs/core/process/test-first/spec.md",
+    "/srv/dev/work/orchestrator/openspec/specs/core/process/unit-test-runs/spec.md",
+    "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md: unit author red, isolation, stable ledger, truthful result",
+    "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/autonomous-development/spec.md: Аудит та вилучення неактуальних змін",
+    "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/parallel-development/spec.md"
+  ],
+  "relevance": "Prior fix 58b1057 already allows whitespace-normalized brief suffix with unchanged footer. Task remains current: own unit red proves interior brief fragment and changed queue footer are still refused. No contradiction with existing one-retry/identity/acceptance contracts.",
+  "liveEvidence": "../../../../openspec/changes/complete-raf-flow-contracts/z41-live-frame.json",
+  "liveLimits": [
+    "sym54 raw header unavailable after cleanup; blank lines alone cannot explain the failure because whitespace normalization already exists. Interior fragment regression proves a gap consistent with the frame structure, not exact incident causality.",
+    "dash-dba33 native header + pending paste + queue footer is available in redacted durable diagnostic. Queue footer is not a native acceptance marker."
+  ],
+  "group": "complete-raf-flow-contracts/z41",
+  "phase": "red",
+  "runId": "c4823543-f820-4fd7-8eee-ac300d48fc89",
+  "observedAssertions": 2,
+  "existingPassed": 27,
+  "ledger": "Same raf-assigned QA HOME and group will be used for hotfix; timeoutCount=0; no reset/rename.",
+  "scope": "Only Z.4.1. No task checkboxes, other items, archive, live activation or push."
+}

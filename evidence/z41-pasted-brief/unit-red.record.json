@@ -1,0 +1,106 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z41 --files test/agent-adapters.test.ts",
+  "sha": "b18556c44497e1a56d70dc0ec9c67858c710e885",
+  "workspaceStatus": "?? evidence/z41-pasted-brief/\n?? node_modules\n",
+  "stdout": "unit-red.stdout",
+  "stderr": "unit-red.stderr",
+  "transport": "unit-red.transport.json",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "runId": "c4823543-f820-4fd7-8eee-ac300d48fc89",
+  "selection": {
+    "files": [
+      "test/agent-adapters.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "assertions-failed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "agent-adapters: Z.4.1 brief fragment with blank lines preserves the expected pending brief context"
+    },
+    {
+      "file": "test/agent-adapters.test.ts",
+      "name": "agent-adapters: Z.4.1 native header and queue footer preserves the expected pending brief context"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/agent-adapters.test.ts",
+        "name": "agent-adapters: Z.4.1 brief fragment with blank lines preserves the expected pending brief context"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (strictEqual)",
+      "location": {
+        "file": "test/agent-adapters.test.ts",
+        "line": 36,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/agent-adapters.test.ts:36:12)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.start (node:internal/test_runner/test:1262:17)",
+        "    at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/agent-adapters.test.ts",
+        "name": "agent-adapters: Z.4.1 native header and queue footer preserves the expected pending brief context"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (strictEqual)",
+      "location": {
+        "file": "test/agent-adapters.test.ts",
+        "line": 36,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/agent-adapters.test.ts:36:12)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": true,
+      "truncated": false
+    }
+  ],
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "34636e00082226eb8a1ae440e7fad48638862edf5bd0f870a7d1cf96f97f3ac6",
+      "testRuns": "13cbadd1b0ee6cdfe479a5425dc9e10df0a016837bbcc6a4d6f2317b10e45855",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "redValidation": "Exactly two assertion failures at matchesNativeDeliveryContext === true, with pending count and unknown-screen assertions already passed. No setup/import failure. Existing unrelated tests and unknown-screen refusal guard passed.",
+  "refactorBeforeRed": "Behavior-preserving extraction of the existing echoesBrief and context comparison into runner-protocols.ts; same whitespace-normalized endsWith and identical header/footer checks before this red."
+}

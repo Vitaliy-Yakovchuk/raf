@@ -135,9 +135,9 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
           try {
             descriptor = openSync(join(path, '.raf-test-run'), constants.O_RDONLY | constants.O_NOFOLLOW);
             const marker = fstatSync(descriptor);
-            if (marker.isFile() && marker.uid === st.uid && marker.size === randomUUID().length) {
+            if (marker.isFile() && marker.uid === st.uid && marker.size > 0 && marker.size <= 4096) {
               const value = readFileSync(descriptor, 'utf8');
-              if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value)) runId = value;
+              if (Buffer.byteLength(value) === marker.size && !value.includes('\0')) runId = value;
             }
           } catch (error) { if (!['ENOENT', 'ELOOP'].includes((error as any).code)) throw error; }
           finally { if (descriptor !== undefined) closeSync(descriptor); }

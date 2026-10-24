@@ -99,9 +99,10 @@ export type CompletionDecision = {
 export type TestRunTransportEnvelope = { result: IntegrationContractResult; stderr: string; cliCode: number };
 
 const record = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
-function reject(code: string, pointer?: string, file?: string): never { throw Object.assign(new Error([code, pointer, file].filter(Boolean).join(': ')), { code, ...(pointer ? { pointer } : {}), ...(file ? { file } : {}) }); }
+function reject(code: string, pointer?: string, file?: string, reason?: string): never { throw Object.assign(new Error([code, pointer, file, reason].filter(Boolean).join(': ')), { code, ...(pointer ? { pointer } : {}), ...(file ? { file } : {}) }); }
 const safe = (file: unknown): file is string => typeof file === 'string' && !!file && !isAbsolute(file) && !/^[A-Za-z]:|[\\*?\[\]{}\0]/.test(file) && file.split('/').every(part => part && part !== '.' && part !== '..' && !part.startsWith('-'));
 const equal = (left: readonly string[], right: readonly string[]) => left.length === right.length && new Set(left).size === left.length && left.every(file => right.includes(file));
+const pointerToken = (value: string) => value.replaceAll('~', '~0').replaceAll('/', '~1');
 const positive = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) > 0;
 const key = (id: TestId) => JSON.stringify([id.file, id.name]);
 const unique = (ids: TestId[]) => [...new Map(ids.map(id => [key(id), id])).values()];
@@ -119,11 +120,11 @@ export function testRunTimeoutPolicy(kind: TestKind, flow: RawConfiguration): Ti
 export function validateProfileInventories(configuration: RawConfiguration, flow: RawConfiguration): void {
   if (!record(configuration.projects)) reject('CONFIGURATION_INVALID', 'conf/test-runs.json#/projects');
   for (const [projectId, project] of Object.entries(configuration.projects)) {
-    const base = `conf/test-runs.json#/projects/${projectId}`;
+    const base = `conf/test-runs.json#/projects/${pointerToken(projectId)}`;
     if (!record(project) || !record(project.profiles) || !record(project.groups)) reject('CONFIGURATION_INVALID', base);
     const membership = new Set<string>();
     for (const [id, profile] of Object.entries(project.profiles)) {
-      const pointer = `${base}/profiles/${id}`;
+      const pointer = `${base}/profiles/${pointerToken(id)}`;
       if (!record(profile)) reject('CONFIGURATION_INVALID', pointer);
       const kind = profileTestKind(profile);
       if (!['unit', 'integration'].includes(kind)) reject('CONFIGURATION_INVALID', `${pointer}/testKind`);
@@ -143,9 +144,9 @@ export function validateProfileInventories(configuration: RawConfiguration, flow
       }
     }
     for (const [id, preset] of Object.entries(project.groups)) {
-      const pointer = `${base}/groups/${id}`;
+      const pointer = `${base}/groups/${pointerToken(id)}`;
       if (!record(preset) || !project.profiles[preset.profileId] || !Array.isArray(preset.files) || !preset.files.length || new Set(preset.files).size !== preset.files.length) reject('CONFIGURATION_INVALID', pointer);
-      for (const file of preset.files) if (!safe(file) || !profileFiles(project.profiles[preset.profileId]).includes(file)) reject('CONFIGURATION_INVALID', `${pointer}/files`, file);
+      for (const file of preset.files) if (!safe(file) || !profileFiles(project.profiles[preset.profileId]).includes(file)) reject('CONFIGURATION_INVALID', `${pointer}/files`, file, `group files must belong to profile ${profileTestKind(project.profiles[preset.profileId]) === 'unit' ? 'unitFiles' : 'integrationFiles'} (projects/${projectId}/groups/${id})`);
     }
   }
 }
@@ -173,7 +174,7 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
   for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) for (const file of profileFiles(profile)) {
     const fact = inventory.find(fact => fact.file === file);
     const pointer = `conf/test-runs.json#/projects/${request.project}/profiles/${id}/${profileTestKind(profile) === 'unit' ? 'unitFiles' : 'integrationFiles'}`;
-    if (!fact?.exists || !fact.canonicalInsideWorkspace) reject('INVENTORY_INCOMPLETE', pointer, file);
+    if (!fact?.exists || !fact.canonicalInsideWorkspace) reject(profileTestKind(profile) === 'integration' ? 'CONFIGURATION_INVALID' : 'INVENTORY_INCOMPLETE', pointer, file);
     if (fact.kind !== profileTestKind(profile)) reject('CONFIGURATION_INVALID', pointer, file);
   }
   const cwd = resolve(request.workspace, profile.cwd);
@@ -193,17 +194,17 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
 export function authorizeTestRunProfile(plan: PreparedTestRun, caller: CallerContext): CallerAuthorization {
   const refuse = () => reject('CALLER_UNAUTHORIZED');
   const request = plan.request, change = request.group.split('/')[0];
-  if (!caller.trusted || !caller.live || caller.project !== request.project || caller.workspace !== request.workspace || caller.branch !== request.branch || !caller.activeChanges.includes(change)) refuse();
-  const coordinating = caller.role === 'main' || caller.role === 'coordinator' && caller.coordinatorAuthorized;
+  if (!caller.trusted || !caller.live || caller.project !== request.project || caller.workspace !== request.workspace || caller.branch !== request.branch) refuse();
+  const coordinating = ['main', 'coordinator'].includes(caller.role) && caller.coordinatorAuthorized;
   const executor = ['agent', 'implement', 'qa', 'hotfix'].includes(caller.role) && ['implement', 'qa', 'hotfix'].includes(caller.phase) && (caller.role === 'agent' || caller.role === caller.phase);
   if (!coordinating && !executor) refuse();
   if (plan.testKind === 'integration') {
-    if (request.phase !== 'integration' || !coordinating && caller.sourceChange !== change) refuse();
+    if (request.phase !== 'integration' || !coordinating && (!caller.activeChanges.includes(change) || caller.sourceChange !== change)) refuse();
   } else {
     if (coordinating ? request.phase !== 'red' && request.phase !== caller.phase : request.phase !== caller.phase) refuse();
     if (caller.sourceChange !== change && !coordinating && !caller.regressionGroups.some(grant => grant.group === request.group && grant.profileId === plan.profileId && plan.selection.files.every(file => grant.files.includes(file)))) refuse();
   }
-  if (!caller.sourceChange || !caller.sourceItem || !caller.activeChanges.includes(caller.sourceChange)) refuse();
+  if (!caller.sourceChange || !caller.sourceItem || !coordinating && !caller.activeChanges.includes(caller.sourceChange)) refuse();
   return { callerPhase: caller.phase, sourceChange: caller.sourceChange, sourceItem: caller.sourceItem };
 }
 
@@ -211,6 +212,7 @@ export function reserveTestRunProfile(plan: PreparedTestRun, authorization: Call
   const identity = { project: plan.request.project, workspace: plan.request.workspace, group: plan.request.group };
   if (aggregate && (Object.keys(identity).some(field => (aggregate.key as any)[field] !== (identity as any)[field]) || aggregate.profileId !== plan.profileId || (aggregate.testKind ?? 'unit') !== plan.testKind)) reject('GROUP_PROFILE_MISMATCH');
   const group = structuredClone(aggregate ?? { key: identity, profileId: plan.profileId, testKind: plan.testKind, timeoutCount: 0, knownRed: [], unexecuted: [], unknown: [], inFlight: null });
+  group.testKind = plan.testKind;
   if (group.inFlight) return { plan, authorization, aggregate: group, run: group.inFlight, disposition: 'reconcile' };
   if (plan.testKind === 'unit') {
     if (plan.selection.testIds.some(id => !contains(group.knownRed, id))) reject('UNKNOWN_RED_TEST');
@@ -225,7 +227,7 @@ export function completeTestRunProfile(reservation: TestRunReservation, executio
   const { plan, run } = reservation;
   const aggregate = structuredClone(reservation.aggregate);
   const finalized = aggregate.lastFinalizedRunId === run.runId;
-  const confirmed = execution.protocolComplete && execution.cleanup.complete && !execution.cleanup.remaining.length;
+  const confirmed = execution.protocolComplete && execution.cleanup.complete && !execution.cleanup.remaining.length && !execution.timedOut && execution.outcome !== 'interrupted';
   const passed = confirmed ? execution.passed : [];
   aggregate.knownRed = unique([...aggregate.knownRed.filter(id => !contains(passed, id)), ...execution.knownRed]);
   aggregate.unexecuted = unique([...aggregate.unexecuted.filter(id => !contains([...passed, ...execution.knownRed], id)), ...execution.unexecuted]);

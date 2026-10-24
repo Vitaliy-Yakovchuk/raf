@@ -199,6 +199,7 @@ export interface TestRunGroup {
   selection: TestRunPlan['selection'];
   knownRed: TestId[];
   unexecuted: TestId[];
+  unknown?: TestId[];
   inFlight: { runId: string; deadlineMs: number; startedAtMs?: number; timeoutPolicy?: TimeoutPolicy; callerPhase?: string | null; processIdentity: string | null; temporary?: RunTemporaryReservation } | null;
   lastResult: TestRunResult | null;
 }
@@ -547,6 +548,17 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     group.knownRed = uniqueIds([...group.knownRed.filter(id => !removed(id) && (!events.some(event => event.kind === 'complete') || events.some(event => event.kind === 'protocol-error') || !containsId(result.passed, id))), ...result.knownRed]);
     result.knownRed = group.knownRed;
     result.unexecuted = uniqueIds([...group.unexecuted.filter(id => !removed(id) && !containsId([...result.passed, ...result.knownRed], id)), ...result.unexecuted, ...(request.only ?? []).filter(id => !containsId([...result.passed, ...classified.knownRed], id))]);
+    if (result.testKind === 'integration') {
+      const confirmed = reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
+      const confirmedPassed = confirmed ? result.passed : [];
+      const previous = reserved as TestRunGroup;
+      group.knownRed = uniqueIds([...previous.knownRed.filter(id => !containsId(confirmedPassed, id)), ...classified.knownRed]);
+      result.knownRed = group.knownRed;
+      result.unexecuted = uniqueIds([...previous.unexecuted.filter(id => !containsId([...confirmedPassed, ...classified.knownRed], id)), ...classified.unexecuted]);
+      result.unknown = uniqueIds([...(previous.unknown ?? previous.lastResult?.unknown ?? []).filter(id => !containsId(confirmedPassed, id)), ...classified.unknown]);
+      group.unknown = result.unknown;
+      result.removed = [];
+    }
     group.unexecuted = result.unexecuted;
     if (result.timedOut) group.timeoutCount++;
     result.timeoutCount = group.timeoutCount;
@@ -604,6 +616,9 @@ export async function reconcileTestRunGroup(key: TestRunGroupKey, policy: UnitTe
       result.failureKinds = observed.deadlineReached ? ['timeout'] : ['setup'];
       result.knownRed = current.knownRed;
       result.unexecuted = current.unexecuted;
+      result.unknown = current.unknown ?? current.lastResult?.unknown ?? [];
+      result.profileId = current.profileId ?? current.lastResult?.profileId ?? null;
+      result.selection = current.selection;
       result.diagnostics = [{ kind: 'runner', test: null, message: 'Recovery lost current run diagnostic details', location: null, stack: [], redacted: false, truncated: false, unavailableReason: 'Current run details unavailable after recovery' }];
       result.diagnosticSummary = { totalEntries: 1, retainedEntries: 1, omittedEntries: 0, truncated: false, redacted: false };
     }

@@ -132,6 +132,10 @@ export function authorizeRegressionRun(
     if (!preset || !profile || profile.testKind !== 'integration' || request.only !== undefined || !Array.isArray(profile.integrationFiles) || !preset.files.length || new Set(preset.files).size !== preset.files.length || preset.files.some(file => !safeFile(file) || !profile.integrationFiles!.includes(file)) || request.files !== undefined && !filesEqual(request.files, preset.files)) refuse('Integration requires the exact configured preset');
     return { key: { project: request.project, workspace: assignment.workspace, group: request.group }, profileId: preset.profileId, files: [...preset.files], provenance: [] };
   }
+  const project = control.config.projects[request.project];
+  const unitPreset = project?.groups[request.group];
+  const selected = request.files ?? request.only?.map(id => id.file) ?? unitPreset?.files ?? [];
+  if (unitPreset && project.profiles[unitPreset.profileId]?.testKind === 'integration' || Object.values(project?.profiles ?? {}).some(profile => profile.testKind === 'integration' && selected.some(file => profile.integrationFiles?.includes(file)))) refuse('Unit phase cannot execute an integration profile');
   const key = { project: request.project, workspace: assignment.workspace, group: request.group };
   if (assignment.changes.includes(request.group.split('/')[0])) return { key, profileId: null, files: [...(request.files ?? request.only?.map(id => id.file) ?? [])], provenance: [] };
   if (!assignment.changes.every(change => control.activeChanges.includes(change))) refuse('Source assignment change is inactive');

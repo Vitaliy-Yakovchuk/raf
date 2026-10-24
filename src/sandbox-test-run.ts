@@ -127,8 +127,7 @@ export async function runSandboxTestCommand(
     if (args.phase === 'integration' && !control.config) throw new Error('Integration requires a trusted preset catalog');
     const key = { project: args.project, workspace: assignment.workspace, group: args.group };
     if ((!control.config || !ports.wrapper) && !control.groups.some(row => row.project === key.project && row.workspace === key.workspace && row.group === key.group)) throw new Error('Group is not configured for this workspace');
-    const prepared = await ports.unitContext(key);
-    const unit = { ...prepared, context: { ...prepared.context, callerPhase: assignment.phase } };
+    const unit = await ports.unitContext(key);
     if (ports.wrapper) {
       executingWrapper = true;
       const reply = await ports.wrapper(requestArgs, unit);
@@ -137,7 +136,7 @@ export async function runSandboxTestCommand(
     }
     if (unit.context.workspace !== key.workspace || unit.context.cwd !== request.cwd || !unit.context.projectWorkspaces[key.project]?.includes(key.workspace)) throw new Error('Unit context workspace differs from the authorized workspace');
     let stdout = '', stderr = '';
-    const code = await runTestRunCli(argv.slice(2), { ...unit, context: { ...unit.context, agentId: assignment.agentId }, stdout: value => { stdout += value; }, stderr: value => { stderr += value; } });
+    const code = await runTestRunCli(argv.slice(2), { ...unit, context: { ...unit.context, agentId: assignment.agentId, callerPhase: assignment.phase }, stdout: value => { stdout += value; }, stderr: value => { stderr += value; } });
     const reply = { code, stdout, stderr };
     if (authorization && ports.evidence) await ports.evidence(authorization, reply);
     return reply;

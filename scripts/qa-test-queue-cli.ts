@@ -194,8 +194,6 @@ try{const result=await execute(process.argv.slice(2),${JSON.stringify(catalog)},
   assert.equal(existsSync(runnerPid), false); assert.equal(agent.child.exitCode, null);
   evidence.testResultSummary = { runId: result.runId, outcome: result.outcome, queue: result.queue, timeoutCount: result.timeoutCount, cleanup: result.cleanup };
   evidence.assertions.push('Test CLI returns its single final TestRunResult with queue.waited=true, HOTFIX_ONLY admission, passed outcome and verified cleanup; ordinary CLI remains pending.');
-  // The assigned scenario ends with the test complete and the ordinary launch still
-  // waiting. Cancel that owned pending CLI and verify that it never spawned.
   agent.child.kill('SIGTERM');
   const cancelled = await agent.done;
   assert.equal(cancelled.cliExitCode, 1);

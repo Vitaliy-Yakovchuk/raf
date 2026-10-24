@@ -107,7 +107,8 @@ const {spawnSync}=require('node:child_process');
  const s = net.createServer(c => c.end('primitive-payload'));
  await new Promise((r,j) => { s.once('error',j); s.listen('primitive.sock',r); });
  const data = await new Promise((r,j) => { let v=''; const c=net.connect('primitive.sock'); c.on('data',b=>v+=b); c.on('end',()=>r(v)); c.on('error',j); });
- assert.equal(data,'primitive-payload'); await new Promise(r=>s.close(r)); fs.unlinkSync('primitive.sock');
+ assert.equal(data,'primitive-payload'); await new Promise(r=>s.close(r));
+ try { fs.unlinkSync('primitive.sock'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
  for(const named of [false,true]) {
   const prefix=named?['-L','z404-primitive']:[];
   const run=args=>{const r=spawnSync('tmux',[...prefix,...args],{env:{...process.env,TMUX_TMPDIR:process.cwd()},encoding:'utf8'});assert.equal(r.error,undefined);assert.equal(r.status,0,r.stderr);return r.stdout.trim();};

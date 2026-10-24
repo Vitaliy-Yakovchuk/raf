@@ -24,6 +24,7 @@ export const configuration: RuntimeConfiguration = {
     routing: { complexityOrder: ['decision'], taskClassification: {}, runnerPreferences: [], modelTransitions: [], roleModelBindings: {} },
   },
   commandTiming: { emaAlpha: 0.1 },
+  service: JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8')).service,
 };
 
 export const realFlow = JSON.parse(await readFile(new URL('../../conf/flow.json', import.meta.url), 'utf8'));

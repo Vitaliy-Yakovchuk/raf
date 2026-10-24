@@ -1,3 +1,4 @@
+import { isAbsolute, join } from 'node:path';
 import type { HotfixCommand } from './hotfix-worktree.ts';
 
 export interface HotfixCommitClientRequest {
@@ -6,9 +7,7 @@ export interface HotfixCommitClientRequest {
   readonly message: string;
 }
 
-export function hotfixCommitClientCommand(
-  directory: string,
-  request: HotfixCommitClientRequest,
-): HotfixCommand & { readonly cwd: string } {
-  throw new Error('NotImplemented');
+export function hotfixCommitClientCommand(directory: string, request: HotfixCommitClientRequest): HotfixCommand & { readonly cwd: string } {
+  if (!isAbsolute(directory) || !isAbsolute(request.cwd) || !request.paths.length || !request.message.trim()) throw new Error('Hotfix client requires directory, workspace, message and explicit paths');
+  return { executable: process.execPath, args: [join(directory, 'hotfix-commit.mjs'), '--message', request.message, ...request.paths], cwd: request.cwd };
 }

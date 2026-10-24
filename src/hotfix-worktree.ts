@@ -1,5 +1,6 @@
 import { promises as fs } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { createRafTemporarySocketEndpoint } from './raf-temporary-socket.ts';
 import { pathToFileURL } from 'node:url';
 import { command, durable, environment, exists, git, hostGit, hotfixRoute, inventory, json, mainRoute, validateWorkspace, withHotfixWriter, within } from './hotfix-host.ts';
 
@@ -202,7 +203,8 @@ export async function startHotfixCommitPort(host: HotfixHost, workspace: HotfixW
   await validateWorkspace(host, workspace);
   const { processStart } = await import('./hotfix-host.ts');
   await durable(join(dirname(workspace.ownershipPath), 'launch.json'), { pid: process.pid, start: await processStart(process.pid) });
-  const socketPath = join(directory, 'hotfix-commit.sock');
+  const endpoint = await createRafTemporarySocketEndpoint({ runId: workspace.runId, directory, basename: 'hotfix-commit.sock', serverCwd: workspace.cwd, clientCwd: workspace.cwd });
+  const socketPath = endpoint.bind.address;
   let chain = Promise.resolve();
   const server = createServer(socket => {
     let input = '';
@@ -221,9 +223,15 @@ export async function startHotfixCommitPort(host: HotfixHost, workspace: HotfixW
       });
     });
   });
+  try {
   await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(socketPath, resolve); });
   await fs.chmod(socketPath, 0o600);
-  const source = `import {connect} from 'node:net'; const args=process.argv.slice(2); if(args[0]!=='--message'||!args[1]||args.length<3)throw new Error('Expected --message text paths'); const socket=connect(${JSON.stringify(socketPath)}); socket.on('connect',()=>socket.write(JSON.stringify({message:args[1],paths:args.slice(2)})+'\\n')); let value=''; socket.on('data',chunk=>value+=chunk);socket.on('end',()=>{const result=JSON.parse(value);if(result.error){console.error(result.error);process.exitCode=1}else console.log(JSON.stringify(result));});socket.on('error',error=>{console.error(error.message);process.exitCode=1});`;
+  const source = `import {connect} from 'node:net'; const args=process.argv.slice(2); if(args[0]!=='--message'||!args[1]||args.length<3)throw new Error('Expected --message text paths'); if(process.cwd()!==${JSON.stringify(workspace.cwd)})throw new Error('Hotfix client workspace mismatch'); const socket=connect(${JSON.stringify(socketPath)}); socket.on('connect',()=>socket.write(JSON.stringify({message:args[1],paths:args.slice(2)})+'\\n')); let value=''; socket.on('data',chunk=>value+=chunk);socket.on('end',()=>{const result=JSON.parse(value);if(result.error){console.error(result.error);process.exitCode=1}else console.log(JSON.stringify(result));});socket.on('error',error=>{console.error(error.message);process.exitCode=1});`;
   await fs.writeFile(join(directory, 'hotfix-commit.mjs'), source, { flag: 'wx', mode: 0o500 });
-  return { close: async () => { await chain; await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())); await fs.rm(socketPath, { force: true }); } };
+  } catch (error) {
+    await new Promise<void>(resolve => server.close(() => resolve()));
+    await endpoint.cleanup().catch(() => undefined);
+    throw error;
+  }
+  return { close: async () => { await chain; await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())); await endpoint.cleanup(); } };
 }

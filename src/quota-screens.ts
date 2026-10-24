@@ -1,3 +1,4 @@
+import { rafSocketDirectory, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
 import { isAbsolute } from 'node:path';
 import type { ProtocolSettings, RunnerId } from './runner-protocols.ts';
 import type { QuotaView } from './quota-collection.ts';
@@ -86,9 +87,10 @@ export function validateQuotaProtocol(row: unknown): QuotaProtocol {
   return { ...protocol, navigation: protocol.navigation ?? [] } as QuotaProtocol;
 }
 
-export function quotaProbeInvocation(settings: QuotaProtocol, probeDirectory: string): { executable: string; args: string[]; env: Record<string, string> } {
+export function quotaProbeInvocation(settings: QuotaProtocol, probeDirectory: string): { executable: string; args: string[]; env: Record<string, string>; cleanupSocket(): Promise<void> } {
   if (!isAbsolute(probeDirectory)) throw new Error('Quota probe directory must be absolute');
-  return { executable: settings.executable, args: settings.quota.args.map(value => value.replaceAll('{probeDirectory}', probeDirectory)), env: { ...settings.quota.env } };
+  const compact = settings.quota.args.some(value => value.includes('{probeDirectory}') && !socketPathFits(value.replaceAll('{probeDirectory}', probeDirectory))) ? rafSocketDirectory(probeDirectory) : probeDirectory;
+  return { executable: settings.executable, args: settings.quota.args.map(value => value.replaceAll('{probeDirectory}', compact)), env: { ...settings.quota.env }, cleanupSocket: async () => { if (compact !== probeDirectory) await releaseRafSocketDirectory(probeDirectory, compact); } };
 }
 
 function stopState(settings: QuotaProtocol, text: string): 'auth_required' | 'workspace_trust_required' | 'permission_required' | null {

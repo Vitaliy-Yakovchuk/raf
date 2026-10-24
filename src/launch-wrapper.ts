@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs';
 import { createServer, createConnection, type Socket } from 'node:net';
 import { randomUUID } from 'node:crypto';
 import { isAbsolute, join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { rafSocketRoot, socketPathFits } from './raf-temporary-socket.ts';
 import { createAgentReportWatcher } from './agent-report.ts';
 import type { AdapterCommand, AdapterSelection } from './agent-adapters.ts';
 import type { AgentReportExit, AgentReportPorts, AgentReportRequest, AgentReportResult } from './agent-report.ts';
@@ -139,9 +139,15 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
 export async function launchPersistentWrapper(request: LaunchWrapperRequest, options: PersistentWrapperOptions): Promise<PersistentWrapperLaunch> {
   if (!isAbsolute(request.statePath) || !isAbsolute(request.cwd) || !isAbsolute(request.tmpRoot) || !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(request.runId) || !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(request.address)) throw new Error('Wrapper requires absolute state, cwd, tmp paths and valid run/address identities');
   if (!Number.isFinite(options.timeoutMs) || options.timeoutMs <= 0) throw new Error('Wrapper handshake timeout must be positive');
-  const directory = await fs.mkdtemp(join(tmpdir(), 'rw-'));
+  const root = rafSocketRoot();
+  await fs.mkdir(root, { mode: 0o700 }).catch(error => { if (error.code !== 'EEXIST') throw error; });
+  const owner = await fs.lstat(root);
+  if (!owner.isDirectory() || owner.uid !== process.getuid?.() || (owner.mode & 0o077) !== 0) throw new Error('Wrapper socket root must be private and owned');
+  const directory = await fs.mkdtemp(join(root, 'rw-'));
   await fs.chmod(directory, 0o700);
   const socketPath = join(directory, 'h.sock');
+  if (!socketPathFits(socketPath)) throw new Error('Wrapper socket pathname exceeds sun_path');
+  const directoryIdentity = await fs.lstat(directory);
   const requestPath = join(directory, 'request.json');
   const nonce = randomUUID();
   const sockets = new Set<Socket>();
@@ -150,16 +156,17 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
   let timer: ReturnType<typeof setTimeout> | undefined;
   let settled = false;
   const runDirectory = join(request.tmpRoot, request.runId);
-  await fs.mkdir(runDirectory, { recursive: true, mode: 0o700 });
-  const logPath = join(runDirectory, 'worker.log');
-  const log = await fs.open(logPath, 'wx+', 0o600);
+  let log: Awaited<ReturnType<typeof fs.open>> | undefined;
   const workerOutput = async () => {
+    if (!log) return '';
     const { size } = await log.stat();
     const length = Math.min(size, 16384);
     const { buffer, bytesRead } = await log.read(Buffer.alloc(length), 0, length, size - length);
     return buffer.subarray(0, bytesRead).toString('utf8');
   };
   try {
+    await fs.mkdir(runDirectory, { recursive: true, mode: 0o700 });
+    log = await fs.open(join(runDirectory, 'worker.log'), 'wx+', 0o600);
     await fs.writeFile(requestPath, JSON.stringify(request), { mode: 0o600, flag: 'wx' });
     await fs.writeFile(requestPath + '.peer', JSON.stringify({ parentPid: process.pid, nonce }), { mode: 0o600, flag: 'wx' });
     await new Promise<void>((resolve, reject) => {
@@ -208,7 +215,7 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
       child = spawn(command.executable, [...command.args], {
         cwd: command.cwd ?? request.cwd,
         detached: true,
-        stdio: [command.stdin === undefined ? 'ignore' : 'pipe', log.fd, log.fd],
+        stdio: [command.stdin === undefined ? 'ignore' : 'pipe', log!.fd, log!.fd],
         env: { ...(command.environment ?? process.env), RAF_WRAPPER_REQUEST_PATH: requestPath, RAF_WRAPPER_HANDSHAKE_SOCKET: socketPath },
       });
       child.once('error', fail);
@@ -224,7 +231,9 @@ export async function launchPersistentWrapper(request: LaunchWrapperRequest, opt
     if (timer) clearTimeout(timer);
     for (const socket of sockets) socket.destroy();
     await new Promise<void>(resolve => server.close(() => resolve()));
-    await log.close();
+    await log?.close();
+    const current = await fs.lstat(directory);
+    if (!current.isDirectory() || current.dev !== directoryIdentity.dev || current.ino !== directoryIdentity.ino) throw new Error('Wrapper IPC cleanup identity mismatch');
     await fs.rm(directory, { recursive: true, force: true });
   }
 }

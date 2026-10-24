@@ -1,3 +1,4 @@
+import { rafSocketRoot, rafSocketDirectory, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
 import { ConfirmationTransientError, ConfirmationBudgetExhaustedError, type ConfirmationBudget, type PendingConfirmation } from './report-confirmation-retry.ts';
 import { createHash } from 'node:crypto';
 import { loadEventCatalog } from './event-catalog.ts';
@@ -235,7 +236,7 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
   const phases = confRoot && ['implement', 'qa', 'hotfix'].includes(phase ?? type ?? '') ? await loadSandboxTestPhases(confRoot) : undefined;
   const subcommands = type === undefined ? [] : rafSubcommandsFor(type, phase ?? type, phases);
   return {
-    hidden: ['/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots, ...registeredSockets],
+    hidden: [rafSocketRoot(), '/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots, ...registeredSockets],
     readable: [report], tmuxDirectory: report, excludedCommands: subcommands === null ? [`${command}:*`] : subcommands.map(subcommand => `${command} ${subcommand}:*`),
   };
 }
@@ -294,11 +295,12 @@ export async function sandboxTestControlSnapshot(store: StateStore, root: string
 }
 async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, environment: NodeJS.ProcessEnv): Promise<string> {
   const directory = join(context.tmpRoot, 'tmux');
-  const socketPath = join(directory, 'server.sock');
+  const logicalSocket = join(directory, 'server.sock');
   await fs.mkdir(directory, { recursive: true, mode: 0o700 });
   const owner = await fs.lstat(directory);
   if (!owner.isDirectory() || owner.uid !== process.getuid?.() || (owner.mode & 0o077) !== 0) fail('TMUX_CONTEXT_INVALID', 'RAF tmux directory must be private and owned by the current user');
-  const socket = await fs.lstat(socketPath).catch(error => { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; });
+  const socketPath = join(rafSocketDirectory(directory), 'server.sock');
+  const socket = await fs.lstat(logicalSocket).catch(error => { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; });
   if (socket && (!socket.isSocket() || socket.uid !== process.getuid?.())) fail('TMUX_CONTEXT_INVALID', 'RAF tmux socket has foreign ownership or file type');
   if (context.stateContext?.mode === 'qa' && socket) {
     const live = await new Promise<boolean>((resolve, reject) => {
@@ -815,7 +817,7 @@ async function quotaProbeWorkspace(context: Pick<RuntimeContext, 'orchestratorRo
   return await registeredBranchDirectory(context.orchestratorRoot, context.confRoot, cwd, gitRoot) ? cwd : undefined;
 }
 function quotaTransport(context: Pick<RuntimeContext, 'tmpRoot' | 'orchestratorRoot' | 'confRoot'>, execute: AdapterCommandExecutor): ProbeTransport {
-  const owned = new Map<string, { session: AdapterSession; directory: string; version: string; settings: QuotaProtocol; adapter: TmuxAgentAdapter }>();
+  const owned = new Map<string, { session: AdapterSession; directory: string; cleanupSocket(): Promise<void>; version: string; settings: QuotaProtocol; adapter: TmuxAgentAdapter }>();
   const handle = (token: string) => {
     const value = owned.get(token);
     if (!value) throw new Error('Quota probe handle is not owned by this process');
@@ -841,11 +843,12 @@ function quotaTransport(context: Pick<RuntimeContext, 'tmpRoot' | 'orchestratorR
       try { session = await adapter.startWithoutInput({ selection: { runner: settings.runner as AgentRunner, model: '', effort: '' }, tmuxSession, cwd, reportWrapper: { wrap: value => value } }); }
       catch (error) {
         await discardOwnedTmuxSession(execute, tmuxSession, settings.timeouts).catch(() => false);
+        await invocation.cleanupSocket();
         await fs.rm(directory, { recursive: true, force: true });
         throw error;
       }
       const token = randomUUID();
-      owned.set(token, { session, directory, version: availability.version, settings, adapter });
+      owned.set(token, { session, directory, cleanupSocket: invocation.cleanupSocket, version: availability.version, settings, adapter });
       return { socket: join(context.tmpRoot, 'tmux', 'server.sock'), session: tmuxSession, ownershipToken: token, trustWorkspace: workspace !== undefined };
     },
     captureOwned: async probe => {
@@ -858,8 +861,9 @@ function quotaTransport(context: Pick<RuntimeContext, 'tmpRoot' | 'orchestratorR
     cleanupOwned: async probe => {
       const value = handle(probe.ownershipToken);
       const stopped = await discardOwnedTmuxSession(execute, value.session.tmuxSession, value.settings.timeouts);
-      await fs.rm(value.directory, { recursive: true, force: true });
       if (!stopped) throw new Error(`Own quota probe session ${value.session.tmuxSession} could not be confirmed terminated`);
+      await value.cleanupSocket();
+      await fs.rm(value.directory, { recursive: true, force: true });
       owned.delete(probe.ownershipToken);
     },
   };
@@ -1294,6 +1298,7 @@ export async function runProductionWorker(
   let hotfixCommitPort: Awaited<ReturnType<typeof startHotfixCommitPort>> | undefined;
   let codexAccess: PreparedCodexRafCommandAccess | undefined;
   let codexSandbox: PreparedCodexSandbox | undefined;
+  let toolTmuxAlias: { directory: string; alias: string } | undefined;
   try {
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings.timeouts, options.execute);
     const session = tools.current(request.runId);
@@ -1324,6 +1329,13 @@ export async function runProductionWorker(
         if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
         throw error;
       });
+      if (settings.runner === 'claude' && !socketPathFits(join(scope.tmuxDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default'))) {
+        const directory = scope.tmuxDirectory;
+        const alias = rafSocketDirectory(directory, 'tool');
+        toolTmuxAlias = { directory, alias };
+        scope.tmuxDirectory = alias;
+        scope.readable.push(alias);
+      }
       invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
       if (hotfix && settings.runner === 'claude') {
         const index = invocation.args.indexOf('--settings');
@@ -1387,7 +1399,7 @@ export async function runProductionWorker(
       const candidates = matching.filter(candidate => !matching.some(other => { let pid = other.ppid; const seen = new Set<number>(); while (pid && !seen.has(pid)) { if (pid === candidate.pid) return true; seen.add(pid); pid = rows.find(row => row.pid === pid)?.ppid ?? 0; } return false; }));
       if (candidates.length !== 1) return { state: 'unknown', reason: 'Actual runner PID is ambiguous or unavailable; shell PID is not identity' };
       const row = candidates[0];
-      actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, ...await dependencies.currentBoot(), ...(!options.execute ? { tmuxSocket: join(context.tmpRoot, 'tmux', 'server.sock') } : {}) } };
+      actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, ...await dependencies.currentBoot(), ...(!options.execute ? { tmuxSocket: await runtimeTmuxSocket(context, stateContextEnvironment(stateContext, process.env)) } : {}) } };
       return { state: 'owned', identity: actual, processKind: 'agent' };
     };
     const transport = adapter.createLaunchTransport({ reportWrapper: { wrap: command => command }, inspectOwnership: ownership, pollIntervalMs: settings.timeouts.pollMs });
@@ -1670,5 +1682,5 @@ export async function runProductionWorker(
       if (!handedOff) await discardFailedLaunch().catch(cleanup => process.stderr.write(`${request.runId}: failed launch cleanup: ${cleanup instanceof Error ? cleanup.message : String(cleanup)}\n`));
       throw error;
     }
-  } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); } finally { store.close(); await generationLease?.release(); } } }
+  } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxAlias) await releaseRafSocketDirectory(toolTmuxAlias.directory, toolTmuxAlias.alias); } finally { store.close(); await generationLease?.release(); } } }
 }

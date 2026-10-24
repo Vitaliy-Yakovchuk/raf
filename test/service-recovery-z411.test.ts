@@ -2,14 +2,16 @@ import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
+import { pathToFileURL } from 'node:url';
+import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 import { setTimeout as pause } from 'node:timers/promises';
 import { openStateStore } from '../src/state-store.ts';
 import { reconcileProductionReports } from '../src/production-runtime.ts';
 import type { RuntimeContext, RuntimeConfiguration } from '../src/app-runtime.ts';
 import type { SessionRecord } from '../src/session-state.ts';
 
-async function fixture(t: test.TestContext) {
+async function fixture(t: TestContext) {
   const root = await fs.mkdtemp(join(tmpdir(), 'raf-z411-recovery-'));
   const confRoot = join(root, 'conf');
   const tmpRoot = join(root, 'reports');
@@ -49,35 +51,50 @@ test('Z411.S01 closed and accepted runs with exhausted confirmation are never re
   assert.equal(reportReads, 0);
 });
 
-test('Z411.S02 pending confirmation cannot block recovery readiness or duplicate in-flight work and closure cancels acceptance', async t => {
+test('Z411.S02 service recovery does not reconfirm reports or block readiness on exhausted pending runs', async t => {
   const f = await fixture(t);
   const rows = await Promise.all(['pending-one', 'pending-two', 'pending-three'].map(id => f.seed(id)));
+  const home = join(f.root, 'home');
+  const stateDirectory = join(home, '.raf');
+  await fs.mkdir(stateDirectory, { recursive: true });
+  await fs.copyFile(new URL('../../conf/projects.json', import.meta.url), join(f.context.confRoot, 'projects.json'));
+  await fs.copyFile(new URL('../../conf/raf-constants.json', import.meta.url), join(f.context.confRoot, 'raf-constants.json'));
+  await prepareProductionQaFixture(t, { root: f.root, home });
+  const codeRoot = join(f.root, 'raf-develop');
+  await fs.mkdir(join(codeRoot, 'dist'), { recursive: true });
+  await fs.copyFile(new URL('../dist/catalog.json', import.meta.url), join(codeRoot, 'dist/catalog.json'));
+  const { createProductionServiceDependencies } = await import(pathToFileURL(join(codeRoot, 'src/production-service-ports.ts')).href);
+  const { createServicePorts } = await import(pathToFileURL(join(codeRoot, 'src/service-host.ts')).href);
+  const settings = JSON.parse(await fs.readFile(join(f.context.confRoot, 'raf.json'), 'utf8'));
+  const serviceStore = openStateStore(join(stateDirectory, settings.state.fileName));
+  for (const row of rows) serviceStore.sessionRepository.transaction(tx => tx.putSession(row));
+  const before = serviceStore.sessionRepository.transaction(tx => tx.listSessions());
+  const context = { orchestratorRoot: f.root, homeDirectory: home, stateDirectory, socketPath: join(stateDirectory, 'service.sock') };
+  const dependencies = await createProductionServiceDependencies(context);
+  dependencies.disableLegacyResourceWait = true;
+  const ports = await createServicePorts(context, dependencies);
   const gate = Promise.withResolvers<void>();
-  const entered = Promise.withResolvers<void>();
   const readFile = fs.readFile;
   let reportReads = 0;
   t.mock.method(fs, 'readFile', async (...args: Parameters<typeof fs.readFile>) => {
     if (rows.some(row => row.launchContext!.reportPath === String(args[0]))) {
       reportReads++;
-      entered.resolve();
       await gate.promise;
     }
     return readFile(...args);
   });
-  const recovery = reconcileProductionReports(f.store, f.context, f.catalog);
+  const recovery = ports.recover();
   try {
-    await entered.promise;
     assert.equal(await Promise.race([recovery.then(() => 'ready'), pause(100).then(() => 'blocked')]), 'ready', 'Readiness must not await a report confirmation cycle');
-    assert.deepEqual(new Set(await recovery), new Set(rows.map(row => row.runId)));
-    await reconcileProductionReports(f.store, f.context, f.catalog);
-    assert.ok(reportReads <= rows.length, 'One in-flight confirmation per run');
+    await ports.refresh();
+    assert.equal(reportReads, 0, 'Only command/worker may confirm these reports');
+    assert.deepEqual(serviceStore.sessionRepository.transaction(tx => tx.listSessions()), before);
+    assert.deepEqual(serviceStore.sessionRepository.transaction(tx => tx.listPending()), []);
   } finally {
-    f.store.sessionRepository.transaction(tx => { for (const row of rows) tx.putSession({ ...row, revision: 2, state: 'finished' }); });
+    if (reportReads) serviceStore.sessionRepository.transaction(tx => { for (const row of rows) tx.putSession({ ...row, revision: 2, state: 'finished' }); });
     gate.resolve();
     await recovery;
-    for (let i = 0; i < 20; i++) await pause(5);
+    await ports.shutdown();
+    serviceStore.close();
   }
-  assert.deepEqual(await reconcileProductionReports(f.store, f.context, f.catalog), []);
-  assert.deepEqual(f.store.sessionRepository.transaction(tx => tx.listPending()), []);
-  assert.ok(f.store.sessionRepository.transaction(tx => tx.listSessions()).every(row => row.state === 'finished' && !row.result));
 });

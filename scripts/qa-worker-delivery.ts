@@ -60,13 +60,13 @@ try {
     for (const key of Object.keys(environment)) if (key.startsWith('RAF_') && key !== 'RAF_QA_HOME') delete environment[key];
     delete environment.TMUX;
     delete environment.TMUX_PANE;
-    f.probe = { runId, address, reportPath, tmuxSession: runtimeLaunch.tmuxSession, selection, brief, environment };
+    f.probe = { runId, address, reportPath, reportedCommits: session.launchContext.reportedCommits, tmuxSession: runtimeLaunch.tmuxSession, selection, brief, environment };
   }
   await Promise.all(fixtures.map(async (f, index) => {
     const p = f.probe;
     const startedAt = Date.now();
     try {
-      const started = await launchPersistentWrapper({ tmpRoot: f.tmpRoot, runId: p.runId, address: p.address, assignment: f.assignment, statePath: f.statePath, cwd: f.cwd, tmuxSession: p.tmuxSession, selection: p.selection, brief: p.brief, reportPath: p.reportPath, readinessTimeoutMs: settings.timeouts.startupMs }, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, environment: p.environment, args: ['--input-type=module', '-e', `const m=await import(${JSON.stringify(pathToFileURL(join(f.cwd, 'src/production-runtime.ts')).href)}); await m.runProductionWorker();`] } });
+      const started = await launchPersistentWrapper({ tmpRoot: f.tmpRoot, runId: p.runId, address: p.address, assignment: f.assignment, reportedCommits: p.reportedCommits, statePath: f.statePath, cwd: f.cwd, tmuxSession: p.tmuxSession, selection: p.selection, brief: p.brief, reportPath: p.reportPath, readinessTimeoutMs: settings.timeouts.startupMs }, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, environment: p.environment, args: ['--input-type=module', '-e', `const trace=await import(${JSON.stringify(pathToFileURL(join(source, 'scripts/qa-worker-trace.ts')).href)});trace.traceWorkerCommands(${JSON.stringify(join(evidence, `trace-${index}.jsonl`))},${JSON.stringify(settings)},${JSON.stringify(p.brief)});const m=await import(${JSON.stringify(pathToFileURL(join(f.cwd, 'src/production-runtime.ts')).href)}); await m.runProductionWorker();`] } });
       f.trackProcess(started.wrapperPid);
       f.trackProcess(started.identity.pid);
       results.push({ index, outcome: 'accepted', identity: started.identity, durationMs: Date.now() - startedAt });

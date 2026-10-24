@@ -1,0 +1,75 @@
+{
+  "kind": "native tmux mechanism probe, not unit or delivery acceptance",
+  "home": "/tmp/fla911b-tmux-hook-home",
+  "socket": "/tmp/fla911b-tmux-hook-home/server.sock",
+  "commands": [
+    [
+      "new-session",
+      "-d",
+      "-s",
+      "probe",
+      "sh",
+      "-c",
+      "read -r _",
+      ";",
+      "set-option",
+      "-p",
+      "-t",
+      "=probe:0.0",
+      "remain-on-exit",
+      "on"
+    ],
+    [
+      "set-hook",
+      "-t",
+      "=probe:0.0",
+      "pane-died[12345]",
+      "wait-for -S own-channel",
+      ";",
+      "set-hook",
+      "-t",
+      "=probe:0.0",
+      "pane-exited[12345]",
+      "wait-for -S own-channel",
+      ";",
+      "set-hook",
+      "-t",
+      "=probe:0.0",
+      "session-closed[12345]",
+      "wait-for -S own-channel"
+    ],
+    [
+      "send-keys",
+      "-t",
+      "=probe:0.0",
+      "Enter"
+    ],
+    [
+      "wait-for",
+      "own-channel"
+    ],
+    [
+      "display-message",
+      "-p",
+      "-t",
+      "=probe:0.0",
+      "#{pane_dead}|#{pane_dead_status}"
+    ],
+    [
+      "kill-server"
+    ]
+  ],
+  "codes": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "status": "1|0\n",
+  "capturePaneCommands": 0,
+  "stderr": "",
+  "cliExitCode": 0,
+  "cleanup": "own tmux server killed"
+}

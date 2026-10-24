@@ -1,5 +1,6 @@
 import type { ResourceUsageRecord, UsageFinishReason } from './resource-usage.ts';
 import type { ResourceEstimateResolution, ResourceReservationEstimate } from './resource-estimates.ts';
+import type { TestRunQueuePort, TestRunResourceRoute } from './test-run-queue.ts';
 import { observeReservedTestTree } from './test-run-resource-process.ts';
 import { runTestRun, reconcileTestRunGroup, testRunFailureResult } from './test-runs.ts';
 import type { TestRunGroup, TestRunPlan, TestRunContext, TestRunGroupKey, TestRunPorts, TestRunRequest, TestRunResult, UnitTestPolicy } from './test-runs.ts';
@@ -50,6 +51,8 @@ export interface TestRunResourcePort {
 }
 
 export interface ResourceReservedTestRunPorts extends TestRunPorts {
+  resourceRoute?: TestRunResourceRoute;
+  queue?: TestRunQueuePort;
   wrapperIdentity?: string;
   resources: TestRunResourcePort;
   machineId: string;
@@ -57,6 +60,7 @@ export interface ResourceReservedTestRunPorts extends TestRunPorts {
 
 export interface ResourceReservedTestRunResult extends TestRunResult {
   admission: object | null;
+  queue?: { queueId: string; waited: boolean } | null;
 }
 
 export interface TestRunResourceReconciliation {

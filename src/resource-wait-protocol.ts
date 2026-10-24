@@ -17,6 +17,7 @@ export type ResourceWaitProtocolOptions = {
 
 export type ResourceWaitRequest = {
   level?: string;
+  workload?: 'test' | 'agent';
   clientIdentity: ResourceWaitIdentity;
   connectionId: string;
   developmentDirectory: string;

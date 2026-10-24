@@ -93,7 +93,11 @@ function fixture() {
         runId, addressId: `unit-path-fixture-${runId}`, revision: 0, state: 'running',
         process: {
           pid: process.pid, startedAt: new Date(processRow[1]).toISOString(), runner: 'qa',
-          runnerSessionId: runId, tmuxSession: '', evidence: { command: processRow[2] },
+          runnerSessionId: runId, tmuxSession: '', evidence: {
+            command: processRow[2],
+            machineId: readFileSync('/etc/machine-id', 'utf8').trim(),
+            bootId: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
+          },
         },
         launchContext: {
           assignment: {

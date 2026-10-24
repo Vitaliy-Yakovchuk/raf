@@ -277,27 +277,20 @@ export async function prepareCodexSandbox(
       if (!existing) mountpoints.push({ path: target, parent: path, dev: parent.dev, ino: parent.ino });
     }
   }
-  await fs.mkdir(runDirectory, { recursive: true, mode: 0o700 });
-  let toolAlias = compactToolTmux ? rafSocketDirectory(runDirectory, 'tool') : undefined;
-  const toolTmux = toolAlias ?? runDirectory;
-  const toolVariables: Record<string, string> = { TMUX_TMPDIR: toolTmux, ...(sharedTmp ? {} : { TMPDIR: runDirectory }) };
-  entries[toolTmux] = 'write';
-  const filesystem = `{${Object.entries(entries).map(([path, access]) => `${JSON.stringify(path)}=${JSON.stringify(access)}`).join(',')}}`;
-  const policy = ['-c', 'sandbox_mode="workspace-write"', '-c', `default_permissions="${profile}"`, '-c', `permissions.${profile}.filesystem=${filesystem}`, '-c', `permissions.${profile}.network.enabled=true`];
-  const shellEnvironment = [...scrubbed.flatMap(name => ['-c', `shell_environment_policy.set.${name}=""`]), ...Object.entries(toolVariables).flatMap(([name, value]) => ['-c', `shell_environment_policy.set.${name}=${JSON.stringify(value)}`])];
-  const launcher = join(directory, 'codex');
-  const invocation: Invocation = { ...request.invocation, executable: launcher, args: [...args, ...policy, ...shellEnvironment, ...(end < 0 ? [] : source.slice(end))] };
-  const toolSandbox: Invocation = { executable: launcher, args: ['sandbox', '-C', cwd, '-P', profile, ...policy, '--'], liveTaskVerified: request.invocation.liveTaskVerified };
-  const environment = Object.fromEntries(Object.entries(request.environment).filter((entry): entry is [string, string] => entry[1] !== undefined && !scrubbed.includes(entry[0])));
-  Object.assign(environment, toolVariables);
   const probeSocket = join(runDirectory, `.codex-sandbox-probe-${process.pid}.sock`);
-  let created = false;
+  let identity: { dev: number; ino: number } | undefined;
+  let helperAlias: string | undefined;
   const cleanup = async () => {
     await fs.rm(probeSocket, { force: true });
-    if (created) await fs.rm(directory, { recursive: true, force: true });
-    if (toolAlias) {
-      await releaseRafSocketDirectory(runDirectory, toolAlias);
-      toolAlias = undefined;
+    if (identity) {
+      const current = await fs.lstat(directory);
+      if (!current.isDirectory() || current.dev !== identity.dev || current.ino !== identity.ino) throw new Error('Codex sandbox cleanup directory identity mismatch');
+      if (helperAlias) {
+        await releaseRafSocketDirectory(directory, helperAlias);
+        helperAlias = undefined;
+      }
+      await fs.rm(directory, { recursive: true });
+      identity = undefined;
     }
     for (const mountpoint of mountpoints.splice(0)) {
       const parent = await fs.lstat(mountpoint.parent).catch(() => null);
@@ -310,9 +303,24 @@ export async function prepareCodexSandbox(
   try {
     await fs.mkdir(runDirectory, { recursive: true, mode: 0o700 });
     await fs.mkdir(directory, { mode: 0o700 });
-    created = true;
+    identity = await fs.lstat(directory);
+    const helperDirectory = socketPathFits(join(directory, 'bwrap')) ? directory : (helperAlias = rafSocketDirectory(directory, 'tool'));
+    const toolTmux = compactToolTmux ? join(helperDirectory, 'tmux') : runDirectory;
+    const tmuxSockets = compactToolTmux ? join(directory, 'tmux') : join(runDirectory, `tmux-${process.getuid?.() ?? 0}`);
+    if (compactToolTmux) await fs.mkdir(tmuxSockets, { mode: 0o700 });
+    entries[helperDirectory] = 'read';
+    entries[tmuxSockets] = 'write';
+    entries[toolTmux] = 'write';
+    const toolVariables: Record<string, string> = { TMUX_TMPDIR: toolTmux, ...(sharedTmp ? {} : { TMPDIR: runDirectory }) };
+    const filesystem = `{${Object.entries(entries).map(([path, access]) => `${JSON.stringify(path)}=${JSON.stringify(access)}`).join(',')}}`;
+    const policy = ['-c', 'sandbox_mode="workspace-write"', '-c', `default_permissions="${profile}"`, '-c', `permissions.${profile}.filesystem=${filesystem}`, '-c', `permissions.${profile}.network.enabled=true`];
+    const shellEnvironment = [...scrubbed.flatMap(name => ['-c', `shell_environment_policy.set.${name}=""`]), ...Object.entries(toolVariables).flatMap(([name, value]) => ['-c', `shell_environment_policy.set.${name}=${JSON.stringify(value)}`])];
+    const launcher = join(helperDirectory, 'codex');
+    const invocation: Invocation = { ...request.invocation, executable: launcher, args: [...args, ...policy, ...shellEnvironment, ...(end < 0 ? [] : source.slice(end))] };
+    const toolSandbox: Invocation = { executable: launcher, args: ['sandbox', '-C', cwd, '-P', profile, ...policy, '--'], liveTaskVerified: request.invocation.liveTaskVerified };
+    const environment = Object.fromEntries(Object.entries(request.environment).filter((entry): entry is [string, string] => entry[1] !== undefined && !scrubbed.includes(entry[0])));
+    Object.assign(environment, toolVariables);
     await fs.writeFile(join(directory, 'network.bpf'), filter, { mode: 0o400 });
-    const tmuxSockets = join(runDirectory, `tmux-${process.getuid?.() ?? 0}`);
     await fs.writeFile(join(directory, 'bwrap'), [
       '#!/bin/sh',
       'mounted=0',
@@ -320,18 +328,18 @@ export async function prepareCodexSandbox(
       '  shift',
       `  if [ "$mounted" = 0 ] && [ "$argument" = -- ]; then set -- "$@" --perms 0700 --tmpfs ${literal(tmuxSockets)} ${fileWrites.map(path => `--bind ${literal(path)} ${literal(path)}`).join(' ')} --; mounted=1; else set -- "$@" "$argument"; fi`,
       'done',
-      `exec ${literal(bwrap)} --unshare-net --add-seccomp-fd 9 "$@" 9<${literal(join(directory, 'network.bpf'))}`,
+      `exec ${literal(bwrap)} --unshare-net --add-seccomp-fd 9 "$@" 9<${literal(join(helperDirectory, 'network.bpf'))}`,
       '',
     ].join('\n'), { mode: 0o500 });
-    await fs.writeFile(launcher, `#!/bin/sh\nPATH=${literal(directory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
+    await fs.writeFile(join(directory, 'codex'), `#!/bin/sh\nPATH=${literal(helperDirectory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
     await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: ['AF_UNIX'], ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
     const visible: string[] = [];
     for (const path of masked) if (await fs.access(path, constants.R_OK).then(() => true, () => false)) visible.push(path);
     await probe(toolSandbox, environment, cwd, probeSocket, visible, request.timeoutMs);
+    return { invocation, environment, toolSandbox, policyPaths: [directory], cleanup };
   } catch (error) {
     await cleanup().catch(() => undefined);
     if (error instanceof CodexSandboxUnavailable) throw error;
     throw new CodexSandboxUnavailable(`Codex sandbox isolation unavailable: ${error instanceof Error ? error.message : String(error)}`);
   }
-  return { invocation, environment, toolSandbox, policyPaths: [directory], cleanup };
 }

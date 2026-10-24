@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
+import { createServer } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { setTimeout as delay } from 'node:timers/promises';
 import { test } from 'node:test';
 import { prepareCodexRafCommandAccess, type PreparedCodexRafCommandAccess } from '../src/codex-raf-command-access.ts';
-import { hookCommand, outputFixture, outputTimeout } from './codex-command-output-fixture.ts';
+import { capture, hookCommand, outputFixture, outputTimeout } from './codex-command-output-fixture.ts';
 
 const options = { timeout: outputTimeout };
 type Fixture = Awaited<ReturnType<typeof outputFixture>>;
@@ -143,4 +144,78 @@ for await (const line of createInterface({input:process.stdin})) {
     await prepared.cleanup();
   }, /hook.*(?:timeout|deadline|lifetime)/iu);
   assert.deepEqual(await f.calls(), []);
+});
+
+test('[codex-command-lifetime] native timeout control kills the waiting owner and runs the original command in the sandbox', options, async t => {
+  const f = await outputFixture(t);
+  const owner = join(f.root, 'native-owner.json');
+  await writeFile(f.commandPath, `import {writeFileSync,mkdirSync} from 'node:fs'; import {randomUUID} from 'node:crypto'; mkdirSync(${JSON.stringify(f.stateDirectory)}+'/activation.lock.owner-'+randomUUID()); writeFileSync(${JSON.stringify(owner)},JSON.stringify({pid:process.pid}));\n` + await readFile(f.commandPath, 'utf8'));
+  await f.configure(Buffer.from('original wrapper completed\n'), Buffer.alloc(0), 0, join(f.root, 'never-admitted'));
+  const prepared = await f.prepare();
+  const hook = `hooks.PreToolUse=[{matcher="^Bash$",hooks=[{type="command",timeout=1,command=${JSON.stringify(hookCommand(prepared))}}]}]`;
+  const args: string[] = [];
+  for (let i = 0; i < prepared.invocation.args.length; i++) {
+    const arg = prepared.invocation.args[i];
+    if (['-c', '--config'].includes(arg)) {
+      const value = prepared.invocation.args[++i];
+      if (!value.startsWith('hooks.PreToolUse=') && !value.startsWith('hooks.state=')) args.push(arg, value);
+    } else args.push(arg);
+  }
+  args.push('-c', hook);
+  const definition = await effectiveHook(f, { ...prepared, invocation: { ...prepared.invocation, args } });
+  assert.equal(definition.timeoutSec, 1, 'the control deliberately compresses only the external hook deadline');
+  args.push('-c', `hooks.state={${JSON.stringify(definition.key)}={trusted_hash=${JSON.stringify(definition.currentHash)}}}`);
+  let output: unknown;
+  let issued = false;
+  const failures: string[] = [];
+  const command = `${f.rafCommand} agent ps`;
+  const flatten = (tools: any[]): any[] => tools.flatMap(tool => tool.type === 'namespace' ? flatten(tool.tools ?? []) : [tool]);
+  const server = createServer(async (request, response) => {
+    try {
+      const chunks: Buffer[] = [];
+      for await (const chunk of request) chunks.push(Buffer.from(chunk));
+      const body = JSON.parse(Buffer.concat(chunks).toString());
+      const returned = body.input?.findLast((entry: any) => ['function_call_output', 'custom_tool_call_output'].includes(entry.type));
+      if (returned) output = returned.output;
+      let item: any = { id: 'done', type: 'message', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: 'Native timeout control complete.', annotations: [] }] };
+      if (!issued) {
+        issued = true;
+        const direct = flatten(body.tools ?? []).find(tool => ['exec_command', 'shell_command', 'shell'].includes(tool.name));
+        if (direct) {
+          item = { id: 'tool', type: 'function_call', status: 'completed', call_id: 'timeout-control', name: direct.name, arguments: JSON.stringify(direct.name === 'shell' ? { command: ['bash', '-c', command] } : direct.name === 'shell_command' ? { command, login: false } : { cmd: command, login: false, yield_time_ms: 10000 }) };
+        } else {
+          const additional = body.input.filter((entry: any) => entry.type === 'additional_tools').flatMap((entry: any) => flatten(entry.tools ?? []));
+          const exec = additional.find((tool: any) => tool.type === 'custom' && tool.name === 'exec');
+          assert.ok(exec, 'installed Codex exposes its shell tool');
+          const nested = ['exec_command', 'shell_command'].find(name => exec.description.includes(`${name}(`));
+          assert.ok(nested);
+          const input = nested === 'exec_command' ? { cmd: command, login: false, yield_time_ms: 10000 } : { command, login: false };
+          item = { id: 'tool', type: 'custom_tool_call', status: 'completed', call_id: 'timeout-control', name: exec.name, input: `const r=await tools.${nested}(${JSON.stringify(input)});text(r);` };
+        }
+      }
+      response.writeHead(200, { 'Content-Type': 'text/event-stream' });
+      const emit = (type: string, value: any) => response.write(`event: ${type}\ndata: ${JSON.stringify({ type, ...value })}\n\n`);
+      const envelope = { id: 'timeout-response', object: 'response', model: body.model, status: 'in_progress', output: [] };
+      emit('response.created', { response: envelope });
+      emit('response.output_item.added', { output_index: 0, item });
+      emit('response.output_item.done', { output_index: 0, item });
+      emit('response.completed', { response: { ...envelope, status: 'completed', output: [item], usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 } } });
+      response.end();
+    } catch (error) { failures.push(String(error)); response.writeHead(500).end(); }
+  });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(async () => { server.closeAllConnections(); await new Promise<void>(resolve => server.close(() => resolve())); });
+  const address = server.address();
+  assert.ok(address && typeof address === 'object');
+  args.push('-c', 'features.plugins=false', '-c', 'model_provider="raf_timeout_fixture"', '-c', `model_providers.raf_timeout_fixture={name="local hook timeout control",base_url="http://127.0.0.1:${address.port}/v1",wire_api="responses",requires_openai_auth=false}`, 'exec', '--json', '--ephemeral', '--skip-git-repo-check', 'Execute the supplied protocol fixture tool call.');
+  const result = await capture(prepared.invocation.executable, args, f.cwd, prepared.environment);
+  assert.deepEqual(failures, []);
+  assert.equal(result.code, 0, result.stderr.toString());
+  assert.ok(issued);
+  assert.match(JSON.stringify(output), /EROFS|EACCES|EPERM|Read-only file system|Permission denied/iu, 'Codex actually attempted the original command in its native sandbox after the hook timed out');
+  assert.doesNotMatch(JSON.stringify(output), /original wrapper completed/u);
+  const pid = JSON.parse(await readFile(owner, 'utf8')).pid;
+  const state = await readFile(`/proc/${pid}/stat`, 'utf8').catch((error: NodeJS.ErrnoException) => { if (error.code === 'ENOENT') return ''; throw error; });
+  assert.ok(!state || ['Z', 'X'].includes(state.slice(state.lastIndexOf(')') + 2).split(' ')[0]), 'native Codex killed the original wrapper process group');
+  assert.equal((await f.calls()).length, 1, 'only the host wrapper reached its admission gate');
 });

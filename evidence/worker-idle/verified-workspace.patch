@@ -1,0 +1,235 @@
+diff --git a/src/agent-adapters.ts b/src/agent-adapters.ts
+index 4f3b732..cca7736 100644
+--- a/src/agent-adapters.ts
++++ b/src/agent-adapters.ts
+@@ -58,6 +58,7 @@ export interface AdapterLaunchTransportOptions {
+   reportWrapper: ReportWrapper;
+   inspectOwnership(session: AdapterSession): Promise<LaunchOwnership>;
+   pollIntervalMs: number;
++  waitForExit?(session: AdapterSession): Promise<{ code: number | null; signal: string | null }>;
+   now?: () => number;
+   delay?: (milliseconds: number) => Promise<void>;
+ }
+@@ -72,6 +73,7 @@ export class TmuxAgentAdapter {
+     let ownershipAnchor: ProcessIdentity | undefined;
+     let stopped = false;
+     let exit: { code: number | null; signal: string | null } | undefined;
++    let exitWait: Promise<{ code: number | null; signal: string | null }> | undefined;
+     const current = () => { if (!session) throw new Error('Launch has not started'); return session; };
+     return {
+       startWithoutInput: async request => {
+@@ -124,6 +126,10 @@ export class TmuxAgentAdapter {
+         await this.deliver(current(), brief);
+       },
+       waitExit: async () => {
++        if (!exit && options.waitForExit) {
++          exitWait ??= options.waitForExit(current()).then(value => exit = value);
++          return exitWait;
++        }
+         while (!exit) {
+           const observation = await this.inspect(current());
+           if (observation.status === 'exited') exit = { code: observation.exitCode, signal: null };
+@@ -211,6 +217,35 @@ export class TmuxAgentAdapter {
+     return this.dependencies.protocols[session.selection.runner].observe(pane.stdout);
+   }
+ 
++  async waitForExit(session: AdapterSession): Promise<{ code: number | null; signal: string | null }> {
++    const target = this.target(session);
++    const channel = `raf-exit-${randomUUID()}`;
++    const index = Number.parseInt(randomUUID().slice(0, 8), 16) >>> 1;
++    const hooks = ['pane-died', 'pane-exited', 'session-closed'].map(name => `${name}[${index}]`);
++    const status = async () => {
++      const result = await this.dependencies.execute({ executable: 'tmux', args: ['display-message', '-p', '-t', target, '#{pane_dead}|#{pane_dead_status}'] });
++      if (result.exitCode !== 0) return { code: null, signal: null };
++      const [dead, code] = result.stdout.trim().split(/[|\t]/);
++      if (dead === '0') return undefined;
++      return { code: dead === '1' && code !== undefined && /^\d+$/.test(code) ? Number(code) : null, signal: null };
++    };
++    try {
++      const installed = await this.dependencies.execute({ executable: 'tmux', args: hooks.flatMap((hook, i) => [...(i ? [';'] : []), 'set-hook', '-t', target, hook, `wait-for -S ${channel}`]) });
++      const initial = await status();
++      if (initial) return initial;
++      if (installed.exitCode !== 0) throw new Error(`tmux exit subscription failed: ${installed.stderr}`);
++      for (;;) {
++        const notified = await this.dependencies.execute({ executable: 'tmux', args: ['wait-for', channel] });
++        const exited = await status();
++        if (exited) return exited;
++        if (notified.exitCode !== 0) throw new Error(`tmux exit notification failed: ${notified.stderr}`);
++      }
++    } finally {
++      for (const hook of hooks) await this.dependencies.execute({ executable: 'tmux', args: ['set-hook', '-u', '-t', target, hook] }).catch(() => undefined);
++      await this.dependencies.execute({ executable: 'tmux', args: ['wait-for', '-S', channel, ';', 'wait-for', channel] }).catch(() => undefined);
++    }
++  }
++
+   async capture(session: AdapterSession): Promise<{ exited: boolean; exitCode: number | null; text: string }> {
+     const target = this.target(session);
+     const state = await this.dependencies.execute({ executable: 'tmux', args: ['display-message', '-p', '-t', target, '#{pane_dead}|#{pane_dead_status}'] });
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 93e71d9..eb811cd 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -321,10 +321,11 @@ async function runtimeTmuxSocket(context: Pick<RuntimeContext, 'tmpRoot' | 'stat
+   }
+   return socketPath;
+ }
+-function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, override?: AdapterCommandExecutor): AdapterCommandExecutor {
++export function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stateContext'>, override?: AdapterCommandExecutor, snapshotEnvironment = false): AdapterCommandExecutor {
+   if (override) return override;
++  const preparedEnvironment = snapshotEnvironment ? { ...(context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env) } : undefined;
+   return async command => {
+-    const environment = context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env;
++    const environment = preparedEnvironment ?? (context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env);
+     if (command.executable !== 'tmux') return executeCommand({ ...command, environment });
+     const socketPath = await runtimeTmuxSocket(context, environment);
+     const args = [...command.args];
+@@ -1308,7 +1309,7 @@ export async function runProductionWorker(
+   } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') fail('WORKER_CONTEXT_UNAVAILABLE', `Prepared worker runtime envelope is missing: ${manifestPath}`); throw error; }
+   if (manifest.version !== 1 || manifest.context?.statePath !== request.statePath || manifest.context?.tmpRoot !== request.tmpRoot || manifest.context?.orchestratorRoot !== request.assignment.root || !isAbsolute(manifest.context?.confRoot ?? '')) fail('INVALID_CONTEXT', 'Worker runtime envelope mismatch');
+   const context: RuntimeContext = { ...manifest.context, stateContext, resolveCaller: async () => undefined };
+-  const execute = runtimeExecution(context, options.execute);
++  const execute = runtimeExecution(context, options.execute, true);
+   const configured = protocolFor(options.protocolSettings ?? manifest.protocolSettings ?? await protocols(context.confRoot), request.selection.runner);
+   const resolution = await resolveRunnerExecutable(configured.runner, configured.executable, process.env);
+   if (resolution.status !== 'resolved' || !text(manifest.runnerPath) || resolution.path !== manifest.runnerPath) fail('RUNNER_PROTOCOL_UNAVAILABLE', resolution.status === 'resolved' ? `Worker runner path ${resolution.path} differs from launch runner path ${manifest.runnerPath ?? 'missing'}` : resolution.reason);
+@@ -1447,7 +1448,7 @@ export async function runProductionWorker(
+       actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, ...(deferred ? { nativeIdentity: { state: 'pending' as const, id: null, reason: 'Awaiting owned SessionStart conversationId' } } : {}), tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, ...deferredEvidence, ...await dependencies.currentBoot(), ...(!options.execute ? { tmuxSocket: await runtimeTmuxSocket(context, stateContextEnvironment(stateContext, process.env)) } : {}) } };
+       return { state: 'owned', identity: actual, processKind: 'agent' };
+     };
+-    const transport = adapter.createLaunchTransport({ reportWrapper: { wrap: command => command }, inspectOwnership: ownership, pollIntervalMs: settings.timeouts.pollMs });
++    const transport = adapter.createLaunchTransport({ reportWrapper: { wrap: command => command }, inspectOwnership: ownership, pollIntervalMs: settings.timeouts.pollMs, waitForExit: session => adapter.waitForExit(session) });
+     let requestedStatus = false;
+     let submittedStatus = false;
+     let retriedStatus = false;
+diff --git a/test/agent-adapters.test.ts b/test/agent-adapters.test.ts
+index fca9790..ca9310e 100644
+--- a/test/agent-adapters.test.ts
++++ b/test/agent-adapters.test.ts
+@@ -1,3 +1,12 @@
++import childProcess from 'node:child_process';
++import nodeFs from 'node:fs';
++import { EventEmitter } from 'node:events';
++import { PassThrough } from 'node:stream';
++import { syncBuiltinESMExports } from 'node:module';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { runtimeExecution } from '../src/production-runtime.ts';
++import { resolveStateContext } from '../src/state-migration-guard.ts';
+ import assert from 'node:assert/strict';
+ import { test } from 'node:test';
+ import {
+@@ -140,3 +149,114 @@ test('agent-adapters: agent delivery uses bracketed paste so the CLI receives on
+   const order = f.commands.map(command => command.args[0]);
+   assert.ok(order.indexOf('paste-buffer') < order.lastIndexOf('send-keys'));
+ });
++
++for (const pollIntervalMs of [1, 10, 100]) {
++  test(`worker-idle: exit observation has a bounded process count at startup poll ${pollIntervalMs} ms`, async () => {
++    const f = fixture();
++    let clock = 0;
++    f.respond(command => {
++      if (command.args[0] === 'wait-for') clock = 5000;
++      return command.args[0] === 'display-message' ? ok(clock >= 5000 ? '1|23' : '0|') : ok('working');
++    });
++    const transport = f.adapter.createLaunchTransport({
++      reportWrapper: f.request.reportWrapper,
++      inspectOwnership: async () => ({ state: 'unknown', reason: 'not needed for exit observation' }),
++      pollIntervalMs,
++      waitForExit: session => f.adapter.waitForExit(session),
++      now: () => clock,
++      delay: async milliseconds => { clock += milliseconds; },
++    });
++    await transport.startWithoutInput({ selection: f.request.selection, tmuxSession: f.request.tmuxSession, cwd: f.request.cwd });
++    f.commands.length = 0;
++    assert.deepEqual(await transport.waitExit(), { code: 23, signal: null });
++    assert.ok(f.commands.length <= 12, `five seconds must spawn at most twelve commands, got ${f.commands.length}`);
++    assert.equal(f.commands.filter(command => command.args[0] === 'capture-pane').length, 0, 'waiting for exit does not need the screen');
++    assert.equal(clock, 5000);
++  });
++}
++
++test('worker-idle: verified worker environment is resolved once across repeated child commands', async t => {
++  const root = nodeFs.mkdtempSync(join(tmpdir(), 'worker-environment-'));
++  t.after(() => nodeFs.rmSync(root, { recursive: true, force: true }));
++  for (const path of ['conf', 'raf-main/src', 'raf-develop/src', 'qa-home', 'account-home']) nodeFs.mkdirSync(join(root, path), { recursive: true });
++  const projectsPath = join(root, 'conf/projects.json');
++  nodeFs.writeFileSync(projectsPath, JSON.stringify({ version: 1, projects: { raf: { path: 'raf-main', profile: 'raf', branchPaths: { main: 'raf-main', develop: 'raf-develop' } } }, profiles: { raf: { production: 'main', environments: { runtime: 'main' } } } }));
++  nodeFs.writeFileSync(join(root, 'conf/raf.json'), JSON.stringify({ version: 1, state: { fileName: 'state.sqlite' } }));
++  const modulePath = join(root, 'raf-develop/src/worker.ts');
++  nodeFs.writeFileSync(modulePath, '');
++  const qaHome = join(root, 'qa-home');
++  const stateContext = resolveStateContext({ orchestratorRoot: root, modulePath, homeDirectory: qaHome, operatingSystemHome: join(root, 'account-home'), environment: { HOME: qaHome, RAF_QA_HOME: qaHome }, entryPoint: 'worker' });
++  const readFileSync = nodeFs.readFileSync;
++  let validations = 0;
++  t.mock.method(nodeFs, 'readFileSync', (...args) => {
++    if (args[0] === projectsPath) validations++;
++    return Reflect.apply(readFileSync, nodeFs, args);
++  });
++  const environments: Record<string, string>[] = [];
++  t.mock.method(childProcess, 'spawn', (_executable, _args, options) => {
++    environments.push(options.env);
++    const child = Object.assign(new EventEmitter(), { stdin: new PassThrough(), stdout: new PassThrough(), stderr: new PassThrough() });
++    queueMicrotask(() => child.emit('close', 0));
++    return child;
++  });
++  syncBuiltinESMExports();
++  t.after(() => { t.mock.restoreAll(); syncBuiltinESMExports(); });
++  const execute = runtimeExecution({ tmpRoot: stateContext.tmpRoot, stateContext }, undefined, true);
++  for (let i = 0; i < 20; i++) await execute({ executable: 'fixture-child', args: [] });
++  assert.equal(validations, 1, 'worker child commands must reuse the verified environment rather than revalidate Git origin and generation inventory');
++  assert.equal(environments.length, 20);
++  assert.ok(environments.every(env => env.HOME === qaHome && env.RAF_QA_HOME === qaHome));
++  nodeFs.writeFileSync(projectsPath, '{}');
++  assert.throws(() => runtimeExecution({ tmpRoot: stateContext.tmpRoot, stateContext }, undefined, true), /STATE_CONTEXT_REFUSED/);
++  await assert.rejects(runtimeExecution({ tmpRoot: stateContext.tmpRoot, stateContext })({ executable: 'fixture-child', args: [] }), /STATE_CONTEXT_REFUSED/);
++});
++
++for (const initial of ['1|0', '1|17', 'missing']) {
++  test(`worker-idle: subscribes before inspecting an already exited or missing pane (${initial})`, async () => {
++    const f = fixture();
++    f.respond(command => command.args[0] === 'display-message' ? initial === 'missing' ? { exitCode: 1, stdout: '', stderr: 'missing pane' } : ok(initial) : ok());
++    assert.deepEqual(await f.adapter.waitForExit(f.session), { code: initial === 'missing' ? null : Number(initial.split('|')[1]), signal: null });
++    assert.equal(f.commands[0].args[0], 'set-hook');
++    assert.ok(f.commands[0].args.some(arg => arg.startsWith('pane-died[')));
++    assert.ok(f.commands[0].args.some(arg => arg.startsWith('session-closed[')));
++    assert.equal(f.commands.filter(command => command.args[0] === 'wait-for' && command.args.length === 2).length, 0);
++    assert.equal(f.commands.filter(command => command.args[0] === 'set-hook' && command.args.includes('-u')).length, 3);
++    assert.ok(f.commands.every(command => command.args[0] !== 'capture-pane'));
++  });
++}
++
++test('worker-idle: unrelated pane notifications rearm the event wait without screen polling', async () => {
++  const f = fixture();
++  let notifications = 0;
++  f.respond(command => {
++    if (command.args[0] === 'wait-for' && command.args.length === 2) notifications++;
++    return command.args[0] === 'display-message' ? ok(notifications >= 2 ? '1|29' : '0|') : ok();
++  });
++  assert.deepEqual(await f.adapter.waitForExit(f.session), { code: 29, signal: null });
++  assert.equal(notifications, 2);
++  assert.ok(f.commands.every(command => command.args[0] !== 'capture-pane'));
++});
++
++for (const failed of ['subscribe', 'notification']) {
++  test(`worker-idle: ${failed} failure for a live pane is explicit and removes owned hooks`, async () => {
++    const f = fixture();
++    f.respond(command => command.args[0] === 'display-message' ? ok('0|') :
++      (failed === 'subscribe' && command.args[0] === 'set-hook' && !command.args.includes('-u') || failed === 'notification' && command.args[0] === 'wait-for' && command.args.length === 2) ? { exitCode: 1, stdout: '', stderr: 'fixture failure' } : ok());
++    await assert.rejects(f.adapter.waitForExit(f.session), /tmux exit (subscription|notification) failed: fixture failure/);
++    assert.equal(f.commands.filter(command => command.args[0] === 'set-hook' && command.args.includes('-u')).length, 3);
++  });
++}
++
++test('worker-idle: concurrent transport exit waiters share one event subscription', async () => {
++  const f = fixture();
++  let resolveExit!: (value: { code: number; signal: null }) => void;
++  const exit = new Promise<{ code: number; signal: null }>(resolve => resolveExit = resolve);
++  let subscriptions = 0;
++  const transport = f.adapter.createLaunchTransport({ reportWrapper: f.request.reportWrapper, inspectOwnership: async () => ({ state: 'unknown', reason: 'not needed' }), pollIntervalMs: 1, waitForExit: async () => { subscriptions++; return exit; } });
++  await transport.startWithoutInput({ selection: f.request.selection, tmuxSession: f.request.tmuxSession, cwd: f.request.cwd });
++  const first = transport.waitExit();
++  const second = transport.waitExit();
++  assert.equal(subscriptions, 1);
++  resolveExit({ code: 0, signal: null });
++  assert.deepEqual(await Promise.all([first, second]), [{ code: 0, signal: null }, { code: 0, signal: null }]);
++});

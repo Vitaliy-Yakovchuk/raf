@@ -48,6 +48,7 @@ function fixture() {
   };
   const context = vm.createContext({
     assert, path, fs, readiness, stand: '/fixture/stand', ev: '/fixture/evidence', home: '/fixture',
+    sourceSha: 'a'.repeat(40), mode: 'live',
     socket: '/fixture/main.sock', codeHome: '/fixture/codex', codeConfigBefore: 'unchanged',
     control: undefined, sequence: 0, interrupted: undefined, cleaning: false, mainStarted: true,
     Date: { now: () => clock },

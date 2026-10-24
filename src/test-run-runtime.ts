@@ -14,7 +14,7 @@ import { TestRunDiagnostics, buildDiagnosticEnvironment, prepareRunTemporaryDire
 import type { RunTemporaryPorts, DiagnosticEnvironmentInput } from './test-run-diagnostics.ts';
 import { spawn, execFileSync } from 'node:child_process';
 import { constants, accessSync, existsSync, globSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { userInfo } from 'node:os';
 import { randomUUID } from 'node:crypto';
@@ -121,6 +121,7 @@ function verifyEtchlyDependencies(context: TestRunContext, profiles: import('./t
 export function createTestRunPorts(config: TestRunConfig, stateContext: StateContext, getStore: () => StateStore, inherited: Readonly<Record<string, string | undefined>> = process.env, configurationBytes?: DiagnosticEnvironmentInput['configurationBytes'], request?: import('./test-runs.ts').ParsedTestRunArgs, bindSpawn?: (identity: string) => void, spawnFailed?: () => void): TestRunPorts {
   let state: TestRunStatePort | undefined;
   const environment = stateContextEnvironment(stateContext, inherited);
+  if (request?.phase !== 'integration' && environment.PATH !== undefined) environment.PATH = environment.PATH.split(delimiter).filter(path => !path.split(sep).some(part => part.startsWith('codex-sandbox-'))).join(delimiter);
   const readConfiguration = (name: string) => readFileSync(join(stateContext.orchestratorRoot, 'conf', name));
   const snapshot = configurationBytes ?? { flow: readConfiguration('flow.json'), testRuns: readConfiguration('test-runs.json'), projects: readConfiguration('projects.json') };
   const temporaryPorts: RunTemporaryPorts = {

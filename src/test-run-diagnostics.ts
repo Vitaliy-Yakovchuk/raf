@@ -357,12 +357,16 @@ export async function prepareRunTemporaryDirectory(configuration: RunTemporaryCo
   const blocked = [context.qaHome, context.statePath, context.stateTmpPath, context.workspace, context.workingStatePath].filter(Boolean);
   if (blocked.some(p => inside(configuration.root, p))) tmpError('Temporary root overlaps protected context');
   const created = await ports.createPrivateDirectory(configuration.root, context.runId);
-  if (!inside(created.path, configuration.root) || created.path === configuration.root || !fits(created.path) || created.symlink || created.path !== created.realpath || created.uid !== context.uid || (created.mode & 0o777) !== 0o700 || created.runId && created.runId !== context.runId || blocked.some(p => inside(created.path, p) || inside(p, created.path))) tmpError('Created temporary directory is unsafe or exceeds socket capacity');
-  const inspected = await ports.inspect(created.path);
-  if (!inspected || inspected.symlink || ['path', 'realpath', 'device', 'inode', 'uid', 'mode'].some(key => (inspected as any)[key] !== (created as any)[key])) tmpError('Created temporary identity changed before reservation');
   const reservation = { runId: context.runId, temporary: { ...created, runId: context.runId } };
-  try { await ports.saveReservation(reservation); } catch (error) {
-    await cleanupRunTemporaryDirectory(reservation, true, ports);
+  const protectedPath = blocked.some(p => inside(created.path, p) || inside(p, created.path));
+  const privateChild = inside(created.path, configuration.root) && created.path !== configuration.root && !protectedPath;
+  try {
+    if (!privateChild || !fits(created.path) || created.symlink || created.path !== created.realpath || created.uid !== context.uid || (created.mode & 0o777) !== 0o700 || created.runId && created.runId !== context.runId) tmpError('Created temporary directory is unsafe or exceeds socket capacity');
+    const inspected = await ports.inspect(created.path);
+    if (!inspected || inspected.symlink || ['path', 'realpath', 'device', 'inode', 'uid', 'mode'].some(key => (inspected as any)[key] !== (created as any)[key])) tmpError('Created temporary identity changed before reservation');
+    await ports.saveReservation(reservation);
+  } catch (error) {
+    if (privateChild) await cleanupRunTemporaryDirectory(reservation, true, ports);
     throw error;
   }
   return { reservation, environment: { HOME: context.qaHome, RAF_QA_HOME: context.qaHome, TMPDIR: created.path }, statePath: context.statePath, stateTmpPath: context.stateTmpPath };

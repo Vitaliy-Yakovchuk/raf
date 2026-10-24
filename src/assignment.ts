@@ -162,7 +162,12 @@ export async function composeAssignmentBrief(snapshot: AssignmentSnapshot, conte
 export async function verifyAssignmentCompletion(snapshot: AssignmentSnapshot, ports: AssignmentPorts, archiveClaims: Readonly<Record<string, string>> = {}): Promise<AssignmentVerification> {
   const issues: AssignmentIssue[] = [];
   let active: Change[], archived: Change[];
-  try { active = await list(ports, snapshot.root); archived = await list(ports, snapshot.root, true); }
+  try {
+    const [current, history] = await Promise.allSettled([list(ports, snapshot.root), list(ports, snapshot.root, true)]);
+    if (current.status === 'rejected') throw current.reason;
+    if (history.status === 'rejected') throw history.reason;
+    active = current.value; archived = history.value;
+  }
   catch (error) { return { ok: false, issues: [issue('', [], errorText(error))] }; }
   for (const change of snapshot.changes) {
     const candidates = archived.filter(row => matchingArchive(row.name, change.id));

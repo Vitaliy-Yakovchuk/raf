@@ -483,7 +483,8 @@ async function verifyReportedAssignmentSource(store: StateStore, context: Runtim
   for (const change of assignment.changes) {
     const subset = { ...assignment, changes: [change] };
     const archived = set.tasks.filter(task => task.key.changeId === change.id).every(task => resolutions.some(row => (row.state === 'open' || row.state === 'completed') && row.task.key.changeId === task.key.changeId && row.task.key.taskId === task.key.taskId && row.location === 'archive'));
-    const checked = archived ? await verifyAssignmentCompletion(subset, assignments, archives) : await validateAssignment({ root: assignment.root, selections: [{ change: change.id, items: change.items.map(item => ({ id: item.id, expectedDescription: item.description })) }] }, assignments);
+    if (!archived) continue;
+    const checked = await verifyAssignmentCompletion(subset, assignments, archives);
     if (!checked.ok) return { ok: false, issues: checked.issues };
   }
   return { ok: true, issues: [] };
@@ -509,9 +510,11 @@ async function confirmReportedTasks(store: StateStore, context: RuntimeContext, 
     executeGit: async (args, options) => { const environment = context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env; const result = await (identityExecute ?? executeCommand)({ executable: 'git', args, cwd: options.cwd, environment: { ...environment, ...options.env } }); return { code: result.exitCode, stdout: result.stdout, stderr: result.stderr }; },
     beforeWrite: async () => {
       if (performance.now() >= indexDeadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before checkbox write');
-      await beforeWrite?.();
-      const verification = await verifyReportedAssignmentSource(store, context, execute, request.runId, request.assignment, Object.fromEntries(report.changes.filter(change => change.archive).map(change => [change.id, change.archive!])), identityExecute);
-      if (!verification.ok) throw new Error(`Assignment changed before checkbox write: ${JSON.stringify(verification.issues)}`);
+      if (beforeWrite) await beforeWrite();
+      else {
+        const verification = await verifyReportedAssignmentSource(store, context, execute, request.runId, request.assignment, Object.fromEntries(report.changes.filter(change => change.archive).map(change => [change.id, change.archive!])), identityExecute);
+        if (!verification.ok) throw new Error(`Assignment changed before checkbox write: ${JSON.stringify(verification.issues)}`);
+      }
       if (performance.now() >= indexDeadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached after checkbox validation');
     },
     waitForIndex: async () => {

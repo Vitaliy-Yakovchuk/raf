@@ -19,7 +19,7 @@ import type {
 const queueA = 'a0000000-0000-4000-8000-000000000001';
 const queueB = 'b0000000-0000-4000-8000-000000000002';
 const eventKind = 'launch-queue.drained';
-const eventDescription = 'Усі запуски, що очікували в черзі машини, підтверджено запущені';
+const eventDescription = 'Покоління черги запусків машини спорожніло незалежно від результатів запусків';
 const idDescription = 'Стабільний ID черги запусків машини в оперативному state-домені raf';
 const identity: LaunchQueueIdentity = { stateDomain: '/isolated/control', machineId: 'machine-a' };
 const prospectiveCatalog: EventCatalog = {
@@ -135,14 +135,42 @@ function ready(queue: LaunchQueueEvents, handle: LaunchQueueHandle): void {
   queue.confirmReady(handle);
 }
 
-function assertFact(fact: LaunchQueueDrainedFact, handle: LaunchQueueHandle): void {
+type Totals = { started: number; cancelled: number; failed: number };
+type Outcome = 'ready' | LaunchQueueFailure;
+const outcomes = ['ready', 'cancelled', 'client-died', 'launch-failed'] as const;
+
+function totalsFor(outcome: Outcome): Totals {
+  return {
+    started: outcome === 'ready' ? 1 : 0,
+    cancelled: outcome === 'cancelled' ? 1 : 0,
+    failed: outcome === 'client-died' || outcome === 'launch-failed' ? 1 : 0,
+  };
+}
+
+function finish(queue: LaunchQueueEvents, handle: LaunchQueueHandle, outcome: Outcome): void {
+  if (outcome === 'ready') ready(queue, handle);
+  else queue.fail(handle, outcome);
+}
+
+function assertCounters(state: LaunchQueueState | undefined, totals: Totals): void {
+  assert.ok(state);
+  assert.deepEqual(state, { ...state, ...totals });
+}
+
+function assertFact(fact: LaunchQueueDrainedFact, handle: LaunchQueueHandle, totals: Totals = { started: 1, cancelled: 0, failed: 0 }): void {
+  assert.ok(fact);
   assert.deepEqual(fact.event, { kind: eventKind, id: handle.queueId });
-  assert.deepEqual(fact.data, { queueId: handle.queueId, generation: handle.generation });
+  assert.deepEqual(fact.data, { queueId: handle.queueId, generation: handle.generation, ...totals });
+  for (const value of Object.values(totals)) {
+    assert.ok(Number.isSafeInteger(value));
+    assert.ok(value >= 0);
+  }
+  assert.ok(totals.started + totals.cancelled + totals.failed > 0);
   assert.equal(typeof fact.key, 'string');
   assert.notEqual(fact.key, '');
 }
 
-test('queue-event: future conf catalog contains the exact approved event and ID description', () => {
+test('queue-event: conf catalog contains the exact outcome-independent event and unchanged ID description', () => {
   const catalog = loadEventCatalog(resolve(import.meta.dirname, '../..'));
   assert.deepEqual(catalog.events.filter(event => event.id === eventKind), [
     { id: eventKind, idKind: 'resourceQueueId', description: eventDescription },
@@ -217,6 +245,7 @@ test('queue-event: waiting, permit/rechecking, reservation/starting retain the f
   for (const stage of ['waiting', 'rechecking', 'starting'] as const) {
     queue.transition(handle, stage);
     assert.deepEqual(fixture.state()?.entries, [{ ...handle, stage }]);
+    assertCounters(fixture.state(), { started: 0, cancelled: 0, failed: 0 });
     assert.deepEqual(fixture.facts(), []);
   }
   queue.confirmReady(handle);
@@ -233,6 +262,7 @@ test('queue-event: a resource refusal after permit requeues the same request in 
   queue.transition(handle, 'waiting');
   assert.deepEqual(enqueue(queue), handle);
   assert.equal(fixture.state()?.entries.length, 1);
+  assertCounters(fixture.state(), { started: 0, cancelled: 0, failed: 0 });
   assert.deepEqual(fixture.facts(), []);
   ready(queue, handle);
   assert.equal(fixture.facts().length, 1);
@@ -249,7 +279,7 @@ test('queue-event: all queued starts must be confirmed, without waiting for thei
   assert.deepEqual(fixture.state()?.entries.map(entry => entry.requestId), ['request-b']);
   ready(queue, b);
   assert.equal(fixture.facts().length, 1);
-  assertFact(fixture.facts()[0], b);
+  assertFact(fixture.facts()[0], b, { started: 2, cancelled: 0, failed: 0 });
 });
 
 test('queue-event: duplicate readiness and restarted reconciliation produce one pending fact', () => {
@@ -264,46 +294,112 @@ test('queue-event: duplicate readiness and restarted reconciliation produce one 
 });
 
 for (const reason of ['cancelled', 'client-died', 'launch-failed'] as const satisfies readonly LaunchQueueFailure[]) {
-  test(`queue-event: ${reason} suppresses the whole generation and the next generation may drain`, () => {
+  test(`queue-event: nonlast ${reason} counts once and does not suppress the last readiness`, () => {
     const fixture = memoryDatabase();
     const queue = fixture.connect();
     const failed = enqueue(queue);
     const survivor = enqueue(queue, 'request-b', 'fence-b');
     queue.fail(failed, reason);
-    assert.equal(fixture.state()?.hadFailure, true);
+    assertCounters(fixture.state(), totalsFor(reason));
     assert.deepEqual(fixture.facts(), []);
+    assert.deepEqual(fixture.state()?.entries.map(entry => entry.requestId), ['request-b']);
     ready(queue, survivor);
-    assert.deepEqual(fixture.facts(), []);
-    const next = enqueue(queue, 'request-c', 'fence-c');
-    assert.ok(next.generation > failed.generation);
-    assert.equal(next.queueId, failed.queueId);
-    assert.equal(fixture.state()?.hadFailure, false);
-    ready(queue, next);
     assert.equal(fixture.facts().length, 1);
-    assertFact(fixture.facts()[0], next);
+    assertFact(fixture.facts()[0], survivor, { ...totalsFor(reason), started: 1 });
+  });
+
+  test(`queue-event: last ${reason} drains after an earlier confirmed start`, () => {
+    const fixture = memoryDatabase();
+    const queue = fixture.connect();
+    const started = enqueue(queue);
+    const last = enqueue(queue, 'last', 'last-fence');
+    ready(queue, started);
+    assert.deepEqual(fixture.facts(), []);
+    queue.fail(last, reason);
+    assert.deepEqual(fixture.state()?.entries, []);
+    assert.equal(fixture.facts().length, 1);
+    assertFact(fixture.facts()[0], last, { ...totalsFor(reason), started: 1 });
   });
 }
 
-test('queue-event: hadFailure survives command restart while survivors are starting', () => {
+test('queue-event: mixed generation drains with started=1 cancelled=1 failed=2', () => {
+  const fixture = memoryDatabase();
+  const queue = fixture.connect();
+  const cancelled = enqueue(queue, 'cancelled', 'cancelled-fence');
+  const died = enqueue(queue, 'died', 'died-fence');
+  const failed = enqueue(queue, 'failed', 'failed-fence');
+  const started = enqueue(queue, 'started', 'started-fence');
+  queue.fail(cancelled, 'cancelled');
+  queue.fail(died, 'client-died');
+  queue.fail(failed, 'launch-failed');
+  assert.deepEqual(fixture.facts(), []);
+  assertCounters(fixture.state(), { started: 0, cancelled: 1, failed: 2 });
+  starting(queue, started);
+  assert.deepEqual(fixture.facts(), []);
+  queue.confirmReady(started);
+  assert.equal(fixture.facts().length, 1);
+  assertFact(fixture.facts()[0], started, { started: 1, cancelled: 1, failed: 2 });
+});
+
+test('queue-event: counters survive restart after cancellation and failure while the survivor is starting', () => {
   const fixture = memoryDatabase();
   const queue = fixture.connect();
   const a = enqueue(queue);
   const b = enqueue(queue, 'request-b', 'fence-b');
-  queue.fail(a, 'client-died');
-  ready(fixture.connect(), b);
+  const c = enqueue(queue, 'request-c', 'fence-c');
+  queue.fail(a, 'cancelled');
+  queue.fail(b, 'client-died');
+  starting(queue, c);
+  const restarted = fixture.connect();
+  assert.equal(restarted.queueId(), a.queueId);
+  assertCounters(fixture.state(), { started: 0, cancelled: 1, failed: 1 });
   assert.deepEqual(fixture.facts(), []);
+  restarted.confirmReady(c);
+  assert.equal(fixture.facts().length, 1);
+  assertFact(fixture.facts()[0], c, { started: 1, cancelled: 1, failed: 1 });
 });
 
-test('queue-event: late failure of an already ready record does not poison the generation', () => {
+test('queue-event: late client death of a ready record never reclassifies started before or after drain', () => {
   const fixture = memoryDatabase();
   const queue = fixture.connect();
   const a = enqueue(queue);
   const b = enqueue(queue, 'request-b', 'fence-b');
   ready(queue, a);
-  queue.fail(a, 'client-died');
+  fixture.connect().fail(a, 'client-died');
+  assertCounters(fixture.state(), { started: 1, cancelled: 0, failed: 0 });
+  assert.deepEqual(fixture.facts(), []);
   ready(queue, b);
   assert.equal(fixture.facts().length, 1);
+  assertFact(fixture.facts()[0], b, { started: 2, cancelled: 0, failed: 0 });
+  const before = structuredClone(fixture.facts());
+  fixture.connect().fail(a, 'client-died');
+  fixture.connect().fail(b, 'client-died');
+  assert.deepEqual(fixture.facts(), before);
+  assertCounters(fixture.state(), { started: 2, cancelled: 0, failed: 0 });
 });
+
+for (const outcome of outcomes) {
+  test(`queue-event: repeated ${outcome} and conflicting terminal outcomes count a fenced record once`, () => {
+    const fixture = memoryDatabase();
+    const queue = fixture.connect();
+    const first = enqueue(queue);
+    const survivor = enqueue(queue, 'survivor', 'survivor-fence');
+    finish(queue, first, outcome);
+    finish(fixture.connect(), first, outcome);
+    fixture.connect().confirmReady(first);
+    for (const reason of ['cancelled', 'client-died', 'launch-failed'] as const) queue.fail(first, reason);
+    assertCounters(fixture.state(), totalsFor(outcome));
+    assert.deepEqual(fixture.facts(), []);
+    ready(queue, survivor);
+    const totals = { ...totalsFor(outcome), started: totalsFor(outcome).started + 1 };
+    assert.equal(fixture.facts().length, 1);
+    assertFact(fixture.facts()[0], survivor, totals);
+    const before = structuredClone(fixture.facts());
+    finish(fixture.connect(), first, outcome);
+    assert.deepEqual(fixture.facts(), before);
+    assertCounters(fixture.state(), totals);
+  });
+}
 
 for (const operation of ['confirmReady', 'fail', 'transition'] as const) {
   test(`queue-event: stale fence cannot ${operation} a current launch record`, () => {
@@ -314,12 +410,15 @@ for (const operation of ['confirmReady', 'fail', 'transition'] as const) {
     const before = structuredClone(fixture.state());
     const stale = { ...handle, fence: 'stale-fence' };
     if (operation === 'confirmReady') queue.confirmReady(stale);
-    if (operation === 'fail') queue.fail(stale, 'cancelled');
+    if (operation === 'fail') {
+      for (const reason of ['cancelled', 'client-died', 'launch-failed'] as const) queue.fail(stale, reason);
+    }
     if (operation === 'transition') queue.transition(stale, 'waiting');
     assert.deepEqual(fixture.state(), before);
     assert.deepEqual(fixture.facts(), []);
     queue.confirmReady(handle);
     assert.equal(fixture.facts().length, 1);
+    assertFact(fixture.facts()[0], handle);
   });
 }
 
@@ -334,75 +433,101 @@ test('queue-event: old generation, foreign queue and unknown request readiness c
   const facts = structuredClone(fixture.facts());
   for (const stale of [old, { ...current, queueId: queueB }, { ...current, requestId: 'unknown' }]) {
     queue.confirmReady(stale);
-    queue.fail(stale, 'cancelled');
+    for (const reason of ['cancelled', 'client-died', 'launch-failed'] as const) queue.fail(stale, reason);
   }
   assert.deepEqual(fixture.state(), before);
   assert.deepEqual(fixture.facts(), facts);
   queue.confirmReady(current);
   assert.equal(fixture.facts().length, 2);
+  assertFact(fixture.facts()[1], current);
 });
 
-test('queue-event: enqueue before last readiness extends the unfinished generation', () => {
-  const fixture = memoryDatabase();
-  const queue = fixture.connect();
-  const a = enqueue(queue);
-  starting(queue, a);
-  const b = enqueue(fixture.connect(), 'request-b', 'fence-b');
-  assert.equal(b.generation, a.generation);
-  queue.confirmReady(a);
-  assert.deepEqual(fixture.facts(), []);
-  ready(queue, b);
-  assert.equal(fixture.facts().length, 1);
-});
-
-test('queue-event: enqueue after last readiness opens a new generation without losing pending', () => {
-  const fixture = memoryDatabase();
-  const queue = fixture.connect();
-  const a = enqueue(queue);
-  ready(queue, a);
-  const first = structuredClone(fixture.facts()[0]);
-  const b = enqueue(fixture.connect(), 'request-b', 'fence-b');
-  assert.ok(b.generation > a.generation);
-  assert.equal(b.queueId, a.queueId);
-  assert.deepEqual(fixture.facts(), [first]);
-  ready(queue, b);
-  const facts = fixture.facts();
-  assert.equal(facts.length, 2);
-  assert.notEqual(facts[0].key, facts[1].key);
-  assertFact(facts[1], b);
-});
-
-test('queue-event: cancellation before readiness suppresses, readiness before cancellation stays final', () => {
-  for (const cancelFirst of [true, false]) {
+for (const outcome of outcomes) {
+  test(`queue-event: enqueue before last ${outcome} extends the same generation and its totals`, () => {
     const fixture = memoryDatabase();
     const queue = fixture.connect();
-    const handle = enqueue(queue);
-    starting(queue, handle);
-    if (cancelFirst) queue.fail(handle, 'cancelled');
-    queue.confirmReady(handle);
-    if (!cancelFirst) queue.fail(handle, 'cancelled');
-    assert.equal(fixture.facts().length, cancelFirst ? 0 : 1);
-  }
-});
+    const a = enqueue(queue);
+    starting(queue, a);
+    const b = enqueue(fixture.connect(), 'request-b', 'fence-b');
+    assert.equal(b.generation, a.generation);
+    finish(queue, a, outcome);
+    assertCounters(fixture.state(), totalsFor(outcome));
+    assert.deepEqual(fixture.facts(), []);
+    ready(queue, b);
+    assert.equal(fixture.facts().length, 1);
+    assertFact(fixture.facts()[0], b, { ...totalsFor(outcome), started: totalsFor(outcome).started + 1 });
+  });
+
+  test(`queue-event: enqueue after last ${outcome} resets counters without losing the prior pending fact`, () => {
+    const fixture = memoryDatabase();
+    const queue = fixture.connect();
+    const a = enqueue(queue);
+    finish(queue, a, outcome);
+    assert.equal(fixture.facts().length, 1);
+    assertFact(fixture.facts()[0], a, totalsFor(outcome));
+    const first = structuredClone(fixture.facts()[0]);
+    const b = enqueue(fixture.connect(), 'request-b', 'fence-b');
+    assert.ok(b.generation > a.generation);
+    assert.equal(b.queueId, a.queueId);
+    assertCounters(fixture.state(), { started: 0, cancelled: 0, failed: 0 });
+    assert.deepEqual(fixture.facts(), [first]);
+    ready(queue, b);
+    const facts = fixture.facts();
+    assert.equal(facts.length, 2);
+    assert.deepEqual(facts[0], first);
+    assert.notEqual(facts[0].key, facts[1].key);
+    assertFact(facts[1], b);
+  });
+}
+
+for (const reason of ['cancelled', 'client-died', 'launch-failed'] as const) {
+  test(`queue-event: first terminal result wins the readiness versus ${reason} race`, () => {
+    for (const failureFirst of [true, false]) {
+      const fixture = memoryDatabase();
+      const queue = fixture.connect();
+      const handle = enqueue(queue);
+      starting(queue, handle);
+      if (failureFirst) queue.fail(handle, reason);
+      queue.confirmReady(handle);
+      if (!failureFirst) queue.fail(handle, reason);
+      assert.equal(fixture.facts().length, 1);
+      assertFact(fixture.facts()[0], handle, totalsFor(failureFirst ? reason : 'ready'));
+    }
+  });
+}
 
 for (const failure of ['failSavePending', 'failSaveQueue'] as const) {
-  test(`queue-event: ${failure} rolls back last readiness and pending as one transaction`, () => {
-    const fixture = memoryDatabase();
-    const queue = fixture.connect();
-    const handle = enqueue(queue);
-    starting(queue, handle);
-    const before = structuredClone(fixture.state());
-    fixture.database[failure] = true;
-    assert.throws(() => queue.confirmReady(handle), /mock .* write failure/);
-    assert.deepEqual(fixture.state(), before);
-    assert.deepEqual(fixture.facts(), []);
-    fixture.database[failure] = false;
-    queue.confirmReady(handle);
-    assert.equal(fixture.facts().length, 1);
-    const last = fixture.database.writes.at(-1)!;
-    assert.equal([...last.queues.values()][0].entries.length, 0);
-    assert.equal([...last.pending.values()].filter(fact => fact.event.kind === eventKind).length, 1);
-  });
+  for (const outcome of outcomes) {
+    test(`queue-event: ${failure} rolls back last ${outcome}, counters and pending together after restart`, () => {
+      const fixture = memoryDatabase();
+      const queue = fixture.connect();
+      const cancelled = enqueue(queue, 'cancelled', 'cancel-fence');
+      const failed = enqueue(queue, 'failed', 'failed-fence');
+      const started = enqueue(queue, 'started', 'started-fence');
+      const last = enqueue(queue, 'last', 'last-fence');
+      queue.fail(cancelled, 'cancelled');
+      queue.fail(failed, 'client-died');
+      ready(queue, started);
+      starting(queue, last);
+      const before = structuredClone(fixture.state());
+      assertCounters(before, { started: 1, cancelled: 1, failed: 1 });
+      const restarted = fixture.connect();
+      fixture.database[failure] = true;
+      assert.throws(() => finish(restarted, last, outcome), /mock .* write failure/);
+      assert.deepEqual(fixture.state(), before);
+      assert.deepEqual(fixture.facts(), []);
+      fixture.database[failure] = false;
+      finish(fixture.connect(), last, outcome);
+      const delta = totalsFor(outcome);
+      const totals = { started: 1 + delta.started, cancelled: 1 + delta.cancelled, failed: 1 + delta.failed };
+      assert.equal(fixture.facts().length, 1);
+      assertFact(fixture.facts()[0], last, totals);
+      assertCounters(fixture.state(), totals);
+      const write = fixture.database.writes.at(-1)!;
+      assert.equal([...write.queues.values()][0].entries.length, 0);
+      assert.deepEqual([...write.pending.values()], fixture.facts());
+    });
+  }
 }
 
 test('queue-event: active external wait and test-run never delay a queued agent drained fact', () => {
@@ -414,28 +539,63 @@ test('queue-event: active external wait and test-run never delay a queued agent 
   }
   ready(queue, handle);
   assert.equal(fixture.facts().length, 1);
+  assertFact(fixture.facts()[0], handle);
   assert.deepEqual(fixture.state()?.entries, []);
 });
 
 for (const action of ['activate', 'close'] as const) {
-  test(`queue-event: reminder add/update ${action} applies pending without a service`, () => {
+  for (const outcome of [...outcomes, 'mixed'] as const) {
+    test(`queue-event: reminder add/update ${action} applies ${outcome} totals without a service`, () => {
+      const fixture = memoryDatabase();
+      const queue = fixture.connect();
+      const service = fixture.attachReminders();
+      const registry = fixture.registry(queue);
+      const binding: ReminderBinding = { kind: eventKind, id: queue.queueId(), action };
+      registry.validate(binding);
+      const reminder = service.add({ to: 'main', at: '2030-02-01T00:00:00.000Z', text: 'Поставити нові задачі', binding });
+      service.update(reminder.id, { binding });
+      const handle = enqueue(queue);
+      if (outcome === 'mixed') {
+        const cancelled = enqueue(queue, 'cancelled', 'cancel-fence');
+        const died = enqueue(queue, 'died', 'died-fence');
+        const failed = enqueue(queue, 'failed', 'failed-fence');
+        queue.fail(cancelled, 'cancelled');
+        queue.fail(died, 'client-died');
+        queue.fail(failed, 'launch-failed');
+        ready(queue, handle);
+      } else finish(queue, handle, outcome);
+      assert.equal(service.list()[0].state, 'pending');
+      assert.equal(fixture.facts().length, 1);
+      assertFact(fixture.facts()[0], handle, outcome === 'mixed' ? { started: 1, cancelled: 1, failed: 2 } : totalsFor(outcome));
+      const result = registry.dispatch();
+      assert.deepEqual(result.unresolved, []);
+      assert.ok(result.delivered.length >= 1);
+      assert.equal(service.list()[0].state, action === 'activate' ? 'active' : 'closed');
+      assert.equal(service.list()[0].text, 'Поставити нові задачі');
+      assert.deepEqual(fixture.facts(), []);
+      const applications = structuredClone(fixture.database.applications);
+      registry.dispatch();
+      assert.deepEqual(fixture.database.applications, applications);
+    });
+  }
+}
+
+for (const outcome of outcomes) {
+  test(`queue-event: unbound ${outcome} fact is processed without creating a reminder or an extra event`, () => {
     const fixture = memoryDatabase();
     const queue = fixture.connect();
     const service = fixture.attachReminders();
-    const registry = fixture.registry(queue);
-    const binding: ReminderBinding = { kind: eventKind, id: queue.queueId(), action };
-    registry.validate(binding);
-    const reminder = service.add({ to: 'main', at: '2030-02-01T00:00:00.000Z', text: 'Поставити нові задачі', binding });
-    service.update(reminder.id, { binding });
     const handle = enqueue(queue);
-    ready(queue, handle);
-    assert.equal(service.list()[0].state, 'pending');
+    finish(queue, handle, outcome);
     assert.equal(fixture.facts().length, 1);
-    const result = registry.dispatch();
-    assert.deepEqual(result.unresolved, []);
-    assert.ok(result.delivered.length >= 1);
-    assert.equal(service.list()[0].state, action === 'activate' ? 'active' : 'closed');
+    assertFact(fixture.facts()[0], handle, totalsFor(outcome));
+    fixture.registry(queue).dispatch();
     assert.deepEqual(fixture.facts(), []);
+    assert.deepEqual(service.list(), []);
+    assert.deepEqual([...fixture.database.pending.values()], []);
+    assert.deepEqual(fixture.database.applications, [{ kind: eventKind, id: handle.queueId }]);
+    fixture.registry(fixture.connect()).dispatch();
+    assert.equal(fixture.database.applications.length, 1);
   });
 }
 
@@ -524,22 +684,78 @@ test('queue-event: a new generation with the same event-id activates a newly bou
 });
 
 for (const reason of ['cancelled', 'client-died', 'launch-failed'] as const) {
-  test(`queue-event: sole ${reason} record closes without a fact and cannot poison later work`, () => {
+  test(`queue-event: sole ${reason} drains with started=0 and the next generation starts at zero`, () => {
     const fixture = memoryDatabase();
     const queue = fixture.connect();
     const first = enqueue(queue);
     queue.fail(first, reason);
     assert.deepEqual(fixture.state()?.entries, []);
-    assert.deepEqual(fixture.facts(), []);
+    assert.equal(fixture.facts().length, 1);
+    assertFact(fixture.facts()[0], first, totalsFor(reason));
+    const prior = structuredClone(fixture.facts()[0]);
     queue.confirmReady(first);
-    assert.deepEqual(fixture.facts(), []);
+    queue.fail(first, reason);
+    assert.deepEqual(fixture.facts(), [prior]);
     const next = enqueue(fixture.connect(), 'next', 'next-fence');
+    assertCounters(fixture.state(), { started: 0, cancelled: 0, failed: 0 });
     ready(queue, next);
     assert.ok(next.generation > first.generation);
     assert.equal(next.queueId, first.queueId);
-    assert.equal(fixture.facts().length, 1);
+    assert.equal(fixture.facts().length, 2);
+    assert.deepEqual(fixture.facts()[0], prior);
+    assertFact(fixture.facts()[1], next);
   });
 }
+
+test('queue-event: a generation with only cancellations and failures still drains with started=0', () => {
+  const fixture = memoryDatabase();
+  const queue = fixture.connect();
+  const a = enqueue(queue);
+  const b = enqueue(queue, 'b', 'b-fence');
+  const c = enqueue(queue, 'c', 'c-fence');
+  queue.fail(a, 'cancelled');
+  queue.fail(b, 'client-died');
+  assert.deepEqual(fixture.facts(), []);
+  fixture.connect().fail(c, 'launch-failed');
+  assert.equal(fixture.facts().length, 1);
+  assertFact(fixture.facts()[0], c, { started: 0, cancelled: 1, failed: 2 });
+});
+
+test('queue-event: two pending generations retain independent totals through restart and registry retry', () => {
+  const fixture = memoryDatabase();
+  const queue = fixture.connect();
+  const service = fixture.attachReminders();
+  const a = enqueue(queue);
+  const b = enqueue(queue, 'b', 'b-fence');
+  queue.fail(a, 'cancelled');
+  queue.fail(b, 'client-died');
+  const next = enqueue(queue, 'next', 'next-fence');
+  assertCounters(fixture.state(), { started: 0, cancelled: 0, failed: 0 });
+  ready(queue, next);
+  const facts = structuredClone(fixture.facts());
+  assert.equal(facts.length, 2);
+  assertFact(facts[0], b, { started: 0, cancelled: 1, failed: 1 });
+  assertFact(facts[1], next);
+  assert.notEqual(facts[0].key, facts[1].key);
+  assert.equal(next.queueId, a.queueId);
+  const reminder = service.add({ to: 'main', at: '2030-02-01T00:00:00.000Z', text: 'Two pending', binding: { kind: eventKind, id: next.queueId, action: 'activate' } });
+  fixture.database.failApply = true;
+  const first = fixture.registry(fixture.connect()).dispatch();
+  assert.deepEqual([...first.unresolved].sort(), facts.map(fact => fact.key).sort());
+  assert.deepEqual(fixture.facts(), facts);
+  fixture.database.failApply = false;
+  const result = fixture.registry(fixture.connect()).dispatch();
+  assert.deepEqual(result.unresolved, []);
+  assert.deepEqual(fixture.facts(), []);
+  assert.equal(service.list().find(row => row.id === reminder.id)?.state, 'active');
+  assert.deepEqual(fixture.state()?.entries, []);
+  const applications = structuredClone(fixture.database.applications);
+  fixture.connect().fail(b, 'client-died');
+  fixture.connect().confirmReady(next);
+  fixture.registry(queue).dispatch();
+  assert.deepEqual(fixture.facts(), []);
+  assert.deepEqual(fixture.database.applications, applications);
+});
 
 test('queue-event: processed generations retain only the current scalar fence and no completed records', () => {
   const fixture = memoryDatabase();
@@ -552,14 +768,17 @@ test('queue-event: processed generations retain only the current scalar fence an
       assert.ok(handle.generation > last.generation);
       assert.equal(handle.queueId, last.queueId);
     }
-    ready(queue, handle);
+    assertCounters(fixture.state(), { started: 0, cancelled: 0, failed: 0 });
+    const outcome = outcomes[index % outcomes.length];
+    finish(queue, handle, outcome);
+    assertFact(fixture.facts()[0], handle, totalsFor(outcome));
     fixture.registry(queue).dispatch();
     assert.deepEqual(fixture.facts(), []);
     assert.deepEqual(fixture.state(), {
       queueId: handle.queueId,
       generation: handle.generation,
       entries: [],
-      hadFailure: false,
+      ...totalsFor(outcome),
     });
     last = handle;
   }

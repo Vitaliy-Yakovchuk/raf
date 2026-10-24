@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFile, writeFile, chmod, cp, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, chmod, cp, mkdir, open, rm } from 'node:fs/promises';
 import { delimiter, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { TestContext } from 'node:test';
@@ -121,6 +121,7 @@ const timer = setInterval(() => {
 const hooks: (() => unknown)[] = [];
 const lifecycle = { after: (action: () => unknown) => hooks.push(action) } as unknown as TestContext;
 let f: Awaited<ReturnType<typeof workerFixture>> | undefined;
+let releaseIndex: (() => Promise<void>) | undefined;
 try {
   f = await workerFixture(lifecycle);
   console.log(JSON.stringify({stage:'prepared', root:f.root}));
@@ -133,7 +134,12 @@ try {
   };
   await new Promise(resolve => setTimeout(resolve, 1000));
   if (process.argv[3] === 'active') await writeFile(f.outputGatePath, 'active');
-  if (process.argv[3] === 'report') await writeFile(f.reportPath, JSON.stringify(f.report));
+  if (process.argv[3] === 'report') {
+    const lockPath = join(f.root, '.git', 'index.lock');
+    const lock = await open(lockPath, 'wx', 0o600);
+    releaseIndex = async () => { await lock.close(); await rm(lockPath); releaseIndex = undefined; };
+    await writeFile(f.reportPath, JSON.stringify(f.report));
+  }
   const before = await sample();
   await new Promise(resolve => setTimeout(resolve, 60000));
   const after = await sample();
@@ -142,12 +148,20 @@ try {
   const cpuMs=(after.user-before.user+after.system-before.system)*1000/hz;
   const pending = await readFile(join(f.tmpRoot, f.runId, 'report-confirmation-pending.json'), 'utf8').then(JSON.parse, () => null);
   const measurement={mode:process.argv[3] ?? 'quiet',before,after,hz,wallMs,cpuMs,corePercent:100*cpuMs/wallMs,pending,session:f.session()};
+  if (process.argv[3] === 'report') {
+    assert.ok(pending?.exhausted, 'locked index must retain automatic confirmation retry');
+    assert.equal(f.session()?.result, undefined, 'report must remain pending while the index is locked');
+    await releaseIndex!();
+    const accepted = await eventually(f.session, row => row?.state === 'running' && row.result?.status === 'succeeded', 'automatic report acceptance after releasing index lock', 45000);
+    Object.assign(measurement, { accepted: accepted?.reportAcceptance, result: accepted?.result });
+  }
   console.log(JSON.stringify({stage:'measured', ...measurement}));
   await writeFile('evidence/profile-raf-performance-5.1/'+process.argv[2]+'-cpu.json',JSON.stringify(measurement,null,2)+'\n');
   await writeFile(f.releasePath, JSON.stringify({exitCode:0}));
   await writeFile(f.exitGatePath, 'exit');
   await eventually(() => f!.session(), s => s?.state === 'finished', 'worker finalized', 45000);
 } finally {
+  await releaseIndex?.();
   if(f) {await writeFile(f.releasePath,JSON.stringify({exitCode:0})); await writeFile(f.exitGatePath,'exit');}
   for (const hook of hooks) await hook();
 }

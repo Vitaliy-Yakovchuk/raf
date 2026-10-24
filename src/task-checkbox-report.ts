@@ -133,31 +133,9 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
       for (const item of change.items) { current = { change: change.id, item: item.id }; lineFor(content, item.id, item.description); }
     }
     await checkpoint('validated', null);
-    const gitDirectory = (await git(['rev-parse', '--absolute-git-dir'])).trim();
-    lockPath = join(gitDirectory, 'raf-task-checkbox.lock');
-    try { lock = await open(lockPath, 'wx', 0o600); }
-    catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
-      const before = await lstat(lockPath);
-      const owner = JSON.parse(await readFile(lockPath, 'utf8'));
-      if (owner.kind !== 'raf-task-checkbox-lock' || !Number.isSafeInteger(owner.pid) || owner.pid <= 0) throw new Error('Task checkbox writer has unknown ownership');
-      if (!before.isFile() || before.isSymbolicLink()) throw new Error('Task checkbox writer has unknown ownership');
-      try {
-        process.kill(owner.pid, 0);
-        const after = await lstat(lockPath);
-        if (before.ino !== after.ino || before.mtimeMs !== after.mtimeMs || before.dev !== after.dev) throw new Error('Task checkbox writer lock changed');
-        throw new ConfirmationTransientError('writer-busy', 'Task checkbox writer is busy; retry confirmation');
-      }
-      catch (probe) { if ((probe as NodeJS.ErrnoException).code !== 'ESRCH') throw probe; }
-      const after = await lstat(lockPath);
-      if (before.ino !== after.ino || before.mtimeMs !== after.mtimeMs) throw new Error('Task checkbox writer lock changed');
-      await rm(lockPath);
-      lock = await open(lockPath, 'wx', 0o600);
-    }
-    await lock.writeFile(JSON.stringify({ kind: 'raf-task-checkbox-lock', pid: process.pid }));
-    await lock.sync();
-    scratch = await mkdtemp(join(tmpdir(), 'raf-checkbox-'));
-    let operations = [...await ports.operations.read(request.runId)];
+    const recorded = await ports.operations.read(request.runId);
+    if (!Array.isArray(recorded)) throw new Error('Invalid checkbox operation journal');
+    let operations = [...recorded];
     if (operations.some(row => row.runId !== request.runId || !request.assignment.changes.some(change => change.id === row.change && change.items.some(item => item.id === row.item)))) throw new Error('Operation journal differs from launch assignment');
     const verifyCommit = async (operation: TaskCheckboxOperation, pathspec: string, description: string) => {
       if (!operation.sha || !/^[a-f0-9]+$/.test(operation.sha) || !/^[a-f0-9]+$/.test(operation.parent)) throw new Error('Missing checkbox commit provenance');
@@ -170,6 +148,91 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
       const expected = original.slice(0, row.index!) + checked(row[0]) + original.slice(row.index! + row[0].length);
       if (row[0] !== operation.originalLine || names !== pathspec || await git(['show', `${operation.sha}:${pathspec}`]) !== expected) throw new Error('Checkbox commit is not the exact one-marker patch');
     };
+    const completed = async () => {
+      if (!request.assignment.changes.every(change => change.items.every(item => operations.some(row => row.change === change.id && row.item === item.id && row.sha)))) return false;
+      for (const change of request.assignment.changes) {
+        const pathspec = `openspec/changes/${change.id}/tasks.md`;
+        const path = join(root, pathspec);
+        let content: string;
+        try { await sourcePath(path); content = await readFile(path, 'utf8'); }
+        catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || !Object.hasOwn(archives, change.id)) throw error;
+          if ((await git(['ls-files', '--stage', '--', pathspec])).trim() || (await git(['ls-tree', 'HEAD', '--', pathspec])).trim()) return false;
+          for (const item of change.items) {
+            current = { change: change.id, item: item.id };
+            const operation = operations.find(row => row.change === change.id && row.item === item.id);
+            if (!operation?.sha) return false;
+            await verifyCommit(operation, pathspec, item.description);
+          }
+          continue;
+        }
+        const head = await git(['show', `HEAD:${pathspec}`]);
+        const staged = await git(['show', `:${pathspec}`]);
+        for (const item of change.items) {
+          current = { change: change.id, item: item.id };
+          const operation = operations.find(row => row.change === change.id && row.item === item.id);
+          if (!operation?.sha) return false;
+          const headLine = lineFor(head, item.id, item.description);
+          if (headLine[2].toLowerCase() !== 'x') return false;
+          await verifyCommit(operation, pathspec, item.description);
+          if (lineFor(content, item.id, item.description)[0] !== headLine[0]) throw new Error('Committed task row differs from index or worktree');
+          const indexLine = lineFor(staged, item.id, item.description);
+          if (indexLine[0] !== headLine[0]) {
+            if (indexLine[0] === operation.originalLine) return false;
+            throw new Error('Committed task row differs from index or worktree');
+          }
+        }
+        const checkboxes = [...content.matchAll(/^\s*-\s+\[([ xX])\]/gm)];
+        if (checkboxes.length && checkboxes.every(row => row[1].toLowerCase() === 'x')) awaitingArchive = true;
+      }
+      return true;
+    };
+    const gitDirectory = (await git(['rev-parse', '--absolute-git-dir'])).trim();
+    lockPath = join(gitDirectory, 'raf-task-checkbox.lock');
+    const contention = () => new ConfirmationTransientError('writer-busy', 'Task checkbox writer changed or is busy; retry confirmation');
+    let turnover = false;
+    try { lock = await open(lockPath, 'wx', 0o600); }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+      let knownOwner = false;
+      try {
+        const before = await lstat(lockPath);
+        if (!before.isFile() || before.isSymbolicLink()) throw new Error('Task checkbox writer has unknown ownership');
+        const owner = JSON.parse(await readFile(lockPath, 'utf8'));
+        if (owner.kind !== 'raf-task-checkbox-lock' || !Number.isSafeInteger(owner.pid) || owner.pid <= 0) throw new Error('Task checkbox writer has unknown ownership');
+        knownOwner = true;
+        let alive = true;
+        try { process.kill(owner.pid, 0); }
+        catch (probe) { if ((probe as NodeJS.ErrnoException).code !== 'ESRCH') throw probe; alive = false; }
+        const after = await lstat(lockPath);
+        turnover = before.ino !== after.ino || before.mtimeMs !== after.mtimeMs || before.dev !== after.dev;
+        if (!turnover) {
+          if (alive) throw contention();
+          await rm(lockPath);
+          try { lock = await open(lockPath, 'wx', 0o600); }
+          catch (acquire) { if ((acquire as NodeJS.ErrnoException).code === 'EEXIST') throw contention(); throw acquire; }
+        }
+      } catch (probe) {
+        if ((probe as NodeJS.ErrnoException).code !== 'ENOENT') throw probe;
+        if (!knownOwner) throw contention();
+        turnover = true;
+      }
+    }
+    if (turnover) {
+      if (await completed()) {
+        for (const operation of operations) commits.push({ change: operation.change, item: operation.item, sha: operation.sha! });
+        const identityAfter = await ports.verifySourceIdentity(request.assignment, archives);
+        if (!identityAfter.ok) return { ...identityAfter, commits, awaitingArchive };
+        const verification = await ports.verifyAssignmentCompletion(request.assignment, archives);
+        if (verification.ok) await checkpoint('after-verification', null);
+        return { ...verification, commits, awaitingArchive };
+      }
+      throw contention();
+    }
+    if (!lock) throw contention();
+    await lock.writeFile(JSON.stringify({ kind: 'raf-task-checkbox-lock', pid: process.pid }));
+    await lock.sync();
+    scratch = await mkdtemp(join(tmpdir(), 'raf-checkbox-'));
     const save = async (operation: TaskCheckboxOperation) => {
       operations = [...operations.filter(row => row.change !== operation.change || row.item !== operation.item), operation];
       await ports.operations.write(request.runId, operations);

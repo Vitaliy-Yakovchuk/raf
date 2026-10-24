@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createConnection, createServer } from 'node:net';
 import { isAbsolute, join, resolve } from 'node:path';
 import test, { type TestContext } from 'node:test';
-import { command, runCase, type CaseInput } from './raf-unix-socket-paths-fixture.ts';
+import { caseDiagnostic, command, runCase, type CaseInput } from './raf-unix-socket-paths-fixture.ts';
 
 const variants = ['short', 'long-run', 'long-tmpdir', 'long-both', 'long-home-tmproot', 'multibyte'] as const;
 const endpoints = ['hotfix', 'wrapper', 'runtime-tmux', 'tool-tmux', 'quota-leader'] as const;
@@ -29,8 +29,17 @@ function longPath(root: string, label: string, multibyte = false): string {
 }
 
 async function fixture(t: TestContext, variant: Variant, endpoint: CaseInput['endpoint'], action: CaseInput['action']) {
+  let evidenceDirectory: string | undefined;
   const root = await mkdtemp('/tmp/z390-');
-  t.after(async () => { await rm(root, { recursive: true, force: true }); });
+  t.after(async () => {
+    try {
+      await rm(root, { recursive: true, force: true });
+      if (evidenceDirectory) await writeFile(join(evidenceDirectory, 'fixture-cleanup.json'), JSON.stringify({ complete: true }), { mode: 0o600 });
+    } catch (error) {
+      if (evidenceDirectory) await writeFile(join(evidenceDirectory, 'fixture-cleanup.json'), JSON.stringify({ complete: false, reason: (error as Error).message, stack: (error as Error).stack }), { mode: 0o600 });
+      throw error;
+    }
+  });
   const home = variant === 'long-home-tmproot' ? longPath(root, 'home') : join(root, 'home');
   const runDirectory = ['long-run', 'long-both', 'multibyte'].includes(variant) ? longPath(root, 'run', variant === 'multibyte') : join(root, 'run');
   const tmpdir = ['long-tmpdir', 'long-both', 'multibyte'].includes(variant) ? longPath(root, 'tmp', variant === 'multibyte') : join(root, 'tmp');
@@ -38,7 +47,21 @@ async function fixture(t: TestContext, variant: Variant, endpoint: CaseInput['en
   const workspace = join(root, 'workspace');
   await Promise.all([home, runDirectory, tmpdir, tmpRoot, workspace].map(path => mkdir(path, { recursive: true, mode: 0o700 })));
   await writeFile(join(home, 'state-sentinel'), 'unchanged state');
-  const input: CaseInput = { root, home, runDirectory, tmpdir, tmpRoot, workspace, runId: `z390-${endpoint}-${variant}`, budgetMs: await budgetMs(), endpoint, action };
+  evidenceDirectory = action === 'sandbox-ingress' ? await mkdtemp('/tmp/z390-evidence-') : undefined;
+  const input: CaseInput = { root, variant, evidenceDirectory, home, runDirectory, tmpdir, tmpRoot, workspace, runId: `z390-${endpoint}-${variant}`, budgetMs: await budgetMs(), endpoint, action };
+  if (evidenceDirectory) {
+    const testId = { file: 'test/raf-unix-socket-paths.test.ts', name: t.name };
+    const manifest = { schema: 'raf-test-evidence-v1', test: testId, caseRunId: input.runId, variant, action,
+      evidence: ['manifest.json', 'case.stdout', 'case.stderr', 'case.code.json', 'case-result.json', 'failure.json', 'failure.jsonl', 'progress.jsonl', 'socket-trace.json', 'cleanup.json', 'fixture-cleanup.json'].map(name => join(evidenceDirectory!, name)),
+      childCommands: 'tool-<sequence>.{stdout,stderr,code.json}; nested commands: tool-<sequence>-nested-<sequence>.{stdout,stderr,code.json}',
+      mechanism: { exactExecveHelper: null, bpfReadOnlyOpen: null, seccompInstall: null, unavailableReason: 'No syscall observer attached. argv, helper creation, and O_WRONLY are not execve/O_RDONLY/seccomp evidence.' },
+    };
+    await Promise.all(['case-result.json', 'failure.json', 'cleanup.json', 'fixture-cleanup.json', 'socket-trace.json'].map(name => writeFile(join(evidenceDirectory!, name), JSON.stringify({ unavailableReason: 'Not observed yet; interruption or earlier failure may prevent this phase.' }), { mode: 0o600 })));
+    await writeFile(join(evidenceDirectory, 'progress.jsonl'), '', { mode: 0o600 });
+    await writeFile(join(evidenceDirectory, 'failure.jsonl'), '', { mode: 0o600 });
+    await writeFile(join(evidenceDirectory, 'manifest.json'), JSON.stringify(manifest), { mode: 0o600 });
+    t.diagnostic(JSON.stringify({ schema: manifest.schema, test: testId, caseRunId: input.runId, evidence: [join(evidenceDirectory, 'manifest.json')] }));
+  }
   const canonical = endpoint === 'hotfix' ? join(runDirectory, 'hotfix-commit.sock') : endpoint === 'wrapper' ? join(tmpdir, 'rw-control', 'h.sock') : endpoint === 'tool-tmux' ? join(runDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default') : endpoint === 'runtime-tmux' ? join(tmpRoot, 'tmux/server.sock') : join(tmpRoot, 'quota/grok-owned/leader.sock');
   const applies = variant === 'multibyte' || (variant === 'long-home-tmproot' && ['runtime-tmux', 'quota-leader'].includes(endpoint)) || (['long-run', 'long-both'].includes(variant) && ['hotfix', 'tool-tmux'].includes(endpoint)) || (['long-tmpdir', 'long-both'].includes(variant) && endpoint === 'wrapper');
   if (applies) assert.ok(Buffer.byteLength(canonical) + 1 > abiLimit(), `fixture must really exceed sun_path: ${canonical}`);
@@ -51,7 +74,8 @@ async function fixture(t: TestContext, variant: Variant, endpoint: CaseInput['en
 
 async function proof(t: TestContext, input: CaseInput) {
   const result = await runCase(input);
-  t.diagnostic(JSON.stringify({ runId: input.runId, endpoint: input.endpoint, roots: { runDirectory: input.runDirectory, tmpdir: input.tmpdir, tmpRoot: input.tmpRoot, home: input.home }, result: { ok: result.ok, phase: result.phase, failureKind: result.failureKind, reason: result.reason, code: result.code, result: result.result, trace: result.trace } }));
+  if (input.evidenceDirectory) t.diagnostic(JSON.stringify(await caseDiagnostic(input, { file: 'test/raf-unix-socket-paths.test.ts', name: t.name }, result)));
+  else t.diagnostic(JSON.stringify({ runId: input.runId, endpoint: input.endpoint, roots: { runDirectory: input.runDirectory, tmpdir: input.tmpdir, tmpRoot: input.tmpRoot, home: input.home }, result: { ok: result.ok, phase: result.phase, failureKind: result.failureKind, reason: result.reason, code: result.code, result: result.result, trace: result.trace } }));
   if (!result.ok && result.failureKind === 'setup') throw new Error(`setup/environment failure: ${result.reason}`);
   assert.equal(result.ok, true, `IPC behavior failed (${input.action}): ${result.reason ?? result.exit.stderr}`);
   assert.equal(result.exit.code, 0);

@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { basename, join, resolve } from 'node:path';
+import { createTestRunPorts } from '../src/test-run-runtime.ts';
+import { runTestRunCli } from '../src/test-run-cli.ts';
+import { runSandboxTestCommand, type SandboxCommandReply, type SandboxTestAssignment, type SandboxTestRunPorts } from '../src/sandbox-test-run.ts';
+import type { ChildExit, RunnerEvent, TestRunConfig, TestRunContext, TestRunGroup, TestRunPorts, TestRunResult, UnitTestPolicy } from '../src/test-runs.ts';
 import {
   TestRunDiagnostics,
   buildDiagnosticEnvironment,
@@ -759,4 +765,244 @@ test('diagnostics: stack frame and byte caps drop source snippets and locals', (
   assert.ok(!JSON.stringify(entry).includes('SNIPPET_VALUE_319'));
   assert.ok(!JSON.stringify(entry).includes('LOCAL_VALUE_319'));
   assert.equal(entry.truncated, true);
+});
+
+
+async function ingressDiagnosticRoute(t: import('node:test').TestContext, mode: 'nested' | 'truncated' | 'unavailable' = 'nested') {
+  const directory = await mkdtemp('/tmp/z40419-route-');
+  const workspace = join(directory, 'workspace');
+  const home = join(directory, 'qa-home');
+  await Promise.all([workspace, home].map(path => mkdir(path, { mode: 0o700 })));
+  const bytes = await readFile(new URL('../../conf/test-runs.json', import.meta.url));
+  const flow = await readFile(new URL('../../conf/flow.json', import.meta.url));
+  const config: TestRunConfig = JSON.parse(bytes.toString());
+  const policy: UnitTestPolicy = JSON.parse(flow.toString()).unitTests;
+  const file = 'probe.test.mjs';
+  const other = 'unselected.test.mjs';
+  const group = 'complete-raf-flow-contracts/z40419-diagnostics';
+  const childId = { file, name: 'outer nested ingress assertion' };
+  const runId = `z40419-${mode}-${basename(directory)}`;
+  const evidence = ['child.stdout', 'child.stderr', 'child.code.json'].map(name => join(directory, name));
+  const note = { schema: 'raf-test-evidence-v1', test: childId, caseRunId: runId, phase: 'prepare:after', evidence };
+  const message = mode === 'truncated' ? 'Z40419 UTF8 Ж🙂 '.repeat(Math.ceil(config.diagnostics.maxMessageBytes / Buffer.byteLength('Z40419 UTF8 Ж🙂 ')) + 1) : 'Z40419 explicit nested failure';
+  const source = `import test from 'node:test';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+test('outer', async t => {
+  await t.test('nested ingress assertion', t => {
+    const executable = process.execPath;
+    const argv = ['-e', "process.stdout.write('fixture child stdout'); process.stderr.write('fixture child stderr'); process.exitCode = 37;"];
+    const child = spawnSync(executable, argv, { encoding: 'utf8' });
+    writeFileSync(${JSON.stringify(evidence[0])}, child.stdout, { mode: 0o600 });
+    writeFileSync(${JSON.stringify(evidence[1])}, child.stderr, { mode: 0o600 });
+    writeFileSync(${JSON.stringify(evidence[2])}, JSON.stringify({ code: child.status, signal: child.signal, spawnError: child.error?.message ?? null, timedOut: false, invocation: { executable, argv, cwd: process.cwd() } }), { mode: 0o600 });
+    t.diagnostic(${JSON.stringify(JSON.stringify(note))});
+    ${mode === 'unavailable' ? "const error = new Error('Z40419 missing assertion location'); error.stack = undefined; throw error;" : `assert.fail(${JSON.stringify(message)});`}
+  });
+});
+`;
+  await writeFile(join(workspace, file), source, { mode: 0o600 });
+  const reporter = new URL('../src/test-run-reporter.ts', import.meta.url).href;
+  const driver = join(directory, 'runner.mjs');
+  await writeFile(driver, `import { run } from 'node:test';
+import { appendFile, writeFile } from 'node:fs/promises';
+import report from ${JSON.stringify(reporter)};
+const observed = run({ files: [${JSON.stringify(file)}], isolation: 'process', execArgv: [] });
+function errorFields(error) {
+  if (!error) return null;
+  return { name: error.name, code: error.code, message: error.message, stack: error.stack, failureType: error.failureType,
+    generatedMessage: error.generatedMessage, cause: error.cause ? errorFields(error.cause) : undefined };
+}
+async function* input() {
+  for await (const event of observed) {
+    const data = event.data;
+    await appendFile(${JSON.stringify(join(directory, 'node-events.jsonl'))}, JSON.stringify({ type: event.type, data: {
+      file: data.file, name: data.name, nesting: data.nesting, line: data.line, column: data.column, message: data.message,
+      details: data.details ? { error: errorFields(data.details.error) } : undefined,
+    } }) + '\\n', { mode: 0o600 });
+    yield event;
+  }
+}
+for await (const chunk of report(input())) {
+  await appendFile(${JSON.stringify(join(directory, 'reporter.stdout'))}, chunk, { mode: 0o600 });
+  process.stdout.write(chunk);
+}
+const stderr = 'Z40419 bounded child stderr ' + 'Ж'.repeat(${mode === 'truncated' ? config.diagnostics.maxStderrBytes : 0}) + '\\n';
+await writeFile(${JSON.stringify(join(directory, 'runner.stderr'))}, stderr, { mode: 0o600 });
+process.stderr.write(stderr);
+await writeFile(${JSON.stringify(join(directory, 'runner.code.json'))}, JSON.stringify({ code: 23, signal: null, spawnError: null, timedOut: false }), { mode: 0o600 });
+process.exitCode = 23;
+`, { mode: 0o600 });
+  config.projects.raf.profiles = { node: {
+    cwd: '.', executable: process.execPath, argv: [driver], unitFiles: [file, other], exactIds: 'node-test-name', resultAdapter: 'node-test-events',
+    environment: { isolatedHome: true, stateOrigin: true }, checks: [],
+  } };
+  config.projects.raf.groups = { [group]: { profileId: 'node', files: [file] } };
+  const context: TestRunContext = {
+    cwd: workspace, workspace, projectWorkspaces: { raf: [workspace] }, agentPhases: Object.keys(config.phases),
+    activeChanges: ['complete-raf-flow-contracts'], agentId: 'z40419-route-worker', sha: 'a'.repeat(40),
+    home, statePath: join(home, '.raf/state.sqlite'), tmpPath: join(home, '.raf/tmp'), operationalHome: join(directory, 'operational'),
+  };
+  await mkdir(context.tmpPath, { recursive: true, mode: 0o700 });
+  const inherited = { ...process.env };
+  delete inherited.NODE_TEST_CONTEXT;
+  const realRuntime = createTestRunPorts(config, {
+    mode: 'qa', orchestratorRoot: resolve(import.meta.dirname, '../..'), codeRoot: workspace,
+    homeDirectory: home, statePath: context.statePath, tmpRoot: context.tmpPath, tmuxSocketPath: join(home, 'tmux.sock'),
+  }, () => { throw new Error('The state-store dependency is mocked by the test transaction port.'); }, inherited,
+  { flow, testRuns: bytes, projects: new Uint8Array() });
+  const groups = new Map<string, TestRunGroup>();
+  const received: RunnerEvent[] = [];
+  let childExit: ChildExit | undefined;
+  const runtime: TestRunPorts = {
+    ...realRuntime,
+    preflight: async () => ({
+      canonicalWorkspace: workspace, canonicalCwd: workspace, gitIdentityMatches: true,
+      runtimeAvailable: true, localRunnerAvailable: true, dependenciesAvailable: true, resultAdapterAvailable: true,
+      artifactsWritable: true, treeControlSupported: true, isolatedHome: true, stateOriginAllowed: true,
+      stateAliasesOperational: false, tmpAliasesOperational: false, inheritedOperationalChannel: false,
+      unitFiles: [file, other], files: Object.fromEntries([file, other].map(path => [path, { kind: 'file', realpath: join(workspace, path), unit: true }])),
+    }),
+    state: { transaction: async operation => operation({
+      get: key => structuredClone(groups.get(JSON.stringify(key)) ?? null),
+      list: (project, path) => structuredClone([...groups.values()].filter(group => group.key.project === project && group.key.workspace === path)),
+      put: group => { groups.set(JSON.stringify(group.key), structuredClone(group)); },
+      delete: key => { groups.delete(JSON.stringify(key)); },
+    }) },
+    newRunId: () => runId,
+    spawn: async (command, onEvent) => {
+      await writeFile(join(directory, 'runtime.command.json'), JSON.stringify({ executable: command.executable, argv: command.argv, cwd: command.cwd }), { mode: 0o600 });
+      const child = await realRuntime.spawn(command, event => { received.push(structuredClone(event)); onEvent(event); });
+      return { ...child, wait: async () => { childExit = await child.wait(); return childExit; } };
+    },
+  };
+  const worker: SandboxTestAssignment = { runId: 'z40419-assignment', agentId: context.agentId, type: 'implement', phase: 'implement',
+    project: 'raf', workspace, branch: 'develop', changes: ['complete-raf-flow-contracts'] };
+  const caller = { pid: 440, startedAt: '2026-10-24T00:00:00.000Z' };
+  const host = { pid: 410, startedAt: '2026-10-24T00:00:01.000Z' };
+  const entrypoint = ['node', '/trusted/raf-main/bin/raf.ts'];
+  let wrapperReply: SandboxCommandReply | undefined;
+  const ports: SandboxTestRunPorts = {
+    caller, entrypoint,
+    control: async () => ({
+      ancestors: [caller, host], sessions: [{ process: host, state: 'running', assignment: worker }],
+      workspaces: [{ project: 'raf', workspace, branch: 'develop', actualBranch: 'develop' }],
+      activeChanges: ['complete-raf-flow-contracts'], groups: [{ project: 'raf', workspace, group }], config,
+      callerEvidence: { caller, machineId: 'fixture-machine', bootId: 'fixture-boot',
+        ancestors: [{ ...caller, parentPid: host.pid, machineId: 'fixture-machine', bootId: 'fixture-boot', originVerified: true },
+          { ...host, parentPid: null, machineId: 'fixture-machine', bootId: 'fixture-boot', originVerified: true }],
+        claims: [{ process: { ...host, machineId: 'fixture-machine', bootId: 'fixture-boot' }, state: 'running', runId: worker.runId, assignment: worker }],
+      },
+    }),
+    unitContext: async () => ({ config, policy, context, runtime }),
+    wrapper: async (request, supplied) => {
+      let stdout = '', stderr = '';
+      const code = await runTestRunCli(['--project', request.project, '--phase', request.phase, '--group', request.group, '--files', ...request.files!], {
+        ...supplied, stdout: text => { stdout += text; }, stderr: text => { stderr += text; },
+      });
+      wrapperReply = Object.freeze({ code, stdout, stderr });
+      return wrapperReply;
+    },
+    communicate: async () => { throw new Error('The test-run route cannot become an agent message.'); },
+  };
+  const brokerReply = Object.freeze(await runSandboxTestCommand({
+    command: `${entrypoint.join(' ')} test run --project raf --phase implement --group ${group} --files ${file}`, cwd: workspace,
+  }, ports));
+  const saved = [...groups.values()][0]?.lastResult;
+  const artifacts = ['runtime.events.json', 'runtime.exit.json', 'aggregate.json', 'wrapper.reply.json', 'broker.reply.json'];
+  await Promise.all([received, childExit ?? null, saved ?? null, wrapperReply ?? null, brokerReply].map((value, index) => writeFile(join(directory, artifacts[index]), JSON.stringify(value), { mode: 0o600 })));
+  const manifest = { schema: 'raf-test-evidence-v1', test: { file: 'test/test-run-diagnostics.test.ts', name: t.name }, caseRunId: runId,
+    evidence: ['node-events.jsonl', 'reporter.stdout', 'runner.stderr', 'runner.code.json', 'runtime.command.json', ...artifacts, ...evidence.map(path => path.slice(directory.length + 1))].map(path => join(directory, path)),
+    mocks: ['broker process/control snapshot', 'preflight filesystem and dependency facts', 'state transaction'],
+    real: ['node:test nested failure and t.diagnostic', 'reporter', 'runtime spawn/parser', 'runTestRunCli', 'runSandboxTestCommand'],
+  };
+  await writeFile(join(directory, 'manifest.json'), JSON.stringify(manifest), { mode: 0o600 });
+  t.diagnostic(JSON.stringify({ ...manifest, evidence: [join(directory, 'manifest.json'), ...manifest.evidence] }));
+  assert.ok(wrapperReply, 'broker authorization must reach the real wrapper before diagnostics assertions; refusal is setup, not red');
+  assert.ok(childExit, 'real runtime must observe the runner child exit before diagnostics assertions');
+  assert.ok(saved, 'real runTestRunCli must persist its result; absent state is setup, not red');
+  const result = JSON.parse(brokerReply.stdout) as TestRunResult;
+  const reporterEvents = (await readFile(join(directory, 'reporter.stdout'), 'utf8')).trim().split('\n').map(line => JSON.parse(line) as RunnerEvent);
+  return { result, saved, brokerReply, wrapperReply, childExit, reporterEvents, received, evidence, childId, runId, directory, config };
+}
+
+test('Z40419.D01 reporter -> runtime preserves nested assertion and t.diagnostic identity', async t => {
+  const h = await ingressDiagnosticRoute(t);
+  const failed = h.reporterEvents.find(event => event.kind === 'assertion-failed');
+  assert.ok(failed && failed.kind === 'assertion-failed', 'reporter boundary lost nested assertion');
+  assert.deepEqual(failed.test, h.childId, 'reporter must retain full nested TestId');
+  assert.equal(failed.inlineDiagnostic?.message, 'Z40419 explicit nested failure', 'reporter boundary lost inner cause/message');
+  assert.ok(failed.inlineDiagnostic?.location?.line, 'reporter boundary lost assertion location');
+  assert.ok(failed.inlineDiagnostic?.stack.length, 'reporter boundary lost assertion stack');
+  for (const path of h.evidence) {
+    assert.ok(JSON.stringify(h.reporterEvents).includes(path), 'reporter boundary lost t.diagnostic evidence locator');
+    assert.ok(JSON.stringify(h.received).includes(path), 'runtime boundary lost reporter evidence locator');
+  }
+  assert.deepEqual(h.received, h.reporterEvents, 'runtime parser must preserve every reporter event without dropping diagnostic events');
+});
+
+test('Z40419.D02 runtime -> aggregate -> broker retains diagnostics and exact raw evidence without JSON repair', async t => {
+  const h = await ingressDiagnosticRoute(t);
+  assert.equal(h.brokerReply.stdout, h.wrapperReply.stdout, 'broker must return the original wrapper JSON bytes');
+  assert.equal(h.brokerReply.stderr, h.wrapperReply.stderr);
+  assert.equal(h.brokerReply.code, h.wrapperReply.code);
+  assert.deepEqual(h.saved, h.result, 'persisted aggregate and delivered broker result must be the same run');
+  assert.equal(h.result.runId, h.runId);
+  assert.deepEqual(h.result.knownRed, [h.childId], 'subtestsFailed parent cannot invent another failed assertion');
+  assert.ok(Array.isArray(h.result.diagnostics), 'broker returned legacy JSON without diagnostics');
+  const failure = h.result.diagnostics.find(entry => entry.kind === 'assertion');
+  assert.ok(failure, 'runtime/classification boundary lost reporter assertion');
+  assert.deepEqual(failure.test, h.childId);
+  assert.equal(failure.message, 'Z40419 explicit nested failure');
+  assert.ok(failure.location?.line);
+  assert.ok(failure.stack.length);
+  for (const path of h.evidence) {
+    assert.ok(h.result.evidence.includes(path), `TestRunResult.evidence lost exact artifact ${path}`);
+    assert.ok((await readFile(path)).length > 0, 'evidence must still exist after nested runner completion');
+  }
+  assert.ok(h.result.diagnostics.some(entry => entry.test?.file === h.childId.file && entry.test?.name === h.childId.name && entry.message.includes('prepare:after') && entry.message.includes(h.runId)), 't.diagnostic progress must retain the same TestId/runId attribution');
+});
+
+test('Z40419.D03 runner, nested tool and CLI exit codes remain independent', async t => {
+  const h = await ingressDiagnosticRoute(t);
+  assert.equal(h.childExit.exitCode, 23);
+  assert.equal(h.result.exitCode, 23, 'TestRunResult must retain runner exit, not CLI or tool exit');
+  assert.notEqual(h.brokerReply.code, 0);
+  assert.notEqual(h.brokerReply.code, 23, 'CLI failure status must not overwrite runner exit');
+  assert.notEqual(h.brokerReply.code, 37, 'nested tool exit must not overwrite CLI status');
+  assert.equal(JSON.parse(await readFile(h.evidence[2], 'utf8')).code, 37);
+  assert.equal(h.result.outcome, 'assertions-failed');
+  assert.equal(h.result.timedOut, false);
+  assert.equal(h.result.cleanup.complete, true);
+});
+
+test('Z40419.D04 route makes UTF8 truncation and bounded child stderr explicit', async t => {
+  const h = await ingressDiagnosticRoute(t, 'truncated');
+  assert.ok(h.result.diagnosticSummary, 'legacy broker result lost diagnosticSummary');
+  assert.equal(h.result.diagnosticSummary.truncated, true);
+  assert.deepEqual(h.result.knownRed, [h.childId]);
+  assert.equal(h.result.runId, h.runId);
+  assert.ok(Buffer.byteLength(h.childExit.stderr) <= h.config.diagnostics.maxStderrBytes);
+  assert.equal(h.childExit.stderrTruncated, true);
+  assert.ok(h.result.diagnostics.some(entry => entry.kind === 'runner' && entry.message.includes('Z40419 bounded child stderr')), 'bounded stderr must reach inline diagnostics');
+  for (const entry of h.result.diagnostics) {
+    validUtf8(entry.message);
+    assert.ok(Buffer.byteLength(entry.message) <= h.config.diagnostics.maxMessageBytes);
+    assert.ok(entry.stack.length <= h.config.diagnostics.maxStackFrames);
+  }
+  assert.ok(Buffer.byteLength(JSON.stringify({ diagnostics: h.result.diagnostics, diagnosticSummary: h.result.diagnosticSummary })) <= h.config.diagnostics.maxTotalBytes);
+  assert.deepEqual(h.saved.diagnosticSummary, h.result.diagnosticSummary);
+});
+
+test('Z40419.D05 route exposes unavailable stack without inventing assertion frames', async t => {
+  const h = await ingressDiagnosticRoute(t, 'unavailable');
+  assert.ok(Array.isArray(h.result.diagnostics), 'legacy broker result lost diagnostics');
+  const entry = h.result.diagnostics.find(entry => entry.test?.name === h.childId.name && entry.message.includes('Z40419 missing assertion location'));
+  assert.ok(entry, 'body error must reach the result with its original message');
+  assert.equal(entry.kind, 'test-failure');
+  assert.deepEqual(entry.test, h.childId);
+  assert.deepEqual(entry.stack, []);
+  assert.ok(entry.unavailableReason, 'missing original stack must remain explicit across every boundary');
+  assert.deepEqual(h.saved.diagnostics, h.result.diagnostics);
 });

@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { appendFileSync, writeFileSync } from 'node:fs';
 import { once } from 'node:events';
-import { lstat, mkdir, readFile, readdir, realpath, stat, symlink, writeFile } from 'node:fs/promises';
+import { appendFile, lstat, mkdir, readFile, readdir, realpath, stat, symlink, writeFile } from 'node:fs/promises';
 import { createConnection, createServer } from 'node:net';
 import { dirname, join, resolve } from 'node:path';
+import { StringDecoder } from 'node:string_decoder';
 import { fileURLToPath } from 'node:url';
 import { createRafTemporarySocketEndpoint, type RafTemporarySocketEndpoint, type RafTemporarySocketScope } from '../src/raf-temporary-socket.ts';
 import { hotfixCommitClientCommand } from '../src/hotfix-commit-client-command.ts';
@@ -12,6 +14,7 @@ import { prepareHotfixWorktree, startHotfixCommitPort, type HotfixHost } from '.
 import { consumeWrapperRequest, launchPersistentWrapper, type LaunchWrapperRequest } from '../src/launch-wrapper.ts';
 import { prepareCodexSandbox, type CodexSandboxRequest } from '../src/codex-sandbox.ts';
 import { readMachineBootIdentity } from '../src/os-runtime.ts';
+import { TestRunDiagnostics, buildDiagnosticEnvironment, validateDiagnosticLimits, type InlineDiagnostic, type DiagnosticSummary } from '../src/test-run-diagnostics.ts';
 
 export interface CaseInput {
   root: string;
@@ -22,6 +25,8 @@ export interface CaseInput {
   workspace: string;
   runId: string;
   budgetMs: number;
+  variant?: string;
+  evidenceDirectory?: string;
   endpoint: 'hotfix' | 'wrapper' | 'runtime-tmux' | 'tool-tmux' | 'quota-leader';
   action: 'exchange' | 'concurrent' | 'failures' | 'hotfix-ingress' | 'wrapper-ingress' | 'sandbox-ingress' | 'wrapper-reject' | 'wrapper-peer';
 }
@@ -29,20 +34,114 @@ export interface CaseInput {
 export const fixturePath = fileURLToPath(import.meta.url);
 const prefix = 'Z390_RESULT:';
 
+interface CommandResult {
+  code: number | null;
+  signal: string | null;
+  stdout: string;
+  stderr: string;
+  spawnError: { name: string; message: string; code: string | null; stack: string | null } | null;
+  timedOut: null;
+  invocation: { executable: string; argv: string[]; cwd: string };
+}
+
+let diagnosticInput: CaseInput | undefined;
+let diagnosticIdentity: Pick<CaseInput, 'runId' | 'variant' | 'action'> | undefined;
+let commandSerial = 0;
+const toolMode = process.argv[2] === 'sandbox-tool';
+const markerPrefix = 'Z390_PROGRESS:';
+const toolCommandPrefix = 'Z390_TOOL_COMMAND:';
+
+async function progress(marker: string): Promise<void> {
+  const event = { marker, phase, runId: diagnosticIdentity?.runId ?? null, variant: diagnosticIdentity?.variant ?? null, action: diagnosticIdentity?.action ?? null };
+  if (diagnosticInput?.evidenceDirectory) await appendFile(join(diagnosticInput.evidenceDirectory, 'progress.jsonl'), JSON.stringify(event) + '\n', { mode: 0o600 });
+  process.stderr.write(markerPrefix + JSON.stringify(event) + '\n');
+}
+
+async function saveCommand(directory: string, label: string, result: CommandResult, writeStreams = true): Promise<void> {
+  await Promise.all([
+    ...(writeStreams ? [writeFile(join(directory, `${label}.stdout`), result.stdout, { mode: 0o600 }),
+      writeFile(join(directory, `${label}.stderr`), result.stderr, { mode: 0o600 })] : []),
+    writeFile(join(directory, `${label}.code.json`), JSON.stringify({
+      invocation: result.invocation, exit: { code: result.code, signal: result.signal, spawnError: result.spawnError, timedOut: result.timedOut },
+      unavailableReason: 'No additional timeout was installed by instrumentation; timeout belongs to the existing outer runner.',
+    }), { mode: 0o600 }),
+  ]);
+  const manifestPath = join(directory, 'manifest.json');
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  manifest.evidence = [...new Set([...manifest.evidence, ...['stdout', 'stderr', 'code.json'].map(suffix => join(directory, `${label}.${suffix}`))])];
+  await writeFile(manifestPath, JSON.stringify(manifest), { mode: 0o600 });
+}
+
 export async function command(executable: string, args: readonly string[], options: {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
-} = {}): Promise<{ code: number | null; signal: string | null; stdout: string; stderr: string }> {
+  evidence?: { directory: string; label: string };
+} = {}): Promise<CommandResult> {
+  const evidence = options.evidence ?? (diagnosticInput?.evidenceDirectory ? { directory: diagnosticInput.evidenceDirectory, label: `tool-${++commandSerial}` } : undefined);
+  if (evidence) {
+    writeFileSync(join(evidence.directory, `${evidence.label}.stdout`), '', { mode: 0o600 });
+    writeFileSync(join(evidence.directory, `${evidence.label}.stderr`), '', { mode: 0o600 });
+    writeFileSync(join(evidence.directory, `${evidence.label}.code.json`), JSON.stringify({ invocation: { executable, argv: [...args], cwd: options.cwd ?? process.cwd() }, exit: { code: null, signal: null, spawnError: null, timedOut: null }, unavailableReason: 'Child has not closed; the outer TestRunResult owns timeout and termination facts.' }), { mode: 0o600 });
+  }
   const child = spawn(executable, [...args], {
     cwd: options.cwd,
     env: options.env ?? process.env,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let stdout = '', stderr = '';
-  child.stdout.on('data', chunk => { stdout += chunk; });
-  child.stderr.on('data', chunk => { stderr += chunk; });
-  const [code, signal] = await once(child, 'close');
-  return { code, signal, stdout, stderr };
+  const outDecoder = new StringDecoder('utf8'), errDecoder = new StringDecoder('utf8');
+  let spawnError: CommandResult['spawnError'] = null;
+  child.stdout.on('data', chunk => { stdout += outDecoder.write(chunk); if (evidence) appendFileSync(join(evidence.directory, `${evidence.label}.stdout`), chunk); });
+  child.stderr.on('data', chunk => { stderr += errDecoder.write(chunk); if (evidence) appendFileSync(join(evidence.directory, `${evidence.label}.stderr`), chunk); });
+  child.once('error', error => { spawnError = { name: error.name, message: error.message, code: (error as NodeJS.ErrnoException).code ?? null, stack: error.stack ?? null }; });
+  const [code, signal] = await new Promise<[number | null, string | null]>(yes => child.once('close', (code, signal) => yes([code, signal])));
+  stdout += outDecoder.end(); stderr += errDecoder.end();
+  const result: CommandResult = { code, signal, stdout, stderr, spawnError, timedOut: null, invocation: { executable, argv: [...args], cwd: options.cwd ?? process.cwd() } };
+  if (evidence) {
+    await saveCommand(evidence.directory, evidence.label, result, false);
+    let serial = 0;
+    for (const line of stderr.split('\n').filter(line => line.startsWith(toolCommandPrefix))) {
+      await saveCommand(evidence.directory, `${evidence.label}-nested-${++serial}`, JSON.parse(line.slice(toolCommandPrefix.length)));
+    }
+  }
+  if (toolMode) process.stderr.write(toolCommandPrefix + JSON.stringify(result) + '\n');
+  return result;
+}
+
+export async function caseDiagnostic(input: CaseInput, test: { file: string; name: string }, result: Record<string, any>): Promise<{
+  caseRunId: string; variant: string | null; action: CaseInput['action']; phase: string;
+  diagnostics: InlineDiagnostic[]; diagnosticSummary: DiagnosticSummary; lastProgress: string | null; evidence: string[];
+  evidenceIndex: { path: string | null; omitted: number; unavailableReason: string | null };
+}> {
+  const conf = await readFile(new URL('../../conf/test-runs.json', import.meta.url));
+  const limits = validateDiagnosticLimits(JSON.parse(conf.toString()).diagnostics);
+  const value = new TestRunDiagnostics(limits, { workspace: resolve(import.meta.dirname, '..'), qaHome: input.home, fixtureRoots: [input.root] });
+  value.failure({ test, origin: 'test-body', error: { name: result.ok ? 'CaseProgress' : 'Error', message: result.reason ?? `case ${input.action}: ${result.phase ?? 'complete'}`, code: result.code, stack: result.stack } });
+  value.stderrChunk(Buffer.from(result.exit?.stderr ?? ''));
+  value.childExit({ exitCode: result.exit?.code ?? null, signal: result.exit?.signal ?? null, validProtocol: Boolean(result.ok) });
+  const details = value.attach({ runId: input.runId,
+    outcome: result.ok ? 'passed' : 'assertions-failed', failureKinds: [], knownRed: [], unknown: [], unexecuted: [], timeoutCount: null,
+    timedOut: false, cleanup: result.cleanup ?? 'unavailable', evidence: input.evidenceDirectory ? [join(input.evidenceDirectory, 'manifest.json')] : [],
+  }, buildDiagnosticEnvironment({ executable: process.execPath, runtimeVersion: process.version, adapter: 'node-test-events', isolation: 'case-process',
+    configurationBytes: { flow: new Uint8Array(), testRuns: conf, projects: new Uint8Array() }, tmpPath: input.tmpdir, privateRunTmp: true }));
+  const lastLine = (result.exit?.stderr ?? '').split('\n').findLast((line: string) => line.startsWith(markerPrefix));
+  const manifest = input.evidenceDirectory ? JSON.parse(await readFile(join(input.evidenceDirectory, 'manifest.json'), 'utf8')) : null;
+  const evidence: string[] = [...(manifest?.evidence ?? [])];
+  while (evidence.length > 1 && Buffer.byteLength(JSON.stringify(evidence)) > Math.floor(limits.maxProtocolLineBytes / 4)) evidence.pop();
+  const omitted = (manifest?.evidence.length ?? 0) - evidence.length;
+  return { caseRunId: input.runId, variant: input.variant ?? null, action: input.action, phase: result.phase ?? 'complete',
+    diagnostics: details.diagnostics, diagnosticSummary: details.diagnosticSummary,
+    lastProgress: lastLine ? JSON.parse(lastLine.slice(markerPrefix.length)).marker : null, evidence,
+    evidenceIndex: { path: input.evidenceDirectory ? join(input.evidenceDirectory, 'manifest.json') : null, omitted, unavailableReason: omitted ? 'Inline locator list bounded by configured protocol limit; the manifest retains every exact raw path.' : null },
+  };
+}
+
+async function saveFailure(input: CaseInput, error: unknown): Promise<void> {
+  if (!input.evidenceDirectory) return;
+  const failure = error as NodeJS.ErrnoException;
+  const record = { runId: input.runId, variant: input.variant, action: input.action, phase, reason: failure.message, code: failure.code ?? null, stack: failure.stack ?? null };
+  await appendFile(join(input.evidenceDirectory, 'failure.jsonl'), JSON.stringify(record) + '\n', { mode: 0o600 });
+  await writeFile(join(input.evidenceDirectory, 'failure.json'), JSON.stringify(record), { mode: 0o600 });
 }
 
 export async function runCase(input: CaseInput): Promise<Record<string, any>> {
@@ -50,14 +149,17 @@ export async function runCase(input: CaseInput): Promise<Record<string, any>> {
   const traceModule = fileURLToPath(new URL('./raf-unix-socket-paths-trace.mjs', import.meta.url));
   const result = await command(process.execPath, [fixturePath, 'case', JSON.stringify(input)], {
     cwd: input.workspace,
+    evidence: input.evidenceDirectory ? { directory: input.evidenceDirectory, label: 'case' } : undefined,
     env: { ...process.env, HOME: input.home, TMPDIR: input.tmpdir, TMP: input.tmpdir, TEMP: input.tmpdir, TMUX: '', TMUX_PANE: '', Z390_TRACE: tracePath, NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --import=${JSON.stringify(traceModule)}` },
   });
   const line = result.stdout.split('\n').findLast(row => row.startsWith(prefix));
   assert.ok(line, `setup/protocol failure: ${JSON.stringify(result)}`);
   const parsed = JSON.parse(line.slice(prefix.length));
+  if (input.evidenceDirectory) await writeFile(join(input.evidenceDirectory, 'case-result.json'), JSON.stringify(parsed), { mode: 0o600 });
   let trace: unknown[] = [];
   try { trace = (await readFile(tracePath, 'utf8')).trim().split('\n').filter(Boolean).map(row => JSON.parse(row)); }
   catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+  if (input.evidenceDirectory) await writeFile(join(input.evidenceDirectory, 'socket-trace.json'), JSON.stringify(trace), { mode: 0o600 });
   return { ...parsed, trace, exit: result };
 }
 
@@ -375,10 +477,12 @@ async function wrapperIngress(input: CaseInput) {
 }
 
 async function sandboxIngress(input: CaseInput) {
+  await progress('unix:registered:before');
   const registered = join(input.workspace, 'registered.sock');
   const foreign = createServer(socket => socket.end('host-forbidden'));
   foreign.listen(registered);
   await once(foreign, 'listening');
+  await progress('unix:registered:after');
   const secret = join(input.root, 'hidden-state', 'secret');
   await mkdir(dirname(secret), { recursive: true });
   await writeFile(secret, 'state-secret');
@@ -405,12 +509,20 @@ async function sandboxIngress(input: CaseInput) {
   };
   phase = 'sandbox-preflight';
   let policy;
-  try { policy = await prepareCodexSandbox(request); } catch (error) {
+  await progress('prepare:before');
+  try { policy = await prepareCodexSandbox(request); await progress('prepare:after'); } catch (error) {
+    await saveFailure(input, error);
+    await progress('prepare:failed');
+    await progress('sandbox:cleanup:before');
     await new Promise<void>(yes => foreign.close(() => yes()));
+    if (input.evidenceDirectory) await writeFile(join(input.evidenceDirectory, 'cleanup.json'), JSON.stringify({ complete: null, foreignClosed: true, unavailableReason: 'prepare did not return a policy; its internal cleanup is unobserved', phase, runId: input.runId }), { mode: 0o600 });
+    await progress('sandbox:cleanup:after');
     throw error;
   }
   try {
-    const result = await command(policy.toolSandbox.executable, [...policy.toolSandbox.args, process.execPath, fixturePath, 'sandbox-tool', registered, secret], { cwd: input.workspace, env: { ...process.env, ...policy.environment } });
+    await progress('sandbox:tool:before');
+    const result = await command(policy.toolSandbox.executable, [...policy.toolSandbox.args, process.execPath, fixturePath, 'sandbox-tool', registered, secret, JSON.stringify({ runId: input.runId, variant: input.variant, action: input.action })], { cwd: input.workspace, env: { ...process.env, ...policy.environment } });
+    await progress('sandbox:tool:after');
     assert.equal(result.code, 0, `sandbox tool failed: ${result.stderr}`);
     const proof = JSON.parse(result.stdout.trim().split('\n').at(-1)!);
     assert.equal(proof.ownTmux, true);
@@ -421,15 +533,27 @@ async function sandboxIngress(input: CaseInput) {
     assert.equal(proof.tmuxInherited, false);
     assert.equal(await readFile(secret, 'utf8'), 'state-secret');
     return { ...proof, prepared: true };
+  } catch (error) {
+    await saveFailure(input, error);
+    throw error;
   } finally {
-    await policy.cleanup();
-    await new Promise<void>((yes, no) => foreign.close(error => error ? no(error) : yes()));
+    await progress('sandbox:cleanup:before');
+    try {
+      await policy.cleanup();
+      await new Promise<void>((yes, no) => foreign.close(error => error ? no(error) : yes()));
+      if (input.evidenceDirectory) await writeFile(join(input.evidenceDirectory, 'cleanup.json'), JSON.stringify({ complete: true, phase, runId: input.runId }), { mode: 0o600 });
+      await progress('sandbox:cleanup:after');
+    } catch (error) {
+      if (input.evidenceDirectory) await writeFile(join(input.evidenceDirectory, 'cleanup.json'), JSON.stringify({ complete: false, phase, runId: input.runId, reason: (error as Error).message, stack: (error as Error).stack }), { mode: 0o600 });
+      throw error;
+    }
   }
 }
 
 let phase = 'endpoint';
 
 async function caseMain(input: CaseInput) {
+  if (input.action === 'sandbox-ingress') { diagnosticInput = input; diagnosticIdentity = input; }
   const before = { cwd: process.cwd(), home: process.env.HOME, tmpdir: process.env.TMPDIR };
   let result: unknown;
   try {
@@ -459,6 +583,7 @@ async function caseMain(input: CaseInput) {
     process.stdout.write(`${prefix}${JSON.stringify({ ok: true, result, before })}\n`);
   } catch (error) {
     const failure = error as NodeJS.ErrnoException;
+    await saveFailure(input, error);
     process.stdout.write(`${prefix}${JSON.stringify({ ok: false, phase, failureKind: /NotImplemented/.test(failure.message) ? 'missing-behavior' : phase === 'setup' || /spawn .*ENOENT|Operation not permitted|unshare|bwrap.*not found/i.test(failure.message) ? 'setup' : 'operation', reason: failure.message, code: failure.code, stack: failure.stack, before })}\n`);
     process.exitCode = 1;
   }
@@ -507,23 +632,40 @@ else if (process.argv[2] === 'server') {
   assert.equal(refused, true, 'inherited handshake environment must not authorize another peer');
   process.stdout.write('PEER_REJECTED');
 } else if (process.argv[2] === 'sandbox-tool') {
+  const identity = JSON.parse(process.argv[5]);
+  diagnosticIdentity = { runId: identity.runId, variant: identity.variant, action: identity.action };
+  phase = 'sandbox-tool';
+  await progress('tool:before');
   assert.ok(!process.env.TMUX && !process.env.TMUX_PANE);
   let hostDenied = false, stateDenied = false, stateWriteDenied = false;
+  await progress('host:socket:deny:before');
   try { await exchange(process.argv[3], 'forbidden'); } catch { hostDenied = true; }
+  await progress('host:socket:deny:after');
+  await progress('state:read:deny:before');
   try { await readFile(process.argv[4]); } catch { stateDenied = true; }
+  await progress('state:read:deny:after');
+  await progress('state:write:deny:before');
   try { await writeFile(process.argv[4], 'tampered'); } catch { stateWriteDenied = true; }
+  await progress('state:write:deny:after');
   const alias = join(process.cwd(), 'registered-alias.sock');
   await symlink(process.argv[3], alias);
   let aliasDenied = false;
+  await progress('alias:deny:before');
   try { await exchange(alias, 'forbidden'); } catch { aliasDenied = true; }
+  await progress('alias:deny:after');
+  await progress('unix:child:deny:before');
   const childConnect = await command(process.execPath, [fixturePath, 'client', process.argv[3], 'forbidden']);
   assert.notEqual(childConnect.code, 0, 'registered host endpoint must stay denied in a child');
+  await progress('unix:child:deny:after');
   const actualSockets: string[] = [];
   for (const selector of [[], ['-L', `z390-${process.pid}`]]) {
     const name = selector.length ? 'named' : 'default';
     try {
+      await progress(`tmux:${name}:command:before`);
       const start = await command('tmux', [...selector, '-f', '/dev/null', 'new-session', '-d', '-s', name, 'cat']);
       assert.equal(start.code, 0, start.stderr);
+      await progress(`tmux:${name}:command:after`);
+      await progress(`tmux:${name}:payload:before`);
       const sent = await command('tmux', [...selector, 'send-keys', '-t', name, '-l', 'sandbox-payload']);
       assert.equal(sent.code, 0, sent.stderr);
       let capture;
@@ -531,10 +673,20 @@ else if (process.argv[2] === 'server') {
         capture = await command('tmux', [...selector, 'capture-pane', '-p', '-t', name]);
         assert.equal(capture.code, 0, capture.stderr);
       } while (!capture.stdout.includes('sandbox-payload'));
+      await progress(`tmux:${name}:payload:after`);
       const address = await command('tmux', [...selector, 'display-message', '-p', '-t', name, '#{socket_path}']);
       assert.equal(address.code, 0, address.stderr);
       actualSockets.push(address.stdout.trim());
-    } finally { await command('tmux', [...selector, 'kill-server']); }
+    } catch (error) {
+      const failure = error as NodeJS.ErrnoException;
+      process.stderr.write('Z390_TOOL_FAILURE:' + JSON.stringify({ ...diagnosticIdentity, phase, reason: failure.message, code: failure.code ?? null, stack: failure.stack ?? null }) + '\n');
+      throw error;
+    } finally {
+      await progress(`tmux:${name}:cleanup:before`);
+      await command('tmux', [...selector, 'kill-server']);
+      await progress(`tmux:${name}:cleanup:after`);
+    }
   }
+  await progress('tool:after');
   process.stdout.write(JSON.stringify({ ownTmux: true, hostDenied, aliasDenied, stateDenied, stateWriteDenied, tmuxInherited: false, actualSockets }) + '\n');
 }

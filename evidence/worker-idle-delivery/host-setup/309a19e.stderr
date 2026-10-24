@@ -1,0 +1,18 @@
+node:internal/modules/run_main:111
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"admitted":false,"reason":"normal: normalized load exceeds 1.2","admission":{"level":"HOTFIX_ONLY","requestedTier":"normal","allowed":false,"reasons":["normal: normalized load exceeds 1.2"],"measurement":{"machineId":"05edcea976d34e69b22f660519c11f6f","loadAverage1m":10.8,"availableCores":8,"totalRamBytes":32852041728,"availableRamBytes":21401919488,"memoryPressure":"normal","fileSystems":[{"id":"tmpfs","totalBytes":25769803776,"availableBytes":18634756096}]},"thresholds":{"normal":{"maxNormalizedLoad":1.2,"minRamFraction":0.2,"minRamBytes":1024,"minDiskFraction":0.1,"minDiskBytes":1024},"hotfix":{"maxNormalizedLoad":1.5,"minRamFraction":0.1,"minRamBytes":1024,"minDiskFraction":0.05,"minDiskBytes":1024},"home":{"minDiskBytes":524288000}},"reservation":{"requested":{"ramBytes":2048,"diskBytes":{"tmpfs":4096}},"unused":{"ramBytes":0,"diskBytes":{}}},"remaining":{"ramBytes":21401917440,"diskBytes":{"tmpfs":18634752000},"normalizedLoad":1.35},"estimate":{"status":"KNOWN","sources":["conf/flow.json#/resourceEstimates/agentTypes/implement"],"reason":null},"queueId":"8703903d-31aa-472a-9c43-518faf66987b"}}
+
+false !== true
+
+    at file:///srv/dev/work/orchestrator/raf-hotfix/scripts/qa-worker-delivery.ts:53:12 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.12.1

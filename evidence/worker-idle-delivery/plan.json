@@ -1,0 +1,30 @@
+{
+  "sourceItem": "fix-raf-load-admission:9.1.1",
+  "audit": {
+    "current": true,
+    "reason": "9.1 implementation was reverted by 309a19e after initial brief failures; current HEAD 8bfbd5d still polls pane state and revalidates worker environment per command. The requested fix remains applicable. No conflicting requirements found.",
+    "sources": [
+      "openspec/changes/fix-raf-load-admission/proposal.md",
+      "openspec/changes/fix-raf-load-admission/tasks.md#9.1.1",
+      "openspec/specs/core/process/test-first/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md",
+      "openspec/specs/projects/orchestrator/parallel-development/spec.md",
+      "openspec/specs/projects/orchestrator/autonomous-development/spec.md#Аудит-та-вилучення-неактуальних-змін"
+    ]
+  },
+  "unitGroup": "fix-raf-load-admission/worker-idle",
+  "unitFiles": ["test/agent-adapters.test.ts"],
+  "unitPolicy": "Retain the 9.1 group and its aggregate/QA HOME; initial own assertion failure via phase red, then phase hotfix. Do not treat setup failures or incomplete output as red/pass.",
+  "livePlan": "Exact archived source revisions 3847327 and 309a19e, then workspace, in parallel full production workers with isolated QA HOME/state/tmp and real installed codex. Live checks have separate budgets and do not count as unit tests.",
+  "sandboxSetupAttempt": {
+    "command": "env -u RAF_ORCHESTRATOR_ROOT -u RAF_STATE_DIRECTORY -u RAF_HOME_DIRECTORY -u RAF_SOCKET_PATH -u RAF_WRAPPER_REQUEST_PATH -u RAF_WRAPPER_HANDSHAKE_SOCKET HOME=/tmp/fla911b-stand-home RAF_QA_HOME=/tmp/fla911b-stand-home node scripts/qa-worker-delivery.ts 3847327 /tmp/fla911b-live-3847327 3",
+    "cliExitCode": 0,
+    "childStarted": false,
+    "outcome": "setup-failed",
+    "reason": "All three wrapper launch attempts failed before child spawn with EACCES on the explicitly denied /tmp/raf-ipc-1000/rw-* directory. Driver originally returned 0 on failed scenarios; corrected its exit status before asking main to run it on host.",
+    "summary": "sandbox-stand-setup.json",
+    "nextAction": "Main host execution of the prepared live driver; do not bypass denied IPC paths. Product implementation remains unchanged until reproduction."
+  },
+  "archive": "Not applicable: 4.3 and 7.1 remain open in the change; this executor owns only 9.1.1."
+}

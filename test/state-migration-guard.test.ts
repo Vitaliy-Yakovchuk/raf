@@ -201,7 +201,7 @@ for (const version of [0, STATE_SCHEMA_VERSION + 1, 777]) {
 
 for (const fromVersion of [7, 10] as const) {
   const seed = fromVersion === 7 ? seedMain7 : seedMain10;
-  const expectedSteps = fromVersion === 7 ? [8, 9, 10, 11, 12] : [11, 12];
+  const expectedSteps = Array.from({ length: STATE_SCHEMA_VERSION - fromVersion }, (_, index) => fromVersion + index + 1);
 
   for (const mode of ['production', 'qa'] as const) {
     test(`${mode} ordinary open refuses schema ${fromVersion} before changing DB/WAL/SHM`, t => {

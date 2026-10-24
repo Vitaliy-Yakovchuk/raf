@@ -52,7 +52,7 @@ function catalog(options: readonly string[]): CompiledCatalog {
   return {
     commands: [{
       path: ['agent', 'close'], handlerName: 'agent close', valueSources: {}, metadata: {},
-      parameters: options.map(option => ({ name: option.slice(2), option })),
+      parameters: options.map(option => ({ name: option.slice(2), option, type: option === '--force' ? 'boolean' : 'string' })),
     }],
     reportStatuses: [
       { id: 'succeeded', event: 'agent.succeeded' }, { id: 'failed', event: 'agent.failed' },

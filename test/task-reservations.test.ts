@@ -603,7 +603,7 @@ scenario('an incomplete archive requires main rather than silently completing wo
 });
 
 for (const mutation of ['renumbered', 'rewritten', 'reused-change-id'] as const) {
-  scenario(`${mutation} cannot rebind an original reservation during completion or another claim`, async f => {
+  scenario(`${mutation} preserves the original lease and checks a new claim by its exact key`, async f => {
     const original = task('R.1');
     const input = f.request('run-a', [original]);
     const { active } = await f.running(input);
@@ -615,10 +615,20 @@ for (const mutation of ['renumbered', 'rewritten', 'reused-change-id'] as const)
     f.resolutions.set(sourceKey(original), { state: 'completed', task: changed, location: mutation === 'reused-change-id' ? 'active' : 'archive' });
     await assert.rejects(() => completeTaskReservations(f.dependencies(), { lease: active, tasks: input.tasks }), hasCode('TASK_IDENTITY_MISMATCH'));
     await assert.rejects(() => claimTaskReservations(f.dependencies(), f.request('run-b', [original])), hasCode('TASK_IDENTITY_MISMATCH'));
-    await assert.rejects(() => claimTaskReservations(f.dependencies(), f.request('run-c', [changed])), hasCode('TASK_IDENTITY_MISMATCH'));
-    assert.deepEqual(listTaskReservations(f.store)[0].tasks, [original]);
-    assert.deepEqual(listTaskReservations(f.store)[0].lease, active);
-    assert.equal(f.launchCalls(), 1);
+    if (mutation === 'rewritten') {
+      await assert.rejects(() => claimTaskReservations(f.dependencies(), f.request('run-c', [changed])), hasCode('TASK_IDENTITY_MISMATCH'));
+    } else {
+      f.resolutions.set(sourceKey(changed), { state: 'open', task: changed, location: 'active' });
+      const independent = await f.claim(f.request('run-c', [changed]));
+      const reservations = listTaskReservations(f.store);
+      assert.deepEqual(reservations.find(set => set.lease.owner.runId === 'run-c')?.tasks, [changed]);
+      assert.deepEqual(reservations.find(set => set.lease.owner.runId === 'run-c')?.lease, independent);
+      assert.equal(reservations.length, 2);
+    }
+    const retained = listTaskReservations(f.store).find(set => set.lease.owner.runId === input.runId);
+    assert.deepEqual(retained?.tasks, [original]);
+    assert.deepEqual(retained?.lease, active);
+    assert.equal(f.launchCalls(), mutation === 'rewritten' ? 1 : 2);
   });
 }
 

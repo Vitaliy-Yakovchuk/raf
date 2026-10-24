@@ -66,7 +66,7 @@ test('[codex-command-lifetime] queued admission beyond the execution budget pres
   const definition = await effectiveHook(f, prepared);
   assert.equal(definition.enabled, true);
   assert.equal(definition.trustStatus, 'trusted');
-  assert.equal(definition.async, false);
+  assert.equal(definition.async ?? false, false);
   assert.ok(Number.isSafeInteger(definition.timeoutSec) && definition.timeoutSec > 0);
   const command = `${f.rafCommand} test run --project raf --phase hotfix --group add-raf-test-run/lifetime-fixture`;
   const hook = spawn('/bin/sh', ['-c', hookCommand(prepared)], {

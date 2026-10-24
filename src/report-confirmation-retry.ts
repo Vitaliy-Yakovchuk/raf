@@ -169,7 +169,10 @@ export async function confirmReportWithRetry(
       return { kind: 'rejected', failure: step.failure };
     }
     if (step.kind === 'awaiting-archive') return step;
-    if (step.kind === 'budget-exhausted') { last = { cause: 'deadline', reason: step.reason }; return pending(); }
+    if (step.kind === 'budget-exhausted') {
+      if (last.cause === 'deadline') last = { cause: 'deadline', reason: step.reason };
+      return pending();
+    }
     if (step.kind === 'transient') last = { cause: step.cause, reason: step.reason };
     if (ports.now() >= deadline) return pending();
     await ports.sleep(Math.min(pollMs, deadline - ports.now()));

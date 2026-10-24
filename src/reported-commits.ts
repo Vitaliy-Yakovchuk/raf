@@ -26,10 +26,14 @@ async function git(repository: string, args: readonly string[]): Promise<string>
 
 async function repositoryIdentity(repositoryRoot: string): Promise<Omit<ReportedCommitRepository, 'launchHead'>> {
   if (!isAbsolute(repositoryRoot) || await realpath(repositoryRoot) !== repositoryRoot) throw new Error(`Noncanonical repository: ${repositoryRoot}`);
-  if (await git(repositoryRoot, ['rev-parse', '--show-toplevel']) !== repositoryRoot) throw new Error(`Repository root changed: ${repositoryRoot}`);
-  const gitDirectory = await realpath(await git(repositoryRoot, ['rev-parse', '--absolute-git-dir']));
-  const commonDirectory = await realpath(resolve(repositoryRoot, await git(repositoryRoot, ['rev-parse', '--git-common-dir'])));
-  const objectFormat = await git(repositoryRoot, ['rev-parse', '--show-object-format']);
+  const [top, directory, common, objectFormat] = await Promise.all([
+    git(repositoryRoot, ['rev-parse', '--show-toplevel']),
+    git(repositoryRoot, ['rev-parse', '--absolute-git-dir']),
+    git(repositoryRoot, ['rev-parse', '--git-common-dir']),
+    git(repositoryRoot, ['rev-parse', '--show-object-format']),
+  ]);
+  if (top !== repositoryRoot) throw new Error(`Repository root changed: ${repositoryRoot}`);
+  const [gitDirectory, commonDirectory] = await Promise.all([realpath(directory), realpath(resolve(repositoryRoot, common))]);
   if (objectFormat !== 'sha1' && objectFormat !== 'sha256') throw new Error(`Unsupported Git object format: ${repositoryRoot}`);
   return { repositoryRoot, gitDirectory, commonDirectory, objectFormat };
 }
@@ -56,10 +60,15 @@ export async function validateReportedCommitGroups(context: ReportedCommitLaunch
     if (roots.has(saved.repositoryRoot)) throw new Error('Duplicate launch repository');
     roots.add(saved.repositoryRoot);
     const { launchHead, ...identity } = saved;
-    if (!isDeepStrictEqual(await repositoryIdentity(saved.repositoryRoot), identity)) throw new Error(`Git identity changed: ${saved.repositoryRoot}`);
     const oid = new RegExp(`^[a-f0-9]{${saved.objectFormat === 'sha1' ? 40 : 64}}$`);
-    if (!oid.test(launchHead) || await git(saved.repositoryRoot, ['cat-file', '-t', launchHead]) !== 'commit') throw new Error(`Invalid launch baseline: ${saved.repositoryRoot}`);
-    await git(saved.repositoryRoot, ['merge-base', '--is-ancestor', launchHead, 'HEAD']);
+    if (!oid.test(launchHead)) throw new Error(`Invalid launch baseline: ${saved.repositoryRoot}`);
+    const [currentIdentity, type] = await Promise.all([
+      repositoryIdentity(saved.repositoryRoot),
+      git(saved.repositoryRoot, ['cat-file', '-t', launchHead]),
+      git(saved.repositoryRoot, ['merge-base', '--is-ancestor', launchHead, 'HEAD']),
+    ]);
+    if (!isDeepStrictEqual(currentIdentity, identity)) throw new Error(`Git identity changed: ${saved.repositoryRoot}`);
+    if (type !== 'commit') throw new Error(`Invalid launch baseline: ${saved.repositoryRoot}`);
   }
   for (const entry of commits) {
     const repository = context.repositories.find(row => row.repositoryRoot === entry.repository);
@@ -69,12 +78,15 @@ export async function validateReportedCommitGroups(context: ReportedCommitLaunch
     if (checkboxCommits.some(row => row.sha === entry.sha)) throw new Error(`Checkbox commit is not an executor commit: ${entry.sha}`);
     const ordered = groups.get(entry.repository) ?? [];
     if (ordered.includes(entry.sha)) throw new Error(`Duplicate reported commit: ${entry.sha}`);
-    if (await git(entry.repository, ['cat-file', '-t', entry.sha]) !== 'commit'
-      || await git(entry.repository, ['rev-parse', '--verify', entry.sha]) !== entry.sha) throw new Error(`Not a commit object: ${entry.sha}`);
     if (entry.sha === repository.launchHead) throw new Error(`Reported commit equals launch baseline: ${entry.sha}`);
-    await git(entry.repository, ['merge-base', '--is-ancestor', repository.launchHead, entry.sha]);
-    await git(entry.repository, ['merge-base', '--is-ancestor', entry.sha, 'HEAD']);
-    if (ordered.length) await git(entry.repository, ['merge-base', '--is-ancestor', ordered[ordered.length - 1], entry.sha]);
+    const [type, resolved] = await Promise.all([
+      git(entry.repository, ['cat-file', '-t', entry.sha]),
+      git(entry.repository, ['rev-parse', '--verify', entry.sha]),
+      git(entry.repository, ['merge-base', '--is-ancestor', repository.launchHead, entry.sha]),
+      git(entry.repository, ['merge-base', '--is-ancestor', entry.sha, 'HEAD']),
+      ...(ordered.length ? [git(entry.repository, ['merge-base', '--is-ancestor', ordered[ordered.length - 1], entry.sha])] : []),
+    ]);
+    if (type !== 'commit' || resolved !== entry.sha) throw new Error(`Not a commit object: ${entry.sha}`);
     ordered.push(entry.sha);
     groups.set(entry.repository, ordered);
   }

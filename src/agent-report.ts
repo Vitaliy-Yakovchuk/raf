@@ -201,6 +201,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
   let result: AgentReportResult | null = null;
   let ownsAttempt = false;
   let checkboxCommits: readonly TaskCheckboxCommit[] | undefined;
+  let commitGroups: Awaited<ReturnType<typeof validateReportedCommitGroups>> = [];
   let budget: ConfirmationBudget;
   const archives = () => Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]));
   const details = (verification: AssignmentVerification) => verification.issues.map(issue => `${issue.change}:${issue.requestedItems.join(',')}: ${issue.reason}; Remedy: ${issue.remedy}`).join('\n');
@@ -217,10 +218,9 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
   const beforeWrite = async () => {
     if (performance.now() >= budget.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before write');
     if (ports.isCurrentReport && !await ports.isCurrentReport(request.runId, path) || !await sameReportBytes(path, bytes, content, ports)) throw new Error('Report snapshot changed before write');
-    const verified = await source();
+    const [verified] = await Promise.all([source(), validate()]);
     if (verified.kind === 'transient') throw new ConfirmationTransientError(verified.cause, verified.reason);
     if (verified.kind === 'rejected') throw new Error(verified.failure.reason);
-    await validate();
     if (performance.now() >= budget.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached after write validation');
   };
   const validate = async () => {
@@ -255,13 +255,10 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
     },
     releaseAttempt: async () => { if (ownsAttempt) { retryAttempts.delete(request.assignment.root); ownsAttempt = false; } },
     verifySource: async () => runStep(source),
-    validateCommits: async () => runStep(async () => { await validate(); return { kind: 'ok' }; }),
+    validateCommits: async () => runStep(async () => { commitGroups = await validate(); return { kind: 'ok' }; }),
     repairCommits: async () => runStep(async () => {
-      for (const group of await validate()) {
+      for (const group of commitGroups) {
         if (!await sameReportBytes(path, bytes, content, ports)) return rejectStep('Report snapshot changed before index repair');
-        const verified = await source();
-        if (verified.kind !== 'ok') return verified;
-        await validate();
         await ports.reconcileReportedCommitIndex!(group, budget, beforeWrite);
       }
       return { kind: 'ok' };
@@ -277,7 +274,6 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
       return { kind: 'ok' };
     }),
     finalCheck: async () => runStep(async () => {
-      await validate();
       if (report.status === 'succeeded') {
         const verification = await ports.verifyAssignmentCompletion(request.assignment, archives());
         if (!verification.ok) return rejectStep(`Assignment completion is not confirmed: ${details(verification)}`);
@@ -417,7 +413,7 @@ export async function createAgentReportWatcher(request: AgentReportRequest, port
   };
   const read = async () => {
     if (accepted || closed) return;
-    const result = await readPendingAgentReport(request, ports.confirmationRetry ? { ...ports, acceptResult: async result => { await ports.result(result); accepted = true; } } : ports);
+    const result = await readPendingAgentReport(request, ports.confirmationRetry ? { ...ports, acceptResult: async result => { await ports.acceptResult?.(result); await ports.result(result); accepted = true; } } : ports);
     if (result) await publish(result);
     if (ports.confirmationRetry && !accepted && !closed && isAgentReportConfirmationPending(request)) {
       const protocol = await ports.confirmationRetry.protocol() as { timeouts: { pollMs: number } };

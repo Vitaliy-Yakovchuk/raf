@@ -11,6 +11,14 @@ import { executeCommand } from './os-runtime.ts';
 
 type Guard = { path: string; stat: BigIntStats; handle: FileHandle; entries?: string[] };
 type Source = { path: string; instance: string; location: 'active' | 'archive' };
+type ParsedSource = { digest: string; rows: Awaited<ReturnType<typeof readAssignmentTasks>> };
+const parsedSources = new WeakMap<AdapterCommandExecutor, Map<string, ParsedSource>>();
+async function checkedTogether<T>(checks: readonly Promise<T>[]): Promise<T[]> {
+  const results = await Promise.allSettled(checks);
+  const failed = results.find(result => result.status === 'rejected');
+  if (failed?.status === 'rejected') throw failed.reason;
+  return results.map(result => (result as PromiseFulfilledResult<T>).value);
+}
 const safeName = (value: unknown): value is string => typeof value === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(value) && value !== '.' && value !== '..';
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
 const failure = (code: 'TASK_IDENTITY_INVALID' | 'TASK_SOURCE_UNKNOWN', reason: string) => Object.assign(new Error(reason), { code });
@@ -38,6 +46,8 @@ export function createAssignmentIdentityAdapter(
 } {
   const roots = Object.assign(Object.create(null), projectRoots) as Record<string, string>;
   const execute = options.execute ?? executeCommand;
+  const parsed = parsedSources.get(execute) ?? new Map<string, ParsedSource>();
+  parsedSources.set(execute, parsed);
   const inspect = options.lstat ?? (path => lstat(path, { bigint: true }));
   const filesystem = options.statfs ?? (path => statfs(path, { bigint: true }));
   const platform = options.platform ?? process.platform;
@@ -115,15 +125,16 @@ export function createAssignmentIdentityAdapter(
       return guards.get(path)!.handle.readFile();
     }
     async function verify(): Promise<void> {
-      for (const guard of guards.values()) {
-        if (!unchanged(guard.stat, await guard.handle.stat({ bigint: true })) || !unchanged(guard.stat, await reinspect(guard.path))) throw new ConfirmationTransientError('source-read-race', `Source read race: ${guard.path}`);
+      await checkedTogether([...guards.values()].map(async guard => {
+        const [opened, pointed] = await checkedTogether([guard.handle.stat({ bigint: true }), reinspect(guard.path)]);
+        if (!unchanged(guard.stat, opened) || !unchanged(guard.stat, pointed)) throw new ConfirmationTransientError('source-read-race', `Source read race: ${guard.path}`);
         if (guard.entries && JSON.stringify((await readdir(guard.path)).sort()) !== JSON.stringify(guard.entries)) throw new ConfirmationTransientError('source-read-race', `Directory read race: ${guard.path}`);
-      }
-      for (const [path, stat] of observed) if (!guards.has(path) && !unchanged(stat, await reinspect(path))) throw new ConfirmationTransientError('source-read-race', `Source candidate race: ${path}`);
-      for (const path of absent) {
-        try { await inspect(path); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue; throw error; }
+      }));
+      await checkedTogether([...observed].map(async ([path, stat]) => { if (!guards.has(path) && !unchanged(stat, await reinspect(path))) throw new ConfirmationTransientError('source-read-race', `Source candidate race: ${path}`); }));
+      await checkedTogether([...absent].map(async path => {
+        try { await inspect(path); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return; throw error; }
         throw new ConfirmationTransientError('source-read-race', `Previously absent source input appeared: ${path}`);
-      }
+      }));
     }
     try {
       await inspectPath(root);
@@ -134,15 +145,19 @@ export function createAssignmentIdentityAdapter(
   }
 
   async function readSource<T>(root: string, change: string, choose: (access: Parameters<Parameters<typeof guarded>[1]>[0]) => Promise<Source>, consume: (source: Source, rows: Awaited<ReturnType<typeof readAssignmentTasks>>) => T): Promise<T> {
-    return guarded(root, async access => {
+    const cacheKey = JSON.stringify([root, change]);
+    let verifiedParse: ParsedSource | undefined;
+    const result = await guarded(root, async access => {
       const source = await choose(access);
+      const inputs = createHash('sha256').update(JSON.stringify([root, change, source]));
+      const files = new Map<string, Buffer>();
       const view = await mkdtemp(join(tmpdir(), 'raf-assignment-read-'));
       try {
         const target = join(view, 'openspec', 'changes', change);
-        await mkdir(target, { recursive: true, mode: 0o700 });
         async function copy(path: string, destination: string, optional = true): Promise<void> {
           const content = await access.bytes(path, optional);
-          if (content !== undefined) { await mkdir(dirname(destination), { recursive: true, mode: 0o700 }); await writeFile(destination, content, { mode: 0o600 }); }
+          inputs.update(JSON.stringify([relative(view, destination), content?.toString('base64') ?? null]));
+          if (content !== undefined) files.set(destination, content);
         }
         await copy(join(source.path, 'tasks.md'), join(target, 'tasks.md'), false);
         await copy(join(source.path, '.openspec.yaml'), join(target, '.openspec.yaml'));
@@ -166,20 +181,33 @@ export function createAssignmentIdentityAdapter(
         await access.verify();
         const version = await execute({ executable: 'openspec', args: ['--version'], cwd: view });
         if (version.exitCode !== 0 || version.stdout.trim() !== '1.14.3') throw new Error('Unverified OpenSpec version; the supported read plan requires 1.14.3');
-        const readRows = () => readAssignmentTasks(view, change, {
-          cli: { async exec(args, cwd) {
-            const result = await execute({ executable: 'openspec', args, cwd });
-            if (result.exitCode === 0) {
-              let data: any;
-              try { data = JSON.parse(result.stdout); } catch { return result; }
-              if ((options.execute === undefined || data.schemaName !== undefined) && data.schemaName !== 'spec-driven') throw new Error(`Unsupported apply schema: ${data.schemaName}`);
-              if (data.references?.length) throw new Error('Linked OpenSpec reference inputs require a verified read plan');
-              if (data.unavailableTrackingFiles?.length) throw new Error('OpenSpec tracking inputs unavailable');
-            }
-            return result;
-          } },
-          fs: { readText: path => readFile(path, 'utf8') },
-        });
+        const readRows = async () => {
+          const digest = inputs.digest('hex');
+          const previous = parsed.get(cacheKey);
+          if (previous?.digest === digest) { verifiedParse = previous; return previous.rows; }
+          for (const [path, content] of files) {
+            await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+            await writeFile(path, content, { mode: 0o600 });
+          }
+          let verifiedSchema = options.execute === undefined;
+          const rows = await readAssignmentTasks(view, change, {
+            cli: { async exec(args, cwd) {
+              const result = await execute({ executable: 'openspec', args, cwd });
+              if (result.exitCode === 0) {
+                let data: any;
+                try { data = JSON.parse(result.stdout); } catch { return result; }
+                if ((options.execute === undefined || data.schemaName !== undefined) && data.schemaName !== 'spec-driven') throw new Error(`Unsupported apply schema: ${data.schemaName}`);
+                if (data.references?.length) throw new Error('Linked OpenSpec reference inputs require a verified read plan');
+                if (data.unavailableTrackingFiles?.length) throw new Error('OpenSpec tracking inputs unavailable');
+                verifiedSchema = data.schemaName === 'spec-driven';
+              }
+              return result;
+            } },
+            fs: { readText: path => readFile(path, 'utf8') },
+          });
+          if (verifiedSchema) verifiedParse = { digest, rows };
+          return rows;
+        };
         let rows: Awaited<ReturnType<typeof readAssignmentTasks>>;
         if (options.execute === undefined) {
           const resolution = await execute({ executable: 'openspec', args: ['schema', 'which', 'spec-driven', '--json'], cwd: view });
@@ -190,9 +218,9 @@ export function createAssignmentIdentityAdapter(
           rows = await guarded(schemaRoot, async schemaAccess => {
             const content = await schemaAccess.bytes(join(schemaRoot, 'schema.yaml'));
             if (!content || createHash('sha256').update(content).digest('hex') !== 'b6f28f305ab7f33b061949251bba82c79de66c82424cfed60582327db3f888f2') throw new Error('Unverified package schema inputs for the supported OpenSpec 1.14.3 read plan');
+            inputs.update(JSON.stringify([schemaRoot, content.toString('base64')]));
             const destination = join(view, 'openspec', 'schemas', 'spec-driven');
-            await mkdir(destination, { recursive: true, mode: 0o700 });
-            await writeFile(join(destination, 'schema.yaml'), content, { mode: 0o600 });
+            files.set(join(destination, 'schema.yaml'), content);
             await schemaAccess.verify();
             return readRows();
           });
@@ -201,6 +229,8 @@ export function createAssignmentIdentityAdapter(
         return consume(source, rows);
       } finally { await rm(view, { recursive: true, force: true }); }
     });
+    if (verifiedParse) parsed.set(cacheKey, verifiedParse);
+    return result;
   }
 
   return {

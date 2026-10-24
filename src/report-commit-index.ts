@@ -28,26 +28,6 @@ export async function reconcileReportedCommitIndex(
     if (!commits.includes(commit)) commits.push(commit);
   }
   for (let i = 1; i < commits.length; i++) await git(['merge-base', '--is-ancestor', commits[i - 1], commits[i]]);
-  const parents = (await git(['rev-list', '--parents', '-n', '1', commits[0]])).trim().split(' ').slice(1);
-  const baseline = parents[0] ?? (await git(['hash-object', '-t', 'tree', '--stdin'], undefined, '')).trim();
-  const paths = new Set<string>();
-  for (const commit of commits) {
-    const parent = (await git(['rev-list', '--parents', '-n', '1', commit])).trim().split(' ')[1];
-    for (const path of (await git(['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', '-z', ...(parent ? [parent, commit] : [commit])])).split('\0').filter(Boolean)) paths.add(path);
-  }
-  if (!paths.size) return;
-  type Entry = { mode: string; oid: string };
-  const tree = async (ref: string): Promise<Map<string, Entry>> => {
-    const entries = new Map<string, Entry>();
-    if (!parents.length && ref === baseline) return entries;
-    for (const row of (await git(['ls-tree', '-r', '-z', '--full-tree', ref])).split('\0').filter(Boolean)) {
-      const match = row.match(/^(\d+) \w+ ([a-f0-9]+)\t([\s\S]+)$/);
-      if (!match) throw new Error('Invalid Git tree entry');
-      if (paths.has(match[3])) entries.set(match[3], { mode: match[1], oid: match[2] });
-    }
-    return entries;
-  };
-  const base = await tree(baseline);
   const indexResult = (await git(['rev-parse', '--git-path', 'index'])).trim();
   const indexPath = isAbsolute(indexResult) ? indexResult : join(request.repositoryRoot, indexResult);
   const lockPath = `${indexPath}.lock`;
@@ -68,6 +48,34 @@ export async function reconcileReportedCommitIndex(
   let scratch: string | undefined;
   let published = false;
   try {
+    const clean = await executeCommand({ executable: 'git', args: ['diff', '--cached', '--quiet', 'HEAD'], cwd: request.repositoryRoot, environment });
+    checkBudget();
+    if (clean.exitCode === 0) {
+      for (const commit of commits) await git(['merge-base', '--is-ancestor', commit, 'HEAD']);
+      checkBudget();
+      return;
+    }
+    if (clean.exitCode !== 1) throw new Error(clean.stderr.trim() || `Git index comparison failed: ${clean.exitCode}`);
+    const parents = (await git(['rev-list', '--parents', '-n', '1', commits[0]])).trim().split(' ').slice(1);
+    const baseline = parents[0] ?? (await git(['hash-object', '-t', 'tree', '--stdin'], undefined, '')).trim();
+    const paths = new Set<string>();
+    for (const commit of commits) {
+      const parent = (await git(['rev-list', '--parents', '-n', '1', commit])).trim().split(' ')[1];
+      for (const path of (await git(['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', '-z', ...(parent ? [parent, commit] : [commit])])).split('\0').filter(Boolean)) paths.add(path);
+    }
+    if (!paths.size) return;
+    type Entry = { mode: string; oid: string };
+    const tree = async (ref: string): Promise<Map<string, Entry>> => {
+      const entries = new Map<string, Entry>();
+      if (!parents.length && ref === baseline) return entries;
+      for (const row of (await git(['ls-tree', '-r', '-z', '--full-tree', ref])).split('\0').filter(Boolean)) {
+        const match = row.match(/^(\d+) \w+ ([a-f0-9]+)\t([\s\S]+)$/);
+        if (!match) throw new Error('Invalid Git tree entry');
+        if (paths.has(match[3])) entries.set(match[3], { mode: match[1], oid: match[2] });
+      }
+      return entries;
+    };
+    const base = await tree(baseline);
     scratch = await mkdtemp(join(dirname(indexPath), 'raf-report-index-'));
     const temporaryIndex = join(scratch, 'index');
     try { await copyFile(indexPath, temporaryIndex); await lock.chmod((await lstat(indexPath)).mode & 0o777); }

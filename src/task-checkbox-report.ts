@@ -75,6 +75,9 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
   let current = { change: '', item: '' };
   const problem = (reason: string): AssignmentIssue => ({ change: current.change, requestedItems: current.item ? [current.item] : [], reason: `${current.change}:${current.item}: ${reason}`, foundItems: [], archives: [], remedy: 'Узгодьте поточний рядок, індекс і HEAD або відновіть доступ до джерела; повторіть підтвердження цього запуску.' });
   const reject = (reason: string): TaskCheckboxConfirmation => ({ ok: false, issues: [problem(reason)], commits, awaitingArchive });
+  const checkBudget = () => {
+    if (ports.budget && performance.now() >= ports.budget.deadline) throw new ConfirmationBudgetExhaustedError('Confirmation deadline reached before checkbox write');
+  };
   if (!isAbsolute(request.assignment.root) || !safeName(request.runId) || !validAgentReport(report, request.assignment) || report.status !== 'succeeded') return reject('A valid succeeded report for the exact launch assignment is required');
   if (!request.assignment.changes.length || request.assignment.changes.some(change => !safeName(change.id) || !change.items.length)) return reject('Invalid change path');
   const archives = Object.fromEntries(report.changes.filter(change => change.archive !== undefined).map(change => [change.id, change.archive!]));
@@ -181,7 +184,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
         await ports.waitForIndex();
       }
     };
-    const withIndexLock = async (update: (env: Readonly<Record<string, string>>) => Promise<boolean>) => {
+    const withIndexLock = async (update: (env: Readonly<Record<string, string>>) => Promise<boolean>, validatesPublication = false) => {
       let handle: Awaited<ReturnType<typeof open>>;
       for (;;) {
         try { handle = await open(`${indexPath}.lock`, 'wx', 0o600); break; }
@@ -195,7 +198,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
         const sharedIndex = join(scratch!, 'shared-index');
         await copyFile(indexPath, sharedIndex);
         if (!await update({ GIT_INDEX_FILE: sharedIndex })) return false;
-        await ports.beforeWrite?.();
+        if (!validatesPublication) await ports.beforeWrite?.();
         await handle.writeFile(await readFile(sharedIndex));
         await handle.sync();
         await handle.close();
@@ -289,7 +292,7 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
         if (workLine[0] !== headLine[0] && !ownWritten) throw new Error('Task row conflict between HEAD and worktree; uncommitted checkbox has unknown ownership');
         operation = { runId: request.runId, ...current, originalLine: headLine[0], parent, phase: ownWritten ? 'written' : 'prepared' };
         await save(operation);
-        await ports.beforeWrite?.();
+        checkBudget();
         await checkpoint('before-write', current);
         await ports.beforeWrite?.();
         await sourcePath(path);
@@ -330,9 +333,8 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
           await git(['update-index', '--add', '--cacheinfo', mode, blob, pathspec], env);
           const tree = (await git(['write-tree'], env)).trim();
           const sha = (await git(['commit-tree', tree, '-p', commitParent, '-m', `raf checkbox ${request.runId} ${change.id}:${item.id}`])).trim();
-          await ports.beforeWrite?.();
+          checkBudget();
           await checkpoint('before-ref-update', current);
-          await ports.beforeWrite?.();
           let committed: boolean;
           try {
             committed = await withIndexLock(async indexEnv => {
@@ -342,9 +344,11 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports: 
               if (await git(['show', `:${pathspec}`], indexEnv) !== staged) throw new Error('Index changed before commit');
               if ((await git(['rev-parse', 'HEAD'])).trim() !== commitParent) return false;
               await stageCheckbox(indexEnv, pathspec, item.id, item.description, headLine[0]);
+              await ports.beforeWrite?.();
+              checkBudget();
               await git(['update-ref', 'HEAD', sha, commitParent]);
               return true;
-            });
+            }, true);
           }
           catch (error) {
             const moved = (await git(['rev-parse', 'HEAD'])).trim();

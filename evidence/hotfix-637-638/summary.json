@@ -1,0 +1,339 @@
+{
+  "project": "raf",
+  "items": [
+    "add-raf-test-run:6.3.7",
+    "add-raf-test-run:6.3.8"
+  ],
+  "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+  "phaseOverride": "Main explicitly directed --phase hotfix for BOTH initial assertion failure and fixed runs, for hotfix resource tier. Preflight attempts with phase red were not assertion red.",
+  "runs": [
+    {
+      "name": "preflight-dependencies",
+      "result": "preflight-dependencies.result.json",
+      "cli": "preflight-dependencies.cli.json",
+      "stderr": "preflight-dependencies.stderr",
+      "runId": "09bfd0b8-ccf1-4c46-9b52-06db9c971c63",
+      "phase": "red",
+      "group": "add-raf-test-run/hotfix-637-638",
+      "selection": {
+        "files": [
+          "test/hotfix-637-638.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "outcome": "setup-failed",
+      "passed": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "unavailable",
+      "groupState": null,
+      "timeoutCount": null,
+      "nextAction": "fix-setup"
+    },
+    {
+      "name": "preflight-inventory",
+      "result": "preflight-inventory.result.json",
+      "cli": "preflight-inventory.cli.json",
+      "stderr": "preflight-inventory.stderr",
+      "runId": "b9d0b91e-1b90-4508-aab2-c6210ba8df4e",
+      "phase": "red",
+      "group": "add-raf-test-run/hotfix-637-638",
+      "selection": {
+        "files": [
+          "test/hotfix-637-638.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "outcome": "refused",
+      "passed": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "unavailable",
+      "groupState": null,
+      "timeoutCount": null,
+      "nextAction": "fix-setup"
+    },
+    {
+      "name": "preflight-resource",
+      "result": "preflight-resource.result.json",
+      "cli": "preflight-resource.cli.json",
+      "stderr": "preflight-resource.stderr",
+      "runId": "a422b15f-1bdf-4981-a9e5-aed595a447d6",
+      "phase": "red",
+      "group": "add-raf-test-run/hotfix-637-638",
+      "selection": {
+        "files": [
+          "test/hotfix-637-638.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "outcome": "refused",
+      "passed": 0,
+      "knownRed": [],
+      "unexecuted": [
+        {
+          "file": "test/hotfix-637-638.test.ts",
+          "name": "*"
+        }
+      ],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "absent",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "retry"
+    },
+    {
+      "name": "preflight-hotfix-resource",
+      "result": "preflight-hotfix-resource.result.json",
+      "cli": "preflight-hotfix-resource.cli.json",
+      "stderr": "preflight-hotfix-resource.stderr",
+      "runId": "963ae595-0a97-4530-80ea-a9fef7ff01ac",
+      "phase": "hotfix",
+      "group": "add-raf-test-run/hotfix-637-638",
+      "selection": {
+        "files": [
+          "test/hotfix-637-638.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "outcome": "refused",
+      "passed": 0,
+      "knownRed": [],
+      "unexecuted": [
+        {
+          "file": "test/hotfix-637-638.test.ts",
+          "name": "*"
+        }
+      ],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "absent",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "retry"
+    },
+    {
+      "name": "initial-failure",
+      "result": "initial-failure.result.json",
+      "cli": "initial-failure.cli.json",
+      "stderr": "initial-failure.stderr",
+      "runId": "2c099a8b-addc-4e95-bd03-999254c06a82",
+      "phase": "hotfix",
+      "group": "add-raf-test-run/hotfix-637-638",
+      "selection": {
+        "files": [
+          "test/hotfix-637-638.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "passed": 3,
+      "knownRed": [
+        {
+          "file": "test/hotfix-637-638.test.ts",
+          "name": "6.3.7 non-etchly Vitest profile at bugs-api uses the structured adapter"
+        },
+        {
+          "file": "test/hotfix-637-638.test.ts",
+          "name": "6.3.7 non-etchly Vitest profile at . uses the structured adapter"
+        },
+        {
+          "file": "test/hotfix-637-638.test.ts",
+          "name": "6.3.7 non-etchly Vitest profile at bugs-api with preload uses the structured adapter"
+        },
+        {
+          "file": "test/hotfix-637-638.test.ts",
+          "name": "6.3.7 dependency checks resolve from workspace for a non-etchly nested profile"
+        },
+        {
+          "file": "test/hotfix-637-638.test.ts",
+          "name": "6.3.7 cwd-local lookalike cannot satisfy a missing workspace dependency"
+        },
+        {
+          "file": "test/hotfix-637-638.test.ts",
+          "name": "6.3.8 test-scaffold/red is rejected before the launch handler (type-first)"
+        },
+        {
+          "file": "test/hotfix-637-638.test.ts",
+          "name": "6.3.8 test-scaffold/red is rejected before the launch handler (phase-first)"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation"
+    },
+    {
+      "name": "fixed",
+      "result": "fixed.result.json",
+      "cli": "fixed.cli.json",
+      "stderr": "fixed.stderr",
+      "runId": "1b374a3b-7dea-46e5-9f63-bb8b638e3211",
+      "phase": "hotfix",
+      "group": "add-raf-test-run/hotfix-637-638",
+      "selection": {
+        "files": [
+          "test/hotfix-637-638.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 10,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "name": "etchly-initial",
+      "result": "etchly-initial.result.json",
+      "cli": "etchly-initial.cli.json",
+      "stderr": "etchly-initial.stderr",
+      "runId": "ed62ec2d-ada3-49cd-99e8-b3f0adefdf87",
+      "phase": "hotfix",
+      "group": "add-raf-test-run/etchly-profiles",
+      "selection": {
+        "files": [
+          "test/test-run-etchly-profiles.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "passed": 85,
+      "knownRed": [
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "full-suite-explicit refuses before Etchly browser-cache preflight failure"
+        },
+        {
+          "file": "test/test-run-etchly-profiles.test.ts",
+          "name": "valid subset retains Etchly browser-cache preflight failure"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation"
+    },
+    {
+      "name": "etchly-fixed",
+      "result": "etchly-fixed.result.json",
+      "cli": "etchly-fixed.cli.json",
+      "stderr": "etchly-fixed.stderr",
+      "runId": "792ecd58-6175-4c63-a667-9280b533910c",
+      "phase": "hotfix",
+      "group": "add-raf-test-run/etchly-profiles",
+      "selection": {
+        "files": [
+          "test/test-run-etchly-profiles.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 87,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    }
+  ],
+  "confMigrationAtActivation": {
+    "owner": "main",
+    "reason": "Active raf-main still uses profile-cwd-relative checks. Main explicitly required atomic migration with code activation; tests use fixture conf.",
+    "values": {
+      "projects.shared-libs.profiles.vitest-bugs-api.checks": [
+        "node_modules/vitest/vitest.mjs",
+        "bugs-api/vitest.config.ts"
+      ],
+      "projects.dash.profiles.vitest-worker.checks": [
+        "tools/raf-test-runtime.mjs",
+        "tools/shared-libs.ts",
+        "worker/vitest.config.ts",
+        "node_modules/vitest/vitest.mjs",
+        "node_modules/miniflare/package.json",
+        "node_modules/jose/package.json"
+      ]
+    }
+  },
+  "otherOwners": [
+    {
+      "sha": "300db24205dd9bbeebd9c2c485f5561092da1d0e",
+      "source": "aff3423",
+      "item": "6.3.6.1",
+      "owner": "main",
+      "reason": "Existing etchly preflight test expected fabricated 0 rather than unavailable/null. Main cherry-picked existing fix. No authored changes to that file."
+    }
+  ],
+  "limitations": [
+    "Unit tests use stubbed child spawn/protocol, not actual shared-libs/dash Vitest suites.",
+    "exec_command exposes combined output; stderr files record no additional text observed, not independent FD capture.",
+    "No deployment, push, task checkboxes or archive; other change tasks remain open."
+  ]
+}

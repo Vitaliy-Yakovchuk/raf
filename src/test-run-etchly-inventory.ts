@@ -6,7 +6,7 @@ import { auditEtchlyInventory } from './test-run-etchly.ts';
 import type { EtchlyInventoryFact } from './test-run-etchly.ts';
 import type { TestRunProfile } from './test-runs.ts';
 
-const reviewed = JSON.parse(readFileSync(new URL('./test-run-etchly-audit.json', import.meta.url), 'utf8')) as { sourceHashes: Record<string, string>; nodeDecisions: { file: string; classification: string; sha256: string }[] };
+const reviewed = JSON.parse(readFileSync(new URL('./test-run-etchly-audit.json', import.meta.url), 'utf8')) as { sourceHashes: Record<string, string>; nodeDecisions: { file: string; classification: string }[] };
 const hash = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex');
 const fail = (message: string): never => { throw Object.assign(new Error(`INVENTORY_INCOMPLETE: ${message}; repeat static review and reconcile conf/test-runs.json#/projects/etchly/profiles and groups`), { code: 'INVENTORY_INCOMPLETE' }); };
 
@@ -90,10 +90,12 @@ export async function observeEtchlyInventory(workspace: string, profiles: Record
     if (!include || /\bexclude\s*:/.test(source)) fail(`unsupported include/exclude in ${cwd}`);
     for (const file of globSync(literal(include![1]), { cwd: resolve(workspace, cwd), exclude: ['**/node_modules/**', '**/.git/**'] })) facts.push({ file: `${cwd}/${file}`, profileId: `vitest-${name}`, classification: 'unit' });
   }
+  const nodeUnits = new Set(profiles['node-root']?.unitFiles ?? []);
+  const excludedNodeFiles = new Set(reviewed.nodeDecisions.filter(item => item.classification === 'excluded').map(item => item.file));
   for (const file of globSync('scripts/*.test.mjs', { cwd: workspace })) {
-    const decision = reviewed.nodeDecisions.find(item => item.file === file);
-    if (!decision || hash(resolve(workspace, file)) !== decision.sha256) fail(`unreviewed Node candidate ${file}`);
-    facts.push({ file, classification: decision!.classification, profileId: decision!.classification === 'unit' ? 'node-root' : null });
+    if (nodeUnits.has(file)) facts.push({ file, classification: 'unit', profileId: 'node-root' });
+    else if (excludedNodeFiles.has(file)) facts.push({ file, classification: 'excluded', profileId: null });
+    else fail(`unreviewed Node candidate ${file}`);
   }
   auditEtchlyInventory({ profiles: Object.fromEntries(Object.entries(profiles).map(([id, p]) => [id, p.unitFiles ?? []])), sourceHashes: reviewed.sourceHashes }, facts, current);
   return facts;

@@ -184,7 +184,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       return { canonicalWorkspace: realpathSync(context.workspace), canonicalCwd: realpathSync(context.cwd), gitIdentityMatches,
         runtimeAvailable: profiles.every(p => executableAvailable(p.executable, resolve(context.workspace, p.cwd))),
         localRunnerAvailable: profiles.every(p => p.resultAdapter === 'node-test-events' || p.resultAdapter === 'vitest-events' && ['./test-run-vitest-runner.ts', '../scripts/test-run-vitest.ts', '../scripts/test-run-vitest-api.ts'].every(path => existsSync(fileURLToPath(new URL(path, import.meta.url))))),
-        dependenciesAvailable: profiles.every(p => p.checks.every(path => existsSync(resolve(context.workspace, projectId === 'etchly' ? '.' : p.cwd, path)))),
+        dependenciesAvailable: profiles.every(p => p.checks.every(path => existsSync(resolve(context.workspace, path)))),
         resultAdapterAvailable: profiles.every(p => existsSync(fileURLToPath(new URL(p.resultAdapter === 'vitest-events' ? './test-run-vitest-reporter.ts' : './test-run-reporter.ts', import.meta.url)))),
         artifactsWritable: !inheritedOperationalChannel && (() => { try { accessSync(stateContext.tmpRoot, constants.W_OK); return true; } catch { return false; } })(),
         treeControlSupported: process.platform === 'linux' && existsSync('/proc/self/stat'), isolatedHome: stateContext.mode === 'qa', stateOriginAllowed: true,
@@ -192,7 +192,10 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         inheritedOperationalChannel, unitFiles: observed ? observed.filter(f => f.classification === 'unit').map(f => f.file) : unitFiles.filter(file => files[file]?.kind === 'file'), files };
     },
     spawn: async (command, onEvent): Promise<ManagedTestProcess> => {
-      const vitestProfile = Object.values(config.projects.etchly?.profiles ?? {}).find(p => p.resultAdapter === 'vitest-events' && command.argv[0] === p.argv[0] && command.argv.includes(p.argv[p.argv.indexOf('run') - 1]) && command.cwd.endsWith('/' + p.cwd) && (!p.argv.includes('--project') || command.argv[command.argv.indexOf('--project') + 1] === p.argv[p.argv.indexOf('--project') + 1]));
+      const project = request ? config.projects[request.project] : undefined;
+      const profileId = request ? project?.groups[request.group]?.profileId : undefined;
+      const profiles = profileId ? [project!.profiles[profileId]] : Object.values(config.projects).flatMap(project => Object.values(project.profiles));
+      const vitestProfile = profiles.find(p => p.resultAdapter === 'vitest-events' && command.executable === p.executable && command.argv[0] === p.argv[0] && command.argv.includes(p.argv[p.argv.indexOf('run') - 1]) && (p.cwd === '.' || command.cwd.endsWith('/' + p.cwd)) && (!p.argv.includes('--project') || command.argv[command.argv.indexOf('--project') + 1] === p.argv[p.argv.indexOf('--project') + 1]));
       let vitestEnvironment: Record<string, string> = {};
       if (vitestProfile) {
         const workspace = resolve(command.cwd, relative(vitestProfile.cwd, '.'));

@@ -1,0 +1,282 @@
+b1538c178194dc8b6e20cd19a1651775223aad38
+ M src/cli-arguments.ts
+ M src/test-run-etchly-audit.json
+ M src/test-run-etchly-inventory.ts
+ M src/test-run-runtime.ts
+ M test/agent-adapters.test.ts
+ M test/hotfix-637-638.test.ts
+?? evidence/hotfix-637-638/etchly-initial.cli.json
+?? evidence/hotfix-637-638/etchly-initial.result.json
+?? evidence/hotfix-637-638/etchly-initial.stderr
+?? evidence/hotfix-637-638/fixed.cli.json
+?? evidence/hotfix-637-638/fixed.result.json
+?? evidence/hotfix-637-638/fixed.stderr
+?? evidence/hotfix-637-638/initial-failure.cli.json
+?? evidence/hotfix-637-638/initial-failure.result.json
+?? evidence/hotfix-637-638/initial-failure.stderr
+?? evidence/hotfix-637-638/preflight-hotfix-resource.cli.json
+?? evidence/hotfix-637-638/preflight-hotfix-resource.result.json
+?? evidence/hotfix-637-638/preflight-hotfix-resource.stderr
+?? evidence/hotfix-637-638/preflight-resource.cli.json
+?? evidence/hotfix-637-638/preflight-resource.result.json
+?? evidence/hotfix-637-638/preflight-resource.stderr
+?? node_modules
+diff --git a/src/test-run-etchly-audit.json b/src/test-run-etchly-audit.json
+index 9557c75..c15e3ca 100644
+--- a/src/test-run-etchly-audit.json
++++ b/src/test-run-etchly-audit.json
+@@ -18,197 +18,120 @@
+     "worker/package.json": "733024dd84b77912961851e905623d5a1d7f3d581540606227ce632d54fb1e56"
+   },
+   "nodeDecisions": [
+-    {
+-      "file": "scripts/critical-path-baseline.test.mjs",
+-      "classification": "unit",
+-      "reason": "Pure baselineErrors assertions; no process or provider.",
+-      "sha256": "aeff4e5b53c09fcf6f50dbc3f889188d56139e31c6248cff2eacb1d30b941c64"
+-    },
+     {
+       "file": "scripts/critical-path-ratchet.test.mjs",
+       "classification": "excluded",
+-      "reason": "Creates Git repositories and commits through real git processes.",
+-      "sha256": "13d9f6219984faefea528fe789edbb63242c72b1fc176619d6fd3e53c5bf2311"
+-    },
+-    {
+-      "file": "scripts/critical-path.test.mjs",
+-      "classification": "unit",
+-      "reason": "Pure glob/baseline comparison and read-only local registry consistency; no runner invocation.",
+-      "sha256": "ff5ca220f7e3499e7517dfc0772ff277415ce127e6a69249fd4dd7eb05a13cce"
++      "reason": "Creates Git repositories and commits through real git processes."
+     },
+     {
+       "file": "scripts/dependency-lock.test.mjs",
+       "classification": "excluded",
+-      "reason": "Real Git/submodule pin and installed semver/library manifest integration.",
+-      "sha256": "1f9ee3dc206409d30982ca33ee9a4296cf9b7a3314f187a866bb1bea7d115c6d"
++      "reason": "Real Git/submodule pin and installed semver/library manifest integration."
+     },
+     {
+       "file": "scripts/integ-run.test.mjs",
+       "classification": "excluded",
+-      "reason": "Runs Bash/npm/Git orchestration and real fixture repositories.",
+-      "sha256": "0a3602d4442ee32577a1ca9d94d471a1bdd79ae3e28b47ae39587214cc17f8ba"
+-    },
+-    {
+-      "file": "scripts/integration-test-groups.test.mjs",
+-      "classification": "unit",
+-      "reason": "Registry validation and runGroup with injected run; no child runner is executed.",
+-      "sha256": "81111c11df89c977068df960049ca01a0c5f1c23d6979b624dc8f388680ebecd"
++      "reason": "Runs Bash/npm/Git orchestration and real fixture repositories."
+     },
+     {
+       "file": "scripts/limits-requirements-openspec.test.mjs",
+       "classification": "excluded",
+-      "reason": "Validates real external orchestrator OpenSpec tree, not an isolated parser fixture.",
+-      "sha256": "e1b8f54b5d27f285f328fac0c287ddb22490be951c577ab0aa2426fc58de8004"
++      "reason": "Validates real external orchestrator OpenSpec tree, not an isolated parser fixture."
+     },
+     {
+       "file": "scripts/limits-requirements.test.mjs",
+       "classification": "excluded",
+-      "reason": "Mixed parser and real CLI subprocess scenarios; whole file is not unit-only.",
+-      "sha256": "c216214997e2cd47fecfd9c7bb1a616e28f3c88822ecca5203e9cd314dea09b8"
++      "reason": "Mixed parser and real CLI subprocess scenarios; whole file is not unit-only."
+     },
+     {
+       "file": "scripts/live-worker-run.test.mjs",
+       "classification": "excluded",
+-      "reason": "Spawns Vitest/live-worker fixtures; lifecycle integration.",
+-      "sha256": "45d67e10561ae62c65fc33d9d29364dc07c46e82628203660131889df3a19486"
++      "reason": "Spawns Vitest/live-worker fixtures; lifecycle integration."
+     },
+     {
+       "file": "scripts/merge-branch.test.mjs",
+       "classification": "excluded",
+-      "reason": "Executes Git/npm/Bash merge gates in real fixture repositories.",
+-      "sha256": "b5d8ef74f7554834c6dbfe9c7d9a9721d11b2a45cef13d94f29f5d340f38bff6"
+-    },
+-    {
+-      "file": "scripts/node-digest.test.mjs",
+-      "classification": "unit",
+-      "reason": "In-process digest/VM byte conversions; no provider or process.",
+-      "sha256": "5ec78d5d993621924b1151dc5cc74e1161e0952eeca6136da11a42e83f60b143"
+-    },
+-    {
+-      "file": "scripts/node-runtime.test.mjs",
+-      "classification": "unit",
+-      "reason": "Read-only local runtime declaration contract.",
+-      "sha256": "9cf9612b75cddb1b5fe10caf7572efb033e289d7ca9ba9171789917dd5b9d96f"
+-    },
+-    {
+-      "file": "scripts/orchestrator-paths.test.mjs",
+-      "classification": "unit",
+-      "reason": "Path resolver on private filesystem fixtures.",
+-      "sha256": "807ce2e3444d32895ed91b9251320bd306d296f57b4b211dc03d2e62f37e6229"
++      "reason": "Executes Git/npm/Bash merge gates in real fixture repositories."
+     },
+     {
+       "file": "scripts/qas-matrix.standalone.test.mjs",
+       "classification": "excluded",
+-      "reason": "Mixed pure matrix checks and actual published external quality-attribute contract.",
+-      "sha256": "433cfbbb5a41b82dd388fd010e81697a843803ab7a6ade0905f6236011f49b55"
+-    },
+-    {
+-      "file": "scripts/quality-boundaries.test.mjs",
+-      "classification": "unit",
+-      "reason": "Static import boundary analysis on synthetic files/symlinks; no child process.",
+-      "sha256": "20fa42085d3216435416944d7cc53e430a201b1f4f4664d8e85d523d848c1cee"
+-    },
+-    {
+-      "file": "scripts/quality-course-cost.test.mjs",
+-      "classification": "unit",
+-      "reason": "Pure budget/event calculations and synthetic local inputs.",
+-      "sha256": "436a624184c4417a5f9e4315b3a087f12698ad695f13b52193a61f8c6fcd98db"
++      "reason": "Mixed pure matrix checks and actual published external quality-attribute contract."
+     },
+     {
+       "file": "scripts/quality-critical.test.mjs",
+       "classification": "excluded",
+-      "reason": "Real watchdog/process tree and critical gate execution.",
+-      "sha256": "f542444145511cde99cde1842345b5ccf3768f4aa08ccdb9bbcfa469edb688f3"
++      "reason": "Real watchdog/process tree and critical gate execution."
+     },
+     {
+       "file": "scripts/quality-header-release.test.mjs",
+       "classification": "excluded",
+-      "reason": "Real Git release tree assembly and pin comparison.",
+-      "sha256": "72c3e6fa1be6dd01684f777172403087a6195dd62de0bd8e8e3d529beaf9ada6"
++      "reason": "Real Git release tree assembly and pin comparison."
+     },
+     {
+       "file": "scripts/quality-scenarios.test.mjs",
+       "classification": "excluded",
+-      "reason": "Real HTTP/Chromium and CLI lifecycle; browser cache does not make it unit.",
+-      "sha256": "580057f194361ffb02f2234d1e8f68ad5599413c3d85ac86345a7f8facfb2e58"
++      "reason": "Real HTTP/Chromium and CLI lifecycle; browser cache does not make it unit."
+     },
+     {
+       "file": "scripts/quality-size-free.test.mjs",
+       "classification": "excluded",
+-      "reason": "Executes gate CLI subprocesses.",
+-      "sha256": "63586c6d6e67368a7785645ca1c358d6309b41b5e48cf0c834d5f0c3dd7cbe84"
++      "reason": "Executes gate CLI subprocesses."
+     },
+     {
+       "file": "scripts/reconcile-window.test.mjs",
+       "classification": "excluded",
+-      "reason": "Evaluates real multi-workspace Vitest configs and imported runtime dependencies.",
+-      "sha256": "aacdc8a718926a508042f1077939a72486f9f1eeb40674f8987f549febc49d82"
++      "reason": "Evaluates real multi-workspace Vitest configs and imported runtime dependencies."
+     },
+     {
+       "file": "scripts/security-guards-budget.test.mjs",
+       "classification": "excluded",
+-      "reason": "Real Bash/Python/detached descendant metering and cleanup.",
+-      "sha256": "0ec2166d9d224da3bd0b6bd48091ab81a4f0e5d44422c147839b70045ea5284a"
++      "reason": "Real Bash/Python/detached descendant metering and cleanup."
+     },
+     {
+       "file": "scripts/shared-file-dependencies.standalone.test.mjs",
+       "classification": "excluded",
+-      "reason": "Physical shared-library resolution/import against installed dependency tree.",
+-      "sha256": "cf9e5dac50b752a13fc887b6804f809bd1d7ca2fa0c0f846550448f1d4be0c8f"
++      "reason": "Physical shared-library resolution/import against installed dependency tree."
+     },
+     {
+       "file": "scripts/shared-library-roots.test.mjs",
+       "classification": "excluded",
+-      "reason": "sharedLibsFixture starts real Git processes and copies library catalog.",
+-      "sha256": "354238a86af343c3798b6165fdbf5c66439eb5bdf20b844f633eeda51d380511"
++      "reason": "sharedLibsFixture starts real Git processes and copies library catalog."
+     },
+     {
+       "file": "scripts/shared-library-runtime.test.mjs",
+       "classification": "excluded",
+-      "reason": "Executes native/build/development entrypoints and real Git fixtures.",
+-      "sha256": "29c6615c47ca8c4f6736e27f435a65f8e13e0de65564e55c05b39baa5c319812"
++      "reason": "Executes native/build/development entrypoints and real Git fixtures."
+     },
+     {
+       "file": "scripts/shared-libs-helper-types.test.mjs",
+       "classification": "excluded",
+-      "reason": "Starts real TypeScript compiler processes.",
+-      "sha256": "5aa37abdb59521cfc7499db5eb52035c17533a1473888615f1bc627fc379c8c7"
++      "reason": "Starts real TypeScript compiler processes."
+     },
+     {
+       "file": "scripts/shared-libs-path.test.mjs",
+       "classification": "excluded",
+-      "reason": "Real Git branch/repository and native preload subprocess checks.",
+-      "sha256": "4eeb37b5dedf1a11ad31c826fcf1d351c01aaf0e2b366de8d4da8a5e50400234"
++      "reason": "Real Git branch/repository and native preload subprocess checks."
+     },
+     {
+       "file": "scripts/test-file-budget.test.mjs",
+       "classification": "excluded",
+-      "reason": "Executes Vitest child fixtures and hang/cleanup scenarios.",
+-      "sha256": "1f693f192e479a907d38a56f86e9d35ff837ee11ebb23d58942f2455dfa14ee9"
++      "reason": "Executes Vitest child fixtures and hang/cleanup scenarios."
+     },
+     {
+       "file": "scripts/typecheck.test.mjs",
+       "classification": "excluded",
+-      "reason": "Contains real compiler/cache regression in addition to injected run unit cases.",
+-      "sha256": "0ee7712890571f5e5cdba3450ebfb41984a9090147a13d36dd7f46bd64a48b7e"
++      "reason": "Contains real compiler/cache regression in addition to injected run unit cases."
+     },
+     {
+       "file": "scripts/vitest-startup.test.mjs",
+       "classification": "excluded",
+-      "reason": "Measures actual Vitest forks, time and RSS.",
+-      "sha256": "4550c1c4d14cb0fe57dd6a6af4be435da55f86e866ad3a293702f13461634115"
+-    },
+-    {
+-      "file": "scripts/worker-indexeddb-dependency.test.mjs",
+-      "classification": "unit",
+-      "reason": "Read-only local dependency/lock contract.",
+-      "sha256": "ec4d00c6d8db1ac9b92ac65841234c48754c9e68b26df56a3e7e67ddf3fdf79f"
++      "reason": "Measures actual Vitest forks, time and RSS."
+     },
+     {
+       "file": "scripts/worker-shared-startup.test.mjs",
+       "classification": "excluded",
+-      "reason": "Real shared live-worker database/Vitest lifecycle.",
+-      "sha256": "f661a034a11bddf2202c7bf94a32b15333a93f854b4653aa8ddbc4ff7486f524"
++      "reason": "Real shared live-worker database/Vitest lifecycle."
+     }
+   ]
+-}
+\ No newline at end of file
++}
+diff --git a/src/test-run-etchly-inventory.ts b/src/test-run-etchly-inventory.ts
+index c224d40..56b11e1 100644
+--- a/src/test-run-etchly-inventory.ts
++++ b/src/test-run-etchly-inventory.ts
+@@ -6,7 +6,7 @@ import { auditEtchlyInventory } from './test-run-etchly.ts';
+ import type { EtchlyInventoryFact } from './test-run-etchly.ts';
+ import type { TestRunProfile } from './test-runs.ts';
+ 
+-const reviewed = JSON.parse(readFileSync(new URL('./test-run-etchly-audit.json', import.meta.url), 'utf8')) as { sourceHashes: Record<string, string>; nodeDecisions: { file: string; classification: string; sha256: string }[] };
++const reviewed = JSON.parse(readFileSync(new URL('./test-run-etchly-audit.json', import.meta.url), 'utf8')) as { sourceHashes: Record<string, string>; nodeDecisions: { file: string; classification: string }[] };
+ const hash = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex');
+ const fail = (message: string): never => { throw Object.assign(new Error(`INVENTORY_INCOMPLETE: ${message}; repeat static review and reconcile conf/test-runs.json#/projects/etchly/profiles and groups`), { code: 'INVENTORY_INCOMPLETE' }); };
+ 
+@@ -90,10 +90,12 @@ export async function observeEtchlyInventory(workspace: string, profiles: Record
+     if (!include || /\bexclude\s*:/.test(source)) fail(`unsupported include/exclude in ${cwd}`);
+     for (const file of globSync(literal(include![1]), { cwd: resolve(workspace, cwd), exclude: ['**/node_modules/**', '**/.git/**'] })) facts.push({ file: `${cwd}/${file}`, profileId: `vitest-${name}`, classification: 'unit' });
+   }
++  const nodeUnits = new Set(profiles['node-root']?.unitFiles ?? []);
++  const excludedNodeFiles = new Set(reviewed.nodeDecisions.filter(item => item.classification === 'excluded').map(item => item.file));
+   for (const file of globSync('scripts/*.test.mjs', { cwd: workspace })) {
+-    const decision = reviewed.nodeDecisions.find(item => item.file === file);
+-    if (!decision || hash(resolve(workspace, file)) !== decision.sha256) fail(`unreviewed Node candidate ${file}`);
+-    facts.push({ file, classification: decision!.classification, profileId: decision!.classification === 'unit' ? 'node-root' : null });
++    if (nodeUnits.has(file)) facts.push({ file, classification: 'unit', profileId: 'node-root' });
++    else if (excludedNodeFiles.has(file)) facts.push({ file, classification: 'excluded', profileId: null });
++    else fail(`unreviewed Node candidate ${file}`);
+   }
+   auditEtchlyInventory({ profiles: Object.fromEntries(Object.entries(profiles).map(([id, p]) => [id, p.unitFiles ?? []])), sourceHashes: reviewed.sourceHashes }, facts, current);
+   return facts;
+56b11e10f8fa65e73fc38581f88a6e83193a2855
+c15e3ca343044a8eddaf785cef0f12b57a781a20
+ec625be1a88e24b3803fbf9ebb9b8dfff69b5e7c

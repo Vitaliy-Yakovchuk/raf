@@ -1,0 +1,33 @@
+diff --git a/test/hotfix-637-638.test.ts b/test/hotfix-637-638.test.ts
+index e4296c7..2272ef2 100644
+--- a/test/hotfix-637-638.test.ts
++++ b/test/hotfix-637-638.test.ts
+@@ -53,8 +53,10 @@ function fixture(t: TestContext, cwd = 'bugs-api') {
+   return { root, workspace, file, ports, context, write, profile };
+ }
+ 
+-for (const cwd of ['bugs-api', '.']) test(`6.3.7 non-etchly Vitest profile at ${cwd} uses the structured adapter`, async t => {
++for (const [cwd, preload] of [['bugs-api', false], ['.', false], ['bugs-api', true]] as const) test(`6.3.7 non-etchly Vitest profile at ${cwd}${preload ? ' with preload' : ''} uses the structured adapter`, async t => {
+   const f = fixture(t, cwd);
++  if (preload) f.profile.argv.unshift('--import', '../tools/raf-test-runtime.mjs');
++  const run = f.profile.argv.indexOf('run');
+   const stdout = new PassThrough(), stderr = new PassThrough();
+   const child = Object.assign(new EventEmitter(), { pid: process.pid, stdout, stderr });
+   let invocation: { executable: string; argv: string[]; options: any } | undefined;
+@@ -66,7 +68,7 @@ for (const cwd of ['bugs-api', '.']) test(`6.3.7 non-etchly Vitest profile at ${
+   syncBuiltinESMExports();
+   t.after(() => { mocked.mock.restore(); syncBuiltinESMExports(); });
+   const command: TestRunCommand = { executable: process.execPath, cwd: join(f.workspace, cwd), shell: false,
+-    argv: [...f.profile.argv.slice(0, 2), cwd === '.' ? f.file : 'src/pull.test.ts', ...f.profile.argv.slice(2)],
++    argv: [...f.profile.argv.slice(0, run + 1), cwd === '.' ? f.file : 'src/pull.test.ts', ...f.profile.argv.slice(run + 1)],
+     environment: { HOME: f.context.home, statePath: f.context.statePath, tmpPath: f.context.tmpPath, TMPDIR: f.context.home } };
+   const events: RunnerEvent[] = [];
+   const managed = await f.ports.spawn(command, event => events.push(event));
+@@ -78,6 +80,7 @@ for (const cwd of ['bugs-api', '.']) test(`6.3.7 non-etchly Vitest profile at ${
+   assert.equal(invocation?.argv[0], fileURLToPath(new URL('../scripts/test-run-vitest.ts', import.meta.url)));
+   assert.equal(invocation?.options.env.RAF_TEST_RUN_WORKSPACE, f.workspace);
+   assert.deepEqual(JSON.parse(invocation!.options.env.RAF_TEST_RUN_VITEST_BATCHES), command.environment.vitestBatches);
++  if (preload) assert.deepEqual(command.environment.vitestBatches![0].argv.slice(0, 2), ['--import', '../tools/raf-test-runtime.mjs']);
+   assert.ok(events.some(event => event.kind === 'complete'));
+ });
+ 

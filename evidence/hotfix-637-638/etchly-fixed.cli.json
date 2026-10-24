@@ -1,0 +1,14 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/d15b4d4f-5ba2-412a-afd8-19ec921e71e4/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/etchly-profiles --files test/test-run-etchly-profiles.test.ts",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "sourceHead": "300db24205dd9bbeebd9c2c485f5561092da1d0e",
+  "workspaceChanges": "Own production diff and test preload diff as recorded in *.patch. Other agent test/agent-adapters.test.ts dirty, excluded from selection and commits. Main cherry-picked pre-existing 6.3.6.1 fix without local assertion edits.",
+  "stderrCapture": "exec_command combines stdout/stderr. One complete TestRunResult JSON and no other text observed; empty stderr is not independent FD capture.",
+  "toolMetadata": {
+    "chunk_id": "2716b5",
+    "wall_time_seconds": 0.093244526,
+    "exit_code": 0,
+    "original_token_count": 4298
+  }
+}

@@ -114,14 +114,26 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
       return { kind: result.admitted ? 'reserved' : 'waiting', record, admission: result.admission };
     },
     commitReady: async (record, process) => {
-      const session = current(record.owner.runId);
-      if (!session?.process || session.process.pid !== process.pid || session.process.startedAt !== process.startedAt ||
-          !sameQueueNativeIdentity({ ...session.process, machineId: session.process.evidence.machineId, bootId: session.process.evidence.bootId, ...(process.runner === undefined ? { runner: undefined } : {}) }, process) || session.process.evidence.machineId !== process.machineId || session.process.evidence.bootId !== process.bootId) return false;
+      const ownsLaunch = (session: SessionRecord | undefined): session is SessionRecord & { process: ProcessIdentity } => {
+        const queued = session?.launchContext?.agentQueue;
+        return session?.state === 'running' && session.runId === input.runId && session.runId === record.owner.runId &&
+          session.addressId === input.addressId && session.addressId === record.agentId && !!queued &&
+          queued.queueId === record.queueId && queued.requestId === record.requestId && queued.agentId === record.agentId &&
+          queued.owner.runId === record.owner.runId && queued.owner.fence === record.owner.fence &&
+          isDeepStrictEqual(queued.clientIdentity, record.clientIdentity) && isDeepStrictEqual(queued.coordinator, record.coordinator) &&
+          !!session.process && session.process.pid === process.pid && session.process.startedAt === process.startedAt &&
+          sameQueueNativeIdentity({ ...session.process, machineId: session.process.evidence.machineId, bootId: session.process.evidence.bootId, ...(process.runner === undefined ? { runner: undefined } : {}) }, process) &&
+          session.process.evidence.machineId === process.machineId && session.process.evidence.bootId === process.bootId;
+      };
+      const session = state.transaction(tx => tx.getSession(record.owner.runId));
+      if (!ownsLaunch(session) || (await dependencies.observe(session.process)).state !== 'alive') return false;
       if (!await api.commitStarted(record.owner.runId, session.process)) return false;
       return state.transaction(tx => {
         const entry = state.get(record);
         const session = tx.getSession(record.owner.runId);
-        if (!entry || entry.phase !== 'starting' || !entry.ready || session?.state !== 'running') return false;
+        if (!ownsLaunch(session)) return false;
+        if (!entry) return true;
+        if (entry.phase !== 'starting' || !entry.ready || entry.record.agentId !== record.agentId) return false;
         return state.remove(record);
       });
     },

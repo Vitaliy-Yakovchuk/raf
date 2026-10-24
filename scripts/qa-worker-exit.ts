@@ -41,16 +41,37 @@ for (const hasReport of [true, false]) {
     }
     const nativeId = '11111111-1111-4111-8111-111111111111';
     const executable = join(f.binRoot, 'codex');
-    const screen = codexPastedBriefFixture(20177).before;
-    await fs.writeFile(executable, `#!${process.execPath}
+    const frame = codexPastedBriefFixture(20177);
+    const acceptedPath = join(f.root, 'native-accepted.json');
+    await fs.writeFile(executable, String.raw`#!${process.execPath}
+import { writeFileSync } from 'node:fs';
 if (process.argv.includes('--version')) { console.log('codex-cli ${settings.version}'); process.exit(0); }
-console.log(${JSON.stringify(screen)});
-let input = '';
+process.stdin.setRawMode(true);
 process.stdin.setEncoding('utf8');
+const frame = ${JSON.stringify({ header: frame.header, footer: frame.footer, before: frame.before, pending: frame.pending() })};
+const render = text => process.stdout.write('\x1b[2J\x1b[H' + text.replace(/\r?\n/g, '\r\n'));
+render(frame.before.replace(/\nSession: [^\n]+/u, ''));
+let input = '';
+let hasStatus = false;
+let pending = false;
+let enters = 0;
 process.stdin.on('data', text => {
   input += text;
-  if (input.includes('/status')) { console.log('Session: ${nativeId}\\n' + ${JSON.stringify(screen)}); input = input.replace('/status', ''); }
-  if (input.includes('BRIEF_END')) console.log('\\n• Working (0s • esc to interrupt)\\n› ');
+  if (!hasStatus) {
+    if (input.includes('/status') && /[\r\n]/.test(input)) { hasStatus = true; input = ''; render(frame.before); }
+    return;
+  }
+  if (!pending) {
+    const end = input.indexOf('BRIEF_END');
+    if (end < 0) return;
+    pending = true;
+    render(frame.pending);
+    if (!/[\r\n]/.test(input.slice(end + 'BRIEF_END'.length))) return;
+  } else if (!/[\r\n]/.test(text)) return;
+  enters++;
+  if (enters === 1) { render(frame.pending.replace('20177 chars', '20178 chars')); return; }
+  writeFileSync(${JSON.stringify(acceptedPath)}, JSON.stringify({ enters, briefCharacters: 20177 }));
+  render('Session: ${nativeId}\n• Working (0s • esc to interrupt)\n› ');
 });
 `, { mode: 0o700 });
     const raf = JSON.parse(await fs.readFile(join(f.confRoot, 'raf.json'), 'utf8'));
@@ -66,7 +87,7 @@ process.stdin.on('data', text => {
     assert.equal(reserved.admitted, true);
     await recordLaunchRunnerPath(f.tmpRoot, runId, executable);
     const session = () => f.store.sessionRepository.transaction(tx => tx.getSession(runId));
-    const brief = 'Synthetic worker exit probe. BRIEF_END';
+    const brief = frame.brief;
     await fs.writeFile(session()!.launchContext!.briefPath, brief);
     const environment = { ...inherited, HOME: f.home, RAF_QA_HOME: f.home, PATH: f.binRoot + ':' + inherited.PATH };
     for (const key of Object.keys(environment)) if (key.startsWith('RAF_') && key !== 'RAF_QA_HOME') delete environment[key];
@@ -76,6 +97,8 @@ process.stdin.on('data', text => {
       workerCommand: { executable: process.execPath, environment, args: ['--input-type=module', '-e', `const trace=await import(${JSON.stringify(pathToFileURL(join(source, 'scripts/qa-worker-trace.ts')).href)});trace.traceWorkerCommands(${JSON.stringify(trace)},${JSON.stringify(settings)},${JSON.stringify(brief)});const m=await import(${JSON.stringify(f.runtimeUrl)});await m.runProductionWorker();`] },
     });
     workerPid = started.wrapperPid; runnerPid = started.identity.pid;
+    row.delivery = JSON.parse(await fs.readFile(acceptedPath, 'utf8'));
+    assert.equal(row.delivery.enters, 2);
     f.trackProcess(workerPid); f.trackProcess(runnerPid);
     const socket = join(f.tmpRoot, 'tmux/server.sock');
     const tmux = async (args: string[]) => {
@@ -104,7 +127,7 @@ process.stdin.on('data', text => {
     row.hooks = await tmux(['show-hooks', '-g']);
     row.workerLog = await fs.readFile(join(f.tmpRoot, runId, 'worker.log'), 'utf8').catch(() => '');
     row.passed = row.workerExited && row.runnerExited && row.session?.state === 'finished' && row.session?.result?.status === 'failed' && row.reservations.length === 0 && row.admission.length === 0 && row.idle.completedCommands === 0 && row.idle.cpuTicks <= 1 && !/raf-exit-/.test(row.hooks);
-  } catch (error) { row.error = String(error); row.passed = false; }
+  } catch (error) { row.error = String(error); row.passed = false; await (error as any).wrapper?.terminate(); }
   finally {
     for (const pid of [workerPid, runnerPid]) if (pid) { try { process.kill(pid, 'SIGTERM'); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error; } }
     for (const action of cleanups.reverse()) await action();

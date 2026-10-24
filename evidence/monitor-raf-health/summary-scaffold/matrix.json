@@ -60,5 +60,7 @@
     "no feature logic in scaffold methods: all throw Error(NotImplemented)"
   ],
   "testDoubles": "In-memory serialized transaction with rollback and persisted state, aggregate reader, existing outbox/receipt transport. These are unit boundaries, not live SQLite/worker/tmux proof.",
-  "qaRemaining": "Task 7.4 owns real worker/SQLite/service-off and main-offline/restart delivery checks; this scaffold does not close it."
+  "qaRemaining": "Task 7.4 owns real worker/SQLite/service-off and main-offline/restart delivery checks; this scaffold does not close it.",
+  "executedUnitTests": 51,
+  "redRunId": "797efc2e-d8c7-4e4b-aa40-8e280de1d6ad"
 }

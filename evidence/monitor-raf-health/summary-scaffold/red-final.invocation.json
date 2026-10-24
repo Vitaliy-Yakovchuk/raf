@@ -1,0 +1,17 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/summary --files test/health-summary.test.ts",
+  "sourceCommit": "405eb81aad38a8322aa6d487598ea7ef5607c929",
+  "registrationReportedByMain": "034b258400",
+  "registeredGroup": {
+    "profileId": "node",
+    "files": [
+      "test/health-summary.test.ts"
+    ]
+  },
+  "fileInUnitFiles": true,
+  "filesSha256": {
+    "src/health-summary.ts": "16f28cda3fbec5c2b7a02ab4eb1db7c6dfcf2c5b5994e3a60b1fedcf61505b96",
+    "test/health-summary.test.ts": "c5e82accf0067859195e6ecec2e53f3fd36b78747ba2c4a332e4e995f54ccac8"
+  },
+  "repeatReason": "Unique test IDs replace JSON.stringify collisions for null/NaN/Infinity; previous tool result was truncated. Assertions and behavior requirements unchanged; no timeout budget reset."
+}

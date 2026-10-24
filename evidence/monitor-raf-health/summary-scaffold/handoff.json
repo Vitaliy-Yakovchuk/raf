@@ -62,6 +62,53 @@
     ],
     "staleInstructions": "tasks.md старе правило сліпого режиму/заборони автору запускати тести перекрите явним брифом та add-raf-test-run feature-test-authoring delta; tasks.md не редагував."
   },
-  "initialRun": "Awaiting main registration after scaffold commit. Full TestRunResult and CLI exit will be added separately.",
-  "archive": "Not applicable: other change items remain open; no checkboxes edited."
+  "initialRun": {
+    "runId": "f30644a9-c51d-4f5c-923c-e5d81d0ac897",
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "completeCapture": false,
+    "artifact": "red-initial.tool-result.json",
+    "reason": "First output capture was truncated; duplicate null/NaN/Infinity names were corrected without changing assertions."
+  },
+  "archive": "Not applicable: other change items remain open; no checkboxes edited.",
+  "finalRun": {
+    "runId": "797efc2e-d8c7-4e4b-aa40-8e280de1d6ad",
+    "sourceCommit": "405eb81aad38a8322aa6d487598ea7ef5607c929",
+    "fullTestRunResult": "red-final.result.json",
+    "invocation": "red-final.invocation.json",
+    "exitEvidence": "red-final.exit.json",
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "knownRedCount": 51,
+    "unexecuted": [],
+    "unknown": [],
+    "timedOut": false,
+    "timeoutCount": 0,
+    "nextAction": "implement"
+  },
+  "redReview": "50 NotImplemented failures in the scaffold and one primary-error preservation assertion; no import/setup failures. Independent coordinator confirmation remains task 7.2. Removed test IDs are only six previous JSON.stringify policy labels, replaced by eight unambiguous case names.",
+  "checks": {
+    "strictTypes": "0: source and test, system Node typings (/usr/share/nodejs/@types); skipLibCheck only ambient declarations",
+    "syntax": "0: both files initially and test after title-only correction",
+    "comments": "Initial check 0. After title-only correction, global check 1 from foreign test/helpers/z4044-host-tmux.mjs:3,4; main notified, no foreign file changed.",
+    "diffCheck": "0",
+    "artifacts": [
+      "checks.json",
+      "checks-after-test-ids.json"
+    ]
+  },
+  "registration": {
+    "performedBy": "main",
+    "reportedCommit": "034b258400",
+    "verifiedGroup": {
+      "profileId": "node",
+      "files": [
+        "test/health-summary.test.ts"
+      ]
+    },
+    "fileInUnitFiles": true
+  }
 }

@@ -11,7 +11,7 @@ import { runAgentWithQueue, type AgentQueueProcess, type AgentQueueRecord, type 
 import type { RuntimeConfiguration, RuntimeContext, RuntimeReservationInput, RuntimeServices } from '../src/app-runtime.ts';
 import type { AdmissionSnapshot } from '../src/admission-snapshot.ts';
 import type { ProcessIdentity, SessionRecord } from '../src/session-state.ts';
-import type { ReservedTaskSnapshot } from '../src/task-reservations.ts';
+import type { ReservationProcessIdentity, ReservedTaskSnapshot } from '../src/task-reservations.ts';
 
 async function fixture(t: TestContext, waited: boolean) {
   const directory = mkdtempSync(join(tmpdir(), 'raf-start-result-'));
@@ -24,7 +24,7 @@ async function fixture(t: TestContext, waited: boolean) {
     runId: 'start-result-run', addressId: 'start-result-worker', tmuxSession: 'start-result-worker',
     activity: { type: 'implement', project: 'raf', phase: 'implement', features: ['fix-raf-load-admission'], cwd: directory },
     assignment: { root: directory, changes: [{ id: 'fix-raf-load-admission', items: [{ id: '6.8.1', description: 'implement start result' }] }], baselineArchives: [] },
-    selection: { status: 'selected', runner: 'codex', model: 'fixture', effort: 'high', reason: 'unit fixture' },
+    selection: { status: 'selected', runner: 'codex', model: 'fixture', effort: 'high', reason: 'unit fixture', quota: 'available' },
     statePath, tmpRoot: directory, reportPath: join(directory, 'report.json'),
     requested: { ramBytes: 8, diskBytes: { fixture: 16 } }, requiredFileSystemIds: ['fixture'],
   };
@@ -53,7 +53,7 @@ async function fixture(t: TestContext, waited: boolean) {
     requiredFileSystemIds: input.requiredFileSystemIds };
   const task: ReservedTaskSnapshot = { key: { project: 'raf', changeId: 'fix-raf-load-admission', taskId: '6.8.1' },
     changeInstance: 'start-result-instance', fingerprint: 'start-result-task' };
-  const identity: ProcessIdentity = {
+  const identity: ReservationProcessIdentity = {
     pid: 4242, startedAt: '2026-10-24T00:00:00Z', runner: 'codex', runnerSessionId: 'native-start-result',
     tmuxSession: input.tmuxSession, evidence: { machineId: production.request.clientIdentity.machineId,
       bootId: production.request.clientIdentity.bootId, runId: input.runId },

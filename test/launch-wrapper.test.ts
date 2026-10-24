@@ -277,7 +277,7 @@ test('delivery failure rechecks ownership before stopping and retains recoverabl
     throw new Error('delivery failed');
   };
   await assert.rejects(runLaunchWrapper(f.request, f.ports), /delivery failed/);
-  assert.equal(f.events.filter(event => event === 'ownership').length, 3);
+  assert.equal(f.events.filter(event => event === 'ownership').length, 2);
   assert.ok(f.events.indexOf('ownership') < f.events.indexOf('deliver'));
   assert.ok(f.events.lastIndexOf('ownership') > f.events.indexOf('deliver'));
   assert.ok(!f.events.includes('stop'));

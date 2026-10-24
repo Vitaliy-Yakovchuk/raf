@@ -1,0 +1,38 @@
+{
+  "change": "profile-raf-performance",
+  "item": "2.3",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/5213cd2c-4a65-4d5e-a479-7b406b7c3ad0/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+  "sourceCommit": "9bdeae6f35d7b5c17798e70821a1d79f5a9ff891",
+  "sourceRepository": "/srv/dev/work/orchestrator/raf-develop",
+  "initialImplementationCompletedBeforePreparedTestRead": true,
+  "preparedTestUnchanged": true,
+  "preparedTestSha256": "919b7a58842b89afde02733c7155f85cb1f44d48e0136b9122022fcbddeedd6a",
+  "consumerAdaptationsAuthorizedBy": "Уточнення main у цій сесії: дозволено мінімальну адаптацію production-entry/app-runtime fixtures; підготовлений raf-cost-profile.test.ts не змінювати.",
+  "configurationCommits": [
+    "755f64560e",
+    "52f5808a3e"
+  ],
+  "checksEvidence": "checks-and-workspace.json",
+  "configurationFingerprints": "configuration-fingerprints.json",
+  "initialRun": {
+    "result": "initial-result.json",
+    "stderr": "initial.stderr.log",
+    "exitCodes": "initial-cli-exit.json",
+    "workspace": "initial-workspace.txt",
+    "resultPreservation": "Повний незмінений об’єкт lastResult прочитано read-only з того самого агрегату до наступного прогону; stderr збережено з відповіді інструмента."
+  },
+  "interruptedRun": {
+    "result": "interrupted-result.json",
+    "stderr": "interrupted.stderr.log",
+    "exitCodes": "interrupted-cli-exit.json",
+    "rawToolResult": "interrupted-tool-result.json",
+    "reason": "Main зупинив службу для перенесення hotfix 9.1.1; RESOURCE_WAIT_FAILED / Service stopped до запуску child.",
+    "retryAuthorization": "Main у цій сесії доручив після перезапуску повторити той самий фінальний profile з 9bdeae6 без змін."
+  },
+  "limitations": [
+    "Node spawn не надає перевірених per-child CPU counters: helper CPU явно null/unavailable з причиною, child wall виміряний. Повний CPU не заявляється.",
+    "Потрібна явна міграція основної SQLite з версії 16 до 17 за чинним raf-state; production стан у цьому пункті не мігрувався.",
+    "Живі сценарії й декларації чужих регресій залишено пункту 2.4; EMA-покриття прямих production-гілок залишається 3.3.",
+    "Інші пункти зміни відкриті; tasks.md не редагувався, архівація не виконувалась."
+  ]
+}

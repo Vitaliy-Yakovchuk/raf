@@ -1,0 +1,49 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/5213cd2c-4a65-4d5e-a479-7b406b7c3ad0/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+  "checks": [
+    {
+      "command": "npm run build",
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "20357a",
+        "wall_time_seconds": 4.287204877,
+        "exit_code": 0,
+        "original_token_count": 34,
+        "output": "\n> build\n> node scripts/build.ts\n\nКаталог зібрано. Операційні команди ще не реалізовані.\n"
+      }
+    },
+    {
+      "command": "npm run check:comments",
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "ab4ed1",
+        "wall_time_seconds": 4.306958413,
+        "exit_code": 0,
+        "original_token_count": 13,
+        "output": "\n> check:comments\n> node scripts/check-comments.ts\n\n"
+      }
+    },
+    {
+      "command": "git diff --check",
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "1db56e",
+        "wall_time_seconds": 0.247043279,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "command": "runtime import smoke",
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "3d93a1",
+        "wall_time_seconds": 0.64972097,
+        "exit_code": 0,
+        "original_token_count": 5,
+        "output": "Runtime imports OK\n"
+      }
+    }
+  ]
+}

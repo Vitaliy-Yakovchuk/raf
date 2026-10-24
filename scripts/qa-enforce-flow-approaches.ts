@@ -104,8 +104,6 @@ try {
   changeRoot = join(root, 'openspec/changes', change);
   tasksPath = join(changeRoot, 'tasks.md');
   evidence.stand = { directory: f.directory, root, home: join(f.directory, 'home'), tmpRoot: f.tmpRoot, statePath: join(f.directory, 'home/.raf/state.sqlite') };
-  // Transport fixture only: the sandbox denies shared host IPC roots. Keep the
-  // production transport and every flow gate, but give this stand private roots.
   const socketModule = join(root, 'raf-develop/src/raf-temporary-socket.ts');
   const socketOriginal = await readFile(socketModule, 'utf8');
   const socketAdapted = socketOriginal

@@ -389,7 +389,7 @@ test('Z409.S01 production implement then qa deliver compact TMPDIR with stable l
   assert.equal(outputs[0].command!.environment.HOME, outputs[1].command!.environment.HOME);
   assert.notEqual(outputs[0].command!.environment.TMPDIR, outputs[1].command!.environment.TMPDIR);
   assert.equal(process.cwd(), cwd);
-  assert.deepEqual(process.env, environment);
+  assert.deepEqual({ ...process.env }, environment);
 });
 
 test('Z409.S02 production accepts exact byte capacity including created suffix and NUL with multibyte root', async t => {

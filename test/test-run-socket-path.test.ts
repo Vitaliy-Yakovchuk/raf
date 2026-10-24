@@ -155,6 +155,8 @@ function fixture(t: TestContext) {
     TMUX: '', TMUX_PANE: '',
   };
   for (const directory of [join(root, 'conf'), join(root, 'openspec/changes', change), workspace, controlHome]) mkdirSync(directory, { recursive: true });
+  mkdirSync(unitHome, { recursive: true, mode: 0o700 });
+  t.diagnostic(`fixture unitHome mode: 0${(lstatSync(unitHome).mode & 0o7777).toString(8)}`);
   for (const name of ['projects.json', 'raf.json', 'raf-constants.json', 'flow.json', 'test-runs.json']) cpSync(join(sourceConf, name), join(root, 'conf', name));
   const projects = json(join(root, 'conf/projects.json'));
   const raf = projects.projects.raf;

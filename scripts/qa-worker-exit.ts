@@ -71,6 +71,7 @@ process.stdin.on('data', text => {
   input += text;
   if (!hasStatus) {
     if (input.includes('/status') && /[\r\n]/.test(input)) { hasStatus = true; input = ''; render(frame.before); }
+    else if (input.includes('/status')) render(frame.before.replace(/\nSession: [^\n]+/u, '').replace('› Ask Codex to do anything', '› /status'));
     return;
   }
   if (!pending) {

@@ -270,7 +270,7 @@ test('7.2 CLI rejects active at with nonzero code explanation details and close 
     assert.match(explanation, /спрац|актив|activ|trigger|fir/iu, result.stderr);
     const diagnostic = JSON.stringify(error);
     assert.ok(diagnostic.includes(reminder.id), result.stderr);
-    assert.match(diagnostic, /active/iu);
+    assert.match(diagnostic, /\bactive\b/u);
     assert.ok(diagnostic.includes(`reminder close --id ${reminder.id}`), result.stderr);
     assert.match(diagnostic, /--reason/);
     assert.ok(diagnostic.includes('reminder add --to worker'), result.stderr);

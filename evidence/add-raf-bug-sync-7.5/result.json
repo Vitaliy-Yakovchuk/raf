@@ -1,0 +1,72 @@
+{
+  "assignment": "add-raf-bug-sync:7.5",
+  "runId": "fe02c3ed-c08b-42b9-b939-a37f4794aeff",
+  "agentId": "raf-bs75-qa",
+  "date": "2026-10-24",
+  "outcome": "unexecuted",
+  "status": "failed",
+  "reason": "Main підтвердив, що upstream dash-bugs-api-for-raf-sync:6.5 не виконано, і доручив завершити failed/unexecuted. Живий сценарій 7.5 залежить від цієї викладки.",
+  "workspace": {
+    "repository": "/srv/dev/work/orchestrator/raf-develop",
+    "headAtAudit": "3d466c34241c13108860e15ead726814355a8cb5",
+    "orchestratorHeadAtAudit": "424523b512308a6a9d0e8ca42095f586a6f4d4f0",
+    "trackedDiffAtAudit": [],
+    "otherUntrackedFilesAtAudit": [
+      "src/flow-brief.ts",
+      "src/flow-qa-report.ts",
+      "src/flow-task-plan.ts",
+      "test/flow-brief.test.ts",
+      "test/flow-qa-report.test.ts",
+      "test/flow-task-plan.test.ts",
+      "test/helpers/flow-checks-fixture.ts"
+    ],
+    "ownChanges": ["evidence/add-raf-bug-sync-7.5/live-scenario.md", "evidence/add-raf-bug-sync-7.5/result.json"]
+  },
+  "environment": {
+    "os": "Linux 7.0.0-30-generic",
+    "node": "v26.12.1",
+    "architecture": "x64",
+    "browser": "not applicable to CLI scenario",
+    "rafQaHomeConfigured": false,
+    "cloudEnvironmentStatusToolAvailable": false,
+    "networkPolicySnapshotAvailable": false,
+    "liveDashBuild": "unknown; deployment not verified in this session"
+  },
+  "sources": [
+    "openspec/changes/add-raf-bug-sync/proposal.md: What Changes and Q89",
+    "openspec/changes/add-raf-bug-sync/tasks.md:7.5",
+    "openspec/changes/add-raf-bug-sync/design.md: Upstream і конфігурація (UP-comment-receipt blocks 7.5)",
+    "openspec/changes/dash-bugs-api-for-raf-sync/tasks.md:6.5 unchecked",
+    "openspec/specs/core/process/user-qa/spec.md: Докази та задачі QA",
+    "openspec/specs/core/process/integration-test-runs/spec.md: Окремі інтеграційні та стендові перевірки",
+    "Main message: Main: згоден — 7.5 залежить від dash-bugs-api-for-raf-sync 6.5 (не виконано). Заверши failed/unexecuted з цією причиною, 7.5 лишається відкритим. Ланцюжок dash запускаю."
+  ],
+  "coordination": [
+    {"recipient": "main", "receiptId": "850f474a-b0d6-40cd-a697-396b11cf8b3b", "cliExitCode": 0, "subject": "request live prerequisites; production secret path is denied"},
+    {"recipient": "main", "receiptId": "9e34853f-e200-40e3-84ee-70ead5abac2c", "cliExitCode": 0, "subject": "report upstream 6.5 unchecked; no substitution with unit checks"}
+  ],
+  "scenarios": [
+    {"name": "live comment add followed immediately by bug show", "outcome": "unexecuted"},
+    {"name": "live status set followed immediately by bug show", "outcome": "unexecuted"},
+    {"name": "live next pull preserves writes and converges with server", "outcome": "unexecuted"},
+    {"name": "isolated CLI with local fake", "outcome": "unexecuted", "reason": "Main subsequently requested immediate failed/unexecuted completion for the upstream dependency; existing fake tests were not rerun or claimed as evidence."}
+  ],
+  "unitRuns": [],
+  "unitState": {
+    "group": null,
+    "state": "not-started",
+    "testRunResult": null,
+    "stderr": null,
+    "cliExitCode": null,
+    "childExitCode": null,
+    "knownRed": [],
+    "unknown": ["live behavior before upstream deployment"],
+    "cleanup": "no test process, HTTP fake, or service started",
+    "timeout": false,
+    "nextAction": "Complete upstream dash-bugs-api-for-raf-sync:6.5; main executes live-scenario.md with the test bug and returns sanitized evidence."
+  },
+  "productDefects": "not assessed; live scenario unavailable",
+  "remoteMutations": [],
+  "tasksModified": false,
+  "archive": null
+}

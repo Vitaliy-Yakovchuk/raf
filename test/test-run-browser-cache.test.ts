@@ -13,6 +13,13 @@ import type { TestRunContext, TestRunProfile } from '../src/test-runs.ts';
 
 const runners: AgentRunner[] = ['codex', 'claude', 'grok', 'agy'];
 
+function setEnvironment(t: TestContext, name: string, value: string | undefined): void {
+  const previous = process.env[name];
+  const set = (next: string | undefined) => { if (next === undefined) delete process.env[name]; else process.env[name] = next; };
+  set(value);
+  t.after(() => set(previous));
+}
+
 async function launch(runner: AgentRunner) {
   const commands: AdapterCommand[] = [];
   const protocol: RunnerProtocol = {
@@ -35,9 +42,9 @@ function sessionCache(command: AdapterCommand): string | undefined {
 
 for (const runner of runners) {
   test(`browser cache: ${runner} launch supplies host default with no tmux server environment`, async t => {
-    t.mock.env('PLAYWRIGHT_BROWSERS_PATH', undefined);
-    t.mock.env('XDG_CACHE_HOME', undefined);
-    t.mock.env('HOME', '/qa/isolated-home');
+    setEnvironment(t, 'PLAYWRIGHT_BROWSERS_PATH', undefined);
+    setEnvironment(t, 'XDG_CACHE_HOME', undefined);
+    setEnvironment(t, 'HOME', '/qa/isolated-home');
     const hostHome = userInfo().homedir;
     const expected = process.platform === 'darwin' ? join(hostHome, 'Library', 'Caches', 'ms-playwright')
       : process.platform === 'win32' ? join(process.env.LOCALAPPDATA || join(hostHome, 'AppData', 'Local'), 'ms-playwright')
@@ -48,16 +55,16 @@ for (const runner of runners) {
 
   test(`browser cache: ${runner} launch carries the explicit trusted host path as one tmux argument`, async t => {
     const cache = '/host/browser cache/$literal;value';
-    t.mock.env('PLAYWRIGHT_BROWSERS_PATH', cache);
-    t.mock.env('XDG_CACHE_HOME', '/host/other-cache');
+    setEnvironment(t, 'PLAYWRIGHT_BROWSERS_PATH', cache);
+    setEnvironment(t, 'XDG_CACHE_HOME', '/host/other-cache');
     assert.equal(sessionCache(await launch(runner)), `PLAYWRIGHT_BROWSERS_PATH=${cache}`);
   });
 }
 
 test('browser cache: Linux launch respects the host XDG cache directory despite isolated HOME', { skip: process.platform !== 'linux' }, async t => {
-  t.mock.env('PLAYWRIGHT_BROWSERS_PATH', undefined);
-  t.mock.env('HOME', '/qa/isolated-home');
-  t.mock.env('XDG_CACHE_HOME', '/host/xdg-cache');
+  setEnvironment(t, 'PLAYWRIGHT_BROWSERS_PATH', undefined);
+  setEnvironment(t, 'HOME', '/qa/isolated-home');
+  setEnvironment(t, 'XDG_CACHE_HOME', '/host/xdg-cache');
   assert.equal(sessionCache(await launch('codex')), 'PLAYWRIGHT_BROWSERS_PATH=/host/xdg-cache/ms-playwright');
 });
 

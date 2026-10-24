@@ -1,0 +1,45 @@
+{
+  "sourceChange": "profile-raf-performance",
+  "sourceItem": "5.1",
+  "scope": "Continuation explicitly limited by tasks.md and main to existing-fix regression groups; main owns CPU stands; no runtime edits.",
+  "observedBeforeFirstInvocation": {
+    "head": "01bd24882dc182765d4cc0845086bba17d7516e4",
+    "dirty": [
+      " M src/test-runs.ts (foreign)",
+      "?? evidence/hotfix-6.3.9/* (foreign)",
+      "?? node_modules (preexisting)"
+    ]
+  },
+  "observedWhileWaiting": {
+    "at": "2026-10-24T22:35:58.473966+00:00",
+    "head": "fc8bcf87888e082670b48ecc13c9ec089d4f0ad7",
+    "status": "?? node_modules\n",
+    "diffStat": ""
+  },
+  "concurrentCommit": "fc8bcf87888e082670b48ecc13c9ec089d4f0ad7 (foreign src/test-runs.ts inventory fix; observed after first invocation and before second invocation)",
+  "testedRuntime": {
+    "path": "src/production-runtime.ts",
+    "sha256": "7bbbb89db6b2229a7f9fd71e69327bf5ecfb29d09c6796471c7c25c8f2010f9a",
+    "fixCommit": "f4eeb215458de4fbf54f7ede45a9e06fa2cd2626"
+  },
+  "inheritedEvidence": "evidence/profile-raf-performance-5.1/summary.json",
+  "inheritedTargetRedRunId": "07aa27a8-63ba-4a4d-b4fd-a53006942be8",
+  "inheritedGreenRunId": "8d48ae5d-05c2-4071-bc80-1e3dc9101348",
+  "inheritedEvidenceCommit": "2b37b59b0412366c5d3e2ddf64f3cf16d7f8480a",
+  "regressionCommands": [
+    "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle",
+    "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z393"
+  ],
+  "runtimeChangesByThisSession": false,
+  "taskCheckboxChangedByThisSession": false,
+  "archive": null,
+  "archiveReason": "Other profile-raf-performance items remain open.",
+  "coordinatorQueueObservation": {
+    "reportedAt": "2026-10-24T22:39:00Z",
+    "reportedBy": "main",
+    "source": "verified agent message delivered in this session",
+    "loadAverageApprox": 15.9,
+    "logicalCores": 8,
+    "state": "Runs alive and waiting for admission; one node --test executes at a time. No rerun requested."
+  }
+}

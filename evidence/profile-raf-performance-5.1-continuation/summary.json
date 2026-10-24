@@ -1,0 +1,241 @@
+{
+  "item": "profile-raf-performance:5.1",
+  "session": "raf-prp51b-hotfix",
+  "status": "failed",
+  "reason": "worker-idle passed; z393 returned setup-failed recovery with original runner protocol and exit code unavailable, nextAction=reconcile. CPU before/after remains owned by main and was not supplied in this session.",
+  "audit": {
+    "current": true,
+    "scope": "Main continuation note under tasks.md 5.1 and verified main messages limit this session to two regressions of existing f4eeb215. No runtime changes or repeat initial red/fix/green.",
+    "runtimeDiffFromFix": ""
+  },
+  "runs": [
+    {
+      "runId": "604603c5-080c-4cc5-99b0-f35db98a97b5",
+      "group": "fix-raf-load-admission/worker-idle",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/agent-adapters.test.ts",
+          "test/agent-control.test.ts",
+          "test/launch-wrapper.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/agent-adapters.test.ts",
+          "test/agent-control.test.ts",
+          "test/launch-wrapper.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+          "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+          "TMPDIR": "/tmp/r-fyZgQ3"
+        }
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "diagnostics": [],
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "34636e00082226eb8a1ae440e7fad48638862edf5bd0f870a7d1cf96f97f3ac6",
+          "testRuns": "82ff1c7b15910d25787ec762607a5c5d11cf805125b4b6261b630db3d966744b",
+          "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+        },
+        "tmpPathBytes": 13,
+        "privateRunTmp": true
+      },
+      "cliExitCode": 0,
+      "passedCount": 84,
+      "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle",
+      "sourceChange": "profile-raf-performance",
+      "sourceItem": "5.1",
+      "headAtReturn": "fc8bcf87888e082670b48ecc13c9ec089d4f0ad7",
+      "result": "evidence/profile-raf-performance-5.1-continuation/worker-idle.stdout.json",
+      "stderr": "evidence/profile-raf-performance-5.1-continuation/worker-idle.stderr",
+      "cli": "evidence/profile-raf-performance-5.1-continuation/worker-idle.cli.json"
+    },
+    {
+      "runId": "c41becb8-3471-40bf-a175-6a2f5f62ad4e",
+      "group": "complete-raf-flow-contracts/z393",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/report-confirmation-retry.test.ts",
+          "test/report-confirmation-runtime.test.ts",
+          "test/report-confirmation-progress.test.ts",
+          "test/assignment-identity.test.ts",
+          "test/assignment-identity-qa.test.ts",
+          "test/task-checkbox-report.test.ts",
+          "test/task-checkbox-index.test.ts",
+          "test/report-commit-index.test.ts",
+          "test/reported-commits-acceptance.test.ts",
+          "test/agent-report.test.ts",
+          "test/agent-report-freshness.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/report-confirmation-retry.test.ts",
+          "test/report-confirmation-runtime.test.ts",
+          "test/report-confirmation-progress.test.ts",
+          "test/assignment-identity.test.ts",
+          "test/assignment-identity-qa.test.ts",
+          "test/task-checkbox-report.test.ts",
+          "test/task-checkbox-index.test.ts",
+          "test/report-commit-index.test.ts",
+          "test/reported-commits-acceptance.test.ts",
+          "test/agent-report.test.ts",
+          "test/agent-report-freshness.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+          "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp"
+        }
+      },
+      "outcome": "setup-failed",
+      "exitCode": null,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "reconcile",
+      "nextAction": "reconcile",
+      "diagnostics": [
+        {
+          "kind": "runner",
+          "test": null,
+          "message": "Original runner protocol unavailable after owner loss",
+          "location": null,
+          "stack": [],
+          "redacted": false,
+          "truncated": false,
+          "unavailableReason": "Original exit code and protocol unavailable"
+        }
+      ],
+      "environmentSummary": {
+        "executable": "",
+        "runtimeVersion": "",
+        "adapter": "unavailable",
+        "isolation": "unavailable",
+        "configurationFingerprints": {
+          "flow": "",
+          "testRuns": "",
+          "projects": ""
+        },
+        "tmpPathBytes": 0,
+        "privateRunTmp": false
+      },
+      "cliExitCode": 1,
+      "passedCount": 0,
+      "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z393",
+      "sourceChange": "profile-raf-performance",
+      "sourceItem": "5.1",
+      "headAtReturn": "fc8bcf87888e082670b48ecc13c9ec089d4f0ad7",
+      "result": "evidence/profile-raf-performance-5.1-continuation/z393-recovery.stdout.json",
+      "stderr": "evidence/profile-raf-performance-5.1-continuation/z393-recovery.stderr",
+      "cli": "evidence/profile-raf-performance-5.1-continuation/z393-recovery.cli.json"
+    }
+  ],
+  "failedInvocations": [
+    {
+      "id": "activation.lock.owner-e2696cd7-2c4a-4b4f-b1dc-fa6a53345faf",
+      "runId": null,
+      "cliExitCode": 1,
+      "testRunResult": null,
+      "diagnosticCode": "PRODUCTION_ENTRY_FAILED",
+      "reason": "EROFS in hotfix activation reader lock; trusted channel was not used, per main",
+      "evidence": "evidence/profile-raf-performance-5.1-continuation/z393-entry-failed.cli.json",
+      "stdout": "evidence/profile-raf-performance-5.1-continuation/z393-entry-failed.stdout",
+      "stderr": "evidence/profile-raf-performance-5.1-continuation/z393-entry-failed.stderr"
+    },
+    {
+      "id": null,
+      "runId": null,
+      "cliExitCode": 127,
+      "testRunResult": null,
+      "reason": "main explicitly requested bare raf command; raf executable unavailable. No test started.",
+      "evidence": "evidence/profile-raf-performance-5.1-continuation/z393-command-not-found.cli.json",
+      "stdout": "evidence/profile-raf-performance-5.1-continuation/z393-command-not-found.stdout",
+      "stderr": "evidence/profile-raf-performance-5.1-continuation/z393-command-not-found.stderr"
+    }
+  ],
+  "retryAuthorization": "Main explicitly allowed exactly one retry in the original successful worker-idle form after those failures; it returned saved recovery result c41becb8. No further test invocation.",
+  "inheritedEvidence": {
+    "summary": "evidence/profile-raf-performance-5.1/summary.json",
+    "commit": "2b37b59b0412366c5d3e2ddf64f3cf16d7f8480a",
+    "red": {
+      "runId": "07aa27a8-63ba-4a4d-b4fd-a53006942be8",
+      "result": "evidence/profile-raf-performance-5.1/red.stdout.json",
+      "cli": "evidence/profile-raf-performance-5.1/red.cli.json",
+      "assertion": "29 origin inventory revalidations != 0"
+    },
+    "fix": "f4eeb215458de4fbf54f7ede45a9e06fa2cd2626",
+    "green": {
+      "runId": "8d48ae5d-05c2-4071-bc80-1e3dc9101348",
+      "result": "evidence/profile-raf-performance-5.1/green-counts.stdout.json",
+      "cli": "evidence/profile-raf-performance-5.1/green-counts.cli.json",
+      "counts": {
+        "firstGitCommands": 18,
+        "repeatedGitCommands": 11,
+        "originRevalidations": 0
+      }
+    },
+    "build": {
+      "evidence": "evidence/profile-raf-performance-5.1/build-final.json",
+      "exitCode": 0
+    },
+    "comments": {
+      "evidence": "evidence/profile-raf-performance-5.1/check-comments-final.json",
+      "exitCode": 0
+    }
+  },
+  "cpu": {
+    "owner": "main",
+    "result": null,
+    "status": "not supplied in this continuation; not claimed passed"
+  },
+  "workspaceContext": "evidence/profile-raf-performance-5.1-continuation/workspace-context.json",
+  "nextAction": "Main reconciles complete-raf-flow-contracts/z393 owner-loss/protocol failure and trusted channel; retain current QA HOME/group aggregate. Do not rerun blindly. Main supplies CPU stand results before accepting complete item 5.1.",
+  "runtimeChangesByThisSession": false,
+  "checkboxChangedByThisSession": false,
+  "archive": null,
+  "archiveReason": "Other tasks remain open; no archive or spec sync performed."
+}

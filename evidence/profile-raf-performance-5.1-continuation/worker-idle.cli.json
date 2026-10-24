@@ -1,0 +1,15 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle",
+  "sourceChange": "profile-raf-performance",
+  "sourceItem": "5.1",
+  "targetGroup": "fix-raf-load-admission/worker-idle",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "streamCapture": "Complete combined tool output retained in merged.txt. Contract stdout is the single unchanged TestRunResult line; remaining queue notice line belongs to stderr. No result reserialization.",
+  "workspaceContext": "workspace-context.json",
+  "headAtReturn": "fc8bcf87888e082670b48ecc13c9ec089d4f0ad7",
+  "workspaceStatusAtReturn": "?? evidence/profile-raf-performance-5.1-continuation/\n?? node_modules\n",
+  "stdoutSha256": "89e6e88cc159e4353d378e06867b19e344e70071d2fb69ad7f27f41e267fef7b",
+  "stderrSha256": "64362b16d1fc2a6e993cdc54291e3bba26ff8e8f897111cf680b06622f52901b",
+  "capturedAt": "2026-10-24T22:43:34.868119+00:00"
+}

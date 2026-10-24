@@ -286,7 +286,7 @@ async function readRetryReport(request: AgentReportRequest, ports: PendingAgentR
       return { kind: 'ok' };
     },
     releaseAttempt: async () => { if (ownsAttempt) { retryAttempts.delete(request.assignment.root); ownsAttempt = false; } },
-    verifySource: async () => runStep(async () => { const verified = await source(); if (verified.kind === 'ok') flow = await checkReportFlow(report, path, ports); return verified; }),
+    verifySource: async () => runStep(async () => { const verified = await source(); if (verified.kind === 'ok') flow = await checkReportFlow(report, path, ports, flow); return verified; }),
     validateCommits: async () => runStep(async () => { commitGroups = await validate(); return { kind: 'ok' }; }),
     repairCommits: async () => runStep(async () => {
       for (const group of commitGroups) {

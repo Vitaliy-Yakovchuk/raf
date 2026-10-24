@@ -1032,7 +1032,10 @@ export async function createProductionServices(
         testAssignment = snapshotRegressionAssignment({ assignment: baseAssignment, verifiedChanges: launch.assignment.changes, selectedItems: launch.assignment.changes.flatMap(change => change.items.map(item => ({ change: change.id, item: item.id }))), catalog: { ...catalog, config: catalog.config! } });
       }
       const projects = JSON.parse(await fs.readFile(join(context.confRoot, 'projects.json'), 'utf8'));
-      const workingMain = { project: 'raf', workspace: await fs.realpath(resolve(context.orchestratorRoot, projects.projects.raf.branchPaths.main)), branch: 'main' };
+      const mainPath = projects.projects?.raf?.branchPaths?.main;
+      const configuredMain = typeof mainPath === 'string' ? resolve(context.orchestratorRoot, mainPath) : '';
+      const mainWorkspace = configuredMain ? await fs.realpath(configuredMain).catch(error => { if (error.code === 'ENOENT') return configuredMain; throw error; }) : '';
+      const workingMain = { project: 'raf', workspace: mainWorkspace, branch: 'main' };
       const flowBrief = prepareFlowBrief({ assignment: launch.assignment, context: { briefsRoot: join(context.confRoot, 'briefs'), runner: launch.selection.runner, stage: launch.activity.phase, project: launch.activity.project, agentId: launch.addressId, sessionName: launch.addressId, features: launch.activity.features, phase: launch.activity.phase, outcome: launch.taskContext.context.outcome, writeBoundaries, sources: launch.taskContext.context.sources, reportPath: join(context.tmpRoot, launch.runId, `${launch.addressId}.json`), reportSchema: launch.taskContext.context.reportSchema, cwd: launch.activity.cwd, rafSubcommands: ['test run'] }, runId: launch.runId, branch: launch.taskContext.context.branch, workingMain, source: flowSources(context.orchestratorRoot) });
       const plan = await checkFlowPlan(store, launch.assignment, 'launch', [], workingMain);
       if (!plan.ok) fail('INVALID_ASSIGNMENT', 'Flow plan: ' + JSON.stringify(plan.issues));

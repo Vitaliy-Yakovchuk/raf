@@ -1,0 +1,26 @@
+{
+  "executor": "main",
+  "project": "raf",
+  "phase": "external synthetic stand, not a unit aggregate",
+  "command": "node --test --test-name-pattern=\"(brief-fragment|queue-footer)(-menu)?\" test/production-codex-delivery-qa.test.ts",
+  "sha": "630496d048f6297a7f4c3ac1f9b153d3c7c1c768",
+  "cleanClone": true,
+  "environment": {
+    "HOME": "separate isolated HOME (main confirmed)",
+    "TMPDIR": "separate isolated TMPDIR (main confirmed)",
+    "LC_ALL": "C"
+  },
+  "cliExitCode": 1,
+  "stdoutSha256": "558d0fa1c3cf918b93043a2af2c7e0acffb096fdff5b32cde12be0c499f90814",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "cleanup": {
+    "source": "main message 2026-10-24",
+    "complete": true,
+    "description": "HOME/TMPDIR empty, no remaining owned processes; secret scan clean"
+  },
+  "outcome": "assertions-failed",
+  "passedCount": 2,
+  "failedCount": 2,
+  "note": "Both target positive tests fail delivery unknown_screen; both -menu refusal tests pass. Valid target red.",
+  "commandSource": "Main reported runner, test file and pattern; shell spelling is not independently retained."
+}

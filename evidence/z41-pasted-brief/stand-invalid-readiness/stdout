@@ -1,0 +1,46 @@
+✖ [production-codex-delivery-qa] brief-fragment: parent handshake follows native acceptance (7867.156238ms)
+ℹ {"mode":"brief-fragment","accepted":false,"input":[]}
+✖ [production-codex-delivery-qa] queue-footer: parent handshake follows native acceptance (7855.92754ms)
+ℹ {"mode":"queue-footer","accepted":false,"input":[]}
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15964.460599
+
+✖ failing tests:
+
+test at test/production-codex-delivery-qa.test.ts:211:3
+✖ [production-codex-delivery-qa] brief-fragment: parent handshake follows native acceptance (7867.156238ms)
+  Error: Wrapper launch fixture-run-1 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-24T20:12:57.537Z worker started run=fixture-run-1 pid=665702 ppid=665473
+  fixture-run-1: worker process group=665702 session=665702 pidNamespace=pid:[4026531836]
+  file:///srv/dev/z41-stand-red2/tmp/raf-prod-IcsraZ/raf-develop/src/launch-wrapper.ts:105
+      if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);
+                                             ^
+  
+  Error: Runner readiness timeout: Native runner readiness timed out
+      at runLaunchWrapper (file:///srv/dev/z41-stand-red2/tmp/raf-prod-IcsraZ/raf-develop/src/launch-wrapper.ts:105:44)
+      at async runProductionWorker (file:///srv/dev/z41-stand-red2/tmp/raf-prod-IcsraZ/raf-develop/src/production-runtime.ts:1767:11)
+      at async file:///srv/dev/z41-stand-red2/tmp/raf-prod-IcsraZ/raf-develop/[eval1]:1:434
+  
+  Node.js v26.12.1; verify runner readiness and recover this run before retrying
+      at file:///srv/dev/z41-stand-red2/raf/src/launch-wrapper.ts:196:81
+
+test at test/production-codex-delivery-qa.test.ts:211:3
+✖ [production-codex-delivery-qa] queue-footer: parent handshake follows native acceptance (7855.92754ms)
+  Error: Wrapper launch fixture-run-1 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-24T20:13:05.406Z worker started run=fixture-run-1 pid=666695 ppid=665473
+  fixture-run-1: worker process group=666695 session=666695 pidNamespace=pid:[4026531836]
+  file:///srv/dev/z41-stand-red2/tmp/raf-prod-2dj31U/raf-develop/src/launch-wrapper.ts:105
+      if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);
+                                             ^
+  
+  Error: Runner readiness timeout: Native runner readiness timed out
+      at runLaunchWrapper (file:///srv/dev/z41-stand-red2/tmp/raf-prod-2dj31U/raf-develop/src/launch-wrapper.ts:105:44)
+      at async runProductionWorker (file:///srv/dev/z41-stand-red2/tmp/raf-prod-2dj31U/raf-develop/src/production-runtime.ts:1767:11)
+      at async file:///srv/dev/z41-stand-red2/tmp/raf-prod-2dj31U/raf-develop/[eval1]:1:434
+  
+  Node.js v26.12.1; verify runner readiness and recover this run before retrying
+      at file:///srv/dev/z41-stand-red2/raf/src/launch-wrapper.ts:196:81

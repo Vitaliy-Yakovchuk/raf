@@ -209,15 +209,16 @@ export async function reconcileTestRunResources(
 ): Promise<TestRunResourceReconciliation> {
   const released: TestRunResourceClaim[] = [], retained: TestRunResourceClaim[] = [];
   for (const claim of await ports.resources.list(ports.machineId)) {
-    const observed = await ports.resources.observeTree(claim);
+    let observed = await ports.resources.observeTree(claim);
     if (observed.consumed) await ports.resources.accountUsage(claim, observed.consumed);
-    if (observed.state !== 'dead') { retained.push(claim); continue; }
     const group = await ports.state.transaction(tx => tx.get(claim.groupKey));
     if (group?.inFlight?.runId === claim.testRunId) {
       if (group.inFlight.processIdentity) {
         const reconciled = await reconcileTestRunGroup(claim.groupKey, policy, { ...context, workspace: claim.groupKey.workspace }, ports);
         if (reconciled?.inFlight) { retained.push(claim); continue; }
-      } else {
+        observed = await ports.resources.observeTree(claim);
+        if (observed.consumed) await ports.resources.accountUsage(claim, observed.consumed);
+      } else if (observed.state === 'dead') {
         await ports.state.transaction(tx => {
           const current = tx.get(claim.groupKey);
           if (current?.inFlight?.runId !== claim.testRunId) return;
@@ -225,6 +226,7 @@ export async function reconcileTestRunResources(
         });
       }
     }
+    if (observed.state !== 'dead') { retained.push(claim); continue; }
     if (await ports.resources.release(claim)) {
       released.push(claim);
       const summary = await ports.resources.resourceUsage?.(claim) ?? null;

@@ -231,7 +231,11 @@ test('test-queue repeats preflight after permit and fails changed prerequisites 
     f.environment.runtimeAvailable = false; f.shared.setRefusal(null); f.testQueue.grant();
     const result = await running;
     assert.notEqual(result.outcome, 'passed'); assert.equal(f.spawned.length, 0);
-    assert.equal(result.timedOut, false); assert.equal(result.timeoutCount, 0);
+    assert.equal(result.timedOut, false);
+    assert.equal(result.timeoutCount, missing === 'UNKNOWN' ? 0 : null);
+    if (missing !== 'UNKNOWN') {
+      assert.equal(result.groupSnapshot, 'unavailable'); assert.equal(result.groupState, null);
+    }
     assert.equal(f.shared.claims.size, 0); assert.equal(f.testQueue.waits.length, 1);
     assert.ok(f.timeline.filter(entry => entry === 'preflight').length >= 2);
   } finally {

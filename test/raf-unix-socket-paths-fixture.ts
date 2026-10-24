@@ -307,6 +307,7 @@ async function hotfixIngress(input: CaseInput) {
   await git(main, 'worktree', 'add', '-b', 'hotfix', hotfix);
   await git(main, 'worktree', 'add', '-b', 'develop', develop);
   await mkdir(join(root, 'conf'), { recursive: true });
+  await writeFile(join(root, 'conf', 'flow.json'), await readFile(new URL('../../conf/flow.json', import.meta.url)));
   await writeFile(join(root, 'conf', 'projects.json'), JSON.stringify({ profiles: { default: { development: 'develop' } }, projects: { raf: { path: 'raf-main', profile: 'default', branchPaths: { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' } } } }));
   const host: HotfixHost = { orchestratorRoot: root, qaHome: input.home, environment: { HOME: input.home, GIT_AUTHOR_NAME: 'Z390', GIT_AUTHOR_EMAIL: 'z390@example.invalid', GIT_COMMITTER_NAME: 'Z390', GIT_COMMITTER_EMAIL: 'z390@example.invalid' }, sandboxExecutable: 'bwrap' };
   const workspace = await prepareHotfixWorktree(host, input.runId);
@@ -383,7 +384,7 @@ async function sandboxIngress(input: CaseInput) {
   await writeFile(secret, 'state-secret');
   phase = 'sandbox-preflight';
   let policy;
-  try { policy = await prepareCodexSandbox({ runId: input.runId, invocation: { executable: process.execPath, args: ['-e', 'process.exit(0)'], liveTaskVerified: true }, scope: { hidden: [dirname(secret), registered], readable: [input.workspace], tmuxDirectory: input.runDirectory, excludedCommands: [] }, cwd: input.workspace, runDirectory: input.runDirectory, writableDirectories: [input.workspace, input.runDirectory], environment: { ...process.env, HOME: input.home, TMPDIR: input.tmpdir, TMUX: 'foreign,1,0', TMUX_PANE: '%99' }, timeoutMs: input.budgetMs }); } catch (error) {
+  try { policy = await prepareCodexSandbox({ runId: input.runId, invocation: { executable: process.execPath, args: ['--sandbox', 'workspace-write', '-e', 'process.exit(0)'], liveTaskVerified: true }, scope: { hidden: [dirname(secret), registered], readable: [input.workspace], tmuxDirectory: input.runDirectory, excludedCommands: [] }, cwd: input.workspace, runDirectory: input.runDirectory, writableDirectories: [input.workspace, input.runDirectory], environment: { ...process.env, HOME: input.home, TMPDIR: input.tmpdir, TMUX: 'foreign,1,0', TMUX_PANE: '%99' }, timeoutMs: input.budgetMs }); } catch (error) {
     await new Promise<void>(yes => foreign.close(() => yes()));
     throw error;
   }
@@ -417,9 +418,20 @@ async function caseMain(input: CaseInput) {
     else if (input.action === 'hotfix-ingress') result = await hotfixIngress(input);
     else if (input.action === 'sandbox-ingress') result = await sandboxIngress(input);
     else if (input.action === 'wrapper-reject') {
-      await assert.rejects(wrapperIngress(input), /handshake|identity|runId|mismatch|exited|invalid/i);
-      const capture = JSON.parse(await readFile(join(input.root, 'wrapper-capture.json'), 'utf8'));
+      let rejection: unknown;
+      await assert.rejects(wrapperIngress(input), error => {
+        rejection = error;
+        return /handshake|identity|runId|mismatch|exited|invalid/i.test((error as Error).message);
+      });
+      let capture;
+      try { capture = JSON.parse(await readFile(join(input.root, 'wrapper-capture.json'), 'utf8')); }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw rejection;
+        throw error;
+      }
       assert.equal(capture.request.runId, input.runId, 'rejection requires a real child to have consumed the request');
+      assert.equal(capture.identity.evidence.runId, input.runId);
+      assert.equal(capture.handshakeRunId, `${input.runId}-forged`);
       result = { rejected: true };
     } else result = await wrapperIngress(input);
     assert.deepEqual({ cwd: process.cwd(), home: process.env.HOME, tmpdir: process.env.TMPDIR }, before);
@@ -457,12 +469,17 @@ else if (process.argv[2] === 'server') {
     assert.equal(peer.stdout.trim(), 'PEER_REJECTED');
     peerRejected = true;
   }
-  await writeFile(process.env.Z390_CAPTURE!, JSON.stringify({ request, home: process.env.HOME, cwd: process.cwd(), peerRejected }));
   const ps = await command('ps', ['-p', String(process.pid), '-o', 'lstart=']);
   assert.equal(ps.code, 0, `setup: process start identity: ${ps.stderr}`);
   const startedAt = new Date(ps.stdout.trim()).toISOString();
-  const evidence = await readMachineBootIdentity();
-  await handshake({ runId: process.env.Z390_REJECT ? `${request.runId}-forged` : request.runId, address: request.address, reportPath: join(request.tmpRoot, request.runId, `${request.address}.json`), identity: { pid: process.pid, startedAt, evidence, runner: request.selection.runner, runnerSessionId: request.runId, tmuxSession: request.tmuxSession } });
+  const processCommand = await command('ps', ['-p', String(process.pid), '-o', 'args=']);
+  assert.equal(processCommand.code, 0, `setup: process command identity: ${processCommand.stderr}`);
+  assert.ok(processCommand.stdout.trim(), 'setup: process command identity must be nonempty');
+  const evidence = { ...await readMachineBootIdentity(), runId: request.runId, command: processCommand.stdout.trim() };
+  const identity = { pid: process.pid, startedAt, evidence, runner: request.selection.runner, runnerSessionId: request.runId, tmuxSession: request.tmuxSession };
+  const handshakeRunId = process.env.Z390_REJECT ? `${request.runId}-forged` : request.runId;
+  await writeFile(process.env.Z390_CAPTURE!, JSON.stringify({ request, home: process.env.HOME, cwd: process.cwd(), peerRejected, identity, handshakeRunId }));
+  await handshake({ runId: handshakeRunId, address: request.address, reportPath: join(request.tmpRoot, request.runId, `${request.address}.json`), identity });
 } else if (process.argv[2] === 'untrusted-wrapper-peer') {
   let refused = false;
   try { await consumeWrapperRequest(); } catch { refused = true; }

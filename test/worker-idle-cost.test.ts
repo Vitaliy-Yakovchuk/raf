@@ -33,6 +33,7 @@ test('worker report confirmation reuses its verified environment across checkbox
   const tasks = await createAssignmentIdentityAdapter({ raf: f.root }, { execute: f.execute }).capture('raf', f.assignment);
   const boot = { machineId: 'fixture', bootId: 'fixture' };
   const starter = { pid: process.pid, startedAt: new Date().toISOString(), runner: 'codex', runnerSessionId: 'fixture', tmuxSession: 'fixture', evidence: { ...boot, runId } };
+  f.store.sessionRepository.transaction(tx => tx.putSession({ runId, addressId: 'idle-cost', revision: 0, state: 'running', activity: { type: 'hotfix', project: 'raf', features: ['fixture-launch'], phase: 'hotfix', cwd: f.cwd } }));
   f.store.taskReservationRepository.transaction(tx => tx.putTaskReservation({ lease: { owner: { runId, addressId: 'idle-cost', fence: 'fixture' }, revision: 0 }, tasks, boot, stage: 'running', starter }));
   const request: AgentReportRequest = { tmpRoot: f.tmpRoot, runId, address: 'idle-cost', assignment: f.assignment };
   const report: AgentReport = { status: 'succeeded', answer: 'Completed', changes: [{ id: 'fixture-launch', items: [{ id: '2.1', status: 'succeeded' }] }] };

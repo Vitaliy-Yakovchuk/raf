@@ -78,6 +78,12 @@ test('integration runtime: unknown and pending facts cannot be erased by truncat
   assert.equal(truncated.outcome, 'setup-failed');
   assert.deepEqual(truncated.unknown, [id]);
   h.events = [{ kind: 'passed', test: id }, { kind: 'complete', expected: [id] }];
+  h.finishImmediately = false;
+  const pending = run(h);
+  await flushMicrotasks();
+  h.clock.advance(budget);
+  assert.deepEqual((await pending).unknown, [id]);
+  h.finishImmediately = true;
   const complete = await run(h);
   assert.equal(complete.outcome, 'passed');
   assert.deepEqual(complete.unknown, []);
@@ -160,4 +166,14 @@ test('integration broker: foreign integration is refused before obtaining test s
   assert.match(reply.stderr, /CALLER_UNAUTHORIZED/);
   assert.equal(b.contexts(), 0);
   assert.equal(b.h.state.transactionCount, 0);
+});
+
+
+test('integration runtime: unit invocation checks stale integration inventory before reservation', async () => {
+  const h = harness();
+  delete h.environment.files[file];
+  const result = await runTestRun({ project: 'raf', phase: 'implement', group: 'add-raf-test-run/unit' }, h.config, policy, h.context, h.ports);
+  assert.equal(result.errorCode, 'CONFIGURATION_INVALID');
+  assert.equal(h.state.transactionCount, 0);
+  assert.equal(h.spawns.length, 0);
 });

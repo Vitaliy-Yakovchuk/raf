@@ -273,6 +273,7 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
     const phase = config.phases[id];
     if (!record(phase) || typeof phase.allowed !== 'boolean' || !['initial-red', 'verification', 'none'].includes(phase.purpose) || !record(phase.hints)) invalid(`phases/${id}`);
     if (phase.allowed && phase.purpose === 'none' || !phase.allowed && phase.purpose !== 'none') invalid(`phases/${id}/purpose`);
+    if (id === 'integration' && (!phase.allowed || phase.purpose !== 'verification')) invalid(`phases/${id}/purpose`);
     if (id === 'test-scaffold' && phase.allowed || id === 'red' && (!phase.allowed || phase.purpose !== 'initial-red')) invalid(`phases/${id}/allowed`);
     for (const kind of kinds) if (!text(phase.hints[kind]) || !text(config.hints[phase.hints[kind]])) invalid(`phases/${id}/hints/${kind}`);
   }
@@ -328,6 +329,10 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
     const profile = project.profiles[prepared.profileId];
     if (profile.environment.isolatedHome && (!env.isolatedHome || context.home === context.operationalHome) || profile.environment.stateOrigin && !env.stateOriginAllowed) failure('STATE_CONTEXT_REFUSED');
     return { ...prepared, workspace: context.workspace, command: { ...prepared.command, shell: false, environment: { HOME: context.home, statePath: context.statePath, tmpPath: context.tmpPath } } };
+  }
+  for (const [id, profile] of Object.entries(project.profiles)) if (profile.testKind === 'integration') for (const file of profileFiles(profile)) {
+    const fact = env.files[file];
+    if (!fact || fact.kind !== 'file' || fact.realpath !== resolve(context.workspace, file) || fact.unit || fact.testKind && fact.testKind !== 'integration') failure('CONFIGURATION_INVALID', `conf/test-runs.json#/projects/${request.project}/profiles/${id}/integrationFiles: ${file}`);
   }
   const configuredInventory = [...new Set(Object.values(project.profiles).flatMap(p => p.testKind === 'integration' ? [] : p.unitFiles ?? []))];
   const missing = configuredInventory.filter(file => !env.unitFiles.includes(file) || env.files[file]?.kind !== 'file');

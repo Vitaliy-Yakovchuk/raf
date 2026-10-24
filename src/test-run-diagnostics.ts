@@ -199,7 +199,8 @@ export class TestRunDiagnostics {
     s = s.replace(/\b(?:sk-(?:proj-|svcacct-)?|gh[pousr]_)[A-Za-z0-9_-]+/g, '<redacted>');
     for (const pattern of this.limits.redactionPatterns) s = s.replace(new RegExp(pattern, 'gu'), '<redacted>');
     let redacted = s !== value;
-    s = s.replace(/https?:\/\/[^\s<>"']+|(?<![\w./<>-])(?:file:\/\/)?\/[^\s():<>"']+/g, value => {
+    s = s.replace(/conf\/flow\.json#\/(?:unitTests|integrationTests)\/timeoutMs|https?:\/\/[^\s<>"']+|(?<![\w./<>-])(?:file:\/\/)?\/[^\s():<>"']+/g, value => {
+      if (/^conf\/flow\.json#\/(?:unitTests|integrationTests)\/timeoutMs$/.test(value)) return value;
       if (/^https?:\/\//.test(value)) {
         try {
           const url = new URL(value);

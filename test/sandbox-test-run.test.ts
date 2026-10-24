@@ -570,6 +570,7 @@ for (const [script, expected, code] of [
 ] as const) {
   test(`T11 ${script} preserves structured facts and separates CLI rc from child rc`, async () => {
     const f = fixture();
+    if (script === 'protocol') f.config.diagnostics.maxStackFrames = 3;
     f.scripts.push(script);
     const reply = await f.run();
     const value = result(reply);
@@ -586,7 +587,14 @@ for (const [script, expected, code] of [
     assert.equal(typeof value.runId, 'string');
     if (script === 'assertion') assert.deepEqual(value.knownRed, [testId]);
     if (script === 'import') assert.deepEqual(value.knownRed, []);
+    if (script === 'protocol') {
+      const diagnostic = value.diagnostics.find(entry => entry.kind === 'protocol');
+      assert.ok(diagnostic);
+      assert.equal(diagnostic.stack.length, f.config.diagnostics.maxStackFrames);
+      assert.equal(diagnostic.truncated, true);
+    }
     const reference = fixture();
+    if (script === 'protocol') reference.config.diagnostics.maxStackFrames = f.config.diagnostics.maxStackFrames;
     reference.scripts.push(script);
     const direct = await directWrapper(reference);
     assert.deepEqual(reply, direct, 'host channel must preserve every wrapper field and stream byte');

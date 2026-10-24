@@ -35,7 +35,7 @@ function identity(runId: string, overrides: Partial<ReservationProcessIdentity> 
   return {
     pid: 40000 + [...runId].reduce((total, char) => total + char.charCodeAt(0), 0), startedAt: '2020-01-01T00:00:00.000Z', runner: 'codex',
     runnerSessionId: `runner-${runId}`, tmuxSession: `tmux-${runId}`,
-    evidence: { ...boot, runId }, ...overrides,
+    evidence: { ...boot, runId, command: `z401-fixture-${runId}` }, ...overrides,
   };
 }
 

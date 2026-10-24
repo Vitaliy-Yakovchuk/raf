@@ -384,7 +384,7 @@ async function sandboxIngress(input: CaseInput) {
   await writeFile(secret, 'state-secret');
   phase = 'sandbox-preflight';
   let policy;
-  try { policy = await prepareCodexSandbox({ runId: input.runId, invocation: { executable: process.execPath, args: ['--sandbox', 'workspace-write', '-e', 'process.exit(0)'], liveTaskVerified: true }, scope: { hidden: [dirname(secret), registered], readable: [input.workspace], tmuxDirectory: input.runDirectory, excludedCommands: [] }, cwd: input.workspace, runDirectory: input.runDirectory, writableDirectories: [input.workspace, input.runDirectory], environment: { ...process.env, HOME: input.home, TMPDIR: input.tmpdir, TMUX: 'foreign,1,0', TMUX_PANE: '%99' }, timeoutMs: input.budgetMs }); } catch (error) {
+  try { policy = await prepareCodexSandbox({ runId: input.runId, invocation: { executable: process.execPath, args: ['--sandbox', 'workspace-write', '-e', 'process.exit(0)'], liveTaskVerified: true }, scope: { hidden: [dirname(secret), registered], readable: [input.workspace], tmuxDirectory: input.runDirectory, excludedCommands: [] }, cwd: input.workspace, runDirectory: input.runDirectory, writableDirectories: [input.workspace, input.runDirectory], environment: { ...process.env, HOME: input.home, TMPDIR: input.tmpdir, TMUX: `${join(input.root, "foreign-tmux.sock")},1,0`, TMUX_PANE: '%99' }, timeoutMs: input.budgetMs }); } catch (error) {
     await new Promise<void>(yes => foreign.close(() => yes()));
     throw error;
   }

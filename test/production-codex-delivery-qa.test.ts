@@ -85,7 +85,7 @@ const timer = setInterval(() => {
     assert.equal(f.store.sessionRepository.transaction(tx => tx.listReservations()).length, 1);
   }
   const launch = async () => {
-    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(f.runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
+    const started = await launchPersistentWrapper({ ...request, reportedCommits: session()?.launchContext?.reportedCommits }, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(f.runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
     f.trackProcess(started.wrapperPid);
     f.trackProcess(started.identity.pid);
     assert.equal(Number(await readFile(wrapperPidPath, 'utf8')), started.wrapperPid);
@@ -103,8 +103,9 @@ async function deliveryFixture(t: TestContext, mode = 'race') {
   f.settings.timeouts.pollMs = 30;
   const rafPath = join(f.confRoot, 'raf.json');
   const raf = JSON.parse(await readFile(rafPath, 'utf8'));
-  await writeFile(rafPath, JSON.stringify({ ...raf, runnerProtocols: [f.settings] }));
-  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute });
+  const completeRaf = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+  await writeFile(rafPath, JSON.stringify({ ...completeRaf, ...raf, runnerProtocols: [f.settings] }));
+  const services = await f.createProductionServices(f.store, configuration, f.context, { execute: f.execute, loadAverage1m: () => 0 });
   const { task: descriptor, launch: derived } = await derivedLaunch(services, f, f.runtimeLaunch);
   const prepared = await services.prepareReport(derived);
   const reservation = await services.reserve({ ...derived, reportPath: prepared.reportPath, requested: descriptor.requested, requiredFileSystemIds: [...descriptor.requiredFileSystemIds] });
@@ -138,12 +139,14 @@ const renderPending = () => {
   const id = mode === 'native-mismatch' ? '22222222-2222-4222-8222-222222222222' : nativeId;
   const heading = mode === 'auth' ? '\r\nFIXTURE_AUTH_REQUIRED' : mode === 'permission' ? '\r\nFIXTURE_PERMISSION_REQUIRED' : mode === 'unknown' || mode === 'menu-above-same-footer' ? '\r\nChoose an unknown action\r\nEnter to approve' : '';
   const nativeHeader = header + '\r\nSession: ' + id;
+  if (mode === 'scrolled-paste') { render(brief.slice(-400) + '\r\n\r\n› [Pasted Content ' + count + ' chars]\r\n' + footer); return; }
   render(nativeHeader + heading + '\r\n› [Pasted Content ' + count + ' chars]' + (mode === 'stale-ready-menu' ? '\r\nAsk Codex to do anything\r\nChoose an unknown action\r\nEnter to approve' : '') + '\r\n' + footer);
 };
 const submit = () => {
   enters++;
   if (!absorbed) {
     absorbed = true;
+    if (mode === 'repainting-paste') { render(brief.slice(-400)); setTimeout(renderPending, 400); return; }
     if (mode !== 'immediate') { renderPending(); return; }
   } else {
     if (mode === 'pending-forever') return;
@@ -198,7 +201,7 @@ const timer = setInterval(() => {
   return { ...f, acceptedPath, inputLog, release, launch };
 }
 
-for (const mode of ['native-placeholder-replaced', 'race', 'immediate']) {
+for (const mode of ['native-placeholder-replaced', 'race', 'immediate', 'scrolled-paste', 'repainting-paste']) {
   test(`[production-codex-delivery-qa] ${mode}: parent handshake follows native acceptance`, async t => {
     const f = await deliveryFixture(t, mode);
     if (mode === 'native-placeholder-replaced') assert.equal([...f.request.brief].length, 6579);

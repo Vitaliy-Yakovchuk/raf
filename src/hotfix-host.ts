@@ -169,7 +169,7 @@ export async function locked<T>(host: HotfixHost, use: (route: Awaited<ReturnTyp
       if (error.code !== 'EEXIST') throw error;
       const owner = await json(join(lock, 'owner.json')).catch(() => null);
       if (owner && !await alive(owner.pid, owner.start)) { await reclaimDeadLock(lock); continue; }
-      if (failIfBusy) throw new Error('Hotfix activation busy; reader admission refused');
+      if (failIfBusy && await exists(join(route.control, 'intent.json'))) throw new Error('Hotfix activation busy; reader admission refused');
       if (Date.now() >= deadline) throw new Error('Hotfix activation lock timeout');
       await new Promise(resolve => setTimeout(resolve, 10));
     }

@@ -501,7 +501,7 @@ async function verifyReportedAssignmentSource(store: StateStore, context: Runtim
   }
   return { ok: true, issues: [] };
 }
-async function confirmReportedTasks(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, request: AgentReportRequest, report: AgentReport, budget: TransitionBudget, identityExecute?: AdapterCommandExecutor, verifiedSource?: import('./assignment.ts').AssignmentVerification, confirmationBudget?: ConfirmationBudget, beforeWrite?: () => Promise<void>) {
+export async function confirmReportedTasks(store: StateStore, context: RuntimeContext, execute: AdapterCommandExecutor, request: AgentReportRequest, report: AgentReport, budget: TransitionBudget, identityExecute?: AdapterCommandExecutor, verifiedSource?: import('./assignment.ts').AssignmentVerification, confirmationBudget?: ConfirmationBudget, beforeWrite?: () => Promise<void>) {
   const directory = join(context.tmpRoot, request.runId);
   const journal = join(directory, 'task-checkbox-operations.json');
   const assignments = assignmentPorts(execute);

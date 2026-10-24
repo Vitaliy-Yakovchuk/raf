@@ -220,11 +220,14 @@ export function nativeDeliveryContext(settings: ProtocolSettings, lines: readonl
 }
 export function isNativeBriefEcho(brief: string, screen: string): boolean {
   const rendered = screen.replace(/\s+/gu, '');
-  return rendered !== '' && brief.replace(/\s+/gu, '').endsWith(rendered);
+  return rendered !== '' && brief.replace(/\s+/gu, '').includes(rendered);
 }
 export function matchesNativeDeliveryContext(settings: ProtocolSettings, before: { header: string; footer: string }, current: { header: string; footer: string }, brief: string): boolean {
-  return before.header === current.header && before.footer === current.footer
-    || settings.runner === 'codex' && current.footer === before.footer && isNativeBriefEcho(brief, current.header);
+  if (before.header === current.header && before.footer === current.footer) return true;
+  if (settings.runner !== 'codex') return false;
+  const knownHeader = current.header === before.header || isNativeBriefEcho(brief, current.header);
+  const knownFooter = current.footer === before.footer || /^tab to queue message\s+\d+% context left$/u.test(current.footer);
+  return knownHeader && knownFooter;
 }
 export function isNativeFinished(settings: ProtocolSettings, screen: string): boolean {
   const finished = dialect(settings).finished;

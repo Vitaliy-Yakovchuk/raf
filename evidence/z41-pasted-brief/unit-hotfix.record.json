@@ -1,0 +1,48 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z41 --files test/agent-adapters.test.ts",
+  "sha": "49bdc87bf3408dfde7183fac9a3bf4f9720990d7",
+  "workspaceStatus": " M src/runner-protocols.ts\n?? evidence/z41-pasted-brief/unit-hotfix.patch\n?? evidence/z41-pasted-brief/unit-hotfix.stderr\n?? evidence/z41-pasted-brief/unit-hotfix.stdout\n?? evidence/z41-pasted-brief/unit-hotfix.transport.json\n?? node_modules\n",
+  "workspacePatch": "unit-hotfix.patch",
+  "workspacePatchSha256": "b4e58499b4b28c372b1f01b9501913408895a043d807f769deb039f212b0705a",
+  "stdout": "unit-hotfix.stdout",
+  "stdoutSha256": "b9e1af419aab21f33e573a63a55745d99a67d9f9df73e6801967f257e4b3e3e6",
+  "stderr": "unit-hotfix.stderr",
+  "transport": "unit-hotfix.transport.json",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "runId": "771a2a81-e488-4f43-8e8f-b08c35aedc4e",
+  "selection": {
+    "files": [
+      "test/agent-adapters.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "timeoutCount": 0,
+  "nextAction": "complete",
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "34636e00082226eb8a1ae440e7fad48638862edf5bd0f870a7d1cf96f97f3ac6",
+      "testRuns": "13cbadd1b0ee6cdfe479a5425dc9e10df0a016837bbcc6a4d6f2317b10e45855",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "passedCount": 29,
+  "verification": "Same assigned QA HOME and stable complete-raf-flow-contracts/z41 aggregate as author red; both prior knownRed tests plus unknown-context guard passed. Queue footer alone remains neither readiness nor acceptance. Acceptance, identity and retry code unchanged."
+}

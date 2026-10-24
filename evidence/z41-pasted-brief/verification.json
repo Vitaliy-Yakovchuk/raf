@@ -1,0 +1,43 @@
+{
+  "change": "complete-raf-flow-contracts",
+  "item": "Z.4.1",
+  "implementation": {
+    "file": "src/runner-protocols.ts",
+    "echo": "The whole visible header, after whitespace normalization, must be a nonempty contiguous part of the exact expected brief, including an interior fragment.",
+    "queue": "Only the anchored native tab-to-queue + percentage-context footer may replace the prior footer; header still must be identical or the exact own brief fragment.",
+    "unchanged": [
+      "Pending count and expected brief verification",
+      "Process/session ownership checks on every delivery inspection",
+      "Identical consecutive pending input and stable screen before the existing one Enter retry",
+      "Acceptance requires paste disappearance, empty native input and a new working/finished marker",
+      "Unknown header/menu/footer still refuses with the existing diagnostic frame",
+      "No new commands, events, configuration constants or delivery limits"
+    ]
+  },
+  "unit": {
+    "red": "unit-red.record.json",
+    "hotfix": "unit-hotfix.record.json"
+  },
+  "build": {
+    "command": "env HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 RAF_QA_HOME=/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685 npm run build",
+    "cliExitCode": 0,
+    "stdout": "\n> build\n> node scripts/build.ts\n\nКаталог зібрано. Операційні команди ще не реалізовані.\n"
+  },
+  "stand": {
+    "executor": "main",
+    "invalidAttempts": [
+      {
+        "sha": "b18556c44497e1a56d70dc0ec9c67858c710e885",
+        "reason": "Readiness timeout before delivery; not red."
+      },
+      {
+        "sha": "e1d3dab9364b475a6cbf8e2b069537dd5e253691",
+        "evidence": "/srv/dev/z41-stand-red2",
+        "reason": "Both tests failed readiness with empty synthetic input log. Fixture header exposed Session before /status, leaving nativeId set but requestedStatus/dismissed false. Not red."
+      }
+    ],
+    "fixtureCorrection": "630496d048f6297a7f4c3ac1f9b153d3c7c1c768",
+    "pending": "Main will run corrected pre-fix fixture then product fix; no stand pass claimed yet."
+  },
+  "rawFrames": "Only opt-in QA synthetic-z41 driver retains private mode0600 capture frames. Production diagnostic redaction remains unchanged; no production brief retention added."
+}

@@ -1,4 +1,4 @@
-import { rafSocketDirectory, rafSocketRoot, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
+import { createRafToolSocketDirectory, rafSocketDirectory, rafSocketRoot, rafToolSocketRoot, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
 import type { Invocation, NativeSandboxScope } from './runner-protocols.ts';
 import { codexInvocationSandboxMode } from './codex-raf-command-access.ts';
 import { spawn } from 'node:child_process';
@@ -211,7 +211,7 @@ export async function prepareCodexSandbox(
   const accountPaths = [accountState, join(accountState, 'tmp')];
   const accountRoots = [...accountPaths, ...await Promise.all(accountPaths.map(canonical))];
   const hidden = new Set<string>();
-  for (const path of [...accountRoots, rafSocketRoot(), ...request.scope.hidden, ...socketAddresses(request.environment)]) {
+  for (const path of [...accountRoots, rafSocketRoot(), rafToolSocketRoot(), ...request.scope.hidden, ...socketAddresses(request.environment)]) {
     if (!isAbsolute(path)) unavailable(`hidden path ${path} is not absolute`);
     hidden.add(path);
     hidden.add(await canonical(path));
@@ -280,8 +280,10 @@ export async function prepareCodexSandbox(
   const probeSocket = join(runDirectory, `.codex-sandbox-probe-${process.pid}.sock`);
   let identity: { dev: number; ino: number } | undefined;
   let helperAlias: string | undefined;
+  let toolDirectory: Awaited<ReturnType<typeof createRafToolSocketDirectory>> | undefined;
   const cleanup = async () => {
     await fs.rm(probeSocket, { force: true });
+    if (toolDirectory) { await toolDirectory.cleanup(); toolDirectory = undefined; }
     if (identity) {
       const current = await fs.lstat(directory);
       if (!current.isDirectory() || current.dev !== identity.dev || current.ino !== identity.ino) throw new Error('Codex sandbox cleanup directory identity mismatch');
@@ -305,9 +307,9 @@ export async function prepareCodexSandbox(
     await fs.mkdir(directory, { mode: 0o700 });
     identity = await fs.lstat(directory);
     const helperDirectory = socketPathFits(join(directory, 'bwrap')) ? directory : (helperAlias = rafSocketDirectory(directory, 'tool'));
-    const toolTmux = compactToolTmux ? join(helperDirectory, 'tmux') : runDirectory;
-    const tmuxSockets = compactToolTmux ? join(directory, 'tmux') : join(runDirectory, `tmux-${process.getuid?.() ?? 0}`);
-    if (compactToolTmux) await fs.mkdir(tmuxSockets, { mode: 0o700 });
+    if (compactToolTmux) toolDirectory = await createRafToolSocketDirectory();
+    const toolTmux = toolDirectory?.directory ?? runDirectory;
+    const tmuxSockets = toolDirectory?.directory ?? join(runDirectory, `tmux-${process.getuid?.() ?? 0}`);
     entries[helperDirectory] = 'read';
     entries[tmuxSockets] = 'write';
     entries[toolTmux] = 'write';

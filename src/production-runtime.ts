@@ -1,4 +1,4 @@
-import { rafSocketRoot, rafSocketDirectory, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
+import { createRafToolSocketDirectory, rafSocketRoot, rafToolSocketRoot, rafSocketDirectory, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
 import { ConfirmationTransientError, ConfirmationBudgetExhaustedError, type ConfirmationBudget, type PendingConfirmation } from './report-confirmation-retry.ts';
 import { createHash } from 'node:crypto';
 import { loadEventCatalog } from './event-catalog.ts';
@@ -236,7 +236,7 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
   const phases = confRoot && ['implement', 'qa', 'hotfix'].includes(phase ?? type ?? '') ? await loadSandboxTestPhases(confRoot) : undefined;
   const subcommands = type === undefined ? [] : rafSubcommandsFor(type, phase ?? type, phases);
   return {
-    hidden: [rafSocketRoot(), '/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots, ...registeredSockets],
+    hidden: [rafSocketRoot(), rafToolSocketRoot(), '/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots, ...registeredSockets],
     readable: [report], tmuxDirectory: report, excludedCommands: subcommands === null ? [`${command}:*`] : subcommands.map(subcommand => `${command} ${subcommand}:*`),
   };
 }
@@ -1300,7 +1300,7 @@ export async function runProductionWorker(
   let hotfixCommitPort: Awaited<ReturnType<typeof startHotfixCommitPort>> | undefined;
   let codexAccess: PreparedCodexRafCommandAccess | undefined;
   let codexSandbox: PreparedCodexSandbox | undefined;
-  let toolTmuxAlias: { directory: string; alias: string } | undefined;
+  let toolTmuxDirectory: Awaited<ReturnType<typeof createRafToolSocketDirectory>> | undefined;
   try {
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings.timeouts, options.execute);
     const session = tools.current(request.runId);
@@ -1332,11 +1332,10 @@ export async function runProductionWorker(
         throw error;
       });
       if (settings.runner === 'claude' && !socketPathFits(join(scope.tmuxDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default'))) {
-        const directory = scope.tmuxDirectory;
-        const alias = rafSocketDirectory(directory, 'tool');
-        toolTmuxAlias = { directory, alias };
-        scope.tmuxDirectory = alias;
-        scope.readable.push(alias);
+        toolTmuxDirectory = await createRafToolSocketDirectory();
+        scope.tmuxDirectory = toolTmuxDirectory.directory;
+        scope.readable.push(toolTmuxDirectory.directory);
+        invocation.args.push(...nativeWriteScopeArgs(settings, [toolTmuxDirectory.directory]));
       }
       invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
       if (hotfix && settings.runner === 'claude') {
@@ -1684,5 +1683,13 @@ export async function runProductionWorker(
       if (!handedOff) await discardFailedLaunch().catch(cleanup => process.stderr.write(`${request.runId}: failed launch cleanup: ${cleanup instanceof Error ? cleanup.message : String(cleanup)}\n`));
       throw error;
     }
-  } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxAlias) await releaseRafSocketDirectory(toolTmuxAlias.directory, toolTmuxAlias.alias); } finally { store.close(); await generationLease?.release(); } } }
+  } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxDirectory) await toolTmuxDirectory.cleanup(async socket => {
+        await executeCommand({ executable: 'tmux', args: ['-S', socket, 'kill-server'], environment: stateContextEnvironment(stateContext, process.env) });
+        await new Promise<void>((resolve, reject) => {
+          const connection = createConnection(socket);
+          const timer = setTimeout(() => { connection.destroy(); reject(new Error('Own tool tmux stop confirmation timed out')); }, settings.timeouts.transitionMs);
+          connection.once('connect', () => { clearTimeout(timer); connection.destroy(); reject(new Error('Own tool tmux server is still live')); });
+          connection.once('error', error => { clearTimeout(timer); connection.destroy(); if (['ENOENT', 'ECONNREFUSED'].includes((error as NodeJS.ErrnoException).code ?? '')) resolve(); else reject(error); });
+        });
+      }); } finally { store.close(); await generationLease?.release(); } } }
 }

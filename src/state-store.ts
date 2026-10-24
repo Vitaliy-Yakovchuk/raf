@@ -641,7 +641,11 @@ export function openStateStore(path: string, options?: import('./state-migration
           requireQueueSchema();
           const row = db.prepare('SELECT queue_id, payload FROM agent_launch_queues WHERE state_domain=? AND machine_id=?').get(identity.stateDomain, identity.machineId);
           if (!row) return undefined;
-          return row.payload ? JSON.parse(row.payload as string) as LaunchQueueState : { queueId: row.queue_id as string, generation: 0, entries: [], hadFailure: false };
+          if (!row.payload && db.prepare('SELECT payload FROM agent_launch_queue_entries').all().some(entry =>
+            (JSON.parse(entry.payload as string) as { record: { queueId: string } }).record.queueId === row.queue_id)) {
+            throw stateFailure('STATE_MIGRATION_REQUIRED', 'Let the previous raf version finish its active launch queue before transferring the queue format');
+          }
+          return row.payload ? JSON.parse(row.payload as string) as LaunchQueueState : { queueId: row.queue_id as string, generation: 0, entries: [], started: 0, cancelled: 0, failed: 0 };
         }),
         saveQueue: (identity, state) => access(() => {
           requireQueueSchema();

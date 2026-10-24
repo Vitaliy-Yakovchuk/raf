@@ -3,7 +3,7 @@ import { ConfirmationTransientError, ConfirmationBudgetExhaustedError, type Conf
 import { createHash } from 'node:crypto';
 import { loadEventCatalog } from './event-catalog.ts';
 import { createStoredLaunchQueueEvents } from './stored-launch-queue-events.ts';
-import { createProductionAgentQueue } from './production-agent-queue.ts';
+import { createProductionAgentQueue, reconcileFinishedAgentQueues } from './production-agent-queue.ts';
 import { createAgentQueueState } from './agent-queue-state.ts';
 import { resolveAgentResourceEstimate } from './resource-estimates.ts';
 import { recordReportRejection, type ReportRejectionSnapshot } from './report-rejection.ts';
@@ -925,6 +925,11 @@ export async function createProductionServices(
   const assignments = assignmentPorts(execute);
   const prepared = new Map<string, { testAssignment: SandboxTestAssignment; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;
+  const cleanQueuedReport = async (runId: string) => {
+    if (readSession(runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch');
+    await fs.rm(join(context.tmpRoot, runId), { recursive: true, force: true });
+    for (const [key, row] of prepared) if (row.launch.runId === runId) prepared.delete(key);
+  };
   const leaseFor = (runId: string) => listTaskReservations(store).find(set => set.lease.owner.runId === runId)?.lease;
   const release = async (runId: string, reason: 'cancelled' | 'failed' | 'succeeded') => {
     const lease = leaseFor(runId);
@@ -942,11 +947,7 @@ export async function createProductionServices(
       caller: async () => { try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; } catch { return undefined; } },
       observe: identity => observeIdentity(identity, execute),
       reconcile: async () => { await tools.control.ps(); await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute)); },
-      cleanReport: async runId => {
-        if (readSession(runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch');
-        await fs.rm(join(context.tmpRoot, runId), { recursive: true, force: true });
-        for (const [key, row] of prepared) if (row.launch.runId === runId) prepared.delete(key);
-      },
+      cleanReport: cleanQueuedReport,
     }),
     resolveNotify: async address => {
       const session = tools.state.listReconciliationCandidates().find(row => row.addressId === address && row.state === 'running');
@@ -1257,7 +1258,14 @@ export async function createProductionServices(
       await release(runId, 'cancelled');
     },
     control: {
-      ps: async () => { const sessions = await tools.control.ps(); if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained'); await tools.deliverResults(); return resultNoticeViews(store, sessions); },
+      ps: async () => {
+        const sessions = await tools.control.ps();
+        if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
+        await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
+        await reconcileFinishedAgentQueues({ store, current: readSession, observe: identity => observeIdentity(identity, execute), cleanReport: cleanQueuedReport });
+        await tools.deliverResults();
+        return resultNoticeViews(store, sessions);
+      },
       update: async (id, patch, caller) => { await tools.authorize(id, caller); const session = tools.state.listReconciliationCandidates().find(session => session.addressId === id); if (!session?.activity) fail('SESSION_UNAVAILABLE', 'Session activity unavailable'); return tools.control.update(id, { ...session.activity, ...patch }); },
       message: (input, caller) => tools.control.message(input, caller),
       close: async (id, caller, options) => { await tools.authorize(id, caller, true); return tools.control.close(id, options); },
@@ -1682,6 +1690,15 @@ export async function runProductionWorker(
             await tools.finalize(exited, exited.activity ? [{ kind: 'ended', session: exited, project: exited.activity.project }] : []);
           }
           if (current?.state === 'reserved' && lease) await releaseTaskReservations(dependencies, { lease, reason: 'cancelled', closeLaunch: tx => closeSessionInTransaction(tx, tx.getSession(request.runId)!, now()) });
+          const queued = tools.current(request.runId)?.launchContext?.agentQueue;
+          if (queued && tools.current(request.runId)?.state === 'finished') {
+            const queueState = createAgentQueueState(store);
+            await retryStateOperation(() => queueState.transaction(() => queueState.remove(queued, 'launch-failed')), settings.timeouts);
+            await settleCommandState({ store, now: Date.now, nextReminderId: randomUUID,
+              catalog: loadEventCatalog(context.orchestratorRoot),
+              deliver: message => tools.control.message(message, rafSystemCaller),
+            });
+          }
         },
       },
       handshake: async handshake => { await channel.handshake({ ...handshake, warnings: availability.warnings }); handedOff = true; },

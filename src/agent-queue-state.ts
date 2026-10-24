@@ -4,6 +4,7 @@ import type { ReservedTaskSnapshot } from './task-reservations.ts';
 import type { SessionTransaction } from './session-state.ts';
 import { createStoredLaunchQueueEvents } from './stored-launch-queue-events.ts';
 import { stateFailure } from './state-migration-guard.ts';
+import type { LaunchQueueFailure } from './launch-queue-events.ts';
 
 export interface StoredAgentQueueEntry {
   record: AgentQueueRecord;
@@ -11,6 +12,7 @@ export interface StoredAgentQueueEntry {
   tasks: readonly ReservedTaskSnapshot[];
   fingerprint: string;
   ready?: boolean;
+  terminalReason?: LaunchQueueFailure;
   delegatedTasks?: readonly ReservedTaskSnapshot[];
 }
 
@@ -37,10 +39,10 @@ export function createAgentQueueState(store: StateStore) {
       VALUES (?, ?, ?, ?) ON CONFLICT(request_id) DO UPDATE SET payload=excluded.payload`).run(
         entry.record.requestId, entry.record.owner.runId, entry.record.agentId, JSON.stringify(entry));
   });
-  const remove = (record: AgentQueueRecord) => store.taskReservationRepository.transaction(() => {
+  const remove = (record: AgentQueueRecord, reason: LaunchQueueFailure = 'launch-failed') => store.taskReservationRepository.transaction(() => {
     const entry = get(record);
     if (!entry) return false;
-    if (!entry.ready && entry.record.eventHandle) events(entry.record).fail(entry.record.eventHandle, 'launch-failed');
+    if (!entry.ready && entry.record.eventHandle) events(entry.record).fail(entry.record.eventHandle, entry.terminalReason ?? reason);
     database.prepare('DELETE FROM agent_launch_queue_entries WHERE request_id=? AND run_id=?').run(record.requestId, record.owner.runId);
     return true;
   });

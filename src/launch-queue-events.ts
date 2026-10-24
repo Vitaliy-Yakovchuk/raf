@@ -1,5 +1,6 @@
 import { validateEventObjectId } from './event-catalog.ts';
 import type { EventTransaction, PendingEvent } from './event-registry.ts';
+import { commandFailure } from './cli-contract.ts';
 
 export interface LaunchQueueIdentity {
   readonly stateDomain: string;
@@ -20,15 +21,20 @@ export interface LaunchQueueEntry extends LaunchQueueHandle {
   readonly stage: LaunchQueueStage;
 }
 
-export interface LaunchQueueState {
+export interface LaunchQueueTotals {
+  readonly started: number;
+  readonly cancelled: number;
+  readonly failed: number;
+}
+
+export interface LaunchQueueState extends LaunchQueueTotals {
   readonly queueId: string;
   readonly generation: number;
   readonly entries: readonly LaunchQueueEntry[];
-  readonly hadFailure: boolean;
 }
 
 export interface LaunchQueueDrainedFact extends PendingEvent {
-  readonly data: {
+  readonly data: LaunchQueueTotals & {
     readonly queueId: string;
     readonly generation: number;
   };
@@ -61,17 +67,43 @@ export class LaunchQueueEvents {
     this.identity = { ...ports.identity };
     if (!this.identity.stateDomain || !this.identity.machineId) throw new Error('Launch queue identity is required');
     ports.transaction(tx => {
-      if (tx.loadQueue(this.identity)) return;
+      if (tx.loadQueue(this.identity)) { this.state(tx); return; }
       const queueId = ports.nextQueueId();
       if (!validateEventObjectId('resourceQueueId', queueId)) throw new Error('Invalid resourceQueueId');
-      tx.saveQueue(this.identity, { queueId, generation: 0, entries: [], hadFailure: false });
+      tx.saveQueue(this.identity, { queueId, generation: 0, entries: [], started: 0, cancelled: 0, failed: 0 });
     });
   }
 
   private state(tx: LaunchQueueTransaction): LaunchQueueState {
     const state = tx.loadQueue(this.identity);
     if (!state) throw new Error('Launch queue state is missing');
+    const incompatible = () => commandFailure({ code: 'STATE_MIGRATION_REQUIRED', message: 'Launch queue totals are unavailable or invalid',
+      reason: 'Legacy active generations and pending facts cannot be reconstructed from hadFailure', stage: 'state-preflight',
+      source: 'launch-queue-events', sourceCode: null, received: null, expected: 'Exact started/cancelled/failed totals',
+      found: null, completed: [], pending: ['launch queue format transfer'], retrySafe: false,
+      remediation: ['Let the previous raf version finish its active launch generation and process pending facts before transferring the new version; preserve the existing state.'] });
+    for (const fact of tx.listPending()) {
+      if (fact.event.kind !== 'launch-queue.drained' || fact.event.id !== state.queueId) continue;
+      if (!this.validTotals(fact.data) || this.total(fact.data) === 0) throw incompatible();
+    }
+    if ([state.started, state.cancelled, state.failed].every(value => value === undefined) && !state.entries.length) {
+      const migrated: LaunchQueueState = { queueId: state.queueId, generation: state.generation, entries: [], started: 0, cancelled: 0, failed: 0 };
+      tx.saveQueue(this.identity, migrated);
+      return migrated;
+    }
+    if (!this.validTotals(state)) throw incompatible();
     return state;
+  }
+
+  private total(totals: LaunchQueueTotals): number {
+    return totals.started + totals.cancelled + totals.failed;
+  }
+
+  private validTotals(value: unknown): value is LaunchQueueTotals {
+    if (!value || typeof value !== 'object') return false;
+    const totals = value as LaunchQueueTotals;
+    return [totals.started, totals.cancelled, totals.failed].every(count => Number.isSafeInteger(count) && count >= 0) &&
+      Number.isSafeInteger(this.total(totals));
   }
 
   queueId(): string {
@@ -95,7 +127,8 @@ export class LaunchQueueEvents {
       const generation = state.entries.length ? state.generation : state.generation + 1;
       if (!Number.isSafeInteger(generation)) throw new Error('Launch queue generation exhausted');
       const handle = { queueId: state.queueId, generation, requestId: input.requestId, fence: input.fence };
-      tx.saveQueue(this.identity, { ...state, generation, hadFailure: state.entries.length ? state.hadFailure : false,
+      const totals = state.entries.length ? { started: state.started, cancelled: state.cancelled, failed: state.failed } : { started: 0, cancelled: 0, failed: 0 };
+      tx.saveQueue(this.identity, { ...state, generation, ...totals,
         entries: [...state.entries, { ...handle, stage: 'waiting' }] });
       return handle;
     });
@@ -119,28 +152,30 @@ export class LaunchQueueEvents {
   }
 
   confirmReady(handle: LaunchQueueHandle): void {
-    this.finish(handle, false);
+    this.finish(handle, 'started');
   }
 
-  fail(handle: LaunchQueueHandle, _reason: LaunchQueueFailure): void {
-    this.finish(handle, true);
+  fail(handle: LaunchQueueHandle, reason: LaunchQueueFailure): void {
+    this.finish(handle, reason === 'cancelled' ? 'cancelled' : 'failed');
   }
 
-  private finish(handle: LaunchQueueHandle, failed: boolean): void {
+  private finish(handle: LaunchQueueHandle, outcome: keyof LaunchQueueTotals): void {
     this.ports.transaction(tx => {
       const state = this.state(tx);
       if (!state.entries.some(entry => this.matches(entry, handle))) return;
       const entries = state.entries.filter(entry => !this.matches(entry, handle));
-      const hadFailure = state.hadFailure || failed;
-      if (!entries.length && !hadFailure) {
+      const totals = { started: state.started, cancelled: state.cancelled, failed: state.failed };
+      totals[outcome]++;
+      if (!this.validTotals(totals)) throw new Error('Launch queue totals exhausted');
+      if (!entries.length) {
         const fact: LaunchQueueDrainedFact = {
           key: JSON.stringify(['launch-queue.drained', state.queueId, state.generation]),
           event: { kind: 'launch-queue.drained', id: state.queueId },
-          data: { queueId: state.queueId, generation: state.generation },
+          data: { queueId: state.queueId, generation: state.generation, ...totals },
         };
         tx.savePending(fact);
       }
-      tx.saveQueue(this.identity, { ...state, entries, hadFailure: entries.length ? hadFailure : false });
+      tx.saveQueue(this.identity, { ...state, entries, ...totals });
     });
   }
 }

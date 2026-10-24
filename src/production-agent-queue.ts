@@ -12,6 +12,28 @@ import { readWaitIdentity, observeWaitIdentity } from './resource-wait-identity.
 import { failureContext } from './cli-contract.ts';
 import { validateHotfixTrust } from './hotfix-worktree.ts';
 
+export async function reconcileFinishedAgentQueues(dependencies: {
+  store: StateStore;
+  current(runId: string): SessionRecord | undefined;
+  observe(identity: ProcessIdentity): Promise<ProcessObservation>;
+  cleanReport(runId: string): Promise<void>;
+}): Promise<void> {
+  const state = createAgentQueueState(dependencies.store);
+  for (const entry of state.transaction(() => state.list())) {
+    const session = dependencies.current(entry.record.owner.runId);
+    if (entry.ready) {
+      if (session?.state === 'finished' || session?.state === 'running' && session.process &&
+          (await dependencies.observe(session.process)).state === 'alive') state.transaction(() => state.remove(entry.record));
+      continue;
+    }
+    if (session && session.state !== 'finished') continue;
+    const client = await observeWaitIdentity(entry.record.clientIdentity);
+    if (client.state !== 'dead') continue;
+    await dependencies.cleanReport(entry.record.owner.runId);
+    state.transaction(() => state.remove(entry.record, 'client-died'));
+  }
+}
+
 export async function createProductionAgentQueue(input: RuntimeReservationInput, dependencies: {
   store: StateStore;
   context: RuntimeContext;
@@ -102,8 +124,12 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
         return state.remove(record);
       });
     },
-    cleanup: async (record, _reason, detail) => {
+    cleanup: async (record, reason, detail) => {
       if (!state.transaction(() => state.get(record))) return { state: 'retained', reason: 'Launch fence is no longer owned by this client', completed: [], pending: [] };
+      state.transaction(() => {
+        const entry = state.get(record);
+        if (entry && !entry.ready) state.save({ ...entry, terminalReason: entry.terminalReason ?? reason });
+      });
       const session = current(record.owner.runId);
       if (session?.state === 'running' && state.transaction(() => state.get(record))?.ready) {
         if (!session.process) return { state: 'unknown', reason: 'Running agent identity is missing', completed: [], pending: ['agent reconciliation'] };
@@ -119,7 +145,7 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
         if (remaining && remaining.state !== 'finished') return { state: 'unknown', reason: 'Launch cleanup is incomplete', completed: [], pending: ['launch cleanup'] };
       }
       await dependencies.cleanReport(record.owner.runId);
-      const removed = state.transaction(() => state.remove(record));
+      const removed = state.transaction(() => state.remove(record, reason));
       return { state: removed ? 'released' : 'retained', reason: detail, completed: removed ? ['launch claims', 'resource reservation', 'report cleanup'] : [], pending: [] };
     },
     observe: async record => {

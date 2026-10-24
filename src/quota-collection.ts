@@ -1,6 +1,7 @@
 import { observeRunnerScreen, nextRunnerAction, parseRunnerQuota } from './runner-protocols.ts';
 import type { ProtocolSettings, QuotaSnapshot, RunnerId, ScreenState } from './runner-protocols.ts';
 import { nextQuotaProbeAction, parseQuotaScreen, type QuotaProtocol, type ScreenQuotaSnapshot } from './quota-screens.ts';
+import type { AbsoluteQuotaCredits } from './quota-credits.ts';
 export type CollectionSettings = ProtocolSettings | QuotaProtocol;
 type AnySnapshot = QuotaSnapshot | ScreenQuotaSnapshot;
 export type ProbeHandle = { socket: string; session: string; ownershipToken: string; trustWorkspace?: boolean };
@@ -30,7 +31,14 @@ export function validateQuotaRunners(requested: string[], available: RunnerId[])
   return [...new Set(requested)] as RunnerId[];
 }
 export function quotaCurrentView(current: CurrentQuota | null, settings: CollectionSettings, now: string, enabled: boolean): QuotaView {
-  const snapshot = current?.snapshot ?? null;
+  const snapshot = current?.snapshot ? structuredClone(current.snapshot) : null;
+  if (snapshot && absoluteCredits(snapshot.credits)) {
+    const credits = snapshot.credits;
+    const creditAge = Date.parse(now) - Date.parse(credits.observedAt);
+    const failedBalance = current?.error && (current.error.code !== 'incomplete' || !current.lastAttemptAt || Date.parse(credits.observedAt) < Date.parse(current.lastAttemptAt));
+    const issue = !enabled ? 'Runner disabled' : failedBalance ? current!.error!.message : !Number.isFinite(creditAge) || creditAge < 0 || creditAge >= settings.collection.staleAfterMs ? 'Stale credits observation' : null;
+    if (issue) { credits.reliable = false; credits.issue = [credits.issue, issue].filter(Boolean).join('; '); }
+  }
   const ageMs = snapshot ? Math.max(0, Date.parse(now) - Date.parse(snapshot.observedAt)) : null;
   let reason: QuotaView['reason'] = 'fresh';
   if (!enabled) reason = 'disabled';
@@ -127,7 +135,7 @@ export async function collectRunnerQuotas(input: { requested: string[]; mode: 'b
         }
         if (snapshot || failure) {
           const current: CurrentQuota = {
-            runner, snapshot: snapshot ?? previous?.snapshot ?? null, lastAttemptAt: attemptedAt, error: failure,
+            runner, snapshot: mergeQuotaSnapshot(previous?.snapshot ?? null, snapshot, failure), lastAttemptAt: attemptedAt, error: failure,
             nextAttemptAt: new Date(Date.parse(dependencies.now()) + (failure ? settings.collection.failureBackoffMs : settings.collection.intervalMs)).toISOString(),
           };
           await dependencies.store.replaceCurrent(current);
@@ -137,6 +145,23 @@ export async function collectRunnerQuotas(input: { requested: string[]; mode: 'b
     }
   }
   return { exitCode: results.some(result => !result.collected) ? 1 : 0, results };
+}
+
+function absoluteCredits(value: AnySnapshot['credits']): value is AbsoluteQuotaCredits {
+  return !!value && typeof value === 'object' && 'unit' in value && value.unit === 'credits';
+}
+
+function mergeQuotaSnapshot(previous: AnySnapshot | null, measured: AnySnapshot | null, failure: CollectionError | null): AnySnapshot | null {
+  if (!measured) return previous;
+  if (!('version' in measured)) return measured;
+  const snapshot = structuredClone(failure && previous && 'version' in previous ? previous : measured);
+  if (!('version' in snapshot)) return snapshot;
+  const credits = measured.credits;
+  if (absoluteCredits(credits) && credits.reliable && credits.remaining !== null) snapshot.credits = credits;
+  else if (previous && absoluteCredits(previous.credits) && previous.credits.remaining !== null) {
+    snapshot.credits = { ...previous.credits, reliable: false, issue: absoluteCredits(credits) ? credits.issue ?? 'Current credits balance unknown' : 'Current credits balance missing' };
+  } else snapshot.credits = credits;
+  return snapshot;
 }
 
 async function screenDialog(settings: QuotaProtocol, handle: ProbeHandle, start: number, dependencies: QuotaDependencies, error: (code: CollectionError['code'], message: string) => CollectionError): Promise<{ snapshot: ScreenQuotaSnapshot | null; failure: CollectionError | null }> {
@@ -164,8 +189,8 @@ async function screenDialog(settings: QuotaProtocol, handle: ProbeHandle, start:
     if (action.kind === 'parse') {
       const parsed = parseQuotaScreen(settings, capture);
       if (settings.quota.dismissKeys.length) await dependencies.transport.sendKeysOwned(handle, settings.quota.dismissKeys);
-      if (!parsed.reliable) return { snapshot: null, failure: error('quota_untrusted', parsed.issues.join('; ') || 'Quota reliability has not been verified') };
-      if (parsed.completeness !== 'complete') return { snapshot: null, failure: error('incomplete', parsed.issues.join('; ')) };
+      if (!parsed.reliable) return { snapshot: parsed.credits ? parsed : null, failure: error('quota_untrusted', parsed.issues.join('; ') || 'Quota reliability has not been verified') };
+      if (parsed.completeness !== 'complete') return { snapshot: parsed.credits ? parsed : null, failure: error('incomplete', parsed.issues.join('; ')) };
       return { snapshot: parsed, failure: null };
     }
     if (action.kind === 'trust') {

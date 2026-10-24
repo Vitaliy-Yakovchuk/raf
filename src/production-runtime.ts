@@ -794,8 +794,8 @@ function quotaStore(store: StateStore, rows: readonly QuotaProtocol[], mode: 'ba
       return { runner, snapshot: row.snapshot as CurrentQuota['snapshot'], lastAttemptAt: row.lastAttemptAt, error, nextAttemptAt: delay === null ? null : new Date(Date.parse(row.lastAttemptAt) + delay).toISOString() };
     },
     replaceCurrent: async value => {
-      if (value.error || !value.snapshot || !value.lastAttemptAt) store.recordQuotaError(value.runner, JSON.stringify(value.error ?? { code: 'probe_failed', message: 'Quota probe produced no snapshot', remedy: quotaRemedy }), value.lastAttemptAt ?? now());
-      else store.setQuotaSnapshot(value.runner, value.snapshot, value.snapshot.observedAt);
+      if (value.snapshot && value.lastAttemptAt) store.setQuotaSnapshot(value.runner, value.snapshot, value.snapshot.observedAt, { attemptedAt: value.lastAttemptAt, error: value.error ? JSON.stringify(value.error) : null });
+      else store.recordQuotaError(value.runner, JSON.stringify(value.error ?? { code: 'probe_failed', message: 'Quota probe produced no snapshot', remedy: quotaRemedy }), value.lastAttemptAt ?? now());
     },
   };
 }

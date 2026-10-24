@@ -1,6 +1,7 @@
 import { isAbsolute } from 'node:path';
 import type { ProtocolSettings, RunnerId } from './runner-protocols.ts';
 import type { QuotaView } from './quota-collection.ts';
+import { parseQuotaCredits, validateQuotaCredits, type AbsoluteQuotaCredits, type QuotaCreditsSettings } from './quota-credits.ts';
 
 export type QuotaScreenParser = 'codex_status' | 'claude_usage' | 'grok_usage' | 'agy_usage';
 export type QuotaWindowName = 'session' | 'weekly' | 'five_hour';
@@ -11,6 +12,7 @@ export type QuotaProbeSettings = {
   panel: string[];
   loading: string[];
   dismissKeys: string[];
+  credits?: QuotaCreditsSettings;
 };
 export type QuotaProtocol = Omit<ProtocolSettings, 'quotaParser' | 'native'> & { quotaParser: QuotaScreenParser | 'unknown'; quota: QuotaProbeSettings };
 export type ScreenQuotaWindow = {
@@ -29,7 +31,7 @@ export type ScreenQuotaSnapshot = {
   observedAt: string;
   version: string;
   pools: ScreenQuotaPool[];
-  credits: { usedFraction: number | null; label: string } | null;
+  credits: { usedFraction: number | null; label: string } | AbsoluteQuotaCredits | null;
   reliable: boolean;
   completeness: 'complete' | 'partial' | 'unknown';
   issues: string[];
@@ -76,6 +78,10 @@ export function validateQuotaProtocol(row: unknown): QuotaProtocol {
   if (!isTexts(quota.panel, true)) invalid('quota.panel');
   if (!isTexts(quota.loading, false)) invalid('quota.loading');
   if (!isTexts(quota.dismissKeys, false)) invalid('quota.dismissKeys');
+  if (Object.hasOwn(quota, 'credits')) {
+    if (row.runner !== 'agy') invalid('quota.credits runner');
+    validateQuotaCredits(quota.credits);
+  }
   if (!isObject(row.modelPools) || !Object.values(row.modelPools).every(isText)) invalid('modelPools');
   if (typeof row.quotaReliable !== 'boolean') invalid('quotaReliable');
   if (!isObject(row.markers) || !isTexts(row.markers.ready, true) || !Object.values(row.markers).every(value => isTexts(value, false))) invalid('markers');
@@ -151,7 +157,9 @@ export function latestQuotaBlock(settings: QuotaProtocol, text: string): string 
     const bare = value.replace(/^\p{L}+:\s*/u, '').replace(/^[^\p{L}\p{N}/]+/u, '');
     if (pattern.test(value) || command && (bare === command || bare.startsWith(`${command} `) && !bare.slice(command.length).trim().startsWith('/'))) echo = index;
   });
-  const block = raw.slice(echo + 1).join('\n').replaceAll('\u00a0', ' ');
+  const response = raw.slice(echo + 1);
+  const panels = response.flatMap((line, index) => line.includes(settings.quota.panel[0]) ? [index] : []);
+  const block = response.slice(panels.length > 1 ? panels.at(-1) : 0).join('\n').replaceAll('\u00a0', ' ');
   return block.trim() ? block : null;
 }
 
@@ -230,6 +238,9 @@ function emptyWindow(name: QuotaWindowName, label: string): ScreenQuotaWindow {
 
 export function parseQuotaScreen(settings: QuotaProtocol, input: { text: string; observedAt: string; version: string; truncated: boolean }): ScreenQuotaSnapshot {
   const snapshot: ScreenQuotaSnapshot = { runner: settings.runner, observedAt: input.observedAt, version: input.version, pools: [], credits: null, reliable: settings.quotaReliable, completeness: 'unknown', issues: [] };
+  const supported = input.version === settings.version || input.version.trim().split(/\s+/).includes(settings.version);
+  const block = latestQuotaBlock(settings, input.text) ?? '';
+  if (settings.runner === 'agy') snapshot.credits = parseQuotaCredits(settings.quota.credits ?? null, { ...input, text: block, reliable: settings.quotaReliable && supported });
   if (input.version !== settings.version && !input.version.trim().split(/\s+/).includes(settings.version)) {
     snapshot.reliable = false;
     snapshot.issues.push(`Unsupported ${settings.runner} version ${JSON.stringify(input.version)}; expected ${settings.version}`);
@@ -240,7 +251,6 @@ export function parseQuotaScreen(settings: QuotaProtocol, input: { text: string;
     snapshot.issues.push('Invalid observation time');
     return snapshot;
   }
-  const block = latestQuotaBlock(settings, input.text) ?? '';
   const zone = settings.quota.env.TZ;
   const reset = (window: ScreenQuotaWindow, text: string) => {
     if (settings.quotaParser === 'unknown') return;

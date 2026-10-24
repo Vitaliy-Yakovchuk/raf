@@ -82,7 +82,7 @@ export interface StateStore {
   getRunnerEnabled(id: string): boolean | undefined;
   initializeRunners(entries: RunnerInitialState[]): void;
   setRunnerEnabled(id: string, enabled: boolean): void;
-  setQuotaSnapshot(runner: string, value: unknown, observedAt: string): void;
+  setQuotaSnapshot(runner: string, value: unknown, observedAt: string, attempt?: { attemptedAt: string; error: string | null }): void;
   recordQuotaError(runner: string, message: string, attemptedAt: string): void;
   getQuota(runner: string): QuotaState | undefined;
   acquireQuotaLease(key: string, token: string, pid: number, expiresAt: string, isStale: (holder: { pid: number; expiresAt: string }) => boolean): boolean;
@@ -886,15 +886,15 @@ export function openStateStore(path: string, options?: import('./state-migration
         if (result.changes === 0) throw new Error("Unknown runner ID");
       });
     },
-    setQuotaSnapshot(runner, value, observedAt) {
+    setQuotaSnapshot(runner, value, observedAt, attempt) {
       let snapshot: string | undefined;
       try { snapshot = JSON.stringify(value); } catch { throw new Error("Quota snapshot must be JSON serializable"); }
       if (snapshot === undefined) throw new Error("Quota snapshot must be JSON serializable");
       operation("setQuotaSnapshot", () => db.prepare(`
-        INSERT INTO quotas (runner, snapshot, observed_at, last_attempt_at, error) VALUES (?, ?, ?, ?, NULL)
+        INSERT INTO quotas (runner, snapshot, observed_at, last_attempt_at, error) VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(runner) DO UPDATE SET snapshot = excluded.snapshot,
-          observed_at = excluded.observed_at, last_attempt_at = excluded.last_attempt_at, error = NULL
-      `).run(runner, snapshot, observedAt, observedAt));
+          observed_at = excluded.observed_at, last_attempt_at = excluded.last_attempt_at, error = excluded.error
+      `).run(runner, snapshot, observedAt, attempt?.attemptedAt ?? observedAt, attempt?.error ?? null));
     },
     recordQuotaError(runner, message, attemptedAt) {
       operation("recordQuotaError", () => db.prepare(`

@@ -34,5 +34,25 @@
     "Потрібна явна міграція основної SQLite з версії 16 до 17 за чинним raf-state; production стан у цьому пункті не мігрувався.",
     "Живі сценарії й декларації чужих регресій залишено пункту 2.4; EMA-покриття прямих production-гілок залишається 3.3.",
     "Інші пункти зміни відкриті; tasks.md не редагувався, архівація не виконувалась."
-  ]
+  ],
+  "finalStatus": "failed",
+  "reason": "Фінальний профіль після закомічених уточнень не підтверджений: прогін bb58a752-c7e4-435c-be4c-903ac5173cae відмовлено до child через зупинку служби main; доручений повтор того самого відбору не виконав raf через ENOENT транспортного каналу. Потрібен відновлений довірений канал і той самий test run implement без зміни HOME/group.",
+  "transportRetry": {
+    "rawToolResult": "retry-transport-tool-result.json",
+    "stderr": "retry-transport.stderr.log",
+    "exitCodes": "retry-cli-exit.json",
+    "workspace": "retry-workspace.json",
+    "testRunResult": null,
+    "runId": null,
+    "outcome": "transport-failed",
+    "cliExitCode": 1,
+    "childExitCode": null,
+    "nextAction": "restore-transport-and-repeat-same-selection",
+    "knownRed": null,
+    "unexecuted": null,
+    "unknown": null,
+    "note": "Відсутній TestRunResult не є pass. Дані агрегату цією спробою не підтверджено й не скидалися."
+  },
+  "checkboxesChanged": false,
+  "archive": null
 }

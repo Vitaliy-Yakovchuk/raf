@@ -1,0 +1,105 @@
+{
+  "assignment": "add-raf-reminders:7.3",
+  "audit": {
+    "current": true,
+    "sources": [
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-reminders/proposal.md",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-reminders/design.md#Оновлення часу active нагадування (7.1)",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-reminders/specs/projects/raf/reminders/spec.md",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-reminders/tasks.md#7",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-reminders/main-verification-7.2/red-3cbe8a6.json"
+    ],
+    "conclusion": "Чинний контракт вимагає атомарної REMINDER_ACTIVE для active + --at. Підтверджений red 7.2 містив 7 knownRed; суперечностей не виявлено."
+  },
+  "implementationCommit": {
+    "repository": "/srv/dev/work/orchestrator/raf-develop",
+    "sha": "b6ddd00a9ce2181264a36b9a49c3eb1c71501cc5"
+  },
+  "catalogCommit": {
+    "repository": "/srv/dev/work/orchestrator",
+    "sha": "8c3229a6fece746f9d58afc4027d73bda1bd32a2",
+    "owner": "main",
+    "reason": "conf/raf-constants.json поза дозволеними шляхами запису; main застосував передані точні description, --at, sideEffects і підтвердив коміт."
+  },
+  "implementation": {
+    "sourceFiles": [
+      "src/reminders.ts",
+      "src/reminder-cli.ts"
+    ],
+    "changes": "Перевірка active та наявності at усередині наявної BEGIN IMMEDIATE транзакції перед tx.save/emit. Closed зберігає REMINDER_CLOSED, active без at і pending зберігають поведінку. REMINDER_ACTIVE має пояснення, received {id,state,assignedTo} і remediation close/add з фактичними ID.",
+    "independence": "Початкову реалізацію завершено до читання test/reminder-active-update.test.ts. Підготовлених тестів не змінено.",
+    "initialFailure": "13/14: підказка містила зайві лапки для звичайних ID. Виправлено формат аргументів у коді; shell-небезпечні значення отримують одинарні лапки."
+  },
+  "unitPolicy": {
+    "source": "/srv/dev/work/orchestrator/conf/flow.json#/unitTests",
+    "timeoutMs": 1200000,
+    "optimizeAfterTimeouts": 1,
+    "maxGroupTimeouts": 2
+  },
+  "selectionPolicy": "Стала група add-raf-reminders/unit і QA HOME з red збережені. Main налаштував групу тільки для нового unit-файлу; старі тести з живим tmux не включено. conf/test-runs.json не змінював.",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/da436d08-f31a-4a9d-b338-22d8a8c31089/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-reminders/unit --files test/reminder-active-update.test.ts",
+  "runs": [
+    {
+      "result": "initial-result.json",
+      "stderr": "initial-stderr.txt",
+      "cli": "initial-cli.json",
+      "workspaceSnapshot": "initial-workspace.txt",
+      "runId": "a5509c84-fa78-49b0-b9dc-c5876d10bffc",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "passed": 13,
+      "knownRed": 1
+    },
+    {
+      "result": "green-result.json",
+      "stderr": "green-stderr.txt",
+      "cli": "green-cli.json",
+      "workspaceSnapshot": "green-workspace.txt",
+      "runId": "d13875ac-105c-4614-9461-61a4a06a8461",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 14,
+      "durationMs": 9423,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    }
+  ],
+  "workspace": "Прогони на HEAD 11b03bef19f82be950c3283d83f3e18244ead29d з незакоміченими власними src/reminders.ts і src/reminder-cli.ts; повний status і diff власних файлів — у *-workspace.txt. Green включав сторонню правку test/test-run-socket-path.test.ts, що не входить у відбір; її не змінював/не комітив. Перевірений фінальний код збережено implementationCommit.",
+  "checks": [
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "evidence": "build.txt"
+    },
+    {
+      "command": "runCli([\"help\", \"reminder\", \"update\"], \"dist/catalog.json\", {})",
+      "exitCode": 0,
+      "evidence": "help.json",
+      "stderr": "help-stderr.txt",
+      "assertions": "description, parameters[at].description і metadata.sideEffects зібраного help точно відповідають conf; містять pending, REMINDER_ACTIVE, REMINDER_CLOSED, close/add.",
+      "verification": "help-check.txt"
+    },
+    {
+      "command": "openspec validate add-raf-reminders --strict --no-interactive",
+      "cwd": "/srv/dev/work/orchestrator",
+      "exitCode": 0,
+      "evidence": "strict-validate.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "limits": "Живі tmux/CLI сценарії 7.4 не виконувалися: це окреме QA-доручення. Інші відкриті пункти лишено відкритими. tasks.md не змінював; sync/archive не виконував."
+}

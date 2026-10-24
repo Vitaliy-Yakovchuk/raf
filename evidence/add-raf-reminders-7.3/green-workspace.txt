@@ -1,0 +1,69 @@
+11b03bef19f82be950c3283d83f3e18244ead29d
+ M src/reminder-cli.ts
+ M src/reminders.ts
+ M test/test-run-socket-path.test.ts
+?? evidence/add-raf-reminders-7.3/
+diff --git a/src/reminder-cli.ts b/src/reminder-cli.ts
+index 070896a..ba06050 100644
+--- a/src/reminder-cli.ts
++++ b/src/reminder-cli.ts
+@@ -47,19 +47,27 @@ const remediation: Record<string, string> = {
+   SESSION_NOT_ACTIVE: 'Оберіть адресата з активних сесій raf agent ps, включно з main.',
+   REMINDER_NOT_FOUND: 'Перевірте ID за raf reminder list.',
+   REMINDER_CLOSED: 'Закрите нагадування не змінюється; створіть нове через raf reminder add.',
++  REMINDER_ACTIVE: 'Закрийте спрацьоване нагадування через raf reminder close --id <ID> --reason <причина>, потім створіть нове через raf reminder add --to <поточний адресний ID> --at <новий час> --text <текст>; за потреби додайте повну трійку прив’язки події.',
+   REMINDER_DUPLICATE: 'Повторіть команду: ID нагадування згенеровано повторно.',
+ };
+ 
+ function reminderFailure(code: string, message: string, received: unknown = null): Error {
++  let step = remediation[code] ?? 'Виправте причину та повторіть команду.';
++  if (code === 'REMINDER_ACTIVE' && received && typeof received === 'object' && 'id' in received && 'assignedTo' in received
++      && typeof received.id === 'string' && typeof received.assignedTo === 'string') {
++    const argument = (value: string) => /^[\w.:/@-]+$/.test(value) ? value : "'" + value.replaceAll("'", "'\\''") + "'";
++    const { id, assignedTo } = received;
++    step = step.replace('<ID>', () => argument(id)).replace('<поточний адресний ID>', () => argument(assignedTo));
++  }
+   return Object.assign(commandFailure({ code, message, stage: 'reminder', source: 'reminder-cli', sourceCode: code, reason: message,
+     received, expected: null, found: null, completed: [], pending: [], retrySafe: true,
+-    remediation: [remediation[code] ?? 'Виправте причину та повторіть команду.'] }), { code });
++    remediation: [step] }), { code });
+ }
+ 
+ function translated<T>(action: () => T): T {
+   try { return action(); }
+   catch (error) {
+-    if (error instanceof ReminderError) throw reminderFailure(error.code, error.message);
++    if (error instanceof ReminderError) throw reminderFailure(error.code, error.message, error.details);
+     throw error;
+   }
+ }
+diff --git a/src/reminders.ts b/src/reminders.ts
+index 7206c52..5f3e48e 100644
+--- a/src/reminders.ts
++++ b/src/reminders.ts
+@@ -65,11 +65,13 @@ export interface SessionEnd {
+ 
+ export class ReminderError extends Error {
+   readonly code: string;
++  readonly details: Record<string, unknown> | null;
+ 
+-  constructor(code: string, message: string) {
++  constructor(code: string, message: string, details: Record<string, unknown> | null = null) {
+     super(message);
+     this.name = 'ReminderError';
+     this.code = code;
++    this.details = details;
+   }
+ }
+ 
+@@ -169,6 +171,10 @@ export class ReminderService {
+     if (input.binding != null) this.binding(input.binding);
+     return this.options.repository.transaction(tx => {
+       const reminder = this.open(tx, id);
++      if (reminder.state === 'active' && input.at !== undefined) {
++        throw new ReminderError('REMINDER_ACTIVE', 'Нагадування вже спрацювало (active); його час змінювати не можна.',
++          { id: reminder.id, state: reminder.state, assignedTo: reminder.assignedTo });
++      }
+       const changed = { ...reminder,
+         at: input.at === undefined ? reminder.at : input.at,
+         text: input.text === undefined ? reminder.text : input.text,

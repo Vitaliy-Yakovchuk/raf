@@ -253,6 +253,9 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
   }
   async function verified(marker = "new"): Promise<VerifiedHotfix> {
     const { workspace } = await candidate(marker);
+    return verifyWorkspace(workspace);
+  }
+  async function verifyWorkspace(workspace: HotfixWorkspace): Promise<VerifiedHotfix> {
     return verifyHotfixCandidate(host, {
       workspace,
       regression: { executable: process.execPath, args: ["--test", "--test-isolation=none", "--test-name-pattern", "^\\[hotfix-pure\\]", "test/hotfix-worktree.test.ts"] },
@@ -267,7 +270,7 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
     childProcesses.add(child);
     return child;
   }
-  return { root, home, workingHome, main, hotfix, host, environment, baseCommit, runnerLog, inbox, budget, poll, socket, startMain, mainCommand, liveIdentity, cli, candidate, verified, forkModule, osHomePreload };
+  return { root, home, workingHome, main, hotfix, host, environment, baseCommit, runnerLog, inbox, budget, poll, socket, startMain, mainCommand, liveIdentity, cli, candidate, verified, verifyWorkspace, forkModule, osHomePreload };
 }
 
 export async function childMessage(child: ChildProcess, predicate: (value: any) => boolean, budget: number): Promise<any> {

@@ -30,8 +30,29 @@ export interface HotfixGateEvidence {
   logPath: string;
 }
 
+export type HotfixSnapshotCheckpoint = "before-copy" | "after-copy";
+
+export interface HotfixSnapshotOptions {
+  checkpoint?: (phase: HotfixSnapshotCheckpoint) => Promise<void>;
+}
+
+export interface HotfixSealedSnapshot {
+  root: string;
+  configurationRoot: string;
+  sourceCwd: string;
+  sourceGitDirectory: string;
+  sourceCommonDirectory: string;
+  baseCommit: string;
+  commit: string;
+  tree: string;
+  fingerprint: string;
+  files: readonly HotfixSnapshotFile[];
+  configuration: readonly HotfixSnapshotFile[];
+}
+
 export interface VerifiedHotfix {
   workspace: HotfixWorkspace;
+  snapshot?: HotfixSealedSnapshot;
   commit: string;
   tree: string;
   fingerprint: string;
@@ -39,6 +60,10 @@ export interface VerifiedHotfix {
   configuration: readonly HotfixSnapshotFile[];
   gates: readonly HotfixGateEvidence[];
   evidencePath: string;
+}
+
+export async function sealHotfixSnapshot(host: HotfixHost, workspace: HotfixWorkspace, options?: HotfixSnapshotOptions): Promise<HotfixSealedSnapshot> {
+  throw new Error("NotImplemented");
 }
 
 export interface HotfixVerificationRequest {

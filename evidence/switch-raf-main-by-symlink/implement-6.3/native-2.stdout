@@ -1,0 +1,62 @@
+✖ native write-deny protects both copies, symlink and Git metadata despite broad parent write grants (41.298632ms)
+✖ native read-deny for SQLite sidecars and secrets survives writable aliases and child shells (24.720066ms)
+✖ native connect-deny protects live host and peer sockets inside writable roots without closing own IPC (31.483652ms)
+✖ native deny boundaries remain effective after host changes logical main from A to B (25.507285ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 292.228306
+
+✖ failing tests:
+
+test at test/main-switch-agent-channel.integration.test.ts:126:1
+✖ native write-deny protects both copies, symlink and Git metadata despite broad parent write grants (41.298632ms)
+  Error: Codex sandbox isolation unavailable: listen EACCES: permission denied 127.0.0.1
+      at prepareCodexSandbox (file:///srv/dev/work/orchestrator/raf-develop/src/codex-sandbox.ts:341:11)
+      at async runAgentChannelNativeProbe (file:///srv/dev/work/orchestrator/raf-develop/src/main-switch-agent-channel.ts:239:15)
+      at async positiveControl (file:///srv/dev/work/orchestrator/raf-develop/test/main-switch-agent-channel.integration.test.ts:116:18)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-develop/test/main-switch-agent-channel.integration.test.ts:129:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    code: 'CODEX_SANDBOX_UNAVAILABLE'
+  }
+
+test at test/main-switch-agent-channel.integration.test.ts:160:1
+✖ native read-deny for SQLite sidecars and secrets survives writable aliases and child shells (24.720066ms)
+  Error: Codex sandbox isolation unavailable: listen EACCES: permission denied 127.0.0.1
+      at prepareCodexSandbox (file:///srv/dev/work/orchestrator/raf-develop/src/codex-sandbox.ts:341:11)
+      at async runAgentChannelNativeProbe (file:///srv/dev/work/orchestrator/raf-develop/src/main-switch-agent-channel.ts:239:15)
+      at async positiveControl (file:///srv/dev/work/orchestrator/raf-develop/test/main-switch-agent-channel.integration.test.ts:116:18)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-develop/test/main-switch-agent-channel.integration.test.ts:163:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'CODEX_SANDBOX_UNAVAILABLE'
+  }
+
+test at test/main-switch-agent-channel.integration.test.ts:179:1
+✖ native connect-deny protects live host and peer sockets inside writable roots without closing own IPC (31.483652ms)
+  Error: Codex sandbox isolation unavailable: listen EACCES: permission denied 127.0.0.1
+      at prepareCodexSandbox (file:///srv/dev/work/orchestrator/raf-develop/src/codex-sandbox.ts:341:11)
+      at async runAgentChannelNativeProbe (file:///srv/dev/work/orchestrator/raf-develop/src/main-switch-agent-channel.ts:239:15)
+      at async positiveControl (file:///srv/dev/work/orchestrator/raf-develop/test/main-switch-agent-channel.integration.test.ts:116:18)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-develop/test/main-switch-agent-channel.integration.test.ts:182:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'CODEX_SANDBOX_UNAVAILABLE'
+  }
+
+test at test/main-switch-agent-channel.integration.test.ts:203:1
+✖ native deny boundaries remain effective after host changes logical main from A to B (25.507285ms)
+  Error: Codex sandbox isolation unavailable: listen EACCES: permission denied 127.0.0.1
+      at prepareCodexSandbox (file:///srv/dev/work/orchestrator/raf-develop/src/codex-sandbox.ts:341:11)
+      at async runAgentChannelNativeProbe (file:///srv/dev/work/orchestrator/raf-develop/src/main-switch-agent-channel.ts:239:15)
+      at async positiveControl (file:///srv/dev/work/orchestrator/raf-develop/test/main-switch-agent-channel.integration.test.ts:116:18)
+      at async TestContext.<anonymous> (file:///srv/dev/work/orchestrator/raf-develop/test/main-switch-agent-channel.integration.test.ts:206:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'CODEX_SANDBOX_UNAVAILABLE'
+  }

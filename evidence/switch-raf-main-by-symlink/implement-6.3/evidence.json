@@ -1,0 +1,169 @@
+{
+  "assignment": "switch-raf-main-by-symlink:6.3",
+  "ownFiles": [
+    "src/main-switch-agent-channel.ts",
+    "src/codex-sandbox.ts"
+  ],
+  "finalWorkspace": {
+    "head": "29ef587a3d34c12213e5d774f8ff071628a4c0b9",
+    "status": " M src/codex-sandbox.ts\n M src/main-switch-agent-channel.ts\n M src/state-migration-guard.ts\n M test/main-symlink-release.test.ts\n?? evidence/switch-raf-main-by-symlink/\n?? scripts/qa-main-symlink-release.ts\n",
+    "patch": "implementation.patch",
+    "sha256": {
+      "src/main-switch-agent-channel.ts": "0ba60ec9f1c045c358e3614e861949c7df9bb839d95b1d760f07c6e6a49838ce",
+      "src/codex-sandbox.ts": "be670de365d83f40bc61a70b10e12451087797859cde3025889063c8ea490113"
+    }
+  },
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase implement --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "workspaceHead": "9bdeae6f35d7b5c17798e70821a1d79f5a9ff891",
+      "uncommittedImplementation": true,
+      "result": "run-1.json",
+      "stderr": "run-1.stderr",
+      "cliExit": "run-1.cli-exit.json",
+      "runId": "fc20fa6d-9157-4965-b20e-7aa2de2a89b4",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": 52,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase implement --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "workspaceHead": "9bdeae6f35d7b5c17798e70821a1d79f5a9ff891",
+      "uncommittedImplementation": true,
+      "result": "run-2.json",
+      "stderr": "run-2.stderr",
+      "cliExit": "run-2.cli-exit.json",
+      "runId": "38ecb7b3-24c2-4cd0-b553-b5403eea7b73",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/4eb94e37-6966-4e7a-b677-82e92951ea84/raf-main/bin/raf.ts test run --project raf --phase implement --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "workspaceHead": "29ef587a3d34c12213e5d774f8ff071628a4c0b9",
+      "uncommittedImplementation": true,
+      "result": "run-3.json",
+      "stderr": "run-3.stderr",
+      "cliExit": "run-3.cli-exit.json",
+      "runId": "ac733d7b-98fd-4562-a4bd-1f4dcf44cc81",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "complete",
+      "nextAction": "complete"
+    }
+  ],
+  "testIntegrity": {
+    "test/main-switch-agent-channel.test.ts": {
+      "sha256": "7b60e6910a550a05060d5ac351fee865b2471b74fb8dadb6f8119fc752172c86",
+      "gitDiff": ""
+    }
+  },
+  "unitPolicy": {
+    "group": "switch-raf-main-by-symlink/agent-channel",
+    "sameQaHome": true,
+    "initialRed": "openspec/changes/switch-raf-main-by-symlink/red-6.1.json",
+    "counterReset": false
+  },
+  "capture": {
+    "json": "Complete original TestRunResult JSON first line preserved verbatim; no truncation.",
+    "stderr": "exec_command merges stdout/stderr; trailing CLI diagnostics preserved separately as .stderr. Stream provenance cannot be independently attested by this tool.",
+    "cliExit": "Recorded from exec_command exit_code, separately from TestRunResult.exitCode."
+  },
+  "build": {
+    "command": "npm run build",
+    "stdout": "build-final.stdout",
+    "stderr": "build-final.stderr",
+    "cliExitCode": 0
+  },
+  "native": {
+    "command": "node --test test/main-switch-agent-channel.integration.test.ts",
+    "attempts": [
+      {
+        "stdout": "native.stdout",
+        "stderr": "native.stderr",
+        "cliExitCode": 1,
+        "classification": "setup-failed: provider lookup incorrectly used target PATH; corrected before second attempt"
+      },
+      {
+        "stdout": "native-2.stdout",
+        "stderr": "native-2.stderr",
+        "cliExitCode": 1,
+        "classification": "provider-unavailable: nested sandbox denies preflight TCP listen 127.0.0.1; no isolation pass claim"
+      }
+    ],
+    "supportedProviderEvidence": false,
+    "nextAction": "Host must run exact integration command on supported Codex provider; current runtime never disables sandbox or bypasses preflight."
+  },
+  "regressions": {
+    "executed": false,
+    "reason": "Main explicitly restricted this implement run to agent-channel; declare exact regressionGroups for 6.4 QA.",
+    "files": [
+      "test/agent-adapters.test.ts",
+      "test/codex-sandbox-preflight-path.test.ts",
+      "test/workspace-trust.test.ts",
+      "test/codex-raf-command-output.test.ts",
+      "test/sandbox-test-run.test.ts"
+    ],
+    "existingGroups": [
+      "complete-raf-flow-contracts/q414-regress",
+      "complete-raf-flow-contracts/z390",
+      "complete-raf-flow-contracts/z389-trust-order",
+      "complete-raf-flow-contracts/z350"
+    ],
+    "ungroupedFiles": [
+      "test/codex-raf-command-output.test.ts"
+    ]
+  },
+  "integrationContract": {
+    "publication": "readPublicationRegistry and pinGeneration must be trusted host ports; pin validates revision plus full fingerprints atomically and protects entire code/catalog until release. Never use env/cwd/symlink as publication authority.",
+    "identity": "verifyCaller uses nearest registered live process ancestor; loadGrant must bind the exact original agent/run/runner identity and issued prefix.",
+    "execution": "executePinned uses fixed executable/entrypoint, shell false, grant workspace and trusted sender; request cwd/env are ignored. Preserve streams and child code without retry.",
+    "legacy": "assessAgentChannelSlotReuse never frees a live legacy reader even if safeRouting is asserted. Existing production hooks remain legacy until controlled bootstrap in 7.1.",
+    "native": "compile policy keeps lexical/canonical code and metadata read-only; explicit nested read/connect denies override broad parent writes. Adapter consumes these protections without expanding issued commands.",
+    "rollout": "No live hooks/main layout/production slots/state modified. 7.1 owns controlled bootstrap/wiring; 6.4 owns unchanged-brief native two-switch QA."
+  }
+}

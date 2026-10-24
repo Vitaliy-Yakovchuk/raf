@@ -262,7 +262,10 @@ export async function prepareCodexSandbox(
       if ((await fs.stat(modules).catch(() => null))?.isDirectory()) entries[modules] = 'read';
     }
   }
-  for (const path of request.readOnlyDirectories ?? []) entries[await canonical(path)] = 'read';
+  for (const path of request.readOnlyDirectories ?? []) {
+    entries[await canonical(path)] = 'read';
+    entries[resolve(path)] = 'read';
+  }
   entries[directory] = 'read';
   for (const path of masked) entries[path] = 'none';
   const mountpoints: { path: string; parent: string; dev: number; ino: number }[] = [];

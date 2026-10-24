@@ -72,7 +72,7 @@ test('known readiness and verified native process precede literal brief, committ
   const f = await fixture(t);
   const running = runLaunchWrapper(f.request, f.ports);
   await Promise.race([f.handshaken.promise, running]);
-  assert.deepEqual(f.events.slice(0, 6), ['start', 'ready', 'ownership', 'deliver', 'started', 'handshake']);
+  assert.deepEqual(f.events.slice(0, 7), ['start', 'ready', 'ownership', 'deliver', 'ownership', 'started', 'handshake']);
   await f.writeReport();
   f.exit.resolve({ code: 7, signal: null });
   await running;
@@ -277,7 +277,9 @@ test('delivery failure rechecks ownership before stopping and retains recoverabl
     throw new Error('delivery failed');
   };
   await assert.rejects(runLaunchWrapper(f.request, f.ports), /delivery failed/);
-  assert.equal(f.events.filter(event => event === 'ownership').length, 2);
+  assert.equal(f.events.filter(event => event === 'ownership').length, 3);
+  assert.ok(f.events.indexOf('ownership') < f.events.indexOf('deliver'));
+  assert.ok(f.events.lastIndexOf('ownership') > f.events.indexOf('deliver'));
   assert.ok(!f.events.includes('stop'));
   assert.ok(!f.events.includes('handshake'));
   assert.ok(f.events.includes('failed:true'));
@@ -288,6 +290,8 @@ test('failed start commit never acknowledges running and terminates only its ver
   f.ports.lifecycle.started = async () => { throw new Error('start commit rejected'); };
   await assert.rejects(runLaunchWrapper(f.request, f.ports), /start commit rejected/);
   assert.ok(!f.events.includes('handshake'));
-  assert.equal(f.events.filter(event => event === 'ownership').length, 2);
+  assert.equal(f.events.filter(event => event === 'ownership').length, 3);
+  assert.ok(f.events.lastIndexOf('ownership') > f.events.indexOf('started'));
+  assert.ok(f.events.lastIndexOf('ownership') < f.events.indexOf('stop'));
   assert.ok(f.events.includes('stop'));
 });

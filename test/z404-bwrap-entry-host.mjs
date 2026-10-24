@@ -129,14 +129,15 @@ async function positive(prerequisites, layout, entry, poison = false) {
     record.executable = input.invocation.executable;
     prepared = await prepareCodexSandbox(input);
     record.accepted = true;
+    record.toolSandboxInvocation = { executable: prepared.toolSandbox.executable, args: [...prepared.toolSandbox.args] };
     const selected = effective(input.invocation), runner = effective(prepared.invocation), tool = effective(prepared.toolSandbox);
     record.effectivePolicy = { selected, runner, tool };
     assert.deepEqual(input, original, 'preparation does not mutate selection, environment or scope');
     assert.ok(selected.model && selected.model_reasoning_effort, 'fixture uses the configured model and effort');
     assert.equal(runner.approval_policy, 'never', 'runner: effective approval policy retained');
+    for (const key of ['model', 'model_reasoning_effort']) assert.equal(runner[key], selected[key], `runner: effective ${key} retained`);
     for (const [kind, values] of [['runner', runner], ['toolSandbox', tool]]) {
       assert.equal(values.sandbox_mode, 'workspace-write', `${kind}: effective workspace-write retained`);
-      for (const key of ['model', 'model_reasoning_effort']) assert.equal(values[key], selected[key], `${kind}: effective ${key} retained`);
     }
     const runnerPolicy = policy(runner), toolPolicy = policy(tool);
     assert.deepEqual(runnerPolicy, toolPolicy, 'preflight/live tools retain the runner filesystem policy');

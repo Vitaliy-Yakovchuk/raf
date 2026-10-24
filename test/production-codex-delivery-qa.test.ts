@@ -132,7 +132,7 @@ const header = ${JSON.stringify(pastedFrame?.header ?? 'OpenAI Codex (v0.160.0)'
 const footer = ${JSON.stringify(pastedFrame?.footer ?? 'GPT-6.1-Sol high fast · ~/Documents/orchestrator/raf-develop')};
 const pastedFrame = ${JSON.stringify(pastedFrame ? { header: pastedFrame.pendingHeader, footer: pastedFrame.pendingFooter } : null)};
 const nativeScreen = (input, extra = '') => header + (hasStatus && !pastedFrame ? '\r\nSession: ' + nativeId : '') + extra + '\r\n› ' + input + '\r\n' + footer;
-const ready = () => render(header + '\r\n› Ask Codex to do anything\r\n' + footer);
+const ready = () => render(header.replace(/\nSession: [^\n]+/u, '') + '\r\n› Ask Codex to do anything\r\n' + footer);
 ready();
 let buffer = '';
 let pending = false;

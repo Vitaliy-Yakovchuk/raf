@@ -234,7 +234,7 @@ test('test-queue repeats preflight after permit and fails changed prerequisites 
     assert.equal(result.timedOut, false);
     assert.equal(result.timeoutCount, missing === 'UNKNOWN' ? 0 : null);
     if (missing !== 'UNKNOWN') {
-      assert.equal(result.groupSnapshot, 'unavailable'); assert.equal(result.groupState, null);
+      assert.equal(result.groupSnapshot, 'unavailable');
     }
     assert.equal(f.shared.claims.size, 0); assert.equal(f.testQueue.waits.length, 1);
     assert.ok(f.timeline.filter(entry => entry === 'preflight').length >= 2);

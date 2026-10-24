@@ -16,7 +16,7 @@
       "source": "original-diagnostics/provenance.json; main 2026-10-24 diagnostic handoff",
       "finding": "Failure also occurred on 309a19e+8bfbd5d without 9.1, with missing composer. Causality of 9.1 is unproven; task remains current because bounded worker overhead and initial-delivery compatibility are both required.",
       "overlap": "Main confirmed Z.4.1 has no active executor and authorized delivery guard changes within 9.1.1. Do not report or tick Z.4.1.",
-      "pending": "Stand behavioral red confirmed 2/2 failures on 1d82581; delivery guard now implemented. Worker-only unit hotfix passed 26/26; post-guard unit repeat refused due concurrent foreign inventory drift; main notified. Unit aggregate and QA HOME retained."
+      "pending": "Stand behavioral red confirmed 2/2 failures on 1d82581; narrow delivery guard committed 58b1057. Main-authorized exact scaffold port 0a1d1ed reconciled concurrent inventory drift; own unit hotfix 398d73b8 passed 26/26, stable group and HOME, no knownRed/unknown/unexecuted. Stand green/negative guards/fixed live sample pending main."
     }
   },
   "unitGroup": "fix-raf-load-admission/worker-idle",

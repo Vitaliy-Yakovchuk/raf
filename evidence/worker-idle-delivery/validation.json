@@ -2,10 +2,25 @@
   "build": {
     "command": "HOME=/tmp/fla911b-static-home RAF_QA_HOME=/tmp/fla911b-static-home node scripts/build.ts",
     "exitCode": 0,
-    "result": "Catalog and repository comment policy passed"
+    "result": "Catalog and repository comment policy passed",
+    "verifiedAgainAfterInventoryPort": true,
+    "sourceSha": "0a1d1ed29a432614cd066877b6c96b52d72761b4"
   },
   "diffCheck": {
     "command": "git diff --check",
     "exitCode": 0
+  },
+  "externalHostStatus": {
+    "state": "waiting-resource-admission",
+    "source": "Main handoff 2026-10-24",
+    "waitingSince": "19:43 UTC",
+    "gate": "raf resource wait --level normal",
+    "reason": "Host load about 10–13/8 from existing workers",
+    "sequence": [
+      "same-pattern stand green",
+      "negative guards",
+      "3 parallel live fixed deliveries"
+    ],
+    "expected": "/srv/dev/fla911b-stand-green/{green,guards}.{stdout,stderr,code}"
   }
 }

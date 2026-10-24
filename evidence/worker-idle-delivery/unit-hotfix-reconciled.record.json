@@ -1,0 +1,34 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/5213cd2c-4a65-4d5e-a479-7b406b7c3ad0/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle --files test/agent-adapters.test.ts",
+  "sha": "0a1d1ed29a432614cd066877b6c96b52d72761b4",
+  "workspaceAtRun": "Product/test tracked paths clean. Only run evidence streams and local untracked node_modules symlink.",
+  "stdout": "unit-hotfix-reconciled.stdout",
+  "stderr": "unit-hotfix-reconciled.stderr",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "passedCount": 26,
+  "aggregate": "Same stable group and same isolated QA HOME as red; no reset or alternate aggregate",
+  "remediation": "Main authorized exact two-file scaffold port to reconcile concurrent shared inventory drift, without running its foreign test group.",
+  "runId": "398d73b8-7153-406c-b607-d4c9216a22c6",
+  "phase": "hotfix",
+  "group": "fix-raf-load-admission/worker-idle",
+  "selection": {
+    "files": [
+      "test/agent-adapters.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "timeoutCount": 0,
+  "nextAction": "complete"
+}

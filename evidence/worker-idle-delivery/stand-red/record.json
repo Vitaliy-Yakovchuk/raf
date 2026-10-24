@@ -1,7 +1,7 @@
 {
   "sha": "1d825818208844d53cdc1610ac2cd5ae7b69a77a",
   "command": "node --test --test-name-pattern=\"scrolled-paste|repainting-paste\" test/production-codex-delivery-qa.test.ts",
-  "executor": "main host; clean git clone; isolated QA HOME (exact path not supplied)",
+  "executor": "main host; clean git clone; HOME=TMPDIR=/srv/dev/fla911b-stand-red/home mode 0700; TMUX/CLAUDE_*/SSH_* unset; LC_ALL=C",
   "outcome": "assertions-failed",
   "cliExitCode": 1,
   "tests": 2,
@@ -9,7 +9,7 @@
   "durationSeconds": 20.1,
   "scrolled-paste": "unknown_screen, composer=paste, pending=pending",
   "repainting-paste": "unknown_screen, composer=missing, pending=none",
-  "cleanup": "TestContext fixture cleanup; main to confirm no remaining processes",
+  "cleanup": "Main confirmed tests themselves remove fixture tmux/processes",
   "stdout": "stdout",
   "stderr": "stderr",
   "stderrProvenance": "Main confirmed stderr empty",

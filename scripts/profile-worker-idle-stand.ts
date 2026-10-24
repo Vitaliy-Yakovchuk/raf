@@ -1,17 +1,14 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdir, readFile, writeFile, chmod, realpath, readdir, access } from 'node:fs/promises';
-import { delimiter, dirname, join } from 'node:path';
-import { test, type TestContext } from 'node:test';
+import { readFile, writeFile, chmod } from 'node:fs/promises';
+import { delimiter, join } from 'node:path';
+import type { TestContext } from 'node:test';
 import { launchPersistentWrapper } from '../src/launch-wrapper.ts';
-import { createSessionState } from '../src/session-state.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
-import { selectModel, listModelAvailability } from '../src/model-routing.ts';
 import type { RuntimeLaunch } from '../src/app-runtime.ts';
-import type { AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import type { LaunchWrapperRequest } from '../src/launch-wrapper.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
-import { configuration, derivedLaunch, eventually, fixture, fixtureResourceEstimates, fixtureResources, recordLaunchRunnerPath, taskDescription } from '../test/production-fixture.ts';
+import { configuration, derivedLaunch, eventually, fixture, recordLaunchRunnerPath } from '../test/production-fixture.ts';
 
 async function workerFixture(t: TestContext, prepareInFixture = true, launchRunnerPath?: string | null) {
   const f = await fixture(t, { productionQa: true, tasks: 2 });
@@ -22,6 +19,7 @@ async function workerFixture(t: TestContext, prepareInFixture = true, launchRunn
   const releasePath = join(f.root, 'release.json');
   const exitGatePath = join(f.root, 'exit-gate');
   const deliveredPath = join(f.root, 'delivered.txt');
+  const outputGatePath = join(f.root, 'output-gate');
   const pidPath = join(f.root, 'agent.pid');
   const wrapperPidPath = join(f.root, 'wrapper.pid');
   f.trackPidFile(pidPath);
@@ -43,6 +41,7 @@ process.stdin.on('data', text => {
 const watchdog = setTimeout(() => process.exit(91), 180000);
 let release;
 const timer = setInterval(() => {
+  if (existsSync(${JSON.stringify(outputGatePath)})) process.stdout.write('synthetic active runner output\\n');
   if (!release && existsSync(${JSON.stringify(releasePath)})) {
     release = JSON.parse(readFileSync(${JSON.stringify(releasePath)}, 'utf8'));
     if (release.report) writeFileSync(${JSON.stringify(reportPath)}, JSON.stringify(release.report));
@@ -95,7 +94,7 @@ const timer = setInterval(() => {
     return started;
   };
   const report = { status: 'succeeded', answer: 'Виконано лише доручену fixture.', changes: [{ id: 'fixture-launch', items: [{ id: '2.1', status: 'succeeded' }] }], commits: [] as { repository: string; sha: string }[] };
-  return { ...f, runId, address, reportPath, releasePath, exitGatePath, deliveredPath, pidPath, wrapperPidPath, nativeId, executable, settings, request, runtimeLaunch, launch, session, report };
+  return { ...f, runId, address, reportPath, releasePath, exitGatePath, deliveredPath, outputGatePath, pidPath, wrapperPidPath, nativeId, executable, settings, request, runtimeLaunch, launch, session, report };
 }
 
 
@@ -113,13 +112,14 @@ try {
     return {at:performance.now(), user:Number(fields[11]), system:Number(fields[12]), start:fields[19]};
   };
   await new Promise(resolve => setTimeout(resolve, 1000));
+  if (process.argv[3] === 'active') await writeFile(f.outputGatePath, 'active');
   const before = await sample();
   await new Promise(resolve => setTimeout(resolve, 60000));
   const after = await sample();
   const hz = Number(spawnSync('getconf', ['CLK_TCK'], {encoding:'utf8'}).stdout.trim());
   const wallMs=after.at-before.at;
   const cpuMs=(after.user-before.user+after.system-before.system)*1000/hz;
-  const measurement={before,after,hz,wallMs,cpuMs,corePercent:100*cpuMs/wallMs};
+  const measurement={mode:process.argv[3] ?? 'quiet',before,after,hz,wallMs,cpuMs,corePercent:100*cpuMs/wallMs};
   console.log(JSON.stringify({stage:'measured', ...measurement}));
   await writeFile('evidence/profile-raf-performance-5.1/'+process.argv[2]+'-cpu.json',JSON.stringify(measurement,null,2)+'\n');
   await writeFile(f.releasePath, JSON.stringify({exitCode:0}));

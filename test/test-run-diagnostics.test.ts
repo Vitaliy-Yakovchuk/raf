@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 import { createTestRunPorts } from '../src/test-run-runtime.ts';
+import { resolveStateContext } from '../src/state-migration-guard.ts';
 import { runTestRunCli } from '../src/test-run-cli.ts';
 import { runSandboxTestCommand, type SandboxCommandReply, type SandboxTestAssignment, type SandboxTestRunPorts } from '../src/sandbox-test-run.ts';
 import type { ChildExit, RunnerEvent, TestRunConfig, TestRunContext, TestRunGroup, TestRunPorts, TestRunResult, UnitTestPolicy } from '../src/test-runs.ts';
@@ -772,9 +773,29 @@ async function ingressDiagnosticRoute(t: import('node:test').TestContext, mode: 
   const directory = await mkdtemp('/tmp/z40419-route-');
   const workspace = join(directory, 'workspace');
   const home = join(directory, 'qa-home');
-  await Promise.all([workspace, home].map(path => mkdir(path, { mode: 0o700 })));
+  const operationalHome = join(directory, 'operational');
+  const orchestratorRoot = join(directory, 'orchestrator');
+  const productionCode = join(orchestratorRoot, 'raf-main');
+  await Promise.all([workspace, home, operationalHome, productionCode, join(orchestratorRoot, 'conf')].map(path => mkdir(path, { recursive: true, mode: 0o700 })));
   const bytes = await readFile(new URL('../../conf/test-runs.json', import.meta.url));
   const flow = await readFile(new URL('../../conf/flow.json', import.meta.url));
+  const settings = await readFile(new URL('../../conf/raf.json', import.meta.url));
+  const projects = JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
+  const raf = projects.projects.raf;
+  const production = projects.profiles[raf.profile].production;
+  projects.projects = { raf: { ...raf, path: productionCode, branchPaths: {
+    [production]: productionCode, develop: resolve(import.meta.dirname, '..'), 'qa-fixture': workspace,
+  } } };
+  const projectBytes = Buffer.from(JSON.stringify(projects));
+  await Promise.all([
+    writeFile(join(orchestratorRoot, 'conf/projects.json'), projectBytes, { mode: 0o600 }),
+    writeFile(join(orchestratorRoot, 'conf/raf.json'), settings, { mode: 0o600 }),
+  ]);
+  const stateContext = resolveStateContext({
+    orchestratorRoot, modulePath: resolve(import.meta.dirname, '../src/test-run-runtime.ts'),
+    homeDirectory: home, operatingSystemHome: operationalHome,
+    environment: { HOME: home, RAF_QA_HOME: home }, entryPoint: 'cli',
+  });
   const config: TestRunConfig = JSON.parse(bytes.toString());
   const policy: UnitTestPolicy = JSON.parse(flow.toString()).unitTests;
   const file = 'probe.test.mjs';
@@ -842,16 +863,14 @@ process.exitCode = 23;
   const context: TestRunContext = {
     cwd: workspace, workspace, projectWorkspaces: { raf: [workspace] }, agentPhases: Object.keys(config.phases),
     activeChanges: ['complete-raf-flow-contracts'], agentId: 'z40419-route-worker', sha: 'a'.repeat(40),
-    home, statePath: join(home, '.raf/state.sqlite'), tmpPath: join(home, '.raf/tmp'), operationalHome: join(directory, 'operational'),
+    home, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome,
   };
   await mkdir(context.tmpPath, { recursive: true, mode: 0o700 });
   const inherited = { ...process.env };
   delete inherited.NODE_TEST_CONTEXT;
-  const realRuntime = createTestRunPorts(config, {
-    mode: 'qa', orchestratorRoot: resolve(import.meta.dirname, '../..'), codeRoot: workspace,
-    homeDirectory: home, statePath: context.statePath, tmpRoot: context.tmpPath, tmuxSocketPath: join(home, 'tmux.sock'),
-  }, () => { throw new Error('The state-store dependency is mocked by the test transaction port.'); }, inherited,
-  { flow, testRuns: bytes, projects: new Uint8Array() });
+  const realRuntime = createTestRunPorts(config, stateContext,
+    () => { throw new Error('The state-store dependency is mocked by the test transaction port.'); }, inherited,
+    { flow, testRuns: bytes, projects: projectBytes });
   const groups = new Map<string, TestRunGroup>();
   const received: RunnerEvent[] = [];
   let childExit: ChildExit | undefined;

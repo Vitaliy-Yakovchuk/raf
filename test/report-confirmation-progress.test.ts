@@ -39,7 +39,7 @@ async function setup() {
     const runId = randomUUID();
     const address = 'z393-progress';
     const tmpRoot = join(root, 'runs', runId);
-    const reportPath = join(tmpRoot, `${address}.json`);
+    let reportPath = join(tmpRoot, `${address}.json`);
     const git = (args: readonly string[], environment: Readonly<Record<string, string>> = {}) => execFileSync('git', [...args], {
         cwd: root,
         encoding: 'utf8',
@@ -105,7 +105,7 @@ async function setup() {
     });
     const launchTasks = await identity.capture('raf', assignment);
     assert.equal(launchTasks.length, 1, 'Fixture must capture one immutable task identity');
-    const reportedCommits = await captureReportedCommitLaunchContext(runId, reportPath, [root], [root]);
+    const reportedCommits = { ...await captureReportedCommitLaunchContext(runId, reportPath, [root], [root]) };
     await writeFile(join(root, 'executor-result.txt'), 'Completed fixture work\n');
     git(['add', 'executor-result.txt']);
     git(['commit', '-qm', 'Executor result']);
@@ -217,7 +217,7 @@ async function setup() {
         if (initialEventError) throw initialEventError;
     };
     return {
-        root, protocol, reportPath, tasksPath, reportBytes, runId, executorHead,
+        root, protocol, get reportPath() { return reportPath; }, tasksPath, reportBytes, runId, executorHead,
         pending, results, accepted, rejections, journals, checkpoints, sourceChecks, checkboxBudgets, repairChecks, openSpecCalls,
         busyCount: () => busyResponses,
         journal: () => operations,
@@ -227,6 +227,8 @@ async function setup() {
             mode = selectedMode;
             if (mode !== 'release-on-busy') operations = [{ runId, change, item: '1.1', originalLine: originalTasks.split('\n')[0], parent: executorHead, phase: 'prepared' }];
             watcher = await createAgentReportWatcher(request, ports);
+            reportPath = watcher.path;
+            reportedCommits.reportPath = reportPath;
             await writeFile(reportPath, reportBytes);
             const initial = await stat(reportPath, { bigint: true });
             if (!listener) throw new Error('Fixture must have exactly one initial file event available');

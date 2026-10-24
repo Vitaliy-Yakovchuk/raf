@@ -198,41 +198,41 @@ test('Z3939.S04 lock disappearing during probe before any checkbox permits guard
   assert.ok((await f.journal()).every(row => row.phase === 'verified'));
 });
 
-test('Z3939.S05 watcher automatically resumes a committed journal after busy exhaustion without another file event or rejection', async t => {
+test('Z3939.S05 watcher accepts a fully committed journal while a known writer remains busy without pending', async t => {
   const f = await fixture(t);
   const head = await f.seedCommitted();
+  await writeFile(join(f.root, 'foreign.txt'), 'foreign staged\n');
+  f.git('add', '--', 'foreign.txt');
+  await writeFile(join(f.root, 'foreign.txt'), 'foreign unstaged\n');
+  const staged = f.git('diff', '--cached', '--', 'foreign.txt');
+  const unstaged = f.git('diff', '--', 'foreign.txt');
   await f.hold();
-  let clock = performance.now();
-  t.mock.method(performance, 'now', () => clock);
+  const before = f.checks();
   const confirm = f.ports.confirmTaskCheckboxes!;
   let busy = 0;
   f.ports.confirmTaskCheckboxes = async (...args) => {
     const result = await confirm(...args);
-    if (result.transient === 'writer-busy') { busy += 1; clock = args[3]!.deadline; }
+    if (result.transient === 'writer-busy') busy += 1;
     return result;
-  };
-  f.ports.confirmationRetry!.retainPending = async diagnostic => {
-    if (!diagnostic) return;
-    f.pending.push(diagnostic);
-    assert.equal(await readFile(f.lockPath, 'utf8'), f.ownerBytes, 'The waiting reader must retain the live foreign lock');
-    await rm(f.lockPath);
   };
   const watcher = await createAgentReportWatcher(f.request, f.ports);
   try {
-    assert.equal(busy, 1);
-    assert.equal(f.pending.length, 1);
-    assert.equal(f.pending[0].candidateBytes, f.reportBytes);
-    assert.equal(f.pending[0].cause, 'writer-busy');
-    assert.equal(f.pending[0].exhausted, true);
-    assert.deepEqual(f.rejections, [], 'Budget exhaustion is pending, not report-rejected');
-    const stop = Date.now() + f.protocol.timeouts.transitionMs;
-    while (f.published.length === 0 && Date.now() < stop) await delay(f.protocol.timeouts.pollMs);
+    assert.equal(busy, 0, 'A complete committed journal needs no checkbox writer');
+    assert.deepEqual(f.pending, [], 'A known busy writer must not manufacture pending for completed work');
     assert.equal(f.accepted.length, 1, f.diagnostics.join('\n'));
     assert.equal(f.published.length, 1);
     assert.equal(f.published[0].event, 'agent.succeeded');
     assert.equal(f.published[0].runId, f.request.runId);
+    assert.deepEqual(f.published[0].checkboxCommits, (await f.journal()).map(row => ({ change: row.change, item: row.item, sha: row.sha })));
     assert.deepEqual(f.rejections, []);
+    assert.ok(f.checks().sourceChecks > before.sourceChecks && f.checks().completionChecks > before.completionChecks, 'Acceptance must recheck source identity and completion');
+    assert.equal(await readFile(f.lockPath, 'utf8'), f.ownerBytes, 'Acceptance must retain the live foreign lock');
+    assert.equal(f.git('diff', '--cached', '--', 'foreign.txt'), staged);
+    assert.equal(f.git('diff', '--', 'foreign.txt'), unstaged);
     await f.assertStable(head);
+    await delay(f.protocol.timeouts.pollMs);
+    assert.equal(f.accepted.length, 1);
+    assert.equal(f.published.length, 1, 'Acceptance must publish only once');
   } finally { await watcher.dispose(); }
 });
 
@@ -292,4 +292,73 @@ test('Z3939.S08 a partial committed journal resumes every assigned item after lo
   assert.equal(await readFile(join(f.root, pathspec), 'utf8'), tasks.replace('[ ] A.1', '[x] A.1').replace('[ ] A.2', '[x] A.2'));
   assert.ok((await f.journal()).every(row => row.phase === 'verified'));
   await f.assertStable(f.git('rev-parse', 'HEAD'), 2);
+});
+
+test('Z3939.S09 watcher automatically resumes a partial committed journal after busy exhaustion without another file event or rejection', async t => {
+  const f = await fixture(t, ['A.1', 'A.2']);
+  const interruption = new Error('Fixture interruption after the first committed checkbox');
+  f.checkboxPorts.checkpoint = async phase => { if (phase === 'after-commit') throw interruption; };
+  await assert.rejects(f.confirm(), error => error === interruption);
+  delete f.checkboxPorts.checkpoint;
+  const partial = await f.journal();
+  assert.equal(partial.length, 1);
+  assert.equal(partial[0].item, 'A.1');
+  assert.equal(partial[0].phase, 'committed');
+  const head = f.git('rev-parse', 'HEAD');
+  assert.equal(partial[0].sha, head.trim());
+  await writeFile(join(f.root, 'foreign.txt'), 'foreign staged\n');
+  f.git('add', '--', 'foreign.txt');
+  await writeFile(join(f.root, 'foreign.txt'), 'foreign unstaged\n');
+  const staged = f.git('diff', '--cached', '--', 'foreign.txt');
+  const unstaged = f.git('diff', '--', 'foreign.txt');
+  await f.hold();
+  let clock = performance.now();
+  t.mock.method(performance, 'now', () => clock);
+  const confirm = f.ports.confirmTaskCheckboxes!;
+  let busy = 0;
+  f.ports.confirmTaskCheckboxes = async (...args) => {
+    const result = await confirm(...args);
+    if (result.transient === 'writer-busy') { busy += 1; clock = args[3]!.deadline; }
+    return result;
+  };
+  const before = f.checks();
+  const watcher = await createAgentReportWatcher(f.request, f.ports);
+  try {
+    assert.equal(busy, 1);
+    assert.equal(f.pending.length, 1);
+    assert.equal(f.pending[0].runId, f.request.runId);
+    assert.equal(f.pending[0].reportPath, f.reportPath);
+    assert.equal(f.pending[0].candidateBytes, f.reportBytes);
+    assert.equal(f.pending[0].stage, 'checkbox');
+    assert.equal(f.pending[0].cause, 'writer-busy');
+    assert.equal(f.pending[0].exhausted, true);
+    assert.equal(f.accepted.length, 0, 'The still-open A.2 must prevent acceptance');
+    assert.equal(f.published.length, 0);
+    assert.deepEqual(f.rejections, [], 'Budget exhaustion is pending, not report-rejected');
+    assert.deepEqual(await f.journal(), partial, 'Pending must retain the committed progress');
+    assert.equal(await readFile(join(f.root, pathspec), 'utf8'), tasks.replace('[ ] A.1', '[x] A.1'));
+    assert.equal(await readFile(f.lockPath, 'utf8'), f.ownerBytes, 'The waiting reader must retain the live foreign lock');
+    await f.assertStable(head, 1);
+    await rm(f.lockPath);
+    const stop = Date.now() + f.protocol.timeouts.transitionMs;
+    while (f.published.length === 0 && Date.now() < stop) await delay(f.protocol.timeouts.pollMs);
+    assert.equal(f.accepted.length, 1, f.diagnostics.join('\n'));
+    assert.equal(f.published.length, 1);
+    assert.equal(f.published[0].event, 'agent.succeeded');
+    assert.equal(f.published[0].runId, f.request.runId);
+    const completed = await f.journal();
+    assert.deepEqual(completed.map(row => row.item), ['A.1', 'A.2']);
+    assert.ok(completed.every(row => row.phase === 'verified' && row.runId === f.request.runId));
+    assert.equal(completed[0].sha, partial[0].sha, 'Retry must reuse the first checkbox commit');
+    assert.deepEqual(f.published[0].checkboxCommits, completed.map(row => ({ change: row.change, item: row.item, sha: row.sha })));
+    assert.deepEqual(f.rejections, []);
+    assert.ok(f.checks().sourceChecks > before.sourceChecks && f.checks().completionChecks > before.completionChecks, 'Retry must recheck source identity and completion');
+    assert.equal(await readFile(join(f.root, pathspec), 'utf8'), tasks.replace('[ ] A.1', '[x] A.1').replace('[ ] A.2', '[x] A.2'));
+    assert.equal(f.git('diff', '--cached', '--', 'foreign.txt'), staged);
+    assert.equal(f.git('diff', '--', 'foreign.txt'), unstaged);
+    await f.assertStable(f.git('rev-parse', 'HEAD'), 2);
+    await delay(f.protocol.timeouts.pollMs);
+    assert.equal(f.accepted.length, 1);
+    assert.equal(f.published.length, 1, 'Automatic retry must publish only once');
+  } finally { await watcher.dispose(); }
 });

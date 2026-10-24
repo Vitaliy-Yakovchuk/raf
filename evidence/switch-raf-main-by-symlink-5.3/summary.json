@@ -1,0 +1,110 @@
+{
+  "assignment": "switch-raf-main-by-symlink:5.3",
+  "implementation": {
+    "source": "src/main-generation-handover.ts",
+    "sourceSha256": "9dd83a31571be9b12b58c179f2c1884a25eb8d6f11e7bbda0dc381b9b513d6f3",
+    "baseSha": "0b647face99aaf0bd0559c71b5d31afe4df6f247",
+    "mechanisms": [
+      "Transactional persisted intent and owner epochs with explicit restored readiness for service, worker and notice",
+      "Physical-generation pinning for deferred imports and operation/fact-delivery leases",
+      "Pending facts fenced by active owner, stable idempotency keys and crash recovery",
+      "Protocol checks in both directions and slot protection until old processes actually exit",
+      "No runner kill/restart/tmp removal; worker facts remain independent of service lifetime"
+    ],
+    "integrationBoundary": "HandoverStore and HandoverRuntime ports in the assigned scaffold; live two-generation/process validation belongs to item 5.4 and final production rollout to item 7.1"
+  },
+  "verification": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/5213cd2c-4a65-4d5e-a479-7b406b7c3ad0/raf-main/bin/raf.ts test run --project raf --phase implement --group switch-raf-main-by-symlink/handover --files test/main-generation-handover.test.ts",
+    "group": "switch-raf-main-by-symlink/handover",
+    "selection": [
+      "test/main-generation-handover.test.ts"
+    ],
+    "phase": "implement",
+    "sameQaHome": true,
+    "runs": [
+      {
+        "runId": "839b7ecc-cb9b-486a-a372-699dc6f409ef",
+        "result": "run-1.TestRunResult.json",
+        "stderr": "run-1.stderr",
+        "cli": "run-1.cli.json",
+        "workspacePatch": "run-1.workspace.patch",
+        "outcome": "assertions-failed",
+        "cliExitCode": 1,
+        "childExitCode": 1,
+        "passed": 0,
+        "knownRed": 33,
+        "unexecuted": 0,
+        "unknown": 0,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "timedOut": false,
+        "timeoutCount": 0,
+        "groupState": "idle",
+        "nextAction": "fix-implementation"
+      },
+      {
+        "runId": "0887d23d-8b26-43aa-978c-c1ddfbda05fe",
+        "result": "run-2.TestRunResult.json",
+        "stderr": "run-2.stderr",
+        "cli": "run-2.cli.json",
+        "workspacePatch": "run-2.workspace.patch",
+        "outcome": "refused",
+        "cliExitCode": 1,
+        "childExitCode": null,
+        "passed": 0,
+        "knownRed": 33,
+        "unexecuted": 1,
+        "unknown": 0,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "timedOut": false,
+        "timeoutCount": 0,
+        "groupState": "idle",
+        "nextAction": "fix-setup"
+      },
+      {
+        "runId": "6e55a4c8-b3a0-4006-8bdd-ea5f4be36930",
+        "result": "run-3.TestRunResult.json",
+        "stderr": "run-3.stderr",
+        "cli": "run-3.cli.json",
+        "workspacePatch": "run-3.workspace.patch",
+        "outcome": "passed",
+        "cliExitCode": 0,
+        "childExitCode": 0,
+        "passed": 33,
+        "knownRed": 0,
+        "unexecuted": 0,
+        "unknown": 0,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "timedOut": false,
+        "timeoutCount": 0,
+        "groupState": "complete",
+        "nextAction": "complete"
+      }
+    ],
+    "build": {
+      "result": "build.json",
+      "stdout": "build.stdout",
+      "stderr": "build.stderr",
+      "exitCode": 0
+    },
+    "preparedTestsUnchanged": true,
+    "preparedTestSha256": "e812352a0be84dc4a4ae846c4d7df0742b6535ec157022373b12ed43158f7fe0",
+    "regressionScope": "Per main instruction, only the assigned handover group was run. Session-recovery and report-confirmation regression groups are assigned to item 5.4.",
+    "refusedRunExplanation": "Run 2 refused configuration drift while queued; main confirmed its conf/raf.json change (Orchestrator 755f64560e), unchanged conf/test-runs.json and authorized retry. Full refusal retained."
+  },
+  "completion": {
+    "item": "5.3",
+    "status": "succeeded",
+    "nextAction": "main/raf verifies evidence and commits the assigned checkbox; item 5.4 live QA remains open",
+    "tasksModified": false,
+    "archive": null
+  }
+}

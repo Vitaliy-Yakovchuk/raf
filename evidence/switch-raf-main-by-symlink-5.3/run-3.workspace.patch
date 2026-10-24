@@ -1,0 +1,371 @@
+diff --git a/src/main-generation-handover.ts b/src/main-generation-handover.ts
+index b4bc7df..7684a0b 100644
+--- a/src/main-generation-handover.ts
++++ b/src/main-generation-handover.ts
+@@ -1,3 +1,6 @@
++import { randomUUID } from 'node:crypto';
++import { isDeepStrictEqual } from 'node:util';
++
+ export type GenerationId = string;
+ export type ComponentRole = 'service' | 'worker' | 'notice';
+ export type FactKind = 'report' | 'event' | 'message' | 'reminder';
+@@ -42,6 +45,7 @@ export interface PinnedOperation {
+   ownerId: string;
+   generation: GenerationId;
+   kind: 'cli' | 'bug-sync' | 'resource-wait' | 'worker-import' | 'hook-notice';
++  factId?: string;
+ }
+ 
+ export interface PendingFact {
+@@ -111,11 +115,109 @@ export interface HandoverProgress {
+   reason?: string;
+ }
+ 
++const roles: ComponentRole[] = ['service', 'worker', 'notice'];
++const protocols: ProtocolKind[] = ['report', 'event', 'message', 'reminder', 'address'];
++const duties: Record<ComponentRole, string[]> = {
++  service: ['bugs', 'resource-wait'],
++  worker: ['reports', 'events', 'messages'],
++  notice: ['reminders'],
++};
++const sameToken = (left: OwnerToken, right: OwnerToken) => left.ownerId === right.ownerId && left.epoch === right.epoch;
++const copy = <T>(value: T): T => structuredClone(value);
++function fail(code: string, message: string): never {
++  throw Object.assign(new Error(code + ': ' + message), { code });
++}
++const factRole = (kind: FactKind): ComponentRole => kind === 'reminder' ? 'notice' : 'worker';
++
++function generation(state: HandoverState, id: GenerationId): MainGeneration {
++  const value = state.generations[id];
++  if (!value || !value.published) fail('MAIN_GENERATION_UNPUBLISHED', 'Unknown or unpublished main generation: ' + id);
++  return value;
++}
++
++function assertCompatible(state: HandoverState, from: GenerationId, to: GenerationId): void {
++  const previous = generation(state, from);
++  const next = generation(state, to);
++  for (const kind of protocols) {
++    const left = previous.protocols[kind];
++    const right = next.protocols[kind];
++    if (!left || !right || !left.accepts.includes(right.emits) || !right.accepts.includes(left.emits)) {
++      fail('MAIN_PROTOCOL_INCOMPATIBLE', 'Incompatible bidirectional main protocol: ' + kind);
++    }
++  }
++  for (const { fact, status } of Object.values(state.facts)) {
++    if (status === 'pending' && !next.protocols[fact.kind].accepts.includes(fact.protocol)) {
++      fail('MAIN_PROTOCOL_INCOMPATIBLE', 'Pending fact protocol is not supported: ' + fact.id);
++    }
++  }
++}
++
++function allocateOwner(state: HandoverState, role: ComponentRole, target: GenerationId): ComponentOwner {
++  const epoch = Math.max(0, ...Object.values(state.owners).filter(owner => owner.role === role).map(owner => owner.epoch)) + 1;
++  const owner: ComponentOwner = { ownerId: randomUUID(), epoch, role, generation: target, phase: 'starting' };
++  state.owners[owner.ownerId] = owner;
++  return owner;
++}
++
++function activeOwner(state: HandoverState, token: OwnerToken): ComponentOwner {
++  const owner = state.owners[token.ownerId];
++  if (!owner || !sameToken(owner, token) || owner.phase !== 'active' || state.activeOwners[owner.role] !== owner.ownerId) {
++    fail('MAIN_OWNER_FENCED', 'Stale or inactive owner epoch');
++  }
++  return owner;
++}
++
++const handoverTails = new WeakMap<HandoverStore, Promise<unknown>>();
++const drainTails = new WeakMap<HandoverStore, Promise<unknown>>();
++
++function serial<T>(tails: WeakMap<HandoverStore, Promise<unknown>>, context: HandoverContext, work: () => Promise<T>): Promise<T> {
++  const next = (tails.get(context.store) ?? Promise.resolve()).then(work);
++  const settled = next.catch(() => undefined);
++  tails.set(context.store, settled);
++  void settled.then(() => { if (tails.get(context.store) === settled) tails.delete(context.store); });
++  return next;
++}
++
++async function ownerReady(context: HandoverContext, owner: ComponentOwner): Promise<boolean> {
++  if (!await context.runtime.isAlive(owner)) return false;
++  const proof = await context.runtime.readiness(owner);
++  return proof !== null && proof.restored === true && sameToken(owner, proof) && await context.runtime.isAlive(owner);
++}
++
++async function retireOwners(context: HandoverContext): Promise<boolean> {
++  const snapshot = await context.store.read();
++  let drained = true;
++  for (const owner of Object.values(snapshot.owners)) {
++    if (snapshot.activeOwners[owner.role] === owner.ownerId || snapshot.transition?.status === 'waiting' && Object.values(snapshot.transition.newOwners).includes(owner.ownerId)) continue;
++    if (Object.values(snapshot.operations).some(operation => operation.ownerId === owner.ownerId)) { drained = false; continue; }
++    if (await context.runtime.isAlive(owner)) await context.runtime.stop(owner);
++    if (await context.runtime.isAlive(owner)) { drained = false; continue; }
++    await context.store.transaction(state => {
++      const current = state.owners[owner.ownerId];
++      if (current && sameToken(current, owner) && state.activeOwners[current.role] !== current.ownerId && !Object.values(state.operations).some(operation => operation.ownerId === current.ownerId)) current.phase = 'retired';
++    });
++  }
++  return drained;
++}
++
+ export async function pinMainOperation(
+   context: HandoverContext,
+   input: { id: string; ownerId: string; kind: PinnedOperation['kind'] },
+ ): Promise<PinnedOperation> {
+-  throw new Error('NotImplemented');
++  return context.store.transaction(state => {
++    const previous = state.operations[input.id];
++    if (previous) {
++      if (previous.ownerId !== input.ownerId || previous.kind !== input.kind) fail('MAIN_OPERATION_CONFLICT', 'Pinned operation identity conflict');
++      return copy(previous);
++    }
++    const owner = state.owners[input.ownerId];
++    if (!owner) fail('MAIN_OWNER_FENCED', 'Unknown main owner');
++    activeOwner(state, owner);
++    generation(state, owner.generation);
++    const operation = { ...input, generation: owner.generation };
++    state.operations[input.id] = operation;
++    return copy(operation);
++  });
+ }
+ 
+ export async function loadPinnedMainAsset(
+@@ -123,53 +225,231 @@ export async function loadPinnedMainAsset(
+   operationId: string,
+   kind: 'catalog' | 'module',
+ ): Promise<string> {
+-  throw new Error('NotImplemented');
++  const state = await context.store.read();
++  const operation = state.operations[operationId];
++  if (!operation) fail('MAIN_OPERATION_MISSING', 'Pinned main operation is missing');
++  return context.runtime.loadAsset(generation(state, operation.generation).root, kind);
+ }
+ 
+ export async function finishMainOperation(
+   context: HandoverContext,
+   operationId: string,
+ ): Promise<void> {
+-  throw new Error('NotImplemented');
++  await context.store.transaction(state => { delete state.operations[operationId]; });
+ }
+ 
+ export async function beginMainHandover(
+   context: HandoverContext,
+   targetGeneration: GenerationId,
+ ): Promise<string> {
+-  throw new Error('NotImplemented');
++  return serial(handoverTails, context, async () => {
++    const { transition, created } = await context.store.transaction(state => {
++      if (state.transition?.status === 'waiting') {
++        if (state.transition.to !== targetGeneration) fail('HANDOVER_IN_PROGRESS', 'Another main handover is pending');
++        return { transition: copy(state.transition), created: false };
++      }
++      if (state.activeGeneration !== targetGeneration) fail('MAIN_GENERATION_UNPUBLISHED', 'Target main generation is not the active publication');
++      const sources = roles.map(role => state.owners[state.activeOwners[role]]?.generation);
++      const from = sources[0];
++      if (!from || sources.some(source => source !== from)) fail('MAIN_OWNER_INCONSISTENT', 'Main owners have inconsistent generations');
++      if (from === targetGeneration) {
++        if (state.transition?.status === 'complete' && state.transition.to === targetGeneration) return { transition: copy(state.transition), created: false };
++        fail('MAIN_GENERATION_ACTIVE', 'Main owners already use the target generation');
++      }
++      assertCompatible(state, from, targetGeneration);
++      if (Object.values(state.owners).some(owner => owner.generation === targetGeneration && owner.phase !== 'retired') || Object.values(state.operations).some(operation => operation.generation === targetGeneration)) {
++        fail('SLOT_IN_USE', 'Target main slot still has readers or owners');
++      }
++      const oldOwners = copy(state.activeOwners);
++      const newOwners = {} as Record<ComponentRole, string>;
++      for (const role of roles) newOwners[role] = allocateOwner(state, role, targetGeneration).ownerId;
++      const next: HandoverTransition = { id: randomUUID(), from, to: targetGeneration, oldOwners, newOwners, status: 'waiting' };
++      state.transition = next;
++      return { transition: copy(next), created: true };
++    });
++    if (created) {
++      for (const role of roles) {
++        const state = await context.store.read();
++        if (state.transition?.id !== transition.id || state.transition.status !== 'waiting') break;
++        const owner = state.owners[transition.newOwners[role]];
++        if (state.transition.newOwners[role] === owner.ownerId && !await context.runtime.isAlive(owner)) await context.runtime.start(copy(owner), [...duties[role]]);
++      }
++    }
++    return transition.id;
++  });
+ }
+ 
+ export async function advanceMainHandover(
+   context: HandoverContext,
+   transitionId: string,
+ ): Promise<HandoverProgress> {
+-  throw new Error('NotImplemented');
++  return serial(handoverTails, context, () => advanceHandover(context, transitionId));
++}
++
++async function advanceHandover(context: HandoverContext, transitionId: string): Promise<HandoverProgress> {
++  const state = await context.store.read();
++  const transition = state.transition;
++  if (!transition || transition.id !== transitionId) fail('MAIN_HANDOVER_MISSING', 'Unknown main handover transition');
++  if (transition.status === 'blocked') return { status: 'blocked', reason: 'Main handover is blocked' };
++  if (transition.status === 'waiting') {
++    if (state.activeGeneration !== transition.to) return { status: 'blocked', reason: 'Main publication changed during handover' };
++    assertCompatible(state, transition.from, transition.to);
++    for (const role of roles) {
++      if (!await ownerReady(context, state.owners[transition.newOwners[role]])) return { status: 'waiting', reason: 'New main owner readiness is not restored: ' + role };
++    }
++    const transferred = await context.store.transaction(current => {
++      if (current.transition?.id !== transition.id) fail('MAIN_HANDOVER_STALE', 'Main handover changed during readiness');
++      if (current.transition.status === 'complete') return true;
++      if (current.transition.status !== 'waiting' || current.activeGeneration !== transition.to) return false;
++      assertCompatible(current, transition.from, transition.to);
++      if (Object.values(current.operations).some(operation => operation.generation === transition.from)) return false;
++      for (const role of roles) {
++        if (current.transition.newOwners[role] !== transition.newOwners[role]) return false;
++        if (![transition.oldOwners[role], transition.newOwners[role]].includes(current.activeOwners[role])) fail('OWNER_FENCED', 'Main ownership changed during handover');
++      }
++      for (const role of roles) {
++        const previous = current.owners[transition.oldOwners[role]];
++        previous.phase = 'retired';
++        const owner = current.owners[transition.newOwners[role]];
++        owner.phase = 'active';
++        current.activeOwners[role] = owner.ownerId;
++      }
++      return true;
++    });
++    if (!transferred) return { status: 'waiting', reason: 'Old main pinned operations must drain' };
++  }
++  if (!await retireOwners(context)) return { status: 'waiting', reason: 'Old main readers must drain' };
++  const current = await context.store.read();
++  for (const role of ['worker', 'notice'] as const) await drainMainFacts(context, current.owners[current.activeOwners[role]]);
++  return context.store.transaction(latest => {
++    if (latest.transition?.id !== transition.id || roles.some(role => latest.activeOwners[role] !== latest.transition?.newOwners[role])) return { status: 'waiting', reason: 'Main ownership changed before completion' };
++    latest.transition.status = 'complete';
++    return { status: 'complete' };
++  });
+ }
+ 
+ export async function recoverMainHandover(
+   context: HandoverContext,
+ ): Promise<HandoverProgress> {
+-  throw new Error('NotImplemented');
++  return serial(handoverTails, context, async () => {
++    const state = await context.store.read();
++    for (const operation of Object.values(state.operations).filter(operation => operation.factId !== undefined)) {
++      const owner = state.owners[operation.ownerId];
++      if (owner && !await context.runtime.isAlive(owner)) await context.store.transaction(current => {
++        const held = current.operations[operation.id];
++        if (held?.ownerId === owner.ownerId && held.factId === operation.factId) delete current.operations[operation.id];
++      });
++    }
++    if (state.transition?.status === 'blocked') return { status: 'blocked', reason: 'Main handover is blocked' };
++    for (const role of roles) {
++      const snapshot = await context.store.read();
++      const pending = snapshot.transition?.status === 'waiting';
++      const ownerId = pending ? snapshot.transition!.newOwners[role] : snapshot.activeOwners[role];
++      const owner = snapshot.owners[ownerId];
++      if (!await context.runtime.isAlive(owner)) {
++        const replacement = await context.store.transaction(current => {
++          const currentId = pending ? current.transition?.id === snapshot.transition!.id && current.transition.newOwners[role] : current.activeOwners[role];
++          if (!currentId) fail('MAIN_HANDOVER_STALE', 'Main handover changed during recovery');
++          const currentOwner = current.owners[currentId];
++          if (!sameToken(currentOwner, owner)) return null;
++          const next = allocateOwner(current, role, owner.generation);
++          currentOwner.phase = 'retired';
++          if (pending) {
++            current.transition!.newOwners[role] = next.ownerId;
++            if (current.activeOwners[role] === owner.ownerId) current.activeOwners[role] = next.ownerId;
++          } else current.activeOwners[role] = next.ownerId;
++          return copy(next);
++        });
++        if (replacement) await context.runtime.start(copy(replacement), [...duties[role]]);
++      }
++      if (!pending) {
++        const latest = await context.store.read();
++        const active = latest.owners[latest.activeOwners[role]];
++        if (!await ownerReady(context, active)) return { status: 'waiting', reason: 'Recovered main owner is not ready: ' + role };
++        await context.store.transaction(current => {
++          if (current.activeOwners[role] === active.ownerId && sameToken(current.owners[active.ownerId], active)) current.owners[active.ownerId].phase = 'active';
++        });
++      }
++    }
++    const latest = await context.store.read();
++    if (latest.transition?.status === 'waiting') return advanceHandover(context, latest.transition.id);
++    if (!await retireOwners(context)) return { status: 'waiting', reason: 'Old main readers must drain' };
++    for (const role of ['worker', 'notice'] as const) await drainMainFacts(context, latest.owners[latest.activeOwners[role]]);
++    return { status: 'complete' };
++  });
+ }
+ 
+ export async function recordMainFact(
+   context: HandoverContext,
+   fact: PendingFact,
+ ): Promise<void> {
+-  throw new Error('NotImplemented');
++  await context.store.transaction(state => {
++    const source = generation(state, fact.generation);
++    if (!source.protocols[fact.kind]?.accepts.includes(fact.protocol)) fail('MAIN_PROTOCOL_INCOMPATIBLE', 'Unsupported fact protocol');
++    const runner = state.runners[fact.runId];
++    if (!runner || runner.address !== fact.address || runner.runId !== fact.runId) fail('MAIN_FACT_IDENTITY', 'Fact address/runId differs from runner identity');
++    const previous = state.facts[fact.id];
++    if (previous) {
++      if (!isDeepStrictEqual(previous.fact, fact)) fail('MAIN_FACT_CONFLICT', 'Conflicting main fact identity');
++      return;
++    }
++    const owner = state.owners[state.activeOwners[factRole(fact.kind)]];
++    if (!generation(state, owner.generation).protocols[fact.kind].accepts.includes(fact.protocol)) fail('MAIN_PROTOCOL_INCOMPATIBLE', 'Current main owner does not accept fact protocol');
++    state.facts[fact.id] = { fact: copy(fact), status: 'pending' };
++  });
+ }
+ 
+ export async function drainMainFacts(
+   context: HandoverContext,
+   owner: OwnerToken,
+ ): Promise<void> {
+-  throw new Error('NotImplemented');
++  return serial(drainTails, context, async () => {
++    const snapshot = await context.store.read();
++    const component = activeOwner(snapshot, owner);
++    if (component.role === 'service') fail('ROLE_FORBIDDEN', 'Service cannot process agent facts');
++    if (!await context.runtime.isAlive(owner)) fail('OWNER_FENCED', 'Main observation owner is dead');
++    for (const { fact, status } of Object.values(snapshot.facts)) {
++      if (status !== 'pending' || factRole(fact.kind) !== component.role) continue;
++      const operationId = randomUUID();
++      const claimed = await context.store.transaction(state => {
++        activeOwner(state, owner);
++        if (state.facts[fact.id]?.status !== 'pending' || Object.values(state.operations).some(operation => operation.factId === fact.id)) return false;
++        if (!generation(state, component.generation).protocols[fact.kind].accepts.includes(fact.protocol)) fail('MAIN_PROTOCOL_INCOMPATIBLE', 'Main fact protocol is incompatible with owner');
++        state.operations[operationId] = { id: operationId, ownerId: owner.ownerId, generation: component.generation, kind: component.role === 'worker' ? 'worker-import' : 'hook-notice', factId: fact.id };
++        return true;
++      });
++      if (!claimed) continue;
++      try {
++        if (!await context.runtime.isAlive(owner)) fail('OWNER_FENCED', 'Main observation owner is dead');
++        await context.runtime.acceptFact(copy(owner), copy(fact), fact.id);
++        await context.store.transaction(state => {
++          activeOwner(state, owner);
++          const stored = state.facts[fact.id];
++          if (stored?.status === 'pending') {
++            stored.status = 'accepted';
++            stored.acceptedBy = { ownerId: owner.ownerId, epoch: owner.epoch };
++          }
++        });
++      } finally {
++        await finishMainOperation(context, operationId);
++      }
++    }
++  });
+ }
+ 
+ export async function assertMainSlotReusable(
+   context: HandoverContext,
+-  generation: GenerationId,
++  generationId: GenerationId,
+ ): Promise<void> {
+-  throw new Error('NotImplemented');
++  const state = await context.store.read();
++  generation(state, generationId);
++  if (state.activeGeneration === generationId
++    || state.transition && state.transition.status !== 'complete' && [state.transition.from, state.transition.to].includes(generationId)
++    || Object.values(state.operations).some(operation => operation.generation === generationId)
++    || Object.values(state.owners).some(owner => owner.generation === generationId && owner.phase !== 'retired')) {
++    fail('SLOT_IN_USE', 'Main slot is busy: active generation, handover, owner or pinned reader');
++  }
++  for (const owner of Object.values(state.owners).filter(owner => owner.generation === generationId)) {
++    if (await context.runtime.isAlive(owner)) fail('SLOT_IN_USE', 'Main slot still has a live process reader');
++  }
+ }

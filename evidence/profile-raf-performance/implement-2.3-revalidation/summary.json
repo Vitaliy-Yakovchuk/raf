@@ -1,0 +1,51 @@
+{
+  "change": "profile-raf-performance",
+  "item": "2.3",
+  "session": "raf-prp23b-impl",
+  "sourceCommit": "9f055e0e195405d16c1d8f195b1b10a963f2e37b",
+  "sourceWorkspaceBeforeRun": "clean",
+  "existingImplementationCommit": "9bdeae6f35d7b5c17798e70821a1d79f5a9ff891",
+  "audit": "Початкова реалізація вже закомічена попереднім виконавцем; доручення лишилось відкритим через відсутність фінального CLI TestRunResult. Код профілю, runtime, SQLite і command stats перевірений за контрактом; повторної реалізації не потрібно.",
+  "preparedTestsRead": false,
+  "preparedTestsModified": false,
+  "preparedTestSha256": "919b7a58842b89afde02733c7155f85cb1f44d48e0136b9122022fcbddeedd6a",
+  "scope": "Лише 2.3. EMA production coverage — 3.3, agent ps optimization — 4.4, живі сценарії — 2.4. Worker polling/delivery 9.1.1 не змінені.",
+  "command": "command.txt",
+  "result": "profile-result.json",
+  "rawToolResult": "profile-tool-result.json",
+  "stderr": "profile.stderr.txt",
+  "exitCodes": "profile-cli-exit.json",
+  "checks": "checks.json",
+  "stderrCapture": "Tool output містить лише повний JSON TestRunResult із завершальним LF; інших байтів stdout/stderr не отримано. Сирий об'єкт інструмента збережено окремо.",
+  "runId": "c0232746-189e-49e8-9714-2503773fed23",
+  "selection": {
+    "files": [
+      "test/raf-cost-profile.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "passed": 31,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "timeoutCount": 0,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "complete",
+  "nextAction": "complete",
+  "groupHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+  "limits": [
+    "Helper CPU явно unavailable (Node spawn без перевіреного per-child OS accounting); повний CPU не заявляється.",
+    "Живі service/worker SQLite restart/crash та CPU-сценарії не замінено unit-прогоном; вони належать 2.4.",
+    "Чужі unit-регресії не запускались: item 2.3 не має regressionGroups."
+  ],
+  "committedChanges": "Власний результат цього запуску — докази фінальної перевірки. Продуктовий код і конфігурація вже були в HEAD.",
+  "tasksUpdated": false,
+  "archive": null
+}

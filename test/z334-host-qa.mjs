@@ -227,7 +227,7 @@ try {
 
   const good = await verify(workspace);
   for (const [label, file] of [['source', path.join(hotfix, 'qa-z334/a.mjs')], ['artifact', path.join(hotfix, 'dist/catalog.json')], ['conf', path.join(root, 'conf/raf.json')], ['sealed-source', path.join(good.snapshot.root, 'qa-z334/a.mjs')], ['sealed-artifact', path.join(good.snapshot.root, 'dist/catalog.json')], ['sealed-conf', path.join(good.snapshot.configurationRoot, 'conf/raf.json')]]) {
-    const original = fs.readFileSync(file); fs.appendFileSync(file, '\nZ334-MUTATION\n');
+    const original = fs.readFileSync(file); fs.appendFileSync(file, '\n ');
     try { await refused(label, () => api.activateHotfix(host, good), /dirty|snapshot|fingerprint|config|changed|evidence/i); }
     finally { fs.writeFileSync(file, original); }
   }

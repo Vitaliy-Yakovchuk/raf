@@ -138,7 +138,7 @@ try {
   const sealed = await sealing; await writer; assert.equal(writerEntered, true); record('seal-blocks-writer', { fingerprint: sealed.fingerprint });
   for (const [label, file] of [['source', path.join(hotfix, 'qa-z334/a.mjs')], ['artifact', path.join(hotfix, 'dist/catalog.json')], ['conf', path.join(root, 'conf/raf.json')]]) {
     const original = fs.readFileSync(file);
-    try { await refused('during-regression-' + label, () => api.verifyHotfixCandidate(host, { workspace: ws, mainAddress: 'main', message: 'unused', regression: { executable: process.execPath, args: ['-e', 'require("node:fs").appendFileSync(process.argv[1], "\\nZ334 writer\\n")', file] } }), /changed|dirty|fingerprint|snapshot|gate/i); }
+    try { await refused('during-regression-' + label, () => api.verifyHotfixCandidate(host, { workspace: ws, mainAddress: 'main', message: 'unused', regression: { executable: process.execPath, args: ['-e', 'require("node:fs").appendFileSync(process.argv[1], "\\n ")', file] } }), /changed|dirty|fingerprint|snapshot|gate/i); }
     finally { fs.writeFileSync(file, original); }
   }
   record('mutation-during-regression');

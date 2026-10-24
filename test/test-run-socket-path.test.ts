@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { execFileSync, fork, type ChildProcess } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { userInfo } from 'node:os';
+import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir, userInfo } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { before, test, type TestContext } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -20,23 +20,96 @@ const branch = 'qa-z409';
 const files = ['socket-a.test.ts', 'socket-b.test.ts', 'unselected.test.ts'];
 const bytes = (value: string): number => Buffer.byteLength(value, 'utf8');
 let capacity: number;
+let evidenceDirectory: string;
 
 function json(path: string): any {
   return JSON.parse(readFileSync(path, 'utf8'));
 }
 
 function save(path: string, value: unknown): void {
-  writeFileSync(path, JSON.stringify(value, null, 2) + '\n');
+  writeFileSync(path, JSON.stringify(value, null, 2) + '\n', { mode: 0o600 });
+}
+
+function identity(path: string | undefined): unknown {
+  if (!path) return { available: false, reason: 'path not supplied' };
+  try {
+    const stat = lstatSync(path);
+    return { path, realpath: realpathSync(path), uid: stat.uid, gid: stat.gid, mode: stat.mode & 0o7777, device: stat.dev, inode: stat.ino, symlink: stat.isSymbolicLink(), directory: stat.isDirectory(), socket: stat.isSocket() };
+  } catch (error) {
+    return { path, available: false, reason: (error as NodeJS.ErrnoException).code };
+  }
+}
+
+function configuredOuterRunner(): unknown {
+  const expected = join(code, 'scripts/test-run-node.ts');
+  const visited = new Set<number>();
+  let pid = process.ppid;
+  while (pid > 0 && !visited.has(pid)) {
+    visited.add(pid);
+    const proc = `/proc/${pid}`;
+    try {
+      if (lstatSync(proc).uid !== process.getuid!()) return { available: false, reason: 'ancestor has a different owner' };
+      const before = readFileSync(join(proc, 'stat'), 'utf8');
+      const fields = before.slice(before.lastIndexOf(')') + 2).trim().split(/\s+/u);
+      const argv = readFileSync(join(proc, 'cmdline'), 'utf8').split('\0').filter(Boolean);
+      const cwd = realpathSync(join(proc, 'cwd'));
+      if (argv.some(argument => resolve(cwd, argument) === expected)) {
+        const environment: Record<string, string | null> = { HOME: null, RAF_QA_HOME: null, TMPDIR: null, TMUX_TMPDIR: null };
+        for (const entry of readFileSync(join(proc, 'environ'), 'utf8').split('\0')) {
+          const separator = entry.indexOf('=');
+          const key = entry.slice(0, separator);
+          if (separator > 0 && Object.hasOwn(environment, key)) environment[key] = entry.slice(separator + 1);
+        }
+        const after = readFileSync(join(proc, 'stat'), 'utf8');
+        const afterFields = after.slice(after.lastIndexOf(')') + 2).trim().split(/\s+/u);
+        if (fields[19] !== afterFields[19]) return { available: false, reason: 'ancestor process identity changed during observation' };
+        return { available: true, source: 'Linux proc exec environment; only four named variables retained', pid, ppid: Number(fields[1]), startTicks: fields[19], argv, cwd, environment, TMPDIRBytes: environment.TMPDIR === null ? null : bytes(environment.TMPDIR), tmpdirIdentity: identity(environment.TMPDIR ?? undefined) };
+      }
+      pid = Number(fields[1]);
+    } catch (error) {
+      return { available: false, reason: (error as NodeJS.ErrnoException).code, pid };
+    }
+  }
+  return { available: false, reason: 'configured runner not found in the observable ancestry', expected };
+}
+
+function outerObservation(): unknown {
+  return {
+    observedAt: new Date().toISOString(), pid: process.pid, ppid: process.ppid,
+    argv: process.argv, execArgv: process.execArgv, cwd: process.cwd(),
+    HOME: process.env.HOME ?? null, RAF_QA_HOME: process.env.RAF_QA_HOME ?? null,
+    TMPDIR: process.env.TMPDIR ?? null, TMUX_TMPDIR: process.env.TMUX_TMPDIR ?? null,
+    tmpdir: tmpdir(), tmpdirBytes: bytes(tmpdir()), tmpdirIdentity: identity(tmpdir()),
+    TMPDIRBytes: process.env.TMPDIR === undefined ? null : bytes(process.env.TMPDIR),
+    TMUX_TMPDIRBytes: process.env.TMUX_TMPDIR === undefined ? null : bytes(process.env.TMUX_TMPDIR),
+    homeIdentity: identity(process.env.HOME),
+    configuredRunner: configuredOuterRunner(),
+    runId: { available: false, reason: 'correlate with the outer authorized CLI TestRunResult and reservation saved by coordinator' },
+  };
 }
 
 before(() => {
-  execFileSync('tmux', ['-V'], { encoding: 'utf8' });
+  const root = join(code, '.test-evidence');
+  mkdirSync(root, { mode: 0o700, recursive: true });
+  const stat = lstatSync(root);
+  assert.ok(stat.isDirectory() && !stat.isSymbolicLink() && stat.uid === process.getuid!() && (stat.mode & 0o077) === 0, 'setup: evidence root must be an owned private directory');
+  evidenceDirectory = mkdtempSync(join(root, 'z409-'));
+  save(join(evidenceDirectory, 'outer-runner-before.json'), outerObservation());
+  const tmuxVersion = execFileSync('tmux', ['-V'], { encoding: 'utf8' });
+  save(join(evidenceDirectory, 'workspace.json'), {
+    sha: execFileSync('git', ['-C', code, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+    trackedChanges: execFileSync('git', ['-C', code, 'status', '--porcelain', '--untracked-files=no'], { encoding: 'utf8' }),
+    tmuxVersion,
+    workspaceConfFingerprints: Object.fromEntries(['flow.json', 'test-runs.json', 'projects.json', 'raf.json', 'raf-constants.json'].map(name => [name, createHash('sha256').update(readFileSync(join(sourceConf, name))).digest('hex')])),
+    wrapperSha: { available: false, reason: 'coordinator must attest the selected authorized command generation' },
+  });
   assert.equal(process.platform, 'linux', 'this local pathname regression requires the Linux sockaddr_un declaration');
   const header = ['/usr/include/x86_64-linux-gnu/sys/un.h', '/usr/include/aarch64-linux-gnu/sys/un.h', '/usr/include/sys/un.h'].find(existsSync);
   assert.ok(header, 'setup: install local libc headers; do not classify this as assertion-red');
   const match = readFileSync(header, 'utf8').match(/sun_path\s*\[\s*(\d+)\s*\]/u);
   assert.ok(match, 'setup: cannot establish local sun_path capacity');
   capacity = Number(match[1]);
+  save(join(evidenceDirectory, 'pathname-capacity.json'), { header, capacity, encoding: 'utf8', terminatingNulBytes: 1 });
 });
 
 interface Observation {
@@ -62,6 +135,8 @@ interface Reply {
   signal: string | null;
   stdout: string;
   stderr: string;
+  stdoutBase64: string;
+  stderrBase64: string;
 }
 
 interface Invocation {
@@ -70,15 +145,21 @@ interface Invocation {
   callerRunId: string;
 }
 
-function probeSource(index: number): string {
+function probeSource(index: number, evidence: string): string {
   return `
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 const observe = () => ({ pid: process.pid, HOME: process.env.HOME, RAF_QA_HOME: process.env.RAF_QA_HOME, TMPDIR: process.env.TMPDIR, tmpdir: tmpdir() });
+const identity = path => {
+  try {
+    const stat = lstatSync(path);
+    return { path, realpath: realpathSync(path), uid: stat.uid, gid: stat.gid, mode: stat.mode & 0o7777, device: stat.dev, inode: stat.ino, symlink: stat.isSymbolicLink(), socket: stat.isSocket() };
+  } catch (error) { return { path, available: false, reason: error.code }; }
+};
 test('Z409 nested tmux ${index}', async () => {
   const inherited = observe();
   const base = mkdtempSync(join(tmpdir(), 'f-'));
@@ -88,9 +169,18 @@ test('Z409 nested tmux ${index}', async () => {
   const endpoint = join(tmuxTmp, 's');
   const environment = { ...process.env, HOME: home, TMUX_TMPDIR: tmuxTmp, TMUX: '', TMUX_PANE: '' };
   const commands = [];
+  const trace = stage => appendFileSync(${JSON.stringify(evidence)} + '/probe-' + process.pid + '-trace.jsonl', JSON.stringify({
+    stage, inherited, endpoint, endpointBytes: Buffer.byteLength(endpoint, 'utf8'),
+    pathnameBytesIncludingNul: Buffer.byteLength(endpoint, 'utf8') + 1,
+    pathnameHexIncludingNul: Buffer.from(endpoint + '\\0', 'utf8').toString('hex'),
+    terminatingNulBytes: 1, capacity: ${capacity},
+    identities: { runTmp: identity(inherited.TMPDIR), fixtureHome: identity(home), tmuxTmp: identity(tmuxTmp), endpoint: identity(endpoint) }, command: commands.at(-1) ?? null,
+  }) + '\\n', { mode: 0o600 });
+  trace('before-tmux');
   const tmux = (operation, args = [], required = true) => {
     const result = spawnSync('tmux', ['-S', endpoint, operation, ...args], { env: environment, encoding: 'utf8' });
-    commands.push({ operation, code: result.status, output: result.stdout + result.stderr });
+    commands.push({ operation, argv: ['-S', endpoint, operation, ...args], code: result.status, signal: result.signal, stdout: result.stdout, stderr: result.stderr, output: result.stdout + result.stderr, error: result.error?.message ?? null });
+    trace(operation);
     if (required) assert.equal(result.status, 0, operation + ': ' + result.stderr);
     return result;
   };
@@ -112,20 +202,26 @@ test('Z409 nested tmux ${index}', async () => {
     }
     const [paneHome, paneQaHome, paneTmp] = readFileSync('pane-env-${index}.txt', 'utf8').trimEnd().split('\\n');
     writeFileSync('probe-${index}.json', JSON.stringify({ ...inherited, descendant: JSON.parse(descendant.stdout), fixture: JSON.parse(fixture.stdout), pane: { HOME: paneHome, RAF_QA_HOME: paneQaHome, TMPDIR: paneTmp }, endpoint, endpointBytes: Buffer.byteLength(endpoint, 'utf8'), suffixBytes, commands }));
+    writeFileSync(${JSON.stringify(evidence)} + '/probe-' + process.pid + '.json', readFileSync('probe-${index}.json'), { mode: 0o600 });
+    trace('pane-marker-observed');
     if (existsSync('hold-${index}')) {
       while (!existsSync('release-${index}')) await new Promise(done => setTimeout(done, 10));
     }
     tmux('kill-server');
     writeFileSync('finished-${index}.json', JSON.stringify({ commands, afterKill: tmux('has-session', ['-t', 'z409'], false).status }));
+    writeFileSync(${JSON.stringify(evidence)} + '/finished-' + process.pid + '.json', readFileSync('finished-${index}.json'), { mode: 0o600 });
   } finally {
-    tmux('kill-server', [], false);
-    rmSync(base, { recursive: true, force: true });
+    try { tmux('kill-server', [], false); }
+    finally { rmSync(base, { recursive: true, force: true }); trace('after-fixture-cleanup'); }
   }
 });
 `;
 }
 
 function fixture(t: TestContext) {
+  const evidence = mkdtempSync(join(evidenceDirectory, 'scenario-'));
+  t.diagnostic(`Z409 durable evidence: ${evidence}`);
+  save(join(evidence, 'scenario.json'), { name: t.name, outerPid: process.pid, outerEnvironment: outerObservation() });
   const stand = mkdtempSync('/tmp/z409-');
   const root = join(stand, 'orchestrator');
   const workspace = join(stand, 'workspace');
@@ -133,20 +229,33 @@ function fixture(t: TestContext) {
   const unitHome = join('/tmp', `raf-unit-${process.getuid?.() ?? 'user'}`, createHash('sha256').update(JSON.stringify([root, 'raf', workspace])).digest('hex'));
   const roots = new Set<string>();
   const invocations: Invocation[] = [];
+  let ledger = async (label: string): Promise<void> => {
+    save(join(evidence, `${label}.json`), { available: false, reason: 'fixture state context was not prepared' });
+  };
   t.after(async () => {
     if (existsSync(workspace)) for (const index of [0, 1]) writeFileSync(join(workspace, `release-${index}`), 'cleanup');
     await Promise.allSettled(invocations.map(invocation => invocation.reply));
-    for (const index of [0, 1]) {
-      const observation = join(workspace, `probe-${index}.json`);
-      if (existsSync(observation)) {
-        try { execFileSync('tmux', ['-S', json(observation).endpoint, 'kill-server'], { stdio: 'ignore' }); }
-        catch {}
+    try {
+      await ledger('before-fixture-cleanup');
+      for (const name of ['runner-entries.jsonl', 'probe-0.json', 'probe-1.json', 'finished-0.json', 'finished-1.json', 'pane-env-0.txt', 'pane-env-1.txt']) {
+        const path = join(workspace, name);
+        if (existsSync(path) && lstatSync(path).isFile() && !lstatSync(path).isSymbolicLink()) writeFileSync(join(evidence, name), readFileSync(path), { mode: 0o600 });
       }
+    } finally {
+      for (const index of [0, 1]) {
+        const observation = join(workspace, `probe-${index}.json`);
+        if (existsSync(observation)) {
+          try { execFileSync('tmux', ['-S', json(observation).endpoint, 'kill-server'], { stdio: 'ignore' }); }
+          catch {}
+        }
+      }
+      for (const invocation of invocations) if (invocation.driver.connected) invocation.driver.disconnect();
+      rmSync(unitHome, { recursive: true, force: true });
+      for (const path of roots) rmSync(path, { recursive: true, force: true });
+      rmSync(stand, { recursive: true, force: true });
+      save(join(evidence, 'after-fixture-cleanup.json'), { unitHome: identity(unitHome), stand: identity(stand), roots: [...roots].map(identity) });
+      save(join(evidenceDirectory, 'outer-runner-after.json'), outerObservation());
     }
-    for (const invocation of invocations) if (invocation.driver.connected) invocation.driver.disconnect();
-    rmSync(unitHome, { recursive: true, force: true });
-    for (const path of roots) rmSync(path, { recursive: true, force: true });
-    rmSync(stand, { recursive: true, force: true });
   });
   const cfgPath = join(root, 'conf/test-runs.json');
   const environment = {
@@ -168,7 +277,6 @@ function fixture(t: TestContext) {
   execFileSync('git', ['-C', workspace, '-c', 'user.name=QA', '-c', 'user.email=qa@example.invalid', 'commit', '--allow-empty', '-qm', 'Z409 isolated caller fixture']);
   const entryObservation = join(workspace, 'runner-entries.jsonl');
   const childPreload = join(stand, 'child-observation.mjs');
-  writeFileSync(childPreload, `import { appendFileSync } from 'node:fs'; import { tmpdir } from 'node:os'; appendFileSync(${JSON.stringify(entryObservation)}, JSON.stringify({pid:process.pid,HOME:process.env.HOME,RAF_QA_HOME:process.env.RAF_QA_HOME,TMPDIR:process.env.TMPDIR,tmpdir:tmpdir()})+'\\n');`);
   const resourcePreload = join(stand, 'resource-preload.mjs');
   writeFileSync(resourcePreload, `
 import { mock } from 'node:test';
@@ -184,14 +292,20 @@ mock.module(${JSON.stringify(pathToFileURL(join(code, 'src/os-runtime.ts')).href
   const driverPath = join(stand, 'caller.mjs');
   writeFileSync(driverPath, `
 import { spawn } from 'node:child_process';
+import { appendFileSync, writeFileSync } from 'node:fs';
 process.send({ ready: true });
-process.once('message', ({ argv }) => {
+process.once('message', ({ argv, evidencePrefix }) => {
+  for (const stream of ['stdout', 'stderr']) writeFileSync(evidencePrefix + '-' + stream, '', { mode: 0o600 });
   const child = spawn(process.execPath, argv, { cwd: ${JSON.stringify(workspace)}, env: process.env, stdio: ['ignore', 'pipe', 'pipe'] });
-  let stdout = '', stderr = '';
-  child.stdout.on('data', value => { stdout += value; });
-  child.stderr.on('data', value => { stderr += value; });
+  const stdout = [], stderr = [];
+  child.stdout.on('data', value => { stdout.push(value); appendFileSync(evidencePrefix + '-stdout', value); });
+  child.stderr.on('data', value => { stderr.push(value); appendFileSync(evidencePrefix + '-stderr', value); });
   child.once('error', error => { process.send({ error: error.message }); process.exitCode = 1; });
-  child.once('close', (code, signal) => { process.send({ code, signal, stdout, stderr }); process.disconnect(); });
+  child.once('close', (code, signal) => {
+    const out = Buffer.concat(stdout), err = Buffer.concat(stderr);
+    writeFileSync(evidencePrefix + '-cli-exit.json', JSON.stringify({ cliExitCode: code, signal, stdoutBytes: out.length, stderrBytes: err.length }), { mode: 0o600 });
+    process.send({ code, signal, stdout: out.toString('utf8'), stderr: err.toString('utf8'), stdoutBase64: out.toString('base64'), stderrBase64: err.toString('base64') }); process.disconnect();
+  });
 });
 `);
   const config = json(cfgPath);
@@ -211,9 +325,28 @@ process.once('message', ({ argv }) => {
   };
   config.temporaryArtifacts.root = makeRoot();
   save(cfgPath, config);
-  for (const index of [0, 1]) writeFileSync(join(workspace, files[index]), probeSource(index));
+  for (const index of [0, 1]) writeFileSync(join(workspace, files[index]), probeSource(index, evidence));
   writeFileSync(join(workspace, files[2]), "throw new Error('unselected inventory sentinel executed');\n");
   const context = resolveStateContext({ orchestratorRoot: root, modulePath: join(code, 'src/test-run-runtime.ts'), homeDirectory: unitHome, operatingSystemHome: userInfo().homedir, environment: { ...environment, HOME: unitHome, RAF_QA_HOME: unitHome }, entryPoint: 'cli' });
+  writeFileSync(childPreload, `
+import { appendFileSync, lstatSync, realpathSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { openStateStore } from ${JSON.stringify(pathToFileURL(join(code, 'src/state-store.ts')).href)};
+import { sqliteTestRunState } from ${JSON.stringify(pathToFileURL(join(code, 'src/test-run-runtime.ts')).href)};
+const observation = { pid: process.pid, HOME: process.env.HOME, RAF_QA_HOME: process.env.RAF_QA_HOME, TMPDIR: process.env.TMPDIR, tmpdir: tmpdir() };
+appendFileSync(${JSON.stringify(entryObservation)}, JSON.stringify(observation) + '\\n');
+const stat = lstatSync(tmpdir());
+const context = ${JSON.stringify(context)};
+const store = openStateStore(context.statePath, { context });
+try {
+  const groups = await sqliteTestRunState(store).transaction(tx => [${JSON.stringify(group)}, ${JSON.stringify(secondGroup)}].map(group => tx.get({ project: 'raf', workspace: ${JSON.stringify(workspace)}, group })));
+  writeFileSync(${JSON.stringify(evidence)} + '/runner-' + process.pid + '.json', JSON.stringify({
+    observation, tmpdirBytes: Buffer.byteLength(tmpdir(), 'utf8'),
+    identity: { path: tmpdir(), realpath: realpathSync(tmpdir()), uid: stat.uid, gid: stat.gid, mode: stat.mode & 0o7777, device: stat.dev, inode: stat.ino, symlink: stat.isSymbolicLink() },
+    groups, reservations: groups.map(group => group?.inFlight ?? null),
+  }), { mode: 0o600 });
+} finally { store.close(); }
+`);
   const state = async <T>(operation: (transaction: TestRunTransaction) => T): Promise<T> => {
     const store = openStateStore(context.statePath, { context });
     try { return await sqliteTestRunState(store).transaction(operation); }
@@ -221,12 +354,21 @@ process.once('message', ({ argv }) => {
   };
   const key = (selectedGroup = group): TestRunGroupKey => ({ project: 'raf', workspace, group: selectedGroup });
   const snapshot = (selectedGroup = group): Promise<TestRunGroup | null> => state(tx => tx.get(key(selectedGroup)));
+  ledger = async (label: string): Promise<void> => {
+    const groups = existsSync(context.statePath) ? await state(tx => [tx.get(key()), tx.get(key(secondGroup))]) : null;
+    save(join(evidence, `${label}.json`), { groups, reservations: groups?.map(group => group?.inFlight ?? null) ?? null, unitHome: identity(unitHome), statePath: context.statePath, stateIdentity: identity(context.statePath), stateTmpPath: context.tmpRoot, temporaryRoot: identity(config.temporaryArtifacts.root) });
+  };
+  save(join(evidence, 'fixture.json'), { stand, root, workspace, unitHome, context, configurationFingerprints: Object.fromEntries(['flow.json', 'test-runs.json', 'projects.json', 'raf.json', 'raf-constants.json'].map(name => [name, createHash('sha256').update(readFileSync(join(root, 'conf', name))).digest('hex')])) });
   const seed = async (selectedGroup = group, index = 0): Promise<void> => {
     const policy = json(join(root, 'conf/flow.json')).unitTests;
     const timeoutCount = Math.min(policy.optimizeAfterTimeouts, policy.maxGroupTimeouts - 1);
     await state(tx => tx.put({ key: key(selectedGroup), testKind: 'unit', profileId: 'node', timeoutCount, state: timeoutCount >= policy.optimizeAfterTimeouts ? 'optimize' : 'idle', selection: { files: [files[index]], testIds: [] }, knownRed: [], unexecuted: [], inFlight: null, lastResult: null }));
+    await ledger(`seed-${index}`);
   };
   const start = async (phase: 'implement' | 'qa', index = 0, selectedGroup = group): Promise<Invocation> => {
+    const sequence = invocations.length;
+    const prefix = `invocation-${sequence}-${phase}-${index}`;
+    await ledger(`${prefix}-before`);
     const driver = fork(driverPath, [], { cwd: workspace, env: environment, execArgv: [], stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
     const ready = new Promise<void>((done, fail) => {
       driver.once('error', fail);
@@ -256,10 +398,26 @@ process.once('message', ({ argv }) => {
         driver.once('message', value => value.error ? fail(new Error(value.error)) : done(value as Reply));
         driver.once('exit', exit => fail(new Error(`fixture caller exited without a complete reply: ${exit}`)));
       });
-      void reply.catch(() => {});
-      const invocation = { driver, reply, callerRunId };
+      const capturedReply = reply.then(async reply => {
+        let output: TestRunResult | null = null;
+        try { output = JSON.parse(reply.stdout) as TestRunResult; } catch {}
+        save(join(evidence, `${prefix}-reply.json`), { callerRunId, cliExitCode: reply.code, signal: reply.signal, stdoutBytes: Buffer.from(reply.stdoutBase64, 'base64').length, stderrBytes: Buffer.from(reply.stderrBase64, 'base64').length, runId: output?.runId ?? null, childExitCode: output?.exitCode ?? null, resultAvailable: output !== null });
+        if (output !== null) save(join(evidence, `${prefix}-TestRunResult.json`), output);
+        const runTmp = output?.command?.environment.TMPDIR;
+        const observations = runTmp === undefined ? [] : readdirSync(evidence).filter(name => /^(?:runner|probe)-\d+\.json$/u.test(name) && (json(join(evidence, name)).observation?.TMPDIR ?? json(join(evidence, name)).TMPDIR) === runTmp);
+        save(join(evidence, `${prefix}-correlation.json`), { runId: output?.runId ?? null, callerRunId, runTmp: runTmp ?? null, runTmpAfterReply: identity(runTmp), observations });
+        await ledger(`${prefix}-after`);
+        return reply;
+      }, error => {
+        save(join(evidence, `${prefix}-transport-error.json`), { callerRunId, message: (error as Error).message, resultAvailable: false });
+        throw error;
+      });
+      void capturedReply.catch(() => {});
+      const invocation = { driver, reply: capturedReply, callerRunId };
       invocations.push(invocation);
-      driver.send({ argv: ['--experimental-test-module-mocks', '--import', resourcePreload, join(code, 'bin/raf.ts'), 'test', 'run', '--project', 'raf', '--phase', phase, '--group', selectedGroup, '--files', files[index]] });
+      const argv = ['--experimental-test-module-mocks', '--import', resourcePreload, join(code, 'bin/raf.ts'), 'test', 'run', '--project', 'raf', '--phase', phase, '--group', selectedGroup, '--files', files[index]];
+      save(join(evidence, `${prefix}-request.json`), { callerRunId, driverPid: driver.pid, phase, selectedGroup, argv, testRunsFingerprint: createHash('sha256').update(readFileSync(cfgPath)).digest('hex') });
+      driver.send({ argv, evidencePrefix: join(evidence, prefix) });
       return invocation;
     } catch (error) {
       driver.kill();

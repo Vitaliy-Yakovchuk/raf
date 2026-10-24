@@ -4,7 +4,7 @@ import { promises as fs } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { alive, command, copyTree, durable, exists, git, hash, inventory, json, locked, mainRoute, processStart, validateWorkspace, withHotfixWriter } from './hotfix-host.ts';
+import { alive, command, copyTree, durable, exists, git, hash, inventory, json, locked, mainRoute, processStart, validateReleaseWorkspace, withReleaseWriter, withHotfixWriter } from './hotfix-host.ts';
 import type { HotfixCleanupResult, HotfixHost, HotfixWorkspace } from "./hotfix-worktree.ts";
 import { stateFailure } from './state-migration-guard.ts';
 
@@ -33,10 +33,14 @@ export interface HotfixGateEvidence {
 export type HotfixSnapshotCheckpoint = "before-copy" | "after-copy";
 
 export interface HotfixSnapshotOptions {
+  source?: "hotfix" | "develop";
+  sourceWorkspace?: HotfixWorkspace;
   checkpoint?: (phase: HotfixSnapshotCheckpoint) => Promise<void>;
 }
 
 export interface HotfixSealedSnapshot {
+  source?: "hotfix" | "develop";
+  sourceWorkspace?: HotfixWorkspace;
   root: string;
   configurationRoot: string;
   sourceCwd: string;
@@ -62,8 +66,8 @@ export interface VerifiedHotfix {
   evidencePath: string;
 }
 
-async function sourceIdentity(host: HotfixHost, workspace: HotfixWorkspace, allowActive = false) {
-  const route = await validateWorkspace(host, workspace);
+async function sourceIdentity(host: HotfixHost, workspace: HotfixWorkspace, allowActive = false, source: "hotfix" | "develop" = "hotfix", sourceWorkspace?: HotfixWorkspace) {
+  const route = await validateReleaseWorkspace(host, workspace, source, sourceWorkspace);
   const mainCommit = await git(route.cwd, 'rev-parse', 'HEAD');
   const sourceCommit = await git(workspace.cwd, 'rev-parse', 'HEAD');
   if (mainCommit !== workspace.baseCommit && !(allowActive && mainCommit === sourceCommit)) throw new Error('Stale hotfix main base');
@@ -79,9 +83,10 @@ async function sourceIdentity(host: HotfixHost, workspace: HotfixWorkspace, allo
 }
 
 export async function sealHotfixSnapshot(host: HotfixHost, workspace: HotfixWorkspace, options: HotfixSnapshotOptions = {}): Promise<HotfixSealedSnapshot> {
-  return withHotfixWriter(host, async () => {
-    const route = await validateWorkspace(host, workspace);
-    const before = await sourceIdentity(host, workspace);
+  return withReleaseWriter(host, workspace, options.source ?? "hotfix", async () => {
+    const route = await validateReleaseWorkspace(host, workspace, options.source ?? "hotfix", options.sourceWorkspace);
+    const before = await sourceIdentity(host, workspace, false, options.source, options.sourceWorkspace);
+    if (options.sourceWorkspace && (await sourceIdentity(host, options.sourceWorkspace, false, options.source)).fingerprint !== before.fingerprint) throw new Error("Prepared slot differs from release source snapshot");
     const parent = join(route.control, 'snapshots', workspace.runId, randomUUID());
     const root = join(parent, 'raf-main');
     const configurationRoot = parent;
@@ -91,18 +96,20 @@ export async function sealHotfixSnapshot(host: HotfixHost, workspace: HotfixWork
       await copyTree(workspace.cwd, root);
       await fs.cp(join(host.orchestratorRoot, 'conf'), join(configurationRoot, 'conf'), { recursive: true, dereference: false });
       await options.checkpoint?.('after-copy');
-      if (JSON.stringify(before) !== JSON.stringify(await sourceIdentity(host, workspace)) || JSON.stringify(before.files) !== JSON.stringify(await inventory(root)) || JSON.stringify(await inventory(join(host.orchestratorRoot, 'conf'), new Set())) !== JSON.stringify(await inventory(join(configurationRoot, 'conf'), new Set()))) throw new Error('Hotfix source/configuration changed while sealing snapshot');
-      const snapshot: HotfixSealedSnapshot = { root, configurationRoot, sourceCwd: workspace.cwd, sourceGitDirectory: workspace.gitDirectory, sourceCommonDirectory: workspace.commonDirectory, baseCommit: workspace.baseCommit, ...before };
+      if (JSON.stringify(before) !== JSON.stringify(await sourceIdentity(host, workspace, false, options.source, options.sourceWorkspace)) || JSON.stringify(before.files) !== JSON.stringify(await inventory(root)) || JSON.stringify(await inventory(join(host.orchestratorRoot, 'conf'), new Set())) !== JSON.stringify(await inventory(join(configurationRoot, 'conf'), new Set()))) throw new Error('Hotfix source/configuration changed while sealing snapshot');
+      const snapshot: HotfixSealedSnapshot = { source: options.source ?? "hotfix", sourceWorkspace: options.sourceWorkspace, root, configurationRoot, sourceCwd: workspace.cwd, sourceGitDirectory: workspace.gitDirectory, sourceCommonDirectory: workspace.commonDirectory, baseCommit: workspace.baseCommit, ...before };
       await durable(join(parent, 'snapshot.json'), snapshot);
       return snapshot;
     } catch (error) {
       await fs.rm(parent, { recursive: true, force: true }).catch(() => {});
       throw error;
     }
-  });
+  }, options.sourceWorkspace);
 }
 
 export interface HotfixVerificationRequest {
+  source?: "hotfix" | "develop";
+  sourceWorkspace?: HotfixWorkspace;
   workspace: HotfixWorkspace;
   regression: { executable: string; args: readonly string[] };
   mainAddress: string;
@@ -114,7 +121,23 @@ export interface AtomicHotfixSwitch {
   exchange(currentDirectory: string, preparedDirectory: string): Promise<void>;
 }
 
+export interface HotfixPublication {
+  currentDirectory: string;
+  preparedDirectory: string;
+  assertSnapshot(): Promise<void>;
+  writeIntent(): Promise<void>;
+  reconcileGit(): Promise<void>;
+  clearIntent(): Promise<void>;
+  generationRoot?: string;
+  afterSwitch?(): Promise<void>;
+  reconcileRefs?(): Promise<void>;
+  activated?(): Promise<void>;
+  rollback?(): Promise<void>;
+  cleanup?(): Promise<void>;
+}
+
 export interface HotfixActivationOptions {
+  publication?: HotfixPublication;
   checkpoint?: (phase: HotfixCheckpoint) => Promise<void>;
   switchProvider?: AtomicHotfixSwitch;
 }
@@ -172,16 +195,17 @@ async function prepareDependencies(host: HotfixHost, workspace: HotfixWorkspace,
 }
 
 async function checkSnapshot(host: HotfixHost, workspace: HotfixWorkspace, snapshot: HotfixSealedSnapshot, allowActive = false): Promise<void> {
-  const route = await validateWorkspace(host, workspace);
+  const route = await validateReleaseWorkspace(host, workspace, snapshot.source ?? "hotfix", snapshot.sourceWorkspace);
   const parent = dirname(snapshot.root);
   if (!parent.startsWith(join(route.control, 'snapshots', workspace.runId) + '/') || snapshot.root !== join(parent, 'raf-main') || snapshot.configurationRoot !== parent || await fs.realpath(parent) !== parent || await fs.realpath(snapshot.root) !== snapshot.root || snapshot.sourceCwd !== workspace.cwd || snapshot.sourceGitDirectory !== workspace.gitDirectory || snapshot.sourceCommonDirectory !== workspace.commonDirectory || snapshot.baseCommit !== workspace.baseCommit || JSON.stringify(await json(join(parent, 'snapshot.json'))) !== JSON.stringify(snapshot)) throw new Error('Sealed snapshot ownership mismatch');
-  if ((await sourceIdentity(host, workspace, allowActive)).fingerprint !== snapshot.fingerprint || JSON.stringify(await inventory(snapshot.root)) !== JSON.stringify(snapshot.files) || JSON.stringify(await inventory(join(snapshot.configurationRoot, 'conf'), new Set())) !== JSON.stringify(await inventory(join(host.orchestratorRoot, 'conf'), new Set()))) throw new Error('Hotfix snapshot fingerprint changed');
+  if ((await sourceIdentity(host, workspace, allowActive, snapshot.source, snapshot.sourceWorkspace)).fingerprint !== snapshot.fingerprint || JSON.stringify(await inventory(snapshot.root)) !== JSON.stringify(snapshot.files) || JSON.stringify(await inventory(join(snapshot.configurationRoot, 'conf'), new Set())) !== JSON.stringify(await inventory(join(host.orchestratorRoot, 'conf'), new Set()))) throw new Error('Hotfix snapshot fingerprint changed');
+  if (snapshot.sourceWorkspace && (await sourceIdentity(host, snapshot.sourceWorkspace, allowActive, snapshot.source)).fingerprint !== snapshot.fingerprint) throw new Error('Release source fingerprint changed');
 }
 
 export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVerificationRequest): Promise<VerifiedHotfix> {
   const workspace = request.workspace;
-  const snapshot = await sealHotfixSnapshot(host, workspace);
-  const route = await validateWorkspace(host, workspace);
+  const snapshot = await sealHotfixSnapshot(host, workspace, { source: request.source, sourceWorkspace: request.sourceWorkspace });
+  const route = await validateReleaseWorkspace(host, workspace, request.source ?? "hotfix", request.sourceWorkspace);
   const evidenceRoot = join(route.control, 'verification', workspace.runId, randomUUID());
   const qaRoot = join(evidenceRoot, 'stand');
   await fs.cp(join(snapshot.configurationRoot, 'conf'), join(qaRoot, 'conf'), { recursive: true, dereference: false });
@@ -228,12 +252,12 @@ export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVer
     let verificationError: string | undefined;
     try {
       if (specification.name !== 'service-stop') {
-        await withHotfixWriter(host, () => checkSnapshot(host, workspace, snapshot));
+        await withReleaseWriter(host, workspace, snapshot.source ?? "hotfix", () => checkSnapshot(host, workspace, snapshot), snapshot.sourceWorkspace);
         await checkStand();
       }
       result = await command(host, snapshot.root, specification.argv[0], specification.argv.slice(1), environment);
       if (['service-ready', 'service-status'].includes(specification.name) && result.code === 0 && JSON.parse(result.stdout).state !== 'ready') throw new Error('Service is not ready');
-      await withHotfixWriter(host, () => checkSnapshot(host, workspace, snapshot));
+      await withReleaseWriter(host, workspace, snapshot.source ?? "hotfix", () => checkSnapshot(host, workspace, snapshot), snapshot.sourceWorkspace);
       await checkStand();
     } catch (error) {
       verificationError = String(error);
@@ -244,14 +268,14 @@ export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVer
     if ((verificationError || result?.code !== 0) && !primary) primary = new Error('Hotfix gate ' + specification.name + ' failed: ' + (verificationError ?? result?.stderr));
   }
   if (primary) throw primary;
-  await withHotfixWriter(host, () => checkSnapshot(host, workspace, snapshot));
+  await withReleaseWriter(host, workspace, snapshot.source ?? "hotfix", () => checkSnapshot(host, workspace, snapshot), snapshot.sourceWorkspace);
   const verified: VerifiedHotfix = { workspace, snapshot, commit: snapshot.commit, tree: snapshot.tree, fingerprint: snapshot.fingerprint, files: snapshot.files, configuration: snapshot.configuration, gates, evidencePath: join(evidenceRoot, 'verified.json') };
   await durable(verified.evidencePath, verified);
   return verified;
 }
 
 async function checkCandidate(host: HotfixHost, candidate: VerifiedHotfix) {
-  const route = await validateWorkspace(host, candidate.workspace);
+  const route = await validateReleaseWorkspace(host, candidate.workspace, candidate.snapshot?.source ?? "hotfix", candidate.snapshot?.sourceWorkspace);
   if (!candidate.snapshot || !candidate.evidencePath.startsWith(join(route.control, 'verification', candidate.workspace.runId) + '/') || JSON.stringify(await json(candidate.evidencePath)) !== JSON.stringify(candidate)) throw new Error('Hotfix verification evidence mismatch');
   await checkSnapshot(host, candidate.workspace, candidate.snapshot, true);
   if (candidate.commit !== candidate.snapshot.commit || candidate.tree !== candidate.snapshot.tree || candidate.fingerprint !== candidate.snapshot.fingerprint || JSON.stringify(candidate.files) !== JSON.stringify(candidate.snapshot.files) || JSON.stringify(candidate.configuration) !== JSON.stringify(candidate.snapshot.configuration)) throw new Error('Hotfix candidate snapshot mismatch');
@@ -349,7 +373,43 @@ async function reconcile(host: HotfixHost, route: Awaited<ReturnType<typeof main
   return true;
 }
 
+async function publishHotfixSnapshot(host: HotfixHost, candidate: VerifiedHotfix, options: HotfixActivationOptions & { publication: HotfixPublication }): Promise<HotfixActivationResult> {
+  const publication = options.publication;
+  const provider = options.switchProvider;
+  if (!provider) throw new Error('Publication requires an explicit atomic switch provider');
+  const checkpoint = options.checkpoint ?? (async () => {});
+  const support = await provider.probe(publication.currentDirectory, publication.preparedDirectory);
+  if (!support.supported || !support.sameDevice) throw new Error('Atomic publication unsupported or EXDEV');
+  await checkpoint('before-intent');
+  await publication.assertSnapshot();
+  await publication.writeIntent();
+  await checkpoint('after-intent');
+  await checkpoint('before-switch');
+  await publication.assertSnapshot();
+  await provider.exchange(publication.currentDirectory, publication.preparedDirectory);
+  await publication.afterSwitch?.();
+  await checkpoint('after-switch');
+  await publication.reconcileRefs?.();
+  await checkpoint('after-refs');
+  await publication.reconcileGit();
+  await checkpoint('after-index');
+  const generationRoot = publication.generationRoot ?? publication.preparedDirectory;
+  const smoke = await generationSmoke(host, generationRoot);
+  if (smoke.code !== 0) {
+    await publication.rollback?.();
+    throw new Error('Activated generation smoke failed: ' + smoke.stderr);
+  }
+  await checkpoint('after-smoke');
+  await publication.activated?.();
+  await publication.clearIntent();
+  await checkpoint('before-cleanup');
+  await publication.cleanup?.();
+  await checkpoint('after-cleanup');
+  return { status: 'activated', commit: candidate.commit, fingerprint: candidate.fingerprint, generationRoot };
+}
+
 export async function activateHotfix(host: HotfixHost, candidate: VerifiedHotfix, options: HotfixActivationOptions = {}): Promise<HotfixActivationResult> {
+  if (options.publication) return publishHotfixSnapshot(host, candidate, { ...options, publication: options.publication });
   return locked(host, async route => withHotfixWriter(host, async () => {
     await reconcile(host, route);
     await checkCandidate(host, candidate);
@@ -386,48 +446,49 @@ export async function activateHotfix(host: HotfixHost, candidate: VerifiedHotfix
     await copyTree(next.root, prepared);
     await fs.copyFile(join(route.cwd, '.git'), join(prepared, '.git'));
     const provider = options.switchProvider ?? createAtomicHotfixSwitch();
-    const support = await provider.probe(route.cwd, prepared);
-    if (!support.supported || !support.sameDevice) throw new Error('Atomic hotfix switch unsupported or EXDEV');
+    let intent: Intent | undefined;
     const checkpoint = options.checkpoint ?? (async () => {});
     try {
-    await checkpoint('before-intent');
-    await assertMainWriterGate(host, route.cwd);
-    await checkCandidate(host, candidate);
-    if (await git(route.cwd, 'rev-parse', 'HEAD') !== head || await git(route.cwd, 'status', '--porcelain', '--untracked-files=all')) throw new Error('Main changed before activation intent');
-    const intent: Intent = { version: 1, base: head, target: candidate.commit, previous: state.current, next: next.root, prepared, oldTree: await treeIdentity(route.cwd), newTree: await treeIdentity(prepared), phase: 'intent', candidate };
-    await durable(join(route.control, 'registry.json'), state);
-    await durable(join(route.control, 'intent.json'), intent);
-    await checkpoint('after-intent');
-    await checkpoint('before-switch');
-    await assertMainWriterGate(host, route.cwd);
-    await checkCandidate(host, candidate);
-    if (await git(route.cwd, 'rev-parse', 'HEAD') !== head || await git(route.cwd, 'status', '--porcelain', '--untracked-files=all') || await treeIdentity(route.cwd) !== intent.oldTree || await treeIdentity(prepared) !== intent.newTree) throw new Error('Main or prepared snapshot changed before activation switch');
-    await provider.exchange(route.cwd, prepared);
-    intent.phase = 'switched'; await durable(join(route.control, 'intent.json'), intent);
-    await checkpoint('after-switch');
-    await assertMainWriterGate(host, route.cwd);
-    await assertMainIndex(route.cwd, [head]);
-    await git(route.cwd, 'update-ref', 'refs/heads/main', candidate.commit, head);
-    intent.phase = 'refs'; await durable(join(route.control, 'intent.json'), intent);
-    await checkpoint('after-refs');
-    await git(route.cwd, 'read-tree', candidate.commit);
-    await updateGitlink(host, route.cwd, candidate.commit, [head, candidate.commit]);
-    intent.phase = 'index'; await durable(join(route.control, 'intent.json'), intent);
-    await checkpoint('after-index');
-    const smoke = await generationSmoke(host, next.root);
-    if (smoke.code !== 0) {
-      await provider.exchange(route.cwd, prepared);
-      await reconcile(host, route);
-      throw new Error('Activated generation smoke failed: ' + smoke.stderr);
-    }
-    await checkpoint('after-smoke');
-    state.current = next.root;
-    await durable(join(route.control, 'registry.json'), state);
-    await removeIntent(join(route.control, 'intent.json'));
-    await checkpoint('before-cleanup');
-    await cleanupGenerations(host, route);
-    await checkpoint('after-cleanup');
-    return { status: 'activated', commit: candidate.commit, fingerprint: candidate.fingerprint, generationRoot: next.root };
+      return await publishHotfixSnapshot(host, candidate, {
+        switchProvider: provider,
+        checkpoint,
+        publication: {
+          currentDirectory: route.cwd,
+          preparedDirectory: prepared,
+          generationRoot: next.root,
+          async assertSnapshot() {
+            await assertMainWriterGate(host, route.cwd);
+            await checkCandidate(host, candidate);
+            if (await git(route.cwd, 'rev-parse', 'HEAD') !== head || await git(route.cwd, 'status', '--porcelain', '--untracked-files=all') || intent && (await treeIdentity(route.cwd) !== intent.oldTree || await treeIdentity(prepared) !== intent.newTree)) throw new Error('Main or prepared snapshot changed before activation switch');
+          },
+          async writeIntent() {
+            intent = { version: 1, base: head, target: candidate.commit, previous: state.current, next: next.root, prepared, oldTree: await treeIdentity(route.cwd), newTree: await treeIdentity(prepared), phase: 'intent', candidate };
+            await durable(join(route.control, 'registry.json'), state);
+            await durable(join(route.control, 'intent.json'), intent);
+          },
+          async afterSwitch() {
+            intent!.phase = 'switched';
+            await durable(join(route.control, 'intent.json'), intent);
+          },
+          async reconcileRefs() {
+            await assertMainWriterGate(host, route.cwd);
+            await assertMainIndex(route.cwd, [head]);
+            await git(route.cwd, 'update-ref', 'refs/heads/main', candidate.commit, head);
+            intent!.phase = 'refs';
+            await durable(join(route.control, 'intent.json'), intent);
+          },
+          async reconcileGit() {
+            await git(route.cwd, 'read-tree', candidate.commit);
+            await updateGitlink(host, route.cwd, candidate.commit, [head, candidate.commit]);
+            intent!.phase = 'index';
+            await durable(join(route.control, 'intent.json'), intent);
+          },
+          async rollback() { await provider.exchange(route.cwd, prepared); await reconcile(host, route); },
+          async activated() { state.current = next.root; await durable(join(route.control, 'registry.json'), state); },
+          async clearIntent() { await removeIntent(join(route.control, 'intent.json')); },
+          async cleanup() { await cleanupGenerations(host, route); },
+        },
+      });
     } catch (primary) {
       try { await checkpoint('before-cleanup'); } catch {}
       throw primary;
@@ -435,7 +496,21 @@ export async function activateHotfix(host: HotfixHost, candidate: VerifiedHotfix
   }));
 }
 
-export async function recoverHotfixActivation(host: HotfixHost): Promise<HotfixRecoveryResult> {
+export interface HotfixPublicationRecovery {
+  reconcile(): Promise<{ result: HotfixRecoveryResult; generationRoot: string }>;
+  clearIntent(): Promise<void>;
+}
+
+export async function recoverHotfixActivation(host: HotfixHost, options: { publication?: HotfixPublicationRecovery } = {}): Promise<HotfixRecoveryResult> {
+  if (options.publication) {
+    const { result, generationRoot } = await options.publication.reconcile();
+    if (!result.pending) {
+      const smoke = await generationSmoke(host, generationRoot);
+      if (smoke.code !== 0) throw new Error('Recovered generation smoke failed: ' + smoke.stderr);
+      await options.publication.clearIntent();
+    }
+    return result;
+  }
   return locked(host, async route => {
     const recovered = await reconcile(host, route);
     const state = await registry(host, route);

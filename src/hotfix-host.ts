@@ -38,7 +38,12 @@ export async function mainRoute(host: HotfixHost): Promise<{ cwd: string; reposi
   const config = await json(join(root, 'conf/projects.json'));
   const path = config.projects?.raf?.branchPaths?.main;
   if (typeof path !== 'string' || config.projects.raf.path !== path) throw new Error('Registered raf main route required');
-  const cwd = resolve(root, path);
+  const logical = resolve(root, path);
+  const cwd = await fs.realpath(logical);
+  if (cwd !== logical) {
+    const copies = config.projects.raf.mainCopies;
+    if (!(await fs.lstat(logical)).isSymbolicLink() || !Array.isArray(copies) || copies.length !== 2 || new Set(copies).size !== 2 || copies.some((copy: unknown) => typeof copy !== 'string' || !copy || copy.startsWith('/') || copy.split('/').some(part => ['', '.', '..', '.git'].includes(part))) || !copies.map((copy: string) => resolve(root, copy)).includes(cwd)) throw new Error('Registered main symlink layout required');
+  }
   if (await fs.realpath(cwd) !== cwd || await git(cwd, 'rev-parse', '--show-toplevel') !== cwd || await git(cwd, 'symbolic-ref', '--short', 'HEAD') !== 'main') throw new Error('Registered main Git root required');
   const repositoryIdentity = await fs.realpath(await git(cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir'));
   return { cwd, repositoryIdentity, control: join(repositoryIdentity, 'raf-hotfix') };
@@ -56,6 +61,36 @@ export async function validateWorkspace(host: HotfixHost, workspace: HotfixWorks
   await git(workspace.cwd, 'merge-base', '--is-ancestor', workspace.baseCommit, 'HEAD');
   return route;
 }
+export async function validateReleaseWorkspace(host: HotfixHost, workspace: HotfixWorkspace, source: 'hotfix' | 'develop', sourceWorkspace?: HotfixWorkspace): Promise<Awaited<ReturnType<typeof mainRoute>>> {
+  if (sourceWorkspace) {
+    const route = await validateReleaseWorkspace(host, sourceWorkspace, source);
+    const copies = (await json(join(host.orchestratorRoot, 'conf/projects.json'))).projects?.raf?.mainCopies;
+    if (!Array.isArray(copies) || !copies.map((path: string) => resolve(host.orchestratorRoot, path)).includes(workspace.cwd) || workspace.cwd === sourceWorkspace.cwd || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.baseCommit !== sourceWorkspace.baseCommit || workspace.runId !== sourceWorkspace.runId || workspace.repositoryIdentity !== route.repositoryIdentity || workspace.commonDirectory !== route.repositoryIdentity || await git(workspace.cwd, 'rev-parse', '--show-toplevel') !== workspace.cwd || await fs.realpath(await git(workspace.cwd, 'rev-parse', '--absolute-git-dir')) !== workspace.gitDirectory || await fs.realpath(await git(workspace.cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir')) !== route.repositoryIdentity || await git(workspace.cwd, 'rev-parse', 'HEAD') !== await git(sourceWorkspace.cwd, 'rev-parse', 'HEAD')) throw new Error('BRANCH_MISMATCH: prepared main slot/source identity mismatch');
+    const branch = await git(workspace.cwd, 'symbolic-ref', '-q', 'HEAD').catch(() => '');
+    if (branch && !(workspace.cwd === route.cwd && branch === 'refs/heads/main')) throw new Error('BRANCH_MISMATCH: prepared main slot must be detached');
+    return route;
+  }
+  if (source === 'hotfix') return validateWorkspace(host, workspace);
+  if (source !== 'develop') throw new Error('Unknown release source');
+  const route = await mainRoute(host);
+  const config = await json(join(host.orchestratorRoot, 'conf/projects.json'));
+  const configured = config.projects?.raf?.branchPaths?.develop;
+  if (typeof configured !== 'string' || workspace.cwd !== resolve(host.orchestratorRoot, configured) || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.repositoryIdentity !== route.repositoryIdentity || workspace.commonDirectory !== route.repositoryIdentity || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(workspace.runId) || workspace.runId === '..') throw new Error('BRANCH_MISMATCH: registered develop release source required');
+  if (await git(workspace.cwd, 'rev-parse', '--show-toplevel') !== workspace.cwd || await git(workspace.cwd, 'symbolic-ref', '-q', 'HEAD') !== 'refs/heads/develop' || await fs.realpath(await git(workspace.cwd, 'rev-parse', '--absolute-git-dir')) !== workspace.gitDirectory || await fs.realpath(await git(workspace.cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir')) !== route.repositoryIdentity) throw new Error('BRANCH_MISMATCH: develop Git identity mismatch');
+  await git(workspace.cwd, 'merge-base', '--is-ancestor', workspace.baseCommit, 'HEAD');
+  return route;
+}
+
+export async function withReleaseWriter<T>(host: HotfixHost, workspace: HotfixWorkspace, source: 'hotfix' | 'develop', use: () => Promise<T>, sourceWorkspace?: HotfixWorkspace): Promise<T> {
+  if (sourceWorkspace) {
+    await validateReleaseWorkspace(host, workspace, source, sourceWorkspace);
+    return withReleaseWriter(host, sourceWorkspace, source, () => withWriterLock(host, workspace.gitDirectory, use));
+  }
+  if (source === 'hotfix') return withHotfixWriter(host, use);
+  await validateReleaseWorkspace(host, workspace, source);
+  return withWriterLock(host, workspace.gitDirectory, use);
+}
+
 export async function hotfixRoute(host: HotfixHost): Promise<{ cwd: string; gitDirectory: string }> {
   const route = await mainRoute(host);
   const config = await json(join(host.orchestratorRoot, 'conf/projects.json'));
@@ -101,7 +136,10 @@ with open(lock+'.reaper', 'a') as guard:
 }
 export async function withHotfixWriter<T>(host: HotfixHost, use: () => Promise<T>): Promise<T> {
   const route = await hotfixRoute(host);
-  const lock = join(route.gitDirectory, 'raf-writer.lock');
+  return withWriterLock(host, route.gitDirectory, use);
+}
+async function withWriterLock<T>(host: HotfixHost, gitDirectory: string, use: () => Promise<T>): Promise<T> {
+  const lock = join(gitDirectory, 'raf-writer.lock');
   const deadline = Date.now() + await timeoutMs(host);
   for (;;) {
     try {
@@ -117,7 +155,7 @@ export async function withHotfixWriter<T>(host: HotfixHost, use: () => Promise<T
     }
   }
   try {
-    while (await exists(join(route.gitDirectory, 'index.lock'))) {
+    while (await exists(join(gitDirectory, 'index.lock'))) {
       if (Date.now() >= deadline) throw new Error('Hotfix index.lock timeout; existing lock retained');
       await new Promise(resolve => setTimeout(resolve, 10));
     }

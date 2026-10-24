@@ -36,7 +36,7 @@
     "Інші пункти зміни відкриті; tasks.md не редагувався, архівація не виконувалась."
   ],
   "finalStatus": "failed",
-  "reason": "Фінальний профіль після закомічених уточнень не підтверджений: прогін bb58a752-c7e4-435c-be4c-903ac5173cae відмовлено до child через зупинку служби main; доручений повтор того самого відбору не виконав raf через ENOENT транспортного каналу. Потрібен відновлений довірений канал і той самий test run implement без зміни HOME/group.",
+  "reason": "Фінальний профіль після закомічених уточнень не підтверджений: прогін bb58a752-c7e4-435c-be4c-903ac5173cae відмовлено до child через зупинку служби main; результат дорученого повтору недоступний через ENOENT транспортного каналу. Потрібен відновлений довірений канал, звірка стану останнього запиту та той самий test run implement без зміни HOME/group.",
   "transportRetry": {
     "rawToolResult": "retry-transport-tool-result.json",
     "stderr": "retry-transport.stderr.log",
@@ -51,8 +51,10 @@
     "knownRed": null,
     "unexecuted": null,
     "unknown": null,
-    "note": "Відсутній TestRunResult не є pass. Дані агрегату цією спробою не підтверджено й не скидалися."
+    "note": "Відсутній TestRunResult не є pass. Дані агрегату цією спробою не підтверджено й не скидалися.",
+    "executionVerification": "unknown; no TestRunResult received"
   },
   "checkboxesChanged": false,
-  "archive": null
+  "archive": null,
+  "workspaceIntegration": "Після власного source-коміту main вніс hotfix 9.1.1 та виправлення каналу; власна реалізація не змінювалася. Остаточна unit-перевірка інтегрованого стану не підтверджена."
 }

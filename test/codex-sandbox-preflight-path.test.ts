@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { userInfo } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { test } from 'node:test';
 import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
@@ -9,6 +10,10 @@ const linuxSunPathBytes = 108;
 async function fixture() {
   const root = await mkdtemp('/tmp/z390-');
   const bin = join(root, 'bin');
+  const home = join(root, 'home');
+  const accountRoot = join(home, '.raf');
+  const accountHomes = [...new Set([userInfo().homedir, home])];
+  assert.ok(accountHomes.every(path => path !== '/'), 'Z390 fixture requires account homes below /');
   const cwd = join(root, 'workspace');
   const shortRun = join(root, 'run');
   const shortTmp = join(root, 'tmp');
@@ -16,10 +21,15 @@ async function fixture() {
   const longRun = join(longBase, 'runner/run-directory');
   const longTmp = join(longBase, 'temporary-artifacts/TMPDIR');
   const witness = join(root, 'listening.jsonl');
-  await Promise.all([bin, cwd, shortRun, shortTmp, longRun, longTmp].map(path => mkdir(path, { recursive: true })));
+  await Promise.all([bin, accountRoot, cwd, shortRun, shortTmp, longRun, longTmp].map(path => mkdir(path, { recursive: true })));
+  await writeFile(join(accountRoot, 'fixture-marker'), 'z390-account-root');
   await writeFile(join(bin, 'socket-witness.cjs'), `
 const fs = require('node:fs');
 const net = require('node:net');
+for (const home of ${JSON.stringify(accountHomes)}) {
+  const accountRoot = require('node:path').join(home, '.raf');
+  if (fs.existsSync(accountRoot)) throw new Error('Z390 fixture account root is still visible: ' + accountRoot);
+}
 const originalEmit = net.Server.prototype.emit;
 net.Server.prototype.emit = function(event, ...args) {
   if (event === 'listening') {
@@ -38,14 +48,20 @@ if (args[0] !== 'sandbox' || separator < 0 || !args[separator + 1]) {
   process.stderr.write('Z390 fixture expects codex sandbox -- executable args');
   process.exit(97);
 }
-const child = spawnSync(args[separator + 1], ['--require', join(__dirname, 'socket-witness.cjs'), ...args.slice(separator + 2)], {
+const child = spawnSync('/usr/bin/bwrap', [
+  '--die-with-parent', '--unshare-user', '--unshare-pid',
+  '--ro-bind', '/', '/', '--bind', '/tmp', '/tmp', '--dev', '/dev', '--proc', '/proc',
+  ...${JSON.stringify(accountHomes)}.flatMap(home => ['--tmpfs', home]),
+  '--', args[separator + 1], '--require', join(__dirname, 'socket-witness.cjs'), ...args.slice(separator + 2)
+], {
   stdio: 'inherit', env: process.env
 });
-if (child.error) { process.stderr.write(child.error.message); process.exit(98); }
+if (child.error) { process.stderr.write('Z390 fixture requires /usr/bin/bwrap and user namespaces: ' + child.error.message); process.exit(98); }
+if (child.status !== 0) process.stderr.write('Z390 fixture isolated probe failed; /usr/bin/bwrap and user namespaces are required\\n');
 process.exit(child.status ?? 99);
 `, { mode: 0o700 });
-  await writeFile(join(bin, 'bwrap'), `#!${process.execPath}\nprocess.exit(0);\n`, { mode: 0o700 });
-  return { root, bin, cwd, shortRun, shortTmp, longRun, longTmp, witness };
+  await symlink('/usr/bin/bwrap', join(bin, 'bwrap'));
+  return { root, bin, home, accountRoot, cwd, shortRun, shortTmp, longRun, longTmp, witness };
 }
 
 const scenarios = [
@@ -61,6 +77,7 @@ for (const scenario of scenarios) {
     try {
       const runDirectory = scenario.longRun ? f.longRun : f.shortRun;
       const tmpDirectory = scenario.longTmp ? f.longTmp : f.shortTmp;
+      assert.equal(await readFile(join(f.accountRoot, 'fixture-marker'), 'utf8'), 'z390-account-root');
       if (scenario.longRun) assert.ok(Buffer.byteLength(runDirectory) > linuxSunPathBytes);
       if (scenario.longTmp) assert.ok(Buffer.byteLength(tmpDirectory) > linuxSunPathBytes);
       const flow = JSON.parse(await readFile(new URL('../../conf/flow.json', import.meta.url), 'utf8'));
@@ -68,11 +85,11 @@ for (const scenario of scenarios) {
       const prepared = await prepareCodexSandbox({
         runId: 'z390-preflight',
         invocation: { executable: 'codex', args: ['--sandbox', 'workspace-write'], liveTaskVerified: false },
-        scope: { hidden: [], readable: [], tmuxDirectory: runDirectory, excludedCommands: [] },
+        scope: { hidden: [f.accountRoot], readable: [], tmuxDirectory: runDirectory, excludedCommands: [] },
         cwd: f.cwd,
         runDirectory,
         writableDirectories: [f.cwd, runDirectory, tmpDirectory],
-        environment: { PATH: `${f.bin}${delimiter}${process.env.PATH ?? ''}`, HOME: f.root, TMPDIR: tmpDirectory },
+        environment: { PATH: `${f.bin}${delimiter}${process.env.PATH ?? ''}`, HOME: f.home, TMPDIR: tmpDirectory },
         timeoutMs: flow.unitTests.timeoutMs,
       });
       try {

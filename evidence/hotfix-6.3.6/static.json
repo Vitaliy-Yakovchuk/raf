@@ -1,0 +1,53 @@
+{
+  "isolatedHome": "/tmp/raf-636-static-qc1flahn",
+  "cleanup": true,
+  "checks": [
+    {
+      "command": [
+        "node",
+        "--check",
+        "src/test-run-etchly.ts"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "scripts/test-run-vitest-api.ts"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "scripts/qa-test-run-generation-stand.ts"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "test/test-run-etchly-profiles.test.ts"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "node",
+        "scripts/check-comments.ts"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exitCode": 0
+    }
+  ]
+}

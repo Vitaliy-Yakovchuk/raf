@@ -1,0 +1,27 @@
+{
+  "baseCommit": "032580ec15c2d1cdb96b48cd71b96aceec6e31c9",
+  "unitGroup": "add-raf-test-run/etchly-profiles",
+  "files": [
+    "test/test-run-etchly-profiles.test.ts"
+  ],
+  "redWorkspace": {
+    "production": "unchanged from baseCommit",
+    "modified": [
+      "test/test-run-etchly-profiles.test.ts"
+    ],
+    "untracked": [
+      "scripts/qa-test-run-generation-stand.ts",
+      "evidence/hotfix-6.3.6/",
+      "node_modules (QA dependency symlink)"
+    ]
+  },
+  "redTestPatch": "red.workspace.patch",
+  "hotfixWorkspace": "hotfix.workspace.patch",
+  "transport": "CLI output was one complete JSON document with no additional stderr bytes surfaced; original JSON stored unchanged including newline; CLI and child exits recorded separately.",
+  "sourceHashes": {
+    "src/test-run-etchly.ts": "2d0ce32e598cc4060c1e1d16b82312e8201500c90a448d3af5f2fc3aad77be95",
+    "scripts/test-run-vitest-api.ts": "6593c3930aae4145b9c272c91c948c0c2c40052acf87e8ef7db8fac87c572599",
+    "test/test-run-etchly-profiles.test.ts": "acfb920ea8716e26830dc51f20e5e3493ba7fbe3b21634e65ead153fad08447d",
+    "scripts/qa-test-run-generation-stand.ts": "18ae821cef66dd8e5f522eb84af0a1fcee21a330744cad914e26bf0a2e4f10a9"
+  }
+}

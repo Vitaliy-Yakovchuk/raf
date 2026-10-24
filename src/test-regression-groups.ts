@@ -1,4 +1,5 @@
 import { runSandboxTestCommand } from './sandbox-test-run.ts';
+import { executorAllowsTestRunPhase } from './test-run-caller-phases.ts';
 import type {
   SandboxCommandReply,
   SandboxCommandRequest,
@@ -119,7 +120,7 @@ export function authorizeRegressionRun(
   control: RegressionControlSnapshot,
 ): RegressionAuthorization {
   const coordinating = assignment.type === 'main' || assignment.type === 'coordinator' && assignment.delegatedByMain === true;
-  if (!coordinating && (!['agent', 'implement', 'qa', 'hotfix'].includes(assignment.type) || !['implement', 'qa', 'hotfix'].includes(assignment.phase) || (request.phase !== assignment.phase && request.phase !== 'integration') || !coordinating && assignment.type !== 'agent' && assignment.type !== assignment.phase)) refuse('Caller role or phase is not authorized');
+  if (!coordinating && !executorAllowsTestRunPhase(assignment, request.phase)) refuse('Caller role or phase is not authorized');
   if (coordinating && request.phase !== 'red' && request.phase !== 'integration' && request.phase !== assignment.phase) refuse('Coordinator phase is not authorized');
   if (!control.config.phases[request.phase]?.allowed) refuse('Requested phase is disabled');
   if (request.project !== assignment.project || !workspaceMatches(assignment, control)) refuse('Project/workspace/branch differs from the immutable assignment');
@@ -138,6 +139,7 @@ export function authorizeRegressionRun(
   if (unitPreset && project.profiles[unitPreset.profileId]?.testKind === 'integration' || Object.values(project?.profiles ?? {}).some(profile => profile.testKind === 'integration' && selected.some(file => profile.integrationFiles?.includes(file)))) refuse('Unit phase cannot execute an integration profile');
   const key = { project: request.project, workspace: assignment.workspace, group: request.group };
   if (assignment.changes.includes(request.group.split('/')[0])) return { key, profileId: null, files: [...(request.files ?? request.only?.map(id => id.file) ?? [])], provenance: [] };
+  if (request.phase === 'red') refuse('Foreign regression grants do not authorize initial-red');
   if (!assignment.changes.every(change => control.activeChanges.includes(change))) refuse('Source assignment change is inactive');
   if (coordinating) refuse('Foreign regression requires an implement/qa/hotfix assignment');
   const grants = (assignment.regressionGroups ?? []).filter(grant => grant.group === request.group);

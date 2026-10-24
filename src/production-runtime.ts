@@ -231,7 +231,7 @@ async function runnerSandboxScope(type: string | undefined, cwd: string, reportD
     }
   } finally { ownedStore?.close(); }
   const command = rafCommandFor();
-  const phases = confRoot && ['implement', 'qa', 'hotfix'].includes(phase ?? type ?? '') ? await loadSandboxTestPhases(confRoot) : undefined;
+  const phases = confRoot && ['implement', 'qa', 'hotfix', 'test-scaffold'].includes(phase ?? type ?? '') ? await loadSandboxTestPhases(confRoot) : undefined;
   const subcommands = type === undefined ? [] : rafSubcommandsFor(type, phase ?? type, phases);
   return {
     hidden: [rafSocketRoot(), rafToolSocketRoot(), '/run', `/tmp/tmux-${process.getuid?.() ?? 0}`, '/tmp/cc-socks', ...stateRoots, ...registeredSockets],
@@ -962,7 +962,7 @@ export async function createProductionServices(
     resolveTask: async (parameters, assignment) => {
       const task = await deriveTaskContext({ root: context.orchestratorRoot, parameters, assignment, configuration: await loadTaskContextConfiguration(context.confRoot) });
       if (task.estimate.status !== 'KNOWN') return fail('RESOURCE_ESTIMATE_UNKNOWN', task.estimate.reason);
-      configuration.sandboxTestPhases = ['implement', 'qa', 'hotfix'].includes(parameters.phase) ? await loadSandboxTestPhases(context.confRoot) : undefined;
+      configuration.sandboxTestPhases = ['implement', 'qa', 'hotfix', 'test-scaffold'].includes(parameters.phase) ? await loadSandboxTestPhases(context.confRoot) : undefined;
       const fileSystemId = `dev:${(await fs.stat(context.orchestratorRoot, { bigint: true })).dev}`;
       return { ...task, estimate: task.estimate, requested: { ramBytes: task.estimate.ramBytes, diskBytes: { [fileSystemId]: task.estimate.diskBytesPerFileSystem } }, requiredFileSystemIds: [fileSystemId] };
     },

@@ -281,7 +281,7 @@ export function validateTestRunConfig(config: unknown, phases: readonly string[]
     if (!record(phase) || typeof phase.allowed !== 'boolean' || !['initial-red', 'verification', 'none'].includes(phase.purpose) || !record(phase.hints)) invalid(`phases/${id}`);
     if (phase.allowed && phase.purpose === 'none' || !phase.allowed && phase.purpose !== 'none') invalid(`phases/${id}/purpose`);
     if (id === 'integration' && (!phase.allowed || phase.purpose !== 'verification')) invalid(`phases/${id}/purpose`);
-    if (id === 'test-scaffold' && phase.allowed || id === 'red' && (!phase.allowed || phase.purpose !== 'initial-red')) invalid(`phases/${id}/allowed`);
+    if (id === 'red' && (!phase.allowed || phase.purpose !== 'initial-red')) invalid(`phases/${id}/allowed`);
     for (const kind of kinds) if (!text(phase.hints[kind]) || !text(config.hints[phase.hints[kind]])) invalid(`phases/${id}/hints/${kind}`);
   }
   for (const [projectId, project] of Object.entries(config.projects)) {

@@ -5,6 +5,7 @@ import type { SandboxCallerSnapshot } from './sandbox-test-caller.ts';
 import { authorizeRegressionRun } from './test-regression-groups.ts';
 import type { RegressionGrant, RegressionAuthorization } from './test-regression-groups.ts';
 import { parseTestRunArgs } from './test-runs.ts';
+import { executorAllowsTestRunPhase } from './test-run-caller-phases.ts';
 import type { TestRunConfig, TestRunGroupKey, TestRunRequest } from './test-runs.ts';
 
 export interface SandboxProcessIdentity {
@@ -123,7 +124,7 @@ export async function runSandboxTestCommand(
     const args = parseTestRunArgs(argv.slice(2));
     const coordinating = assignment.type === 'main' || assignment.type === 'coordinator' && assignment.delegatedByMain === true;
     if (assignment.type === 'coordinator' && !coordinating) throw new SandboxCallerRefusal('Coordinator requires explicit main delegation in its immutable assignment');
-    if (!coordinating && (!executorTypes.has(assignment.type) || !executorPhases.has(assignment.phase) || (args.phase !== assignment.phase && args.phase !== 'integration') || !coordinating && assignment.type !== 'agent' && assignment.type !== assignment.phase)) throw new SandboxCallerRefusal('Caller assignment does not authorize the requested phase');
+    if (!coordinating && !executorAllowsTestRunPhase(assignment, args.phase)) throw new SandboxCallerRefusal('Caller assignment does not authorize the requested phase');
     if (coordinating && args.phase !== 'red' && args.phase !== 'integration' && args.phase !== assignment.phase) throw new SandboxCallerRefusal('Coordinator phase is not authorized');
     if (assignment.project !== args.project || request.cwd !== assignment.workspace) throw new SandboxCallerRefusal('Project or workspace differs from the immutable assignment');
     if (!control.workspaces.some(row => row.project === args.project && row.workspace === request.cwd && row.branch === assignment.branch && row.actualBranch === assignment.branch)) throw new SandboxCallerRefusal('Registered workspace or branch differs from the assignment');
@@ -164,12 +165,10 @@ export async function runSandboxTestCommand(
   } catch (error) {
     if (executingWrapper) throw error;
     const reason = error instanceof SandboxCallerRefusal ? error.message : selectingUnit ? 'QA channel unavailable: unit context could not be verified' : 'Trusted caller channel or request could not be verified';
-    return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${reason}; use agent message to main with the exact command, runId and sanitized reason to restore the trusted channel or issue a new verified assignment with the required phase and grants; main may run only its authorized phase, never repeat another caller's implement/qa/hotfix command; do not retry blindly; raf was not retried\n` };
+    return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${reason}; restore the trusted channel or obtain a new verified assignment with the required phase and grants; the executor must run its own authorized tests; do not delegate the run to main or coordinator; do not retry blindly; raf was not retried\n` };
   }
 }
 
-const executorPhases = new Set(['implement', 'qa', 'hotfix']);
-const executorTypes = new Set(['agent', ...executorPhases]);
 const sameProcess = (left: SandboxProcessIdentity, right: SandboxProcessIdentity) => left.pid === right.pid && left.startedAt === right.startedAt;
 const shellLiteral = (value: string) => /^[a-zA-Z0-9_./:-]+$/.test(value) ? value : `'${value.replaceAll("'", "'\\''")}'`;
 
@@ -216,7 +215,7 @@ export function sandboxRafCommandAccess(
   const raf_command = entrypoint.map(shellLiteral).join(' ');
   const raf_subcommands = ['agent message', 'agent ps'];
   const coordinating = assignment.type === 'main' || assignment.type === 'coordinator' && assignment.delegatedByMain === true;
-  if (executorTypes.has(assignment.type) && executorPhases.has(assignment.phase) && phases[assignment.phase]?.allowed || coordinating && phases.red?.allowed) raf_subcommands.push('test run');
+  if ([assignment.phase, 'red'].some(phase => phases[phase]?.allowed && executorAllowsTestRunPhase(assignment, phase)) || coordinating && phases.red?.allowed) raf_subcommands.push('test run');
   return { raf_command, raf_subcommands, hostCommands: raf_subcommands.map(command => `${raf_command} ${command}`) };
 }
 

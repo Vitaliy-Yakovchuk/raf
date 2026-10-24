@@ -1,0 +1,15 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts",
+  "launchSha": "f406d25e28f0cf52760af78b56e50da7bcacafcb",
+  "executionSha": "1ab4375f2a6cbd626e2422cc8fd50cdeaa3e0e70",
+  "workspaceChanges": [
+    "own untracked evidence/profile-raf-performance-5.1 files",
+    "preexisting untracked node_modules",
+    "foreign modified test/test-run-diagnostics-sanitize.test.ts",
+    "foreign modified test/test-run-refusal-diagnostics.test.ts"
+  ],
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "streamCapture": "Combined tool output split into unchanged TestRunResult and following stderr queue notice",
+  "repeatedBecause": "Retain exact Git operation counts through the configured diagnostic protocol; no runtime logic change after first green"
+}

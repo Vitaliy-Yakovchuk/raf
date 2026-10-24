@@ -274,6 +274,10 @@ async function git(cwd: string, ...args: string[]): Promise<string> {
   return result.stdout.trim();
 }
 
+async function worktreeRegistry(main: string, hotfix: string): Promise<string> {
+  return (await git(main, 'worktree', 'list', '--porcelain')).split('\n\n').map(record => record.startsWith(`worktree ${hotfix}\n`) ? record.replace(/^HEAD [0-9a-f]+$/m, 'HEAD <hotfix-current>') : record).join('\n\n');
+}
+
 async function treeFingerprint(root: string): Promise<string> {
   const hash = createHash('sha256');
   async function visit(path: string) {
@@ -311,7 +315,7 @@ async function hotfixIngress(input: CaseInput) {
   const developBefore = await git(develop, 'rev-parse', 'HEAD');
   const mainGitDir = await git(main, 'rev-parse', '--absolute-git-dir');
   const metadata = await Promise.all(['index', 'HEAD'].map(name => readFile(join(mainGitDir, name))));
-  const registered = await git(main, 'worktree', 'list', '--porcelain');
+  const registered = await worktreeRegistry(main, hotfix);
   const developGitDir = await git(develop, 'rev-parse', '--absolute-git-dir');
   const developMetadata = await treeFingerprint(developGitDir);
   await writeFile(join(hotfix, 'own.txt'), 'own payload');
@@ -327,12 +331,19 @@ async function hotfixIngress(input: CaseInput) {
     assert.equal(await readFile(join(hotfix, 'foreign.txt'), 'utf8'), 'foreign dirty');
     assert.equal(await git(main, 'rev-parse', 'HEAD'), mainBefore);
     assert.equal(await git(develop, 'rev-parse', 'HEAD'), developBefore);
-    assert.equal(await git(main, 'worktree', 'list', '--porcelain'), registered);
+    assert.equal(await worktreeRegistry(main, hotfix), registered);
     assert.equal(await treeFingerprint(developGitDir), developMetadata);
     assert.deepEqual(await Promise.all(['index', 'HEAD'].map(name => readFile(join(mainGitDir, name)))), metadata);
+    const committedHead = await git(hotfix, 'rev-parse', 'HEAD');
     const rejected = hotfixCommitClientCommand(input.runDirectory, { cwd: hotfix, paths: ['../raf-main/base.txt'], message: 'must refuse' });
     const refusal = await command(rejected.executable, rejected.args, { cwd: rejected.cwd, env: { ...process.env, ...rejected.environment } });
     assert.notEqual(refusal.code, 0, 'client must not authorize paths outside workspace');
+    assert.equal(await git(hotfix, 'rev-parse', 'HEAD'), committedHead);
+    assert.equal(await git(main, 'rev-parse', 'HEAD'), mainBefore);
+    assert.equal(await git(develop, 'rev-parse', 'HEAD'), developBefore);
+    assert.equal(await worktreeRegistry(main, hotfix), registered);
+    assert.equal(await treeFingerprint(developGitDir), developMetadata);
+    assert.deepEqual(await Promise.all(['index', 'HEAD'].map(name => readFile(join(mainGitDir, name)))), metadata);
     return { committed: true, generatedClient: client.executable, gitBoundaries: true, workspace: workspace.cwd };
   } finally { await port.close(); }
 }

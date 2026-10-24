@@ -17,6 +17,11 @@ const protocol = conf.runnerProtocols.find((entry: { runner: string }) => entry.
 export const transitionMs: number = protocol.timeouts.transitionMs;
 export const pollMs: number = protocol.timeouts.pollMs;
 
+export function rawSandboxPrefix(): string[] {
+  assert.ok(protocol.baseArgs.includes('--no-daemon'), 'Z404_SETUP: configured Codex must use the standalone mode');
+  return ['--no-daemon', 'sandbox'];
+}
+
 export async function command(executable: string, args: readonly string[], cwd: string,
   environment: Readonly<Record<string, string | undefined>>, timeoutMs = transitionMs) {
   const child = spawn(executable, [...args], { cwd, env: environment, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -162,18 +167,22 @@ export async function ownCompactAliases(roots: readonly string[]) {
   return found.sort();
 }
 
-export async function stand(long: boolean) {
+export async function stand(long: boolean, rawControl = false) {
   const root = await fs.mkdtemp(join(repository, '.z404-host-'));
-  const shortHome = await fs.mkdtemp('/tmp/z404-h-');
+  const owned = [root];
   const servers: Server[] = [];
   const dispose = async () => {
     try {
       await Promise.all(servers.map(server => new Promise<void>((done, reject) => server.close(error => error ? reject(error) : done()))));
     } finally {
-      await Promise.all([root, shortHome].map(path => fs.rm(path, { recursive: true, force: true })));
+      await Promise.all(owned.map(path => fs.rm(path, { recursive: true, force: true })));
+      for (const path of owned) await assert.rejects(fs.lstat(path), { code: 'ENOENT' });
     }
   };
   try {
+    assert.ok(!rawControl || !long, 'raw diagnostic control uses a short HOME');
+    const shortHome = await fs.mkdtemp(rawControl ? join(repository, '.z404-h-') : '/tmp/z404-h-');
+    owned.push(shortHome);
     const home = long ? join(root, 'srv/dev/qa-home/.git/modules/raf/raf-hotfix/generations', randomUUID(), 'raf-main/isolated-long-HOME') : shortHome;
     const account = join(home, '.raf'), runDirectory = join(account, 'tmp/run');
     const source = join(root, 'source'), workspace = join(root, 'workspace');
@@ -181,6 +190,11 @@ export async function stand(long: boolean) {
     const endpoint = join(host, 'registered.sock'), alias = join(workspace, 'registered-alias.sock');
     const environment = { ...cleanEnvironment(home), TMUX: `${endpoint},123,0`, TMUX_PANE: '%777',
       SSH_AUTH_SOCK: join(host, 'ssh.sock'), DBUS_SESSION_BUS_ADDRESS: `unix:path=${join(host, 'bus.sock')}`, XDG_RUNTIME_DIR: host };
+    if (rawControl) {
+      environment.CODEX_HOME = await fs.mkdtemp(join(repository, '.z404-c-'));
+      owned.push(environment.CODEX_HOME);
+      assert.ok(!environment.CODEX_HOME.startsWith(home + '/'), 'Z404_SETUP: raw CODEX_HOME must be outside TMPDIR');
+    }
     await Promise.all([runDirectory, source, host, dirname(questions), environment.CODEX_HOME, environment.XDG_CONFIG_HOME].map(path => fs.mkdir(path, { recursive: true })));
     await fs.writeFile(questions, 'question-original');
     await fs.writeFile(join(dirname(questions), 'sibling.md'), 'sibling-original');
@@ -239,7 +253,8 @@ export async function stand(long: boolean) {
       environment, timeoutMs: transitionMs,
     });
     return { root, home, account, runDirectory, workspace, source, common, gitdir, questions, endpoint, alias,
-      endpoints, denyReads, denyWrites, denyDirectories, ports, ipv6Unavailable, environment, request, control, dispose };
+      endpoints, denyReads, denyWrites, denyDirectories, ports, ipv6Unavailable, environment, request, control, dispose,
+      ownedDirectories: [...owned], homeLayout: rawControl ? 'raw-sibling-CODEX_HOME' : 'agent-HOME-CODEX_HOME' };
   } catch (error) {
     await dispose();
     throw new Error(`Z404_SETUP: stand preparation failed: ${(error as Error).message}`, { cause: error });

@@ -5,8 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
 import { resolveRunnerExecutable } from '../src/runner-availability.ts';
-import { checkPrerequisites, stand, command, ok, ownCompactAliases, transitionMs, pollMs } from './helpers/z404-host-fixture.ts';
-import { traceEvidence } from './helpers/z404-trace-evidence.ts';
+import { checkPrerequisites, stand, command, ok, ownCompactAliases, transitionMs, pollMs, rawSandboxPrefix } from './helpers/z404-host-fixture.ts';
 
 const [mode, target] = process.argv.slice(2);
 assert.ok(['setup', 'verify'].includes(mode) && target, 'usage: node test/z404-bwrap-entry-host.mjs setup|verify <own-evidence-directory>');
@@ -18,20 +17,95 @@ async function save(name, data) {
   await fs.writeFile(temporary, JSON.stringify(data, null, 2) + '\n'); await fs.rename(temporary, path);
 }
 
-function policy(invocation) {
-  const tables = invocation.args.flatMap((arg, index, args) => ['-c', '--config'].includes(arg) && /^permissions\.[^.]+\.filesystem=/.test(args[index + 1] ?? '') ? [args[index + 1]] : []);
-  assert.equal(tables.length, 1, 'runner/tool expose one effective native filesystem policy');
-  const body = tables[0].slice(tables[0].indexOf('=') + 1);
+function effective(invocation) {
+  const values = {};
+  const flags = { '--sandbox': 'sandbox_mode', '-s': 'sandbox_mode', '--ask-for-approval': 'approval_policy', '-a': 'approval_policy', '--model': 'model', '-m': 'model', '-P': 'default_permissions', '--permission-profile': 'default_permissions' };
+  for (let index = 0; index < invocation.args.length; index++) {
+    const arg = invocation.args[index];
+    if (arg === '--') break;
+    const [flag, ...inline] = arg.split('=');
+    if (['-c', '--config'].includes(flag)) {
+      const assignment = inline.length ? inline.join('=') : invocation.args[++index];
+      assert.ok(assignment?.includes('='), 'complete config override');
+      const split = assignment.indexOf('='), key = assignment.slice(0, split).trim(), value = assignment.slice(split + 1).trim();
+      values[key] = value.startsWith('"') ? JSON.parse(value) : /^'[^']*'$/.test(value) ? value.slice(1, -1) : value;
+    } else if (flags[flag]) {
+      values[flags[flag]] = inline.length ? inline.join('=') : invocation.args[++index];
+    }
+    assert.doesNotMatch(flag, /dangerously-bypass|disable-sandbox/, 'no sandbox bypass flag before the payload');
+  }
+  return values;
+}
+
+function policy(values) {
+  assert.ok(values.default_permissions, 'explicit effective native permissions profile');
+  const body = values[`permissions.${values.default_permissions}.filesystem`];
+  assert.ok(body?.startsWith('{') && body.endsWith('}'), 'effective filesystem table, not an overridden profile');
   const pairs = [...body.slice(1, -1).matchAll(/("(?:\\.|[^"\\])*")\s*=\s*("(?:\\.|[^"\\])*")/g)];
   assert.ok(pairs.length > 0, 'native permissions must be observable');
   return pairs.map(([, path, access]) => [JSON.parse(path), JSON.parse(access)]).sort(([a], [b]) => a.localeCompare(b));
+}
+
+function execs(lines) {
+  return lines.flatMap((line, index) => {
+    const match = line.match(/^\s*(\d+)\s+execve\(("(?:\\.|[^"\\])*"), (\[.*\]), .*\) = 0$/);
+    if (!match) return [];
+    return [{ pid: match[1], executable: JSON.parse(match[2]), args: JSON.parse(match[3]), line: index + 1 }];
+  });
+}
+
+function exactArgs(actual, expected) {
+  return actual.length === expected.length && actual.every((value, index) => value === expected[index]);
+}
+
+function backendEvidence(lines, payload, helpers, filters, prerequisites) {
+  const events = execs(lines);
+  const backends = ['/usr/bin/bwrap', prerequisites.binaries.find(item => item.kind === 'bundled-bwrap').path];
+  const roles = events.filter(event => [...backends, ...helpers].includes(event.executable)).map(event => {
+    const separator = event.args.indexOf('--');
+    const command = separator < 0 ? [] : event.args.slice(separator + 1);
+    const flags = separator < 0 ? event.args.slice(1) : event.args.slice(1, separator);
+    const role = separator < 0 && flags.some(arg => ['--help', '--version'].includes(arg)) ? 'help'
+      : ['/usr/bin/true', '/bin/true'].includes(command[0]) ? 'capability'
+      : exactArgs(command, payload) ? 'target-payload'
+      : command.includes('--apply-seccomp-then-exec') || flags.includes('--argv0') ? 'daemon-or-outer'
+      : 'other';
+    return { ...event, role, flags, command };
+  });
+  const node = events.filter(event => event.executable === payload[0] && exactArgs(event.args, payload));
+  const reads = lines.flatMap((line, index) => {
+    const match = line.match(/^\s*(\d+)\s+openat\(AT_FDCWD, ("(?:\\.|[^"\\])*"), O_RDONLY[^)]*\) = (\d+)$/);
+    return match && filters.includes(JSON.parse(match[2])) ? [{ pid: match[1], filter: JSON.parse(match[2]), fd: Number(match[3]), line: index + 1 }] : [];
+  });
+  const installs = lines.flatMap((line, index) => {
+    const match = line.match(/^\s*(\d+)\s+seccomp\(SECCOMP_SET_MODE_FILTER,.*\) = 0$/);
+    return match ? [{ pid: match[1], line: index + 1 }] : [];
+  });
+  const targets = roles.filter(event => event.role === 'target-payload' && backends.includes(event.executable));
+  const carriers = roles.filter(event => event.role === 'daemon-or-outer' && backends.includes(event.executable)
+    && event.command.includes('--apply-seccomp-then-exec') && exactArgs(event.command.slice(-payload.length), payload));
+  const unfiltered = targets.filter(event => !event.flags.some(arg => ['--unshare-net', '--unshare-all', '--seccomp', '--add-seccomp-fd'].includes(arg)));
+  return {
+    roles, node, targetBackends: targets, outerPayloadCarriers: carriers, unfilteredTargetBackends: unfiltered,
+    helperExecutions: roles.filter(event => helpers.includes(event.executable)),
+    filterReads: reads, seccompInstallations: installs,
+    rafFilterApplied: 'not-established-by-execve-open-or-unrelated-seccomp',
+  };
+}
+
+function refusalKind(message, f) {
+  const match = message.match(/cannot enforce sandbox read-only path (\/tmp\/raf-tools-\d+\/\S+) because it crosses writable symlink/);
+  if (match) return { kind: 'product-compact-helper-writable-symlink', path: match[1] };
+  if (/Refusing to create helper binaries under temporary dir/.test(message) && message.includes(f.home)) return { kind: 'product-agent-CODEX_HOME-under-TMPDIR' };
+  if (/host loopback TCP reachable/.test(message)) return { kind: 'tcp-guard-refusal' };
+  return { kind: 'setup-capability-or-unclassified-failure' };
 }
 
 async function positive(prerequisites, layout, entry, poison = false) {
   const id = `[Z.404 H01 ${layout} ${entry}${poison ? ' unselected-PATH-backend' : ''}]`;
   const f = await stand(layout === 'long');
   let prepared;
-  const record = { id, accepted: false, cleaned: false, workerStarted: false, ipv6Unavailable: f.ipv6Unavailable };
+  const record = { id, expectedAccepted: true, accepted: false, cleaned: false, workerStarted: false, ipv6Unavailable: f.ipv6Unavailable, homeLayout: f.homeLayout };
   try {
     await f.control();
     assert.equal(f.environment.HOME, f.environment.RAF_QA_HOME);
@@ -56,12 +130,18 @@ async function positive(prerequisites, layout, entry, poison = false) {
     prepared = await prepareCodexSandbox(input);
     record.accepted = true;
     assert.deepEqual(input, original, 'preparation does not mutate selection, environment or scope');
-    for (const value of ['workspace-write', 'never']) assert.ok(prepared.invocation.args.includes(value), `${value} retained`);
-    assert.doesNotMatch(prepared.invocation.args.join(' '), /danger-full-access|dangerously-bypass|disable-sandbox/);
-    const selection = input.invocation.args.flatMap((arg, index, args) => arg === '--model' || (arg === '-c' && args[index + 1]?.startsWith('model_reasoning_effort=')) ? [args[index + 1]] : []);
-    assert.ok(selection.length >= 2 && selection.every(value => prepared.invocation.args.includes(value)), 'raf model and effort retained');
-    const runnerPolicy = policy(prepared.invocation), toolPolicy = policy(prepared.toolSandbox);
+    const selected = effective(input.invocation), runner = effective(prepared.invocation), tool = effective(prepared.toolSandbox);
+    assert.ok(selected.model && selected.model_reasoning_effort, 'fixture uses the configured model and effort');
+    for (const [kind, values] of [['runner', runner], ['toolSandbox', tool]]) {
+      assert.equal(values.sandbox_mode, 'workspace-write', `${kind}: effective workspace-write retained`);
+      assert.equal(values.approval_policy, 'never', `${kind}: effective approval policy retained`);
+      for (const key of ['model', 'model_reasoning_effort']) assert.equal(values[key], selected[key], `${kind}: effective ${key} retained`);
+    }
+    record.effectivePolicy = { selected, runner, tool };
+    const runnerPolicy = policy(runner), toolPolicy = policy(tool);
     assert.deepEqual(runnerPolicy, toolPolicy, 'preflight/live tools retain the runner filesystem policy');
+    assert.deepEqual(Object.fromEntries(Object.entries(runner).filter(([key]) => key.startsWith('permissions.'))),
+      Object.fromEntries(Object.entries(tool).filter(([key]) => key.startsWith('permissions.'))), 'all filesystem/network overrides retained');
     for (const [path, access] of runnerPolicy) {
       if (access !== 'write') continue;
       assert.notEqual(path, ':root');
@@ -96,7 +176,7 @@ async function positive(prerequisites, layout, entry, poison = false) {
     record.passed = true;
   } catch (error) {
     record.passed = false; record.error = { message: error.message, code: error.code, stack: error.stack };
-    record.failureKind = 'assertions';
+    record.failureKind = record.accepted ? 'assertions' : refusalKind(error.message, f).kind;
     record.guardRefusedBeforeWorker = /host loopback TCP reachable/.test(error.message) && !record.workerStarted;
   } finally {
     try {
@@ -119,41 +199,80 @@ async function positive(prerequisites, layout, entry, poison = false) {
 }
 
 async function rawBypass(prerequisites) {
-  const f = await stand(false);
-  const record = { id: '[Z.404 H02] actual installed Codex selects system bwrap without RAF filter', passed: false, cleaned: false };
+  const f = await stand(false, true);
+  const record = { id: '[Z.404 H02] actual installed Codex selects system bwrap without RAF filter', passed: false, cleaned: false, failureKind: 'setup-control', homeLayout: f.homeLayout };
   try {
     await f.control();
+    assert.equal(f.environment.HOME, f.environment.RAF_QA_HOME);
+    assert.equal(f.environment.HOME, f.environment.TMPDIR);
+    assert.ok(Buffer.byteLength(f.home) < 108 && Buffer.byteLength(f.environment.CODEX_HOME) < 108);
+    assert.deepEqual(await fs.readdir(f.environment.CODEX_HOME), [], 'raw control owns a fresh CODEX_HOME without owner config/auth');
+    record.selectors = Object.fromEntries(['HOME', 'RAF_QA_HOME', 'TMPDIR', 'CODEX_HOME'].map(key => [key, f.environment[key]]));
+    const prefix = rawSandboxPrefix();
+    const help = await command(prerequisites.native, [...prefix, '--help'], f.workspace, f.environment);
+    record.helperInitialization = help;
+    ok(help, 'Z404_SETUP raw sandbox CLI syntax and helper initialization');
+    assert.match(help.stdout, /Usage: codex sandbox \[OPTIONS\] \[COMMAND\]/);
+    assert.doesNotMatch(help.stderr, /could not create PATH aliases|Refusing to create helper binaries/,
+      'Z404_SETUP: moving HOME alone does not establish usable helper initialization');
     const bin = join(f.root, 'path-helper'); await fs.mkdir(bin);
     const helper = join(bin, 'bwrap'), helperMarker = join(f.workspace, 'PATH-helper-executed');
     const filter = join(f.workspace, 'network.bpf'), traceFile = join(evidenceDirectory, 'raw-bypass.strace');
     await fs.writeFile(helper, `#!/bin/sh\nprintf executed > '${helperMarker}'\nexec /usr/bin/bwrap "$@"\n`, { mode: 0o700 });
     const environment = { ...f.environment, PATH: `${bin}${delimiter}${f.environment.PATH}` };
-    const program = `const fs=require('node:fs'),net=require('node:net');fs.writeFileSync(process.argv[2],Buffer.alloc(80));const c=net.connect(JSON.parse(process.argv[1]));let data='';c.on('data',b=>data+=b);c.on('error',e=>{console.error(e.code);process.exitCode=1});c.on('end',()=>{if(data!=='host-sentinel')process.exitCode=2;else console.log('HOST_TCP_REACHABLE')});`;
+    const token = randomUUID();
+    const program = `const fs=require('node:fs'),net=require('node:net');
+const [address,filter,decoy,token]=process.argv.slice(1);fs.writeFileSync(filter,Buffer.alloc(80));
+const c=net.connect(JSON.parse(address));let data='';c.setTimeout(${transitionMs},()=>c.destroy(Error('control deadline')));
+c.on('data',b=>data+=b);c.on('error',e=>{if(!['EPERM','EACCES'].includes(e.code)){console.error(e);process.exitCode=3}else console.log(JSON.stringify({token,executable:process.execPath,outcome:'network-denied',code:e.code}))});
+c.on('end',()=>{if(data!=='host-sentinel')process.exitCode=2;else console.log(JSON.stringify({token,executable:process.execPath,outcome:'host-tcp-reachable'}))});`;
+    const payload = [process.execPath, '-e', program, JSON.stringify(f.ports[0]), filter, helper, token];
     const table = `{":root"="read",${JSON.stringify(f.workspace)}="write"}`;
-    const args = ['-f', '-s', '65535', '-e', 'trace=execve,openat,seccomp,unshare', '-o', traceFile,
-      prerequisites.native, 'sandbox', 'linux', '-C', f.workspace, '-P', 'linux',
+    const args = [...prefix, '-C', f.workspace, '-P', 'linux',
       '-c', 'sandbox_mode="workspace-write"', '-c', 'default_permissions="linux"',
       '-c', `permissions.linux.filesystem=${table}`, '-c', 'permissions.linux.network.enabled=true',
-      '--', process.execPath, '-e', program, JSON.stringify(f.ports[0]), filter, helper];
-    const result = await command('strace', args, f.workspace, environment);
-    ok(result, 'raw deliberately unfiltered Codex control'); assert.equal(result.stdout.trim(), 'HOST_TCP_REACHABLE');
-    record.trace = traceEvidence((await fs.readFile(traceFile, 'utf8')).split('\n'), helper, filter);
-    assert.equal(record.trace.systemBwrapExecuted, true, 'exact successful system bwrap execve required');
-    assert.equal(record.trace.systemSandboxWithoutRafFlags, true, 'inspect actual sandbox payload argv, not help or another execve');
-    assert.equal(record.trace.helperExecuted, false, 'pathname in node argv is not helper execution');
-    assert.equal(record.trace.filterRead, false, 'O_WRONLY creation is not filter loading');
-    await assert.rejects(fs.stat(helperMarker), { code: 'ENOENT' });
-    assert.equal((await fs.stat(filter)).size, 80);
-    const untraced = await command(prerequisites.native, args.slice(args.indexOf(prerequisites.native) + 1), f.workspace, environment);
-    ok(untraced, 'same raw control without tracer'); assert.equal(untraced.stdout.trim(), 'HOST_TCP_REACHABLE');
-    record.untracedMatched = true;
-    record.passed = true;
-  } catch (error) { record.error = { message: error.message, stack: error.stack }; }
+      '--', ...payload];
+    record.args = args;
+    const traced = await command('strace', ['-f', '-s', '65535', '-e', 'trace=execve,openat,seccomp,unshare', '-o', traceFile,
+      prerequisites.native, ...args], f.workspace, environment);
+    record.tracedControl = traced;
+    const marker = await fs.readFile(helperMarker, 'utf8').catch(error => { if (error.code === 'ENOENT') return null; throw error; });
+    const untraced = await command(prerequisites.native, args, f.workspace, environment);
+    record.untracedControl = untraced;
+    ok(traced, 'Z404_SETUP raw traced control must reach the exact Node payload');
+    ok(untraced, 'Z404_SETUP same raw control without tracer');
+    const observed = JSON.parse(traced.stdout), plain = JSON.parse(untraced.stdout);
+    assert.equal(observed.token, token); assert.equal(observed.executable, process.execPath);
+    assert.ok(['host-tcp-reachable', 'network-denied'].includes(observed.outcome));
+    assert.deepEqual(plain, observed, 'traced/untraced exact payload outcomes match');
+    record.untracedMatched = true; record.payload = observed;
+    const lines = (await fs.readFile(traceFile, 'utf8')).split('\n');
+    record.trace = backendEvidence(lines, payload, [helper], [filter], prerequisites);
+    assert.ok(record.trace.node.length, 'exact successful Node execve, not a pathname in another argv');
+    assert.ok(record.trace.targetBackends.length || record.trace.outerPayloadCarriers.length,
+      'exact bwrap payload or explicit apply-seccomp carrier required; help/capability alone cannot prove it');
+    assert.equal(record.trace.filterReads.length, 0, 'raw control does not load its dummy RAF BPF');
+    assert.equal((await fs.stat(filter)).size, 80, 'payload-created BPF is distinct from filter read/installation');
+    assert.equal(marker, record.trace.helperExecutions.length ? 'executed' : null);
+    record.bypassReproduced = observed.outcome === 'host-tcp-reachable'
+      && record.trace.unfilteredTargetBackends.some(event => event.executable === '/usr/bin/bwrap')
+      && !record.trace.helperExecutions.some(event => event.role === 'target-payload');
+    record.classification = record.bypassReproduced ? 'historical-target-helper-bypass-reproduced' : 'historical-bypass-not-reproduced';
+    record.note = 'Help/capability/outer helper executions and generic seccomp events are recorded separately; no historical backend choice is required for control success.';
+    record.failureKind = undefined; record.passed = true;
+  } catch (error) {
+    record.passed = false; record.error = { message: error.message, stack: error.stack };
+    record.failureKind ??= 'setup-control-or-trace';
+  }
   finally {
-    try { await f.control(); }
-    catch (error) { record.passed = false; record.controlError = error.message; }
+    try {
+      await f.control();
+      record.residualAliases = await ownCompactAliases([f.root, f.home]);
+      assert.deepEqual(record.residualAliases, []);
+    }
+    catch (error) { record.passed = false; record.failureKind = 'setup-control-or-cleanup'; record.controlError = error.message; }
     try { await f.dispose(); record.cleaned = true; }
-    catch (error) { record.passed = false; record.cleanupError = error.message; }
+    catch (error) { record.passed = false; record.failureKind = 'setup-cleanup'; record.cleanupError = error.message; }
     await save('raw-bypass.json', record);
   }
   return record;
@@ -174,37 +293,79 @@ async function tracedPreparation(prerequisites) {
     const response = JSON.parse(await fs.readFile(output, 'utf8'));
     assert.equal(response.cleaned, true); assert.equal(response.workerStarted, false);
     const lines = (await fs.readFile(trace, 'utf8')).split('\n');
+    const events = execs(lines);
     const filters = [...new Set(lines.flatMap(line => {
       const match = line.match(/openat\(AT_FDCWD, ("(?:\\.|[^"\\])*\/network\.bpf")/);
       return match ? [JSON.parse(match[1])] : [];
     }))];
-    const launcherHelpers = lines.flatMap(line => {
-      const match = line.match(/execve\(("\/tmp\/raf-tools-[^"\n]+\/codex")/);
-      return match ? [join(dirname(JSON.parse(match[1])), 'bwrap')] : [];
+    const helpers = [...new Set([
+      ...filters.map(filter => join(dirname(filter), 'bwrap')),
+      ...events.filter(event => event.executable.startsWith(`/tmp/raf-tools-${process.getuid()}/`)
+        && event.executable.endsWith('/codex')).map(event => join(dirname(event.executable), 'bwrap')),
+    ])];
+    const candidates = events.flatMap(event => {
+      const separator = event.args.indexOf('--'), payload = event.args.slice(separator + 1);
+      if (separator < 0 || payload[0] !== process.execPath || payload[1] !== '-e'
+        || !payload[2]?.includes('host loopback TCP reachable')) return [];
+      let addresses;
+      try { addresses = JSON.parse(payload[3]); } catch { return []; }
+      return Array.isArray(addresses) && typeof addresses[0] === 'string' && addresses[0].startsWith(f.runDirectory + '/')
+        ? [payload] : [];
     });
-    record.filterEvidence = filters.map(filter => {
-      const helpers = [join(dirname(filter), 'bwrap'), ...launcherHelpers];
-      const observations = helpers.map(helper => traceEvidence(lines, helper, filter));
-      return { filter, helpers, ...observations[0], helperExecuted: observations.some(item => item.helperExecuted) };
-    });
+    record.trace = candidates.map(payload => backendEvidence(lines, payload, helpers, filters, prerequisites));
     record.preflight = response;
+    record.observedExecs = events;
+    record.filters = filters; record.helpers = helpers;
+    record.guardRefusedBeforeWorker = false;
     if (!response.accepted) {
-      assert.match(response.error.message, /host loopback TCP reachable/, 'only actual TCP protective refusal counts here; missing setup/capability is not the bypass reproduction');
-      assert.ok(record.filterEvidence.some(item => item.systemSandboxWithoutRafFlags && !item.helperExecuted && !item.filterRead), 'actual Codex→system bwrap and RAF BPF creation without loading must be observed');
-      record.guardRefusedBeforeWorker = true;
+      assert.equal(response.error?.code, 'CODEX_SANDBOX_UNAVAILABLE', 'specific product preflight refusal required');
+      const refusal = refusalKind(response.error?.message ?? '', f);
+      record.classification = refusal.kind;
+      if (refusal.kind === 'tcp-guard-refusal') {
+        assert.ok(record.trace.some(item => item.node.length && item.unfilteredTargetBackends.length
+          && !item.helperExecutions.some(event => event.role === 'target-payload') && !item.filterReads.length),
+        'TCP bypass requires exact Node and unfiltered target bwrap; preparatory/outer flags are not target flags');
+        record.guardRefusedBeforeWorker = true;
+      } else if (refusal.kind === 'product-compact-helper-writable-symlink') {
+        const aliases = lines.flatMap(line => {
+          const match = line.match(/symlink\(("(?:\\.|[^"\\])*"), ("(?:\\.|[^"\\])*")\) = 0$/)
+            ?? line.match(/symlinkat\(("(?:\\.|[^"\\])*"), AT_FDCWD, ("(?:\\.|[^"\\])*")\) = 0$/);
+          return match ? [{ target: JSON.parse(match[1]), path: JSON.parse(match[2]) }] : [];
+        });
+        record.compactHelperSymlinks = aliases;
+        assert.ok(aliases.some(alias => alias.path === refusal.path && alias.target.startsWith(f.runDirectory + '/')),
+          'specific compact alias must originate in this product run, not an unrelated symlink error');
+        record.failureKind = 'product-compatibility';
+        assert.equal(response.accepted, true, 'Z.404.2 product red: compact-helper writable-symlink incompatibility; positive H01 remains required');
+      } else if (refusal.kind === 'product-agent-CODEX_HOME-under-TMPDIR') {
+        record.failureKind = 'product-compatibility';
+        assert.equal(response.accepted, true, 'Z.404.2 product red: actual agent CODEX_HOME under TMPDIR is incompatible with installed CLI helper initialization');
+      } else {
+        record.failureKind = 'setup-capability-or-unclassified-failure';
+        assert.fail('Z404_SETUP: unclassified refusal is neither protective green nor confirmed product red');
+      }
     } else {
-      record.guardRefusedBeforeWorker = false;
-      record.note = 'Effective preflight accepted after repair; positive untraced matrix still must pass every live boundary.';
+      record.classification = 'accepted-preflight';
+      assert.ok(record.trace.some(item => item.node.length && (item.targetBackends.length || item.outerPayloadCarriers.length)),
+        'accepted trace must reach the exact preflight Node payload and its bwrap, not just diagnostic child/help/capability');
+      record.note = 'Accepted diagnostic preflight; independent untraced H01 must still pass every live boundary.';
     }
     record.residualAliases = await ownCompactAliases([f.root, f.home]);
     assert.deepEqual(record.residualAliases, []);
     record.passed = true;
-  } catch (error) { record.error = { message: error.message, stack: error.stack }; }
+  } catch (error) {
+    record.passed = false; record.error = { message: error.message, stack: error.stack };
+    record.failureKind ??= 'setup-control-or-trace';
+  }
   finally {
-    try { await f.control(); }
-    catch (error) { record.passed = false; record.controlError = error.message; }
+    try {
+      await f.control();
+      record.residualAliases = await ownCompactAliases([f.root, f.home]);
+      assert.deepEqual(record.residualAliases, []);
+    }
+    catch (error) { record.passed = false; record.failureKind = 'setup-control-or-cleanup'; record.controlError = error.message; }
     try { await f.dispose(); record.cleaned = true; }
-    catch (error) { record.passed = false; record.cleanupError = error.message; }
+    catch (error) { record.passed = false; record.failureKind = 'setup-cleanup'; record.cleanupError = error.message; }
     await save('traced-preparation.json', record);
   }
   return record;
@@ -218,9 +379,15 @@ try {
   const dirty = await command('git', ['status', '--porcelain=v1', '--untracked-files=normal'], dirname(fileURLToPath(import.meta.url)), process.env); ok(dirty, 'source dirty context');
   summary.sourceStatus = dirty.stdout.split('\n').filter(Boolean);
   if (mode === 'verify') {
+    const control = await rawBypass(prerequisites);
+    summary.cases.push(control);
+    if (!control.passed || !control.cleaned) throw new Error('Z404_SETUP: H02 raw control failed; product assertions not started');
     summary.stage = 'assertions';
-    summary.cases.push(await rawBypass(prerequisites));
-    summary.cases.push(await tracedPreparation(prerequisites));
+    const traced = await tracedPreparation(prerequisites);
+    summary.cases.push(traced);
+    if (!traced.passed && traced.failureKind !== 'product-compatibility') {
+      throw new Error('Z404_SETUP: H03 setup/capability/control/trace failure is not a confirmed product red');
+    }
     for (const layout of ['short', 'long']) for (const entry of ['bare', 'npm', 'native', 'configured']) {
       summary.cases.push(await positive(prerequisites, layout, entry));
       await save('summary.json', summary);

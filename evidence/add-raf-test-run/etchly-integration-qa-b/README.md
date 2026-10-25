@@ -77,3 +77,7 @@ Host h6.rc=0, driver.rc=0, summary passed, failures=[]. Вісім expected case
 ## Незавершений пункт
 
 Загальний результат **failed/open**: повного unit-green немає й окремого release unit-hold не отримано; smoke retry assertion досі failed, exact-files/негативні відбори/дві missing prerequisites не досягнуті; власний D09 потребує належного project=etchly доручення цього самого пункту після готовності каналу. Main погодив це продовження. Це відсутні передумови/незавершена робота, не owner-waiver; чужі bound-generation задачі не закривалися. Нових defect-fix/repeat-qa tasks не створено. За прямою вказівкою main tasks.md не редагувався; галочки, sync/archive та push не виконувалися.
+
+## Виправлення посилань у звіті
+
+Raf відхилив первісний JSON: followUps[0]/[1] мали нові назви, яких не було серед qa.scenarios. У тому самому запуску прив’язано deployment до вже звітованого failed unit-повтору, first-execution — до вже звітованого failed D09; sourceItem=6.2.6.3 збережено. [Точна перевірка зв’язків](report-correction.json) відповідає ключу change/sourceItem/scenario валідатора. Сценарії, результати та докази перевірок не змінено; нових сценаріїв і unit-прогонів немає.

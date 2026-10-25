@@ -1,0 +1,30 @@
+{
+  "sourceItem": "add-raf-test-run:6.2.6.3",
+  "checkedAt": "2026-10-25T23:28:00.638487+00:00",
+  "trigger": "Main reported agent.report-rejected: qa.followUps[0] and [1], expected source scenario from this QA",
+  "validatorSource": "src/flow-qa-report.ts:281",
+  "method": "Exact equality of change/sourceItem/scenario against change/item/scenario in this report qa.scenarios; both target follow-ups still open in tasks.md",
+  "boundary": "Report-reference correction only; no test rerun, no new scenario or changed QA outcome, no operational raf state read. Full broker validation is performed by raf.",
+  "checks": [
+    {
+      "index": 0,
+      "targetItem": "6.2.5",
+      "sourceItem": "6.2.6.3",
+      "previousScenario": "Сумісна викладка робочої raf та відновлення дозволеного unit-контексту",
+      "correctedScenario": "Unit add-raf-test-run/etchly-integration: один дозволений повтор",
+      "sourceScenarioStatus": "failed",
+      "sourceKeyMatches": true
+    },
+    {
+      "index": 1,
+      "targetItem": "6.2.6.3",
+      "sourceItem": "6.2.6.3",
+      "previousScenario": "Перший власний D09 та невиконані exact-files/негативні передумови, unit і погоджені same-change регресії",
+      "correctedScenario": "D09: own etchly preset/exact-files/негативні відбори через довірений канал",
+      "sourceScenarioStatus": "failed",
+      "sourceKeyMatches": true
+    }
+  ],
+  "status": "failed",
+  "qaOutcomeUnchanged": true
+}

@@ -361,7 +361,7 @@
         "change": "add-raf-test-run",
         "item": "6.2.5",
         "sourceItem": "6.2.6.3",
-        "scenario": "Сумісна викладка робочої raf та відновлення дозволеного unit-контексту",
+        "scenario": "Unit add-raf-test-run/etchly-integration: один дозволений повтор",
         "purpose": "deployment",
         "reason": "Main не зняв явний unit-hold; чинний дозволений unit-контекст і rollout integration-каналу потребують підтвердження. Позначка 6.2.6.2.1 вже фіксує перенесення, але сама не доводить готовність цього caller або release hold.",
         "evidence": [
@@ -374,7 +374,7 @@
         "change": "add-raf-test-run",
         "item": "6.2.6.3",
         "sourceItem": "6.2.6.3",
-        "scenario": "Перший власний D09 та невиконані exact-files/негативні передумови, unit і погоджені same-change регресії",
+        "scenario": "D09: own etchly preset/exact-files/негативні відбори через довірений канал",
         "purpose": "first-execution",
         "reason": "Належне immutable project=etchly доручення active change add-raf-test-run і доступний сумісний trusted канал ще відсутні; unit-hold чинний. Пункт той самий; пройдені QA-сценарії та fixed regressions не повторюються, нових QA-задач немає.",
         "evidence": [
@@ -431,7 +431,12 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "43a56bafd0d87f930c20774e211252d0eb9eba11"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "812679c714162c4adaf912e11a62fd27315a8988"
     }
   ],
-  "evidenceBoundary": "Final report adds its own evidence commit after commit creation; no circular self-hash."
+  "evidenceBoundary": "Final report adds its own evidence commit after commit creation; no circular self-hash.",
+  "reportCorrectionEvidence": "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/report-correction.json"
 }

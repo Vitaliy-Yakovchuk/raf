@@ -1,0 +1,75 @@
+{
+  "verifiedAt": "2026-10-25T23:17:52.049213+00:00",
+  "assignment": "add-raf-agent-run:4.1",
+  "workspaceHead": "b1375013b0f55ed5fdd05ae4d124855c05c34c09",
+  "ownCommitsVerifiedInAncestry": [
+    "27a96607ee4c3b3d1dda00eda48e72716c714164",
+    "0644fad19046a78751df8b89919c4e9e821d756f",
+    "fcfdb32a5eb3bb8ec51b7e6d7bf1747c2e9670b5",
+    "6433bfd7db499a1ba54985e8ba0df9b149a65967",
+    "1c85a39b6b53193a8862ac7438afa41dd70e1c02",
+    "f9090bd653e98a59befdff17fde8dc668755fe21",
+    "3047d44c053876246a7082252d4fe9bcf20a6ecf",
+    "1be928a0820198b0a84d9b7d37a668cbaf398fee"
+  ],
+  "priorArtifactsVerified": 88,
+  "implementation": [
+    {
+      "path": "src/sandbox-test-run.ts",
+      "result": "Quoted LF/CR/CRLF preserved; unquoted newlines and NUL refused.",
+      "proof": "unit-green.metadata.json",
+      "runId": "686f569f-bda3-4ffc-8c27-c9940f6eefe6",
+      "passed": 18
+    },
+    {
+      "path": "src/production-runtime.ts",
+      "result": "Recipient composer lease contention waits within configured protocol budget and serializes through acceptance/refusal.",
+      "proof": "serialization-green.metadata.json",
+      "runId": "ea33801c-f27b-4bf5-9efc-93ba1a90851e",
+      "passed": 10
+    },
+    {
+      "path": "scripts/qa-agent-run-live.mjs",
+      "result": "Use launchContext.selection; isolated --only-system-main subset preserves actual native routing and records omitted checks.",
+      "proof": "host-script-build-final.metadata.json"
+    }
+  ],
+  "currentContracts": {
+    "proof": "contracts-accounting.metadata.json",
+    "result": "642 passed; 4 knownRed remain in test/main-session-accounting.test.ts. No reset or rerun after discovering obsolete real-tmux shell fixture.",
+    "nextAction": "Independent scaffold repair and integration classification by main; preserve guard against delivery to shell."
+  },
+  "host": {
+    "passedProof": "host-1c85-review.json",
+    "checksPassed": 6,
+    "subsetPending": {
+      "reviewedSha": "3047d44c053876246a7082252d4fe9bcf20a6ecf",
+      "scope": "system-main-only",
+      "stand": "/srv/dev/ara41q9",
+      "executor": "main",
+      "result": "not received"
+    },
+    "hypothesis": {
+      "source": "src/production-runtime.ts:762",
+      "finding": "Attached main always selects Claude protocol; QA native main uses actual Codex routing. No host result yet, no product fix claimed."
+    }
+  },
+  "integration": {
+    "proof": "integration-selection.json",
+    "result": "integration-unexecuted",
+    "reason": "All six registered groups use node unit profile; own exact integration preset is absent. No substitute preset or direct runner used."
+  },
+  "taskState": "4.1 remains unchecked; no task checkboxes or archive changed.",
+  "streamCaptureLimitation": "CLI tool returned merged stdout/stderr. Original merged bytes and full TestRunResult retained; extracted queue NDJSON stored as logical stderr, not independently captured physical stream.",
+  "conclusion": {
+    "status": "failed",
+    "reason": "4.1 verification incomplete: current contracts retains four knownRed from obsolete shell fixture; required integration selection has no exact preset; queued native-system-to-main host result not received. No task checkbox or archive claimed.",
+    "nextAction": "Main to return ara41q9 evidence, arrange independent fixture/classification repair and register exact integration preset before resuming verification."
+  },
+  "sourceSha256": {
+    "src/sandbox-test-run.ts": "c0435f568f7f1264fdc135c7dcfdc41d22142affe36124a20a581aa81da5c822",
+    "src/production-runtime.ts": "e421ef27d4f608a4e36ee7b0683805a8e2bcbec0b79fa02c3b5c135cb077a413",
+    "scripts/qa-agent-run-live.mjs": "8dbebfd0b47d0c598f81a1f61b37b732d9c00523643bc5aa5a3aacaff95d7793"
+  },
+  "configurationSha256": "750d7e39e1d2770b0417d21279e17f2db59f35b270bba46d214cef4264acf6d5"
+}

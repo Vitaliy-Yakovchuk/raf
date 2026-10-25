@@ -67,7 +67,10 @@ try {
   await fs.mkdir(join(cfg.sourceRoot, 'dist'), { recursive: true });
   await fs.copyFile(cfg.artifact, join(cfg.sourceRoot, 'dist/catalog.json'));
   const probeName = mode === 'L3-full' ? 'qa-agent-adapters-extra-probe.mjs' : 'qa-agent-adapters-probe.mjs';
-  await fs.copyFile(join(source, 'scripts', probeName), join(cfg.sourceRoot, 'scripts', probeName));
+  const copiedProbe = join(cfg.sourceRoot, 'scripts', probeName);
+  await fs.copyFile(join(source, 'scripts', probeName), copiedProbe);
+  const probeHash = createHash('sha256').update(await fs.readFile(copiedProbe)).digest('hex');
+  summary.probe = { path: copiedProbe, sha256: probeHash };
   await fs.writeFile(cfg.commandPath, `import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';const c=JSON.parse(readFileSync(process.argv[2]));const r=spawnSync(process.execPath,[c.sourceRoot+'/bin/raf.ts',...JSON.parse(process.argv[3])],{env:{...process.env,HOME:c.home,RAF_QA_HOME:c.home,RAF_ORCHESTRATOR_ROOT:c.root},cwd:c.root,encoding:'utf8',maxBuffer:64*1024*1024});if(r.error)throw r.error;console.log(JSON.stringify({exitCode:r.status,signal:r.signal,stdout:r.stdout,stderr:r.stderr}));process.exitCode=r.status;`);
   const forbidden = join(f.directory, 'private-canary');
   await fs.writeFile(forbidden, 'QA NONSECRET CANARY\n');
@@ -97,6 +100,9 @@ try {
   await until(async () => fs.readFile(probePath, 'utf8').then(JSON.parse, () => null), Boolean, 'Native sandbox probe and atomic report', deadline);
   const probes = JSON.parse(await fs.readFile(probePath, 'utf8'));
   await atomic('native-probes', probes);
+  const afterProbeHash = createHash('sha256').update(await fs.readFile(copiedProbe)).digest('hex');
+  await atomic('probe-source-verification', { beforeSha256: probeHash, afterSha256: afterProbeHash, unchanged: probeHash === afterProbeHash });
+  assert.equal(afterProbeHash, probeHash, 'Native must not change probe code or criteria');
   if (controls) await atomic('host-controls-after', await controls.verify());
   assert.ok(probes.checks.every((c: any) => c.status === 'passed'), 'Protective and positive halves must both pass');
   await until(() => f.inspect().sessions.find((s: any) => s.runId === launched.runId)?.result?.status, (s: any) => s === 'succeeded', 'Atomic native report accepted', deadline);

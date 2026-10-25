@@ -1,0 +1,8 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts agent message --to main --text 'add-raf-test-run:6.2.6.3 фактично заблоковано: команда node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group add-raf-test-run/etchly-integration --files test/test-run-etchly-integration.test.ts повернула CLI 1/refused, runId 45f28a08-e8c4-4576-8447-4409ff640237, CALLER_UNAUTHORIZED: QA channel unavailable: unit context could not be verified; до reservation/spawn, groupSnapshot unavailable. Не повторюю сліпо, не підміняю runner/HOME. Потрібно відновити довірений unit context і належний власний project=etchly assignment для D08-D09; main не запускає за виконавця. Перша доставка повідомлення теж HANDLER_FAILED Recipient has no recognized empty agent composer. Збережу failed і повні докази без галочок, якщо канал не відновиться.'",
+  "chunk_id": "1ea516",
+  "wall_time_seconds": 0.238673737,
+  "exit_code": 1,
+  "original_token_count": 129,
+  "output": "{\"code\":\"HANDLER_FAILED\",\"message\":\"Message delivery failed: Recipient has no recognized empty agent composer\",\"details\":{\"command\":\"agent message\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Message delivery failed: Recipient has no recognized empty agent composer\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent message\"]}\n"
+}

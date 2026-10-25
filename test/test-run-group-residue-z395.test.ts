@@ -26,11 +26,20 @@ async function execute(h: RunHarness, overrides: Partial<TestRunRequest> = {}): 
     config: h.config, policy, context: h.context, runtime: h.ports,
     stdout: text => output.push(text), stderr: () => {},
   });
-  return { result: JSON.parse(output.join('')) as TestRunResult, code };
+  const result = JSON.parse(output.join('')) as TestRunResult;
+  assert.notEqual(result.errorCode, 'CONFIGURATION_INVALID', JSON.stringify(result));
+  return { result, code };
+}
+
+function harness(): RunHarness {
+  const h = new RunHarness();
+  h.config.phases.integration.allowed = true;
+  h.config.phases.integration.purpose = 'verification';
+  return h;
 }
 
 function residue(timeoutCount = 0): RunHarness {
-  const h = new RunHarness();
+  const h = harness();
   h.state.seed(fixtureGroup({
     timeoutCount, state: timeoutCount >= policy.maxGroupTimeouts ? 'confirm-known-red' : 'idle',
     selection: { files: [b.file], testIds: [] }, knownRed: [a, sibling], unexecuted: [pending],
@@ -39,14 +48,14 @@ function residue(timeoutCount = 0): RunHarness {
 }
 
 test('Z395 U1 accepted A red then B green preserves off-selection debt and gives exact confirmation guidance', async () => {
-  const h = new RunHarness();
+  const h = harness();
   h.events = [
     { kind: 'assertion-failed', test: a, diagnostic: 'historical assertion marker Z395' },
     { kind: 'passed', test: b }, { kind: 'complete', expected: [a, b] },
   ];
   h.exit.exitCode = 1;
   const initial = await execute(h, { phase: 'red' });
-  assert.equal(initial.result.outcome, 'assertions-failed');
+  assert.equal(initial.result.outcome, 'assertions-failed', JSON.stringify(initial.result));
   assert.deepEqual(initial.result.knownRed, [a]);
   h.config.projects.raf.groups[key.group].files = [b.file];
   h.context.agentId = 'next-author';
@@ -80,7 +89,7 @@ test('Z395 U1 off-selection unexecuted IDs survive a valid green subset with the
   h.events = green(b);
   const { result, code } = await execute(h, { files: [b.file] });
   assert.deepEqual(result.unexecuted, [pending]);
-  assert.deepEqual(result.knownRed, [a, sibling]);
+  assert.deepEqual(result.knownRed, [a, sibling], JSON.stringify(result));
   assert.deepEqual(result.passed, [b]);
   assert.deepEqual(result.removed, []);
   assert.equal(result.timeoutCount, policy.optimizeAfterTimeouts);
@@ -96,7 +105,7 @@ for (const dimension of ['project', 'workspace', 'group'] as const) {
     h.state.seed(foreign);
     h.events = green(b);
     const { result } = await execute(h, { files: [b.file] });
-    assert.deepEqual(result.knownRed, [a, sibling]);
+    assert.deepEqual(result.knownRed, [a, sibling], JSON.stringify(result));
     assert.deepEqual(result.passed, [b]);
     assert.deepEqual(h.state.get(foreignKey), foreign);
     const current = clone(h.state.get()!);
@@ -129,7 +138,7 @@ for (const kind of ['discovered', 'passed', 'assertion-failed', 'complete'] as c
       assert.ok(result.failureKinds.includes('setup'));
       assert.ok(!result.failureKinds.includes('assertions'), 'invalid runner IDs are not assertion-red');
       assert.ok(!result.passed.some(id => id.file === outsider.file && id.name === outsider.name));
-      assert.deepEqual(result.knownRed, [a, sibling]);
+      assert.deepEqual(result.knownRed, [a, sibling], JSON.stringify(result));
       assert.deepEqual(h.state.get()?.knownRed, [a, sibling]);
       assert.deepEqual(result.removed, []);
       assert.equal(result.timeoutCount, 0);
@@ -149,12 +158,12 @@ for (const failure of ['timeout', 'setup', 'interruption', 'missing-complete', '
     const running = execute(h, { files: undefined, only: [a] });
     if (!h.finishImmediately) {
       await flushMicrotasks();
-      assert.equal(h.spawns.length, 1);
+      assert.equal(h.spawns.length, 1, JSON.stringify(h.state.get()));
       if (failure === 'timeout') h.clock.advance(policy.timeoutMs);
       else { assert.ok(h.interrupt); h.interrupt('SIGINT'); }
     }
     const { result, code } = await running;
-    assert.deepEqual(result.knownRed, [a, sibling]);
+    assert.deepEqual(result.knownRed, [a, sibling], JSON.stringify(result));
     assert.deepEqual(h.state.get()?.knownRed, [a, sibling]);
     assert.deepEqual(result.removed, []);
     assert.ok(result.unexecuted.some(id => id.name === pending.name));
@@ -173,11 +182,11 @@ test('Z395 U4 exact confirmation after a narrowed selection preserves other debt
   assert.deepEqual(result.unexecuted, [pending]);
   assert.deepEqual(result.removed, []);
   assert.equal(result.timeoutCount, policy.maxGroupTimeouts);
-  assert.equal(h.spawns.length, 1);
+  assert.equal(h.spawns.length, 1, JSON.stringify(h.state.get()));
   assert.deepEqual(h.spawns[0].environment.testIds, [a]);
   const refused = await execute(h, { files: [b.file] });
   assert.equal(refused.result.outcome, 'refused');
-  assert.equal(h.spawns.length, 1);
+  assert.equal(h.spawns.length, 1, JSON.stringify(h.state.get()));
   assert.deepEqual(h.state.get()?.knownRed, [sibling]);
   assert.equal(h.state.get()?.timeoutCount, policy.maxGroupTimeouts);
 });
@@ -192,7 +201,7 @@ for (const failure of ['interruption', 'cleanup', 'file-missing'] as const) {
     const running = execute(h, { files: [a.file] });
     if (failure === 'interruption') {
       await flushMicrotasks();
-      assert.equal(h.spawns.length, 1);
+      assert.equal(h.spawns.length, 1, JSON.stringify(h.state.get()));
       assert.ok(h.interrupt);
       h.interrupt('SIGINT');
     }
@@ -212,6 +221,7 @@ for (const guard of ['inventory', 'overlap', 'in-flight'] as const) {
     if (guard === 'inventory') {
       h.config.projects.raf.profiles.node.unitFiles = files.filter(file => file !== a.file);
       h.environment.unitFiles = files.filter(file => file !== a.file);
+      h.config.projects.raf.groups[key.group].files = [b.file];
     }
     if (guard === 'overlap') h.state.seed(fixtureGroup({
       key: { ...key, group: 'add-raf-test-run/accepted-owner' },
@@ -226,6 +236,7 @@ for (const guard of ['inventory', 'overlap', 'in-flight'] as const) {
     const before = clone([...h.state.records]);
     const { result, code } = await execute(h, { files: undefined, only: [a] });
     assert.equal(result.outcome, 'refused');
+    assert.equal(result.errorCode, { inventory: 'UNSAFE_SELECTION', overlap: 'GROUP_RENAME_REFUSED', 'in-flight': 'GROUP_IN_FLIGHT' }[guard]);
     assert.equal(h.spawns.length, 0);
     assert.deepEqual([...h.state.records], before);
     assert.notEqual(code, 0);

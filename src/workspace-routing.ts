@@ -87,9 +87,15 @@ export async function resolveWorkspaceRoute(
   if (!configured.ok) return configured;
   const entry = config.projects[project];
   const rootProject = project === 'orchestrator' && entry.path === '.';
+  const persistentHotfix = project === 'raf' && branch === 'hotfix';
   let cwd = configured.cwd;
   try {
-    if (rootProject && dependencies.realPath) cwd = await dependencies.realPath(cwd);
+    if (rootProject || persistentHotfix) {
+      if (!dependencies.realPath || !dependencies.gitRoot) return failure('WORKSPACE_UNAVAILABLE', `Canonical path and Git root verification required for workspace ${cwd}.`);
+      const canonical = await dependencies.realPath(cwd);
+      if (persistentHotfix && canonical !== cwd) return failure('WORKSPACE_UNAVAILABLE', `Hotfix workspace ${cwd} resolves to ${canonical}; expected the registered physical worktree.`);
+      cwd = canonical;
+    }
     const kind = await dependencies.pathKind(cwd);
     if (kind === 'symlink' && project === 'raf' && branch === 'main' && entry.mainCopies !== undefined) {
       const copies = entry.mainCopies;
@@ -100,7 +106,7 @@ export async function resolveWorkspaceRoute(
     } else if (kind !== 'directory') {
       return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not an available directory.`);
     }
-    if (rootProject && dependencies.gitRoot && await dependencies.gitRoot(cwd) !== cwd) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not the Orchestrator Git root.`);
+    if ((rootProject || persistentHotfix) && await dependencies.gitRoot!(cwd) !== cwd) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not the registered ${rootProject ? 'Orchestrator' : 'hotfix'} Git root.`);
     const actual = await dependencies.currentBranch(cwd);
     if (actual !== branch) {
       return failure('BRANCH_MISMATCH', `Workspace ${cwd} is on ${actual ?? 'detached HEAD'}; expected ${branch}.`);

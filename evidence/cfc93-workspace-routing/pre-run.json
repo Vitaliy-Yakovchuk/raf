@@ -1,0 +1,30 @@
+{
+  "recordedAt": "2026-10-25T12:52:16.822581+00:00",
+  "implementationCompleteBeforeReadingPreparedTests": true,
+  "preparedTestsRead": false,
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "head": "633e77a43d18a13df2bfc8c1ea0bbabed8e07371",
+  "branch": "develop",
+  "status": " M src/event-catalog.ts\n M src/event-registry.ts\n M src/reminder-cli.ts\n M src/service-host.ts\n M src/workspace-routing.ts\n M test/command-timing.test.ts\n?? evidence/cfc125-cli-catalog/\n?? evidence/cfc44-command-timing/\n?? evidence/cfc53-event-registry/\n?? src/archive-events-runtime.ts\n",
+  "ownPaths": [
+    "src/workspace-routing.ts",
+    "evidence/cfc93-workspace-routing/"
+  ],
+  "ownDiff": "diff --git a/src/workspace-routing.ts b/src/workspace-routing.ts\nindex 5034a2f..1311635 100644\n--- a/src/workspace-routing.ts\n+++ b/src/workspace-routing.ts\n@@ -87,9 +87,15 @@ export async function resolveWorkspaceRoute(\n   if (!configured.ok) return configured;\n   const entry = config.projects[project];\n   const rootProject = project === 'orchestrator' && entry.path === '.';\n+  const persistentHotfix = project === 'raf' && branch === 'hotfix';\n   let cwd = configured.cwd;\n   try {\n-    if (rootProject && dependencies.realPath) cwd = await dependencies.realPath(cwd);\n+    if (rootProject || persistentHotfix) {\n+      if (!dependencies.realPath || !dependencies.gitRoot) return failure('WORKSPACE_UNAVAILABLE', `Canonical path and Git root verification required for workspace ${cwd}.`);\n+      const canonical = await dependencies.realPath(cwd);\n+      if (persistentHotfix && canonical !== cwd) return failure('WORKSPACE_UNAVAILABLE', `Hotfix workspace ${cwd} resolves to ${canonical}; expected the registered physical worktree.`);\n+      cwd = canonical;\n+    }\n     const kind = await dependencies.pathKind(cwd);\n     if (kind === 'symlink' && project === 'raf' && branch === 'main' && entry.mainCopies !== undefined) {\n       const copies = entry.mainCopies;\n@@ -100,7 +106,7 @@ export async function resolveWorkspaceRoute(\n     } else if (kind !== 'directory') {\n       return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not an available directory.`);\n     }\n-    if (rootProject && dependencies.gitRoot && await dependencies.gitRoot(cwd) !== cwd) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not the Orchestrator Git root.`);\n+    if ((rootProject || persistentHotfix) && await dependencies.gitRoot!(cwd) !== cwd) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not the registered ${rootProject ? 'Orchestrator' : 'hotfix'} Git root.`);\n     const actual = await dependencies.currentBranch(cwd);\n     if (actual !== branch) {\n       return failure('BRANCH_MISMATCH', `Workspace ${cwd} is on ${actual ?? 'detached HEAD'}; expected ${branch}.`);\n",
+  "testHashes": {
+    "test/workspace-routing.test.ts": "dc151b80d616b0ddbf743656861b5805adfbe021da40e0e3199f1596fb03533c",
+    "test/workspace-routing-contracts.test.ts": "dda23ad85fc6ee0906c9903619e052fd32e02e791dd02031613f9478187e8122"
+  },
+  "configHashes": {
+    "/srv/dev/work/orchestrator/conf/projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "/srv/dev/work/orchestrator/conf/test-runs.json": "171acf0a1fb6a5f8e96ca614de0ec981364b4be348a1382604dba4d3678f0b95",
+    "/srv/dev/work/orchestrator/conf/flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+  },
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/raf-workspace-routing --files test/workspace-routing.test.ts test/workspace-routing-contracts.test.ts",
+  "acceptedRed": {
+    "runId": "fbd23c46-6b04-47b0-813a-550fc7d3aa52",
+    "path": "../cfc92-workspace-routing/red-result.json",
+    "knownRed": 9,
+    "acceptedBy": "main"
+  }
+}

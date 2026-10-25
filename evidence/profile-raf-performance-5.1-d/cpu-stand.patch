@@ -1,0 +1,37 @@
+--- scripts/profile-worker-idle-stand.ts
++++ scripts/profile-worker-idle-acceptance.ts
+@@ -2,7 +2,7 @@
+ import { spawnSync } from 'node:child_process';
+ import { readFile, writeFile, chmod, cp, mkdir, open, rm } from 'node:fs/promises';
+ import { delimiter, join } from 'node:path';
+-import { pathToFileURL } from 'node:url';
++import { fileURLToPath, pathToFileURL } from 'node:url';
+ import type { TestContext } from 'node:test';
+ import { launchPersistentWrapper } from '../src/launch-wrapper.ts';
+ import { listTaskReservations } from '../src/task-reservations.ts';
+@@ -15,6 +15,7 @@
+ async function workerFixture(t: TestContext, prepareInFixture = true, launchRunnerPath?: string | null) {
+   const f = await fixture(t, { productionQa: true, tasks: 2 });
+   let runtimeUrl = f.runtimeUrl;
++  if (process.argv[4]) await writeFile(fileURLToPath(runtimeUrl), await readFile(process.argv[4]));
+   if (process.argv[3] === 'report') {
+     const projects = JSON.parse(await readFile(join(f.confRoot, 'projects.json'), 'utf8'));
+     const productionRoot = join(f.root, projects.projects.raf.branchPaths.main);
+@@ -107,7 +108,7 @@
+     assert.equal(f.store.sessionRepository.transaction(tx => tx.listReservations()).length, 1);
+   }
+   const launch = async () => {
+-    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--cpu-prof', '--cpu-prof-dir=' + process.cwd() + '/evidence/profile-raf-performance-5.1', '--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
++    const started = await launchPersistentWrapper(request, { timeoutMs: settings.timeouts.overallMs, workerCommand: { executable: process.execPath, args: ['--input-type=module', '-e', `import { writeFileSync } from 'node:fs'; import { runProductionWorker } from ${JSON.stringify(runtimeUrl)}; writeFileSync(${JSON.stringify(wrapperPidPath)}, String(process.pid)); process.env.PATH = ${JSON.stringify(f.binRoot + delimiter)} + (process.env.PATH ?? ''); process.env.HOME = ${JSON.stringify(f.home)}; await runProductionWorker();`] } });
+     f.trackProcess(started.wrapperPid);
+     f.trackProcess(started.identity.pid);
+     assert.equal(Number(await readFile(wrapperPidPath, 'utf8')), started.wrapperPid);
+@@ -156,7 +157,7 @@
+     Object.assign(measurement, { accepted: accepted?.reportAcceptance, result: accepted?.result });
+   }
+   console.log(JSON.stringify({stage:'measured', ...measurement}));
+-  await writeFile('evidence/profile-raf-performance-5.1/'+process.argv[2]+'-cpu.json',JSON.stringify(measurement,null,2)+'\n');
++  await writeFile('evidence/profile-raf-performance-5.1-d/'+process.argv[2]+'-cpu.json',JSON.stringify(measurement,null,2)+'\n');
+   await writeFile(f.releasePath, JSON.stringify({exitCode:0}));
+   await writeFile(f.exitGatePath, 'exit');
+   await eventually(() => f!.session(), s => s?.state === 'finished', 'worker finalized', 45000);

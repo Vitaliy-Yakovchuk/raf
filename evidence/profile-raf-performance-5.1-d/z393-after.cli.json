@@ -1,0 +1,16 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z393",
+  "sha": "3dbdb0efaab8aa774a932b2cfd6eded00ada1975",
+  "uncommitted": [
+    "src/production-runtime.ts",
+    "test/worker-idle-cost.test.ts"
+  ],
+  "workspacePatch": "identity-fix.patch",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "rawOutput": "z393-after.stdout.json",
+  "stderr": "z393-after.stderr",
+  "sourceItem": "profile-raf-performance:5.1",
+  "targetGroup": "complete-raf-flow-contracts/z393",
+  "runId": "8c30bd59-4fda-47bf-b220-febb4af75c28"
+}

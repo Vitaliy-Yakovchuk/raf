@@ -1,0 +1,17 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z393 --only 'test/reported-commits-acceptance.test.ts::[reported-commits Z.370.1] production final archive skip_specs=true: final reread repairs appended archive commit'",
+  "cliExitCode": 1,
+  "childExitCode": 0,
+  "sha": "3dbdb0efaab8aa774a932b2cfd6eded00ada1975",
+  "uncommitted": [
+    "src/production-runtime.ts",
+    "test/worker-idle-cost.test.ts",
+    "test/reported-commits-acceptance.test.ts"
+  ],
+  "sourceItem": "profile-raf-performance:5.1",
+  "rawOutput": "z370-only.stdout.json",
+  "stderr": "z370-only.stderr",
+  "runId": "5b70c1f8-2e98-4dd8-83c5-4a1775e98d05",
+  "groupState": "idle",
+  "nextAction": "fix-implementation"
+}

@@ -1,0 +1,17 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts",
+  "sha": "3dbdb0efaab8aa774a932b2cfd6eded00ada1975",
+  "uncommitted": [
+    "src/production-runtime.ts",
+    "test/worker-idle-cost.test.ts",
+    "evidence/profile-raf-performance-5.1-d/"
+  ],
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "rawOutput": "identity-green.stdout.json",
+  "stderr": "identity-green.stderr",
+  "sourceItem": "profile-raf-performance:5.1",
+  "runId": "7541fdb8-775d-491d-bfce-edae09140cc8",
+  "groupState": "complete",
+  "nextAction": "complete"
+}

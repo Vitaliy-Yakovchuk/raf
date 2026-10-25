@@ -1,0 +1,16 @@
+node:internal/fs/promises:2131
+  return await PromisePrototypeThen(
+         ^
+
+Error: EACCES: permission denied, mkdtemp '/tmp/raf-ipc-1000/rw-fUmVDw'
+    at async Object.mkdtemp (node:internal/fs/promises:2131:10)
+    at async launchPersistentWrapper (file:///srv/dev/work/orchestrator/raf-hotfix/src/launch-wrapper.ts:152:21)
+    at async Object.launch (file:///srv/dev/work/orchestrator/raf-hotfix/scripts/profile-worker-idle-acceptance.ts:111:21)
+    at async file:///srv/dev/work/orchestrator/raf-hotfix/scripts/profile-worker-idle-acceptance.ts:129:19 {
+  errno: -13,
+  code: 'EACCES',
+  syscall: 'mkdtemp',
+  path: '/tmp/raf-ipc-1000/rw-fUmVDw'
+}
+
+Node.js v26.12.1

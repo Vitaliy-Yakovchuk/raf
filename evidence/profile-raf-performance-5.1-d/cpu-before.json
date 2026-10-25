@@ -1,0 +1,17 @@
+{
+  "command": "node scripts/profile-worker-idle-acceptance.ts before report /tmp/p51d-before-production-runtime.ts",
+  "scriptDerivation": "cpu-stand.patch against scripts/profile-worker-idle-stand.ts at 3dbdb0efaab8aa774a932b2cfd6eded00ada1975; transient script removed after failed attempt",
+  "beforeDerivation": "Current production-runtime.ts with the two f4eeb215 optimization hunks reversed, no policy changes. The child worker never started.",
+  "beforeSourceSha256": "3281b7ecf07da190c6caa587efcddec1ce8af4e5f1371f0e891af37302450d90",
+  "cliExitCode": 1,
+  "childExitCode": null,
+  "outcome": "setup-failed",
+  "reason": "Explicit sandbox EACCES creating hardcoded /tmp/raf-ipc-1000 wrapper directory. No worker launched or CPU sample obtained.",
+  "sampleSeconds": null,
+  "beforeCpu": null,
+  "afterCpu": null,
+  "stdout": "cpu-before.stdout",
+  "stderr": "cpu-before.stderr",
+  "cleanup": "Fixture lifecycle hooks completed before the process exited; its prepared isolated directory was removed.",
+  "mainDirection": "main 2026-10-25: record incomplete EACCES stand in report; main will measure live workers before/after transfer."
+}

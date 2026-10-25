@@ -632,8 +632,10 @@ async function production(t: TestContext, path: 'worker' | 'reconciliation', opt
   const commits: ReportedCommit[] = [{ repository: root, sha: r1 }, { repository: code, sha: c1 }, { repository: root, sha: r2 }, { repository: code, sha: c2 }];
   const report = { status: 'succeeded', answer: 'Verified fixture only.', changes: [{ id: change, items: [{ id: '1.1', status: 'succeeded' }] }], commits };
   const publish = (value: unknown = report) => { writeFileSync(reportPath + '.next', JSON.stringify(value)); renameSync(reportPath + '.next', reportPath); };
+  let psStderr = '';
   const ps = async () => {
     const listed = await f.command(['agent', 'ps']);
+    psStderr = listed.result.stderr;
     assert.equal(listed.exitCode, 0, JSON.stringify(listed));
     return (JSON.parse(listed.result.stdout) as SessionRecord[]).find(row => row.runId === runId);
   };
@@ -643,7 +645,7 @@ async function production(t: TestContext, path: 'worker' | 'reconciliation', opt
     try { store.sessionRepository.transaction(tx => { const record = tx.getSession(runId); assert.ok(record); tx.putSession(operation(record)); }); }
     finally { store.close(); }
   };
-  return { ...f, root, code, taskPath, rootBaseline, codeBaseline, address, runId, session, wrapper, reportPath, commits, report, publish, ps, mutate, indexRoot, foreignEntry };
+  return { ...f, root, code, taskPath, rootBaseline, codeBaseline, address, runId, session, wrapper, reportPath, commits, report, publish, ps, psStderr: () => psStderr, mutate, indexRoot, foreignEntry };
 }
 
 for (const path of ['worker', 'reconciliation'] as const) {
@@ -725,6 +727,7 @@ for (const skipSpecs of [false, true]) {
     const final = git(f.root, ['rev-parse', 'HEAD']);
     f.publish({ ...f.report, changes: [{ id: change, archive, items: [{ id: '1.1', status: 'succeeded' }] }], commits: [...f.commits, { repository: f.root, sha: final }] });
     const accepted = await f.ps();
+    if (accepted?.result?.status !== 'succeeded') t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', test: { file: 'test/reported-commits-acceptance.test.ts', name: t.name }, message: f.psStderr(), location: null, stack: [], redacted: false, truncated: false }] }));
     assert.equal(accepted?.result?.status, 'succeeded');
     const archiveTask = `openspec/changes/archive/${archive}/tasks.md`;
     assert.equal(git(f.root, ['show', `:${archiveTask}`]), git(f.root, ['show', `HEAD:${archiveTask}`]));

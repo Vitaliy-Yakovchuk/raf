@@ -1,0 +1,297 @@
+{
+  "result": {
+    "testKind": "integration",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 4000
+    },
+    "callerPhase": "qa",
+    "diagnostics": [],
+    "diagnosticSummary": {
+      "totalEntries": 0,
+      "retainedEntries": 0,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": false
+    },
+    "environmentSummary": {
+      "executable": "node",
+      "runtimeVersion": "v26.12.1",
+      "adapter": "node-test-events",
+      "isolation": "process",
+      "configurationFingerprints": {
+        "flow": "7f749fd2b6f16a76cc182393a4448e683c9a426eea8e8380df76b78e06ee8785",
+        "testRuns": "48ec6b0072507718f642f5ec5446b6c3d7bbbc163aaeed54323ade689e734aea",
+        "projects": "08d547bda4236a81319aa690f9690f4743e42fc82c2283003eb5c56ed14af4de"
+      },
+      "tmpPathBytes": 62,
+      "privateRunTmp": true
+    },
+    "runId": "cdd3159e-a8b6-4d95-b050-b23698bf542e",
+    "project": "raf",
+    "workspace": "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA/raf-develop",
+    "phase": "integration",
+    "group": "add-raf-test-run/state-open-recovery-fixture",
+    "profileId": "node-integration",
+    "selection": {
+      "files": [
+        "test/recovery-integration.test.mjs"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/recovery-integration.test.mjs"
+      ],
+      "cwd": "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA/raf-develop",
+      "shell": false,
+      "environment": {
+        "HOME": "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA/u/3905d3677c38b6096109b5688ae487f02a4278700d3ec308638e0e296176e363",
+        "statePath": "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA/u/3905d3677c38b6096109b5688ae487f02a4278700d3ec308638e0e296176e363/.raf/state.sqlite",
+        "tmpPath": "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA/u/3905d3677c38b6096109b5688ae487f02a4278700d3ec308638e0e296176e363/.raf/tmp",
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/integrationTests/timeoutMs",
+          "timeoutMs": 4000
+        },
+        "TMPDIR": "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA/t/r-Xbv9JY"
+      }
+    },
+    "startedAt": "2026-10-25T19:37:19.139Z",
+    "durationMs": 758,
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "outcome": "passed",
+    "failureKinds": [],
+    "passed": [
+      {
+        "file": "test/recovery-integration.test.mjs",
+        "name": "owned recovery child"
+      }
+    ],
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "stateAccess": null,
+    "groupSnapshot": "loaded",
+    "groupState": "complete",
+    "timeoutCount": 1,
+    "nextAction": "complete",
+    "hintIds": [],
+    "hints": [],
+    "evidence": [],
+    "admission": {
+      "level": "ANY_RUN",
+      "requestedTier": "normal",
+      "allowed": true,
+      "reasons": [
+        "All normal resource thresholds satisfied after reservations"
+      ],
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 1.96,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 27544752128,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "totalBytes": 190143823872,
+            "availableBytes": 150749220864
+          },
+          {
+            "id": "/dev/mapper/home-dev",
+            "totalBytes": 11499937792,
+            "availableBytes": 7996899328
+          }
+        ]
+      },
+      "thresholds": {
+        "normal": {
+          "maxNormalizedLoad": 1.2,
+          "minRamFraction": 0.2,
+          "minRamBytes": 2147483648,
+          "minDiskFraction": 0.1,
+          "minDiskBytes": 10737418240
+        },
+        "hotfix": {
+          "maxNormalizedLoad": 1.5,
+          "minRamFraction": 0.1,
+          "minRamBytes": 1073741824,
+          "minDiskFraction": 0.05,
+          "minDiskBytes": 5368709120
+        },
+        "home": {
+          "minDiskBytes": 524288000
+        }
+      },
+      "reservation": {
+        "requested": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        },
+        "unused": {
+          "ramBytes": 0,
+          "diskBytes": {}
+        }
+      },
+      "remaining": {
+        "ramBytes": 25397268480,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 140011802624,
+          "/dev/mapper/home-dev": 7996899328
+        },
+        "normalizedLoad": 0.245
+      },
+      "estimate": {
+        "status": "KNOWN",
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node-integration/resourceEstimate"
+        ],
+        "reason": null
+      },
+      "queueId": "50b77fe1-a67c-47d8-a710-812517c5d93e"
+    },
+    "resourceUsage": {
+      "context": {
+        "identity": {
+          "kind": "test",
+          "id": "cdd3159e-a8b6-4d95-b050-b23698bf542e",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "fence": "821d555b-ad8f-4224-999a-8cdd6f467af8",
+          "root": {
+            "pid": 2956585,
+            "startTicks": "29972175",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        },
+        "project": "raf",
+        "agentType": null,
+        "testProfile": "node-integration",
+        "items": [],
+        "requestedEstimate": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          },
+          "sources": [
+            "conf/test-runs.json#/projects/raf/profiles/node-integration/resourceEstimate"
+          ],
+          "confHash": "c74974dd5becf467d02f717acd5cdbb3232f69aa9b2fbb8c79e32ff60c0a95f9"
+        },
+        "requiredFileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "paths": [
+              "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA",
+              "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA/raf-develop"
+            ]
+          }
+        ],
+        "resultStatePath": "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA/u/3905d3677c38b6096109b5688ae487f02a4278700d3ec308638e0e296176e363/.raf/state.sqlite",
+        "attributedPaths": [
+          "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA/t/r-Xbv9JY"
+        ]
+      },
+      "preparedAt": 1792957039469,
+      "baseline": {
+        "at": 1792957039574,
+        "disk": [
+          {
+            "fileSystemId": "/dev/mapper/data-dev",
+            "files": [
+              {
+                "fileSystemId": "/dev/mapper/data-dev",
+                "deviceId": "64513",
+                "inode": "3023311",
+                "path": "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA/t/r-Xbv9JY/.raf-test-run",
+                "allocatedBytes": 4096,
+                "logicalBytes": 36,
+                "attribution": {
+                  "kind": "run",
+                  "key": {
+                    "kind": "test",
+                    "id": "cdd3159e-a8b6-4d95-b050-b23698bf542e"
+                  }
+                }
+              }
+            ],
+            "complete": true,
+            "reasons": []
+          }
+        ]
+      },
+      "startedAt": 1792957039682,
+      "lastObservedAt": 1792957039849,
+      "finishedAt": 1792957039879,
+      "finishReason": "exit",
+      "peakRamBytes": 65126400,
+      "peakDiskBytes": {
+        "/dev/mapper/data-dev": 0
+      },
+      "ram": {
+        "peakBytes": 65126400,
+        "currentBytes": null,
+        "method": {
+          "name": "rss-sampled",
+          "scope": "verified process tree; simultaneous RSS sum",
+          "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+        },
+        "completeness": "partial",
+        "reasons": [
+          "RAM measurement unavailable"
+        ]
+      },
+      "disk": {
+        "/dev/mapper/data-dev": {
+          "peakBytes": 0,
+          "currentBytes": 0,
+          "method": {
+            "name": "allocated-files-sampled",
+            "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+          },
+          "completeness": "partial",
+          "reasons": [
+            "Changes in shared development directories cannot be fully attributed to this run",
+            "Disk attribution is partial"
+          ]
+        }
+      },
+      "completeness": "partial",
+      "reasons": [
+        "Changes in shared development directories cannot be fully attributed to this run",
+        "Disk attribution is partial",
+        "Root process identity is unavailable or changed",
+        "RAM measurement unavailable",
+        "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+        "Final measurement completeness is unverified"
+      ]
+    },
+    "queue": null
+  },
+  "stderr": "",
+  "cliCode": 0,
+  "argv": [
+    "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA/raf-develop/bin/raf.ts",
+    "test",
+    "run",
+    "--project",
+    "raf",
+    "--phase",
+    "integration",
+    "--group",
+    "add-raf-test-run/state-open-recovery-fixture"
+  ],
+  "cwd": "/srv/dev/h-rd-ok1z/raf-state-recovery-normal-3ayOtA/raf-develop"
+}

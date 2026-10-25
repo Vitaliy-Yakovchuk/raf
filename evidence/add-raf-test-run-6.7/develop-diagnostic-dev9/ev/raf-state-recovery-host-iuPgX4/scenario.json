@@ -1,0 +1,1129 @@
+{
+  "testKind": "unit",
+  "checkpoint": "after-spawn",
+  "child": "alive-through-deadline",
+  "root": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4",
+  "command": {
+    "executable": "/opt/dev/node/bin/node",
+    "argv": [
+      "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop/bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "raf",
+      "--phase",
+      "qa",
+      "--group",
+      "add-raf-test-run/state-open-recovery-fixture"
+    ],
+    "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+    "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/control"
+  },
+  "before": {
+    "group": {
+      "key": {
+        "project": "raf",
+        "workspace": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "group": "add-raf-test-run/state-open-recovery-fixture"
+      },
+      "testKind": "unit",
+      "profileId": "node",
+      "timeoutCount": 1,
+      "state": "running",
+      "selection": {
+        "files": [
+          "test/recovery-unit.test.mjs"
+        ],
+        "testIds": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "inFlight": {
+        "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+        "deadlineMs": 1792956091475,
+        "startedAtMs": 1792956087475,
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/unitTests/timeoutMs",
+          "timeoutMs": 4000
+        },
+        "callerPhase": "qa",
+        "processIdentity": "{\"pid\":2934216,\"start\":\"29876974\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+        "phase": "qa",
+        "selection": {
+          "files": [
+            "test/recovery-unit.test.mjs"
+          ],
+          "testIds": []
+        },
+        "command": {
+          "executable": "node",
+          "argv": [
+            "./scripts/test-run-node.ts",
+            "test/recovery-unit.test.mjs"
+          ],
+          "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+          "shell": false,
+          "environment": {
+            "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5",
+            "statePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+            "tmpPath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/tmp"
+          }
+        },
+        "testKind": "unit",
+        "startedAt": "2026-10-25T19:21:27.144Z",
+        "finishedAtMs": null,
+        "deadlineObservedAtMs": null,
+        "wrapperIdentity": "{\"pid\":2934173,\"start\":\"29876864\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+        "ownerIdentity": "{\"pid\":2934173,\"start\":\"29876864\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+        "temporary": {
+          "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+          "temporary": {
+            "path": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/t/r-UaqLyu",
+            "realpath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/t/r-UaqLyu",
+            "device": "64513",
+            "inode": "8131214",
+            "uid": 1000,
+            "mode": 16832,
+            "symlink": false,
+            "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416"
+          }
+        }
+      },
+      "lastResult": null,
+      "delivery": null
+    },
+    "originalRun": {
+      "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+      "deadlineMs": 1792956091475,
+      "startedAtMs": 1792956087475,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 4000
+      },
+      "callerPhase": "qa",
+      "processIdentity": "{\"pid\":2934216,\"start\":\"29876974\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/recovery-unit.test.mjs"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/recovery-unit.test.mjs"
+        ],
+        "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5",
+          "statePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+          "tmpPath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/tmp"
+        }
+      },
+      "testKind": "unit",
+      "startedAt": "2026-10-25T19:21:27.144Z",
+      "finishedAtMs": null,
+      "deadlineObservedAtMs": null,
+      "wrapperIdentity": "{\"pid\":2934173,\"start\":\"29876864\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "ownerIdentity": "{\"pid\":2934173,\"start\":\"29876864\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "temporary": {
+        "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+        "temporary": {
+          "path": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/t/r-UaqLyu",
+          "realpath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/t/r-UaqLyu",
+          "device": "64513",
+          "inode": "8131214",
+          "uid": 1000,
+          "mode": 16832,
+          "symlink": false,
+          "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416"
+        }
+      }
+    },
+    "controlStatePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/control/.raf/state.sqlite",
+    "unitStatePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+    "wrapper": {
+      "pid": 2934173,
+      "start": "29876864",
+      "boot": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    },
+    "tree": [
+      {
+        "pid": 2934216,
+        "start": "29876974",
+        "boot": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      }
+    ],
+    "caller": {
+      "agentId": "state-recovery-stand",
+      "runId": "f6f6db28-6d65-4b8f-ae46-344e0bb89292",
+      "identity": {
+        "pid": 2933722,
+        "start": "29875572",
+        "boot": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      }
+    },
+    "generation": "4e9dc0a808281e819171871ad2cbb8a0a6dfc57012ec13caa49797811b3542b8",
+    "sha": "0b644c0d36abdc77fa5b55ba8d1c5468ee9172d1",
+    "dirtyPaths": [
+      "node_modules"
+    ],
+    "spawnCount": 1,
+    "releaseCount": 0
+  },
+  "point": {
+    "name": "after-spawn",
+    "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+    "atMs": 1792956087740
+  },
+  "cliExit": {
+    "code": null,
+    "signal": "SIGKILL"
+  },
+  "stdout": "",
+  "stderr": "",
+  "first": {
+    "result": {
+      "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+      "project": "raf",
+      "workspace": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+      "group": "add-raf-test-run/state-open-recovery-fixture",
+      "phase": "qa",
+      "callerPhase": "qa",
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 4000
+      },
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/recovery-unit.test.mjs"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/recovery-unit.test.mjs"
+        ],
+        "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5",
+          "statePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+          "tmpPath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/tmp"
+        }
+      },
+      "startedAt": "2026-10-25T19:21:27.144Z",
+      "durationMs": 4728,
+      "outcome": "timed-out",
+      "failureKinds": [
+        "timeout"
+      ],
+      "exitCode": null,
+      "signal": null,
+      "timedOut": true,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [],
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "reconcile",
+      "timeoutCount": 2,
+      "nextAction": "reconcile",
+      "stateAccess": null,
+      "groupSnapshot": "loaded",
+      "hintIds": [],
+      "hints": [],
+      "evidence": [],
+      "diagnostics": [
+        {
+          "kind": "runner",
+          "test": null,
+          "message": "Original runner protocol unavailable after owner loss",
+          "location": null,
+          "stack": [],
+          "redacted": false,
+          "truncated": false,
+          "unavailableReason": "Original exit code and protocol unavailable"
+        }
+      ],
+      "diagnosticSummary": {
+        "totalEntries": 1,
+        "retainedEntries": 1,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "environmentSummary": {
+        "executable": "",
+        "runtimeVersion": "",
+        "adapter": "unavailable",
+        "isolation": "unavailable",
+        "configurationFingerprints": {
+          "flow": "",
+          "testRuns": "",
+          "projects": ""
+        },
+        "tmpPathBytes": 0,
+        "privateRunTmp": false
+      }
+    },
+    "stderr": "",
+    "cliCode": 1,
+    "argv": [
+      "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop/bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "raf",
+      "--phase",
+      "qa",
+      "--group",
+      "add-raf-test-run/state-open-recovery-fixture"
+    ],
+    "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop"
+  },
+  "pending": {
+    "group": {
+      "key": {
+        "project": "raf",
+        "workspace": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "group": "add-raf-test-run/state-open-recovery-fixture"
+      },
+      "testKind": "unit",
+      "profileId": "node",
+      "timeoutCount": 2,
+      "state": "reconcile",
+      "selection": {
+        "files": [
+          "test/recovery-unit.test.mjs"
+        ],
+        "testIds": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "inFlight": null,
+      "lastResult": {
+        "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+        "project": "raf",
+        "workspace": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "group": "add-raf-test-run/state-open-recovery-fixture",
+        "phase": "qa",
+        "callerPhase": "qa",
+        "testKind": "unit",
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/unitTests/timeoutMs",
+          "timeoutMs": 4000
+        },
+        "profileId": "node",
+        "selection": {
+          "files": [
+            "test/recovery-unit.test.mjs"
+          ],
+          "testIds": []
+        },
+        "command": {
+          "executable": "node",
+          "argv": [
+            "./scripts/test-run-node.ts",
+            "test/recovery-unit.test.mjs"
+          ],
+          "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+          "shell": false,
+          "environment": {
+            "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5",
+            "statePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+            "tmpPath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/tmp"
+          }
+        },
+        "startedAt": "2026-10-25T19:21:27.144Z",
+        "durationMs": 4728,
+        "outcome": "timed-out",
+        "failureKinds": [
+          "timeout"
+        ],
+        "exitCode": null,
+        "signal": null,
+        "timedOut": true,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "passed": [],
+        "knownRed": [],
+        "unexecuted": [],
+        "unknown": [],
+        "removed": [],
+        "groupState": "reconcile",
+        "timeoutCount": 2,
+        "nextAction": "reconcile",
+        "stateAccess": null,
+        "groupSnapshot": "loaded",
+        "hintIds": [],
+        "hints": [],
+        "evidence": [],
+        "diagnostics": [
+          {
+            "kind": "runner",
+            "test": null,
+            "message": "Original runner protocol unavailable after owner loss",
+            "location": null,
+            "stack": [],
+            "redacted": false,
+            "truncated": false,
+            "unavailableReason": "Original exit code and protocol unavailable"
+          }
+        ],
+        "diagnosticSummary": {
+          "totalEntries": 1,
+          "retainedEntries": 1,
+          "omittedEntries": 0,
+          "truncated": false,
+          "redacted": false
+        },
+        "environmentSummary": {
+          "executable": "",
+          "runtimeVersion": "",
+          "adapter": "unavailable",
+          "isolation": "unavailable",
+          "configurationFingerprints": {
+            "flow": "",
+            "testRuns": "",
+            "projects": ""
+          },
+          "tmpPathBytes": 0,
+          "privateRunTmp": false
+        }
+      },
+      "delivery": {
+        "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+        "pending": true,
+        "receiptId": null,
+        "returned": false,
+        "forwardedToMain": false
+      }
+    },
+    "originalRun": {
+      "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+      "deadlineMs": 1792956091475,
+      "startedAtMs": 1792956087475,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 4000
+      },
+      "callerPhase": "qa",
+      "processIdentity": "{\"pid\":2934216,\"start\":\"29876974\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/recovery-unit.test.mjs"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/recovery-unit.test.mjs"
+        ],
+        "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5",
+          "statePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+          "tmpPath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/tmp"
+        }
+      },
+      "testKind": "unit",
+      "startedAt": "2026-10-25T19:21:27.144Z",
+      "finishedAtMs": null,
+      "deadlineObservedAtMs": null,
+      "wrapperIdentity": "{\"pid\":2934173,\"start\":\"29876864\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "ownerIdentity": "{\"pid\":2934173,\"start\":\"29876864\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "temporary": {
+        "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+        "temporary": {
+          "path": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/t/r-UaqLyu",
+          "realpath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/t/r-UaqLyu",
+          "device": "64513",
+          "inode": "8131214",
+          "uid": 1000,
+          "mode": 16832,
+          "symlink": false,
+          "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416"
+        }
+      }
+    },
+    "controlStatePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/control/.raf/state.sqlite",
+    "unitStatePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+    "wrapper": {
+      "pid": 2934173,
+      "start": "29876864",
+      "boot": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    },
+    "tree": [],
+    "caller": {
+      "agentId": "state-recovery-stand",
+      "runId": "f6f6db28-6d65-4b8f-ae46-344e0bb89292",
+      "identity": {
+        "pid": 2933722,
+        "start": "29875572",
+        "boot": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      }
+    },
+    "generation": "4e9dc0a808281e819171871ad2cbb8a0a6dfc57012ec13caa49797811b3542b8",
+    "sha": "0b644c0d36abdc77fa5b55ba8d1c5468ee9172d1",
+    "dirtyPaths": [
+      "node_modules"
+    ],
+    "spawnCount": 1,
+    "releaseCount": 1
+  },
+  "accepted": {
+    "result": {
+      "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+      "project": "raf",
+      "workspace": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+      "group": "add-raf-test-run/state-open-recovery-fixture",
+      "phase": "qa",
+      "callerPhase": "qa",
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 4000
+      },
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/recovery-unit.test.mjs"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/recovery-unit.test.mjs"
+        ],
+        "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5",
+          "statePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+          "tmpPath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/tmp"
+        }
+      },
+      "startedAt": "2026-10-25T19:21:27.144Z",
+      "durationMs": 4728,
+      "outcome": "timed-out",
+      "failureKinds": [
+        "timeout"
+      ],
+      "exitCode": null,
+      "signal": null,
+      "timedOut": true,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [],
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "reconcile",
+      "timeoutCount": 2,
+      "nextAction": "reconcile",
+      "stateAccess": null,
+      "groupSnapshot": "loaded",
+      "hintIds": [],
+      "hints": [],
+      "evidence": [],
+      "diagnostics": [
+        {
+          "kind": "runner",
+          "test": null,
+          "message": "Original runner protocol unavailable after owner loss",
+          "location": null,
+          "stack": [],
+          "redacted": false,
+          "truncated": false,
+          "unavailableReason": "Original exit code and protocol unavailable"
+        }
+      ],
+      "diagnosticSummary": {
+        "totalEntries": 1,
+        "retainedEntries": 1,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "environmentSummary": {
+        "executable": "",
+        "runtimeVersion": "",
+        "adapter": "unavailable",
+        "isolation": "unavailable",
+        "configurationFingerprints": {
+          "flow": "",
+          "testRuns": "",
+          "projects": ""
+        },
+        "tmpPathBytes": 0,
+        "privateRunTmp": false
+      }
+    },
+    "stderr": "",
+    "cliCode": 1,
+    "argv": [
+      "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop/bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "raf",
+      "--phase",
+      "qa",
+      "--group",
+      "add-raf-test-run/state-open-recovery-fixture"
+    ],
+    "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop"
+  },
+  "concurrent": [
+    {
+      "result": {
+        "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+        "project": "raf",
+        "workspace": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "group": "add-raf-test-run/state-open-recovery-fixture",
+        "phase": "qa",
+        "callerPhase": "qa",
+        "testKind": "unit",
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/unitTests/timeoutMs",
+          "timeoutMs": 4000
+        },
+        "profileId": "node",
+        "selection": {
+          "files": [
+            "test/recovery-unit.test.mjs"
+          ],
+          "testIds": []
+        },
+        "command": {
+          "executable": "node",
+          "argv": [
+            "./scripts/test-run-node.ts",
+            "test/recovery-unit.test.mjs"
+          ],
+          "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+          "shell": false,
+          "environment": {
+            "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5",
+            "statePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+            "tmpPath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/tmp"
+          }
+        },
+        "startedAt": "2026-10-25T19:21:27.144Z",
+        "durationMs": 4728,
+        "outcome": "timed-out",
+        "failureKinds": [
+          "timeout"
+        ],
+        "exitCode": null,
+        "signal": null,
+        "timedOut": true,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "passed": [],
+        "knownRed": [],
+        "unexecuted": [],
+        "unknown": [],
+        "removed": [],
+        "groupState": "reconcile",
+        "timeoutCount": 2,
+        "nextAction": "reconcile",
+        "stateAccess": null,
+        "groupSnapshot": "loaded",
+        "hintIds": [],
+        "hints": [],
+        "evidence": [],
+        "diagnostics": [
+          {
+            "kind": "runner",
+            "test": null,
+            "message": "Original runner protocol unavailable after owner loss",
+            "location": null,
+            "stack": [],
+            "redacted": false,
+            "truncated": false,
+            "unavailableReason": "Original exit code and protocol unavailable"
+          }
+        ],
+        "diagnosticSummary": {
+          "totalEntries": 1,
+          "retainedEntries": 1,
+          "omittedEntries": 0,
+          "truncated": false,
+          "redacted": false
+        },
+        "environmentSummary": {
+          "executable": "",
+          "runtimeVersion": "",
+          "adapter": "unavailable",
+          "isolation": "unavailable",
+          "configurationFingerprints": {
+            "flow": "",
+            "testRuns": "",
+            "projects": ""
+          },
+          "tmpPathBytes": 0,
+          "privateRunTmp": false
+        }
+      },
+      "stderr": "",
+      "cliCode": 1,
+      "argv": [
+        "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop/bin/raf.ts",
+        "test",
+        "run",
+        "--project",
+        "raf",
+        "--phase",
+        "qa",
+        "--group",
+        "add-raf-test-run/state-open-recovery-fixture"
+      ],
+      "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop"
+    },
+    {
+      "result": {
+        "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+        "project": "raf",
+        "workspace": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "group": "add-raf-test-run/state-open-recovery-fixture",
+        "phase": "qa",
+        "callerPhase": "qa",
+        "testKind": "unit",
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/unitTests/timeoutMs",
+          "timeoutMs": 4000
+        },
+        "profileId": "node",
+        "selection": {
+          "files": [
+            "test/recovery-unit.test.mjs"
+          ],
+          "testIds": []
+        },
+        "command": {
+          "executable": "node",
+          "argv": [
+            "./scripts/test-run-node.ts",
+            "test/recovery-unit.test.mjs"
+          ],
+          "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+          "shell": false,
+          "environment": {
+            "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5",
+            "statePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+            "tmpPath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/tmp"
+          }
+        },
+        "startedAt": "2026-10-25T19:21:27.144Z",
+        "durationMs": 4728,
+        "outcome": "timed-out",
+        "failureKinds": [
+          "timeout"
+        ],
+        "exitCode": null,
+        "signal": null,
+        "timedOut": true,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "passed": [],
+        "knownRed": [],
+        "unexecuted": [],
+        "unknown": [],
+        "removed": [],
+        "groupState": "reconcile",
+        "timeoutCount": 2,
+        "nextAction": "reconcile",
+        "stateAccess": null,
+        "groupSnapshot": "loaded",
+        "hintIds": [],
+        "hints": [],
+        "evidence": [],
+        "diagnostics": [
+          {
+            "kind": "runner",
+            "test": null,
+            "message": "Original runner protocol unavailable after owner loss",
+            "location": null,
+            "stack": [],
+            "redacted": false,
+            "truncated": false,
+            "unavailableReason": "Original exit code and protocol unavailable"
+          }
+        ],
+        "diagnosticSummary": {
+          "totalEntries": 1,
+          "retainedEntries": 1,
+          "omittedEntries": 0,
+          "truncated": false,
+          "redacted": false
+        },
+        "environmentSummary": {
+          "executable": "",
+          "runtimeVersion": "",
+          "adapter": "unavailable",
+          "isolation": "unavailable",
+          "configurationFingerprints": {
+            "flow": "",
+            "testRuns": "",
+            "projects": ""
+          },
+          "tmpPathBytes": 0,
+          "privateRunTmp": false
+        }
+      },
+      "stderr": "",
+      "cliCode": 1,
+      "argv": [
+        "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop/bin/raf.ts",
+        "test",
+        "run",
+        "--project",
+        "raf",
+        "--phase",
+        "qa",
+        "--group",
+        "add-raf-test-run/state-open-recovery-fixture"
+      ],
+      "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop"
+    }
+  ],
+  "repeated": {
+    "group": {
+      "key": {
+        "project": "raf",
+        "workspace": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "group": "add-raf-test-run/state-open-recovery-fixture"
+      },
+      "testKind": "unit",
+      "profileId": "node",
+      "timeoutCount": 2,
+      "state": "reconcile",
+      "selection": {
+        "files": [
+          "test/recovery-unit.test.mjs"
+        ],
+        "testIds": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "inFlight": null,
+      "lastResult": {
+        "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+        "project": "raf",
+        "workspace": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "group": "add-raf-test-run/state-open-recovery-fixture",
+        "phase": "qa",
+        "callerPhase": "qa",
+        "testKind": "unit",
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/unitTests/timeoutMs",
+          "timeoutMs": 4000
+        },
+        "profileId": "node",
+        "selection": {
+          "files": [
+            "test/recovery-unit.test.mjs"
+          ],
+          "testIds": []
+        },
+        "command": {
+          "executable": "node",
+          "argv": [
+            "./scripts/test-run-node.ts",
+            "test/recovery-unit.test.mjs"
+          ],
+          "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+          "shell": false,
+          "environment": {
+            "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5",
+            "statePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+            "tmpPath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/tmp"
+          }
+        },
+        "startedAt": "2026-10-25T19:21:27.144Z",
+        "durationMs": 4728,
+        "outcome": "timed-out",
+        "failureKinds": [
+          "timeout"
+        ],
+        "exitCode": null,
+        "signal": null,
+        "timedOut": true,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "passed": [],
+        "knownRed": [],
+        "unexecuted": [],
+        "unknown": [],
+        "removed": [],
+        "groupState": "reconcile",
+        "timeoutCount": 2,
+        "nextAction": "reconcile",
+        "stateAccess": null,
+        "groupSnapshot": "loaded",
+        "hintIds": [],
+        "hints": [],
+        "evidence": [],
+        "diagnostics": [
+          {
+            "kind": "runner",
+            "test": null,
+            "message": "Original runner protocol unavailable after owner loss",
+            "location": null,
+            "stack": [],
+            "redacted": false,
+            "truncated": false,
+            "unavailableReason": "Original exit code and protocol unavailable"
+          }
+        ],
+        "diagnosticSummary": {
+          "totalEntries": 1,
+          "retainedEntries": 1,
+          "omittedEntries": 0,
+          "truncated": false,
+          "redacted": false
+        },
+        "environmentSummary": {
+          "executable": "",
+          "runtimeVersion": "",
+          "adapter": "unavailable",
+          "isolation": "unavailable",
+          "configurationFingerprints": {
+            "flow": "",
+            "testRuns": "",
+            "projects": ""
+          },
+          "tmpPathBytes": 0,
+          "privateRunTmp": false
+        }
+      },
+      "delivery": {
+        "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+        "pending": true,
+        "receiptId": "stand-receipt-4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+        "returned": false,
+        "forwardedToMain": false
+      }
+    },
+    "originalRun": {
+      "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+      "deadlineMs": 1792956091475,
+      "startedAtMs": 1792956087475,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 4000
+      },
+      "callerPhase": "qa",
+      "processIdentity": "{\"pid\":2934216,\"start\":\"29876974\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/recovery-unit.test.mjs"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/recovery-unit.test.mjs"
+        ],
+        "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5",
+          "statePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+          "tmpPath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/tmp"
+        }
+      },
+      "testKind": "unit",
+      "startedAt": "2026-10-25T19:21:27.144Z",
+      "finishedAtMs": null,
+      "deadlineObservedAtMs": null,
+      "wrapperIdentity": "{\"pid\":2934173,\"start\":\"29876864\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "ownerIdentity": "{\"pid\":2934173,\"start\":\"29876864\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+      "temporary": {
+        "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+        "temporary": {
+          "path": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/t/r-UaqLyu",
+          "realpath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/t/r-UaqLyu",
+          "device": "64513",
+          "inode": "8131214",
+          "uid": 1000,
+          "mode": 16832,
+          "symlink": false,
+          "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416"
+        }
+      }
+    },
+    "controlStatePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/control/.raf/state.sqlite",
+    "unitStatePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+    "wrapper": {
+      "pid": 2934173,
+      "start": "29876864",
+      "boot": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    },
+    "tree": [],
+    "caller": {
+      "agentId": "state-recovery-stand",
+      "runId": "f6f6db28-6d65-4b8f-ae46-344e0bb89292",
+      "identity": {
+        "pid": 2933722,
+        "start": "29875572",
+        "boot": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      }
+    },
+    "generation": "4e9dc0a808281e819171871ad2cbb8a0a6dfc57012ec13caa49797811b3542b8",
+    "sha": "0b644c0d36abdc77fa5b55ba8d1c5468ee9172d1",
+    "dirtyPaths": [
+      "node_modules"
+    ],
+    "spawnCount": 1,
+    "releaseCount": 1
+  },
+  "delivered": {
+    "result": {
+      "runId": "4df3b0c5-c9eb-4259-81ab-8567ef8be416",
+      "project": "raf",
+      "workspace": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+      "group": "add-raf-test-run/state-open-recovery-fixture",
+      "phase": "qa",
+      "callerPhase": "qa",
+      "testKind": "unit",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 4000
+      },
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/recovery-unit.test.mjs"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/recovery-unit.test.mjs"
+        ],
+        "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5",
+          "statePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/state.sqlite",
+          "tmpPath": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/u/0b722d6762f28c6e555d7c9ca3e483bb36d3ba40c915d566f369f2bbf5d0d6b5/.raf/tmp"
+        }
+      },
+      "startedAt": "2026-10-25T19:21:27.144Z",
+      "durationMs": 4728,
+      "outcome": "timed-out",
+      "failureKinds": [
+        "timeout"
+      ],
+      "exitCode": null,
+      "signal": null,
+      "timedOut": true,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": [],
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "groupState": "reconcile",
+      "timeoutCount": 2,
+      "nextAction": "reconcile",
+      "stateAccess": null,
+      "groupSnapshot": "loaded",
+      "hintIds": [],
+      "hints": [],
+      "evidence": [],
+      "diagnostics": [
+        {
+          "kind": "runner",
+          "test": null,
+          "message": "Original runner protocol unavailable after owner loss",
+          "location": null,
+          "stack": [],
+          "redacted": false,
+          "truncated": false,
+          "unavailableReason": "Original exit code and protocol unavailable"
+        }
+      ],
+      "diagnosticSummary": {
+        "totalEntries": 1,
+        "retainedEntries": 1,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": false
+      },
+      "environmentSummary": {
+        "executable": "",
+        "runtimeVersion": "",
+        "adapter": "unavailable",
+        "isolation": "unavailable",
+        "configurationFingerprints": {
+          "flow": "",
+          "testRuns": "",
+          "projects": ""
+        },
+        "tmpPathBytes": 0,
+        "privateRunTmp": false
+      }
+    },
+    "stderr": "",
+    "cliCode": 1,
+    "argv": [
+      "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop/bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "raf",
+      "--phase",
+      "qa",
+      "--group",
+      "add-raf-test-run/state-open-recovery-fixture"
+    ],
+    "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-host-iuPgX4/raf-develop"
+  },
+  "cleanup": {
+    "remainingOwned": [],
+    "operationalStateOpened": false
+  }
+}

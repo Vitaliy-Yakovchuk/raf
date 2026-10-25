@@ -1,0 +1,146 @@
+{
+  "result": {
+    "testKind": "unit",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 4000
+    },
+    "callerPhase": "qa",
+    "diagnostics": [
+      {
+        "kind": "preflight",
+        "test": null,
+        "errorName": "Error",
+        "errorCode": "UNKNOWN_RED_TEST",
+        "message": "UNKNOWN_RED_TEST: UNKNOWN_RED_TEST",
+        "location": {
+          "file": "src/test-runs.ts",
+          "line": 249,
+          "column": 80
+        },
+        "stack": [
+          "    at failure (src/test-runs.ts:249:80)",
+          "    at src/test-runs.ts:487:108",
+          "    at src/test-run-reservations.ts:131:57",
+          "    at Object.transaction (src/test-run-runtime.ts:58:22)",
+          "    at Object.transaction (src/test-run-runtime.ts:193:80)",
+          "    at Object.transaction (src/test-run-reservations.ts:131:39)",
+          "    at runTestRun (src/test-runs.ts:468:23)",
+          "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+          "    at async runResourceReservedTestRun (src/test-run-reservations.ts:265:18)",
+          "    at async runTestRunCli (src/test-run-cli.ts:31:20)"
+        ],
+        "redacted": false,
+        "truncated": false
+      }
+    ],
+    "diagnosticSummary": {
+      "totalEntries": 1,
+      "retainedEntries": 1,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": false
+    },
+    "environmentSummary": {
+      "executable": "node",
+      "runtimeVersion": "v26.12.1",
+      "adapter": "node-test-events",
+      "isolation": "process",
+      "configurationFingerprints": {
+        "flow": "7f749fd2b6f16a76cc182393a4448e683c9a426eea8e8380df76b78e06ee8785",
+        "testRuns": "692f82eff9f92dc2cd4ea3aaf0e2cdfc6172c881afe8e61f9cdac4c1bb4c180d",
+        "projects": "08d547bda4236a81319aa690f9690f4743e42fc82c2283003eb5c56ed14af4de"
+      },
+      "tmpPathBytes": 127,
+      "privateRunTmp": false
+    },
+    "runId": "e0aaa2a2-bed8-4ae3-8961-8f528605e378",
+    "project": "raf",
+    "workspace": "/srv/dev/h-rd-V3sl/raf-state-recovery-normal-BoZNQk/raf-develop",
+    "phase": "qa",
+    "group": "add-raf-test-run/state-open-recovery-fixture",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/recovery-unit.test.mjs"
+      ],
+      "testIds": [
+        {
+          "file": "test/recovery-unit.test.mjs",
+          "name": "unknown stand test"
+        }
+      ]
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "--test-name-pattern=^(?:unknown stand test)$",
+        "test/recovery-unit.test.mjs"
+      ],
+      "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-normal-BoZNQk/raf-develop",
+      "shell": false,
+      "environment": {
+        "HOME": "/srv/dev/h-rd-V3sl/raf-state-recovery-normal-BoZNQk/u/04aa5eba9d3d81346f94e8e7b5d2af724fe43cb8f7bb23b4606df24e39e580db",
+        "statePath": "/srv/dev/h-rd-V3sl/raf-state-recovery-normal-BoZNQk/u/04aa5eba9d3d81346f94e8e7b5d2af724fe43cb8f7bb23b4606df24e39e580db/.raf/state.sqlite",
+        "tmpPath": "/srv/dev/h-rd-V3sl/raf-state-recovery-normal-BoZNQk/u/04aa5eba9d3d81346f94e8e7b5d2af724fe43cb8f7bb23b4606df24e39e580db/.raf/tmp",
+        "testIds": [
+          {
+            "file": "test/recovery-unit.test.mjs",
+            "name": "unknown stand test"
+          }
+        ]
+      }
+    },
+    "startedAt": "2026-10-25T19:24:16.954Z",
+    "durationMs": 73,
+    "exitCode": null,
+    "signal": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "outcome": "refused",
+    "failureKinds": [
+      "refusal"
+    ],
+    "passed": [],
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "stateAccess": null,
+    "groupSnapshot": "loaded",
+    "groupState": "idle",
+    "timeoutCount": 1,
+    "nextAction": "fix-setup",
+    "hintIds": [
+      "refusal"
+    ],
+    "hints": [
+      "Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін."
+    ],
+    "evidence": [],
+    "errorCode": "UNKNOWN_RED_TEST",
+    "admission": null,
+    "resourceUsage": null,
+    "queue": null
+  },
+  "stderr": "",
+  "cliCode": 1,
+  "argv": [
+    "/srv/dev/h-rd-V3sl/raf-state-recovery-normal-BoZNQk/raf-develop/bin/raf.ts",
+    "test",
+    "run",
+    "--project",
+    "raf",
+    "--phase",
+    "qa",
+    "--group",
+    "add-raf-test-run/state-open-recovery-fixture",
+    "--only",
+    "test/recovery-unit.test.mjs::unknown stand test"
+  ],
+  "cwd": "/srv/dev/h-rd-V3sl/raf-state-recovery-normal-BoZNQk/raf-develop"
+}

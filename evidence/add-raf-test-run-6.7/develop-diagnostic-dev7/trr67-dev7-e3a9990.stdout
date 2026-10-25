@@ -1,0 +1,34 @@
+✔ S10 normal real unit passed preserves delivery and phase policy (3591.68672ms)
+✔ S10 normal real unit refused preserves delivery and phase policy (2767.64662ms)
+✔ S10 normal real integration passed preserves delivery and phase policy (3392.726873ms)
+✖ S10 normal real integration refused preserves delivery and phase policy (2500.020155ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12436.548339
+
+✖ failing tests:
+
+test at test/test-run-state-recovery-runtime.test.ts:221:5
+✖ S10 normal real integration refused preserves delivery and phase policy (2500.020155ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + null
+  - 'integration'
+  
+      at TestContext.<anonymous> (file:///srv/dev/raf-merge-67-root/raf/test/test-run-state-recovery-runtime.test.ts:228:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 'integration',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

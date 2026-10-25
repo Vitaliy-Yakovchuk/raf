@@ -10,6 +10,7 @@ const close = (a, b) => assert.ok(Math.abs(a - b) <= Math.max(1, Math.abs(a), Ma
 const payloads = (state, table) => (state[table] ?? []).map(row => row.payload ? JSON.parse(row.payload) : row);
 const matrix = ['empty', 'live', 'finished', 'missing', 'pid-reused', 'unverifiable'];
 const semanticTables = ['sessions', 'admission_reservations', 'reminders', 'pending_intents', 'qa_ps_events', 'closure_notices', 'result_notices', 'reminder_deliveries'];
+const derivedTables = ['command_timings', 'raf_cost_profile', 'raf_health_cpu', 'raf_health_summary', 'runners'];
 const stats = values => {
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
   return { samples: values.length, mean, min: Math.min(...values), max: Math.max(...values),
@@ -87,6 +88,9 @@ function verify(file) {
       assert.ok(sample.cpuFullMs + 1e-6 >= sample.cpuSelfMs, 'External full CPU includes every measured self interval');
       assert.deepEqual(sample.rusage, commandMap.get(sample.label + '-ps').rusage);
       const state = read(path.join(ev, sample.label + '-state-after.json'));
+      for (const [table, initial] of Object.entries(c.initial)) {
+        if (!semanticTables.includes(table) && !derivedTables.includes(table)) assert.deepEqual(state[table], initial, `${c.name}: unrelated SQLite table ${table} changed`);
+      }
       const sessions = payloads(state, 'sessions'), events = state.qa_ps_events.map(row => JSON.parse(row.intent));
       const reservations = payloads(state, 'admission_reservations');
       if (c.name === 'unverifiable') {

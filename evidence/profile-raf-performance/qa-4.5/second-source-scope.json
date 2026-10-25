@@ -1,0 +1,15 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--stat",
+    "1451bbe3f9521a0da486ec3b9cd94de3a5e863ba",
+    "535441d79f5b18d70442c9a7374c1037c428fee7",
+    "--",
+    "src"
+  ],
+  "cliExitCode": 0,
+  "stdout": " src/app-runtime.ts                  |  11 +-\n src/assignment.ts                   |  20 ++-\n src/codex-sandbox.ts                |  12 +-\n src/health-summary-runtime.ts       |  45 ++++++\n src/health-summary-storage.ts       |  61 ++++++++\n src/health-summary.ts               | 133 ++++++++++++++++-\n src/hotfix-host.ts                  |  11 +-\n src/hotfix-origin.ts                |   8 +-\n src/hotfix-worktree.ts              |   1 +\n src/main-layout.ts                  |  31 ++--\n src/main-production-store.ts        | 274 ++++++++++++++++++++++++++++++++++++\n src/main-switch-agent-launcher.ts   |  14 +-\n src/production-entry.ts             |  20 ++-\n src/production-runtime.ts           |  14 +-\n src/reminder-cli.ts                 |  17 +++\n src/state-store.ts                  |  51 ++++++-\n src/test-run-config-dependencies.ts | 110 ++++++++++++++-\n src/test-run-reservations.ts        |  33 ++++-\n src/test-run-runtime.ts             |  55 ++++++--\n 19 files changed, 856 insertions(+), 65 deletions(-)\n",
+  "stderr": "",
+  "interpretation": "The second live pair measures the complete committed develop revision against baseline. Concurrent health, protected store and assignment changes are included; the one-open QA counter isolates the local fix but does not uniquely attribute every wall/CPU difference."
+}

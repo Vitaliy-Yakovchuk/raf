@@ -20,7 +20,8 @@ assert not destination.exists(), 'Do not overwrite an earlier evidence archive'
 destination.mkdir(parents=True)
 selected = []
 for name, digest in entries.items():
-    if not (name.startswith('ev/') or name.startswith('root/conf/') or name in ['summary.json', 'stdout', 'stderr']):
+    top_log = '/' not in name and (name in ['stdout', 'stderr'] or name.endswith(('.stdout', '.stderr')))
+    if not (name.startswith('ev/') or name.startswith('root/conf/') or name == 'summary.json' or top_log):
         continue
     original = source / name
     assert not original.is_symlink() and original.is_file()

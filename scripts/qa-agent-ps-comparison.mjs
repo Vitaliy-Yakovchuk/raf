@@ -7,6 +7,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
 import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import { copyAgentPsConfiguration } from './qa-agent-ps-configuration.mjs';
 
 const atomic = (file, value) => {
   fs.writeFileSync(file + '.part', JSON.stringify(value, null, 2) + '\n');
@@ -134,7 +135,7 @@ sys.exit(code if code >= 0 else 128-code)
     summary.harnessSha256 = digest(script);
     summary.tools = Object.fromEntries([['git', ['--version']], ['tmux', ['-V']], ['ps', ['--version']], ['python3', ['--version']]].map(([exe, args]) => [exe, setup(exe, args)]));
     summary.sourceConfiguration = Object.fromEntries(['raf.json', 'flow.json', 'projects.json', 'models.json', 'raf-constants.json', 'test-runs.json'].map(name => [name, digest(path.join(conf, name))]));
-    fs.cpSync(conf, path.join(root, 'conf'), { recursive: true });
+    copyAgentPsConfiguration(conf, path.join(root, 'conf'));
     const projectPath = path.join(root, 'conf/projects.json'), projects = JSON.parse(fs.readFileSync(projectPath));
     projects.projects = { raf: projects.projects.raf, orchestrator: projects.projects.orchestrator };
     Object.assign(projects.projects.raf, { path: 'raf-main', branchPaths: { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' } });

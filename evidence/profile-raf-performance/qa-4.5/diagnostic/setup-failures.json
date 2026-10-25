@@ -1,0 +1,86 @@
+[
+  {
+    "label": "setup-failed-before",
+    "host": "/srv/dev/p45-diag-4B7JPR",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "--cpu-prof",
+      "--cpu-prof-dir=/srv/dev/p45-diag-4B7JPR",
+      "--cpu-prof-name=agent-ps.cpuprofile",
+      "--import",
+      "/srv/dev/p45-diag-4B7JPR/instrument.mjs",
+      "/srv/dev/p45-wzWK2O/root/raf-main/bin/raf.ts",
+      "agent",
+      "ps"
+    ],
+    "cliExitCode": 1,
+    "harnessExitCode": 1,
+    "harnessExitSource": "main verified message",
+    "outcome": "setup-failed",
+    "reason": "Read-only archived source could not create production activation lock owner; main repeats on writable copies. This is not a product assertion red or speed measurement.",
+    "files": [
+      {
+        "file": "command.json",
+        "sha256": "f516ca51bc8b7c818c21b5c8bdf857a6488857ed4654dc138a58bc83f2aff47e"
+      },
+      {
+        "file": "stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "stderr",
+        "sha256": "c5ec04f7fc58fde6e527ad64c45df01e0b1e98d8ca9625485715842c489a5158"
+      },
+      {
+        "file": "operations.json",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      }
+    ],
+    "secscan": {
+      "exitCode": 0,
+      "source": "main verified message"
+    }
+  },
+  {
+    "label": "setup-failed-after",
+    "host": "/srv/dev/p45-diag-vVljaJ",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "--cpu-prof",
+      "--cpu-prof-dir=/srv/dev/p45-diag-vVljaJ",
+      "--cpu-prof-name=agent-ps.cpuprofile",
+      "--import",
+      "/srv/dev/p45-diag-vVljaJ/instrument.mjs",
+      "/srv/dev/p45-q27DT6/root/raf-main/bin/raf.ts",
+      "agent",
+      "ps"
+    ],
+    "cliExitCode": 1,
+    "harnessExitCode": 1,
+    "harnessExitSource": "main verified message",
+    "outcome": "setup-failed",
+    "reason": "Read-only archived source could not create production activation lock owner; main repeats on writable copies. This is not a product assertion red or speed measurement.",
+    "files": [
+      {
+        "file": "command.json",
+        "sha256": "889df0d318b7057133a74656968d14af1884e79d907e5b9c5b6b4ef727c959b2"
+      },
+      {
+        "file": "stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "stderr",
+        "sha256": "06a2a9eea3aa590f018df77b9bfa78e802712339039a5546c174a3d7e12da727"
+      },
+      {
+        "file": "operations.json",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      }
+    ],
+    "secscan": {
+      "exitCode": 0,
+      "source": "main verified message"
+    }
+  }
+]

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { copyAgentPsConfiguration } from '../scripts/qa-agent-ps-configuration.mjs';
 import { registerHooks } from 'node:module';
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
@@ -38,6 +39,27 @@ const configuration: RuntimeConfiguration = {
 const start = 'Sun Oct 25 00:00:00 2026';
 const startedAt = new Date(start).toISOString();
 const succeeded: WorkResult = { status: 'succeeded', response: 'Verified result', proof: { fixture: true } };
+
+test('agent ps live harness: read-only source conf remains immutable and its owned copy is writable', async t => {
+  const directory = await mkdtemp(join(tmpdir(), 'raf-ps-conf-unit-'));
+  const source = join(directory, 'source'), destination = join(directory, 'destination');
+  await mkdir(source);
+  await writeFile(join(source, 'projects.json'), '{"projects":{}}\n');
+  await chmod(join(source, 'projects.json'), 0o400);
+  await chmod(source, 0o500);
+  t.after(async () => {
+    for (const path of [source, destination]) await chmod(path, 0o700).catch(() => {});
+    await rm(directory, { recursive: true, force: true });
+  });
+  copyAgentPsConfiguration(source, destination);
+  assert.equal((await stat(destination)).mode & 0o200, 0o200, 'The new owned conf directory must permit fixture normalization');
+  assert.equal((await stat(join(destination, 'projects.json'))).mode & 0o200, 0o200, 'The new owned projects file must permit fixture normalization');
+  assert.equal((await stat(source)).mode & 0o777, 0o500);
+  assert.equal((await stat(join(source, 'projects.json'))).mode & 0o777, 0o400);
+  assert.equal(await readFile(join(destination, 'projects.json'), 'utf8'), await readFile(join(source, 'projects.json'), 'utf8'));
+  await writeFile(join(destination, 'projects.json'), '{"projects":{"raf":{}}}\n');
+  assert.equal(await readFile(join(source, 'projects.json'), 'utf8'), '{"projects":{}}\n');
+});
 
 async function fixture(t: TestContext) {
   const directory = await mkdtemp(join(tmpdir(), 'raf-ps-unit-'));

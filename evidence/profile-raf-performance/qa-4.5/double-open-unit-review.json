@@ -1,0 +1,83 @@
+{
+  "group": "profile-raf-performance/agent-ps",
+  "selection": [
+    "test/agent-ps-cost.test.ts"
+  ],
+  "qaHomeUnchanged": true,
+  "implementationCommit": "535441d79f5b18d70442c9a7374c1037c428fee7",
+  "workspaceEvidence": [
+    "double-open-red-workspace.json",
+    "double-open-green-workspace.json"
+  ],
+  "runs": [
+    {
+      "stage": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "result": "agent-ps-double-open-red.TestRunResult.json",
+      "stderr": "agent-ps-double-open-red.stderr.txt",
+      "cliEvidence": "agent-ps-double-open-red.cli.json",
+      "runId": "523fb23b-905f-4bc6-8adb-1d7901d835e4",
+      "phase": "qa",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "passed": 14,
+      "knownRed": 7,
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "nextAction": "fix-implementation"
+    },
+    {
+      "stage": "intermediate",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "result": "agent-ps-double-open-intermediate.TestRunResult.json",
+      "stderr": "agent-ps-double-open-intermediate.stderr.txt",
+      "cliEvidence": "agent-ps-double-open-intermediate.cli.json",
+      "runId": "0c9bdda6-efea-4628-b24d-0cadd2552961",
+      "phase": "qa",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "passed": 14,
+      "knownRed": 7,
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "nextAction": "fix-implementation"
+    },
+    {
+      "stage": "green",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "result": "agent-ps-double-open-green.TestRunResult.json",
+      "stderr": "agent-ps-double-open-green.stderr.txt",
+      "cliEvidence": "agent-ps-double-open-green.cli.json",
+      "runId": "134bde56-2aa0-409c-a912-0b93804a0bcd",
+      "phase": "qa",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 21,
+      "knownRed": 0,
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "nextAction": "complete"
+    }
+  ]
+}

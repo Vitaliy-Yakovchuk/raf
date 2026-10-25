@@ -1,0 +1,34 @@
+{
+  "reviewed": "ae1d7cce7a8f572eb0e01d50c5b16a0d2c1334ed",
+  "recipient": "main",
+  "accepted": true,
+  "receiptId": "8613301a-d7a2-4e2d-8a46-39d5156cd1a0",
+  "command": "LC_ALL=C node scripts/qa-main-symlink-live.mjs ae1d7cce7a8f572eb0e01d50c5b16a0d2c1334ed --resume-after-start /srv/dev/s72-bDaBYe",
+  "hostEnvironmentSelectors": [
+    "CODEX_HOME",
+    "CLAUDE_CONFIG_DIR"
+  ],
+  "completed": [
+    "actual-start"
+  ],
+  "pending": [
+    "develop-main",
+    "hotfix-main-develop",
+    "rollback",
+    "native-channel",
+    "pending-report-message",
+    "handover",
+    "repeat-start"
+  ],
+  "reportContinuing": true,
+  "previousDelivery": {
+    "accepted": false,
+    "cliCode": 1,
+    "code": "HANDLER_FAILED",
+    "reason": "Recipient composer contains unrelated input",
+    "completed": [],
+    "pending": [],
+    "retrySafe": true
+  },
+  "note": "The final unit qa completed before main announced subsequent conf registration b1ca8e7cf5; no retry of a passed run."
+}

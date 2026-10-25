@@ -296,7 +296,9 @@ if (process.argv[2] === 'pane') {
     try { const current = record(); if (live(current?.pid)) { process.kill(current.pid, 'SIGKILL'); await wait('own service cleanup', () => !live(current.pid)); } } catch (error) { if (error.code !== 'ENOENT') summary.cleanup.serviceError = String(error); }
     for (const socket of sockets) { const result = run('tmux-cleanup-' + (++sequence), 'tmux', ['-S', socket, 'kill-server']); if (result.cliExitCode !== 0) summary.cleanup.tmuxError = result.stderr; }
     for (const child of processes) if (child.exitCode === null && child.signalCode === null) { const exit = new Promise(resolve => child.once('close', resolve)); child.kill('SIGKILL'); await exit; }
-    const remaining = fs.readdirSync('/proc').filter(name => /^\d+$/.test(name)).flatMap(name => { try { const cwd = fs.readlinkSync('/proc/' + name + '/cwd'); return cwd.startsWith(base + '/') && live(Number(name)) ? [{ pid: Number(name), cwd }] : []; } catch { return []; } });
+    const remainingOwned=()=>fs.readdirSync('/proc').filter(name => /^\d+$/.test(name)).flatMap(name => { try { const cwd = fs.readlinkSync('/proc/' + name + '/cwd'); return cwd.startsWith(base + '/') && live(Number(name)) ? [{ pid: Number(name), cwd, command:fs.readFileSync('/proc/'+name+'/cmdline','utf8').replaceAll('\0',' ') }] : []; } catch { return []; } });
+    try {await wait('owned process tree termination',()=>remainingOwned().length===0,5000);}catch(error){summary.cleanup.processExitError=String(error);}
+    const remaining=remainingOwned();
     summary.cleanup.remaining = remaining; summary.cleanup.complete = remaining.length === 0 && !summary.cleanup.stopError && !summary.cleanup.serviceError && !summary.cleanup.tmuxError;
     if (fs.existsSync(path.join(home, '.raf/service.log'))) fs.copyFileSync(path.join(home, '.raf/service.log'), path.join(output, 'service.log'));
     fs.writeFileSync(path.join(output,'upstream.stderr'),upstreamErrors);

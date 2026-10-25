@@ -1,0 +1,108 @@
+[
+  {
+    "label": "before",
+    "host": "/srv/dev/p45-diag-q9rZeo",
+    "hostManifestSha256": "a9e53c22a3d0cef563a2161b6630592508eb0145bc68dfc5ab4d9f71f7a3ffcf",
+    "hostManifestFiles": 14241,
+    "selectedFiles": [
+      {
+        "file": "command.json",
+        "sha256": "657c96c7a31f9dfa26bb0c78a7a0baddb34de532d7c436789fba329cff767aaf"
+      },
+      {
+        "file": "operations.json",
+        "sha256": "935fffb7d8d34a03125833d6fe07a2942a99584e1fe3c3196a8d3f94420a835c"
+      },
+      {
+        "file": "stdout",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      {
+        "file": "stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "instrument.mjs",
+        "sha256": "e9ac10664d2631086b3bc1af74acbdc776f2f21da4840ea553754789974b074a"
+      },
+      {
+        "file": "agent-ps.cpuprofile",
+        "sha256": "002261f78c485689163db229cc217f26ab32113d5c854dcf99fc35e7971c1ae3"
+      },
+      {
+        "file": "harness.stdout",
+        "sha256": "c1fba813a2d98383dc4a318bbba1b17609a441c9fe5c362e4f27605d1a911fa5",
+        "source": "/srv/dev/p45c-diag-p45-wzWK2O.stdout",
+        "hostManifestVerified": false
+      },
+      {
+        "file": "harness.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source": "/srv/dev/p45c-diag-p45-wzWK2O.stderr",
+        "hostManifestVerified": false
+      }
+    ],
+    "allSelectedManifestEntriesVerified": true,
+    "cliExitCode": 0,
+    "harnessExitCode": 0,
+    "exitCodeSource": "command.json and main verified message",
+    "secscan": {
+      "exitCode": 0,
+      "source": "main verified message"
+    },
+    "excludedFromSpeedAcceptance": true
+  },
+  {
+    "label": "after-4.4",
+    "host": "/srv/dev/p45-diag-XSTgEr",
+    "hostManifestSha256": "71f747732bdd709810bd62c3e142bafd61337d74d9b8f95a485251ad0d6aec68",
+    "hostManifestFiles": 15483,
+    "selectedFiles": [
+      {
+        "file": "command.json",
+        "sha256": "b1e94e588873fbb02719d7fd8bc0728b7ee9a2ab08222b200e71eb86f18e15e7"
+      },
+      {
+        "file": "operations.json",
+        "sha256": "985ecef0009b07a4d9e51e580a8c8620257a1aeb591d3e23bb062a015b15189d"
+      },
+      {
+        "file": "stdout",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      },
+      {
+        "file": "stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "file": "instrument.mjs",
+        "sha256": "513c2364224801a74073dea01078c4b0e267b2e5316c7f2e62601ffde64330c8"
+      },
+      {
+        "file": "agent-ps.cpuprofile",
+        "sha256": "0e2c75b88bc72da5cbe545036eb59338de91305d0c7caba8dba6903529e68bc0"
+      },
+      {
+        "file": "harness.stdout",
+        "sha256": "f108f40e54773ab4c421707fcbe7a482468d4c37b48b63938eca56c7c1d49d9f",
+        "source": "/srv/dev/p45c-diag-p45-q27DT6.stdout",
+        "hostManifestVerified": false
+      },
+      {
+        "file": "harness.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source": "/srv/dev/p45c-diag-p45-q27DT6.stderr",
+        "hostManifestVerified": false
+      }
+    ],
+    "allSelectedManifestEntriesVerified": true,
+    "cliExitCode": 0,
+    "harnessExitCode": 0,
+    "exitCodeSource": "command.json and main verified message",
+    "secscan": {
+      "exitCode": 0,
+      "source": "main verified message"
+    },
+    "excludedFromSpeedAcceptance": true
+  }
+]

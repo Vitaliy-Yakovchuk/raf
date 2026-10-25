@@ -1,0 +1,32 @@
+{
+  "label": "service-start",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-zdTeyF/root/raf-main/bin/raf.ts",
+    "service",
+    "start"
+  ],
+  "cwd": "/srv/dev/p45-zdTeyF/root/raf-main",
+  "startedAt": "2026-10-25T03:36:33.407Z",
+  "finishedAt": "2026-10-25T03:36:41.290Z",
+  "wallMs": 7881.753912,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 291,
+  "stderrBytes": 0,
+  "loadAverage": [
+    2.05,
+    1.68,
+    2.13
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 2914.328,
+    "cpuSystemMs": 3336.771,
+    "wallMs": 7855.857501,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 6251.099
+}

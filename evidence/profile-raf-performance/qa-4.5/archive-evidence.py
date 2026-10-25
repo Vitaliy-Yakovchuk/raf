@@ -1,12 +1,14 @@
 import hashlib
 import json
 import pathlib
-import shutil
 import sys
 
 source, destination = map(pathlib.Path, sys.argv[1:3])
 expected_hash, expected_count = sys.argv[3], int(sys.argv[4])
-manifest = (source / 'MANIFEST.sha256').read_bytes()
+manifest_path = source / 'MANIFEST.sha256'
+if not manifest_path.exists():
+    manifest_path = pathlib.Path(str(source) + '.sha256')
+manifest = manifest_path.read_bytes()
 assert hashlib.sha256(manifest).hexdigest() == expected_hash
 entries = {}
 for line in manifest.decode().splitlines():

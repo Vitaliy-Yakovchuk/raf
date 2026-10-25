@@ -1,0 +1,32 @@
+{
+  "label": "pid-reused-2-ps",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-zdTeyF/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-zdTeyF/root/raf-main",
+  "startedAt": "2026-10-25T03:40:37.066Z",
+  "finishedAt": "2026-10-25T03:40:39.612Z",
+  "wallMs": 2546.7185549999995,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 3,
+  "stderrBytes": 52,
+  "loadAverage": [
+    3.15,
+    2.12,
+    2.18
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1627.644,
+    "cpuSystemMs": 1304.2359999999999,
+    "wallMs": 2522.854868,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 2931.88
+}

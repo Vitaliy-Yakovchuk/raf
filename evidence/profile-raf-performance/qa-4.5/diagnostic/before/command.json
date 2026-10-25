@@ -1,0 +1,22 @@
+{
+  "reviewed": "1212a1330a2b097620bd491e5cc8d2f549c774b9",
+  "fixture": "/srv/dev/p45-wzWK2O",
+  "startedAt": "2026-10-25T03:36:12.632Z",
+  "finishedAt": "2026-10-25T03:36:14.995Z",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "--cpu-prof",
+    "--cpu-prof-dir=/srv/dev/p45-diag-q9rZeo",
+    "--cpu-prof-name=agent-ps.cpuprofile",
+    "--import",
+    "/srv/dev/p45-diag-q9rZeo/instrument.mjs",
+    "/srv/dev/p45-diag-q9rZeo/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-diag-q9rZeo/root/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "mode": "Fresh isolated root, normal generation activation, restored original empty seed after warmup; separate V8 CPU sampling and real module operation wrappers; excluded from speed acceptance series"
+}

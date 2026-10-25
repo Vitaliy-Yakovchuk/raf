@@ -1,0 +1,119 @@
+[
+  {
+    "label": "setup-failed-after",
+    "host": "/srv/dev/p45-iNz7BC",
+    "reviewed": "535441d79f5b18d70442c9a7374c1037c428fee7",
+    "harnessSha256": "d024ee65c5a758c0fa4dc303166a36fe375cca47ed93fa188e249ab156057949",
+    "sourceWorkspace": {
+      "head": "fc2bd476aebb79101272b3f467c6fecc888361b5",
+      "status": "?? node_modules",
+      "policy": "Only the exact committed SHA enters the fresh clone; unrelated workspace edits are excluded."
+    },
+    "hostManifestSha256": "ba48528b7c8b432b23a721400f9dd805d5132bdc6f2170747ed2b975a792239e",
+    "selectedManifestFiles": 29,
+    "harnessLogs": [
+      {
+        "file": "harness.stdout",
+        "sha256": "f2fa0ada8d22f77357c813bb4ca60f58d207f2a048913fc61567e3dbc47a4afd",
+        "source": "/srv/dev/p45c-run-535441d.stdout",
+        "hostManifestVerified": false
+      },
+      {
+        "file": "harness.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source": "/srv/dev/p45c-run-535441d.stderr",
+        "hostManifestVerified": false
+      }
+    ],
+    "cliExitCode": 1,
+    "cliExitSource": "main verified message",
+    "childCommands": 1,
+    "samples": 0,
+    "cleanup": {
+      "complete": true,
+      "service": null,
+      "actors": [],
+      "remainingProcesses": []
+    },
+    "secscan": {
+      "exitCode": 0,
+      "source": "main verified message"
+    },
+    "acceptance": "Excluded: after stopped before samples; this complete control has no matched after series with this harness"
+  },
+  {
+    "label": "unpaired-control",
+    "host": "/srv/dev/p45-zdTeyF",
+    "reviewed": "1212a1330a2b097620bd491e5cc8d2f549c774b9",
+    "harnessSha256": "d024ee65c5a758c0fa4dc303166a36fe375cca47ed93fa188e249ab156057949",
+    "sourceWorkspace": {
+      "head": "fc2bd476aebb79101272b3f467c6fecc888361b5",
+      "status": "?? node_modules",
+      "policy": "Only the exact committed SHA enters the fresh clone; unrelated workspace edits are excluded."
+    },
+    "hostManifestSha256": "6a01e30daba161c0eaf1dd25ecf02c10ef1b760da37a303fff22dc894665dc50",
+    "selectedManifestFiles": 647,
+    "harnessLogs": [
+      {
+        "file": "harness.stdout",
+        "sha256": "9da20df501509810321a8b3fe6f7475c45fd1bccacebb9a0fafad0d20bc2d431",
+        "source": "/srv/dev/p45c-run-1212a13.stdout",
+        "hostManifestVerified": false
+      },
+      {
+        "file": "harness.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source": "/srv/dev/p45c-run-1212a13.stderr",
+        "hostManifestVerified": false
+      }
+    ],
+    "cliExitCode": 0,
+    "cliExitSource": "main verified message",
+    "childCommands": 135,
+    "samples": 30,
+    "cleanup": {
+      "complete": true,
+      "service": {
+        "pid": 3745125,
+        "identity": {
+          "pid": 3745125,
+          "startedAt": "24208126",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "token": "a94f9205-16aa-4c04-ba64-ee7fad33c96e",
+        "mainPath": "/srv/dev/p45-zdTeyF/root/.git/modules/raf-main/raf-hotfix/generations/831256ab-5308-48bd-9fe5-e196c8ac79b5/raf-main",
+        "state": "stopped",
+        "stopReason": "Service stopped normally"
+      },
+      "actors": [
+        {
+          "pid": 3745198,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "pid": 3745206,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "pid": 3745214,
+          "exitCode": 0,
+          "signal": null
+        }
+      ],
+      "remainingProcesses": [],
+      "integrityCheck": [
+        {
+          "integrity_check": "ok"
+        }
+      ]
+    },
+    "secscan": {
+      "exitCode": 0,
+      "source": "main verified message"
+    },
+    "acceptance": "Excluded: after stopped before samples; this complete control has no matched after series with this harness"
+  }
+]

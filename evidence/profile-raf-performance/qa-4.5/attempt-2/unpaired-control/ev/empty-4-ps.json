@@ -1,0 +1,32 @@
+{
+  "label": "empty-4-ps",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-zdTeyF/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-zdTeyF/root/raf-main",
+  "startedAt": "2026-10-25T03:37:20.311Z",
+  "finishedAt": "2026-10-25T03:37:22.838Z",
+  "wallMs": 2527.2785589999985,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 3,
+  "stderrBytes": 0,
+  "loadAverage": [
+    1.77,
+    1.66,
+    2.1
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1729.773,
+    "cpuSystemMs": 1364.99,
+    "wallMs": 2473.861984,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 3094.763
+}

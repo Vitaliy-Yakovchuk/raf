@@ -1,0 +1,470 @@
+{
+  "host": "/srv/dev/p45-diag-XSTgEr",
+  "evidenceDirectory": "evidence/profile-raf-performance/qa-4.5/diagnostic/after-4.4",
+  "reviewed": "1451bbe3f9521a0da486ec3b9cd94de3a5e863ba",
+  "cliExitCode": 0,
+  "command": [
+    "/opt/dev/node/bin/node",
+    "--cpu-prof",
+    "--cpu-prof-dir=/srv/dev/p45-diag-XSTgEr",
+    "--cpu-prof-name=agent-ps.cpuprofile",
+    "--import",
+    "/srv/dev/p45-diag-XSTgEr/instrument.mjs",
+    "/srv/dev/p45-diag-XSTgEr/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "operations": {
+    "state-migration-guard.ts::productionStateContext": {
+      "calls": 2,
+      "wallMs": [
+        165.78646600000002,
+        133.86010899999997
+      ],
+      "selfCpuMs": [
+        185.44299999999998,
+        143.00599999999997
+      ],
+      "inclusiveWallTotalMs": 299.646575,
+      "inclusiveSelfCpuTotalMs": 328.44899999999996
+    },
+    "state-migration-guard.ts::verifyStateContext": {
+      "calls": 8,
+      "wallMs": [
+        152.27718800000002,
+        137.52928599999996,
+        174.6125219999999,
+        139.0746529999999,
+        155.1629009999997,
+        147.648279,
+        145.06180799999993,
+        151.92054999999982
+      ],
+      "selfCpuMs": [
+        176.095,
+        154.233,
+        224.892,
+        195.132,
+        161.668,
+        176.992,
+        162.519,
+        183.502
+      ],
+      "inclusiveWallTotalMs": 1203.2871869999992,
+      "inclusiveSelfCpuTotalMs": 1435.033
+    },
+    "state-store.ts::openStateStore": {
+      "calls": 2,
+      "wallMs": [
+        606.5742600000001,
+        601.878068
+      ],
+      "selfCpuMs": [
+        753.642,
+        689.562
+      ],
+      "inclusiveWallTotalMs": 1208.452328,
+      "inclusiveSelfCpuTotalMs": 1443.2040000000002
+    }
+  },
+  "operationCaveat": "Operation wrappers are inclusive and nested. Never add store and guard totals together. CPU is process.cpuUsage self only; this diagnostic is excluded from full CPU acceptance.",
+  "v8": {
+    "samples": 2345,
+    "totalSampledIntervalMs": 2668.693,
+    "topExclusiveSampleLocations": [
+      {
+        "functionName": "(idle)",
+        "url": "",
+        "line": 0,
+        "sampledIntervalMs": 526.619,
+        "fractionOfSampledIntervals": 0.19733217721184115
+      },
+      {
+        "functionName": "lstat",
+        "url": "",
+        "line": 0,
+        "sampledIntervalMs": 333.5789999999998,
+        "fractionOfSampledIntervals": 0.1249971427961177
+      },
+      {
+        "functionName": "open",
+        "url": "",
+        "line": 0,
+        "sampledIntervalMs": 244.55200000000016,
+        "fractionOfSampledIntervals": 0.0916373670557086
+      },
+      {
+        "functionName": "update",
+        "url": "node:internal/crypto/hash",
+        "line": 179,
+        "sampledIntervalMs": 226.11200000000002,
+        "fractionOfSampledIntervals": 0.084727617601575
+      },
+      {
+        "functionName": "read",
+        "url": "",
+        "line": 0,
+        "sampledIntervalMs": 217.66400000000004,
+        "fractionOfSampledIntervals": 0.08156202305772901
+      },
+      {
+        "functionName": "fstat",
+        "url": "",
+        "line": 0,
+        "sampledIntervalMs": 128.9989999999999,
+        "fractionOfSampledIntervals": 0.04833789424261236
+      },
+      {
+        "functionName": "spawnSync",
+        "url": "node:internal/child_process",
+        "line": 1160,
+        "sampledIntervalMs": 107.87499999999997,
+        "fractionOfSampledIntervals": 0.04042240902194444
+      },
+      {
+        "functionName": "(garbage collector)",
+        "url": "",
+        "line": 0,
+        "sampledIntervalMs": 80.02100000000002,
+        "fractionOfSampledIntervals": 0.02998509007967571
+      },
+      {
+        "functionName": "Hash",
+        "url": "node:internal/crypto/hash",
+        "line": 105,
+        "sampledIntervalMs": 47.18099999999999,
+        "fractionOfSampledIntervals": 0.017679440834895577
+      },
+      {
+        "functionName": "readdir",
+        "url": "",
+        "line": 0,
+        "sampledIntervalMs": 47.17099999999999,
+        "fractionOfSampledIntervals": 0.017675693682263186
+      },
+      {
+        "functionName": "normalizeString",
+        "url": "node:path",
+        "line": 92,
+        "sampledIntervalMs": 39.69500000000001,
+        "fractionOfSampledIntervals": 0.01487432237428584
+      },
+      {
+        "functionName": "close",
+        "url": "",
+        "line": 0,
+        "sampledIntervalMs": 38.793000000000006,
+        "fractionOfSampledIntervals": 0.01453632920684395
+      },
+      {
+        "functionName": "(program)",
+        "url": "",
+        "line": 0,
+        "sampledIntervalMs": 38.47099999999999,
+        "fractionOfSampledIntervals": 0.014415670892080875
+      },
+      {
+        "functionName": "transaction",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-store.ts",
+        "line": 208,
+        "sampledIntervalMs": 38.312999999999995,
+        "fractionOfSampledIntervals": 0.01435646588048906
+      },
+      {
+        "functionName": "relative",
+        "url": "node:path",
+        "line": 1353,
+        "sampledIntervalMs": 29.503,
+        "fractionOfSampledIntervals": 0.011055224411350425
+      },
+      {
+        "functionName": "compileSourceTextModule",
+        "url": "node:internal/modules/esm/utils",
+        "line": 338,
+        "sampledIntervalMs": 28.128000000000007,
+        "fractionOfSampledIntervals": 0.010539990924396326
+      },
+      {
+        "functionName": "run",
+        "url": "",
+        "line": 0,
+        "sampledIntervalMs": 27.629,
+        "fractionOfSampledIntervals": 0.01035300800803989
+      },
+      {
+        "functionName": "walk",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/hotfix-origin.ts",
+        "line": 14,
+        "sampledIntervalMs": 26.745000000000005,
+        "fractionOfSampledIntervals": 0.01002175971533631
+      },
+      {
+        "functionName": "hotfixModuleOrigin",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/hotfix-origin.ts",
+        "line": 28,
+        "sampledIntervalMs": 17.679,
+        "fractionOfSampledIntervals": 0.006624591138808397
+      },
+      {
+        "functionName": "schema",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/startup-context.ts",
+        "line": 240,
+        "sampledIntervalMs": 14.964,
+        "fractionOfSampledIntervals": 0.005607239199113574
+      },
+      {
+        "functionName": "resolve",
+        "url": "node:path",
+        "line": 1245,
+        "sampledIntervalMs": 14.395999999999999,
+        "fractionOfSampledIntervals": 0.005394400929593624
+      },
+      {
+        "functionName": "wrappedFn",
+        "url": "node:internal/errors",
+        "line": 542,
+        "sampledIntervalMs": 14.324000000000002,
+        "fractionOfSampledIntervals": 0.005367421430640392
+      },
+      {
+        "functionName": "__require",
+        "url": "node:internal/deps/amaro/dist/index",
+        "line": 8,
+        "sampledIntervalMs": 13.812999999999999,
+        "fractionOfSampledIntervals": 0.005175941931125086
+      },
+      {
+        "functionName": "digest",
+        "url": "node:internal/crypto/hash",
+        "line": 197,
+        "sampledIntervalMs": 13.096,
+        "fractionOfSampledIntervals": 0.004907271087382475
+      },
+      {
+        "functionName": "join",
+        "url": "node:path",
+        "line": 1329,
+        "sampledIntervalMs": 11.98,
+        "fractionOfSampledIntervals": 0.004489088853607365
+      },
+      {
+        "functionName": "spawn",
+        "url": "node:internal/child_process",
+        "line": 384,
+        "sampledIntervalMs": 10.897999999999998,
+        "fractionOfSampledIntervals": 0.004083646938782392
+      },
+      {
+        "functionName": "json",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/hotfix-origin.ts",
+        "line": 6,
+        "sampledIntervalMs": 10.021,
+        "fractionOfSampledIntervals": 0.0037550216529214863
+      },
+      {
+        "functionName": "normalize",
+        "url": "node:path",
+        "line": 1292,
+        "sampledIntervalMs": 9.964,
+        "fractionOfSampledIntervals": 0.0037336628829168434
+      },
+      {
+        "functionName": "Module",
+        "url": "",
+        "line": 0,
+        "sampledIntervalMs": 8.953000000000001,
+        "fractionOfSampledIntervals": 0.003354825751781865
+      },
+      {
+        "functionName": "compileForInternalLoader",
+        "url": "node:internal/bootstrap/realm",
+        "line": 425,
+        "sampledIntervalMs": 8.877999999999998,
+        "fractionOfSampledIntervals": 0.0033267221070389127
+      }
+    ],
+    "topInclusiveSourceLocations": [
+      {
+        "functionName": "<anonymous>",
+        "url": "ps-diagnostic:file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-migration-guard.ts",
+        "line": 1,
+        "sampledIntervalMs": 1443.1570000000013
+      },
+      {
+        "functionName": "resolveStateContext",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-migration-guard.ts",
+        "line": 134,
+        "sampledIntervalMs": 1438.801000000001
+      },
+      {
+        "functionName": "hotfixModuleOrigin",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/hotfix-origin.ts",
+        "line": 28,
+        "sampledIntervalMs": 1429.672000000001
+      },
+      {
+        "functionName": "walk",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/hotfix-origin.ts",
+        "line": 14,
+        "sampledIntervalMs": 1287.2720000000006
+      },
+      {
+        "functionName": "inventory",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/hotfix-origin.ts",
+        "line": 12,
+        "sampledIntervalMs": 1287.2720000000006
+      },
+      {
+        "functionName": "<anonymous>",
+        "url": "ps-diagnostic:file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-store.ts",
+        "line": 1,
+        "sampledIntervalMs": 1157.2939999999992
+      },
+      {
+        "functionName": "openStateStore",
+        "url": "ps-diagnostic:file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-store.ts",
+        "line": 1,
+        "sampledIntervalMs": 1157.2939999999992
+      },
+      {
+        "functionName": "openStateStore",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-store.ts",
+        "line": 131,
+        "sampledIntervalMs": 1156.259999999999
+      },
+      {
+        "functionName": "checkContext",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-store.ts",
+        "line": 136,
+        "sampledIntervalMs": 1152.3069999999989
+      },
+      {
+        "functionName": "verifyStateContext",
+        "url": "ps-diagnostic:file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-migration-guard.ts",
+        "line": 1,
+        "sampledIntervalMs": 1151.2039999999988
+      },
+      {
+        "functionName": "verifyStateContext",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-migration-guard.ts",
+        "line": 184,
+        "sampledIntervalMs": 1150.0939999999987
+      },
+      {
+        "functionName": "runPublicCli",
+        "url": "file://<diagnostic>/root/raf-main/src/cli.ts",
+        "line": 116,
+        "sampledIntervalMs": 1059.6019999999999
+      },
+      {
+        "functionName": "<anonymous>",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/production-entry.ts",
+        "line": 159,
+        "sampledIntervalMs": 927.4740000000003
+      },
+      {
+        "functionName": "execute",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/cli.ts",
+        "line": 62,
+        "sampledIntervalMs": 891.8100000000003
+      },
+      {
+        "functionName": "runCli",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/bootstrap.ts",
+        "line": 37,
+        "sampledIntervalMs": 891.8100000000003
+      },
+      {
+        "functionName": "runProductionCli",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/production-entry.ts",
+        "line": 146,
+        "sampledIntervalMs": 891.8100000000003
+      },
+      {
+        "functionName": "<anonymous>",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/app-runtime.ts",
+        "line": 187,
+        "sampledIntervalMs": 575.9339999999997
+      },
+      {
+        "functionName": "openStore",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/production-entry.ts",
+        "line": 134,
+        "sampledIntervalMs": 571.7869999999997
+      },
+      {
+        "functionName": "productionStateContext",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-migration-guard.ts",
+        "line": 215,
+        "sampledIntervalMs": 293.0630000000001
+      },
+      {
+        "functionName": "productionStateContext",
+        "url": "ps-diagnostic:file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-migration-guard.ts",
+        "line": 1,
+        "sampledIntervalMs": 293.0630000000001
+      },
+      {
+        "functionName": "walk",
+        "url": "file://<diagnostic>/root/raf-main/src/hotfix-host.ts",
+        "line": 167,
+        "sampledIntervalMs": 220.56800000000013
+      },
+      {
+        "functionName": "openProductionRuntime",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/production-entry.ts",
+        "line": 126,
+        "sampledIntervalMs": 132.77699999999993
+      },
+      {
+        "functionName": "productionContext",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/production-entry.ts",
+        "line": 90,
+        "sampledIntervalMs": 131.66599999999997
+      },
+      {
+        "functionName": "git",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/hotfix-origin.ts",
+        "line": 7,
+        "sampledIntervalMs": 105.79499999999994
+      },
+      {
+        "functionName": "hash",
+        "url": "file://<diagnostic>/root/raf-main/src/hotfix-host.ts",
+        "line": 9,
+        "sampledIntervalMs": 68.29599999999998
+      },
+      {
+        "functionName": "operation",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-store.ts",
+        "line": 175,
+        "sampledIntervalMs": 58.467999999999996
+      },
+      {
+        "functionName": "transaction",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-store.ts",
+        "line": 208,
+        "sampledIntervalMs": 47.245999999999995
+      },
+      {
+        "functionName": "finish",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/raf-cost-runtime.ts",
+        "line": 86,
+        "sampledIntervalMs": 24.193999999999996
+      },
+      {
+        "functionName": "<anonymous>",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-store.ts",
+        "line": 1032,
+        "sampledIntervalMs": 19.729000000000003
+      },
+      {
+        "functionName": "mergeCostContribution",
+        "url": "file://<diagnostic>/root/.git/modules/raf-main/raf-hotfix/generations/a97e3809-1548-4c2e-8f5f-aed178c930ed/raf-main/src/state-store.ts",
+        "line": 1031,
+        "sampledIntervalMs": 19.729000000000003
+      }
+    ],
+    "caveat": "V8 sampled intervals locate work; timeDeltas are sampling intervals, not independent complete process-tree CPU measurements or speed acceptance."
+  }
+}

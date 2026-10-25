@@ -135,7 +135,7 @@ try {
       const probe = `const fs=require('fs'); if(fs.readFileSync(${JSON.stringify(control)},'utf8')!=='readable-control')process.exit(12); for(const path of ${JSON.stringify([recordPath, seed, join(fixture.tmpRoot, '.delivery-evidence')])}) { try { fs.readFileSync(path); process.exit(13); } catch(e) { if(!['EACCES','EPERM','ENOENT','EISDIR'].includes(e.code))process.exit(14); } } console.log('PRIVATE_RAW_DENIED; OWN_CONTROL_READABLE');`;
       const result = spawnSync(sandbox.toolSandbox.executable, [...sandbox.toolSandbox.args, process.execPath, '-e', probe], { cwd: cfg.sourceRoot, env: sandbox.environment, encoding: 'utf8', timeout: 30000 });
       safe(result.stdout); safe(result.stderr);
-      steps.push({ command: [sandbox.toolSandbox.executable, ...sandbox.toolSandbox.args, 'node', '-e', 'private raw denial with readable own control'], cliExitCode: result.status, stdout: result.stdout, stderr: result.stderr, signal: result.signal });
+      steps.push({ command: [sandbox.toolSandbox.executable, ...sandbox.toolSandbox.args, process.execPath, '-e', probe], cliExitCode: result.status, stdout: result.stdout, stderr: result.stderr, signal: result.signal });
       await publicJson('cli.json', steps);
       assert.equal(result.status, 0, 'Real Codex sandbox probe succeeds');
       assert.match(result.stdout, /PRIVATE_RAW_DENIED; OWN_CONTROL_READABLE/);

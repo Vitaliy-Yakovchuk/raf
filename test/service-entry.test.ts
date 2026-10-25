@@ -23,14 +23,14 @@ async function fixture(t: TestContext, mode: 'valid' | 'absent' | 'broken' = 'va
   const develop = join(root, 'raf-develop');
   const homeDirectory = join(root, 'home');
   await Promise.all([mkdir(join(root, 'conf'), { recursive: true }), mkdir(join(main, 'bin'), { recursive: true }), mkdir(join(develop, 'bin'), { recursive: true }), mkdir(homeDirectory)]);
-  const gitDirectory = join(root, 'configured-main.git');
-  execFileSync('git', ['init', '-q', '-b', 'main', '--separate-git-dir', gitDirectory, main]);
+  execFileSync('git', ['init', '-q', '-b', 'main', main]);
   execFileSync('git', ['init', '-q', '-b', 'develop', develop]);
   const projects = JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
   projects.projects.raf.path = 'configured-working-main';
   projects.projects.raf.branchPaths.main = 'configured-working-main';
   await writeFile(join(root, 'conf', 'projects.json'), JSON.stringify(projects));
   const runProductionCli = await prepareProductionQaFixture(t, { root, home: homeDirectory });
+  const gitDirectory = execFileSync('git', ['-C', develop, 'rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim();
   await cp(join(develop, 'src'), join(main, 'src'), { recursive: true });
   await writeFile(join(main, 'package.json'), '{"type":"module"}');
   const origin = { configuredMain: main, nonce: randomUUID() };
@@ -70,7 +70,7 @@ const host = await runServiceEntry();
 await host.closed;
 `);
   await writeFile(join(develop, 'bin', 'service.ts'), 'throw new Error("forbidden develop worker");\n');
-  execFileSync('git', ['-C', main, 'add', '--', 'bin/service.ts', 'src/service-entry.ts', 'service-fixture-origin.json', 'package.json']);
+  execFileSync('git', ['-C', main, 'add', '--', 'bin', 'src', 'service-fixture-origin.json', 'package.json']);
   execFileSync('git', ['-C', main, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '--allow-empty', '-m', 'Initialize configured main fixture']);
   const mainCommit = execFileSync('git', ['-C', main, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   const committedFile = (path: string): string => execFileSync('git', ['-C', main, 'show', `${mainCommit}:${path}`], { encoding: 'utf8' });
@@ -316,7 +316,7 @@ test('production help remains available before service wiring or the main servic
 
 test('configured main path on the wrong Git branch is rejected before spawning', { timeout: 10_000 }, async t => {
   const f = await fixture(t);
-  execFileSync('git', ['-C', f.main, 'checkout', '-q', '-b', 'develop']);
+  execFileSync('git', ['-C', f.main, 'checkout', '-q', '--ignore-other-worktrees', 'develop']);
   assert.match(JSON.stringify(diagnostic(await f.cli(['service', 'start']))), /main|branch|гіл/i);
   assert.equal(f.children.length, 0);
 });

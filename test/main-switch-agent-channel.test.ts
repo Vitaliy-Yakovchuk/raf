@@ -9,6 +9,9 @@ import { agentChannelReadOnlyPaths, runPublishedAgentChannel } from "../src/main
 import { codexBwrapWrapper, protectCodexReadOnlyPaths } from "../src/codex-sandbox.ts";
 import { compileCatalog } from "../src/catalog.ts";
 import { execute } from "../src/cli.ts";
+import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
+import { createWorkspacePorts } from "../src/os-runtime.ts";
+import { prepareProductionQaFixture } from "./production-qa-fixture.ts";
 import { negativePeerCommand } from "../scripts/qa-main-agent-channel-metadata.mjs";
 import {
   assessAgentChannelSlotReuse,
@@ -521,6 +524,43 @@ test("public CLI pins the active physical main slot before loading its runtime",
     const refused = JSON.parse(inactive.stdout);
     assert.equal(refused.exitCode, 1);
     assert.match(refused.stderr, /Inactive main slot/);
+  } finally { await fs.rm(f.root, { recursive: true, force: true }); }
+});
+
+test("QA source registration preserves pre-existing fixture contents", async t => {
+  const temporary = await fs.mkdtemp(join(tmpdir(), "raf-source-registration-"));
+  try {
+    const codeRoot = join(temporary, "raf-develop");
+    await fs.mkdir(join(codeRoot, "bin"), { recursive: true });
+    await fs.mkdir(join(temporary, "conf"));
+    await fs.mkdir(join(temporary, "home"));
+    await fs.writeFile(join(codeRoot, "bin/fixture-marker"), "retain fixture contents\n");
+    await fs.writeFile(join(temporary, "conf/projects.json"), JSON.stringify({ projects: { raf: { path: "raf-main", branchPaths: { main: "raf-main", develop: "raf-develop" } } } }));
+    await fs.copyFile(new URL("../../conf/raf.json", import.meta.url), join(temporary, "conf/raf.json"));
+    let failure: unknown;
+    try { await prepareProductionQaFixture(t, { root: temporary, home: join(temporary, "home") }); }
+    catch (error) { failure = String(error); }
+    assert.equal(failure, undefined, "Registering an existing fixture directory must preserve its files");
+    assert.equal(await fs.readFile(join(codeRoot, "bin/fixture-marker"), "utf8"), "retain fixture contents\n");
+  } finally { await fs.rm(temporary, { recursive: true, force: true }); }
+});
+
+test("logical main routing accepts only a canonical registered physical main worktree", async () => {
+  const f = await publishedLauncherFixture();
+  try {
+    const configuration = JSON.parse(await fs.readFile(join(f.root, "conf/projects.json"), "utf8"));
+    const route = () => resolveWorkspaceRoute({ root: f.root, project: "raf", branch: "main" }, configuration, createWorkspacePorts());
+    assert.deepEqual(await route(), { ok: true, project: "raf", branch: "main", cwd: join(f.root, "raf-main") });
+    await fs.unlink(join(f.root, "raf-main"));
+    await fs.symlink(f.source, join(f.root, "raf-main"));
+    assert.equal((await route()).ok, false, "An unregistered source target cannot replace main");
+    await fs.unlink(join(f.root, "raf-main"));
+    await fs.symlink(f.B, join(f.root, "raf-main"));
+    assert.equal((await route()).ok, false, "An inactive detached slot cannot become the main route");
+    await fs.unlink(join(f.root, "raf-main"));
+    await fs.symlink(f.A, join(f.root, "raf-main"));
+    delete configuration.projects.raf.mainCopies;
+    assert.equal((await route()).ok, false, "An undeclared symlink cannot become a directory route");
   } finally { await fs.rm(f.root, { recursive: true, force: true }); }
 });
 

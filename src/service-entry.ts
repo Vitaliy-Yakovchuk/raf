@@ -1,11 +1,11 @@
 import { hotfixModuleOrigin } from './hotfix-origin.ts';
 import { acquireHotfixReader } from './hotfix-activation.ts';
 import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
-import { spawn, execFile } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { promisify } from 'node:util';
+import { createWorkspacePorts } from './os-runtime.ts';
 import { createBackgroundRuntime, runServiceHost } from './background-runtime.ts';
 import { resolveWorkspaceRoute, type WorkspaceProjectsConfig } from './workspace-routing.ts';
 import { commandFailure } from './cli-contract.ts';
@@ -52,14 +52,7 @@ export function createServiceHandlers(
     resolveMainPath: async signal => {
       const config = JSON.parse(await fs.readFile(join(options.orchestratorRoot, 'conf', 'projects.json'), 'utf8')) as WorkspaceProjectsConfig;
       if (!config || typeof config.projects !== 'object' || config.projects === null) throw new Error('Invalid projects.json configuration for raf main');
-      const route = await resolveWorkspaceRoute({ root: options.orchestratorRoot, project: 'raf', branch: 'main' }, config, {
-        pathKind: async path => {
-          try { const stat = await fs.lstat(path); return stat.isSymbolicLink() ? 'symlink' : stat.isDirectory() ? 'directory' : 'file'; }
-          catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return 'missing'; throw error; }
-        },
-        readLink: path => fs.readlink(path),
-        currentBranch: async cwd => (await promisify(execFile)('git', ['-C', cwd, 'branch', '--show-current'])).stdout.trim() || null,
-      });
+      const route = await resolveWorkspaceRoute({ root: options.orchestratorRoot, project: 'raf', branch: 'main' }, config, createWorkspacePorts());
       if (!route.ok) {
         if (stateContext.mode === 'qa' && config.projects.raf.branchPaths?.main && stateContext.codeRoot === await fs.realpath(join(options.orchestratorRoot, config.projects.raf.branchPaths.main))) return stateContext.codeRoot;
         throw new Error(`${route.error.code}: ${route.error.message}`);

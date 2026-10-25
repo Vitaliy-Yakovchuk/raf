@@ -1,0 +1,211 @@
+{
+  "status": "failed",
+  "stand": "/srv/dev/s64-skc9S9",
+  "reviewed": "22032d53a2c733a1a6c37f52845b347b23b77044",
+  "startedAt": "2026-10-25T03:54:28.671Z",
+  "commands": [
+    {
+      "label": "git-1",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-2",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-node",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-codex",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-git",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-tmux",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-bwrap",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-uname",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "identity-author",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "identity-committer",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "clone",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-3",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "build",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-4",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-5",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-6",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-7",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-8",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-9",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-10",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-11",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-12",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "main-start",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "cleanup-agent-tmux-inspect",
+      "cliExitCode": 1,
+      "signal": null
+    },
+    {
+      "label": "cleanup-tmux",
+      "cliExitCode": 0,
+      "signal": null
+    }
+  ],
+  "switches": [],
+  "limitations": [
+    "This stand tests the published agent channel with host-controlled real symlink/Git/registry fixtures. Release verification gates remain the separate 4.4 QA.",
+    "No unit result substitutes for native tool evidence."
+  ],
+  "workspace": "",
+  "configuration": {
+    "raf-constants.json": "4a9986526efe2b9751684f6a1b4d74aadb91dd0094acda2a1ac8d91e92b4e6e0",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "flow.json": "c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd",
+    "test-runs.json": "fecc975c8696a984dcbb58677c4bac45edd90a0e2d553365cd01b40960ae1256"
+  },
+  "trust": {
+    "gitRoots": [
+      "/srv/dev/s64-skc9S9/root",
+      "/srv/dev/s64-skc9S9/root/raf-main",
+      "/srv/dev/s64-skc9S9/root/raf-develop",
+      "/srv/dev/s64-skc9S9/root/raf-hotfix"
+    ],
+    "overrides": [
+      "projects={\"/srv/dev/s64-skc9S9/root\"={trust_level=\"trusted\"},\"/srv/dev/s64-skc9S9/root/raf-main\"={trust_level=\"trusted\"},\"/srv/dev/s64-skc9S9/root/raf-develop\"={trust_level=\"trusted\"},\"/srv/dev/s64-skc9S9/root/raf-hotfix\"={trust_level=\"trusted\"}}"
+    ],
+    "quotaCwd": "/srv/dev/s64-skc9S9/root/raf-main"
+  },
+  "error": {
+    "message": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Service startup failed\",\"details\":{\"command\":\"service start\",\"stage\":\"start\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"WORKSPACE_UNAVAILABLE: Workspace /srv/dev/s64-skc9S9/root/raf-main is not an available directory.\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service start\"],\"retrySafe\":false},\"remediation\":[\"Check the configured raf main checkout, service entry, state directory permissions and service.log, then retry service start.\",\"raf help service start\"]}\n\n\n1 !== 0\n",
+    "stack": "AssertionError [ERR_ASSERTION]: {\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Service startup failed\",\"details\":{\"command\":\"service start\",\"stage\":\"start\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"WORKSPACE_UNAVAILABLE: Workspace /srv/dev/s64-skc9S9/root/raf-main is not an available directory.\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service start\"],\"retrySafe\":false},\"remediation\":[\"Check the configured raf main checkout, service entry, state directory permissions and service.log, then retry service start.\",\"raf help service start\"]}\n\n\n1 !== 0\n\n    at must (file:///srv/dev/sym64e-src.4Df9vt/raf-develop/scripts/qa-main-agent-channel.mjs:43:28)\n    at file:///srv/dev/sym64e-src.4Df9vt/raf-develop/scripts/qa-main-agent-channel.mjs:153:3"
+  },
+  "cleanup": [
+    {
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/s64-skc9S9/root/raf-main/bin/raf.ts",
+        "service",
+        "stop"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "{\"exitCode\":0,\"state\":\"stopped\",\"pid\":null,\"mainPath\":null,\"stopReason\":null,\"reasonKnown\":false}\n",
+      "stderr": ""
+    }
+  ],
+  "agentTmuxCleanup": {
+    "outcome": "already-stopped",
+    "command": null,
+    "cliExitCode": null,
+    "verification": {
+      "command": [
+        "tmux",
+        "-S",
+        "/srv/dev/s64-skc9S9/.raf/tmp/tmux/server.sock",
+        "list-sessions"
+      ],
+      "cwd": "/srv/dev/s64-skc9S9/root",
+      "cliExitCode": 1,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "no server running on /srv/dev/s64-skc9S9/.raf/tmp/tmux/server.sock\n"
+    }
+  },
+  "tmuxCleanup": {
+    "command": [
+      "tmux",
+      "-S",
+      "/srv/dev/s64-skc9S9/main.sock",
+      "kill-server"
+    ],
+    "cwd": "/srv/dev/s64-skc9S9/root",
+    "cliExitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "",
+    "stderr": ""
+  },
+  "endedAt": "2026-10-25T03:55:24.842Z"
+}

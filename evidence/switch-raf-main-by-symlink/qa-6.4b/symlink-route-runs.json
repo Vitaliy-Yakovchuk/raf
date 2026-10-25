@@ -1,0 +1,435 @@
+[
+  {
+    "runId": "290e9356-dbe2-47c1-a43f-e05699c155f8",
+    "startedAt": "2026-10-25T03:58:21.721Z",
+    "phase": "red",
+    "group": "switch-raf-main-by-symlink/agent-channel",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/main-switch-agent-channel.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/main-switch-agent-channel.test.ts",
+        "name": "logical main routing accepts only a canonical registered physical main worktree"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "passedCount": 72,
+    "cliExitCode": 1,
+    "separateStderr": null,
+    "raw": "symlink-route-red.TestRunResult.json",
+    "tool": "symlink-route-red.tool.json",
+    "combinedStream": "symlink-route-red.combined-stream.txt",
+    "stderrLimitation": "symlink-route-red.stderr-unavailable.json",
+    "workspaceSnapshotHead": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "ownPatch": "symlink-route-workspace.patch",
+    "patchSha256": "5598e70ac078d8d454ba955e34b4cd69b31616b3bb1e3bdd3884a4a3b0f397ad",
+    "workspaceLimitation": "Final own diff preserved; exact concurrent shared diff was not captured atomically at run start.",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+    "headAtStartedAtFromReflog": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "classification": "behavioral red"
+  },
+  {
+    "runId": "54f1c7d5-6f6a-4455-b43d-bd0cbc1f4866",
+    "startedAt": "2026-10-25T03:58:44.655Z",
+    "phase": "qa",
+    "group": "switch-raf-main-by-symlink/agent-channel",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/main-switch-agent-channel.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "passedCount": 73,
+    "cliExitCode": 0,
+    "separateStderr": null,
+    "raw": "symlink-route-qa.TestRunResult.json",
+    "tool": "symlink-route-qa.tool.json",
+    "combinedStream": "symlink-route-qa.combined-stream.txt",
+    "stderrLimitation": "symlink-route-qa.stderr-unavailable.json",
+    "workspaceSnapshotHead": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "ownPatch": "symlink-route-workspace.patch",
+    "patchSha256": "5598e70ac078d8d454ba955e34b4cd69b31616b3bb1e3bdd3884a4a3b0f397ad",
+    "workspaceLimitation": "Final own diff preserved; exact concurrent shared diff was not captured atomically at run start.",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+    "headAtStartedAtFromReflog": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "classification": "QA"
+  },
+  {
+    "runId": "148ce748-1f31-425d-b577-e18f57c35954",
+    "startedAt": "2026-10-25T03:59:30.256Z",
+    "phase": "qa",
+    "group": "switch-raf-main-by-symlink/agent-channel",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/main-switch-agent-channel.test.ts",
+        "test/service-entry.test.ts",
+        "test/workspace-routing.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "help is lazy and remains usable with absent main and absent host ports"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "service requests auto-start one configured worker and reuse it after command completion"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "missing configured main never falls back to available develop worker"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "missing production ports and failed recovery do not claim readiness"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "production help remains available before service wiring or the main service entry is available"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "configured main path on the wrong Git branch is rejected before spawning"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation",
+    "passedCount": 88,
+    "cliExitCode": 1,
+    "separateStderr": null,
+    "raw": "symlink-route-expanded-qa-1.TestRunResult.json",
+    "tool": "symlink-route-expanded-qa-1.tool.json",
+    "combinedStream": "symlink-route-expanded-qa-1.combined-stream.txt",
+    "stderrLimitation": "symlink-route-expanded-qa-1.stderr-unavailable.json",
+    "workspaceSnapshotHead": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "ownPatch": "symlink-route-workspace.patch",
+    "patchSha256": "5598e70ac078d8d454ba955e34b4cd69b31616b3bb1e3bdd3884a4a3b0f397ad",
+    "workspaceLimitation": "Final own diff preserved; exact concurrent shared diff was not captured atomically at run start.",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+    "headAtStartedAtFromReflog": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "classification": "fixture setup failure, not behavioral red"
+  },
+  {
+    "runId": "7a4869bd-dda4-4d06-93bd-9f9c0353d434",
+    "startedAt": "2026-10-25T04:00:19.557Z",
+    "phase": "red",
+    "group": "switch-raf-main-by-symlink/agent-channel",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/main-switch-agent-channel.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "help is lazy and remains usable with absent main and absent host ports"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "service requests auto-start one configured worker and reuse it after command completion"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "missing configured main never falls back to available develop worker"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "missing production ports and failed recovery do not claim readiness"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "production help remains available before service wiring or the main service entry is available"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "configured main path on the wrong Git branch is rejected before spawning"
+      },
+      {
+        "file": "test/main-switch-agent-channel.test.ts",
+        "name": "QA source registration preserves pre-existing fixture contents"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "passedCount": 73,
+    "cliExitCode": 1,
+    "separateStderr": null,
+    "raw": "fixture-contents-red.TestRunResult.json",
+    "tool": "fixture-contents-red.tool.json",
+    "combinedStream": "fixture-contents-red.combined-stream.txt",
+    "stderrLimitation": "fixture-contents-red.stderr-unavailable.json",
+    "workspaceSnapshotHead": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "ownPatch": "symlink-route-workspace.patch",
+    "patchSha256": "5598e70ac078d8d454ba955e34b4cd69b31616b3bb1e3bdd3884a4a3b0f397ad",
+    "workspaceLimitation": "Final own diff preserved; exact concurrent shared diff was not captured atomically at run start.",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+    "headAtStartedAtFromReflog": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "classification": "behavioral red"
+  },
+  {
+    "runId": "95239269-1fa5-4b4f-8529-1b78f21f01f3",
+    "startedAt": "2026-10-25T04:00:41.321Z",
+    "phase": "qa",
+    "group": "switch-raf-main-by-symlink/agent-channel",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/main-switch-agent-channel.test.ts",
+        "test/service-entry.test.ts",
+        "test/workspace-routing.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "help is lazy and remains usable with absent main and absent host ports"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "service requests auto-start one configured worker and reuse it after command completion"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "missing configured main never falls back to available develop worker"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "missing production ports and failed recovery do not claim readiness"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "production help remains available before service wiring or the main service entry is available"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "configured main path on the wrong Git branch is rejected before spawning"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation",
+    "passedCount": 89,
+    "cliExitCode": 1,
+    "separateStderr": null,
+    "raw": "symlink-route-expanded-qa-2.TestRunResult.json",
+    "tool": "symlink-route-expanded-qa-2.tool.json",
+    "combinedStream": "symlink-route-expanded-qa-2.combined-stream.txt",
+    "stderrLimitation": "symlink-route-expanded-qa-2.stderr-unavailable.json",
+    "workspaceSnapshotHead": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "ownPatch": "symlink-route-workspace.patch",
+    "patchSha256": "5598e70ac078d8d454ba955e34b4cd69b31616b3bb1e3bdd3884a4a3b0f397ad",
+    "workspaceLimitation": "Final own diff preserved; exact concurrent shared diff was not captured atomically at run start.",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+    "headAtStartedAtFromReflog": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "classification": "fixture setup failure, not behavioral red"
+  },
+  {
+    "runId": "7ca949ab-2102-418b-8443-8c76f700bea3",
+    "startedAt": "2026-10-25T04:03:19.048Z",
+    "phase": "qa",
+    "group": "switch-raf-main-by-symlink/agent-channel",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/main-switch-agent-channel.test.ts",
+        "test/service-entry.test.ts",
+        "test/workspace-routing.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "service requests auto-start one configured worker and reuse it after command completion"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "missing production ports and failed recovery do not claim readiness"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+      },
+      {
+        "file": "test/service-entry.test.ts",
+        "name": "configured main path on the wrong Git branch is rejected before spawning"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation",
+    "passedCount": 92,
+    "cliExitCode": 1,
+    "separateStderr": null,
+    "raw": "symlink-route-expanded-qa-3.TestRunResult.json",
+    "tool": "symlink-route-expanded-qa-3.tool.json",
+    "combinedStream": "symlink-route-expanded-qa-3.combined-stream.txt",
+    "stderrLimitation": "symlink-route-expanded-qa-3.stderr-unavailable.json",
+    "workspaceSnapshotHead": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "ownPatch": "symlink-route-workspace.patch",
+    "patchSha256": "5598e70ac078d8d454ba955e34b4cd69b31616b3bb1e3bdd3884a4a3b0f397ad",
+    "workspaceLimitation": "Final own diff preserved; exact concurrent shared diff was not captured atomically at run start.",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+    "headAtStartedAtFromReflog": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "classification": "service fixture snapshot/branch registration failures; assertions unchanged"
+  },
+  {
+    "runId": "01f66914-2b11-4b2f-a40b-a31246627355",
+    "startedAt": "2026-10-25T04:03:49.176Z",
+    "phase": "qa",
+    "group": "switch-raf-main-by-symlink/agent-channel",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/main-switch-agent-channel.test.ts",
+        "test/service-entry.test.ts",
+        "test/workspace-routing.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "passedCount": 98,
+    "cliExitCode": 0,
+    "separateStderr": null,
+    "raw": "symlink-route-expanded-qa-4.TestRunResult.json",
+    "tool": "symlink-route-expanded-qa-4.tool.json",
+    "combinedStream": "symlink-route-expanded-qa-4.combined-stream.txt",
+    "stderrLimitation": "symlink-route-expanded-qa-4.stderr-unavailable.json",
+    "workspaceSnapshotHead": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "ownPatch": "symlink-route-workspace.patch",
+    "patchSha256": "5598e70ac078d8d454ba955e34b4cd69b31616b3bb1e3bdd3884a4a3b0f397ad",
+    "workspaceLimitation": "Final own diff preserved; exact concurrent shared diff was not captured atomically at run start.",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+    "headAtStartedAtFromReflog": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+    "classification": "QA"
+  }
+]

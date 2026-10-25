@@ -1,0 +1,190 @@
+diff --git a/src/service-entry.ts b/src/service-entry.ts
+index c45b17d..758498b 100644
+--- a/src/service-entry.ts
++++ b/src/service-entry.ts
+@@ -1,11 +1,11 @@
+ import { hotfixModuleOrigin } from './hotfix-origin.ts';
+ import { acquireHotfixReader } from './hotfix-activation.ts';
+ import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
+-import { spawn, execFile } from 'node:child_process';
++import { spawn } from 'node:child_process';
+ import { promises as fs } from 'node:fs';
+ import { isAbsolute, join } from 'node:path';
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+-import { promisify } from 'node:util';
++import { createWorkspacePorts } from './os-runtime.ts';
+ import { createBackgroundRuntime, runServiceHost } from './background-runtime.ts';
+ import { resolveWorkspaceRoute, type WorkspaceProjectsConfig } from './workspace-routing.ts';
+ import { commandFailure } from './cli-contract.ts';
+@@ -52,14 +52,7 @@ export function createServiceHandlers(
+     resolveMainPath: async signal => {
+       const config = JSON.parse(await fs.readFile(join(options.orchestratorRoot, 'conf', 'projects.json'), 'utf8')) as WorkspaceProjectsConfig;
+       if (!config || typeof config.projects !== 'object' || config.projects === null) throw new Error('Invalid projects.json configuration for raf main');
+-      const route = await resolveWorkspaceRoute({ root: options.orchestratorRoot, project: 'raf', branch: 'main' }, config, {
+-        pathKind: async path => {
+-          try { const stat = await fs.lstat(path); return stat.isSymbolicLink() ? 'symlink' : stat.isDirectory() ? 'directory' : 'file'; }
+-          catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return 'missing'; throw error; }
+-        },
+-        readLink: path => fs.readlink(path),
+-        currentBranch: async cwd => (await promisify(execFile)('git', ['-C', cwd, 'branch', '--show-current'])).stdout.trim() || null,
+-      });
++      const route = await resolveWorkspaceRoute({ root: options.orchestratorRoot, project: 'raf', branch: 'main' }, config, createWorkspacePorts());
+       if (!route.ok) {
+         if (stateContext.mode === 'qa' && config.projects.raf.branchPaths?.main && stateContext.codeRoot === await fs.realpath(join(options.orchestratorRoot, config.projects.raf.branchPaths.main))) return stateContext.codeRoot;
+         throw new Error(`${route.error.code}: ${route.error.message}`);
+diff --git a/src/workspace-routing.ts b/src/workspace-routing.ts
+index 47c65aa..5034a2f 100644
+--- a/src/workspace-routing.ts
++++ b/src/workspace-routing.ts
+@@ -1,4 +1,4 @@
+-import { resolve, join } from 'node:path';
++import { resolve, join, isAbsolute } from 'node:path';
+ 
+ export interface WorkspaceProjectsConfig {
+   profiles?: Record<string, { development?: string | null }>;
+@@ -7,6 +7,7 @@ export interface WorkspaceProjectsConfig {
+     profile: string;
+     branchPaths?: Record<string, string>;
+     usesSharedLibs?: boolean;
++    mainCopies?: readonly string[];
+   }>;
+ }
+ 
+@@ -89,7 +90,14 @@ export async function resolveWorkspaceRoute(
+   let cwd = configured.cwd;
+   try {
+     if (rootProject && dependencies.realPath) cwd = await dependencies.realPath(cwd);
+-    if (await dependencies.pathKind(cwd) !== 'directory') {
++    const kind = await dependencies.pathKind(cwd);
++    if (kind === 'symlink' && project === 'raf' && branch === 'main' && entry.mainCopies !== undefined) {
++      const copies = entry.mainCopies;
++      if (!Array.isArray(copies) || copies.length !== 2 || new Set(copies).size !== 2 || copies.some(copy => typeof copy !== 'string' || !copy || isAbsolute(copy) || copy.includes('\\') || copy.split('/').some(part => ['', '.', '..', '.git'].includes(part)))) return failure('CONFIGURATION_INVALID', 'raf mainCopies must contain two distinct physical paths within the Orchestrator root.');
++      if (!dependencies.realPath || !dependencies.gitRoot) return failure('WORKSPACE_UNAVAILABLE', 'Canonical main target and Git root verification required.');
++      const active = await dependencies.realPath(cwd);
++      if (!copies.map(copy => resolve(root, copy)).includes(active) || await dependencies.pathKind(active) !== 'directory' || await dependencies.gitRoot(active) !== active) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} does not point to a registered physical main worktree.`);
++    } else if (kind !== 'directory') {
+       return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not an available directory.`);
+     }
+     if (rootProject && dependencies.gitRoot && await dependencies.gitRoot(cwd) !== cwd) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not the Orchestrator Git root.`);
+diff --git a/test/main-switch-agent-channel.test.ts b/test/main-switch-agent-channel.test.ts
+index 92379ec..2d1ec83 100644
+--- a/test/main-switch-agent-channel.test.ts
++++ b/test/main-switch-agent-channel.test.ts
+@@ -9,6 +9,9 @@ import { agentChannelReadOnlyPaths, runPublishedAgentChannel } from "../src/main
+ import { codexBwrapWrapper, protectCodexReadOnlyPaths } from "../src/codex-sandbox.ts";
+ import { compileCatalog } from "../src/catalog.ts";
+ import { execute } from "../src/cli.ts";
++import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
++import { createWorkspacePorts } from "../src/os-runtime.ts";
++import { prepareProductionQaFixture } from "./production-qa-fixture.ts";
+ import { negativePeerCommand } from "../scripts/qa-main-agent-channel-metadata.mjs";
+ import {
+   assessAgentChannelSlotReuse,
+@@ -524,6 +527,43 @@ test("public CLI pins the active physical main slot before loading its runtime",
+   } finally { await fs.rm(f.root, { recursive: true, force: true }); }
+ });
+ 
++test("QA source registration preserves pre-existing fixture contents", async t => {
++  const temporary = await fs.mkdtemp(join(tmpdir(), "raf-source-registration-"));
++  try {
++    const codeRoot = join(temporary, "raf-develop");
++    await fs.mkdir(join(codeRoot, "bin"), { recursive: true });
++    await fs.mkdir(join(temporary, "conf"));
++    await fs.mkdir(join(temporary, "home"));
++    await fs.writeFile(join(codeRoot, "bin/fixture-marker"), "retain fixture contents\n");
++    await fs.writeFile(join(temporary, "conf/projects.json"), JSON.stringify({ projects: { raf: { path: "raf-main", branchPaths: { main: "raf-main", develop: "raf-develop" } } } }));
++    await fs.copyFile(new URL("../../conf/raf.json", import.meta.url), join(temporary, "conf/raf.json"));
++    let failure: unknown;
++    try { await prepareProductionQaFixture(t, { root: temporary, home: join(temporary, "home") }); }
++    catch (error) { failure = String(error); }
++    assert.equal(failure, undefined, "Registering an existing fixture directory must preserve its files");
++    assert.equal(await fs.readFile(join(codeRoot, "bin/fixture-marker"), "utf8"), "retain fixture contents\n");
++  } finally { await fs.rm(temporary, { recursive: true, force: true }); }
++});
++
++test("logical main routing accepts only a canonical registered physical main worktree", async () => {
++  const f = await publishedLauncherFixture();
++  try {
++    const configuration = JSON.parse(await fs.readFile(join(f.root, "conf/projects.json"), "utf8"));
++    const route = () => resolveWorkspaceRoute({ root: f.root, project: "raf", branch: "main" }, configuration, createWorkspacePorts());
++    assert.deepEqual(await route(), { ok: true, project: "raf", branch: "main", cwd: join(f.root, "raf-main") });
++    await fs.unlink(join(f.root, "raf-main"));
++    await fs.symlink(f.source, join(f.root, "raf-main"));
++    assert.equal((await route()).ok, false, "An unregistered source target cannot replace main");
++    await fs.unlink(join(f.root, "raf-main"));
++    await fs.symlink(f.B, join(f.root, "raf-main"));
++    assert.equal((await route()).ok, false, "An inactive detached slot cannot become the main route");
++    await fs.unlink(join(f.root, "raf-main"));
++    await fs.symlink(f.A, join(f.root, "raf-main"));
++    delete configuration.projects.raf.mainCopies;
++    assert.equal((await route()).ok, false, "An undeclared symlink cannot become a directory route");
++  } finally { await fs.rm(f.root, { recursive: true, force: true }); }
++});
++
+ test("production scope protects both actual Git directories and main locks while preserving assigned Git writes", async () => {
+   const f = await publishedLauncherFixture();
+   try {
+diff --git a/test/production-qa-fixture.ts b/test/production-qa-fixture.ts
+index a1963b4..d6a9acb 100644
+--- a/test/production-qa-fixture.ts
++++ b/test/production-qa-fixture.ts
+@@ -1,6 +1,6 @@
+ import assert from 'node:assert/strict';
+ import { spawnSync } from 'node:child_process';
+-import { cpSync, mkdirSync, readFileSync, rmSync, rmdirSync } from 'node:fs';
++import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync } from 'node:fs';
+ import { join } from 'node:path';
+ import { pathToFileURL } from 'node:url';
+ 
+@@ -29,8 +29,11 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location:
+   git(location.root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './' + projects.projects.raf.branchPaths.main, projects.projects.raf.branchPaths.main);
+   git(location.root, 'submodule', 'absorbgitdirs');
+   rmSync(join(codeRoot, '.git'), { recursive: true, force: true });
+-  rmdirSync(codeRoot);
++  const retained = mkdtempSync(join(location.root, '.qa-retained-source-'));
++  renameSync(codeRoot, join(retained, 'source'));
+   git(mainRoot, 'worktree', 'add', '-b', 'develop', codeRoot, 'HEAD');
++  cpSync(join(retained, 'source'), codeRoot, { recursive: true });
++  rmSync(retained, { recursive: true });
+   for (const name of ['src', 'bin', 'scripts', 'package.json']) {
+     cpSync(new URL(`../${name}`, import.meta.url), join(codeRoot, name), { recursive: true });
+   }
+diff --git a/test/service-entry.test.ts b/test/service-entry.test.ts
+index 79c2514..4bb1449 100644
+--- a/test/service-entry.test.ts
++++ b/test/service-entry.test.ts
+@@ -23,14 +23,14 @@ async function fixture(t: TestContext, mode: 'valid' | 'absent' | 'broken' = 'va
+   const develop = join(root, 'raf-develop');
+   const homeDirectory = join(root, 'home');
+   await Promise.all([mkdir(join(root, 'conf'), { recursive: true }), mkdir(join(main, 'bin'), { recursive: true }), mkdir(join(develop, 'bin'), { recursive: true }), mkdir(homeDirectory)]);
+-  const gitDirectory = join(root, 'configured-main.git');
+-  execFileSync('git', ['init', '-q', '-b', 'main', '--separate-git-dir', gitDirectory, main]);
++  execFileSync('git', ['init', '-q', '-b', 'main', main]);
+   execFileSync('git', ['init', '-q', '-b', 'develop', develop]);
+   const projects = JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
+   projects.projects.raf.path = 'configured-working-main';
+   projects.projects.raf.branchPaths.main = 'configured-working-main';
+   await writeFile(join(root, 'conf', 'projects.json'), JSON.stringify(projects));
+   const runProductionCli = await prepareProductionQaFixture(t, { root, home: homeDirectory });
++  const gitDirectory = execFileSync('git', ['-C', develop, 'rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim();
+   await cp(join(develop, 'src'), join(main, 'src'), { recursive: true });
+   await writeFile(join(main, 'package.json'), '{"type":"module"}');
+   const origin = { configuredMain: main, nonce: randomUUID() };
+@@ -70,7 +70,7 @@ const host = await runServiceEntry();
+ await host.closed;
+ `);
+   await writeFile(join(develop, 'bin', 'service.ts'), 'throw new Error("forbidden develop worker");\n');
+-  execFileSync('git', ['-C', main, 'add', '--', 'bin/service.ts', 'src/service-entry.ts', 'service-fixture-origin.json', 'package.json']);
++  execFileSync('git', ['-C', main, 'add', '--', 'bin', 'src', 'service-fixture-origin.json', 'package.json']);
+   execFileSync('git', ['-C', main, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '--allow-empty', '-m', 'Initialize configured main fixture']);
+   const mainCommit = execFileSync('git', ['-C', main, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+   const committedFile = (path: string): string => execFileSync('git', ['-C', main, 'show', `${mainCommit}:${path}`], { encoding: 'utf8' });
+@@ -316,7 +316,7 @@ test('production help remains available before service wiring or the main servic
+ 
+ test('configured main path on the wrong Git branch is rejected before spawning', { timeout: 10_000 }, async t => {
+   const f = await fixture(t);
+-  execFileSync('git', ['-C', f.main, 'checkout', '-q', '-b', 'develop']);
++  execFileSync('git', ['-C', f.main, 'checkout', '-q', '--ignore-other-worktrees', 'develop']);
+   assert.match(JSON.stringify(diagnostic(await f.cli(['service', 'start']))), /main|branch|гіл/i);
+   assert.equal(f.children.length, 0);
+ });

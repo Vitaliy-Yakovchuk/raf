@@ -1,0 +1,23 @@
+{
+  "stand": "/srv/dev/s64-skc9S9",
+  "hostSha256": "/srv/dev/s64-skc9S9.sha256",
+  "manifestSha256": "a0262f0e9f23583c50bac6af1b23c7e6f1973f94de9c6d69500262dddfd7b7b3",
+  "summarySha256": "91a6cd32204c14423f0dcec81f3e1799c4bdfcd3a7a54a8c19c86ad27d43b089",
+  "status": "failed-before-native",
+  "reviewed": "22032d53a2c733a1a6c37f52845b347b23b77044",
+  "nativeEvents": [],
+  "secretScan": "Main attests clean; no native agents launched",
+  "cause": "Logical main symlink rejected as non-directory by service workspace route",
+  "observedPhysicalCopies": [
+    {
+      "path": "/srv/dev/s64-skc9S9/root/raf-main-a",
+      "directory": true,
+      "symlink": false
+    },
+    {
+      "path": "/srv/dev/s64-skc9S9/root/raf-main-b",
+      "directory": true,
+      "symlink": false
+    }
+  ]
+}

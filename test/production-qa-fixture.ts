@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, readFileSync, rmSync, rmdirSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -29,8 +29,11 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
   git(location.root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './' + projects.projects.raf.branchPaths.main, projects.projects.raf.branchPaths.main);
   git(location.root, 'submodule', 'absorbgitdirs');
   rmSync(join(codeRoot, '.git'), { recursive: true, force: true });
-  rmdirSync(codeRoot);
+  const retained = mkdtempSync(join(location.root, '.qa-retained-source-'));
+  renameSync(codeRoot, join(retained, 'source'));
   git(mainRoot, 'worktree', 'add', '-b', 'develop', codeRoot, 'HEAD');
+  cpSync(join(retained, 'source'), codeRoot, { recursive: true });
+  rmSync(retained, { recursive: true });
   for (const name of ['src', 'bin', 'scripts', 'package.json']) {
     cpSync(new URL(`../${name}`, import.meta.url), join(codeRoot, name), { recursive: true });
   }

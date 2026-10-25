@@ -1,4 +1,4 @@
-import { resolve, join } from 'node:path';
+import { resolve, join, isAbsolute } from 'node:path';
 
 export interface WorkspaceProjectsConfig {
   profiles?: Record<string, { development?: string | null }>;
@@ -7,6 +7,7 @@ export interface WorkspaceProjectsConfig {
     profile: string;
     branchPaths?: Record<string, string>;
     usesSharedLibs?: boolean;
+    mainCopies?: readonly string[];
   }>;
 }
 
@@ -89,7 +90,14 @@ export async function resolveWorkspaceRoute(
   let cwd = configured.cwd;
   try {
     if (rootProject && dependencies.realPath) cwd = await dependencies.realPath(cwd);
-    if (await dependencies.pathKind(cwd) !== 'directory') {
+    const kind = await dependencies.pathKind(cwd);
+    if (kind === 'symlink' && project === 'raf' && branch === 'main' && entry.mainCopies !== undefined) {
+      const copies = entry.mainCopies;
+      if (!Array.isArray(copies) || copies.length !== 2 || new Set(copies).size !== 2 || copies.some(copy => typeof copy !== 'string' || !copy || isAbsolute(copy) || copy.includes('\\') || copy.split('/').some(part => ['', '.', '..', '.git'].includes(part)))) return failure('CONFIGURATION_INVALID', 'raf mainCopies must contain two distinct physical paths within the Orchestrator root.');
+      if (!dependencies.realPath || !dependencies.gitRoot) return failure('WORKSPACE_UNAVAILABLE', 'Canonical main target and Git root verification required.');
+      const active = await dependencies.realPath(cwd);
+      if (!copies.map(copy => resolve(root, copy)).includes(active) || await dependencies.pathKind(active) !== 'directory' || await dependencies.gitRoot(active) !== active) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} does not point to a registered physical main worktree.`);
+    } else if (kind !== 'directory') {
       return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not an available directory.`);
     }
     if (rootProject && dependencies.gitRoot && await dependencies.gitRoot(cwd) !== cwd) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not the Orchestrator Git root.`);

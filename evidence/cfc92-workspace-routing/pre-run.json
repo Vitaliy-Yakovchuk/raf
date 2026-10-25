@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-25T12:43:49.113Z",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "branch": "develop",
+  "workspaceSha": "455714821621d90517e345c81ed0f225ff7e2bdc",
+  "node": "v26.12.1",
+  "configuration": [
+    {
+      "path": "../conf/test-runs.json",
+      "sha256": "171acf0a1fb6a5f8e96ca614de0ec981364b4be348a1382604dba4d3678f0b95"
+    },
+    {
+      "path": "../conf/flow.json",
+      "sha256": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+    },
+    {
+      "path": "../conf/projects.json",
+      "sha256": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    }
+  ],
+  "group": "complete-raf-flow-contracts/raf-workspace-routing",
+  "files": [
+    "test/workspace-routing.test.ts",
+    "test/workspace-routing-contracts.test.ts"
+  ],
+  "policy": {
+    "timeoutMs": 1200000,
+    "optimizeAfterTimeouts": 1,
+    "maxGroupTimeouts": 2
+  }
+}

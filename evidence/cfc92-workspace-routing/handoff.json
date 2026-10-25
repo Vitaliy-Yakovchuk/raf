@@ -1,0 +1,69 @@
+{
+  "item": "complete-raf-flow-contracts:9.2",
+  "nextItem": "complete-raf-flow-contracts:9.3",
+  "group": "complete-raf-flow-contracts/raf-workspace-routing",
+  "files": [
+    "test/workspace-routing.test.ts",
+    "test/workspace-routing-contracts.test.ts"
+  ],
+  "profileId": "node",
+  "registration": {
+    "repository": "/srv/dev/work/orchestrator",
+    "commit": "23b9d245e61690992fc6d6e46a32a3153654fcb9",
+    "unitFilesAddition": [
+      "test/workspace-routing-contracts.test.ts"
+    ],
+    "group": {
+      "profileId": "node",
+      "files": [
+        "test/workspace-routing.test.ts",
+        "test/workspace-routing-contracts.test.ts"
+      ]
+    }
+  },
+  "wrapper": {
+    "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts",
+    "sha256": "28f299dcc066b9d7e6f7dce8ad62fbec3a56d1fe1b2d81a81727747424428926"
+  },
+  "run": {
+    "runId": "fbd23c46-6b04-47b0-813a-550fc7d3aa52",
+    "phase": "red",
+    "callerPhase": "test-scaffold",
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 59,
+    "knownRed": 9,
+    "completeResult": "red-result.json",
+    "unmodifiedCommandResult": "red-command-result.json"
+  },
+  "qaEnvironment": {
+    "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+    "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+    "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+    "TMPDIR": "/tmp/r-IcTGPj"
+  },
+  "coordinatorReview": {
+    "agentId": "main",
+    "accepted": true,
+    "quote": "Red 9.2 прийнято: runId fbd23c46, 9 knownRed (U3 — 2, U5 — 7, поведінкові: ok замість WORKSPACE_UNAVAILABLE), setup/import чисті, cleanup complete. Заверши докази й звіт; 9.3 отримає ту саму групу."
+  },
+  "verification": {
+    "syntaxNodeCheck": [
+      "test/workspace-routing-contracts.test.ts",
+      "src/task-context.ts",
+      "src/app-runtime.ts"
+    ],
+    "syntaxExitCode": 0,
+    "commentCheck": {
+      "command": "npm run check:comments",
+      "exitCode": 0
+    }
+  },
+  "limitations": [
+    "U6 equivalent existing coverage was mapped, not rerun",
+    "I1–I6 live integration is outside 9.2",
+    "Resource measurement completeness is partial",
+    "No routing feature behavior implemented; only optional dependency declarations and forwarding"
+  ]
+}

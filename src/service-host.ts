@@ -1,4 +1,5 @@
 import { loadCompiledCatalog } from './compiled-catalog.ts';
+import { settleArchiveEvents } from './archive-events-runtime.ts';
 import { RafCostRuntime, rafCostBoundary, measureRafCost } from './raf-cost-runtime.ts';
 import { runtimeResourceUsage } from './resource-usage-runtime.ts';
 import { productionStateContext, stateFailure } from './state-migration-guard.ts';
@@ -193,6 +194,7 @@ export async function createServicePorts(
           } catch {}
         }
         reminders.activateDue();
+        await settleArchiveEvents(store, context.orchestratorRoot, catalog);
         events.dispatch();
         reminders.pruneClosed();
         const active = reminders.list().filter(reminder => reminder.state === 'active');

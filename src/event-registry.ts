@@ -90,17 +90,18 @@ export function createArchiveObserver(initial: ArchiveSnapshot, ports: ArchiveOb
   const successfulNames = (snapshot: ArchiveSnapshot): Set<string> => new Set(
     snapshot.archives.filter(archive => archive.successful).map(archive => archive.name),
   );
-  const changeId = (name: string): string => name.replace(/^\d{4}-\d{2}-\d{2}-/, '');
-  const cycles = new Map(initial.active.map(id => [id, successfulNames(initial)]));
+  const changeId = (name: string): string => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name) ? name.replace(/^\d{4}-\d{2}-\d{2}-/, '') : '';
+  const cycles = new Map(initial.active.map(id => [id, new Set(initial.archives.map(archive => archive.name))]));
   let previousActive = new Set(initial.active);
   let tail: Promise<unknown> = Promise.resolve();
   return {
     observe(snapshot) {
-      const active = new Set(snapshot.active);
-      const successful = successfulNames(snapshot);
+      const captured = structuredClone(snapshot);
       const operation = tail.then(async () => {
+        const active = new Set(captured.active);
+        const successful = successfulNames(captured);
         for (const id of active) {
-          if (!previousActive.has(id)) cycles.set(id, new Set(successful));
+          if (!previousActive.has(id)) cycles.set(id, new Set(captured.archives.map(archive => archive.name)));
         }
         previousActive = active;
         const emitted: ReminderEvent[] = [];

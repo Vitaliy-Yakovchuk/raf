@@ -1,4 +1,5 @@
 import { runtimeHealthSummary } from './health-summary-runtime.ts';
+import { settleArchiveEvents } from './archive-events-runtime.ts';
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import type { Handler } from './cli.ts';
@@ -213,7 +214,7 @@ function applyPendingFacts(ports: CommandStatePorts, at: string): void {
       const done = ports.store.eventRepository.transaction(tx => {
         const fact = tx.listPending().find(item => item.key === key);
         if (!fact || !applicable(fact)) return false;
-        tx.applyReminderEvent(fact.event, at);
+        if (tx.applyReminderEvent(fact.event, at) !== 'delivered') return false;
         tx.deletePending(fact.key);
         return true;
       });
@@ -227,6 +228,8 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
   const report: CommandSettleReport = { activated: [], delivered: [], undelivered: [], notices: [], pruned: [] };
   const clock = isoClock(ports);
   if (ports.orchestratorRoot) {
+    try { await settleArchiveEvents(ports.store, ports.orchestratorRoot, ports.catalog); }
+    catch (error) { process.emitWarning(String(error)); }
     try { await runtimeHealthSummary(ports.store, ports.orchestratorRoot, () => deliverHealthSummaries(ports)).settle(); }
     catch (error) { process.emitWarning(String(error)); }
   }

@@ -219,6 +219,7 @@ finally {
       try { const result = await request('cleanup-' + a.addressId, ['agent', 'close', '--id', a.addressId, '--force', '--reason', 'Host-owned isolated QA cleanup'], 60000); (summary.cleanup ??= []).push(result); } catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
     }
     try { (summary.cleanup ??= []).push(await request('cleanup-service', ['service', 'stop'], 60000)); } catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
+    summary.agentTmuxCleanup = run('cleanup-agent-tmux', 'tmux', ['-S', path.join(stand, '.raf/tmp/tmux/server.sock'), 'kill-server']);
     summary.tmuxCleanup = run('cleanup-tmux', 'tmux', ['-S', socket, 'kill-server']);
   }
   if (endpoint) await new Promise(resolve => endpoint.close(resolve));

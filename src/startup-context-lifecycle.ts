@@ -1,5 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import type { AgentReportResult } from './agent-report.ts';
+import type { AssignmentSnapshot } from './assignment.ts';
 import type { PendingIntent, SessionRecord } from './session-state.ts';
 import { bindStartupContextReview, settleStartupContextReview, listStartupContextReviewEvents, pruneStartupContextTraces, readStartupContextTrace, recordStartupContextCompletion, type StartupContextCapturePorts } from './startup-context.ts';
 import { captureStartupContextJournal, type StartupContextJournal } from './startup-context-journal.ts';
@@ -67,14 +68,19 @@ export async function finalizeStartupContextRun(
 }
 
 export function reserveStartupContextReview(
-  input: { readonly runId: string; readonly phase: 'context-review'; readonly brief: string },
+  input: { readonly runId: string; readonly phase: 'context-review'; readonly brief: string; readonly assignment?: AssignmentSnapshot },
   ports: Pick<StartupContextLifecyclePorts, 'database'>,
 ): StartupContextReviewReservation {
+  const packageIds = new Set(input.assignment?.changes.flatMap(change => change.items.flatMap(item =>
+    [...item.description.matchAll(/\bcontext-review\.due\s+([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\b/giu)].map(match => match[1].toLowerCase()),
+  )));
+  if (packageIds.size !== 1) throw new Error('Exactly one context-review.due package ID is required in assigned task descriptions');
+  const [packageId] = packageIds;
   listStartupContextReviewEvents(ports.database);
   ports.database.exec('SAVEPOINT reserve_startup_context_review');
   try {
-    const row = ports.database.prepare('SELECT id, payload FROM startup_context_reviews WHERE closed_at IS NULL AND review_run_id IS NULL ORDER BY rowid LIMIT 1').get();
-    if (!row) throw new Error('No open unbound startup context review package is available');
+    const row = ports.database.prepare('SELECT id, payload FROM startup_context_reviews WHERE id=? AND closed_at IS NULL AND review_run_id IS NULL').get(packageId);
+    if (!row) throw new Error(`Assigned startup context review package is unknown, closed or already bound: ${packageId}`);
     const event = JSON.parse(row.payload as string);
     bindStartupContextReview(ports.database, { eventId: row.id as string, reviewRunId: input.runId, phase: input.phase });
     const reservation = { contextReviewId: row.id as string, runIds: event.runIds as string[], brief: `${input.brief}\n\ncontextReviewId: ${row.id}\nrunIds: ${JSON.stringify(event.runIds)}\n` };

@@ -28,7 +28,7 @@ function redactBrief(screen: string, brief: string): string {
   return result;
 }
 
-export function deliveryDiagnostic(settings: ProtocolSettings, frame: DeliveryFrame) {
+export function redactDeliveryText(settings: ProtocolSettings, frame: DeliveryFrame): string {
   const composer = readNativeComposer(settings, frame.screen);
   const input = composer?.input;
   const paste = input !== undefined && new RegExp(settings.native!.pendingPaste.pattern, 'u').test(input);
@@ -50,6 +50,15 @@ export function deliveryDiagnostic(settings: ProtocolSettings, frame: DeliveryFr
     .replace(/(?:~?\/)[\w.@%+:-]+(?:\/[\w.@%+:-]+)*/gu, '[redacted-path]')
     .replace(/\bsk-[\w-]+/gu, '[redacted]');
   screen = String(redactDiagnostic(screen));
+  return screen;
+}
+
+export function deliveryDiagnostic(settings: ProtocolSettings, frame: DeliveryFrame) {
+  const composer = readNativeComposer(settings, frame.screen);
+  const input = composer?.input;
+  const paste = input !== undefined && new RegExp(settings.native!.pendingPaste.pattern, 'u').test(input);
+  const kind = input === undefined ? 'missing' : input === '' || settings.markers.ready?.includes(input) ? 'empty' : paste ? 'paste' : 'other';
+  let screen = redactDeliveryText(settings, frame);
   const truncated = JSON.stringify(screen).length > 2048;
   while (JSON.stringify(screen).length > 2048) screen = screen.slice(Math.max(1, Math.ceil((JSON.stringify(screen).length - 2048) / 6)));
   return {

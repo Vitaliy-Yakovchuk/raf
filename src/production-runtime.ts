@@ -34,7 +34,9 @@ import { randomUUID } from 'node:crypto';
 import { createConnection } from 'node:net';
 import type { RuntimeConfiguration, RuntimeContext, RuntimeServices, RuntimeLaunch } from './app-runtime.ts';
 import { TmuxAgentAdapter, type AdapterCommandExecutor, type AgentRunner, type RunnerProtocol, type AdapterSession } from './agent-adapters.ts';
-import { deliveryDiagnostic, type DeliveryFrame } from './delivery-diagnostic.ts';
+import type { DeliveryFrame } from './delivery-diagnostic.ts';
+import { preserveFailedDeliveryEvidence } from './delivery-evidence.ts';
+import { privateDeliveryEvidencePorts, cleanupExpiredDeliveryEvidence } from './delivery-evidence-storage.ts';
 import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativeComposer, matchPendingBrief, readNativeSessionId, isNativeWorking, isNativeFinished, nativeDeliveryContext, isNativeBriefEcho, matchesNativeDeliveryContext, nativeWriteScopeArgs, nativeSandboxArgs, type ProtocolSettings, type NativeDialect } from './runner-protocols.ts';
 import { openStateStore, retryStateOperation, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
@@ -762,6 +764,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         if (receipt.accepted) store.sessionRepository.transaction(tx => { tx.deletePending(intent.id); tx.putPending({ ...intent, payload: { ...payload, kind: intent.event, id: intent.id, mainDelivered: true } }); });
       } catch {}
     }
+    await cleanupExpiredDeliveryEvidence(context.tmpRoot, now()).catch(() => { process.stderr.write('Delivery evidence cleanup unavailable\n'); });
     cleanupStartupContextCompleted(now(), { database: store.startupContextDatabase, flowPath: join(context.confRoot, 'flow.json'), sessions: state });
     return settleResultNotices({ store, now: Date.now, deliver: (request, sender) => {
       if (sender.kind !== 'system') throw new Error('Result notices require a system sender');
@@ -1376,6 +1379,7 @@ export async function runProductionWorker(
     const assignedId = native.identity.source === 'assigned' ? randomUUID() : undefined;
     let invocation = buildRunnerInvocation(settings, { ...request.selection, ...(assignedId ? { sessionId: assignedId } : {}) });
     if (hotfix && settings.runner === 'codex') invocation.args.push('-C', request.cwd);
+    let deliveryEvidenceIsolated = false;
     try {
       const writable = await runnerWritableDirectories(request.cwd, writeBoundaries, dirname(session.launchContext.reportPath), request.statePath, settings.runner === 'codex', context.orchestratorRoot);
       invocation.args.push(...nativeWriteScopeArgs(settings, hotfix ? [...new Set([...writable.directories, ...writable.workspace])] : writable.directories, writable.workspace));
@@ -1392,6 +1396,7 @@ export async function runProductionWorker(
         invocation.args.push(...nativeWriteScopeArgs(settings, [toolTmuxDirectory.directory]));
       }
       invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
+      deliveryEvidenceIsolated = settings.runner === 'claude';
       if ((hotfix || mainReadOnly.length) && settings.runner === 'claude') {
         const index = invocation.args.indexOf('--settings');
         if (index < 0) fail('RUNNER_SANDBOX_UNAVAILABLE', 'Claude requires enforced filesystem sandbox');
@@ -1406,6 +1411,7 @@ export async function runProductionWorker(
           if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
           throw error;
         }
+        deliveryEvidenceIsolated = true;
         invocation = codexSandbox.invocation;
       }
       if (settings.runner === 'codex') {
@@ -1434,6 +1440,7 @@ export async function runProductionWorker(
     }
     if (hotfix) await fs.writeFile(join(dirname(session.launchContext.reportPath), 'invocation.json'), JSON.stringify({ cwd: request.cwd, runId: request.runId, runner: settings.runner, invocation }), { mode: 0o600 });
     let screen = '';
+    let screenCapturedAt: string | undefined;
     let nativeId: string | null = null;
     let dismissed = false;
     let actual: ProcessIdentity | undefined;
@@ -1443,6 +1450,7 @@ export async function runProductionWorker(
       invocation: () => invocation,
       observe: pane => {
         screen = pane;
+        screenCapturedAt = now();
         const observation = observeRunnerScreen(settings, { text: pane, version: availability.version, requestedCommand: nativeId ? identityCommand : null });
         if (observation.state === 'workspace_trust_required') return { status: 'failed', reason: observation.state };
         const durable = tools.current(request.runId)?.process;
@@ -1690,10 +1698,23 @@ export async function runProductionWorker(
       if (!isDeepStrictEqual(request.reportedCommits, session.launchContext!.reportedCommits)) fail('INVALID_CONTEXT', 'Worker reported commit contract does not match durable launch context');
       try { await deliverInitialBrief(brief); }
       catch (error) {
-        const context = failureContext(error);
-        const diagnostic = deliveryDiagnostic(settings, { screen, brief, phase: deliveryPhase, retried: deliveryRetried });
-        const reason = `${context?.reason ?? (error instanceof Error ? error.message : String(error))}; delivery=${JSON.stringify(diagnostic)}`;
-        throw context ? commandFailure({ ...context, message: reason, reason }) : new Error(reason);
+        const deliveryFailure = failureContext(error);
+        let configuration: unknown;
+        try { configuration = await json(join(context.confRoot, 'flow.json')); } catch {}
+        const evidence = await preserveFailedDeliveryEvidence({
+          runId: request.runId, generation: createHash('sha256').update(fileURLToPath(new URL('../', import.meta.url))).digest('hex'),
+          settings: { ...settings, version: availability.version }, firstFailureAt: now(), configuration,
+          primaryReason: deliveryFailure?.reason ?? (error instanceof Error ? error.message : String(error)),
+          retrySafe: deliveryFailure?.retrySafe ?? true, cleanupFailures: [],
+          capture: screenCapturedAt ? {
+            frame: { screen, brief, phase: deliveryPhase, retried: deliveryRetried }, capturedAt: screenCapturedAt,
+            method: 'tmux capture-pane -p', limitations: ['Visible pane only; scrollback and earlier frames are not captured'],
+          } : { unavailable: 'No adapter decision frame was captured' },
+        }, privateDeliveryEvidencePorts(request.tmpRoot, async runId => {
+          if (runId !== request.runId || !deliveryEvidenceIsolated) throw new Error('Runner private evidence isolation unavailable');
+        }));
+        const reason = `${evidence.reason}; deliveryEvidence=${JSON.stringify(evidence.evidence)}`;
+        throw deliveryFailure ? commandFailure({ ...deliveryFailure, message: reason, reason }) : new Error(reason);
       }
     };
     const assignments = assignmentPorts(execute);

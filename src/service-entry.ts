@@ -1,4 +1,5 @@
 import { hotfixModuleOrigin } from './hotfix-origin.ts';
+import { prepareMainLayoutForProductionStart } from './production-start-layout.ts';
 import { acquireHotfixReader } from './hotfix-activation.ts';
 import { productionStateContext, stateContextEnvironment, stateFailure, verifyStateModule } from './state-migration-guard.ts';
 import { spawn } from 'node:child_process';
@@ -78,6 +79,7 @@ export function createServiceHandlers(
     }) as typeof spawn,
   });
   const invoke = (operation: 'start' | 'status' | 'stop'): Handler => async () => {
+    if (operation === 'start') await prepareMainLayoutForProductionStart({ orchestratorRoot: options.orchestratorRoot });
     const result = await runtime[operation]().finally(releaseBootstrap);
     if (result.exitCode !== 0) throw commandFailure({
       code: 'SERVICE_OPERATION_FAILED', message: result.reason, stage: operation, source: 'background-runtime', sourceCode: result.exitCode,
@@ -87,11 +89,18 @@ export function createServiceHandlers(
     return result;
   };
   const ensureResourceReady = async (signal?: AbortSignal) => {
+    if (signal?.aborted) throw new Error('Resource wait service startup cancelled');
+    await prepareMainLayoutForProductionStart({ orchestratorRoot: options.orchestratorRoot });
     const result = await runtime.ensureReady({ signal }).finally(releaseBootstrap);
     if (result.exitCode !== 0 || result.state !== 'ready' || !result.serviceEpoch || !result.resourceWaitReady) throw new Error(`Resource wait service readiness failed: ${JSON.stringify(result)}`);
     return { endpoint: socketPath, serviceEpoch: result.serviceEpoch };
   };
-  return { ensureResourceReady, handlers: { 'service start': invoke('start'), 'service status': invoke('status'), 'service stop': invoke('stop') }, request: (request, requestOptions) => runtime.request(request, requestOptions).finally(releaseBootstrap) };
+  const request: ServiceHandlers['request'] = async (request, requestOptions) => {
+    if (requestOptions?.signal?.aborted) throw new Error('Service request cancelled');
+    await prepareMainLayoutForProductionStart({ orchestratorRoot: options.orchestratorRoot });
+    return runtime.request(request, requestOptions).finally(releaseBootstrap);
+  };
+  return { ensureResourceReady, handlers: { 'service start': invoke('start'), 'service status': invoke('status'), 'service stop': invoke('stop') }, request };
 }
 
 export async function runServiceEntry(options?: {
@@ -113,6 +122,7 @@ export async function runServiceEntry(options?: {
   required('RAF_MAIN_PATH');
   const modulePath = required('RAF_SERVICE_HOST_MODULE_PATH');
   verifyStateModule(stateContext, modulePath);
+  await prepareMainLayoutForProductionStart({ orchestratorRoot: context.orchestratorRoot });
   const loadPorts = options?.loadPorts ?? (async (path: string, value: ServiceEntryContext): Promise<ServicePorts> => {
     const module = await import(pathToFileURL(path).href);
     if (typeof module.createServicePorts !== 'function') throw new Error(`Service host module ${path} must export createServicePorts`);

@@ -1,9 +1,10 @@
 import { promises as fs } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { promisify } from 'node:util';
 import { alive, durable, processStart } from './hotfix-host.ts';
+import { configuredMainLayoutPaths as configuredPaths } from './main-layout-paths.ts';
 import { nativeMainLayoutPublicationProvider } from './main-layout-publication.ts';
 import { ensureProductionMainStore, productionStorePaths, resolveProductionStore } from './main-production-store.ts';
 
@@ -102,32 +103,6 @@ const digest = (data: Buffer) => createHash('sha256').update(data).digest('hex')
 
 function refuse(message: string): never {
   throw new Error('Main layout expected safe canonical raf mainCopies and consistent Git registration; actual: ' + message);
-}
-
-function configuredPaths(root: string, projects: MainLayoutStartOptions['projects']) {
-  if (!isAbsolute(root) || resolve(root) !== root) refuse(`expected canonical absolute root; received ${root}`);
-  for (const [id, project] of Object.entries(projects)) {
-    if (id !== 'raf' && project.mainCopies !== undefined) refuse(`mainCopies is supported only for raf; received projects.${id}.mainCopies`);
-  }
-  const raf = projects.raf;
-  if (!raf || raf.path !== 'raf-main' || raf.branchPaths?.main !== 'raf-main') refuse('projects.raf.path and branchPaths.main must both be raf-main');
-  if (!Array.isArray(raf.mainCopies) || raf.mainCopies.length !== 2) refuse('projects.raf.mainCopies must contain exactly two different physical paths');
-  const physical = raf.mainCopies.map(path => {
-    if (typeof path !== 'string' || !path || path !== path.trim() || isAbsolute(path) || path.includes('\\') || path.includes('\0') || path.split('/').some(part => ['', '.', '..', '.git'].includes(part))) refuse(`unsafe mainCopies path: ${String(path)}; expected relative path inside ${root}`);
-    return resolve(root, path);
-  });
-  const logical = join(root, 'raf-main');
-  if (overlaps(physical[0], physical[1]) || physical.some(path => overlaps(path, logical))) refuse('mainCopies paths must be different and must not overlap raf-main or one another');
-  const protectedPaths: string[] = [];
-  for (const [id, project] of Object.entries(projects)) {
-    for (const path of new Set([project.path, ...Object.values(project.branchPaths ?? {})])) {
-      const absolute = resolve(root, path);
-      if (absolute === root && id === 'orchestrator' || id === 'raf' && absolute === logical) continue;
-      if (physical.some(copy => overlaps(copy, absolute))) refuse(`mainCopies overlaps protected ${id} path ${absolute}`);
-      protectedPaths.push(absolute);
-    }
-  }
-  return { logical, physical, protectedPaths };
 }
 
 function differentFiles(repositories: readonly { path: string; repository: MainLayoutRepositoryInspection }[]) {

@@ -58,3 +58,7 @@ Main тимчасово зняв integration-реєстрацію (conf 35121777
 [native-codex-reuse.json](native-codex-reuse.json) посилається на реальний перевірений стенд 4e1d2345b9d4134df73e03fb9fb2f88c6b311db1: два native ID, 6 accepted message receipts незалежно зіставлені з user-role отриманням, 6 повних ps stdout по 77341/77342 символи звірені з CLI audit; 8 завершених native helpers мають індекси виконаних IPC/Git/state/registered-tmux перевірок і raw exit/stderr. Джерела вже містять host review та контроль існування/живості endpoint; сам ENOENT не доводить заборону доступу до наявного ресурсу.
 
 Збережено source hashes і [повний релевантний drift](native-codex-source-drift.patch). Після стенда змінилися network filter/preflight Codex та message/lifecycle код. Тому зараховуються лише виконані історичні факти; весь поточний L1/L3/L4, інші runners, bus/ssh-agent, questions та spec/design commit лишаються непідтвердженими. Чужу unit-регресію не запускали.
+
+## Передумови продовження
+
+[pending-prerequisites.json](pending-prerequisites.json) зберігає точну чинну Git-цитату Z.425, останній refused runId, чергу host на reviewed SHA та ще неперевірені native критерії. Закриття агентів Z.423/Z.424 не означає випуску у робочу raf: main повідомив про чотири нові preflight-падіння кандидата e860ffa, які блокують повернення preset. Це запис зовнішніх передумов, а не фінальний звіт або відкладення за рішенням власника.

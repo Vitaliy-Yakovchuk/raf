@@ -1,0 +1,52 @@
+{
+  "observedAt": "2026-10-25T23:32:07.309Z",
+  "assignment": "complete-raf-flow-contracts:2.4",
+  "state": "awaiting-external-prerequisites",
+  "notFinalReport": true,
+  "integration": {
+    "authorization": "Paused by main; no new integration command before explicit restored registration and authorization",
+    "lastRunId": "e17afe73-8880-49f0-ad59-b6afb1e9fce3",
+    "lastOutcome": "refused",
+    "cliCode": 1,
+    "childExitCode": null,
+    "source": {
+      "repository": "/srv/dev/work/orchestrator",
+      "sha": "98aee15c4c72ebc8eddb602c7df92c83f6966032",
+      "path": "openspec/changes/complete-raf-flow-contracts/tasks.md",
+      "quote": "- [ ] Z.425 [hotfix] Регресія hotfix-кандидата e860ffa проти робочої raf 30eaf7f (main 2026-10-25, чистий клон, однаковий conf і набір файлів): 4 тести test/codex-sandbox-preflight-path.test.ts «[Z.390] preflight: …» (short-path control, runDirectory/TMPDIR/обидва понад sun_path) зелені на 30eaf7f і падають на e860ffa з CODEX_SANDBOX_UNAVAILABLE «preflight probe exited 7: host TCP isolation unverified: EPERM» (src/codex-sandbox.ts:262). Ймовірне джерело — Z.421 1f32022 (loopback TCP у власному мережевому просторі). Блокує випуск Z.422–Z.424 у робочу raf. Виправити за flow hotfix (red → фікс) без послаблення вимог Z.390 і Z.421; обидві групи мають бути зелені. Доказ: [regression-e860ffa.log](evidence-z425/regression-e860ffa.log)."
+    },
+    "nextAction": "Wait for actual working raf release resolving Z.423/Z.424/Z.425, then explicit restored preset; preserve original group and QA HOME"
+  },
+  "host": {
+    "reviewed": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+    "checkout": "/srv/dev/cfc24h1/raf",
+    "runners": [
+      "codex",
+      "grok",
+      "agy",
+      "claude"
+    ],
+    "evidencePattern": "/srv/dev/cfc24h1/<runner>/ev",
+    "state": "queued per latest main message; no rc/stdout/stderr received",
+    "nextAction": "Review returned original evidence; fix any actual develop/fixture defect with preserved initial red and scoped green in same QA execution"
+  },
+  "remainingNativeCriteria": [
+    "L2 intentional unknown/permission/auth and applicable native readiness/paste/mode transitions; version behavior without modifying installed CLI",
+    "L3 host/registered tmux including nonstandard paths, bus/ssh-agent, real child/symlink and neighboring questions; both positive and negative controls",
+    "L4 current verified-sender transport concurrency/full literal streams/nonzero exit, provided test-run channel if applicable, spec/design document commit with code read-only"
+  ],
+  "alreadyObserved": {
+    "unit": {
+      "runId": "08174764-3f10-4c03-ac97-c134eec28b4d",
+      "outcome": "passed",
+      "tests": 47,
+      "scope": "unit only"
+    },
+    "I4": "I4-reuse.json: addressed OS facts only; not new integration pass",
+    "nativeCodex": "native-codex-reuse.json: historical executed facts with explicit code drift; not full current native acceptance"
+  },
+  "delivery": {
+    "mainReceiptId": "becd4f50-d8c1-4797-95b6-1e95cc317ce8"
+  },
+  "taskEdits": "No additional tasks.md edits; main owns evidence subpoints and raf owns assigned checkbox"
+}

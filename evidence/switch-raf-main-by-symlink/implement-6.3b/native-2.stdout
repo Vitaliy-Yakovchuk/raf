@@ -1,0 +1,54 @@
+✖ native write-deny protects both copies, symlink and Git metadata despite broad parent write grants (270.633678ms)
+✖ native read-deny for SQLite sidecars and secrets survives writable aliases and child shells (241.994107ms)
+✖ native connect-deny protects live host and peer sockets inside writable roots without closing own IPC (250.806818ms)
+✖ native deny boundaries remain effective after host changes logical main from A to B (247.149671ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1183.801839
+
+✖ failing tests:
+
+test at test/main-switch-agent-channel.integration.test.ts:126:1
+✖ native write-deny protects both copies, symlink and Git metadata despite broad parent write grants (270.633678ms)
+  Error: Codex sandbox isolation unavailable: preflight probe exited 1: bwrap: Can't write data to file /srv/dev/sym63-native2.t6QpTb/tmp/raf-channel-lkPLN7/raf-develop/peer.sock: Bad file descriptor
+      at ChildProcess.<anonymous> (file:///srv/dev/sym63-native2.t6QpTb/raf-develop/src/codex-sandbox.ts:221:21)
+      at ChildProcess.emit (node:events:514:20)
+      at maybeClose (node:internal/child_process:1156:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:334:5) {
+    code: 'CODEX_SANDBOX_UNAVAILABLE'
+  }
+
+test at test/main-switch-agent-channel.integration.test.ts:160:1
+✖ native read-deny for SQLite sidecars and secrets survives writable aliases and child shells (241.994107ms)
+  Error: Codex sandbox isolation unavailable: preflight probe exited 1: bwrap: Can't write data to file /srv/dev/sym63-native2.t6QpTb/tmp/raf-channel-puBoet/raf-develop/peer.sock: Bad file descriptor
+      at ChildProcess.<anonymous> (file:///srv/dev/sym63-native2.t6QpTb/raf-develop/src/codex-sandbox.ts:221:21)
+      at ChildProcess.emit (node:events:514:20)
+      at maybeClose (node:internal/child_process:1156:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:334:5) {
+    code: 'CODEX_SANDBOX_UNAVAILABLE'
+  }
+
+test at test/main-switch-agent-channel.integration.test.ts:179:1
+✖ native connect-deny protects live host and peer sockets inside writable roots without closing own IPC (250.806818ms)
+  Error: Codex sandbox isolation unavailable: preflight probe exited 1: bwrap: Can't write data to file /srv/dev/sym63-native2.t6QpTb/tmp/raf-channel-8jadJ8/raf-develop/peer.sock: Bad file descriptor
+      at ChildProcess.<anonymous> (file:///srv/dev/sym63-native2.t6QpTb/raf-develop/src/codex-sandbox.ts:221:21)
+      at ChildProcess.emit (node:events:514:20)
+      at maybeClose (node:internal/child_process:1156:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:334:5) {
+    code: 'CODEX_SANDBOX_UNAVAILABLE'
+  }
+
+test at test/main-switch-agent-channel.integration.test.ts:203:1
+✖ native deny boundaries remain effective after host changes logical main from A to B (247.149671ms)
+  Error: Codex sandbox isolation unavailable: preflight probe exited 1: bwrap: Can't write data to file /srv/dev/sym63-native2.t6QpTb/tmp/raf-channel-R42iiD/raf-develop/peer.sock: Bad file descriptor
+      at ChildProcess.<anonymous> (file:///srv/dev/sym63-native2.t6QpTb/raf-develop/src/codex-sandbox.ts:221:21)
+      at ChildProcess.emit (node:events:514:20)
+      at maybeClose (node:internal/child_process:1156:16)
+      at ChildProcess._handle.onexit (node:internal/child_process:334:5) {
+    code: 'CODEX_SANDBOX_UNAVAILABLE'
+  }

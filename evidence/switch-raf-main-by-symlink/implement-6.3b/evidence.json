@@ -131,6 +131,30 @@
       "nextAction": "complete",
       "childExitCode": 0,
       "explanation": "Native symlink parent guard with existing Orchestrator .git and assigned sibling directory grants: 69/69."
+    },
+    {
+      "result": "unit-6-TestRunResult.json",
+      "cli": "unit-6-cli.json",
+      "runId": "509f8968-e3be-49c7-9c85-cf6cad2d6c50",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "childExitCode": 0,
+      "explanation": "70/70 including real inherited FD 9 mask-data vs dynamically allocated network filter descriptor."
     }
   ],
   "native": {
@@ -142,6 +166,11 @@
         "result": "native-1.json",
         "outcome": "failed",
         "reason": "Native provider rejected lexical symlink read-only policy under writable parent. Fixed by guarding the parent and retaining existing sibling grants."
+      },
+      {
+        "result": "native-2.json",
+        "outcome": "failed",
+        "reason": "Seccomp FD collision with inherited native mask-data descriptor; fixed dynamic free descriptor allocation, unit verified exact separate data."
       }
     ]
   },
@@ -169,6 +198,6 @@
     "executedByThisAgent": false,
     "reason": "Main directed no foreign unit groups; item6.4 owns declared regressionGroups."
   },
-  "testChanges": "Independent implementation preceded prepared-test reads. Original 65 scaffold scenarios unchanged; four production launcher/scope scenarios added, including Orchestrator root with .git and several assigned directories.",
+  "testChanges": "Independent implementation preceded prepared-test reads. Original 65 scaffold scenarios unchanged; five production launcher/scope/descriptor scenarios added.",
   "captureLimit": "Tool exec_command exposes merged stdout/stderr. Every unit captured stream is a complete single TestRunResult JSON document, saved byte-for-byte; no additional stderr was observed. Separate .stderr files record this absence, not a separately available OS stream."
 }

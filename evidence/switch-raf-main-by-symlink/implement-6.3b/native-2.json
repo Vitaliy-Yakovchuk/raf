@@ -1,0 +1,10 @@
+{
+  "command": "node --test test/main-switch-agent-channel.integration.test.ts",
+  "sha": "b4d6e3d77cd351554dd7cc50c5ed9168a3490f68",
+  "executor": "main on host; clean clone, isolated HOME/TMPDIR, conf alongside",
+  "cliExitCode": 1,
+  "passed": 0,
+  "failed": 4,
+  "source": "/srv/dev/sym63-native2.t6QpTb",
+  "reason": "Fixed FD 9 for seccomp replaced inherited backend mask-data descriptor. Wrapper now reserves a free FD using Bash dynamic redirection."
+}

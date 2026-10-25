@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { agentChannelReadOnlyPaths, runPublishedAgentChannel } from "../src/main-switch-agent-launcher.ts";
-import { protectCodexReadOnlyPaths } from "../src/codex-sandbox.ts";
+import { codexBwrapWrapper, protectCodexReadOnlyPaths } from "../src/codex-sandbox.ts";
 import {
   assessAgentChannelSlotReuse,
   compileAgentChannelNativePolicy,
@@ -559,4 +559,31 @@ test("logical main parent becomes read-only while existing Orchestrator Git and 
     assert.equal(result.filesystem[secret], "none");
     assert.equal(original[f.root], "write");
   } finally { await fs.rm(f.root, { recursive: true, force: true }); }
+});
+
+
+test("native bwrap wrapper preserves inherited mask-data FD 9 while adding its network filter", async () => {
+  const root = await fs.mkdtemp(join(tmpdir(), "raf-channel-fds-"));
+  let mask: Awaited<ReturnType<typeof fs.open>> | undefined;
+  try {
+    const backend = join(root, "backend");
+    const wrapper = join(root, "bwrap");
+    const filter = join(root, "network.bpf");
+    const data = join(root, "mask-data");
+    await fs.writeFile(filter, "network-filter");
+    await fs.writeFile(data, "backend-mask");
+    await fs.writeFile(backend, `#!${process.execPath}
+const fs=require('node:fs');const args=process.argv.slice(2);const fd=Number(args[args.indexOf('--add-seccomp-fd')+1]);
+process.stdout.write(JSON.stringify({mask:fs.readFileSync(9,'utf8'),filter:fs.readFileSync(fd,'utf8'),fd,args}));
+`, { mode: 0o700 });
+    await fs.writeFile(wrapper, codexBwrapWrapper(backend, filter, join(root, "tmux"), []), { mode: 0o700 });
+    mask = await fs.open(data, "r");
+    const result = spawnSync(wrapper, ["--file", "9", "/hidden/peer.sock", "--", "/payload"], { stdio: ["ignore", "pipe", "pipe", "ignore", "ignore", "ignore", "ignore", "ignore", "ignore", mask.fd] });
+    assert.equal(result.status, 0, result.stderr?.toString());
+    const output = JSON.parse(result.stdout.toString());
+    assert.equal(output.mask, "backend-mask");
+    assert.equal(output.filter, "network-filter");
+    assert.notEqual(output.fd, 9);
+    assert.deepEqual(output.args.slice(-6), ["--perms", "0700", "--tmpfs", join(root, "tmux"), "--", "/payload"]);
+  } finally { await mask?.close(); await fs.rm(root, { recursive: true, force: true }); }
 });

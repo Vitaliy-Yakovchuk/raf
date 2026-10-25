@@ -106,6 +106,20 @@ export async function protectCodexReadOnlyPaths(
   return { filesystem, writableFiles: [...files], symlinkParents };
 }
 
+export function codexBwrapWrapper(bwrap: string, networkFilterPath: string, tmuxSockets: string, writableFiles: readonly string[]): string {
+  return [
+    '#!/bin/bash',
+    'mounted=0',
+    'for argument do',
+    '  shift',
+    `  if [ "$mounted" = 0 ] && [ "$argument" = -- ]; then set -- "$@" --perms 0700 --tmpfs ${literal(tmuxSockets)} ${writableFiles.map(path => `--bind ${literal(path)} ${literal(path)}`).join(' ')} --; mounted=1; else set -- "$@" "$argument"; fi`,
+    'done',
+    `exec {raf_network_fd}<${literal(networkFilterPath)}`,
+    `exec ${literal(bwrap)} --unshare-net --add-seccomp-fd "$raf_network_fd" "$@"`,
+    '',
+  ].join('\n');
+}
+
 async function workspaceGitPaths(cwd: string): Promise<string[]> {
   const dotGit = join(cwd, '.git');
   const entry = await fs.stat(dotGit).catch(() => null);
@@ -368,16 +382,7 @@ export async function prepareCodexSandbox(
     const environment = Object.fromEntries(Object.entries(request.environment).filter((entry): entry is [string, string] => entry[1] !== undefined && !scrubbed.includes(entry[0])));
     Object.assign(environment, toolVariables);
     await fs.writeFile(join(helperDirectory, 'network.bpf'), filter, { mode: 0o400 });
-    await fs.writeFile(join(helperDirectory, 'bwrap'), [
-      '#!/bin/sh',
-      'mounted=0',
-      'for argument do',
-      '  shift',
-      `  if [ "$mounted" = 0 ] && [ "$argument" = -- ]; then set -- "$@" --perms 0700 --tmpfs ${literal(tmuxSockets)} ${fileWrites.map(path => `--bind ${literal(path)} ${literal(path)}`).join(' ')} --; mounted=1; else set -- "$@" "$argument"; fi`,
-      'done',
-      `exec ${literal(bwrap)} --unshare-net --add-seccomp-fd 9 "$@" 9<${literal(join(helperDirectory, 'network.bpf'))}`,
-      '',
-    ].join('\n'), { mode: 0o500 });
+    await fs.writeFile(join(helperDirectory, 'bwrap'), codexBwrapWrapper(bwrap, join(helperDirectory, 'network.bpf'), tmuxSockets, fileWrites), { mode: 0o500 });
     await fs.writeFile(join(helperDirectory, 'codex'), `#!/bin/sh\nPATH=${literal(helperDirectory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
     await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, verification: 'preflight Unix IPC, TCP denial and hidden paths' }, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: ['AF_UNIX'], ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
     const visible: string[] = [];

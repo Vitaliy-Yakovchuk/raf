@@ -14,7 +14,8 @@ import { execute } from '../src/cli.ts';
 import { createTestRunPorts } from '../src/test-run-runtime.ts';
 import { resolveStateContext } from '../src/state-migration-guard.ts';
 import { runResourceReservedTestRun } from '../src/test-run-reservations.ts';
-import { acknowledgeTestRunDelivery } from '../src/test-run-state-recovery.ts';
+import { acknowledgeTestRunDelivery, recoverTestRun } from '../src/test-run-state-recovery.ts';
+import type { RecoveryStatePort } from '../src/test-run-state-recovery.ts';
 import { machine } from './helpers/test-run-reservations-fixture.ts';
 import { RunHarness, fixtureGroup, policy } from './helpers/test-run-fixture.ts';
 import type { RunnerEvent, TestRunCommand, TestRunConfig, TestRunContext } from '../src/test-runs.ts';
@@ -126,6 +127,30 @@ test('6.7 Vitest setup ENOENT before OS spawn releases the group and preserves i
   assert.equal(retried.cleanup.complete, true);
   assert.equal(h.state.get(key)?.inFlight, null);
   assert.equal(shared.claims.size, 0);
+});
+
+test('6.7 copied legacy null identity needs verified recovery rather than a deadline reset', async () => {
+  const saved = JSON.parse(readFileSync(new URL('../evidence/add-raf-test-run-6.7/original-setup-failed.json', import.meta.url), 'utf8'));
+  const refused = JSON.parse(readFileSync(new URL('../evidence/add-raf-test-run-6.7/original-in-flight.json', import.meta.url), 'utf8'));
+  const h = new RunHarness();
+  const key = { project: saved.project, workspace: saved.workspace, group: saved.group };
+  const copied = fixtureGroup({ key, timeoutCount: saved.timeoutCount, state: 'reconcile',
+    selection: saved.selection, knownRed: saved.knownRed, unexecuted: saved.unexecuted,
+    inFlight: refused.inFlight, lastResult: saved });
+  h.state.seed(copied);
+  const reply = await recoverTestRun({ key, authorized: true, nowMs: refused.inFlight.deadlineMs + 1 }, {
+    state: h.state as unknown as RecoveryStatePort,
+    observe: async () => ({ owner: 'unknown', tree: 'unknown', identity: null,
+      finishedAtMs: null, deadlineObservedAtMs: null, interrupted: false }),
+    cleanup: async () => { throw new Error('Unverified tree must not be cleaned'); },
+    release: async () => { throw new Error('Unverified resource fence must not be released'); },
+    returnResult: async () => ({ returned: false }),
+    messageMain: async () => ({ accepted: false, receiptId: null, forwarded: false }),
+  });
+  assert.equal(reply.result, null);
+  assert.equal(reply.recovery.runId, '3163a552-987d-48da-a681-a5622f022384');
+  assert.equal(reply.recovery.needsMain, true);
+  assert.deepEqual(h.state.get(key), copied);
 });
 
 for (const [cwd, preload] of [['bugs-api', false], ['.', false], ['bugs-api', true]] as const) test(`6.3.7 non-etchly Vitest profile at ${cwd}${preload ? ' with preload' : ''} uses the structured adapter`, async t => {

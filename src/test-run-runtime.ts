@@ -192,28 +192,34 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         inheritedOperationalChannel, unitFiles: observed ? observed.filter(f => f.classification === 'unit').map(f => f.file) : unitFiles.filter(file => files[file]?.kind === 'file'), files };
     },
     spawn: async (command, onEvent): Promise<ManagedTestProcess> => {
-      const project = request ? config.projects[request.project] : undefined;
-      const profileId = request ? project?.groups[request.group]?.profileId : undefined;
-      const profiles = profileId ? [project!.profiles[profileId]] : Object.values(config.projects).flatMap(project => Object.values(project.profiles));
-      const vitestProfile = profiles.find(p => p.resultAdapter === 'vitest-events' && command.executable === p.executable && command.argv[0] === p.argv[0] && command.argv.includes(p.argv[p.argv.indexOf('run') - 1]) && (p.cwd === '.' || command.cwd.endsWith('/' + p.cwd)) && (!p.argv.includes('--project') || command.argv[command.argv.indexOf('--project') + 1] === p.argv[p.argv.indexOf('--project') + 1]));
-      let vitestEnvironment: Record<string, string> = {};
-      if (vitestProfile) {
-        const workspace = resolve(command.cwd, relative(vitestProfile.cwd, '.'));
-        const run = command.argv.indexOf('run');
-        const options = command.argv.slice(run + 1);
-        const firstOption = options.findIndex(arg => arg.startsWith('-'));
-        const files = (firstOption < 0 ? options : options.slice(0, firstOption)).map(file => relative(workspace, resolve(command.cwd, file)));
-        const ids = command.environment.testIds ?? [];
-        const policy = JSON.parse(Buffer.from(snapshot.flow).toString('utf8')).unitTests;
-        const batches = planVitestInvocations({ workspace, selection: { files, testIds: ids }, command } as any, vitestProfile, policy, fileURLToPath(new URL('./test-run-vitest-reporter.ts', import.meta.url)), ids);
-        const localConfig = readFileSync(resolve(command.cwd, 'vitest.config.ts'), 'utf8');
-        const baseRunner = localConfig.match(/\brunner:\s*["']([^"']+)["']/)?.[1];
-        command.environment.vitestBatches = batches;
-        vitestEnvironment = { RAF_TEST_RUN_VITEST_BATCHES: JSON.stringify(batches), RAF_TEST_RUN_WORKSPACE: workspace, RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(config.diagnostics), ...(baseRunner ? { RAF_TEST_RUN_BASE_RUNNER: resolve(command.cwd, baseRunner) } : {}) };
-        command.argv = [fileURLToPath(new URL('../scripts/test-run-vitest.ts', import.meta.url))];
+      let child: ReturnType<typeof spawn>;
+      try {
+        const project = request ? config.projects[request.project] : undefined;
+        const profileId = request ? project?.groups[request.group]?.profileId : undefined;
+        const profiles = profileId ? [project!.profiles[profileId]] : Object.values(config.projects).flatMap(project => Object.values(project.profiles));
+        const vitestProfile = profiles.find(p => p.resultAdapter === 'vitest-events' && command.executable === p.executable && command.argv[0] === p.argv[0] && command.argv.includes(p.argv[p.argv.indexOf('run') - 1]) && (p.cwd === '.' || command.cwd.endsWith('/' + p.cwd)) && (!p.argv.includes('--project') || command.argv[command.argv.indexOf('--project') + 1] === p.argv[p.argv.indexOf('--project') + 1]));
+        let vitestEnvironment: Record<string, string> = {};
+        if (vitestProfile) {
+          const workspace = resolve(command.cwd, relative(vitestProfile.cwd, '.'));
+          const run = command.argv.indexOf('run');
+          const options = command.argv.slice(run + 1);
+          const firstOption = options.findIndex(arg => arg.startsWith('-'));
+          const files = (firstOption < 0 ? options : options.slice(0, firstOption)).map(file => relative(workspace, resolve(command.cwd, file)));
+          const ids = command.environment.testIds ?? [];
+          const policy = JSON.parse(Buffer.from(snapshot.flow).toString('utf8')).unitTests;
+          const batches = planVitestInvocations({ workspace, selection: { files, testIds: ids }, command } as any, vitestProfile, policy, fileURLToPath(new URL('./test-run-vitest-reporter.ts', import.meta.url)), ids);
+          const localConfig = readFileSync(resolve(command.cwd, 'vitest.config.ts'), 'utf8');
+          const baseRunner = localConfig.match(/\brunner:\s*["']([^"']+)["']/)?.[1];
+          command.environment.vitestBatches = batches;
+          vitestEnvironment = { RAF_TEST_RUN_VITEST_BATCHES: JSON.stringify(batches), RAF_TEST_RUN_WORKSPACE: workspace, RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(config.diagnostics), ...(baseRunner ? { RAF_TEST_RUN_BASE_RUNNER: resolve(command.cwd, baseRunner) } : {}) };
+          command.argv = [fileURLToPath(new URL('../scripts/test-run-vitest.ts', import.meta.url))];
+        }
+        child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...environment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '2' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+        await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', fail); });
+      } catch (error) {
+        spawnFailed?.();
+        throw error;
       }
-      const child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...environment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '2' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
-      await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', error => { spawnFailed?.(); fail(error); }); });
       const pid = child.pid!;
       const exited = new Promise<void>(done => child.once('exit', () => done()));
       const identity = JSON.stringify({ pid, start: processStart(pid), boot: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });

@@ -19,6 +19,8 @@ bash /srv/dev/work/orchestrator/raf-develop/scripts/qa-etchly-integration-suite.
 
 Очікується suite rc=0, prepare rc=0 для обох режимів, driver rc=0 і `summary.status=passed`. У smoke: 11 captures (два повні green рівно трьох файлів; сім негативних відборів із CLI 1 до spawn; дві відсутні передумови із setup-failed до spawn). У D08: 12 captures, включаючи навмисний wrapper SIGKILL без JSON; recovery та delivery зберігають початковий runId, timeoutCount=2 і наступний повний green. Навмисні неуспішні child/CLI результати залишаються незміненими в captures, driver оцінює саме очікувану поведінку.
 
+Для D08 hang fixture після SQL-підтвердження надсилає SIGSTOP лише власному fork. Це моделює завислий OS-процес, щоб перевірити зовнішній deadline/cleanup; чинні локальні etchly operation/cleanup limits не змінюються. SIGINT/SIGTERM/SIGKILL надсилаються лише власному wrapper; cleanup перевіряється за PID/start identity його нащадків.
+
 У кожного запуску є `*.stdout`, `*.stderr`, `*.capture.json` (окремий CLI code/signal та незмінений result), `*.input.json`, фактична bridge-команда й внутрішні batches у `*.spawn.json`. `ready-*.json` доводить SQL `SELECT 1` та спостереження реального workerd. `summary.json` містить початкові SHA/dirty/config hashes, процеси з PID/start identity, відсутність залишків до аварійного cleanup, після нього й відновлення конфігурації. Власна SQLite стенда зберігається для перевірки стану групи; вона не видається за робочий стан raf.
 
 Повернути QA весь suite rc, prepare/driver rc/stdout/stderr, `results` обох режимів і `.qa-etchly-stand.json`; не урізати TestRunResult. Якщо failure стався до results, повернути stderr і marker. Cleanup, timeout, setup, skip чи частковий результат не є проходженням integration.

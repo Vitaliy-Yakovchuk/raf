@@ -92,9 +92,11 @@ if (mode === 'setup') throw new Error('Controlled import failure');
     expect(row.proof).toBe(1);
     writeFileSync(join(process.env.TMPDIR, 'qa-d1-ready.json'), JSON.stringify({ pid: process.pid, mode, proof: row.proof, tmp: process.env.TMPDIR }));
     if (mode === 'assertions') expect(row.proof).toBe(2);
-    if (mode === 'hang') await new Promise(() => {});
+    // Stall this fixture's own OS fork after D1 readiness. Local file-budget
+    // timers stay unchanged; only the outer wrapper can clean a stopped fork.
+    if (mode === 'hang') { process.kill(process.pid, 'SIGSTOP'); await new Promise(() => {}); }
   } finally { await mf.dispose(); }
-}, 2_000_000_000);
+});
 `;
 
 async function host(root, output, mode, budget, watchdogMs) {

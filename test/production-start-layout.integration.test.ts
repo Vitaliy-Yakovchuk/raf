@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -189,4 +189,27 @@ test('production bootstrap: a live activation writer blocks split without overwr
   await assert.rejects(prepareMainLayoutForProductionStart({ orchestratorRoot: f.root }), /writer barrier busy/);
   assert.deepEqual({ main: workingState(f.main), sources: sourceState(f.root), lock: tree(lock), pins: pinnedState(f.control) }, before);
   assert.equal(existsSync(paths.production), false);
+});
+
+test('production bootstrap: the starting process own reader lease does not block its split', async t => {
+  const f = fixture(t);
+  const before = workingState(f.main); const sources = sourceState(f.root); const pins = pinnedState(f.control);
+  const lease = join(f.control, 'readers/own-cli.json');
+  write(lease, JSON.stringify({ root: join(f.control, 'generations/pinned/raf-main'), pid: process.pid, start: await processStart(process.pid) }));
+  await prepareMainLayoutForProductionStart({ orchestratorRoot: f.root });
+  await ready(f, before, sources, pins);
+  assert.ok(existsSync(lease), 'own reader lease stays owned by its process');
+});
+
+test('production bootstrap: a foreign live reader without protection still blocks split', async t => {
+  const f = fixture(t);
+  const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore' });
+  t.after(() => { child.kill('SIGKILL'); });
+  const paths = await productionStorePaths(f.root);
+  write(join(f.control, 'readers/foreign.json'), JSON.stringify({ root: join(f.control, 'generations/pinned/raf-main'), pid: child.pid, start: await processStart(child.pid!) }));
+  const before = { main: workingState(f.main), sources: sourceState(f.root), pins: pinnedState(f.control) };
+  await assert.rejects(prepareMainLayoutForProductionStart({ orchestratorRoot: f.root }), /live reader has unknown protection/);
+  assert.deepEqual({ main: workingState(f.main), sources: sourceState(f.root), pins: pinnedState(f.control) }, before);
+  assert.equal(existsSync(paths.production), false);
+  assert.equal(existsSync(join(paths.control, 'main-store-intent.json')), false);
 });

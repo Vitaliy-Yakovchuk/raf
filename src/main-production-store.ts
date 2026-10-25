@@ -151,9 +151,11 @@ export async function recordProductionSandboxProtection(directories: readonly st
 
 async function requireProtectedReaders(control: string) {
   const readers = join(control, 'readers');
+  const start = await processStart(process.pid);
   for (const name of await fs.readdir(readers).catch(error => { if (error.code === 'ENOENT') return []; throw error; })) {
     if (!name.endsWith('.json')) continue;
     const lease = JSON.parse(await fs.readFile(join(readers, name), 'utf8'));
+    if (lease.pid === process.pid && lease.start === start) continue;
     if (!await alive(lease.pid, lease.start)) continue;
     const protection = lease.nativeProtection;
     if (protection?.control !== control || typeof protection.policyPath !== 'string') refused('live reader has unknown protection; wait without terminating it');

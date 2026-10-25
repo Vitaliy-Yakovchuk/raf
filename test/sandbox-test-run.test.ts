@@ -647,6 +647,16 @@ test('T12 unavailable transport is a failure without blind retry or fabricated p
   assert.match(reply.stderr + reply.stdout, /QA channel unavailable/);
 });
 
+test('T12 unit context refusal names the underlying cause for diagnosis', async () => {
+  const f = fixture();
+  f.unitFailure = 'Unit HOME root is not private or has aliases';
+  const reply = await f.run();
+  assert.notEqual(reply.code, 0);
+  assert.equal(f.spawns.length, 0);
+  assert.match(reply.stderr + reply.stdout, /QA channel unavailable: unit context could not be verified/);
+  assert.match(reply.stderr + reply.stdout, /Unit HOME root is not private or has aliases/);
+});
+
 for (const runner of ['codex', 'claude'] as const) {
   for (const phase of ['implement', 'qa', 'hotfix', 'test-scaffold', 'spec', 'design']) {
     test(`T13 ${runner}/${phase} brief and actual host allowlist agree`, () => {

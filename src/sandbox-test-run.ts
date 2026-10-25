@@ -164,7 +164,9 @@ export async function runSandboxTestCommand(
     return reply;
   } catch (error) {
     if (executingWrapper) throw error;
-    const reason = error instanceof SandboxCallerRefusal ? error.message : selectingUnit ? 'QA channel unavailable: unit context could not be verified' : 'Trusted caller channel or request could not be verified';
+    const code = typeof (error as { code?: unknown })?.code === 'string' ? `${(error as { code: string }).code}: ` : '';
+    const cause = `${code}${error instanceof Error ? error.message : String(error)}`.replace(/\s+/g, ' ').slice(0, 300);
+    const reason = error instanceof SandboxCallerRefusal ? error.message : selectingUnit ? `QA channel unavailable: unit context could not be verified (${cause})` : 'Trusted caller channel or request could not be verified';
     return { code: 1, stdout: '', stderr: `Sandbox raf command refused (CALLER_UNAUTHORIZED): ${reason}; restore the trusted channel or obtain a new verified assignment with the required phase and grants; the executor must run its own authorized tests; do not delegate the run to main or coordinator; do not retry blindly; raf was not retried\n` };
   }
 }

@@ -1,0 +1,53 @@
+[
+  {
+    "command": [
+      "node",
+      "--check",
+      "src/delivery-evidence.ts"
+    ],
+    "code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "--check",
+      "src/delivery-evidence-storage.ts"
+    ],
+    "code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "--check",
+      "src/delivery-diagnostic.ts"
+    ],
+    "code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "--check",
+      "src/production-runtime.ts"
+    ],
+    "code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "--input-type=module",
+      "-e",
+      "await import(\"./src/production-runtime.ts\"); console.log(\"production runtime imports passed\")"
+    ],
+    "code": 0,
+    "stdout": "production runtime imports passed\n",
+    "stderr": ""
+  }
+]

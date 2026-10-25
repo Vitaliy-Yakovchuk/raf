@@ -1,0 +1,174 @@
+{
+  "assignment": "monitor-raf-health:3.3",
+  "sourceCommit": "b76996afefd321ec9a5c0517e00fe3820e5f6158",
+  "verifiedHead": "5ef6623737aac57cceb9abcd37e4b90ce15a9fff",
+  "workspace": "verified-workspace.json",
+  "unit": [
+    {
+      "number": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase implement --group monitor-raf-health/delivery-evidence --files test/delivery-evidence.test.ts",
+      "result": "unit-1.result.json",
+      "transport": "unit-1.transport.json",
+      "stderr": null,
+      "stderrNote": "Tool повертає combined output. Main 2026-10-25 погодив повний незмінений TestRunResult із diagnostics/child exitCode та окремий CLI code як достатній доказ; порожній stderr не вигадується.",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "runId": "f8640283-eeeb-4342-8cf2-1363dfb6011c",
+      "selection": {
+        "files": [
+          "test/delivery-evidence.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 8,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/delivery-evidence.test.ts",
+          "name": "[MRH 3.1] refuses raw persistence when native isolation cannot exclude agents and neighbouring runs"
+        },
+        {
+          "file": "test/delivery-evidence.test.ts",
+          "name": "[MRH 3.1] capture failure is secondary to delivery failure and never claims a frame or launch success"
+        },
+        {
+          "file": "test/delivery-evidence.test.ts",
+          "name": "[MRH 3.1] write failure keeps the primary LAUNCH_FAILED reason ahead of evidence and cleanup failures"
+        },
+        {
+          "file": "test/delivery-evidence.test.ts",
+          "name": "[MRH 3.1] redacts every external field including primary, cleanup and capture error text"
+        },
+        {
+          "file": "test/delivery-evidence.test.ts",
+          "name": "[MRH 3.1] retention is read only from the exact flow key without a hidden fallback"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "workspace": "initial-workspace.json (незакомічена проміжна реалізація, не фінальний SHA)"
+    },
+    {
+      "number": 2,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase implement --group monitor-raf-health/delivery-evidence --files test/delivery-evidence.test.ts",
+      "result": "unit-2.result.json",
+      "transport": "unit-2.transport.json",
+      "stderr": null,
+      "stderrNote": "Tool повертає combined output. Main 2026-10-25 погодив повний незмінений TestRunResult із diagnostics/child exitCode та окремий CLI code як достатній доказ; порожній stderr не вигадується.",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "4aedaf4e-5c70-4f80-8314-0a4ebbdffe65",
+      "selection": {
+        "files": [
+          "test/delivery-evidence.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 13,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "workspace": "initial-workspace.json (незакомічена проміжна реалізація, не фінальний SHA)"
+    },
+    {
+      "number": 3,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase implement --group monitor-raf-health/delivery-evidence --files test/delivery-evidence.test.ts",
+      "result": "unit-3.result.json",
+      "transport": "unit-3.transport.json",
+      "stderr": null,
+      "stderrNote": "Tool повертає combined output. Main 2026-10-25 погодив повний незмінений TestRunResult із diagnostics/child exitCode та окремий CLI code як достатній доказ; порожній stderr не вигадується.",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "runId": "40668d06-a12d-4e76-8c47-ca7e5afd3df2",
+      "selection": {
+        "files": [
+          "test/delivery-evidence.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 13,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "workspace": "verified-workspace.json"
+    }
+  ],
+  "checks": {
+    "build": {
+      "command": "npm run build",
+      "code": 0,
+      "stdout": "build.stdout",
+      "stderr": "build.stderr"
+    },
+    "comments": {
+      "command": "npm run check:comments",
+      "code": 0,
+      "stdout": "comments.stdout",
+      "stderr": "comments.stderr"
+    },
+    "storage": {
+      "command": "node evidence/monitor-raf-health/implement-3.3/storage-smoke.mjs",
+      "code": 0,
+      "stdout": "storage-smoke.stdout",
+      "stderr": "storage-smoke.stderr",
+      "initialFailure": "storage-smoke-initial.stderr",
+      "fix": "Concurrent expiry cleanup tolerates already removed own frame/directory"
+    },
+    "syntaxImport": "syntax-import.json",
+    "diffCheck": {
+      "command": "git diff --check",
+      "code": 0
+    },
+    "optionalTypecheck": {
+      "status": "unavailable",
+      "reason": "Ad hoc tsc не є налаштованою перевіркою репозиторію: @types/node відсутні, також є сторонні помилки типів. Не заявляється pass; фінальні node --check/import пройшли."
+    }
+  },
+  "configuration": {
+    "repository": "/srv/dev/work/orchestrator",
+    "commit": "ec265b25a8537cde53c8d093e3d1f13049b0b158",
+    "owner": "main",
+    "pointer": "conf/flow.json#/retention/failedDeliveryEvidenceMs",
+    "value": 604800000,
+    "additionalCatalogEntries": "Не додаються: нових команд, подій або статусів цей пункт не вводить; unit-група вже зареєстрована за 3.2."
+  },
+  "implementation": {
+    "privatePath": "<tmpRoot>/.delivery-evidence/<runId>/frame.json",
+    "isolation": "Поза readable/writable runDirectory, під прихованим tmpRoot; production raw write лише після налаштування sandbox codex/claude; без доказу isolation повертається супутня unavailable.",
+    "capture": "Саме рядок pane, який прочитав адаптер, без redaction/truncation; метадані явно вказують viewport-only capture.",
+    "generation": "SHA-256 фізичної адреси runtime module root — непрозорий локальний ідентифікатор покоління; фактична runner version з probe.",
+    "retention": "Перший record публікується атомарним link-if-absent, expiry не поновлюється повтором; opportunistic cleanup видаляє лише прострочений власний frame.",
+    "redaction": "Той самий redaction pipeline перед публікацією діагностики, primary/cleanup/capture error та текстових метаданих."
+  },
+  "tests": "Підготовлені test/delivery-evidence.test.ts не читалися до первинної реалізації та першого implement-прогону; не змінювалися.",
+  "nextAction": "Незалежний live QA 3.4; unit group complete. Інші відкриті пункти не виконувалися, archive не виконується."
+}

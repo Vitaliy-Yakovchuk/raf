@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import { promises as fs } from 'node:fs';
+import { join } from 'node:path';
+import { privateDeliveryEvidencePorts, cleanupExpiredDeliveryEvidence } from '/srv/dev/work/orchestrator/raf-develop/src/delivery-evidence-storage.ts';
+const root = await fs.mkdtemp('/tmp/mrh33-storage-');
+const ports = privateDeliveryEvidencePorts(root, async () => {});
+const start = Date.now();
+const record = id => ({reference:'ref-'+id,runId:id,runner:'codex',version:'synthetic',generation:'synthetic',firstFailureAt:new Date(start).toISOString(),expiresAt:new Date(start+1000).toISOString(),capture:{frame:{screen:'\u0000\u001b[31m\r\n😀'.repeat(2000),brief:'synthetic',phase:'awaiting_acceptance',retried:false},capturedAt:new Date(start).toISOString(),method:'synthetic filesystem probe',limitations:[]}});
+try {
+  await fs.mkdir(join(root,'run-a'));
+  const [a, b] = await Promise.all([ports.putIfAbsent(record('run-a')), ports.putIfAbsent({...record('run-a'), reference:'alternate'})]);
+  assert.equal(a.reference,b.reference);
+  assert.equal((await ports.read('run-a')).capture.frame.screen,record('run-a').capture.frame.screen);
+  await ports.putIfAbsent({...record('run-b'),expiresAt:new Date(start+2000).toISOString()});
+  assert.equal((await fs.stat(join(root,'.delivery-evidence','run-a','frame.json'))).mode & 0o777,0o600);
+  await fs.rm(join(root,'run-a'),{recursive:true});
+  assert.ok(await ports.read('run-a'));
+  await cleanupExpiredDeliveryEvidence(root,new Date(start+999).toISOString());
+  assert.ok(await ports.read('run-a'));
+  await cleanupExpiredDeliveryEvidence(root,new Date(start+1000).toISOString());
+  assert.equal(await ports.read('run-a'),null);
+  assert.ok(await ports.read('run-b'));
+  await cleanupExpiredDeliveryEvidence(root,new Date(start+1001).toISOString());
+  await assert.rejects(ports.read('../run-b'));
+  await fs.symlink(join(root,'.delivery-evidence','run-b'),join(root,'.delivery-evidence','run-c'));
+  await assert.rejects(ports.read('run-c'));
+  await fs.unlink(join(root,'.delivery-evidence','run-c'));
+  await Promise.all([cleanupExpiredDeliveryEvidence(root,new Date(start+2000).toISOString()),cleanupExpiredDeliveryEvidence(root,new Date(start+2000).toISOString())]);
+  console.log(JSON.stringify({status:'passed',checks:['atomic first writer','exact frame string','private modes','survives ordinary cleanup','configured expiry boundary','neighbour retained','idempotent cleanup','path traversal rejected','symlink rejected','concurrent expiry cleanup'],liveSandboxIsolation:'not tested; separate QA 3.4'}));
+} finally {await fs.rm(root,{recursive:true,force:true});}

@@ -1,0 +1,18 @@
+node:internal/fs/promises:1959
+  return await PromisePrototypeThen(
+         ^
+
+Error: ENOENT: no such file or directory, unlink '/tmp/mrh33-storage-bV6K1d/.delivery-evidence/run-b/frame.json'
+    at async Object.unlink (node:internal/fs/promises:1959:10)
+    at async Object.remove (file:///srv/dev/work/orchestrator/raf-develop/src/delivery-evidence-storage.ts:60:7)
+    at async cleanupFailedDeliveryEvidence (file:///srv/dev/work/orchestrator/raf-develop/src/delivery-evidence.ts:136:3)
+    at async cleanupExpiredDeliveryEvidence (file:///srv/dev/work/orchestrator/raf-develop/src/delivery-evidence-storage.ts:73:32)
+    at async Promise.all (index 1)
+    at async file:///tmp/mrh33-storage-smoke.mjs:28:3 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'unlink',
+  path: '/tmp/mrh33-storage-bV6K1d/.delivery-evidence/run-b/frame.json'
+}
+
+Node.js v26.12.1

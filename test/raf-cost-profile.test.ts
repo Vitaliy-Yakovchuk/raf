@@ -387,7 +387,6 @@ function statsFixture(rows: RafCostRow[] = []) {
     getCommandTiming: (command: string) => timings.get(command),
     recordCommandDuration: (command: string, duration: number) => { calls.push(`timing:${command}`); timings.set(command, { averageMs: duration, updatedAt: readAt }); },
     readCostProfile: () => { calls.push('read-profile'); return structuredClone(profile); },
-    readForcedCloseMetrics: (observedAt: string) => ({ readAt: observedAt, since: epoch, completed: 0, refusalsByCode: {}, unavailableReason: null }),
     close: () => calls.push('close'),
   } as unknown as StateStore & RafCostProfileState;
   const context: RuntimeContext = { orchestratorRoot: '/unit/orchestrator', confRoot: '/unit/orchestrator/conf', artifactPath: '/unit/catalog.json', statePath: '/unit/state.sqlite', tmpRoot: '/unit/tmp', mode: 'test', commandStartedAtMs: 100, resolveCaller: async () => { calls.push('caller'); return null; } };
@@ -412,8 +411,11 @@ test('profile: existing command stats without flags returns commands/profile, pr
   assert.ok(Array.isArray(body.commands));
   assert.deepEqual(Object.keys(body).sort(), ['commands', 'health', 'profile']);
   assert.ok(Date.parse(body.health.readAt) >= startedAt && Date.parse(body.health.readAt) <= finishedAt);
-  assert.deepEqual(body.health, { readAt: body.health.readAt, since: epoch,
-    forcedClose: { readAt: body.health.readAt, since: epoch, completed: 0, refusalsByCode: {}, unavailableReason: null } });
+  assert.deepEqual(body.health, { readAt: body.health.readAt, since: null, error: null, unavailableReason: null,
+    cpu: { availability: 'unavailable', reason: 'Health CPU is unavailable', startedAt: null, completedAt: body.health.readAt,
+      wallMs: null, cpuUserMs: null, cpuSystemMs: null, cores: null, thresholdCores: null, exceeded: false, sources: [], scopes: null, error: null },
+    forcedClose: { value: null, availability: 'unavailable', reason: 'Forced close accounting is unavailable' },
+    summary: { startedAt: null, completedAt: null, dueAt: null, delivery: null, delayed: false } });
   const ps = body.commands.find((row: { command: string }) => row.command === 'agent ps');
   assert.equal(ps.command, 'agent ps');
   assert.equal(ps.averageMs, 23.25);

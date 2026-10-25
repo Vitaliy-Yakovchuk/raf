@@ -14,6 +14,11 @@ import { nativeUserInputs, agentMessageCommand } from './qa-agent-run-evidence.m
 const source = path.resolve(import.meta.dirname, '..');
 const reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
+const options = process.argv.slice(3);
+assert.ok(options.length === 0 || options.length === 1 && options[0] === '--only-system-main', 'Expected an optional --only-system-main');
+const onlySystemMain = options.length === 1;
+const actorLaunches = onlySystemMain ? [['a', '1.1']] : [['a', '1.1'], ['b', '1.2']];
+const requiredChecks = ['detached-native-types-and-narrow-context', 'unregistered-and-env-forged-sender', 'main-close-interrupt-protection', 'attached-non-agent-no-input-or-enter', 'native-receipts-literal-signatures-and-concurrency', 'immutable-context-after-messages', 'real-native-system-to-main'];
 assert.equal(process.env.CODEX_HOME, '/home/dev/.codex', 'Use existing auth selector without copying credentials');
 assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
@@ -27,6 +32,9 @@ for (const key of Object.keys(env)) if (key.startsWith('GIT_') && key !== 'GIT_C
   key.startsWith('RAF_') && key !== 'RAF_QA_HOME' || ['TMUX', 'TMUX_PANE', 'NODE_OPTIONS', 'NODE_PATH', 'CLAUDE_CONFIG_DIR'].includes(key)) delete env[key];
 for (const p of [root, ev, path.join(stand, 'commands')]) fs.mkdirSync(p, { recursive: true });
 const summary = { status: 'failed', reviewed, stand, evidence: ev, startedAt: new Date().toISOString(), checks: [], commands: [],
+  scope: onlySystemMain ? 'system-main-only' : 'full',
+  requiredChecks: onlySystemMain ? ['real-native-system-to-main'] : requiredChecks,
+  omittedChecks: onlySystemMain ? requiredChecks.filter(id => id !== 'real-native-system-to-main') : [],
   limitations: ['Resource thresholds, transactional admission races, storage/tmux/readiness/unknown error paths are covered by the separately recorded contracts unit group; this host script does not impose real host resource pressure.',
     'Native actors use the existing model-routing selection. No mocked runner or substituted native markers are used.',
     'Only stand fixture tasks are created. No operational task, state, socket or main process is changed.'] };
@@ -99,7 +107,7 @@ const checkDiskCapacity = async () => {
   }
   const ids = [...volumes.values()].filter(v => v.development).map(v => v.id);
   const { resolveAgentResourceEstimate } = await import(pathToFileURL(path.join(main, 'src/resource-estimates.ts')));
-  const estimates = ['1.1', '1.2'].map(item => resolveAgentResourceEstimate({ flow, type: 'implement', project: 'raf',
+  const estimates = actorLaunches.map(([, item]) => resolveAgentResourceEstimate({ flow, type: 'implement', project: 'raf',
     tasks: [{ project: 'raf', change: 'ar41-fixture', item }], fileSystemIds: ids }));
   for (const estimate of estimates) assert.equal(estimate.status, 'KNOWN', JSON.stringify(estimate));
   const capacity = [...volumes.values()].map(volume => {
@@ -111,9 +119,9 @@ const checkDiskCapacity = async () => {
     return { ...volume, availableBytes, totalBytes, reservedBytes, thresholdBytes, requiredAvailableBytes: reservedBytes + thresholdBytes,
       sufficient: availableBytes - reservedBytes >= thresholdBytes };
   });
-  summary.diskCapacity = { estimates, volumes: capacity, method: 'stat.dev deduplication and statfs bavail; conservative simultaneous unused estimates for both actors; measured after fixture copies; production admission remains authoritative' };
+  summary.diskCapacity = { estimates, volumes: capacity, method: 'stat.dev deduplication and statfs bavail; conservative simultaneous unused estimates for the selected actors; measured after fixture copies; production admission remains authoritative' };
   atomic(path.join(ev, 'disk-capacity.json'), summary.diskCapacity);
-  assert.ok(capacity.every(v => v.sufficient), 'Insufficient stand disk for both configured estimates plus normal threshold; see disk-capacity.json. No agent run issued. Use an owned stand on a filesystem with sufficient actual space; do not lower conf thresholds or estimates.');
+  assert.ok(capacity.every(v => v.sufficient), 'Insufficient stand disk for selected configured estimates plus normal threshold; see disk-capacity.json. No agent run issued. Use an owned stand on a filesystem with sufficient actual space; do not lower conf thresholds or estimates.');
 };
 const sessions = () => {
   const db = new DatabaseSync(path.join(stand, '.raf/state.sqlite'), { readOnly: true });
@@ -215,98 +223,101 @@ try {
   must(await request('runner-list', ['runner', 'list']));
   must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
   must(await request('service-start', ['service', 'start']));
-  for (const [name, item] of [['a', '1.1'], ['b', '1.2']]) {
+  for (const [name, item] of actorLaunches) {
     await launch(name, item);
     const actor = await wait('registered ' + name, () => sessions().find(s => s.addressId === 'ar41-' + name && s.state === 'running'));
     actors.push(actor);
     await waitForActor('native ready ' + name, actor, () => fs.existsSync(path.join(own(actor), 'ar41-ready-1.json')));
   }
-  summary.actors = actors.map(a => ({ runId: a.runId, addressId: a.addressId, process: a.process, selection: a.selection,
+  summary.actors = actors.map(a => ({ runId: a.runId, addressId: a.addressId, process: a.process, selection: a.launchContext.selection,
     reportPath: a.launchContext.reportPath, briefPath: a.launchContext.briefPath, briefSha256: hash(a.launchContext.briefPath), contextSha256: hash(path.join(own(a), 'task-context.json')) }));
-  await check('detached-native-types-and-narrow-context', async () => {
-    const listed = JSON.parse(must(await request('live-ps', ['agent', 'ps'])));
-    for (const actor of actors) {
-      const row = listed.find(r => r.runId === actor.runId);
-      assert.equal(row.activity.type, 'implement'); assert.equal(row.observation.state, 'alive');
-      assert.ok(actor.process.runnerSessionId && actor.process.pid);
-      const attached = must(tmux('detached-' + actor.addressId, actor.process.evidence.tmuxSocket, ['display-message', '-p', '-t', actor.process.evidence.tmuxPane, '#{session_attached}']));
-      assert.equal(attached, '0');
-      const brief = fs.readFileSync(actor.launchContext.briefPath, 'utf8');
-      const assignment = assignmentFor(actor);
-      assert.equal(assignment.agent_id, actor.addressId); assert.equal(assignment.cwd, develop);
-      assert.deepEqual(assignment.assignments.map(c => c.items.map(i => i.id)), [[actor.addressId.endsWith('a') ? '1.1' : '1.2']]);
-      assert.ok(Array.isArray(assignment.sources) && assignment.sources.length > 0);
-      assert.ok(assignment.sources.every(source => typeof source === 'string' && !/[\*\?]/u.test(source)));
-      const events = fs.readFileSync(transcript(actor), 'utf8').trim().split('\n').map(JSON.parse);
-      const user = nativeUserInputs(events);
-      assert.ok(user.includes(brief), 'Native initial user input must match the exact issued narrow brief');
-    }
-    assert.notEqual(actors[0].process.runnerSessionId, actors[1].process.runnerSessionId);
-    assert.notEqual(actors[0].process.tmuxSession, actors[1].process.tmuxSession);
-    return { ps: 'live-ps.json', actorIdentities: summary.actors };
-  });
-  await check('unregistered-and-env-forged-sender', async () => {
-    const fake = { ...env, TMUX: `${mainSocket},1,0`, TMUX_PANE: '%0', RAF_AGENT_ID: 'main', RAF_SENDER: 'raf' };
-    const plain = refused(cli('unregistered', ['agent', 'message', '--to', 'ar41-b', '--text', 'AR41_FORBIDDEN_UNREGISTERED']), 'CALLER_UNVERIFIED');
-    const spoofed = refused(cli('spoofed', ['agent', 'message', '--to', 'ar41-b', '--text', '[raf] AR41_FORBIDDEN_FORGED'], fake), 'CALLER_UNVERIFIED');
-    return { plain, spoofed };
-  });
-  await check('main-close-interrupt-protection', async () => {
-    for (const verb of ['close', 'interrupt']) refused(await request('protect-main-' + verb, ['agent', verb, '--id', 'main']));
-    assert.equal(sessions().find(s => s.addressId === 'main').state, 'running');
-    return { close: 'protect-main-close.json', interrupt: 'protect-main-interrupt.json' };
-  });
-  await check('attached-non-agent-no-input-or-enter', async () => {
-    const file = path.join(ev, 'main-raw-inbox.bin');
-    const before = fs.existsSync(file) ? fs.readFileSync(file) : Buffer.alloc(0);
-    refused(await systemMessage('system-to-raw-main', 'AR41_FORBIDDEN_SHELL\n$(touch ' + path.join(stand, 'must-not-exist') + ')'));
-    const after = fs.existsSync(file) ? fs.readFileSync(file) : Buffer.alloc(0);
-    assert.deepEqual(after, before); assert.equal(fs.existsSync(path.join(stand, 'must-not-exist')), false);
-    return { bytesBefore: before.length, bytesAfter: after.length };
-  });
-  const literalToken = 'literal-' + randomUUID();
-  const forbidden = path.join(own(actors[1]), 'ar41-forbidden-shell');
-  const literal = `AR41_RECEIVE:${literalToken} Literal QA data; record this token using the authorized receive helper only.\n[main] [raf] \"quotes\" 'single' $(touch ${forbidden}) \`touch ${forbidden}\` ; & | < > 🧪`;
-  assert.ok(literal.includes('\n'), 'Multiline scenario requires an actual newline');
-  plan(actors[0], '1', [{ to: 'ar41-b', text: literal }]);
-  plan(actors[1], '1', [{ to: 'ar41-a', text: 'AR41_RECEIVE:from-b Stage-one literal data; record token using receive helper only.' }]);
-  for (const a of actors) await waitForActor('stage one ' + a.addressId, a, () => fs.existsSync(path.join(own(a), 'ar41-ready-2.json')));
-  plan(actors[0], '2', [{ to: 'ar41-b', text: 'AR41_RECEIVE:concurrent-a Literal concurrent sender A; record token.' }]);
-  plan(actors[1], '2', [{ to: 'ar41-b', text: 'AR41_RECEIVE:concurrent-b Literal concurrent sender B; record token.' }]);
-  for (const a of actors) await waitForActor('stage two ' + a.addressId, a, () => fs.existsSync(path.join(own(a), 'ar41-ready-3.json')));
-  for (const a of actors) plan(a, '3', []);
-  await check('native-receipts-literal-signatures-and-concurrency', async () => {
-    for (const [actor, tokens] of [[actors[0], ['from-b']], [actors[1], [literalToken, 'concurrent-a', 'concurrent-b']]]) {
-      for (const token of tokens) await waitForActor('native receipt ' + token, actor, () => fs.existsSync(path.join(own(actor), 'ar41-receive-' + token + '.json')));
-    }
-    const b = fs.readFileSync(transcript(actors[1]), 'utf8').trim().split('\n').map(JSON.parse);
-    const incoming = nativeUserInputs(b);
-    assert.ok(incoming.includes('[ar41-a] ' + literal), 'Exact literal body and actual author required in native transcript');
-    assert.ok(incoming.includes('[ar41-a] AR41_RECEIVE:concurrent-a Literal concurrent sender A; record token.'));
-    assert.ok(incoming.includes('[ar41-b] AR41_RECEIVE:concurrent-b Literal concurrent sender B; record token.'));
-    assert.ok(incoming.every(text => !text.includes('AR41_FORBIDDEN_')));
-    assert.equal(fs.existsSync(forbidden), false);
-    for (const actor of actors) capture('after-messages-' + actor.addressId, actor);
-    const audit = fs.readdirSync(env.AR41_AUDIT).filter(f => f.endsWith('.json')).map(f => JSON.parse(fs.readFileSync(path.join(env.AR41_AUDIT, f))));
-    const concurrent = ['a', 'b'].map(a => audit.find(r => r.argv.includes('AR41_RECEIVE:concurrent-' + a + ' Literal concurrent sender ' + a.toUpperCase() + '; record token.')));
-    assert.ok(concurrent.every(Boolean), 'Both native caller audits required');
-    assert.ok(Math.max(...concurrent.map(r => r.handlerStartedAt)) < Math.min(...concurrent.map(r => r.endedAt)), 'Actual handler intervals must overlap');
-    for (const r of concurrent) { assert.equal(r.result.exitCode, 0); assert.equal(JSON.parse(r.result.stdout).accepted, true); }
-    atomic(path.join(ev, 'native-message-cli-audit.json'), audit);
-    return { nativeLiteral: literalToken, forbiddenFileAbsent: true, receiptTokens: ['from-b', literalToken, 'concurrent-a', 'concurrent-b'],
-      overlap: concurrent.map(r => ({ id: r.id, handlerStartedAt: r.handlerStartedAt, endedAt: r.endedAt })) };
-  });
-  await check('immutable-context-after-messages', async () => {
-    for (const a of summary.actors) {
-      assert.equal(hash(a.briefPath), a.briefSha256);
-      assert.equal(hash(path.join(path.dirname(a.reportPath), 'task-context.json')), a.contextSha256);
-    }
-    return { unchanged: true };
-  });
+  if (!onlySystemMain) {
+    await check('detached-native-types-and-narrow-context', async () => {
+      const listed = JSON.parse(must(await request('live-ps', ['agent', 'ps'])));
+      for (const actor of actors) {
+        const row = listed.find(r => r.runId === actor.runId);
+        assert.equal(row.activity.type, 'implement'); assert.equal(row.observation.state, 'alive');
+        assert.ok(actor.process.runnerSessionId && actor.process.pid);
+        const attached = must(tmux('detached-' + actor.addressId, actor.process.evidence.tmuxSocket, ['display-message', '-p', '-t', actor.process.evidence.tmuxPane, '#{session_attached}']));
+        assert.equal(attached, '0');
+        const brief = fs.readFileSync(actor.launchContext.briefPath, 'utf8');
+        const assignment = assignmentFor(actor);
+        assert.equal(assignment.agent_id, actor.addressId); assert.equal(assignment.cwd, develop);
+        assert.deepEqual(assignment.assignments.map(c => c.items.map(i => i.id)), [[actor.addressId.endsWith('a') ? '1.1' : '1.2']]);
+        assert.ok(Array.isArray(assignment.sources) && assignment.sources.length > 0);
+        assert.ok(assignment.sources.every(source => typeof source === 'string' && !/[\*\?]/u.test(source)));
+        const events = fs.readFileSync(transcript(actor), 'utf8').trim().split('\n').map(JSON.parse);
+        const user = nativeUserInputs(events);
+        assert.ok(user.includes(brief), 'Native initial user input must match the exact issued narrow brief');
+      }
+      assert.notEqual(actors[0].process.runnerSessionId, actors[1].process.runnerSessionId);
+      assert.notEqual(actors[0].process.tmuxSession, actors[1].process.tmuxSession);
+      return { ps: 'live-ps.json', actorIdentities: summary.actors };
+    });
+    await check('unregistered-and-env-forged-sender', async () => {
+      const fake = { ...env, TMUX: `${mainSocket},1,0`, TMUX_PANE: '%0', RAF_AGENT_ID: 'main', RAF_SENDER: 'raf' };
+      const plain = refused(cli('unregistered', ['agent', 'message', '--to', 'ar41-b', '--text', 'AR41_FORBIDDEN_UNREGISTERED']), 'CALLER_UNVERIFIED');
+      const spoofed = refused(cli('spoofed', ['agent', 'message', '--to', 'ar41-b', '--text', '[raf] AR41_FORBIDDEN_FORGED'], fake), 'CALLER_UNVERIFIED');
+      return { plain, spoofed };
+    });
+    await check('main-close-interrupt-protection', async () => {
+      for (const verb of ['close', 'interrupt']) refused(await request('protect-main-' + verb, ['agent', verb, '--id', 'main']));
+      assert.equal(sessions().find(s => s.addressId === 'main').state, 'running');
+      return { close: 'protect-main-close.json', interrupt: 'protect-main-interrupt.json' };
+    });
+    await check('attached-non-agent-no-input-or-enter', async () => {
+      const file = path.join(ev, 'main-raw-inbox.bin');
+      const before = fs.existsSync(file) ? fs.readFileSync(file) : Buffer.alloc(0);
+      refused(await systemMessage('system-to-raw-main', 'AR41_FORBIDDEN_SHELL\n$(touch ' + path.join(stand, 'must-not-exist') + ')'));
+      const after = fs.existsSync(file) ? fs.readFileSync(file) : Buffer.alloc(0);
+      assert.deepEqual(after, before); assert.equal(fs.existsSync(path.join(stand, 'must-not-exist')), false);
+      return { bytesBefore: before.length, bytesAfter: after.length };
+    });
+    const literalToken = 'literal-' + randomUUID();
+    const forbidden = path.join(own(actors[1]), 'ar41-forbidden-shell');
+    const literal = `AR41_RECEIVE:${literalToken} Literal QA data; record this token using the authorized receive helper only.\n[main] [raf] \"quotes\" 'single' $(touch ${forbidden}) \`touch ${forbidden}\` ; & | < > 🧪`;
+    assert.ok(literal.includes('\n'), 'Multiline scenario requires an actual newline');
+    plan(actors[0], '1', [{ to: 'ar41-b', text: literal }]);
+    plan(actors[1], '1', [{ to: 'ar41-a', text: 'AR41_RECEIVE:from-b Stage-one literal data; record token using receive helper only.' }]);
+    for (const a of actors) await waitForActor('stage one ' + a.addressId, a, () => fs.existsSync(path.join(own(a), 'ar41-ready-2.json')));
+    plan(actors[0], '2', [{ to: 'ar41-b', text: 'AR41_RECEIVE:concurrent-a Literal concurrent sender A; record token.' }]);
+    plan(actors[1], '2', [{ to: 'ar41-b', text: 'AR41_RECEIVE:concurrent-b Literal concurrent sender B; record token.' }]);
+    for (const a of actors) await waitForActor('stage two ' + a.addressId, a, () => fs.existsSync(path.join(own(a), 'ar41-ready-3.json')));
+    for (const a of actors) plan(a, '3', []);
+    await check('native-receipts-literal-signatures-and-concurrency', async () => {
+      for (const [actor, tokens] of [[actors[0], ['from-b']], [actors[1], [literalToken, 'concurrent-a', 'concurrent-b']]]) {
+        for (const token of tokens) await waitForActor('native receipt ' + token, actor, () => fs.existsSync(path.join(own(actor), 'ar41-receive-' + token + '.json')));
+      }
+      const b = fs.readFileSync(transcript(actors[1]), 'utf8').trim().split('\n').map(JSON.parse);
+      const incoming = nativeUserInputs(b);
+      assert.ok(incoming.includes('[ar41-a] ' + literal), 'Exact literal body and actual author required in native transcript');
+      assert.ok(incoming.includes('[ar41-a] AR41_RECEIVE:concurrent-a Literal concurrent sender A; record token.'));
+      assert.ok(incoming.includes('[ar41-b] AR41_RECEIVE:concurrent-b Literal concurrent sender B; record token.'));
+      assert.ok(incoming.every(text => !text.includes('AR41_FORBIDDEN_')));
+      assert.equal(fs.existsSync(forbidden), false);
+      for (const actor of actors) capture('after-messages-' + actor.addressId, actor);
+      const audit = fs.readdirSync(env.AR41_AUDIT).filter(f => f.endsWith('.json')).map(f => JSON.parse(fs.readFileSync(path.join(env.AR41_AUDIT, f))));
+      const concurrent = ['a', 'b'].map(a => audit.find(r => r.argv.includes('AR41_RECEIVE:concurrent-' + a + ' Literal concurrent sender ' + a.toUpperCase() + '; record token.')));
+      assert.ok(concurrent.every(Boolean), 'Both native caller audits required');
+      assert.ok(Math.max(...concurrent.map(r => r.handlerStartedAt)) < Math.min(...concurrent.map(r => r.endedAt)), 'Actual handler intervals must overlap');
+      for (const r of concurrent) { assert.equal(r.result.exitCode, 0); assert.equal(JSON.parse(r.result.stdout).accepted, true); }
+      atomic(path.join(ev, 'native-message-cli-audit.json'), audit);
+      return { nativeLiteral: literalToken, forbiddenFileAbsent: true, receiptTokens: ['from-b', literalToken, 'concurrent-a', 'concurrent-b'],
+        overlap: concurrent.map(r => ({ id: r.id, handlerStartedAt: r.handlerStartedAt, endedAt: r.endedAt })) };
+    });
+    await check('immutable-context-after-messages', async () => {
+      for (const a of summary.actors) {
+        assert.equal(hash(a.briefPath), a.briefSha256);
+        assert.equal(hash(path.join(path.dirname(a.reportPath), 'task-context.json')), a.contextSha256);
+      }
+      return { unchanged: true };
+    });
+  }
   must(tmux('main-stop-raw', mainSocket, ['kill-session', '-t', 'ar41-main'])); mainStarted = false;
   await wait('raw main exit', () => { const r = spawnSync('tmux', ['-S', mainSocket, 'list-sessions'], { env, encoding: 'utf8' }); return r.status !== 0; }, 15000);
   const { buildRunnerInvocation, observeRunnerScreen, readNativeComposer } = await import(pathToFileURL(path.join(main, 'src/runner-protocols.ts')));
-  const selected = actors[0].selection;
+  const selected = actors[0].launchContext.selection;
+  assert.ok(selected && selected.runner === actors[0].process.runner && selected.model && selected.effort, 'Recorded launch selection must match the native actor');
   const protocol = settings.runnerProtocols.find(p => p.runner === selected.runner);
   assert.ok(protocol && selected.model && selected.effort);
   const invocation = buildRunnerInvocation(protocol, { model: selected.model, effort: selected.effort,
@@ -321,11 +332,12 @@ try {
       const state = observeRunnerScreen(protocol, { text: r.stdout, version: protocol.version, requestedCommand: null }).state;
       return r.cliExitCode === 0 && state === 'ready' && readNativeComposer(protocol, r.stdout)?.input === '';
     }, protocol.timeouts.overallMs);
-    const accepted = JSON.parse(must(await systemMessage('system-to-native-main', 'AR41_SYSTEM_MAIN literal verified raf sender')));
+    const message = 'AR41_SYSTEM_MAIN-' + randomUUID() + ' literal verified raf sender';
+    const accepted = JSON.parse(must(await systemMessage('system-to-native-main', message)));
     assert.equal(accepted.accepted, true);
     const screen = must(tmux('native-main-after', mainSocket, ['capture-pane', '-p', '-t', 'ar41-main:0.0', '-S', '-200']));
-    assert.ok(screen.includes('AR41_SYSTEM_MAIN'));
-    return { receipt: accepted, screen: 'native-main-after.stdout', selection: selected };
+    assert.ok(screen.includes('[raf] ' + message), 'Unique system message and actual raf signature required in native main screen');
+    return { receipt: accepted, message, screen: 'native-main-after.stdout', selection: selected };
   });
 } catch (error) { summary.error = { message: error.message, stack: error.stack }; }
 finally {
@@ -376,10 +388,11 @@ finally {
     } catch (e) { summary.cleanup.errors.push(e.message); }
   }
   summary.cleanup.complete = summary.cleanup.errors.length === 0;
-  const required = ['detached-native-types-and-narrow-context', 'unregistered-and-env-forged-sender', 'main-close-interrupt-protection', 'attached-non-agent-no-input-or-enter', 'native-receipts-literal-signatures-and-concurrency', 'immutable-context-after-messages', 'real-native-system-to-main'];
-  summary.unexecuted = required.filter(id => !summary.checks.some(c => c.id === id));
+  summary.unexecuted = summary.requiredChecks.filter(id => !summary.checks.some(c => c.id === id));
   summary.status = !summary.error && summary.cleanup.complete && !summary.unexecuted.length && summary.checks.every(c => c.status === 'passed') ? 'completed-review-required' : 'failed';
-  summary.nextAction = 'Review native tool exits/receipts, actual delivery interval overlap, exact native user messages and cleanup before accepting 4.1. completed-review-required is not an automatic succeeded report.';
+  summary.nextAction = onlySystemMain
+    ? 'Review the native system-to-main receipt, screen and cleanup together with the separately recorded full-run checks. The six omitted checks were not rerun. completed-review-required is not an automatic succeeded report.'
+    : 'Review native tool exits/receipts, actual delivery interval overlap, exact native user messages and cleanup before accepting 4.1. completed-review-required is not an automatic succeeded report.';
   summary.endedAt = new Date().toISOString();
   atomic(path.join(ev, 'summary.json'), summary);
   console.log(JSON.stringify(summary));

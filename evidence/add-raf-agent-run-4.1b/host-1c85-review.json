@@ -1,0 +1,95 @@
+{
+  "reviewedAt": "2026-10-25T22:49:35.704690+00:00",
+  "sourceCommit": "07cfc255c5918bd13dd430adf9a58cc2d66b567a",
+  "source": "/srv/dev/work/orchestrator/openspec/changes/add-raf-agent-run/evidence-4.1-host-ara41q8-1c85a39",
+  "sourceSummarySha256": "2d30a9406c0a02fd97956bbf996261670eec24458cb04dfa5af69f0dd4617338",
+  "reviewed": "1c85a39b6b53193a8862ac7438afa41dd70e1c02",
+  "status": "failed",
+  "cliExitCode": 1,
+  "cliExitCodeSource": "Main host delivery, 2026-10-25: Host live QA на 1c85a39 виконано (ara41q8): exit=1.",
+  "startedAt": "2026-10-25T22:36:33.681Z",
+  "endedAt": "2026-10-25T22:40:06.929Z",
+  "checks": [
+    {
+      "id": "detached-native-types-and-narrow-context",
+      "status": "passed",
+      "startedAt": "2026-10-25T22:39:16.965Z"
+    },
+    {
+      "id": "unregistered-and-env-forged-sender",
+      "status": "passed",
+      "startedAt": "2026-10-25T22:39:19.206Z"
+    },
+    {
+      "id": "main-close-interrupt-protection",
+      "status": "passed",
+      "startedAt": "2026-10-25T22:39:23.804Z"
+    },
+    {
+      "id": "attached-non-agent-no-input-or-enter",
+      "status": "passed",
+      "startedAt": "2026-10-25T22:39:29.220Z"
+    },
+    {
+      "id": "native-receipts-literal-signatures-and-concurrency",
+      "status": "passed",
+      "startedAt": "2026-10-25T22:40:06.704Z"
+    },
+    {
+      "id": "immutable-context-after-messages",
+      "status": "passed",
+      "startedAt": "2026-10-25T22:40:06.753Z"
+    }
+  ],
+  "concurrentCalls": [
+    {
+      "id": "157b47af-6a69-4e79-87dc-f64844b26618",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "ar41-b",
+        "--text",
+        "AR41_RECEIVE:concurrent-a Literal concurrent sender A; record token."
+      ],
+      "handlerStartedAt": 1792967991885,
+      "endedAt": 1792967996021,
+      "result": {
+        "exitCode": 0,
+        "stdout": "{\"accepted\":true,\"receiptId\":\"fc92311a-b38c-48a1-8089-54504e84162b\"}",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "2a08e466-00a9-4fd8-8733-8d81cceb811a",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "ar41-b",
+        "--text",
+        "AR41_RECEIVE:concurrent-b Literal concurrent sender B; record token."
+      ],
+      "handlerStartedAt": 1792967991880,
+      "endedAt": 1792967995501,
+      "result": {
+        "exitCode": 0,
+        "stdout": "{\"accepted\":true,\"receiptId\":\"76796d0f-860f-436a-b96b-ce2a9c0db1c7\"}",
+        "stderr": ""
+      }
+    }
+  ],
+  "unexecuted": [
+    "real-native-system-to-main"
+  ],
+  "error": {
+    "message": "Cannot read properties of undefined (reading 'runner')",
+    "stack": "TypeError: Cannot read properties of undefined (reading 'runner')\n    at file:///srv/dev/ara41q8/raf/scripts/qa-agent-run-live.mjs:310:77\n    at Array.find (<anonymous>)\n    at file:///srv/dev/ara41q8/raf/scripts/qa-agent-run-live.mjs:310:45"
+  },
+  "cleanup": {
+    "complete": true,
+    "errors": [],
+    "remainingServices": []
+  },
+  "conclusion": "Six native checks passed, including actual overlapping message handlers and accepted receipts. The remaining system-to-main step did not execute because the QA script read selection from SessionRecord instead of launchContext. This run is not a full host pass."
+}

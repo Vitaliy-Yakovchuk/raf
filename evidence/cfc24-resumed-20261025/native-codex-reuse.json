@@ -1,0 +1,1582 @@
+{
+  "source": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/",
+  "executionReview": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/execution-review.json",
+  "incomingDeliveryReview": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/delivery-review.json",
+  "nativeSourceManifest": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/native-source-manifest.json",
+  "reviewed": "4e1d2345b9d4134df73e03fb9fb2f88c6b311db1",
+  "observedHead": "b947daed00dce0ed44c6581e57fd57608d1a0ac4",
+  "versions": [
+    {
+      "name": "node",
+      "command": [
+        "node",
+        "--version"
+      ],
+      "cwd": "/srv/dev/s64-oF3uEe/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "v26.12.1\n",
+      "stderr": ""
+    },
+    {
+      "name": "codex",
+      "command": [
+        "codex",
+        "--version"
+      ],
+      "cwd": "/srv/dev/s64-oF3uEe/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "codex-cli 0.163.0\n",
+      "stderr": ""
+    },
+    {
+      "name": "tmux",
+      "command": [
+        "tmux",
+        "-V"
+      ],
+      "cwd": "/srv/dev/s64-oF3uEe/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "tmux 3.6\n",
+      "stderr": ""
+    },
+    {
+      "name": "bwrap",
+      "command": [
+        "bwrap",
+        "--version"
+      ],
+      "cwd": "/srv/dev/s64-oF3uEe/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "bubblewrap 0.11.1\n",
+      "stderr": ""
+    },
+    {
+      "name": "git",
+      "command": [
+        "git",
+        "--version"
+      ],
+      "cwd": "/srv/dev/s64-oF3uEe/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "git version 2.53.0\n",
+      "stderr": ""
+    },
+    {
+      "name": "uname",
+      "command": [
+        "uname",
+        "-a"
+      ],
+      "cwd": "/srv/dev/s64-oF3uEe/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "Linux ubuntu-32gb-hel1-1 7.0.0-30-generic #30-Ubuntu SMP PREEMPT_DYNAMIC Fri Jul 31 18:22:54 UTC 2026 x86_64 GNU/Linux\n",
+      "stderr": ""
+    }
+  ],
+  "actors": [
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "nativeSessionId": "01a1726b-ebd2-7dd0-9d22-4e563d7e0417",
+      "process": {
+        "pid": 916243,
+        "startedAt": "2026-10-25T09:37:15.000Z"
+      },
+      "briefSha256": "1a267ba7c9e77275ec27b14873f0842ef3097fc261fc5c9b2f582cab3d993e3f",
+      "issuedPrefix": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts"
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "nativeSessionId": "01a1726c-41e6-74f3-91ea-b067f22fd097",
+      "process": {
+        "pid": 918298,
+        "startedAt": "2026-10-25T09:37:37.000Z"
+      },
+      "briefSha256": "fc7d6850f8be98ebb6b33b83b6f9b01fafc3bd0e992d29e7a93c855b7586381a",
+      "issuedPrefix": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts"
+    }
+  ],
+  "channels": [
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "stage": 1,
+      "kind": "message",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent message --to 'sym64-b' --text 'sym64-a-after-B'",
+      "sourceLine": 54,
+      "cleanedLine": 15,
+      "outputSourceLine": 65,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 69,
+      "stdoutSha256": "a94df8219d85dd0386a8f5d76ca6768027e0039d50ec9f0e19cf1b9cf2ec1b65",
+      "exactAudit": "cli-audit/953fc685-74ff-4fcd-bfb3-9fa656a65d56.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2b692017-1455-4f08-9a70-55f3026f1e8e/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "stage": 1,
+      "kind": "ps",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent ps",
+      "sourceLine": 69,
+      "cleanedLine": 19,
+      "outputSourceLine": 72,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 77341,
+      "stdoutSha256": "6ca45a4b8522c464e83c8e007a90db01823462c731d62b7e5c22bee6fbdadecc",
+      "exactAudit": "cli-audit/d8921e3a-0956-4cef-a01e-26fc95d77ecc.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2b692017-1455-4f08-9a70-55f3026f1e8e/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "stage": 2,
+      "kind": "message",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent message --to 'sym64-b' --text 'sym64-a-after-A'",
+      "sourceLine": 89,
+      "cleanedLine": 25,
+      "outputSourceLine": 98,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 69,
+      "stdoutSha256": "d0424909b7a457f899d17ea9c21f8eab2cb306280ea53c91a6c8694b8cf70bf5",
+      "exactAudit": "cli-audit/acb493ff-8a09-45af-9c6c-00bd0349c875.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/cfb4de0d-522d-4a91-9295-704960927e89/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "stage": 2,
+      "kind": "ps",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent ps",
+      "sourceLine": 102,
+      "cleanedLine": 29,
+      "outputSourceLine": 105,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 77341,
+      "stdoutSha256": "baa116c3a2926a1c5029267c82ab9f1c1bf050ab553e39ef9abfb0a4d44c6b86",
+      "exactAudit": "cli-audit/013900c0-9adc-4fea-8f5e-5dbdb3ab8e88.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/cfb4de0d-522d-4a91-9295-704960927e89/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "stage": 3,
+      "kind": "message",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent message --to 'sym64-b' --text 'sym64-a-after-rollback'",
+      "sourceLine": 120,
+      "cleanedLine": 35,
+      "outputSourceLine": 129,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 69,
+      "stdoutSha256": "60bd1c783d8a4c99532337b1a58638b91a36937500f0319a4f6f2de6ad7280dc",
+      "exactAudit": "cli-audit/4b3c8600-a45f-43d6-952d-5d007079500e.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2303a0f2-e987-4c71-819e-409d99f27f50/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "stage": 3,
+      "kind": "ps",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent ps",
+      "sourceLine": 131,
+      "cleanedLine": 39,
+      "outputSourceLine": 134,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 77342,
+      "stdoutSha256": "2a03d6ecd7403978584564bf99c660ca9220b4f30cb85045c2bbbbafa0b2dee8",
+      "exactAudit": "cli-audit/2f8f4f64-1c48-4441-b707-69d92c3bf244.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2303a0f2-e987-4c71-819e-409d99f27f50/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "stage": 1,
+      "kind": "message",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent message --to 'sym64-a' --text 'sym64-b-after-B'",
+      "sourceLine": 28,
+      "cleanedLine": 7,
+      "outputSourceLine": 39,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 69,
+      "stdoutSha256": "f8fbf3b2664297c2dc66de4df63b12ef9f533352978ea5a3357a73373120a382",
+      "exactAudit": "cli-audit/2698431b-d60b-4954-bc24-9b77322b4ec8.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2b692017-1455-4f08-9a70-55f3026f1e8e/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "stage": 1,
+      "kind": "ps",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent ps",
+      "sourceLine": 43,
+      "cleanedLine": 11,
+      "outputSourceLine": 46,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 77341,
+      "stdoutSha256": "6a735ade828d2692c3e92ea4eec661841e78cb1cfa723c0e8af10c4f18209d2d",
+      "exactAudit": "cli-audit/2ae6bcd5-51eb-4879-9d24-c9ebb52305a2.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2b692017-1455-4f08-9a70-55f3026f1e8e/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "stage": 2,
+      "kind": "message",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent message --to 'sym64-a' --text 'sym64-b-after-A'",
+      "sourceLine": 57,
+      "cleanedLine": 15,
+      "outputSourceLine": 66,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 69,
+      "stdoutSha256": "2c9eb6e8d5cc6155c5fc0e1720fcc697f610a22b9faf214b3143a743463f7d7f",
+      "exactAudit": "cli-audit/1d43b0df-19e6-46d1-9080-12a22404d806.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/cfb4de0d-522d-4a91-9295-704960927e89/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "stage": 2,
+      "kind": "ps",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent ps",
+      "sourceLine": 68,
+      "cleanedLine": 19,
+      "outputSourceLine": 71,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 77341,
+      "stdoutSha256": "022e4415609f5932d8c61a4df779e4e9a9d5dba1d175eb60d4c1bc8e2f9a3a26",
+      "exactAudit": "cli-audit/e98c12f1-de31-4b6a-9d50-687652b875cd.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/cfb4de0d-522d-4a91-9295-704960927e89/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "stage": 3,
+      "kind": "message",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent message --to 'sym64-a' --text 'sym64-b-after-rollback'",
+      "sourceLine": 82,
+      "cleanedLine": 23,
+      "outputSourceLine": 91,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 69,
+      "stdoutSha256": "ff8b6dac9fab4341fb77339e40237cb7323f644176f4003001b4413cd2026ecc",
+      "exactAudit": "cli-audit/3a2af59a-79e5-4c6f-90f0-690a1d0ff068.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2303a0f2-e987-4c71-819e-409d99f27f50/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "stage": 3,
+      "kind": "ps",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent ps",
+      "sourceLine": 93,
+      "cleanedLine": 27,
+      "outputSourceLine": 96,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 77342,
+      "stdoutSha256": "08fcd862c18c2cddca34cc8739d1e348d2c9438b054be2d931ac920de21851ef",
+      "exactAudit": "cli-audit/af81535c-c280-4644-a66c-7c001052906b.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2303a0f2-e987-4c71-819e-409d99f27f50/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    }
+  ],
+  "incomingDeliveries": [
+    {
+      "from": "sym64-b",
+      "fromRunId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "to": "sym64-a",
+      "toRunId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "marker": "sym64-b-after-B",
+      "status": "received-in-native-user-item",
+      "recipientSourceLine": 58,
+      "recipientTimestamp": "2026-10-25T09:38:23.404Z",
+      "recipientNativeSha256": "5406f3eb593fa15877f5a81a4690a7073e5edc52da02c9c141340273abaaf07d",
+      "senderSourceLine": 28,
+      "senderCliReceipt": {
+        "accepted": true,
+        "receiptId": "7be8e5a2-c3e3-4c9d-9f9e-56bc068e20a0"
+      },
+      "senderAudit": "cli-audit/2698431b-d60b-4954-bc24-9b77322b4ec8.json"
+    },
+    {
+      "from": "sym64-b",
+      "fromRunId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "to": "sym64-a",
+      "toRunId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "marker": "sym64-b-after-A",
+      "status": "received-in-native-user-item",
+      "recipientSourceLine": 93,
+      "recipientTimestamp": "2026-10-25T09:39:01.169Z",
+      "recipientNativeSha256": "5406f3eb593fa15877f5a81a4690a7073e5edc52da02c9c141340273abaaf07d",
+      "senderSourceLine": 57,
+      "senderCliReceipt": {
+        "accepted": true,
+        "receiptId": "3f563ab5-56b1-4931-923a-5a2f48b48f22"
+      },
+      "senderAudit": "cli-audit/1d43b0df-19e6-46d1-9080-12a22404d806.json"
+    },
+    {
+      "from": "sym64-b",
+      "fromRunId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "to": "sym64-a",
+      "toRunId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "marker": "sym64-b-after-rollback",
+      "status": "received-in-native-user-item",
+      "recipientSourceLine": 124,
+      "recipientTimestamp": "2026-10-25T09:39:39.637Z",
+      "recipientNativeSha256": "5406f3eb593fa15877f5a81a4690a7073e5edc52da02c9c141340273abaaf07d",
+      "senderSourceLine": 82,
+      "senderCliReceipt": {
+        "accepted": true,
+        "receiptId": "66043062-4e6e-4889-9a87-123274f9eae2"
+      },
+      "senderAudit": "cli-audit/3a2af59a-79e5-4c6f-90f0-690a1d0ff068.json"
+    },
+    {
+      "from": "sym64-a",
+      "fromRunId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "to": "sym64-b",
+      "toRunId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "marker": "sym64-a-after-B",
+      "status": "received-in-native-user-item",
+      "recipientSourceLine": 32,
+      "recipientTimestamp": "2026-10-25T09:38:23.585Z",
+      "recipientNativeSha256": "0e41fb73345f791df3d7c3f0320676fc11775d2b100ad38cf5e94d227b651865",
+      "senderSourceLine": 54,
+      "senderCliReceipt": {
+        "accepted": true,
+        "receiptId": "ef9b12ee-1229-42fc-8194-a20f3a55bb5b"
+      },
+      "senderAudit": "cli-audit/953fc685-74ff-4fcd-bfb3-9fa656a65d56.json"
+    },
+    {
+      "from": "sym64-a",
+      "fromRunId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "to": "sym64-b",
+      "toRunId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "marker": "sym64-a-after-A",
+      "status": "received-in-native-user-item",
+      "recipientSourceLine": 61,
+      "recipientTimestamp": "2026-10-25T09:39:00.725Z",
+      "recipientNativeSha256": "0e41fb73345f791df3d7c3f0320676fc11775d2b100ad38cf5e94d227b651865",
+      "senderSourceLine": 89,
+      "senderCliReceipt": {
+        "accepted": true,
+        "receiptId": "223b8b2e-4fb8-4f77-bade-450700e70736"
+      },
+      "senderAudit": "cli-audit/acb493ff-8a09-45af-9c6c-00bd0349c875.json"
+    },
+    {
+      "from": "sym64-a",
+      "fromRunId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "to": "sym64-b",
+      "toRunId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "marker": "sym64-a-after-rollback",
+      "status": "received-in-native-user-item",
+      "recipientSourceLine": 86,
+      "recipientTimestamp": "2026-10-25T09:39:39.883Z",
+      "recipientNativeSha256": "0e41fb73345f791df3d7c3f0320676fc11775d2b100ad38cf5e94d227b651865",
+      "senderSourceLine": 120,
+      "senderCliReceipt": {
+        "accepted": true,
+        "receiptId": "79bf7d55-a7d7-43bf-b10d-8b9dcd8ac28f"
+      },
+      "senderAudit": "cli-audit/4b3c8600-a45f-43d6-952d-5d007079500e.json"
+    }
+  ],
+  "helperReports": [
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "report": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/sym64-a/run/sym64-source-0.json",
+      "status": "passed",
+      "finalNativeExitCode": 0,
+      "reusedResultIndices": [
+        {
+          "index": 0,
+          "label": "own add /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 1,
+          "label": "own commit /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 2,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 3,
+          "label": "own add /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 4,
+          "label": "own commit /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 5,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        }
+      ],
+      "fullResultSha256": "2ba4a9e05ed5490e63540757cdc6edc1584825cecacaabefbcc4a55b33379da8"
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "report": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/sym64-a/run/sym64-stage-1.json",
+      "status": "passed",
+      "finalNativeExitCode": 0,
+      "reusedResultIndices": [
+        {
+          "index": 256,
+          "label": "deny state state.sqlite direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 257,
+          "label": "deny state state.sqlite child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 258,
+          "label": "deny state state.sqlite direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 259,
+          "label": "deny state state.sqlite child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 260,
+          "label": "deny state state.sqlite-wal direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 261,
+          "label": "deny state state.sqlite-wal child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 262,
+          "label": "deny state state.sqlite-wal direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 263,
+          "label": "deny state state.sqlite-wal child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 264,
+          "label": "deny state state.sqlite-shm direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 265,
+          "label": "deny state state.sqlite-shm child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 266,
+          "label": "deny state state.sqlite-shm direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 267,
+          "label": "deny state state.sqlite-shm child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 268,
+          "label": "deny state secrets.json direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 269,
+          "label": "deny state secrets.json child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 270,
+          "label": "deny state secrets.json direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 271,
+          "label": "deny state secrets.json child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 272,
+          "label": "deny foreign connection peer direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 273,
+          "label": "deny foreign connection peer child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 274,
+          "label": "deny foreign connection peer direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 275,
+          "label": "deny foreign connection peer child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 276,
+          "label": "deny foreign connection host-main direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 277,
+          "label": "deny foreign connection host-main child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 278,
+          "label": "deny foreign connection host-main direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 279,
+          "label": "deny foreign connection host-main child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 280,
+          "label": "allow own IPC direct",
+          "cliExitCode": 0
+        },
+        {
+          "index": 281,
+          "label": "allow own IPC child-shell",
+          "cliExitCode": 0
+        },
+        {
+          "index": 282,
+          "label": "own add /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 283,
+          "label": "own commit /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 284,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 285,
+          "label": "own add /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 286,
+          "label": "own commit /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 287,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        }
+      ],
+      "fullResultSha256": "14e1aa99a28c7fa344db2a6bd728b3a9ed7f4ed7a047e594be481a3f77022469"
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "report": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/sym64-a/run/sym64-stage-2.json",
+      "status": "passed",
+      "finalNativeExitCode": 0,
+      "reusedResultIndices": [
+        {
+          "index": 264,
+          "label": "deny state state.sqlite direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 265,
+          "label": "deny state state.sqlite child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 266,
+          "label": "deny state state.sqlite direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 267,
+          "label": "deny state state.sqlite child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 268,
+          "label": "deny state state.sqlite-wal direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 269,
+          "label": "deny state state.sqlite-wal child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 270,
+          "label": "deny state state.sqlite-wal direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 271,
+          "label": "deny state state.sqlite-wal child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 272,
+          "label": "deny state state.sqlite-shm direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 273,
+          "label": "deny state state.sqlite-shm child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 274,
+          "label": "deny state state.sqlite-shm direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 275,
+          "label": "deny state state.sqlite-shm child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 276,
+          "label": "deny state secrets.json direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 277,
+          "label": "deny state secrets.json child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 278,
+          "label": "deny state secrets.json direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 279,
+          "label": "deny state secrets.json child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 280,
+          "label": "deny foreign connection peer direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 281,
+          "label": "deny foreign connection peer child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 282,
+          "label": "deny foreign connection peer direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 283,
+          "label": "deny foreign connection peer child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 284,
+          "label": "deny foreign connection host-main direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 285,
+          "label": "deny foreign connection host-main child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 286,
+          "label": "deny foreign connection host-main direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 287,
+          "label": "deny foreign connection host-main child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 288,
+          "label": "allow own IPC direct",
+          "cliExitCode": 0
+        },
+        {
+          "index": 289,
+          "label": "allow own IPC child-shell",
+          "cliExitCode": 0
+        },
+        {
+          "index": 290,
+          "label": "own add /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 291,
+          "label": "own commit /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 292,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 293,
+          "label": "own add /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 294,
+          "label": "own commit /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 295,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        }
+      ],
+      "fullResultSha256": "799a747b334254e49144c47b0b4fe76a4160fc0625aeade44dc4a0f8e64208ef"
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "report": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/sym64-a/run/sym64-stage-3.json",
+      "status": "passed",
+      "finalNativeExitCode": 0,
+      "reusedResultIndices": [
+        {
+          "index": 256,
+          "label": "deny state state.sqlite direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 257,
+          "label": "deny state state.sqlite child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 258,
+          "label": "deny state state.sqlite direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 259,
+          "label": "deny state state.sqlite child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 260,
+          "label": "deny state state.sqlite-wal direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 261,
+          "label": "deny state state.sqlite-wal child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 262,
+          "label": "deny state state.sqlite-wal direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 263,
+          "label": "deny state state.sqlite-wal child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 264,
+          "label": "deny state state.sqlite-shm direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 265,
+          "label": "deny state state.sqlite-shm child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 266,
+          "label": "deny state state.sqlite-shm direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 267,
+          "label": "deny state state.sqlite-shm child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 268,
+          "label": "deny state secrets.json direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 269,
+          "label": "deny state secrets.json child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 270,
+          "label": "deny state secrets.json direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 271,
+          "label": "deny state secrets.json child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 272,
+          "label": "deny foreign connection peer direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 273,
+          "label": "deny foreign connection peer child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 274,
+          "label": "deny foreign connection peer direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 275,
+          "label": "deny foreign connection peer child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 276,
+          "label": "deny foreign connection host-main direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 277,
+          "label": "deny foreign connection host-main child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 278,
+          "label": "deny foreign connection host-main direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 279,
+          "label": "deny foreign connection host-main child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 280,
+          "label": "allow own IPC direct",
+          "cliExitCode": 0
+        },
+        {
+          "index": 281,
+          "label": "allow own IPC child-shell",
+          "cliExitCode": 0
+        },
+        {
+          "index": 282,
+          "label": "own add /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 283,
+          "label": "own commit /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 284,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 285,
+          "label": "own add /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 286,
+          "label": "own commit /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 287,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        }
+      ],
+      "fullResultSha256": "2e806d81599a991831d0e93ba668058717a0b9f0ba84becb9bb21e2b8f006bd3"
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "report": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/sym64-b/run/sym64-source-0.json",
+      "status": "passed",
+      "finalNativeExitCode": 0,
+      "reusedResultIndices": [
+        {
+          "index": 0,
+          "label": "own add /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 1,
+          "label": "own commit /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 2,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 3,
+          "label": "own add /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 4,
+          "label": "own commit /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 5,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        }
+      ],
+      "fullResultSha256": "5a625463380689e4a1792ef788ddc2bd8889a012815358d5321f8ea0aebe97c3"
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "report": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/sym64-b/run/sym64-stage-1.json",
+      "status": "passed",
+      "finalNativeExitCode": 0,
+      "reusedResultIndices": [
+        {
+          "index": 256,
+          "label": "deny state state.sqlite direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 257,
+          "label": "deny state state.sqlite child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 258,
+          "label": "deny state state.sqlite direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 259,
+          "label": "deny state state.sqlite child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 260,
+          "label": "deny state state.sqlite-wal direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 261,
+          "label": "deny state state.sqlite-wal child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 262,
+          "label": "deny state state.sqlite-wal direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 263,
+          "label": "deny state state.sqlite-wal child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 264,
+          "label": "deny state state.sqlite-shm direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 265,
+          "label": "deny state state.sqlite-shm child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 266,
+          "label": "deny state state.sqlite-shm direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 267,
+          "label": "deny state state.sqlite-shm child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 268,
+          "label": "deny state secrets.json direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 269,
+          "label": "deny state secrets.json child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 270,
+          "label": "deny state secrets.json direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 271,
+          "label": "deny state secrets.json child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 272,
+          "label": "deny foreign connection peer direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 273,
+          "label": "deny foreign connection peer child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 274,
+          "label": "deny foreign connection peer direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 275,
+          "label": "deny foreign connection peer child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 276,
+          "label": "deny foreign connection host-main direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 277,
+          "label": "deny foreign connection host-main child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 278,
+          "label": "deny foreign connection host-main direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 279,
+          "label": "deny foreign connection host-main child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 280,
+          "label": "allow own IPC direct",
+          "cliExitCode": 0
+        },
+        {
+          "index": 281,
+          "label": "allow own IPC child-shell",
+          "cliExitCode": 0
+        },
+        {
+          "index": 282,
+          "label": "own add /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 283,
+          "label": "own commit /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 284,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 285,
+          "label": "own add /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 286,
+          "label": "own commit /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 287,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        }
+      ],
+      "fullResultSha256": "812182c4933bc68785aa2416addeee77be7c646e0edc84251e4a9a93d1554d43"
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "report": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/sym64-b/run/sym64-stage-2.json",
+      "status": "passed",
+      "finalNativeExitCode": 0,
+      "reusedResultIndices": [
+        {
+          "index": 264,
+          "label": "deny state state.sqlite direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 265,
+          "label": "deny state state.sqlite child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 266,
+          "label": "deny state state.sqlite direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 267,
+          "label": "deny state state.sqlite child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 268,
+          "label": "deny state state.sqlite-wal direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 269,
+          "label": "deny state state.sqlite-wal child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 270,
+          "label": "deny state state.sqlite-wal direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 271,
+          "label": "deny state state.sqlite-wal child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 272,
+          "label": "deny state state.sqlite-shm direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 273,
+          "label": "deny state state.sqlite-shm child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 274,
+          "label": "deny state state.sqlite-shm direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 275,
+          "label": "deny state state.sqlite-shm child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 276,
+          "label": "deny state secrets.json direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 277,
+          "label": "deny state secrets.json child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 278,
+          "label": "deny state secrets.json direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 279,
+          "label": "deny state secrets.json child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 280,
+          "label": "deny foreign connection peer direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 281,
+          "label": "deny foreign connection peer child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 282,
+          "label": "deny foreign connection peer direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 283,
+          "label": "deny foreign connection peer child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 284,
+          "label": "deny foreign connection host-main direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 285,
+          "label": "deny foreign connection host-main child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 286,
+          "label": "deny foreign connection host-main direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 287,
+          "label": "deny foreign connection host-main child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 288,
+          "label": "allow own IPC direct",
+          "cliExitCode": 0
+        },
+        {
+          "index": 289,
+          "label": "allow own IPC child-shell",
+          "cliExitCode": 0
+        },
+        {
+          "index": 290,
+          "label": "own add /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 291,
+          "label": "own commit /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 292,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 293,
+          "label": "own add /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 294,
+          "label": "own commit /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 295,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        }
+      ],
+      "fullResultSha256": "187c5e343e36b3ba95612456368283719784ab2691308aec25eebe7f8308f6f2"
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "report": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/sym64-b/run/sym64-stage-3.json",
+      "status": "passed",
+      "finalNativeExitCode": 0,
+      "reusedResultIndices": [
+        {
+          "index": 256,
+          "label": "deny state state.sqlite direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 257,
+          "label": "deny state state.sqlite child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 258,
+          "label": "deny state state.sqlite direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 259,
+          "label": "deny state state.sqlite child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 260,
+          "label": "deny state state.sqlite-wal direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 261,
+          "label": "deny state state.sqlite-wal child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 262,
+          "label": "deny state state.sqlite-wal direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 263,
+          "label": "deny state state.sqlite-wal child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 264,
+          "label": "deny state state.sqlite-shm direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 265,
+          "label": "deny state state.sqlite-shm child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 266,
+          "label": "deny state state.sqlite-shm direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 267,
+          "label": "deny state state.sqlite-shm child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 268,
+          "label": "deny state secrets.json direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 269,
+          "label": "deny state secrets.json child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 270,
+          "label": "deny state secrets.json direct",
+          "cliExitCode": 1
+        },
+        {
+          "index": 271,
+          "label": "deny state secrets.json child-shell",
+          "cliExitCode": 1
+        },
+        {
+          "index": 272,
+          "label": "deny foreign connection peer direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 273,
+          "label": "deny foreign connection peer child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 274,
+          "label": "deny foreign connection peer direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 275,
+          "label": "deny foreign connection peer child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 276,
+          "label": "deny foreign connection host-main direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 277,
+          "label": "deny foreign connection host-main child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 278,
+          "label": "deny foreign connection host-main direct",
+          "cliExitCode": 19
+        },
+        {
+          "index": 279,
+          "label": "deny foreign connection host-main child-shell",
+          "cliExitCode": 19
+        },
+        {
+          "index": 280,
+          "label": "allow own IPC direct",
+          "cliExitCode": 0
+        },
+        {
+          "index": 281,
+          "label": "allow own IPC child-shell",
+          "cliExitCode": 0
+        },
+        {
+          "index": 282,
+          "label": "own add /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 283,
+          "label": "own commit /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 284,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root/raf-develop",
+          "cliExitCode": 0
+        },
+        {
+          "index": 285,
+          "label": "own add /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 286,
+          "label": "own commit /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        },
+        {
+          "index": 287,
+          "label": "own commit visible /srv/dev/s64-oF3uEe/root",
+          "cliExitCode": 0
+        }
+      ],
+      "fullResultSha256": "c1268b465fd2100eba74f32cd6feac7d8fbe3b2518069a35a53272012461accc"
+    }
+  ],
+  "cleanup": {
+    "complete": true,
+    "source": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-completed-s64-oF3uEe/summary.json"
+  },
+  "sourceChecks": [
+    {
+      "file": "src/agent-adapters.ts",
+      "previousSha256": "2daa13f9518062cbd7d9d4863503b4449256ddfbfd7b520698e50e980ee3ee77",
+      "currentSha256": "2daa13f9518062cbd7d9d4863503b4449256ddfbfd7b520698e50e980ee3ee77",
+      "unchanged": true
+    },
+    {
+      "file": "src/main-switch-agent-channel.ts",
+      "previousSha256": "f122c15f1f24875ac30d3e7ec53e750bb55de62531da9eb6d4947b52f1b382bc",
+      "currentSha256": "f122c15f1f24875ac30d3e7ec53e750bb55de62531da9eb6d4947b52f1b382bc",
+      "unchanged": true
+    },
+    {
+      "file": "src/codex-raf-command-access.ts",
+      "previousSha256": "9314e3894c2c5c12d2a73df067a4b1c75ba8c61f817edf7d7636b0cb9f995865",
+      "currentSha256": "9314e3894c2c5c12d2a73df067a4b1c75ba8c61f817edf7d7636b0cb9f995865",
+      "unchanged": true
+    },
+    {
+      "file": "src/raf-temporary-socket.ts",
+      "previousSha256": "68789d0f3a706d0b306f2a344c07e2a029b3941c76f67df4375ddce765922def",
+      "currentSha256": "68789d0f3a706d0b306f2a344c07e2a029b3941c76f67df4375ddce765922def",
+      "unchanged": true
+    },
+    {
+      "file": "scripts/qa-main-agent-channel-probe.mjs",
+      "previousSha256": "4226d40d34e5805bf609c0ec704c213df71b9d74001f5408767b05c80dc4fe10",
+      "currentSha256": "4226d40d34e5805bf609c0ec704c213df71b9d74001f5408767b05c80dc4fe10",
+      "unchanged": true
+    },
+    {
+      "file": "scripts/qa-main-agent-channel-metadata.mjs",
+      "previousSha256": "7faedf4f87ea870e51c05abfb7769c36640d561d72e7bba7c51eb99656fbb52d",
+      "currentSha256": "7faedf4f87ea870e51c05abfb7769c36640d561d72e7bba7c51eb99656fbb52d",
+      "unchanged": true
+    },
+    {
+      "file": "src/codex-sandbox.ts",
+      "previousSha256": "cf88c85bdafeeb0734602d93282c5549c481460b2e83eb852876c4665634efef",
+      "currentSha256": "7aec7586872b3a740e5aafda1b9c713e0b43a39ddf40c1ce6084e2154f9da7e0",
+      "unchanged": false
+    }
+  ],
+  "reuseScope": [
+    "Executed native Codex facts only: two real native identities, issued pinned simple command prefixes, 6 message accepted receipts independently matched to incoming recipient user-role records, 6 full 77341/77342-character ps outputs equal to exact public CLI audits.",
+    "Executed Codex filesystem facts only: indexed own IPC/Git and protected state/registered tmux probes, with actual raw child status/stderr, host existence/liveness controls and metadata invariance in source review. ENOENT is a masked path observation, not by itself proof that an existing resource was protected."
+  ],
+  "limitations": [
+    "Not a new integration run or full L1/L3/L4 current pass. No foreign regression command was run.",
+    "Codex sandbox network families and preflight changed after the native stand; exact diff retained. Filesystem denial and positive IPC observations are historical facts with this explicit drift, not a claim of current complete sandbox verification.",
+    "Message delivery, production runtime and other lifecycle code changed after the source stand; receipt/native-delivery facts do not verify the new acceptance implementation.",
+    "No Claude/Grok/Agy proof; no L2 intentional UI/auth/version failure, bus/ssh-agent, neighbor questions, spec/design commit or current assigned test-run transport is proved by this reuse."
+  ]
+}

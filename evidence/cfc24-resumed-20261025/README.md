@@ -52,3 +52,9 @@ Main тимчасово зняв integration-реєстрацію (conf 35121777
 ## Перевірка збірки
 
 `npm run build` після усунення чужих коментарів завершився CLI 0; повний tool envelope збережено у [build-green.json](build-green.json). Початковий build-check.json містить окрему чужу source-comment відмову й повідомлення main. Збірка підтверджує компіляцію; предметні integration/native сценарії цим не закриваються.
+
+## Адресні факти живого Codex із наявного host-стенда
+
+[native-codex-reuse.json](native-codex-reuse.json) посилається на реальний перевірений стенд 4e1d2345b9d4134df73e03fb9fb2f88c6b311db1: два native ID, 6 accepted message receipts незалежно зіставлені з user-role отриманням, 6 повних ps stdout по 77341/77342 символи звірені з CLI audit; 8 завершених native helpers мають індекси виконаних IPC/Git/state/registered-tmux перевірок і raw exit/stderr. Джерела вже містять host review та контроль існування/живості endpoint; сам ENOENT не доводить заборону доступу до наявного ресурсу.
+
+Збережено source hashes і [повний релевантний drift](native-codex-source-drift.patch). Після стенда змінилися network filter/preflight Codex та message/lifecycle код. Тому зараховуються лише виконані історичні факти; весь поточний L1/L3/L4, інші runners, bus/ssh-agent, questions та spec/design commit лишаються непідтвердженими. Чужу unit-регресію не запускали.

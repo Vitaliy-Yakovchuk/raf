@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { createServer, connect } from 'node:net';
 import { prepareHostTmuxEndpoint } from './z4044-host-tmux.mjs';
+import { configureLiveCodexTrust } from './z4044-live-trust.mjs';
 
 const driverFile = fileURLToPath(import.meta.url);
 const here = path.dirname(driverFile);
@@ -153,6 +154,10 @@ try {
   projects.projects.raf.path = 'raf-main';
   projects.projects.raf.branchPaths = { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' };
   fs.writeFileSync(projectsPath, JSON.stringify(projects, null, 2) + '\n');
+  const rafConfigPath = path.join(root, 'conf/raf.json');
+  const rafConfig = JSON.parse(fs.readFileSync(rafConfigPath, 'utf8'));
+  summary.trustSelectors = configureLiveCodexTrust(rafConfig, root);
+  fs.writeFileSync(rafConfigPath, JSON.stringify(rafConfig, null, 2) + '\n');
   summary.modelConfHash = hash(path.join(root, 'conf/models.json'));
   summary.flowConfHash = hash(path.join(root, 'conf/flow.json'));
   must(command('clone', 'git', ['clone', '--no-hardlinks', '--no-checkout', source, main]));

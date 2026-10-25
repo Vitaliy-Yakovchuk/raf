@@ -2,9 +2,30 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { traceEvidence } from './helpers/z404-trace-evidence.ts';
 import { prepareHostTmuxEndpoint } from './helpers/z4044-host-tmux.mjs';
+import { configureLiveCodexTrust } from './helpers/z4044-live-trust.mjs';
 
 const helper = '/tmp/own/bwrap';
 const filter = '/tmp/own/network.bpf';
+
+test('[Z.404 E07] live fixture supplies scoped trust to both real quota probe and workers without changing their policies', () => {
+  const root = '/tmp/own isolated/"stand"/root';
+  const configuration = { runnerProtocols: [
+    { runner: 'codex', executable: 'codex', baseArgs: ['--no-daemon', '--sandbox', 'workspace-write', '--ask-for-approval', 'never'], quota: { args: ['--model', 'assigned-quota-model', '--sandbox', 'read-only'], env: { TZ: 'UTC' } }, modelFlag: '--model', effortFlag: '-c' },
+    { runner: 'claude', baseArgs: ['unchanged'], quota: { args: ['unchanged'] } },
+  ] };
+  const before = structuredClone(configuration);
+  const gitRoots = [root, ...['raf-main', 'raf-develop', 'raf-hotfix'].map(name => root + '/' + name)];
+  const overrides = gitRoots.map(directory => `projects.${JSON.stringify(directory)}.trust_level="trusted"`);
+  const args = overrides.flatMap(value => ['-c', value]);
+  const trust = configureLiveCodexTrust(configuration, root);
+  assert.deepEqual(configuration.runnerProtocols[0].quota.args, [...before.runnerProtocols[0].quota.args, ...args], 'quota must not depend on persisting trust to the shared CODEX_HOME');
+  assert.deepEqual(configuration.runnerProtocols[0].baseArgs, [...before.runnerProtocols[0].baseArgs, ...args], 'workers use the same owned Git roots');
+  assert.deepEqual(trust, { gitRoots, overrides });
+  const restored = structuredClone(configuration);
+  restored.runnerProtocols[0].baseArgs = before.runnerProtocols[0].baseArgs;
+  restored.runnerProtocols[0].quota.args = before.runnerProtocols[0].quota.args;
+  assert.deepEqual(restored, before, 'model, effort, executable, sandbox, env and other runners retain their configured values');
+});
 
 test('[Z.404 E05] registered host tmux control survives absence and closure of worker sessions', () => {
   const endpoint = '/tmp/own-stand/.raf/tmp/tmux/server.sock';

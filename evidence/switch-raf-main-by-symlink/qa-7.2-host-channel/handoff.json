@@ -1,0 +1,23 @@
+{
+  "reviewedSha": "bd4050a1f7a628a8793a755d57b8778ee0b33299",
+  "command": "LC_ALL=C CODEX_HOME=/home/dev/.codex node scripts/qa-main-symlink-live.mjs bd4050a1f7a628a8793a755d57b8778ee0b33299",
+  "recipient": {
+    "addressId": "main",
+    "runId": "b09cec83-8f8b-4a94-bd02-ee076c7ccfcc",
+    "pid": 15315
+  },
+  "receipt": {
+    "accepted": true,
+    "receiptId": "d3801aa6-f332-4deb-8233-b72701e5c5a2"
+  },
+  "status": "awaiting-host-artifacts",
+  "instructionSource": "Main message in this session: main executes the committed script on a clean clone and returns rc/stdout/stderr/artifacts.",
+  "boundary": "Syntax checks passed; delivery receipt is not execution evidence. Native live steps remain unverified. No completed QA scenario is to be replayed blindly.",
+  "requestedArtifacts": [
+    "host exit code",
+    "stdout",
+    "stderr",
+    "full /srv/dev/s72-*/ev named by first stdout record"
+  ],
+  "createdAt": "2026-10-25T22:31:02.344884+00:00"
+}

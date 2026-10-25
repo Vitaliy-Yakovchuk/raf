@@ -437,3 +437,18 @@ test('U5 launch failure retains delivery reason before a secondary cleanup failu
   assert.deepEqual(h.deliveries, [brief]);
   assert.equal(h.starts.length, 1);
 });
+
+test('message receipt treats the runner ready placeholder as an empty composer', async () => {
+  const settings = { ...messageSettings, markers: { ready: ['Ask Codex to do anything'] } } as unknown as ProtocolSettings;
+  const busy = messageHarness(['Working\n$ Ask Codex to do anything', 'Working\nqueued hello\n$ Ask Codex to do anything']);
+  busy.ports.settings = settings;
+  assert.equal((await deliverCheckedMessage(busy.ports, 'hello')).accepted, true);
+  assert.deepEqual(busy.pasted, ['hello']);
+  const idle = messageHarness(['agent ready\n$ Ask Codex to do anything', '[sender] hello\n$ Ask Codex to do anything']);
+  idle.ports.settings = settings;
+  assert.equal((await deliverCheckedMessage(idle.ports, '[sender] hello')).accepted, true);
+  const draft = messageHarness(['Working\n$ my own draft']);
+  draft.ports.settings = settings;
+  assert.equal((await deliverCheckedMessage(draft.ports, 'hello')).accepted, false);
+  assert.deepEqual(draft.pasted, []);
+});

@@ -18,9 +18,10 @@ export async function deliverCheckedMessage(ports: MessageDeliveryPorts, message
     const state = observeRunnerScreen(settings, { text: screen, version: settings.version, requestedCommand: null }).state;
     return state === 'ready' || state === 'unknown_screen' && (isNativeWorking(settings, screen) || isNativeFinished(settings, screen));
   };
+  const empty = (input: string | undefined) => input === '' || input !== undefined && (settings.markers.ready ?? []).includes(input);
   if (!await ports.verify()) return refuse('Recipient identity is no longer verified');
   const before = await ports.capture();
-  if (!recognized(before) || readNativeComposer(settings, before)?.input !== '') return refuse('Recipient has no recognized empty agent composer');
+  if (!recognized(before) || !empty(readNativeComposer(settings, before)?.input)) return refuse('Recipient has no recognized empty agent composer');
   if (!await ports.verify()) return refuse('Recipient identity changed before insertion');
   await ports.paste(message);
   const deadline = ports.now() + settings.timeouts.transitionMs;
@@ -31,9 +32,9 @@ export async function deliverCheckedMessage(ports: MessageDeliveryPorts, message
     const screen = await ports.capture();
     const composer = readNativeComposer(settings, screen);
     if (!recognized(screen) || !composer) return refuse('Recipient screen cannot confirm agent acceptance');
-    if (composer.input === '' && screen !== before) return await ports.verify() ? { accepted: true } : refuse('Recipient identity changed before receipt');
+    if (empty(composer.input) && screen !== before) return await ports.verify() ? { accepted: true } : refuse('Recipient identity changed before receipt');
     const pending = matchPendingBrief(settings, composer.input, message) === 'pending' || composer.input === message;
-    if (composer.input !== '' && !pending) return refuse('Recipient composer contains unrelated input');
+    if (!empty(composer.input) && !pending) return refuse('Recipient composer contains unrelated input');
     if (pending && !retried && pendingFrame === screen) {
       if (!await ports.verify()) return refuse('Recipient identity changed before Enter retry');
       if (await ports.capture() !== screen) return refuse('Recipient composer changed before Enter retry');

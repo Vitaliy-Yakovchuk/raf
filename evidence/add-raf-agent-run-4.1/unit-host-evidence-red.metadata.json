@@ -1,0 +1,77 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/host-evidence",
+  "testedHead": "448f6c54a1235e8dc0b6c6861b9b4f26202d08fd",
+  "workspace": {
+    "ownChanges": [],
+    "foreignUncommittedPaths": [
+      "src/production-runtime.ts",
+      "src/task-context.ts",
+      "test/shared-libs-launch-boundaries.test.ts",
+      "src/shared-libs-sandbox.ts",
+      "evidence/cfc97-shared-libs-live/"
+    ]
+  },
+  "testSha256": "fe7ec254d7dae657369c4aca85a7c5c6ca71bf5e3edee62e767c39790c76c697",
+  "runId": "a2cee695-7622-40ae-8fb6-0cd8dc642e90",
+  "selection": {
+    "files": [
+      "test/qa-agent-run-evidence.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "assertions-failed",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "signal": null,
+  "passed": 0,
+  "knownRed": [
+    {
+      "file": "test/qa-agent-run-evidence.test.ts",
+      "name": "host evidence reads the exact issued brief from current native response items"
+    },
+    {
+      "file": "test/qa-agent-run-evidence.test.ts",
+      "name": "host evidence reads both native layouts for literal and concurrent message assertions"
+    },
+    {
+      "file": "test/qa-agent-run-evidence.test.ts",
+      "name": "host evidence preserves text parts and ignores assistant, tool and metadata records"
+    },
+    {
+      "file": "test/qa-agent-run-evidence.test.ts",
+      "name": "host evidence leaves whitespace, wrong authors and one-byte mutations distinguishable"
+    },
+    {
+      "file": "test/qa-agent-run-evidence.test.ts",
+      "name": "host message command round-trips quotes, literal shell syntax, unicode and actual multiline"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "group": "add-raf-agent-run/host-evidence",
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "nextAction": "fix-implementation",
+  "timeoutCount": 0,
+  "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+  "capture": {
+    "method": "Complete native exec output retained before display. Removed exactly the complete launch-queue.waiting NDJSON event including LF, without changing any TestRunResult characters; preserved original merged-output too.",
+    "limitation": "Tool supplies one merged stream, not independent byte-level stderr; stderr file contains extracted logical queue NDJSON.",
+    "queueEvents": 1,
+    "mergedCharacters": 12500,
+    "stdoutCharacters": 10988,
+    "logicalStderrCharacters": 1512,
+    "toolMetadata": {
+      "chunk_id": "ca2724",
+      "wall_time_seconds": 0.151145589,
+      "exit_code": 1,
+      "original_token_count": 3142
+    }
+  },
+  "remaining": "Real host repeat required after parser LF product regression 4.1.4; composer rejection lacks a frame in ara41q6, next harness records frames. Integration preset remains unexecuted."
+}

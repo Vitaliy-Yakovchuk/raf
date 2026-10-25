@@ -1,0 +1,56 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/host-evidence",
+  "testedHead": "eba43b4daa252ec589a43e447b0044266922be5f",
+  "workspace": {
+    "ownChanges": [
+      "scripts/qa-agent-run-evidence.mjs",
+      "scripts/qa-agent-run-live.mjs",
+      "scripts/qa-agent-run-audit.mjs"
+    ],
+    "testedHelperSha256": "7ae54d8cf549d0ead2c3841cee37c29411569881a40e44f71f795db019679cb8",
+    "liveScriptSha256": "2bf229037dc4a1f17e47f1bd62a46f2638631156a86b3f43ed81a839dfea1ee9",
+    "auditScriptSha256": "b6c97793f562ba288d87ec2ee83a3e2421e9a124f1761245fd7d3c6e8b132d4f"
+  },
+  "testSha256": "fe7ec254d7dae657369c4aca85a7c5c6ca71bf5e3edee62e767c39790c76c697",
+  "runId": "90852c84-51a5-434f-a11c-1323a553d463",
+  "selection": {
+    "files": [
+      "test/qa-agent-run-evidence.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "signal": null,
+  "passed": 5,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "group": "add-raf-agent-run/host-evidence",
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "nextAction": "complete",
+  "timeoutCount": 0,
+  "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+  "capture": {
+    "method": "Complete native exec output retained before display. Removed exactly the complete launch-queue.waiting NDJSON event including LF, without changing any TestRunResult characters; preserved original merged-output too.",
+    "limitation": "Tool supplies one merged stream, not independent byte-level stderr; stderr file contains extracted logical queue NDJSON.",
+    "queueEvents": 1,
+    "mergedCharacters": 8193,
+    "stdoutCharacters": 6680,
+    "logicalStderrCharacters": 1513,
+    "toolMetadata": {
+      "chunk_id": "735b7a",
+      "wall_time_seconds": 0.19085808,
+      "exit_code": 0,
+      "original_token_count": 2049
+    }
+  },
+  "remaining": "Real host repeat required after parser LF product regression 4.1.4; composer rejection lacks a frame in ara41q6, next harness records frames. Integration preset remains unexecuted."
+}

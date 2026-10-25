@@ -1,7 +1,7 @@
 import { runtimeHealthSummary } from './health-summary-runtime.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { measureRafCost } from './raf-cost-runtime.ts';
-import { commandTimingFailure, recordCommandTiming } from './command-timing.ts';
+import { commandTimingFailure, recordCommandTiming, validateCommandTiming } from './command-timing.ts';
 import { runAgentWithQueue, type AgentQueueRecord, type AgentQueueValidation, type AgentQueueRequest, type AgentRunQueuePorts } from './agent-run-queue.ts';
 import { isAbsolute, join } from 'node:path';
 import { commandFailure, failureContext, type CommandFailureContext } from './cli-contract.ts';
@@ -183,7 +183,9 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
     for (const name of ['orchestratorRoot', 'confRoot', 'artifactPath', 'statePath', 'tmpRoot'] as const) {
       if (!isAbsolute(context[name])) throw fail('INVALID_CONTEXT', 'context', `Absolute ${name} required`);
     }
-    return dependencies.loadConfiguration(context);
+    const loaded = await dependencies.loadConfiguration(context);
+    validateCommandTiming(loaded.commandTiming);
+    return loaded;
   })();
   const store = () => opening ??= (async () => {
     const loaded = await config();
@@ -378,7 +380,6 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const loaded = await config();
       const state = await store();
       const budget = loaded.commandTiming.sqliteOnlyMeanBudgetMs;
-      if (!Number.isFinite(budget) || budget! <= 0) throw fail('CONFIGURATION_INVALID', 'configuration', 'Invalid commandTiming.sqliteOnlyMeanBudgetMs');
       await settleRuntimeHealthCpu(state, context.orchestratorRoot);
       const summary = runtimeHealthSummary(state, context.orchestratorRoot);
       await summary.settle();

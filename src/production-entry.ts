@@ -1,6 +1,6 @@
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
-import { commandTimingFailure, recordCommandTiming } from './command-timing.ts';
+import { commandTimingFailure, recordCommandTiming, validateCommandTiming } from './command-timing.ts';
 import { storedLaunchQueueIdentity, validateStoredQueueId } from './stored-launch-queue-events.ts';
 import { readMachineBootIdentity } from './os-runtime.ts';
 import { productionStateContext, type StateContext } from './state-migration-guard.ts';
@@ -50,12 +50,12 @@ function readConfiguration(root: string): { models: ModelCatalog; commandTiming:
     catch (error) { throw failure('CONFIGURATION_INVALID', `Cannot read valid ${path}: ${(error as NodeJS.ErrnoException).code ?? 'invalid JSON'}`, path); }
   };
   const settings = read('raf.json');
-  if (!object(settings) || settings.version !== 1 || !object(settings.commandTiming) ||
-      !Number.isFinite(settings.commandTiming.emaAlpha) || settings.commandTiming.emaAlpha <= 0 || settings.commandTiming.emaAlpha > 1 ||
+  if (!object(settings) || settings.version !== 1 ||
       !object(settings.state) || !text(settings.state.fileName) || ['.', '..'].includes(settings.state.fileName) ||
       basename(settings.state.fileName) !== settings.state.fileName || /[\\/\0]/.test(settings.state.fileName)) {
-    throw failure('CONFIGURATION_INVALID', 'Invalid raf.json version, commandTiming.emaAlpha or state.fileName', 'raf.json');
+    throw failure('CONFIGURATION_INVALID', 'Invalid raf.json version or state.fileName', 'raf.json');
   }
+  validateCommandTiming(settings.commandTiming);
   const models = read('models.json');
   if (!object(models) || models.version !== 1 || !Array.isArray(models.runners) || !models.runners.length ||
       models.runners.some((runner: unknown) => !object(runner) || !text(runner.id) || !/^[A-Za-z0-9_-]+$/.test(runner.id) || typeof runner.initialEnabled !== 'boolean') ||

@@ -1,0 +1,33 @@
+[
+  {
+    "label": "host-syntax",
+    "command": [
+      "node",
+      "--check",
+      "scripts/qa-etchly-integration-host.mjs"
+    ],
+    "cliCode": 0,
+    "kind": "static syntax/comment acceptance only; not unit or integration execution"
+  },
+  {
+    "label": "resume-syntax",
+    "command": [
+      "bash",
+      "-n",
+      "scripts/qa-etchly-integration-resume.sh"
+    ],
+    "cliCode": 0,
+    "kind": "static syntax/comment acceptance only; not unit or integration execution"
+  },
+  {
+    "label": "own-comment-policy",
+    "command": [
+      "node",
+      "--input-type=module",
+      "-e",
+      "import fs from 'node:fs'; import assert from 'node:assert/strict'; import {findSourceComments} from './src/comment-policy.ts'; for(const f of ['scripts/qa-etchly-integration-prepare.mjs','scripts/qa-etchly-integration-host.mjs']) {const c=findSourceComments(f,fs.readFileSync(f,'utf8')); assert.deepEqual(c,[]); console.log(f+': no source comments');}"
+    ],
+    "cliCode": 0,
+    "kind": "static syntax/comment acceptance only; not unit or integration execution"
+  }
+]

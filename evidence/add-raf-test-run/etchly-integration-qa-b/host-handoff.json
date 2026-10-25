@@ -95,7 +95,7 @@
       "setup",
       "skip"
     ],
-    "observerDefect": "extra tmp path prevented D1-ready detection; no SIGINT sent, hang and interrupt both reached deadline",
+    "observerDefect": "Observer did not find SQL proof and did not send SIGINT. Initial extra-tmp diagnosis withdrawn after runtime source audit; actual fixture TMPDIR is reservedRoot/tmp while command environment reports reservedRoot.",
     "timeoutCount": 2,
     "readyProofs": 0,
     "cleanup": {
@@ -105,5 +105,26 @@
     },
     "liveOwnedAfterEmergencyCleanup": [],
     "continuation": "same HOME/group, corrected ready path; d08-remainder skips passed prefix, baseline timeout2 → expected4; new results-continuation"
+  },
+  "d08Remainder": {
+    "sha": "dd69fee002c2c3367e7e2908fe3f83ab564720ab",
+    "receipt": "05b6b198-1f40-4474-abbe-14f7e3da09bc",
+    "command": "bash /srv/dev/work/orchestrator/raf-develop/scripts/qa-etchly-integration-resume.sh /srv/dev/work/orchestrator /srv/dev/raf-etchly-6263b-host4/d08 dd69fee002c2c3367e7e2908fe3f83ab564720ab",
+    "status": "cancelled before start by main confirmation; no aggregate change",
+    "aggregateContinuity": "same HOME/group; baseline timeoutCount2, expected4; no reset; passed prefix skipped",
+    "stopReceipt": "241e5005-d432-40cc-b115-d673e36368e6"
+  },
+  "explicitProofFix": {
+    "status": "awaiting commit and main queue confirmation",
+    "method": "Atomic per-launch SQL-ready path; verify SQL=1, hang, live owned fork and workerd, canonical actual TMPDIR inside reservation",
+    "output": "results-readiness-regression",
+    "capture": "readiness-regression-capture",
+    "aggregate": "same HOME/group; N → N+2; no reset; passed prefix skipped",
+    "initialTimeoutCount": 2,
+    "build": {
+      "cliCode": 1,
+      "blocker": "Foreign scripts/qa-main-symlink-live.mjs comments lines128,129",
+      "ownSyntaxAndCommentPolicy": "passed; no unit run"
+    }
   }
 }

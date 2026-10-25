@@ -24,16 +24,16 @@ for (const name of ['raf-develop', 'etchly-develop', 'shared-libs-develop']) {
   assert.equal(fs.realpathSync(repo), repo);
   assert.equal(execFileSync('git', ['--no-optional-locks', 'status', '--porcelain=v1'], { cwd: repo, encoding: 'utf8' }).trim(), '');
 }
-assert.equal(fs.existsSync(path.join(root, 'results-continuation')), false);
-assert.equal(fs.existsSync(path.join(root, 'continuation-capture')), false);
+assert.equal(fs.existsSync(path.join(root, 'results-readiness-regression')), false);
+assert.equal(fs.existsSync(path.join(root, 'readiness-regression-capture')), false);
 NODE
-mkdir -m 700 -- "$stand_root/continuation-capture"
+mkdir -m 700 -- "$stand_root/readiness-regression-capture"
 git -C "$stand_root/raf-develop" fetch --no-tags -- "$source_root/raf-develop" "$raf_sha"
 git -C "$stand_root/raf-develop" checkout -B develop "$raf_sha"
 set +e
-node "$stand_root/raf-develop/scripts/qa-etchly-integration-host.mjs" "$stand_root" "$stand_root/results-continuation" d08-remainder 60000 900000 >"$stand_root/continuation-capture/driver.stdout" 2>"$stand_root/continuation-capture/driver.stderr"
+node "$stand_root/raf-develop/scripts/qa-etchly-integration-host.mjs" "$stand_root" "$stand_root/results-readiness-regression" d08-remainder 60000 900000 >"$stand_root/readiness-regression-capture/driver.stdout" 2>"$stand_root/readiness-regression-capture/driver.stderr"
 driver_rc=$?
 set -e
-printf '%s\n' "$driver_rc" >"$stand_root/continuation-capture/driver.rc"
-printf 'D08 continuation rc=%s; artifacts=%s/results-continuation\n' "$driver_rc" "$stand_root"
+printf '%s\n' "$driver_rc" >"$stand_root/readiness-regression-capture/driver.rc"
+printf 'D08 continuation rc=%s; artifacts=%s/results-readiness-regression\n' "$driver_rc" "$stand_root"
 exit "$driver_rc"

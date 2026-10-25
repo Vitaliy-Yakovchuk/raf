@@ -80,9 +80,9 @@ function assertStand(root) {
 const fixture = String.raw`import { test, expect } from 'vitest';
 import './test-support/live-worker.ts';
 import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
-const mode = JSON.parse(readFileSync(new URL('../raf-etchly-lifecycle-mode.json', import.meta.url), 'utf8')).mode;
+const { mode, readyPath } = JSON.parse(readFileSync(new URL('../raf-etchly-lifecycle-mode.json', import.meta.url), 'utf8'));
 if (mode === 'setup') throw new Error('Controlled import failure');
 (mode === 'skip' ? test.skip : test)('real fork, workerd and D1', async () => {
   const mf = new Miniflare(convertV4MiniflareOptions({ resourcePersistencePath: join(process.env.TMPDIR, 'd1-persistence'), workers: [{ modules: true, script: 'export default { fetch() { return new Response("qa") } }', d1Databases: { QA_DB: '7311ab35-a96a-43cb-89b4-91cb7f11e302' } }] }));
@@ -90,7 +90,8 @@ if (mode === 'setup') throw new Error('Controlled import failure');
     const db = await mf.getD1Database('QA_DB');
     const row = await db.prepare('SELECT 1 AS proof').first();
     expect(row.proof).toBe(1);
-    writeFileSync(join(process.env.TMPDIR, 'qa-d1-ready.json'), JSON.stringify({ pid: process.pid, mode, proof: row.proof, tmp: process.env.TMPDIR }));
+    writeFileSync(readyPath + '.pending', JSON.stringify({ pid: process.pid, mode, proof: row.proof, tmp: process.env.TMPDIR }));
+    renameSync(readyPath + '.pending', readyPath);
     if (mode === 'assertions') expect(row.proof).toBe(2);
     // Stall this fixture's own OS fork after D1 readiness. Local file-budget
     // timers stay unchanged; only the outer wrapper can clean a stopped fork.
@@ -156,6 +157,11 @@ async function host(root, output, mode, budget, watchdogMs) {
     const argv = ['--project', 'etchly', '--phase', 'integration', '--group', group, ...selection];
     const observation = path.join(output, label + '.spawn.json');
     const input = path.join(output, label + '.input.json');
+    const readyPath = path.join(output, label + '.d1-proof.json');
+    if (fixtureCreated) {
+      assert(!fs.existsSync(readyPath));
+      write(path.join(workspace, modeFile), { ...json(path.join(workspace, modeFile)), readyPath });
+    }
     write(input, { root, home, workspace, argv, observation });
     const stdout = fs.openSync(path.join(output, label + '.stdout'), 'wx', 0o600), stderr = fs.openSync(path.join(output, label + '.stderr'), 'wx', 0o600);
     const command = { executable: process.execPath, argv: [self, '--worker', input], cwd: workspace };
@@ -172,7 +178,7 @@ async function host(root, output, mode, budget, watchdogMs) {
         write(path.join(output, label + '.capture.json'), row); rows.push(row); resolve(row);
       });
     });
-    return { child, done, input };
+    return { child, done, input, readyPath };
   }
   const expect = (row, outcome) => {
     assert.equal(row.signal, null);
@@ -193,11 +199,16 @@ async function host(root, output, mode, budget, watchdogMs) {
     while (!interrupted) {
       const flight = keyGroup()?.inFlight;
       const temp = flight?.temporary?.temporary?.path;
-      if (temp && fs.existsSync(path.join(temp, 'qa-d1-ready.json'))) {
+      if (temp && fs.existsSync(run.readyPath)) {
         track();
-        const proof = json(path.join(temp, 'qa-d1-ready.json'));
+        const proof = json(run.readyPath);
         assert.equal(proof.proof, 1);
-        assert([...owned.values()].some(row => row.argv.some(value => /(?:^|\/)workerd$/.test(value))), 'A real workerd identity must be observed');
+        assert.equal(proof.mode, 'hang');
+        assert(inside(proof.tmp, temp), 'Actual fixture TMPDIR must be inside the reserved private run root');
+        assert.equal(fs.realpathSync(proof.tmp), proof.tmp);
+        const live = [...owned.values()].filter(row => identity(row.pid)?.start === row.start);
+        assert(live.some(row => row.pid === proof.pid), 'SQL proof must belong to a live owned fork');
+        assert(live.some(row => row.argv.some(value => /(?:^|\/)workerd$/.test(value))), 'A real live workerd identity must be observed');
         write(path.join(output, 'ready-' + flight.runId + '.json'), { flight, proof, processes: [...owned.values()] });
         return flight;
       }

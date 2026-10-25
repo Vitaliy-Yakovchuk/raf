@@ -9,6 +9,8 @@ import type { TestContext } from "node:test";
 import type { HotfixHost, HotfixWorkspace } from "../src/hotfix-worktree.ts";
 import { commitHotfix, prepareHotfixWorktree } from "../src/hotfix-worktree.ts";
 import { verifyHotfixCandidate, type VerifiedHotfix } from "../src/hotfix-activation.ts";
+import { observeWaitIdentity, readWaitIdentity } from "../src/resource-wait-identity.ts";
+import type { ResourceWaitIdentity } from "../src/resource-wait-protocol.ts";
 
 const source = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const confSource = process.env.HOTFIX_FIXTURE_CONF ?? join(dirname(source), "conf");
@@ -40,9 +42,9 @@ export async function until<T>(read: () => T | undefined, budget: number, poll: 
   throw new Error("Fixture readiness deadline exceeded");
 }
 
-export function command(executable: string, args: readonly string[], cwd: string, environment: Record<string, string>): { code: number; stdout: string; stderr: string } {
+export function command(executable: string, args: readonly string[], cwd: string, environment: Record<string, string>, deadline = timeoutMs): { code: number; stdout: string; stderr: string } {
   try {
-    return { code: 0, stdout: execFileSync(executable, [...args], { cwd, env: environment, encoding: "utf8", timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024 }), stderr: "" };
+    return { code: 0, stdout: execFileSync(executable, [...args], { cwd, env: environment, encoding: "utf8", timeout: deadline, maxBuffer: 16 * 1024 * 1024 }), stderr: "" };
   } catch (error) {
     const e = error as { status?: number; stdout?: string; stderr?: string; code?: string };
     if (e.status === undefined || e.status === null) throw error;
@@ -200,8 +202,8 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
 `);
   const socket = join(home, "main.sock");
   const childProcesses = new Set<ChildProcess>();
+  const serviceOwners = join(root, "fixture-services.jsonl");
   t.after(async () => {
-    command(process.execPath, [join(main, "bin", "raf.ts"), "service", "stop"], main, environment);
     await Promise.all([...childProcesses].map(child => new Promise<void>(resolveExit => {
       if (child.exitCode !== null || child.signalCode !== null) { resolveExit(); return; }
       child.once("exit", () => resolveExit());
@@ -209,11 +211,77 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
     })));
     command("tmux", ["-S", socket, "kill-server"], root, environment);
     command("tmux", ["-S", join(home, ".raf", "tmp", "tmux", "server.sock"), "kill-server"], root, environment);
+    const stopResults = [false, true].map(production => {
+      try { return cli(main, ["service", "stop"], production, {}, budget); }
+      catch (error) { return { code: null, stdout: "", stderr: String(error) }; }
+    });
+    writeFileSync(join(root, "fixture-stop-results.json"), JSON.stringify(stopResults), { mode: 0o600 });
+    const owners: { identity: ResourceWaitIdentity; entry: string }[] = existsSync(serviceOwners)
+      ? readFileSync(serviceOwners, "utf8").trim().split("\n").filter(Boolean).map(line => JSON.parse(line)) : [];
+    for (const { identity, entry } of owners) {
+      assert.ok(entry.startsWith(root + "/") && entry.endsWith("/bin/service.ts"), "Only fixture-owned services may be stopped");
+      async function signalOwned(signal: NodeJS.Signals) {
+        const observed = await observeWaitIdentity(identity);
+        assert.notEqual(observed.state, "unknown", "Service ownership must be verified before cleanup");
+        if (observed.state === "alive") {
+          try { process.kill(identity.pid, signal); }
+          catch (error) { if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error; }
+        }
+      }
+      let state = await observeWaitIdentity(identity);
+      async function awaitStopped() {
+        const deadline = Date.now() + budget;
+        do {
+          state = await observeWaitIdentity(identity);
+          if (state.state === "dead") return;
+          await delay(poll);
+        } while (Date.now() < deadline);
+        throw new Error(`Fixture service PID ${identity.pid} did not exit`);
+      }
+      if (stopResults.some(result => result.code !== 0)) await signalOwned("SIGTERM");
+      try { await awaitStopped(); }
+      catch {
+        await signalOwned("SIGTERM");
+        try { await awaitStopped(); }
+        catch { await signalOwned("SIGKILL"); await awaitStopped(); }
+      }
+      assert.equal((await observeWaitIdentity(identity)).state, "dead", "Service must exit before fixture removal");
+    }
     rmSync(root, { recursive: true, force: true });
   });
-  const host: HotfixHost = { orchestratorRoot: root, qaHome: home, environment: { ...environment, PATH: `${binary}:${environment.PATH}` }, sandboxExecutable: realCodex };
   const osHomePreload = join(root, "os-home.mjs");
   writeFileSync(osHomePreload, `import os from 'node:os';import {syncBuiltinESMExports} from 'node:module';const original=os.userInfo;os.userInfo=(options)=>({...original(options),homedir:${JSON.stringify(workingHome)}});syncBuiltinESMExports();`);
+  const lifecyclePreload = join(root, "fixture-lifecycle.mjs");
+  const owner = await readWaitIdentity();
+  const rootIdentity = lstatSync(root);
+  writeFileSync(lifecyclePreload, `import fs from 'node:fs';
+import {resolve} from 'node:path';
+const root=${JSON.stringify(root)};
+const entry=resolve(process.argv[1]??'.');
+if(entry.startsWith(root+'/')&&entry.endsWith('/bin/service.ts')){
+ const {readWaitIdentity,observeWaitIdentity}=await import(${JSON.stringify(new URL("../src/resource-wait-identity.ts", import.meta.url).href)});
+ const identity=await readWaitIdentity();
+ fs.appendFileSync(${JSON.stringify(serviceOwners)},JSON.stringify({identity,entry})+'\\n',{mode:0o600});
+ let checking=false;
+ const timer=setInterval(async()=>{
+  if(checking)return;
+  checking=true;
+  try{
+   let gone=false;
+   try{const stat=fs.lstatSync(root);gone=stat.dev!==${rootIdentity.dev}||stat.ino!==${rootIdentity.ino};}
+   catch(error){if(error.code==='ENOENT')gone=true;else throw error;}
+   if(gone||(await observeWaitIdentity(${JSON.stringify(owner)})).state==='dead'){
+    clearInterval(timer);
+    setTimeout(()=>process.kill(process.pid,'SIGKILL'),${budget / 2}).unref();
+    process.kill(process.pid,'SIGTERM');
+   }
+  }finally{checking=false;}
+ },${poll});
+ timer.unref();
+}
+`);
+  environment.NODE_OPTIONS = `--import=${osHomePreload} --import=${lifecyclePreload}`;
+  const host: HotfixHost = { orchestratorRoot: root, qaHome: home, environment: { ...environment, PATH: `${binary}:${environment.PATH}` }, sandboxExecutable: realCodex };
   async function startMain() {
     const result = command("tmux", ["-S", socket, "new-session", "-d", "-s", "hotfix-fixture-main", "-x", "200", "-y", "60", process.execPath, pane], root, environment);
     assert.equal(result.code, 0, result.stderr);
@@ -242,10 +310,10 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
       gitConfig: sha(join(root, ".git", "modules", "raf-main", "config"))
     };
   }
-  function cli(cwd: string, args: readonly string[], production = false, extra: Record<string, string> = {}) {
+  function cli(cwd: string, args: readonly string[], production = false, extra: Record<string, string> = {}, deadline = timeoutMs) {
     const env = { ...environment, ...extra, HOME: production ? workingHome : home };
     if (production) delete (env as Record<string, string | undefined>).RAF_QA_HOME;
-    return command(process.execPath, ["--import", osHomePreload, join(cwd, "bin", "raf.ts"), ...args], cwd, env);
+    return command(process.execPath, ["--import", osHomePreload, join(cwd, "bin", "raf.ts"), ...args], cwd, env, deadline);
   }
   async function candidate(marker = "new") {
     const workspace = await prepareHotfixWorktree(host, randomUUID());

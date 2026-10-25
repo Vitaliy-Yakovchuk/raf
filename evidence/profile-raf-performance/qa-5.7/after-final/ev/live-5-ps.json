@@ -1,0 +1,32 @@
+{
+  "label": "live-5-ps",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-KOcV1m/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-KOcV1m/root/raf-main",
+  "startedAt": "2026-10-25T05:48:43.867Z",
+  "finishedAt": "2026-10-25T05:48:45.122Z",
+  "wallMs": 1255.064394999994,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 2210,
+  "stderrBytes": 0,
+  "loadAverage": [
+    3.45,
+    2.6,
+    2.97
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 924.252,
+    "cpuSystemMs": 688.4979999999999,
+    "wallMs": 1215.886526,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 1612.75
+}

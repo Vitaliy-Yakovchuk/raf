@@ -1,0 +1,32 @@
+{
+  "label": "live-1-idempotence",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-KOcV1m/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-KOcV1m/root/raf-main",
+  "startedAt": "2026-10-25T05:48:22.421Z",
+  "finishedAt": "2026-10-25T05:48:23.758Z",
+  "wallMs": 1337.6525519999996,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 2210,
+  "stderrBytes": 0,
+  "loadAverage": [
+    3.55,
+    2.55,
+    2.96
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 977.31,
+    "cpuSystemMs": 709.348,
+    "wallMs": 1307.002737,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 1686.658
+}

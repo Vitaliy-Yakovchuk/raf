@@ -1,0 +1,4935 @@
+{
+  "basis": "The same broker aggregate persists across phases, SHA and selections. Earlier passed tests are retained; this is not a claim that all tests ran in one final command.",
+  "targetCases": 255,
+  "qaPassedCases": 216,
+  "remainingKnownRed": [
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] commit after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] sealed-artifact after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] sealed-configuration after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] forged-report after green invalidates activation"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-atomic] unsupported refuses activation without checkout/reset/copy fallback"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-atomic] EXDEV refuses activation without checkout/reset/copy fallback"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-concurrency] local tracked survives rejected publication byte for byte"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-concurrency] local untracked survives rejected publication byte for byte"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-concurrency] local index survives rejected publication byte for byte"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-reader] cli process retains one generation across deferred import and switch"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-reader] service process retains one generation across deferred import and switch"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-reader] worker process retains one generation across deferred import and switch"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-reader] hook process retains one generation across deferred import and switch"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-reader] notice process retains one generation across deferred import and switch"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-concurrency] duplicate publishers of the same sealed proof exchange main once"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-cleanup] activation and cleanup preserve the permanent hotfix inode, next commit, index and dirty work"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-recovery] recovery reconciles only the sealed target while a later shared HEAD and dirty work survive"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-cycle] main to the same hotfix to atomic main to develop repeats without losing local work"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-cycle] a develop conflict leaves transfer open and retains main, hotfix and the developer side"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-concurrency] conflicting main refresh cannot activate an old seal or erase either side"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] shared source changing during regression cannot receive a green proof"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] shared artifact changing during regression cannot receive a green proof"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] shared configuration changing during regression cannot receive a green proof"
+    },
+    {
+      "file": "test/hotfix-activation.test.ts",
+      "name": "[hotfix-gates] shared new-HEAD changing during regression cannot receive a green proof"
+    }
+  ],
+  "latestResult": "batch1.TestRunResult.json",
+  "cases": [
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-atomic] EXDEV refuses activation without checkout/reset/copy fallback"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-atomic] real filesystem primitive exchanges the whole directory; unsupported and cross-device cases have no fallback"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-atomic] unsupported refuses activation without checkout/reset/copy fallback"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-cleanup] activation and cleanup preserve the permanent hotfix inode, next commit, index and dirty work"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-concurrency] conflicting main refresh cannot activate an old seal or erase either side"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-concurrency] duplicate publishers of the same sealed proof exchange main once"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-concurrency] local index survives rejected publication byte for byte"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-concurrency] local tracked survives rejected publication byte for byte"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-concurrency] local untracked survives rejected publication byte for byte"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-cycle] a develop conflict leaves transfer open and retains main, hotfix and the developer side"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-cycle] main to the same hotfix to atomic main to develop repeats without losing local work"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "batch1.TestRunResult.json",
+          "runId": "3969e72f-1309-48e4-b7b4-d371bb679893"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed build never changes live files/ref/index"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "batch1.TestRunResult.json",
+          "runId": "3969e72f-1309-48e4-b7b4-d371bb679893"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed message never changes live files/ref/index"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed regression never changes live files/ref/index"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed runtime-import never changes live files/ref/index"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] failed service-ready never changes live files/ref/index"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "batch1.TestRunResult.json",
+          "runId": "3969e72f-1309-48e4-b7b4-d371bb679893"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] shared artifact changing during regression cannot receive a green proof"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] shared configuration changing during regression cannot receive a green proof"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] shared new-HEAD changing during regression cannot receive a green proof"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] shared source changing during regression cannot receive a green proof"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "batch1.TestRunResult.json",
+          "runId": "3969e72f-1309-48e4-b7b4-d371bb679893"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "batch1.TestRunResult.json",
+          "runId": "3969e72f-1309-48e4-b7b4-d371bb679893"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-gates] uncommitted source is rejected before any verification can bless it"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "split-publication-qa.TestRunResult.json",
+          "runId": "b7c00ffb-2224-4a96-a3a3-99c49558d420"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-reader] cli process retains one generation across deferred import and switch"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-reader] hook process retains one generation across deferred import and switch"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-reader] notice process retains one generation across deferred import and switch"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-reader] service process retains one generation across deferred import and switch"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-reader] worker process retains one generation across deferred import and switch"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-recovery] recovery reconciles only the sealed target while a later shared HEAD and dirty work survive"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] artifact after green invalidates activation"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "batch1.TestRunResult.json",
+          "runId": "3969e72f-1309-48e4-b7b4-d371bb679893"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] commit after green invalidates activation"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] configuration after green invalidates activation"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "batch1.TestRunResult.json",
+          "runId": "3969e72f-1309-48e4-b7b4-d371bb679893"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] forged-report after green invalidates activation"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] sealed-artifact after green invalidates activation"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] sealed-configuration after green invalidates activation"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] sealed-source after green invalidates activation"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "stand-qa-final.TestRunResult.json",
+          "runId": "f064653d-6da8-4885-9249-ed9ddf9dbd7b"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] source after green invalidates activation"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "batch1.TestRunResult.json",
+          "runId": "3969e72f-1309-48e4-b7b4-d371bb679893"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] the shared writer cannot enter during copy and resumes without changing the sealed bytes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated artifact at after-copy rejects a mixed seal without reverting the writer"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated artifact at before-copy rejects a mixed seal without reverting the writer"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated configuration at after-copy rejects a mixed seal without reverting the writer"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated configuration at before-copy rejects a mixed seal without reverting the writer"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated new-HEAD at after-copy rejects a mixed seal without reverting the writer"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated new-HEAD at before-copy rejects a mixed seal without reverting the writer"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated source at after-copy rejects a mixed seal without reverting the writer"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-snapshot] uncoordinated source at before-copy rejects a mixed seal without reverting the writer"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-activation.test.ts",
+        "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+      },
+      "qaPassEvidence": []
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] a new potential input dist/new.js cannot be trusted automatically"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] a new potential input new-package/package.json cannot be trusted automatically"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] a new potential input node_modules/new-package/package.json cannot be trusted automatically"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] a new potential input node_modules/origin-dep/new.payload cannot be trusted automatically"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] a new potential input scripts/new-child cannot be trusted automatically"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] a new potential input src/new-package/package.json cannot be trusted automatically"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] a new potential input src/new.unusual cannot be trusted automatically"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] a retained reader uses its own inventory after the main route advances"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of bin/raf.ts refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of dist/catalog.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of dist/runtime.js refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of node_modules/origin-dep/index.js refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of node_modules/origin-dep/nested/package.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of node_modules/origin-dep/package.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of node_modules/origin-dep/table.payload refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of package-lock.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of package.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of scripts/helper refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of src/dynamic.mjs refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of src/lazy.mjs refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of src/nested/package.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of src/state-store.ts refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] changing the canonical root rejects a pathname alias"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] cli refuses changed dependencies before touching state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of bin/raf.ts refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of dist/catalog.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of dist/runtime.js refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of node_modules/origin-dep/index.js refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of node_modules/origin-dep/nested/package.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of node_modules/origin-dep/package.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of node_modules/origin-dep/table.payload refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of package-lock.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of package.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of scripts/helper refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of src/dynamic.mjs refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of src/lazy.mjs refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of src/nested/package.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of src/state-store.ts refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] directory-symlink in node_modules/origin-dep refuses despite identical bytes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] directory-symlink in src refuses despite identical bytes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] every successful guard rereads runtime bytes without a success cache"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: export const load=()=>import(process.env.UNKNOWN_MODULE);"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: import '../evidence/executable.payload';"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: import {readFileSync} from 'node:fs'; readFileSync(new URL('../docs/package.json', import.meta.url));"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: import {spawn} from 'node:child_process'; spawn(process.execPath,['docs/child.payload']);"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] extra published evidence and docs add zero guard file operations"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] factory require aliases cannot load excluded inputs: import * as modules from 'node:module'; const factory=modules.createRequire; const first=factory(import.meta.url); const load=first;"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] factory require aliases cannot load excluded inputs: import {createRequire as factory} from 'node:module'; const load=factory(import.meta.url);"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] factory require aliases cannot load excluded inputs: import {createRequire} from 'node:module'; const load=createRequire(import.meta.url);"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] factory require aliases record protected loads"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] file-hardlink in node_modules/origin-dep refuses despite identical bytes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] file-hardlink in src refuses despite identical bytes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] file-symlink in node_modules/origin-dep refuses despite identical bytes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] file-symlink in src refuses despite identical bytes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] full activation fingerprint still detects add in excluded docs"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] full activation fingerprint still detects add in excluded evidence"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] full activation fingerprint still detects bytes in excluded docs"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] full activation fingerprint still detects bytes in excluded evidence"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] full activation fingerprint still detects delete in excluded docs"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] full activation fingerprint still detects delete in excluded evidence"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] full activation fingerprint still detects hardlink in excluded docs"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] full activation fingerprint still detects hardlink in excluded evidence"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] full activation fingerprint still detects mode in excluded docs"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] full activation fingerprint still detects mode in excluded evidence"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] full activation fingerprint still detects symlink in excluded docs"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] full activation fingerprint still detects symlink in excluded evidence"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] hook refuses changed dependencies before touching state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] missing runtime inventory fails closed with an intact full fingerprint"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] missing-file runtime inventory fails closed with an intact full fingerprint"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] missing-scopes runtime inventory fails closed with an intact full fingerprint"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of bin/raf.ts refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of dist/catalog.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of dist/runtime.js refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of node_modules/origin-dep/index.js refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of node_modules/origin-dep/nested/package.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of node_modules/origin-dep/package.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of node_modules/origin-dep/table.payload refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of package-lock.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of package.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of scripts/helper refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of src/dynamic.mjs refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of src/lazy.mjs refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of src/nested/package.json refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of src/state-store.ts refuses immediately after a successful guard"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] notice refuses changed dependencies before touching state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] one guard never traverses or reads proven non-runtime trees"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] package bin maps cannot execute excluded inputs: node_modules/origin-dep/package.json"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] package bin maps cannot execute excluded inputs: package.json"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] package bin maps record protected executable targets"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] refused provenance preserves existing state and sidecars byte for byte"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] runner-limits refuses changed dependencies before touching state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] service-store refuses changed dependencies before touching state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] the publication inventory builder includes runtime dependencies and unconventional inputs"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] unsupported-version runtime inventory fails closed with an intact full fingerprint"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] worker refuses changed dependencies before touching state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] wrong-commit runtime inventory fails closed with an intact full fingerprint"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] wrong-root runtime inventory fails closed with an intact full fingerprint"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "qa.TestRunResult.json",
+          "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
+        },
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "a new observer dying before takeover is replaced from durable state without retiring the old observer"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "concurrent drains and concurrent recovery retain one ownership transition and one fact acceptance"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "death after accepting a fact but before its acknowledgement recovers without duplicate effects"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover pins bug-sync catalog and deferred import until its old operation drains"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover pins cli catalog and deferred import until its old operation drains"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover pins hook-notice catalog and deferred import until its old operation drains"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover pins resource-wait catalog and deferred import until its old operation drains"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover pins worker-import catalog and deferred import until its old operation drains"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover refuses incompatible address protocol in A-to-B before component changes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover refuses incompatible address protocol in B-to-A before component changes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover refuses incompatible event protocol in A-to-B before component changes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover refuses incompatible event protocol in B-to-A before component changes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover refuses incompatible message protocol in A-to-B before component changes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover refuses incompatible message protocol in B-to-A before component changes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover refuses incompatible reminder protocol in A-to-B before component changes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover refuses incompatible reminder protocol in B-to-A before component changes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover refuses incompatible report protocol in A-to-B before component changes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover refuses incompatible report protocol in B-to-A before component changes"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover rejects readiness evidence: dead-process"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover rejects readiness evidence: not-restored"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover rejects readiness evidence: wrong-epoch"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover rejects readiness evidence: wrong-owner"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "handover requires explicit service, worker and notice readiness before retiring any old owner"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "old observer death before readiness preserves pending report and permits durable recovery"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "pending events, addressed messages and reminders survive recovery and are fenced against old owners"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "report committed after handover is accepted exactly once with its original run identity"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "report committed before handover is accepted exactly once with its original run identity"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "report committed during handover is accepted exactly once with its original run identity"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "retired metadata alone cannot release a slot while the old process is still reading it"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "reverse handover accepts facts from both protocol versions and preserves the live runner"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "rollback after the new observer dies preserves pending facts and does not reuse its old epoch"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "slot preparation is blocked by handover, active ownership or any outstanding operation lease"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/main-generation-handover.test.ts",
+        "name": "worker report and message processing remains independent of service readiness and service lifetime"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/service-entry.test.ts",
+        "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/service-entry.test.ts",
+        "name": "child entry validates environment and required ports before declaring readiness"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/service-entry.test.ts",
+        "name": "configured main path on the wrong Git branch is rejected before spawning"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/service-entry.test.ts",
+        "name": "help is lazy and remains usable with absent main and absent host ports"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/service-entry.test.ts",
+        "name": "missing configured main never falls back to available develop worker"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/service-entry.test.ts",
+        "name": "missing production ports and failed recovery do not claim readiness"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/service-entry.test.ts",
+        "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/service-entry.test.ts",
+        "name": "production help remains available before service wiring or the main service entry is available"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/service-entry.test.ts",
+        "name": "service requests auto-start one configured worker and reuse it after command completion"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/service-entry.test.ts",
+        "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "QA child environment replaces foreign HOME/selector/tmux socket without carrying a transfer permission"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "QA refuses canonical ancestor alias before changing working state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "QA refuses canonical database alias before changing working state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "QA refuses canonical home alias before changing working state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "QA refuses canonical shm alias before changing working state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "QA refuses canonical state-directory alias before changing working state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "QA refuses canonical tmp alias before changing working state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "QA refuses canonical wal alias before changing working state"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "QA rejects hardlinked SQLite database by file identity"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "QA rejects hardlinked SQLite-shm by file identity"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "QA rejects hardlinked SQLite-wal by file identity"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "a state path different from the validated context cannot reuse that context"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "allowed QA initializes empty-version-zero locally and opening the current schema repeats no DDL"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "allowed QA initializes missing locally and opening the current schema repeats no DDL"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "cli: develop refuses working account HOME before any filesystem initialization"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "explicit QA requires absolute matching HOME and a separate canonical account HOME"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "explicit path-bound 10→18 applies each SQL migration once and ordinary reopen does not replay it"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "explicit path-bound 7→18 applies each SQL migration once and ordinary reopen does not replay it"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "hook: develop refuses working account HOME before any filesystem initialization"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "loaded module provenance wins over an executable alias and arbitrary main declaration"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "nonempty schema 0 is unsupported with and without an explicit transfer"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "nonempty schema 19 is unsupported with and without an explicit transfer"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "nonempty schema 777 is unsupported with and without an explicit transfer"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "notice: develop refuses working account HOME before any filesystem initialization"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "path revalidation and actual state-store open reject alias replacement after preflight"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "production ordinary open refuses schema 10 before changing DB/WAL/SHM"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "production ordinary open refuses schema 7 before changing DB/WAL/SHM"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "qa ordinary open refuses schema 10 before changing DB/WAL/SHM"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "qa ordinary open refuses schema 7 before changing DB/WAL/SHM"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "resolver reads registered main path/profile and fails closed on missing, conflicting or unregistered configuration"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "runner-limits: develop refuses working account HOME before any filesystem initialization"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 10: a fault after the first DDL step rolls back schema, version and rows; a fresh attempt succeeds"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 10: maintenance backs up committed WAL through SQLite and preserves both source and immutable backup on repeat"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 10: maintenance refuses an existing backup and a failed backup destination without touching the database"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 10: maintenance refuses incompatible clients before backup or migration"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 10: maintenance refuses unknown clients before backup or migration"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 10: transfer validates source, target and exact state path before any write"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 10: two explicitly permitted processes recheck under the write lock and apply SQL only once"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 7: a fault after the first DDL step rolls back schema, version and rows; a fresh attempt succeeds"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 7: maintenance backs up committed WAL through SQLite and preserves both source and immutable backup on repeat"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 7: maintenance refuses an existing backup and a failed backup destination without touching the database"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 7: maintenance refuses incompatible clients before backup or migration"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 7: maintenance refuses unknown clients before backup or migration"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 7: transfer validates source, target and exact state path before any write"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "schema 7: two explicitly permitted processes recheck under the write lock and apply SQL only once"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "service-store: develop refuses working account HOME before any filesystem initialization"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "the existing openStateStore(path) port refuses schema 10 without any new options"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "the existing openStateStore(path) port refuses schema 7 without any new options"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/state-migration-guard.test.ts",
+        "name": "worker: develop refuses working account HOME before any filesystem initialization"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "final-other-qa.TestRunResult.json",
+          "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "intermediate-preset.TestRunResult.json",
+          "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "stable-preset.TestRunResult.json",
+          "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    }
+  ]
+}

@@ -73,8 +73,7 @@
   "groupPolicy": "Same project/workspace/group/HOME/aggregate; current preset added by main, no foreign regression group invocation.",
   "archive": null,
   "pending": [
-    "47 knownRed hotfix-activation scenarios must actually pass in the same aggregate",
-    "final host after4a comparison"
+    "47 knownRed hotfix-activation scenarios must actually pass in the same aggregate"
   ],
   "qaFixShas": [
     "c50b4c6d331f807f8a0f5533e0341d75ba3ae8a2",
@@ -162,5 +161,20 @@
     "command": "node scripts/qa-agent-ps-comparison.mjs 8f665165d57ae0b824f6b992824ebb6217358c83 /srv/dev/p57-conf.AwZAJz 5",
     "manifests": "before/provenance.json + after/provenance.json",
     "cleanup": "complete, service stopped, remainingProcesses=[], SQLite integrity ok"
+  },
+  "finalHost": {
+    "before": "before/summary.json",
+    "after": "after-final/summary.json",
+    "comparison": "comparison-final.json",
+    "verificationCliExitCode": 0,
+    "evidenceIntegrity": "verified",
+    "allCasesHaveFavorableMeans": true,
+    "allCasesRangesStrictlyImprove": true,
+    "sourceSha": "4a0bc11ec74917da83049bf2c0fd0b628ea88ac6",
+    "baselineSha": "0e022cd356a9bf7760328839fcb7f39103ebce30",
+    "command": "node scripts/qa-agent-ps-comparison.mjs 4a0bc11ec74917da83049bf2c0fd0b628ea88ac6 /srv/dev/p57-conf.AwZAJz 5",
+    "manifests": "before/provenance.json + after-final/provenance.json",
+    "cleanup": "complete, service stopped, remainingProcesses=[], SQLite integrity ok",
+    "harnessSha256": "2723e90855d4ba02f0a47df8e8677507b9ae59e6feac03934a5fd943e9eb16b1"
   }
 }

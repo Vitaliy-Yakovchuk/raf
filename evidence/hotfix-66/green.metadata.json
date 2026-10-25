@@ -1,0 +1,60 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "test/test-run-etchly-profiles.test.ts"
+  ],
+  "executableVersion": "v26.12.1",
+  "sha": "8de8959108a4223aea9b2002bb72ae0dc7cdd83b",
+  "workspace": null,
+  "workspaceState": "clean detached clone before execution; same isolation/configuration/cleanup metadata as red, confirmed by main",
+  "configuration": "Sibling conf directory copied from current Orchestrator conf/*.json; node_modules symlink to raf-main/node_modules",
+  "environment": "Fresh isolated HOME=TMPDIR under /srv/dev/h-rx-*; LC_ALL=C; session variables, RAF_*, NODE_OPTIONS, NODE_PATH removed",
+  "admission": {
+    "command": "raf resource wait --level normal",
+    "exitCode": 0,
+    "actor": "main"
+  },
+  "timeout": {
+    "externalCommand": "timeout 1300",
+    "seconds": 1300,
+    "triggered": false,
+    "rafUnitDeadlineWrapper": false
+  },
+  "cleanup": {
+    "complete": true,
+    "removed": [
+      "clean clone",
+      "private HOME/TMPDIR"
+    ],
+    "source": "main confirmed cleanup"
+  },
+  "runner": "direct Node host run explicitly authorized by main after wrapper CONFIGURATION_INVALID; not a TestRunResult",
+  "rafCliExitCode": null,
+  "hostCommandExitCode": 0,
+  "nodeExitCode": 0,
+  "timedOut": false,
+  "selection": {
+    "files": [
+      "test/test-run-etchly-profiles.test.ts"
+    ],
+    "testIds": []
+  },
+  "stableGroup": "add-raf-test-run/etchly-profiles",
+  "runId": null,
+  "groupSnapshot": "unavailable in direct host run; no wrapper aggregate reset or mutation claimed",
+  "counts": {
+    "tests": 107,
+    "passed": 107,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "failureKind": null,
+  "unknown": [],
+  "unexecuted": [],
+  "knownRedNames": [],
+  "durationMs": 264.782788,
+  "nextAction": "main transfers reviewed hotfix through normal hotfix flow; other add-raf-test-run tasks remain open",
+  "provenance": "main messages delivered to raf-rtr66-hotfix on 2026-10-25; raw stdout/stderr/exit SHA-256 in red.sha256"
+}

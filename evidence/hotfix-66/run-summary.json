@@ -1,0 +1,96 @@
+{
+  "assignment": {
+    "change": "add-raf-test-run",
+    "item": "6.6",
+    "project": "raf",
+    "agentId": "raf-rtr66-hotfix"
+  },
+  "stableGroup": "add-raf-test-run/etchly-profiles",
+  "selection": {
+    "files": [
+      "test/test-run-etchly-profiles.test.ts"
+    ],
+    "testIds": []
+  },
+  "audit": {
+    "current": true,
+    "contradictions": [],
+    "source": "README.md"
+  },
+  "initialWrapperAttempt": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-test-run/etchly-profiles --files test/test-run-etchly-profiles.test.ts",
+    "sha": "0e1ffba331055a3baa484f35fe08107c35e09819",
+    "executionHead": "0e1ffba331055a3baa484f35fe08107c35e09819",
+    "workspaceChanges": "Before red test commit: modified test/test-run-etchly-profiles.test.ts; untracked test/fixtures/etchly-audited-package.json; pre-existing untracked node_modules symlink; production sources unchanged",
+    "result": "initial-refusal.result.json",
+    "cli": "initial-refusal.cli.json",
+    "runId": "feacbbdb-e20c-4e9e-a85d-325d248c7422",
+    "outcome": "refused",
+    "cliExitCode": 1,
+    "childExitCode": null,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "unavailable",
+    "groupState": null,
+    "timeoutCount": null,
+    "nextAction": "fix-setup",
+    "acceptedAsRed": false,
+    "subsequentTestCommit": "b9ec64b58fd28c35990b636b16eebb3de87badf7"
+  },
+  "hostAuthorization": "main explicitly directed host red/green on clean committed clones after wrapper refusal; authorization and metadata recorded in README.md and *.metadata.json",
+  "runs": [
+    {
+      "phase": "red",
+      "metadata": "red.metadata.json",
+      "sha": "b9ec64b58fd28c35990b636b16eebb3de87badf7",
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "tests": 107,
+      "passed": 102,
+      "failed": 5
+    },
+    {
+      "phase": "hotfix",
+      "metadata": "green-7929159.metadata.json",
+      "sha": "792915977696ecd1b036f609cba7c60f7467b20b",
+      "outcome": "passed",
+      "exitCode": 0,
+      "tests": 107,
+      "passed": 107,
+      "failed": 0
+    },
+    {
+      "phase": "hotfix",
+      "metadata": "green.metadata.json",
+      "sha": "8de8959108a4223aea9b2002bb72ae0dc7cdd83b",
+      "outcome": "passed",
+      "exitCode": 0,
+      "tests": 107,
+      "passed": 107,
+      "failed": 0
+    }
+  ],
+  "hostPhaseLabelMeaning": "requested work phase, not a claim that the host Node command ran through raf --phase hotfix; no host TestRunResult/runId fabricated",
+  "groupState": "wrapper aggregate unavailable; no QA HOME change/reset and no aggregate mutation claimed for authorized direct host runs",
+  "finalKnownRed": [],
+  "finalUnexecuted": [],
+  "finalUnknown": [],
+  "limitations": [
+    "Initial refused tool call did not expose separate raw stderr; not counted as red or pass",
+    "Direct host fallback does not provide TestRunResult or wrapper aggregate",
+    "Full TypeScript check not available without Node type declarations; typecheck.json retains diagnostics"
+  ],
+  "completion": {
+    "assignedItemImplemented": true,
+    "checkboxesEdited": false,
+    "archivePerformed": false,
+    "reason": "Other add-raf-test-run items remain open; raf owns assigned checkbox commit",
+    "nextAction": "main reviews/transfers hotfix and resolves wrapper setup via 6.5"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "test/test-run-etchly-profiles.test.ts"
+  ],
+  "executableVersion": "v26.12.1",
+  "sha": "b9ec64b58fd28c35990b636b16eebb3de87badf7",
+  "workspace": "/srv/dev/rafhx-rtr66-red/raf",
+  "workspaceState": "clean detached clone before execution",
+  "configuration": "Sibling conf directory copied from current Orchestrator conf/*.json; node_modules symlink to raf-main/node_modules",
+  "environment": "Fresh isolated HOME=TMPDIR under /srv/dev/h-rx-*; LC_ALL=C; session variables, RAF_*, NODE_OPTIONS, NODE_PATH removed",
+  "admission": {
+    "command": "raf resource wait --level normal",
+    "exitCode": 0,
+    "actor": "main"
+  },
+  "timeout": {
+    "externalCommand": "timeout 1300",
+    "seconds": 1300,
+    "triggered": false,
+    "rafUnitDeadlineWrapper": false
+  },
+  "cleanup": {
+    "complete": true,
+    "removed": [
+      "clean clone",
+      "private HOME/TMPDIR"
+    ],
+    "source": "main confirmed cleanup"
+  },
+  "runner": "direct Node host run explicitly authorized by main after wrapper CONFIGURATION_INVALID; not a TestRunResult",
+  "rafCliExitCode": null,
+  "hostCommandExitCode": 1,
+  "nodeExitCode": 1,
+  "timedOut": false,
+  "selection": {
+    "files": [
+      "test/test-run-etchly-profiles.test.ts"
+    ],
+    "testIds": []
+  },
+  "stableGroup": "add-raf-test-run/etchly-profiles",
+  "runId": null,
+  "groupSnapshot": "unavailable in direct host run; no wrapper aggregate reset or mutation claimed",
+  "counts": {
+    "tests": 107,
+    "passed": 102,
+    "failed": 5,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "failureKind": "assertions",
+  "unknown": [],
+  "unexecuted": [],
+  "knownRedNames": [
+    "root package scripts-only add does not invalidate the fixed runner inventory",
+    "root package scripts-only edit does not invalidate the fixed runner inventory",
+    "root package scripts-only remove does not invalidate the fixed runner inventory",
+    "root package JSON formatting and object key order do not change the audited execution contract",
+    "accepting root scripts changes preserves the byte hash guard on the next runner source"
+  ],
+  "durationMs": 266.840474,
+  "nextAction": "implement, then verify the same file on the fix SHA through main-authorized host run",
+  "provenance": "main messages delivered to raf-rtr66-hotfix on 2026-10-25; raw stdout/stderr/exit SHA-256 in red.sha256"
+}

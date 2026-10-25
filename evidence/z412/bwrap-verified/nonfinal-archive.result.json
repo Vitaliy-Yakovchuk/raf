@@ -1,0 +1,33 @@
+{
+  "label": "nonfinal-archive",
+  "executable": "/usr/bin/bwrap",
+  "args": [
+    "--ro-bind",
+    "/",
+    "/",
+    "--bind",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-TRaudS/run-nonfinal",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-TRaudS/run-nonfinal",
+    "--bind",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-TRaudS/qa-home",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-TRaudS/qa-home",
+    "--bind",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-TRaudS/tmp",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-TRaudS/tmp",
+    "--bind",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-TRaudS/nonfinal/openspec/changes/archive-demo-nonfinal",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-TRaudS/nonfinal/openspec/changes/archive-demo-nonfinal",
+    "--chdir",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-TRaudS/nonfinal",
+    "--",
+    "openspec",
+    "archive",
+    "archive-demo-nonfinal",
+    "--yes",
+    "--json"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-TRaudS/nonfinal/raf-develop",
+  "code": 1,
+  "signal": null,
+  "error": null
+}

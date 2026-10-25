@@ -1,0 +1,45 @@
+{
+  "testedSha": "27a96607ee4c3b3d1dda00eda48e72716c714164",
+  "method": "Clean detached local clone, existing node_modules and read-only source conf symlink. No tests executed. Build artifacts isolated; only own temporary clone removed.",
+  "steps": [
+    {
+      "command": [
+        "git",
+        "clone",
+        "--quiet",
+        "--shared",
+        "--no-checkout",
+        "/srv/dev/work/orchestrator/raf-develop",
+        "/tmp/ara41b-build-FCrSdY/raf-develop"
+      ],
+      "cwd": "/tmp/ara41b-build-FCrSdY",
+      "status": 0,
+      "signal": null
+    },
+    {
+      "command": [
+        "git",
+        "checkout",
+        "--quiet",
+        "--detach",
+        "27a96607ee4c3b3d1dda00eda48e72716c714164"
+      ],
+      "cwd": "/tmp/ara41b-build-FCrSdY/raf-develop",
+      "status": 0,
+      "signal": null
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "cwd": "/tmp/ara41b-build-FCrSdY/raf-develop",
+      "status": 0,
+      "signal": null
+    }
+  ],
+  "cleanup": {
+    "complete": true
+  }
+}

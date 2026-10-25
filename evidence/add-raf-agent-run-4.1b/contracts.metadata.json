@@ -1,0 +1,19 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/contracts",
+  "snapshot": "26dd251d44efc48f41e68cf1ae004b8008d9331b\n M evidence/add-raf-agent-run-4.1b/unit-refused.stderr\n?? evidence/add-raf-agent-run-4.1b/build-current.cli-exit-code\n?? evidence/add-raf-agent-run-4.1b/build-current.stderr\n?? evidence/add-raf-agent-run-4.1b/build-current.stdout\n?? evidence/add-raf-agent-run-4.1b/unit-green.cli-exit-code\n?? evidence/add-raf-agent-run-4.1b/unit-green.merged-output\n?? evidence/add-raf-agent-run-4.1b/unit-green.metadata.json\n?? evidence/add-raf-agent-run-4.1b/unit-green.stderr\n?? evidence/add-raf-agent-run-4.1b/unit-green.stdout.json\n76d502a5735ce10076a33e9ff46e4729bf835e89a5881ec18d8af8445b19e6ea  test/sandbox-command-multiline.test.ts\n1116:        \"add-raf-agent-run/contracts\": {\n",
+  "toolMetadata": {
+    "chunk_id": "a60771",
+    "wall_time_seconds": 0.266232016,
+    "exit_code": 1,
+    "original_token_count": 25582
+  },
+  "capture": {
+    "method": "Full merged output retained before display. Extracted exactly one complete launch-queue.waiting NDJSON record including LF at character offset 63604; untouched remaining bytes form one valid full TestRunResult JSON. Original merged output preserved.",
+    "limitation": "Native tool interleaved logical stderr queue event inside JSON stdout. Independent byte-level streams unavailable. Not a green claim; preserve source and exact extraction.",
+    "stderrCharacters": 1513,
+    "stdoutCharacters": 98816,
+    "mergedCharacters": 100329
+  },
+  "cliExitCode": 1,
+  "childExitCode": 1
+}

@@ -1,0 +1,31 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/sandbox-multiline",
+  "snapshot": "27a96607ee4c3b3d1dda00eda48e72716c714164\n?? evidence/add-raf-test-run/etchly-integration-qa-b/\n?? scripts/qa-etchly-integration-host.mjs\n?? scripts/qa-etchly-integration-prepare.mjs\n?? scripts/qa-etchly-integration-suite.sh\nc0435f568f7f1264fdc135c7dcfdc41d22142affe36124a20a581aa81da5c822  src/sandbox-test-run.ts\n76d502a5735ce10076a33e9ff46e4729bf835e89a5881ec18d8af8445b19e6ea  test/sandbox-command-multiline.test.ts\n",
+  "toolMetadata": {
+    "chunk_id": "b87d48",
+    "wall_time_seconds": 0.311986053,
+    "exit_code": 0,
+    "original_token_count": 2375
+  },
+  "capture": {
+    "method": "Complete native exec output retained before display. Exactly two complete NDJSON records: first unchanged TestRunResult; second launch-queue.waiting event from logical stderr. Both records and original merged output preserved including LF.",
+    "limitation": "Tool returns merged output, not independent byte-level stdout/stderr. Logical streams are unambiguous complete lines; no TestRunResult text changed.",
+    "truncated": false
+  },
+  "confirmation": "Main identified concurrent conf commit 481597225e and explicitly confirmed stable conf before this one repeated run.",
+  "runId": "686f569f-bda3-4ffc-8c27-c9940f6eefe6",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "passed": 18,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "groupState": "complete",
+  "nextAction": "complete",
+  "timeoutCount": 0
+}

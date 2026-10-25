@@ -1,0 +1,75 @@
+{
+  "source": "/srv/dev/s64-5zOAbq",
+  "readOnlyArchiveReportedBy": "main",
+  "secretScanReportedByMain": "clean",
+  "status": "failed",
+  "error": {
+    "message": "Unexecuted remainder: native gate 1",
+    "stack": "Error: Unexecuted remainder: native gate 1\n    at wait (file:///srv/dev/sym64b-src.zcCv8l/raf-develop/scripts/qa-main-agent-channel.mjs:47:9)\n    at async file:///srv/dev/sym64b-src.zcCv8l/raf-develop/scripts/qa-main-agent-channel.mjs:224:7"
+  },
+  "reviewed": "e7d0d164222940d486cc06536a65bde7fe7726a9",
+  "startedAt": "2026-10-25T03:11:42.712Z",
+  "endedAt": "2026-10-25T03:27:47.562Z",
+  "switches": [
+    {
+      "target": "4bf6b6ee185fdc48e44f1e897f16bdfa59801e35"
+    }
+  ],
+  "cleanup": [
+    {
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/s64-5zOAbq/root/raf-main/bin/raf.ts",
+        "agent",
+        "close",
+        "--id",
+        "sym64-a",
+        "--force",
+        "--reason",
+        "Host-owned isolated QA cleanup"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "{\"closed\":true,\"unfinished\":[],\"result\":\"failed\",\"forcedClose\":{\"reason\":\"Host-owned isolated QA cleanup\"}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/s64-5zOAbq/root/raf-main/bin/raf.ts",
+        "agent",
+        "close",
+        "--id",
+        "sym64-b",
+        "--force",
+        "--reason",
+        "Host-owned isolated QA cleanup"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "{\"closed\":true,\"unfinished\":[],\"result\":\"failed\",\"forcedClose\":{\"reason\":\"Host-owned isolated QA cleanup\"}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/s64-5zOAbq/root/raf-main/bin/raf.ts",
+        "service",
+        "stop"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "{\"serviceEpoch\":\"683419a8-2e41-48c5-bd5a-b150b840c77f\",\"resourceWaitReady\":false,\"exitCode\":0,\"state\":\"stopped\",\"pid\":null,\"mainPath\":\"/srv/dev/s64-5zOAbq/root/raf-main-a\",\"stopReason\":\"Service stopped normally\",\"reasonKnown\":true}\n",
+      "stderr": ""
+    }
+  ],
+  "summarySha256": "96dc4b1a5268f899b4ceae705c8bad2f4ca3ab6c14a4996c04cb9dd729696938",
+  "archiveManifest": "/srv/dev/s64-5zOAbq.sha256",
+  "archiveManifestSha256": "5fad2fca1e638cea17e0bde4e5f18ea31d7a336de9b20dbc39e37e9a5e0bdd89",
+  "verifiedSummaryManifestLine": "96dc4b1a5268f899b4ceae705c8bad2f4ca3ab6c14a4996c04cb9dd729696938  ./ev/summary.json",
+  "partialOnly": true,
+  "fullSummaryPreservedAt": "/srv/dev/s64-5zOAbq/ev/summary.json"
+}

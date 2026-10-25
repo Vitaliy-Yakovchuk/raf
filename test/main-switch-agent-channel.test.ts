@@ -474,7 +474,7 @@ async function publishedLauncherFixture() {
     git("add", "bin");
     git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "-m", "published fixture");
     execFileSync("git", ["-C", root, "init", "-b", "main"], { env: environment });
-    execFileSync("git", ["-C", root, "-c", "protocol.file.allow=always", "submodule", "add", "./raf-main-a", "raf-main-a"], { env: environment });
+    execFileSync("git", ["-C", root, "-c", "protocol.file.allow=always", "submodule", "add", "--name", "raf-main", "./raf-main-a", "raf-main-a"], { env: environment });
     execFileSync("git", ["-C", root, "submodule", "absorbgitdirs"], { env: environment });
     git("worktree", "add", "-b", "develop", join(root, "raf-develop"), "HEAD");
     git("worktree", "add", "--detach", B, "HEAD");
@@ -488,6 +488,41 @@ async function publishedLauncherFixture() {
     return { root, A, B, home, work, source: join(root, "raf-develop"), git, common, environment };
   } catch (error) { await fs.rm(root, { recursive: true, force: true }); throw error; }
 }
+
+test("public CLI pins the active physical main slot before loading its runtime", async () => {
+  const f = await publishedLauncherFixture();
+  try {
+    await fs.cp(join(f.source, "src"), join(f.A, "src"), { recursive: true });
+    await fs.cp(join(f.source, "package.json"), join(f.A, "package.json"));
+    await fs.mkdir(join(f.A, "dist"));
+    const configuration = async (name: string) => JSON.parse(await fs.readFile(new URL('../../conf/' + name, import.meta.url), 'utf8'));
+    const constants = await configuration('raf-constants.json');
+    const catalog = compileCatalog(constants, await configuration('models.json'), constants.commands.map((command: { path: string[] }) => command.path.join(' ')), await configuration('projects.json'));
+    await fs.writeFile(join(f.A, "dist/catalog.json"), JSON.stringify(catalog));
+    await fs.writeFile(join(f.A, "src/production-entry.ts"), `import{existsSync,readdirSync}from'node:fs';export async function runProductionCli(){return{exitCode:17,stderr:'',stdout:JSON.stringify({origin:import.meta.url,pinned:existsSync(process.env.CHANNEL_CONTROL+'/readers')&&readdirSync(process.env.CHANNEL_CONTROL+'/readers').length>0})}}`);
+    f.git("add", "--", "src", "package.json", "dist/catalog.json");
+    f.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "-m", "physical main CLI fixture");
+    execFileSync("git", ["-C", f.root, "add", "--", "raf-main-a", ".gitmodules"], { env: f.environment });
+    const script = `const{runPublicCli}=await import(${JSON.stringify(new URL("file://" + join(f.A, "src/cli.ts")).href)});const result=await runPublicCli(${JSON.stringify(new URL("file://" + join(f.A, "bin/raf.ts")).href)},['agent','ps']);console.log(JSON.stringify(result));`;
+    const result = spawnSync(process.execPath, ["--input-type=module", "-e", script], { cwd: f.work, env: { ...f.environment, RAF_ORCHESTRATOR_ROOT: f.root, CHANNEL_CONTROL: join(f.common, "raf-hotfix") }, encoding: "utf8", timeout: 30000 });
+    assert.equal(result.status, 0, result.stderr);
+    const cli = JSON.parse(result.stdout);
+    assert.equal(cli.exitCode, 17, cli.stderr);
+    const runtime = JSON.parse(cli.stdout);
+    assert.ok(runtime.origin.startsWith(new URL("file://" + join(f.common, "raf-hotfix/generations/")).href), runtime.origin);
+    assert.equal(runtime.pinned, true);
+    assert.deepEqual(await fs.readdir(join(f.common, "raf-hotfix/readers")), []);
+    await fs.cp(join(f.source, "src"), join(f.B, "src"), { recursive: true });
+    await fs.cp(join(f.source, "package.json"), join(f.B, "package.json"));
+    await fs.cp(join(f.A, "dist"), join(f.B, "dist"), { recursive: true });
+    const inactiveScript = script.replaceAll(f.A, f.B);
+    const inactive = spawnSync(process.execPath, ["--input-type=module", "-e", inactiveScript], { cwd: f.work, env: { ...f.environment, RAF_ORCHESTRATOR_ROOT: f.root }, encoding: "utf8", timeout: 30000 });
+    assert.equal(inactive.status, 0, inactive.stderr);
+    const refused = JSON.parse(inactive.stdout);
+    assert.equal(refused.exitCode, 1);
+    assert.match(refused.stderr, /Inactive main slot/);
+  } finally { await fs.rm(f.root, { recursive: true, force: true }); }
+});
 
 test("production scope protects both actual Git directories and main locks while preserving assigned Git writes", async () => {
   const f = await publishedLauncherFixture();

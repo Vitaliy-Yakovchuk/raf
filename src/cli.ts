@@ -1,7 +1,7 @@
 import { parseCommandArguments } from './cli-arguments.ts';
 import { homedir } from 'node:os';
 import { execFileSync } from 'node:child_process';
-import { statSync, readFileSync } from 'node:fs';
+import { statSync, readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve, join } from 'node:path';
 import type { CompiledCatalog } from './catalog.ts';
@@ -143,8 +143,18 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[], co
     catch (error) { return diagnostic('CONFIGURATION_INVALID', error); }
     const main = configuration.projects?.raf?.branchPaths?.main;
     if (typeof main !== 'string' || !main.trim()) return diagnostic('STATE_CONTEXT_REFUSED', new Error('Registered raf main route required'));
-    if (resolve(orchestratorRoot, main) === codeRoot || owner?.root === codeRoot) {
-      if (resolve(orchestratorRoot, main) === codeRoot && execFileSync('git', ['-C', codeRoot, 'symbolic-ref', '--short', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() !== 'main') throw new Error('Registered raf main Git branch required');
+    const logicalMain = resolve(orchestratorRoot, main);
+    const copies = configuration.projects.raf.mainCopies;
+    const physicalSlot = Array.isArray(copies) && copies.some(copy => typeof copy === 'string' && resolve(orchestratorRoot, copy) === codeRoot);
+    if (logicalMain === codeRoot || physicalSlot || owner?.root === codeRoot) {
+      if (owner?.root !== codeRoot) {
+        if (realpathSync(logicalMain) !== codeRoot) throw new Error('Inactive main slot cannot bootstrap the production runtime');
+        if (physicalSlot) {
+          const { productionStateContext } = await import(pathToFileURL(join(codeRoot, 'src/state-migration-guard.ts')).href);
+          productionStateContext(orchestratorRoot, fileURLToPath(entryUrl), homedir(), 'cli');
+        }
+        if (execFileSync('git', ['-C', codeRoot, 'symbolic-ref', '--short', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() !== 'main') throw new Error('Registered raf main Git branch required');
+      }
       verifyBootstrap();
       const { acquireHotfixReader, retainHotfixGeneration } = await import(pathToFileURL(join(codeRoot, 'src/hotfix-activation.ts')).href);
       verifyBootstrap();

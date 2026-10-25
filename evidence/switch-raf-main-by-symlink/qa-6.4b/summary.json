@@ -1360,7 +1360,7 @@
     "Exact workspace diff was not captured atomically at each unit start in the shared tree."
   ],
   "native": {
-    "status": "awaiting-main-host-evidence",
+    "status": "awaiting-new-main-host-run-after-physical-slot-pinning",
     "reviewedCommit": "e7d0d164222940d486cc06536a65bde7fe7726a9",
     "command": "CODEX_HOME=/home/dev/.codex LC_ALL=C node scripts/qa-main-agent-channel.mjs e7d0d164222940d486cc06536a65bde7fe7726a9",
     "provider": "Owner ordinary Codex; main runs isolated clean clone after resource wait",
@@ -1372,6 +1372,20 @@
         "outcome": "precondition-failed",
         "reason": "Clean-clone assertion rejected untracked node_modules symlink. No scenarios executed. Main will exclude this host dependency link via clone-local .git/info/exclude and rerun after resource wait.",
         "scenariosExecuted": false
+      },
+      {
+        "stand": "/srv/dev/s64-jjox0y",
+        "review": "native-partial-s64-jjox0y/review.json",
+        "outcome": "failed",
+        "reason": "A real live pinned reader with native protection is required",
+        "superseded": true
+      },
+      {
+        "stand": "/srv/dev/s64-5zOAbq",
+        "review": "native-partial-s64-5zOAbq/review.json",
+        "outcome": "failed",
+        "reason": "Unexecuted remainder: native gate 1; old-slot origin rejected after switch",
+        "superseded": true
       }
     ]
   },
@@ -1383,5 +1397,42 @@
     "qaRunId": "a7526ef1-426f-4f06-b2f0-4799da3e0b66",
     "supersededHostCommit": "27e2668bb9803668bde8deb7518ff70a3cdcfb90",
     "nativeStatus": "awaiting-new-reviewed-commit-host-run"
+  },
+  "physicalSlotPinning": {
+    "defect": "ESM resolves logical symlink to physical main slot; runPublicCli compared only logical path and bypassed generation acquisition. Native worker had no lease/protection record; old slot channel failed after switch.",
+    "behaviorRedRunId": "92d6e190-f010-4f69-9c65-e955271ad0f3",
+    "qaRunId": "a6ece229-813c-4d1d-a023-52c77f527ede",
+    "fix": "Validate active physical main origin, acquire/pin immutable generation before loading production entry; refuse inactive slots. Fixture registers canonical submodule name from creation, matching actual absorbed source store.",
+    "assertions": "Runtime originates in generation, live reader exists during execution, lease released; inactive slot returns nonzero.",
+    "phase": "qa",
+    "group": "switch-raf-main-by-symlink/agent-channel",
+    "files": [
+      "test/main-switch-agent-channel.test.ts"
+    ],
+    "passed": 72,
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "raw": "physical-slot-qa.TestRunResult.json",
+    "workspace": "physical-slot-workspace.patch and physical-slot-workspace-status.txt",
+    "redRaw": "physical-slot-red.TestRunResult.json",
+    "knownRed": [],
+    "unknown": [],
+    "unexecuted": [],
+    "cleanupComplete": true,
+    "groupState": "complete",
+    "nextAction": "main reviewed clean-clone native stand",
+    "fixtureFailures": [
+      "physical-slot-fixture-failure",
+      "physical-slot-qa-duplicate-registration",
+      "physical-slot-qa-source-registration",
+      "physical-slot-qa-inactive-fixture"
+    ],
+    "uncapturedRun": {
+      "runId": "682a7b75-1d25-4d4e-97a1-b25f3c5638ec",
+      "observedOutcome": "passed",
+      "passed": 72,
+      "rawPreserved": false,
+      "reason": "Tool output was not stored. Superseded by full preserved qa after adding inactive-origin assertion; not counted as complete evidence."
+    }
   }
 }

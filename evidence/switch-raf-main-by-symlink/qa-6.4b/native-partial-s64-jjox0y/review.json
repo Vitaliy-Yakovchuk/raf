@@ -1,0 +1,71 @@
+{
+  "source": "/srv/dev/s64-jjox0y",
+  "readOnlyArchiveReportedBy": "main",
+  "secretScanReportedByMain": "clean",
+  "status": "failed",
+  "error": {
+    "message": "A real live pinned reader with native protection is required",
+    "stack": "AssertionError [ERR_ASSERTION]: A real live pinned reader with native protection is required\n    at file:///srv/dev/sym64d-src.UrArPt/raf-develop/scripts/qa-main-agent-channel.mjs:218:10"
+  },
+  "reviewed": "e794768d5e05bb25b6ba219eea07a4aa164b124f",
+  "startedAt": "2026-10-25T03:30:51.013Z",
+  "endedAt": "2026-10-25T03:32:05.725Z",
+  "switches": [],
+  "cleanup": [
+    {
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/s64-jjox0y/root/raf-main/bin/raf.ts",
+        "agent",
+        "close",
+        "--id",
+        "sym64-a",
+        "--force",
+        "--reason",
+        "Host-owned isolated QA cleanup"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "{\"closed\":true,\"unfinished\":[],\"result\":\"failed\",\"forcedClose\":{\"reason\":\"Host-owned isolated QA cleanup\"}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/s64-jjox0y/root/raf-main/bin/raf.ts",
+        "agent",
+        "close",
+        "--id",
+        "sym64-b",
+        "--force",
+        "--reason",
+        "Host-owned isolated QA cleanup"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "{\"closed\":true,\"unfinished\":[],\"result\":\"failed\",\"forcedClose\":{\"reason\":\"Host-owned isolated QA cleanup\"}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/s64-jjox0y/root/raf-main/bin/raf.ts",
+        "service",
+        "stop"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "{\"serviceEpoch\":\"ad82f098-2887-44d4-947d-d38b2879c3d9\",\"resourceWaitReady\":false,\"exitCode\":0,\"state\":\"stopped\",\"pid\":null,\"mainPath\":\"/srv/dev/s64-jjox0y/root/raf-main-a\",\"stopReason\":\"Service stopped normally\",\"reasonKnown\":true}\n",
+      "stderr": ""
+    }
+  ],
+  "summarySha256": "3db1c1af7af719fc53c93737c83bf768a0d6f46d5634cd76fbecec8d45e0392b",
+  "archiveManifest": "/srv/dev/s64-jjox0y.sha256",
+  "archiveManifestSha256": "72c5f0bcfeb03476becb32ca73941a432bb7fddcaab19ab162996b334b7a9c8d",
+  "verifiedSummaryManifestLine": "3db1c1af7af719fc53c93737c83bf768a0d6f46d5634cd76fbecec8d45e0392b  ./ev/summary.json",
+  "partialOnly": true,
+  "fullSummaryPreservedAt": "/srv/dev/s64-jjox0y/ev/summary.json"
+}

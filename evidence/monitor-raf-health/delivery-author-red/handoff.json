@@ -1,0 +1,146 @@
+{
+  "assignment": "monitor-raf-health:3.1",
+  "author": "raf-mrh31b-scaffold",
+  "state": "author-red-confirmed; awaiting-independent-main-review",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/delivery-evidence --files test/delivery-evidence.test.ts",
+  "scaffoldCommit": "82d2a0e3be94ed4338d78b99d581e6039053ce93",
+  "result": "red.result.json",
+  "toolResult": "red.tool-result.json",
+  "runId": "5ef338f8-b296-4b53-a85f-82b121c4c66c",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "outcome": "assertions-failed",
+  "callerPhase": "test-scaffold",
+  "selection": {
+    "files": [
+      "test/delivery-evidence.test.ts"
+    ],
+    "testIds": []
+  },
+  "knownRedCount": 13,
+  "passedCount": 0,
+  "unexecuted": [],
+  "unknown": [],
+  "timedOut": false,
+  "timeoutCount": 0,
+  "durationMs": 46503,
+  "diagnosticSummary": {
+    "totalEntries": 13,
+    "retainedEntries": 13,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": false
+  },
+  "failureAssessment": "Усі 13 тестів виконані й упали через NotImplemented у preserveFailedDeliveryEvidence (12 тестів) або readFailedDeliveryEvidenceRetention (1). Setup/import failure немає; це початкове падіння відсутньої цільової поведінки. Main має незалежно перевірити перед implement.",
+  "matrix": [
+    {
+      "requirement": "Повний фактичний кадр і linked redacted derivative",
+      "tests": [
+        1,
+        2,
+        7
+      ],
+      "invariants": [
+        "байти кадру та brief без обрізання/redaction у приватному записі",
+        "runner/version/generation, phase/time, capture method/limitations",
+        "зовнішня діагностика без raw, спільний reference"
+      ]
+    },
+    {
+      "requirement": "Межі приватних даних запуску",
+      "tests": [
+        3,
+        4
+      ],
+      "invariants": [
+        "два runId й різні reference",
+        "перевірка ізоляції до write; відмова без raw persistence"
+      ]
+    },
+    {
+      "requirement": "Capture/write failure; LAUNCH_FAILED",
+      "tests": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "invariants": [
+        "первинна delivery причина перша",
+        "evidence/cleanup помилки супутні",
+        "retrySafe не змінюється; успіх не вигадується"
+      ]
+    },
+    {
+      "requirement": "Retention/cleanup",
+      "tests": [
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "invariants": [
+        "до expiresAt доказ лишається",
+        "на межі видаляється лише власний запис",
+        "повтори/concurrent writes не замінюють перший кадр/не продовжують строк",
+        "точний conf/flow.json#/retention/failedDeliveryEvidenceMs без fallback"
+      ]
+    }
+  ],
+  "configuration": {
+    "source": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "status": "Main зареєстрував до red; profileId=node, groupSnapshot=loaded.",
+    "requiredUnitFile": {
+      "pointer": "/projects/raf/profiles/node/unitFiles",
+      "append": "test/delivery-evidence.test.ts"
+    },
+    "requiredGroup": {
+      "pointer": "/projects/raf/groups/monitor-raf-health~1delivery-evidence",
+      "value": {
+        "profileId": "node",
+        "files": [
+          "test/delivery-evidence.test.ts"
+        ]
+      }
+    },
+    "prerequisites": [
+      "Активна monitor-raf-health, довірений живий caller test-scaffold із дозволом red у зареєстрованому raf-develop/develop",
+      "Явний unit inventory всіх profiles узгоджений, локальний node і scripts/test-run-node.ts, node-test-events",
+      "Перевірені ізольовані QA HOME/state/tmp; робочий ~/.raf недоступний тестам; незмінний агрегат групи",
+      "Таймаут/ліміти тільки conf/flow.json#/unitTests; profile resource estimate/admission з conf"
+    ],
+    "isolatedQaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+    "stateAccess": null,
+    "privateRunTmp": true
+  },
+  "priorAttempts": [
+    {
+      "result": "phase-refusal.result.json",
+      "runId": "7ae7290f-0817-43d7-8db5-557e6619fd90",
+      "outcome": "refused",
+      "errorCode": "PHASE_NOT_ALLOWED",
+      "cliExitCode": 1,
+      "resolution": "Виконано дозволену початковим брифом phase red за conf і src/test-run-caller-phases.ts; main повідомлено receipt f920ed88-2292-4d70-a7d6-628d762d3a03."
+    }
+  ],
+  "checks": {
+    "syntaxExitCode": 0,
+    "transitiveTypeCheckExitCode": 2,
+    "details": "checks.json",
+    "limitation": "Strict tsc транзитивного графа не пройшов: відсутні Node typings і є помилки інших модулів. Це не результат unit runner. Scope продовження main — лише власний red; test/scaffold не змінені."
+  },
+  "handoff": {
+    "stableGroup": "monitor-raf-health/delivery-evidence",
+    "files": [
+      "test/delivery-evidence.test.ts"
+    ],
+    "nextAction": "implement",
+    "main": "Незалежно перевірити red і передати ту саму групу іншому implement-агенту; тести не змінювати."
+  },
+  "audit": {
+    "current": "Задача актуальна: повний приватний доказ ще не реалізовано, всі три публічні методи каркаса кидають NotImplemented. Scope main звужено до власного red. Тести та каркас 82d2a0e не змінено.",
+    "archive": "Не виконується: інші пункти monitor-raf-health відкриті.",
+    "sourceNote": "Основний projects/raf/test-runs spec відсутній; застосовний контракт прочитано в активній delta add-raf-test-run."
+  }
+}

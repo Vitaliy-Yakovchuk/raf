@@ -1,0 +1,5 @@
+{
+  "available": false,
+  "reason": "Only merged tool output was supplied. Raw complete output is preserved in integration-merged.txt and integration-tool-result.json. The trailing sandbox diagnostic cannot be independently attributed to stderr by this executor.",
+  "mergedTrailingDiagnostic": "Sandbox raf command refused (CALLER_UNAUTHORIZED): Regression grant, profile or selection differs from the immutable assignment; restore the trusted channel or obtain a new verified assignment with the required phase and grants; the executor must run its own authorized tests; do not delegate the run to main or coordinator; do not retry blindly; raf was not retried\n"
+}

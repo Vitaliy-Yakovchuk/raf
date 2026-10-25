@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-25T13:13:44.268Z",
+  "head": "60e921e829d87f73e6cfd1fdd21928065947e2dc",
+  "trackedDirtyPaths": [
+    "src/background-runtime.ts",
+    "src/production-runtime.ts",
+    "src/production-service-ports.ts",
+    "src/service-lifecycle.ts"
+  ],
+  "ownSourceDiff": "",
+  "sourceSha256": {
+    "src/workspace-routing.ts": "14ac20eb3405e5e946249f9b55af4632b687a26af13cbdb876e0ded0aa35fb54",
+    "test/workspace-routing.test.ts": "dc151b80d616b0ddbf743656861b5805adfbe021da40e0e3199f1596fb03533c",
+    "test/workspace-routing-contracts.test.ts": "6998a9f77490d8820c467bc322adcc57c72efa32d5fb29782c33f5a815c211bc",
+    "test/workspace-routing-integration.test.ts": "ed46a04b2373025c31b53722f56cd6ef5e79b10847d1dd8b983806c7fd485025"
+  },
+  "ownImplementationCommit": "c8d87d5a3bc0b7f258ab3b9cbee2244affae68ed",
+  "note": "Shared HEAD and unrelated runtime edits advanced independently. Own routing and unit source bytes are unchanged from the verified fix. Foreign staged/unstaged files were not committed or reverted."
+}

@@ -1,0 +1,129 @@
+{
+  "at": "2026-10-25T13:14:49.654Z",
+  "basis": "Only directly relevant summaries were reviewed. Original artifacts stay unchanged in their recorded locations. No foreign unit groups were executed; item 9.4 has no foreign regression declaration.",
+  "rows": [
+    {
+      "source": "evidence/switch-raf-main-by-symlink/qa-6.4b/acceptance-review.json",
+      "candidateFor": [
+        "I2",
+        "I3",
+        "I5",
+        "I6"
+      ],
+      "fact": "Recorded actual codex sessions, A-to-B/B-to-A/rollback, 1756 sandbox probes, six incoming deliveries, own commits and cleanup on reviewed SHA 4e1d2345b9d4134df73e03fb9fb2f88c6b311db1.",
+      "reuse": "historical narrower facts only",
+      "limit": "Not claude plus product/root spec/design/hotfix matrix. Current production/app/task/routing/worker/layout sources differ; see dependency-source-audit.json. No full current I* pass inferred.",
+      "sha256": "895d4b94a2440c548838b0288984b270ad178756bedd3d191958b0a4b141ab61"
+    },
+    {
+      "source": "evidence/switch-raf-main-by-symlink/qa-5.4/live-final/summary.json",
+      "candidateFor": [
+        "I5",
+        "I6"
+      ],
+      "fact": "Real isolated handover processes and SQLite, atomic selection symlink, report watcher, fenced idempotent delivery; cleanup complete. The engine and stand file SHA256 match current files.",
+      "reuse": "matching engine/stand handover subscenario",
+      "limit": "Source explicitly excludes native model/full production service-worker rollout and Git publication. Matching these two files alone does not establish matching transitive inventory or the whole hotfix-to-main-to-develop cycle.",
+      "sha256": "1ed8ac149d24107db4b78f5b02ba7fafb0881f04a82907ed17dd83a2f772ff6e"
+    },
+    {
+      "source": "evidence/switch-raf-main-by-symlink-5.3/summary.json",
+      "candidateFor": [
+        "I5",
+        "I6"
+      ],
+      "fact": "Implementation/unit evidence for handover ports.",
+      "reuse": "none as live acceptance",
+      "limit": "No complete native current-code I5/I6 lifecycle.",
+      "sha256": "61ed1db2c981b80faf6a8283069c125d900747a754490621c1aad481294506ab"
+    },
+    {
+      "source": "evidence/switch-raf-main-by-symlink-6.6/summary.json",
+      "candidateFor": [
+        "I5",
+        "I6"
+      ],
+      "fact": "Implementation with 11 unit tests; its report leaves integration scenarios unrun.",
+      "reuse": "none as live acceptance",
+      "limit": "Unit evidence cannot replace live routing/provider/runner scenarios.",
+      "sha256": "ba5a8787d8f30e8d6c4d55a1db5f4a6d1a8940d8232cff075201311602927b66"
+    },
+    {
+      "source": "evidence/profile-raf-performance/qa-4.5/final-review.json",
+      "candidateFor": [
+        "I4",
+        "I5"
+      ],
+      "fact": "Failed earlier performance item; isolated read-only integrity checks and explicit later inventory continuation.",
+      "reuse": "none as complete current acceptance",
+      "limit": "Earlier failed item and later continuation cannot establish current complete activation inventory gates.",
+      "sha256": "22ad2f102f8e30b007138f5fa5248672b925ff16741783fd6b26339255c0e766"
+    },
+    {
+      "source": "evidence/profile-raf-performance/qa-5.7/scenario-review.json",
+      "candidateFor": [
+        "I4",
+        "I5",
+        "I6"
+      ],
+      "fact": "Requirement-to-test map plus a real host comparison at source SHA 96644a145e1bc1ab7923e98c93a7b2f59243e940; cleanup reported complete.",
+      "reuse": "historical inventory/origin subscenarios only",
+      "limit": "Most matrix rows refer to unit test evidence, not complete current native I2-I6; exact current transitive runtime inventory was not established.",
+      "sha256": "58506d281bc4b30a2b49c5775eab8c974ea482aefe54dc1a180f590e087c69f7"
+    },
+    {
+      "source": "evidence/profile-raf-performance-5.1-continuation/summary.json",
+      "candidateFor": [
+        "I4"
+      ],
+      "fact": "Worker idle unit passed; z393 setup-failed recovery, overall failed.",
+      "reuse": "none as routing live acceptance",
+      "limit": "Not a completed routing/SQLite/tmux gate scenario.",
+      "sha256": "6c8e72cabcafbeeb7f7dcb65d0af906a936708c48d607a04c50a28ce82b63608"
+    },
+    {
+      "source": "evidence/hotfix-6.3.6/stand-hotfix/summary.json",
+      "candidateFor": [
+        "I5"
+      ],
+      "fact": "Actual generation/ordinary Vitest node and happy-dom commands; fixtures removed.",
+      "reuse": "historical wrapped test-runtime subscenario only",
+      "limit": "No concurrent old/new production reader/provider crash-recovery lifecycle; source belongs to earlier hotfix workspace.",
+      "sha256": "de5ada702b692999f47314f9ed3519af224bf0518ad9ad27bc139d094ffe2633"
+    },
+    {
+      "source": "evidence/hotfix-6.3.9/summary.json",
+      "candidateFor": [
+        "I1",
+        "I4"
+      ],
+      "fact": "Unit inventory selection fix and assertion red/green.",
+      "reuse": "none as routing live acceptance",
+      "limit": "Selected-inventory contract evidence, no assigned live workspace-routing scenario.",
+      "sha256": "8d9fd3df486a2905578ebc5752fb92763142fb306283945c9234e65b8b88bb91"
+    },
+    {
+      "source": "evidence/hotfix-637-638/summary.json",
+      "candidateFor": [
+        "I1",
+        "I4"
+      ],
+      "fact": "Unit/Etchly profile work with explicit preflight attempts and phase override.",
+      "reuse": "none as routing live acceptance",
+      "limit": "No complete I1-I6 current production routing evidence.",
+      "sha256": "e3b2d95b4bbece8df5665ae1f625db22709591e6ce3bad505b42eb5c50ad0932"
+    },
+    {
+      "source": "evidence/z334-resumed/qa.json",
+      "candidateFor": [
+        "I2",
+        "I4"
+      ],
+      "fact": "z334-launch-wait unit result.",
+      "reuse": "none as full live acceptance",
+      "limit": "No actual codex/claude preparation-worker/native scenario.",
+      "sha256": "fbce1b97b77fc2b71ff3cc4f47f026664092fb4017eb20d412c2e180c501db38"
+    }
+  ],
+  "conclusion": "No complete I2-I6 current-code pass can be inherited from these reviewed facts. I1 manual defect proof and own stable unit QA are separate."
+}

@@ -1,0 +1,94 @@
+{
+  "item": "complete-raf-flow-contracts:9.4",
+  "status": "failed",
+  "audit": {
+    "current": true,
+    "sources": [
+      "../openspec/changes/complete-raf-flow-contracts/proposal.md",
+      "../openspec/changes/complete-raf-flow-contracts/tasks.md#9.4",
+      "../openspec/changes/complete-raf-flow-contracts/workspace-routing-design.md#I1-I6",
+      "../openspec/changes/complete-raf-flow-contracts/specs/projects/raf/workspace-routing/spec.md"
+    ],
+    "reason": "The assignment is current. Acceptance cannot be established: the registered integration profile differs from the immutable launch assignment and was refused before spawn."
+  },
+  "fix": {
+    "commit": "c8d87d5a3bc0b7f258ab3b9cbee2244affae68ed",
+    "files": [
+      "src/workspace-routing.ts",
+      "test/workspace-routing-contracts.test.ts"
+    ],
+    "testFirst": "Four assertion failures before production edit; stable group qa 72/72 after fix; actual Git/fs public API refusal after fix.",
+    "sourceHashes": "versions-and-source.json"
+  },
+  "scenarios": [
+    {
+      "id": "I1",
+      "status": "partial",
+      "evidence": [
+        "non-git-live-before-fix.json",
+        "non-git-live-after-fix.json",
+        "unit-runs.json",
+        "integration-run.json"
+      ],
+      "proven": "Real Git/fs parent-branch false acceptance reproduced and fixed without branch/status changes. Unit regression green. 23-case production Git/fs/SQLite suite committed and syntax checked.",
+      "unexecuted": "The complete I1 integration suite: all 23 cases; no SQLite acceptance was executed in this session.",
+      "nextAction": "Run the committed file through the exact integration preset under a newly verified assignment."
+    },
+    {
+      "id": "I2",
+      "status": "unverified",
+      "evidence": [
+        "dependency-source-audit.json",
+        "dependency-evidence-review.json"
+      ],
+      "reason": "No complete current-code live acceptance for this scenario was run or inherited. Historical narrower evidence is not a current whole-scenario pass."
+    },
+    {
+      "id": "I3",
+      "status": "unverified",
+      "evidence": [
+        "dependency-source-audit.json",
+        "dependency-evidence-review.json"
+      ],
+      "reason": "No complete current-code live acceptance for this scenario was run or inherited. Historical narrower evidence is not a current whole-scenario pass."
+    },
+    {
+      "id": "I4",
+      "status": "unverified",
+      "evidence": [
+        "dependency-source-audit.json",
+        "dependency-evidence-review.json"
+      ],
+      "reason": "No complete current-code live acceptance for this scenario was run or inherited. Historical narrower evidence is not a current whole-scenario pass."
+    },
+    {
+      "id": "I5",
+      "status": "unverified",
+      "evidence": [
+        "dependency-source-audit.json",
+        "dependency-evidence-review.json"
+      ],
+      "reason": "No complete current-code live acceptance for this scenario was run or inherited. Historical narrower evidence is not a current whole-scenario pass."
+    },
+    {
+      "id": "I6",
+      "status": "unverified",
+      "evidence": [
+        "dependency-source-audit.json",
+        "dependency-evidence-review.json"
+      ],
+      "reason": "No complete current-code live acceptance for this scenario was run or inherited. Historical narrower evidence is not a current whole-scenario pass."
+    }
+  ],
+  "foreignRegressionsRun": false,
+  "checkboxesChanged": false,
+  "archive": null,
+  "archiveReason": "Other tasks remain open and 9.4 did not pass.",
+  "cleanup": {
+    "manualProbe": "own temporary directory removed in finally",
+    "unitRuns": "complete in all three TestRunResult records",
+    "integration": "preflight refused; no child spawned; cleanup.complete=true",
+    "liveStand": "not created"
+  },
+  "nextAction": "A new verified assignment is required for the newly registered integration preset; I2-I6 retain explicit live stand prerequisites."
+}

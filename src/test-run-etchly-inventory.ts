@@ -21,7 +21,7 @@ function hash(path: string, file: string): string {
     let manifest: unknown;
     try { manifest = JSON.parse(source.toString('utf8')); }
     catch { fail('invalid JSON in package.json'); }
-    if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) fail('invalid root object in package.json');
+    if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) return fail('invalid root object in package.json');
     const executionManifest = { ...manifest } as Record<string, unknown>;
     delete executionManifest.scripts;
     source = Buffer.from(JSON.stringify(canonicalJson(executionManifest)));

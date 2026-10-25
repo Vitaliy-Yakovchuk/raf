@@ -1,4 +1,3 @@
-// Host-only preparation. No test or operational raf command is executed here.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,7 +14,7 @@ assert.equal(fs.realpathSync(path.dirname(root)), path.dirname(root));
 const git = (cwd, ...args) => execFileSync('git', ['--no-optional-locks', ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 const hash = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 const write = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { mode: 0o600 });
-fs.mkdirSync(root, { mode: 0o700 }); // Must be new; never remove/overwrite a prior stand.
+fs.mkdirSync(root, { mode: 0o700 });
 const marker = { root, sourceRoot, sourceItem: 'add-raf-test-run:6.2.6.3', preparedAt: new Date().toISOString(),
   boundary: 'Clean committed code clones plus a snapshot of preinstalled dependencies and app build. No install, build, operational state or live caller grant is copied.', repositories: [], copied: [], configurations: [] };
 write(path.join(root, '.qa-etchly-stand.json'), marker);
@@ -45,7 +44,6 @@ try {
   snapshot('etchly-develop', 'etchly-develop', 'node_modules');
   snapshot('etchly-develop', 'etchly-develop', 'app/dist/local');
   snapshot('shared-libs-develop', 'shared-libs-develop', 'node_modules', false);
-  // Local resource-protocol workspaces may each own dependencies.
   const shared = path.join(sourceRoot, 'shared-libs-develop');
   function copyNested(directory) {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
@@ -58,7 +56,6 @@ try {
     }
   }
   copyNested(shared);
-  // Rebase absolute links that refer to the source checkout; refuse external links.
   function links(directory) {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       if (entry.name === '.git') continue;

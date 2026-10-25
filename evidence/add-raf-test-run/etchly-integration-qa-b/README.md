@@ -24,6 +24,12 @@ D01–D07 вивчено за контрактом, fixture та production impl
 
 Main підтвердив, що suite на `df2ff8047166a45046b50fcc231ac6e9e82ae20c` стоїть у хостовій flock-черзі після двох інших прогонів. Повідомив про ймовірний зв'язок unit `STATE_CONTEXT_REFUSED` із Z.420/міграцією QA state, яке виправляє `raf-z420-hotfix`, і прямо доручив не запускати unit до підтвердження виправлення. Це точна поточна передумова, не встановлений цим QA діагноз і не закриття пункту. Подальших unit-викликів не було.
 
+## Власний дефект build і виправлення
+
+Main виявив, що чотири коментарі мого нового `scripts/qa-etchly-integration-prepare.mjs` порушують comment-free policy raf. Я сам відтворив адресне падіння `node scripts/build.ts`: [red capture](build-red.capture.json), [незмінений stderr](build-red.stderr), CLI 1 із чотирма точними діагностиками цього файла. Одразу прибрав лише ці коментарі, не змінюючи перевірку або поведінку стенда, і повторив саме build: [green capture](build-green.capture.json), [stdout](build-green.stdout), [stderr](build-green.stderr), CLI 0. Первісне падіння збережене.
+
+Межа автоматичного доказу: це реальний build acceptance check із чинним `checkRepositoryComments` та CatalogGenerator, з окремо захопленими OS stdout/stderr й CLI code. Це не unit `TestRunResult`, не integration-прогін і не доказ D08/D09; unit-команди під час прямого hold main не запускалися. Наявний автоматичний comment-free check збережено без послаблення. Знайдений дефект не передавався іншому виконавцю, нових QA-пунктів або повторного користувацького проходу не створено.
+
 ## Канал координації
 
 Адресу `main` перевірено через `agent ps`. Повідомлення про початок QA прийнято receipt `62ff1e46-5f13-4e46-8aa3-4ba653c1719c`; про урізаний capture — `1c0a0314-d163-493f-86ae-c683045bf6c4`. Після повторного unit setup-failure повідомлення main отримало CLI 1, `STATE_CONTEXT_REFUSED: Unregistered module origin` для переданого покоління `de319c1f-fc5b-432e-884a-a25ac062c5bf`. Receipt доставки немає. Це окрема від початкового обрізання відмова; обхід каналу не застосовувався.

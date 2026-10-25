@@ -1,0 +1,27 @@
+# QA complete-raf-flow-contracts:9.4.1
+
+Результат **failed**: повне приймання I1–I6 не підтверджено. Галочки 9.4/9.4.1 не змінювалися. Код продукту не змінювався; нових продуктових дефектів у виконаних підсценаріях не знайдено.
+
+## Авторизований автоматизований прогін
+
+Точна команда, runId, запитаний і фактичний відбір, стан групи та наступна дія — у [integration-run.json](integration-run.json). Єдиний виклик повернув `refused / CALLER_UNAUTHORIZED`: CLI 1, child exitCode null, timeout false, cleanup complete, group snapshot unavailable. Тести не запускалися. Порожні knownRed/unexecuted/unknown у preflight не доводять проходження 23 випадків I1.
+
+[integration.TestRunResult.json](integration.TestRunResult.json) збережено без переформатування, байтово звірено з першим рядком повного [tool envelope](integration.tool-result.json). Окремо збережені [коди виходу](integration.exit.json) та [обмеження захоплення stderr](integration.stderr.capture.json): інструмент повернув об'єднаний потік, незалежний stderr недоступний. Відмова не є assertion-red чи pass.
+
+Main уточнив у чинному повідомленні, що група існувала до запуску цього агента, а відмова спричинена підтримкою integration-профілю в розгорнутій raf-main. Дослівне повідомлення збережено в integration-run.json. Повтору, зміни фази, прямого node --test, заміни HOME чи скидання агрегату не було. Висновок 9.4 про пізню реєстрацію групи не переноситься на цей запуск.
+
+## Живі підсценарії
+
+- [manual-hotfix.json](manual-hotfix.json): вісім пройдених підсценаріїв на власних реальних Git-репозиторіях, зареєстрованому submodule і worktree main/develop/hotfix, з реальним SQLite та поточними production API без підміни портів. Перевірені точний hotfix trust і негативні шляхи/detached; постійний cwd і два ownership; no-op зі staged/dirty/untracked; відмова commit через чужий index без змін; власний commit після явної координації stand-власника; refresh dirty refusal і чистий merge; snapshot configuration drift; справжній Linux renameat2 exchange; відмова develop для шести entrypoint-міток без зміни stand-бази; conflict та unfinished operation без втрати роботи. Команди Git, stdout/stderr, SHA, індекси, файли до/після та cleanup збережені. [Скрипт](manual-hotfix.mjs), [stdout](manual-hotfix.stdout), [stderr](manual-hotfix.stderr), [коди](manual-hotfix.exit.json). Підготовки двох власників були послідовні; native concurrency цим не доведена.
+- [handover/summary.json](handover/summary.json): п'ять пройдених сценаріїв поточного handover engine через реальні окремі процеси, SQLite, атомарний symlink, IPC та filesystem report watcher. A→B, deferred import/resource drain, відмова readiness, SIGKILL старого observer, втрата acknowledgement з двома спробами й однією доставкою, rollback B→A, відмова несумісного protocol та збереження runner/черги. Це stand-адаптери engine, а не повний production service/worker чи native model session. [stdout](handover.stdout), [stderr](handover.stderr), [коди](handover.exit.json), [підтверджене завершення процесів і видалення fixture](handover.cleanup.json).
+- [manual-environment-corrected.json](manual-environment-corrected.json): справжні Git 2.53.0, tmux 3.6, codex 0.163.0, Claude 2.1.310, bwrap 0.11.1; Node v26.12.1, SQLite 3.54.0. Native CLI стартували у власному tmux з порожніми ізольованими HOME без надсилання brief чи model request. Claude завершився 1 з EAI_AGAIN для api.anthropic.com. Codex лишався живим без доказу readiness. У [початковому probe](manual-environment.json) bwrap завершився 1: `Failed to create NETLINK_ROUTE socket: Permission denied`. Native sandbox тут недоступний.
+
+Початкові probe та їхні версії скриптів залишені незмінними. Власний неправильний аргумент `--screen-reader` у другій спробі виправлено на налаштований `--ax-screen-reader`; це помилка QA probe, не дефект продукту. У native probe збережено успішне закриття власних tmux server/windows та видалення root. [Пізніша перевірка залишків](native-residual-observation.json) не виявила процесів із cwd у власних roots; повного доказу descendant PID/start identity для цих startup probe немає.
+
+Production commit-port завжди використовує `/tmp/raf-ipc-1000`, явно заборонений цією пісочницею. Його не відкривали й не підміняли іншим root. Long-TMPDIR bind/connect залишається невиконаним. Так само не виконано повні native spec/design/commit/permission матриці, build/regression/service gates, Git publication crash recovery та цикл hotfix→published main→develop→next hotfix. Повний залишок і вузькі межі доказів — у [acceptance.json](acceptance.json).
+
+## Повторне використання й актуальність
+
+Докази 9.4 використано адресно: [попередній README](../cfc94-workspace-routing/README.md), non-git live regression, 72 unit qa та dependency review. Нових unit-прогонів не було; агрегат не змінювався. Старі native докази не прийняті як повний поточний I2–I6: [dependency-source-audit.json](dependency-source-audit.json) фіксує відмінності routing/runtime/task/layout. Поточні SHA, конфіг, dirty workspace, хеші предметного коду та незмінність перевірених API/engine до завершення — у [versions-and-source.json](versions-and-source.json).
+
+Зміна актуальна й узгоджена з обраним 9.4.1. Це незавершена перевірка через фактичні обмеження стенда й каналу, не відмова за рішенням власника. Нових задач не додано: наявні відкриті 9.4/9.4.1 уже описують потрібне приймання. Наступна передумова — integration-capable raf із довіреним каналом та придатний native sandbox/мережа/IPC стенд. Інші відкриті пункти не виконувалися; archive не робився.

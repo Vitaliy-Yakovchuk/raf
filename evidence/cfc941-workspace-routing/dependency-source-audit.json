@@ -1,0 +1,139 @@
+{
+  "at": "2026-10-25T13:31:49.889673+00:00",
+  "head": "9dd18529664c77fa25c517bae63e564b4ff50668",
+  "workspaceStatus": "M src/production-runtime.ts\n M test/agent-adapters-contract.test.ts\n?? evidence/cfc24-agent-adapters/\n?? evidence/cfc34-background-runtime/\n?? evidence/cfc941-workspace-routing/\n?? scripts/qa-background-runtime.mjs\n?? src/message-delivery.ts",
+  "previousReview": "evidence/cfc94-workspace-routing/dependency-evidence-review.json",
+  "previousAudit": "evidence/cfc94-workspace-routing/dependency-source-audit.json",
+  "priorNativeEvidence": "evidence/switch-raf-main-by-symlink/qa-6.4b/acceptance-review.json",
+  "rows": [
+    {
+      "file": "src/workspace-routing.ts",
+      "historicalNativeSha256": "724433e7dd97d258b8e1a597f03dc206f7cb3a63f5f6541f6873c80ccbdae37e",
+      "previousQaSha256": "14ac20eb3405e5e946249f9b55af4632b687a26af13cbdb876e0ded0aa35fb54",
+      "currentSha256": "14ac20eb3405e5e946249f9b55af4632b687a26af13cbdb876e0ded0aa35fb54",
+      "matchesHistorical": false,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "src/production-runtime.ts",
+      "historicalNativeSha256": "5111c123699850c9d345f7b47a79ea8fdf718184be903485ee995e9d24ff93cc",
+      "previousQaSha256": "b3f322001a6fce42db8278f4f8b37ab65ef00135e8c87046c472b6cf3215a95b",
+      "currentSha256": "80d22978e24385ead0c9f38bbd9a7695b52d1d35fd1cae554e39d4e68a3d40b0",
+      "matchesHistorical": false,
+      "matchesPreviousQa": false
+    },
+    {
+      "file": "src/app-runtime.ts",
+      "historicalNativeSha256": "f439bd3eb410e47167e7e39d4adcaaff672bae7d40426da21ad65c2b77de4b3a",
+      "previousQaSha256": "cf74b289ca90743e671cc85b6d5415b5568b2f825e1a4ef1811cebda4e96b912",
+      "currentSha256": "cf74b289ca90743e671cc85b6d5415b5568b2f825e1a4ef1811cebda4e96b912",
+      "matchesHistorical": false,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "src/task-context.ts",
+      "historicalNativeSha256": "4932cf96af0714ac49db0aed0f29f1c565eff43092d761bdf63690a56d6a6802",
+      "previousQaSha256": "7ad4b83519e330bc06f9d8e5d5481848c21853d0a0ab246c0c4cdd966a179bd5",
+      "currentSha256": "7ad4b83519e330bc06f9d8e5d5481848c21853d0a0ab246c0c4cdd966a179bd5",
+      "matchesHistorical": false,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "src/hotfix-worktree.ts",
+      "historicalNativeSha256": "6086b05a020f98655d4d6893b9dad15fe753edb0c67a415c2e3e5a51675e0fbf",
+      "previousQaSha256": "6086b05a020f98655d4d6893b9dad15fe753edb0c67a415c2e3e5a51675e0fbf",
+      "currentSha256": "6086b05a020f98655d4d6893b9dad15fe753edb0c67a415c2e3e5a51675e0fbf",
+      "matchesHistorical": true,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "src/agent-adapters.ts",
+      "historicalNativeSha256": "2daa13f9518062cbd7d9d4863503b4449256ddfbfd7b520698e50e980ee3ee77",
+      "previousQaSha256": "2daa13f9518062cbd7d9d4863503b4449256ddfbfd7b520698e50e980ee3ee77",
+      "currentSha256": "2daa13f9518062cbd7d9d4863503b4449256ddfbfd7b520698e50e980ee3ee77",
+      "matchesHistorical": true,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "src/os-runtime.ts",
+      "historicalNativeSha256": "d831bcb59f9d8e69c7fa3fccf107df7d2dfd304aacc052a8d2358e8622d1866e",
+      "previousQaSha256": "d831bcb59f9d8e69c7fa3fccf107df7d2dfd304aacc052a8d2358e8622d1866e",
+      "currentSha256": "d831bcb59f9d8e69c7fa3fccf107df7d2dfd304aacc052a8d2358e8622d1866e",
+      "matchesHistorical": true,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "src/hotfix-activation.ts",
+      "historicalNativeSha256": "2d24106120acd64691195c944c187a4f26d35a07f414baddab3bf17ca8e0c9c6",
+      "previousQaSha256": "2d24106120acd64691195c944c187a4f26d35a07f414baddab3bf17ca8e0c9c6",
+      "currentSha256": "2d24106120acd64691195c944c187a4f26d35a07f414baddab3bf17ca8e0c9c6",
+      "matchesHistorical": true,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "src/hotfix-origin.ts",
+      "historicalNativeSha256": "8ca84c55e8ef8005545fa55d68aa0a63eb35079d2f272f66023f055302290943",
+      "previousQaSha256": "8ca84c55e8ef8005545fa55d68aa0a63eb35079d2f272f66023f055302290943",
+      "currentSha256": "8ca84c55e8ef8005545fa55d68aa0a63eb35079d2f272f66023f055302290943",
+      "matchesHistorical": true,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "src/main-generation-handover.ts",
+      "historicalNativeSha256": "9dd83a31571be9b12b58c179f2c1884a25eb8d6f11e7bbda0dc381b9b513d6f3",
+      "previousQaSha256": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b",
+      "currentSha256": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b",
+      "matchesHistorical": false,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "src/service-lifecycle.ts",
+      "historicalNativeSha256": null,
+      "previousQaSha256": "a12df8d599edc65447ff4be2c5fd7a24660609e267baee17486516ffd6f3b88e",
+      "currentSha256": "a12df8d599edc65447ff4be2c5fd7a24660609e267baee17486516ffd6f3b88e",
+      "matchesHistorical": false,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "src/state-migration-guard.ts",
+      "historicalNativeSha256": "debb2543890453959e872591df873e65aeacc5f807c41a30e0656d2ade6f8fa2",
+      "previousQaSha256": "debb2543890453959e872591df873e65aeacc5f807c41a30e0656d2ade6f8fa2",
+      "currentSha256": "debb2543890453959e872591df873e65aeacc5f807c41a30e0656d2ade6f8fa2",
+      "matchesHistorical": true,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "src/agent-worker.ts",
+      "historicalNativeSha256": null,
+      "previousQaSha256": null,
+      "currentSha256": null,
+      "matchesHistorical": false,
+      "matchesPreviousQa": false
+    },
+    {
+      "file": "src/main-layout.ts",
+      "historicalNativeSha256": "4c2fd363fa117e14855ea31de592cbb04b3b80cd5f9c0245bd2073a261150f9f",
+      "previousQaSha256": "a699071235a81e9ed603115b36608dbba7404131dfcec3029fe302989bd4a27b",
+      "currentSha256": "a699071235a81e9ed603115b36608dbba7404131dfcec3029fe302989bd4a27b",
+      "matchesHistorical": false,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "scripts/qa-main-agent-channel.mjs",
+      "historicalNativeSha256": "ed255f92932ed6a499037a713744e634d3afba615f0bd3d2495277929485ff9d",
+      "previousQaSha256": "ed255f92932ed6a499037a713744e634d3afba615f0bd3d2495277929485ff9d",
+      "currentSha256": "ed255f92932ed6a499037a713744e634d3afba615f0bd3d2495277929485ff9d",
+      "matchesHistorical": true,
+      "matchesPreviousQa": true
+    },
+    {
+      "file": "scripts/qa-main-generation-handover.ts",
+      "historicalNativeSha256": null,
+      "previousQaSha256": "54398550a9242a952f681b97c3d311f6f02034e9e6e908c0fdad48b94bac0ee7",
+      "currentSha256": "54398550a9242a952f681b97c3d311f6f02034e9e6e908c0fdad48b94bac0ee7",
+      "matchesHistorical": false,
+      "matchesPreviousQa": true
+    }
+  ],
+  "conclusion": "Prior native codex sandbox/channel proof remains historical only. Changed routing/runtime/task/layout and absent full claude/spec/design matrix prevent full current acceptance; do not infer unchanged transitive inventory from individual matches. Live handover was re-exercised narrowly on current engine."
+}

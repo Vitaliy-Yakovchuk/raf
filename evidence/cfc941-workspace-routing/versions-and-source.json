@@ -1,0 +1,46 @@
+{
+  "at": "2026-10-25T13:31:49.889673+00:00",
+  "head": "9dd18529664c77fa25c517bae63e564b4ff50668",
+  "workspaceStatus": "M src/production-runtime.ts\n M test/agent-adapters-contract.test.ts\n?? evidence/cfc24-agent-adapters/\n?? evidence/cfc34-background-runtime/\n?? evidence/cfc941-workspace-routing/\n?? scripts/qa-background-runtime.mjs\n?? src/message-delivery.ts",
+  "sourceSha256": {
+    "src/hotfix-worktree.ts": "6086b05a020f98655d4d6893b9dad15fe753edb0c67a415c2e3e5a51675e0fbf",
+    "src/hotfix-host.ts": "6d1ec4d6a57bb42305ee523f6c161eaca30f355f3e17e0874e3b8ece503d65fa",
+    "src/hotfix-activation.ts": "2d24106120acd64691195c944c187a4f26d35a07f414baddab3bf17ca8e0c9c6",
+    "src/main-production-store.ts": "fc2c1f71acfe3d4e9a819360a6f9c5a9ffcac8d76ef351559a627498fc7e708a",
+    "src/state-migration-guard.ts": "debb2543890453959e872591df873e65aeacc5f807c41a30e0656d2ade6f8fa2",
+    "src/hotfix-origin.ts": "8ca84c55e8ef8005545fa55d68aa0a63eb35079d2f272f66023f055302290943",
+    "src/workspace-routing.ts": "14ac20eb3405e5e946249f9b55af4632b687a26af13cbdb876e0ded0aa35fb54",
+    "src/production-runtime.ts": "80d22978e24385ead0c9f38bbd9a7695b52d1d35fd1cae554e39d4e68a3d40b0",
+    "src/app-runtime.ts": "cf74b289ca90743e671cc85b6d5415b5568b2f825e1a4ef1811cebda4e96b912",
+    "src/task-context.ts": "7ad4b83519e330bc06f9d8e5d5481848c21853d0a0ab246c0c4cdd966a179bd5",
+    "src/main-layout.ts": "a699071235a81e9ed603115b36608dbba7404131dfcec3029fe302989bd4a27b",
+    "src/main-generation-handover.ts": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b",
+    "scripts/qa-main-generation-handover.ts": "54398550a9242a952f681b97c3d311f6f02034e9e6e908c0fdad48b94bac0ee7",
+    "test/workspace-routing-integration.test.ts": "ed46a04b2373025c31b53722f56cd6ef5e79b10847d1dd8b983806c7fd485025"
+  },
+  "configurationSha256": {
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "test-runs.json": "4ddc888e40abcf0ba054c2c227b9362439440673ffd0d245c6cc38b475ec48d3"
+  },
+  "unchangedSinceManualHotfix": true,
+  "unchangedSinceHandover": true,
+  "versions": {
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6",
+    "codex": "codex-cli 0.163.0",
+    "claude": "2.1.310 (Claude Code)",
+    "bwrap": "bubblewrap 0.11.1"
+  },
+  "node": "v26.12.1",
+  "sqlite": "3.54.0",
+  "os": "7.0.0-30-generic",
+  "ownPaths": [
+    "evidence/cfc941-workspace-routing"
+  ],
+  "sourceChangesByThisAssignment": [],
+  "unitRunsByThisAssignment": [],
+  "noProductDefectFound": true,
+  "probeCorrection": "manual-environment-retained.json used our invalid --screen-reader CLI option; corrected to configured --ax-screen-reader and preserved both observations. This is a QA harness correction, not a product regression or assertion red."
+}

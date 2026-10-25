@@ -1,0 +1,45 @@
+{
+  "at": "2026-10-25T13:31:49.889673+00:00",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-workspace-routing-integration --files test/workspace-routing-integration.test.ts",
+  "cwd": "/srv/dev/work/orchestrator/raf-develop",
+  "runId": "0b06f586-6614-48a8-b762-86c47bed6d97",
+  "requestedSelection": {
+    "files": [
+      "test/workspace-routing-integration.test.ts"
+    ]
+  },
+  "sourceBeforeAttempt": {
+    "sha": "f7474de010b623f41ee812746f758e8037c9e611",
+    "limitation": "Pre-attempt HEAD observation in shared workspace; exact simultaneous HEAD/dirty snapshot not captured. Shared staged implementation changes existed; no test child was spawned."
+  },
+  "rawResult": "integration.TestRunResult.json",
+  "toolEnvelope": "integration.tool-result.json",
+  "rawPreservation": "First complete output line byte-for-byte verified against tool envelope; JSON not reserialized. Unmodified redacted TestRunResult as returned by CLI; truncated=false.",
+  "stderr": "integration.stderr.capture.json",
+  "exit": "integration.exit.json",
+  "outcome": "refused",
+  "cliExitCode": 1,
+  "childExitCode": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "reportedSelection": {
+    "files": [],
+    "testIds": []
+  },
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "groupSnapshot": "unavailable",
+  "groupState": null,
+  "timeoutCount": null,
+  "reportedNextAction": "fix-setup",
+  "interpretation": "No tests executed; empty preflight arrays do not establish acceptance or a complete group. The 23 I1 cases remain unexecuted. Unit aggregate was not touched or reset. Independent stderr unavailable.",
+  "mainClarification": {
+    "source": "Delivered [main] user message in this session",
+    "text": "група була в conf до твого запуску, тож відмова — обмеження чинного raf-main для інтеграційного профілю (як у QA 10.5; зніметься після перенесення raf). Не обходь і не повторюй. Пройди живі I2–I6 вручну на ізольованому стенді наскільки можливо, збережи докази; автоматизований прогін групи познач невиконаним із цією причиною й завершуй за результатом."
+  },
+  "nextAction": "Main must provide an integration-capable deployed raf and a verified authorized channel before automated acceptance can run. No retry, phase change, direct node --test or HOME/ledger bypass performed."
+}

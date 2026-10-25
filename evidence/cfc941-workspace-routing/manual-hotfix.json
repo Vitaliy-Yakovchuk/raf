@@ -1,0 +1,1846 @@
+{
+  "runId": "b18ff373-2443-4251-9159-6230af2ce509",
+  "root": "/tmp/cfc941-hotfix-OZ4Y10",
+  "sourceRoot": "/srv/dev/work/orchestrator/raf-develop",
+  "commands": [
+    {
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "9dd18529664c77fa25c517bae63e564b4ff50668\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "?? evidence/cfc24-agent-adapters/\n?? evidence/cfc941-workspace-routing/\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "init",
+        "-q",
+        "-b",
+        "main"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "init",
+        "-q",
+        "-b",
+        "main"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "add",
+        "--",
+        "tracked.txt",
+        "foreign.txt",
+        "src/production-entry.ts"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "commit",
+        "-qm",
+        "Isolated baseline"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "-c",
+        "protocol.file.allow=always",
+        "submodule",
+        "add",
+        "./raf-main",
+        "raf-main"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "Adding existing repo at 'raf-main' to the index\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "submodule",
+        "absorbgitdirs"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "Migrating git directory of 'raf-main' from\n'/tmp/cfc941-hotfix-OZ4Y10/raf-main/.git' to\n'/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main'\n"
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "worktree",
+        "add",
+        "-b",
+        "develop",
+        "/tmp/cfc941-hotfix-OZ4Y10/raf-develop",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "HEAD is now at bec8549 Isolated baseline\n",
+      "stderr": "Preparing worktree (new branch 'develop')\n"
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "worktree",
+        "add",
+        "-b",
+        "hotfix",
+        "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "HEAD is now at bec8549 Isolated baseline\n",
+      "stderr": "Preparing worktree (new branch 'hotfix')\n"
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "add",
+        "--",
+        ".gitmodules",
+        "raf-main",
+        "conf"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "commit",
+        "-qm",
+        "Isolated Orchestrator registration"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "main\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-develop",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-develop\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-develop",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-develop",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "develop\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-develop",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "add",
+        "--",
+        "staged.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": " M foreign.txt\nA  staged.txt\n?? untracked.txt\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": " M foreign.txt\nA  staged.txt\n?? untracked.txt\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "checkout",
+        "--detach"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "M\tforeign.txt\nA\tstaged.txt\n",
+      "stderr": "HEAD is now at bec8549 Isolated baseline\n"
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "checkout",
+        "hotfix"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "M\tforeign.txt\nA\tstaged.txt\n",
+      "stderr": "Switched to branch 'hotfix'\n"
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": " M foreign.txt\nA  staged.txt\n?? own.txt\n?? untracked.txt\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": " M foreign.txt\nA  staged.txt\n?? own.txt\n?? untracked.txt\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "restore",
+        "--staged",
+        "--",
+        "staged.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "diff-tree",
+        "--no-commit-id",
+        "--name-only",
+        "-r",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "own.txt\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "main\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-develop",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-develop\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-develop",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-develop",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "develop\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-develop",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "9958902e048bd6baedfa497641aa8fb3732f78b5\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": " M foreign.txt\n?? staged.txt\n?? untracked.txt\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "add",
+        "--",
+        "published.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "commit",
+        "-qm",
+        "Advance isolated main"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "9958902e048bd6baedfa497641aa8fb3732f78b5\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": " M foreign.txt\n?? staged.txt\n?? untracked.txt\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "9958902e048bd6baedfa497641aa8fb3732f78b5\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": " M foreign.txt\n?? staged.txt\n?? untracked.txt\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "c2301265b7ddc6bdddaacc5d768a86327854e947\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "merge-base",
+        "--is-ancestor",
+        "c2301265b7ddc6bdddaacc5d768a86327854e947",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "a43269a884566e08d73e163eba90a906af935141\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "add",
+        "--",
+        "tracked.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "commit",
+        "-qm",
+        "Hotfix conflicting variant"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "f60cfef19d65c67a80052461e3adaba006d16b86\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "add",
+        "--",
+        "tracked.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-main",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "commit",
+        "-qm",
+        "Main conflicting variant"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "f60cfef19d65c67a80052461e3adaba006d16b86\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "f60cfef19d65c67a80052461e3adaba006d16b86\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "UU tracked.txt\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "--absolute-git-dir"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "f60cfef19d65c67a80052461e3adaba006d16b86\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "symbolic-ref",
+        "--short",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "hotfix\n",
+      "stderr": ""
+    },
+    {
+      "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+      "executable": "git",
+      "args": [
+        "--no-optional-locks",
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "UU tracked.txt\n",
+      "stderr": ""
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "I3-I4-persistent-cwd-two-ownerships-ancestor-noop",
+      "startedAt": "2026-10-25T13:28:37.412Z",
+      "outcome": "passed",
+      "evidence": {
+        "before": {
+          "head": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d",
+          "branch": "hotfix",
+          "index": "fe01ffd7750d59fcb90a7d7c6ae4ddf473c20a6c4ac21137026afa1c9624288c",
+          "dirty": "M foreign.txt\nA  staged.txt\n?? untracked.txt",
+          "files": [
+            {
+              "path": "foreign.txt",
+              "mode": 436,
+              "sha256": "b5cc2a6e7fe4ecff1dafff558dfab86028a69a9144b4700838915883b7a1bacb"
+            },
+            {
+              "path": "src/production-entry.ts",
+              "mode": 436,
+              "sha256": "efebacf1fd1eb504c6358c6284eec704c55f8debf6f9be7aa15ec64f235b128f"
+            },
+            {
+              "path": "staged.txt",
+              "mode": 436,
+              "sha256": "f6eda94ec9abcf4a0b154c048a124ee28fbd24b55168c8538e907b50cc2ad8c8"
+            },
+            {
+              "path": "tracked.txt",
+              "mode": 436,
+              "sha256": "f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"
+            },
+            {
+              "path": "untracked.txt",
+              "mode": 436,
+              "sha256": "6cbf44b0542309137c12bb98a6598e9da914447a7c804f3a3b9cb1c7417d9226"
+            }
+          ]
+        },
+        "after": {
+          "head": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d",
+          "branch": "hotfix",
+          "index": "fe01ffd7750d59fcb90a7d7c6ae4ddf473c20a6c4ac21137026afa1c9624288c",
+          "dirty": "M foreign.txt\nA  staged.txt\n?? untracked.txt",
+          "files": [
+            {
+              "path": "foreign.txt",
+              "mode": 436,
+              "sha256": "b5cc2a6e7fe4ecff1dafff558dfab86028a69a9144b4700838915883b7a1bacb"
+            },
+            {
+              "path": "src/production-entry.ts",
+              "mode": 436,
+              "sha256": "efebacf1fd1eb504c6358c6284eec704c55f8debf6f9be7aa15ec64f235b128f"
+            },
+            {
+              "path": "staged.txt",
+              "mode": 436,
+              "sha256": "f6eda94ec9abcf4a0b154c048a124ee28fbd24b55168c8538e907b50cc2ad8c8"
+            },
+            {
+              "path": "tracked.txt",
+              "mode": 436,
+              "sha256": "f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"
+            },
+            {
+              "path": "untracked.txt",
+              "mode": 436,
+              "sha256": "6cbf44b0542309137c12bb98a6598e9da914447a7c804f3a3b9cb1c7417d9226"
+            }
+          ]
+        },
+        "a": {
+          "runId": "manual-a",
+          "orchestratorRoot": "/tmp/cfc941-hotfix-OZ4Y10",
+          "project": "raf",
+          "targetBranch": "main",
+          "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+          "baseCommit": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d",
+          "repositoryIdentity": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main",
+          "gitDirectory": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix",
+          "commonDirectory": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main",
+          "ownershipPath": "/tmp/cfc941-hotfix-OZ4Y10/.raf-hotfix/runs/manual-a/ownership.json"
+        },
+        "b": {
+          "runId": "manual-b",
+          "orchestratorRoot": "/tmp/cfc941-hotfix-OZ4Y10",
+          "project": "raf",
+          "targetBranch": "main",
+          "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+          "baseCommit": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d",
+          "repositoryIdentity": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main",
+          "gitDirectory": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix",
+          "commonDirectory": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main",
+          "ownershipPath": "/tmp/cfc941-hotfix-OZ4Y10/.raf-hotfix/runs/manual-b/ownership.json"
+        },
+        "note": "Sequential preparations model distinct owners; concurrent native agents are unexecuted."
+      },
+      "finishedAt": "2026-10-25T13:28:38.113Z"
+    },
+    {
+      "id": "I2-hotfix-trust-exact-root-and-negative-paths",
+      "startedAt": "2026-10-25T13:28:38.113Z",
+      "outcome": "passed",
+      "evidence": {
+        "values": {
+          "registered": true,
+          "subdirectory": false,
+          "symlinkAlias": false,
+          "foreignRoot": false,
+          "detached": false
+        },
+        "limitation": "Current production hotfix trust API only, not native codex/claude registration or full spec/design routing."
+      },
+      "finishedAt": "2026-10-25T13:28:38.388Z"
+    },
+    {
+      "id": "I3-explicit-commit-preserves-foreign-state",
+      "startedAt": "2026-10-25T13:28:38.388Z",
+      "outcome": "passed",
+      "evidence": {
+        "before": {
+          "head": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d",
+          "branch": "hotfix",
+          "index": "fe01ffd7750d59fcb90a7d7c6ae4ddf473c20a6c4ac21137026afa1c9624288c",
+          "dirty": "M foreign.txt\nA  staged.txt\n?? own.txt\n?? untracked.txt",
+          "files": [
+            {
+              "path": "foreign.txt",
+              "mode": 436,
+              "sha256": "b5cc2a6e7fe4ecff1dafff558dfab86028a69a9144b4700838915883b7a1bacb"
+            },
+            {
+              "path": "own.txt",
+              "mode": 436,
+              "sha256": "5a0c55c30a25cd62b4fe17cd6e1a3a75a1627f3ae52b428026f9e49607e11122"
+            },
+            {
+              "path": "src/production-entry.ts",
+              "mode": 436,
+              "sha256": "efebacf1fd1eb504c6358c6284eec704c55f8debf6f9be7aa15ec64f235b128f"
+            },
+            {
+              "path": "staged.txt",
+              "mode": 436,
+              "sha256": "f6eda94ec9abcf4a0b154c048a124ee28fbd24b55168c8538e907b50cc2ad8c8"
+            },
+            {
+              "path": "tracked.txt",
+              "mode": 436,
+              "sha256": "f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"
+            },
+            {
+              "path": "untracked.txt",
+              "mode": 436,
+              "sha256": "6cbf44b0542309137c12bb98a6598e9da914447a7c804f3a3b9cb1c7417d9226"
+            }
+          ]
+        },
+        "refusal": {
+          "code": null,
+          "message": "Foreign staged hotfix paths"
+        },
+        "afterRefusal": {
+          "head": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d",
+          "branch": "hotfix",
+          "index": "fe01ffd7750d59fcb90a7d7c6ae4ddf473c20a6c4ac21137026afa1c9624288c",
+          "dirty": "M foreign.txt\nA  staged.txt\n?? own.txt\n?? untracked.txt",
+          "files": [
+            {
+              "path": "foreign.txt",
+              "mode": 436,
+              "sha256": "b5cc2a6e7fe4ecff1dafff558dfab86028a69a9144b4700838915883b7a1bacb"
+            },
+            {
+              "path": "own.txt",
+              "mode": 436,
+              "sha256": "5a0c55c30a25cd62b4fe17cd6e1a3a75a1627f3ae52b428026f9e49607e11122"
+            },
+            {
+              "path": "src/production-entry.ts",
+              "mode": 436,
+              "sha256": "efebacf1fd1eb504c6358c6284eec704c55f8debf6f9be7aa15ec64f235b128f"
+            },
+            {
+              "path": "staged.txt",
+              "mode": 436,
+              "sha256": "f6eda94ec9abcf4a0b154c048a124ee28fbd24b55168c8538e907b50cc2ad8c8"
+            },
+            {
+              "path": "tracked.txt",
+              "mode": 436,
+              "sha256": "f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"
+            },
+            {
+              "path": "untracked.txt",
+              "mode": 436,
+              "sha256": "6cbf44b0542309137c12bb98a6598e9da914447a7c804f3a3b9cb1c7417d9226"
+            }
+          ]
+        },
+        "committed": {
+          "commit": "9958902e048bd6baedfa497641aa8fb3732f78b5",
+          "tree": "ca1cc821f5f4575aa37e97ac01591df287a7167f",
+          "workspace": {
+            "runId": "manual-a",
+            "orchestratorRoot": "/tmp/cfc941-hotfix-OZ4Y10",
+            "project": "raf",
+            "targetBranch": "main",
+            "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+            "baseCommit": "bec8549e2ef9f1fb1fec50656e6f5bce07b0d69d",
+            "repositoryIdentity": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main",
+            "gitDirectory": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix",
+            "commonDirectory": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main",
+            "ownershipPath": "/tmp/cfc941-hotfix-OZ4Y10/.raf-hotfix/runs/manual-a/ownership.json"
+          }
+        },
+        "committedPaths": "own.txt",
+        "afterCommit": {
+          "head": "9958902e048bd6baedfa497641aa8fb3732f78b5",
+          "branch": "hotfix",
+          "index": "13971291b800cb0a71a7d0940962511e8cdfed8181fe4a4a2a77ab2a42c36933",
+          "dirty": "M foreign.txt\n?? staged.txt\n?? untracked.txt",
+          "files": [
+            {
+              "path": "foreign.txt",
+              "mode": 436,
+              "sha256": "b5cc2a6e7fe4ecff1dafff558dfab86028a69a9144b4700838915883b7a1bacb"
+            },
+            {
+              "path": "own.txt",
+              "mode": 436,
+              "sha256": "5a0c55c30a25cd62b4fe17cd6e1a3a75a1627f3ae52b428026f9e49607e11122"
+            },
+            {
+              "path": "src/production-entry.ts",
+              "mode": 436,
+              "sha256": "efebacf1fd1eb504c6358c6284eec704c55f8debf6f9be7aa15ec64f235b128f"
+            },
+            {
+              "path": "staged.txt",
+              "mode": 436,
+              "sha256": "f6eda94ec9abcf4a0b154c048a124ee28fbd24b55168c8538e907b50cc2ad8c8"
+            },
+            {
+              "path": "tracked.txt",
+              "mode": 436,
+              "sha256": "f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"
+            },
+            {
+              "path": "untracked.txt",
+              "mode": 436,
+              "sha256": "6cbf44b0542309137c12bb98a6598e9da914447a7c804f3a3b9cb1c7417d9226"
+            }
+          ]
+        },
+        "cleanup": {
+          "removed": [
+            "/tmp/cfc941-hotfix-OZ4Y10/.raf-hotfix/runs/manual-a"
+          ],
+          "retained": [
+            "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix"
+          ]
+        },
+        "remainingOwner": "/tmp/cfc941-hotfix-OZ4Y10/.raf-hotfix/runs/manual-b/ownership.json"
+      },
+      "finishedAt": "2026-10-25T13:28:39.005Z"
+    },
+    {
+      "id": "I4-nonancestor-dirty-refusal-clean-coordinated-merge",
+      "startedAt": "2026-10-25T13:28:39.005Z",
+      "outcome": "passed",
+      "evidence": {
+        "before": {
+          "head": "9958902e048bd6baedfa497641aa8fb3732f78b5",
+          "branch": "hotfix",
+          "index": "13971291b800cb0a71a7d0940962511e8cdfed8181fe4a4a2a77ab2a42c36933",
+          "dirty": "M foreign.txt\n?? staged.txt\n?? untracked.txt",
+          "files": [
+            {
+              "path": "foreign.txt",
+              "mode": 436,
+              "sha256": "b5cc2a6e7fe4ecff1dafff558dfab86028a69a9144b4700838915883b7a1bacb"
+            },
+            {
+              "path": "own.txt",
+              "mode": 436,
+              "sha256": "5a0c55c30a25cd62b4fe17cd6e1a3a75a1627f3ae52b428026f9e49607e11122"
+            },
+            {
+              "path": "src/production-entry.ts",
+              "mode": 436,
+              "sha256": "efebacf1fd1eb504c6358c6284eec704c55f8debf6f9be7aa15ec64f235b128f"
+            },
+            {
+              "path": "staged.txt",
+              "mode": 436,
+              "sha256": "f6eda94ec9abcf4a0b154c048a124ee28fbd24b55168c8538e907b50cc2ad8c8"
+            },
+            {
+              "path": "tracked.txt",
+              "mode": 436,
+              "sha256": "f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"
+            },
+            {
+              "path": "untracked.txt",
+              "mode": 436,
+              "sha256": "6cbf44b0542309137c12bb98a6598e9da914447a7c804f3a3b9cb1c7417d9226"
+            }
+          ]
+        },
+        "refusal": {
+          "code": null,
+          "message": "Dirty hotfix workspace/index; main must coordinate writers before refresh"
+        },
+        "refreshed": {
+          "runId": "clean-refresh",
+          "orchestratorRoot": "/tmp/cfc941-hotfix-OZ4Y10",
+          "project": "raf",
+          "targetBranch": "main",
+          "cwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+          "baseCommit": "c2301265b7ddc6bdddaacc5d768a86327854e947",
+          "repositoryIdentity": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main",
+          "gitDirectory": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix",
+          "commonDirectory": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main",
+          "ownershipPath": "/tmp/cfc941-hotfix-OZ4Y10/.raf-hotfix/runs/clean-refresh/ownership.json"
+        },
+        "after": {
+          "head": "a43269a884566e08d73e163eba90a906af935141",
+          "branch": "hotfix",
+          "index": "b0d4cbb7d8f9c742344c9be37931bc49e9c7712d5720459380d719ebb1cbb4f6",
+          "dirty": "",
+          "files": [
+            {
+              "path": "foreign.txt",
+              "mode": 436,
+              "sha256": "9623633e106ef1b718735129fc188d318e0ddccf6159033cb3801465a2740434"
+            },
+            {
+              "path": "own.txt",
+              "mode": 436,
+              "sha256": "5a0c55c30a25cd62b4fe17cd6e1a3a75a1627f3ae52b428026f9e49607e11122"
+            },
+            {
+              "path": "published.txt",
+              "mode": 436,
+              "sha256": "fcb48ddc01bc01ca380738b4b375b985047ec7c65dc7a2056c1e586fdde6ce60"
+            },
+            {
+              "path": "src/production-entry.ts",
+              "mode": 436,
+              "sha256": "efebacf1fd1eb504c6358c6284eec704c55f8debf6f9be7aa15ec64f235b128f"
+            },
+            {
+              "path": "tracked.txt",
+              "mode": 436,
+              "sha256": "f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"
+            }
+          ]
+        }
+      },
+      "finishedAt": "2026-10-25T13:28:39.474Z"
+    },
+    {
+      "id": "I4-sealed-snapshot-and-configuration-drift-refusal",
+      "startedAt": "2026-10-25T13:28:39.474Z",
+      "outcome": "passed",
+      "evidence": {
+        "sealed": {
+          "source": "hotfix",
+          "root": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/raf-hotfix/snapshots/clean-refresh/a7d54ed2-3b74-472c-8a3d-6b03cccecc61/raf-main",
+          "configurationRoot": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/raf-hotfix/snapshots/clean-refresh/a7d54ed2-3b74-472c-8a3d-6b03cccecc61",
+          "sourceCwd": "/tmp/cfc941-hotfix-OZ4Y10/raf-hotfix",
+          "sourceGitDirectory": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main/worktrees/raf-hotfix",
+          "sourceCommonDirectory": "/tmp/cfc941-hotfix-OZ4Y10/.git/modules/raf-main",
+          "baseCommit": "c2301265b7ddc6bdddaacc5d768a86327854e947",
+          "commit": "a43269a884566e08d73e163eba90a906af935141",
+          "tree": "81bf5545e48d8f1e76bf7efbc2739dd0035ec517",
+          "files": [
+            {
+              "path": "foreign.txt",
+              "sha256": "9623633e106ef1b718735129fc188d318e0ddccf6159033cb3801465a2740434",
+              "mode": 436
+            },
+            {
+              "path": "own.txt",
+              "sha256": "5a0c55c30a25cd62b4fe17cd6e1a3a75a1627f3ae52b428026f9e49607e11122",
+              "mode": 436
+            },
+            {
+              "path": "published.txt",
+              "sha256": "fcb48ddc01bc01ca380738b4b375b985047ec7c65dc7a2056c1e586fdde6ce60",
+              "mode": 436
+            },
+            {
+              "path": "src/production-entry.ts",
+              "sha256": "efebacf1fd1eb504c6358c6284eec704c55f8debf6f9be7aa15ec64f235b128f",
+              "mode": 436
+            },
+            {
+              "path": "tracked.txt",
+              "sha256": "f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac",
+              "mode": 436
+            }
+          ],
+          "configuration": [
+            {
+              "path": "conf/flow.json",
+              "sha256": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+              "mode": 436
+            },
+            {
+              "path": "conf/projects.json",
+              "sha256": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+              "mode": 436
+            },
+            {
+              "path": "conf/raf.json",
+              "sha256": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+              "mode": 436
+            }
+          ],
+          "fingerprint": "b4a91832c46606f64ee6970532cb38a2f777639c0b07865973552049afa39b28"
+        },
+        "refusal": {
+          "code": null,
+          "message": "Hotfix source/configuration changed while sealing snapshot"
+        },
+        "note": "No build/regression/service gates invoked; seal consistency only."
+      },
+      "finishedAt": "2026-10-25T13:28:40.258Z"
+    },
+    {
+      "id": "I5-real-linux-atomic-directory-exchange",
+      "startedAt": "2026-10-25T13:28:40.258Z",
+      "outcome": "passed",
+      "evidence": {
+        "capability": {
+          "supported": true,
+          "sameDevice": true
+        },
+        "before": {
+          "left": "old\n",
+          "right": "new\n"
+        },
+        "after": {
+          "left": "new\n",
+          "right": "old\n"
+        },
+        "note": "Real provider/syscall only, not the full publication/reader/recovery acceptance."
+      },
+      "finishedAt": "2026-10-25T13:28:40.305Z"
+    },
+    {
+      "id": "I6-develop-origin-refused-before-stand-production-db-change",
+      "startedAt": "2026-10-25T13:28:40.305Z",
+      "outcome": "passed",
+      "evidence": {
+        "state": "/tmp/cfc941-hotfix-OZ4Y10/stand-account/.raf/state.sqlite",
+        "before": "423de376e37fa7bc4925382725c091f538d4ef3da71cd272e449a2309f3e64e9",
+        "after": "423de376e37fa7bc4925382725c091f538d4ef3da71cd272e449a2309f3e64e9",
+        "rows": [
+          {
+            "value": "unchanged"
+          }
+        ],
+        "refusals": [
+          {
+            "entryPoint": "cli",
+            "code": "STATE_CONTEXT_REFUSED",
+            "message": "STATE_CONTEXT_REFUSED: Loaded code /tmp/cfc941-hotfix-OZ4Y10/raf-develop cannot use state /tmp/cfc941-hotfix-OZ4Y10/stand-account/.raf/state.sqlite with HOME /tmp/cfc941-hotfix-OZ4Y10/stand-account; production tree is /tmp/cfc941-hotfix-OZ4Y10/raf-main, account HOME is /tmp/cfc941-hotfix-OZ4Y10/stand-account"
+          },
+          {
+            "entryPoint": "runner-limits",
+            "code": "STATE_CONTEXT_REFUSED",
+            "message": "STATE_CONTEXT_REFUSED: Loaded code /tmp/cfc941-hotfix-OZ4Y10/raf-develop cannot use state /tmp/cfc941-hotfix-OZ4Y10/stand-account/.raf/state.sqlite with HOME /tmp/cfc941-hotfix-OZ4Y10/stand-account; production tree is /tmp/cfc941-hotfix-OZ4Y10/raf-main, account HOME is /tmp/cfc941-hotfix-OZ4Y10/stand-account"
+          },
+          {
+            "entryPoint": "worker",
+            "code": "STATE_CONTEXT_REFUSED",
+            "message": "STATE_CONTEXT_REFUSED: Loaded code /tmp/cfc941-hotfix-OZ4Y10/raf-develop cannot use state /tmp/cfc941-hotfix-OZ4Y10/stand-account/.raf/state.sqlite with HOME /tmp/cfc941-hotfix-OZ4Y10/stand-account; production tree is /tmp/cfc941-hotfix-OZ4Y10/raf-main, account HOME is /tmp/cfc941-hotfix-OZ4Y10/stand-account"
+          },
+          {
+            "entryPoint": "service-store",
+            "code": "STATE_CONTEXT_REFUSED",
+            "message": "STATE_CONTEXT_REFUSED: Loaded code /tmp/cfc941-hotfix-OZ4Y10/raf-develop cannot use state /tmp/cfc941-hotfix-OZ4Y10/stand-account/.raf/state.sqlite with HOME /tmp/cfc941-hotfix-OZ4Y10/stand-account; production tree is /tmp/cfc941-hotfix-OZ4Y10/raf-main, account HOME is /tmp/cfc941-hotfix-OZ4Y10/stand-account"
+          },
+          {
+            "entryPoint": "notice",
+            "code": "STATE_CONTEXT_REFUSED",
+            "message": "STATE_CONTEXT_REFUSED: Loaded code /tmp/cfc941-hotfix-OZ4Y10/raf-develop cannot use state /tmp/cfc941-hotfix-OZ4Y10/stand-account/.raf/state.sqlite with HOME /tmp/cfc941-hotfix-OZ4Y10/stand-account; production tree is /tmp/cfc941-hotfix-OZ4Y10/raf-main, account HOME is /tmp/cfc941-hotfix-OZ4Y10/stand-account"
+          },
+          {
+            "entryPoint": "hook",
+            "code": "STATE_CONTEXT_REFUSED",
+            "message": "STATE_CONTEXT_REFUSED: Loaded code /tmp/cfc941-hotfix-OZ4Y10/raf-develop cannot use state /tmp/cfc941-hotfix-OZ4Y10/stand-account/.raf/state.sqlite with HOME /tmp/cfc941-hotfix-OZ4Y10/stand-account; production tree is /tmp/cfc941-hotfix-OZ4Y10/raf-main, account HOME is /tmp/cfc941-hotfix-OZ4Y10/stand-account"
+          }
+        ],
+        "note": "Actual resolver with stand account HOME; productionStateContext/bootstrap and real account HOME deliberately not accessed."
+      },
+      "finishedAt": "2026-10-25T13:28:40.380Z"
+    },
+    {
+      "id": "I4-conflict-and-unfinished-operation-preserve-work",
+      "startedAt": "2026-10-25T13:28:40.380Z",
+      "outcome": "passed",
+      "evidence": {
+        "ownHead": "f60cfef19d65c67a80052461e3adaba006d16b86",
+        "conflict": {
+          "code": 1,
+          "message": "Command failed: git -C /tmp/cfc941-hotfix-OZ4Y10/raf-hotfix -c core.hooksPath=/dev/null merge --no-edit 11604c730b199bbe4af987c950256cf4c3a4b12a\n"
+        },
+        "before": {
+          "head": "f60cfef19d65c67a80052461e3adaba006d16b86",
+          "branch": "hotfix",
+          "index": "01418b5934cce45929e3e10ae5723f09a44cda74d3833a3ebc6df44bde7dae80",
+          "dirty": "UU tracked.txt",
+          "files": [
+            {
+              "path": "foreign.txt",
+              "mode": 436,
+              "sha256": "9623633e106ef1b718735129fc188d318e0ddccf6159033cb3801465a2740434"
+            },
+            {
+              "path": "own.txt",
+              "mode": 436,
+              "sha256": "5a0c55c30a25cd62b4fe17cd6e1a3a75a1627f3ae52b428026f9e49607e11122"
+            },
+            {
+              "path": "published.txt",
+              "mode": 436,
+              "sha256": "fcb48ddc01bc01ca380738b4b375b985047ec7c65dc7a2056c1e586fdde6ce60"
+            },
+            {
+              "path": "src/production-entry.ts",
+              "mode": 436,
+              "sha256": "efebacf1fd1eb504c6358c6284eec704c55f8debf6f9be7aa15ec64f235b128f"
+            },
+            {
+              "path": "tracked.txt",
+              "mode": 436,
+              "sha256": "4a6b1897721d0e02d3ebc1c5f9abdb60adf762824fed76e2b3d04cd377607868"
+            }
+          ]
+        },
+        "refusal": {
+          "code": null,
+          "message": "Hotfix preparation has unfinished Git operation: MERGE_HEAD"
+        },
+        "after": {
+          "head": "f60cfef19d65c67a80052461e3adaba006d16b86",
+          "branch": "hotfix",
+          "index": "01418b5934cce45929e3e10ae5723f09a44cda74d3833a3ebc6df44bde7dae80",
+          "dirty": "UU tracked.txt",
+          "files": [
+            {
+              "path": "foreign.txt",
+              "mode": 436,
+              "sha256": "9623633e106ef1b718735129fc188d318e0ddccf6159033cb3801465a2740434"
+            },
+            {
+              "path": "own.txt",
+              "mode": 436,
+              "sha256": "5a0c55c30a25cd62b4fe17cd6e1a3a75a1627f3ae52b428026f9e49607e11122"
+            },
+            {
+              "path": "published.txt",
+              "mode": 436,
+              "sha256": "fcb48ddc01bc01ca380738b4b375b985047ec7c65dc7a2056c1e586fdde6ce60"
+            },
+            {
+              "path": "src/production-entry.ts",
+              "mode": 436,
+              "sha256": "efebacf1fd1eb504c6358c6284eec704c55f8debf6f9be7aa15ec64f235b128f"
+            },
+            {
+              "path": "tracked.txt",
+              "mode": 436,
+              "sha256": "4a6b1897721d0e02d3ebc1c5f9abdb60adf762824fed76e2b3d04cd377607868"
+            }
+          ]
+        },
+        "note": "Conflict left intact; entire disposable stand is removed only after evidence is captured."
+      },
+      "finishedAt": "2026-10-25T13:28:40.748Z"
+    }
+  ],
+  "cleanup": {
+    "complete": true,
+    "fixtureRemoved": true,
+    "spawnedBackgroundProcesses": false
+  },
+  "startedAt": "2026-10-25T13:28:37.103Z",
+  "sourceSha": "9dd18529664c77fa25c517bae63e564b4ff50668",
+  "workspace": "?? evidence/cfc24-agent-adapters/\n?? evidence/cfc941-workspace-routing/",
+  "sourceHashes": {
+    "src/hotfix-worktree.ts": "6086b05a020f98655d4d6893b9dad15fe753edb0c67a415c2e3e5a51675e0fbf",
+    "src/hotfix-host.ts": "6d1ec4d6a57bb42305ee523f6c161eaca30f355f3e17e0874e3b8ece503d65fa",
+    "src/hotfix-activation.ts": "2d24106120acd64691195c944c187a4f26d35a07f414baddab3bf17ca8e0c9c6",
+    "src/main-production-store.ts": "fc2c1f71acfe3d4e9a819360a6f9c5a9ffcac8d76ef351559a627498fc7e708a",
+    "src/state-migration-guard.ts": "debb2543890453959e872591df873e65aeacc5f807c41a30e0656d2ade6f8fa2",
+    "src/hotfix-origin.ts": "8ca84c55e8ef8005545fa55d68aa0a63eb35079d2f272f66023f055302290943"
+  },
+  "configurationHashes": {
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+  },
+  "outcome": "passed",
+  "finishedAt": "2026-10-25T13:28:40.755Z",
+  "scriptSha256": "3b79e9b863b4f6483ef4d29852fbce80a481e5f6ff4d50a5062b8419810d46aa"
+}

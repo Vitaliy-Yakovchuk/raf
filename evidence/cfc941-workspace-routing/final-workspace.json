@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-25T13:33:25.813223+00:00",
+  "head": "9dd18529664c77fa25c517bae63e564b4ff50668",
+  "status": "M src/production-runtime.ts\n M test/agent-adapters-contract.test.ts\n?? evidence/cfc24-agent-adapters/\n?? evidence/cfc34-background-runtime/\n?? evidence/cfc941-workspace-routing/\n?? scripts/qa-background-runtime.mjs\n?? src/message-delivery.ts",
+  "stagedPaths": [],
+  "ownPaths": [
+    "evidence/cfc941-workspace-routing"
+  ],
+  "manualHotfixInputsUnchanged": {
+    "src/hotfix-worktree.ts": true,
+    "src/hotfix-host.ts": true,
+    "src/hotfix-activation.ts": true,
+    "src/main-production-store.ts": true,
+    "src/state-migration-guard.ts": true,
+    "src/hotfix-origin.ts": true
+  },
+  "handoverInputsUnchanged": {
+    "src/main-generation-handover.ts": true,
+    "scripts/qa-main-generation-handover.ts": true
+  },
+  "sharedWorkspaceNote": "Foreign production-runtime/agent-adapters edits appeared after the provenance snapshot. This assignment did not edit or stage them. Acceptance remains failed; prior source audits retain their observation time."
+}

@@ -1,0 +1,115 @@
+{
+  "at": "2026-10-25T13:31:49.889673+00:00",
+  "item": "complete-raf-flow-contracts:9.4.1",
+  "status": "failed",
+  "reason": "Assigned automated integration run refused by current raf-main capability before child spawn. Manual stands passed narrower I2–I6 facts, but native sandbox, Claude connection, production IPC access and full publication/worker matrix are unavailable or unexecuted; no complete I1–I6 acceptance.",
+  "automatedRun": "integration-run.json",
+  "manualRuns": [
+    {
+      "command": "node evidence/cfc941-workspace-routing/manual-hotfix.mjs",
+      "result": "manual-hotfix.json",
+      "stdout": "manual-hotfix.stdout",
+      "stderr": "manual-hotfix.stderr",
+      "exit": "manual-hotfix.exit.json",
+      "runId": "b18ff373-2443-4251-9159-6230af2ce509",
+      "outcome": "passed",
+      "timeout": false,
+      "cleanup": {
+        "complete": true,
+        "fixtureRemoved": true,
+        "spawnedBackgroundProcesses": false
+      }
+    },
+    {
+      "command": "node scripts/qa-main-generation-handover.ts evidence/cfc941-workspace-routing/handover",
+      "result": "handover/summary.json",
+      "stdout": "handover.stdout",
+      "stderr": "handover.stderr",
+      "exit": "handover.exit.json",
+      "runId": "279c97de-6a2c-4248-a473-b488e10c15c1",
+      "outcome": "passed",
+      "cleanup": "handover.cleanup.json",
+      "timeout": false
+    },
+    {
+      "command": "node evidence/cfc941-workspace-routing/manual-environment.mjs",
+      "result": "manual-environment-corrected.json",
+      "cliExitCode": 0,
+      "nativeChildCodes": "commands/native-exit-* retain actual tmux pane_dead_status; native launcher command 0 is not native task success",
+      "cleanup": {
+        "complete": true,
+        "fixtureRemoved": true,
+        "tmuxStopped": true
+      },
+      "limitations": [
+        "no model request, no production brief or readiness",
+        "original captures and invalid probe option retained",
+        "native-residual-observation.json is not a full descendant identity proof"
+      ]
+    }
+  ],
+  "matrix": [
+    {
+      "id": "I1",
+      "status": "unexecuted-remainder",
+      "passedEvidence": [
+        "evidence/cfc94-workspace-routing/non-git-live-after-fix.json",
+        "evidence/cfc94-workspace-routing/qa-TestRunResult.json"
+      ],
+      "remaining": "All 23 real Git/fs/SQLite routing cases in the integration file remain unexecuted because authorized preflight refused. Historical 72 unit tests are not integration acceptance."
+    },
+    {
+      "id": "I2",
+      "status": "partial",
+      "passedEvidence": [
+        "manual-hotfix.json#I2-hotfix-trust-exact-root-and-negative-paths",
+        "manual-environment-corrected.json"
+      ],
+      "remaining": "Real versions/tmux and current hotfix trust API exercised, but production brief delivery/native identity/readiness across codex AND claude spec/design/product/root/hotfix not exercised. Claude native CLI failed DNS EAI_AGAIN; codex startup remained live without readiness proof; isolated homes have no account authentication. No model request or assigned native worker launch performed."
+    },
+    {
+      "id": "I3",
+      "status": "partial",
+      "passedEvidence": [
+        "manual-hotfix.json#I3-I4-persistent-cwd-two-ownerships-ancestor-noop",
+        "manual-hotfix.json#I3-explicit-commit-preserves-foreign-state"
+      ],
+      "remaining": "Sequential own preparations/commit/cleanup proved persistent cwd, separate ownership and preservation of foreign state. Native document-only enforcement, parallel native hotfix writers, index-lock waits and real long-TMPDIR commit-port bind/connect remain unverified. bwrap namespace fails NETLINK_ROUTE permission; production IPC root /tmp/raf-ipc-1000 explicitly denied and never accessed. Native startup cleanup has tmux stop/root removal and later empty cwd-residual observation, not complete native descendant PID/start proof."
+    },
+    {
+      "id": "I4",
+      "status": "partial",
+      "passedEvidence": [
+        "manual-hotfix.json#I4-nonancestor-dirty-refusal-clean-coordinated-merge",
+        "manual-hotfix.json#I4-sealed-snapshot-and-configuration-drift-refusal",
+        "manual-hotfix.json#I4-conflict-and-unfinished-operation-preserve-work"
+      ],
+      "remaining": "Real Git refresh, dirty refusal, merge conflict, unfinished refusal and sealed config drift passed. Full build/regression/runtime-import/ps/message/service gates against a native production launch and real service are unexecuted; no fake gate receipts supplied."
+    },
+    {
+      "id": "I5",
+      "status": "partial",
+      "passedEvidence": [
+        "manual-hotfix.json#I5-real-linux-atomic-directory-exchange",
+        "handover/summary.json"
+      ],
+      "remaining": "Current Linux provider exchange passed and isolated handover engine proved old deferred-generation operations/readers. Full current Git publication, unsupported/EXDEV/stale/dirty publication refusals, crash recovery refs/index/gitlink/.gitmodules and native live leases remain unverified. Handover actors are real processes with engine adapters, not production model workers."
+    },
+    {
+      "id": "I6",
+      "status": "partial",
+      "passedEvidence": [
+        "manual-hotfix.json#I6-develop-origin-refused-before-stand-production-db-change",
+        "handover/summary.json"
+      ],
+      "remaining": "All six resolver entrypoint labels refused develop against stand-account HOME with unchanged real SQLite hash/sentinel. Handover/rollback/resource queue/report delivery and runner identity passed on isolated engine. Full hotfix→published main→develop→next hotfix identical-tree cycle, active/retained inventory/bootstrap origin proofs, and production service/native-agent continuity remain unverified."
+    }
+  ],
+  "newProductDefects": [],
+  "newUnitRedRequired": false,
+  "priorUnitEvidenceReusedWithoutRerun": true,
+  "assignedCheckboxChanged": false,
+  "archive": null,
+  "tasksFollowupsAdded": false,
+  "tasksFollowupsReason": "Existing 9.4 and 9.4.1 remain open and already describe required acceptance; main must resolve runner capability. No duplicate task or proposedTasks substitute for fixing a discovered defect."
+}

@@ -1,0 +1,385 @@
+{
+  "runId": "fd5dc7df-d8c9-4166-ba2a-804fbe4d4a4a",
+  "root": "/tmp/cfc941-native-ZtKXkI",
+  "scope": "Real tool availability and native CLI startup only; no model request, no brief delivery or trust acceptance",
+  "os": "7.0.0-30-generic",
+  "node": "v26.12.1",
+  "sqlite": "3.54.0",
+  "commands": [
+    {
+      "label": "workspace-sha",
+      "executable": "git",
+      "args": [
+        "rev-parse",
+        "HEAD"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "9dd18529664c77fa25c517bae63e564b4ff50668\n",
+      "stderr": ""
+    },
+    {
+      "label": "workspace-status",
+      "executable": "git",
+      "args": [
+        "status",
+        "--porcelain=v1"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "?? evidence/cfc941-workspace-routing/\n",
+      "stderr": ""
+    },
+    {
+      "label": "version-git",
+      "executable": "git",
+      "args": [
+        "--version"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "git version 2.53.0\n",
+      "stderr": ""
+    },
+    {
+      "label": "version-tmux",
+      "executable": "tmux",
+      "args": [
+        "-V"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "tmux 3.6\n",
+      "stderr": ""
+    },
+    {
+      "label": "version-codex",
+      "executable": "codex",
+      "args": [
+        "--version"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "codex-cli 0.163.0\n",
+      "stderr": "WARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"/tmp/cfc941-native-ZtKXkI\" (codex_home: AbsolutePathBuf(\"/tmp/cfc941-native-ZtKXkI/home/.codex\"))\n"
+    },
+    {
+      "label": "version-claude",
+      "executable": "claude",
+      "args": [
+        "--version"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "2.1.310 (Claude Code)\n",
+      "stderr": ""
+    },
+    {
+      "label": "version-bwrap",
+      "executable": "bwrap",
+      "args": [
+        "--version"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "bubblewrap 0.11.1\n",
+      "stderr": ""
+    },
+    {
+      "label": "tmux-create",
+      "executable": "tmux",
+      "args": [
+        "-S",
+        "/tmp/cfc941-native-ZtKXkI/tmux.sock",
+        "new-session",
+        "-d",
+        "-s",
+        "cfc941",
+        "-x",
+        "140",
+        "-y",
+        "42",
+        "-c",
+        "/tmp/cfc941-native-ZtKXkI",
+        "sleep 30"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "tmux-retain-exit",
+      "executable": "tmux",
+      "args": [
+        "-S",
+        "/tmp/cfc941-native-ZtKXkI/tmux.sock",
+        "set-window-option",
+        "-g",
+        "remain-on-exit",
+        "on"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "tmux-fixed-shell",
+      "executable": "tmux",
+      "args": [
+        "-S",
+        "/tmp/cfc941-native-ZtKXkI/tmux.sock",
+        "set-option",
+        "-g",
+        "default-shell",
+        "/bin/bash"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "git-init-codex",
+      "executable": "git",
+      "args": [
+        "init",
+        "-q",
+        "-b",
+        "develop"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI/codex",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "native-start-codex",
+      "executable": "tmux",
+      "args": [
+        "-S",
+        "/tmp/cfc941-native-ZtKXkI/tmux.sock",
+        "new-window",
+        "-d",
+        "-t",
+        "cfc941",
+        "-n",
+        "codex",
+        "-c",
+        "/tmp/cfc941-native-ZtKXkI/codex",
+        "codex",
+        "--no-alt-screen"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "native-screen-codex",
+      "executable": "tmux",
+      "args": [
+        "-S",
+        "/tmp/cfc941-native-ZtKXkI/tmux.sock",
+        "capture-pane",
+        "-p",
+        "-S",
+        "-",
+        "-t",
+        "cfc941:codex"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "WARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"/tmp/cfc941-nativ\ne-ZtKXkI\" (codex_home: AbsolutePathBuf(\"/tmp/cfc941-native-ZtKXkI/home/.codex\"))\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "stderr": ""
+    },
+    {
+      "label": "native-exit-codex",
+      "executable": "tmux",
+      "args": [
+        "-S",
+        "/tmp/cfc941-native-ZtKXkI/tmux.sock",
+        "display-message",
+        "-p",
+        "-t",
+        "cfc941:codex",
+        "#{pane_dead}:#{pane_dead_status}:#{pane_dead_signal}"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "0::\n",
+      "stderr": ""
+    },
+    {
+      "label": "native-stop-codex",
+      "executable": "tmux",
+      "args": [
+        "-S",
+        "/tmp/cfc941-native-ZtKXkI/tmux.sock",
+        "kill-window",
+        "-t",
+        "cfc941:codex"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "git-init-claude",
+      "executable": "git",
+      "args": [
+        "init",
+        "-q",
+        "-b",
+        "develop"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI/claude",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "native-start-claude",
+      "executable": "tmux",
+      "args": [
+        "-S",
+        "/tmp/cfc941-native-ZtKXkI/tmux.sock",
+        "new-window",
+        "-d",
+        "-t",
+        "cfc941",
+        "-n",
+        "claude",
+        "-c",
+        "/tmp/cfc941-native-ZtKXkI/claude",
+        "claude",
+        "--screen-reader"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "native-screen-claude",
+      "executable": "tmux",
+      "args": [
+        "-S",
+        "/tmp/cfc941-native-ZtKXkI/tmux.sock",
+        "capture-pane",
+        "-p",
+        "-S",
+        "-",
+        "-t",
+        "cfc941:claude"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "error: unknown option '--screen-reader'\n(Did you mean --ax-screen-reader?)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nPane is dead (status 1, Sun Oct 25 13:24:14 2026)\n",
+      "stderr": ""
+    },
+    {
+      "label": "native-exit-claude",
+      "executable": "tmux",
+      "args": [
+        "-S",
+        "/tmp/cfc941-native-ZtKXkI/tmux.sock",
+        "display-message",
+        "-p",
+        "-t",
+        "cfc941:claude",
+        "#{pane_dead}:#{pane_dead_status}:#{pane_dead_signal}"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "1:1:\n",
+      "stderr": ""
+    },
+    {
+      "label": "native-stop-claude",
+      "executable": "tmux",
+      "args": [
+        "-S",
+        "/tmp/cfc941-native-ZtKXkI/tmux.sock",
+        "kill-window",
+        "-t",
+        "cfc941:claude"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "tmux-cleanup",
+      "executable": "tmux",
+      "args": [
+        "-S",
+        "/tmp/cfc941-native-ZtKXkI/tmux.sock",
+        "kill-server"
+      ],
+      "cwd": "/tmp/cfc941-native-ZtKXkI",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "cleanup": {
+    "complete": true,
+    "fixtureRemoved": true,
+    "tmuxStopped": true
+  },
+  "sha": "9dd18529664c77fa25c517bae63e564b4ff50668",
+  "workspace": "?? evidence/cfc941-workspace-routing/\n",
+  "priorBwrapCapability": "manual-environment.json#commands/native-bwrap-capability",
+  "portPrerequisite": {
+    "available": false,
+    "path": "/tmp/raf-ipc-1000",
+    "reason": "Explicit denied filesystem path in this assignment. Production createRafTemporarySocketEndpoint always uses this root; it was not accessed or replaced."
+  },
+  "source": "7b70789b0592f083f3c67cdc08486b0c852242b99a77dd7ee76993028d670463"
+}

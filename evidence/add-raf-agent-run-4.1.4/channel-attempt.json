@@ -1,0 +1,73 @@
+{
+  "assignment": "add-raf-agent-run:4.1.4",
+  "agentId": "raf-ara414-scaffold",
+  "phase": "test-scaffold",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a082d01d-15d1-4418-a307-f8f63cb140f5/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-agent-run/sandbox-multiline --files test/sandbox-command-multiline.test.ts",
+  "group": "add-raf-agent-run/sandbox-multiline",
+  "selection": {
+    "files": [
+      "test/sandbox-command-multiline.test.ts"
+    ]
+  },
+  "commandExitCode": 1,
+  "cliExitCode": null,
+  "childExitCode": null,
+  "testRunResult": null,
+  "stdout": null,
+  "stderr": null,
+  "rawToolOutput": "file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a082d01d-15d1-4418-a307-f8f63cb140f5/raf-main/src/cli.ts:31\n  const error = new Error(context.message);\n                ^\n\nError: STATE_CONTEXT_REFUSED: Unregistered module origin: /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a082d01d-15d1-4418-a307-f8f63cb140f5/raf-main/src/main-switch-agent-launcher.ts\n    at commandFailure (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a082d01d-15d1-4418-a307-f8f63cb140f5/raf-main/src/cli.ts:31:17)\n    at stateFailure (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a082d01d-15d1-4418-a307-f8f63cb140f5/raf-main/src/state-migration-guard.ts:42:24)\n    at refuse (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a082d01d-15d1-4418-a307-f8f63cb140f5/raf-main/src/state-migration-guard.ts:51:48)\n    at resolveStateContext (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a082d01d-15d1-4418-a307-f8f63cb140f5/raf-main/src/state-migration-guard.ts:153:105)\n    at productionStateContext (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a082d01d-15d1-4418-a307-f8f63cb140f5/raf-main/src/state-migration-guard.ts:232:10)\n    at verifyCaller (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a082d01d-15d1-4418-a307-f8f63cb140f5/raf-main/src/main-switch-agent-launcher.ts:31:19)\n    at runPublishedAgentChannel (file:///srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a082d01d-15d1-4418-a307-f8f63cb140f5/raf-main/src/main-switch-agent-launcher.ts:70:9)\n    at file:///srv/dev/work/orchestrator/raf-develop/[eval1]:1:87 {\n  code: 'STATE_CONTEXT_REFUSED'\n}\n\nNode.js v26.12.1\n",
+  "classification": "trusted-channel-failure-before-test-run",
+  "reason": "Published launcher origin was refused before test runner startup. The tool exposes merged output; separate streams and an actual raf test-run CLI exit code were not delivered. No red, assertion result, timeout or cleanup result is claimed.",
+  "blockerMessage": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a082d01d-15d1-4418-a307-f8f63cb140f5/raf-main/bin/raf.ts agent message --to main --text 'add-raf-agent-run:4.1.4 blocker: author red returned CLI 1 STATE_CONTEXT_REFUSED Unregistered module origin main-switch-agent-launcher.ts for generation a082d01d-15d1-4418-a307-f8f63cb140f5. No TestRunResult or verified red. Test ready: test/sandbox-command-multiline.test.ts; stable group add-raf-agent-run/sandbox-multiline. Please restore trusted channel and register node.unitFiles plus group preset for this file. Previous config handoff message also failed: missing raf-hotfix/registry.json. Product code and tasks unchanged.'",
+    "chunk_id": "b6292f",
+    "wall_time_seconds": 0.288669988,
+    "exit_code": 1,
+    "original_token_count": 127,
+    "output": "{\"code\":\"HANDLER_FAILED\",\"message\":\"Message delivery failed: Recipient composer contains unrelated input\",\"details\":{\"command\":\"agent message\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Message delivery failed: Recipient composer contains unrelated input\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent message\"]}\n"
+  },
+  "profileRegistration": {
+    "file": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "operations": [
+      {
+        "op": "add-to-array",
+        "path": "/projects/raf/profiles/node/unitFiles",
+        "value": "test/sandbox-command-multiline.test.ts"
+      },
+      {
+        "op": "add",
+        "path": "/projects/raf/groups/add-raf-agent-run~1sandbox-multiline",
+        "value": {
+          "profileId": "node",
+          "files": [
+            "test/sandbox-command-multiline.test.ts"
+          ]
+        }
+      }
+    ],
+    "prerequisites": {
+      "node": ">=25.4.0",
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "branch": "develop",
+      "profileId": "node",
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts"
+      ],
+      "exactIds": "node-test-name",
+      "resultAdapter": "node-test-events",
+      "checks": [
+        "node_modules/typescript/package.json",
+        "src/test-run-reporter.ts",
+        "scripts/test-run-node.ts"
+      ],
+      "environment": {
+        "isolatedHome": true,
+        "stateOrigin": true
+      },
+      "authorization": "Restore a verified live caller channel with the registered module origin for this generation; main must check and commit inventory/preset before author retries red.",
+      "state": "Retain the same group and isolated QA HOME/aggregate for author red, coordinator review, implement and QA.",
+      "timeoutPolicySource": "conf/flow.json#/unitTests"
+    }
+  }
+}

@@ -132,17 +132,17 @@
     "sameQaHomeAsImplement": true
   },
   "checks": [
-    "post-hotfix-build.json",
-    "post-hotfix-check-comments.json"
+    "final-confirmation-build.json",
+    "final-confirmation-comments.json"
   ],
-  "nextAction": "Main owns resource-wait regression for test/state-store.test.ts and test/state-migration-cli.test.ts; QA 5.4 remains separate. Raf owns checkbox 5.3. Other change items open: no archive.",
+  "nextAction": "QA 5.4 owns resource-wait regression for test/state-store.test.ts and test/state-migration-cli.test.ts under grant c61c3b63b6. Raf owns checkbox 5.3. Other change items open: no archive.",
   "scope": {
     "tasksEdited": false,
     "archive": false,
     "reason": "Other change items and QA 5.4 remain open."
   },
   "catalogue": "Main confirmed command stats health.forcedClose catalogue update before authorized repeat. No conf changes made by this executor.",
-  "completedAt": "2026-10-25T00:40:17.968085+00:00",
+  "completedAt": "2026-10-25T00:42:56.508229+00:00",
   "whitespaceVerification": {
     "sourceCommitDiffCheckExitCode": 0,
     "rawEvidenceStagedDiffCheckExitCode": 2,
@@ -150,13 +150,16 @@
   },
   "earlierChecks": [
     "migrated-build.json",
-    "migrated-check-comments.json"
+    "migrated-check-comments.json",
+    "post-hotfix-build.json",
+    "post-hotfix-check-comments.json"
   ],
   "verificationWorkspace": {
     "unitHead": "208718601c071b72f592b8eebe30958e7eb61afa",
     "unitWorkspace": "Full captured snapshot in post-hotfix-invocation.json includes main-owned staged transfer and unrelated unmerged test files. No foreign files or index entries changed by this executor.",
-    "finalBuildHead": "8a28926f9664f710224108b4954fd1c5d51d60e3",
+    "finalBuildHead": "2da0e6d310f16a3b11f4f8f1a1c5a11a0b8f9b5a",
     "assignedSourceAndTestDiffFromSourceCommitEmpty": true,
-    "foreignTransferCompletedBeforeFinalChecks": true
+    "foreignTransferCompletedBeforeFinalChecks": true,
+    "finalBuildWorkspaceStatus": "?? test/runtime-command-timing.test.ts\n"
   }
 }

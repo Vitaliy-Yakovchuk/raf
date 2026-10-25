@@ -57,13 +57,13 @@ if (process.argv[2] === 'pane') {
   const { createServer } = await import('node:https');
   const server = createServer({ key: fs.readFileSync(config.key), cert: fs.readFileSync(config.cert) }, (request, response) => {
     const state = read(config.control), url = new URL(request.url, 'https://localhost');
-    fs.appendFileSync(config.log, JSON.stringify({ pathname: url.pathname, cursor: url.searchParams.get('cursor'), at: Date.now() }) + '\n');
+    fs.appendFileSync(config.log, JSON.stringify({ pathname: url.pathname, cursor: url.searchParams.get('cursor'), revision:state.revision, repeated:!!state.repeat, at: Date.now() }) + '\n');
     const key = ['qa', 'fixture', '3401'], problem_id = JSON.stringify(key);
-    const detail = { problem_id, revision: state.revision, status: 'open', state: 'open', created_at: '2026-10-25T00:00:00Z', comments: state.comment ? [{ id: state.comment, author_id: 'human-fixture', author_kind: 'human', text: 'CFC34 literal $(touch forbidden) `false`', created_at: '2026-10-25T00:00:00Z' }] : [], attachments: [] };
+    const detail = { problem_id, revision: state.revision, status: 'open', state: 'open', created_at: '2026-10-25T00:00:00Z', comments: state.comment ? [{ id: state.comment, author_id: 'human-fixture', author_kind: 'person', text: 'CFC34 literal $(touch forbidden) `false`', created_at: '2026-10-25T00:00:00Z' }] : [], attachments: [] };
     let value;
     if (url.pathname === '/api/bugs/events') {
       const cursor = Number(url.searchParams.get('cursor') ?? 0);
-      value = { cursor: String(state.revision), has_more: false, events: state.revision > cursor && state.revision > 0 ? [{ cursor: String(state.revision), problem_id, kind: 'changed' }] : [] };
+      value = { cursor: String(state.revision), has_more: false, events: (state.revision > cursor || state.repeat) && state.revision > 0 ? [{ cursor: String(state.revision), problem_id, kind: 'changed' }] : [] };
     } else if (url.pathname === '/api/bugs') value = { bugs: state.revision ? [detail] : [], nextCursor: null };
     else value = detail;
     response.writeHead(200, { 'content-type': 'application/json' }); response.end(JSON.stringify(value));
@@ -131,7 +131,7 @@ if (process.argv[2] === 'pane') {
     const value = await wait(label, () => fs.existsSync(path.join(output, label + '.json')) && read(path.join(output, label + '.json')), 130000);
     summary.commands.push({ label, evidence: label + '.json', cliExitCode: value.cliExitCode }); flush(); return value;
   };
-  const record = () => read(path.join(home, '.raf/service.json'));
+  const record = () => fs.existsSync(path.join(home,'.raf/service.json')) ? read(path.join(home, '.raf/service.json')) : null;
   const stop = () => { const result = must(cli('service-stop-' + (++sequence), ['service', 'stop'])); servicePid = undefined; return result; };
   const start = () => { const result = must(cli('service-start-' + (++sequence), ['service', 'start'])); servicePid = result.pid; return result; };
   try {
@@ -229,8 +229,10 @@ if (process.argv[2] === 'pane') {
       db(state, d => d.prepare('INSERT INTO sessions(run_id,address_id,state,finished_at,payload) VALUES(?,?,?,?,?)').run(mainSession.run_id, mainSession.address_id, mainSession.state, mainSession.finished_at, mainSession.payload), false);
       await wait('retry accepted', () => notices().some(row => row.comment_server_id === 'cfc34-comment-2' && row.noticed_at !== null));
       await wait('main literal comment marker', () => received().some(row => row.text.includes('cfc34-comment-2')));
-      await delay(settings.bugs.pollIntervalMs * 3);
-      const texts = received().filter(row => /bug#3401|cfc34-comment-2/.test(row.text)); assert.equal(texts.length, 2); for (const value of texts) { assert.match(value.text, /^\[raf\] /); assert.equal(value.text.match(/\[raf\]/g).length, 1); }
+      atomic(upstreamControl, {revision:2,comment:'cfc34-comment-2',repeat:true});
+      await delay(settings.bugs.pollIntervalMs * 4);
+      atomic(upstreamControl, {revision:2,comment:'cfc34-comment-2',repeat:false});
+      const texts = received().filter(row => /bug#3401|cfc34-comment-2/.test(row.text)); assert.equal(texts.length, 2); for (const value of texts) { assert.match(value.text, /^\[raf\] /); assert.ok(value.text.includes('projects/raf/bug#3401')); assert.equal(value.text.match(/\[raf\]/g).length, 1); }
       const delivered = notices(); stop(); atomic(path.join(output, 'I6-delivery.json'), { bug, pending, delivered, received: texts, upstreamErrors }); return { evidence: 'I6-delivery.json', defaultProductionDelivery: true };
     });
     await scenario('I7', async () => {
@@ -251,6 +253,19 @@ if (process.argv[2] === 'pane') {
       let stdout = '', stderr = ''; client.stdout.on('data', value => stdout += value); client.stderr.on('data', value => stderr += value); const exited = new Promise(resolve => client.on('close', (code, signal) => resolve({ cliExitCode: code, signal })));
       await delay(500); assert.equal(client.exitCode, null); stop(); const result = { ...(await exited), stdout, stderr, command: [process.execPath, ...args] }; assert.notEqual(result.cliExitCode, 0); assert.match(stdout + stderr, /service_stopped/);
       atomic(path.join(output, 'I5-grants.json'), { grant, next, before, after, elapsed, interval: settings.resourceWait.grantIntervalMs, abandoned: result }); return { evidence: 'I5-grants.json' };
+    });
+    await scenario('I5-channel', async () => {
+      const policyFile=path.join(root,'conf/flow.json'), saved=fs.readFileSync(policyFile,'utf8'), policy=JSON.parse(saved);
+      policy.resources.normal.minRamBytes=Number.MAX_SAFE_INTEGER; policy.resources.hotfix.minRamBytes=Number.MAX_SAFE_INTEGER; atomic(policyFile,policy);
+      try {
+        atomic(path.join(base,'mode.json'),{mode:'normal'}); const owner=start(), before=sql().resource_wait_protocol_state;
+        const args=[path.join(main,'bin/raf.ts'),'resource','wait','--level','normal']; const client=spawn(process.execPath,args,{cwd:main,env,stdio:['ignore','pipe','pipe']}); processes.push(client);
+        let stdout='',stderr=''; client.stdout.on('data',value=>stdout+=value);client.stderr.on('data',value=>stderr+=value);const exited=new Promise(resolve=>client.on('close',(code,signal)=>resolve({cliExitCode:code,signal})));
+        await delay(5000);assert.equal(client.exitCode,null);assert.ok(live(owner.pid));const pendingFds=fs.readdirSync('/proc/'+client.pid+'/fd').flatMap(fd=>{try{return[fs.readlinkSync('/proc/'+client.pid+'/fd/'+fd)];}catch{return[];}});assert.ok(pendingFds.some(fd=>fd.startsWith('socket:')));
+        process.kill(owner.pid,'SIGKILL'); await wait('killed own service',()=>!live(owner.pid));const result={...(await Promise.race([exited,delay(45000).then(()=>{throw Error('channel loss client did not exit');})])),stdout,stderr,command:[process.execPath,...args]}; assert.notEqual(result.cliExitCode,0);assert.equal(result.signal,null);assert.match(stdout+stderr,/connection.*lost|service_stopped/i);
+        const abandoned=sql().resource_wait_protocol_state;assert.deepEqual(abandoned,before);const replacement=start();assert.notEqual(replacement.serviceEpoch,owner.serviceEpoch);assert.equal(client.exitCode,result.cliExitCode);assert.deepEqual(sql().resource_wait_protocol_state[0].grant_json,before[0].grant_json);stop();
+        atomic(path.join(output,'I5-channel.json'),{owner,replacement,before,abandoned,result,pendingFds,policy:{normal:policy.resources.normal,hotfix:policy.resources.hotfix},noRevive:true});return{evidence:'I5-channel.json'};
+      } finally {fs.writeFileSync(policyFile,saved);}
     });
     await scenario('I2', async () => {
       stop(); const saved = { ...settings.service }; settings.service.entryRelativePath = 'bin/absent.ts'; atomic(path.join(root, 'conf/raf.json'), settings);
@@ -277,7 +292,7 @@ if (process.argv[2] === 'pane') {
   } catch (error) { summary.setupError = { message: String(error), stack: error.stack }; }
   finally {
     try { if (fs.existsSync(state)) stop(); } catch (error) { summary.cleanup.stopError = String(error); }
-    try { const current = record(); if (live(current.pid)) { process.kill(current.pid, 'SIGKILL'); await wait('own service cleanup', () => !live(current.pid)); } } catch (error) { if (error.code !== 'ENOENT') summary.cleanup.serviceError = String(error); }
+    try { const current = record(); if (live(current?.pid)) { process.kill(current.pid, 'SIGKILL'); await wait('own service cleanup', () => !live(current.pid)); } } catch (error) { if (error.code !== 'ENOENT') summary.cleanup.serviceError = String(error); }
     for (const socket of sockets) { const result = run('tmux-cleanup-' + (++sequence), 'tmux', ['-S', socket, 'kill-server']); if (result.cliExitCode !== 0) summary.cleanup.tmuxError = result.stderr; }
     for (const child of processes) if (child.exitCode === null && child.signalCode === null) { const exit = new Promise(resolve => child.once('close', resolve)); child.kill('SIGKILL'); await exit; }
     const remaining = fs.readdirSync('/proc').filter(name => /^\d+$/.test(name)).flatMap(name => { try { const cwd = fs.readlinkSync('/proc/' + name + '/cwd'); return cwd.startsWith(base + '/') && live(Number(name)) ? [{ pid: Number(name), cwd }] : []; } catch { return []; } });
@@ -285,6 +300,7 @@ if (process.argv[2] === 'pane') {
     if (fs.existsSync(path.join(home, '.raf/service.log'))) fs.copyFileSync(path.join(home, '.raf/service.log'), path.join(output, 'service.log'));
     fs.writeFileSync(path.join(output,'upstream.stderr'),upstreamErrors);
     summary.received = received(); summary.finalSql = fs.existsSync(state) ? sql() : null; summary.finalNotices = fs.existsSync(bugs) ? notices() : null;
+    summary.finalBugState=fs.existsSync(bugs)?db(bugs,d=>Object.fromEntries(['bugs','comments','sync_state'].map(table=>[table,d.prepare('SELECT * FROM '+table).all()]))):null;
     summary.status = summary.scenarios.length === summary.selection.length && summary.scenarios.every(row => row.status === 'passed' && !row.details.remaining && !row.details.ordinaryAgent) && summary.cleanup.complete && !summary.setupError ? 'passed' : 'incomplete'; flush();
     fs.rmSync(base, { recursive: true, force: true }); summary.cleanup.fixtureRemoved = !fs.existsSync(base); flush();
   }

@@ -1,0 +1,29 @@
+{
+  "project": "raf",
+  "profileId": "node",
+  "group": "complete-raf-flow-contracts/raf-agent-adapters",
+  "addUnitFiles": [
+    "test/agent-adapters-contract.test.ts"
+  ],
+  "groupEntry": {
+    "profileId": "node",
+    "files": [
+      "test/agent-adapter-readiness.test.ts",
+      "test/agent-adapters-contract.test.ts"
+    ]
+  },
+  "configurationAppliedBy": "main",
+  "configurationCommitPrefix": "030e6b4a4c",
+  "prerequisites": [
+    "Закомічений новий unit-файл і незмінний readiness baseline.",
+    "Реєстрація unitFiles та точного preset main; integration не додається.",
+    "Статичний аудит: лише fake executor/clock/ownership/report/process; немає справжніх subprocess/fs/tmux/SQLite/socket/network.",
+    "Чинний compiled raf_command та immutable caller assignment test-scaffold з дозволом red.",
+    "Перевірений isolated QA HOME/state/tmp, той самий ledger без reset; selection/knownRed/timeoutCount/inFlight перевіряє main.",
+    "Deadline лише conf/flow.json#/unitTests/timeoutMs."
+  ],
+  "productionScaffold": {
+    "added": false,
+    "reason": "Поточні публічні adapter/wrapper порти достатні. Немає нових production методів або декларацій, які потребують NotImplemented."
+  }
+}

@@ -841,11 +841,11 @@
       "message": "an identity snapshot cannot authorize delivery after the active run changed\n+ actual - expected\n\n+ [\n+   {\n+     target: {\n+       evidence: {\n+         token: <redacted>\n+       },\n+       pid: 66,\n+       runner: 'codex',\n+       runnerSessionId: 'cli-B',\n+       startedAt: '2026-10-21T10:00:00.000Z',\n+       tmuxSession: 'tmux-B'\n+     },\n+     text: '[A] for old B'\n+   }\n+ ]\n- []\n",
       "location": {
         "file": "test/agent-control.test.ts",
-        "line": 282,
+        "line": 286,
         "column": 10
       },
       "stack": [
-        "    at TestContext.<anonymous> (test/agent-control.test.ts:282:10)",
+        "    at TestContext.<anonymous> (test/agent-control.test.ts:286:10)",
         "    at async Test.run (node:internal/test_runner/test:1409:7)",
         "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
       ],
@@ -863,11 +863,11 @@
       "message": "transport receipt cannot replace a current runId check\n+ actual - expected\n\n+ 'fulfilled'\n- 'rejected'\n",
       "location": {
         "file": "test/agent-control.test.ts",
-        "line": 299,
+        "line": 303,
         "column": 10
       },
       "stack": [
-        "    at TestContext.<anonymous> (test/agent-control.test.ts:299:10)",
+        "    at TestContext.<anonymous> (test/agent-control.test.ts:303:10)",
         "    at async Test.run (node:internal/test_runner/test:1409:7)",
         "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
       ],
@@ -885,11 +885,11 @@
       "message": "Assertion failed (strictEqual)",
       "location": {
         "file": "test/agent-control.test.ts",
-        "line": 415,
+        "line": 419,
         "column": 12
       },
       "stack": [
-        "    at TestContext.<anonymous> (test/agent-control.test.ts:415:12)",
+        "    at TestContext.<anonymous> (test/agent-control.test.ts:419:12)",
         "    at async Test.run (node:internal/test_runner/test:1409:7)",
         "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
       ],
@@ -983,7 +983,7 @@
     "tmpPathBytes": 13,
     "privateRunTmp": true
   },
-  "runId": "991eb4d6-386f-4c1e-97bd-d6b6550b152f",
+  "runId": "7315b628-527b-44e7-a743-e16d4e6af92e",
   "project": "raf",
   "workspace": "/srv/dev/work/orchestrator/raf-develop",
   "phase": "red",
@@ -1035,11 +1035,11 @@
       "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
       "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
       "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
-      "TMPDIR": "/tmp/r-TSmBtB"
+      "TMPDIR": "/tmp/r-xoS9g4"
     }
   },
-  "startedAt": "2026-10-25T14:25:18.395Z",
-  "durationMs": 19756,
+  "startedAt": "2026-10-25T14:28:51.462Z",
+  "durationMs": 18046,
   "exitCode": 1,
   "signal": null,
   "timedOut": false,
@@ -3511,21 +3511,21 @@
     ],
     "measurement": {
       "machineId": "05edcea976d34e69b22f660519c11f6f",
-      "loadAverage1m": 5.89,
+      "loadAverage1m": 4.52,
       "availableCores": 8,
       "totalRamBytes": 32852041728,
-      "availableRamBytes": 19832672256,
+      "availableRamBytes": 20529520640,
       "memoryPressure": "normal",
       "fileSystems": [
         {
           "id": "/dev/mapper/data-dev",
           "totalBytes": 190143823872,
-          "availableBytes": 163919998976
+          "availableBytes": 163916517376
         },
         {
           "id": "/dev/mapper/home-dev",
           "totalBytes": 11499937792,
-          "availableBytes": 8132067328
+          "availableBytes": 8130297856
         }
       ]
     },
@@ -3561,12 +3561,12 @@
       }
     },
     "remaining": {
-      "ramBytes": 17685188608,
+      "ramBytes": 18382036992,
       "diskBytes": {
-        "/dev/mapper/data-dev": 153182580736,
-        "/dev/mapper/home-dev": 8132067328
+        "/dev/mapper/data-dev": 153179099136,
+        "/dev/mapper/home-dev": 8130297856
       },
-      "normalizedLoad": 0.73625
+      "normalizedLoad": 0.565
     },
     "estimate": {
       "status": "KNOWN",
@@ -3581,13 +3581,13 @@
     "context": {
       "identity": {
         "kind": "test",
-        "id": "991eb4d6-386f-4c1e-97bd-d6b6550b152f",
+        "id": "7315b628-527b-44e7-a743-e16d4e6af92e",
         "machineId": "05edcea976d34e69b22f660519c11f6f",
         "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
-        "fence": "31d51477-5c73-4572-9831-68cc13a575c3",
+        "fence": "c0afbcd9-f829-4502-bd18-61ab90fd177e",
         "root": {
-          "pid": 1779233,
-          "startTicks": "28100134",
+          "pid": 1791153,
+          "startTicks": "28121390",
           "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
         }
       },
@@ -3622,12 +3622,12 @@
       ],
       "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
       "attributedPaths": [
-        "/tmp/r-TSmBtB"
+        "/tmp/r-xoS9g4"
       ]
     },
-    "preparedAt": 1792938319221,
+    "preparedAt": 1792938531785,
     "baseline": {
-      "at": 1792938319250,
+      "at": 1792938531807,
       "disk": [
         {
           "fileSystemId": "/dev/mapper/data-dev",
@@ -3639,16 +3639,16 @@
         }
       ]
     },
-    "startedAt": 1792938319268,
-    "lastObservedAt": 1792938337894,
-    "finishedAt": 1792938337937,
+    "startedAt": 1792938531829,
+    "lastObservedAt": 1792938549305,
+    "finishedAt": 1792938549338,
     "finishReason": "exit",
-    "peakRamBytes": 290365440,
+    "peakRamBytes": 306266112,
     "peakDiskBytes": {
       "/dev/mapper/data-dev": null
     },
     "ram": {
-      "peakBytes": 290365440,
+      "peakBytes": 306266112,
       "currentBytes": null,
       "method": {
         "name": "rss-sampled",
@@ -3691,8 +3691,5 @@
       "Final measurement completeness is unverified"
     ]
   },
-  "queue": {
-    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
-    "waited": true
-  }
+  "queue": null
 }

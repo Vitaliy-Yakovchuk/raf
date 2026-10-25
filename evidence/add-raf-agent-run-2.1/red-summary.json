@@ -1,6 +1,6 @@
 {
   "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-agent-run/contracts",
-  "runId": "991eb4d6-386f-4c1e-97bd-d6b6550b152f",
+  "runId": "7315b628-527b-44e7-a743-e16d4e6af92e",
   "outcome": "assertions-failed",
   "exitCode": 1,
   "passedCount": 567,
@@ -103,11 +103,11 @@
       "message": "an identity snapshot cannot authorize delivery after the active run changed\n+ actual - expected\n\n+ [\n+   {\n+     target: {\n+       evidence: {\n+         token: <redacted>\n+       },\n+       pid: 66,\n+       runner: 'codex',\n+       runnerSessionId: 'cli-B',\n+       startedAt: '2026-10-21T10:00:00.000Z',\n+       tmuxSession: 'tmux-B'\n+     },\n+     text: '[A] for old B'\n+   }\n+ ]\n- []\n",
       "location": {
         "file": "test/agent-control.test.ts",
-        "line": 282,
+        "line": 286,
         "column": 10
       },
       "stack": [
-        "    at TestContext.<anonymous> (test/agent-control.test.ts:282:10)",
+        "    at TestContext.<anonymous> (test/agent-control.test.ts:286:10)",
         "    at async Test.run (node:internal/test_runner/test:1409:7)",
         "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
       ],
@@ -125,11 +125,11 @@
       "message": "transport receipt cannot replace a current runId check\n+ actual - expected\n\n+ 'fulfilled'\n- 'rejected'\n",
       "location": {
         "file": "test/agent-control.test.ts",
-        "line": 299,
+        "line": 303,
         "column": 10
       },
       "stack": [
-        "    at TestContext.<anonymous> (test/agent-control.test.ts:299:10)",
+        "    at TestContext.<anonymous> (test/agent-control.test.ts:303:10)",
         "    at async Test.run (node:internal/test_runner/test:1409:7)",
         "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
       ],
@@ -973,11 +973,11 @@
       "message": "Assertion failed (strictEqual)",
       "location": {
         "file": "test/agent-control.test.ts",
-        "line": 415,
+        "line": 419,
         "column": 12
       },
       "stack": [
-        "    at TestContext.<anonymous> (test/agent-control.test.ts:415:12)",
+        "    at TestContext.<anonymous> (test/agent-control.test.ts:419:12)",
         "    at async Test.run (node:internal/test_runner/test:1409:7)",
         "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
       ],
@@ -1064,6 +1064,6 @@
     "project": "raf",
     "workspace": "/srv/dev/work/orchestrator/raf-develop",
     "group": "add-raf-agent-run/contracts",
-    "reason": "Merged command output interleaved a launch-queue.waiting event into the TestRunResult JSON; the aggregate contains the complete result with matching runId."
+    "reason": "Complete persisted lastResult with matching runId; full command output exceeds the tool output budget, and the preceding run also interleaved a launch-queue.waiting event into the JSON."
   }
 }

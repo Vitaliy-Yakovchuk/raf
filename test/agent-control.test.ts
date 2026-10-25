@@ -271,14 +271,18 @@ test('ARA 2.1 stale runId is refused before transport after the address is reuse
 test('ARA 2.1 recipient replaced during inspection receives no stale message', async () => {
   const f = fixture();
   const old = structuredClone(f.records.get('run-B')!);
-  f.dependencies.scanner.inspect = async process => {
-    if (process.runnerSessionId === 'cli-B') {
-      f.records.get(old.runId)!.state = 'finished';
+  const observe = f.dependencies.coordinator.observe;
+  f.dependencies.coordinator.observe = async (row, observation) => {
+    const snapshot = await observe(row, observation);
+    if (row.runId === old.runId) {
+      f.records.set(old.runId, { ...snapshot, state: 'finished', revision: snapshot.revision + 1 });
       f.records.set('run-B-new', { ...session('B'), runId: 'run-B-new', process: { ...old.process!, pid: 901, runnerSessionId: 'cli-B-new' } });
     }
-    return { state: 'alive', observedAt: time, identity: process };
+    return snapshot;
   };
   const result = await Promise.allSettled([f.service.message({ to: 'B', text: 'for old B' }, f.trustedCaller)]);
+  assert.equal(f.records.get(old.runId)?.state, 'finished', 'a competing commit must not be overwritten by the observation fixture');
+  assert.deepEqual([...f.records.values()].filter(row => row.addressId === 'B' && row.state !== 'finished').map(row => row.runId), ['run-B-new']);
   assert.deepEqual(f.deliveries, [], 'an identity snapshot cannot authorize delivery after the active run changed');
   assert.equal(result[0].status, 'rejected', 'a replaced recipient must not produce accepted:true');
 });

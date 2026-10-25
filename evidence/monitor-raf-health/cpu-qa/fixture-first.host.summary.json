@@ -1,0 +1,55 @@
+{
+  "runId": "5782b7af-5a09-4a1e-86e8-b756244e5ea9",
+  "kind": "local Linux integration stand with production modules and actual CPU; no raf CLI routing",
+  "sha": "690abcbc8c6b47ecebe82f9ac78a2002f19b09e1",
+  "workspaceStatus": "?? evidence/monitor-raf-health/cpu-qa/\n?? evidence/profile-raf-performance/qa-4.1/\n?? scripts/qa-health-cpu-host.ts\n",
+  "platform": "linux",
+  "release": "7.0.0-30-generic",
+  "node": "v26.12.1",
+  "sqlite": "3.54.0",
+  "configuredPolicy": {
+    "cpuWindowMs": 600000,
+    "cpuThresholdCores": 1
+  },
+  "standPolicy": {
+    "cpuWindowMs": 1000,
+    "cpuThresholdCores": 1
+  },
+  "statePath": "/tmp/raf-health-cpu-host-EOvL4e/state.sqlite",
+  "limitations": [
+    "cpuWindowMs explicitly shortened in isolated fixture conf; production threshold retained",
+    "Own workload runs RafCostRuntime directly, not daemon/worker/CLI dispatch",
+    "No production state, HOME, service, agent or admission reservation is modified"
+  ],
+  "scenarios": [
+    {
+      "name": "No baseline is unavailable",
+      "outcome": "passed",
+      "evidence": {
+        "availability": "unavailable",
+        "reason": "Missing initial profile baseline",
+        "startedAt": null,
+        "completedAt": "2026-10-25T02:32:49.886Z",
+        "wallMs": null,
+        "cpuUserMs": null,
+        "cpuSystemMs": null,
+        "cores": null,
+        "thresholdCores": 1,
+        "exceeded": false,
+        "sources": [],
+        "scopes": null,
+        "error": null
+      }
+    }
+  ],
+  "cleanup": {
+    "complete": true,
+    "remainingPids": [],
+    "removed": "/tmp/raf-health-cpu-host-EOvL4e"
+  },
+  "outcome": "failed",
+  "error": {
+    "message": "Expected values to be strictly equal:\n\n0 !== 1\n",
+    "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n0 !== 1\n\n    at file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-health-cpu-host.ts:105:12"
+  }
+}

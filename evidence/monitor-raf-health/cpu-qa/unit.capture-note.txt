@@ -1,0 +1,1 @@
+exec_command returns a combined output stream. Output is exactly one complete JSON object; no extra stderr bytes were observed. Empty stderr is inferred, not independently captured. CLI exit code is captured independently from TestRunResult.exitCode.

@@ -79,13 +79,13 @@ function assertStand(root) {
 
 const fixture = String.raw`import { test, expect } from 'vitest';
 import './test-support/live-worker.ts';
-import { Miniflare } from 'miniflare';
+import { Miniflare, convertV4MiniflareOptions } from 'miniflare';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 const mode = JSON.parse(readFileSync(new URL('../raf-etchly-lifecycle-mode.json', import.meta.url), 'utf8')).mode;
 if (mode === 'setup') throw new Error('Controlled import failure');
 (mode === 'skip' ? test.skip : test)('real fork, workerd and D1', async () => {
-  const mf = new Miniflare({ modules: true, script: 'export default { fetch() { return new Response("qa") } }', d1Databases: { QA_DB: '7311ab35-a96a-43cb-89b4-91cb7f11e302' }, d1Persist: join(process.env.TMPDIR, 'd1-persistence') });
+  const mf = new Miniflare(convertV4MiniflareOptions({ resourcePersistencePath: join(process.env.TMPDIR, 'd1-persistence'), workers: [{ modules: true, script: 'export default { fetch() { return new Response("qa") } }', d1Databases: { QA_DB: '7311ab35-a96a-43cb-89b4-91cb7f11e302' } }] }));
   try {
     const db = await mf.getD1Database('QA_DB');
     const row = await db.prepare('SELECT 1 AS proof').first();

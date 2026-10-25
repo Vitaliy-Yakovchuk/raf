@@ -1,0 +1,117 @@
+[
+  {
+    "mode": "smoke",
+    "label": "preset",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "rafSha": "5e5934435f8fab25e1031ce6205237e12002c9a4",
+    "etchlySha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host3/smoke/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host3/smoke/results/preset.input.json"
+      ],
+      "cwd": "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop"
+    },
+    "cliCode": 1,
+    "childExitCode": 1,
+    "resultPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host3/smoke/results/preset.result.json",
+    "stderrPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host3/smoke/results/preset.stderr",
+    "resultSha256": "8b6ac10dbf4352eea95674c200e990bf9f31c6d8551372be19684c2bf481e814",
+    "runId": "39a3abbc-939b-4f29-84fa-c5591bf86e67",
+    "selection": {
+      "files": [
+        "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+        "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+        "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts"
+      ],
+      "testIds": []
+    },
+    "testKind": "integration",
+    "callerPhase": "qa",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+        "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong attempt 1 without REPORT → attempt 2 is made by itself, its prompt carries the section «Помилки валідатора» naming the refusal, it is accepted, review done on its second attempt"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+        "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong three refused answers → exactly three analysis calls, then review exhausts attempts with lastCode analysis_output_invalid"
+      },
+      {
+        "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+        "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong the person reads analysis_output_invalid as «the model's answer could not be read», not as an unavailable review"
+      }
+    ],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "incomplete",
+    "timeoutCount": 0,
+    "nextAction": "complete-integration"
+  },
+  {
+    "mode": "d08",
+    "label": "green",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "rafSha": "5e5934435f8fab25e1031ce6205237e12002c9a4",
+    "etchlySha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host3/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host3/d08/results/green.input.json"
+      ],
+      "cwd": "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop"
+    },
+    "cliCode": 1,
+    "childExitCode": 1,
+    "resultPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host3/d08/results/green.result.json",
+    "stderrPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host3/d08/results/green.stderr",
+    "resultSha256": "163953efb5c208f5a825b3692c023aff07dd0c61b757395f5da89318087efc51",
+    "runId": "3cfb73e2-49cc-4e27-9aea-4afe43eb1aeb",
+    "selection": {
+      "files": [
+        "worker/src/raf-etchly-lifecycle-qa.test.ts"
+      ],
+      "testIds": []
+    },
+    "testKind": "integration",
+    "callerPhase": "qa",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 60000
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+        "name": "real fork, workerd and D1"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "incomplete",
+    "timeoutCount": 0,
+    "nextAction": "complete-integration"
+  }
+]

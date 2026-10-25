@@ -23,6 +23,24 @@
       "cliCode": 0,
       "accepted": true,
       "receiptId": "3f1f6bc1-287b-4973-b387-c8a8273ad401"
+    },
+    {
+      "purpose": "Host2 setup diagnosis; QA owns immediate fixture fix",
+      "cliCode": 0,
+      "accepted": true,
+      "receiptId": "2f39ed44-ef2d-4ffe-8044-8dcfd8a13c37"
+    },
+    {
+      "purpose": "Corpus fixture fix SHA and exact host3 command",
+      "cliCode": 0,
+      "accepted": true,
+      "receiptId": "7f70dc40-b6e0-465c-a38d-3a600b2db2d4"
+    },
+    {
+      "purpose": "Clarify existing completed host2 artifacts versus host queue",
+      "cliCode": 0,
+      "accepted": true,
+      "receiptId": "2d9a27bc-a03d-4c14-bab8-e73ee5bdd0fd"
     }
   ],
   "syntax": {
@@ -46,5 +64,14 @@
   "tasksNoteOwner": "Main explicitly instructed agents not to edit add-raf-test-run/tasks.md; main will add the evidence note from this QA report. QA does not change this file or its checkboxes.",
   "d09OwnTrustedCallerProved": false,
   "hostInitialEvidence": "host-initial/manifest.json",
-  "hostRetryEvidence": "host2/manifest.json"
+  "hostRetryEvidence": "host2/manifest.json",
+  "corpusFixCommit": "5e5934435f8fab25e1031ce6205237e12002c9a4",
+  "hostContinuation": {
+    "root": "/srv/dev/raf-etchly-6263b-host3",
+    "status": "Completed suite1; both prepare0/driver1. Smoke actual retry assertion; D08 own Miniflare API mismatch. Full artifacts preserved in host3/.",
+    "command": "bash /srv/dev/work/orchestrator/raf-develop/scripts/qa-etchly-integration-suite.sh /srv/dev/work/orchestrator /srv/dev/raf-etchly-6263b-host3 5e5934435f8fab25e1031ce6205237e12002c9a4 b8a769ccca3cd281ab80278cedc173d6df9a3dc9 171441decdf6de1e57482e816f7db683765ce7f6",
+    "expected": "prepare/driver/suite rc0; smoke 11 and D08 12 captures; complete cleanup; D09 not proved",
+    "evidence": "host3/manifest.json"
+  },
+  "d08Fix": "Use installed Miniflare5 convertV4MiniflareOptions with workers array. Next host continuation restricted to d08; live green pending."
 }

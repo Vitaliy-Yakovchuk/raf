@@ -1,0 +1,843 @@
+{
+  "sourceItem": "add-raf-test-run:6.2.6.3",
+  "mode": "d08",
+  "root": "/srv/dev/raf-etchly-6263b-host3/d08",
+  "output": "/srv/dev/raf-etchly-6263b-host3/d08/results",
+  "marker": {
+    "root": "/srv/dev/raf-etchly-6263b-host3/d08",
+    "sourceRoot": "/srv/dev/work/orchestrator",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "preparedAt": "2026-10-25T22:24:47.448Z",
+    "boundary": "Clean committed code clones plus a snapshot of preinstalled dependencies and app build. No install, build, operational state or live caller grant is copied.",
+    "repositories": [
+      {
+        "name": "raf-develop",
+        "sha": "5e5934435f8fab25e1031ce6205237e12002c9a4",
+        "branch": "develop",
+        "source": "/srv/dev/work/orchestrator/raf-develop",
+        "sourceHead": "80ac6292e895dc2892153505bd8fa8911249960f",
+        "sourceDirty": "M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2-result-index.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.cli-code.txt\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.result.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.cli-code.txt\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.result.json"
+      },
+      {
+        "name": "raf-main",
+        "sha": "5e5934435f8fab25e1031ce6205237e12002c9a4",
+        "branch": "main",
+        "source": "/srv/dev/work/orchestrator/raf-develop",
+        "sourceHead": "80ac6292e895dc2892153505bd8fa8911249960f",
+        "sourceDirty": "M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2-result-index.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.cli-code.txt\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.result.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.cli-code.txt\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.result.json"
+      },
+      {
+        "name": "etchly-develop",
+        "sha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+        "branch": "develop",
+        "source": "/srv/dev/work/orchestrator/etchly-develop",
+        "sourceHead": "989cca780ba5175169637f6d6b1cecfec4781b14",
+        "sourceDirty": "M app/admin/sections/person-qa-6-1.test.tsx"
+      },
+      {
+        "name": "shared-libs-develop",
+        "sha": "171441decdf6de1e57482e816f7db683765ce7f6",
+        "branch": "develop",
+        "source": "/srv/dev/work/orchestrator/shared-libs-develop",
+        "sourceHead": "171441decdf6de1e57482e816f7db683765ce7f6",
+        "sourceDirty": ""
+      }
+    ],
+    "copied": [
+      {
+        "from": "/srv/dev/work/orchestrator/raf-develop/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/raf-develop/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/raf-develop/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/raf-main/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/etchly-develop/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/etchly-develop/app/dist/local",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/app/dist/local"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/learning/concept-base",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/learning/concept-base"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/app-shell/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/app-shell/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/bugs-api/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/bugs-api/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/bugs-ui/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/bugs-ui/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/invite-client/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/invite-client/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/payment-ports/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/payment-ports/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/reader/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/reader/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/resource-protocol/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/access/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/resource-protocol/packages/access/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/address/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/resource-protocol/packages/address/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/prefix-load/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/resource-protocol/packages/prefix-load/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/protocol/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/resource-protocol/packages/protocol/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/store/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/resource-protocol/packages/store/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/sync/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/d08/shared-libs-develop/resource-protocol/packages/sync/node_modules"
+      }
+    ],
+    "configurations": [
+      {
+        "name": "projects.json",
+        "sourceSha256": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+        "standSha256": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+      },
+      {
+        "name": "raf.json",
+        "sourceSha256": "a17d917f9afaf86a6f52d1105e854c2c9641fb01ecd4d7beea1ce38f1fdbba92"
+      },
+      {
+        "name": "raf-constants.json",
+        "sourceSha256": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e"
+      },
+      {
+        "name": "flow.json",
+        "sourceSha256": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+      },
+      {
+        "name": "test-runs.json",
+        "sourceSha256": "6a8f1494b9cc30fae82403bf52d9c5218fbc9421f5df1ca6b97ab093e086ce86"
+      }
+    ],
+    "learning": {
+      "sourceHead": "f17a5a65b29035e53a426eb0f20b1895c5b286e9",
+      "sourceDirty": "",
+      "scope": "Only concept-base including its prepared build; no other learning directories are copied.",
+      "files": 1654,
+      "hashesSha256": "48c3b5c7dfe667e569ff1e5e90bc39a32fc5d3ca3695f1ec8fc8791f755d20f6"
+    },
+    "prerequisites": [
+      {
+        "relative": "etchly-develop/node_modules/vitest/package.json",
+        "sha256": "a28126d97bcaf567da5bed69443b7f3bcd9a7a8c38c8b66e554686b6bb2c10e0"
+      },
+      {
+        "relative": "etchly-develop/node_modules/miniflare/package.json",
+        "sha256": "e2349545887eb236d46dacf2cd65802316cb6bf20b8a78e99753323c0a20fa06"
+      },
+      {
+        "relative": "etchly-develop/node_modules/workerd/bin/workerd",
+        "sha256": "d7ce7f7de38dba233a2924b777b51c65a407e524154d9b66fa8d2bc0a1ff5dcf"
+      },
+      {
+        "relative": "etchly-develop/node_modules/esbuild/bin/esbuild",
+        "sha256": "e1698a3d5c6c0798fee4fd3b5cc816651f460c63d390a7a26ea4beb0b1884100"
+      },
+      {
+        "relative": "etchly-develop/app/dist/local/index.html",
+        "sha256": "ddab268e2ce1e60d9b872c1d860c0e9f3f004089f37d0acb525c559d9acc5274"
+      },
+      {
+        "relative": "learning/concept-base/build/records.jsonl",
+        "sha256": "3c97be7378d494f28c39195607aa3cee11b598b448f204ba5c5f7e17c19bb365"
+      },
+      {
+        "relative": "learning/concept-base/build/chunks.jsonl",
+        "sha256": "ffb0ce1ee064c0d3cc2f444ea544d52ad15c2a13c8fad173cbe0daa9363bd124"
+      },
+      {
+        "relative": "learning/concept-base/build/manifest-summary.json",
+        "sha256": "f9f0620c6fc2476fac912ed05263cc63beccf892dacd09a37e4825f575d93c03"
+      },
+      {
+        "relative": "learning/concept-base/sources/manifest.yaml",
+        "sha256": "a51b63310253ad0c37b7053710ddec50bd78ea55faf9d5ed0d330e71b7eb5720"
+      }
+    ],
+    "status": "prepared"
+  },
+  "driverSha256": "0c4e7e1fd9a8aefc151717282924a3f36367ed8387dc15cea806a0658d895c47",
+  "evidenceBoundary": "Main-executed controlled host API stand. Real production planner/runtime/reporter/SQLite/forks/workerd. Does not establish a live QA etchly assignment or its trusted broker channel; D09 own-caller gate stays open.",
+  "before": [
+    {
+      "name": "raf-develop",
+      "sha": "5e5934435f8fab25e1031ce6205237e12002c9a4",
+      "dirty": ""
+    },
+    {
+      "name": "etchly-develop",
+      "sha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+      "dirty": ""
+    },
+    {
+      "name": "shared-libs-develop",
+      "sha": "171441decdf6de1e57482e816f7db683765ce7f6",
+      "dirty": ""
+    }
+  ],
+  "configuration": [
+    {
+      "name": "flow.json",
+      "sha256": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+    },
+    {
+      "name": "projects.json",
+      "sha256": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+    },
+    {
+      "name": "test-runs.json",
+      "sha256": "6a8f1494b9cc30fae82403bf52d9c5218fbc9421f5df1ca6b97ab093e086ce86"
+    },
+    {
+      "name": "raf-constants.json",
+      "sha256": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e"
+    }
+  ],
+  "integrationBudgetMs": 60000,
+  "hostWatchdogMs": 900000,
+  "scenarios": [
+    {
+      "label": "green",
+      "command": {
+        "executable": "/opt/dev/node/bin/node",
+        "argv": [
+          "/srv/dev/raf-etchly-6263b-host3/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+          "--worker",
+          "/srv/dev/raf-etchly-6263b-host3/d08/results/green.input.json"
+        ],
+        "cwd": "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop"
+      },
+      "cliCode": 1,
+      "signal": null,
+      "result": {
+        "testKind": "integration",
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/integrationTests/timeoutMs",
+          "timeoutMs": 60000
+        },
+        "callerPhase": "qa",
+        "diagnostics": [
+          {
+            "kind": "test-failure",
+            "test": {
+              "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+              "name": "real fork, workerd and D1"
+            },
+            "errorName": "ZodError",
+            "message": "[\n  {\n    \"expected\": \"array\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"workers\"\n    ],\n    \"message\": \"Invalid input: expected array, received undefined\"\n  },\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"modules\",\n      \"script\",\n      \"d1Databases\",\n      \"d1Persist\"\n    ],\n    \"path\": [],\n    \"message\": \"Unrecognized keys: \\\"modules\\\", \\\"script\\\", \\\"d1Databases\\\", \\\"d1Persist\\\"\"\n  }\n]",
+            "location": {
+              "file": "src/raf-etchly-lifecycle-qa.test.ts",
+              "line": 9,
+              "column": 14
+            },
+            "stack": [
+              "    at validateOptions (<external>/index.js:133121:37)",
+              "    at new _Miniflare (<external>/index.js:133550:38)",
+              "    at src/raf-etchly-lifecycle-qa.test.ts:9:14",
+              "    at <external>/chunk-artifact.js:302:11",
+              "    at <external>/chunk-artifact.js:1903:26",
+              "    at <external>/chunk-artifact.js:2326:20",
+              "    at new Promise (<anonymous>)",
+              "    at runWithCancel (<external>/chunk-artifact.js:2323:10)",
+              "    at <external>/chunk-artifact.js:2305:20",
+              "    at new Promise (<anonymous>)"
+            ],
+            "redacted": true,
+            "truncated": false,
+            "origin": "test-body"
+          },
+          {
+            "kind": "runner",
+            "test": null,
+            "message": "shared worker: startup=6461 ms; leases=0; setup max=0 ms; teardown max=0 ms\nshared worker: startup=1892 ms; leases=0; setup max=0 ms; teardown max=0 ms\n",
+            "location": null,
+            "stack": [],
+            "redacted": false,
+            "truncated": false,
+            "unavailableReason": "Error origin is unknown"
+          }
+        ],
+        "diagnosticSummary": {
+          "totalEntries": 2,
+          "retainedEntries": 2,
+          "omittedEntries": 0,
+          "truncated": false,
+          "redacted": true
+        },
+        "environmentSummary": {
+          "executable": "node",
+          "runtimeVersion": "v26.12.1",
+          "adapter": "vitest-events",
+          "isolation": "process",
+          "configurationFingerprints": {
+            "flow": "3ad562f8f47dfdbce4a37b4a31fad2ce61874c43f17b1766b2f34dc314101a56",
+            "testRuns": "94f2619443be1150043f043d243b3bd51a623ba1fee513b02259cb9d49842090",
+            "projects": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+          },
+          "tmpPathBytes": 13,
+          "privateRunTmp": true
+        },
+        "runId": "3cfb73e2-49cc-4e27-9aea-4afe43eb1aeb",
+        "project": "etchly",
+        "workspace": "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop",
+        "phase": "integration",
+        "group": "add-raf-test-run/etchly-worker-d1-lifecycle",
+        "profileId": "vitest-worker-d1-integration",
+        "selection": {
+          "files": [
+            "worker/src/raf-etchly-lifecycle-qa.test.ts"
+          ],
+          "testIds": []
+        },
+        "command": {
+          "executable": "node",
+          "argv": [
+            "/srv/dev/raf-etchly-6263b-host3/d08/raf-develop/scripts/test-run-vitest.ts"
+          ],
+          "cwd": "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/worker",
+          "shell": false,
+          "environment": {
+            "HOME": "/srv/dev/raf-etchly-6263b-host3/d08/qa-home",
+            "statePath": "/srv/dev/raf-etchly-6263b-host3/d08/qa-home/.raf/state.sqlite",
+            "tmpPath": "/srv/dev/raf-etchly-6263b-host3/d08/qa-home/.raf/tmp",
+            "timeoutPolicy": {
+              "source": "conf/flow.json#/integrationTests/timeoutMs",
+              "timeoutMs": 60000
+            },
+            "TMPDIR": "/tmp/r-VhyMx2",
+            "vitestBatches": [
+              {
+                "executable": "node",
+                "argv": [
+                  "--import",
+                  "../scripts/shared-library-runtime.mjs",
+                  "../node_modules/vitest/vitest.mjs",
+                  "run",
+                  "src/raf-etchly-lifecycle-qa.test.ts",
+                  "--configLoader",
+                  "runner",
+                  "--project",
+                  "worker-d1-integration",
+                  "--testTimeout",
+                  "60000",
+                  "--hookTimeout",
+                  "60000",
+                  "--reporter",
+                  "/srv/dev/raf-etchly-6263b-host3/d08/raf-develop/src/test-run-vitest-reporter.ts"
+                ],
+                "cwd": "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/worker",
+                "shell": false,
+                "environment": {
+                  "HOME": "/srv/dev/raf-etchly-6263b-host3/d08/qa-home",
+                  "statePath": "/srv/dev/raf-etchly-6263b-host3/d08/qa-home/.raf/state.sqlite",
+                  "tmpPath": "/srv/dev/raf-etchly-6263b-host3/d08/qa-home/.raf/tmp",
+                  "timeoutPolicy": {
+                    "source": "conf/flow.json#/integrationTests/timeoutMs",
+                    "timeoutMs": 60000
+                  },
+                  "TMPDIR": "/tmp/r-VhyMx2"
+                }
+              }
+            ]
+          }
+        },
+        "startedAt": "2026-10-25T22:25:16.595Z",
+        "durationMs": 26938,
+        "exitCode": 1,
+        "signal": null,
+        "timedOut": false,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "outcome": "assertions-failed",
+        "failureKinds": [
+          "assertions"
+        ],
+        "passed": [],
+        "knownRed": [
+          {
+            "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+            "name": "real fork, workerd and D1"
+          }
+        ],
+        "unexecuted": [],
+        "unknown": [],
+        "removed": [],
+        "stateAccess": null,
+        "groupSnapshot": "loaded",
+        "groupState": "incomplete",
+        "timeoutCount": 0,
+        "nextAction": "complete-integration",
+        "hintIds": [
+          "integration-assertions"
+        ],
+        "hints": [
+          "Виправте реалізацію та підтвердьте повний integration-сценарій; knownRed зберігаються до підтвердження."
+        ],
+        "evidence": []
+      },
+      "state": [
+        {
+          "key": {
+            "project": "etchly",
+            "workspace": "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop",
+            "group": "add-raf-test-run/etchly-worker-d1-lifecycle"
+          },
+          "testKind": "integration",
+          "profileId": "vitest-worker-d1-integration",
+          "timeoutCount": 0,
+          "state": "incomplete",
+          "selection": {
+            "files": [
+              "worker/src/raf-etchly-lifecycle-qa.test.ts"
+            ],
+            "testIds": []
+          },
+          "knownRed": [
+            {
+              "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+              "name": "real fork, workerd and D1"
+            }
+          ],
+          "unexecuted": [],
+          "inFlight": null,
+          "lastResult": {
+            "testKind": "integration",
+            "timeoutPolicy": {
+              "source": "conf/flow.json#/integrationTests/timeoutMs",
+              "timeoutMs": 60000
+            },
+            "callerPhase": "qa",
+            "diagnostics": [
+              {
+                "kind": "test-failure",
+                "test": {
+                  "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+                  "name": "real fork, workerd and D1"
+                },
+                "errorName": "ZodError",
+                "message": "[\n  {\n    \"expected\": \"array\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"workers\"\n    ],\n    \"message\": \"Invalid input: expected array, received undefined\"\n  },\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"modules\",\n      \"script\",\n      \"d1Databases\",\n      \"d1Persist\"\n    ],\n    \"path\": [],\n    \"message\": \"Unrecognized keys: \\\"modules\\\", \\\"script\\\", \\\"d1Databases\\\", \\\"d1Persist\\\"\"\n  }\n]",
+                "location": {
+                  "file": "src/raf-etchly-lifecycle-qa.test.ts",
+                  "line": 9,
+                  "column": 14
+                },
+                "stack": [
+                  "    at validateOptions (<external>/index.js:133121:37)",
+                  "    at new _Miniflare (<external>/index.js:133550:38)",
+                  "    at src/raf-etchly-lifecycle-qa.test.ts:9:14",
+                  "    at <external>/chunk-artifact.js:302:11",
+                  "    at <external>/chunk-artifact.js:1903:26",
+                  "    at <external>/chunk-artifact.js:2326:20",
+                  "    at new Promise (<anonymous>)",
+                  "    at runWithCancel (<external>/chunk-artifact.js:2323:10)",
+                  "    at <external>/chunk-artifact.js:2305:20",
+                  "    at new Promise (<anonymous>)"
+                ],
+                "redacted": true,
+                "truncated": false,
+                "origin": "test-body"
+              },
+              {
+                "kind": "runner",
+                "test": null,
+                "message": "shared worker: startup=6461 ms; leases=0; setup max=0 ms; teardown max=0 ms\nshared worker: startup=1892 ms; leases=0; setup max=0 ms; teardown max=0 ms\n",
+                "location": null,
+                "stack": [],
+                "redacted": false,
+                "truncated": false,
+                "unavailableReason": "Error origin is unknown"
+              }
+            ],
+            "diagnosticSummary": {
+              "totalEntries": 2,
+              "retainedEntries": 2,
+              "omittedEntries": 0,
+              "truncated": false,
+              "redacted": true
+            },
+            "environmentSummary": {
+              "executable": "node",
+              "runtimeVersion": "v26.12.1",
+              "adapter": "vitest-events",
+              "isolation": "process",
+              "configurationFingerprints": {
+                "flow": "3ad562f8f47dfdbce4a37b4a31fad2ce61874c43f17b1766b2f34dc314101a56",
+                "testRuns": "94f2619443be1150043f043d243b3bd51a623ba1fee513b02259cb9d49842090",
+                "projects": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+              },
+              "tmpPathBytes": 13,
+              "privateRunTmp": true
+            },
+            "runId": "3cfb73e2-49cc-4e27-9aea-4afe43eb1aeb",
+            "project": "etchly",
+            "workspace": "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop",
+            "phase": "integration",
+            "group": "add-raf-test-run/etchly-worker-d1-lifecycle",
+            "profileId": "vitest-worker-d1-integration",
+            "selection": {
+              "files": [
+                "worker/src/raf-etchly-lifecycle-qa.test.ts"
+              ],
+              "testIds": []
+            },
+            "command": {
+              "executable": "node",
+              "argv": [
+                "/srv/dev/raf-etchly-6263b-host3/d08/raf-develop/scripts/test-run-vitest.ts"
+              ],
+              "cwd": "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/worker",
+              "shell": false,
+              "environment": {
+                "HOME": "/srv/dev/raf-etchly-6263b-host3/d08/qa-home",
+                "statePath": "/srv/dev/raf-etchly-6263b-host3/d08/qa-home/.raf/state.sqlite",
+                "tmpPath": "/srv/dev/raf-etchly-6263b-host3/d08/qa-home/.raf/tmp",
+                "timeoutPolicy": {
+                  "source": "conf/flow.json#/integrationTests/timeoutMs",
+                  "timeoutMs": 60000
+                },
+                "TMPDIR": "/tmp/r-VhyMx2",
+                "vitestBatches": [
+                  {
+                    "executable": "node",
+                    "argv": [
+                      "--import",
+                      "../scripts/shared-library-runtime.mjs",
+                      "../node_modules/vitest/vitest.mjs",
+                      "run",
+                      "src/raf-etchly-lifecycle-qa.test.ts",
+                      "--configLoader",
+                      "runner",
+                      "--project",
+                      "worker-d1-integration",
+                      "--testTimeout",
+                      "60000",
+                      "--hookTimeout",
+                      "60000",
+                      "--reporter",
+                      "/srv/dev/raf-etchly-6263b-host3/d08/raf-develop/src/test-run-vitest-reporter.ts"
+                    ],
+                    "cwd": "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/worker",
+                    "shell": false,
+                    "environment": {
+                      "HOME": "/srv/dev/raf-etchly-6263b-host3/d08/qa-home",
+                      "statePath": "/srv/dev/raf-etchly-6263b-host3/d08/qa-home/.raf/state.sqlite",
+                      "tmpPath": "/srv/dev/raf-etchly-6263b-host3/d08/qa-home/.raf/tmp",
+                      "timeoutPolicy": {
+                        "source": "conf/flow.json#/integrationTests/timeoutMs",
+                        "timeoutMs": 60000
+                      },
+                      "TMPDIR": "/tmp/r-VhyMx2"
+                    }
+                  }
+                ]
+              }
+            },
+            "startedAt": "2026-10-25T22:25:16.595Z",
+            "durationMs": 26938,
+            "exitCode": 1,
+            "signal": null,
+            "timedOut": false,
+            "cleanup": {
+              "complete": true,
+              "remainingPids": []
+            },
+            "outcome": "assertions-failed",
+            "failureKinds": [
+              "assertions"
+            ],
+            "passed": [],
+            "knownRed": [
+              {
+                "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+                "name": "real fork, workerd and D1"
+              }
+            ],
+            "unexecuted": [],
+            "unknown": [],
+            "removed": [],
+            "stateAccess": null,
+            "groupSnapshot": "loaded",
+            "groupState": "incomplete",
+            "timeoutCount": 0,
+            "nextAction": "complete-integration",
+            "hintIds": [
+              "integration-assertions"
+            ],
+            "hints": [
+              "Виправте реалізацію та підтвердьте повний integration-сценарій; knownRed зберігаються до підтвердження."
+            ],
+            "evidence": []
+          },
+          "unknown": [],
+          "delivery": {
+            "runId": "3cfb73e2-49cc-4e27-9aea-4afe43eb1aeb",
+            "pending": false,
+            "receiptId": null,
+            "returned": true,
+            "forwardedToMain": false
+          }
+        }
+      ],
+      "stdoutSha256": "163953efb5c208f5a825b3692c023aff07dd0c61b757395f5da89318087efc51",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "failures": [
+    {
+      "message": "See green.stdout/.stderr\n+ actual - expected\n\n+ 'assertions-failed'\n- 'passed'\n",
+      "stack": "AssertionError [ERR_ASSERTION]: See green.stdout/.stderr\n+ actual - expected\n\n+ 'assertions-failed'\n- 'passed'\n\n    at expect (file:///srv/dev/raf-etchly-6263b-host3/d08/raf-develop/scripts/qa-etchly-integration-host.mjs:175:12)\n    at host (file:///srv/dev/raf-etchly-6263b-host3/d08/raf-develop/scripts/qa-etchly-integration-host.mjs:219:47)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///srv/dev/raf-etchly-6263b-host3/d08/raf-develop/scripts/qa-etchly-integration-host.mjs:296:3"
+    }
+  ],
+  "status": "failed",
+  "restored": {
+    "configuration": true,
+    "flow": true,
+    "etchlyDirty": ""
+  },
+  "observedProcesses": [
+    {
+      "pid": 3329509,
+      "ppid": 3329139,
+      "start": "30979788",
+      "argv": []
+    },
+    {
+      "pid": 3331108,
+      "ppid": 3329509,
+      "start": "30980741",
+      "argv": [
+        "node",
+        "/srv/dev/raf-etchly-6263b-host3/d08/raf-develop/scripts/test-run-vitest.ts"
+      ]
+    },
+    {
+      "pid": 3331127,
+      "ppid": 3331108,
+      "start": "30980750",
+      "argv": [
+        "node",
+        "--import",
+        "../scripts/shared-library-runtime.mjs",
+        "/srv/dev/raf-etchly-6263b-host3/d08/raf-develop/scripts/test-run-vitest-api.ts",
+        "run",
+        "src/raf-etchly-lifecycle-qa.test.ts",
+        "--configLoader",
+        "runner",
+        "--project",
+        "worker-d1-integration",
+        "--testTimeout",
+        "60000",
+        "--hookTimeout",
+        "60000",
+        "--reporter",
+        "/srv/dev/raf-etchly-6263b-host3/d08/raf-develop/src/test-run-vitest-reporter.ts"
+      ]
+    },
+    {
+      "pid": 3331222,
+      "ppid": 3331127,
+      "start": "30980788",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/node_modules/@esbuild/linux-x64/bin/esbuild",
+        "--service=0.28.2",
+        "--ping"
+      ]
+    },
+    {
+      "pid": 3332233,
+      "ppid": 3331127,
+      "start": "30981344",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:38109",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3332585,
+      "ppid": 3331127,
+      "start": "30981549",
+      "argv": []
+    },
+    {
+      "pid": 3332587,
+      "ppid": 3331127,
+      "start": "30981553",
+      "argv": [
+        "git",
+        "-C",
+        "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop",
+        "symbolic-ref",
+        "--quiet",
+        "--short",
+        "HEAD"
+      ]
+    },
+    {
+      "pid": 3332589,
+      "ppid": 3331127,
+      "start": "30981556",
+      "argv": [
+        "git",
+        "-C",
+        "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/shared-libs",
+        "rev-parse",
+        "--show-toplevel"
+      ]
+    },
+    {
+      "pid": 3332596,
+      "ppid": 3331127,
+      "start": "30981559",
+      "argv": [
+        "git",
+        "-C",
+        "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/shared-libs",
+        "symbolic-ref",
+        "--quiet",
+        "--short",
+        "HEAD"
+      ]
+    },
+    {
+      "pid": 3332800,
+      "ppid": 3331127,
+      "start": "30981698",
+      "argv": []
+    },
+    {
+      "pid": 3332814,
+      "ppid": 3331127,
+      "start": "30981705",
+      "argv": []
+    },
+    {
+      "pid": 3333004,
+      "ppid": 3331127,
+      "start": "30981870",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:33419",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3333198,
+      "ppid": 3331127,
+      "start": "30981988",
+      "argv": []
+    },
+    {
+      "pid": 3333199,
+      "ppid": 3331127,
+      "start": "30981992",
+      "argv": [
+        "git",
+        "-C",
+        "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop",
+        "symbolic-ref",
+        "--quiet",
+        "--short",
+        "HEAD"
+      ]
+    },
+    {
+      "pid": 3333201,
+      "ppid": 3331127,
+      "start": "30981996",
+      "argv": []
+    },
+    {
+      "pid": 3333225,
+      "ppid": 3331127,
+      "start": "30982006",
+      "argv": []
+    },
+    {
+      "pid": 3333235,
+      "ppid": 3331127,
+      "start": "30982013",
+      "argv": []
+    },
+    {
+      "pid": 3333294,
+      "ppid": 3331127,
+      "start": "30982076",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:33527",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3333797,
+      "ppid": 3331127,
+      "start": "30982350",
+      "argv": [
+        "/opt/dev/node/bin/node",
+        "--experimental-import-meta-resolve",
+        "--require",
+        "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/node_modules/vitest/suppress-warnings.cjs",
+        "--conditions",
+        "node",
+        "--conditions",
+        "development",
+        "/srv/dev/raf-etchly-6263b-host3/d08/etchly-develop/node_modules/vitest/dist/workers/forks.js"
+      ]
+    }
+  ],
+  "liveOwnedAfterEmergencyCleanup": [],
+  "interrupted": false
+}

@@ -1,0 +1,888 @@
+{
+  "sourceItem": "add-raf-test-run:6.2.6.3",
+  "mode": "smoke",
+  "root": "/srv/dev/raf-etchly-6263b-host3/smoke",
+  "output": "/srv/dev/raf-etchly-6263b-host3/smoke/results",
+  "marker": {
+    "root": "/srv/dev/raf-etchly-6263b-host3/smoke",
+    "sourceRoot": "/srv/dev/work/orchestrator",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "preparedAt": "2026-10-25T22:23:16.814Z",
+    "boundary": "Clean committed code clones plus a snapshot of preinstalled dependencies and app build. No install, build, operational state or live caller grant is copied.",
+    "repositories": [
+      {
+        "name": "raf-develop",
+        "sha": "5e5934435f8fab25e1031ce6205237e12002c9a4",
+        "branch": "develop",
+        "source": "/srv/dev/work/orchestrator/raf-develop",
+        "sourceHead": "c13173074f1561404b401f568808c98aacdefda4",
+        "sourceDirty": "M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n?? evidence/add-raf-agent-run-4.1.5/\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2-result-index.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.cli-code.txt\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.result.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.cli-code.txt\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.result.json\n?? test/production-message-serialization.test.ts"
+      },
+      {
+        "name": "raf-main",
+        "sha": "5e5934435f8fab25e1031ce6205237e12002c9a4",
+        "branch": "main",
+        "source": "/srv/dev/work/orchestrator/raf-develop",
+        "sourceHead": "c13173074f1561404b401f568808c98aacdefda4",
+        "sourceDirty": "M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n?? evidence/add-raf-agent-run-4.1.5/\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2-result-index.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.cli-code.txt\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.result.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.cli-code.txt\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.result.json\n?? test/production-message-serialization.test.ts"
+      },
+      {
+        "name": "etchly-develop",
+        "sha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+        "branch": "develop",
+        "source": "/srv/dev/work/orchestrator/etchly-develop",
+        "sourceHead": "989cca780ba5175169637f6d6b1cecfec4781b14",
+        "sourceDirty": ""
+      },
+      {
+        "name": "shared-libs-develop",
+        "sha": "171441decdf6de1e57482e816f7db683765ce7f6",
+        "branch": "develop",
+        "source": "/srv/dev/work/orchestrator/shared-libs-develop",
+        "sourceHead": "171441decdf6de1e57482e816f7db683765ce7f6",
+        "sourceDirty": ""
+      }
+    ],
+    "copied": [
+      {
+        "from": "/srv/dev/work/orchestrator/raf-develop/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/raf-develop/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/raf-develop/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/raf-main/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/etchly-develop/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/etchly-develop/app/dist/local",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/app/dist/local"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/learning/concept-base",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/learning/concept-base"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/app-shell/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/app-shell/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/bugs-api/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/bugs-api/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/bugs-ui/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/bugs-ui/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/invite-client/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/invite-client/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/payment-ports/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/payment-ports/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/reader/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/reader/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/resource-protocol/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/access/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/resource-protocol/packages/access/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/address/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/resource-protocol/packages/address/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/prefix-load/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/resource-protocol/packages/prefix-load/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/protocol/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/resource-protocol/packages/protocol/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/store/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/resource-protocol/packages/store/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/sync/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host3/smoke/shared-libs-develop/resource-protocol/packages/sync/node_modules"
+      }
+    ],
+    "configurations": [
+      {
+        "name": "projects.json",
+        "sourceSha256": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+        "standSha256": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+      },
+      {
+        "name": "raf.json",
+        "sourceSha256": "a17d917f9afaf86a6f52d1105e854c2c9641fb01ecd4d7beea1ce38f1fdbba92"
+      },
+      {
+        "name": "raf-constants.json",
+        "sourceSha256": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e"
+      },
+      {
+        "name": "flow.json",
+        "sourceSha256": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+      },
+      {
+        "name": "test-runs.json",
+        "sourceSha256": "6a8f1494b9cc30fae82403bf52d9c5218fbc9421f5df1ca6b97ab093e086ce86"
+      }
+    ],
+    "learning": {
+      "sourceHead": "f17a5a65b29035e53a426eb0f20b1895c5b286e9",
+      "sourceDirty": "",
+      "scope": "Only concept-base including its prepared build; no other learning directories are copied.",
+      "files": 1654,
+      "hashesSha256": "48c3b5c7dfe667e569ff1e5e90bc39a32fc5d3ca3695f1ec8fc8791f755d20f6"
+    },
+    "prerequisites": [
+      {
+        "relative": "etchly-develop/node_modules/vitest/package.json",
+        "sha256": "a28126d97bcaf567da5bed69443b7f3bcd9a7a8c38c8b66e554686b6bb2c10e0"
+      },
+      {
+        "relative": "etchly-develop/node_modules/miniflare/package.json",
+        "sha256": "e2349545887eb236d46dacf2cd65802316cb6bf20b8a78e99753323c0a20fa06"
+      },
+      {
+        "relative": "etchly-develop/node_modules/workerd/bin/workerd",
+        "sha256": "d7ce7f7de38dba233a2924b777b51c65a407e524154d9b66fa8d2bc0a1ff5dcf"
+      },
+      {
+        "relative": "etchly-develop/node_modules/esbuild/bin/esbuild",
+        "sha256": "e1698a3d5c6c0798fee4fd3b5cc816651f460c63d390a7a26ea4beb0b1884100"
+      },
+      {
+        "relative": "etchly-develop/app/dist/local/index.html",
+        "sha256": "ddab268e2ce1e60d9b872c1d860c0e9f3f004089f37d0acb525c559d9acc5274"
+      },
+      {
+        "relative": "learning/concept-base/build/records.jsonl",
+        "sha256": "3c97be7378d494f28c39195607aa3cee11b598b448f204ba5c5f7e17c19bb365"
+      },
+      {
+        "relative": "learning/concept-base/build/chunks.jsonl",
+        "sha256": "ffb0ce1ee064c0d3cc2f444ea544d52ad15c2a13c8fad173cbe0daa9363bd124"
+      },
+      {
+        "relative": "learning/concept-base/build/manifest-summary.json",
+        "sha256": "f9f0620c6fc2476fac912ed05263cc63beccf892dacd09a37e4825f575d93c03"
+      },
+      {
+        "relative": "learning/concept-base/sources/manifest.yaml",
+        "sha256": "a51b63310253ad0c37b7053710ddec50bd78ea55faf9d5ed0d330e71b7eb5720"
+      }
+    ],
+    "status": "prepared"
+  },
+  "driverSha256": "0c4e7e1fd9a8aefc151717282924a3f36367ed8387dc15cea806a0658d895c47",
+  "evidenceBoundary": "Main-executed controlled host API stand. Real production planner/runtime/reporter/SQLite/forks/workerd. Does not establish a live QA etchly assignment or its trusted broker channel; D09 own-caller gate stays open.",
+  "before": [
+    {
+      "name": "raf-develop",
+      "sha": "5e5934435f8fab25e1031ce6205237e12002c9a4",
+      "dirty": ""
+    },
+    {
+      "name": "etchly-develop",
+      "sha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+      "dirty": ""
+    },
+    {
+      "name": "shared-libs-develop",
+      "sha": "171441decdf6de1e57482e816f7db683765ce7f6",
+      "dirty": ""
+    }
+  ],
+  "configuration": [
+    {
+      "name": "flow.json",
+      "sha256": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+    },
+    {
+      "name": "projects.json",
+      "sha256": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+    },
+    {
+      "name": "test-runs.json",
+      "sha256": "6a8f1494b9cc30fae82403bf52d9c5218fbc9421f5df1ca6b97ab093e086ce86"
+    },
+    {
+      "name": "raf-constants.json",
+      "sha256": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e"
+    }
+  ],
+  "integrationBudgetMs": 1200000,
+  "hostWatchdogMs": 3000000,
+  "scenarios": [
+    {
+      "label": "preset",
+      "command": {
+        "executable": "/opt/dev/node/bin/node",
+        "argv": [
+          "/srv/dev/raf-etchly-6263b-host3/smoke/raf-develop/scripts/qa-etchly-integration-host.mjs",
+          "--worker",
+          "/srv/dev/raf-etchly-6263b-host3/smoke/results/preset.input.json"
+        ],
+        "cwd": "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop"
+      },
+      "cliCode": 1,
+      "signal": null,
+      "result": {
+        "testKind": "integration",
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/integrationTests/timeoutMs",
+          "timeoutMs": 1200000
+        },
+        "callerPhase": "qa",
+        "diagnostics": [
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+              "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong attempt 1 without REPORT → attempt 2 is made by itself, its prompt carries the section «Помилки валідатора» naming the refusal, it is accepted, review done on its second attempt"
+            },
+            "errorName": "AssertionError",
+            "message": "кроки [\"intake:done:1\",\"archive:done:1\",\"review:queued:3\"]: expected { analysisCalls: 1, …(4) } to deeply equal { analysisCalls: 2, …(4) }",
+            "location": {
+              "file": "src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+              "line": 66,
+              "column": 104
+            },
+            "stack": [
+              "    at src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts:66:104",
+              "    at <external>/chunk-artifact.js:1903:20"
+            ],
+            "redacted": true,
+            "truncated": false,
+            "origin": "test-body"
+          },
+          {
+            "kind": "runner",
+            "test": null,
+            "message": "shared worker: startup=4990 ms; leases=0; setup max=0 ms; teardown max=0 ms\nshared worker: startup=1614 ms; leases=0; setup max=0 ms; teardown max=0 ms\n",
+            "location": null,
+            "stack": [],
+            "redacted": false,
+            "truncated": false,
+            "unavailableReason": "Error origin is unknown"
+          }
+        ],
+        "diagnosticSummary": {
+          "totalEntries": 2,
+          "retainedEntries": 2,
+          "omittedEntries": 0,
+          "truncated": false,
+          "redacted": true
+        },
+        "environmentSummary": {
+          "executable": "node",
+          "runtimeVersion": "v26.12.1",
+          "adapter": "vitest-events",
+          "isolation": "process",
+          "configurationFingerprints": {
+            "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+            "testRuns": "6a8f1494b9cc30fae82403bf52d9c5218fbc9421f5df1ca6b97ab093e086ce86",
+            "projects": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+          },
+          "tmpPathBytes": 13,
+          "privateRunTmp": true
+        },
+        "runId": "39a3abbc-939b-4f29-84fa-c5591bf86e67",
+        "project": "etchly",
+        "workspace": "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop",
+        "phase": "integration",
+        "group": "add-raf-test-run/etchly-worker-d1-smoke",
+        "profileId": "vitest-worker-d1-integration",
+        "selection": {
+          "files": [
+            "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+            "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+            "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts"
+          ],
+          "testIds": []
+        },
+        "command": {
+          "executable": "node",
+          "argv": [
+            "/srv/dev/raf-etchly-6263b-host3/smoke/raf-develop/scripts/test-run-vitest.ts"
+          ],
+          "cwd": "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/worker",
+          "shell": false,
+          "environment": {
+            "HOME": "/srv/dev/raf-etchly-6263b-host3/smoke/qa-home",
+            "statePath": "/srv/dev/raf-etchly-6263b-host3/smoke/qa-home/.raf/state.sqlite",
+            "tmpPath": "/srv/dev/raf-etchly-6263b-host3/smoke/qa-home/.raf/tmp",
+            "timeoutPolicy": {
+              "source": "conf/flow.json#/integrationTests/timeoutMs",
+              "timeoutMs": 1200000
+            },
+            "TMPDIR": "/tmp/r-ewgedn",
+            "vitestBatches": [
+              {
+                "executable": "node",
+                "argv": [
+                  "--import",
+                  "../scripts/shared-library-runtime.mjs",
+                  "../node_modules/vitest/vitest.mjs",
+                  "run",
+                  "src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+                  "src/accepted-source-1939-agent-tests/continuation.test.ts",
+                  "src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts",
+                  "--configLoader",
+                  "runner",
+                  "--project",
+                  "worker-d1-integration",
+                  "--testTimeout",
+                  "1200000",
+                  "--hookTimeout",
+                  "1200000",
+                  "--reporter",
+                  "/srv/dev/raf-etchly-6263b-host3/smoke/raf-develop/src/test-run-vitest-reporter.ts"
+                ],
+                "cwd": "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/worker",
+                "shell": false,
+                "environment": {
+                  "HOME": "/srv/dev/raf-etchly-6263b-host3/smoke/qa-home",
+                  "statePath": "/srv/dev/raf-etchly-6263b-host3/smoke/qa-home/.raf/state.sqlite",
+                  "tmpPath": "/srv/dev/raf-etchly-6263b-host3/smoke/qa-home/.raf/tmp",
+                  "timeoutPolicy": {
+                    "source": "conf/flow.json#/integrationTests/timeoutMs",
+                    "timeoutMs": 1200000
+                  },
+                  "TMPDIR": "/tmp/r-ewgedn"
+                }
+              }
+            ]
+          }
+        },
+        "startedAt": "2026-10-25T22:23:57.368Z",
+        "durationMs": 49286,
+        "exitCode": 1,
+        "signal": null,
+        "timedOut": false,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "outcome": "assertions-failed",
+        "failureKinds": [
+          "assertions"
+        ],
+        "passed": [
+          {
+            "file": "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts",
+            "name": "прийняте закриття англійського курсу передає summary/pass мову en і скелет із заголовком «## Pass»"
+          },
+          {
+            "file": "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+            "name": "1939: historical pack-6 source hashes publish next-module under a current non-exhausted intent"
+          },
+          {
+            "file": "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+            "name": "1939: an exhausted historical run remains failed without enqueue/send and retains archived answers"
+          },
+          {
+            "file": "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+            "name": "1939: a legacy paid task without a trusted intent cannot mint allowance through resume or redelivery"
+          }
+        ],
+        "knownRed": [
+          {
+            "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+            "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong attempt 1 without REPORT → attempt 2 is made by itself, its prompt carries the section «Помилки валідатора» naming the refusal, it is accepted, review done on its second attempt"
+          }
+        ],
+        "unexecuted": [
+          {
+            "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+            "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong three refused answers → exactly three analysis calls, then review exhausts attempts with lastCode analysis_output_invalid"
+          },
+          {
+            "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+            "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong the person reads analysis_output_invalid as «the model's answer could not be read», not as an unavailable review"
+          }
+        ],
+        "unknown": [],
+        "removed": [],
+        "stateAccess": null,
+        "groupSnapshot": "loaded",
+        "groupState": "incomplete",
+        "timeoutCount": 0,
+        "nextAction": "complete-integration",
+        "hintIds": [
+          "integration-assertions"
+        ],
+        "hints": [
+          "Виправте реалізацію та підтвердьте повний integration-сценарій; knownRed зберігаються до підтвердження."
+        ],
+        "evidence": []
+      },
+      "state": [
+        {
+          "key": {
+            "project": "etchly",
+            "workspace": "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop",
+            "group": "add-raf-test-run/etchly-worker-d1-smoke"
+          },
+          "testKind": "integration",
+          "profileId": "vitest-worker-d1-integration",
+          "timeoutCount": 0,
+          "state": "incomplete",
+          "selection": {
+            "files": [
+              "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+              "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+              "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts"
+            ],
+            "testIds": []
+          },
+          "knownRed": [
+            {
+              "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+              "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong attempt 1 without REPORT → attempt 2 is made by itself, its prompt carries the section «Помилки валідатора» naming the refusal, it is accepted, review done on its second attempt"
+            }
+          ],
+          "unexecuted": [
+            {
+              "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+              "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong three refused answers → exactly three analysis calls, then review exhausts attempts with lastCode analysis_output_invalid"
+            },
+            {
+              "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+              "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong the person reads analysis_output_invalid as «the model's answer could not be read», not as an unavailable review"
+            }
+          ],
+          "inFlight": null,
+          "lastResult": {
+            "testKind": "integration",
+            "timeoutPolicy": {
+              "source": "conf/flow.json#/integrationTests/timeoutMs",
+              "timeoutMs": 1200000
+            },
+            "callerPhase": "qa",
+            "diagnostics": [
+              {
+                "kind": "assertion",
+                "test": {
+                  "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+                  "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong attempt 1 without REPORT → attempt 2 is made by itself, its prompt carries the section «Помилки валідатора» naming the refusal, it is accepted, review done on its second attempt"
+                },
+                "errorName": "AssertionError",
+                "message": "кроки [\"intake:done:1\",\"archive:done:1\",\"review:queued:3\"]: expected { analysisCalls: 1, …(4) } to deeply equal { analysisCalls: 2, …(4) }",
+                "location": {
+                  "file": "src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+                  "line": 66,
+                  "column": 104
+                },
+                "stack": [
+                  "    at src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts:66:104",
+                  "    at <external>/chunk-artifact.js:1903:20"
+                ],
+                "redacted": true,
+                "truncated": false,
+                "origin": "test-body"
+              },
+              {
+                "kind": "runner",
+                "test": null,
+                "message": "shared worker: startup=4990 ms; leases=0; setup max=0 ms; teardown max=0 ms\nshared worker: startup=1614 ms; leases=0; setup max=0 ms; teardown max=0 ms\n",
+                "location": null,
+                "stack": [],
+                "redacted": false,
+                "truncated": false,
+                "unavailableReason": "Error origin is unknown"
+              }
+            ],
+            "diagnosticSummary": {
+              "totalEntries": 2,
+              "retainedEntries": 2,
+              "omittedEntries": 0,
+              "truncated": false,
+              "redacted": true
+            },
+            "environmentSummary": {
+              "executable": "node",
+              "runtimeVersion": "v26.12.1",
+              "adapter": "vitest-events",
+              "isolation": "process",
+              "configurationFingerprints": {
+                "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+                "testRuns": "6a8f1494b9cc30fae82403bf52d9c5218fbc9421f5df1ca6b97ab093e086ce86",
+                "projects": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+              },
+              "tmpPathBytes": 13,
+              "privateRunTmp": true
+            },
+            "runId": "39a3abbc-939b-4f29-84fa-c5591bf86e67",
+            "project": "etchly",
+            "workspace": "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop",
+            "phase": "integration",
+            "group": "add-raf-test-run/etchly-worker-d1-smoke",
+            "profileId": "vitest-worker-d1-integration",
+            "selection": {
+              "files": [
+                "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+                "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+                "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts"
+              ],
+              "testIds": []
+            },
+            "command": {
+              "executable": "node",
+              "argv": [
+                "/srv/dev/raf-etchly-6263b-host3/smoke/raf-develop/scripts/test-run-vitest.ts"
+              ],
+              "cwd": "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/worker",
+              "shell": false,
+              "environment": {
+                "HOME": "/srv/dev/raf-etchly-6263b-host3/smoke/qa-home",
+                "statePath": "/srv/dev/raf-etchly-6263b-host3/smoke/qa-home/.raf/state.sqlite",
+                "tmpPath": "/srv/dev/raf-etchly-6263b-host3/smoke/qa-home/.raf/tmp",
+                "timeoutPolicy": {
+                  "source": "conf/flow.json#/integrationTests/timeoutMs",
+                  "timeoutMs": 1200000
+                },
+                "TMPDIR": "/tmp/r-ewgedn",
+                "vitestBatches": [
+                  {
+                    "executable": "node",
+                    "argv": [
+                      "--import",
+                      "../scripts/shared-library-runtime.mjs",
+                      "../node_modules/vitest/vitest.mjs",
+                      "run",
+                      "src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+                      "src/accepted-source-1939-agent-tests/continuation.test.ts",
+                      "src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts",
+                      "--configLoader",
+                      "runner",
+                      "--project",
+                      "worker-d1-integration",
+                      "--testTimeout",
+                      "1200000",
+                      "--hookTimeout",
+                      "1200000",
+                      "--reporter",
+                      "/srv/dev/raf-etchly-6263b-host3/smoke/raf-develop/src/test-run-vitest-reporter.ts"
+                    ],
+                    "cwd": "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/worker",
+                    "shell": false,
+                    "environment": {
+                      "HOME": "/srv/dev/raf-etchly-6263b-host3/smoke/qa-home",
+                      "statePath": "/srv/dev/raf-etchly-6263b-host3/smoke/qa-home/.raf/state.sqlite",
+                      "tmpPath": "/srv/dev/raf-etchly-6263b-host3/smoke/qa-home/.raf/tmp",
+                      "timeoutPolicy": {
+                        "source": "conf/flow.json#/integrationTests/timeoutMs",
+                        "timeoutMs": 1200000
+                      },
+                      "TMPDIR": "/tmp/r-ewgedn"
+                    }
+                  }
+                ]
+              }
+            },
+            "startedAt": "2026-10-25T22:23:57.368Z",
+            "durationMs": 49286,
+            "exitCode": 1,
+            "signal": null,
+            "timedOut": false,
+            "cleanup": {
+              "complete": true,
+              "remainingPids": []
+            },
+            "outcome": "assertions-failed",
+            "failureKinds": [
+              "assertions"
+            ],
+            "passed": [
+              {
+                "file": "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts",
+                "name": "прийняте закриття англійського курсу передає summary/pass мову en і скелет із заголовком «## Pass»"
+              },
+              {
+                "file": "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+                "name": "1939: historical pack-6 source hashes publish next-module under a current non-exhausted intent"
+              },
+              {
+                "file": "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+                "name": "1939: an exhausted historical run remains failed without enqueue/send and retains archived answers"
+              },
+              {
+                "file": "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+                "name": "1939: a legacy paid task without a trusted intent cannot mint allowance through resume or redelivery"
+              }
+            ],
+            "knownRed": [
+              {
+                "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+                "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong attempt 1 without REPORT → attempt 2 is made by itself, its prompt carries the section «Помилки валідатора» naming the refusal, it is accepted, review done on its second attempt"
+              }
+            ],
+            "unexecuted": [
+              {
+                "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+                "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong three refused answers → exactly three analysis calls, then review exhausts attempts with lastCode analysis_output_invalid"
+              },
+              {
+                "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+                "name": "1177: an analysis answer the validator refuses is retried as a new validation attempt that tells the model what was wrong the person reads analysis_output_invalid as «the model's answer could not be read», not as an unavailable review"
+              }
+            ],
+            "unknown": [],
+            "removed": [],
+            "stateAccess": null,
+            "groupSnapshot": "loaded",
+            "groupState": "incomplete",
+            "timeoutCount": 0,
+            "nextAction": "complete-integration",
+            "hintIds": [
+              "integration-assertions"
+            ],
+            "hints": [
+              "Виправте реалізацію та підтвердьте повний integration-сценарій; knownRed зберігаються до підтвердження."
+            ],
+            "evidence": []
+          },
+          "unknown": [],
+          "delivery": {
+            "runId": "39a3abbc-939b-4f29-84fa-c5591bf86e67",
+            "pending": false,
+            "receiptId": null,
+            "returned": true,
+            "forwardedToMain": false
+          }
+        }
+      ],
+      "stdoutSha256": "8b6ac10dbf4352eea95674c200e990bf9f31c6d8551372be19684c2bf481e814",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "failures": [
+    {
+      "message": "See preset.stdout/.stderr\n+ actual - expected\n\n+ 'assertions-failed'\n- 'passed'\n",
+      "stack": "AssertionError [ERR_ASSERTION]: See preset.stdout/.stderr\n+ actual - expected\n\n+ 'assertions-failed'\n- 'passed'\n\n    at expect (file:///srv/dev/raf-etchly-6263b-host3/smoke/raf-develop/scripts/qa-etchly-integration-host.mjs:175:12)\n    at host (file:///srv/dev/raf-etchly-6263b-host3/smoke/raf-develop/scripts/qa-etchly-integration-host.mjs:244:7)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///srv/dev/raf-etchly-6263b-host3/smoke/raf-develop/scripts/qa-etchly-integration-host.mjs:296:3"
+    }
+  ],
+  "status": "failed",
+  "restored": {
+    "configuration": true,
+    "flow": true,
+    "etchlyDirty": ""
+  },
+  "observedProcesses": [
+    {
+      "pid": 3317641,
+      "ppid": 3317496,
+      "start": "30971861",
+      "argv": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/raf-etchly-6263b-host3/smoke/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host3/smoke/results/preset.input.json"
+      ]
+    },
+    {
+      "pid": 3318057,
+      "ppid": 3317641,
+      "start": "30972923",
+      "argv": [
+        "node",
+        "/srv/dev/raf-etchly-6263b-host3/smoke/raf-develop/scripts/test-run-vitest.ts"
+      ]
+    },
+    {
+      "pid": 3318071,
+      "ppid": 3318057,
+      "start": "30972931",
+      "argv": []
+    },
+    {
+      "pid": 3318119,
+      "ppid": 3318071,
+      "start": "30972972",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/node_modules/@esbuild/linux-x64/bin/esbuild",
+        "--service=0.28.2",
+        "--ping"
+      ]
+    },
+    {
+      "pid": 3318888,
+      "ppid": 3318071,
+      "start": "30973643",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:41123",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3319151,
+      "ppid": 3318071,
+      "start": "30973809",
+      "argv": []
+    },
+    {
+      "pid": 3319322,
+      "ppid": 3318071,
+      "start": "30973901",
+      "argv": [
+        "git",
+        "-C",
+        "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop",
+        "rev-parse",
+        "--show-toplevel"
+      ]
+    },
+    {
+      "pid": 3319334,
+      "ppid": 3318071,
+      "start": "30973905",
+      "argv": []
+    },
+    {
+      "pid": 3319341,
+      "ppid": 3318071,
+      "start": "30973909",
+      "argv": []
+    },
+    {
+      "pid": 3319350,
+      "ppid": 3318071,
+      "start": "30973914",
+      "argv": []
+    },
+    {
+      "pid": 3319617,
+      "ppid": 3318071,
+      "start": "30974054",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:36567",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3319828,
+      "ppid": 3318071,
+      "start": "30974137",
+      "argv": []
+    },
+    {
+      "pid": 3319838,
+      "ppid": 3318071,
+      "start": "30974141",
+      "argv": []
+    },
+    {
+      "pid": 3319861,
+      "ppid": 3318071,
+      "start": "30974147",
+      "argv": []
+    },
+    {
+      "pid": 3319873,
+      "ppid": 3318071,
+      "start": "30974151",
+      "argv": []
+    },
+    {
+      "pid": 3319886,
+      "ppid": 3318071,
+      "start": "30974158",
+      "argv": []
+    },
+    {
+      "pid": 3319988,
+      "ppid": 3318071,
+      "start": "30974211",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:37721",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3320656,
+      "ppid": 3318071,
+      "start": "30974482",
+      "argv": [
+        "/opt/dev/node/bin/node",
+        "--experimental-import-meta-resolve",
+        "--require",
+        "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/node_modules/vitest/suppress-warnings.cjs",
+        "--conditions",
+        "node",
+        "--conditions",
+        "development",
+        "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/node_modules/vitest/dist/workers/forks.js"
+      ]
+    },
+    {
+      "pid": 3320672,
+      "ppid": 3318071,
+      "start": "30974487",
+      "argv": [
+        "/opt/dev/node/bin/node",
+        "--experimental-import-meta-resolve",
+        "--require",
+        "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/node_modules/vitest/suppress-warnings.cjs",
+        "--conditions",
+        "node",
+        "--conditions",
+        "development",
+        "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/node_modules/vitest/dist/workers/forks.js"
+      ]
+    },
+    {
+      "pid": 3323136,
+      "ppid": 3318071,
+      "start": "30975998",
+      "argv": [
+        "/opt/dev/node/bin/node",
+        "--experimental-import-meta-resolve",
+        "--require",
+        "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/node_modules/vitest/suppress-warnings.cjs",
+        "--conditions",
+        "node",
+        "--conditions",
+        "development",
+        "/srv/dev/raf-etchly-6263b-host3/smoke/etchly-develop/node_modules/vitest/dist/workers/forks.js"
+      ]
+    }
+  ],
+  "liveOwnedAfterEmergencyCleanup": [],
+  "interrupted": false
+}

@@ -6,10 +6,16 @@ suite_root=$2
 raf_sha=$3
 etchly_sha=$4
 shared_sha=$5
+case "${6:-all}" in
+  all) modes=(smoke d08) ;;
+  smoke) modes=(smoke) ;;
+  d08) modes=(d08) ;;
+  *) printf '%s\n' 'Expected optional mode: all, smoke or d08' >&2; exit 2 ;;
+esac
 umask 077
 mkdir -m 700 -- "$suite_root" || exit 1
 suite_rc=0
-for mode in smoke d08; do
+for mode in "${modes[@]}"; do
   stand_root="$suite_root/$mode"
   node "$source_root/raf-develop/scripts/qa-etchly-integration-prepare.mjs" "$source_root" "$stand_root" "$raf_sha" "$etchly_sha" "$shared_sha" >"$suite_root/$mode.prepare.stdout" 2>"$suite_root/$mode.prepare.stderr"
   prepare_rc=$?

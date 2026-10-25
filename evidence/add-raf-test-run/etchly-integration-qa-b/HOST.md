@@ -35,3 +35,5 @@ raf_command test run --project etchly --phase integration --group add-raf-test-r
 Тут `raf_command` — лише префікс нового перевіреного доручення. Це не команда для обходу поточного sandbox чи використання іншого покоління.
 
 Після host2 setup-failure до D1 потрібен виправлений prepare із concept-base. Це продовження початкових невиконаних сценаріїв; host2 результати не перезаписуються. Підготовка додає `learning-corpus-hashes.json` та `marker.learning` (SHA, scoped dirty, число файлів і hash індексу). Повернути також цей індекс; він містить лише імена та hashes, без тексту корпусу. Unit-hold main залишається чинним.
+
+Host3 показав Miniflare 5 API mismatch у власній D08 fixture. Після виправлення наступне продовження запускає лише D08: додати останній шостий аргумент `d08` до suite, новий suite root `/srv/dev/raf-etchly-6263b-host4` і SHA коміту з fixture fix. Очікуються тільки D08 prepare/driver/suite rc0 та 12 captures; smoke повторно не виконується. Поточний smoke retry assertion лишається відкритим із чотирма passed та двома unexecuted, без послаблення контракту.

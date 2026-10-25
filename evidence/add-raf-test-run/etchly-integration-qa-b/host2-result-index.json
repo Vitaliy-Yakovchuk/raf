@@ -1,0 +1,100 @@
+[
+  {
+    "mode": "smoke",
+    "label": "preset",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "rafSha": "5b21d80e4a0bb9d6f2bb192d7849c766f3cf45bb",
+    "etchlySha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host2/smoke/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host2/smoke/results/preset.input.json"
+      ],
+      "cwd": "/srv/dev/raf-etchly-6263b-host2/smoke/etchly-develop"
+    },
+    "cliCode": 1,
+    "childExitCode": 1,
+    "resultPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.result.json",
+    "stderrPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.stderr",
+    "resultSha256": "cd7d0b52b1af12d417c0fc25741c15ec07bda1f5b5848fb552f1b0135f3a11d5",
+    "runId": "92734f3e-0c10-46b2-8588-8271cf661e5c",
+    "selection": {
+      "files": [
+        "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+        "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+        "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts"
+      ],
+      "testIds": []
+    },
+    "testKind": "integration",
+    "callerPhase": "qa",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "outcome": "setup-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "incomplete",
+    "timeoutCount": 0,
+    "nextAction": "complete-integration",
+    "boundary": "Runner collection failed in global setup before D1; empty knownRed/unexecuted/unknown arrays do not prove execution. Remaining driver scenarios not reached. No D09 own caller."
+  },
+  {
+    "mode": "d08",
+    "label": "green",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "rafSha": "5b21d80e4a0bb9d6f2bb192d7849c766f3cf45bb",
+    "etchlySha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host2/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host2/d08/results/green.input.json"
+      ],
+      "cwd": "/srv/dev/raf-etchly-6263b-host2/d08/etchly-develop"
+    },
+    "cliCode": 1,
+    "childExitCode": 1,
+    "resultPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.result.json",
+    "stderrPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.stderr",
+    "resultSha256": "7deb9162b401e4d343b33afbe871fa23210a68cbda7e1077b7c00469678b9ad2",
+    "runId": "a211c63c-f83c-47fc-9087-a19f67b18164",
+    "selection": {
+      "files": [
+        "worker/src/raf-etchly-lifecycle-qa.test.ts"
+      ],
+      "testIds": []
+    },
+    "testKind": "integration",
+    "callerPhase": "qa",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 60000
+    },
+    "outcome": "setup-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "incomplete",
+    "timeoutCount": 0,
+    "nextAction": "complete-integration",
+    "boundary": "Runner collection failed in global setup before D1; empty knownRed/unexecuted/unknown arrays do not prove execution. Remaining driver scenarios not reached. No D09 own caller."
+  }
+]

@@ -1,3 +1,5 @@
+import { activeRafCost, rafCostBoundary } from './raf-cost-runtime.ts';
+import { basename } from 'node:path';
 import { spawn } from 'node:child_process';
 import { lstat, readlink, readFile, realpath } from 'node:fs/promises';
 import { availableParallelism, loadavg, totalmem, platform, hostname } from 'node:os';
@@ -7,7 +9,11 @@ import type { WorkspaceRoutingDependencies } from './workspace-routing.ts';
 import type { ResourceMeasurement } from './resource-admission.ts';
 import type { ProcessIdentity, ProcessObservation } from './session-state.ts';
 
-export const executeCommand: AdapterCommandExecutor = command => new Promise((resolve, reject) => {
+export const executeCommand: AdapterCommandExecutor = async command => {
+  const profile = activeRafCost();
+  const helper = profile?.helperExecutables.includes(basename(command.executable));
+  const start = helper ? rafCostBoundary() : undefined;
+  const execute = () => new Promise<import('./agent-adapters.ts').AdapterCommandResult>((resolve, reject) => {
   const child = spawn(command.executable, [...command.args], { cwd: command.cwd, shell: false, stdio: ['pipe', 'pipe', 'pipe'], env: { ...(command.environment ?? process.env), LC_ALL: 'C' } });
   let stdout = '';
   let stderr = '';
@@ -17,7 +23,17 @@ export const executeCommand: AdapterCommandExecutor = command => new Promise((re
   child.stdin.on('error', error => { if ((error as NodeJS.ErrnoException).code !== 'EPIPE') reject(error); });
   child.on('close', code => resolve({ exitCode: code ?? 1, stdout, stderr }));
   child.stdin.end(command.stdin ?? '');
-});
+  });
+  try { return profile ? await profile.measure('child-wait', execute) : await execute(); }
+  finally {
+    if (profile && start && helper) {
+      const end = rafCostBoundary();
+      try { profile.profiler.recordChild({ stage: 'child-wait', startedAt: start.utc, completedAt: end.utc, wallMs: Math.max(0, end.monotonicMs - start.monotonicMs),
+        cpu: { userMs: null, systemMs: null, source: null, unavailableReason: 'Per-child OS CPU accounting unavailable from spawn' } }, 'helper'); }
+      catch (error) { profile.reportStorageFailure(error); }
+    }
+  }
+};
 
 export async function readMachineBootIdentity(execute: AdapterCommandExecutor = executeCommand): Promise<{ machineId: string; bootId: string }> {
   let machineId: string;

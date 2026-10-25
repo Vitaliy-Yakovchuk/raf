@@ -1,3 +1,4 @@
+import { measureRafCost } from './raf-cost-runtime.ts';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
@@ -743,7 +744,7 @@ export async function startBugSyncService(options: BugSyncServiceOptions): Promi
   const wake = async () => {
     cancel = undefined;
     if (stopped) return;
-    running = syncer.runCycle().catch(report);
+    running = measureRafCost('bug-sync', () => syncer.runCycle()).catch(report);
     await running;
     running = undefined;
     if (!stopped) cancel = options.schedule(options.now() + config.pollIntervalMs, wake);

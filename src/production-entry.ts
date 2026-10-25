@@ -1,6 +1,8 @@
+import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
+import { commandTimingFailure, recordCommandTiming } from './command-timing.ts';
 import { storedLaunchQueueIdentity, validateStoredQueueId } from './stored-launch-queue-events.ts';
 import { readMachineBootIdentity } from './os-runtime.ts';
-import { productionStateContext } from './state-migration-guard.ts';
+import { productionStateContext, type StateContext } from './state-migration-guard.ts';
 import { createServiceHandlers } from './service-entry.ts';
 import { createProductionServices, rafSystemCaller } from './production-runtime.ts';
 import { fileURLToPath } from 'node:url';
@@ -26,6 +28,7 @@ export interface ProductionEntryOptions {
   homeDirectory: string;
   artifactPath: string;
   now?: () => number;
+  costStartedAt?: RafCostBoundary;
   runIdentity?: { runId: string; tmuxSession: string };
   serviceHostModulePath?: string;
 }
@@ -36,7 +39,7 @@ function failure(code: string, reason: string, source = 'production-entry'): Err
     remediation: ['Перевірте конфігурацію та доступність потрібного компонента.'] });
 }
 
-function readConfiguration(root: string): { models: ModelCatalog; commandTiming: { emaAlpha: number }; fileName: string } {
+function readConfiguration(root: string): { models: ModelCatalog; commandTiming: { emaAlpha: number; sqliteOnlyMeanBudgetMs: number }; fileName: string } {
   const object = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
   const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
   const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(text);
@@ -66,7 +69,7 @@ function readConfiguration(root: string): { models: ModelCatalog; commandTiming:
       new Set(models.models.map((model: any) => model.id)).size !== models.models.length) {
     throw failure('CONFIGURATION_INVALID', 'Invalid models.json configuration or version', 'models.json');
   }
-  return { models: models as unknown as ModelCatalog, commandTiming: { emaAlpha: settings.commandTiming.emaAlpha }, fileName: settings.state.fileName };
+  return { models: models as unknown as ModelCatalog, commandTiming: { emaAlpha: settings.commandTiming.emaAlpha, sqliteOnlyMeanBudgetMs: settings.commandTiming.sqliteOnlyMeanBudgetMs }, fileName: settings.state.fileName };
 }
 
 function canonicalRoot(path: string): string {
@@ -83,8 +86,8 @@ function clock(options: ProductionEntryOptions): () => number {
   return options.now ?? (() => performance.now());
 }
 
-function productionContext(options: ProductionEntryOptions, orchestratorRoot: string, fileName: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>) {
-  const stateContext = productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
+function productionContext(options: ProductionEntryOptions, orchestratorRoot: string, fileName: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>, sharedContext?: StateContext) {
+  const stateContext = sharedContext ?? productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
   return { stateContext, orchestratorRoot: orchestratorRoot, confRoot: join(orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
     statePath: stateContext.statePath, tmpRoot: stateContext.tmpRoot,
     mode: 'production' as const, commandStartedAtMs, resolveCaller };
@@ -119,15 +122,15 @@ function commandState(orchestratorRoot: string): (store: StateStore, services: (
   });
 }
 
-function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>, additionalHandlers: Record<string, Handler> = {}): AppRuntime {
+function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>, additionalHandlers: Record<string, Handler> = {}, commandTimingOwner?: 'production', sharedState?: { store: StateStore; context: StateContext }): AppRuntime {
   const now = clock(options);
   const loaded = readConfiguration(orchestratorRoot);
   const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
-  const context = productionContext(options, orchestratorRoot, loaded.fileName, commandStartedAtMs, resolveCaller);
+  const context = { ...productionContext(options, orchestratorRoot, loaded.fileName, commandStartedAtMs, resolveCaller, sharedState?.context), commandTimingOwner };
   return createAppRuntime(context, {
     additionalHandlers,
     now, loadConfiguration: async () => ({ catalog, models: loaded.models, commandTiming: loaded.commandTiming }),
-    openStore: async path => openStateStore(path, { context: context.stateContext }), nextRunIdentity: () => options.runIdentity ?? ({ runId: randomUUID(), tmuxSession: randomUUID() }),
+    openStore: async path => sharedState ? { ...sharedState.store, close() {} } : openStateStore(path, { context: context.stateContext }), nextRunIdentity: () => options.runIdentity ?? ({ runId: randomUUID(), tmuxSession: randomUUID() }),
     createServices: createProductionServices, commandState: commandState(orchestratorRoot),
   });
 }
@@ -140,33 +143,51 @@ export async function withProductionRuntime<T>(options: ProductionEntryOptions, 
 }
 
 export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
-  if (argv[0] === 'test' && argv[1] === 'run' && !argv.includes('--help')) {
-    const { runConfiguredTestRun } = await import('./test-run-runtime.ts');
-    let services: Promise<RuntimeServices> | undefined;
-    return runConfiguredTestRun(argv.slice(2), { ...options, settle: async store => {
-      const root = canonicalRoot(options.orchestratorRoot);
-      const loaded = readConfiguration(root);
-      const context = productionContext(options, root, loaded.fileName, performance.now(), async () => rafSystemCaller);
-      await settleCommandState(commandState(root)(store, () => services ??= createProductionServices(store, {
-        catalog: JSON.parse(readFileSync(options.artifactPath, 'utf8')), models: loaded.models, commandTiming: loaded.commandTiming,
-      }, context)));
-    } });
-  }
-  const startedAtMs = performance.now();
+  const costStartedAt = options.costStartedAt ?? rafCostBoundary();
+  const now = clock(options);
+  const startedAtMs = options.costStartedAt?.monotonicMs ?? (options.now ? now() : costStartedAt.monotonicMs);
   let runtime: AppRuntime | undefined;
+  let testExecution: ExecutionResult | undefined;
   const unavailable = () => { throw failure('COMMAND_UNAVAILABLE', 'Production service for this operation is unavailable'); };
   const handlers = new Proxy(Object.create(null) as Record<string, Handler>, {
     get(_target, name) {
       if (typeof name !== 'string') return undefined;
-      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'runner limits', 'command stats', 'resource wait', 'service start', 'service status', 'service stop',
+      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'runner limits', 'command stats', 'resource wait', 'service start', 'service status', 'service stop', 'test run',
         'reminder add', 'reminder list', 'reminder update', 'reminder activate', 'reminder close', 'reminder reassign', 'reminder close-all',
         'bug list', 'bug show', 'bug comment add', 'bug status set', 'bug attachment get'].includes(name)) return unavailable;
       return async (params: Record<string, unknown>) => {
+        let profileStore: StateStore | undefined;
+        let profile: RafCostRuntime | undefined;
+        let original: unknown;
+        let loaded: ReturnType<typeof readConfiguration> | undefined;
+        let command: CompiledCatalog['commands'][number] | undefined;
         try {
-          const commandStartedAtMs = options.now?.() ?? startedAtMs;
+          const commandStartedAtMs = startedAtMs;
           const orchestratorRoot = validatedRoot(options);
-          readConfiguration(orchestratorRoot);
-          productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
+          loaded = readConfiguration(orchestratorRoot);
+          const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
+          command = catalog.commands.find(candidate => candidate.handlerName === name);
+          const profileContext = productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
+          const serviceHandlers = name.startsWith('service ') ? createServiceHandlers({
+            orchestratorRoot, homeDirectory: options.homeDirectory,
+            service: JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'raf.json'), 'utf8')).service,
+            hostModulePath: options.serviceHostModulePath ?? fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)),
+          }) : undefined;
+          const sqliteStartedAt = rafCostBoundary();
+          profileStore = openStateStore(profileContext.statePath, { context: profileContext });
+          profile = new RafCostRuntime(profileStore, { scope: 'command', command: name }, orchestratorRoot, 'handler', costStartedAt, sqliteStartedAt);
+          profile.install();
+          if (name === 'test run') {
+            const { runConfiguredTestRun } = await import('./test-run-runtime.ts');
+            let services: Promise<RuntimeServices> | undefined;
+            testExecution = await runConfiguredTestRun(argv.slice(2), { ...options, costStartedAt, commandTimingOwner: 'production', settle: async store => {
+              const context = productionContext(options, orchestratorRoot, loaded!.fileName, commandStartedAtMs, async () => rafSystemCaller);
+              await settleCommandState(commandState(orchestratorRoot)(store, () => services ??= createProductionServices(store, {
+                catalog, models: loaded!.models, commandTiming: loaded!.commandTiming,
+              }, context)));
+            } });
+            return null;
+          }
           if (name.startsWith('bug ')) {
             const [{ createBugHandlers }, { createProductionBugPorts }] = await Promise.all([import('./bug-cli.ts'), import('./bug-production.ts')]);
             return await createBugHandlers(createProductionBugPorts({ orchestratorRoot, homeDirectory: options.homeDirectory }))[name as BugCommand](params);
@@ -179,25 +200,35 @@ export async function runProductionCli(argv: readonly string[], options: Product
               completed: [...result.diagnostic.completed], pending: [...result.diagnostic.pending], retrySafe: false, remediation: [result.diagnostic.remediation] });
             return result;
           }
-          if (name.startsWith('service ')) {
-            readConfiguration(orchestratorRoot);
-            const settings = JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'raf.json'), 'utf8'));
-            const services = createServiceHandlers({ orchestratorRoot: orchestratorRoot, homeDirectory: options.homeDirectory,
-              service: settings.service, hostModulePath: options.serviceHostModulePath ?? fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)) });
-            return await services.handlers[name as keyof typeof services.handlers](params);
-          }
-          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) });
+          if (serviceHandlers) return await serviceHandlers.handlers[name as keyof typeof serviceHandlers.handlers](params);
+          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) }, 'production', name === 'agent ps' ? { store: profileStore, context: profileContext } : undefined);
           const result = await runtime.handlers[name](params);
           await runtime.close();
           return result;
         } catch (error) {
+          original = failureContext(error) ? error : failure('PRODUCTION_ENTRY_FAILED', error instanceof Error ? error.message : String(error));
           try { await runtime?.close(); } catch {}
-          if (failureContext(error)) throw error;
-          throw failure('PRODUCTION_ENTRY_FAILED', error instanceof Error ? error.message : String(error));
+          throw original;
+        } finally {
+          let finalizationError: unknown;
+          try { profile?.stage('finalization'); profile?.finish(); }
+          catch (error) { if (original === undefined) finalizationError = error; else process.emitWarning(error instanceof Error ? error : String(error)); }
+          try {
+            if (profileStore && loaded) recordCommandTiming(profileStore, command, startedAtMs, now, loaded.commandTiming.emaAlpha);
+          } catch (error) { finalizationError = commandTimingFailure(error, original ?? finalizationError); }
+          finally { profileStore?.close(); }
+          if (finalizationError !== undefined) {
+            if (!testExecution) throw finalizationError;
+            testExecution.exitCode = testExecution.exitCode || 1;
+            testExecution.stderr = [testExecution.stderr, finalizationError instanceof Error ? finalizationError.message : String(finalizationError)].filter(Boolean).join('\n');
+          }
         }
       };
     },
   });
-  try { return await runCli(argv, options.artifactPath, handlers); }
+  try {
+    const result = await runCli(argv, options.artifactPath, handlers);
+    return result.exitCode === 0 && testExecution ? testExecution : result;
+  }
   finally { await runtime?.close(); }
 }

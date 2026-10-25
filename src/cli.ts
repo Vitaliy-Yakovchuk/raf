@@ -113,7 +113,7 @@ export class UnavailableCommandError extends Error {}
 
 const diagnostic = (code: string, error: unknown): ExecutionResult => ({ exitCode: 1, stdout: '', stderr: JSON.stringify({ code, message: error instanceof Error ? error.message : String(error) }) });
 
-export async function runPublicCli(entryUrl: string, argv: readonly string[]): Promise<ExecutionResult> {
+export async function runPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
   const codeRoot = fileURLToPath(new URL('../', entryUrl)).replace(/\/$/, '');
   const artifactPath = join(codeRoot, 'dist/catalog.json');
   const bootstrapIdentity = statSync(codeRoot, { bigint: true });
@@ -157,7 +157,7 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[]): P
     }
     const root = lease?.generationRoot ?? codeRoot;
     const { runProductionCli } = await import(pathToFileURL(join(root, 'src/production-entry.ts')).href);
-    result = await runProductionCli(argv, { orchestratorRoot, homeDirectory: homedir(), artifactPath: join(root, 'dist/catalog.json') });
+    result = await runProductionCli(argv, { orchestratorRoot, homeDirectory: homedir(), artifactPath: join(root, 'dist/catalog.json'), costStartedAt });
   } catch (error) { result = diagnostic(failureContext(error)?.code ?? 'PRODUCTION_ENTRY_FAILED', error); }
   finally {
     try { await lease?.release(); }

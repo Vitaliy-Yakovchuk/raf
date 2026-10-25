@@ -1,3 +1,4 @@
+import { measureRafCost } from './raf-cost-runtime.ts';
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { homedir } from 'node:os';
@@ -40,7 +41,7 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
   const protocol = createResourceWaitProtocol(options, {
     monotonicNow: () => performance.now(), wallNow: now, bootIdentity: () => `${boot.machineId}/${boot.bootId}`, nextId: randomUUID,
     schedule: (at, wake) => { const timer = setTimeout(() => { void wake().catch(error => process.emitWarning(error)); }, Math.max(0, at - performance.now())); timer.unref(); return () => clearTimeout(timer); },
-    readSnapshot: async requests => {
+    readSnapshot: async requests => measureRafCost('resource-queue', async () => {
       const observedAt = performance.now();
       const paths = [...new Set([context.orchestratorRoot, homedir(), ...requests.map(request => request.developmentDirectory)])];
       const sessions = getStore().sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state === 'running' && session.process), 'read');
@@ -52,7 +53,7 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
       if (unknown?.state === 'unknown') snapshot.reasons.push(unknown.error);
       const observedProcesses = observations.flatMap((row, index) => row.state === 'alive' ? [{ runId: sessions[index].runId, identity: row.identity }] : []);
       return { observedAt, data: { ...snapshot, observedProcesses } };
-    },
+    }),
     evaluateSnapshot: (probe, request: ResourceWaitPending) => {
       const snapshot = probe.data as Awaited<ReturnType<ReturnType<typeof createResourceSnapshotReader>['read']>> & { observedProcesses: import('./launch-state.ts').LaunchMeasurement['observedProcesses'] };
       const volumes = deriveResourceAdmissionVolumes({ orchestratorRoot: context.orchestratorRoot, workspace: request.developmentDirectory, home: homedir() }, snapshot.fileSystemByPath);

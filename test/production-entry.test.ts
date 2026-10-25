@@ -135,8 +135,8 @@ test('command stats reads existing canonical timing from the same file and recor
   try { store.recordCommandDuration('runner list', 314, 0.37); } finally { store.close(); }
   const data = success(await f.run(['command', 'stats']));
   assert.ok(JSON.stringify(data).includes('runner list'));
-  assert.ok(records(data).some(row => row.averageMs === 314));
-  assert.ok(!records(data).some(row => row.averageMs === 0));
+  assert.ok(records((data as { commands: unknown }).commands).some(row => row.averageMs === 314));
+  assert.ok(!records((data as { commands: unknown }).commands).some(row => row.averageMs === 0));
   const reopened = openStateStore(f.statePath);
   try {
     assert.equal(reopened.getCommandTiming('runner list')?.averageMs, 314);
@@ -147,7 +147,7 @@ test('command stats reads existing canonical timing from the same file and recor
 test('fresh command stats does not fabricate measurements for commands that never ran', async t => {
   const f = await fixture(t);
   const data = success(await f.run(['command', 'stats']));
-  assert.ok(!records(data).some(row => row.averageMs === 0));
+  assert.ok(!records((data as { commands: unknown }).commands).some(row => row.averageMs === 0));
   const store = openStateStore(f.statePath);
   try { assert.equal(store.getCommandTiming('agent run'), undefined); } finally { store.close(); }
 });

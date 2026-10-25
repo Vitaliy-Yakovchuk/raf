@@ -66,7 +66,8 @@ for (const testKind of ['unit', 'integration'] as const) {
         try {
           host = await prepareStateRecoveryHost({ root, testKind, checkpoint: name, child, initialTimeoutCount: 1 });
           assert.ok(Number.isFinite(host.deadlineMs) && host.deadlineMs > Date.now());
-          inside(host.home, root); inside(host.checkpointPath, root); inside(host.childReleasePath, root); inside(host.evidencePath, root);
+          inside(host.home, root); inside(host.checkpointPath, root); inside(host.childReleasePath, root);
+          inside(host.evidencePath, process.env.RAF_STATE_RECOVERY_EVIDENCE_ROOT || root);
           assert.equal(host.command.env.HOME, host.home);
           assert.equal(host.command.env.RAF_QA_HOME, host.home);
           assert.ok(host.command.argv.includes('test') && host.command.argv.includes('run'));

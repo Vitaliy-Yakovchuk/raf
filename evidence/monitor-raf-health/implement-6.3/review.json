@@ -1,0 +1,117 @@
+{
+  "assignment": "monitor-raf-health:6.3",
+  "status": "succeeded",
+  "implementationCommit": "eb5353dd2e85925d09f7fef0ced57a20d2fdc175",
+  "implementation": [
+    "Узгоджений semantic snapshot лише залежностей вибраного тестового прогону з адресними діагностичними JSON pointers.",
+    "Повторна перевірка початкового snapshot на межах reservation/commit/spawn; відмова до child зберігає timeoutCount та knownRed.",
+    "Свіжа авторизація caller має пріоритет; повторний контроль використовує валідований маршрут, окремо перевіряючи актуальний конфіг.",
+    "Знято spawning при передстартовій відмові для звільнення резерву; друга черга не створювалася."
+  ],
+  "acceptance": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase implement --group monitor-raf-health/config-dependencies --files test/test-run-config-dependencies.test.ts",
+    "shaFile": "final-run-sha.txt",
+    "workspaceFile": "final-run-workspace.txt",
+    "implementationPatch": "final-run-implementation.patch",
+    "resultFile": "unit-final.TestRunResult.json",
+    "rawToolResultFile": "unit-final.tool-result.json",
+    "exitFile": "unit-final.exit.json",
+    "cliCode": 0,
+    "childExitCode": 0,
+    "runId": "fe6df55d-de43-48d4-a923-52b4928ad0d2",
+    "selection": {
+      "files": [
+        "test/test-run-config-dependencies.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 59,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0,
+    "streamCapture": "exec_command повернув об’єднаний потік: повний незмінений JSON без інших байтів. Окремі stderr-файли порожні за контрактом stdout CLI; незалежного розділення потоків інструмент не надає."
+  },
+  "checks": [
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "evidence": "build.exit.json"
+    },
+    {
+      "command": "npm run check:comments",
+      "exitCode": 0,
+      "evidence": "check-comments.exit.json"
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "evidence": "diff-check.exit.json"
+    },
+    {
+      "command": "git diff --exit-code -- test/test-run-config-dependencies.test.ts",
+      "exitCode": 0,
+      "evidence": "tests-unchanged.exit.json"
+    }
+  ],
+  "earlierRuns": [
+    {
+      "runId": "f93f30c1-462d-433f-8b4c-1536fdb2cfae",
+      "cliCode": 1,
+      "outcome": "assertions-failed",
+      "captureComplete": false,
+      "evidence": "unit-1.tool-result.json",
+      "limitation": "Перший інструментальний результат урізано лімітом виводу. Повного TestRunResult і окремого stderr немає; цей прогін не є доказом pass. Виявлені помилки виправлено; остаточний повний прогін перевіряє всю ту саму групу."
+    },
+    {
+      "runId": "60e2497f-f151-4b95-8092-b1e9e50314e1",
+      "cliCode": 0,
+      "outcome": "passed",
+      "evidence": "unit-2.TestRunResult.json"
+    },
+    {
+      "runId": "b158903e-1088-40ea-bd99-0dca2b0f5a4d",
+      "cliCode": 0,
+      "outcome": "passed",
+      "evidence": "unit-3.TestRunResult.json"
+    }
+  ],
+  "configurationRegistration": {
+    "alreadyRegistered": true,
+    "unitFile": {
+      "path": "/projects/raf/profiles/node/unitFiles/-",
+      "value": "test/test-run-config-dependencies.test.ts"
+    },
+    "group": {
+      "path": "/projects/raf/groups/monitor-raf-health~1config-dependencies",
+      "value": {
+        "profileId": "node",
+        "files": [
+          "test/test-run-config-dependencies.test.ts"
+        ]
+      }
+    },
+    "confEditedByThisAgent": false
+  },
+  "coordination": [
+    "Початковий build/check:comments блокував чужий scripts/qa-main-agent-channel.mjs:167,168. Main погодив виправлення з raf-sym64b-qa; остаточні обидві перевірки мають код 0.",
+    "Main підтвердив відсутність перетину src/production-runtime.ts після закриття raf-mrh73-impl і дозволив вузьку правку 6.3."
+  ],
+  "scope": {
+    "testsChanged": false,
+    "tasksCheckboxesChanged": false,
+    "qaHomeReset": false,
+    "groupRenamed": false,
+    "archive": null,
+    "reason": "Інші пункти зміни відкриті; live QA не входить до 6.3."
+  }
+}

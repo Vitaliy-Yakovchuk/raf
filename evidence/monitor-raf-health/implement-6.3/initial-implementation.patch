@@ -1,0 +1,297 @@
+diff --git a/src/test-run-config-dependencies.ts b/src/test-run-config-dependencies.ts
+index 2ef2b0f..8cbb812 100644
+--- a/src/test-run-config-dependencies.ts
++++ b/src/test-run-config-dependencies.ts
+@@ -1,3 +1,4 @@
++import { isDeepStrictEqual } from 'node:util';
+ import type { TestKind } from './test-run-integration-profiles.ts';
+ 
+ export type TestRunConfigurationFile =
+@@ -50,20 +51,122 @@ export interface TestRunConfigurationDependencyPort {
+   recheck(snapshot: TestRunConfigurationSnapshot, at: 'reservation' | 'spawn'): Promise<void>;
+ }
+ 
++const escape = (key: string) => key.replaceAll('~', '~0').replaceAll('/', '~1');
++const address = (dependency: TestRunConfigurationDependency) => dependency.file + '#' + dependency.pointer;
++
+ export function testRunConfigurationManifest(scope: TestRunConfigurationScope): TestRunConfigurationDependency[] {
+-  throw new Error('NotImplemented');
++  const dependencies: TestRunConfigurationDependency[] = [];
++  const add = (file: TestRunConfigurationFile, ...pointers: string[]) => {
++    dependencies.push(...pointers.map(pointer => ({ file, pointer })));
++  };
++  const project = escape(scope.project);
++  add('conf/test-runs.json', `/projects/${project}/profiles/${escape(scope.profileId)}`,
++    `/projects/${project}/groups/${escape(scope.group)}`, `/phases/${escape(scope.phase)}`, '/diagnostics', '/temporaryArtifacts');
++  add('conf/projects.json', ...['path', 'profile', 'branchPaths'].map(key => `/projects/${project}/${key}`),
++    `/profiles/${escape(scope.projectProfileId)}`);
++  add('conf/flow.json', scope.testKind === 'integration' ? '/integrationTests/timeoutMs' : '/unitTests',
++    `/resources/${scope.resourceLevel}`, '/resources/home');
++  add('conf/raf-constants.json', `/agentPhases/${scope.agentPhaseIndex}`, `/commands/${scope.commandIndex}`);
++  add('conf/raf.json', '/resourceWait');
++  if (scope.runner !== undefined) add('conf/raf.json', `/runnerProtocols/${escape(scope.runner)}`);
++  return dependencies;
++}
++
++function failure(): TestRunConfigurationFailure {
++  return Object.assign(new Error('Test configuration could not be verified'), {
++    code: 'CONFIGURATION_INVALID' as const, changedPointers: [] as string[], unreadableFiles: [] as TestRunConfigurationFile[],
++    missingPointers: [] as string[], inconsistentFiles: [] as TestRunConfigurationFile[],
++  });
++}
++
++function reject(error: TestRunConfigurationFailure): void {
++  if (!error.changedPointers.length && !error.unreadableFiles.length && !error.missingPointers.length && !error.inconsistentFiles.length) return;
++  error.message = ['CONFIGURATION_INVALID',
++    ...(['changedPointers', 'unreadableFiles', 'missingPointers', 'inconsistentFiles'] as const)
++      .filter(key => error[key].length).map(key => `${key}: ${error[key].join(', ')}`)].join('; ');
++  throw error;
++}
++
++function normalize(value: ConfigurationValue): ConfigurationValue {
++  if (Array.isArray(value)) return value.map(normalize);
++  if (value !== null && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(key => [key, normalize(value[key])]));
++  return value;
++}
++
++function lookup(value: ConfigurationValue, pointer: string): { value: ConfigurationValue } | null {
++  if (pointer === '') return { value };
++  if (!pointer.startsWith('/')) return null;
++  for (const token of pointer.slice(1).split('/')) {
++    if (/~(?:[^01]|$)/u.test(token)) return null;
++    const key = token.replaceAll('~1', '/').replaceAll('~0', '~');
++    if (value === null || typeof value !== 'object' || !Object.hasOwn(value, key)) return null;
++    value = (value as Record<string, ConfigurationValue>)[key];
++  }
++  return { value };
++}
++
++async function readSnapshot(dependencies: readonly TestRunConfigurationDependency[], reader: TestRunConfigurationReader) {
++  const error = failure();
++  const documents = new Map<TestRunConfigurationFile, ConfigurationValue>();
++  const revisions = new Map<TestRunConfigurationFile, string>();
++  const files = [...new Set(dependencies.map(dependency => dependency.file))];
++  for (const file of files) {
++    try {
++      const read = await reader.read(file);
++      documents.set(file, JSON.parse(read.text));
++      revisions.set(file, read.revision);
++    } catch { error.unreadableFiles.push(file); }
++  }
++  for (const file of files) {
++    if (!revisions.has(file)) continue;
++    try { if (await reader.revision(file) !== revisions.get(file)) error.inconsistentFiles.push(file); }
++    catch { error.unreadableFiles.push(file); }
++  }
++  const snapshot: TestRunConfigurationSnapshot = { version: 1, dependencies: [] };
++  const seen = new Set<string>();
++  for (const dependency of dependencies) {
++    if (seen.has(address(dependency))) continue;
++    seen.add(address(dependency));
++    if (!documents.has(dependency.file) || error.unreadableFiles.includes(dependency.file) || error.inconsistentFiles.includes(dependency.file)) continue;
++    const found = lookup(documents.get(dependency.file)!, dependency.pointer);
++    if (!found) error.missingPointers.push(address(dependency));
++    else snapshot.dependencies.push({ ...dependency, value: normalize(found.value) });
++  }
++  return { snapshot, error };
+ }
+ 
+ export async function captureTestRunConfiguration(
+   dependencies: readonly TestRunConfigurationDependency[],
+   reader: TestRunConfigurationReader,
+ ): Promise<TestRunConfigurationSnapshot> {
+-  throw new Error('NotImplemented');
++  const { snapshot, error } = await readSnapshot(dependencies, reader);
++  reject(error);
++  return snapshot;
++}
++
++function changed(before: ConfigurationValue, after: ConfigurationValue, pointer: string): string[] {
++  if (isDeepStrictEqual(before, after)) return [];
++  if (before !== null && after !== null && typeof before === 'object' && typeof after === 'object' && Array.isArray(before) === Array.isArray(after)) {
++    const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])].sort();
++    return keys.flatMap(key => {
++      const path = `${pointer}/${escape(key)}`;
++      if (!Object.hasOwn(before, key) || !Object.hasOwn(after, key)) return [path];
++      return changed((before as Record<string, ConfigurationValue>)[key], (after as Record<string, ConfigurationValue>)[key], path);
++    });
++  }
++  return [pointer];
+ }
+ 
+ export async function assertTestRunConfigurationUnchanged(
+   snapshot: TestRunConfigurationSnapshot,
+   reader: TestRunConfigurationReader,
+ ): Promise<void> {
+-  throw new Error('NotImplemented');
++  if (snapshot.version !== 1) throw Object.assign(failure(), { message: 'CONFIGURATION_INVALID: unsupported snapshot version' });
++  const current = await readSnapshot(snapshot.dependencies, reader);
++  for (const dependency of snapshot.dependencies) {
++    const actual = current.snapshot.dependencies.find(entry => address(entry) === address(dependency));
++    if (actual) current.error.changedPointers.push(...changed(dependency.value, actual.value, address(dependency)));
++  }
++  current.error.changedPointers = [...new Set(current.error.changedPointers)];
++  reject(current.error);
+ }
+diff --git a/src/test-run-reservations.ts b/src/test-run-reservations.ts
+index 0b5e0d7..8353936 100644
+--- a/src/test-run-reservations.ts
++++ b/src/test-run-reservations.ts
+@@ -1,5 +1,5 @@
+ import { isDeepStrictEqual } from 'node:util';
+-import type { TestRunConfigurationDependencyPort } from './test-run-config-dependencies.ts';
++import type { TestRunConfigurationSnapshot, TestRunConfigurationDependencyPort } from './test-run-config-dependencies.ts';
+ import type { TestRunQueueRecord } from './test-run-queue.ts';
+ import type { ResourceUsageRecord, UsageFinishReason } from './resource-usage.ts';
+ import type { ResourceEstimateResolution, ResourceReservationEstimate } from './resource-estimates.ts';
+@@ -97,6 +97,8 @@ export async function runResourceReservedTestRun(
+   let pendingOwned = false;
+   let accepted = false;
+   let waitError: string | null = null;
++  let configurationSnapshot: TestRunConfigurationSnapshot | undefined;
++  let preSpawnRejected = false;
+   let interrupted: string | null = null;
+   const controller = new AbortController();
+   let unsubscribe = () => {};
+@@ -149,6 +151,7 @@ export async function runResourceReservedTestRun(
+           let mustWait = await ports.queue?.hasPending() ?? false;
+           for (;;) {
+             checkSignal();
++            if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, 'reservation');
+             {
+               const estimate = await ports.resources.estimateProfile(request.project, plan!.profileId);
+               const prepared = await ports.resources.prepare({ testRunId: runId, profileId: plan!.profileId, groupKey: key,
+@@ -193,6 +196,8 @@ export async function runResourceReservedTestRun(
+           acquiredGroup.inFlight!.startedAtMs = ports.clock.now();
+           if (!await ports.resources.commit(claim!) || !await ports.resources.current(claim!)) throw lost();
+           if (record && !await ports.queue!.transition(record, 'starting')) throw lost();
++          await ports.preflight(context);
++          if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, 'reservation');
+           await ports.state.transaction(tx => {
+             if (!isDeepStrictEqual(tx.get(key), previous)) throw lost();
+             tx.put(owned!);
+@@ -214,14 +219,23 @@ export async function runResourceReservedTestRun(
+       if (!ports.resourceRoute || !Object.values(ports.resourceRoute.branchPaths).includes(environment.canonicalWorkspace)) fail('WORKSPACE_MISMATCH', 'A trusted canonical resource route is required');
+       requestedTier = ports.resourceRoute!.branchPaths.hotfix === environment.canonicalWorkspace ? 'hotfix' : 'normal';
+       checkPending();
++      configurationSnapshot ??= await ports.configurationDependencies?.capture();
+       return environment;
+     },
+     spawn: async (command, onEvent) => {
+       if (!claim || !await ports.resources.current(claim)) throw lost();
+       const group = await ports.state.transaction(tx => tx.get(key));
+       if (group?.inFlight?.runId !== runId) throw lost();
+-      await ports.resources.beforeSpawn?.(claim, command.environment.TMPDIR ? [command.environment.TMPDIR] : []);
+-      await ports.resources.markSpawning?.(claim);
++      try {
++        await ports.resources.beforeSpawn?.(claim, command.environment.TMPDIR ? [command.environment.TMPDIR] : []);
++        await ports.resources.markSpawning?.(claim);
++        await ports.preflight(context);
++        if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, 'spawn');
++      } catch (error) {
++        preSpawnRejected = true;
++        waitError = (error as any)?.code ?? 'RUNNER_SETUP_FAILED';
++        throw error;
++      }
+       const child = await ports.spawn(command, onEvent);
+       try { await ports.resources.bindProcess(claim, child.identity); }
+       catch (error) { await child.cleanup(owned!.inFlight!.deadlineMs, 'interruption'); throw error; }
+@@ -274,6 +288,14 @@ export async function runResourceReservedTestRun(
+         });
+       }
+     }
++    if (preSpawnRejected && result.cleanup.complete && (!claim || released)) {
++      await restore();
++      result.outcome = 'refused'; result.failureKinds = ['refusal']; result.exitCode = null;
++      result.errorCode = waitError; result.timedOut = false; result.nextAction = 'fix-setup';
++      result.timeoutCount = original?.timeoutCount ?? 0; result.knownRed = original?.knownRed ?? [];
++      result.unexecuted = original?.unexecuted ?? []; result.unknown = original?.unknown ?? [];
++      result.groupState = original?.state ?? 'idle';
++    }
+     result.resourceUsage = claim ? await ports.resources.resourceUsage?.(claim) ?? null : null;
+     if (result.runId === runId) result.durationMs = ports.clock.now() - started;
+     const queueRecord = record as TestRunQueueRecord | null;
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index a0f60e2..b3e2b69 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -1,3 +1,5 @@
++import { testRunConfigurationManifest, captureTestRunConfiguration, assertTestRunConfigurationUnchanged } from './test-run-config-dependencies.ts';
++import type { TestRunConfigurationReader, TestRunConfigurationFile } from './test-run-config-dependencies.ts';
+ import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
+ import { recordFlowTestRun } from './flow-qa-report.ts';
+ import { flowTestRunStore } from './flow-runtime.ts';
+@@ -31,7 +33,7 @@ import { sandboxTestControlSnapshot } from './production-runtime.ts';
+ import { productionStateContext, stateContextEnvironment, canonicalStatePath, type StateContext } from './state-migration-guard.ts';
+ import { openStateStore } from './state-store.ts';
+ import { loadFlowPolicy } from './flow-policy.ts';
+-import { parseTestRunArgs, validateTestRunConfig, cleanupClosedTestRunGroups, testRunFailureResult } from './test-runs.ts';
++import { planTestRun, parseTestRunArgs, validateTestRunConfig, cleanupClosedTestRunGroups, testRunFailureResult } from './test-runs.ts';
+ import { cleanupTestProcessGroup, reconcileTestRunProcess } from './test-run-processes.ts';
+ import type { ChildExit, ManagedTestProcess, RunnerEvent, TestRunConfig, TestRunContext, TestRunEnvironment, TestRunGroup, TestRunGroupKey, TestRunPorts, TestRunStatePort, TestRunTransaction } from './test-runs.ts';
+ import type { ExecutionResult } from './cli.ts';
+@@ -295,7 +297,19 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+     config = validateTestRunConfig(read('test-runs.json'), phases, policy, integrationTests);
+     const args = parseTestRunArgs(argv);
+     request = { project: args.project, phase: args.phase, group: args.group };
+-    const projects = read('projects.json').projects;
++    const projectConfiguration = read('projects.json');
++    const projects = projectConfiguration.projects;
++    read('raf.json');
++    configuration.set('flow.json', flowBytes);
++    const revision = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
++    const configurationReader: TestRunConfigurationReader = {
++      read: async file => { const bytes = readFileSync(join(root, file)); return { text: bytes.toString('utf8'), revision: revision(bytes) }; },
++      revision: async file => revision(readFileSync(join(root, file))),
++    };
++    const initialConfigurationReader: TestRunConfigurationReader = {
++      ...configurationReader,
++      read: async file => { const bytes = configuration.get(file.slice('conf/'.length))!; return { text: bytes.toString('utf8'), revision: revision(bytes) }; },
++    };
+     const cwd = realpathSync(process.cwd());
+     const workspaces: Record<string, string[]> = {};
+     for (const [id, project] of Object.entries(projects) as [string, any][]) workspaces[id] = [...new Set<string>(Object.values(project.branchPaths ?? { main: project.path }).map(path => resolve(root, String(path))))];
+@@ -355,20 +369,37 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+           const current = await sandboxTestControlSnapshot(controlStore!, root, args.project, args.group);
+           if (!isDeepStrictEqual(resolveSandboxTestCaller(current.callerEvidence), assignment) ||
+               !current.activeChanges.includes(args.group.split('/')[0]) ||
+-              !current.workspaces.some(row => row.workspace === workspace && row.branch === assignment.branch && row.actualBranch === assignment.branch)) {
++              execFileSync('git', ['branch', '--show-current'], { cwd: workspace, encoding: 'utf8' }).trim() !== assignment.branch) {
+             throw Object.assign(new Error('Test authorization changed while waiting'), { code: 'CALLER_UNAUTHORIZED' });
+           }
+-          for (const [name, bytes] of configuration) if (!bytes.equals(readFileSync(join(root, 'conf', name)))) {
+-            throw Object.assign(new Error('Test configuration changed while waiting'), { code: 'CONFIGURATION_INVALID' });
+-          }
+-          if (!flowBytes.equals(readFileSync(join(root, 'conf/flow.json')))) throw Object.assign(new Error('Flow configuration changed while waiting'), { code: 'CONFIGURATION_INVALID' });
+           return originalPreflight(value);
+         };
+         const resourceRoute = { branchPaths: Object.fromEntries(Object.entries(projects[args.project].branchPaths ?? { main: projects[args.project].path })
+           .map(([branch, path]) => [branch, resolve(root, String(path))])) };
+         const queue = createTestRunQueuePort(controlStore!, { root, workspace, home: controlContext.homeDirectory,
+           machineId: boot.machineId, settle: async () => { await options.settle?.(controlStore!); } });
+-        const reserved = Object.assign(runtime, { resourceRoute, queue, deferDelivery: true, machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
++        const configurationDependencies = {
++          capture: async () => {
++            const environment = await runtime!.preflight(context);
++            const plan = planTestRun({ ...args, only: args.only?.map(id => { const split = id.indexOf('::'); return id.startsWith('{') ? JSON.parse(id) : { file: id.slice(0, split), name: id.slice(split + 2) }; }) }, config!, context, environment);
++            const dependencies = testRunConfigurationManifest({ project: args.project, profileId: plan.profileId, group: args.group,
++              phase: args.phase, testKind: plan.testKind ?? 'unit', resourceLevel: assignment.branch === 'hotfix' ? 'hotfix' : 'normal',
++              projectProfileId: projects[args.project].profile, agentPhaseIndex: phases.indexOf(args.phase),
++              commandIndex: constants.commands.findIndex((entry: any) => isDeepStrictEqual(entry.path, ['test', 'run'])) });
++            const add = (file: TestRunConfigurationFile, pointer: string) => dependencies.push({ file, pointer });
++            add('conf/raf-constants.json', '/resourceWaitLevels');
++            add('conf/raf.json', '/service');
++            for (const hint of Object.values(config!.phases[args.phase].hints)) add('conf/test-runs.json', `/hints/${hint.replaceAll('~', '~0').replaceAll('/', '~1')}`);
++            add('conf/flow.json', assignment.branch === 'hotfix' ? '/resources/normal' : '/resources/hotfix');
++            const presetKey = config!.projects[args.project].groups[args.group] ? args.group : args.group.slice(args.group.indexOf('/') + 1);
++            const groupDependency = dependencies.find(dependency => dependency.file === 'conf/test-runs.json' && dependency.pointer.includes('/groups/'))!;
++            if (config!.projects[args.project].groups[presetKey]) groupDependency.pointer = `/projects/${args.project.replaceAll('~', '~0').replaceAll('/', '~1')}/groups/${presetKey.replaceAll('~', '~0').replaceAll('/', '~1')}`;
++            else dependencies.splice(dependencies.indexOf(groupDependency), 1);
++            return captureTestRunConfiguration(dependencies, initialConfigurationReader);
++          },
++          recheck: (snapshot: import('./test-run-config-dependencies.ts').TestRunConfigurationSnapshot) => assertTestRunConfigurationUnchanged(snapshot, configurationReader),
++        };
++        const reserved = Object.assign(runtime, { configurationDependencies, resourceRoute, queue, deferDelivery: true, machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
+         runtime.recoverGroup = async groupKey => {
+           const recovery = await recoverTestRun({ key: groupKey, authorized: true, nowMs: Date.now() }, {
+             state: runtime!.state as RecoveryStatePort,

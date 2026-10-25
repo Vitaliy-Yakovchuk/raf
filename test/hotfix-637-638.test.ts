@@ -62,6 +62,7 @@ test('6.7 Vitest setup ENOENT before OS spawn releases the group and preserves i
   const f = fixture(t, 'bugs-api', () => { spawning = false; failedSpawns++; });
   const unrelated = 'bugs-api/src/unrelated.test.ts';
   f.profile.unitFiles.push(unrelated);
+  f.context.agentPhases = Object.keys(f.config.phases);
   rmSync(join(f.workspace, 'bugs-api/vitest.config.ts'));
   const h = new RunHarness();
   const shared = machine();

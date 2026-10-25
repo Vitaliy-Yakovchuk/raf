@@ -77,7 +77,7 @@ async function controls(label) {
 function copyTranscript(record, label) {
   const target = path.join(ev, label); fs.mkdirSync(target, { recursive: true });
   // Only this run's directory and native rollout; no traversal/copy of auth or provider config.
-  fs.cpSync(own(record), path.join(target, 'run'), { recursive: true, filter: p => !fs.lstatSync(p).isSocket() });
+  fs.cpSync(own(record), path.join(target, 'run'), { recursive: true, filter: p => { const s = fs.lstatSync(p); return s.isFile() || s.isDirectory(); } });
   const native = record.process?.runnerSessionId;
   assert.ok(native, 'native session ID required');
   const found = [];
@@ -134,6 +134,10 @@ try {
   const layout = await import(pathToFileURL(path.join(main, 'src/main-layout.ts')));
   await layout.ensureMainLayoutForStart({ root, projects: projects.projects });
   const A = path.join(root, 'raf-main-a'), B = path.join(root, 'raf-main-b');
+  // Git worktrees do not include ignored runtime dependencies/build output.
+  for (const slot of [B, develop, path.join(root, 'raf-hotfix')]) {
+    for (const name of ['node_modules', 'dist']) fs.cpSync(path.join(A, name), path.join(slot, name), { recursive: true, dereference: true });
+  }
   // The native runner/selection/brief/process identity are all produced by real raf.
   env.SYM64_AUDIT = path.join(ev, 'cli-audit'); fs.mkdirSync(env.SYM64_AUDIT);
   must(run('main-start', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym64-main', '-x', '180', '-y', '50', process.execPath, path.join(source, 'test/helpers/z4044-main-pane.mjs'), stand])); pane = true;

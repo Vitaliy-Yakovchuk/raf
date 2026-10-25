@@ -159,6 +159,9 @@ export async function prepareStateRecoveryHost(input: {
     config.projects = { raf: { profiles: { [profileId]: profile }, groups: { [groupId]: { profileId, files: [file] } } } };
     config.temporaryArtifacts = { ...config.temporaryArtifacts, root: join(root, 't'), minimumNestedSocketPathBytes: 1 };
     json(join(root, 'conf/test-runs.json'), config);
+    const constants = read(join(root, 'conf/raf-constants.json'));
+    constants.commands.find((command: { path: string[] }) => command.path.join(' ') === 'test run').examples = [`raf test run --project raf --phase ${phase} --group ${groupId}`];
+    json(join(root, 'conf/raf-constants.json'), constants);
     json(settings, { mode: 'crash', availability: 'unavailable', recipientGeneration: 0 });
     json(metadata, { spawnRuns: [], releasedRuns: [] });
     const hookSource = `import {existsSync,readFileSync,writeFileSync,readdirSync} from 'node:fs';

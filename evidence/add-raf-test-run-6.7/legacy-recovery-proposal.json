@@ -1,0 +1,21 @@
+{
+  "runId": "3163a552-987d-48da-a681-a5622f022384",
+  "group": "add-visitor-origin-analytics/consent-web",
+  "project": "shared-libs",
+  "workspace": "/srv/dev/work/orchestrator/shared-libs-develop",
+  "performed": false,
+  "basis": [
+    "original-setup-failed.json",
+    "original-in-flight.json"
+  ],
+  "limits": "Only the original two TestRunResults are available. The group snapshot is reconstructed from their fields; resource claim, owner identity and temporary-directory reservation are unavailable. A null process identity alone does not prove that no process was spawned.",
+  "proposedMainOperation": [
+    "Export the exact group and matching control/resource claim into an isolated QA copy. Match project/workspace/group, original runId and resource fence; retain an immutable before snapshot.",
+    "Verify that the original owner is gone, both group and resource process identities remain null, and the deployed source matching the recorded stack confirms this ENOENT came from Vitest config preparation before OS spawn. If any proof is missing or contradictory, retain reconcile and do not reset state.",
+    "Using the recorded temporary-directory reservation, verify its ownership/runId/device/inode and clean only that directory. Do not treat an empty remainingPids array as proof of process termination.",
+    "After proving no child was created and cleanup succeeded, release only the exact fenced resource claim through its existing resource port, recording spawn-failure usage. Use compare-and-set checks for the original runId and null identity.",
+    "Clear only that group's inFlight after the successful fenced release. Preserve timeoutCount, knownRed, unexecuted, unknown, selection, runId and delivery bookkeeping. Keep setup-failed as the historical outcome and attach the completed recovery cleanup facts; never label it passed.",
+    "Confirm on the isolated copy that the first authorized call delivers any pending original result, and that the following allowed retry starts a new child after the missing Vitest config is restored. Only main decides whether to apply the verified operation to live state."
+  ],
+  "activation": "Main owns activation and live-state repair. The hotfix prevents new pre-spawn preparation failures from leaving spawning=true; it does not infer a dead tree from legacy null identities."
+}

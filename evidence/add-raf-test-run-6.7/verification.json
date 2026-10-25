@@ -1,0 +1,254 @@
+{
+  "assignment": "add-raf-test-run:6.7",
+  "audit": {
+    "valid": true,
+    "sources": [
+      "proposal.md Why/What Changes/Non-goals",
+      "tasks.md 6.7",
+      "delta projects/raf/test-runs",
+      "core/process/test-first",
+      "core/process/unit-test-runs"
+    ],
+    "conclusion": "Current pre-spawn setup leak matches assigned defect. No obsolete or contradictory requirement found."
+  },
+  "stableGroup": "add-raf-test-run/setup-reservation",
+  "refusedCalls": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-test-run/setup-reservation --files test/hotfix-637-638.test.ts",
+      "sha": "3022bf60cf42a9a8a64d5a574a94a31e989f7a3c",
+      "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+      "workspaceChanges": "Regression committed; pre-existing untracked node_modules. Exact per-invocation status listing was not retained. Commit timestamp 16:36:35Z precedes refused startedAt 16:36:41.508Z.",
+      "runId": "ad6749e6-f6cb-44bf-8f90-aa99704cf836",
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "requestedFiles": [
+        "test/hotfix-637-638.test.ts"
+      ],
+      "outcome": "refused",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "unavailable",
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "stdout": "refused.stdout.json",
+      "stderr": "refused.stderr.txt",
+      "exit": "refused.cli-code.json",
+      "transport": "exec_command exposes merged output; single JSON line and trailing stderr split without altering their bytes. No truncation."
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/setup-reservation --files test/hotfix-637-638.test.ts",
+      "sha": "b5f363589ef337e58767e3cf15158aa7064acd9d",
+      "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+      "workspaceChanges": "only untracked evidence/node_modules; code and tests committed",
+      "runId": "bb70056f-46ae-4693-8638-812fffeeb20f",
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "requestedFiles": [
+        "test/hotfix-637-638.test.ts"
+      ],
+      "outcome": "refused",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "unavailable",
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "stdout": "hotfix-refused.stdout.json",
+      "stderr": "hotfix-refused.stderr.txt",
+      "exit": "hotfix-refused.cli-code.json",
+      "transport": "exec_command exposes merged output; single JSON line and trailing stderr split without altering their bytes. No truncation."
+    }
+  ],
+  "hostFallback": {
+    "authorizedBy": "Main messages in this session: hotfix wrapper blocked by develop inventory, open item 6.5; main performs isolated host red/green. No local bypass or direct unit run by executor.",
+    "command": "timeout 1300 node --test test/hotfix-637-638.test.ts",
+    "selection": [
+      "test/hotfix-637-638.test.ts"
+    ],
+    "environment": "Main reports rafhx clean clone, conf copy, cleaned environment, separate HOME/TMPDIR, LC_ALL=C. Production HOME never read.",
+    "red": {
+      "sha": "5e1b200af16129d2e2ee468d9db93e05f18d2490",
+      "workspaceChanges": "clean clone",
+      "cliExitCode": 1,
+      "tests": 12,
+      "passed": 11,
+      "failed": 1,
+      "target": "6.7 Vitest setup ENOENT before OS spawn releases the group and preserves its retry budget",
+      "assertion": "failed.cleanup.complete expected true, actual false at test/hotfix-637-638.test.ts:112",
+      "prerequisiteAssertionsPassed": [
+        "outcome setup-failed",
+        "errorCode ENOENT",
+        "child exitCode null",
+        "timedOut false",
+        "OS spawn count 0"
+      ],
+      "stdout": "host-red.stdout",
+      "stderr": "host-red.stderr",
+      "exit": "host-red.exit",
+      "hashes": "host-red.sha256",
+      "secscan": 0
+    },
+    "initialNonTargetRun": {
+      "sha": "3022bf60cf42a9a8a64d5a574a94a31e989f7a3c",
+      "cliExitCode": 1,
+      "acceptedAsRed": false,
+      "reason": "Fixture refused before target setup; fixture corrected in subsequent test commits.",
+      "stdout": "host-initial-nontarget-red.stdout",
+      "stderr": "host-initial-nontarget-red.stderr",
+      "exit": "host-initial-nontarget-red.exit"
+    },
+    "resultLimits": "Host node --test emits its test report, not TestRunResult. No wrapper runId, persistent group counters or phase is invented; wrapper refusals are not pass.",
+    "green": {
+      "sha": "b5f363589ef337e58767e3cf15158aa7064acd9d",
+      "workspaceChanges": "clean clone reported by main",
+      "cliExitCode": 0,
+      "tests": 12,
+      "passed": 12,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "stdout": "host-green.stdout",
+      "stderr": "host-green.stderr",
+      "exit": "host-green.exit",
+      "hashes": "host-green.sha256",
+      "assertions": "ENOENT no-child setup frees group and resource; preserves timeoutCount/knownRed/unexecuted; same group retries successfully with hotfix phase across agent/SHA after config restoration. Copied ambiguous legacy group remains fail-closed."
+    }
+  },
+  "staticChecks": [
+    {
+      "command": "node --check src/test-run-runtime.ts",
+      "exitCode": 0
+    },
+    {
+      "command": "node --check test/hotfix-637-638.test.ts",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/build.ts",
+      "exitCode": 0,
+      "output": "Каталог зібрано. Операційні команди ще не реалізовані.\n"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit --strict --allowImportingTsExtensions --module nodenext --target esnext --types node test/hotfix-637-638.test.ts",
+      "exitCode": 2,
+      "result": "TS2688: Cannot find type definition file for node; not accepted as unit red or successful typecheck."
+    }
+  ],
+  "legacyRecovery": {
+    "evidence": [
+      "original-setup-failed.json",
+      "original-in-flight.json"
+    ],
+    "copyOnly": true,
+    "liveStateRead": false,
+    "liveStateModified": false,
+    "claimSnapshotAvailable": false,
+    "proposal": "legacy-recovery-proposal.json",
+    "tested": "Reconstructed copied group after deadline stays unchanged with unknown owner/tree; no unsafe cleanup/release. Exact original resource claim unavailable, so live repair is not claimed."
+  },
+  "artifacts": {
+    "host-green.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "host-green.sha256": {
+      "bytes": 280,
+      "sha256": "b1373e2a47645a3b580809713e6de9f526ee6ae161688113be721456aa583176"
+    },
+    "host-green.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "host-green.stdout": {
+      "bytes": 1225,
+      "sha256": "7985ba29b0025c717bc732ba403699fe96a86a53cba227165477bc0681158397"
+    },
+    "host-initial-nontarget-red.exit": {
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "host-initial-nontarget-red.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "host-initial-nontarget-red.stdout": {
+      "bytes": 1841,
+      "sha256": "ef62b7984bfdfa5c8ee92266f0b94a17e40f03ac4362c5cb20d61d32759b6743"
+    },
+    "host-red.exit": {
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "host-red.sha256": {
+      "bytes": 277,
+      "sha256": "0477bdd3b753fc5ef8c4c6d37d6cddf3f496d6798ea11a24614d4cc8fdf01674"
+    },
+    "host-red.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "host-red.stdout": {
+      "bytes": 1892,
+      "sha256": "d74eecb2fe2bf4bcceaa01b7b5b04faba5befbdddce91b564d2acf25ae611843"
+    },
+    "hotfix-refused.cli-code.json": {
+      "bytes": 39,
+      "sha256": "007a9fdb06f4825eb962f4b9ef4bdda1f9775853899b6f8f74a15d55067e7d11"
+    },
+    "hotfix-refused.stderr.txt": {
+      "bytes": 333,
+      "sha256": "d5341a517c2efd7e844a5a7df0fe8bf5a06e415c38c8a22aa9153869a0c11d41"
+    },
+    "hotfix-refused.stdout.json": {
+      "bytes": 2054,
+      "sha256": "d47c8066fd0cac80ea1a211c06e5a7285c56ca037276e25b8fb0d9df7a167939"
+    },
+    "legacy-recovery-proposal.json": {
+      "bytes": 2351,
+      "sha256": "085dd8ff55f54b83818324892e081935ca8b4601a6a8b97b974dac3b190a080c"
+    },
+    "original-in-flight.json": {
+      "bytes": 3320,
+      "sha256": "0711b562a745569c8b2b91bacd2a80eead7620455de5c21659106a26a6eebd1d"
+    },
+    "original-setup-failed.json": {
+      "bytes": 6205,
+      "sha256": "6c656ab04b0e01a846a43096b61dfd4ede78e0493e11c15742263048e7eba3c3"
+    },
+    "refused.cli-code.json": {
+      "bytes": 39,
+      "sha256": "007a9fdb06f4825eb962f4b9ef4bdda1f9775853899b6f8f74a15d55067e7d11"
+    },
+    "refused.stderr.txt": {
+      "bytes": 333,
+      "sha256": "d5341a517c2efd7e844a5a7df0fe8bf5a06e415c38c8a22aa9153869a0c11d41"
+    },
+    "refused.stdout.json": {
+      "bytes": 2051,
+      "sha256": "4ff4384a951be55c700fe6a4dfc0ce0c85dfc2777780e372aa3b54ee3c536007"
+    }
+  }
+}

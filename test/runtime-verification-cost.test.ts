@@ -139,7 +139,8 @@ function fileMeter(t: TestContext, generation: string) {
     const inside = log.filter(row => row.path === generation || row.path.startsWith(generation + '/'));
     return { traversal: inside.filter(row => /^readdir|^opendir/.test(row.operation)),
       metadata: inside.filter(row => /^(?:lstat|stat|realpath|readlink)/.test(row.operation)),
-      content: inside.filter(row => /^readFile|^open/.test(row.operation)),
+      content: inside.filter(row => /^readFile/.test(row.operation)),
+      opens: inside.filter(row => /^open/.test(row.operation)),
       full: inside.filter(row => /^readdir|^opendir/.test(row.operation) && row.path === generation).length };
   };
   return { log, snapshot, reset() { log.length = 0; } };
@@ -314,11 +315,13 @@ function processFixture(t: TestContext) {
   let reads = 0;
   const commands: AdapterCommand[] = [];
   const procReads: string[] = [];
+  const allCommands: AdapterCommand[] = [];
+  const allProcReads: string[] = [];
   const beforeRead = (path: fs.PathLike) => {
     const name = String(path);
     const target = identities.find(identity => name.startsWith('/proc/' + identity.pid + '/'));
     if (target) {
-      procReads.push(name); reads++;
+      procReads.push(name); allProcReads.push(name); reads++;
       if (mode === 'denied' || mode === 'disappeared' && reads > 1) throw Object.assign(new Error('Controlled OS read refusal'), { code: mode === 'denied' ? 'EACCES' : 'ENOENT' });
       if (mode === 'missing') throw Object.assign(new Error('Controlled missing process'), { code: 'ENOENT' });
     }
@@ -351,6 +354,7 @@ function processFixture(t: TestContext) {
   syncBuiltinESMExports();
   const execute: AdapterCommandExecutor = async command => {
     commands.push(structuredClone(command));
+    allCommands.push(structuredClone(command));
     assert.equal(basename(command.executable), 'ps', 'Unit OS executor must not spawn a runner or polling helper');
     if (mode === 'denied') return { exitCode: 1, stdout: '', stderr: 'Controlled process access denied' };
     if (mode === 'malformed') return { exitCode: 0, stdout: 'malformed', stderr: '' };
@@ -366,9 +370,14 @@ function processFixture(t: TestContext) {
   const state = { boot: async () => boot };
   (globalThis as any)[bridgeKey] = state;
   t.after(() => { (globalThis as any)[bridgeKey] = previous; t.mock.restoreAll(); syncBuiltinESMExports(); });
-  const scanCount = () => commands.filter(command => command.args.includes('-axo') || command.args.includes('-ax') || command.args.includes('-ef')).length;
+  const globalScans = (rows: AdapterCommand[]) => rows.filter(command => command.args.includes('-axo') || command.args.includes('-ax') || command.args.includes('-ef')).length;
+  const scanCount = () => globalScans(commands);
+  const targetedCost = (pid: number) => allProcReads.filter(path => path.startsWith('/proc/' + pid + '/')).length
+    + allCommands.filter(command => command.args.includes('-p') && command.args[command.args.indexOf('-p') + 1].split(',').includes(String(pid))).length;
   const targetedPids = () => [...new Set(procReads.flatMap(path => path.match(/^\/proc\/(\d+)\//)?.[1] ?? []).concat(commands.filter(command => command.args.includes('-p')).flatMap(command => command.args[command.args.indexOf('-p') + 1].split(','))))].sort();
-  return { boot, identities, execute, commands, procReads, state, scanCount, targetedPids,
+  return { boot, identities, execute, commands, procReads, state, scanCount, targetedPids, targetedCost,
+    totalScans: () => globalScans(allCommands),
+    resetAll() { allCommands.length = 0; allProcReads.length = 0; commands.length = 0; procReads.length = 0; reads = 0; },
     mode(value: OSMode) { mode = value; reads = 0; }, reset() { commands.length = 0; procReads.length = 0; reads = 0; } };
 }
 
@@ -483,7 +492,7 @@ for (const count of [1, 3, 7]) {
   });
 }
 
-for (const change of ['start', 'command', 'missing', 'denied', 'malformed', 'disappeared', 'machine', 'boot'] as const) {
+for (const change of ['start', 'command', 'missing', 'denied', 'malformed', 'disappeared', 'machine', 'boot', 'host-machine', 'host-boot'] as const) {
   test(`known identity fresh after wait rejects ${change} without inventing alive`, { skip: process.platform !== 'linux' }, async t => {
     const os = processFixture(t);
     const identity = structuredClone(os.identities[0]);
@@ -491,6 +500,8 @@ for (const change of ['start', 'command', 'missing', 'denied', 'malformed', 'dis
     await Promise.resolve(); os.reset();
     if (change === 'machine') identity.evidence.machineId = 'foreign-machine';
     else if (change === 'boot') identity.evidence.bootId = 'foreign-boot';
+    else if (change === 'host-machine') os.boot.machineId = 'new-machine';
+    else if (change === 'host-boot') os.boot.bootId = 'new-boot';
     else os.mode(change);
     const observed = await runtime.observeIdentity(identity, os.execute);
     assert.equal(observed.state, ['denied', 'malformed', 'disappeared'].includes(change) ? 'unknown' : 'exited');
@@ -498,6 +509,17 @@ for (const change of ['start', 'command', 'missing', 'denied', 'malformed', 'dis
     assert.equal(os.scanCount(), 0, 'Linux known-identity check stays targeted on failure too');
   });
 }
+
+test('one PID with different full identities cannot share an alive proof', { skip: process.platform !== 'linux' }, async t => {
+  const os = processFixture(t);
+  const original = os.identities[0];
+  const foreign = structuredClone(original);
+  foreign.evidence.command = 'foreign command';
+  const rows = await runtime.observeIdentities([original, foreign, original], os.execute);
+  assert.deepEqual(rows.map(row => row.state), ['alive', 'exited', 'alive']);
+  assert.equal(os.scanCount(), 0);
+  assert.deepEqual(os.targetedPids(), [String(original.pid)]);
+});
 
 test('extra consumers do not multiply real targeted OS reads in one identity pass', { skip: process.platform !== 'linux' }, async t => {
   const os = processFixture(t);
@@ -582,6 +604,9 @@ for (const queued of [false, true]) for (const count of [1, 4]) for (const scena
     const os = processFixture(t);
     const selected = { status: 'selected' as const, runner: 'codex' as const, model: 'unit-model', effort: 'unit-effort', reason: 'controlled selection', quota: 'unknown' as const };
     const runner = { ...os.identities[0], tmuxSession: 'unit-launch', runnerSessionId: 'native-ready' };
+    assert.deepEqual((await runtime.observeIdentities([runner, os.identities[1]], os.execute)).map(row => row.state), ['alive', 'alive']);
+    const costPerPid = os.identities.map(identity => os.targetedCost(identity.pid));
+    os.resetAll();
     let currentStore: StateStore;
     let opens = 0, closes = 0, contexts = 0, pass = 0, delivered = 0, aborted = 0, committed = 0, clock = 0;
     const frames: { traversals: number; scans: number; pids: string[]; states: string[] }[] = [];
@@ -713,6 +738,11 @@ for (const queued of [false, true]) for (const count of [1, 4]) for (const scena
       assert.equal(operations.filter(operation => operation === 'starting').length, 1);
       if (successful) assert.deepEqual(JSON.parse(result.stdout).queue, { queueId: queueRecord.queueId, waited: false });
     }
+    assert.equal(os.totalScans(), 0, 'The entire known-identity command, including delivery and final verification, has no global ps');
+    const ownershipChecks = successful || scenario === 'delivery-error' || scenario === 'ownership-changed' ? 1 : 0;
+    const finalChecks = successful ? (queued ? 2 : 1) : 0;
+    assert.equal(os.targetedCost(runner.pid), costPerPid[0] * (count + ownershipChecks + finalChecks), 'Runner OS reads scale with actual waits and independent ownership boundaries');
+    assert.equal(os.targetedCost(os.identities[1].pid), costPerPid[1] * count, 'Worker OS reads scale with waits, not duplicate consumers');
     assert.equal(opens, 1, 'One command store serves handler and profile');
     assert.equal(contexts, 1, 'Observation iterations do not rebuild production context');
     assert.equal(closes, 1);

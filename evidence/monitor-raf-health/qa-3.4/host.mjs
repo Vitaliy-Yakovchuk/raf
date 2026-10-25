@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { randomUUID, createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { configureDeliveryStand } from '../../../scripts/qa-delivery-config.mjs';
 
 const source = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const base = await fs.mkdtemp('/srv/dev/mrh34-');
@@ -61,7 +62,7 @@ try {
   assert.equal(initialized.status, 0, 'Isolated main repository initialized');
   const rafPath = join(root, 'conf/raf.json');
   const raf = JSON.parse(await fs.readFile(rafPath, 'utf8'));
-  raf.runnerProtocols[0].baseArgs = ['--sandbox', 'workspace-write'];
+  configureDeliveryStand(raf, JSON.parse(await fs.readFile(join(source, '../conf/raf.json'), 'utf8')));
   await fs.writeFile(rafPath, JSON.stringify(raf));
   const conf = JSON.parse(await fs.readFile(join(root, 'conf/flow.json'), 'utf8'));
   const retention = conf.retention.failedDeliveryEvidenceMs;

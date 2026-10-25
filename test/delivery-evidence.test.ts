@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { configureDeliveryStand } from '../scripts/qa-delivery-config.mjs';
 import { deliveryDiagnostic } from '../src/delivery-diagnostic.ts';
 import {
   cleanupFailedDeliveryEvidence, preserveFailedDeliveryEvidence, readFailedDeliveryEvidenceRetention,
@@ -13,6 +15,16 @@ const settings = { runner: 'codex', version: '0.163.0', markers: { ready: ['Ask 
 } } as ProtocolSettings;
 const at = (ms: number) => new Date(Date.UTC(2026, 9, 24) + ms).toISOString();
 const retentionMs = 4000;
+test('[MRH 3.4] delivery stand preserves production startup policy and configured runner timeouts', () => {
+  const original = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+  const synthetic = { commandTiming: { emaAlpha: 0.1 }, runnerProtocols: [{ runner: 'codex', version: '0.0.1', baseArgs: [], timeouts: {} }] };
+  const configured = configureDeliveryStand(synthetic, original);
+  assert.deepEqual(configured.costProfile, original.costProfile);
+  assert.deepEqual(configured.commandTiming, original.commandTiming);
+  assert.deepEqual(configured.runnerProtocols[0].timeouts, original.runnerProtocols.find((row: { runner: string }) => row.runner === 'codex').timeouts);
+  assert.deepEqual(configured.runnerProtocols[0].baseArgs, ['--sandbox', 'workspace-write']);
+  assert.equal(configured.runnerProtocols[0].version, '0.0.1');
+});
 const primaryReason = 'RUNNER_DELIVERY_UNAVAILABLE: Unknown native input or screen during initial brief submission';
 const brief = 'Synthetic confidential assignment for a private customer';
 const screen = `BEGIN\u0000\u001b[31m${'аб😀\r\n'.repeat(1500)}\u001b[0m\n${brief}\nAccount: Synthetic Owner\nsynthetic@example.test\nAuthorization: Bearer synthetic-token\n/home/synthetic/customer\nEND Unknown native dialog\n› synthetic composer`;

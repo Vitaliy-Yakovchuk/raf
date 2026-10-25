@@ -1,0 +1,28 @@
+{
+  "status": "failed",
+  "assignment": "monitor-raf-health:3.4",
+  "revision": "392d56deb4ff010a725d159f1da30f38479a945b",
+  "sourceStatus": "?? node_modules\n",
+  "versions": {
+    "node": "v26.12.1",
+    "tmux": "tmux 3.6",
+    "codex": "codex-cli 0.163.0",
+    "git": "git version 2.53.0"
+  },
+  "platform": {
+    "os": "linux",
+    "arch": "x64"
+  },
+  "isolation": "Private /srv/dev fixture, own HOME/TMPDIR/state; real production CLI/worker/tmux and Codex sandbox; deterministic synthetic TUI, no live model or provider request",
+  "checks": [],
+  "failure": {
+    "name": "AssertionError",
+    "code": "ERR_ASSERTION",
+    "message": "Expected values to be strictly equal:\n\n1 !== 0\n"
+  },
+  "cleanup": {
+    "complete": true,
+    "privateFixtureRemoved": true
+  },
+  "unitRun": "Separate authorized raf test run; not invoked by this host script"
+}

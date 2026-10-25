@@ -1,0 +1,39 @@
+{
+  "checks": [
+    {
+      "command": "npm run build",
+      "initial": {
+        "chunk_id": "5467af",
+        "wall_time_seconds": 1.000914958,
+        "session_id": 15560,
+        "original_token_count": 9,
+        "output": "\n> build\n> node scripts/build.ts\n\n"
+      },
+      "completion": {
+        "chunk_id": "a371ad",
+        "wall_time_seconds": 0.32612651,
+        "exit_code": 0,
+        "original_token_count": 26,
+        "output": "Каталог зібрано. Операційні команди ще не реалізовані.\n"
+      }
+    },
+    {
+      "command": "npm run check:comments",
+      "initial": {
+        "chunk_id": "f426e0",
+        "wall_time_seconds": 1.001832375,
+        "session_id": 10974,
+        "original_token_count": 13,
+        "output": "\n> check:comments\n> node scripts/check-comments.ts\n\n"
+      },
+      "completion": {
+        "chunk_id": "e6a342",
+        "wall_time_seconds": 0.28116895,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    }
+  ],
+  "note": "Shared workspace may contain unrelated in-flight changes; unit workspace snapshot is recorded separately. Tool output combines streams."
+}

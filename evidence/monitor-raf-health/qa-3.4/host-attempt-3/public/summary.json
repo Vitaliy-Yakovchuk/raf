@@ -1,0 +1,33 @@
+{
+  "status": "failed",
+  "assignment": "monitor-raf-health:3.4",
+  "revision": "fe2d55b7099ef7fbe70a514785f5d0d51d64aa60",
+  "sourceStatus": "",
+  "untrackedStatus": "node_modules\n",
+  "versions": {
+    "node": "v26.12.1",
+    "tmux": "tmux 3.6",
+    "codex": "codex-cli 0.163.0",
+    "git": "git version 2.53.0"
+  },
+  "platform": {
+    "os": "linux",
+    "arch": "x64"
+  },
+  "isolation": "Private /srv/dev fixture, own HOME/TMPDIR/state; real production CLI/worker/tmux and Codex sandbox; deterministic synthetic TUI, no live model or provider request",
+  "checks": [],
+  "failure": {
+    "stage": "positive agent ps",
+    "name": "AssertionError",
+    "code": "ERR_ASSERTION",
+    "message": "Positive agent ps failed; see cli.json\n\n1 !== 0\n",
+    "stack": [
+      "    at file:///srv/dev/mrh34-src.bKop1b/raf-develop/evidence/monitor-raf-health/qa-3.4/host.mjs:96:10"
+    ]
+  },
+  "cleanup": {
+    "complete": true,
+    "privateFixtureRemoved": true
+  },
+  "unitRun": "Separate authorized raf test run; not invoked by this host script"
+}

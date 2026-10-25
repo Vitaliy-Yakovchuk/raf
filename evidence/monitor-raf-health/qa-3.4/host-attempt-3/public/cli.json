@@ -1,0 +1,17 @@
+[
+  {
+    "command": [
+      "node",
+      "/srv/dev/mrh34-tNfIBb/raf-lfc-0bBD0z/command.mjs",
+      "/srv/dev/mrh34-tNfIBb/raf-lfc-0bBD0z/fixture.json",
+      "[\"agent\",\"ps\"]"
+    ],
+    "exitCode": 1,
+    "result": {
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"Cannot read properties of undefined (reading 'helperExecutables')\",\"details\":{\"command\":\"agent ps\",\"stage\":\"startup\",\"source\":\"production-entry\",\"sourceCode\":null,\"reason\":\"Cannot read properties of undefined (reading 'helperExecutables')\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true},\"remediation\":[\"Перевірте конфігурацію та доступність потрібного компонента.\",\"raf help agent ps\"]}"
+    },
+    "stderr": ""
+  }
+]

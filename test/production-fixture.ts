@@ -161,7 +161,7 @@ process.exit(result.status ?? 1);
   await mkdir(specRoot, { recursive: true });
   const tasksPath = join(changeRoot, 'tasks.md');
   await Promise.all([
-    writeFile(tasksPath, `## 2. Fixture\n\n${Array.from({ length: options.tasks ?? 1 }, (_, index) => `- [ ] 2.${index + 1} ${taskDescription}${index ? ` ${index + 1}` : ''}\n`).join('')}`),
+    writeFile(tasksPath, `## 2. Fixture\n\n${Array.from({ length: options.tasks ?? 1 }, (_, index) => `- [ ] 2.${index + 1} ${taskDescription}${index ? ` ${index + 1}` : ''}\n`).join('')}\n## 3. Follow-up\n\n- [ ] 3.1 Unassigned fixture follow-up stays open\n`),
     writeFile(join(changeRoot, 'proposal.md'), '# Fixture launch\n\n## Why\n\nVerify isolated production composition.\n\n## What Changes\n\nRun a synthetic executable only.\n'),
     writeFile(join(changeRoot, 'design.md'), '# Fixture design\n\nUse the production composition with an isolated home and owned tmux socket.\n'),
     writeFile(join(specRoot, 'spec.md'), '## ADDED Requirements\n\n### Requirement: Synthetic execution\n\nThe fixture SHALL run only its synthetic executable.\n\n#### Scenario: Owned launch\n\n- **WHEN** the fixture starts\n- **THEN** its report belongs to the reserved run\n'),

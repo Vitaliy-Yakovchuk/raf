@@ -1,0 +1,359 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "totalEntries": 0,
+    "retainedEntries": 0,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": false
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "38be3c621e7bfbdd79a02af6e67f6194ca33fd9160acc5ebbfdd73851205675c",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "e1eb480d-a656-4a5f-a8bb-38ca75fa7c7c",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "add-raf-agent-run/contracts",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/production-runtime.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/production-runtime.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-Fjqtyg"
+    }
+  },
+  "startedAt": "2026-10-25T16:40:21.404Z",
+  "durationMs": 118610,
+  "exitCode": 0,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "passed",
+  "failureKinds": [],
+  "passed": [
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] default factory returns the existing RuntimeServices without launching a runner"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] route uses configured project and actual Git branch"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] invalid resource estimate (negative RAM) fails before any run directory or process"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] invalid resource estimate (missing disk estimate) fails before any run directory or process"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] explicit zero resource estimate is known independently of positive thresholds"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] absent and opaque quota stay unknown and selection reuses model-routing"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] forged main and system claims do not authorize protected mutations or messages"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] prepared reports belong to distinct run directories and cleanup touches only its own run"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] impossible resource demand refuses without a session, reservation or tmux spawn"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] unknown process scan does not release an existing owner or report it as live"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-launch] default service composition starts the persistent worker and survives the command process exit"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] persistent child commits the actual native process before returning the handshake"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] missing launch runner path refuses before the runner process starts"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] different launch runner path refuses before the runner process starts"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] unconfirmed OpenSpec success becomes failed after exit and never auto-resumes"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] crash without a report records failed in the same SQLite and does not launch a replacement"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] disk admission checks development and HOME without reserving HOME or checking state and temporary volumes"
+    }
+  ],
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "timeoutCount": 0,
+  "nextAction": "complete",
+  "hintIds": [],
+  "hints": [],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 9.14,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 16969064448,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 160880787456
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 8061190144
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      }
+    },
+    "remaining": {
+      "ramBytes": 12674097152,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 139405950976,
+        "/dev/mapper/home-dev": 8061190144
+      },
+      "normalizedLoad": 1.1425
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "e1eb480d-a656-4a5f-a8bb-38ca75fa7c7c",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "c2ff1d26-965a-4218-9254-d5afca4ce1f8",
+        "root": {
+          "pid": 2230334,
+          "startTicks": "28914774",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "add-raf-agent-run",
+          "item": "4.1.2"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "ce1f428739b2ac374bdbdf680e5327bfa350e64cb9a0429e3caabd323c720dd8"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-Fjqtyg"
+      ]
+    },
+    "preparedAt": 1792946465624,
+    "baseline": {
+      "at": 1792946465650,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1792946465672,
+    "lastObservedAt": 1792946539970,
+    "finishedAt": 1792946539997,
+    "finishReason": "exit",
+    "peakRamBytes": 560668672,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 560668672,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Usage observer reattached; the interval since the previous persisted sample is unverified",
+      "Process liveness unknown during reconciliation",
+      "RAM measurement unavailable",
+      "A process disappeared or RSS was unavailable during sample",
+      "Process scan could not establish every process identity",
+      "Process identity changed during disk sample",
+      "Root process identity is unavailable or changed",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": {
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+    "waited": true
+  }
+}

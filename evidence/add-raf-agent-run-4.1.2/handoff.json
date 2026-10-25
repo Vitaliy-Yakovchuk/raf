@@ -15,7 +15,8 @@
     "Каталог компілюється з чинних raf-constants/models/projects через compileCatalog; synthetic models збережено в RuntimeConfiguration та catalog.models.",
     "Той самий каталог записується в context.artifactPath та стандартний raf-develop/dist/catalog.json для default loader у worker.",
     "Ізольований conf/raf.json успадковує актуальну runtime-конфігурацію, включно з service, costProfile та повним commandTiming; state.fileName лишається isolated.sqlite.",
-    "Синтетичні normal/hotfix thresholds fixtureResources мають maxNormalizedLoad=Number.MAX_VALUE: перевірки старту не залежать від стороннього CPU-навантаження хоста; зовнішній допуск raf test run та робочі conf не змінені."
+    "Синтетичні normal/hotfix thresholds fixtureResources мають maxNormalizedLoad=Number.MAX_VALUE: перевірки старту не залежать від стороннього CPU-навантаження хоста; зовнішній допуск raf test run та робочі conf не змінені.",
+    "Синтетичний tasks.md завжди має недоручений відкритий пункт 3.1: доручення 2.1 не є останнім, тому не отримує archiveWriteBoundaries."
   ],
   "invariants": {
     "assertionsFile": "test/production-runtime.test.ts",
@@ -103,9 +104,37 @@
       "unexecuted": [],
       "unknown": [],
       "timedOut": false
+    },
+    {
+      "file": "pass-test-run-result.json",
+      "runId": "e1eb480d-a656-4a5f-a8bb-38ca75fa7c7c",
+      "cliExitCode": 0,
+      "classification": "20 passed / 0 knownRed; assertions збережено, setup/import помилок немає.",
+      "durationMs": 118610,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false
     }
   ],
-  "remainingAssertion": {
+  "remainingAssertion": null,
+  "completion": {
+    "fixtureRepairSatisfied": true,
+    "fullSuitePassed": true,
+    "archivePerformed": false,
+    "otherOpenAssignedChangeItems": [
+      "4.1",
+      "4.2"
+    ],
+    "note": "Ставить галочку 4.1.2 raf за succeeded; інші пункти не виконувалися.",
+    "finalResult": "pass-test-run-result.json",
+    "passed": 20,
+    "knownRed": 0
+  },
+  "resolvedAssertion": {
     "test": {
       "file": "test/production-runtime.test.ts",
       "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
@@ -116,24 +145,14 @@
       "column": 10
     },
     "assertion": "assert.deepEqual(task.writeBoundaries, [f.changeRoot, f.questionsPath]);",
-    "classification": "Залишкове поведінкове твердження про вузький контекст, не помилка каталогу/імпорту/setup. Потрібен аудит main/4.1; сам результат не доводить дефект production.",
-    "inference": "Фікстура за замовчуванням має лише один пункт. Чинна archiveWriteBoundaries може розширювати права останнього виконавця; можливе застаріле очікування assertion. Фактичні expected/actual були редаговані адаптером, тому це лише висновок зі статичного коду.",
+    "classification": "Main підтвердив чинний контракт архівації: причиною була фікстура з єдиним відкритим пунктом. Додано окремий недоручений пункт 3.1 без зміни assertion.",
     "sources": [
       "test/production-fixture.ts:fixture",
       "test/production-runtime.test.ts:153",
       "src/task-context.ts:archiveWriteBoundaries",
       "openspec/specs/projects/orchestrator/autonomous-development/spec.md#Архівація останнім виконавцем"
     ],
-    "assertionsChanged": false
-  },
-  "completion": {
-    "fixtureRepairSatisfied": true,
-    "fullSuitePassed": false,
-    "archivePerformed": false,
-    "otherOpenAssignedChangeItems": [
-      "4.1",
-      "4.2"
-    ],
-    "note": "Ставить галочку 4.1.2 raf за succeeded; інші пункти не виконувалися."
+    "assertionsChanged": false,
+    "mainAudit": "Повідомлення main у цій сесії: archiveWriteBoundaries навмисна поведінка за add-raf-agent-run 4.2 / src/task-context.ts:328-332."
   }
 }

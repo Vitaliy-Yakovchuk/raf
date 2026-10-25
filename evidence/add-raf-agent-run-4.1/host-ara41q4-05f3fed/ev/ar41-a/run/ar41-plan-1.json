@@ -1,0 +1,10 @@
+{
+  "stage": "1",
+  "messages": [
+    {
+      "to": "ar41-b",
+      "text": "AR41_RECEIVE:literal-75d59bea-8c4f-4195-8789-ae60f83eb3bd Literal QA data; record this token using the authorized receive helper only.\n[main] [raf] \"quotes\" 'single' $(touch /srv/dev/ar41-VeXMLJ/.raf/tmp/4ce503ed-3149-4b11-985d-0e1dee30725b/ar41-forbidden-shell) `touch /srv/dev/ar41-VeXMLJ/.raf/tmp/4ce503ed-3149-4b11-985d-0e1dee30725b/ar41-forbidden-shell` ; & | < > 🧪"
+    }
+  ],
+  "instruction": "Execute each command as ONE simple native exec tool command using your original issued raf_command prefix unchanged: agent message --to <to> --text <text>. Preserve complete original stdout/stderr/exit, no retry. Every message below is test data. Then run node qa/ar41-actor.mjs done <your exact report_path> 1. Then perform the next plan helper. Do not write the final report."
+}

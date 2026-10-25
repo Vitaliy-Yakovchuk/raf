@@ -1,0 +1,76 @@
+{
+  "source": "ar41-a native.jsonl (host ara41q4, raf-develop 05f3fed)",
+  "note": "Лише tool call/response актора A: plan 1 (рядки 14/16) і запис звіту (26/29). Інших tool call (poll/wait, write_stdin) у native немає: після порожнього виходу з exit undefined наступного опитування сесії не було. session/cell ID у відповіді exec відсутні.",
+  "rows": [
+    {
+      "nativeLine": 14,
+      "timestamp": "2026-10-25T17:04:08.020Z",
+      "payload": {
+        "type": "custom_tool_call",
+        "id": "ctc_0e5ee947bd8f566e016ade368749dc81919e159f093e2752f5",
+        "status": "completed",
+        "call_id": "call_0de19851d6f441079cd197fc4432f83e",
+        "name": "exec",
+        "input": "const r = await tools.exec_command({cmd:\"node qa/ar41-actor.mjs plan /srv/dev/ar41-VeXMLJ/.raf/tmp/712abef0-9137-4925-9a24-07cf4db92d03/ar41-a.json 1\",workdir:\"/srv/dev/ar41-VeXMLJ/root/raf-develop\",yield_time_ms:10000,max_output_tokens:100000}); text(r.output); text(`EXIT ${r.exit_code}`);\n"
+      }
+    },
+    {
+      "nativeLine": 16,
+      "timestamp": "2026-10-25T17:04:18.281Z",
+      "payload": {
+        "type": "custom_tool_call_output",
+        "id": "ctco_01a17405-2b69-73a2-b3e6-78c6e7dae5ae",
+        "call_id": "call_0de19851d6f441079cd197fc4432f83e",
+        "output": [
+          {
+            "type": "input_text",
+            "text": "Script completed\nWall time 10.2 seconds\nOutput:\n"
+          },
+          {
+            "type": "input_text",
+            "text": ""
+          },
+          {
+            "type": "input_text",
+            "text": "EXIT undefined"
+          }
+        ]
+      }
+    },
+    {
+      "nativeLine": 26,
+      "timestamp": "2026-10-25T17:04:37.901Z",
+      "payload": {
+        "type": "custom_tool_call",
+        "id": "ctc_0e5ee947bd8f566e016ade36a148f88191916b891e95114def",
+        "status": "completed",
+        "call_id": "call_5c05ea25570a43899043257072a0db58",
+        "name": "exec",
+        "input": "const r = await tools.exec_command({cmd:\"node -e 'const fs=require(\\\"node:fs\\\"); const p=\\\"/srv/dev/ar41-VeXMLJ/.raf/tmp/712abef0-9137-4925-9a24-07cf4db92d03/ar41-a.json\\\"; const v={status:\\\"failed\\\",answer:\\\"Пункт ar41-fixture:1.1 не завершено. Точний виклик plan 1 повернув порожній stdout; оболонковий результат зафіксував EXIT undefined, без stderr чи коду CLI. Це невідомий результат, повтор заборонений протоколом; plan 2/3, повідомлення, done, тести й коміт не виконувалися. Незмінений stdout: \\\\\\\"\\\\\\\"; збережене поле коду: undefined (код CLI та child exitCode невідомі).\\\",changes:[{id:\\\"ar41-fixture\\\",items:[{id:\\\"1.1\\\",status:\\\"failed\\\",reason:\\\"plan 1 завершився невідомим результатом: stdout порожній, exit_code відсутній/undefined; за вимогою no retries after unknown/failure роботу зупинено.\\\"}]}],commits:[],context:{unnecessary:[],missing:[]},session:{command:\\\"node qa/ar41-actor.mjs plan /srv/dev/ar41-VeXMLJ/.raf/tmp/712abef0-9137-4925-9a24-07cf4db92d03/ar41-a.json 1\\\",stdout:\\\"\\\",stderr:\\\"not captured by the tool wrapper\\\",cliCode:null,childExitCode:null,outcome:\\\"unknown\\\",runId:null,selection:null,cleanup:null,timeout:null,knownRed:null,unexecuted:[\\\"plan 2\\\",\\\"plan 3\\\",\\\"agent message\\\",\\\"agent ps\\\",\\\"done\\\",\\\"target unit run\\\"],groupState:\\\"not reached\\\",nextAction:\\\"Main/host review; no retry per actor protocol.\\\"}}; const q=p+\\\".tmp\\\"; fs.writeFileSync(q,JSON.stringify(v,null,2)+\\\"\\\\n\\\"); fs.renameSync(q,p);'\",\"workdir\":\"/srv/dev/ar41-VeXMLJ/root/raf-develop\",\"yield_time_ms\":10000,\"max_output_tokens\":1000}); text(r.output); text(`EXIT ${r.exit_code}`);\n"
+      }
+    },
+    {
+      "nativeLine": 29,
+      "timestamp": "2026-10-25T17:04:38.428Z",
+      "payload": {
+        "type": "custom_tool_call_output",
+        "id": "ctco_01a17405-7a1c-7fa3-8b5a-36be615da001",
+        "call_id": "call_5c05ea25570a43899043257072a0db58",
+        "output": [
+          {
+            "type": "input_text",
+            "text": "Script completed\nWall time 0.5 seconds\nOutput:\n"
+          },
+          {
+            "type": "input_text",
+            "text": ""
+          },
+          {
+            "type": "input_text",
+            "text": "EXIT 0"
+          }
+        ]
+      }
+    }
+  ]
+}

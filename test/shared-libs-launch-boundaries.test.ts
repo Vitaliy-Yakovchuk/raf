@@ -10,6 +10,23 @@ import type { AssignmentBriefContext, AssignmentSnapshot } from '../src/assignme
 import type { AdapterStartRequest } from '../src/agent-adapters.ts';
 import type { ReportedCommitLaunchContext } from '../src/reported-commits-contract.ts';
 import type { StateStore } from '../src/state-store.ts';
+import { assertSharedLibraryLaunch, assertSharedLibraryAcceptance } from '../scripts/qa-shared-libs-observation.mjs';
+
+test('live shared-libs stand observes the persisted launchContext contract', () => {
+  const layout = { product: '/stand/etchly-develop', library: '/stand/shared-libs-develop', libraryGit: '/stand/.git/modules/shared-libs/worktrees/develop', libraryCommon: '/stand/.git/modules/shared-libs' };
+  const actor = {
+    activity: { cwd: layout.product }, process: { pid: 123, runnerSessionId: 'native-id' },
+    launchContext: { reportedCommits: { repositories: [{ repositoryRoot: layout.library }], writeBoundaries: [layout.library, layout.libraryGit, layout.libraryCommon] } },
+  };
+  assert.doesNotThrow(() => assertSharedLibraryLaunch(actor, layout, true));
+});
+
+test('live shared-libs stand observes accepted commits in WorkResult proof', () => {
+  const commit = { repository: '/stand/shared-libs-develop', sha: 'a'.repeat(40) };
+  const checkboxCommits = [{ repository: '/stand', sha: 'b'.repeat(40) }];
+  const accepted = { reportAcceptance: { status: 'succeeded' }, result: { status: 'succeeded', proof: { commits: [commit], checkboxCommits } } };
+  assert.deepEqual(assertSharedLibraryAcceptance(accepted, { commit }), checkboxCommits);
+});
 
 const change = 'complete-raf-flow-contracts';
 

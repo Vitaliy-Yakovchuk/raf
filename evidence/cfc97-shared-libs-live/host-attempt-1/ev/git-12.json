@@ -1,0 +1,20 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/cfc97-y41EIT/root",
+    "-c",
+    "protocol.file.allow=always",
+    "submodule",
+    "add",
+    "./etchly-main",
+    "etchly-main"
+  ],
+  "cwd": "/srv/dev/cfc97-y41EIT/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "Adding existing repo at 'etchly-main' to the index\n",
+  "stderr": ""
+}

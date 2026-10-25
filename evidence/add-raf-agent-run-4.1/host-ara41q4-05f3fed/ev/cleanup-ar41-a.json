@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/ar41-VeXMLJ/root/raf-main/bin/raf.ts",
+    "agent",
+    "close",
+    "--id",
+    "ar41-a",
+    "--force",
+    "--reason",
+    "Own isolated agent-run QA stand cleanup"
+  ],
+  "startedAt": "2026-10-25T17:20:02.133Z",
+  "endedAt": "2026-10-25T17:20:07.134Z",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\"closed\":true,\"unfinished\":[],\"result\":\"failed\",\"forcedClose\":{\"reason\":\"Own isolated agent-run QA stand cleanup\"}}\n",
+  "stderr": ""
+}

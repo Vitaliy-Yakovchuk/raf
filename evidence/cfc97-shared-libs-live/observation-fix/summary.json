@@ -1,0 +1,72 @@
+{
+  "assignment": "complete-raf-flow-contracts:9.7",
+  "defect": "QA stand used CLI-shaped fields instead of persisted SessionRecord.launchContext and WorkResult.proof",
+  "head": "f7e935c6069de23ce98cc11e19b098b6722cc048",
+  "ownFiles": [
+    {
+      "file": "scripts/qa-shared-libs-live.mjs",
+      "sha256": "927ad443546e7eaa801eae5c295ee6055856e3fb37d1bd9edb05d9907fc1c33f"
+    },
+    {
+      "file": "scripts/qa-shared-libs-observation.mjs",
+      "sha256": "a2c3bd3b14ee08aa931ecb9c94b91290299812457ea9d0c5eff27d3f4959d88d"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "sha256": "42db8f0ea47d37b1034e03bd33218e767838951d5ef8954af0f95bedd17a3afe"
+    }
+  ],
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/shared-libs-launch-boundaries --files test/shared-libs-launch-boundaries.test.ts",
+      "result": "red-TestRunResult.json",
+      "stderr": "red-stderr.jsonl",
+      "exit": "red-exit.json",
+      "workspace": "red-workspace.txt",
+      "runId": "41bd4cb9-db7a-4c9a-8b5e-d6d757a3cd02",
+      "outcome": "assertions-failed",
+      "knownRed": [
+        {
+          "file": "test/shared-libs-launch-boundaries.test.ts",
+          "name": "live shared-libs stand observes the persisted launchContext contract"
+        },
+        {
+          "file": "test/shared-libs-launch-boundaries.test.ts",
+          "name": "live shared-libs stand observes accepted commits in WorkResult proof"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/shared-libs-launch-boundaries --files test/shared-libs-launch-boundaries.test.ts",
+      "result": "qa-TestRunResult.json",
+      "stderr": "qa-stderr.jsonl",
+      "exit": "qa-exit.json",
+      "workspace": "qa-workspace.txt",
+      "runId": "35735e7d-dbb9-4825-a1c3-0deb2e4e6af5",
+      "outcome": "passed",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete"
+    }
+  ],
+  "liveStatus": "pending; first host failed before both probes, cleanup complete",
+  "foreignChanges": "src/production-runtime.ts and evidence/add-raf-agent-run-4.1/* were neither modified nor committed by this agent"
+}

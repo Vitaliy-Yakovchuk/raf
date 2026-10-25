@@ -1,0 +1,73 @@
+{
+  "assignment": "complete-raf-flow-contracts:9.7",
+  "preparedCommit": "254850fbd9a6ec0627d07484d68142f300619bed",
+  "files": {
+    "scripts/qa-shared-libs-live.mjs": "f6a5d1709ef61df6828172c3576260233b02495157dd110497e6a1e450ef7716",
+    "scripts/qa-shared-libs-main.mjs": "910a141cbbd9a3986a181c648aef15261a9d7d547979be31b328834d12f45edc",
+    "scripts/qa-shared-libs-actor.mjs": "0e626a2fe6277208afe1d26620802f19b9fd07a497698327e6b542ed30c813b5"
+  },
+  "checks": [
+    {
+      "command": [
+        "node",
+        "--check",
+        "scripts/qa-shared-libs-live.mjs"
+      ],
+      "cliExitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "scripts/qa-shared-libs-main.mjs"
+      ],
+      "cliExitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "scripts/qa-shared-libs-actor.mjs"
+      ],
+      "cliExitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "audit": {
+    "current": true,
+    "sources": [
+      "tasks.md:9.5–9.7",
+      "specs/projects/raf/workspace-routing/spec.md — Робоче дерево за проєктом і гілкою",
+      "specs/projects/raf/agent-adapters/spec.md — Виконавець комітить свою роботу",
+      "specs/projects/raf/quality-assurance/spec.md — Ізольований живий QA develop",
+      "core/process/user-qa — Один прохід QA з виправленням"
+    ],
+    "contradictions": []
+  },
+  "coordination": {
+    "mainAddressVerifiedBy": "raf agent ps (2026-10-25T16:51:35Z)",
+    "prepareReceipt": "a5386c22-c50d-455b-a6ce-cc8a8b4f9b19",
+    "hostRunAcceptedByMain": true,
+    "hostPaths": [
+      "/srv/dev/cfc97q/stdout",
+      "/srv/dev/cfc97q/stderr",
+      "/srv/dev/cfc97q/exit",
+      "/srv/dev/cfc97q/ev-clean"
+    ]
+  },
+  "liveStatus": "pending-host-run",
+  "unitStatus": "passed",
+  "unitEvidence": [
+    "qa-TestRunResult.json",
+    "qa-tool-result.json",
+    "qa-stderr.jsonl",
+    "qa-exit.json",
+    "before-qa.json"
+  ],
+  "unitQueueNote": "Command submitted at pre-run SHA 05f3fed4fd6b65dcf8d44f6eec8b787748f9003c; during admission wait only stand scripts/README were committed as 254850fbd9a6ec0627d07484d68142f300619bed. No source or test changes between those SHAs."
+}

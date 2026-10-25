@@ -373,7 +373,7 @@ async function belongsToPane(identity: ProcessIdentity, execute: AdapterCommandE
   if (!/^[A-Za-z0-9_-]+$/.test(identity.tmuxSession)) return false;
   const pane = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_pid}'] });
   if (pane.exitCode !== 0 || !/^\d+$/.test(pane.stdout.trim())) return false;
-  if (identity.nativeIdentity) {
+  if (identity.nativeIdentity || identity.evidence.tmuxPane !== undefined) {
     const paneId = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
     if (paneId.exitCode !== 0 || paneId.stdout.trim() !== identity.evidence.tmuxPane) return false;
   }
@@ -1592,13 +1592,9 @@ export async function runProductionWorker(
       const candidates = matching.filter(candidate => !matching.some(other => { let pid = other.ppid; const seen = new Set<number>(); while (pid && !seen.has(pid)) { if (pid === candidate.pid) return true; seen.add(pid); pid = rows.find(row => row.pid === pid)?.ppid ?? 0; } return false; }));
       if (candidates.length !== 1) return { state: 'unknown', reason: 'Actual runner PID is ambiguous or unavailable; shell PID is not identity' };
       const row = candidates[0];
-      const deferredEvidence: Record<string, string> = {};
-      if (deferred) {
-        const paneId = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_id}'] });
-        if (paneId.exitCode !== 0 || !/^%\d+$/.test(paneId.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane identity unavailable' };
-        Object.assign(deferredEvidence, { tmuxPane: paneId.stdout.trim(), cwd: request.cwd, executable: availability.path, tmuxSocket: await runtimeTmuxSocket(context, stateContextEnvironment(stateContext, process.env)) });
-      }
-      actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, ...(deferred ? { nativeIdentity: { state: 'pending' as const, id: null, reason: 'Awaiting owned SessionStart conversationId' } } : {}), tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, ...deferredEvidence, ...await dependencies.currentBoot(), ...(!options.execute ? { tmuxSocket: await runtimeTmuxSocket(context, stateContextEnvironment(stateContext, process.env)) } : {}) } };
+      const paneId = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_id}'] });
+      if (paneId.exitCode !== 0 || !/^%\d+$/.test(paneId.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane identity unavailable' };
+      actual = { pid: row.pid, startedAt: row.startedAt, runner: request.selection.runner, runnerSessionId: nativeId, ...(deferred ? { nativeIdentity: { state: 'pending' as const, id: null, reason: 'Awaiting owned SessionStart conversationId' } } : {}), tmuxSession: request.tmuxSession, evidence: { command: row.command, runId: request.runId, tmuxPane: paneId.stdout.trim(), cwd: request.cwd, executable: availability.path, ...await dependencies.currentBoot(), tmuxSocket: await runtimeTmuxSocket(context, stateContextEnvironment(stateContext, process.env)) } };
       return { state: 'owned', identity: actual, processKind: 'agent' };
     };
     const transport = adapter.createLaunchTransport({ reportWrapper: { wrap: command => command }, inspectOwnership: ownership, pollIntervalMs: settings.timeouts.pollMs, waitForExit: session => adapter.waitForExit(session) });

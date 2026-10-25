@@ -1,0 +1,295 @@
+{
+  "assignment": "complete-raf-flow-contracts:9.7",
+  "status": "failed",
+  "reviewed": "254850fbd9a6ec0627d07484d68142f300619bed",
+  "stand": "/srv/dev/cfc97-y41EIT",
+  "evidence": "/srv/dev/cfc97-y41EIT/ev",
+  "startedAt": "2026-10-25T17:29:02.359Z",
+  "checks": [],
+  "commands": [
+    {
+      "label": "git-1",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-2",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-node",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-git",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-tmux",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-codex",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-bwrap",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-uname",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "clone",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-3",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "build",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-4",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-5",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-6",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-7",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-8",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-9",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-10",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-11",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-12",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-13",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-14",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-15",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-16",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-17",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-18",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-19",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-20",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-21",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-22",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-23",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-24",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "main-start",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "runner-list",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "runner-limits",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "service-start",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-28",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "launch-dependent",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "cleanup-cfc97-dependent",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "cleanup-service",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "cleanup-inspect-32",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "cleanup-socket-33",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "cleanup-inspect-34",
+      "cliExitCode": 1,
+      "signal": null
+    }
+  ],
+  "cleanup": {
+    "complete": true,
+    "errors": [],
+    "services": {
+      "complete": true,
+      "processes": [],
+      "remaining": []
+    }
+  },
+  "limitations": [
+    "Native runner, model and effort are selected by unchanged production model routing. No mock runner or auth files are copied.",
+    "Only isolated fixture repositories/tasks/state are changed. This stand does not test real product behavior or resource pressure."
+  ],
+  "versions": {
+    "node": "v26.12.1",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6",
+    "codex": "codex-cli 0.163.0",
+    "bwrap": "bubblewrap 0.11.1",
+    "uname": "Linux ubuntu-32gb-hel1-1 7.0.0-30-generic #30-Ubuntu SMP PREEMPT_DYNAMIC Fri Jul 31 18:22:54 UTC 2026 x86_64 GNU/Linux"
+  },
+  "configuration": {
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "test-runs.json": "19b93941bdd68d57254d87c2da65aa06d4529455c48e417d400dfd13e5a7bcfc"
+  },
+  "trust": {
+    "gitRoots": [
+      "/srv/dev/cfc97-y41EIT/root",
+      "/srv/dev/cfc97-y41EIT/root/raf-main",
+      "/srv/dev/cfc97-y41EIT/root/raf-develop",
+      "/srv/dev/cfc97-y41EIT/root/raf-hotfix"
+    ],
+    "overrides": [
+      "projects={\"/srv/dev/cfc97-y41EIT/root\"={trust_level=\"trusted\"},\"/srv/dev/cfc97-y41EIT/root/raf-main\"={trust_level=\"trusted\"},\"/srv/dev/cfc97-y41EIT/root/raf-develop\"={trust_level=\"trusted\"},\"/srv/dev/cfc97-y41EIT/root/raf-hotfix\"={trust_level=\"trusted\"}}"
+    ],
+    "quotaCwd": "/srv/dev/cfc97-y41EIT/root/raf-main"
+  },
+  "fixtureConfiguration": {
+    "projects": {
+      "path": "etchly-main",
+      "profile": "product",
+      "branchPaths": {
+        "main": "etchly-main",
+        "develop": "etchly-develop"
+      },
+      "usesSharedLibs": true
+    },
+    "extraTrust": "projects={\"/srv/dev/cfc97-y41EIT/root\"={trust_level=\"trusted\"},\"/srv/dev/cfc97-y41EIT/root/raf-main\"={trust_level=\"trusted\"},\"/srv/dev/cfc97-y41EIT/root/raf-develop\"={trust_level=\"trusted\"},\"/srv/dev/cfc97-y41EIT/root/raf-hotfix\"={trust_level=\"trusted\"},\"/srv/dev/cfc97-y41EIT/root/etchly-develop\"={trust_level=\"trusted\"},\"/srv/dev/cfc97-y41EIT/root/shared-libs-develop\"={trust_level=\"trusted\"}}",
+    "resourcePolicyUnchanged": true,
+    "modelRoutingUnchanged": true
+  },
+  "layout": {
+    "main": "/srv/dev/cfc97-y41EIT/root/raf-main-a",
+    "develop": "/srv/dev/cfc97-y41EIT/root/raf-develop",
+    "product": "/srv/dev/cfc97-y41EIT/root/etchly-develop",
+    "library": "/srv/dev/cfc97-y41EIT/root/shared-libs-develop",
+    "libraryGit": "/srv/dev/cfc97-y41EIT/root/.git/modules/shared-libs-main/worktrees/shared-libs-develop",
+    "libraryCommon": "/srv/dev/cfc97-y41EIT/root/.git/modules/shared-libs-main"
+  },
+  "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(contract?.repositories)\n\n    at file:///srv/dev/cfc97q/raf/scripts/qa-shared-libs-live.mjs:138:12",
+  "unexecuted": [
+    "dependent",
+    "independent"
+  ],
+  "endedAt": "2026-10-25T17:30:53.093Z"
+}

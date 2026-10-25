@@ -1,0 +1,17 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/cfc97-y41EIT/root/etchly-main",
+    "commit",
+    "-m",
+    "qa: isolated shared-libs repository"
+  ],
+  "cwd": "/srv/dev/cfc97-y41EIT/root/etchly-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "[main (root-commit) 366f97d] qa: isolated shared-libs repository\n 3 files changed, 72 insertions(+)\n create mode 100644 fixture.txt\n create mode 100644 qa/cfc97-actor.mjs\n create mode 120000 shared-libs\n",
+  "stderr": ""
+}

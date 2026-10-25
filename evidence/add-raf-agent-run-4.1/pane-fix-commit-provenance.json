@@ -1,0 +1,21 @@
+{
+  "assignment": "add-raf-agent-run:4.1",
+  "authorAgent": "raf-ara41-impl",
+  "repository": "/srv/dev/work/orchestrator/raf-develop",
+  "implementationAndEvidenceCommit": "34c50d1bc1631de770bbcedf4d540271217329e5",
+  "sourceSha256": "3e36dce8064467f09c55450b522b3c421b17f6245ac01df6854395c368390fdb",
+  "circumstance": "This agent explicitly staged only src/production-runtime.ts and fifteen own pane proof/documentation paths. Before its commit, another executor committed the shared index along with that executor's shared-libs work. This agent's commit returned exit 1, nothing to commit. No reset, amend, revert, push or removal of another executor's changes was performed.",
+  "mainAcknowledgement": "main: прийнято — 34c50d1 зараховую як твій pane-фікс, переписування не буде; provenance-коміт ок. Надалі комміть з явним pathspec (git commit -- <шляхи>), щоб не захоплювати чужий індекс.",
+  "verification": {
+    "workerPaneRunId": "04358b37-16af-4a75-a823-2194126bfd6f",
+    "workerPanePassed": 6,
+    "contractsRunId": "1ca74755-6599-420e-a03e-587e8aa56cb4",
+    "contractsPassed": 628,
+    "buildExitCode": 0,
+    "hostStatus": "pending-repeat",
+    "integrationStatus": "unexecuted-preset-not-deployed"
+  },
+  "nextCommand": "node scripts/qa-agent-run-live.mjs <full-provenance-commit-SHA>",
+  "hostPrerequisites": "Clean clone at exact SHA, adjacent conf and node_modules as before, cleaned environment with LC_ALL=C CODEX_HOME=/home/dev/.codex GIT_CONFIG_GLOBAL=/home/dev/.gitconfig, timeout 5400; stdout/stderr/exit separate. Main reviewed scripts at fea480b; all four agent-run QA scripts are unchanged.",
+  "task41Complete": false
+}

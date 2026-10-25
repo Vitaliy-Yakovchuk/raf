@@ -1,0 +1,67 @@
+{
+  "runId": "4ce503ed-3149-4b11-985d-0e1dee30725b",
+  "profile": "linux",
+  "sandboxMode": "workspace-write",
+  "codex": "/home/dev/.local/bin/codex",
+  "bwrap": "/usr/bin/bwrap",
+  "backend": {
+    "selection": "PATH",
+    "sharedDaemon": false,
+    "helperDirectory": "/srv/dev/ar41-VeXMLJ/.raf/tmp/4ce503ed-3149-4b11-985d-0e1dee30725b/codex-sandbox-4ce503ed-3149-4b11-985d-0e1dee30725b",
+    "verification": "preflight Unix IPC, TCP denial and hidden paths"
+  },
+  "network": {
+    "codex": "enabled",
+    "namespace": "unshared",
+    "socketFamilies": [
+      "AF_UNIX"
+    ],
+    "ioUring": "denied"
+  },
+  "tmuxSockets": "private tmpfs per sandboxed command",
+  "filesystem": {
+    ":root": "read",
+    ":slash_tmp": "write",
+    "/srv/dev/ar41-VeXMLJ/.raf/tmp/4ce503ed-3149-4b11-985d-0e1dee30725b": "write",
+    "/srv/dev/ar41-VeXMLJ/root/openspec/changes/ar41-fixture": "write",
+    "/srv/dev/ar41-VeXMLJ/root/.git/modules/raf-main/worktrees/raf-develop": "write",
+    "/srv/dev/ar41-VeXMLJ/root/.git/modules/raf-main": "write",
+    "/srv/dev/ar41-VeXMLJ/root/.git": "write",
+    "/srv/dev/ar41-VeXMLJ/root/raf-develop": "write",
+    "/srv/dev/ar41-VeXMLJ/root/raf-develop/.git": "write",
+    "/home/dev/.raf": "none",
+    "/tmp/raf-ipc-1000": "none",
+    "/tmp/raf-tools-1000": "none",
+    "/run": "none",
+    "/tmp/tmux-1000": "none",
+    "/tmp/cc-socks": "none",
+    "/srv/dev/ar41-VeXMLJ/.raf": "none",
+    "/srv/dev/ar41-VeXMLJ/main.sock": "none",
+    "/srv/dev/ar41-VeXMLJ/root": "read",
+    "/srv/dev/ar41-VeXMLJ/root/raf-main-a": "read",
+    "/srv/dev/ar41-VeXMLJ/root/raf-main-b": "read",
+    "/srv/dev/ar41-VeXMLJ/root/.gitmodules": "read",
+    "/srv/dev/ar41-VeXMLJ/root/.git/modules/raf-main/raf-hotfix": "read",
+    "/srv/dev/ar41-VeXMLJ/.raf/tmp/4ce503ed-3149-4b11-985d-0e1dee30725b/codex-sandbox-4ce503ed-3149-4b11-985d-0e1dee30725b": "read",
+    "/srv/dev/ar41-VeXMLJ/.raf/tmp/4ce503ed-3149-4b11-985d-0e1dee30725b/tmux-1000": "write"
+  },
+  "writableFiles": [
+    "/srv/dev/ar41-VeXMLJ/root/questions/projects/raf/questions.md"
+  ],
+  "symlinkParents": [
+    "/srv/dev/ar41-VeXMLJ/root"
+  ],
+  "environment": {
+    "cleared": [
+      "TMUX",
+      "TMUX_PANE",
+      "SSH_AUTH_SOCK",
+      "SSH_AGENT_PID",
+      "DBUS_SESSION_BUS_ADDRESS",
+      "XDG_RUNTIME_DIR"
+    ],
+    "set": {
+      "TMUX_TMPDIR": "/srv/dev/ar41-VeXMLJ/.raf/tmp/4ce503ed-3149-4b11-985d-0e1dee30725b"
+    }
+  }
+}

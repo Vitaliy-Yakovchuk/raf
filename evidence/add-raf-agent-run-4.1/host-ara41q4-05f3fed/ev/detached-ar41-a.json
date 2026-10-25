@@ -1,0 +1,21 @@
+{
+  "command": [
+    "tmux",
+    "-u",
+    "-S",
+    "/srv/dev/ar41-VeXMLJ/.raf/tmp/tmux/server.sock",
+    "display-message",
+    "-p",
+    "-t",
+    null,
+    "#{session_attached}"
+  ],
+  "cwd": "/srv/dev/ar41-VeXMLJ/root",
+  "startedAt": "2026-10-25T17:04:50.196Z",
+  "endedAt": "2026-10-25T17:04:50.209Z",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "\n",
+  "stderr": ""
+}

@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/ar41-VeXMLJ/root/raf-main/bin/raf.ts",
+    "agent",
+    "interrupt",
+    "--id",
+    "main"
+  ],
+  "startedAt": "2026-10-25T17:04:58.292Z",
+  "endedAt": "2026-10-25T17:05:01.112Z",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "{\"code\":\"HANDLER_FAILED\",\"message\":\"Main cannot be interrupted\",\"details\":{\"command\":\"agent interrupt\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Main cannot be interrupted\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent interrupt\"]}\n"
+}

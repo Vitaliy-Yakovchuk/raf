@@ -1,0 +1,19 @@
+# complete-raf-flow-contracts:9.7
+
+Сценарій `scripts/qa-shared-libs-live.mjs` запускає main на хості з чистого клону raf-develop. Аргумент — повний SHA цього клону. Біля клону має бути копія актуального `conf/`, у клоні — залежності `node_modules/`. `CODEX_HOME` має вказувати на вже авторизований Codex; секрети не копіюються. Модель та effort обирає production routing без змін.
+
+Команда: `node scripts/qa-shared-libs-live.mjs <reviewed-full-sha>`.
+
+Скрипт створює власний `/srv/dev/cfc97-*`, окремі HOME/RAF_QA_HOME/tmp/tmux/SQLite та Git-репозиторії з main/develop worktree. CLI main attach/agent run/ps/service викликаються з **raf-develop** через власну зареєстровану main-панель. Ізоляція не змінює ledger unit-групи. Налаштування ресурсів, моделі, effort, timeout і guards не послаблюються; локальна довіра обмежена коренями стенду. У власному product fixture tasks.md лишається 1.3, щоб актори не архівували стенд.
+
+1. `usesSharedLibs=true`: справжній etchly implement на develop виконує helper через свій native sandbox tool; той пише marker через symlink у shared-libs-develop та комітить тільки marker. Хост перевіряє реальні writeBoundaries, reported-commits repositories, точний Git-коміт, reportAcceptance і checkboxCommit raf.
+2. `usesSharedLibs=false`: наступний запуск на тому самому HOME/state після зміни лише конфігурації etchly. Та сама бібліотека доступна для читання, але прямий шлях/symlink/git-dir/common-dir мають відхилити запис з EROFS/EACCES/EPERM. Shared-libs відсутня в writeBoundaries/repositories, її HEAD незмінний. Власний marker etchly комітиться і приймається.
+3. Cleanup закриває тільки власні адреси, власну службу/сокети, перевіряє exit PID. Репозиторії та докази лишаються для огляду. Невідомі команди не повторюються; відсутні сценарії або cleanup error означають failed.
+
+На stdout одразу друкується шлях стенду й доказів `ev/`. Кожна команда зберігає повні stdout/stderr, CLI exit, signal/error; probe окремо має exit дочірніх Git. `summary.json` містить checks/unexecuted/cleanup; `*-accepted.json` — прийнятий результат SQLite, `*-run/` — початковий бриф/контекст і звіт актора. Прогін не є unit і unit-виняток timeout до нього не застосовується.
+
+Аудит: 9.5/9.6 закриті; чинні workspace-routing «Робоче дерево за проєктом і гілкою» (same-branch та usesSharedLibs=false), agent-adapters «Виконавець комітить свою роботу», quality-assurance «Ізольований живий QA develop» узгоджуються з 9.7. Продуктовий код не змінювався на стадії підготовки. Галочку 9.7 ставить raf лише за підсумковим валідним succeeded. Інші пункти відкриті, archive не застосовується.
+
+Перший хостовий прогін (`host-attempt-1/`, reviewed `254850fbd9a6ec0627d07484d68142f300619bed`) завершився CLI 1: stand читав `reportedCommits` із кореня SessionRecord замість `launchContext`. Обидва сценарії unexecuted, cleanup complete; це не доказ дефекту продукту чи успішного live QA. Main передав очищені докази із secscan 0, без identity/native/transcript. У тому самому виправленні reader прийнятих комітів переведено з неіснуючого `result.report` на production `result.proof`.
+
+`observation-fix/` містить повні незрізані TestRunResult, stderr, окремі CLI/child exit та snapshot workspace для двох адресних прогонів тієї самої групи `complete-raf-flow-contracts/shared-libs-launch-boundaries` і файла `test/shared-libs-launch-boundaries.test.ts`: phase red `41bd4cb9-db7a-4c9a-8b5e-d6d757a3cd02` (14 pass, 2 виконані регресії fail), після виправлення phase qa `35735e7d-dbb9-4825-a1c3-0deb2e4e6af5` (16 pass). В обох cleanup complete, timedOut false, timeoutCount 0, unexecuted/unknown порожні; після qa knownRed порожній, groupState complete, nextAction complete. HOME/агрегат незмінні. Повні CLI-команди: переданий `raf_command test run --project raf --phase red|qa --group complete-raf-flow-contracts/shared-libs-launch-boundaries --files test/shared-libs-launch-boundaries.test.ts`. Повторний живий прогін ще очікується.

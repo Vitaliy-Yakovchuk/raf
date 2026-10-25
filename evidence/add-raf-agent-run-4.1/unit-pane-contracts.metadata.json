@@ -1,0 +1,81 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/contracts",
+  "testedHead": "e88c24281d60081d9fb45ea1e8c278886d2dc7c1",
+  "observedHeadAfter": "f7e935c6069de23ce98cc11e19b098b6722cc048",
+  "concurrentCommit": "f7e935c6069de23ce98cc11e19b098b6722cc048 contains scaffold evidence only; product and selected tests unchanged during runs",
+  "workspaceChanges": {
+    "own": [
+      "src/production-runtime.ts"
+    ],
+    "sourceSha256": "3e36dce8064467f09c55450b522b3c421b17f6245ac01df6854395c368390fdb",
+    "selectedTestSha256": {
+      "test/production-worker-pane.test.ts": "d54d478c0a4ff576c9f5a5153f812994000d3b8947cfba9d7fc748c44c03422e",
+      "test/production-runtime.test.ts": "c1c5e550176cb4aa65a5ca58730e8cb34e8c3a2fb8ed0d4103dc2800a3414cdb"
+    },
+    "foreignPathsNotCommitted": [
+      "scripts/qa-shared-libs-live.mjs",
+      "test/shared-libs-launch-boundaries.test.ts",
+      "scripts/qa-shared-libs-observation.mjs",
+      "evidence/cfc97-shared-libs-live/"
+    ]
+  },
+  "runId": "1ca74755-6599-420e-a03e-587e8aa56cb4",
+  "selection": {
+    "files": [
+      "test/cli-catalog.test.ts",
+      "test/app-runtime.test.ts",
+      "test/task-context.test.ts",
+      "test/task-context-z12.test.ts",
+      "test/runner-availability.test.ts",
+      "test/agent-control.test.ts",
+      "test/session-state.test.ts",
+      "test/task-reservations.test.ts",
+      "test/resource-admission.test.ts",
+      "test/resource-estimates.test.ts",
+      "test/agent-run-admission-snapshot.test.ts",
+      "test/home-disk-admission.test.ts",
+      "test/session-recovery.test.ts",
+      "test/agent-adapters-contract.test.ts",
+      "test/launch-state.test.ts",
+      "test/production-runtime.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "signal": null,
+  "passed": 628,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "group": "add-raf-agent-run/contracts",
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "nextAction": "complete",
+  "timeoutCount": 0,
+  "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+  "redProvenance": {
+    "source": "main confirmed independent 4.1.3 red before product implementation",
+    "runId": "7d299407-2e51-47df-b819-e5f2cc0a2133",
+    "knownRed": 6
+  },
+  "capture": {
+    "mergedCharacters": 92145,
+    "stdoutCharacters": 90635,
+    "logicalStderrCharacters": 1510,
+    "method": "Full exec tool output saved before rendering. Removed exactly one balanced launch-queue.waiting NDJSON event including its LF, retaining every other byte in original order; full TestRunResult parses without truncation. Original merged stream retained.",
+    "limitation": "exec tool supplies merged output, not independent byte-level stderr. stderr file is the complete extracted queue event, not an independently captured descriptor.",
+    "toolMetadata": {
+      "chunk_id": "dac170",
+      "wall_time_seconds": 0.270943999,
+      "exit_code": 0,
+      "original_token_count": 23520
+    }
+  }
+}

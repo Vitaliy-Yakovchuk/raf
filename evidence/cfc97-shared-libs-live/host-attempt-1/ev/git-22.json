@@ -1,0 +1,17 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/cfc97-y41EIT/root",
+    "commit",
+    "-m",
+    "qa: isolated shared-libs orchestrator"
+  ],
+  "cwd": "/srv/dev/cfc97-y41EIT/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "[main (root-commit) 3670d0e] qa: isolated shared-libs orchestrator\n 32 files changed, 8260 insertions(+)\n create mode 100644 .gitmodules\n create mode 100644 conf/README.md\n create mode 100644 conf/briefs/README.md\n create mode 100644 conf/briefs/completion.md\n create mode 100644 conf/briefs/runners/agy.md\n create mode 100644 conf/briefs/runners/claude.md\n create mode 100644 conf/briefs/runners/codex.md\n create mode 100644 conf/briefs/runners/grok.md\n create mode 100644 conf/briefs/tasks/context-review.md\n create mode 100644 conf/briefs/tasks/coordinator.md\n create mode 100644 conf/briefs/tasks/design.md\n create mode 100644 conf/briefs/tasks/hotfix.md\n create mode 100644 conf/briefs/tasks/implement.md\n create mode 100644 conf/briefs/tasks/main.md\n create mode 100644 conf/briefs/tasks/qa.md\n create mode 100644 conf/briefs/tasks/spec.md\n create mode 100644 conf/briefs/tasks/test-scaffold.md\n create mode 100644 conf/flow.json\n create mode 100644 conf/models.json\n create mode 100644 conf/project-priorities.json\n create mode 100644 conf/projects.json\n create mode 100644 conf/raf-constants.json\n create mode 100644 conf/raf.json\n create mode 100644 conf/temporary-exceptions.json\n create mode 100644 conf/test-runs.json\n create mode 160000 etchly-main\n create mode 100644 openspec/changes/cfc97-fixture/.openspec.yaml\n create mode 100644 openspec/changes/cfc97-fixture/proposal.md\n create mode 100644 openspec/changes/cfc97-fixture/tasks.md\n create mode 100644 openspec/config.yaml\n create mode 160000 raf-main\n create mode 160000 shared-libs-main\n",
+  "stderr": ""
+}

@@ -1,0 +1,99 @@
+{
+  "assignment": "add-raf-agent-run:4.1.3",
+  "stage": "test-scaffold",
+  "scope": "Regression unit tests only; no production methods or implementation changes.",
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/add-raf-agent-run/proposal.md",
+      "openspec/changes/add-raf-agent-run/tasks.md#4.1.3",
+      "openspec/changes/add-raf-agent-run/specs/projects/raf/agent-message/spec.md"
+    ],
+    "conclusion": "The assigned item is open; production code remains identical to the live-QA baseline and the six failures reproduce the assigned defect."
+  },
+  "baseline": {
+    "commit": "05f3fed4fd6b65dcf8d44f6eec8b787748f9003c",
+    "testedCommit": "e88c24281d60081d9fb45ea1e8c278886d2dc7c1",
+    "productionRuntimeBlob": "d94eaeeac5d0af4d2d2ee848b0d0e729c81c484c",
+    "verification": "git diff 05f3fed e88c242 -- src test/production-fixture.ts returns no changes; runtime blob is identical at both commits. Tests ran in the authorized current develop workspace rather than switching the shared tree."
+  },
+  "selection": {
+    "project": "raf",
+    "group": "add-raf-agent-run/worker-pane",
+    "profileId": "node",
+    "files": [
+      "test/production-worker-pane.test.ts"
+    ],
+    "authorCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-agent-run/worker-pane --files test/production-worker-pane.test.ts",
+    "nextStage": "Keep the same group and files; implement agent uses its authorized phase after fixing without opening the prepared tests until implementation is finished."
+  },
+  "configuration": {
+    "owner": "main",
+    "file": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "mainReportedCommit": "c713b3d839",
+    "addToUnitFiles": {
+      "pointer": "/projects/raf/profiles/node/unitFiles",
+      "value": "test/production-worker-pane.test.ts"
+    },
+    "addGroup": {
+      "pointer": "/projects/raf/groups/add-raf-agent-run~1worker-pane",
+      "value": {
+        "profileId": "node",
+        "files": [
+          "test/production-worker-pane.test.ts"
+        ]
+      }
+    },
+    "prerequisites": [
+      "Existing node profile (cwd '.', executable 'node', argv ['./scripts/test-run-node.ts']), existing resourceEstimate and node-test-events adapter.",
+      "File committed before registration; active change; verified project raf, branch develop and matching caller assignment.",
+      "Explicit isolated QA HOME, state and tmp supplied by raf wrapper; no direct node test run or production state access."
+    ]
+  },
+  "invariants": [
+    "Both native identity sources remain exercised: codex=status and claude=assigned; neither uses deferred SessionStart.",
+    "Public runProductionWorker must reach a durable running state and publish a handshake before target assertions run.",
+    "Persist both the exact launch socket and the exact owned pane in durable session.process.evidence.",
+    "Public production control.message must target the recorded pane, paste the signed literal text and return a native acceptance receipt.",
+    "Public production control.interrupt must authorize the caller, send Escape to the recorded pane, confirm an idle native composer and preserve the running session.",
+    "Message and interrupt are separate tests; an absent pane in message cannot mask interrupt coverage.",
+    "All tmux commands are isolated doubles and must use the expected launch socket; no model, tmux server, external service or real SQLite is started."
+  ],
+  "testSupport": {
+    "real": [
+      "Worker ownership construction",
+      "TmuxAgentAdapter launch/readiness/control transport",
+      "Configured native parsing for both runners",
+      "Session state transitions",
+      "AgentControlService",
+      "Native message acceptance and interrupt confirmation"
+    ],
+    "isolated": [
+      "Filesystem/command execution and process observations",
+      "State repository as an in-memory transaction map",
+      "Reservation lease handoff",
+      "Runner availability and sandbox bootstrap",
+      "Wrapper watcher/lifetime replaced by a controlled durable-start cutoff",
+      "Unrelated report, health, cost, flow evidence and lease side effects"
+    ],
+    "limitation": "Unit regression evidence, not a new host/live QA result. The wrapper double drives startup/readiness/ownership/lifecycle through the public worker; it stops after the durable start handshake, before report watching and process exit."
+  },
+  "runs": [
+    {
+      "file": "fixture-setup-attempt.json",
+      "runId": "d4052a0e-a988-4dfb-ba0d-433d6592d925",
+      "acceptedBehavioralRed": false,
+      "exitCode": 1,
+      "summary": "Fixture preparation defect: unrelated flowEvidencePorts tried to open missing test-runs.json. Although the runner emitted assertions-failed, this is not accepted as behavioral red. Fixed in e88c242 by isolating the unrelated flow evidence dependency."
+    },
+    {
+      "file": "red-result.json",
+      "runId": "7d299407-2e51-47df-b819-e5f2cc0a2133",
+      "acceptedBehavioralRed": true,
+      "exitCode": 1,
+      "summary": "Six target failures: missing pane evidence; message refuses missing pane; interrupt refuses missing socket/pane. No timeout, unexecuted or unknown tests; cleanup complete."
+    }
+  ],
+  "scaffold": "No new production public surface is needed; existing runProductionWorker/createProductionServices APIs are the test entry points. No NotImplemented production stubs were added.",
+  "completion": "Only item 4.1.3 is delivered. tasks.md remains untouched for raf; other tasks remain open, so sync/archive does not apply."
+}

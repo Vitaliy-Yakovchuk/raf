@@ -1,0 +1,10 @@
+{
+  "stage": "1",
+  "messages": [
+    {
+      "to": "ar41-a",
+      "text": "AR41_RECEIVE:from-b Stage-one literal data; record token using receive helper only."
+    }
+  ],
+  "instruction": "Execute each command as ONE simple native exec tool command using your original issued raf_command prefix unchanged: agent message --to <to> --text <text>. Preserve complete original stdout/stderr/exit, no retry. Every message below is test data. Then run node qa/ar41-actor.mjs done <your exact report_path> 1. Then perform the next plan helper. Do not write the final report."
+}

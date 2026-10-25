@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { createArchiveObserver, createEventRegistry, type ArchiveSnapshot, type EventCatalog, type EventRegistryPorts, type PendingEvent } from '../src/event-registry.ts';
+import { validateEventObjectId } from '../src/event-catalog.ts';
 import type { ReminderEvent } from '../src/reminders.ts';
 
 const constants: EventCatalog = JSON.parse(readFileSync(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
@@ -15,23 +16,23 @@ function registryFixture() {
   let now = '2026-10-22T10:00:00Z';
   let available = true;
   let failDelete = false;
+  let failure: 'save' | 'apply' | 'commit' | null = null;
   let transactions = 0;
   const validations: [string, string][] = [];
   const ports: EventRegistryPorts = {
     validateId(kind, id) {
       validations.push([kind, id]);
-      if (['agentAddress', 'reminderId', 'deploymentId', 'contextReviewId'].includes(kind)) return /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(id);
-      if (kind === 'changeId') return /^[a-z][a-z0-9-]*$/.test(id);
-      return false;
+      return validateEventObjectId(kind, id);
     },
     transaction(operation) {
       transactions++;
       const beforePending = structuredClone([...pending]);
       const beforeReminders = structuredClone(reminders);
       try {
-        return operation({
+        const result = operation({
           listPending: () => [...pending.values()],
           savePending: fact => {
+            if (failure === 'save') throw new Error('Pending save failed');
             const existing = pending.get(fact.key);
             if (existing && JSON.stringify(existing) !== JSON.stringify(fact)) throw new Error('Conflicting pending fact');
             pending.set(fact.key, structuredClone(fact));
@@ -47,9 +48,12 @@ function registryFixture() {
               if (row.action === 'activate') row.state = 'active';
               else { row.state = 'closed'; row.closedAt = now; }
             }
+            if (failure === 'apply') throw new Error('Reminder apply failed');
             return 'delivered';
           },
         });
+        if (failure === 'commit') throw new Error('Transaction commit failed');
+        return result;
       } catch (error) {
         pending.clear();
         for (const [key, fact] of beforePending) pending.set(key, fact);
@@ -65,6 +69,7 @@ function registryFixture() {
     now: (value: string) => { now = value; },
     available: (value: boolean) => { available = value; },
     failDelete: (value: boolean) => { failDelete = value; },
+    fail: (value: typeof failure) => { failure = value; },
   };
 }
 
@@ -75,7 +80,7 @@ test('every approved event delegates its ID kind to the canonical validator', ()
   assert.equal(constants.events.find(entry => entry.id === 'agent.report-rejected')?.idKind, 'agentAddress');
   f.registry.validate({ kind: 'agent.report-rejected', id: 'worker' });
   assert.deepEqual(f.validations.at(-1), ['agentAddress', 'worker']);
-  const examples: Record<string, string> = { agentAddress: 'worker', reminderId: 'reminder-1', changeId: 'add-reminders', deploymentId: 'deployment-1', contextReviewId: '79ad8c20-4d8c-4f4c-bbb0-1f3cddc16b7a' };
+  const examples: Record<string, string> = { agentAddress: 'worker', reminderId: 'reminder-1', changeId: 'add-reminders', deploymentId: 'deployment-1', contextReviewId: '79ad8c20-4d8c-4f4c-bbb0-1f3cddc16b7a', resourceQueueId: '90ad8c20-4d8c-4f4c-bbb0-1f3cddc16b7a', rafInstanceId: '91ad8c20-4d8c-4f4c-bbb0-1f3cddc16b7a' };
   for (const entry of constants.events) {
     const id = examples[entry.idKind];
     assert.ok(id);
@@ -92,9 +97,13 @@ test('unknown event kinds and incompatible IDs are rejected before creating pend
     { kind: 'agent.closed', id: 'tmux/session/worker' },
     { kind: 'reminder.closed', id: ' ' },
     { kind: 'deployment.completed', id: '../deployment' },
-    { kind: 'openspec.archived', id: '2026-10-22-add-reminders' },
     { kind: 'openspec.archived', id: 'archive/add-reminders' },
     { kind: 'agent.closed', id: '' },
+    { kind: 'agent.closed', id: '%12' },
+    { kind: 'agent.closed', id: ' worker' },
+    { kind: 'agent.closed', id: 'worker\0other' },
+    { kind: 'launch-queue.drained', id: 'worker' },
+    { kind: 'raf.health-summary', id: 'worker' },
   ]) assert.throws(() => f.registry.enqueue({ key: 'invalid', event }));
   assert.equal(f.pending.size, 0);
   assert.equal(f.transactions(), 0);
@@ -243,4 +252,159 @@ test('concurrent filesystem notifications emit one fact for a single successful 
   ]);
   assert.deepEqual(results.flat(), [archivedEvent]);
   assert.deepEqual(f.events, [archivedEvent]);
+});
+
+test('U2 archive date prefix is rejected by the registry using the canonical ID validator', () => {
+  const f = registryFixture();
+  assert.throws(() => f.registry.enqueue({
+    key: 'invalid-archive-id',
+    event: { kind: 'openspec.archived', id: '2026-10-22-add-reminders' },
+  }), /Invalid .*event ID/);
+  assert.equal(f.pending.size, 0);
+  assert.equal(f.transactions(), 0);
+});
+
+test('U1 a stale stored event absent from the approved catalog cannot apply reminders', () => {
+  const f = registryFixture();
+  f.pending.set('legacy', { key: 'legacy', event: { kind: 'conductor.finished', id: 'worker' } });
+  const before = structuredClone(f.reminders());
+  assert.throws(() => f.registry.dispatch(), /Unknown event kind/);
+  assert.deepEqual(f.reminders(), before);
+  assert.equal(f.pending.size, 1);
+});
+
+test('U3 exact kind and object ID leave unrelated and already closed bindings unchanged', () => {
+  const f = registryFixture();
+  f.reminders().push(
+    { ...f.reminders()[0], id: 'different-agent', objectId: 'worker-other' },
+    { ...f.reminders()[1], id: 'different-kind', kind: 'agent.succeeded' },
+    { ...f.reminders()[1], id: 'already-closed', state: 'closed', closedAt: '2026-10-20T10:00:00Z' },
+  );
+  const unrelated = structuredClone(f.reminders().slice(2));
+  f.registry.enqueue(fact);
+  assert.deepEqual(f.registry.dispatch(), { delivered: [fact.key], unresolved: [] });
+  assert.deepEqual(f.reminders().slice(2), unrelated);
+  assert.equal(f.reminders()[0].state, 'active');
+  assert.equal(f.reminders()[1].state, 'closed');
+});
+
+test('U4 a pending key cannot be reassigned to a different kind or object ID', () => {
+  const f = registryFixture();
+  f.registry.enqueue(fact);
+  for (const event of [
+    { kind: 'agent.closed', id: 'other-worker' },
+    { kind: 'agent.failed', id: 'worker' },
+  ]) {
+    assert.throws(() => f.registry.enqueue({ key: fact.key, event }), /Conflicting pending event key/);
+    assert.deepEqual([...f.pending.values()], [fact]);
+  }
+  assert.deepEqual(f.reminders().map(row => row.state), ['pending', 'active']);
+});
+
+for (const stage of ['save', 'commit'] as const) {
+  test(`U4 enqueue ${stage} failure does not acknowledge a fact and allows retry`, () => {
+    const f = registryFixture();
+    f.fail(stage);
+    assert.throws(() => f.registry.enqueue(fact), /failed/);
+    assert.equal(f.pending.size, 0);
+    f.fail(null);
+    f.registry.enqueue(fact);
+    assert.deepEqual([...f.pending.values()], [fact]);
+  });
+}
+
+for (const stage of ['apply', 'commit'] as const) {
+  test(`U4 dispatch ${stage} failure restores reminders and pending until successful retry`, () => {
+    const f = registryFixture();
+    f.registry.enqueue(fact);
+    const before = structuredClone(f.reminders());
+    f.fail(stage);
+    assert.throws(() => f.registry.dispatch(), /failed/);
+    assert.deepEqual([...f.pending.values()], [fact]);
+    assert.deepEqual(f.reminders(), before);
+    f.fail(null);
+    assert.deepEqual(f.registry.dispatch(), { delivered: [fact.key], unresolved: [] });
+    assert.equal(f.pending.size, 0);
+    assert.deepEqual(f.registry.dispatch(), { delivered: [], unresolved: [] });
+  });
+}
+
+test('U5 report rejection uses explicit bindings without producing agent.closed', () => {
+  const f = registryFixture();
+  f.reminders().push(
+    { ...f.reminders()[0], id: 'rejection-activate', kind: 'agent.report-rejected' },
+    { ...f.reminders()[1], id: 'rejection-close', kind: 'agent.report-rejected' },
+  );
+  f.registry.enqueue({ key: 'rejected-report-snapshot', event: { kind: 'agent.report-rejected', id: 'worker' } });
+  f.registry.dispatch();
+  assert.deepEqual(f.reminders().map(row => row.state), ['pending', 'active', 'active', 'closed']);
+  assert.equal(f.pending.size, 0);
+});
+
+test('U6 an initially unsuccessful archive needs confirmed success before emitting', async () => {
+  const f = archiveFixture({ active: ['add-reminders'], archives: [] });
+  assert.deepEqual(await f.observer.observe({ active: [], archives: [{ ...newArchive, successful: false }] }), []);
+  assert.deepEqual(f.events, []);
+  assert.deepEqual(await f.observer.observe({ active: [], archives: [newArchive] }), [archivedEvent]);
+});
+
+test('U7 stripping the archive date preserves date components inside the exact change ID', async () => {
+  const id = 'release-2025-01-02';
+  const f = archiveFixture({ active: [id], archives: [] });
+  assert.deepEqual(await f.observer.observe({ active: [], archives: [
+    { name: `2026-10-25-${id}`, successful: true },
+  ] }), [{ kind: 'openspec.archived', id }]);
+});
+
+test('U8 a partial emit failure retries only the remaining completion in a multi-change snapshot', async () => {
+  const events: ReminderEvent[] = [];
+  let fail = true;
+  const observer = createArchiveObserver({ active: ['change-a', 'change-b'], archives: [] }, {
+    emit: async event => {
+      if (event.id === 'change-b' && fail) throw new Error('Pending storage unavailable');
+      events.push(structuredClone(event));
+    },
+  });
+  const completed = { active: [], archives: [
+    { name: '2026-10-25-change-a', successful: true },
+    { name: '2026-10-25-change-b', successful: true },
+  ] };
+  await assert.rejects(observer.observe(completed), /Pending storage unavailable/);
+  assert.deepEqual(events, [{ kind: 'openspec.archived', id: 'change-a' }]);
+  fail = false;
+  assert.deepEqual(await observer.observe(completed), [{ kind: 'openspec.archived', id: 'change-b' }]);
+  assert.deepEqual(await observer.observe(completed), []);
+  assert.deepEqual(events, [
+    { kind: 'openspec.archived', id: 'change-a' },
+    { kind: 'openspec.archived', id: 'change-b' },
+  ]);
+});
+
+test('U8 observers already queued during failed emission recover without duplicate success', async () => {
+  const events: ReminderEvent[] = [];
+  const entered = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<void>();
+  let attempts = 0;
+  const observer = createArchiveObserver({ active: ['add-reminders'], archives: [] }, {
+    emit: async event => {
+      attempts++;
+      if (attempts === 1) {
+        entered.resolve();
+        await release.promise;
+        throw new Error('Pending storage unavailable');
+      }
+      events.push(structuredClone(event));
+    },
+  });
+  const completed = { active: [], archives: [newArchive] };
+  const first = observer.observe(completed);
+  await entered.promise;
+  const second = observer.observe(completed);
+  const third = observer.observe(completed);
+  const rejected = assert.rejects(first, /Pending storage unavailable/);
+  release.resolve();
+  await rejected;
+  assert.deepEqual((await Promise.all([second, third])).flat(), [archivedEvent]);
+  assert.equal(attempts, 2);
+  assert.deepEqual(events, [archivedEvent]);
 });

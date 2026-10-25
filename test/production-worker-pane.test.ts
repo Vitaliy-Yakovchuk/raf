@@ -59,6 +59,7 @@ const doubles: Record<string, string> = {
     export class RafCostRuntime { install() {} stage() {} finish() {} }`,
   './health-cpu-runtime.ts': 'export const settleRuntimeHealthCpu = async () => {};',
   './event-catalog.ts': 'export const loadEventCatalog = () => ({ events: [] });',
+  './flow-runtime.ts': `export * from ${real('flow-runtime.ts')}; export const flowEvidencePorts = () => ({});`,
   './reminder-cli.ts': `export * from ${real('reminder-cli.ts')}; export const settleCommandState = async () => {};`,
   './health-summary-runtime.ts': 'export const scheduleWorkerHealthSummary = () => async () => {};',
 };

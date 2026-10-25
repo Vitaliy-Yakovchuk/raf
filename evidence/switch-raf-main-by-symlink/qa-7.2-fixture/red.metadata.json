@@ -1,0 +1,18 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "toolMetadata": {
+    "chunk_id": "f016ed",
+    "wall_time_seconds": 0.344158859,
+    "exit_code": 1,
+    "original_token_count": 2760
+  },
+  "capture": {
+    "method": "Retained full merged output; first LF-terminated record is the complete unmodified TestRunResult, remaining record is launch-queue.waiting logical stderr. Both parsed independently; original merged output retained.",
+    "limitation": "Tool merges native streams; byte-level stream provenance is unavailable.",
+    "stdoutCharacters": 9455,
+    "stderrCharacters": 1512
+  },
+  "quotaRecovery": "Main confirmed quota cleared and codex-daemon-1000 restored; exactly one test retry after environment failure."
+}

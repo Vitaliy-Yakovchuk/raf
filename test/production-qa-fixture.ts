@@ -49,8 +49,8 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
     cpSync(new URL(`../${name}`, import.meta.url), join(codeRoot, name), { recursive: true });
   }
   copyProductionQaDependencies(codeRoot);
-  const { ensureProductionMainStore } = await import('../src/main-production-store.ts');
-  await ensureProductionMainStore({ root: location.root });
+  const { prepareMainLayoutForProductionStart } = await import('../src/production-start-layout.ts');
+  await prepareMainLayoutForProductionStart({ orchestratorRoot: location.root });
 
   const names = ['HOME', 'RAF_QA_HOME', 'RAF_ORCHESTRATOR_ROOT', 'TMUX', 'TMUX_PANE'] as const;
   const inherited = Object.fromEntries(names.map(name => [name, process.env[name]]));

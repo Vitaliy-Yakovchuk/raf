@@ -12,8 +12,16 @@ const generation = `${root}/.git/modules/raf/raf-hotfix/generations/pinned/raf-m
 const fixtureKey = Symbol.for('raf.production-start-layout.unit');
 const prepareUrl = new URL('../src/production-start-layout.ts?start-unit', import.meta.url).href;
 const serviceUrl = new URL('../src/service-entry.ts?start-layout-unit', import.meta.url).href;
+const qaFixtureUrl = new URL('./production-qa-fixture.ts?start-layout-unit', import.meta.url).href;
 const bridge = 'const f = () => globalThis[Symbol.for("raf.production-start-layout.unit")];';
 const doubles: Record<string, string> = {
+  'qa-fs': `${bridge}
+    export const readFileSync = path => String(path).endsWith('/conf/projects.json') ? JSON.stringify({projects:f().projects}) : '';
+    export const cpSync = () => {}; export const mkdirSync = () => {};
+    export const mkdtempSync = prefix => prefix + 'unit'; export const renameSync = () => {};
+    export const rmSync = () => {}; export const existsSync = () => false; export const appendFileSync = () => {};`,
+  'qa-process': `export const spawnSync = () => ({status:0,stdout:'/unit/production-start/exclude',stderr:''});`,
+  'qa-entry': 'export const runProductionCli = async () => 0;',
   fs: `${bridge} export * from 'node:fs'; import { promises as real } from 'node:fs';
     export const promises = { ...real, readFile: (...args) => f().readFile(...args) };`,
   promises: `${bridge} export * from 'node:fs/promises'; export const readFile = (...args) => f().readFile(...args);`,
@@ -31,6 +39,13 @@ const doubles: Record<string, string> = {
 };
 const hooks = registerHooks({
   resolve(specifier, context, next) {
+    if (context.parentURL === qaFixtureUrl) {
+      if (specifier === '../src/production-start-layout.ts') return { url: prepareUrl, shortCircuit: true };
+      const key = specifier === 'node:fs' ? 'qa-fs' : specifier === 'node:child_process' ? 'qa-process'
+        : specifier === '../src/main-production-store.ts' ? 'main-production-store.ts'
+        : specifier === new URL(`${root}/raf-develop/src/production-entry.ts`, 'file:').href ? 'qa-entry' : undefined;
+      if (key) return { url: `start-layout-unit:${key}`, shortCircuit: true };
+    }
     if (context.parentURL === prepareUrl || context.parentURL === serviceUrl) {
       const key = specifier === 'node:fs' ? 'fs' : specifier === 'node:fs/promises' ? 'promises' : specifier.replace(/^\.\//, '');
       if (doubles[key]) return { url: `start-layout-unit:${key}`, shortCircuit: true };
@@ -44,6 +59,7 @@ const hooks = registerHooks({
 });
 const { prepareMainLayoutForProductionStart } = await import(prepareUrl) as typeof import('../src/production-start-layout.ts');
 const { createServiceHandlers } = await import(serviceUrl) as typeof import('../src/service-entry.ts');
+const { prepareProductionQaFixture } = await import(qaFixtureUrl) as typeof import('./production-qa-fixture.ts');
 test.after(() => hooks.deregister());
 
 function fixture(t: TestContext, copies = false) {
@@ -61,6 +77,7 @@ function fixture(t: TestContext, copies = false) {
     storeFailure: undefined as Error | undefined,
     startFailure: undefined as Error | undefined,
     startGate: undefined as Promise<void> | undefined,
+    layoutGate: undefined as Promise<void> | undefined,
     async readFile(path: unknown) {
       assert.equal(String(path), `${root}/conf/projects.json`);
       events.push('configuration');
@@ -75,6 +92,8 @@ function fixture(t: TestContext, copies = false) {
     },
     async ensureLayout(options: MainLayoutStartOptions) {
       events.push('layout'); layoutCalls.push(options);
+      await f.layoutGate;
+      events.push('layout:complete');
       return { status: 'converted', activePath: `${root}/raf-main-a`, inactivePath: `${root}/raf-main-b` };
     },
     async prepareStart(options: ProductionStartLayoutOptions) {
@@ -209,4 +228,41 @@ test('service status and stop do not initiate layout mutation', async t => {
   await handlers['service stop']({});
   assert.deepEqual(f.startCalls, []);
   assert.ok(!f.events.includes('pin'));
+});
+
+test('production QA fixture: configured main copies are ready before the entry callback', async t => {
+  const f = fixture(t, true);
+  const cli = await prepareProductionQaFixture(t, { root, home }, async codeRoot => {
+    assert.equal(codeRoot, `${root}/raf-develop`);
+    assert.equal(f.storeCalls.length, 1, 'the protected production store must still be prepared');
+    assert.equal(f.layoutCalls.length, 1, 'configured mainCopies require layout conversion before loading production code');
+    assert.deepEqual(f.layoutCalls[0].projects, f.projects);
+    assert.ok(f.events.indexOf('store') < f.events.indexOf('layout'));
+    assert.ok(f.events.includes('layout:complete'));
+  });
+  assert.equal(typeof cli, 'function');
+});
+
+test('production QA fixture: pending layout conversion blocks entry preparation', async t => {
+  const f = fixture(t, true);
+  let release!: () => void;
+  f.layoutGate = new Promise<void>(resolve => { release = resolve; });
+  let entryPrepared = false;
+  const pending = prepareProductionQaFixture(t, { root, home }, async () => { entryPrepared = true; });
+  try {
+    await new Promise<void>(resolve => setImmediate(resolve));
+    assert.equal(f.layoutCalls.length, 1, 'fixture must enter the configured layout conversion');
+    assert.equal(entryPrepared, false, 'production entry cannot observe an unfinished layout');
+  } finally { release(); await pending; }
+  assert.equal(entryPrepared, true);
+});
+
+test('production QA fixture: store refusal prevents entry preparation', async t => {
+  const f = fixture(t, true);
+  f.storeFailure = new Error('Production Git store refused: writer barrier busy');
+  let entryPrepared = false;
+  await assert.rejects(prepareProductionQaFixture(t, { root, home }, async () => { entryPrepared = true; }),
+    error => error === f.storeFailure);
+  assert.equal(entryPrepared, false);
+  assert.equal(f.layoutCalls.length, 0);
 });

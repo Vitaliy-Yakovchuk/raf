@@ -1,0 +1,17 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+  "toolResult": {
+    "chunk_id": "f1591c",
+    "wall_time_seconds": 0,
+    "exit_code": 101,
+    "original_token_count": 64,
+    "output": "\nthread 'main' (3228102) panicked at linux-sandbox/src/linux_run_main.rs:996:25:\nfailed to register synthetic bubblewrap mount target /tmp/.git: Quota exceeded (os error 122)\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  },
+  "outcome": "not-started",
+  "redEstablished": false,
+  "testRunResult": null,
+  "cliCode": null,
+  "toolExitCode": 101,
+  "childExitCode": null,
+  "nextAction": "Resolve sandbox quota before first own red; do not treat setup failure as red or repeat blindly."
+}

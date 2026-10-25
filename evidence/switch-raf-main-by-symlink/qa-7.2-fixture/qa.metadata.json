@@ -1,0 +1,19 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "toolMetadata": {
+    "chunk_id": "d0bcab",
+    "wall_time_seconds": 0.261418112,
+    "exit_code": 0,
+    "original_token_count": 2339
+  },
+  "capture": {
+    "method": "Retained full merged output; first LF-terminated record is the complete unmodified TestRunResult, remaining record is launch-queue.waiting logical stderr. Both parsed independently; original merged output retained.",
+    "limitation": "Tool merges native streams; byte-level stream provenance is unavailable.",
+    "stdoutCharacters": 7842,
+    "stderrCharacters": 1513
+  },
+  "sameQaHomeAsRed": true,
+  "sameGroupAsRed": true
+}

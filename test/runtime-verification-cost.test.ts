@@ -256,7 +256,7 @@ test('retained A verifies its own inventory after B activation and cannot borrow
   assert.equal(f.origin('src/state-store.ts', b), b);
 });
 
-test('serialized verified flags and env cannot suppress a new guard', t => {
+test('serialized verified flags cannot suppress a new guard', t => {
   const f = generationFixture(t);
   const context = f.context();
   const forged = { ...JSON.parse(JSON.stringify(context)), verified: true, runtimeInventory: f.inventory };
@@ -300,7 +300,7 @@ test('path is checked again after SQLite open even when inventory is shared', t 
   assert.equal(hash(fs.readFileSync(foreign)), before);
 });
 
-type OSMode = 'alive' | 'missing' | 'start' | 'command' | 'denied' | 'malformed' | 'disappeared';
+type OSMode = 'alive' | 'missing' | 'start' | 'command' | 'denied' | 'malformed' | 'disappeared' | 'reuse-during-read';
 function processFixture(t: TestContext) {
   const boot = { machineId: fs.readFileSync('/etc/machine-id', 'utf8').trim(), bootId: fs.readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() };
   const identities = [process.pid, process.ppid].map((pid, index): ProcessIdentity => {
@@ -328,8 +328,8 @@ function processFixture(t: TestContext) {
     if (name) {
       const encode = (text: string) => typeof value === 'string' ? text : Buffer.from(text);
       if (mode === 'malformed') return encode('malformed');
-      if (mode === 'command' && name.endsWith('/cmdline')) return encode('foreign\0command\0');
-      if (mode === 'start' && name.endsWith('/stat')) {
+      if ((mode === 'command' || mode === 'reuse-during-read' && reads > 1) && name.endsWith('/cmdline')) return encode('foreign\0command\0');
+      if ((mode === 'start' || mode === 'reuse-during-read' && reads > 1) && name.endsWith('/stat')) {
         const text = value.toString();
         const end = text.lastIndexOf(')') + 2;
         const fields = text.slice(end).split(' '); fields[19] = String(Number(fields[19]) + 1000);
@@ -510,6 +510,15 @@ test('extra consumers do not multiply real targeted OS reads in one identity pas
   assert.deepEqual(os.procReads, single, 'Metadata/content reads cannot grow with duplicate consumers');
   assert.equal(os.commands.length, helpers);
   assert.ok(single.length > 0 || helpers > 0, 'An empty fake observation is not evidence of identity');
+});
+
+test('PID reuse between targeted OS reads never becomes an alive identity', { skip: process.platform !== 'linux' }, async t => {
+  const os = processFixture(t);
+  os.mode('reuse-during-read');
+  const observed = await runtime.observeIdentity(os.identities[0], os.execute);
+  assert.notEqual(observed.state, 'alive', 'Mixed process-start/command evidence cannot prove ownership');
+  assert.ok(observed.state === 'unknown' ? observed.error : observed.state === 'exited' && observed.evidence);
+  assert.equal(os.scanCount(), 0);
 });
 
 for (const changed of ['pane-id', 'pane-pid', 'process-command', 'pane-denied'] as const) {

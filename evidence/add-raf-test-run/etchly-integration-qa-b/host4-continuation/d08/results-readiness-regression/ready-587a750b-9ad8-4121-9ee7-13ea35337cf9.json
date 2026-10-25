@@ -1,0 +1,402 @@
+{
+  "flight": {
+    "runId": "587a750b-9ad8-4121-9ee7-13ea35337cf9",
+    "deadlineMs": 1792970408478,
+    "startedAtMs": 1792970348478,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 60000
+    },
+    "callerPhase": "qa",
+    "processIdentity": "{\"pid\":3807636,\"start\":\"31303724\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+    "phase": "integration",
+    "selection": {
+      "files": [
+        "worker/src/raf-etchly-lifecycle-qa.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "--import",
+        "../scripts/shared-library-runtime.mjs",
+        "../node_modules/vitest/vitest.mjs",
+        "run",
+        "src/raf-etchly-lifecycle-qa.test.ts",
+        "--configLoader",
+        "runner",
+        "--project",
+        "worker-d1-integration"
+      ],
+      "cwd": "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/worker",
+      "shell": false,
+      "environment": {
+        "HOME": "/srv/dev/raf-etchly-6263b-host4/d08/qa-home",
+        "statePath": "/srv/dev/raf-etchly-6263b-host4/d08/qa-home/.raf/state.sqlite",
+        "tmpPath": "/srv/dev/raf-etchly-6263b-host4/d08/qa-home/.raf/tmp",
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/integrationTests/timeoutMs",
+          "timeoutMs": 60000
+        }
+      }
+    },
+    "testKind": "integration",
+    "startedAt": "2026-10-25T23:19:08.478Z",
+    "finishedAtMs": null,
+    "deadlineObservedAtMs": null,
+    "temporary": {
+      "runId": "587a750b-9ad8-4121-9ee7-13ea35337cf9",
+      "temporary": {
+        "path": "/tmp/r-0Jx0J7",
+        "realpath": "/tmp/r-0Jx0J7",
+        "device": "36",
+        "inode": "38975458",
+        "uid": 1000,
+        "mode": 16832,
+        "symlink": false,
+        "runId": "587a750b-9ad8-4121-9ee7-13ea35337cf9"
+      }
+    }
+  },
+  "proof": {
+    "pid": 3808173,
+    "mode": "hang",
+    "proof": 1,
+    "tmp": "/tmp/r-0Jx0J7/tmp/etchly-test-scope-8umlTE"
+  },
+  "processes": [
+    {
+      "pid": 3804828,
+      "ppid": 3804655,
+      "start": "31296923",
+      "argv": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host4/d08/results-readiness-regression/hang.input.json"
+      ]
+    },
+    {
+      "pid": 3804973,
+      "ppid": 3804828,
+      "start": "31297612",
+      "argv": [
+        "node",
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/test-run-vitest.ts"
+      ]
+    },
+    {
+      "pid": 3804983,
+      "ppid": 3804973,
+      "start": "31297619",
+      "argv": [
+        "node",
+        "--import",
+        "../scripts/shared-library-runtime.mjs",
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/test-run-vitest-api.ts",
+        "run",
+        "src/raf-etchly-lifecycle-qa.test.ts",
+        "--configLoader",
+        "runner",
+        "--project",
+        "worker-d1-integration",
+        "--testTimeout",
+        "60000",
+        "--hookTimeout",
+        "60000",
+        "--reporter",
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/src/test-run-vitest-reporter.ts"
+      ]
+    },
+    {
+      "pid": 3805001,
+      "ppid": 3804983,
+      "start": "31297650",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules/@esbuild/linux-x64/bin/esbuild",
+        "--service=0.28.2",
+        "--ping"
+      ]
+    },
+    {
+      "pid": 3805445,
+      "ppid": 3804983,
+      "start": "31298118",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:36103",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3805659,
+      "ppid": 3804983,
+      "start": "31298284",
+      "argv": [
+        "git",
+        "-C",
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/shared-libs",
+        "rev-parse",
+        "--show-toplevel"
+      ]
+    },
+    {
+      "pid": 3805660,
+      "ppid": 3804983,
+      "start": "31298287",
+      "argv": []
+    },
+    {
+      "pid": 3805697,
+      "ppid": 3804983,
+      "start": "31298364",
+      "argv": []
+    },
+    {
+      "pid": 3805702,
+      "ppid": 3804983,
+      "start": "31298368",
+      "argv": []
+    },
+    {
+      "pid": 3805723,
+      "ppid": 3804983,
+      "start": "31298467",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:38705",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3805742,
+      "ppid": 3804983,
+      "start": "31298537",
+      "argv": []
+    },
+    {
+      "pid": 3805748,
+      "ppid": 3804983,
+      "start": "31298546",
+      "argv": []
+    },
+    {
+      "pid": 3805750,
+      "ppid": 3804983,
+      "start": "31298552",
+      "argv": []
+    },
+    {
+      "pid": 3805760,
+      "ppid": 3804983,
+      "start": "31298584",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:46869",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3805797,
+      "ppid": 3804983,
+      "start": "31298749",
+      "argv": []
+    },
+    {
+      "pid": 3805826,
+      "ppid": 3805797,
+      "start": "31298828",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:42671",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3807250,
+      "ppid": 3804655,
+      "start": "31303007",
+      "argv": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host4/d08/results-readiness-regression/interrupt.input.json"
+      ]
+    },
+    {
+      "pid": 3807636,
+      "ppid": 3807250,
+      "start": "31303724",
+      "argv": [
+        "node",
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/test-run-vitest.ts"
+      ]
+    },
+    {
+      "pid": 3807645,
+      "ppid": 3807636,
+      "start": "31303731",
+      "argv": [
+        "node",
+        "--import",
+        "../scripts/shared-library-runtime.mjs",
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/test-run-vitest-api.ts",
+        "run",
+        "src/raf-etchly-lifecycle-qa.test.ts",
+        "--configLoader",
+        "runner",
+        "--project",
+        "worker-d1-integration",
+        "--testTimeout",
+        "60000",
+        "--hookTimeout",
+        "60000",
+        "--reporter",
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/src/test-run-vitest-reporter.ts"
+      ]
+    },
+    {
+      "pid": 3807667,
+      "ppid": 3807645,
+      "start": "31303765",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules/@esbuild/linux-x64/bin/esbuild",
+        "--service=0.28.2",
+        "--ping"
+      ]
+    },
+    {
+      "pid": 3808024,
+      "ppid": 3807645,
+      "start": "31304260",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:33011",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3808074,
+      "ppid": 3807645,
+      "start": "31304454",
+      "argv": []
+    },
+    {
+      "pid": 3808078,
+      "ppid": 3807645,
+      "start": "31304547",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:37597",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3808104,
+      "ppid": 3807645,
+      "start": "31304614",
+      "argv": []
+    },
+    {
+      "pid": 3808106,
+      "ppid": 3807645,
+      "start": "31304620",
+      "argv": []
+    },
+    {
+      "pid": 3808107,
+      "ppid": 3807645,
+      "start": "31304624",
+      "argv": []
+    },
+    {
+      "pid": 3808109,
+      "ppid": 3807645,
+      "start": "31304632",
+      "argv": []
+    },
+    {
+      "pid": 3808111,
+      "ppid": 3807645,
+      "start": "31304639",
+      "argv": []
+    },
+    {
+      "pid": 3808123,
+      "ppid": 3807645,
+      "start": "31304677",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:35199",
+        "--control-fd=3",
+        "-"
+      ]
+    },
+    {
+      "pid": 3808173,
+      "ppid": 3807645,
+      "start": "31304834",
+      "argv": [
+        "/opt/dev/node/bin/node",
+        "--experimental-import-meta-resolve",
+        "--require",
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules/vitest/suppress-warnings.cjs",
+        "--conditions",
+        "node",
+        "--conditions",
+        "development",
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules/vitest/dist/workers/forks.js"
+      ]
+    },
+    {
+      "pid": 3808350,
+      "ppid": 3808173,
+      "start": "31304919",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules/@cloudflare/workerd-linux-64/bin/workerd",
+        "serve",
+        "--binary",
+        "--experimental",
+        "--socket-addr=entry=127.0.0.1:0",
+        "--external-addr=loopback=127.0.0.1:41185",
+        "--control-fd=3",
+        "-"
+      ]
+    }
+  ]
+}

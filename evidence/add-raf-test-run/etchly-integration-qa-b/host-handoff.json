@@ -60,7 +60,7 @@
   },
   "hostResultsReceived": true,
   "hostQueue": "Initial attempt quota-failed (host-initial/). Retry on 5b21d80 completed CLI 1, both prepare 0 and drivers 1. Both first scenarios setup-failed because prepare omitted learning/concept-base; no workerd/D1 readiness. Full unchanged captures copied into host2/. QA fixes its prepare in this same run, focused completion pending host execution.",
-  "unitHold": "Main confirms Z.420 fixed in raf-hotfix but not yet switched into working raf. Do not run unit until separate working-switch confirmation.",
+  "unitHold": "No explicit release received from main; no further unit run. Prior main message said Z.420 hotfix awaiting working switch; current readiness not inferred from other agent closure notices.",
   "tasksNoteOwner": "Main explicitly instructed agents not to edit add-raf-test-run/tasks.md; main will add the evidence note from this QA report. QA does not change this file or its checkboxes.",
   "d09OwnTrustedCallerProved": false,
   "hostInitialEvidence": "host-initial/manifest.json",
@@ -73,12 +73,12 @@
     "expected": "prepare/driver/suite rc0; smoke 11 and D08 12 captures; complete cleanup; D09 not proved",
     "evidence": "host3/manifest.json"
   },
-  "d08Fix": "Use installed Miniflare5 convertV4MiniflareOptions with workers array. Next host continuation restricted to d08; live green pending.",
+  "d08Fix": "Miniflare5 fixture fixed and real D1 green confirmed host4. Explicit proof observer regression fixed by h6, deadline/interruption/concurrent/crash/recovery expected behavior passed.",
   "d08Continuation": {
     "sha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
     "root": "/srv/dev/raf-etchly-6263b-host4",
     "mode": "d08",
-    "status": "Queued by main; results pending",
+    "status": "completed failed original observer; original evidence retained in host4/",
     "deliveryReceipt": "43bdaade-b3b6-4256-8924-d443f41a50a2"
   },
   "d09RequestReceipt": "03b459db-bcc8-41d3-899c-e057c022e6d7",
@@ -104,7 +104,7 @@
       "etchlyDirty": ""
     },
     "liveOwnedAfterEmergencyCleanup": [],
-    "continuation": "same HOME/group, corrected ready path; d08-remainder skips passed prefix, baseline timeout2 → expected4; new results-continuation"
+    "continuation": "completed explicit per-launch proof continuation 43a56baf; unchanged HOME/group; timeout2→4; results-readiness-regression, no passed prefix repetition"
   },
   "d08Remainder": {
     "sha": "dd69fee002c2c3367e7e2908fe3f83ab564720ab",
@@ -115,7 +115,7 @@
     "stopReceipt": "241e5005-d432-40cc-b115-d673e36368e6"
   },
   "explicitProofFix": {
-    "status": "awaiting commit and main queue confirmation",
+    "status": "completed passed; host and driver rc0, main confirms secscan0",
     "method": "Atomic per-launch SQL-ready path; verify SQL=1, hang, live owned fork and workerd, canonical actual TMPDIR inside reservation",
     "output": "results-readiness-regression",
     "capture": "readiness-regression-capture",
@@ -125,6 +125,17 @@
       "cliCode": 1,
       "blocker": "Foreign scripts/qa-main-symlink-live.mjs comments lines128,129",
       "ownSyntaxAndCommentPolicy": "passed; no unit run"
-    }
+    },
+    "sha": "43a56bafd0d87f930c20774e211252d0eb9eba11",
+    "receipt": "4940a39d-b040-4d6a-b45e-5dca2bedb138",
+    "command": "bash /srv/dev/work/orchestrator/raf-develop/scripts/qa-etchly-integration-resume.sh /srv/dev/work/orchestrator /srv/dev/raf-etchly-6263b-host4/d08 43a56bafd0d87f930c20774e211252d0eb9eba11",
+    "outerCaptures": "/srv/dev/raf-etchly-6263b-host4/h6.{stdout,stderr,rc}",
+    "resultEvidence": "host4-continuation/manifest.json",
+    "cleanupEvidence": "host4-continuation-cleanup.json",
+    "cases": 8,
+    "finalRunId": "061d4e3b-22e4-4b18-b124-c5b8052c21eb",
+    "finalGroupState": "complete",
+    "finalTimeoutCount": 4,
+    "closureReceipt": "82745dee-6abf-48d4-a8c0-cd6228562c15"
   }
 }

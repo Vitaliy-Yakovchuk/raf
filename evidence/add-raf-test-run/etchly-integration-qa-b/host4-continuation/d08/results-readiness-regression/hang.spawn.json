@@ -1,0 +1,56 @@
+{
+  "boundary": "Actual production runtime spawn; host API stand does not prove broker authorization",
+  "command": {
+    "executable": "node",
+    "argv": [
+      "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/test-run-vitest.ts"
+    ],
+    "cwd": "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/worker",
+    "shell": false,
+    "environment": {
+      "HOME": "/srv/dev/raf-etchly-6263b-host4/d08/qa-home",
+      "statePath": "/srv/dev/raf-etchly-6263b-host4/d08/qa-home/.raf/state.sqlite",
+      "tmpPath": "/srv/dev/raf-etchly-6263b-host4/d08/qa-home/.raf/tmp",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/integrationTests/timeoutMs",
+        "timeoutMs": 60000
+      },
+      "TMPDIR": "/tmp/r-HnDUbD",
+      "vitestBatches": [
+        {
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../scripts/shared-library-runtime.mjs",
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "src/raf-etchly-lifecycle-qa.test.ts",
+            "--configLoader",
+            "runner",
+            "--project",
+            "worker-d1-integration",
+            "--testTimeout",
+            "60000",
+            "--hookTimeout",
+            "60000",
+            "--reporter",
+            "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/src/test-run-vitest-reporter.ts"
+          ],
+          "cwd": "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/worker",
+          "shell": false,
+          "environment": {
+            "HOME": "/srv/dev/raf-etchly-6263b-host4/d08/qa-home",
+            "statePath": "/srv/dev/raf-etchly-6263b-host4/d08/qa-home/.raf/state.sqlite",
+            "tmpPath": "/srv/dev/raf-etchly-6263b-host4/d08/qa-home/.raf/tmp",
+            "timeoutPolicy": {
+              "source": "conf/flow.json#/integrationTests/timeoutMs",
+              "timeoutMs": 60000
+            },
+            "TMPDIR": "/tmp/r-HnDUbD"
+          }
+        }
+      ]
+    }
+  },
+  "processIdentity": "{\"pid\":3804973,\"start\":\"31297612\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}"
+}

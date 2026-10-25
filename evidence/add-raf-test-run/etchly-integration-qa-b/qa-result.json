@@ -1,0 +1,437 @@
+{
+  "sourceItem": "add-raf-test-run:6.2.6.3",
+  "status": "failed",
+  "answer": "Повного unit-green немає: первісний capture урізано, повтор setup-failed STATE_CONTEXT_REFUSED до spawn, main не зняв unit-hold. Host3 smoke assertions-failed (4 passed, 1 knownRed, 2 unexecuted); exact-files/негативні відбори/дві missing prerequisites не досягнуті. Власний D09 потребує належного immutable project=etchly доручення цього самого пункту та готового trusted каналу. D08 у керованому API-стенді завершено rc0; це не заміна власного caller. Власні build/corpus/Miniflare/observer дефекти виправлено в цьому запуску; початкові failures збережено, критерії не послаблено. H6: 8 expected cases, timeoutCount2→4, final group complete, SQL-ready forks/workerd, усі 5 temp roots видалені, залишків процесів немає. Докази закомічені. Tasks.md не редагував за прямою вказівкою main, галочки/archive/push не виконував.",
+  "changes": [
+    {
+      "id": "add-raf-test-run",
+      "items": [
+        {
+          "id": "6.2.6.3",
+          "status": "failed",
+          "reason": "Повного unit-green немає: первісний capture урізано, повтор setup-failed STATE_CONTEXT_REFUSED до spawn, main не зняв unit-hold. Host3 smoke assertions-failed (4 passed, 1 knownRed, 2 unexecuted); exact-files/негативні відбори/дві missing prerequisites не досягнуті. Власний D09 потребує належного immutable project=etchly доручення цього самого пункту та готового trusted каналу. D08 у керованому API-стенді завершено rc0; це не заміна власного caller."
+        }
+      ]
+    }
+  ],
+  "qa": {
+    "scenarios": [
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "[qa] Не автор scaffold і не implement: перевірити D01–D09, unit-групу add-raf-test-run/etchly-integration з --phase qa й узгоджені unit-регресії. Після сумісного rollout і готових локальних dependencies/app build одержати належне project=etchly доручення власної active change=add-raf-test-run та самому через довірений канал виконати `raf test run --project etchly --phase integration --group add-raf-test-run/etchly-worker-d1-smoke` (рівно три файли контракту); окремо preset і його exact --files та негативні відбори/передумови. У керованому власному integration-стенді перевірити D08 deadline/interruption/concurrent/crash/recovery з реальними forks/workerd і cleanup, без читання робочого стану raf. Зберегти source item, etchly/raf SHA й dirty context, generation/conf hashes, фактичні bridge/внутрішні executable/argv/cwd, callerPhase/testKind/timeoutPolicy, повні JSON/stderr/CLI code, підтверджений D1 setup і відсутність власних залишених процесів/артефактів. Повний green/cleanup — CLI 0; timeout/setup/skip/частковий результат не закриває integration, unit-моки й прогін main не замінюють живий канал виконавця. Чужі задачі bound-generation-retries-and-spend не закривати, grants не розширювати; недоступні сценарії лишаються відкритими.",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/README.md",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/coverage.md",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/unit-qa.result.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3-result-index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-result-index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation-result-index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation-cleanup.json"
+        ],
+        "reason": "Повного unit-green немає: первісний capture урізано, повтор setup-failed STATE_CONTEXT_REFUSED до spawn, main не зняв unit-hold. Host3 smoke assertions-failed (4 passed, 1 knownRed, 2 unexecuted); exact-files/негативні відбори/дві missing prerequisites не досягнуті. Власний D09 потребує належного immutable project=etchly доручення цього самого пункту та готового trusted каналу. D08 у керованому API-стенді завершено rc0; це не заміна власного caller."
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Unit add-raf-test-run/etchly-integration: перший capture",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/README.md",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/context.json"
+        ],
+        "reason": "Run d4e3c4d7 спостерігався passed, CLI0/child0, але tool max_output_tokens урізав JSON; результат не прийнятий як pass."
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Unit add-raf-test-run/etchly-integration: один дозволений повтор",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/unit-qa.result.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/unit-qa.stdout",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/unit-qa.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/unit-qa.cli-code.txt",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/unit-qa.tool-capture.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/context.json"
+        ],
+        "reason": "Run e42191ba CLI1, child null, setup-failed STATE_CONTEXT_REFUSED до spawn. Group unavailable, лічильник невідомий; HOME/group не скидались. Окремий stderr не надано tool; порожній stderr artifact не доводить порожній OS stderr. Unit та дві same-change регресії лишаються невиконаними під прямим hold."
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "D01–D07: контракт, ізоляція та авторизація",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/coverage.md",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/context.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/audit.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3-result-index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-result-index.json"
+        ],
+        "reason": "Static inventory/config/source audit та часткові живі API-випадки підтверджено; повний поведінковий unit-набір і own etchly caller/refusal не виконано. Немає підстав оголошувати повний pass."
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Build власного prepare: comment-free check до виправлення",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-red.capture.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-red.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-red.cli-code.txt"
+        ],
+        "reason": "Чотири власні коментарі порушили чинний build check; первісний failed збережено після виправлення."
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Build власного prepare: адресне підтвердження виправлення",
+        "status": "succeeded",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-green.capture.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-green.stdout",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-green.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-green.cli-code.txt"
+        ]
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Host initial: підготовка до integration",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host-initial/manifest.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host-initial/command.txt"
+        ],
+        "reason": "Зовнішній rc1 після Quota exceeded 122 до тестів; prepare/suite rc-файли порожні, повного результату немає. Не red і не pass."
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Host2 smoke/D08: concept corpus prerequisite",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host2/manifest.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host2-result-index.json"
+        ],
+        "reason": "Власна prepare не копіювала learning/concept-base; обидва виклики setup-failed CLI1 child1 до D1. Не unit-red; власну fixture одразу виправлено, первісний failure збережено."
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Host3 smoke preset: рівно три файли",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/smoke/results/preset.result.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/smoke/results/preset.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/smoke/results/preset.cli-code.txt",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3-result-index.json"
+        ],
+        "reason": "Реальний assertion у analysis-output-1177: analysisCalls 1 замість 2, review queued:3; CLI1/child1, 4 passed, 1 knownRed, 2 unexecuted, unknown=[], cleanup complete, timeout0. Причину не доведено; etchly source поза write boundaries. Exact-files та негативні випадки не досягнуті; критерії/foreign tasks не змінені."
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Host3 D08 fixture: Miniflare5 options",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/d08/results/green.result.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/d08/results/green.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/d08/results/green.cli-code.txt"
+        ],
+        "reason": "Стара single-worker форма власної fixture несумісна зі встановленим Miniflare5; assertion-red збережено після негайного виправлення adapter/workers."
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Host4 D08: green, assertion, import failure, skip",
+        "status": "succeeded",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-result-index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/green.result.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/assertions.result.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/setup.result.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/skip.result.json"
+        ],
+        "reason": "Керований API-стенд із реальними forks/workerd/D1; очікувані CLI/outcome та cleanup підтверджено. Не own broker/caller proof."
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Host4 D08: interruption readiness observer",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/interrupt.result.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/interrupt.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-result-index.json"
+        ],
+        "reason": "Observer не одержав SQL-ready, SIGINT не надіслано, interrupt став timeout2. Початковий path hypothesis dd69fee відкликано й зупинено до старту. Явний per-launch proof fix 43a56baf queued; той самий HOME/group, live regression green ще не отримано."
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "D09: own etchly preset/exact-files/негативні відбори через довірений канал",
+        "status": "failed",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/HOST.md",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/context.json"
+        ],
+        "reason": "Поточне immutable доручення project=raf. Після сумісного rollout потрібне належне project=etchly доручення цього виконавця на active change add-raf-test-run. Host API/main не замінює власного каналу; grant чи HOME не підмінялися."
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "H6 D08: explicit-ready regression та перше interruption/concurrent/crash/recovery",
+        "status": "succeeded",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation/manifest.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation/d08/results-readiness-regression/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation-result-index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation-cleanup.json",
+          "Межа доказу: main-executed керований API-стенд; не власний trusted unit/D09 caller."
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Build власного prepare: comment-free check до виправлення",
+        "requirement": "Чинний raf build не допускає коментарів у source; критерій не послаблювати.",
+        "fixed": true,
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-red.capture.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-red.stderr",
+          "Межа автоматичного доказу: адресний OS build check, не unit TestRunResult/red і не D08/D09.",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-green.capture.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-green.stdout",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-green.stderr"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "5b21d80e4a0bb9d6f2bb192d7849c766f3cf45bb"
+          }
+        ],
+        "regression": {
+          "kind": "manual",
+          "redEvidence": [
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-red.capture.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-red.stderr",
+            "Межа автоматичного доказу: адресний OS build check, не unit TestRunResult/red і не D08/D09."
+          ],
+          "greenEvidence": [
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-green.capture.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-green.stdout",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/build-green.stderr"
+          ]
+        }
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Host2 smoke/D08: concept corpus prerequisite",
+        "requirement": "D05: локальні передумови snapshot-стенда включають learning/concept-base та готовий build, без install/операційного стану.",
+        "fixed": true,
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host2-result-index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.result.json",
+          "Межа доказу: setup-failure власної host fixture, не цільовий unit-red.",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/manifest.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/smoke/results/preset.result.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/green.result.json",
+          "Host3 дійшов до test-body assertion, host4 D1 green; це підтвердження передумови, а не повний smoke/D09 pass."
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "5e5934435f8fab25e1031ce6205237e12002c9a4"
+          }
+        ],
+        "regression": {
+          "kind": "manual",
+          "redEvidence": [
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host2-result-index.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.result.json",
+            "Межа доказу: setup-failure власної host fixture, не цільовий unit-red."
+          ],
+          "greenEvidence": [
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/manifest.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/smoke/results/preset.result.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/green.result.json",
+            "Host3 дійшов до test-body assertion, host4 D1 green; це підтвердження передумови, а не повний smoke/D09 pass."
+          ]
+        }
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Host3 D08 fixture: Miniflare5 options",
+        "requirement": "D08: реальний workerd/D1 setup; виправлення fixture зберігає SQL assertion і cleanup.",
+        "fixed": true,
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/d08/results/green.result.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/d08/results/green.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/d08/results/green.cli-code.txt",
+          "Межа доказу: main-executed керований API-стенд із реальним assertion-red; це не власний trusted CLI/unit-red.",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/green.result.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/green.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/green.cli-code.txt"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4"
+          }
+        ],
+        "regression": {
+          "kind": "manual",
+          "redEvidence": [
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/d08/results/green.result.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/d08/results/green.stderr",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/d08/results/green.cli-code.txt",
+            "Межа доказу: main-executed керований API-стенд із реальним assertion-red; це не власний trusted CLI/unit-red."
+          ],
+          "greenEvidence": [
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/green.result.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/green.stderr",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/green.cli-code.txt"
+          ]
+        }
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Host4 D08: interruption readiness observer",
+        "requirement": "D08: сигнали лише після доведеного D1 setup, зі збереженням HOME/group і timeout aggregate.",
+        "fixed": true,
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/interrupt.result.json",
+          "Межа доказу: реальний failed observer у main-executed API-стенді; не unit-red.",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation/manifest.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation/d08/results-readiness-regression/summary.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation-result-index.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation-cleanup.json",
+          "Межа доказу: main-executed керований API-стенд; не власний trusted unit/D09 caller."
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "43a56bafd0d87f930c20774e211252d0eb9eba11"
+          }
+        ],
+        "regression": {
+          "kind": "manual",
+          "redEvidence": [
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/summary.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/interrupt.result.json",
+            "Межа доказу: реальний failed observer у main-executed API-стенді; не unit-red."
+          ],
+          "greenEvidence": [
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation/manifest.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation/d08/results-readiness-regression/summary.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation-result-index.json",
+            "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation-cleanup.json",
+            "Межа доказу: main-executed керований API-стенд; не власний trusted unit/D09 caller."
+          ]
+        }
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "scenario": "Host3 smoke preset: рівно три файли",
+        "requirement": "D09: усі три контрактні smoke файли повністю green із cleanup; timeout/setup/частковий результат не pass.",
+        "fixed": false,
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/smoke/results/preset.result.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3/smoke/results/preset.stderr",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host3-result-index.json"
+        ],
+        "reason": "Фактичний assertion-red etchly retry, причина не доведена. Etchly source не входить до поточних write boundaries; потрібне належне project=etchly доручення того самого QA після rollout. Це незавершена робота, не owner-waiver і не передача іншому агенту; foreign bound-generation задачі не закриваю."
+      }
+    ],
+    "followUps": [
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.5",
+        "sourceItem": "6.2.6.3",
+        "scenario": "Сумісна викладка робочої raf та відновлення дозволеного unit-контексту",
+        "purpose": "deployment",
+        "reason": "Main не зняв явний unit-hold; чинний дозволений unit-контекст і rollout integration-каналу потребують підтвердження. Позначка 6.2.6.2.1 вже фіксує перенесення, але сама не доводить готовність цього caller або release hold.",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/README.md",
+          "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/tasks.md:165"
+        ]
+      },
+      {
+        "change": "add-raf-test-run",
+        "item": "6.2.6.3",
+        "sourceItem": "6.2.6.3",
+        "scenario": "Перший власний D09 та невиконані exact-files/негативні передумови, unit і погоджені same-change регресії",
+        "purpose": "first-execution",
+        "reason": "Належне immutable project=etchly доручення active change add-raf-test-run і доступний сумісний trusted канал ще відсутні; unit-hold чинний. Пункт той самий; пройдені QA-сценарії та fixed regressions не повторюються, нових QA-задач немає.",
+        "evidence": [
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/HOST.md",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/coverage.md",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json",
+          "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/unit-qa.result.json"
+        ]
+      }
+    ]
+  },
+  "context": {
+    "unnecessary": [],
+    "missing": [
+      {
+        "description": "Відсутній доступний повний artifact початкового run d4e3c4d7; tool output урізано, raf його не зберіг.",
+        "foundAt": "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/README.md"
+      },
+      {
+        "description": "Повний unit-green після окремого release hold, належне project=etchly immutable assignment і власний trusted D09; smoke retry assertion ще не виправлено.",
+        "foundAt": "/srv/dev/work/orchestrator/raf-develop/evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json"
+      }
+    ]
+  },
+  "ownWorkCommitsBeforeEvidenceCommit": [
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "26dd251d44efc48f41e68cf1ae004b8008d9331b"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "df2ff8047166a45046b50fcc231ac6e9e82ae20c"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "e592f76631da7c16dc2ef500bcc318e4c2bd97fc"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "5b21d80e4a0bb9d6f2bb192d7849c766f3cf45bb"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "5e5934435f8fab25e1031ce6205237e12002c9a4"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "dd69fee002c2c3367e7e2908fe3f83ab564720ab"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "43a56bafd0d87f930c20774e211252d0eb9eba11"
+    }
+  ],
+  "evidenceBoundary": "Final report adds its own evidence commit after commit creation; no circular self-hash."
+}

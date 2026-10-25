@@ -1,0 +1,87 @@
+{
+  "checkedAt": "2026-10-25T23:22:53.184721+00:00",
+  "boundary": "Known own stand artifacts and PID/start identities only; no operational raf state read. Crash reservation included despite absent crash JSON.",
+  "temporaryRoots": [
+    {
+      "path": "/tmp/r-0Jx0J7",
+      "exists": false
+    },
+    {
+      "path": "/tmp/r-4JU3fS",
+      "exists": false
+    },
+    {
+      "path": "/tmp/r-EH2sb4",
+      "exists": false
+    },
+    {
+      "path": "/tmp/r-GDyVuP",
+      "exists": false
+    },
+    {
+      "path": "/tmp/r-HnDUbD",
+      "exists": false
+    }
+  ],
+  "remainingOwnedProcessIdentities": [],
+  "readyProofs": [
+    {
+      "file": "evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation/d08/results-readiness-regression/ready-1f10dd5e-196a-4a69-8492-d743df934cdd.json",
+      "runId": "1f10dd5e-196a-4a69-8492-d743df934cdd",
+      "deadlineMs": 1792970347827,
+      "proof": {
+        "pid": 3805797,
+        "mode": "hang",
+        "proof": 1,
+        "tmp": "/tmp/r-HnDUbD/tmp/etchly-test-scope-u7yzRc"
+      },
+      "reservedRoot": "/tmp/r-HnDUbD"
+    },
+    {
+      "file": "evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation/d08/results-readiness-regression/ready-587a750b-9ad8-4121-9ee7-13ea35337cf9.json",
+      "runId": "587a750b-9ad8-4121-9ee7-13ea35337cf9",
+      "deadlineMs": 1792970408478,
+      "proof": {
+        "pid": 3808173,
+        "mode": "hang",
+        "proof": 1,
+        "tmp": "/tmp/r-0Jx0J7/tmp/etchly-test-scope-8umlTE"
+      },
+      "reservedRoot": "/tmp/r-0Jx0J7"
+    },
+    {
+      "file": "evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation/d08/results-readiness-regression/ready-8a9720d4-d0d8-43e1-8c27-7230dd0b87db.json",
+      "runId": "8a9720d4-d0d8-43e1-8c27-7230dd0b87db",
+      "deadlineMs": 1792970456429,
+      "proof": {
+        "pid": 3810976,
+        "mode": "hang",
+        "proof": 1,
+        "tmp": "/tmp/r-EH2sb4/tmp/etchly-test-scope-ULnBrF"
+      },
+      "reservedRoot": "/tmp/r-EH2sb4"
+    },
+    {
+      "file": "evidence/add-raf-test-run/etchly-integration-qa-b/host4-continuation/d08/results-readiness-regression/ready-ef4ff164-731a-4705-affa-b8044fbff631.json",
+      "runId": "ef4ff164-731a-4705-affa-b8044fbff631",
+      "deadlineMs": 1792970428205,
+      "proof": {
+        "pid": 3809242,
+        "mode": "hang",
+        "proof": 1,
+        "tmp": "/tmp/r-4JU3fS/tmp/etchly-test-scope-ys4uKf"
+      },
+      "reservedRoot": "/tmp/r-4JU3fS"
+    }
+  ],
+  "crashRunId": "8a9720d4-d0d8-43e1-8c27-7230dd0b87db",
+  "recoveryDeliveryRunId": "8a9720d4-d0d8-43e1-8c27-7230dd0b87db",
+  "pendingDeliverySpawnObserved": false,
+  "beforeEmergencyCleanup": [],
+  "afterEmergencyCleanup": [],
+  "restored": {
+    "configuration": true,
+    "flow": true,
+    "etchlyDirty": ""
+  }
+}

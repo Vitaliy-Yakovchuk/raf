@@ -5,7 +5,7 @@
   "sourceTaskText": "- [ ] 6.2.6.3 [qa] Не автор scaffold і не implement: перевірити D01–D09, unit-групу add-raf-test-run/etchly-integration з --phase qa й узгоджені unit-регресії. Після сумісного rollout і готових локальних dependencies/app build одержати належне project=etchly доручення власної active change=add-raf-test-run та самому через довірений канал виконати `raf test run --project etchly --phase integration --group add-raf-test-run/etchly-worker-d1-smoke` (рівно три файли контракту); окремо preset і його exact --files та негативні відбори/передумови. У керованому власному integration-стенді перевірити D08 deadline/interruption/concurrent/crash/recovery з реальними forks/workerd і cleanup, без читання робочого стану raf. Зберегти source item, etchly/raf SHA й dirty context, generation/conf hashes, фактичні bridge/внутрішні executable/argv/cwd, callerPhase/testKind/timeoutPolicy, повні JSON/stderr/CLI code, підтверджений D1 setup і відсутність власних залишених процесів/артефактів. Повний green/cleanup — CLI 0; timeout/setup/skip/частковий результат не закриває integration, unit-моки й прогін main не замінюють живий канал виконавця. Чужі задачі bound-generation-retries-and-spend не закривати, grants не розширювати; недоступні сценарії лишаються відкритими.",
   "taskFileSha256": "b677d57b626f32606cd48784f5544fef41d8210382b0dfc44a4abdcfcd52f02b",
   "auditRequirement": "openspec/specs/projects/orchestrator/autonomous-development/spec.md:153",
-  "result": "Assigned item remains active and consistent. Environment setup failures and own fixture errors do not make it obsolete; no scope expansion, criterion relaxation or owner-waiver.",
+  "result": "Assigned item remains active and consistent. D08 controlled stand completed; unit evidence and own etchly authorization still incomplete. No obsolete-task refusal, waiver, scope expansion or criteria relaxation.",
   "newCircumstances": [
     "Host quota remediation and one authorized separate retry",
     "Missing concept-base snapshot fixed in own prepare",
@@ -13,13 +13,14 @@
     "Etchly retry assertion remains open; no authority to write etchly source",
     "Main schedules proper project=etchly launch of same item only after this report and working raf rollout",
     "Host4 D08 passed green/assertions/setup/skip; own ready observer path fixed with same-HOME/group continuation dd69fee, pending real regression",
-    "Static runtime audit withdrew speculative extra-tmp diagnosis; queued dd69fee cancellation requested before start. Explicit per-launch D1 proof replaces guessed paths; same aggregate preserved."
+    "Static runtime audit withdrew speculative extra-tmp diagnosis; queued dd69fee cancellation requested before start. Explicit per-launch D1 proof replaces guessed paths; same aggregate preserved.",
+    "Main confirms h6 rc0. Eight remaining D08 cases passed with same HOME/group; SQL proofs, crash delivery identity, timeoutCount2→4, complete cleanup and restoration independently inspected."
   ],
   "writeScope": "Own raf scripts and evidence only; tasks.md untouched by explicit main instruction; no bound-generation tasks modified.",
   "remainingPrerequisites": [
-    "Host4 D08 continuation full captures after own observer fix, preserving timeoutCount2",
-    "Working raf switch to release unit hold",
-    "Proper immutable project=etchly assignment with active change add-raf-test-run for own trusted integration channel"
+    "Explicit main release of unit-hold and a working authorized unit context",
+    "Proper immutable project=etchly assignment of same active change/item for own trusted integration channel",
+    "Full green of three-file etchly smoke; retry assertion cause/fix still unproved within current raf-only write scope"
   ],
-  "updatedAt": "2026-10-25T22:51:08.703153+00:00"
+  "updatedAt": "2026-10-25T23:24:34.333441+00:00"
 }

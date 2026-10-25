@@ -1,0 +1,188 @@
+{
+  "root": "/srv/dev/raf-etchly-6263b-host4/d08",
+  "sourceRoot": "/srv/dev/work/orchestrator",
+  "sourceItem": "add-raf-test-run:6.2.6.3",
+  "preparedAt": "2026-10-25T22:40:30.957Z",
+  "boundary": "Clean committed code clones plus a snapshot of preinstalled dependencies and app build. No install, build, operational state or live caller grant is copied.",
+  "repositories": [
+    {
+      "name": "raf-develop",
+      "sha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
+      "branch": "develop",
+      "source": "/srv/dev/work/orchestrator/raf-develop",
+      "sourceHead": "f9090bd653e98a59befdff17fde8dc668755fe21",
+      "sourceDirty": "M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n M evidence/switch-raf-main-by-symlink/qa-7.2-host-channel/handoff.json\n M scripts/qa-main-symlink-live.mjs\n M test/model-routing-integration.test.ts\n M test/production-start-layout.test.ts\n?? evidence/add-raf-test-run/etchly-integration-qa-b/audit.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host3/trt6263h3.log\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host3/trt6263h3.log.exit\n?? evidence/cfc105-model-routing-current/\n?? evidence/cfc24-resumed-20261025/\n?? evidence/switch-raf-main-by-symlink/qa-7.2-fixture-catalog/\n?? evidence/switch-raf-main-by-symlink/qa-7.2-live/\n?? scripts/qa-main-symlink-fixture.ts\n?? test/agent-adapters-integration.test.ts"
+    },
+    {
+      "name": "raf-main",
+      "sha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
+      "branch": "main",
+      "source": "/srv/dev/work/orchestrator/raf-develop",
+      "sourceHead": "f9090bd653e98a59befdff17fde8dc668755fe21",
+      "sourceDirty": "M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n M evidence/switch-raf-main-by-symlink/qa-7.2-host-channel/handoff.json\n M scripts/qa-main-symlink-live.mjs\n M test/model-routing-integration.test.ts\n M test/production-start-layout.test.ts\n?? evidence/add-raf-test-run/etchly-integration-qa-b/audit.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host3/trt6263h3.log\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host3/trt6263h3.log.exit\n?? evidence/cfc105-model-routing-current/\n?? evidence/cfc24-resumed-20261025/\n?? evidence/switch-raf-main-by-symlink/qa-7.2-fixture-catalog/\n?? evidence/switch-raf-main-by-symlink/qa-7.2-live/\n?? scripts/qa-main-symlink-fixture.ts\n?? test/agent-adapters-integration.test.ts"
+    },
+    {
+      "name": "etchly-develop",
+      "sha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+      "branch": "develop",
+      "source": "/srv/dev/work/orchestrator/etchly-develop",
+      "sourceHead": "78025fc8b2802a7303fe9eebd71bd50019c89927",
+      "sourceDirty": ""
+    },
+    {
+      "name": "shared-libs-develop",
+      "sha": "171441decdf6de1e57482e816f7db683765ce7f6",
+      "branch": "develop",
+      "source": "/srv/dev/work/orchestrator/shared-libs-develop",
+      "sourceHead": "171441decdf6de1e57482e816f7db683765ce7f6",
+      "sourceDirty": ""
+    }
+  ],
+  "copied": [
+    {
+      "from": "/srv/dev/work/orchestrator/raf-develop/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/raf-develop/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/raf-main/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/etchly-develop/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/etchly-develop/app/dist/local",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop/app/dist/local"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/learning/concept-base",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/learning/concept-base"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/app-shell/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/app-shell/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/bugs-api/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/bugs-api/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/bugs-ui/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/bugs-ui/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/invite-client/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/invite-client/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/payment-ports/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/payment-ports/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/reader/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/reader/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/resource-protocol/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/access/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/resource-protocol/packages/access/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/address/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/resource-protocol/packages/address/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/prefix-load/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/resource-protocol/packages/prefix-load/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/protocol/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/resource-protocol/packages/protocol/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/store/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/resource-protocol/packages/store/node_modules"
+    },
+    {
+      "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/sync/node_modules",
+      "to": "/srv/dev/raf-etchly-6263b-host4/d08/shared-libs-develop/resource-protocol/packages/sync/node_modules"
+    }
+  ],
+  "configurations": [
+    {
+      "name": "projects.json",
+      "sourceSha256": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+      "standSha256": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+    },
+    {
+      "name": "raf.json",
+      "sourceSha256": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357"
+    },
+    {
+      "name": "raf-constants.json",
+      "sourceSha256": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e"
+    },
+    {
+      "name": "flow.json",
+      "sourceSha256": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+    },
+    {
+      "name": "test-runs.json",
+      "sourceSha256": "d9f421e5a7e412ba7f3c63974d2b63103622cdc302709efe0f89e60c1ab56417"
+    }
+  ],
+  "learning": {
+    "sourceHead": "f17a5a65b29035e53a426eb0f20b1895c5b286e9",
+    "sourceDirty": "",
+    "scope": "Only concept-base including its prepared build; no other learning directories are copied.",
+    "files": 1654,
+    "hashesSha256": "48c3b5c7dfe667e569ff1e5e90bc39a32fc5d3ca3695f1ec8fc8791f755d20f6"
+  },
+  "prerequisites": [
+    {
+      "relative": "etchly-develop/node_modules/vitest/package.json",
+      "sha256": "a28126d97bcaf567da5bed69443b7f3bcd9a7a8c38c8b66e554686b6bb2c10e0"
+    },
+    {
+      "relative": "etchly-develop/node_modules/miniflare/package.json",
+      "sha256": "e2349545887eb236d46dacf2cd65802316cb6bf20b8a78e99753323c0a20fa06"
+    },
+    {
+      "relative": "etchly-develop/node_modules/workerd/bin/workerd",
+      "sha256": "d7ce7f7de38dba233a2924b777b51c65a407e524154d9b66fa8d2bc0a1ff5dcf"
+    },
+    {
+      "relative": "etchly-develop/node_modules/esbuild/bin/esbuild",
+      "sha256": "e1698a3d5c6c0798fee4fd3b5cc816651f460c63d390a7a26ea4beb0b1884100"
+    },
+    {
+      "relative": "etchly-develop/app/dist/local/index.html",
+      "sha256": "ddab268e2ce1e60d9b872c1d860c0e9f3f004089f37d0acb525c559d9acc5274"
+    },
+    {
+      "relative": "learning/concept-base/build/records.jsonl",
+      "sha256": "3c97be7378d494f28c39195607aa3cee11b598b448f204ba5c5f7e17c19bb365"
+    },
+    {
+      "relative": "learning/concept-base/build/chunks.jsonl",
+      "sha256": "ffb0ce1ee064c0d3cc2f444ea544d52ad15c2a13c8fad173cbe0daa9363bd124"
+    },
+    {
+      "relative": "learning/concept-base/build/manifest-summary.json",
+      "sha256": "f9f0620c6fc2476fac912ed05263cc63beccf892dacd09a37e4825f575d93c03"
+    },
+    {
+      "relative": "learning/concept-base/sources/manifest.yaml",
+      "sha256": "a51b63310253ad0c37b7053710ddec50bd78ea55faf9d5ed0d330e71b7eb5720"
+    }
+  ],
+  "status": "prepared"
+}

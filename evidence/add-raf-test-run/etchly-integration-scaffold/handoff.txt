@@ -1,0 +1,83 @@
+6.2.6.1 / add-raf-test-run/etchly-integration
+
+Contract audit: current proposal, tasks, etchly-integration-profile D01-D09,
+integration-profile and delta test-runs agree. Feature remains active/unimplemented.
+The current feature-test-authoring delta allows production/test reads, but this
+assignment explicitly narrows this scaffold: no production or other-author test
+contents were read. Subject config, classifier and permitted test-support were
+read. Example test files were hashed, not read or executed. The static classifier
+walked imports without evaluating modules, Vitest config or D1.
+
+Own surface: src/test-run-etchly-integration.ts. All nine exported functions have
+full signatures and throw Error('NotImplemented'). No implementation or existing
+production changes. Implementer must integrate this contract into the existing
+validator/planner/Vitest runner/caller/runtime/recovery path; a standalone green
+module is insufficient acceptance. Existing production interfaces were not read,
+so compatibility with them is not claimed.
+
+Registration: unit-registration.patch.json and etchly-registration.patch.json are
+RFC 6902 operations against conf/test-runs.json. Main must check current membership
+before appending to unitFiles, preserve existing groups/aggregate and apply only
+missing compatible entries. Unit group uses node profile and the sole new test.
+No conf files were modified by scaffold. Unit profile prerequisites remain local
+Node >= package engine, TypeScript, scripts/test-run-node.ts and reporter,
+verified QA HOME/state origin, active assignment and compatible trusted channel.
+
+Etchly integration patch contains the full 621-file current worker-d1 list and
+four exact groups (three own bound-generation presets and the three-file smoke).
+Static audit independently confirmed all three examples, excluded both plan-D1,
+and found no overlap with registered unitFiles. Spec snapshot had 620 files:
+current classification/hash replaces that stale inventory, not a test claim.
+Hashes and repository SHA/dirty/generation context are in static-audit.json.
+The patch copies resourceEstimate from the current etchly worker profile, without
+new limits. integrationTests.timeoutMs must exist as a positive finite integer;
+no value is invented or changed here.
+
+checks are exact existence prerequisites, not sufficient proof of environment.
+Implementer must additionally verify executable workerd/esbuild/Node, compatible
+trusted bridge/reporter, shared-libs branch and installed resource-protocol,
+preload/alias resolution, current app/dist/local build/environment, private
+writable TMPDIR, local loopback, QA HOME/state-origin and ancestor path/symlink
+safety. The trusted bridge/reporter comes from the selected generation, never
+from the caller workspace; its exact executable/path belongs to runtime evidence.
+All fixture/template/cache/persistence/logs/socket paths are owned by the run.
+No installs, symlinks, branch switches or hidden builds; no inherited external
+D1 template/cache/shared-worker endpoint/token or operational raf state.
+Local app/dist/local/index.html and dependencies existed during static audit;
+existence is not build validity, executable/loopback proof or live D1 acceptance.
+
+Primary command (author executes after main registration):
+node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-test-run/etchly-integration --files test/test-run-etchly-integration.test.ts
+Keep this stable group for implement/qa. Main must inspect actual target
+NotImplemented/test-body failures, not count setup/import failures as red.
+
+D08 live plan for independent QA (not performed by scaffold):
+Use an owned isolated integration stand with real Vitest forks and workerd.
+Record descendant identities and private artifacts before/after each case:
+green, test-body failure, import/global-setup/migrations/hook failure, file-budget
+skip, outer deadline, interruption, crash/recovery and concurrent same-group caller.
+Prove only owned descendants/artifacts are cleaned, one tree exists, an outer
+timeout counts once across recovery, interruption/setup do not count, recovery
+keeps its reserved deadline, and a retry executes the entire original preset.
+Exercise repeats beyond configured unit thresholds: no unit exception/--only/
+remainder and no renewed in-flight timeout. Unknown exit or incomplete cleanup
+must remain incomplete/nonzero. Do not inspect operational raf HOME/SQLite.
+
+D09 live plan for independent QA (not performed by scaffold):
+After compatible code/conf/bridge rollout, grant the QA worker its own active
+project=etchly, change=add-raf-test-run assignment, correct workspace/branch.
+That worker itself runs --project etchly --phase integration --group
+add-raf-test-run/etchly-worker-d1-smoke, then the same exact --files list of the
+three examples; check each result/aggregate without resetting group identity.
+Address negative subset/extra/duplicate/directory/glob/escape/only/profile and
+setup guards in the isolated stand. Verify trusted implement/qa/hotfix own caller,
+refused scaffold/spec and foreign project/change even with unit regression grant.
+Capture source item, raf/etchly SHA/dirty, generation/conf hashes, real bridge and
+inner executable/argv/cwd, root-relative TestIds, actual D1 setup, callerPhase,
+testKind, timeoutPolicy, full TestRunResult/stderr/CLI code and process/artifact
+cleanup. Only full valid protocol, all tests executed, no knownRed/unexecuted/
+unknown and cleanup.complete=true gives complete/CLI 0. Never replace worker
+execution with main's run. Do not close bound-generation tasks or extend grants.
+
+D09 is a future live acceptance gate, not represented as a mocked green test.
+Other tasks remain open. No tasks.md changes, sync, archive or push by scaffold.

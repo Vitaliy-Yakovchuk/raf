@@ -1,0 +1,178 @@
+{
+  "observedAt": "2026-10-25T11:58:03.877Z",
+  "method": "Static testProjectFiles import graph; no Vitest config evaluation, discovery or D1 execution",
+  "counts": {
+    "unit": 594,
+    "integration": 602,
+    "harness": 8,
+    "d1": 623
+  },
+  "workerD1Count": 621,
+  "inventorySha256": "9109eb8656d3e11438ec03abfdfaf75725836d9d7e00126b8d7764f23187f87d",
+  "excludedPlanFiles": [
+    "worker/src/security-agent-tests/generation-plan-d1-2127.test.ts",
+    "worker/src/security-agent-tests/generation-plan-d1-campaign-2127.test.ts"
+  ],
+  "unitOverlap": [],
+  "examples": [
+    {
+      "file": "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+      "project": "worker-d1-integration",
+      "sha256": "9de2e2aae57c8482a59081e6da71ec28c14e5d752ad6c8d96dbd570022fbb728"
+    },
+    {
+      "file": "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+      "project": "worker-d1-integration",
+      "sha256": "445a3b012c01b3fa0d2a4ca5a16cdfd251cf1a1cd7faf594ff4cd6a56883208c"
+    },
+    {
+      "file": "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts",
+      "project": "worker-d1-integration",
+      "sha256": "14eafd1c50785985646e8c17e5e6e8d61475428296788eb166d80012a463dd6c"
+    }
+  ],
+  "sourceHashes": {
+    "conf/projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "conf/test-runs.json": "bde6bb827bc1fe9e05a66f232e7595ff024bdd8b3c818f899e5530042dc419d9",
+    "conf/flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "etchly-develop/worker/vitest.config.ts": "366ff16dedad7fcd23b5d6b8ff45976c093d157fd5c6ebe2239ba5c8b6868518",
+    "etchly-develop/test-support/vitest-project-files.ts": "1fcdd85cbaaff718056142161cb88dd2c7328f4d279e9a30471ee3bfa455c2c9",
+    "etchly-develop/test-support/temp-resources.ts": "d5aabbf45ceb135d06a49b504926db8bc5c349b9c06dcf6fffc460fb05ab8fc4",
+    "etchly-develop/test-support/file-budget-runner.ts": "0bb55bea645c4290ae2a5eff104f40cdc9fa289fbe47e15a0b9d581530f3868d",
+    "etchly-develop/scripts/shared-library-runtime.mjs": "eb907e3bdafe3cc6f5a2c34499e51cb48d7db14f11246dc6c96ee6d9e99f23d1",
+    "etchly-develop/scripts/shared-library-aliases.ts": "372e98aa4471009720c7eeb05a8e264a94bd0303e3a468bfdcc8f03aa23e23cb",
+    "etchly-develop/scripts/shared-libs-path.mjs": "2b67a7482c613ae710f454c5c254c5ee57672ce52872076a9ebcc2fed294ffc3",
+    "etchly-develop/worker/wrangler.jsonc": "1703d0c61e249d217ae1638499b3136d876d368bf4bb95fe2ef3331d2877d0b7",
+    "etchly-develop/worker/scripts/migrate.ts": "793e5cdae9831459aa02fc274b8261bb23d46343f051fe9a0689575be95f365b",
+    "etchly-develop/worker/src/test-support/shared-worker-global-setup.ts": "127af8f9ba67caa3076b559836b3fbc3e098972183fbf47fd44d8b5db1b7aca5",
+    "etchly-develop/worker/src/test-support/d1-template-global-setup.ts": "b68bc8cd342f7554dc24c03c7911aa07c7d35f7b9a956cadf61f6a13acd5e63d",
+    "etchly-develop/worker/src/test-support/d1-template-setup.ts": "5d72ef4db5ee20cd4a07c9cabe77a0fb77bf8d91522d0fdd41c29f6504b76a2b",
+    "etchly-develop/worker/src/test-support/shared-worker-setup.ts": "93cdcac9b979a679a4e793b3c8d7b71e025c5b4bec7484c72d00d4db0aa33a6a",
+    "etchly-develop/worker/src/test-support/shared-worker-runtime.ts": "592660ec1fdad8bee748dabd1d13342e4a7e56a89f1b133a1787685bb76e4ba0",
+    "etchly-develop/worker/src/test-support/live-worker.ts": "1a355c91812dcc76faa75eef211451c0d58e1efba1f6677ec05c41f211fec399",
+    "etchly-develop/worker/src/test-support/miniflare.ts": "774a58b5dd4adc99131b37d5791a38d017e12b1269179e8341848310bc022c88",
+    "etchly-develop/worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts": "9de2e2aae57c8482a59081e6da71ec28c14e5d752ad6c8d96dbd570022fbb728",
+    "etchly-develop/worker/src/accepted-source-1939-agent-tests/continuation.test.ts": "445a3b012c01b3fa0d2a4ca5a16cdfd251cf1a1cd7faf594ff4cd6a56883208c",
+    "etchly-develop/worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts": "14eafd1c50785985646e8c17e5e6e8d61475428296788eb166d80012a463dd6c",
+    "openspec/changes/add-raf-test-run/etchly-integration-profile.md": "7aaee8cb91d884a773cc18d8327fb8ba9751fdb9385b5fee46bf97c3c033993f",
+    "openspec/changes/add-raf-test-run/specs/core/process/feature-test-authoring/spec.md": "abcb34a1a6b98cd571bb2c24b1615065328a52838cd6b082e1bb7dda6f7c85eb"
+  },
+  "repositories": [
+    {
+      "repository": "/srv/dev/work/orchestrator",
+      "sha": "0081197d202fa79d4896637086a84bae9a2c2cfc",
+      "branch": "main",
+      "dirty": "M dash-main\n M etchly-main\n M raf-main\n M shared-libs-main\n?? .raf-hotfix/\n?? .tmp\n?? openspec/changes/add-raf-test-run/clean-c35ea97.log\n?? openspec/changes/bound-generation-retries-and-spend/main-verification-3.5.20/int-4373a15-extract.log\n?? openspec/changes/complete-raf-flow-contracts/resource-wait-13.5.1.2-red-bbef25a.log\n?? openspec/changes/complete-raf-flow-contracts/z352-red-d26424d.log\n?? openspec/changes/complete-raf-flow-contracts/z352-red-db65b53.log\n?? openspec/changes/complete-raf-flow-contracts/z369-brief-red-0600988.log\n?? openspec/changes/complete-raf-flow-contracts/z369-green-6412b3b.log\n?? openspec/changes/complete-raf-flow-contracts/z373-d1-regress-prodlaunch-578a471.log\n?? openspec/changes/complete-raf-flow-contracts/z373-d1-regress-prodlaunch-f25ef02.log\n?? openspec/changes/complete-raf-flow-contracts/z388-run-ffe723ae-cli.json\n?? openspec/changes/complete-raf-flow-contracts/z388-run-ffe723ae.json\n?? openspec/changes/reduce-etchly-codebase/aguest-21569-green-f3bf4f7c7.log\n?? openspec/changes/reduce-etchly-codebase/keyboard-2156-browser-2e01f64fd.log\n?? openspec/changes/reduce-etchly-codebase/keyboard-2156-green-2e01f64fd.log\n?? openspec/changes/reduce-etchly-codebase/poll-2205-green-b85265fe9.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-1549-406274a9c.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-1549-fdf1fef1f.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-base-b85265fe9.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-empty-406274a9c.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-empty-fdf1fef1f.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-omits-false-406274a9c.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-omits-false-fdf1fef1f.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-omits-true-406274a9c.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-omits-true-fdf1fef1f.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-present=false-406274a9c.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-present=false-fdf1fef1f.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-present=true-406274a9c.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-present=true-fdf1fef1f.log\n?? openspec/changes/reduce-etchly-codebase/privacy-21561-red-fdf1fef1f.log\n?? openspec/changes/reduce-etchly-codebase/r10-domain/r10dom-base-app-93061d221.log\n?? openspec/changes/reduce-etchly-codebase/r10-domain/r10dom-base-shared-domain-93061d221.log\n?? openspec/changes/reduce-etchly-codebase/r10-domain/r10dom-base-worker-0-93061d221.log\n?? openspec/changes/reduce-etchly-codebase/r10-domain/r10dom-base-worker-1-93061d221.log\n?? openspec/changes/reduce-etchly-codebase/r10-domain/r10dom-green-app-36cde1565.log\n?? openspec/changes/reduce-etchly-codebase/r10-domain/r10dom-green-shared-domain-36cde1565.log\n?? openspec/changes/reduce-etchly-codebase/r10-domain/r10dom-green-worker-0-36cde1565.log\n?? openspec/changes/reduce-etchly-codebase/r10-domain/r10dom-green-worker-1-36cde1565.log\n?? openspec/changes/reduce-etchly-codebase/r10-domain/r10fwd-base-worker-0-93061d221.log\n?? openspec/changes/reduce-etchly-codebase/r10-domain/r10fwd-green-worker-0-36cde1565.log\n?? openspec/changes/reduce-etchly-codebase/r10dom-worker-typecheck-36cde1565.log\n?? openspec/changes/reduce-etchly-codebase/r10dom-worker-typecheck-93061d221.log\n?? openspec/changes/reduce-etchly-codebase/rec-2.15.6.30/\n?? openspec/changes/reduce-etchly-codebase/recordings-21562-29-file-bf590308b.log\n?? openspec/changes/reduce-etchly-codebase/recordings-21562-29-lang-bf590308b.log\n?? openspec/changes/reduce-etchly-codebase/search-2158-rest-cadda9663.log\n?? openspec/changes/retire-conductor-everywhere/etchly-2.5-worker-3edd62dbe.log\n?? questions/projects/shared-libs/"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/etchly-develop",
+      "sha": "4cb7f232fd25c9520f60d5b0e5664b91feddaf40",
+      "branch": "develop",
+      "dirty": ""
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "e29ee471974c8d0061a7fb81d5dde87b0d47d6b4",
+      "branch": "develop",
+      "dirty": "?? evidence/add-raf-test-run/\n?? src/production-start-layout.ts"
+    }
+  ],
+  "generation": {
+    "entrypoint": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts",
+    "workingMainSha": "6730c74b5ce2fae6b0f7daa05e393c5fa244b423"
+  },
+  "localCheckPaths": [
+    {
+      "path": "scripts/shared-library-runtime.mjs",
+      "exists": true
+    },
+    {
+      "path": "scripts/shared-library-aliases.ts",
+      "exists": true
+    },
+    {
+      "path": "scripts/shared-libs-path.mjs",
+      "exists": true
+    },
+    {
+      "path": "test-support/vitest-project-files.ts",
+      "exists": true
+    },
+    {
+      "path": "test-support/temp-resources.ts",
+      "exists": true
+    },
+    {
+      "path": "test-support/file-budget-runner.ts",
+      "exists": true
+    },
+    {
+      "path": "worker/vitest.config.ts",
+      "exists": true
+    },
+    {
+      "path": "worker/wrangler.jsonc",
+      "exists": true
+    },
+    {
+      "path": "worker/scripts/migrate.ts",
+      "exists": true
+    },
+    {
+      "path": "worker/migrations",
+      "exists": true
+    },
+    {
+      "path": "worker/src/test-support/shared-worker-global-setup.ts",
+      "exists": true
+    },
+    {
+      "path": "worker/src/test-support/d1-template-global-setup.ts",
+      "exists": true
+    },
+    {
+      "path": "worker/src/test-support/d1-template-setup.ts",
+      "exists": true
+    },
+    {
+      "path": "worker/src/test-support/shared-worker-setup.ts",
+      "exists": true
+    },
+    {
+      "path": "worker/src/test-support/shared-worker-runtime.ts",
+      "exists": true
+    },
+    {
+      "path": "worker/src/test-support/live-worker.ts",
+      "exists": true
+    },
+    {
+      "path": "worker/src/test-support/miniflare.ts",
+      "exists": true
+    },
+    {
+      "path": "node_modules/vitest/vitest.mjs",
+      "exists": true
+    },
+    {
+      "path": "node_modules/wrangler/package.json",
+      "exists": true
+    },
+    {
+      "path": "node_modules/miniflare/package.json",
+      "exists": true
+    },
+    {
+      "path": "node_modules/workerd/package.json",
+      "exists": true
+    },
+    {
+      "path": "node_modules/esbuild/package.json",
+      "exists": true
+    },
+    {
+      "path": "app/dist/local/index.html",
+      "exists": true
+    }
+  ]
+}

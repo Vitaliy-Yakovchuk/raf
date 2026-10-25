@@ -1,0 +1,20 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/cfc97-y41EIT/root/shared-libs-main",
+    "worktree",
+    "add",
+    "-b",
+    "develop",
+    "/srv/dev/cfc97-y41EIT/root/shared-libs-develop",
+    "HEAD"
+  ],
+  "cwd": "/srv/dev/cfc97-y41EIT/root/shared-libs-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "HEAD is now at 679ba4e qa: isolated shared-libs repository\n",
+  "stderr": "Preparing worktree (new branch 'develop')\n"
+}

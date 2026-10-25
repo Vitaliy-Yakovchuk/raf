@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/cfc97-y41EIT/root/raf-develop/bin/raf.ts",
+    "agent",
+    "close",
+    "--id",
+    "cfc97-dependent",
+    "--force",
+    "--reason",
+    "Own isolated shared-libs QA cleanup"
+  ],
+  "cwd": "/srv/dev/cfc97-y41EIT/root/raf-develop",
+  "startedAt": "2026-10-25T17:30:49.587Z",
+  "endedAt": "2026-10-25T17:30:51.825Z",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "{\"closed\":true,\"unfinished\":[],\"result\":\"failed\",\"forcedClose\":{\"reason\":\"Own isolated shared-libs QA cleanup\"}}\n",
+  "stderr": ""
+}

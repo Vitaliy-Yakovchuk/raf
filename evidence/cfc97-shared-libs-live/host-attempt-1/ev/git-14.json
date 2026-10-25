@@ -1,0 +1,20 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/cfc97-y41EIT/root/etchly-main",
+    "worktree",
+    "add",
+    "-b",
+    "develop",
+    "/srv/dev/cfc97-y41EIT/root/etchly-develop",
+    "HEAD"
+  ],
+  "cwd": "/srv/dev/cfc97-y41EIT/root/etchly-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "HEAD is now at 366f97d qa: isolated shared-libs repository\n",
+  "stderr": "Preparing worktree (new branch 'develop')\n"
+}

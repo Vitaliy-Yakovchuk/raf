@@ -1,0 +1,27 @@
+{
+  "command": [
+    "tmux",
+    "-u",
+    "-S",
+    "/srv/dev/cfc97-y41EIT/main.sock",
+    "-f",
+    "/dev/null",
+    "new-session",
+    "-d",
+    "-s",
+    "cfc97-main",
+    "-x",
+    "180",
+    "-y",
+    "50",
+    "/opt/dev/node/bin/node",
+    "/srv/dev/cfc97q/raf/scripts/qa-shared-libs-main.mjs",
+    "/srv/dev/cfc97-y41EIT"
+  ],
+  "cwd": "/srv/dev/cfc97-y41EIT/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": ""
+}

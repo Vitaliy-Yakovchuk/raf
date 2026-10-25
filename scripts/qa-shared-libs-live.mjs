@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 import { stopStandServices } from './qa-main-agent-channel-metadata.mjs';
+import { assertSharedLibraryLaunch, assertSharedLibraryAcceptance } from './qa-shared-libs-observation.mjs';
 
 const source = path.resolve(import.meta.dirname, '..');
 const reviewed = process.argv[2];
@@ -132,11 +133,7 @@ try {
     must(launched);
     const actor = await wait('registered ' + mode, () => sessions().find(row => row.addressId === 'cfc97-' + mode && row.state === 'running'));
     actors.push(actor); atomic(path.join(ev, mode + '-session.json'), actor);
-    assert.equal(actor.activity.cwd, product);
-    assert.ok(actor.process?.runnerSessionId && actor.process.pid, 'Real native identity required');
-    const contract = actor.reportedCommits;
-    assert.ok(contract?.repositories); assert.equal(contract.repositories.some(row => row.repositoryRoot === library), dependent);
-    for (const directory of [library, summary.layout.libraryGit, summary.layout.libraryCommon]) assert.equal(contract.writeBoundaries.includes(directory), dependent, directory);
+    assertSharedLibraryLaunch(actor, summary.layout, dependent);
     const probeFile = path.join(own(actor), 'cfc97-probe.json');
     const probe = await wait('sandbox probe ' + mode, () => fs.existsSync(probeFile) && json(probeFile));
     atomic(path.join(ev, mode + '-probe.json'), probe); assert.equal(probe.status, 'passed', probe.error);
@@ -149,14 +146,13 @@ try {
       return false;
     });
     atomic(path.join(ev, mode + '-accepted.json'), accepted);
-    assert.deepEqual(accepted.result.report.commits, [probe.commit]);
-    assert.ok(accepted.result.checkboxCommits?.length, 'Raf checkbox commit required');
+    const checkboxCommits = assertSharedLibraryAcceptance(accepted, probe);
     assert.match(fs.readFileSync(path.join(change, 'tasks.md'), 'utf8'), new RegExp('^- \\[x\\] ' + taskId.replace('.', '\\.') + ' ', 'm'));
     assert.equal(git(probe.commit.repository, 'show', '--format=', '--name-only', probe.commit.sha), 'qa-cfc97-' + mode + '.txt');
     if (!dependent) assert.equal(git(library, 'rev-parse', 'HEAD'), beforeLibrary);
     fs.cpSync(own(actor), path.join(ev, mode + '-run'), { recursive: true, filter: file => { const stat = fs.lstatSync(file); return stat.isDirectory() || stat.isFile(); } });
     summary.checks.push({ id: mode, status: 'passed', runId: actor.runId, process: actor.process,
-      reportedCommit: probe.commit, reportAcceptance: accepted.reportAcceptance, checkboxCommits: accepted.result.checkboxCommits, denials: probe.denials });
+      reportedCommit: probe.commit, reportAcceptance: accepted.reportAcceptance, checkboxCommits, denials: probe.denials });
     atomic(path.join(ev, 'progress.json'), summary);
     must(await request('close-' + mode, ['agent', 'close', '--id', actor.addressId, '--force', '--reason', 'Own isolated shared-libs QA actor completed']));
   }

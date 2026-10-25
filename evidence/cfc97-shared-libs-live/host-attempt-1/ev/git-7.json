@@ -1,0 +1,20 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/cfc97-y41EIT/root/raf-main",
+    "worktree",
+    "add",
+    "-B",
+    "develop",
+    "/srv/dev/cfc97-y41EIT/root/raf-develop",
+    "HEAD"
+  ],
+  "cwd": "/srv/dev/cfc97-y41EIT/root/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "HEAD is now at 254850f qa: prepare native shared-libs sandbox acceptance stand\n",
+  "stderr": "Preparing worktree (new branch 'develop')\nUpdating files:  86% (13926/16085)\rUpdating files:  87% (13994/16085)\rUpdating files:  88% (14155/16085)\rUpdating files:  89% (14316/16085)\rUpdating files:  90% (14477/16085)\rUpdating files:  91% (14638/16085)\rUpdating files:  92% (14799/16085)\rUpdating files:  93% (14960/16085)\rUpdating files:  94% (15120/16085)\rUpdating files:  95% (15281/16085)\rUpdating files:  96% (15442/16085)\rUpdating files:  97% (15603/16085)\rUpdating files:  98% (15764/16085)\rUpdating files:  99% (15925/16085)\rUpdating files: 100% (16085/16085)\rUpdating files: 100% (16085/16085), done.\n"
+}

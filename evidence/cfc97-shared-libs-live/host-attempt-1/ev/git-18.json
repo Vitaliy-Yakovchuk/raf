@@ -1,0 +1,20 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/cfc97-y41EIT/root",
+    "-c",
+    "protocol.file.allow=always",
+    "submodule",
+    "add",
+    "./shared-libs-main",
+    "shared-libs-main"
+  ],
+  "cwd": "/srv/dev/cfc97-y41EIT/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "Adding existing repo at 'shared-libs-main' to the index\n",
+  "stderr": ""
+}

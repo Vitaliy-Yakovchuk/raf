@@ -759,13 +759,20 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         if (!pane || !/^%\d+$/.test(pane)) return { accepted: false, reason: 'Session has no recorded tmux pane' };
         const tmux = paneExecutor(identity.evidence.tmuxSocket, direct);
         const adapter = new TmuxAgentAdapter({ execute: tmux, protocols: {} as Record<AgentRunner, RunnerProtocol> });
+        const settings = await settingsFor(identity.runner === 'main' ? 'claude' : identity.runner);
         const directory = join(context.tmpRoot, 'message-locks');
         await fs.mkdir(directory, { recursive: true, mode: 0o700 });
         const key = createHash('sha256').update(`${identity.evidence.tmuxSocket}\0${pane}`).digest('hex');
-        const lease = await tryWaitLease(join(directory, key), 2000);
-        if (!lease) return { accepted: false, reason: 'Another delivery owns the recipient composer' };
+        const deadline = performance.now() + settings.timeouts.transitionMs;
+        let lease: Awaited<ReturnType<typeof tryWaitLease>> = null;
+        while (!lease) {
+          const remaining = deadline - performance.now();
+          if (remaining <= 0) return { accepted: false, reason: 'Another delivery owns the recipient composer after bounded protocol wait' };
+          lease = await tryWaitLease(join(directory, key), Math.ceil(remaining));
+          if (!lease) await new Promise(resolve => setTimeout(resolve, Math.min(settings.timeouts.pollMs, Math.max(0, deadline - performance.now()))));
+        }
         try {
-          const settings = await settingsFor(identity.runner === 'main' ? 'claude' : identity.runner);
+          if (performance.now() >= deadline) return { accepted: false, reason: 'Recipient composer lease exceeded the protocol wait budget' };
           const result = await deliverCheckedMessage({
             settings,
             verify: async () => {

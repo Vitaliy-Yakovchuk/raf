@@ -1,0 +1,24 @@
+{
+  "sha": "c13173074f1561404b401f568808c98aacdefda4",
+  "workspaceStatusBefore": " M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n?? evidence/add-raf-agent-run-4.1.5/\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2-result-index.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.cli-code.txt\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.result.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.cli-code.txt\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.result.json\n?? test/production-message-serialization.test.ts\n",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/contracts",
+  "fixtureRepair": "c13173074f1561404b401f568808c98aacdefda4",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "runId": "aab578b8-379c-4215-bcbd-3a7f2eb7cc08",
+  "outcome": "passed",
+  "passed": 629,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "timeoutCount": 0,
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "nextAction": "complete",
+  "streamCapture": "Tool merges stdout/stderr; complete launch-queue.waiting JSON extracted without reformatting; original merged bytes retained. Separate OS streams unavailable."
+}

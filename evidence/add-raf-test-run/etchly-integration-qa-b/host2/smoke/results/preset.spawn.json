@@ -1,0 +1,58 @@
+{
+  "boundary": "Actual production runtime spawn; host API stand does not prove broker authorization",
+  "command": {
+    "executable": "node",
+    "argv": [
+      "/srv/dev/raf-etchly-6263b-host2/smoke/raf-develop/scripts/test-run-vitest.ts"
+    ],
+    "cwd": "/srv/dev/raf-etchly-6263b-host2/smoke/etchly-develop/worker",
+    "shell": false,
+    "environment": {
+      "HOME": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home",
+      "statePath": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home/.raf/state.sqlite",
+      "tmpPath": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home/.raf/tmp",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/integrationTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "TMPDIR": "/tmp/r-YjOeXn",
+      "vitestBatches": [
+        {
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../scripts/shared-library-runtime.mjs",
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+            "src/accepted-source-1939-agent-tests/continuation.test.ts",
+            "src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts",
+            "--configLoader",
+            "runner",
+            "--project",
+            "worker-d1-integration",
+            "--testTimeout",
+            "1200000",
+            "--hookTimeout",
+            "1200000",
+            "--reporter",
+            "/srv/dev/raf-etchly-6263b-host2/smoke/raf-develop/src/test-run-vitest-reporter.ts"
+          ],
+          "cwd": "/srv/dev/raf-etchly-6263b-host2/smoke/etchly-develop/worker",
+          "shell": false,
+          "environment": {
+            "HOME": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home",
+            "statePath": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home/.raf/state.sqlite",
+            "tmpPath": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home/.raf/tmp",
+            "timeoutPolicy": {
+              "source": "conf/flow.json#/integrationTests/timeoutMs",
+              "timeoutMs": 1200000
+            },
+            "TMPDIR": "/tmp/r-YjOeXn"
+          }
+        }
+      ]
+    }
+  },
+  "processIdentity": "{\"pid\":3268503,\"start\":\"30911164\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}"
+}

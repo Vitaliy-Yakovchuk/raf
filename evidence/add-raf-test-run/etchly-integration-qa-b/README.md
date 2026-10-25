@@ -33,3 +33,13 @@ Main виявив, що чотири коментарі мого нового `s
 ## Канал координації
 
 Адресу `main` перевірено через `agent ps`. Повідомлення про початок QA прийнято receipt `62ff1e46-5f13-4e46-8aa3-4ba653c1719c`; про урізаний capture — `1c0a0314-d163-493f-86ae-c683045bf6c4`. Після повторного unit setup-failure повідомлення main отримало CLI 1, `STATE_CONTEXT_REFUSED: Unregistered module origin` для переданого покоління `de319c1f-fc5b-432e-884a-a25ac062c5bf`. Receipt доставки немає. Це окрема від початкового обрізання відмова; обхід каналу не застосовувався.
+
+## Результати перших хостових спроб
+
+Main зберіг спробу `df2ff804` у `/srv/dev/trt6263h-initial`: quota exceeded до integration. Незмінені наявні файли та hashes — [host-initial/manifest.json](host-initial/manifest.json). Порожні prepare/suite rc збережені порожніми; зовнішній log.exit повідомляє rc=1. Це не pass і не unit-red.
+
+Повтор на `5b21d80` у `/srv/dev/raf-etchly-6263b-host2` завершився suite CLI 1: обидва prepare CLI 0, обидва driver CLI 1. Повні незмінені stdout/stderr, TestRunResult у captures, spawn, marker і summary — [host2/manifest.json](host2/manifest.json). Smoke preset run `92734f3e-0c10-46b2-8588-8271cf661e5c` та D08 green run `a211c63c-f83c-47fc-9087-a19f67b18164` мають child 1, setup-failed, timeoutCount=0, cleanup.complete=true, remainingPids=[]; nextAction=complete-integration. Драйвери відновили конфігурацію, etchly clean і не виявили живих власних процесів після cleanup. Реального workerd/D1 setup немає; решту сценаріїв не виконано.
+
+Причина — моя prepare fixture не копіювала потрібний etchly corpus `learning/concept-base`. Одразу додано snapshot лише цієї теки з її готовим build, learning SHA та scoped dirty context, hashes усіх файлів/посилань у corpus index. Решта learning не копіюється. Smoke/D08 критерії та etchly runner/setup не змінено. Синтаксис і build після цієї правки успішні: [build-corpus-fix.capture.json](build-corpus-fix.capture.json); це лише автоматична build-перевірка, не green live integration і не початковий unit-red. Жоден unit під час hold не запускався. Потрібне продовження невиконаних живих сценаріїв на виправленій власній fixture, без повторення вже успішних QA-сценаріїв.
+
+Main окремо доручив не редагувати tasks.md; посилання на докази додасть сам зі звіту. Галочки не змінювалися.

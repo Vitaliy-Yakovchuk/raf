@@ -6,17 +6,45 @@
   "followupCommit": "df2ff8047166a45046b50fcc231ac6e9e82ae20c",
   "command": "bash /srv/dev/work/orchestrator/raf-develop/scripts/qa-etchly-integration-suite.sh /srv/dev/work/orchestrator /tmp/raf-etchly-6263b-host df2ff8047166a45046b50fcc231ac6e9e82ae20c b8a769ccca3cd281ab80278cedc173d6df9a3dc9 171441decdf6de1e57482e816f7db683765ce7f6",
   "deliveries": [
-    {"purpose": "Initial script command and full unit result notification", "cliCode": 0, "accepted": true, "receiptId": "0fa245d3-2954-4489-98be-29fc9bcb5813"},
-    {"purpose": "Hold D08 until own-fork stall fixture follow-up", "cliCode": 0, "accepted": true, "receiptId": "e3c36108-b55c-4edf-b709-d8c518af39df"},
-    {"purpose": "Follow-up SHA, unchanged criteria, request host captures and repaired unit context", "cliCode": 0, "accepted": true, "receiptId": "3f1f6bc1-287b-4973-b387-c8a8273ad401"}
+    {
+      "purpose": "Initial script command and full unit result notification",
+      "cliCode": 0,
+      "accepted": true,
+      "receiptId": "0fa245d3-2954-4489-98be-29fc9bcb5813"
+    },
+    {
+      "purpose": "Hold D08 until own-fork stall fixture follow-up",
+      "cliCode": 0,
+      "accepted": true,
+      "receiptId": "e3c36108-b55c-4edf-b709-d8c518af39df"
+    },
+    {
+      "purpose": "Follow-up SHA, unchanged criteria, request host captures and repaired unit context",
+      "cliCode": 0,
+      "accepted": true,
+      "receiptId": "3f1f6bc1-287b-4973-b387-c8a8273ad401"
+    }
   ],
   "syntax": {
-    "commands": ["node --check scripts/qa-etchly-integration-host.mjs", "node --check scripts/qa-etchly-integration-prepare.mjs", "bash -n scripts/qa-etchly-integration-suite.sh", "git diff --check"],
-    "exitCodes": [0, 0, 0, 0],
+    "commands": [
+      "node --check scripts/qa-etchly-integration-host.mjs",
+      "node --check scripts/qa-etchly-integration-prepare.mjs",
+      "bash -n scripts/qa-etchly-integration-suite.sh",
+      "git diff --check"
+    ],
+    "exitCodes": [
+      0,
+      0,
+      0,
+      0
+    ],
     "boundary": "Syntax and whitespace only; no host preparation/test runtime was executed by QA in sandbox."
   },
-  "hostResultsReceived": false,
-  "hostQueue": "Main confirmed suite on df2ff804 is queued behind two runs under host flock; results pending.",
-  "unitHold": "Main: STATE_CONTEXT_REFUSED likely same cause as Z.420 (QA state migration); raf-z420-hotfix is fixing it. Do not run unit until main confirms repair.",
-  "d09OwnTrustedCallerProved": false
+  "hostResultsReceived": true,
+  "hostQueue": "Initial attempt quota-failed (host-initial/). Retry on 5b21d80 completed CLI 1, both prepare 0 and drivers 1. Both first scenarios setup-failed because prepare omitted learning/concept-base; no workerd/D1 readiness. Full unchanged captures copied into host2/. QA fixes its prepare in this same run, focused completion pending host execution.",
+  "unitHold": "Main confirms Z.420 fixed in raf-hotfix but not yet switched into working raf. Do not run unit until separate working-switch confirmation.",
+  "tasksNoteOwner": "Main explicitly instructed agents not to edit add-raf-test-run/tasks.md; main will add the evidence note from this QA report. QA does not change this file or its checkboxes.",
+  "d09OwnTrustedCallerProved": false,
+  "hostInitialEvidence": "host-initial/manifest.json",
+  "hostRetryEvidence": "host2/manifest.json"
 }

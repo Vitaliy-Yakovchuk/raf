@@ -1,0 +1,78 @@
+{
+  "sourceItem": "add-raf-test-run:6.2.6.3",
+  "reportedBy": "main",
+  "reportedCliCode": 1,
+  "outcome": "host-preparation-failed",
+  "cause": "Host /tmp quota exceeded; no integration child result available.",
+  "testRunResult": null,
+  "childExitCode": null,
+  "runId": null,
+  "knownRed": null,
+  "unexecuted": null,
+  "unknown": "Integration was not run; empty preparation rc and suite rc files cannot establish child or cleanup outcomes.",
+  "cleanup": "No integration child was started according to suite preparation failure logs; clone/dependency preparation directories were retained by main as stand/. Process cleanup was not independently observed by QA.",
+  "groupState": "No TestRunResult/group state available; not a pass.",
+  "nextAction": "One host retry authorized by main after quota remediation, in a separate directory on 5b21d80. Unit remains on explicit hold.",
+  "files": [
+    {
+      "source": "/srv/dev/trt6263h-initial/command.txt",
+      "copy": "evidence/add-raf-test-run/etchly-integration-qa-b/host-initial/command.txt",
+      "bytes": 213,
+      "sha256": "b8c5feb88494e4dae583c08e6a3e8b076a724a22ef6137c2f7d3e9f578e012cf"
+    },
+    {
+      "source": "/srv/dev/trt6263h-initial/trt6263h.log",
+      "copy": "evidence/add-raf-test-run/etchly-integration-qa-b/host-initial/trt6263h.log",
+      "bytes": 521,
+      "sha256": "c4fa8d41b7be4d1797b3374f1d77a0094fd683e759ebcba019b9f350875dc85c"
+    },
+    {
+      "source": "/srv/dev/trt6263h-initial/trt6263h.log.exit",
+      "copy": "evidence/add-raf-test-run/etchly-integration-qa-b/host-initial/trt6263h.log.exit",
+      "bytes": 5,
+      "sha256": "91d957f8f2748a950526d4d21e0d5cd3bf5518e6c60b1beb470a13be1f978b1d"
+    },
+    {
+      "source": "/srv/dev/trt6263h-initial/stand/smoke.prepare.stdout",
+      "copy": "evidence/add-raf-test-run/etchly-integration-qa-b/host-initial/stand/smoke.prepare.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/trt6263h-initial/stand/smoke.prepare.stderr",
+      "copy": "evidence/add-raf-test-run/etchly-integration-qa-b/host-initial/stand/smoke.prepare.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/trt6263h-initial/stand/smoke.prepare.rc",
+      "copy": "evidence/add-raf-test-run/etchly-integration-qa-b/host-initial/stand/smoke.prepare.rc",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/trt6263h-initial/stand/d08.prepare.stdout",
+      "copy": "evidence/add-raf-test-run/etchly-integration-qa-b/host-initial/stand/d08.prepare.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/trt6263h-initial/stand/d08.prepare.stderr",
+      "copy": "evidence/add-raf-test-run/etchly-integration-qa-b/host-initial/stand/d08.prepare.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/trt6263h-initial/stand/d08.prepare.rc",
+      "copy": "evidence/add-raf-test-run/etchly-integration-qa-b/host-initial/stand/d08.prepare.rc",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/srv/dev/trt6263h-initial/stand/suite.rc",
+      "copy": "evidence/add-raf-test-run/etchly-integration-qa-b/host-initial/stand/suite.rc",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

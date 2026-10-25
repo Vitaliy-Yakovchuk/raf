@@ -43,6 +43,10 @@ try {
   for (const name of ['raf-develop', 'raf-main']) snapshot('raf-develop', name, 'node_modules');
   snapshot('etchly-develop', 'etchly-develop', 'node_modules');
   snapshot('etchly-develop', 'etchly-develop', 'app/dist/local');
+  snapshot('learning', 'learning', 'concept-base');
+  const learning = path.join(sourceRoot, 'learning');
+  marker.learning = { sourceHead: git(learning, 'rev-parse', 'HEAD'), sourceDirty: git(learning, 'status', '--porcelain=v1', '--', 'concept-base'),
+    scope: 'Only concept-base including its prepared build; no other learning directories are copied.' };
   snapshot('shared-libs-develop', 'shared-libs-develop', 'node_modules', false);
   const shared = path.join(sourceRoot, 'shared-libs-develop');
   function copyNested(directory) {
@@ -70,7 +74,19 @@ try {
       } else if (entry.isDirectory()) links(file);
     }
   }
-  for (const name of ['raf-develop', 'raf-main', 'etchly-develop', 'shared-libs-develop']) links(path.join(root, name));
+  for (const name of ['raf-develop', 'raf-main', 'etchly-develop', 'shared-libs-develop', 'learning']) links(path.join(root, name));
+  const corpusHashes = [];
+  function hashCorpus(directory) {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const file = path.join(directory, entry.name), relative = path.relative(path.join(root, 'learning'), file);
+      if (entry.isDirectory()) hashCorpus(file);
+      else if (entry.isSymbolicLink()) corpusHashes.push([relative, 'symlink', fs.readlinkSync(file)]);
+      else corpusHashes.push([relative, 'file', hash(file)]);
+    }
+  }
+  hashCorpus(path.join(root, 'learning/concept-base'));
+  write(path.join(root, 'learning-corpus-hashes.json'), corpusHashes);
+  Object.assign(marker.learning, { files: corpusHashes.length, hashesSha256: hash(path.join(root, 'learning-corpus-hashes.json')) });
   const sharedLink = path.join(root, 'etchly-develop/shared-libs');
   if (!fs.existsSync(sharedLink)) fs.symlinkSync('../shared-libs-develop', sharedLink);
   assert.equal(fs.readlinkSync(sharedLink), '../shared-libs-develop');
@@ -90,6 +106,8 @@ try {
     'etchly-develop/node_modules/vitest/package.json', 'etchly-develop/node_modules/miniflare/package.json',
     'etchly-develop/node_modules/workerd/bin/workerd', 'etchly-develop/node_modules/esbuild/bin/esbuild',
     'etchly-develop/app/dist/local/index.html',
+    'learning/concept-base/build/records.jsonl', 'learning/concept-base/build/chunks.jsonl',
+    'learning/concept-base/build/manifest-summary.json', 'learning/concept-base/sources/manifest.yaml',
   ].map(relative => ({ relative, sha256: hash(path.join(root, relative)) }));
   for (const name of ['raf-develop', 'raf-main', 'etchly-develop', 'shared-libs-develop']) assert.equal(git(path.join(root, name), 'status', '--porcelain=v1'), '', 'Copied artifacts must be ignored in clean clones: ' + name);
   marker.status = 'prepared';

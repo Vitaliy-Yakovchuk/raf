@@ -1,0 +1,544 @@
+{
+  "label": "preset",
+  "command": {
+    "executable": "/opt/dev/node/bin/node",
+    "argv": [
+      "/srv/dev/raf-etchly-6263b-host2/smoke/raf-develop/scripts/qa-etchly-integration-host.mjs",
+      "--worker",
+      "/srv/dev/raf-etchly-6263b-host2/smoke/results/preset.input.json"
+    ],
+    "cwd": "/srv/dev/raf-etchly-6263b-host2/smoke/etchly-develop"
+  },
+  "cliCode": 1,
+  "signal": null,
+  "result": {
+    "testKind": "integration",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "callerPhase": "qa",
+    "diagnostics": [
+      {
+        "kind": "setup",
+        "test": null,
+        "errorName": "Error",
+        "message": "learning/concept-base not found above the repository; set ETCHLY_LEARNING_ROOT",
+        "location": {
+          "file": "src/test-support/learning-root.ts",
+          "line": 20,
+          "column": 35
+        },
+        "stack": [
+          "    at findLearning (src/test-support/learning-root.ts:20:35)",
+          "    at src/test-support/learning-root.ts:24:23",
+          "    at VitestModuleEvaluator._runInlinedModule (<external>/module-evaluator.js:206:4)",
+          "    at ServerModuleRunner.directRequest (<external>/module-runner.js:1146:59)",
+          "    at ServerModuleRunner.cachedRequest (<external>/module-runner.js:1053:73)",
+          "    at src/test-support/staged-zopa-import-fixture.ts:10:1",
+          "    at VitestModuleEvaluator._runInlinedModule (<external>/module-evaluator.js:206:4)",
+          "    at ServerModuleRunner.directRequest (<external>/module-runner.js:1146:59)",
+          "    at ServerModuleRunner.cachedRequest (<external>/module-runner.js:1053:73)",
+          "    at src/test-support/native-canonical-source.ts:3:1"
+        ],
+        "redacted": true,
+        "truncated": false,
+        "origin": "global-setup"
+      },
+      {
+        "kind": "protocol",
+        "test": null,
+        "errorName": "Error",
+        "message": "Empty Vitest collection or unmatched exact filter",
+        "location": null,
+        "stack": [
+          "    at TestRunDiagnostics.protocolError (<external>/test-run-diagnostics.ts:288:119)",
+          "    at recordEvent (<external>/test-runs.ts:527:60)",
+          "    at onEvent (<external>/test-runs.ts:533:60)",
+          "    at consume (<external>/test-run-runtime.ts:278:11)",
+          "    at Socket.<anonymous> (<external>/test-run-runtime.ts:286:38)",
+          "    at Socket.emit (node:events:514:20)",
+          "    at addChunk (node:internal/streams/readable:605:12)",
+          "    at readableAddChunkPushByteMode (node:internal/streams/readable:556:3)",
+          "    at Readable.push (node:internal/streams/readable:436:5)",
+          "    at Pipe.onStreamRead (node:internal/stream_base_commons:194:23)"
+        ],
+        "redacted": true,
+        "truncated": false,
+        "unavailableReason": "Error origin is unknown"
+      },
+      {
+        "kind": "protocol",
+        "test": null,
+        "errorName": "Error",
+        "message": "Vitest batch missing complete structured protocol",
+        "location": null,
+        "stack": [
+          "    at TestRunDiagnostics.protocolError (<external>/test-run-diagnostics.ts:288:119)",
+          "    at recordEvent (<external>/test-runs.ts:527:60)",
+          "    at onEvent (<external>/test-runs.ts:533:60)",
+          "    at consume (<external>/test-run-runtime.ts:278:11)",
+          "    at Socket.<anonymous> (<external>/test-run-runtime.ts:286:38)",
+          "    at Socket.emit (node:events:514:20)",
+          "    at addChunk (node:internal/streams/readable:605:12)",
+          "    at readableAddChunkPushByteMode (node:internal/streams/readable:556:3)",
+          "    at Readable.push (node:internal/streams/readable:436:5)",
+          "    at Pipe.onStreamRead (node:internal/stream_base_commons:194:23)"
+        ],
+        "redacted": true,
+        "truncated": false,
+        "unavailableReason": "Error origin is unknown"
+      },
+      {
+        "kind": "protocol",
+        "test": null,
+        "errorName": "Error",
+        "message": "Runner exited without valid protocol",
+        "location": null,
+        "stack": [
+          "    at TestRunDiagnostics.childExit (<external>/test-run-diagnostics.ts:302:149)",
+          "    at runTestRun (<external>/test-runs.ts:579:48)",
+          "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+          "    at async runTestRunCli (<external>/test-run-cli.ts:31:20)",
+          "    at async worker (<external>/qa-etchly-integration-host.mjs:57:24)",
+          "    at async <external>/qa-etchly-integration-host.mjs:292:37"
+        ],
+        "redacted": true,
+        "truncated": false,
+        "unavailableReason": "Valid runner protocol unavailable"
+      },
+      {
+        "kind": "runner",
+        "test": null,
+        "errorName": "Error",
+        "message": "node:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nError: learning/concept-base not found above the repository; set ETCHLY_LEARNING_ROOT\n    at findLearning (worker/src/test-support/learning-root.ts:20:35)\n    at worker/src/test-support/learning-root.ts:24:23\n    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)\n    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)\n    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)\n    at worker/src/test-support/staged-zopa-import-fixture.ts:10:1\n    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)\n    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)\n    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)\n    at worker/src/test-support/native-canonical-source.ts:3:1\n\nNode.js v26.12.1\n",
+        "location": {
+          "file": "worker/src/test-support/learning-root.ts",
+          "line": 20,
+          "column": 35
+        },
+        "stack": [
+          "    at findLearning (worker/src/test-support/learning-root.ts:20:35)",
+          "    at worker/src/test-support/learning-root.ts:24:23",
+          "    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)",
+          "    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)",
+          "    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)",
+          "    at worker/src/test-support/staged-zopa-import-fixture.ts:10:1",
+          "    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)",
+          "    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)",
+          "    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)",
+          "    at worker/src/test-support/native-canonical-source.ts:3:1",
+          "    at TestRunDiagnostics.childExit (<external>/test-run-diagnostics.ts:302:356)",
+          "    at runTestRun (<external>/test-runs.ts:579:48)",
+          "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+          "    at async runTestRunCli (<external>/test-run-cli.ts:31:20)",
+          "    at async worker (<external>/qa-etchly-integration-host.mjs:57:24)",
+          "    at async <external>/qa-etchly-integration-host.mjs:292:37"
+        ],
+        "redacted": true,
+        "truncated": false,
+        "unavailableReason": "Error origin is unknown"
+      }
+    ],
+    "diagnosticSummary": {
+      "totalEntries": 5,
+      "retainedEntries": 5,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": true
+    },
+    "environmentSummary": {
+      "executable": "node",
+      "runtimeVersion": "v26.12.1",
+      "adapter": "vitest-events",
+      "isolation": "process",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "1e39dc504f26933acb34f5dc6aceba5d5e024ebde8e8bf9178e175e26f6a44b3",
+        "projects": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+      },
+      "tmpPathBytes": 13,
+      "privateRunTmp": true
+    },
+    "runId": "92734f3e-0c10-46b2-8588-8271cf661e5c",
+    "project": "etchly",
+    "workspace": "/srv/dev/raf-etchly-6263b-host2/smoke/etchly-develop",
+    "phase": "integration",
+    "group": "add-raf-test-run/etchly-worker-d1-smoke",
+    "profileId": "vitest-worker-d1-integration",
+    "selection": {
+      "files": [
+        "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+        "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+        "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host2/smoke/raf-develop/scripts/test-run-vitest.ts"
+      ],
+      "cwd": "/srv/dev/raf-etchly-6263b-host2/smoke/etchly-develop/worker",
+      "shell": false,
+      "environment": {
+        "HOME": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home",
+        "statePath": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home/.raf/state.sqlite",
+        "tmpPath": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home/.raf/tmp",
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/integrationTests/timeoutMs",
+          "timeoutMs": 1200000
+        },
+        "TMPDIR": "/tmp/r-YjOeXn",
+        "vitestBatches": [
+          {
+            "executable": "node",
+            "argv": [
+              "--import",
+              "../scripts/shared-library-runtime.mjs",
+              "../node_modules/vitest/vitest.mjs",
+              "run",
+              "src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+              "src/accepted-source-1939-agent-tests/continuation.test.ts",
+              "src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts",
+              "--configLoader",
+              "runner",
+              "--project",
+              "worker-d1-integration",
+              "--testTimeout",
+              "1200000",
+              "--hookTimeout",
+              "1200000",
+              "--reporter",
+              "/srv/dev/raf-etchly-6263b-host2/smoke/raf-develop/src/test-run-vitest-reporter.ts"
+            ],
+            "cwd": "/srv/dev/raf-etchly-6263b-host2/smoke/etchly-develop/worker",
+            "shell": false,
+            "environment": {
+              "HOME": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home",
+              "statePath": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home/.raf/state.sqlite",
+              "tmpPath": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home/.raf/tmp",
+              "timeoutPolicy": {
+                "source": "conf/flow.json#/integrationTests/timeoutMs",
+                "timeoutMs": 1200000
+              },
+              "TMPDIR": "/tmp/r-YjOeXn"
+            }
+          }
+        ]
+      }
+    },
+    "startedAt": "2026-10-25T22:13:39.748Z",
+    "durationMs": 17111,
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "outcome": "setup-failed",
+    "failureKinds": [
+      "setup"
+    ],
+    "passed": [],
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "stateAccess": null,
+    "groupSnapshot": "loaded",
+    "groupState": "incomplete",
+    "timeoutCount": 0,
+    "nextAction": "complete-integration",
+    "hintIds": [
+      "integration-setup"
+    ],
+    "hints": [
+      "Усуньте помилку середовища, протоколу або cleanup та завершіть повний integration-сценарій."
+    ],
+    "evidence": []
+  },
+  "state": [
+    {
+      "key": {
+        "project": "etchly",
+        "workspace": "/srv/dev/raf-etchly-6263b-host2/smoke/etchly-develop",
+        "group": "add-raf-test-run/etchly-worker-d1-smoke"
+      },
+      "testKind": "integration",
+      "profileId": "vitest-worker-d1-integration",
+      "timeoutCount": 0,
+      "state": "incomplete",
+      "selection": {
+        "files": [
+          "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+          "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+          "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts"
+        ],
+        "testIds": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "inFlight": null,
+      "lastResult": {
+        "testKind": "integration",
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/integrationTests/timeoutMs",
+          "timeoutMs": 1200000
+        },
+        "callerPhase": "qa",
+        "diagnostics": [
+          {
+            "kind": "setup",
+            "test": null,
+            "errorName": "Error",
+            "message": "learning/concept-base not found above the repository; set ETCHLY_LEARNING_ROOT",
+            "location": {
+              "file": "src/test-support/learning-root.ts",
+              "line": 20,
+              "column": 35
+            },
+            "stack": [
+              "    at findLearning (src/test-support/learning-root.ts:20:35)",
+              "    at src/test-support/learning-root.ts:24:23",
+              "    at VitestModuleEvaluator._runInlinedModule (<external>/module-evaluator.js:206:4)",
+              "    at ServerModuleRunner.directRequest (<external>/module-runner.js:1146:59)",
+              "    at ServerModuleRunner.cachedRequest (<external>/module-runner.js:1053:73)",
+              "    at src/test-support/staged-zopa-import-fixture.ts:10:1",
+              "    at VitestModuleEvaluator._runInlinedModule (<external>/module-evaluator.js:206:4)",
+              "    at ServerModuleRunner.directRequest (<external>/module-runner.js:1146:59)",
+              "    at ServerModuleRunner.cachedRequest (<external>/module-runner.js:1053:73)",
+              "    at src/test-support/native-canonical-source.ts:3:1"
+            ],
+            "redacted": true,
+            "truncated": false,
+            "origin": "global-setup"
+          },
+          {
+            "kind": "protocol",
+            "test": null,
+            "errorName": "Error",
+            "message": "Empty Vitest collection or unmatched exact filter",
+            "location": null,
+            "stack": [
+              "    at TestRunDiagnostics.protocolError (<external>/test-run-diagnostics.ts:288:119)",
+              "    at recordEvent (<external>/test-runs.ts:527:60)",
+              "    at onEvent (<external>/test-runs.ts:533:60)",
+              "    at consume (<external>/test-run-runtime.ts:278:11)",
+              "    at Socket.<anonymous> (<external>/test-run-runtime.ts:286:38)",
+              "    at Socket.emit (node:events:514:20)",
+              "    at addChunk (node:internal/streams/readable:605:12)",
+              "    at readableAddChunkPushByteMode (node:internal/streams/readable:556:3)",
+              "    at Readable.push (node:internal/streams/readable:436:5)",
+              "    at Pipe.onStreamRead (node:internal/stream_base_commons:194:23)"
+            ],
+            "redacted": true,
+            "truncated": false,
+            "unavailableReason": "Error origin is unknown"
+          },
+          {
+            "kind": "protocol",
+            "test": null,
+            "errorName": "Error",
+            "message": "Vitest batch missing complete structured protocol",
+            "location": null,
+            "stack": [
+              "    at TestRunDiagnostics.protocolError (<external>/test-run-diagnostics.ts:288:119)",
+              "    at recordEvent (<external>/test-runs.ts:527:60)",
+              "    at onEvent (<external>/test-runs.ts:533:60)",
+              "    at consume (<external>/test-run-runtime.ts:278:11)",
+              "    at Socket.<anonymous> (<external>/test-run-runtime.ts:286:38)",
+              "    at Socket.emit (node:events:514:20)",
+              "    at addChunk (node:internal/streams/readable:605:12)",
+              "    at readableAddChunkPushByteMode (node:internal/streams/readable:556:3)",
+              "    at Readable.push (node:internal/streams/readable:436:5)",
+              "    at Pipe.onStreamRead (node:internal/stream_base_commons:194:23)"
+            ],
+            "redacted": true,
+            "truncated": false,
+            "unavailableReason": "Error origin is unknown"
+          },
+          {
+            "kind": "protocol",
+            "test": null,
+            "errorName": "Error",
+            "message": "Runner exited without valid protocol",
+            "location": null,
+            "stack": [
+              "    at TestRunDiagnostics.childExit (<external>/test-run-diagnostics.ts:302:149)",
+              "    at runTestRun (<external>/test-runs.ts:579:48)",
+              "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+              "    at async runTestRunCli (<external>/test-run-cli.ts:31:20)",
+              "    at async worker (<external>/qa-etchly-integration-host.mjs:57:24)",
+              "    at async <external>/qa-etchly-integration-host.mjs:292:37"
+            ],
+            "redacted": true,
+            "truncated": false,
+            "unavailableReason": "Valid runner protocol unavailable"
+          },
+          {
+            "kind": "runner",
+            "test": null,
+            "errorName": "Error",
+            "message": "node:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nError: learning/concept-base not found above the repository; set ETCHLY_LEARNING_ROOT\n    at findLearning (worker/src/test-support/learning-root.ts:20:35)\n    at worker/src/test-support/learning-root.ts:24:23\n    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)\n    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)\n    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)\n    at worker/src/test-support/staged-zopa-import-fixture.ts:10:1\n    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)\n    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)\n    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)\n    at worker/src/test-support/native-canonical-source.ts:3:1\n\nNode.js v26.12.1\n",
+            "location": {
+              "file": "worker/src/test-support/learning-root.ts",
+              "line": 20,
+              "column": 35
+            },
+            "stack": [
+              "    at findLearning (worker/src/test-support/learning-root.ts:20:35)",
+              "    at worker/src/test-support/learning-root.ts:24:23",
+              "    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)",
+              "    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)",
+              "    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)",
+              "    at worker/src/test-support/staged-zopa-import-fixture.ts:10:1",
+              "    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)",
+              "    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)",
+              "    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)",
+              "    at worker/src/test-support/native-canonical-source.ts:3:1",
+              "    at TestRunDiagnostics.childExit (<external>/test-run-diagnostics.ts:302:356)",
+              "    at runTestRun (<external>/test-runs.ts:579:48)",
+              "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+              "    at async runTestRunCli (<external>/test-run-cli.ts:31:20)",
+              "    at async worker (<external>/qa-etchly-integration-host.mjs:57:24)",
+              "    at async <external>/qa-etchly-integration-host.mjs:292:37"
+            ],
+            "redacted": true,
+            "truncated": false,
+            "unavailableReason": "Error origin is unknown"
+          }
+        ],
+        "diagnosticSummary": {
+          "totalEntries": 5,
+          "retainedEntries": 5,
+          "omittedEntries": 0,
+          "truncated": false,
+          "redacted": true
+        },
+        "environmentSummary": {
+          "executable": "node",
+          "runtimeVersion": "v26.12.1",
+          "adapter": "vitest-events",
+          "isolation": "process",
+          "configurationFingerprints": {
+            "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+            "testRuns": "1e39dc504f26933acb34f5dc6aceba5d5e024ebde8e8bf9178e175e26f6a44b3",
+            "projects": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+          },
+          "tmpPathBytes": 13,
+          "privateRunTmp": true
+        },
+        "runId": "92734f3e-0c10-46b2-8588-8271cf661e5c",
+        "project": "etchly",
+        "workspace": "/srv/dev/raf-etchly-6263b-host2/smoke/etchly-develop",
+        "phase": "integration",
+        "group": "add-raf-test-run/etchly-worker-d1-smoke",
+        "profileId": "vitest-worker-d1-integration",
+        "selection": {
+          "files": [
+            "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+            "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+            "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts"
+          ],
+          "testIds": []
+        },
+        "command": {
+          "executable": "node",
+          "argv": [
+            "/srv/dev/raf-etchly-6263b-host2/smoke/raf-develop/scripts/test-run-vitest.ts"
+          ],
+          "cwd": "/srv/dev/raf-etchly-6263b-host2/smoke/etchly-develop/worker",
+          "shell": false,
+          "environment": {
+            "HOME": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home",
+            "statePath": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home/.raf/state.sqlite",
+            "tmpPath": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home/.raf/tmp",
+            "timeoutPolicy": {
+              "source": "conf/flow.json#/integrationTests/timeoutMs",
+              "timeoutMs": 1200000
+            },
+            "TMPDIR": "/tmp/r-YjOeXn",
+            "vitestBatches": [
+              {
+                "executable": "node",
+                "argv": [
+                  "--import",
+                  "../scripts/shared-library-runtime.mjs",
+                  "../node_modules/vitest/vitest.mjs",
+                  "run",
+                  "src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+                  "src/accepted-source-1939-agent-tests/continuation.test.ts",
+                  "src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts",
+                  "--configLoader",
+                  "runner",
+                  "--project",
+                  "worker-d1-integration",
+                  "--testTimeout",
+                  "1200000",
+                  "--hookTimeout",
+                  "1200000",
+                  "--reporter",
+                  "/srv/dev/raf-etchly-6263b-host2/smoke/raf-develop/src/test-run-vitest-reporter.ts"
+                ],
+                "cwd": "/srv/dev/raf-etchly-6263b-host2/smoke/etchly-develop/worker",
+                "shell": false,
+                "environment": {
+                  "HOME": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home",
+                  "statePath": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home/.raf/state.sqlite",
+                  "tmpPath": "/srv/dev/raf-etchly-6263b-host2/smoke/qa-home/.raf/tmp",
+                  "timeoutPolicy": {
+                    "source": "conf/flow.json#/integrationTests/timeoutMs",
+                    "timeoutMs": 1200000
+                  },
+                  "TMPDIR": "/tmp/r-YjOeXn"
+                }
+              }
+            ]
+          }
+        },
+        "startedAt": "2026-10-25T22:13:39.748Z",
+        "durationMs": 17111,
+        "exitCode": 1,
+        "signal": null,
+        "timedOut": false,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "outcome": "setup-failed",
+        "failureKinds": [
+          "setup"
+        ],
+        "passed": [],
+        "knownRed": [],
+        "unexecuted": [],
+        "unknown": [],
+        "removed": [],
+        "stateAccess": null,
+        "groupSnapshot": "loaded",
+        "groupState": "incomplete",
+        "timeoutCount": 0,
+        "nextAction": "complete-integration",
+        "hintIds": [
+          "integration-setup"
+        ],
+        "hints": [
+          "Усуньте помилку середовища, протоколу або cleanup та завершіть повний integration-сценарій."
+        ],
+        "evidence": []
+      },
+      "unknown": [],
+      "delivery": {
+        "runId": "92734f3e-0c10-46b2-8588-8271cf661e5c",
+        "pending": false,
+        "receiptId": null,
+        "returned": true,
+        "forwardedToMain": false
+      }
+    }
+  ],
+  "stdoutSha256": "cd7d0b52b1af12d417c0fc25741c15ec07bda1f5b5848fb552f1b0135f3a11d5",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

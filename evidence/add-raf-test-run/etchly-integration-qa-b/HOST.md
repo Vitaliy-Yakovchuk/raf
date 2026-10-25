@@ -1,6 +1,6 @@
 # Хостовий стенд 6.2.6.3
 
-Виконання доручив main у повідомленні 2026-10-25. Скрипти готують нові приватні клони; робочі SQLite/HOME/socket raf не читаються. Залежності та готовий local app build копіюються як передумови, без install/build. Код береться лише з переданих committed SHA; джерельний dirty context і hashes конфігурації/пакетів/збірки записуються у marker. Застарілий inventory, залежності чи build дають failure, без fallback.
+Виконання доручив main у повідомленні 2026-10-25. Скрипти готують нові приватні клони; робочі SQLite/HOME/socket raf не читаються. Залежності, готовий local app build та лише corpus `learning/concept-base` із його готовим build копіюються як передумови, без install/build. Код береться лише з переданих committed SHA; джерельний dirty context і hashes конфігурації/пакетів/збірки записуються у marker. Застарілий inventory, залежності чи build дають failure, без fallback.
 
 Перевірено тут лише синтаксис (`node --check` обох mjs; `bash -n` suite). Жоден хостовий сценарій у sandbox цим скриптом не запускався. Успішний синтаксис не доводить працездатність стенда.
 
@@ -9,13 +9,13 @@ Main запускає з host shell; замінює `RAF_SHA` на SHA пере�
 ```bash
 bash /srv/dev/work/orchestrator/raf-develop/scripts/qa-etchly-integration-suite.sh \
   /srv/dev/work/orchestrator \
-  /tmp/raf-etchly-6263b-host \
+  /srv/dev/raf-etchly-6263b-host3 \
   RAF_SHA \
   b8a769ccca3cd281ab80278cedc173d6df9a3dc9 \
   171441decdf6de1e57482e816f7db683765ce7f6
 ```
 
-Каталог `/tmp/raf-etchly-6263b-host` має бути відсутнім. Скрипт не видаляє попередній стенд і не повторює failed/unknown прогін. Для нового узгодженого запуску вкажіть інший явний шлях.
+Каталог `/srv/dev/raf-etchly-6263b-host3` має бути відсутнім. Скрипт не видаляє попередній стенд і не повторює failed/unknown прогін. Для нового узгодженого запуску вкажіть інший явний шлях.
 
 Очікується suite rc=0, prepare rc=0 для обох режимів, driver rc=0 і `summary.status=passed`. У smoke: 11 captures (два повні green рівно трьох файлів; сім негативних відборів із CLI 1 до spawn; дві відсутні передумови із setup-failed до spawn). У D08: 12 captures, включаючи навмисний wrapper SIGKILL без JSON; recovery та delivery зберігають початковий runId, timeoutCount=2 і наступний повний green. Навмисні неуспішні child/CLI результати залишаються незміненими в captures, driver оцінює саме очікувану поведінку.
 
@@ -33,3 +33,5 @@ raf_command test run --project etchly --phase integration --group add-raf-test-r
 ```
 
 Тут `raf_command` — лише префікс нового перевіреного доручення. Це не команда для обходу поточного sandbox чи використання іншого покоління.
+
+Після host2 setup-failure до D1 потрібен виправлений prepare із concept-base. Це продовження початкових невиконаних сценаріїв; host2 результати не перезаписуються. Підготовка додає `learning-corpus-hashes.json` та `marker.learning` (SHA, scoped dirty, число файлів і hash індексу). Повернути також цей індекс; він містить лише імена та hashes, без тексту корпусу. Unit-hold main залишається чинним.

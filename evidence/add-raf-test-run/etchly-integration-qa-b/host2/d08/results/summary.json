@@ -1,0 +1,808 @@
+{
+  "sourceItem": "add-raf-test-run:6.2.6.3",
+  "mode": "d08",
+  "root": "/srv/dev/raf-etchly-6263b-host2/d08",
+  "output": "/srv/dev/raf-etchly-6263b-host2/d08/results",
+  "marker": {
+    "root": "/srv/dev/raf-etchly-6263b-host2/d08",
+    "sourceRoot": "/srv/dev/work/orchestrator",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "preparedAt": "2026-10-25T22:13:57.366Z",
+    "boundary": "Clean committed code clones plus a snapshot of preinstalled dependencies and app build. No install, build, operational state or live caller grant is copied.",
+    "repositories": [
+      {
+        "name": "raf-develop",
+        "sha": "5b21d80e4a0bb9d6f2bb192d7849c766f3cf45bb",
+        "branch": "develop",
+        "source": "/srv/dev/work/orchestrator/raf-develop",
+        "sourceHead": "ac9a49eeabc85a476bc864d9b1ed0bdb1e62f54b",
+        "sourceDirty": "M evidence/add-raf-agent-run-4.1b/multiline-audit.md\n M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n M test/runtime-verification-cost.test.ts\n?? evidence/add-raf-agent-run-4.1b/artifact-verification.json\n?? evidence/add-raf-agent-run-4.1b/build-repaired.cli-exit-code\n?? evidence/add-raf-agent-run-4.1b/build-repaired.metadata.json\n?? evidence/add-raf-agent-run-4.1b/build-repaired.stderr\n?? evidence/add-raf-agent-run-4.1b/build-repaired.stdout\n?? evidence/add-raf-agent-run-4.1b/contracts-coverage.json\n?? evidence/add-raf-agent-run-4.1b/host-27a-review.json\n?? evidence/add-raf-agent-run-4.1b/integration-selection.json\n?? evidence/profile-raf-performance/test-scaffold-5.10.1/"
+      },
+      {
+        "name": "raf-main",
+        "sha": "5b21d80e4a0bb9d6f2bb192d7849c766f3cf45bb",
+        "branch": "main",
+        "source": "/srv/dev/work/orchestrator/raf-develop",
+        "sourceHead": "ac9a49eeabc85a476bc864d9b1ed0bdb1e62f54b",
+        "sourceDirty": "M evidence/add-raf-agent-run-4.1b/multiline-audit.md\n M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n M test/runtime-verification-cost.test.ts\n?? evidence/add-raf-agent-run-4.1b/artifact-verification.json\n?? evidence/add-raf-agent-run-4.1b/build-repaired.cli-exit-code\n?? evidence/add-raf-agent-run-4.1b/build-repaired.metadata.json\n?? evidence/add-raf-agent-run-4.1b/build-repaired.stderr\n?? evidence/add-raf-agent-run-4.1b/build-repaired.stdout\n?? evidence/add-raf-agent-run-4.1b/contracts-coverage.json\n?? evidence/add-raf-agent-run-4.1b/host-27a-review.json\n?? evidence/add-raf-agent-run-4.1b/integration-selection.json\n?? evidence/profile-raf-performance/test-scaffold-5.10.1/"
+      },
+      {
+        "name": "etchly-develop",
+        "sha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+        "branch": "develop",
+        "source": "/srv/dev/work/orchestrator/etchly-develop",
+        "sourceHead": "94d62875f2a7713e0edc6ff940fab5556cb10b7f",
+        "sourceDirty": "M app/admin/sections/person-qa-6-1.test.tsx\n M app/src/exchange/startup-batch.ts"
+      },
+      {
+        "name": "shared-libs-develop",
+        "sha": "171441decdf6de1e57482e816f7db683765ce7f6",
+        "branch": "develop",
+        "source": "/srv/dev/work/orchestrator/shared-libs-develop",
+        "sourceHead": "171441decdf6de1e57482e816f7db683765ce7f6",
+        "sourceDirty": ""
+      }
+    ],
+    "copied": [
+      {
+        "from": "/srv/dev/work/orchestrator/raf-develop/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/raf-develop/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/raf-develop/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/raf-main/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/etchly-develop/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/etchly-develop/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/etchly-develop/app/dist/local",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/etchly-develop/app/dist/local"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/app-shell/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/app-shell/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/bugs-api/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/bugs-api/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/bugs-ui/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/bugs-ui/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/invite-client/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/invite-client/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/payment-ports/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/payment-ports/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/reader/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/reader/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/resource-protocol/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/access/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/resource-protocol/packages/access/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/address/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/resource-protocol/packages/address/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/prefix-load/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/resource-protocol/packages/prefix-load/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/protocol/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/resource-protocol/packages/protocol/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/store/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/resource-protocol/packages/store/node_modules"
+      },
+      {
+        "from": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/packages/sync/node_modules",
+        "to": "/srv/dev/raf-etchly-6263b-host2/d08/shared-libs-develop/resource-protocol/packages/sync/node_modules"
+      }
+    ],
+    "configurations": [
+      {
+        "name": "projects.json",
+        "sourceSha256": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea",
+        "standSha256": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+      },
+      {
+        "name": "raf.json",
+        "sourceSha256": "a17d917f9afaf86a6f52d1105e854c2c9641fb01ecd4d7beea1ce38f1fdbba92"
+      },
+      {
+        "name": "raf-constants.json",
+        "sourceSha256": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e"
+      },
+      {
+        "name": "flow.json",
+        "sourceSha256": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+      },
+      {
+        "name": "test-runs.json",
+        "sourceSha256": "1e39dc504f26933acb34f5dc6aceba5d5e024ebde8e8bf9178e175e26f6a44b3"
+      }
+    ],
+    "prerequisites": [
+      {
+        "relative": "etchly-develop/node_modules/vitest/package.json",
+        "sha256": "a28126d97bcaf567da5bed69443b7f3bcd9a7a8c38c8b66e554686b6bb2c10e0"
+      },
+      {
+        "relative": "etchly-develop/node_modules/miniflare/package.json",
+        "sha256": "e2349545887eb236d46dacf2cd65802316cb6bf20b8a78e99753323c0a20fa06"
+      },
+      {
+        "relative": "etchly-develop/node_modules/workerd/bin/workerd",
+        "sha256": "d7ce7f7de38dba233a2924b777b51c65a407e524154d9b66fa8d2bc0a1ff5dcf"
+      },
+      {
+        "relative": "etchly-develop/node_modules/esbuild/bin/esbuild",
+        "sha256": "e1698a3d5c6c0798fee4fd3b5cc816651f460c63d390a7a26ea4beb0b1884100"
+      },
+      {
+        "relative": "etchly-develop/app/dist/local/index.html",
+        "sha256": "ddab268e2ce1e60d9b872c1d860c0e9f3f004089f37d0acb525c559d9acc5274"
+      }
+    ],
+    "status": "prepared"
+  },
+  "driverSha256": "0c4e7e1fd9a8aefc151717282924a3f36367ed8387dc15cea806a0658d895c47",
+  "evidenceBoundary": "Main-executed controlled host API stand. Real production planner/runtime/reporter/SQLite/forks/workerd. Does not establish a live QA etchly assignment or its trusted broker channel; D09 own-caller gate stays open.",
+  "before": [
+    {
+      "name": "raf-develop",
+      "sha": "5b21d80e4a0bb9d6f2bb192d7849c766f3cf45bb",
+      "dirty": ""
+    },
+    {
+      "name": "etchly-develop",
+      "sha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+      "dirty": ""
+    },
+    {
+      "name": "shared-libs-develop",
+      "sha": "171441decdf6de1e57482e816f7db683765ce7f6",
+      "dirty": ""
+    }
+  ],
+  "configuration": [
+    {
+      "name": "flow.json",
+      "sha256": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+    },
+    {
+      "name": "projects.json",
+      "sha256": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+    },
+    {
+      "name": "test-runs.json",
+      "sha256": "1e39dc504f26933acb34f5dc6aceba5d5e024ebde8e8bf9178e175e26f6a44b3"
+    },
+    {
+      "name": "raf-constants.json",
+      "sha256": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e"
+    }
+  ],
+  "integrationBudgetMs": 60000,
+  "hostWatchdogMs": 900000,
+  "scenarios": [
+    {
+      "label": "green",
+      "command": {
+        "executable": "/opt/dev/node/bin/node",
+        "argv": [
+          "/srv/dev/raf-etchly-6263b-host2/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+          "--worker",
+          "/srv/dev/raf-etchly-6263b-host2/d08/results/green.input.json"
+        ],
+        "cwd": "/srv/dev/raf-etchly-6263b-host2/d08/etchly-develop"
+      },
+      "cliCode": 1,
+      "signal": null,
+      "result": {
+        "testKind": "integration",
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/integrationTests/timeoutMs",
+          "timeoutMs": 60000
+        },
+        "callerPhase": "qa",
+        "diagnostics": [
+          {
+            "kind": "setup",
+            "test": null,
+            "errorName": "Error",
+            "message": "learning/concept-base not found above the repository; set ETCHLY_LEARNING_ROOT",
+            "location": {
+              "file": "src/test-support/learning-root.ts",
+              "line": 20,
+              "column": 35
+            },
+            "stack": [
+              "    at findLearning (src/test-support/learning-root.ts:20:35)",
+              "    at src/test-support/learning-root.ts:24:23",
+              "    at VitestModuleEvaluator._runInlinedModule (<external>/module-evaluator.js:206:4)",
+              "    at ServerModuleRunner.directRequest (<external>/module-runner.js:1146:59)",
+              "    at ServerModuleRunner.cachedRequest (<external>/module-runner.js:1053:73)",
+              "    at src/test-support/staged-zopa-import-fixture.ts:10:1",
+              "    at VitestModuleEvaluator._runInlinedModule (<external>/module-evaluator.js:206:4)",
+              "    at ServerModuleRunner.directRequest (<external>/module-runner.js:1146:59)",
+              "    at ServerModuleRunner.cachedRequest (<external>/module-runner.js:1053:73)",
+              "    at src/test-support/native-canonical-source.ts:3:1"
+            ],
+            "redacted": true,
+            "truncated": false,
+            "origin": "global-setup"
+          },
+          {
+            "kind": "protocol",
+            "test": null,
+            "errorName": "Error",
+            "message": "Empty Vitest collection or unmatched exact filter",
+            "location": null,
+            "stack": [
+              "    at TestRunDiagnostics.protocolError (<external>/test-run-diagnostics.ts:288:119)",
+              "    at recordEvent (<external>/test-runs.ts:527:60)",
+              "    at onEvent (<external>/test-runs.ts:533:60)",
+              "    at consume (<external>/test-run-runtime.ts:278:11)",
+              "    at Socket.<anonymous> (<external>/test-run-runtime.ts:286:38)",
+              "    at Socket.emit (node:events:514:20)",
+              "    at addChunk (node:internal/streams/readable:605:12)",
+              "    at readableAddChunkPushByteMode (node:internal/streams/readable:556:3)",
+              "    at Readable.push (node:internal/streams/readable:436:5)",
+              "    at Pipe.onStreamRead (node:internal/stream_base_commons:194:23)"
+            ],
+            "redacted": true,
+            "truncated": false,
+            "unavailableReason": "Error origin is unknown"
+          },
+          {
+            "kind": "protocol",
+            "test": null,
+            "errorName": "Error",
+            "message": "Vitest batch missing complete structured protocol",
+            "location": null,
+            "stack": [
+              "    at TestRunDiagnostics.protocolError (<external>/test-run-diagnostics.ts:288:119)",
+              "    at recordEvent (<external>/test-runs.ts:527:60)",
+              "    at onEvent (<external>/test-runs.ts:533:60)",
+              "    at consume (<external>/test-run-runtime.ts:278:11)",
+              "    at Socket.<anonymous> (<external>/test-run-runtime.ts:286:38)",
+              "    at Socket.emit (node:events:514:20)",
+              "    at addChunk (node:internal/streams/readable:605:12)",
+              "    at readableAddChunkPushByteMode (node:internal/streams/readable:556:3)",
+              "    at Readable.push (node:internal/streams/readable:436:5)",
+              "    at Pipe.onStreamRead (node:internal/stream_base_commons:194:23)"
+            ],
+            "redacted": true,
+            "truncated": false,
+            "unavailableReason": "Error origin is unknown"
+          },
+          {
+            "kind": "protocol",
+            "test": null,
+            "errorName": "Error",
+            "message": "Runner exited without valid protocol",
+            "location": null,
+            "stack": [
+              "    at TestRunDiagnostics.childExit (<external>/test-run-diagnostics.ts:302:149)",
+              "    at runTestRun (<external>/test-runs.ts:579:48)",
+              "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+              "    at async runTestRunCli (<external>/test-run-cli.ts:31:20)",
+              "    at async worker (<external>/qa-etchly-integration-host.mjs:57:24)",
+              "    at async <external>/qa-etchly-integration-host.mjs:292:37"
+            ],
+            "redacted": true,
+            "truncated": false,
+            "unavailableReason": "Valid runner protocol unavailable"
+          },
+          {
+            "kind": "runner",
+            "test": null,
+            "errorName": "Error",
+            "message": "node:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nError: learning/concept-base not found above the repository; set ETCHLY_LEARNING_ROOT\n    at findLearning (worker/src/test-support/learning-root.ts:20:35)\n    at worker/src/test-support/learning-root.ts:24:23\n    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)\n    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)\n    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)\n    at worker/src/test-support/staged-zopa-import-fixture.ts:10:1\n    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)\n    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)\n    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)\n    at worker/src/test-support/native-canonical-source.ts:3:1\n\nNode.js v26.12.1\n",
+            "location": {
+              "file": "worker/src/test-support/learning-root.ts",
+              "line": 20,
+              "column": 35
+            },
+            "stack": [
+              "    at findLearning (worker/src/test-support/learning-root.ts:20:35)",
+              "    at worker/src/test-support/learning-root.ts:24:23",
+              "    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)",
+              "    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)",
+              "    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)",
+              "    at worker/src/test-support/staged-zopa-import-fixture.ts:10:1",
+              "    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)",
+              "    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)",
+              "    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)",
+              "    at worker/src/test-support/native-canonical-source.ts:3:1",
+              "    at TestRunDiagnostics.childExit (<external>/test-run-diagnostics.ts:302:356)",
+              "    at runTestRun (<external>/test-runs.ts:579:48)",
+              "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+              "    at async runTestRunCli (<external>/test-run-cli.ts:31:20)",
+              "    at async worker (<external>/qa-etchly-integration-host.mjs:57:24)",
+              "    at async <external>/qa-etchly-integration-host.mjs:292:37"
+            ],
+            "redacted": true,
+            "truncated": false,
+            "unavailableReason": "Error origin is unknown"
+          }
+        ],
+        "diagnosticSummary": {
+          "totalEntries": 5,
+          "retainedEntries": 5,
+          "omittedEntries": 0,
+          "truncated": false,
+          "redacted": true
+        },
+        "environmentSummary": {
+          "executable": "node",
+          "runtimeVersion": "v26.12.1",
+          "adapter": "vitest-events",
+          "isolation": "process",
+          "configurationFingerprints": {
+            "flow": "3ad562f8f47dfdbce4a37b4a31fad2ce61874c43f17b1766b2f34dc314101a56",
+            "testRuns": "6735af83292a32f019f48f58bf0de5175aefd88049c59dd301e0abaee20fa69a",
+            "projects": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+          },
+          "tmpPathBytes": 13,
+          "privateRunTmp": true
+        },
+        "runId": "a211c63c-f83c-47fc-9087-a19f67b18164",
+        "project": "etchly",
+        "workspace": "/srv/dev/raf-etchly-6263b-host2/d08/etchly-develop",
+        "phase": "integration",
+        "group": "add-raf-test-run/etchly-worker-d1-lifecycle",
+        "profileId": "vitest-worker-d1-integration",
+        "selection": {
+          "files": [
+            "worker/src/raf-etchly-lifecycle-qa.test.ts"
+          ],
+          "testIds": []
+        },
+        "command": {
+          "executable": "node",
+          "argv": [
+            "/srv/dev/raf-etchly-6263b-host2/d08/raf-develop/scripts/test-run-vitest.ts"
+          ],
+          "cwd": "/srv/dev/raf-etchly-6263b-host2/d08/etchly-develop/worker",
+          "shell": false,
+          "environment": {
+            "HOME": "/srv/dev/raf-etchly-6263b-host2/d08/qa-home",
+            "statePath": "/srv/dev/raf-etchly-6263b-host2/d08/qa-home/.raf/state.sqlite",
+            "tmpPath": "/srv/dev/raf-etchly-6263b-host2/d08/qa-home/.raf/tmp",
+            "timeoutPolicy": {
+              "source": "conf/flow.json#/integrationTests/timeoutMs",
+              "timeoutMs": 60000
+            },
+            "TMPDIR": "/tmp/r-Rahsgo",
+            "vitestBatches": [
+              {
+                "executable": "node",
+                "argv": [
+                  "--import",
+                  "../scripts/shared-library-runtime.mjs",
+                  "../node_modules/vitest/vitest.mjs",
+                  "run",
+                  "src/raf-etchly-lifecycle-qa.test.ts",
+                  "--configLoader",
+                  "runner",
+                  "--project",
+                  "worker-d1-integration",
+                  "--testTimeout",
+                  "60000",
+                  "--hookTimeout",
+                  "60000",
+                  "--reporter",
+                  "/srv/dev/raf-etchly-6263b-host2/d08/raf-develop/src/test-run-vitest-reporter.ts"
+                ],
+                "cwd": "/srv/dev/raf-etchly-6263b-host2/d08/etchly-develop/worker",
+                "shell": false,
+                "environment": {
+                  "HOME": "/srv/dev/raf-etchly-6263b-host2/d08/qa-home",
+                  "statePath": "/srv/dev/raf-etchly-6263b-host2/d08/qa-home/.raf/state.sqlite",
+                  "tmpPath": "/srv/dev/raf-etchly-6263b-host2/d08/qa-home/.raf/tmp",
+                  "timeoutPolicy": {
+                    "source": "conf/flow.json#/integrationTests/timeoutMs",
+                    "timeoutMs": 60000
+                  },
+                  "TMPDIR": "/tmp/r-Rahsgo"
+                }
+              }
+            ]
+          }
+        },
+        "startedAt": "2026-10-25T22:14:13.931Z",
+        "durationMs": 16098,
+        "exitCode": 1,
+        "signal": null,
+        "timedOut": false,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "outcome": "setup-failed",
+        "failureKinds": [
+          "setup"
+        ],
+        "passed": [],
+        "knownRed": [],
+        "unexecuted": [],
+        "unknown": [],
+        "removed": [],
+        "stateAccess": null,
+        "groupSnapshot": "loaded",
+        "groupState": "incomplete",
+        "timeoutCount": 0,
+        "nextAction": "complete-integration",
+        "hintIds": [
+          "integration-setup"
+        ],
+        "hints": [
+          "Усуньте помилку середовища, протоколу або cleanup та завершіть повний integration-сценарій."
+        ],
+        "evidence": []
+      },
+      "state": [
+        {
+          "key": {
+            "project": "etchly",
+            "workspace": "/srv/dev/raf-etchly-6263b-host2/d08/etchly-develop",
+            "group": "add-raf-test-run/etchly-worker-d1-lifecycle"
+          },
+          "testKind": "integration",
+          "profileId": "vitest-worker-d1-integration",
+          "timeoutCount": 0,
+          "state": "incomplete",
+          "selection": {
+            "files": [
+              "worker/src/raf-etchly-lifecycle-qa.test.ts"
+            ],
+            "testIds": []
+          },
+          "knownRed": [],
+          "unexecuted": [],
+          "inFlight": null,
+          "lastResult": {
+            "testKind": "integration",
+            "timeoutPolicy": {
+              "source": "conf/flow.json#/integrationTests/timeoutMs",
+              "timeoutMs": 60000
+            },
+            "callerPhase": "qa",
+            "diagnostics": [
+              {
+                "kind": "setup",
+                "test": null,
+                "errorName": "Error",
+                "message": "learning/concept-base not found above the repository; set ETCHLY_LEARNING_ROOT",
+                "location": {
+                  "file": "src/test-support/learning-root.ts",
+                  "line": 20,
+                  "column": 35
+                },
+                "stack": [
+                  "    at findLearning (src/test-support/learning-root.ts:20:35)",
+                  "    at src/test-support/learning-root.ts:24:23",
+                  "    at VitestModuleEvaluator._runInlinedModule (<external>/module-evaluator.js:206:4)",
+                  "    at ServerModuleRunner.directRequest (<external>/module-runner.js:1146:59)",
+                  "    at ServerModuleRunner.cachedRequest (<external>/module-runner.js:1053:73)",
+                  "    at src/test-support/staged-zopa-import-fixture.ts:10:1",
+                  "    at VitestModuleEvaluator._runInlinedModule (<external>/module-evaluator.js:206:4)",
+                  "    at ServerModuleRunner.directRequest (<external>/module-runner.js:1146:59)",
+                  "    at ServerModuleRunner.cachedRequest (<external>/module-runner.js:1053:73)",
+                  "    at src/test-support/native-canonical-source.ts:3:1"
+                ],
+                "redacted": true,
+                "truncated": false,
+                "origin": "global-setup"
+              },
+              {
+                "kind": "protocol",
+                "test": null,
+                "errorName": "Error",
+                "message": "Empty Vitest collection or unmatched exact filter",
+                "location": null,
+                "stack": [
+                  "    at TestRunDiagnostics.protocolError (<external>/test-run-diagnostics.ts:288:119)",
+                  "    at recordEvent (<external>/test-runs.ts:527:60)",
+                  "    at onEvent (<external>/test-runs.ts:533:60)",
+                  "    at consume (<external>/test-run-runtime.ts:278:11)",
+                  "    at Socket.<anonymous> (<external>/test-run-runtime.ts:286:38)",
+                  "    at Socket.emit (node:events:514:20)",
+                  "    at addChunk (node:internal/streams/readable:605:12)",
+                  "    at readableAddChunkPushByteMode (node:internal/streams/readable:556:3)",
+                  "    at Readable.push (node:internal/streams/readable:436:5)",
+                  "    at Pipe.onStreamRead (node:internal/stream_base_commons:194:23)"
+                ],
+                "redacted": true,
+                "truncated": false,
+                "unavailableReason": "Error origin is unknown"
+              },
+              {
+                "kind": "protocol",
+                "test": null,
+                "errorName": "Error",
+                "message": "Vitest batch missing complete structured protocol",
+                "location": null,
+                "stack": [
+                  "    at TestRunDiagnostics.protocolError (<external>/test-run-diagnostics.ts:288:119)",
+                  "    at recordEvent (<external>/test-runs.ts:527:60)",
+                  "    at onEvent (<external>/test-runs.ts:533:60)",
+                  "    at consume (<external>/test-run-runtime.ts:278:11)",
+                  "    at Socket.<anonymous> (<external>/test-run-runtime.ts:286:38)",
+                  "    at Socket.emit (node:events:514:20)",
+                  "    at addChunk (node:internal/streams/readable:605:12)",
+                  "    at readableAddChunkPushByteMode (node:internal/streams/readable:556:3)",
+                  "    at Readable.push (node:internal/streams/readable:436:5)",
+                  "    at Pipe.onStreamRead (node:internal/stream_base_commons:194:23)"
+                ],
+                "redacted": true,
+                "truncated": false,
+                "unavailableReason": "Error origin is unknown"
+              },
+              {
+                "kind": "protocol",
+                "test": null,
+                "errorName": "Error",
+                "message": "Runner exited without valid protocol",
+                "location": null,
+                "stack": [
+                  "    at TestRunDiagnostics.childExit (<external>/test-run-diagnostics.ts:302:149)",
+                  "    at runTestRun (<external>/test-runs.ts:579:48)",
+                  "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+                  "    at async runTestRunCli (<external>/test-run-cli.ts:31:20)",
+                  "    at async worker (<external>/qa-etchly-integration-host.mjs:57:24)",
+                  "    at async <external>/qa-etchly-integration-host.mjs:292:37"
+                ],
+                "redacted": true,
+                "truncated": false,
+                "unavailableReason": "Valid runner protocol unavailable"
+              },
+              {
+                "kind": "runner",
+                "test": null,
+                "errorName": "Error",
+                "message": "node:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nError: learning/concept-base not found above the repository; set ETCHLY_LEARNING_ROOT\n    at findLearning (worker/src/test-support/learning-root.ts:20:35)\n    at worker/src/test-support/learning-root.ts:24:23\n    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)\n    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)\n    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)\n    at worker/src/test-support/staged-zopa-import-fixture.ts:10:1\n    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)\n    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)\n    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)\n    at worker/src/test-support/native-canonical-source.ts:3:1\n\nNode.js v26.12.1\n",
+                "location": {
+                  "file": "worker/src/test-support/learning-root.ts",
+                  "line": 20,
+                  "column": 35
+                },
+                "stack": [
+                  "    at findLearning (worker/src/test-support/learning-root.ts:20:35)",
+                  "    at worker/src/test-support/learning-root.ts:24:23",
+                  "    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)",
+                  "    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)",
+                  "    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)",
+                  "    at worker/src/test-support/staged-zopa-import-fixture.ts:10:1",
+                  "    at VitestModuleEvaluator._runInlinedModule (node_modules/vitest/dist/module-evaluator.js:206:4)",
+                  "    at ServerModuleRunner.directRequest (node_modules/vite/dist/node/module-runner.js:1146:59)",
+                  "    at ServerModuleRunner.cachedRequest (node_modules/vite/dist/node/module-runner.js:1053:73)",
+                  "    at worker/src/test-support/native-canonical-source.ts:3:1",
+                  "    at TestRunDiagnostics.childExit (<external>/test-run-diagnostics.ts:302:356)",
+                  "    at runTestRun (<external>/test-runs.ts:579:48)",
+                  "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+                  "    at async runTestRunCli (<external>/test-run-cli.ts:31:20)",
+                  "    at async worker (<external>/qa-etchly-integration-host.mjs:57:24)",
+                  "    at async <external>/qa-etchly-integration-host.mjs:292:37"
+                ],
+                "redacted": true,
+                "truncated": false,
+                "unavailableReason": "Error origin is unknown"
+              }
+            ],
+            "diagnosticSummary": {
+              "totalEntries": 5,
+              "retainedEntries": 5,
+              "omittedEntries": 0,
+              "truncated": false,
+              "redacted": true
+            },
+            "environmentSummary": {
+              "executable": "node",
+              "runtimeVersion": "v26.12.1",
+              "adapter": "vitest-events",
+              "isolation": "process",
+              "configurationFingerprints": {
+                "flow": "3ad562f8f47dfdbce4a37b4a31fad2ce61874c43f17b1766b2f34dc314101a56",
+                "testRuns": "6735af83292a32f019f48f58bf0de5175aefd88049c59dd301e0abaee20fa69a",
+                "projects": "3d09716dc7a856af2aa1553cd18062e720113a337fe1d22a5fa2257ebdd67189"
+              },
+              "tmpPathBytes": 13,
+              "privateRunTmp": true
+            },
+            "runId": "a211c63c-f83c-47fc-9087-a19f67b18164",
+            "project": "etchly",
+            "workspace": "/srv/dev/raf-etchly-6263b-host2/d08/etchly-develop",
+            "phase": "integration",
+            "group": "add-raf-test-run/etchly-worker-d1-lifecycle",
+            "profileId": "vitest-worker-d1-integration",
+            "selection": {
+              "files": [
+                "worker/src/raf-etchly-lifecycle-qa.test.ts"
+              ],
+              "testIds": []
+            },
+            "command": {
+              "executable": "node",
+              "argv": [
+                "/srv/dev/raf-etchly-6263b-host2/d08/raf-develop/scripts/test-run-vitest.ts"
+              ],
+              "cwd": "/srv/dev/raf-etchly-6263b-host2/d08/etchly-develop/worker",
+              "shell": false,
+              "environment": {
+                "HOME": "/srv/dev/raf-etchly-6263b-host2/d08/qa-home",
+                "statePath": "/srv/dev/raf-etchly-6263b-host2/d08/qa-home/.raf/state.sqlite",
+                "tmpPath": "/srv/dev/raf-etchly-6263b-host2/d08/qa-home/.raf/tmp",
+                "timeoutPolicy": {
+                  "source": "conf/flow.json#/integrationTests/timeoutMs",
+                  "timeoutMs": 60000
+                },
+                "TMPDIR": "/tmp/r-Rahsgo",
+                "vitestBatches": [
+                  {
+                    "executable": "node",
+                    "argv": [
+                      "--import",
+                      "../scripts/shared-library-runtime.mjs",
+                      "../node_modules/vitest/vitest.mjs",
+                      "run",
+                      "src/raf-etchly-lifecycle-qa.test.ts",
+                      "--configLoader",
+                      "runner",
+                      "--project",
+                      "worker-d1-integration",
+                      "--testTimeout",
+                      "60000",
+                      "--hookTimeout",
+                      "60000",
+                      "--reporter",
+                      "/srv/dev/raf-etchly-6263b-host2/d08/raf-develop/src/test-run-vitest-reporter.ts"
+                    ],
+                    "cwd": "/srv/dev/raf-etchly-6263b-host2/d08/etchly-develop/worker",
+                    "shell": false,
+                    "environment": {
+                      "HOME": "/srv/dev/raf-etchly-6263b-host2/d08/qa-home",
+                      "statePath": "/srv/dev/raf-etchly-6263b-host2/d08/qa-home/.raf/state.sqlite",
+                      "tmpPath": "/srv/dev/raf-etchly-6263b-host2/d08/qa-home/.raf/tmp",
+                      "timeoutPolicy": {
+                        "source": "conf/flow.json#/integrationTests/timeoutMs",
+                        "timeoutMs": 60000
+                      },
+                      "TMPDIR": "/tmp/r-Rahsgo"
+                    }
+                  }
+                ]
+              }
+            },
+            "startedAt": "2026-10-25T22:14:13.931Z",
+            "durationMs": 16098,
+            "exitCode": 1,
+            "signal": null,
+            "timedOut": false,
+            "cleanup": {
+              "complete": true,
+              "remainingPids": []
+            },
+            "outcome": "setup-failed",
+            "failureKinds": [
+              "setup"
+            ],
+            "passed": [],
+            "knownRed": [],
+            "unexecuted": [],
+            "unknown": [],
+            "removed": [],
+            "stateAccess": null,
+            "groupSnapshot": "loaded",
+            "groupState": "incomplete",
+            "timeoutCount": 0,
+            "nextAction": "complete-integration",
+            "hintIds": [
+              "integration-setup"
+            ],
+            "hints": [
+              "Усуньте помилку середовища, протоколу або cleanup та завершіть повний integration-сценарій."
+            ],
+            "evidence": []
+          },
+          "unknown": [],
+          "delivery": {
+            "runId": "a211c63c-f83c-47fc-9087-a19f67b18164",
+            "pending": false,
+            "receiptId": null,
+            "returned": true,
+            "forwardedToMain": false
+          }
+        }
+      ],
+      "stdoutSha256": "7deb9162b401e4d343b33afbe871fa23210a68cbda7e1077b7c00469678b9ad2",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "failures": [
+    {
+      "message": "See green.stdout/.stderr\n+ actual - expected\n\n+ 'setup-failed'\n- 'passed'\n",
+      "stack": "AssertionError [ERR_ASSERTION]: See green.stdout/.stderr\n+ actual - expected\n\n+ 'setup-failed'\n- 'passed'\n\n    at expect (file:///srv/dev/raf-etchly-6263b-host2/d08/raf-develop/scripts/qa-etchly-integration-host.mjs:175:12)\n    at host (file:///srv/dev/raf-etchly-6263b-host2/d08/raf-develop/scripts/qa-etchly-integration-host.mjs:219:47)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///srv/dev/raf-etchly-6263b-host2/d08/raf-develop/scripts/qa-etchly-integration-host.mjs:296:3"
+    }
+  ],
+  "status": "failed",
+  "restored": {
+    "configuration": true,
+    "flow": true,
+    "etchlyDirty": ""
+  },
+  "observedProcesses": [
+    {
+      "pid": 3270095,
+      "ppid": 3269971,
+      "start": "30913502",
+      "argv": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/raf-etchly-6263b-host2/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host2/d08/results/green.input.json"
+      ]
+    },
+    {
+      "pid": 3270604,
+      "ppid": 3270095,
+      "start": "30914516",
+      "argv": []
+    },
+    {
+      "pid": 3270615,
+      "ppid": 3270604,
+      "start": "30914526",
+      "argv": [
+        "node",
+        "--import",
+        "../scripts/shared-library-runtime.mjs",
+        "/srv/dev/raf-etchly-6263b-host2/d08/raf-develop/scripts/test-run-vitest-api.ts",
+        "run",
+        "src/raf-etchly-lifecycle-qa.test.ts",
+        "--configLoader",
+        "runner",
+        "--project",
+        "worker-d1-integration",
+        "--testTimeout",
+        "60000",
+        "--hookTimeout",
+        "60000",
+        "--reporter",
+        "/srv/dev/raf-etchly-6263b-host2/d08/raf-develop/src/test-run-vitest-reporter.ts"
+      ]
+    },
+    {
+      "pid": 3270635,
+      "ppid": 3270615,
+      "start": "30914567",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host2/d08/etchly-develop/node_modules/@esbuild/linux-x64/bin/esbuild",
+        "--service=0.28.2",
+        "--ping"
+      ]
+    }
+  ],
+  "liveOwnedAfterEmergencyCleanup": [],
+  "interrupted": false
+}

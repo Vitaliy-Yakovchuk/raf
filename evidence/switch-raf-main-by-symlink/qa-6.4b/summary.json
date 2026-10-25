@@ -1,0 +1,1306 @@
+{
+  "status": "native-pending",
+  "item": "switch-raf-main-by-symlink:6.4",
+  "implementationCommit": "e7d0d164222940d486cc06536a65bde7fe7726a9",
+  "initialHandedRed": {
+    "runId": "4da8714a-783b-45c2-a482-96b074198062",
+    "source": "../qa-6.4/completion.json",
+    "group": "switch-raf-main-by-symlink/qa64-trust-fixture",
+    "note": "Inherited unchanged aggregate; fixed by this agent, final QA 038f4daf."
+  },
+  "unitRuns": [
+    {
+      "runId": "25e198ab-82da-4d6c-961f-89519a4ad418",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:05:32.059Z",
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "cliExitCode": 0,
+      "headAtStartedAtFromReflog": "eb5353dd2e85925d09f7fef0ced57a20d2fdc175",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 70,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "channel-fixture-qa.TestRunResult.json",
+      "separateStderrAvailable": false
+    },
+    {
+      "runId": "cadbf217-ff6d-49f5-92a2-091b08274e45",
+      "phase": "red",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:04:59.973Z",
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "implement",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "cliExitCode": 1,
+      "headAtStartedAtFromReflog": "eb5353dd2e85925d09f7fef0ced57a20d2fdc175",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 68,
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production scope protects both actual Git directories and main locks while preserving assigned Git writes"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production launcher verifies registered caller and pins published code through exact output and exit"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "channel-fixture-red.TestRunResult.json",
+      "separateStderrAvailable": false
+    },
+    {
+      "runId": "986d00d8-6a5e-44f7-b6b9-01b86e439575",
+      "phase": "red",
+      "group": "switch-raf-main-by-symlink/layout",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T02:39:36.128Z",
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "implement",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/layout --files test/main-layout.test.ts",
+      "cliExitCode": 1,
+      "headAtStartedAtFromReflog": "ec515f673f46d3bb89829e52ca7257ebb793c69a",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 44,
+      "knownRed": [
+        {
+          "file": "test/hotfix-worktree.test.ts",
+          "name": "[hotfix-launch] agent-run/codex preserves the registered route through worker, trust and brief"
+        },
+        {
+          "file": "test/hotfix-worktree.test.ts",
+          "name": "[hotfix-launch] agent-run/claude preserves the registered route through worker, trust and brief"
+        },
+        {
+          "file": "test/hotfix-worktree.test.ts",
+          "name": "[hotfix-launch] direct-main/codex preserves the registered route through worker, trust and brief"
+        },
+        {
+          "file": "test/hotfix-worktree.test.ts",
+          "name": "[hotfix-launch] direct-main/claude preserves the registered route through worker, trust and brief"
+        },
+        {
+          "file": "test/hotfix-worktree.test.ts",
+          "name": "[hotfix-sandbox] real sandbox permits shared hotfix and own tmp while protecting live Git and aliases"
+        },
+        {
+          "file": "test/hotfix-worktree.test.ts",
+          "name": "[hotfix-cleanup] a completed launch releases only its resources while another runner remains alive"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] source after green invalidates activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] artifact after green invalidates activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] configuration after green invalidates activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] commit after green invalidates activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] forged-report after green invalidates activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-atomic] unsupported refuses activation without checkout/reset/copy fallback"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-atomic] EXDEV refuses activation without checkout/reset/copy fallback"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local tracked survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local untracked survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local index survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] cli process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] service process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] worker process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] hook process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] notice process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+        },
+        {
+          "file": "test/main-layout.test.ts",
+          "name": "unit: registered production store preserves the distinct source worktree identity"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "layout-red.TestRunResult.json",
+      "separateStderrAvailable": false
+    },
+    {
+      "runId": "d45a3720-2b49-4f94-ab5c-dd765237ee6f",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:04:10.771Z",
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel",
+      "cliExitCode": 1,
+      "headAtStartedAtFromReflog": "eb5353dd2e85925d09f7fef0ced57a20d2fdc175",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 68,
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production scope protects both actual Git directories and main locks while preserving assigned Git writes"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production launcher verifies registered caller and pins published code through exact output and exit"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "qa-agent-channel.TestRunResult.json",
+      "separateStderrAvailable": false
+    },
+    {
+      "runId": "477f4d0a-fc19-4543-8aa2-8d7bc2223e58",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/handover",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-generation-handover.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:04:10.507Z",
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/handover",
+      "cliExitCode": 0,
+      "headAtStartedAtFromReflog": "eb5353dd2e85925d09f7fef0ced57a20d2fdc175",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 33,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "qa-handover.TestRunResult.json",
+      "separateStderrAvailable": false
+    },
+    {
+      "runId": "7d1a27f6-a772-4c91-abba-9643db328b27",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/layout",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:04:11.530Z",
+      "outcome": "assertions-failed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/layout",
+      "cliExitCode": 1,
+      "headAtStartedAtFromReflog": "eb5353dd2e85925d09f7fef0ced57a20d2fdc175",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 45,
+      "knownRed": [
+        {
+          "file": "test/hotfix-worktree.test.ts",
+          "name": "[hotfix-launch] agent-run/codex preserves the registered route through worker, trust and brief"
+        },
+        {
+          "file": "test/hotfix-worktree.test.ts",
+          "name": "[hotfix-launch] agent-run/claude preserves the registered route through worker, trust and brief"
+        },
+        {
+          "file": "test/hotfix-worktree.test.ts",
+          "name": "[hotfix-launch] direct-main/codex preserves the registered route through worker, trust and brief"
+        },
+        {
+          "file": "test/hotfix-worktree.test.ts",
+          "name": "[hotfix-launch] direct-main/claude preserves the registered route through worker, trust and brief"
+        },
+        {
+          "file": "test/hotfix-worktree.test.ts",
+          "name": "[hotfix-sandbox] real sandbox permits shared hotfix and own tmp while protecting live Git and aliases"
+        },
+        {
+          "file": "test/hotfix-worktree.test.ts",
+          "name": "[hotfix-cleanup] a completed launch releases only its resources while another runner remains alive"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] real build/regression/CLI/runtime/SQLite/tmux smoke binds all evidence to exact commit and inputs"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] failed gate evidence cannot authorize activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] skipped gate evidence cannot authorize activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] timeout gate evidence cannot authorize activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-gates] absent gate evidence cannot authorize activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] source after green invalidates activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] artifact after green invalidates activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] configuration after green invalidates activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] commit after green invalidates activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-snapshot] forged-report after green invalidates activation"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-atomic] unsupported refuses activation without checkout/reset/copy fallback"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-atomic] EXDEV refuses activation without checkout/reset/copy fallback"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local tracked survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local untracked survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] local index survives rejected publication byte for byte"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] cli process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] service process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] worker process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] hook process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-reader] notice process retains one generation across deferred import and switch"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
+        },
+        {
+          "file": "test/hotfix-activation.test.ts",
+          "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "qa-layout.TestRunResult.json",
+      "separateStderrAvailable": false,
+      "interpretation": "Preset test/main-layout.test.ts: child 0, 45 passed. CLI 1 solely because aggregate retains historical reds from test/hotfix-worktree.test.ts and test/hotfix-activation.test.ts (complete-raf-flow-contracts/z392); these are outside layout preset. z392 is not authorized here and was not run. State preserved."
+    },
+    {
+      "runId": "451524c7-7a8e-406f-b34c-5e8febb4879f",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/release",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-symlink-release.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:04:11.120Z",
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/release",
+      "cliExitCode": 0,
+      "headAtStartedAtFromReflog": "eb5353dd2e85925d09f7fef0ced57a20d2fdc175",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 64,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "qa-release.TestRunResult.json",
+      "separateStderrAvailable": false
+    },
+    {
+      "runId": "eed73bf3-41e7-4c90-8467-dd7feea4a142",
+      "phase": "red",
+      "group": "switch-raf-main-by-symlink/qa64-trust-fixture",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-layout.test.ts",
+          "test/workspace-trust.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T02:39:28.235Z",
+      "outcome": "refused",
+      "exitCode": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-setup",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/qa64-trust-fixture --files test/main-layout.test.ts test/workspace-trust.test.ts",
+      "cliExitCode": 1,
+      "headAtStartedAtFromReflog": "ec515f673f46d3bb89829e52ca7257ebb793c69a",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 0,
+      "knownRed": [
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] absent protected Git files never become native mountpoints"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "red-selection-refused.TestRunResult.json",
+      "separateStderrAvailable": false
+    },
+    {
+      "runId": "4516dc33-06b4-4523-a4d0-fb3014149e74",
+      "phase": "qa",
+      "group": "complete-raf-flow-contracts/q414-regress",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/agent-adapters.test.ts",
+          "test/session-state.test.ts",
+          "test/agent-run-queue.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:06:33.065Z",
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/q414-regress",
+      "cliExitCode": 0,
+      "headAtStartedAtFromReflog": "e5c99f84cd7aad013a9883fc676e8c19d332ec5f",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 105,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "regression-q414-regress.TestRunResult.json",
+      "separateStderrAvailable": false,
+      "grantSource": "switch-raf-main-by-symlink:6.4; regressionGroups declaration in trusted launch"
+    },
+    {
+      "runId": "144fe350-cf41-4e48-97f7-187de636e430",
+      "phase": "qa",
+      "group": "complete-raf-flow-contracts/z350",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/sandbox-test-run.test.ts",
+          "test/sandbox-test-caller-z400.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:06:33.578Z",
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z350",
+      "cliExitCode": 0,
+      "headAtStartedAtFromReflog": "e5c99f84cd7aad013a9883fc676e8c19d332ec5f",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 186,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "regression-z350.TestRunResult.json",
+      "separateStderrAvailable": false,
+      "grantSource": "switch-raf-main-by-symlink:6.4; regressionGroups declaration in trusted launch"
+    },
+    {
+      "runId": "2ea9eb2a-c5d1-45e4-b89c-012a1a8fd6fd",
+      "phase": "qa",
+      "group": "complete-raf-flow-contracts/z389-trust-order",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/workspace-trust.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:06:32.768Z",
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z389-trust-order",
+      "cliExitCode": 0,
+      "headAtStartedAtFromReflog": "e5c99f84cd7aad013a9883fc676e8c19d332ec5f",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 53,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "regression-z389-trust-order.TestRunResult.json",
+      "separateStderrAvailable": false,
+      "grantSource": "switch-raf-main-by-symlink:6.4; regressionGroups declaration in trusted launch"
+    },
+    {
+      "runId": "9df0e58f-18a5-4577-b407-522a65833932",
+      "phase": "qa",
+      "group": "complete-raf-flow-contracts/z390",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/codex-sandbox-preflight-path.test.ts",
+          "test/raf-unix-socket-paths.test.ts",
+          "test/codex-bwrap-entry.test.ts",
+          "test/codex-bwrap-evidence.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:06:32.620Z",
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z390",
+      "cliExitCode": 0,
+      "headAtStartedAtFromReflog": "e5c99f84cd7aad013a9883fc676e8c19d332ec5f",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 77,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "regression-z390.TestRunResult.json",
+      "separateStderrAvailable": false,
+      "grantSource": "switch-raf-main-by-symlink:6.4; regressionGroups declaration in trusted launch"
+    },
+    {
+      "runId": "038f4daf-30d6-4a3f-9e5f-c0192ce576bc",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/qa64-trust-fixture",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/workspace-trust.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:00:19.070Z",
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/qa64-trust-fixture --files test/workspace-trust.test.ts",
+      "cliExitCode": 0,
+      "headAtStartedAtFromReflog": "a230935f7f8dc5e783c75246fef55852d3640c66",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 53,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "trust-fixed-qa.TestRunResult.json",
+      "separateStderrAvailable": false
+    },
+    {
+      "runId": "c36812a2-7879-419c-8eb5-0e5d65f61d8b",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/qa64-trust-fixture",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/workspace-trust.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T02:48:04.315Z",
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/qa64-trust-fixture --files test/workspace-trust.test.ts",
+      "cliExitCode": 1,
+      "headAtStartedAtFromReflog": "c59701447f097fe69bf4c0ba0acda1c4b3555940",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 17,
+      "knownRed": [
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: sticky root prompt receives only one navigation answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: root exception rejects unregistered without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: root exception rejects subdirectory without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: root exception rejects outside-symlink without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: changed-branch at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: detached-head at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: verified Orchestrator main root is trusted once without expanding write scope"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: sticky root prompt receives only one navigation answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: root exception rejects unregistered without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: root exception rejects subdirectory without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: root exception rejects outside-symlink without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: changed-branch at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: detached-head at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: verified Orchestrator main root is trusted once without expanding write scope"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: sticky root prompt receives only one navigation answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: root exception rejects unregistered without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: root exception rejects subdirectory without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: root exception rejects outside-symlink without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: changed-branch at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: detached-head at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: registered branch directory — raf confirms the trust prompt with protocol navigation keys and the launch continues"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: trust prompt that stays after the confirmation keys — RUNNER_WORKSPACE_UNTRUSTED without a second answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: unregistered workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: outside-symlink workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: subdirectory workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: registered branch directory — raf confirms the trust prompt with protocol navigation keys and the launch continues"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: trust prompt that stays after the confirmation keys — RUNNER_WORKSPACE_UNTRUSTED without a second answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: unregistered workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: outside-symlink workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: subdirectory workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "trust-full-qa.TestRunResult.json",
+      "separateStderrAvailable": false
+    },
+    {
+      "runId": "8e871de2-ed3e-4674-a328-f2e6bb0807bf",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/qa64-trust-fixture",
+      "profileId": null,
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T02:47:43.381Z",
+      "outcome": "refused",
+      "exitCode": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": null,
+      "groupSnapshot": "unavailable",
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/qa64-trust-fixture --files test/workspace-trust.test.ts --only 'test/workspace-trust.test.ts::[workspace-trust] absent protected Git files never become native mountpoints'",
+      "cliExitCode": 1,
+      "headAtStartedAtFromReflog": "c59701447f097fe69bf4c0ba0acda1c4b3555940",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "trust-selection-refused.TestRunResult.json",
+      "separateStderrAvailable": false
+    },
+    {
+      "runId": "4aa7b0b5-1a16-4f6c-939e-88a7162fed09",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/qa64-trust-fixture",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/workspace-trust.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] absent protected Git files never become native mountpoints"
+          }
+        ]
+      },
+      "startedAt": "2026-10-25T02:47:54.046Z",
+      "outcome": "assertions-failed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/qa64-trust-fixture --only 'test/workspace-trust.test.ts::[workspace-trust] absent protected Git files never become native mountpoints'",
+      "cliExitCode": 1,
+      "headAtStartedAtFromReflog": "c59701447f097fe69bf4c0ba0acda1c4b3555940",
+      "workspaceAtStart": "Shared tree; exact per-run diff was not atomically captured. See implementation.patch, workspace-own-followup.patch and layout-integration.json for contemporaneous changes; no claim of a clean source tree.",
+      "passed": 1,
+      "knownRed": [
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] production QA fixture selects its own worker Orchestrator root"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] production QA fixture provisions the registered main Git root"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] production trust fixture supplies the worker cost policy"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Codex fixture delegates sandbox with global options intact"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Codex fixture delegates app-server hook inspection intact"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] protected slot Git directory needs no descendant lock mounts"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: verified Orchestrator main root is trusted once without expanding write scope"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: sticky root prompt receives only one navigation answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: root exception rejects unregistered without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: root exception rejects subdirectory without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: root exception rejects outside-symlink without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: changed-branch at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: detached-head at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: verified Orchestrator main root is trusted once without expanding write scope"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: sticky root prompt receives only one navigation answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: root exception rejects unregistered without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: root exception rejects subdirectory without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: root exception rejects outside-symlink without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: changed-branch at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: detached-head at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: verified Orchestrator main root is trusted once without expanding write scope"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: sticky root prompt receives only one navigation answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: root exception rejects unregistered without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: root exception rejects subdirectory without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: root exception rejects outside-symlink without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: changed-branch at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: detached-head at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: verified Orchestrator main root is trusted once without expanding write scope"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: sticky root prompt receives only one navigation answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: root exception rejects unregistered without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: root exception rejects subdirectory without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: root exception rejects outside-symlink without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: changed-branch at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: detached-head at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: registered branch directory — raf confirms the trust prompt with protocol navigation keys and the launch continues"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: trust prompt that stays after the confirmation keys — RUNNER_WORKSPACE_UNTRUSTED without a second answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: unregistered workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: outside-symlink workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: subdirectory workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: registered branch directory — raf confirms the trust prompt with protocol navigation keys and the launch continues"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: trust prompt that stays after the confirmation keys — RUNNER_WORKSPACE_UNTRUSTED without a second answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: unregistered workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: outside-symlink workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: subdirectory workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "raw": "trust-target-qa.TestRunResult.json",
+      "separateStderrAvailable": false
+    }
+  ],
+  "incompleteCapture": {
+    "file": "trust-qa-fixture-error.incomplete-stream.txt",
+    "runId": "7b3eb5e5-d07c-4841-bd26-436ddae4b144",
+    "classification": "setup failure, truncated result; never counted as behavioral red or pass"
+  },
+  "verification": {
+    "realGitIntegration": "layout-integration.json: 41 passed, CLI 0",
+    "build": "final-build.json: CLI 0",
+    "comments": "final-comments.json: CLI 0"
+  },
+  "captureLimitations": [
+    "Native exec combined stdout/stderr for unit invocations; full available stream and unchanged JSON result preserved, CLI code stored separately from child exitCode. Separate OS stderr is unavailable and is explicitly null.",
+    "Exact workspace diff was not captured atomically at each unit start in the shared tree."
+  ],
+  "native": {
+    "status": "awaiting-main-host-evidence",
+    "reviewedCommit": "e7d0d164222940d486cc06536a65bde7fe7726a9",
+    "command": "CODEX_HOME=/home/dev/.codex LC_ALL=C node scripts/qa-main-agent-channel.mjs e7d0d164222940d486cc06536a65bde7fe7726a9",
+    "provider": "Owner ordinary Codex; main runs isolated clean clone after resource wait",
+    "acceptance": "No unit or mock result substitutes for native transcript, exact commands/results, protection boundaries, host controls before/after and cleanup.",
+    "hostAttempts": [
+      {
+        "stand": "/srv/dev/s64-IPLiLd",
+        "reportedBy": "main",
+        "outcome": "precondition-failed",
+        "reason": "Clean-clone assertion rejected untracked node_modules symlink. No scenarios executed. Main will exclude this host dependency link via clone-local .git/info/exclude and rerun after resource wait.",
+        "scenariosExecuted": false
+      }
+    ]
+  },
+  "createdAt": "2026-10-25T03:11:47.143644+00:00"
+}

@@ -1,0 +1,65 @@
+diff --git a/test/main-switch-agent-channel.test.ts b/test/main-switch-agent-channel.test.ts
+index 2b8e63b..e9e9d28 100644
+--- a/test/main-switch-agent-channel.test.ts
++++ b/test/main-switch-agent-channel.test.ts
+@@ -455,15 +455,22 @@ async function publishedLauncherFixture() {
+   try {
+     for (const directory of [join(root, "conf"), join(A, "bin"), home, work]) await fs.mkdir(directory, { recursive: true });
+     await fs.writeFile(join(A, "bin/raf.ts"), `import{readdirSync}from'node:fs';process.stdout.write(JSON.stringify({argv:process.argv.slice(2),cwd:process.cwd(),entrypoint:process.argv[1],pinned:readdirSync(process.env.CHANNEL_CONTROL+'/readers').length>0})+'\\n');process.stderr.write('literal $() stderr\\n');process.exitCode=17;`);
+-    git("init", "-b", "main", "--separate-git-dir", join(root, "raf-common"));
++    git("init", "-b", "main");
+     git("add", "bin");
+     git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "-m", "published fixture");
++    execFileSync("git", ["-C", root, "init", "-b", "main"], { env: environment });
++    execFileSync("git", ["-C", root, "-c", "protocol.file.allow=always", "submodule", "add", "./raf-main-a", "raf-main-a"], { env: environment });
++    execFileSync("git", ["-C", root, "submodule", "absorbgitdirs"], { env: environment });
++    git("worktree", "add", "-b", "develop", join(root, "raf-develop"), "HEAD");
+     git("worktree", "add", "--detach", B, "HEAD");
+     await fs.symlink(A, join(root, "raf-main"));
+-    await fs.writeFile(join(root, "conf/projects.json"), JSON.stringify({ version: 1, profiles: { fixture: { production: "main", environments: { runtime: "main" } } }, projects: { raf: { profile: "fixture", path: "raf-main", branchPaths: { main: "raf-main", develop: source }, mainCopies: ["raf-main-a", "raf-main-b"] } } }));
++    await fs.writeFile(join(root, "conf/projects.json"), JSON.stringify({ version: 1, profiles: { fixture: { production: "main", environments: { runtime: "main" } } }, projects: { raf: { profile: "fixture", path: "raf-main", branchPaths: { main: "raf-main", develop: "raf-develop" }, mainCopies: ["raf-main-a", "raf-main-b"] } } }));
+     await fs.writeFile(join(root, "conf/raf.json"), JSON.stringify({ version: 1, state: { fileName: "state.sqlite" }, runnerProtocols: [{ runner: "codex", timeouts: { transitionMs: 10000 } }] }));
+     const common = git("rev-parse", "--path-format=absolute", "--git-common-dir");
+-    return { root, A, B, home, work, source, git, common, environment };
++    for (const name of ["src", "package.json"]) await fs.cp(join(source, name), join(root, "raf-develop", name), { recursive: true });
++    const { ensureProductionMainStore } = await import("../src/main-production-store.ts");
++    await ensureProductionMainStore({ root });
++    return { root, A, B, home, work, source: join(root, "raf-develop"), git, common, environment };
+   } catch (error) { await fs.rm(root, { recursive: true, force: true }); throw error; }
+ }
+ 
+@@ -476,9 +483,15 @@ test("production scope protects both actual Git directories and main locks while
+     assert.ok(paths.includes(join(f.root, "raf-main")));
+     assert.ok(paths.includes(join(f.root, ".gitmodules")));
+     assert.ok(paths.includes(join(f.common, "raf-hotfix")));
+-    for (const name of ["HEAD", "index", "index.lock", "config", "refs/heads/main", "refs/heads/main.lock", "packed-refs"]) assert.ok(paths.includes(join(f.common, name)), name);
++    const control = join(f.common, "raf-hotfix"), production = join(control, "main.git");
++    for (const name of ["HEAD", "index", "index.lock", "HEAD.lock", "config", "refs/heads/main", "refs/heads/main.lock", "packed-refs"]) {
++      assert.equal(paths.includes(join(f.common, name)), false, 'Source metadata must remain writable: ' + name);
++      assert.equal(paths.includes(join(production, name)), false, 'Directory policy must not create child mountpoints: ' + name);
++    }
++    assert.equal(paths.some(path => path.startsWith(control + '/')), false, 'The existing control directory recursively protects every production path');
+     const bGit = execFileSync("git", ["-C", f.B, "rev-parse", "--absolute-git-dir"], { env: f.environment, encoding: "utf8" }).trim();
+-    assert.ok(paths.includes(bGit));
++    assert.ok(bGit.startsWith(production + "/"));
++    assert.equal(paths.includes(bGit), false);
+     assert.equal(paths.includes(f.common), false);
+     assert.equal(paths.includes(join(f.common, "refs/heads/develop")), false);
+     assert.equal(paths.includes(join(f.root, ".git/index")), false);
+@@ -496,11 +509,11 @@ test("production launcher rejects unissued origins and shell expansion before op
+ test("production launcher verifies registered caller and pins published code through exact output and exit", async () => {
+   const f = await publishedLauncherFixture();
+   try {
+-    const launcher = new URL("../src/main-switch-agent-launcher.ts", import.meta.url).href;
+-    const origin = fileURLToPath(new URL("../src/main-switch-agent-launcher.ts", import.meta.url));
+-    const state = new URL("../src/state-store.ts", import.meta.url).href;
+-    const guard = new URL("../src/state-migration-guard.ts", import.meta.url).href;
+-    const runtime = new URL("../src/os-runtime.ts", import.meta.url).href;
++    const launcher = new URL("file://" + join(f.source, "src/main-switch-agent-launcher.ts")).href;
++    const origin = join(f.source, "src/main-switch-agent-launcher.ts");
++    const state = new URL("file://" + join(f.source, "src/state-store.ts")).href;
++    const guard = new URL("file://" + join(f.source, "src/state-migration-guard.ts")).href;
++    const runtime = new URL("file://" + join(f.source, "src/os-runtime.ts")).href;
+     const issued = `node ${join(f.source, "bin/raf.ts")} agent ps`;
+     const input = { orchestratorRoot: f.root, homeDirectory: f.home, cwd: f.work, runId: "fixture-run", agentId: "fixture-agent", issuedCommands: [issued], command: issued };
+     const script = `

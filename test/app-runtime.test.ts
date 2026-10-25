@@ -361,14 +361,14 @@ test('resource wait delegated handler never contributes duration statistics', as
 test('timing write failure preserves structured operation error and redacts secrets', async () => {
   const f = fixture();
   f.store.recordCommandDuration = () => { throw new Error('timing unavailable'); };
-  f.services.control.ps = async () => { throw commandFailure({ code: 'SCAN_UNAVAILABLE', message: 'scan token=private', stage: 'reconcile', source: 'identity', sourceCode: 'EACCES', reason: 'denied', received: null, expected: 'verified process', found: null, completed: ['loaded'], pending: ['scan'], retrySafe: true, remediation: ['fix scanner'], secrets: ['private'] }); };
+  f.services.control.ps = async () => { throw commandFailure({ code: 'PROCESS_SCAN_UNKNOWN', message: 'scan token=private', stage: 'reconcile', source: 'identity', sourceCode: 'EACCES', reason: 'denied', received: null, expected: 'verified process', found: null, completed: ['loaded'], pending: ['scan'], retrySafe: true, remediation: ['fix scanner'], secrets: ['private'] }); };
   const result = await execute(['agent', 'ps'], catalog, f.runtime().handlers);
   assert.notEqual(result.exitCode, 0);
-  for (const value of ['SCAN_UNAVAILABLE', 'reconcile', 'identity', 'EACCES', 'loaded', 'scan']) assert.ok(result.stderr.includes(value));
+  for (const value of ['PROCESS_SCAN_UNKNOWN', 'reconcile', 'identity', 'EACCES', 'loaded', 'scan']) assert.ok(result.stderr.includes(value));
   assert.ok(!result.stderr.includes('private'));
   assert.match(result.stderr, /Command timing storage failed: timing unavailable/);
   const failure = JSON.parse(result.stderr);
-  assert.equal(failure.code, 'SCAN_UNAVAILABLE');
+  assert.equal(failure.code, 'PROCESS_SCAN_UNKNOWN');
   assert.match(failure.message, /^scan token=.*; Command timing storage failed: timing unavailable$/);
   assert.deepEqual(failure.details.completed, ['loaded']);
   assert.deepEqual(failure.details.pending, ['scan']);

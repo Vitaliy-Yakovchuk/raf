@@ -358,7 +358,7 @@ async function runWithAdmission(admission: AdmissionSnapshot | null, resolveTask
   const commandConstants = { ...constants,
     commands: constants.commands.filter((command: { path: string[] }) => command.path.join(' ') === 'agent run') };
   const dependencies: AppRuntimeDependencies = {
-    loadConfiguration: async () => ({ catalog, models, commandTiming: { emaAlpha: 0.5 } }),
+    loadConfiguration: async () => ({ catalog, models, commandTiming: { emaAlpha: 0.5, sqliteOnlyMeanBudgetMs: 100 } }),
     openStore: async () => store, createServices: async () => services,
     nextRunIdentity: () => ({ runId, tmuxSession: 'unit-session' }), now: () => 100,
   };

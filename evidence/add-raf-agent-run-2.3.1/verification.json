@@ -1,0 +1,92 @@
+{
+  "assignment": "add-raf-agent-run:2.3.1",
+  "stage": "test-scaffold",
+  "workspaceHead": "4c1b0b36ee60806daa26f0f25937ee843dc19125",
+  "testedUncommittedPaths": [
+    "test/agent-run-admission-snapshot.test.ts",
+    "test/app-runtime.test.ts",
+    "test/task-context.test.ts",
+    "test/z12-fixture.ts"
+  ],
+  "profileHandoff": {
+    "project": "raf",
+    "group": "add-raf-agent-run/contracts",
+    "profileId": "node",
+    "unitFilesAdditions": [],
+    "groupsAdditions": [],
+    "prerequisites": {
+      "cwd": ".",
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts"
+      ],
+      "checks": [
+        "node_modules/typescript/package.json",
+        "src/test-run-reporter.ts",
+        "scripts/test-run-node.ts"
+      ],
+      "environment": {
+        "isolatedHome": true,
+        "stateOrigin": true
+      },
+      "exactIds": "node-test-name",
+      "resultAdapter": "node-test-events",
+      "runtimeVersion": "v26.12.1",
+      "timeoutSource": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    }
+  },
+  "runs": [
+    {
+      "runId": "ac9b8063-ccfd-4fd2-ba27-a0fb8e2cd2f0",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-agent-run/contracts",
+      "outcome": "assertions-failed",
+      "childExitCode": 1,
+      "cliExitCode": null,
+      "fullResultAvailable": false,
+      "reason": "Інструмент обрізав результат; помилка збереження metadata у functions.store не дозволила зберегти CLI code. Не є повним доказом. Шість task-context failures привели до діагностичного прогону."
+    },
+    {
+      "runId": "4702aba4-7540-422b-9e64-6b35e6d83523",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-agent-run/contracts --files test/task-context.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "result": "diagnostic-result.json",
+      "outcome": "assertions-failed",
+      "temporaryDiagnostic": "Додано лише пояснення assertion з очищеним failureText для першого тесту; після встановлення помилки Git mock видалено."
+    },
+    {
+      "runId": "d3eee944-085c-4ca7-b424-34d79569e679",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-agent-run/contracts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "result": "contracts-result.json",
+      "outcome": "passed",
+      "passed": 608,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "durationMs": 18431
+    }
+  ],
+  "capture": {
+    "method": "Повний output exec_command збережено програмно до будь-якого друку; JSON розібрано без відновлення або переформатування. Прямі виклики raf лишалися простими командами згідно з sandbox-каналом.",
+    "stderr": "Окремий stderr stream exec_command не надає; у завершеному output сторонній текст відсутній. Окремі сирі stderr bytes не заявляються."
+  },
+  "audit": {
+    "sources": [
+      "openspec/changes/add-raf-agent-run/proposal.md",
+      "openspec/changes/add-raf-agent-run/tasks.md#2.3.1",
+      "openspec/changes/add-raf-test-run/specs/core/process/feature-test-authoring/spec.md"
+    ],
+    "conclusion": "Доручення актуальне: застарілі фікстури; assertions збережено. Нової публічної поверхні або реалізації фічі немає.",
+    "archive": "Не застосовується: інші пункти add-raf-agent-run відкриті; tasks.md не змінено."
+  }
+}

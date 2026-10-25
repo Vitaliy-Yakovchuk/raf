@@ -55,6 +55,7 @@ export async function z12Fixture(t: TestContext) {
       fixture: { development: 'integration', integration: 'main', production: 'main' },
     },
     projects: {
+      ...json('projects.json').projects,
       orchestrator: { path: '.', profile: 'orchestrator' },
       app: { path: 'app-main', profile: 'fixture', branchPaths: { main: 'app-main', develop: 'app-develop', integration: 'app-integration' }, usesSharedLibs: true },
       raf: { path: 'raf-main', profile: 'raf', branchPaths: { main: 'raf-main', develop: 'raf-develop' }, usesSharedLibs: false },

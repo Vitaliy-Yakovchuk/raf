@@ -186,12 +186,12 @@ async function harness(t: TestContext, w: Workspace, override: (services: Runtim
   const execute: AdapterCommandExecutor = async command => {
     calls.push(structuredClone(command));
     if (command.executable === 'openspec') return fakeOpenSpec(command.args);
-    if (command.executable === 'git') return { exitCode: 0, stdout: `${(command.cwd ?? '').endsWith('-main') ? 'main' : (command.cwd ?? '').endsWith('-hotfix') ? 'hotfix' : 'develop'}\n`, stderr: '' };
+    if (command.executable === 'git') return { exitCode: 0, stdout: `${fixtureGit(command.cwd ?? w.root, [...command.args])}\n`, stderr: '' };
     throw new Error(`Forbidden executable in unit fixture: ${command.executable}`);
   };
   let store: StateStore | undefined;
   const context: RuntimeContext = { orchestratorRoot: w.root, confRoot: w.confRoot, artifactPath: join(w.root, 'catalog.json'), statePath: w.statePath, tmpRoot: w.tmpRoot, mode: 'test', commandStartedAtMs: 0, resolveCaller: async () => undefined };
-  const configuration: RuntimeConfiguration = { catalog, models, commandTiming: { emaAlpha: 0.1 } };
+  const configuration: RuntimeConfiguration = { catalog, models, commandTiming: { emaAlpha: 0.1, sqliteOnlyMeanBudgetMs: 100 } };
   const runtime = createAppRuntime(context, {
     loadConfiguration: async () => configuration,
     openStore: async path => (store = openStateStore(path)),
@@ -451,7 +451,7 @@ test('[task-context] 6. sources: файли зміни, шлях із пункт
 test('[task-context] 7. reportSchema будується з reportStatuses conf без зміни коду', async t => {
   const w = await workspace(t);
   const derive = (configuration: TaskContextConfiguration) => deriveTaskContext({ root: w.root, parameters: baseParams, assignment: snapshotFor(w.root, baseParams.tasks), configuration });
-  const fromConf = await loadTaskContextConfiguration(w.confRoot);
+  const fromConf = await loadTaskContextConfiguration(w.confRoot, catalog);
   const schema = (await derive(fromConf)).reportSchema;
   const ids = constants.reportStatuses.map((status: { id: string }) => status.id);
   assert.deepEqual(schema.properties.status.enum, ids);
@@ -467,7 +467,9 @@ test('[task-context] 7. reportSchema будується з reportStatuses conf �
   assert.deepEqual(item.properties.status.enum, ids);
   assert.equal(schema.additionalProperties, true);
   await writeFile(join(w.confRoot, 'raf-constants.json'), JSON.stringify({ ...constants, reportStatuses: [...constants.reportStatuses, { id: 'fixture-status', description: 'Фікстура', event: 'agent.failed' }] }));
-  const changed = (await derive(await loadTaskContextConfiguration(w.confRoot))).reportSchema;
+  const changedConstants = JSON.parse(await readFile(join(w.confRoot, 'raf-constants.json'), 'utf8'));
+  const changedCatalog = compileCatalog(changedConstants, models, catalog.commands.map(command => command.handlerName), realProjects);
+  const changed = (await derive(await loadTaskContextConfiguration(w.confRoot, changedCatalog))).reportSchema;
   assert.deepEqual(changed.properties.status.enum, [...ids, 'fixture-status']);
   assert.deepEqual(changed.properties.changes.items.properties.items.items.properties.status.enum, [...ids, 'fixture-status']);
 });

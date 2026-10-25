@@ -137,9 +137,34 @@ test('Z416 oversized individual line retains the exact protocol error and alread
   assert.equal(result.outcome, 'setup-failed'); assert.deepEqual(result.passed, ids);
 });
 
-test('Z416 Vitest batch wrapper accepts a bounded large inventory and requires complete protocol', async t => {
+for (const corruption of ['missing-final', 'missing-expected', 'duplicate-expected', 'wrong-count'] as const) {
+  test(`Z416 incomplete inventory ${corruption} cannot pass despite successful test results`, async t => {
+    const lines = await reporterLines(t, 'node', 'passed');
+    const final = lines.findIndex(line => JSON.parse(line).kind === 'complete');
+    const expected = lines.findIndex(line => JSON.parse(line).kind === 'expected');
+    if (corruption === 'missing-final') lines.splice(final, 1);
+    else if (corruption === 'wrong-count') {
+      const event = JSON.parse(lines[final]);
+      lines[final] = JSON.stringify({ ...event, expectedCount: ids.length + 1 }) + '\n';
+    } else if (expected >= 0) {
+      if (corruption === 'missing-expected') lines.splice(expected, 1);
+      else lines.splice(expected, 0, lines[expected]);
+    } else lines.splice(final, 1);
+    const events = await receive(t, lines);
+    const result = classifyRunnerResult(events, { exitCode: 0, signal: null, stderr: '' });
+    assert.equal(result.outcome, 'setup-failed');
+    assert.deepEqual(result.passed, ids);
+  });
+}
+
+for (const corruption of ['none', 'missing-final', 'wrong-count'] as const) {
+test(`Z416 Vitest batch wrapper validates large inventories across batches: ${corruption}`, async t => {
   const lines = await reporterLines(t, 'vitest-events', 'passed');
+  const final = lines.findIndex(line => JSON.parse(line).kind === 'complete');
+  if (corruption === 'missing-final') lines.splice(final, 1);
+  if (corruption === 'wrong-count') lines[final] = JSON.stringify({ ...JSON.parse(lines[final]), expectedCount: ids.length + 1 }) + '\n';
   environment(t, { RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(limits), RAF_TEST_RUN_VITEST_BATCHES: JSON.stringify([
+    { executable: process.execPath, argv: ['vitest', 'run'], cwd: workspace, environment: {} },
     { executable: process.execPath, argv: ['vitest', 'run'], cwd: workspace, environment: {} },
   ]) });
   fakeChild(t, lines, 3);
@@ -149,7 +174,8 @@ test('Z416 Vitest batch wrapper accepts a bounded large inventory and requires c
   const write = t.mock.method(process.stdout, 'write', (chunk: string | Buffer) => { output.push(chunk.toString()); return true; });
   try {
     await import(`../scripts/test-run-vitest.ts?z416=${Date.now()}`);
-    assert.equal(process.exitCode, 0, 'a large valid inventory must pass the Vitest batch protocol gate');
-    assert.equal(output.join('').includes('Vitest batch missing complete structured protocol'), false);
+    assert.equal(process.exitCode, corruption === 'none' ? 0 : 1, 'the Vitest batch protocol gate must require a complete inventory');
+    assert.equal(output.join('').includes('Vitest batch missing complete structured protocol'), corruption !== 'none');
   } finally { write.mock.restore(); process.exitCode = previousExitCode; }
 });
+}

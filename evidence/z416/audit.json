@@ -1,0 +1,23 @@
+{
+  "item": "complete-raf-flow-contracts:Z.416",
+  "auditedHead": "0d8481ce7c809df00947f68ba889f6f0468c85b3",
+  "applicable": true,
+  "findings": [
+    "Both reporters still serialize every expected ID into one complete protocol line. Runtime and Vitest wrapper reject lines larger than diagnostics.maxProtocolLineBytes. The defect remains present after the assignment base commit.",
+    "The task agrees with test-first, unit-test-runs and add-raf-test-run/test-runs: bounded lines, strict completeness, truthful classification and unchanged limits. No obsolete or conflicting requirement was found."
+  ],
+  "sources": [
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/proposal.md#Why",
+    "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md#Z.416",
+    "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md",
+    "/srv/dev/work/orchestrator/openspec/specs/core/process/test-first/spec.md",
+    "/srv/dev/work/orchestrator/openspec/specs/core/process/unit-test-runs/spec.md",
+    "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/autonomous-development/spec.md#requirement-аудит-та-вилучення-неактуальних-змін"
+  ],
+  "group": "complete-raf-flow-contracts/z416-protocol-size",
+  "files": [
+    "test/test-run-protocol-size.test.ts"
+  ],
+  "scope": "Only Z.416. Checkboxes belong to raf. Other tasks are open, so no archive is authorized.",
+  "isolation": "Unit regression mocks reporter lifecycle and child-process streams; no real Vitest, Etchly project tests, state store, or provider is executed."
+}

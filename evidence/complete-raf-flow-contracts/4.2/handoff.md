@@ -1,0 +1,13 @@
+# Передача 4.2 → 4.3
+
+Повторно використано `test/command-timing.test.ts` з коміту `936f9bcd69a3c814c461f4e29d49c6efb0810646`. Main у цій сесії підтвердив дозвіл читання готового scaffold для аудиту. Production-код не читався й не змінювався. Додаткові API та каркас NotImplemented не потрібні: файл використовує наявні AppRuntime/StateStore порти.
+
+Група: `complete-raf-flow-contracts/raf-command-timing`; єдиний файл: `test/command-timing.test.ts`. Автор сам виконав `--phase red`; точна команда, SHA та CLI/child коди — у `red-run.json`, повний результат — у `red.TestRunResult.json`.
+
+Результат: assertions-failed; 31 passed, 17 knownRed, без unknown/unexecuted/import/setup. CLI=1, child=1, timeoutCount=0, cleanup.complete=true. U4: дев'ять невалідних alpha приймаються runtime замість CONFIGURATION_INVALID; вісім невалідних budget дають запис успішного внеску. Не змінювати очікування, щоб приховати ці помилки.
+
+Аудит U1–U7: canonical key/alpha/один завершальний запис/startup; args та календарна корекція; null/zero/EMA/timestamp/знімок stats; межі й зміна конфігурації; строгий бюджет і зовнішні команди; parser/help/resource wait success/error/cancel; відкриття/запис без fallback та санітизована вторинна помилка. Незавершений виклик перевіряється до фіналізації; справжній crash та UTC запису production SQL залишаються I1/I4. Fake-store лише збирає виклики або повертає готовий знімок, EMA не обчислює. U5 порівнює повернуті EMA/budget, не підтверджує реальну швидкість I5.
+
+Конфігурація вже зареєстрована main: `conf/test-runs.json#/projects/raf/profiles/node/unitFiles` містить `test/command-timing.test.ts`; `groups["complete-raf-flow-contracts/raf-command-timing"]={"profileId":"node","files":["test/command-timing.test.ts"]}`. Нових доповнень немає. Профіль: cwd=., executable=node, argv=[./scripts/test-run-node.ts], exactIds=node-test-name, resultAdapter=node-test-events; checks: node_modules/typescript/package.json, src/test-run-reporter.ts, scripts/test-run-node.ts; environment isolatedHome/stateOrigin=true. Фактичні fingerprints, ізольований HOME/statePath і timeout із conf/flow.json#/unitTests/timeoutMs є у повному TestRunResult.
+
+4.3 використовує ту саму групу й файл із --phase implement після перевірки red main. Не скидати knownRed/timeoutCount новим HOME/SHA/group. Чужі dirty test-run файли не змінено; SHA фіксує HEAD, а стан дерева мав сторонні незакомічені зміни. Сам прогін успішно допущений довіреним каналом; їх перелік збережено в OpenSpec evidence. Тестовий файл незмінний проти коміту scaffold. I1–I6, SQL, конкурентність, швидкість і повна production-матриця timing-coverage тут не виконувались. Галочки tasks.md належать raf; інші пункти відкриті, archive не виконується.

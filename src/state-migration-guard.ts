@@ -72,7 +72,9 @@ function activeMainOrigin(root: string, project: any, productionRoot: string, mo
       { encoding: 'utf8', env: environment, stdio: ['ignore', 'pipe', 'ignore'] }).trim();
     const commit = git(productionRoot, 'rev-parse', 'HEAD');
     if (git(productionRoot, 'symbolic-ref', 'HEAD') !== 'refs/heads/main' || git(productionRoot, 'rev-parse', 'refs/heads/main') !== commit) return;
-    if (git(root, 'config', '-f', '.gitmodules', '--get', 'submodule.raf-main.path') !== active ||
+    const modules = git(root, 'config', '-f', '.gitmodules', '--get-regexp', '^submodule\\..*\\.path$').split('\n')
+      .map(line => /^submodule\..*\.path (.+)$/.exec(line)?.[1]).filter(path => path !== undefined && copies.includes(path));
+    if (modules.length !== 1 || modules[0] !== active ||
       git(root, 'ls-files', '--stage', '--', active) !== `160000 ${commit} 0\t${active}`) return;
     return productionRoot;
   } catch { return; }

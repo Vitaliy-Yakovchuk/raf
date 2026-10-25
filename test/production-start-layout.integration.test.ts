@@ -9,6 +9,7 @@ import { prepareMainLayoutForProductionStart } from '../src/production-start-lay
 import { agentChannelReadOnlyPaths } from '../src/main-switch-agent-launcher.ts';
 import { productionStorePaths, resolveProductionStore } from '../src/main-production-store.ts';
 import { processStart } from '../src/hotfix-host.ts';
+import { resolveStateContext } from '../src/state-migration-guard.ts';
 
 const bootstrapUrl = new URL('../src/production-start-layout.ts', import.meta.url).href;
 const gitEnvironment = {
@@ -212,4 +213,19 @@ test('production bootstrap: a foreign live reader without protection still block
   assert.deepEqual({ main: workingState(f.main), sources: sourceState(f.root), pins: pinnedState(f.control) }, before);
   assert.equal(existsSync(paths.production), false);
   assert.equal(existsSync(join(paths.control, 'main-store-intent.json')), false);
+});
+
+test('production bootstrap: converted copies keep the registered submodule name and the active copy is a valid CLI origin', async t => {
+  const f = fixture(t, true);
+  await prepareMainLayoutForProductionStart({ orchestratorRoot: f.root });
+  assert.equal(git(f.root, 'config', '-f', '.gitmodules', '--get', 'submodule.raf.path'), 'raf-main-a');
+  const projects = JSON.parse(readFileSync(join(f.root, 'conf/projects.json'), 'utf8'));
+  write(join(f.root, 'conf/projects.json'), JSON.stringify({ version: 1, profiles: { raf: { production: 'main', environments: { runtime: 'main' } } }, ...projects }));
+  write(join(f.root, 'conf/raf.json'), JSON.stringify({ version: 1, state: { fileName: 'state.sqlite' } }));
+  const entry = join(f.root, 'raf-main-a/bin/raf.ts');
+  write(entry, 'export {};\n');
+  const home = join(f.root, 'home');
+  mkdirSync(home);
+  const context = resolveStateContext({ orchestratorRoot: f.root, modulePath: entry, homeDirectory: home, operatingSystemHome: home, environment: {}, entryPoint: 'cli' });
+  assert.equal(context.codeRoot, join(f.root, 'raf-main-a'));
 });

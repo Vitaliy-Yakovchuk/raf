@@ -158,6 +158,7 @@ test('main cannot launch but may be used as a phase', async () => {
 test('recompilation updates parsing and help from both JSON catalogs', async () => {
   const data = fixture();
   data.constants.agentTypes[1].id = 'replacement-worker';
+  data.constants.commands[0].examples = ['raf agent run --type replacement-worker'];
   data.models.routing.complexityOrder = ['replacement-complexity'];
   data.constants.commands[0].parameters![2].default = 'replacement-complexity';
   data.models.runners[0].id = 'replacement-runner';

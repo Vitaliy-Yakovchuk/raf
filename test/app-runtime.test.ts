@@ -7,7 +7,7 @@ import { createAppRuntime, type RuntimeContext, type RuntimeConfiguration, type 
 import { compileCatalog } from '../src/catalog.ts';
 import { execute } from '../src/cli.ts';
 import { runCli } from '../src/bootstrap.ts';
-import { commandFailure } from '../src/cli-contract.ts';
+import { commandFailure, failureContext } from '../src/cli-contract.ts';
 import { rafCommandFor } from '../src/task-context.ts';
 import type { StateStore } from '../src/state-store.ts';
 import type { ModelCatalog, ModelSelection } from '../src/model-routing.ts';
@@ -436,7 +436,10 @@ for (const command of ['agent run', 'agent message', 'agent ps']) {
     f.deps.openStore = async path => { f.note('open', path); throw unavailable; };
     const app = f.runtime();
     try {
-      await assert.rejects(() => app.handlers[command]({ ...params, to: 'worker', text: 'literal message' }), error => error === unavailable);
+      await assert.rejects(() => app.handlers[command]({ ...params, to: 'worker', text: 'literal message' }), error => {
+        assert.equal(failureContext(error)?.reason, unavailable.message, 'preserve the store failure in the command diagnostic');
+        return true;
+      });
       assert.deepEqual(f.calls.get('open'), [[f.context.statePath]], 'one explicit store path, no replacement database');
       for (const effect of ['services', 'reserve', 'start', 'compose', 'prepare', 'message', 'ps', 'commit']) assert.equal(count(f, effect), 0, effect);
     } finally { await app.close(); }

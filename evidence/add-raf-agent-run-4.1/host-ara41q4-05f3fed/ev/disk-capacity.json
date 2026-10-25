@@ -1,0 +1,50 @@
+{
+  "estimates": [
+    {
+      "status": "KNOWN",
+      "reservation": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "dev:64513": 10737418240
+        }
+      },
+      "sources": [
+        "conf/flow.json#/resourceEstimates/agentTypes/implement"
+      ],
+      "reason": null,
+      "confPointer": null
+    },
+    {
+      "status": "KNOWN",
+      "reservation": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "dev:64513": 10737418240
+        }
+      },
+      "sources": [
+        "conf/flow.json#/resourceEstimates/agentTypes/implement"
+      ],
+      "reason": null,
+      "confPointer": null
+    }
+  ],
+  "volumes": [
+    {
+      "id": "dev:64513",
+      "directories": [
+        "/srv/dev/ar41-VeXMLJ/root",
+        "/srv/dev/ar41-VeXMLJ/root/raf-develop",
+        "/srv/dev/ar41-VeXMLJ"
+      ],
+      "development": true,
+      "availableBytes": 159566061568,
+      "totalBytes": 190143823872,
+      "reservedBytes": 21474836480,
+      "thresholdBytes": 19014382387.2,
+      "requiredAvailableBytes": 40489218867.2,
+      "sufficient": true
+    }
+  ],
+  "method": "stat.dev deduplication and statfs bavail; conservative simultaneous unused estimates for both actors; measured after fixture copies; production admission remains authoritative"
+}

@@ -1,0 +1,44 @@
+{
+  "status": "failed",
+  "answer": "Пункт ar41-fixture:1.1 не завершено. Точний виклик plan 1 повернув порожній stdout; оболонковий результат зафіксував EXIT undefined, без stderr чи коду CLI. Це невідомий результат, повтор заборонений протоколом; plan 2/3, повідомлення, done, тести й коміт не виконувалися. Незмінений stdout: \"\"; збережене поле коду: undefined (код CLI та child exitCode невідомі).",
+  "changes": [
+    {
+      "id": "ar41-fixture",
+      "items": [
+        {
+          "id": "1.1",
+          "status": "failed",
+          "reason": "plan 1 завершився невідомим результатом: stdout порожній, exit_code відсутній/undefined; за вимогою no retries after unknown/failure роботу зупинено."
+        }
+      ]
+    }
+  ],
+  "commits": [],
+  "context": {
+    "unnecessary": [],
+    "missing": []
+  },
+  "session": {
+    "command": "node qa/ar41-actor.mjs plan /srv/dev/ar41-VeXMLJ/.raf/tmp/712abef0-9137-4925-9a24-07cf4db92d03/ar41-a.json 1",
+    "stdout": "",
+    "stderr": "not captured by the tool wrapper",
+    "cliCode": null,
+    "childExitCode": null,
+    "outcome": "unknown",
+    "runId": null,
+    "selection": null,
+    "cleanup": null,
+    "timeout": null,
+    "knownRed": null,
+    "unexecuted": [
+      "plan 2",
+      "plan 3",
+      "agent message",
+      "agent ps",
+      "done",
+      "target unit run"
+    ],
+    "groupState": "not reached",
+    "nextAction": "Main/host review; no retry per actor protocol."
+  }
+}

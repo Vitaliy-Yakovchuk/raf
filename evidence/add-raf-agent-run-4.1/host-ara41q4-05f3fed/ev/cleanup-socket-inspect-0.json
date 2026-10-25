@@ -1,0 +1,17 @@
+{
+  "command": [
+    "tmux",
+    "-u",
+    "-S",
+    "/srv/dev/ar41-VeXMLJ/.raf/tmp/tmux/server.sock",
+    "list-sessions"
+  ],
+  "cwd": "/srv/dev/ar41-VeXMLJ/root",
+  "startedAt": "2026-10-25T17:20:14.788Z",
+  "endedAt": "2026-10-25T17:20:14.800Z",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "no server running on /srv/dev/ar41-VeXMLJ/.raf/tmp/tmux/server.sock\n"
+}

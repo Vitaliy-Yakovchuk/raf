@@ -1,0 +1,30 @@
+{
+  "command": [
+    "tmux",
+    "-u",
+    "-S",
+    "/srv/dev/ar41-VeXMLJ/main.sock",
+    "-f",
+    "/dev/null",
+    "new-session",
+    "-d",
+    "-s",
+    "ar41-main",
+    "-x",
+    "180",
+    "-y",
+    "50",
+    "/opt/dev/node/bin/node",
+    "/srv/dev/ara41q4/raf/scripts/qa-agent-run-main.mjs",
+    "/srv/dev/ar41-VeXMLJ",
+    "raw"
+  ],
+  "cwd": "/srv/dev/ar41-VeXMLJ/root",
+  "startedAt": "2026-10-25T17:02:52.907Z",
+  "endedAt": "2026-10-25T17:02:52.929Z",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": ""
+}

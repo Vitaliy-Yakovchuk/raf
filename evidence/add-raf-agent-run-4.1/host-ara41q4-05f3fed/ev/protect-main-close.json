@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/ar41-VeXMLJ/root/raf-main/bin/raf.ts",
+    "agent",
+    "close",
+    "--id",
+    "main"
+  ],
+  "startedAt": "2026-10-25T17:04:55.428Z",
+  "endedAt": "2026-10-25T17:04:58.191Z",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "{\"code\":\"HANDLER_FAILED\",\"message\":\"Main cannot be closed\",\"details\":{\"command\":\"agent close\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Main cannot be closed\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent close\"]}\n"
+}

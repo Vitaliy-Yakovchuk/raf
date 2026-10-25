@@ -264,7 +264,7 @@ export async function agentRunFixture(t: any, mode: string, timeouts: { startupM
     runner: 'codex', executable: 'codex', version: '0.0.1', baseArgs: [], modelFlag: '--model', effortFlag: '-c', effortFormat: 'codex_config', modelAliases: {}, promptTransport: 'positional', sessionIdFlag: null, quotaCommand: '/status', navigation: [], markers: { ready: ['RAF SYNTHETIC READY'] }, quotaParser: 'codex_status', modelPools: {}, quotaReliable: false, liveTaskVerified: true,
     timeouts: { ...timeouts, pollMs: 25 }, collection: { intervalMs: 300000, failureBackoffMs: 60000, staleAfterMs: 60000 },
   }];
-  await writeJson(join(conf, 'raf.json'), { version: 1, state: { fileName: 'state.sqlite' }, commandTiming: rafConfiguration.commandTiming, runnerProtocols: protocols, service: rafConfiguration.service });
+  await writeJson(join(conf, 'raf.json'), { ...rafConfiguration, state: { fileName: 'state.sqlite' }, runnerProtocols: protocols });
   for (const path of [`runners/${runner}.md`, ...['implement', ...(options.stages ?? [])].map(stage => `tasks/${stage}.md`), 'completion.md']) { await fs.mkdir(dirname(join(conf, 'briefs', path)), { recursive: true }); await fs.writeFile(join(conf, 'briefs', path), 'Synthetic launch failure fixture.\n'); }
   if (options.productionQa) await fs.copyFile(join(sourceRoot, '../conf/projects.json'), join(conf, 'projects.json'));
   buildCatalog(conf, artifact, constants.commands.map((x: any) => x.path.join(' ')));

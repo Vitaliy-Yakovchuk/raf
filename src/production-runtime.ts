@@ -763,16 +763,16 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         const directory = join(context.tmpRoot, 'message-locks');
         await fs.mkdir(directory, { recursive: true, mode: 0o700 });
         const key = createHash('sha256').update(`${identity.evidence.tmuxSocket}\0${pane}`).digest('hex');
-        const deadline = performance.now() + settings.timeouts.transitionMs;
+        const deadline = Date.now() + settings.timeouts.transitionMs;
         let lease: Awaited<ReturnType<typeof tryWaitLease>> = null;
         while (!lease) {
-          const remaining = deadline - performance.now();
+          const remaining = deadline - Date.now();
           if (remaining <= 0) return { accepted: false, reason: 'Another delivery owns the recipient composer after bounded protocol wait' };
           lease = await tryWaitLease(join(directory, key), Math.ceil(remaining));
-          if (!lease) await new Promise(resolve => setTimeout(resolve, Math.min(settings.timeouts.pollMs, Math.max(0, deadline - performance.now()))));
+          if (!lease) await new Promise(resolve => setTimeout(resolve, Math.min(settings.timeouts.pollMs, Math.max(0, deadline - Date.now()))));
         }
         try {
-          if (performance.now() >= deadline) return { accepted: false, reason: 'Recipient composer lease exceeded the protocol wait budget' };
+          if (Date.now() >= deadline) return { accepted: false, reason: 'Recipient composer lease exceeded the protocol wait budget' };
           const result = await deliverCheckedMessage({
             settings,
             verify: async () => {

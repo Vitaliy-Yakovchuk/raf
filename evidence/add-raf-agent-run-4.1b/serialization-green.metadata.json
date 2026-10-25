@@ -1,0 +1,24 @@
+{
+  "sha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
+  "workspaceStatusBefore": " M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n M src/production-runtime.ts\n?? evidence/add-raf-agent-run-4.1b/serialization-first.cli-exit-code\n?? evidence/add-raf-agent-run-4.1b/serialization-first.merged-output\n?? evidence/add-raf-agent-run-4.1b/serialization-first.metadata.json\n?? evidence/add-raf-agent-run-4.1b/serialization-first.stderr\n?? evidence/add-raf-agent-run-4.1b/serialization-first.stdout.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host3/trt6263h3.log\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host3/trt6263h3.log.exit\n",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/message-serialization --files test/production-message-serialization.test.ts",
+  "uncommittedDiff": "src/production-runtime.ts: replace performance.now with native delivery clock Date.now for lease wait; first-result evidence added",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "runId": "ea33801c-f27b-4bf5-9efc-93ba1a90851e",
+  "outcome": "passed",
+  "passed": 10,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "timeoutCount": 0,
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "nextAction": "complete",
+  "streamCapture": "Merged tool output retained. Complete launch-queue.waiting JSON record split as logical stderr without reformatting; independent OS stream ordering unavailable."
+}

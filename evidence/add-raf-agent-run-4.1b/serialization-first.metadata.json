@@ -1,0 +1,40 @@
+{
+  "sha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
+  "workspaceStatusBefore": "",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/message-serialization --files test/production-message-serialization.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "runId": "9eec17c2-5073-4b3d-9411-8ef34e824b93",
+  "outcome": "assertions-failed",
+  "passed": 6,
+  "knownRed": [
+    {
+      "file": "test/production-message-serialization.test.ts",
+      "name": "codex: contended production message waits and polls only within protocol 90/10"
+    },
+    {
+      "file": "test/production-message-serialization.test.ts",
+      "name": "codex: contended production message waits and polls only within protocol 140/20"
+    },
+    {
+      "file": "test/production-message-serialization.test.ts",
+      "name": "claude: contended production message waits and polls only within protocol 90/10"
+    },
+    {
+      "file": "test/production-message-serialization.test.ts",
+      "name": "claude: contended production message waits and polls only within protocol 140/20"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "timeoutCount": 0,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "nextAction": "fix-implementation",
+  "streamCapture": "Merged tool output retained. Complete launch-queue.waiting record split as logical stderr without JSON reformatting; independent OS stream ordering unavailable."
+}

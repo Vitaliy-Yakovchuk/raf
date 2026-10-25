@@ -1,0 +1,127 @@
+{
+  "assignment": "complete-raf-flow-contracts:9.7",
+  "status": "succeeded",
+  "command": "node scripts/qa-shared-libs-live.mjs 7fab104897f32d54657d96d48cc00ac8995c4b25",
+  "hostTimeoutSeconds": 5400,
+  "sourceSha": "7fab104897f32d54657d96d48cc00ac8995c4b25",
+  "workspace": "Main ran reviewed clean clone; stand creates isolated fixture repositories and HOME. Unit ledger unchanged.",
+  "evidence": {
+    "repository": "/srv/dev/work/orchestrator",
+    "commit": "6ce999101df793333987cff6bd9abc0805277e7b",
+    "path": "openspec/changes/complete-raf-flow-contracts/evidence-9.7-host-cfc97q4-7fab104",
+    "transfer": "Main supplied sanitized evidence, secscan 0; raw identity/native/transcript excluded."
+  },
+  "cliExitCode": 0,
+  "startedAt": "2026-10-25T19:00:00.549Z",
+  "endedAt": "2026-10-25T19:02:29.257Z",
+  "checks": [
+    {
+      "id": "dependent",
+      "status": "passed",
+      "runId": "84125f27-a80c-47c1-8a93-b2c0d1a4659f",
+      "process": {
+        "pid": 2865846,
+        "runner": "codex",
+        "runnerSessionId": "01a17470-c473-7292-8192-39c054af6181"
+      },
+      "commit": {
+        "repository": "/srv/dev/cfc97-ShL17K/root/shared-libs-develop",
+        "sha": "3d7db66a683200f103288f654e5fe7382cb89f12"
+      },
+      "reportAcceptance": {
+        "runId": "84125f27-a80c-47c1-8a93-b2c0d1a4659f",
+        "status": "succeeded",
+        "event": "agent.succeeded"
+      },
+      "checkboxCommits": [
+        {
+          "change": "cfc97-fixture",
+          "item": "1.1",
+          "sha": "c41a50543754c1f224d38b550da1803ee7993a25"
+        }
+      ],
+      "denials": []
+    },
+    {
+      "id": "independent",
+      "status": "passed",
+      "runId": "dec8ecbe-4623-4284-86ba-eae6ae344e35",
+      "process": {
+        "pid": 2869048,
+        "runner": "codex",
+        "runnerSessionId": "01a17471-2356-7f10-a2ab-59103c26fc72"
+      },
+      "commit": {
+        "repository": "/srv/dev/cfc97-ShL17K/root/etchly-develop",
+        "sha": "3b95cd9bba80bbb3f29bfb9d502bd29360ea1ec5"
+      },
+      "reportAcceptance": {
+        "runId": "dec8ecbe-4623-4284-86ba-eae6ae344e35",
+        "status": "succeeded",
+        "event": "agent.succeeded"
+      },
+      "checkboxCommits": [
+        {
+          "change": "cfc97-fixture",
+          "item": "1.2",
+          "sha": "a4b5cdaaf967e7ccf660d894cf8da0f22580cafd"
+        }
+      ],
+      "denials": [
+        {
+          "target": "/srv/dev/cfc97-ShL17K/root/shared-libs-develop/qa-cfc97-independent.txt",
+          "code": "EROFS",
+          "message": "EROFS: read-only file system, open '/srv/dev/cfc97-ShL17K/root/shared-libs-develop/qa-cfc97-independent.txt'"
+        },
+        {
+          "target": "/srv/dev/cfc97-ShL17K/root/etchly-develop/shared-libs/qa-cfc97-independent.txt",
+          "code": "EROFS",
+          "message": "EROFS: read-only file system, open '/srv/dev/cfc97-ShL17K/root/etchly-develop/shared-libs/qa-cfc97-independent.txt'"
+        },
+        {
+          "target": "/srv/dev/cfc97-ShL17K/root/.git/modules/shared-libs-main/worktrees/shared-libs-develop/qa-cfc97-independent.txt",
+          "code": "EROFS",
+          "message": "EROFS: read-only file system, open '/srv/dev/cfc97-ShL17K/root/.git/modules/shared-libs-main/worktrees/shared-libs-develop/qa-cfc97-independent.txt'"
+        },
+        {
+          "target": "/srv/dev/cfc97-ShL17K/root/.git/modules/shared-libs-main/qa-cfc97-independent.txt",
+          "code": "EROFS",
+          "message": "EROFS: read-only file system, open '/srv/dev/cfc97-ShL17K/root/.git/modules/shared-libs-main/qa-cfc97-independent.txt'"
+        }
+      ]
+    }
+  ],
+  "unexecuted": [],
+  "cleanup": {
+    "complete": true,
+    "errors": [],
+    "services": {
+      "complete": true,
+      "processes": [],
+      "remaining": []
+    }
+  },
+  "expectedNonzero": [
+    {
+      "label": "cleanup-inspect-46",
+      "cliExitCode": 1,
+      "signal": null
+    }
+  ],
+  "buildExitCode": 0,
+  "unitGroup": "complete-raf-flow-contracts/shared-libs-launch-boundaries",
+  "unitGroupState": "complete",
+  "nextAction": "Raf validates this report and marks assigned item 9.7; no archive while other items remain open.",
+  "inputSha256": {
+    "summary.json": "314b6a00be27b165141ef66c4cf68dcf2bd337ed3cdaf82162cd48265ae2f020",
+    "cli.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "dependent-probe.json": "d947f92623ff2d4253c444e48aced322f8a76e57d75a3f60241ef9028728223e",
+    "dependent-accepted.json": "1d7e5f41e58e473240fe1f96eeb95757a1c447011bd864d8b1822b40426cfb8a",
+    "dependent-run/codex-sandbox-84125f27-a80c-47c1-8a93-b2c0d1a4659f/policy.json": "5ab0317694fa1fb5a66bd8390bdc2981ffcefb0c9e67cbdbafca4e4672ccd734",
+    "independent-probe.json": "bef2875d6655f76bf5a06734b07f8bca283874ff4ecf947b296d41e0bff557cf",
+    "independent-accepted.json": "aa6c60527a9901d787c5a77bc6a0bb65ea41ac043c792b929db84566d3028fab",
+    "independent-run/codex-sandbox-dec8ecbe-4623-4284-86ba-eae6ae344e35/policy.json": "87140f5f8a413fbabb35c7f6fea7a5a871271ea4b25b0a54642efc6ca86265de",
+    "cleanup-inspect-46.stderr": "628a6ce640af04e8151daa5bd91476e703ceaf02a7b7e2bbe89e1b4f5ef2115f",
+    "build.json": "09103e058166f5c5e8c4f9577a1592f7ae71ec9d611260ed0ba5c61a863113c9"
+  }
+}

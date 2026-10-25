@@ -1,0 +1,101 @@
+{
+  "assignment": "complete-raf-flow-contracts:9.7",
+  "defect": "usesSharedLibs=false inherits shared-libs Git metadata write access from writable Orchestrator .git",
+  "sourceFix": "7fab104897f32d54657d96d48cc00ac8995c4b25",
+  "hostFailure": {
+    "repository": "/srv/dev/work/orchestrator",
+    "commit": "a2569cb9609ea9caccefbf9258e6921b269758db",
+    "path": "openspec/changes/complete-raf-flow-contracts/evidence-9.7-host-cfc97q3-23968f5",
+    "reviewed": "23968f5d892b5a20a0408282c2e99d85fb53d88e",
+    "cliExitCode": 1,
+    "dependent": "passed",
+    "independent": "failed",
+    "cleanupComplete": true
+  },
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/shared-libs-launch-boundaries --files test/shared-libs-launch-boundaries.test.ts",
+      "runId": "8c6a904a-70bd-4109-9e5e-55deb0743288",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/shared-libs-launch-boundaries.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 18,
+      "knownRed": [
+        {
+          "file": "test/shared-libs-launch-boundaries.test.ts",
+          "name": "independent library Git metadata stays read-only under writable Orchestrator Git ancestor (false)"
+        },
+        {
+          "file": "test/shared-libs-launch-boundaries.test.ts",
+          "name": "independent library Git metadata stays read-only under writable Orchestrator Git ancestor (undefined)"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+        "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+        "TMPDIR": "/tmp/r-uumgdj"
+      },
+      "result": "red-TestRunResult.json",
+      "workspace": "red-workspace.txt"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/shared-libs-launch-boundaries --files test/shared-libs-launch-boundaries.test.ts",
+      "runId": "2ce0acf6-3ddb-4676-a8fd-c74626988549",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/shared-libs-launch-boundaries.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 20,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+        "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+        "TMPDIR": "/tmp/r-PDhYB1"
+      },
+      "result": "qa-TestRunResult.json",
+      "workspace": "qa-workspace.txt"
+    }
+  ],
+  "build": {
+    "command": "npm run build",
+    "source": "7fab104897f32d54657d96d48cc00ac8995c4b25",
+    "cliExitCode": 0,
+    "result": "build-passed.json"
+  },
+  "hostConfirmation": "../host-review.json"
+}

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, rename, mkdir, readlink } from 'node:fs/promises';
 import { writeFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -93,9 +93,18 @@ setInterval(() => {
     const assignment = JSON.parse(received.slice(payloadStart).trim());
     assert.equal(assignment.cwd, cfg.sourceRoot);
     assert.equal(assignment.report_path, session.launchContext!.reportPath);
+    assert.equal(session.activity!.cwd, cfg.sourceRoot);
+    assert.equal(await readlink(`/proc/${session.process!.pid}/cwd`), cfg.sourceRoot);
+    const selection = session.launchContext!.selection;
+    assert.equal(selection.runner, 'codex');
+    const argv = (await readFile(`/proc/${session.process!.pid}/cmdline`, 'utf8')).split('\0').filter(Boolean);
+    assert.equal(argv[argv.indexOf('--model') + 1], selection.model);
+    assert.ok(argv.some(value => value.includes('model_reasoning_effort') && value.includes(selection.effort)));
+    const normalizedInput = (await f.input(session.process!.pid)).replace(/\x1b\[(?:200|201)~/g, '').replace(/\r/g, '\n');
+    assert.equal(normalizedInput.split(received).length - 1, 1, 'complete initial brief was pasted exactly once');
     assert.equal(f.inspect().claims.length, 1);
     assert.equal(f.inspect().admission.length, 1);
-    evidence('I1-launch', { cli, identity: session.process, runId: result.runId, selection: session.activity, claims: f.inspect().claims, admission: f.inspect().admission });
+    evidence('I1-launch', { cli, identity: session.process, runId: result.runId, selection, argv, cwd: session.activity!.cwd, initialBriefCopies: 1, claims: f.inspect().claims, admission: f.inspect().admission });
     return { result, session, assignment };
   };
   const ps = async () => {
@@ -120,6 +129,11 @@ test('[I1/I3] public compiled CLI persists identity, literal brief, atomic succe
   const { result, session } = await f.launch('adapter-report');
   const caller = await f.as('adapter-report', ['agent', 'ps']);
   assert.equal(caller.exitCode, 0, JSON.stringify(caller));
+  assert.equal(caller.result.exitCode, 0, JSON.stringify(caller));
+  const persisted = JSON.parse(caller.result.stdout).find((row: any) => row.runId === result.runId);
+  assert.ok(persisted, 'fresh runner-owned public CLI sees the same run in the same state');
+  assert.deepEqual(f.inspect().sessions.find(row => row.runId === result.runId)!.launchContext!.selection, session.launchContext!.selection);
+  f.evidence('I1-fresh-caller', { caller, persisted });
   await publish(session.launchContext!.reportPath, report('succeeded'));
   await until(() => f.inspect().sessions.find(row => row.runId === result.runId)?.result?.status, status => status === 'succeeded', 'watcher accepts atomic report', timeouts.overallMs);
   const acceptedHead = (await f.git('rev-parse', 'HEAD')).trim();

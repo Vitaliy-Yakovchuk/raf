@@ -1,0 +1,94 @@
+diff --git a/scripts/qa-main-agent-channel-metadata.mjs b/scripts/qa-main-agent-channel-metadata.mjs
+index cf4fa9d..8043b7e 100644
+--- a/scripts/qa-main-agent-channel-metadata.mjs
++++ b/scripts/qa-main-agent-channel-metadata.mjs
+@@ -42,6 +42,12 @@ export function capturePolicy(directories, runId, phase) {
+   fs.writeFileSync(target, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+ }
+ 
++export function prepareStandAudit(develop, evidence) {
++  const directory = path.join(evidence, 'cli-audit');
++  fs.mkdirSync(directory, { recursive: true });
++  return directory;
++}
++
+ export function instrumentStandCli(cli) {
+   const insertion = "if (result.stdout)";
+   assert.ok(cli.includes(insertion));
+diff --git a/scripts/qa-main-agent-channel.mjs b/scripts/qa-main-agent-channel.mjs
+index c8e563d..1e312cd 100644
+--- a/scripts/qa-main-agent-channel.mjs
++++ b/scripts/qa-main-agent-channel.mjs
+@@ -10,7 +10,7 @@ import { setTimeout as delay } from 'node:timers/promises';
+ import { captureStateReadControls } from './qa-main-agent-denial.mjs';
+ import { createStandGeneration } from './qa-main-agent-generation.mjs';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+-import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, stopStandServices } from './qa-main-agent-channel-metadata.mjs';
++import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, stopStandServices, prepareStandAudit } from './qa-main-agent-channel-metadata.mjs';
+ 
+ const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+ const reviewed = process.argv[2];
+@@ -153,7 +153,7 @@ try {
+   for (const slot of [B, develop, path.join(root, 'raf-hotfix')]) {
+     for (const name of ['node_modules', 'dist']) fs.cpSync(path.join(A, name), path.join(slot, name), { recursive: true, dereference: true });
+   }
+-  env.SYM64_AUDIT = path.join(ev, 'cli-audit'); fs.mkdirSync(env.SYM64_AUDIT);
++  env.SYM64_AUDIT = prepareStandAudit(develop, ev);
+   must(run('main-start', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym64-main', '-x', '180', '-y', '50', process.execPath, path.join(source, 'test/helpers/z4044-main-pane.mjs'), stand])); pane = true;
+   must(await wait('main attach', () => fs.existsSync(path.join(stand, 'main-ready.json')) && JSON.parse(fs.readFileSync(path.join(stand, 'main-ready.json')))));
+   must(await request('runner-list', ['runner', 'list'])); must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
+diff --git a/test/main-switch-agent-channel.test.ts b/test/main-switch-agent-channel.test.ts
+index bd1ba70..45ca259 100644
+--- a/test/main-switch-agent-channel.test.ts
++++ b/test/main-switch-agent-channel.test.ts
+@@ -16,7 +16,7 @@ import { execute } from "../src/cli.ts";
+ import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
+ import { createWorkspacePorts } from "../src/os-runtime.ts";
+ import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
+-import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices } from "../scripts/qa-main-agent-channel-metadata.mjs";
++import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices, prepareStandAudit } from "../scripts/qa-main-agent-channel-metadata.mjs";
+ import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
+ import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
+ import * as generationHost from "../src/hotfix-host.ts";
+@@ -43,6 +43,41 @@ import { captureStateReadControls, assertNativeDenial, nativeProbeReceipt } from
+ 
+ const root = "/fixture/orchestrator";
+ 
++test("stand allowed CLI writes its exact audit inside the existing writable develop grant", async () => {
++  const directory = await fs.mkdtemp(join(tmpdir(), "native-writable-audit-"));
++  const evidence = join(directory, "ev"), develop = join(directory, "root/raf-develop");
++  const protectedAudit = join(evidence, "cli-audit");
++  try {
++    await fs.mkdir(join(develop, "qa"), { recursive: true });
++    await fs.mkdir(protectedAudit, { recursive: true });
++    await fs.chmod(protectedAudit, 0o500);
++    await fs.chmod(evidence, 0o500);
++    const audit = prepareStandAudit(develop, evidence);
++    const cli = join(develop, "qa/raf.mjs");
++    const result = { exitCode: 0, stdout: JSON.stringify([{ runId: "actor-a" }, { runId: "actor-b" }]), stderr: "" };
++    await fs.writeFile(cli, instrumentStandCli(`const result = ${JSON.stringify(result)};
++if (result.stdout) process.stdout.write(result.stdout+'\\n');
++if (result.stderr) process.stderr.write(result.stderr+'\\n');
++process.exitCode=result.exitCode;`));
++    const allowed = spawnSync(process.execPath, [cli, "agent", "ps"], { encoding: "utf8", env: { ...process.env, SYM64_AUDIT: audit } });
++    assert.equal(allowed.status, 0, "Allowed ps must not fail because fixture evidence is outside the native writable grant: " + allowed.stderr);
++    assert.equal(allowed.signal, null);
++    assert.equal(allowed.stdout, result.stdout + "\n");
++    assert.equal(allowed.stderr, "");
++    assert.equal(audit, join(develop, "qa/sym64-cli-audit"));
++    assert.deepEqual(await fs.readdir(protectedAudit), [], "Actor CLI must not write the read-only host evidence tree");
++    const records = await fs.readdir(audit);
++    assert.equal(records.length, 1);
++    const recorded = JSON.parse(await fs.readFile(join(audit, records[0]), "utf8"));
++    assert.deepEqual(recorded.result, result);
++    assert.deepEqual(recorded.argv, ["agent", "ps"]);
++  } finally {
++    await fs.chmod(evidence, 0o700);
++    await fs.chmod(protectedAudit, 0o700);
++    await fs.rm(directory, { recursive: true, force: true });
++  }
++});
++
+ test("stand CLI audit preserves the actual unauthorized result without a writable audit grant", async () => {
+   const directory = await fs.mkdtemp(join(tmpdir(), "native-cli-audit-"));
+   try {

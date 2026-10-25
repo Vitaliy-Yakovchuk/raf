@@ -16,7 +16,7 @@ import { execute } from "../src/cli.ts";
 import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
 import { createWorkspacePorts } from "../src/os-runtime.ts";
 import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
-import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices } from "../scripts/qa-main-agent-channel-metadata.mjs";
+import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices, prepareStandAudit, archiveStandAudit } from "../scripts/qa-main-agent-channel-metadata.mjs";
 import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
 import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
 import * as generationHost from "../src/hotfix-host.ts";
@@ -42,6 +42,46 @@ import type {
 import { captureStateReadControls, assertNativeDenial, nativeProbeReceipt } from "../scripts/qa-main-agent-denial.mjs";
 
 const root = "/fixture/orchestrator";
+
+test("stand allowed CLI writes its exact audit inside the existing writable develop grant", async () => {
+  const directory = await fs.mkdtemp(join(tmpdir(), "native-writable-audit-"));
+  const evidence = join(directory, "ev"), develop = join(directory, "root/raf-develop");
+  const protectedAudit = join(evidence, "cli-audit");
+  try {
+    await fs.mkdir(join(develop, "qa"), { recursive: true });
+    await fs.mkdir(protectedAudit, { recursive: true });
+    await fs.chmod(protectedAudit, 0o500);
+    await fs.chmod(evidence, 0o500);
+    const audit = prepareStandAudit(develop);
+    const cli = join(develop, "qa/raf.mjs");
+    const result = { exitCode: 0, stdout: JSON.stringify([{ runId: "actor-a" }, { runId: "actor-b" }]), stderr: "" };
+    await fs.writeFile(cli, instrumentStandCli(`const result = ${JSON.stringify(result)};
+if (result.stdout) process.stdout.write(result.stdout+'\\n');
+if (result.stderr) process.stderr.write(result.stderr+'\\n');
+process.exitCode=result.exitCode;`));
+    const allowed = spawnSync(process.execPath, [cli, "agent", "ps"], { encoding: "utf8", env: { ...process.env, SYM64_AUDIT: audit } });
+    assert.equal(allowed.status, 0, "Allowed ps must not fail because fixture evidence is outside the native writable grant: " + allowed.stderr);
+    assert.equal(allowed.signal, null);
+    assert.equal(allowed.stdout, result.stdout + "\n");
+    assert.equal(allowed.stderr, "");
+    assert.equal(audit, join(develop, "qa/sym64-cli-audit"));
+    assert.deepEqual(await fs.readdir(protectedAudit), [], "Actor CLI must not write the read-only host evidence tree");
+    const records = await fs.readdir(audit);
+    assert.equal(records.length, 1);
+    const recorded = JSON.parse(await fs.readFile(join(audit, records[0]), "utf8"));
+    assert.deepEqual(recorded.result, result);
+    assert.deepEqual(recorded.argv, ["agent", "ps"]);
+    await fs.chmod(evidence, 0o700);
+    await fs.chmod(protectedAudit, 0o700);
+    const archived = archiveStandAudit(audit, evidence);
+    assert.deepEqual(archived.files, [{ name: records[0], bytes: (await fs.stat(join(audit, records[0]))).size, sha256: createHash("sha256").update(await fs.readFile(join(audit, records[0]))).digest("hex") }]);
+    assert.deepEqual(await fs.readFile(join(archived.archive, records[0])), await fs.readFile(join(audit, records[0])), "Host archive must preserve the full original audit after the actor exits");
+  } finally {
+    await fs.chmod(evidence, 0o700);
+    await fs.chmod(protectedAudit, 0o700);
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
 
 test("stand CLI audit preserves the actual unauthorized result without a writable audit grant", async () => {
   const directory = await fs.mkdtemp(join(tmpdir(), "native-cli-audit-"));
@@ -116,6 +156,7 @@ test("stand cleanup stops a live service after a failed CLI stop without touchin
     assert.equal(failedStop.cliExitCode, 1);
     const result = await stopStandServices(join(directory, "root"), { graceMs: 100 });
     assert.equal(result.complete, true, "A failed logical-slot CLI stop must not leave the original physical-slot service alive");
+    await closed[0];
     assert.equal(await alive(children[0].pid!, await processStart(children[0].pid!).catch(() => "gone")), false);
     assert.equal(await alive(children[1].pid!, peerStart), true, "Other fixture roots must stay live");
     assert.equal(children[1].signalCode, null);

@@ -10,7 +10,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { captureStateReadControls } from './qa-main-agent-denial.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
-import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, stopStandServices } from './qa-main-agent-channel-metadata.mjs';
+import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, stopStandServices, prepareStandAudit, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const reviewed = process.argv[2];
@@ -153,7 +153,7 @@ try {
   for (const slot of [B, develop, path.join(root, 'raf-hotfix')]) {
     for (const name of ['node_modules', 'dist']) fs.cpSync(path.join(A, name), path.join(slot, name), { recursive: true, dereference: true });
   }
-  env.SYM64_AUDIT = path.join(ev, 'cli-audit'); fs.mkdirSync(env.SYM64_AUDIT);
+  env.SYM64_AUDIT = prepareStandAudit(develop);
   must(run('main-start', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym64-main', '-x', '180', '-y', '50', process.execPath, path.join(source, 'test/helpers/z4044-main-pane.mjs'), stand])); pane = true;
   must(await wait('main attach', () => fs.existsSync(path.join(stand, 'main-ready.json')) && JSON.parse(fs.readFileSync(path.join(stand, 'main-ready.json')))));
   must(await request('runner-list', ['runner', 'list'])); must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
@@ -391,6 +391,10 @@ finally {
       try { assert.deepEqual(afterExit, protectedState.beforeExit, 'Native exit cannot change protected metadata'); }
       catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
     }
+  }
+  if (env.SYM64_AUDIT) {
+    try { summary.cliAudit = archiveStandAudit(env.SYM64_AUDIT, ev); }
+    catch (error) { (summary.cleanupErrors ??= []).push('CLI audit archive failed: ' + error.message); }
   }
   if (summary.cleanupErrors?.length) { summary.status = 'failed'; process.exitCode = 1; }
   stateKeepAlive?.close();

@@ -42,6 +42,27 @@ export function capturePolicy(directories, runId, phase) {
   fs.writeFileSync(target, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
 }
 
+export function prepareStandAudit(develop) {
+  const directory = path.join(develop, 'qa/sym64-cli-audit');
+  fs.mkdirSync(directory, { recursive: true });
+  return directory;
+}
+
+export function archiveStandAudit(directory, evidence) {
+  const archive = path.join(evidence, 'cli-audit');
+  fs.mkdirSync(archive, { recursive: true });
+  const files = fs.readdirSync(directory).sort().map(name => {
+    const source = path.join(directory, name), target = path.join(archive, name);
+    assert.ok(fs.lstatSync(source).isFile(), 'CLI audit must contain only regular files');
+    const content = fs.readFileSync(source);
+    const sha256 = createHash('sha256').update(content).digest('hex');
+    fs.writeFileSync(target, content, { flag: 'wx' });
+    assert.equal(createHash('sha256').update(fs.readFileSync(target)).digest('hex'), sha256);
+    return { name, bytes: content.length, sha256 };
+  });
+  return { directory, archive, files, grant: 'Existing raf-develop write boundary; no additional native grant' };
+}
+
 export function instrumentStandCli(cli) {
   const insertion = "if (result.stdout)";
   assert.ok(cli.includes(insertion));

@@ -1,0 +1,250 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "unit-passed-native-required",
+  "audit": {
+    "source": "tasks.md:6.4 and main stand41 report; compiled policy in native-partial-s64-NPoWX9",
+    "conclusion": "Current fixture defect blocks the assigned native flow. Existing develop write grant already covers qa; no additional permissions or production source changes are needed."
+  },
+  "finding": "Allowed initial ps audit wrote to host read-only evidence. Actor correctly stopped before probes.",
+  "fixes": [
+    "prepareStandAudit uses raf-develop/qa/sym64-cli-audit under the existing write grant, shared by policy and CLI audit writers. No failures are swallowed.",
+    "After all native cleanup, host archives every regular audit file with exact bytes and sha256 into ev/cli-audit; failure makes cleanup and stand failed. Summary retains runtime/archive paths, file digests and permission basis.",
+    "Real-child regression executes instrumented allowed ps with read-only host evidence and writable develop, checks exact stdout/stderr/exit and full audit. Host archive is checked byte-for-byte.",
+    "During first QA the pre-existing service cleanup test observed the SIGKILL child before its registered close notification. Await that already registered close promise before checking absence; peer liveness and TERM→KILL checks remain intact. Original service cleanup behavior red is retained in native-denial-cleanup-review.json (87dd5fc9)."
+  ],
+  "unitRuns": [
+    {
+      "runId": "9e25a1fa-e153-455a-a2d4-db53d61fdc67",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+          "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+          "TMPDIR": "/tmp/r-x17RFm"
+        }
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "stand allowed CLI writes its exact audit inside the existing writable develop grant"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "optimize",
+      "nextAction": "implement",
+      "timeoutCount": 1,
+      "passedCount": 88,
+      "cliExitCode": 1,
+      "raw": "native-writable-audit-setup.TestRunResult.json",
+      "tool": "native-writable-audit-setup.tool.json",
+      "combinedStream": "native-writable-audit-setup.combined-stream.txt",
+      "cli": "native-writable-audit-setup.cli-exit.json",
+      "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "acceptance": "NOT behavioral red: recursive read-only mkdir setup failed and cleanup ENOENT masked it. Preserved without claiming red."
+    },
+    {
+      "runId": "4a2499ae-bb6a-4f33-9e41-1b27b428fe94",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+          "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+          "TMPDIR": "/tmp/r-naw2Vo"
+        }
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "stand allowed CLI writes its exact audit inside the existing writable develop grant"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "optimize",
+      "nextAction": "implement",
+      "timeoutCount": 1,
+      "passedCount": 88,
+      "cliExitCode": 1,
+      "raw": "native-writable-audit-red.TestRunResult.json",
+      "tool": "native-writable-audit-red.tool.json",
+      "combinedStream": "native-writable-audit-red.combined-stream.txt",
+      "cli": "native-writable-audit-red.cli-exit.json",
+      "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "workspace": {
+        "head": "8cea001c333351c9392f1d3841153badd4ed21a4",
+        "status": "native-writable-audit-red-workspace.status.txt",
+        "patch": "native-writable-audit-red-workspace.patch"
+      },
+      "acceptance": "Confirmed behavior red: child actual EACCES writing host evidence, ERR_ASSERTION 1 !== 0. Behavior-preserving extraction retained the original evidence/cli-audit path."
+    },
+    {
+      "runId": "d872608a-d31f-4dd4-bf27-745efcd44bef",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+          "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+          "TMPDIR": "/tmp/r-cv5Ig6"
+        }
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "stand cleanup stops a live service after a failed CLI stop without touching a peer"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "optimize",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 1,
+      "passedCount": 88,
+      "cliExitCode": 1,
+      "raw": "native-writable-audit-qa.TestRunResult.json",
+      "tool": "native-writable-audit-qa.tool.json",
+      "combinedStream": "native-writable-audit-qa.combined-stream.txt",
+      "cli": "native-writable-audit-qa.cli-exit.json",
+      "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "workspace": {
+        "head": "8cea001c333351c9392f1d3841153badd4ed21a4",
+        "status": "native-writable-audit-qa-workspace.status.txt",
+        "patch": "native-writable-audit-qa-workspace.patch"
+      },
+      "acceptance": "Writable audit regression passed; old service cleanup assertion observed a killed unreaped child before close. Not final group acceptance."
+    },
+    {
+      "runId": "1d7c970d-e17f-4ad7-8af0-2abac0d55a23",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+          "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+          "TMPDIR": "/tmp/r-CwtYvG"
+        }
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 1,
+      "passedCount": 89,
+      "cliExitCode": 0,
+      "raw": "native-writable-audit-qa-final.TestRunResult.json",
+      "tool": "native-writable-audit-qa-final.tool.json",
+      "combinedStream": "native-writable-audit-qa-final.combined-stream.txt",
+      "cli": "native-writable-audit-qa-final.cli-exit.json",
+      "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "workspace": {
+        "head": "8cea001c333351c9392f1d3841153badd4ed21a4",
+        "status": "native-writable-audit-qa-final-workspace.status.txt",
+        "patch": "native-writable-audit-qa-final-workspace.patch"
+      },
+      "acceptance": "Final own-file QA passed; native stand acceptance remains required."
+    }
+  ],
+  "checks": "native-writable-audit-checks.json",
+  "stderrLimitation": "exec_command exposes combined output only; unchanged TestRunResult, complete tool record/combined stream and separate CLI-versus-child exit evidence retained. No claim of independently captured empty stderr.",
+  "nativeAcceptance": null,
+  "nextAction": "Main secscan and script diff review, own commit, clean-clone live stand42 with same native flow.",
+  "secretScan": {
+    "source": "Main host secret-value scan message in this session, 2026-10-25",
+    "scope": [
+      "scripts/qa-main-agent-channel.mjs",
+      "scripts/qa-main-agent-channel-metadata.mjs",
+      "test/main-switch-agent-channel.test.ts",
+      "evidence/switch-raf-main-by-symlink/qa-6.4b"
+    ],
+    "secretValueMatches": 0,
+    "falsePositives": "Two already committed environment-variable names in native-ps-audit-review.json describe the scan itself. Main explicitly confirmed no secret values."
+  }
+}

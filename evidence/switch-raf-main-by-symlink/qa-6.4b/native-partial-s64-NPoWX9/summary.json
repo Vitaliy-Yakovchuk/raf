@@ -1,0 +1,244 @@
+{
+  "status": "failed",
+  "stand": "/srv/dev/s64-NPoWX9",
+  "reviewed": "11577969d2e8a9b7dadf34f6b19bb587effcc8e7",
+  "startedAt": "2026-10-25T07:23:46.309Z",
+  "commands": [
+    {
+      "label": "git-1",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-2",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-node",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-codex",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-git",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-tmux",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-bwrap",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-uname",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "identity-author",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "identity-committer",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "clone",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-3",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "build",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-4",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-5",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-6",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-7",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-8",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-9",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-10",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-11",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-12",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "main-start",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-16",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-17",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "cleanup-agent-tmux-inspect",
+      "cliExitCode": 1,
+      "signal": null
+    },
+    {
+      "label": "cleanup-tmux",
+      "cliExitCode": 0,
+      "signal": null
+    }
+  ],
+  "switches": [],
+  "limitations": [
+    "This stand tests the published agent channel with host-controlled real symlink/Git/registry fixtures. Release verification gates remain the separate 4.4 QA.",
+    "No unit result substitutes for native tool evidence."
+  ],
+  "workspace": "",
+  "configuration": {
+    "raf-constants.json": "4a9986526efe2b9751684f6a1b4d74aadb91dd0094acda2a1ac8d91e92b4e6e0",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "flow.json": "c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd",
+    "test-runs.json": "e6023d1bbcbdd5ee9f7bf318a5ce87ee36ea383c432c448f1c0c406c0b81dce6"
+  },
+  "trust": {
+    "gitRoots": [
+      "/srv/dev/s64-NPoWX9/root",
+      "/srv/dev/s64-NPoWX9/root/raf-main",
+      "/srv/dev/s64-NPoWX9/root/raf-develop",
+      "/srv/dev/s64-NPoWX9/root/raf-hotfix"
+    ],
+    "overrides": [
+      "projects={\"/srv/dev/s64-NPoWX9/root\"={trust_level=\"trusted\"},\"/srv/dev/s64-NPoWX9/root/raf-main\"={trust_level=\"trusted\"},\"/srv/dev/s64-NPoWX9/root/raf-develop\"={trust_level=\"trusted\"},\"/srv/dev/s64-NPoWX9/root/raf-hotfix\"={trust_level=\"trusted\"}}"
+    ],
+    "quotaCwd": "/srv/dev/s64-NPoWX9/root/raf-main"
+  },
+  "error": {
+    "message": "Unexecuted remainder: native initial gate a",
+    "stack": "Error: Unexecuted remainder: native initial gate a\n    at wait (file:///srv/dev/sym64m-src.gLJ0ku/raf-develop/scripts/qa-main-agent-channel.mjs:50:9)\n    at async file:///srv/dev/sym64m-src.gLJ0ku/raf-develop/scripts/qa-main-agent-channel.mjs:187:26"
+  },
+  "cleanup": [
+    {
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/s64-NPoWX9/root/raf-main/bin/raf.ts",
+        "agent",
+        "close",
+        "--id",
+        "sym64-a",
+        "--force",
+        "--reason",
+        "Host-owned isolated QA cleanup"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "{\"closed\":true,\"unfinished\":[],\"result\":\"failed\",\"forcedClose\":{\"reason\":\"Host-owned isolated QA cleanup\"}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/s64-NPoWX9/root/raf-main/bin/raf.ts",
+        "service",
+        "stop"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "{\"serviceEpoch\":\"0dfd5aa3-7790-4e66-b6c5-e363ea06eca5\",\"resourceWaitReady\":false,\"exitCode\":0,\"state\":\"stopped\",\"pid\":null,\"mainPath\":\"/srv/dev/s64-NPoWX9/root/.git/modules/raf-main/raf-hotfix/generations/bb6fdedc-7e86-4498-88fe-f08bd0006b9c/raf-main\",\"stopReason\":\"Service stopped normally\",\"reasonKnown\":true}\n",
+      "stderr": ""
+    }
+  ],
+  "agentTmuxCleanup": {
+    "outcome": "already-stopped",
+    "command": null,
+    "cliExitCode": null,
+    "verification": {
+      "command": [
+        "tmux",
+        "-S",
+        "/srv/dev/s64-NPoWX9/.raf/tmp/tmux/server.sock",
+        "list-sessions"
+      ],
+      "cwd": "/srv/dev/s64-NPoWX9/root",
+      "cliExitCode": 1,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": "no server running on /srv/dev/s64-NPoWX9/.raf/tmp/tmux/server.sock\n"
+    }
+  },
+  "tmuxCleanup": {
+    "command": [
+      "tmux",
+      "-S",
+      "/srv/dev/s64-NPoWX9/main.sock",
+      "kill-server"
+    ],
+    "cwd": "/srv/dev/s64-NPoWX9/root",
+    "cliExitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "",
+    "stderr": ""
+  },
+  "serviceProcessCleanup": {
+    "complete": true,
+    "processes": [],
+    "remaining": []
+  },
+  "endedAt": "2026-10-25T07:44:06.016Z"
+}

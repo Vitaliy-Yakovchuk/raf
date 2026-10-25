@@ -1,0 +1,11 @@
+{
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "stderr": null,
+  "reason": "exec_command exposes only a combined stream; full unmodified stream retained separately",
+  "runId": "d872608a-d31f-4dd4-bf27-745efcd44bef",
+  "combinedPrefixBytes": 0,
+  "combinedSuffixBytes": 1470,
+  "combinedPrefix": "",
+  "combinedSuffix": "{\"kind\":\"launch-queue.waiting\",\"queueId\":\"15392981-91bf-41d4-857c-5fc6d4899263\",\"requestId\":\"77aa9d5d-f25c-4221-857e-7de22641c8b8\",\"testRunId\":\"d872608a-d31f-4dd4-bf27-745efcd44bef\",\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":8.97,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":23097421824,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"/dev/mapper/data-dev\",\"totalBytes\":190143823872,\"availableBytes\":164652257280},{\"id\":\"/dev/mapper/home-dev\",\"totalBytes\":11499937792,\"availableBytes\":8354246656}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.2,\"minRamFraction\":0.2,\"minRamBytes\":2147483648,\"minDiskFraction\":0.1,\"minDiskBytes\":10737418240},\"hotfix\":{\"maxNormalizedLoad\":1.5,\"minRamFraction\":0.1,\"minRamBytes\":1073741824,\"minDiskFraction\":0.05,\"minDiskBytes\":5368709120},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":20949938176,\"diskBytes\":{\"/dev/mapper/data-dev\":153914839040,\"/dev/mapper/home-dev\":8354246656},\"normalizedLoad\":1.12125},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate\"],\"reason\":null},\"queueId\":\"15392981-91bf-41d4-857c-5fc6d4899263\"}}\n"
+}

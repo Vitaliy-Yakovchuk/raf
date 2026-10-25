@@ -1,0 +1,135 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "failed-native-initial-gate",
+  "reviewed": "11577969d2e8a9b7dadf34f6b19bb587effcc8e7",
+  "runId": "753b8c3f-4673-4e18-80ac-35150a61c6eb",
+  "runnerSessionId": "01a171f6-4f94-7c72-b1a7-290bb1d34bfa",
+  "nativeEvidence": "native-clean/sym64-a.events.jsonl",
+  "assistantEvidence": "assistant-clean/sym64-a-assistant-messages.json",
+  "failure": {
+    "sourceLine": 17,
+    "code": "EROFS",
+    "operation": "write CLI ps audit",
+    "target": "/srv/dev/s64-NPoWX9/ev/cli-audit/4e27341d-17ca-4292-bbf3-3d5a75f4b835.json",
+    "explanation": "Allowed initial ps reached the instrumented CLI but its observational audit was outside actor writable roots. Actor stopped without retry or widening permissions."
+  },
+  "actualFilesystem": {
+    ":root": "read",
+    ":slash_tmp": "write",
+    "/srv/dev/s64-NPoWX9/.raf/tmp/753b8c3f-4673-4e18-80ac-35150a61c6eb": "write",
+    "/srv/dev/s64-NPoWX9/root/openspec/changes/sym64-fixture": "write",
+    "/srv/dev/s64-NPoWX9/root/.git/modules/raf-main/worktrees/raf-develop": "write",
+    "/srv/dev/s64-NPoWX9/root/.git/modules/raf-main": "write",
+    "/srv/dev/s64-NPoWX9/root/.git": "write",
+    "/srv/dev/s64-NPoWX9/root/raf-develop": "write",
+    "/srv/dev/s64-NPoWX9/root/raf-develop/.git": "write",
+    "/home/dev/.raf": "none",
+    "/tmp/raf-ipc-1000": "none",
+    "/tmp/raf-tools-1000": "none",
+    "/run": "none",
+    "/tmp/tmux-1000": "none",
+    "/tmp/cc-socks": "none",
+    "/srv/dev/s64-NPoWX9/.raf": "none",
+    "/srv/dev/s64-NPoWX9/main.sock": "none",
+    "/srv/dev/s64-NPoWX9/root": "read",
+    "/srv/dev/s64-NPoWX9/root/raf-main-a": "read",
+    "/srv/dev/s64-NPoWX9/root/raf-main-b": "read",
+    "/srv/dev/s64-NPoWX9/root/.gitmodules": "read",
+    "/srv/dev/s64-NPoWX9/root/.git/modules/raf-main/raf-hotfix": "read",
+    "/srv/dev/s64-NPoWX9/.raf/tmp/753b8c3f-4673-4e18-80ac-35150a61c6eb/codex-sandbox-753b8c3f-4673-4e18-80ac-35150a61c6eb": "read",
+    "/srv/dev/s64-NPoWX9/.raf/tmp/753b8c3f-4673-4e18-80ac-35150a61c6eb/tmux-1000": "write"
+  },
+  "cleanup": {
+    "service": {
+      "complete": true,
+      "processes": [],
+      "remaining": []
+    },
+    "tmux": {
+      "command": [
+        "tmux",
+        "-S",
+        "/srv/dev/s64-NPoWX9/main.sock",
+        "kill-server"
+      ],
+      "cwd": "/srv/dev/s64-NPoWX9/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    "agentTmux": {
+      "outcome": "already-stopped",
+      "command": null,
+      "cliExitCode": null,
+      "verification": {
+        "command": [
+          "tmux",
+          "-S",
+          "/srv/dev/s64-NPoWX9/.raf/tmp/tmux/server.sock",
+          "list-sessions"
+        ],
+        "cwd": "/srv/dev/s64-NPoWX9/root",
+        "cliExitCode": 1,
+        "signal": null,
+        "error": null,
+        "stdout": "",
+        "stderr": "no server running on /srv/dev/s64-NPoWX9/.raf/tmp/tmux/server.sock\n"
+      }
+    },
+    "requests": [
+      {
+        "command": [
+          "/opt/dev/node/bin/node",
+          "/srv/dev/s64-NPoWX9/root/raf-main/bin/raf.ts",
+          "agent",
+          "close",
+          "--id",
+          "sym64-a",
+          "--force",
+          "--reason",
+          "Host-owned isolated QA cleanup"
+        ],
+        "cliExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "{\"closed\":true,\"unfinished\":[],\"result\":\"failed\",\"forcedClose\":{\"reason\":\"Host-owned isolated QA cleanup\"}}\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/opt/dev/node/bin/node",
+          "/srv/dev/s64-NPoWX9/root/raf-main/bin/raf.ts",
+          "service",
+          "stop"
+        ],
+        "cliExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "{\"serviceEpoch\":\"0dfd5aa3-7790-4e66-b6c5-e363ea06eca5\",\"resourceWaitReady\":false,\"exitCode\":0,\"state\":\"stopped\",\"pid\":null,\"mainPath\":\"/srv/dev/s64-NPoWX9/root/.git/modules/raf-main/raf-hotfix/generations/bb6fdedc-7e86-4498-88fe-f08bd0006b9c/raf-main\",\"stopReason\":\"Service stopped normally\",\"reasonKnown\":true}\n",
+        "stderr": ""
+      }
+    ]
+  },
+  "unexecuted": [
+    "actor a helper 0 and all native stages",
+    "actor b launch and all stages",
+    "A→B→A and rollback native acceptance",
+    "all six message/ps/sender comparisons"
+  ],
+  "nodeCliExitCode": 1,
+  "exitEvidence": {
+    "source": "/srv/dev/sym64m-host.exit",
+    "copy": "host-exit.txt",
+    "sha256": "667d6ed2a5a91f98ea10512c9ea738a11bb86c17dea2b0362bd9410635aa5f97",
+    "value": "sym64m=1"
+  },
+  "copiesVerified": 21,
+  "integrity": "copies.json retains each exact source manifest entry and source/copied digests; source-manifests.json retains complete manifest file digests. Only main-cleaned native/assistant messages were read/copied.",
+  "secretScan": {
+    "source": "Main message for stand41 in this session",
+    "matches": 0
+  },
+  "nextAction": "Move fixture audit to the existing develop write boundary, preserve exact CLI outputs, host archive after cleanup; red→qa then full native stand required."
+}

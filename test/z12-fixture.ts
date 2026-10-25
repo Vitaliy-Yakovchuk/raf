@@ -66,7 +66,7 @@ export async function z12Fixture(t: TestContext) {
   await Promise.all([
     writeFile(join(change, 'proposal.md'), '# Z12 fixture\n'),
     writeFile(join(change, 'design.md'), '# Z12 fixture design\n'),
-    writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Prepare assigned documents\n'),
+    writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Prepare assigned documents\n- [ ] 1.2 Unselected remaining work\n'),
     writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify(constants)),
     writeFile(join(confRoot, 'flow.json'), JSON.stringify(flow)),
     writeFile(join(confRoot, 'test-runs.json'), JSON.stringify(json('test-runs.json'))),
@@ -120,6 +120,7 @@ export async function productionPreparation(t: TestContext, f: Awaited<ReturnTyp
   const reserved: Parameters<RuntimeServices['reserve']>[0][] = [];
   const createServices = async (): Promise<RuntimeServices> => ({
     ...await getServices(),
+    agentQueue: undefined,
     assignment: { validate: async () => ({ ok: true, snapshot: f.assignment }), compose: async () => 'Z12 fixture brief' },
     routingSnapshot: async () => ({ runnerEnabled: { codex: true }, cliAvailable: { codex: true }, quotas: [] }),
     selectModel: () => ({ status: 'selected', runner: 'codex', model: 'fixture-model', effort: 'fixture-effort', reason: 'fixture', quota: 'unknown' }),

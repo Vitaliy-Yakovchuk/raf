@@ -78,7 +78,7 @@ async function fixture(t: TestContext, linkedOrchestrator = false) {
   await Promise.all([
     writeFile(join(change, 'proposal.md'), '# Document only\n'),
     writeFile(join(change, 'design.md'), '# Document design\n'),
-    writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Write assigned documents\n'),
+    writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Write assigned documents\n- [ ] 1.2 Unselected remaining work\n'),
     writeFile(spec, '## ADDED Requirements\n'),
     writeFile(questions, '# Questions\n'),
   ]);

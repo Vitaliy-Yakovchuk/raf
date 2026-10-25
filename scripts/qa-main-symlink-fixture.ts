@@ -6,3 +6,9 @@ export function prepareLiveProjects(configuration: { projects: Record<string, an
   });
   return projects;
 }
+
+export function prepareLegacyLiveProjects(configuration: { projects: Record<string, any> }) {
+  const projects = prepareLiveProjects(configuration);
+  delete projects.projects.raf.mainCopies;
+  return projects;
+}

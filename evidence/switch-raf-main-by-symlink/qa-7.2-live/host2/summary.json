@@ -1,0 +1,203 @@
+{
+  "status": "failed",
+  "reviewed": "6ad616d09af67dfcba7c34420f609a7f9c9213ea",
+  "stand": "/srv/dev/s72-gjx02G",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/sym72q2/raf/scripts/qa-main-symlink-live.mjs",
+    "6ad616d09af67dfcba7c34420f609a7f9c9213ea"
+  ],
+  "startedAt": "2026-10-25T22:51:52.315Z",
+  "commands": [
+    {
+      "label": "git-1",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-2",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-node",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-codex",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-git",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-tmux",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-bwrap",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-uname",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "clone",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-3",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-4",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-5",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "build",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-6",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-7",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-8",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-9",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-10",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-11",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-12",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-13",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-14",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-15",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-16",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-17",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-18",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-19",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-20",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "actual-initial-start",
+      "cliExitCode": 1,
+      "signal": null
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "actual-start",
+      "status": "failed",
+      "reason": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"Cannot register dirty initial main generation\"}\n\n\n1 !== 0\n"
+    }
+  ],
+  "completed": [],
+  "pending": [
+    "actual-start",
+    "develop-main",
+    "hotfix-main-develop",
+    "rollback",
+    "native-channel",
+    "pending-report-message",
+    "handover",
+    "repeat-start"
+  ],
+  "scope": "Host executes real production start, native provider and shared release gates on a fresh isolated Git stand. No mocked runner, synthetic report acceptance, always-true compatibility/handover, unit execution or production HOME writes.",
+  "cleanup": {
+    "complete": true,
+    "services": {
+      "complete": true,
+      "processes": [],
+      "remaining": []
+    }
+  },
+  "trust": {
+    "gitRoots": [
+      "/srv/dev/s72-gjx02G/root",
+      "/srv/dev/s72-gjx02G/root/raf-main",
+      "/srv/dev/s72-gjx02G/root/raf-develop",
+      "/srv/dev/s72-gjx02G/root/raf-hotfix"
+    ],
+    "overrides": [
+      "projects={\"/srv/dev/s72-gjx02G/root\"={trust_level=\"trusted\"},\"/srv/dev/s72-gjx02G/root/raf-main\"={trust_level=\"trusted\"},\"/srv/dev/s72-gjx02G/root/raf-develop\"={trust_level=\"trusted\"},\"/srv/dev/s72-gjx02G/root/raf-hotfix\"={trust_level=\"trusted\"}}"
+    ],
+    "quotaCwd": "/srv/dev/s72-gjx02G/root/raf-main"
+  },
+  "error": {
+    "message": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"Cannot register dirty initial main generation\"}\n\n\n1 !== 0\n",
+    "stack": "AssertionError [ERR_ASSERTION]: {\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"Cannot register dirty initial main generation\"}\n\n\n1 !== 0\n\n    at must (file:///srv/dev/sym72q2/raf/scripts/qa-main-symlink-live.mjs:41:87)\n    at file:///srv/dev/sym72q2/raf/scripts/qa-main-symlink-live.mjs:132:31\n    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)\n    at async node:internal/modules/esm/loader:650:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)",
+    "code": "ERR_ASSERTION"
+  },
+  "finishedAt": "2026-10-25T22:52:04.320Z"
+}

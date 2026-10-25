@@ -1,0 +1,16 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/s72-gjx02G/root/raf-main",
+    "diff",
+    "--binary"
+  ],
+  "cwd": "/srv/dev/s72-gjx02G/root/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "diff --git a/qa/unstaged.txt b/qa/unstaged.txt\nindex 180b47c..8605d59 100644\n--- a/qa/unstaged.txt\n+++ b/qa/unstaged.txt\n@@ -1 +1 @@\n-baseline\n+unstaged bytes\n",
+  "stderr": ""
+}

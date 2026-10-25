@@ -1,0 +1,58 @@
+{
+  "group": "switch-raf-main-by-symlink/production-start-layout",
+  "files": [
+    "test/production-start-layout.test.ts"
+  ],
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "sha": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+  "commands": {
+    "red": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+    "qa": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts"
+  },
+  "streams": "Tool merges stdout/stderr. First unchanged LF-terminated TestRunResult line is saved as *.stdout.json; following launch-queue.waiting bytes saved separately as *.stderr; full merged output and tool object retained. Native byte-stream provenance unavailable. Existing stderr broker issue Z.423 awaits main instructions.",
+  "proofBoundary": "Unit tests configuration/catalog preparation only. Does not establish live start, conversion, native runner, handover or accepted JSON. Host2 actual start failed; new real bootstrap path requires host execution.",
+  "host2": "../qa-7.2-live/host2/summary.json",
+  "red": {
+    "runId": "0770cd2a-44cf-45d0-8285-cb5f3dfda50e",
+    "cliCode": 1,
+    "childExitCode": 1,
+    "outcome": "assertions-failed",
+    "passed": 16,
+    "knownRed": [
+      {
+        "file": "test/production-start-layout.test.ts",
+        "name": "native actual-start fixture: initial production registration uses the ordinary legacy main layout"
+      }
+    ],
+    "unknown": [],
+    "unexecuted": [],
+    "removed": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+  },
+  "qa": {
+    "runId": "1ff450ae-2fc5-4f74-9665-af5deeac5b50",
+    "cliCode": 0,
+    "childExitCode": 0,
+    "outcome": "passed",
+    "passed": 17,
+    "knownRed": [],
+    "unknown": [],
+    "unexecuted": [],
+    "removed": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+  }
+}

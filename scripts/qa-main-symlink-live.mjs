@@ -9,7 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
-import { prepareLiveProjects } from './qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects } from './qa-main-symlink-fixture.ts';
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
@@ -105,7 +105,7 @@ try {
   for (const [exe, args] of [['node', ['--version']], ['codex', ['--version']], ['git', ['--version']], ['tmux', ['-V']], ['bwrap', ['--version']], ['uname', ['-a']]]) must(run('version-' + exe, exe, args));
   fs.cpSync(path.join(path.dirname(source), 'conf'), path.join(root, 'conf'), { recursive: true });
   const projects = prepareLiveProjects(read(path.join(root, 'conf/projects.json')));
-  atomic(path.join(root, 'conf/projects.json'), projects);
+  atomic(path.join(root, 'conf/projects.json'), prepareLegacyLiveProjects(projects));
   const settings = read(path.join(root, 'conf/raf.json')); summary.trust = configureLiveCodexTrust(settings, root); atomic(path.join(root, 'conf/raf.json'), settings);
   must(run('clone', 'git', ['clone', '--no-hardlinks', '--no-checkout', source, main])); git(main, 'checkout', '-B', 'main', reviewed);
   fs.cpSync(path.join(source, 'node_modules'), path.join(main, 'node_modules'), { recursive: true, dereference: true });
@@ -125,6 +125,13 @@ try {
   fs.writeFileSync(path.join(change, 'proposal.md'), '## Why\nIsolated native 7.2 QA.\n\n## What Changes\nExecute the exact native plan at qa/sym72-instructions.txt.\n\n## Non-goals\nNo implementation or tests in the native actor.\n');
   fs.writeFileSync(path.join(change, 'tasks.md'), '- [ ] 1.1 [implement] Execute qa/sym72-instructions.txt verbatim using the initial issued raf_command, native exec and own report_path. Keep the same live session across host switches.\n- [ ] 1.2 Host retains active fixture; unassigned.\n');
   git(root, 'add', '--', '.gitmodules', 'raf-main', 'conf', 'openspec'); git(root, 'commit', '-m', 'qa: isolated orchestrator and live actor assignment');
+  // Existing production has a registered clean generation before the migration.
+  // Keep that real owner alive: conversion must preserve its registry and state.
+  const legacyService = JSON.parse(must(run('legacy-clean-start', process.execPath, [path.join(main, 'bin/raf.ts'), 'service', 'start'])));
+  assert.equal(legacyService.state, 'ready');
+  assert.ok(fs.lstatSync(main).isDirectory(), 'legacy bootstrap must retain the ordinary main directory');
+  atomic(path.join(ev, 'legacy-clean-ready.json'), legacyService);
+  atomic(path.join(root, 'conf/projects.json'), projects);
   fs.writeFileSync(path.join(main, 'qa/staged.txt'), 'staged bytes\n'); git(main, 'add', '--', 'qa/staged.txt');
   fs.writeFileSync(path.join(main, 'qa/unstaged.txt'), 'unstaged bytes\n'); fs.writeFileSync(path.join(main, 'qa/untracked.txt'), 'untracked bytes\n');
   const before = dirty(main); atomic(path.join(ev, 'conversion-before.json'), { ordinaryDirectory: fs.lstatSync(main).isDirectory(),

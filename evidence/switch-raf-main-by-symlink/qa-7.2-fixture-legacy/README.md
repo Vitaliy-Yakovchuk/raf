@@ -1,0 +1,7 @@
+# QA 7.2: legacy production prerequisite
+
+Host2 on 6ad616d built successfully, then actual start returned 1: `Cannot register dirty initial main generation`. Full unchanged host evidence is in ../qa-7.2-live/host2/. No live step completed, no native actor launched; cleanup complete. This is a fixture prerequisite defect: a fresh clone had dirty bytes before its first trusted production generation was registered. The product validator remains unchanged.
+
+Own unit red 0770cd2a-44cf-45d0-8285-cb5f3dfda50e establishes an assertion failure in the same file/group/HOME (16 passed, 1 knownRed). Fix prepares legacy projects without mainCopies, retaining the entire configured registry and real catalog compilation. Own qa 1ff450ae-2fc5-4f74-9665-af5deeac5b50 passes all 17 tests; no unknown/unexecuted, timeout false, cleanup complete, group complete. Commands, SHA and raw stream limitations are in metadata.json; workspace diffs are retained.
+
+The driver now first uses actual clean service start with an ordinary registered main directory and no mainCopies. It keeps that real owner alive, enables mainCopies, introduces staged/unstaged/untracked sentinels, then performs actual conversion start and exact before/after assertions. No direct ensure helper, injected initial registry, manual stop/start or weakened production validation. Unit green proves configuration preparation only; real bootstrap/conversion green is pending host evidence and is not claimed here.

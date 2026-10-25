@@ -9,7 +9,7 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
 import type { ProductionStoreOptions } from '../src/main-production-store.ts';
 import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
 import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
-import { prepareLiveProjects } from '../scripts/qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects } from '../scripts/qa-main-symlink-fixture.ts';
 import { CatalogGenerator } from '../src/catalog-generator.ts';
 import { productionBindings } from '../src/production-bindings.ts';
 
@@ -78,6 +78,22 @@ test('native actual-start fixture: configured catalog examples remain valid on t
     constants: config('raf-constants.json'), models: config('models.json'), projects: isolated,
   }, productionBindings()));
   assert.deepEqual(projects, original, 'stand setup must not mutate the source configuration');
+});
+
+test('native actual-start fixture: initial production registration uses the ordinary legacy main layout', () => {
+  const config = (name: string) => JSON.parse(readFileSync(new URL(`../../conf/${name}`, import.meta.url), 'utf8'));
+  const projects = config('projects.json');
+  const original = structuredClone(projects);
+  const legacy = prepareLegacyLiveProjects(projects);
+  assert.equal(legacy.projects.raf.mainCopies, undefined, 'the clean first start must register the existing ordinary main before conversion');
+  assert.equal(legacy.projects.raf.path, 'raf-main');
+  assert.deepEqual(legacy.projects.raf.branchPaths, { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' });
+  assert.doesNotThrow(() => new CatalogGenerator().compile({
+    constants: config('raf-constants.json'), models: config('models.json'), projects: legacy,
+  }, productionBindings()));
+  const conversion = prepareLiveProjects(legacy);
+  assert.deepEqual(conversion.projects.raf.mainCopies, ['raf-main-a', 'raf-main-b']);
+  assert.deepEqual(projects, original);
 });
 
 function fixture(t: TestContext, copies = false) {

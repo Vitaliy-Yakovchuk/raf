@@ -1,0 +1,99 @@
+diff --git a/scripts/qa-main-symlink-fixture.ts b/scripts/qa-main-symlink-fixture.ts
+index 5814f9d..0a223bd 100644
+--- a/scripts/qa-main-symlink-fixture.ts
++++ b/scripts/qa-main-symlink-fixture.ts
+@@ -6,3 +6,9 @@ export function prepareLiveProjects(configuration: { projects: Record<string, an
+   });
+   return projects;
+ }
++
++export function prepareLegacyLiveProjects(configuration: { projects: Record<string, any> }) {
++  const projects = prepareLiveProjects(configuration);
++  delete projects.projects.raf.mainCopies;
++  return projects;
++}
+diff --git a/scripts/qa-main-symlink-live.md b/scripts/qa-main-symlink-live.md
+index cd7d499..c40671f 100644
+--- a/scripts/qa-main-symlink-live.md
++++ b/scripts/qa-main-symlink-live.md
+@@ -8,7 +8,7 @@ LC_ALL=C CODEX_HOME=/home/dev/.codex node scripts/qa-main-symlink-live.mjs FULL_
+ 
+ The first stdout record names `/srv/dev/s72-*/ev`. Preserve complete stdout, stderr and host exit code separately, and return that evidence directory. No unit commands run. The setup's committed QA instructions and CLI output audit do not modify validators, sandbox, routing, native grants or report acceptance. All native RAF commands must be separate direct tools using the original brief prefix. Native tool transcripts, sessions, original brief, exact CLI results, real service output, release gates and Git/state snapshots are archived.
+ 
+-The conversion starts with an ordinary registered main directory and actual `service start`; there is no direct layout/store call in setup. The release engine uses real verification/activation gates, cross-store fetches and real compatibility probes on an isolated SQLite snapshot. The host registers complete immutable generations as the publication storage adapter; it never substitutes release gates with hand-built success objects. Native agents retain their original launch identity. The hotfix worktree remains permanent.
++The fixture first registers a clean ordinary legacy production main with actual `service start`, while `mainCopies` is absent. This establishes the existing immutable generation through the real CLI, rather than making an unverified dirty clone its first generation. That real service stays alive. The fixture then enables `mainCopies`, writes staged/unstaged/untracked sentinels, and invokes actual `service start` for conversion. Both before/after Git states are captured; there is no direct layout/store call or injected registry in setup. The release engine uses real verification/activation gates, cross-store fetches and real compatibility probes on an isolated SQLite snapshot. The host registers complete immutable generations as the publication storage adapter; it never substitutes release gates with hand-built success objects. Native agents retain their original launch identity. The hotfix worktree remains permanent.
+ 
+ Handover is deliberately an assertion, not an always-true port: actual `service start` must return readiness in the newly registered generation. An old ready service does not prove handover and stops the dependent scenario with failure. No forced service restart or agent kill is used to manufacture a passing transition. During the second transition the same native actor writes its actual report, and production must accept it exactly once. A full pass additionally needs review of the returned native transcript and pending/report/ownership artifacts against the delta; the driver's exit zero alone is not the final QA verdict.
+ 
+diff --git a/scripts/qa-main-symlink-live.mjs b/scripts/qa-main-symlink-live.mjs
+index 4cbd71a..dc06e49 100644
+--- a/scripts/qa-main-symlink-live.mjs
++++ b/scripts/qa-main-symlink-live.mjs
+@@ -9,7 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+ import { createStandGeneration } from './qa-main-agent-generation.mjs';
+ import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
+-import { prepareLiveProjects } from './qa-main-symlink-fixture.ts';
++import { prepareLegacyLiveProjects, prepareLiveProjects } from './qa-main-symlink-fixture.ts';
+ 
+ const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
+ assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
+@@ -105,7 +105,7 @@ try {
+   for (const [exe, args] of [['node', ['--version']], ['codex', ['--version']], ['git', ['--version']], ['tmux', ['-V']], ['bwrap', ['--version']], ['uname', ['-a']]]) must(run('version-' + exe, exe, args));
+   fs.cpSync(path.join(path.dirname(source), 'conf'), path.join(root, 'conf'), { recursive: true });
+   const projects = prepareLiveProjects(read(path.join(root, 'conf/projects.json')));
+-  atomic(path.join(root, 'conf/projects.json'), projects);
++  atomic(path.join(root, 'conf/projects.json'), prepareLegacyLiveProjects(projects));
+   const settings = read(path.join(root, 'conf/raf.json')); summary.trust = configureLiveCodexTrust(settings, root); atomic(path.join(root, 'conf/raf.json'), settings);
+   must(run('clone', 'git', ['clone', '--no-hardlinks', '--no-checkout', source, main])); git(main, 'checkout', '-B', 'main', reviewed);
+   fs.cpSync(path.join(source, 'node_modules'), path.join(main, 'node_modules'), { recursive: true, dereference: true });
+@@ -125,6 +125,13 @@ try {
+   fs.writeFileSync(path.join(change, 'proposal.md'), '## Why\nIsolated native 7.2 QA.\n\n## What Changes\nExecute the exact native plan at qa/sym72-instructions.txt.\n\n## Non-goals\nNo implementation or tests in the native actor.\n');
+   fs.writeFileSync(path.join(change, 'tasks.md'), '- [ ] 1.1 [implement] Execute qa/sym72-instructions.txt verbatim using the initial issued raf_command, native exec and own report_path. Keep the same live session across host switches.\n- [ ] 1.2 Host retains active fixture; unassigned.\n');
+   git(root, 'add', '--', '.gitmodules', 'raf-main', 'conf', 'openspec'); git(root, 'commit', '-m', 'qa: isolated orchestrator and live actor assignment');
++  // Existing production has a registered clean generation before the migration.
++  // Keep that real owner alive: conversion must preserve its registry and state.
++  const legacyService = JSON.parse(must(run('legacy-clean-start', process.execPath, [path.join(main, 'bin/raf.ts'), 'service', 'start'])));
++  assert.equal(legacyService.state, 'ready');
++  assert.ok(fs.lstatSync(main).isDirectory(), 'legacy bootstrap must retain the ordinary main directory');
++  atomic(path.join(ev, 'legacy-clean-ready.json'), legacyService);
++  atomic(path.join(root, 'conf/projects.json'), projects);
+   fs.writeFileSync(path.join(main, 'qa/staged.txt'), 'staged bytes\n'); git(main, 'add', '--', 'qa/staged.txt');
+   fs.writeFileSync(path.join(main, 'qa/unstaged.txt'), 'unstaged bytes\n'); fs.writeFileSync(path.join(main, 'qa/untracked.txt'), 'untracked bytes\n');
+   const before = dirty(main); atomic(path.join(ev, 'conversion-before.json'), { ordinaryDirectory: fs.lstatSync(main).isDirectory(),
+diff --git a/test/production-start-layout.test.ts b/test/production-start-layout.test.ts
+index ebef9cb..07df96e 100644
+--- a/test/production-start-layout.test.ts
++++ b/test/production-start-layout.test.ts
+@@ -9,7 +9,7 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
+ import type { ProductionStoreOptions } from '../src/main-production-store.ts';
+ import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
+ import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
+-import { prepareLiveProjects } from '../scripts/qa-main-symlink-fixture.ts';
++import { prepareLegacyLiveProjects, prepareLiveProjects } from '../scripts/qa-main-symlink-fixture.ts';
+ import { CatalogGenerator } from '../src/catalog-generator.ts';
+ import { productionBindings } from '../src/production-bindings.ts';
+ 
+@@ -80,6 +80,22 @@ test('native actual-start fixture: configured catalog examples remain valid on t
+   assert.deepEqual(projects, original, 'stand setup must not mutate the source configuration');
+ });
+ 
++test('native actual-start fixture: initial production registration uses the ordinary legacy main layout', () => {
++  const config = (name: string) => JSON.parse(readFileSync(new URL(`../../conf/${name}`, import.meta.url), 'utf8'));
++  const projects = config('projects.json');
++  const original = structuredClone(projects);
++  const legacy = prepareLegacyLiveProjects(projects);
++  assert.equal(legacy.projects.raf.mainCopies, undefined, 'the clean first start must register the existing ordinary main before conversion');
++  assert.equal(legacy.projects.raf.path, 'raf-main');
++  assert.deepEqual(legacy.projects.raf.branchPaths, { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' });
++  assert.doesNotThrow(() => new CatalogGenerator().compile({
++    constants: config('raf-constants.json'), models: config('models.json'), projects: legacy,
++  }, productionBindings()));
++  const conversion = prepareLiveProjects(legacy);
++  assert.deepEqual(conversion.projects.raf.mainCopies, ['raf-main-a', 'raf-main-b']);
++  assert.deepEqual(projects, original);
++});
++
+ function fixture(t: TestContext, copies = false) {
+   const projects = {
+     raf: { path: 'raf-main', profile: 'raf', branchPaths: { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' },

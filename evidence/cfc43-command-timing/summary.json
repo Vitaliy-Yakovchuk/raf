@@ -1,0 +1,88 @@
+{
+  "assignment": "complete-raf-flow-contracts:4.3",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/raf-command-timing --files test/command-timing.test.ts",
+  "testedCommit": "a4dd05b6ace555c12d2559c0408bd6881fd58c7d",
+  "ownImplementationFiles": [
+    "src/app-runtime.ts",
+    "src/command-timing.ts",
+    "src/production-entry.ts"
+  ],
+  "workspaceBeforeRun": {
+    "ownUncommittedChanges": [],
+    "foreignModified": [
+      "src/catalog-generator.ts",
+      "src/test-run-diagnostics.ts",
+      "src/test-run-etchly-integration.ts",
+      "src/test-run-etchly-inventory.ts",
+      "src/test-run-etchly.ts",
+      "src/test-run-integration-profiles.ts",
+      "src/test-run-runtime.ts",
+      "src/test-run-vitest-reporter.ts",
+      "src/test-run-vitest-runner.ts",
+      "src/test-runs.ts"
+    ],
+    "foreignUntracked": [
+      "evidence/add-raf-test-run/etchly-integration-implementation/",
+      "src/catalog-schema.ts",
+      "src/catalog.schema.json"
+    ],
+    "sharedWorkspace": true
+  },
+  "result": {
+    "runId": "29ae9ce0-ce25-4537-b908-f0f2d95c0459",
+    "selection": {
+      "files": [
+        "test/command-timing.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "durationMs": 922,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 48,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "complete",
+    "nextAction": "complete",
+    "timeoutCount": 0
+  },
+  "capture": {
+    "toolOutput": "test-run.output.json",
+    "toolEnvelope": "test-run.tool-result.json",
+    "cliExit": "cli-exit-code.txt",
+    "stderr": "stderr-availability.json",
+    "fullResultParsed": true,
+    "outputTruncated": false,
+    "separateStderrAvailable": false
+  },
+  "checks": [
+    {
+      "command": "npm run build",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run check:comments",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "implementationOrder": "Initial implementation completed and committed before first reading test/command-timing.test.ts; no tests modified.",
+  "retainedExistingBehavior": [
+    "Atomic StateStore.recordCommandDuration SQL UPSERT and single EMA row",
+    "Production-owned finalizer and commands/profile/health envelope",
+    "Canonical keys and existing primary error preservation",
+    "SQLite-only command stats budget; external commands have null budgets"
+  ],
+  "scope": "No integration scenario I1-I6 performed or closed; 4.4 and many other change items remain open, so no archive."
+}

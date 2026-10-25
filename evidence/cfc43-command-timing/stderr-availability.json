@@ -1,0 +1,6 @@
+{
+  "available": false,
+  "reason": "exec_command exposes combined output, not a separate stderr stream; the complete returned output is valid TestRunResult JSON. No separate capture/manifest remains in the caller run directory.",
+  "mainConfirmation": "[main] Окремого stderr чи capture цього прогону в main немає: raf зараз не зберігає повний результат (Q97 без відповіді власника). Повтор не потрібен: збережи наявний JSON, явно познач недоступність окремого stderr і заверши звіт; галочку ставить raf.",
+  "emptyStderrNotAsserted": true
+}

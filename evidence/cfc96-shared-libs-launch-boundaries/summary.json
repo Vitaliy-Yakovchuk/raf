@@ -1,0 +1,89 @@
+{
+  "assignment": "complete-raf-flow-contracts:9.6",
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/tasks.md#9.5–9.6",
+      "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/workspace-routing/spec.md — Робоче дерево за проєктом і гілкою",
+      "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/agent-adapters/spec.md — Виконавець комітить свою роботу"
+    ],
+    "finding": "Підтверджено чинний дефект: resolver перевіряв залежність, але launch не передавав її дерево, Git-права та commitRepositories. Суперечностей дорученню немає."
+  },
+  "implementation": {
+    "file": "src/app-runtime.ts",
+    "behavior": "Для workspaceWritable перевірений route.sharedLibrariesPath канонізується й додається до workspaceBoundaries/commitPaths та commitRepositories; для обох дерев обчислюються Git-права, дублікати усуваються. За usesSharedLibs=false/undefined resolver не повертає залежність. Spec/design не розширюють права коду чи його Git-каталогів.",
+    "preparedTestsReadBeforeImplementation": false,
+    "testsModifiedByThisAgent": false
+  },
+  "registration": {
+    "source": "../cfc95-shared-libs-launch-boundaries/registration.json",
+    "presentIn": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "confModifiedByThisAgent": false
+  },
+  "redHandoff": {
+    "source": "../cfc95-shared-libs-launch-boundaries/red-result.json",
+    "runId": "11f7179a-9bf7-46f8-87c9-a98d8ea0411a",
+    "knownRedCount": 6,
+    "timeoutCount": 0,
+    "sameGroupAndQaHomePreserved": true
+  },
+  "unit": {
+    "runId": "27a4e4ba-c9e5-40b1-af0c-187fff5267b3",
+    "group": "complete-raf-flow-contracts/shared-libs-launch-boundaries",
+    "selection": {
+      "files": [
+        "test/shared-libs-launch-boundaries.test.ts"
+      ],
+      "testIds": []
+    },
+    "passed": 14,
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "durationMs": 1644,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "files": [
+      "implement-result.json",
+      "implement-stderr.jsonl",
+      "implement-tool-result.json",
+      "implement-command.json",
+      "before-implement.json"
+    ],
+    "streamEvidence": "Повний combined tool output збережено без змін. Перший JSON рядок — stderr launch-queue.waiting (src/test-run-reservations.ts:179); другий рядок — незмінений stdout TestRunResult. CLI exit з tool metadata збережено окремо від child exitCode."
+  },
+  "checks": [
+    {
+      "command": "node --check src/app-runtime.ts",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "stdout": "\n> build\n> node scripts/build.ts\n\nКаталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n"
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "coordination": {
+    "mainAddressVerifiedBy": "raf agent ps",
+    "messageReceipt": "adbd2742-ba02-477d-bf86-863aca2a4fb9",
+    "mainReply": "Перетинів у src/app-runtime.ts немає (ara41 змінював production-runtime.ts, ara412 — test/production-fixture.ts).",
+    "foreignPathsUntouched": [
+      "test/production-fixture.ts",
+      "evidence/add-raf-agent-run-4.1.2/"
+    ]
+  },
+  "limits": "Unit doubles підтверджують межі launch/reservation/brief та reported-commits; живий sandbox runner і приймання фактичних shared-libs commits цим прогоном не перевірялись. Інші пункти зміни відкриті, sync/archive не виконуються. Галочку 9.6 ставить raf."
+}

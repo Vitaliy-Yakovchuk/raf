@@ -4,6 +4,7 @@ import { measureRafCost } from './raf-cost-runtime.ts';
 import { commandTimingFailure, recordCommandTiming, validateCommandTiming } from './command-timing.ts';
 import { runAgentWithQueue, type AgentQueueRecord, type AgentQueueValidation, type AgentQueueRequest, type AgentRunQueuePorts } from './agent-run-queue.ts';
 import { isAbsolute, join } from 'node:path';
+import { realpath } from 'node:fs/promises';
 import { commandFailure, failureContext, type CommandFailureContext } from './cli-contract.ts';
 import type { Handler } from './cli.ts';
 import type { CompiledCatalog } from './catalog.ts';
@@ -250,8 +251,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const hotfix = params.type === 'hotfix' && params.project === 'raf';
       const route = await api.route({ root: context.orchestratorRoot, project: params.project, branch: task.branch, ...(hotfix ? { hotfixRunId: identity.runId } : {}) });
       if (!route.ok) throw fail(route.error.code, 'workspace', route.error.message);
-      const workspaceBoundaries = bindWorkspaceBoundaries(task, route.cwd);
-      const gitBoundaries = hotfix ? [] : await (dependencies.resolveGitWriteBoundaries ?? resolveGitWriteBoundaries)(route.cwd, context.orchestratorRoot, !task.workspaceWritable ? task.writeBoundaries : undefined);
+      const codeWorkspaces = [route.cwd, ...(task.workspaceWritable && route.sharedLibrariesPath ? [await realpath(route.sharedLibrariesPath)] : [])];
+      const workspaceBoundaries = [...new Set([...bindWorkspaceBoundaries(task, route.cwd), ...codeWorkspaces.slice(1)])];
+      const gitBoundaries = hotfix ? [] : [...new Set((await Promise.all(codeWorkspaces.map(cwd =>
+        (dependencies.resolveGitWriteBoundaries ?? resolveGitWriteBoundaries)(cwd, context.orchestratorRoot, !task.workspaceWritable ? task.writeBoundaries : undefined)
+      ))).flat())];
       const commitOwnWork = task.workspaceWritable || gitBoundaries.length > 0;
       const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
       const policy = handoff ? { ...loaded.models, models: loaded.models.models.filter(model => model.id !== handoff.causeModel) } : loaded.models;
@@ -261,7 +265,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const launch: RuntimeLaunch = { ...identity, addressId: params.id,
         ...(notify ? { notify } : {}),
         activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
-        assignment, selection, ...(handoff ? { handoff } : {}), statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(task.workspaceWritable ? [route.cwd, context.orchestratorRoot] : gitBoundaries.length ? [context.orchestratorRoot] : [])], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
+        assignment, selection, ...(handoff ? { handoff } : {}), statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(task.workspaceWritable ? [...codeWorkspaces, context.orchestratorRoot] : gitBoundaries.length ? [context.orchestratorRoot] : [])], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
       let prepared: PreparedRuntimeReport | undefined;
       let reserved = false;
       let startAttempted = false;

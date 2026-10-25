@@ -1,0 +1,42 @@
+{
+  "reason": "Main secret scan identified Git author email as a configured secret value. No values are reproduced in this manifest.",
+  "history": "No history rewrite. New corrective commit only.",
+  "edits": [
+    {
+      "file": "implementation.patch",
+      "scope": "Author/Commit header email only",
+      "count": 2,
+      "sourceSha256": "3d6bf776096522c0ce9a056f8f62ac76c4488f50e5d3a4f7a6c5d57a4984a246",
+      "redactedSha256": "929b4c12baa0f598ea8ec44e10f3049905bcd45c2494c03517bafad5e6f0ab72",
+      "replacement": "<redacted>"
+    },
+    {
+      "file": "native-partial-s64-Itc0Q9/review.json",
+      "fields": [
+        {
+          "jsonPointer": "/metadataChanges/0/sourceText",
+          "count": 1
+        },
+        {
+          "jsonPointer": "/metadataChanges/0/copiedText",
+          "count": 1
+        }
+      ],
+      "sourceSha256": "68a9c3d8948b673526ce8bc0d3f5f19ee931dbc8397998843a72e77773b7a5d5",
+      "redactedSha256": "7a1db9751adaa6a439df10f89203583da8f8dc4aa46926c9a102b738384beb4d",
+      "replacement": "<redacted>"
+    }
+  ],
+  "integrity": "Original host manifest and cleaned native event files are unchanged. Source reflog byte hashes in review remain hashes of original host bytes; sourceText/copiedText are now redacted explanatory copies.",
+  "preCommitSecretScan": {
+    "attestedBy": "main",
+    "result": "0 configured-secret-value matches",
+    "scope": [
+      "implementation.patch",
+      "native-partial-s64-Itc0Q9/",
+      "redactions-manifest.json",
+      "entire evidence/switch-raf-main-by-symlink/qa-6.4b"
+    ],
+    "localStoreAccess": false
+  }
+}

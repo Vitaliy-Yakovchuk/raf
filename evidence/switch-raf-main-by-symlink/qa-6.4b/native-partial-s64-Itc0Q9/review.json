@@ -36,11 +36,13 @@
       },
       "actualSha256": "ca39cd14b0bede8d051efb1203fece6e42f19f952264903fa544d95cdaca145a",
       "copiedSha256": "ebdacc701d3f66535c895b59065c4d737fe98ad5c725b0f124fd9f3fc6384375",
-      "sourceText": "0000000000000000000000000000000000000000 592b529d9b612b288967877e17696b0ab6ebad89 Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com> 1792902272 +0000\t\n",
-      "copiedText": "0000000000000000000000000000000000000000 592b529d9b612b288967877e17696b0ab6ebad89 Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com> 1792902272 +0000\n",
+      "sourceText": "0000000000000000000000000000000000000000 592b529d9b612b288967877e17696b0ab6ebad89 Vitaliy Yakovchuk <redacted> 1792902272 +0000\t\n",
+      "copiedText": "0000000000000000000000000000000000000000 592b529d9b612b288967877e17696b0ab6ebad89 Vitaliy Yakovchuk <redacted> 1792902272 +0000\n",
       "mtime": 1792902439.425003
     }
   ],
   "cause": "Git maintenance during the allowed source commits normalized the empty inactive legacy HEAD reflog message from LF to TAB+LF. No commit OID changed. Guard correctly retained recovery.",
-  "nextAction": "Normalize the fixture legacy reflog with Git before metadata snapshot; behavioral red and QA in the unchanged agent-channel group, then reviewed live stand."
+  "nextAction": "Normalize the fixture legacy reflog with Git before metadata snapshot; behavioral red and QA in the unchanged agent-channel group, then reviewed live stand.",
+  "redactionManifest": "../redactions-manifest.json",
+  "secretScanCorrection": "Main subsequently found a configured secret email value in the copied reflog identity. Review-only sourceText/copiedText emails are redacted; raw original metadata digests remain unchanged."
 }

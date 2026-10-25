@@ -1,0 +1,64 @@
+diff --git a/test/production-qa-fixture.ts b/test/production-qa-fixture.ts
+index e2d3a31..840114f 100644
+--- a/test/production-qa-fixture.ts
++++ b/test/production-qa-fixture.ts
+@@ -43,6 +43,7 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location:
+   const retained = mkdtempSync(join(location.root, '.qa-retained-source-'));
+   renameSync(codeRoot, join(retained, 'source'));
+   git(mainRoot, 'worktree', 'add', '-b', 'develop', codeRoot, 'HEAD');
++  git(mainRoot, 'worktree', 'add', '-b', 'hotfix', join(location.root, projects.projects.raf.branchPaths.hotfix), 'HEAD');
+   cpSync(join(retained, 'source'), codeRoot, { recursive: true });
+   rmSync(retained, { recursive: true });
+   for (const name of ['src', 'bin', 'scripts', 'package.json']) {
+diff --git a/test/production-start-layout.test.ts b/test/production-start-layout.test.ts
+index 076016e..352a0a5 100644
+--- a/test/production-start-layout.test.ts
++++ b/test/production-start-layout.test.ts
+@@ -1,6 +1,10 @@
+ import assert from 'node:assert/strict';
+ import { registerHooks } from 'node:module';
+ import test, { type TestContext } from 'node:test';
++import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
++import { spawnSync } from 'node:child_process';
++import { join } from 'node:path';
++import { tmpdir } from 'node:os';
+ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
+ import type { ProductionStoreOptions } from '../src/main-production-store.ts';
+ import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
+@@ -243,6 +247,36 @@ test('production QA fixture: configured main copies are ready before the entry c
+   assert.equal(typeof cli, 'function');
+ });
+ 
++test('production QA fixture: real configured layout retains registered develop and hotfix worktrees', async t => {
++  const directory = mkdtempSync(join(tmpdir(), 'raf-start-fixture-'));
++  t.after(() => rmSync(directory, { recursive: true, force: true }));
++  const actualRoot = join(directory, 'root'), actualHome = join(directory, 'home');
++  mkdirSync(join(actualRoot, 'conf'), { recursive: true });
++  mkdirSync(actualHome);
++  cpSync(new URL('../../conf/projects.json', import.meta.url), join(actualRoot, 'conf/projects.json'));
++  const projects = JSON.parse(readFileSync(join(actualRoot, 'conf/projects.json'), 'utf8')).projects;
++  assert.equal(projects.raf.mainCopies.length, 2, 'exercise the deployed configured layout');
++  const realFixture = await import('./production-qa-fixture.ts');
++  const callbackReached = new Error('registered real layout reached entry boundary');
++  await assert.rejects(realFixture.prepareProductionQaFixture(t, { root: actualRoot, home: actualHome }, async () => {
++    const git = (cwd: string, ...args: string[]) => {
++      const result = spawnSync('git', ['--no-optional-locks', '-C', cwd, ...args], { encoding: 'utf8' });
++      assert.equal(result.status, 0, result.stderr);
++      return result.stdout.trim();
++    };
++    const source = git(join(actualRoot, projects.raf.branchPaths.develop), 'rev-parse', '--path-format=absolute', '--git-common-dir');
++    for (const branch of ['develop', 'hotfix']) {
++      const cwd = join(actualRoot, projects.raf.branchPaths[branch]);
++      assert.equal(git(cwd, 'symbolic-ref', '--short', 'HEAD'), branch);
++      assert.equal(git(cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir'), source);
++      assert.ok(git(cwd, 'worktree', 'list', '--porcelain').includes(`worktree ${cwd}\n`));
++    }
++    assert.equal(realpathSync(join(actualRoot, projects.raf.path)), join(actualRoot, projects.raf.mainCopies[0]));
++    assert.notEqual(git(join(actualRoot, projects.raf.path), 'rev-parse', '--path-format=absolute', '--git-common-dir'), source);
++    throw callbackReached;
++  }), error => error === callbackReached);
++});
++
+ test('production QA fixture: pending layout conversion blocks entry preparation', async t => {
+   const f = fixture(t, true);
+   let release!: () => void;

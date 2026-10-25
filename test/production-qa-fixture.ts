@@ -43,6 +43,7 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
   const retained = mkdtempSync(join(location.root, '.qa-retained-source-'));
   renameSync(codeRoot, join(retained, 'source'));
   git(mainRoot, 'worktree', 'add', '-b', 'develop', codeRoot, 'HEAD');
+  git(mainRoot, 'worktree', 'add', '-b', 'hotfix', join(location.root, projects.projects.raf.branchPaths.hotfix), 'HEAD');
   cpSync(join(retained, 'source'), codeRoot, { recursive: true });
   rmSync(retained, { recursive: true });
   for (const name of ['src', 'bin', 'scripts', 'package.json']) {

@@ -1,6 +1,6 @@
-import { createHash } from 'node:crypto';
-import { lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { readFileSync, realpathSync } from 'node:fs';
+import { join, relative, resolve } from 'node:path';
+import { verifyHotfixRuntimeInventory } from './hotfix-runtime-inventory.ts';
 import { execFileSync } from 'node:child_process';
 
 function json(path: string): any { return JSON.parse(readFileSync(path, 'utf8')); }
@@ -9,23 +9,7 @@ function git(cwd: string, ...args: string[]): string {
   for (const key of Object.keys(env)) if (key.startsWith('GIT_')) delete env[key];
   return execFileSync('git', ['-C', cwd, ...args], { env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
 }
-function inventory(root: string): { path: string; sha256: string; mode: number }[] {
-  const files: { path: string; sha256: string; mode: number }[] = [];
-  function walk(directory: string) {
-    for (const name of readdirSync(directory).sort()) {
-      if (directory === root && ['.git', 'node_modules'].includes(name)) continue;
-      const path = join(directory, name);
-      const info = lstatSync(path);
-      if (info.isSymbolicLink()) throw new Error('Generation symlink');
-      if (info.isDirectory()) walk(path);
-      else if (info.isFile() && info.nlink === 1) files.push({ path: relative(root, path), sha256: createHash('sha256').update(readFileSync(path)).digest('hex'), mode: info.mode & 0o777 });
-      else throw new Error('Generation alias');
-    }
-  }
-  walk(root);
-  return files;
-}
-export function hotfixModuleOrigin(orchestratorRoot: string, productionRoot: string, modulePath: string, qa: boolean): string | undefined {
+export function hotfixModuleOrigin(orchestratorRoot: string, productionRoot: string, modulePath: string, qa: boolean, diagnostic?: (reason: string) => void): string | undefined {
   const common = git(productionRoot, 'rev-parse', '--path-format=absolute', '--git-common-dir');
   const projects = json(join(orchestratorRoot, 'conf/projects.json')).projects;
   const source = realpathSync(git(resolve(orchestratorRoot, projects.raf.branchPaths.develop), 'rev-parse', '--path-format=absolute', '--git-common-dir'));
@@ -34,15 +18,14 @@ export function hotfixModuleOrigin(orchestratorRoot: string, productionRoot: str
     const registration = json(join(control, 'main-store.json'));
     if (registration.root !== orchestratorRoot || registration.source !== source || registration.control !== control || registration.production !== join(control, 'main.git') || realpathSync(common) !== registration.production) return undefined;
   }
-  const root = dirname(dirname(modulePath));
-  if (realpathSync(root) !== root || !['src', 'bin', 'scripts'].includes(relative(root, modulePath).split('/')[0])) return undefined;
   try {
     const state = json(join(control, 'registry.json'));
-    const generation = state.generations?.[root];
-    if (generation && root.startsWith(join(control, 'generations') + '/') && generation.root === root) {
-      if (createHash('sha256').update(JSON.stringify(inventory(root))).digest('hex') !== generation.fingerprint) return undefined;
+    for (const [root, generation] of Object.entries(state.generations ?? {}) as [string, any][]) {
+      if (!modulePath.startsWith(root + '/')) continue;
+      if (!root.startsWith(join(control, 'generations') + '/') || generation.root !== root || realpathSync(root) !== root || !['src', 'bin', 'scripts'].includes(relative(root, modulePath).split('/')[0])) return undefined;
+      verifyHotfixRuntimeInventory(root, generation.commit, generation.runtimeInventory, modulePath);
       return root;
     }
-  } catch {}
+  } catch (error) { diagnostic?.(error instanceof Error ? error.message : String(error)); }
   return undefined;
 }

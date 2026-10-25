@@ -145,9 +145,10 @@ export function resolveStateContext(request: StateContextRequest): StateContext 
     if (statSync(modulePath).nlink !== 1) refuse(`Module origin has hardlink aliases: ${modulePath}`);
     const roots = Object.values(project.branchPaths).filter((path): path is string => typeof path === 'string')
       .map(path => resolve(orchestratorRoot, path));
+    let originReason: string | undefined;
     const codeRoot = roots.find(root => { try { return realpathSync(root) === root && inside(modulePath, root); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false; throw error; } }) ??
-      activeMainOrigin(orchestratorRoot, project, productionRoot, modulePath) ?? hotfixModuleOrigin(orchestratorRoot, productionRoot, modulePath, request.environment.RAF_QA_HOME !== undefined);
-    if (!codeRoot || !['src', 'bin', 'scripts'].includes(relative(codeRoot, modulePath).split(sep)[0])) refuse(`Unregistered module origin: ${modulePath}`);
+      activeMainOrigin(orchestratorRoot, project, productionRoot, modulePath) ?? hotfixModuleOrigin(orchestratorRoot, productionRoot, modulePath, request.environment.RAF_QA_HOME !== undefined, reason => { originReason = reason; });
+    if (!codeRoot || !['src', 'bin', 'scripts'].includes(relative(codeRoot, modulePath).split(sep)[0])) refuse(originReason ?? `Unregistered module origin: ${modulePath}`);
     const settingsPath = join(orchestratorRoot, 'conf', 'raf.json');
     let settings;
     try { settings = JSON.parse(readFileSync(settingsPath, 'utf8')); }
@@ -196,6 +197,18 @@ export function verifyStateContext(context: StateContext): void {
   const current = resolveStateContext(proof.request);
   if (JSON.stringify(current) !== JSON.stringify(context)) refuse('State context configuration changed before open');
   isolatedPaths(context, proof.workingHome);
+}
+
+export function verifyStateModule(context: StateContext, modulePath: string): void {
+  if (context.mode !== 'production') return;
+  verifyStateContext(context);
+  const actual = realpathSync(modulePath);
+  if (actual !== resolve(modulePath) || !inside(actual, context.codeRoot)) refuse('Dynamic module is outside the pinned production generation: ' + modulePath);
+  if (context.codeRoot.includes('/raf-hotfix/generations/')) {
+    const projects = JSON.parse(readFileSync(join(context.orchestratorRoot, 'conf/projects.json'), 'utf8'));
+    const productionRoot = realpathSync(resolve(context.orchestratorRoot, projects.projects.raf.path));
+    if (hotfixModuleOrigin(context.orchestratorRoot, productionRoot, actual, false) !== context.codeRoot) refuse('Dynamic module is not protected by its generation runtime inventory: ' + modulePath);
+  }
 }
 
 export function stateContextEnvironment(context: StateContext, inherited: Readonly<Record<string, string | undefined>>): Record<string, string | undefined> {

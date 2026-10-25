@@ -23,6 +23,7 @@ import { validateTestRunConfig } from './test-runs.ts';
 import type { SandboxCallerControlSnapshot } from './sandbox-test-caller.ts';
 import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
 import { retainHotfixGeneration } from './hotfix-activation.ts';
+import { verifyStateModule } from './state-migration-guard.ts';
 import { agentChannelReadOnlyPaths } from './main-switch-agent-launcher.ts';
 import { prepareHotfixWorktree, validateHotfixTrust, startHotfixCommitPort } from './hotfix-worktree.ts';
 import { hotfixRoute } from './hotfix-host.ts';
@@ -1247,6 +1248,7 @@ export async function createProductionServices(
       }
       record.brief = request.brief;
       const modulePath = options.workerModulePath ?? fileURLToPath(import.meta.url);
+      if (context.stateContext) verifyStateModule(context.stateContext, modulePath);
       if (!options.execute && context.stateContext?.mode === 'qa') await runtimeTmuxSocket(context, stateContextEnvironment(context.stateContext, process.env));
       record.spawnAttempted = true;
       try {

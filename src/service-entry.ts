@@ -1,6 +1,6 @@
 import { hotfixModuleOrigin } from './hotfix-origin.ts';
 import { acquireHotfixReader } from './hotfix-activation.ts';
-import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
+import { productionStateContext, stateContextEnvironment, stateFailure, verifyStateModule } from './state-migration-guard.ts';
 import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
@@ -112,6 +112,7 @@ export async function runServiceEntry(options?: {
   if (context.stateDirectory !== join(stateContext.homeDirectory, '.raf') || context.socketPath !== join(context.stateDirectory, 'service.sock')) throw stateFailure('STATE_CONTEXT_REFUSED', 'Service bootstrap paths differ from selected state context');
   required('RAF_MAIN_PATH');
   const modulePath = required('RAF_SERVICE_HOST_MODULE_PATH');
+  verifyStateModule(stateContext, modulePath);
   const loadPorts = options?.loadPorts ?? (async (path: string, value: ServiceEntryContext): Promise<ServicePorts> => {
     const module = await import(pathToFileURL(path).href);
     if (typeof module.createServicePorts !== 'function') throw new Error(`Service host module ${path} must export createServicePorts`);

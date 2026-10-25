@@ -7,6 +7,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { alive, command, copyTree, durable, exists, git, hash, inventory, json, locked, mainRoute, processStart, validateReleaseWorkspace, withReleaseWriter, withHotfixWriter } from './hotfix-host.ts';
 import type { HotfixCleanupResult, HotfixHost, HotfixWorkspace } from "./hotfix-worktree.ts";
 import { stateFailure } from './state-migration-guard.ts';
+import { createHotfixRuntimeInventory, defaultHotfixRuntimePolicy, verifyHotfixRuntimeInventory } from './hotfix-runtime-inventory.ts';
+import type { HotfixRuntimeInventory } from './hotfix-runtime-inventory.ts';
 
 export type HotfixGateName = "build" | "regression" | "runtime-import" | "help" | "agent-ps" | "agent-message" | "service-start" | "service-ready" | "service-status" | "service-stop";
 export type HotfixCheckpoint = "before-intent" | "after-intent" | "before-switch" | "after-switch" | "after-refs" | "after-index" | "after-smoke" | "before-cleanup" | "after-cleanup";
@@ -288,7 +290,7 @@ async function checkCandidate(host: HotfixHost, candidate: VerifiedHotfix) {
   return route;
 }
 
-interface Generation { root: string; commit: string; fingerprint: string; files: readonly HotfixSnapshotFile[] }
+interface Generation { root: string; commit: string; fingerprint: string; files: readonly HotfixSnapshotFile[]; runtimeInventory: HotfixRuntimeInventory }
 interface Registry { current: string; generations: Record<string, Generation>; prepared?: string[]; garbage?: { path: string; root: string; kind: 'generation' | 'prepared' }[] }
 async function assertMainWriterGate(host: HotfixHost, cwd: string): Promise<void> {
   const directories = new Set([await git(cwd, 'rev-parse', '--absolute-git-dir'), await git(host.orchestratorRoot, 'rev-parse', '--absolute-git-dir')]);
@@ -309,7 +311,8 @@ async function generation(host: HotfixHost, route: Awaited<ReturnType<typeof mai
   await copyTree(source, root);
   await fs.cp(configurationRoot, join(parent, 'conf'), { recursive: true, dereference: false });
   const files = await inventory(root);
-  return { root, commit, fingerprint: hash(JSON.stringify(files)), files };
+  const runtimeInventory = createHotfixRuntimeInventory(root, commit, defaultHotfixRuntimePolicy(root));
+  return { root, commit, fingerprint: hash(JSON.stringify(files)), files, runtimeInventory };
 }
 async function registry(host: HotfixHost, route: Awaited<ReturnType<typeof mainRoute>>): Promise<Registry> {
   const path = join(route.control, 'registry.json');
@@ -577,7 +580,8 @@ export async function acquireHotfixReader(host: HotfixHost, _kind: HotfixReaderK
     await reconcile(host, route);
     const state = await registry(host, route);
     const current = state.generations[state.current];
-    if (await treeIdentity(current.root) !== current.fingerprint) throw stateFailure('STATE_CONTEXT_REFUSED', 'Production generation fingerprint changed');
+    try { verifyHotfixRuntimeInventory(current.root, current.commit, current.runtimeInventory); }
+    catch (error) { throw stateFailure('STATE_CONTEXT_REFUSED', error instanceof Error ? error.message : String(error)); }
     const id = randomUUID();
     const path = join(route.control, 'readers', id + '.json');
     await durable(path, { root: current.root, pid: process.pid, start: await processStart(process.pid) });
@@ -609,7 +613,9 @@ export async function retainHotfixGeneration(host: HotfixHost, root: string): Pr
   return locked(host, async route => {
     const state: Registry = await json(join(route.control, 'registry.json'));
     const generation = state.generations[root];
-    if (!generation || await treeIdentity(root) !== generation.fingerprint) throw new Error('Unregistered or changed production generation');
+    if (!generation) throw stateFailure('STATE_CONTEXT_REFUSED', 'Unregistered production generation');
+    try { verifyHotfixRuntimeInventory(root, generation.commit, generation.runtimeInventory); }
+    catch (error) { throw stateFailure('STATE_CONTEXT_REFUSED', error instanceof Error ? error.message : String(error)); }
     const path = join(route.control, 'readers', randomUUID() + '.json');
     await durable(path, { root, pid: process.pid, start: await processStart(process.pid) });
     return { release: () => fs.rm(path, { force: true }) };

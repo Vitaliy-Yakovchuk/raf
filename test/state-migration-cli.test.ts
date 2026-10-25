@@ -246,9 +246,27 @@ test('maintenance CLI is explicit, path-bound and does not grant migration to su
   const source = files(f.statePath);
   const before = logical(f.qaStatePath);
   const backupPath = join(f.root, 'maintenance-backup.sqlite');
-  const program = { file: join(f.developTree, 'scripts', 'migrate-state.ts') };
+  const program = (clients: 'unknown' | 'quiescent') => `import assert from 'node:assert/strict';
+import { runStateMigration } from ${JSON.stringify(pathToFileURL(join(f.developTree, 'src', 'state-migration.ts')).href)};
+let inspections = 0;
+process.exitCode = await runStateMigration(process.argv.slice(1), {
+  async inspectClients(path) {
+    assert.equal(path, ${JSON.stringify(f.qaStatePath)});
+    inspections++;
+    return ${JSON.stringify(clients)};
+  }
+});
+assert.equal(inspections, ${clients === 'unknown' ? 1 : 2});`;
   const env = { HOME: f.qaHome, RAF_QA_HOME: f.qaHome };
-  const result = await nodeProcess(f, program, ['--state', f.qaStatePath, '--from', '7', '--to', String(STATE_SCHEMA_VERSION), '--backup', backupPath], env);
+  const args = ['--state', f.qaStatePath, '--from', '7', '--to', String(STATE_SCHEMA_VERSION), '--backup', backupPath];
+  const unverified = await nodeProcess(f, program('unknown'), ['--', ...args], env);
+  assert.equal(unverified.code, 1, unverified.stderr);
+  assert.equal(JSON.parse(unverified.stderr.trim()).code, 'STATE_MIGRATION_CONFLICT');
+  assert.match(unverified.stderr, /unknown client/);
+  assert.equal(existsSync(backupPath), false);
+  assert.deepEqual(logical(f.qaStatePath), before);
+  assert.deepEqual(files(f.statePath), source);
+  const result = await nodeProcess(f, program('quiescent'), ['--', ...args], env);
   assert.equal(result.code, 0, result.stderr);
   assert.deepEqual(logical(backupPath), before);
   assert.equal(logical(f.qaStatePath).version, STATE_SCHEMA_VERSION);

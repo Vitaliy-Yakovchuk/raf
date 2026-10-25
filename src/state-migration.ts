@@ -136,7 +136,7 @@ export async function migrateState(request: StateMigrationRequest, ports: StateM
   }
 }
 
-export async function runStateMigration(argv: readonly string[]): Promise<number> {
+export async function runStateMigration(argv: readonly string[], ports?: StateMigrationPorts): Promise<number> {
   try {
     const options = new Map<string, string>();
     for (let index = 0; index < argv.length; index += 2) {
@@ -149,7 +149,7 @@ export async function runStateMigration(argv: readonly string[]): Promise<number
     if (options.size !== 4 || !/^\d+$/.test(options.get('--from')!) || !/^\d+$/.test(options.get('--to')!)) throw stateFailure('STATE_MIGRATION_CONFLICT', 'All four migration arguments and integer versions are required');
     const context = productionStateContext(fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'cli');
     const result = await migrateState({ context, statePath: options.get('--state')!, fromVersion: Number(options.get('--from')),
-      toVersion: Number(options.get('--to')), backupPath: options.get('--backup')! });
+      toVersion: Number(options.get('--to')), backupPath: options.get('--backup')! }, ports);
     process.stdout.write(JSON.stringify(result) + '\n');
     return 0;
   } catch (error) {

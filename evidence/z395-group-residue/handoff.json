@@ -1,0 +1,493 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.395.1",
+  "stage": "test-scaffold",
+  "project": "raf",
+  "answer": "Підготовлено 29 fake-port unit-тестів U1–U6 без production-реалізації. Первинний цільовий red підтверджено автором; 13 assertion-red, 16 already-green збережено. Main перевіряє причини red у Z.395.2 перед незалежним implement.",
+  "sourceAudit": {
+    "valid": true,
+    "sources": [
+      {
+        "path": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/proposal.md",
+        "sections": [
+          "Why",
+          "What Changes"
+        ],
+        "finding": "Z.395 у межах завершення чинного flow; окремої секції Non-goals немає, межі визначені дизайном."
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md",
+        "requirements": [
+          "Стабільний облік таймаутів групи",
+          "Наступна дія за станом unit-групи"
+        ],
+        "scenarios": "Усі сценарії обох вимог прочитано. Profile/authorization/result прочитано лише щодо fake seam, структурованого результату, відбору та чинних guards."
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/z395-group-residue-design.md",
+        "sections": [
+          "Матриця приймання наступних стадій",
+          "Межі агрегату і результату",
+          "Закриття залишку без обходу"
+        ]
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/core/process/feature-test-authoring/spec.md",
+        "requirement": "Агент тестів і каркаса",
+        "commit": "2c9d57d4537efffa78cb7a05d27920b1c1a59c4d",
+        "quote": "Агент MAY читати будь-який код проєкту в межах файлового доступу",
+        "authorRedQuote": "Автор тестів SHALL сам виконувати первинний прогін своїх тестів через raf test run із --phase red"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/core/process/unit-test-runs/spec.md",
+        "purpose": "Точний відбір, stable key/HOME, fake unit ports, конфігураційна політика й author-red."
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/autonomous-development/spec.md",
+        "requirement": "Аудит та вилучення неактуальних змін"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/parallel-development/spec.md",
+        "requirement": "Коміти в спільному робочому дереві"
+      }
+    ],
+    "resolvedStaleInstructions": [
+      {
+        "source": "Z.395.1/tasks.md і абзац дизайну про сліпий режим/не запускати",
+        "resolution": "Чинний feature-test-authoring і прямий бриф дозволяють читати код та вимагають author-red. Main повідомив, що декларацій портів немає; використано наявні public ports і test-support, без нових API."
+      },
+      {
+        "source": "Z.395.2–4/design команди add-raf-test-run/unit",
+        "resolution": "Пряме повідомлення main і root commit 3961007afe9cc57f910d7c2f79a1156fc08f1571 зареєстрували власну групу до першого запуску. Наступним фазам передається саме complete-raf-flow-contracts/z395-group-residue. Стару чужу групу/HOME/агрегат не змінено; бюджет нової групи весь час 0.",
+        "mainNotifiedReceipt": "d3ecf3b3-bd20-48a3-bee4-f20519c92ef1"
+      }
+    ]
+  },
+  "implementationBoundary": {
+    "newProductionApis": [],
+    "scaffoldMethods": [],
+    "reason": "Наявні runTestRunCli/reconcileTestRunGroup, TestRunRequest/TestRunGroup/TestRunTransaction/TestRunStatePort/TestRunPorts/TestRunResult і RunHarness достатні. Нових production-методів немає, тому NotImplemented-каркас не потрібний.",
+    "changedProductionFiles": [],
+    "changedSharedTestsOrHelpers": [],
+    "fakeOnly": true,
+    "realIntegrationAcceptance": "Не виконувалось і не підтверджується unit-доказом; Z.395.4 лишається відкритим."
+  },
+  "selection": {
+    "group": "complete-raf-flow-contracts/z395-group-residue",
+    "profileId": "node",
+    "files": [
+      "test/test-run-group-residue-z395.test.ts"
+    ],
+    "commands": {
+      "red": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z395-group-residue --files test/test-run-group-residue-z395.test.ts",
+      "implement": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/z395-group-residue --files test/test-run-group-residue-z395.test.ts",
+      "qa": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z395-group-residue --files test/test-run-group-residue-z395.test.ts"
+    },
+    "nextStagePermission": "Main має перевірити нове доручення/авторизацію для implement/qa; текст команди сам дозволу не видає.",
+    "exactIds": [
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U1 accepted A red then B green preserves off-selection debt and gives exact confirmation guidance",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U1 off-selection unexecuted IDs survive a valid green subset with the same budget",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U2 green in another group cannot confirm the target exact ID",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U2 green in another project cannot confirm the target exact ID",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U2 green in another workspace cannot confirm the target exact ID",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U2 reads and recovery isolate the full key: group",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U2 reads and recovery isolate the full key: project",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U2 reads and recovery isolate the full key: workspace",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection assertion-failed IDs in exact-name selection",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection assertion-failed IDs in file selection",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection complete IDs in exact-name selection",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection complete IDs in file selection",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection discovered IDs in exact-name selection",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection discovered IDs in file selection",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection passed IDs in exact-name selection",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U3 rejects off-selection passed IDs in file selection",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 a provisional exact pass followed by cleanup cannot clear inherited knownRed",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 a provisional exact pass followed by interruption cannot clear inherited knownRed",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 a provisional exact pass followed by missing-complete cannot clear inherited knownRed",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 a provisional exact pass followed by protocol-error cannot clear inherited knownRed",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 a provisional exact pass followed by setup cannot clear inherited knownRed",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 a provisional exact pass followed by timeout cannot clear inherited knownRed",
+        "status": "assertion-red"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U4 exact confirmation after a narrowed selection preserves other debt and refuses a full run at the limit",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U5 cleanup cannot prove removal even with a replacement test in the selected file",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U5 file-missing cannot prove removal even with a replacement test in the selected file",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U5 interruption cannot prove removal even with a replacement test in the selected file",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U6 inherited residue does not bypass the existing in-flight guard",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U6 inherited residue does not bypass the existing inventory guard",
+        "status": "passed"
+      },
+      {
+        "file": "test/test-run-group-residue-z395.test.ts",
+        "name": "Z395 U6 inherited residue does not bypass the existing overlap guard",
+        "status": "passed"
+      }
+    ],
+    "fakeAggregateGroup": "add-raf-test-run/unit",
+    "fakeAggregateGroupNote": "Це лише значення ключа в in-memory RunHarness; зовнішній raf запускав тільки власну stable group."
+  },
+  "profileRegistration": {
+    "file": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "owner": "main",
+    "appliedCommit": "3961007afe9cc57f910d7c2f79a1156fc08f1571",
+    "verifiedPresent": true,
+    "authorChangedConf": false,
+    "exactAdditions": [
+      {
+        "op": "add",
+        "path": "/projects/raf/profiles/node/unitFiles/-",
+        "value": "test/test-run-group-residue-z395.test.ts"
+      },
+      {
+        "op": "add",
+        "path": "/projects/raf/groups/complete-raf-flow-contracts~1z395-group-residue",
+        "value": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-group-residue-z395.test.ts"
+          ]
+        }
+      }
+    ],
+    "furtherDiff": [],
+    "prerequisites": {
+      "registeredProject": "raf",
+      "activeChange": "complete-raf-flow-contracts",
+      "canonicalWorkspace": "/srv/dev/work/orchestrator/raf-develop",
+      "phase": "red",
+      "callerPhase": "test-scaffold",
+      "profile": {
+        "cwd": ".",
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts"
+        ],
+        "exactIds": "node-test-name",
+        "resultAdapter": "node-test-events",
+        "environment": {
+          "isolatedHome": true,
+          "stateOrigin": true
+        },
+        "checks": [
+          "node_modules/typescript/package.json",
+          "src/test-run-reporter.ts",
+          "scripts/test-run-node.ts"
+        ]
+      },
+      "runtimeVersion": "v26.12.1",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0
+    }
+  },
+  "acceptance": [
+    {
+      "id": "U1",
+      "tests": 2,
+      "assertions": [
+        "Прийняті A red/B green → лише B: command/selection/passed лише B, child0/CLI nonzero, A лишається knownRed поза звуженим preset; зміна фази/агента/SHA не змінює budget.",
+        "nextAction confirm-known-red та точні group/file/name і перевірка permission у guidance; старий assertion marker не є diagnostic нового runId.",
+        "Позавідбірний unexecuted зберігається."
+      ],
+      "red": 1,
+      "green": 1
+    },
+    {
+      "id": "U2",
+      "tests": 6,
+      "assertions": [
+        "Ізольовані project/workspace/group записи й recovery; reconcile викликається лише для target processIdentity.",
+        "Однаковий file/name, той самий QA HOME: окремий green запуск за кожним foreign key не очищує target knownRed."
+      ],
+      "red": 0,
+      "green": 6
+    },
+    {
+      "id": "U3",
+      "tests": 8,
+      "assertions": [
+        "Чотири види events discovered/passed/assertion-failed/complete × files або exact-name selection.",
+        "Новий сторонній file/name не імпортується до passed/knownRed/unexecuted; setup/fix-setup, CLI nonzero без assertions failureKind; попередній борг і timeoutCount збережені."
+      ],
+      "red": 8,
+      "green": 0
+    },
+    {
+      "id": "U4",
+      "tests": 7,
+      "assertions": [
+        "Прогнозований pass A перед timeout/setup/interruption/missing-complete/protocol-error/cleanup-incomplete не очищує непідтверджений A.",
+        "Валідний exact A за max прибирає тільки A, зберігає sibling/pending і budget; наступний повний прогін відхилений без spawn.",
+        "Лише timeout збільшує timeoutCount."
+      ],
+      "red": 4,
+      "green": 3
+    },
+    {
+      "id": "U5",
+      "tests": 3,
+      "assertions": [
+        "Додано лише відсутні межі interruption/cleanup/file-missing: навіть replacement у вибраному файлі не доводить removed старого A; файл відсутній → 0 spawn.",
+        "Попередні knownRed/unexecuted збережені, removed порожній, CLI nonzero, budget не скинуто."
+      ],
+      "red": 0,
+      "green": 3
+    },
+    {
+      "id": "U6",
+      "tests": 3,
+      "assertions": [
+        "Residue за max не обходить inventory/overlap/inFlight: точний errorCode, 0 spawn, весь in-memory Map незмінний.",
+        "Broker grant/phase/identity guards повторно не реалізовано; адресний reuse наявних tests наведено нижче."
+      ],
+      "red": 0,
+      "green": 3
+    }
+  ],
+  "reusedCoverageWithoutRerun": [
+    {
+      "file": "test/test-run-refusal-diagnostics.test.ts",
+      "tests": [
+        "a complete selected-file collection removes stale knownRed IDs, marks them separately, and permits passed",
+        "a complete collection retires deleted IDs while retaining a current assertion failure",
+        "collection reconciliation uses full file/name identity when another file retains the same test name",
+        "a narrowed file selection cannot retire knownRed belonging to an uncollected file",
+        "a filtered --only completion cannot prove that another knownRed in the same file was deleted",
+        "a timeout before authoritative collection preserves knownRed and the group timeout budget",
+        "missing-complete/protocol-error/setup/empty-collection cannot turn unobserved knownRed into removed IDs or passed"
+      ],
+      "purpose": "U5 позитивне removed та вже наявні негативні межі не продубльовано."
+    },
+    {
+      "file": "test/test-run-selection-atomicity.test.ts",
+      "ids": [
+        "Z399 S01",
+        "Z399 S02",
+        "Z399 S03",
+        "Z399 S04"
+      ],
+      "purpose": "Чинні guards атомарної відмови/перетину/конкуренції."
+    },
+    {
+      "file": "test/sandbox-test-regression-groups.test.ts",
+      "ids": [
+        "R04/R05 refusal precedes unitContext, test state, reservation, recovery and spawn",
+        "R04 explicit other project and cwd refuse before any unit context",
+        "R05 --only out-of-grant file is refused without reading even target knownRed",
+        "R06 own and foreign callers across agent, phase, SHA and source-item use the same target aggregate key",
+        "R07 concurrent own and regression execution delegates both to the identical reservation context",
+        "R09 own active custom group with exact unit files keeps existing authorization without a foreign declaration"
+      ],
+      "purpose": "Гранти/phase/identity поза зміненим агрегувальним стиком збережено через existing broker."
+    }
+  ],
+  "runs": [
+    {
+      "artifactPrefix": "first-red",
+      "runId": "50317612-485f-4783-94f4-f0b4e7c9c6ba",
+      "testSourceCommit": "b947daed00dce0ed44c6581e57fd57608d1a0ac4",
+      "featureRed": false,
+      "reason": "Власний fake integration phase мав purpose=none/allowed=false і ранній CONFIGURATION_INVALID. Не є доказом відсутньої поведінки.",
+      "cliCode": 1
+    },
+    {
+      "artifactPrefix": "second-red",
+      "runId": "c3a15ebf-0f0c-428b-91e1-da49fa242087",
+      "testSourceCommit": "b947daed00dce0ed44c6581e57fd57608d1a0ac4",
+      "ownTestDirty": true,
+      "featureRed": false,
+      "reason": "Діагностичний повтор встановив точне CONFIGURATION_INVALID phases/integration/purpose; власний harness виправлено локально, shared helper не змінювався.",
+      "cliCode": 1
+    },
+    {
+      "artifactPrefix": "third-red",
+      "runId": "8d4fa244-54f5-4309-9e88-197e0deae5f6",
+      "testSourceCommit": "19d387a9719f386ffdebc92677d61913d2dbe726",
+      "featureRed": true,
+      "assertionRed": 11,
+      "passed": 15,
+      "cliCode": 1,
+      "childCode": 1,
+      "note": "Після виправлення setup. Пізніше додано три U2 foreign-pass і посилено U3 unexecuted assertions."
+    },
+    {
+      "artifactPrefix": null,
+      "runId": "27a188b2-08e3-421a-bb21-253d4bb84370",
+      "testSourceCommit": "2c96dc642a6b043678e00b35648b13c5c6fb7469",
+      "featureRed": true,
+      "assertionRed": 13,
+      "passed": 16,
+      "cliCode": 1,
+      "childCode": 1,
+      "note": "Повний transport показано у відповіді exec, але не збережено в store. Єдине повторення незмінного відбору для збереження повного машинного доказу наведено як final-red."
+    },
+    {
+      "artifactPrefix": "final-red",
+      "runId": "13d1b385-c811-43ff-bcba-088d8e4b8533",
+      "testSourceCommit": "2c96dc642a6b043678e00b35648b13c5c6fb7469",
+      "ownTestDirty": false,
+      "featureRed": true,
+      "assertionRed": 13,
+      "passed": 16,
+      "cliCode": 1,
+      "childCode": 1,
+      "failureKinds": [
+        "assertions"
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "durationMs": 16057,
+      "timeoutCount": 0,
+      "nextAction": "implement"
+    }
+  ],
+  "evidenceFormat": {
+    "result": "*.result.json — повний TestRunResult, перший JSON-рядок без змін.",
+    "stderr": "*.stderr.txt — рядки launch-queue.waiting зі злитого stdout/stderr tool transport; джерело атрибуції — контракт stderr queue. Сирий злитий потік збережений окремо.",
+    "transport": "*.transport.txt — повний output exec без змін; *.transport.json — CLI exit_code і метадані інструмента, без дублювання output.",
+    "caveat": "Діагностику редагує стандартний reporter; final diagnosticSummary truncated=false/omittedEntries=0. Розділені OS stdout/stderr FD не перехоплювались; збережено доступний merged transport, без вигаданих окремих байтів."
+  },
+  "workspace": {
+    "repository": "/srv/dev/work/orchestrator/raf-develop",
+    "testSourceCommit": "2c96dc642a6b043678e00b35648b13c5c6fb7469",
+    "headObservedBeforeFinalRuns": "e2f7c04898a8116041c2484baf70cd9b94f43e10",
+    "headObservedAfterFinalRuns": "812679c714162c4adaf912e11a62fd27315a8988",
+    "note": "Спільна гілка рухалася через чужі коміти. Власний test і imported production/helper paths чисті; fingerprints після прогону наведено нижче. Чужі незакомічені evidence не комітяться.",
+    "hashesAfterFinalRun": {
+      "test/test-run-group-residue-z395.test.ts": "cfcabf1f23dd9a7b58d985dede2b3d7b23d67fc3258f6a773b35dff512f535bf",
+      "test/helpers/test-run-fixture.ts": "d14861fd22aa7f10aa5b7711c4772ce165ca619ae1ce196ecf55a97f6ff9e6af",
+      "src/test-runs.ts": "a70a720ecb8946b5e41174e21843cfe501f91cc2b9466e3a02b7aa598e02f091",
+      "src/test-run-cli.ts": "e00d891f0e452ec46d267d9ae2e06aac6b310925c593e41ccf45a7a5da7ce796",
+      "/srv/dev/work/orchestrator/conf/flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "/srv/dev/work/orchestrator/conf/test-runs.json": "750d7e39e1d2770b0417d21279e17f2db59f35b270bba46d214cef4264acf6d5",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md": "4c137c3dcb1695518534df3ba3201d91f44602f51612f0b114e26fb43bd2b6fc",
+      "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/z395-group-residue-design.md": "707ec039ede8edac85f67e1239990c2eaeeb9d84c4e6dcc32c63fb3203f2400f"
+    },
+    "configurationFingerprintsAtRun": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "750d7e39e1d2770b0417d21279e17f2db59f35b270bba46d214cef4264acf6d5",
+      "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+    }
+  },
+  "remaining": {
+    "mainReview": "Z.395.2 має перевірити цільові assertions і передати точні knownRed/групу незалежному implement.",
+    "implementation": "Не виконувалась.",
+    "qa": "Реальний SQLite/runner/CLI стенд Z.395.4 не виконаний.",
+    "tasksMd": "Галочки Z.395.1 не змінювалися; ставить raf. Інші пункти відкриті, archive не застосовується.",
+    "push": false
+  }
+}

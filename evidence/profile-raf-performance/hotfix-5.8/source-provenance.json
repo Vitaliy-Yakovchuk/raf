@@ -1,0 +1,41 @@
+{
+  "sources": [
+    {
+      "item": "2.3",
+      "sha": "9bdeae6f35d7b5c17798e70821a1d79f5a9ff891",
+      "scope": "CPU/wall profile runtime, schema 17 migration, consumer fixture updates"
+    },
+    {
+      "item": "3.3",
+      "sha": "71770afeb1e609954c98d36a0b8414e2c13c61c3",
+      "scope": "single production EMA finalization; excluded unrelated health stats fixture changes"
+    },
+    {
+      "item": "2.4 QA preflight",
+      "sha": "33c8c4a7cd2c1c5efc526f16fde06ac3db6c7611",
+      "scope": "service configuration validation before profile SQLite open; production-entry only"
+    },
+    {
+      "item": "4.4",
+      "sha": "c59701447f097fe69bf4c0ba0acda1c4b3555940",
+      "scope": "batch process observation; preserve hotfix ownership/worker-result logic"
+    },
+    {
+      "item": "4.5 QA",
+      "sha": "535441d79f5b18d70442c9a7374c1037c428fee7",
+      "scope": "reuse agent ps profiling store through finalization"
+    },
+    {
+      "item": "4.5 QA",
+      "sha": "a592802c693130c26460fd7b82645636bf3c2882",
+      "scope": "reuse validated store context; regression tests excluding unrelated live harness tests"
+    }
+  ],
+  "productionBefore": "6730c74b5ce2fae6b0f7daa05e393c5fa244b423",
+  "productionAfter": null,
+  "requiredSchema": 17,
+  "developSchema": 18,
+  "productionSchemaReportedByMain": 16,
+  "activation": "main only; not performed",
+  "excluded": "monitor-raf-health schema18 and module inventory 5.6 are outside item5.8"
+}

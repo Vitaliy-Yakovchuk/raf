@@ -1,0 +1,1008 @@
+diff --git a/bin/raf.ts b/bin/raf.ts
+index f4ba076..44bc645 100644
+--- a/bin/raf.ts
++++ b/bin/raf.ts
+@@ -1,9 +1,10 @@
+ #!/usr/bin/env node
+ import { statSync } from 'node:fs';
+ 
++const costStartedAt = { monotonicMs: performance.now(), utc: new Date().toISOString(), cpu: process.cpuUsage() };
+ const result = statSync(new URL(import.meta.url)).nlink !== 1
+   ? { exitCode: 1, stdout: '', stderr: JSON.stringify({ code: 'STATE_CONTEXT_REFUSED', message: 'Hardlinked raf entry has ambiguous code provenance' }) }
+-  : await (await import('../src/cli.ts')).runPublicCli(import.meta.url, process.argv.slice(2));
++  : await (await import('../src/cli.ts')).runPublicCli(import.meta.url, process.argv.slice(2), costStartedAt);
+ if (result.stdout) {
+   await new Promise<void>((done, fail) => process.stdout.write(result.stdout + '\n', error => error ? fail(error) : done()));
+   try { await result.afterDelivery?.(); } catch { }
+diff --git a/src/agent-adapters.ts b/src/agent-adapters.ts
+index fbb640e..643b16e 100644
+--- a/src/agent-adapters.ts
++++ b/src/agent-adapters.ts
+@@ -1,3 +1,4 @@
++import { measureRafCost } from './raf-cost-runtime.ts';
+ import type { NativeIdentity } from './agy-session-start.ts';
+ import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
+ import { randomUUID } from 'node:crypto';
+@@ -212,6 +213,10 @@ export class TmuxAgentAdapter {
+   }
+ 
+   async inspect(session: AdapterSession): Promise<AdapterObservation> {
++    return measureRafCost('runner-observation', () => this.inspectRunner(session));
++  }
++
++  private async inspectRunner(session: AdapterSession): Promise<AdapterObservation> {
+     const target = this.target(session);
+     const state = await this.dependencies.execute({ executable: 'tmux', args: ['display-message', '-p', '-t', target, '#{pane_dead}|#{pane_dead_status}'] });
+     if (state.exitCode !== 0) return { status: 'exited', exitCode: null };
+diff --git a/src/agent-control.ts b/src/agent-control.ts
+index 3571c1d..dbbba0a 100644
+--- a/src/agent-control.ts
++++ b/src/agent-control.ts
+@@ -23,7 +23,10 @@ export interface AgentControlCoordinator {
+ export interface AgentControlDependencies {
+   repository: SessionRepository;
+   coordinator: AgentControlCoordinator;
+-  scanner: { inspect(identity: ProcessIdentity): Promise<ProcessObservation> };
++  scanner: {
++    inspect(identity: ProcessIdentity): Promise<ProcessObservation>;
++    inspectMany?(identities: readonly ProcessIdentity[]): Promise<ProcessObservation[]>;
++  };
+   authority: { resolve(caller: unknown): Promise<VerifiedSender> };
+   transport: {
+     deliver(target: ProcessIdentity, text: string): Promise<DeliveryReceipt>;
+@@ -87,6 +90,10 @@ export class AgentControlService {
+     } catch (error) {
+       observation = { state: 'unknown', observedAt: new Date().toISOString(), error: String(error) };
+     }
++    return this.checkedObservation(identity, observation);
++  }
++
++  private checkedObservation(identity: ProcessIdentity, observation: ProcessObservation): ProcessObservation {
+     if (observation.state === 'alive' && !this.sameProcess(identity, observation.identity)) {
+       observation = { state: 'exited', observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity no longer belongs to this run' };
+     }
+@@ -94,11 +101,15 @@ export class AgentControlService {
+   }
+ 
+   private async reconcile(session: SessionRecord, observed?: ProcessObservation): Promise<SessionRecord> {
++    const process = session.process;
+     if (!session.result && session.launchContext?.reportPath && (session.state === 'running' || session.state === 'exited')) {
+       session = await this.dependencies.coordinator.acceptPendingReport(session);
+     }
+     if (session.state === 'running' && session.process) {
+-      session = await this.dependencies.coordinator.observe(session, observed ?? await this.inspect(session.process));
++      const observation = observed && process && this.sameProcess(process, session.process)
++        ? this.checkedObservation(session.process, observed)
++        : await this.inspect(session.process);
++      session = await this.dependencies.coordinator.observe(session, observation);
+     }
+     if (session.state === 'exited') {
+       session = await this.dependencies.coordinator.finalize(session, this.events(session, 'ended'));
+@@ -118,10 +129,25 @@ export class AgentControlService {
+ 
+   async ps(): Promise<AgentPsSession[]> {
+     const sessions: AgentPsSession[] = [];
+-    for (const candidate of this.sessions()) {
+-      if (candidate.state === 'finished') continue;
++    const candidates = this.sessions().filter(session => session.state !== 'finished');
++    const observations = new Map<string, ProcessObservation>();
++    if (this.dependencies.scanner.inspectMany) {
++      const running = candidates.filter(session => session.state === 'running' && session.process);
++      if (running.length) {
++        let batch: ProcessObservation[];
++        try {
++          batch = await this.dependencies.scanner.inspectMany(running.map(session => session.process!));
++          if (batch.length !== running.length) throw new Error('Incomplete process scan');
++        } catch (error) {
++          const observedAt = new Date().toISOString();
++          batch = running.map(() => ({ state: 'unknown', observedAt, error: String(error) }));
++        }
++        running.forEach((session, index) => observations.set(session.runId, batch[index]));
++      }
++    }
++    for (const candidate of candidates) {
+       try {
+-        const session = await this.reconcile(candidate);
++        const session = await this.reconcile(candidate, observations.get(candidate.runId));
+         if (session.state === 'running') sessions.push(session);
+       } catch (error) {
+         const failure = failureContext(error);
+diff --git a/src/app-runtime.ts b/src/app-runtime.ts
+index 594e931..12d3ce0 100644
+--- a/src/app-runtime.ts
++++ b/src/app-runtime.ts
+@@ -1,3 +1,5 @@
++import { measureRafCost } from './raf-cost-runtime.ts';
++import { commandTimingFailure, recordCommandTiming } from './command-timing.ts';
+ import { runAgentWithQueue, type AgentQueueRecord, type AgentQueueValidation, type AgentQueueRequest, type AgentRunQueuePorts } from './agent-run-queue.ts';
+ import { isAbsolute, join } from 'node:path';
+ import { commandFailure, failureContext, type CommandFailureContext } from './cli-contract.ts';
+@@ -28,6 +30,7 @@ export interface RuntimeContext {
+   tmpRoot: string;
+   mode: 'production' | 'test';
+   commandStartedAtMs: number;
++  commandTimingOwner?: 'production';
+   resolveCaller(): Promise<unknown>;
+ }
+ 
+@@ -35,7 +38,7 @@ export interface RuntimeConfiguration {
+   sandboxTestPhases?: import('./test-runs.ts').TestRunConfig['phases'];
+   catalog: CompiledCatalog;
+   models: ModelCatalog;
+-  commandTiming: { emaAlpha: number };
++  commandTiming: { emaAlpha: number; sqliteOnlyMeanBudgetMs?: number };
+ }
+ 
+ export interface RuntimeRunParameters {
+@@ -339,7 +342,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+         });
+       }
+     },
+-    'agent ps': async () => (await service()).control.ps(),
++    'agent ps': async () => measureRafCost('reconciliation', async () => (await service()).control.ps()),
+     'agent update': async params => {
+       const patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>> = {};
+       for (const key of ['project', 'features', 'phase'] as const) {
+@@ -371,7 +374,9 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+     'command stats': async () => {
+       const loaded = await config();
+       const state = await store();
+-      return loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) }));
++      const budget = loaded.commandTiming.sqliteOnlyMeanBudgetMs;
++      if (!Number.isFinite(budget) || budget! <= 0) throw fail('CONFIGURATION_INVALID', 'configuration', 'Invalid commandTiming.sqliteOnlyMeanBudgetMs');
++      return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile() };
+     },
+   };
+   if (dependencies.commandState) for (const name of reminderCommands) builtins[name] = async params => createReminderHandlers(await statePorts())[name](params);
+@@ -398,16 +403,17 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+     } catch (error) {
+       original = error;
+       if (failureContext(error)) throw error;
+-      throw fail('HANDLER_FAILED', 'handler', describe(error), { sourceCode: (error as { code?: string })?.code ?? null });
++      original = fail('HANDLER_FAILED', 'handler', describe(error), { sourceCode: (error as { code?: string })?.code ?? null });
++      throw original;
+     } finally {
+       await settle();
+-      if (opening && configuration) {
++      if (context.commandTimingOwner !== 'production' && opening && configuration) {
+         try {
+           const loaded = await configuration;
+           const command = loaded.catalog.commands.find(command => command.handlerName === name);
+-          if (command && command.metadata.recordDuration !== false) (await opening).recordCommandDuration(command.path.join(' '), Math.max(0, dependencies.now() - context.commandStartedAtMs), loaded.commandTiming.emaAlpha);
++          recordCommandTiming(await opening, command, context.commandStartedAtMs, dependencies.now, loaded.commandTiming.emaAlpha);
+         } catch (error) {
+-          if (original === undefined) throw fail('TIMING_FAILED', 'timing', describe(error));
++          throw commandTimingFailure(error, original);
+         }
+       }
+     }
+diff --git a/src/bug-sync.ts b/src/bug-sync.ts
+index b24dc1e..ede837d 100644
+--- a/src/bug-sync.ts
++++ b/src/bug-sync.ts
+@@ -1,3 +1,4 @@
++import { measureRafCost } from './raf-cost-runtime.ts';
+ import { createHash, createHmac, randomUUID } from 'node:crypto';
+ import { readFile } from 'node:fs/promises';
+ import { basename, join } from 'node:path';
+@@ -743,7 +744,7 @@ export async function startBugSyncService(options: BugSyncServiceOptions): Promi
+   const wake = async () => {
+     cancel = undefined;
+     if (stopped) return;
+-    running = syncer.runCycle().catch(report);
++    running = measureRafCost('bug-sync', () => syncer.runCycle()).catch(report);
+     await running;
+     running = undefined;
+     if (!stopped) cancel = options.schedule(options.now() + config.pollIntervalMs, wake);
+diff --git a/src/cli.ts b/src/cli.ts
+index 8333520..09cbf21 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -113,7 +113,7 @@ export class UnavailableCommandError extends Error {}
+ 
+ const diagnostic = (code: string, error: unknown): ExecutionResult => ({ exitCode: 1, stdout: '', stderr: JSON.stringify({ code, message: error instanceof Error ? error.message : String(error) }) });
+ 
+-export async function runPublicCli(entryUrl: string, argv: readonly string[]): Promise<ExecutionResult> {
++export async function runPublicCli(entryUrl: string, argv: readonly string[], costStartedAt?: import('./raf-cost-runtime.ts').RafCostBoundary): Promise<ExecutionResult> {
+   const codeRoot = fileURLToPath(new URL('../', entryUrl)).replace(/\/$/, '');
+   const artifactPath = join(codeRoot, 'dist/catalog.json');
+   const bootstrapIdentity = statSync(codeRoot, { bigint: true });
+@@ -157,7 +157,7 @@ export async function runPublicCli(entryUrl: string, argv: readonly string[]): P
+     }
+     const root = lease?.generationRoot ?? codeRoot;
+     const { runProductionCli } = await import(pathToFileURL(join(root, 'src/production-entry.ts')).href);
+-    result = await runProductionCli(argv, { orchestratorRoot, homeDirectory: homedir(), artifactPath: join(root, 'dist/catalog.json') });
++    result = await runProductionCli(argv, { orchestratorRoot, homeDirectory: homedir(), artifactPath: join(root, 'dist/catalog.json'), costStartedAt });
+   } catch (error) { result = diagnostic(failureContext(error)?.code ?? 'PRODUCTION_ENTRY_FAILED', error); }
+   finally {
+     try { await lease?.release(); }
+diff --git a/src/launch-wrapper.ts b/src/launch-wrapper.ts
+index 6c457b9..b9ff93f 100644
+--- a/src/launch-wrapper.ts
++++ b/src/launch-wrapper.ts
+@@ -1,3 +1,4 @@
++import { activeRafCost, measureRafCost } from './raf-cost-runtime.ts';
+ import type { NativeIdentity } from './agy-session-start.ts';
+ import { hasValidNativeIdentity, sameProcessOwnership } from './process-identity.ts';
+ import { spawn } from 'node:child_process';
+@@ -100,15 +101,16 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
+       result: result => ports.lifecycle.acceptReport(result),
+     });
+     attempted = true;
+-    await ports.transport.startWithoutInput(request, watcher.path);
++    await measureRafCost('preparation', () => ports.transport.startWithoutInput(request, watcher!.path));
++    activeRafCost()?.stage('runner-wait');
+     const readiness = await within(ports.transport.waitReady(request.readinessTimeoutMs), request.readinessTimeoutMs, 'Runner readiness');
+     if (readiness.state !== 'ready') throw new Error(`Runner readiness ${readiness.state}: ${'reason' in readiness ? readiness.reason : 'runner has not become ready'}`);
+-    const ownership = await ports.transport.ownership();
++    const ownership = await measureRafCost('runner-observation', () => ports.transport.ownership());
+     if (ownership.state !== 'owned') throw new Error(`Runner ownership ${ownership.state}: ${ownership.reason}`);
+     if (!['agent', 'runner-owned'].includes(ownership.processKind) || !validIdentity(ownership.identity, request) || !(ownership.identity.runnerSessionId === readiness.runnerSessionId || request.selection.runner === 'agy' && ownership.identity.nativeIdentity !== undefined && readiness.runnerSessionId === null && readiness.nativeIdentity?.state === 'pending' && readiness.nativeIdentity.id === null && !!readiness.nativeIdentity.reason?.trim())) throw new Error('Runner identity does not match the ready native session and launch');
+     identity = structuredClone(ownership.identity);
+     const handshake: LaunchHandshake = { runId: request.runId, address: request.address, reportPath: watcher.path, identity };
+-    await ports.transport.deliver(request.brief);
++    await measureRafCost('delivery', () => ports.transport.deliver(request.brief));
+     const deliveredOwner = await ports.transport.ownership();
+     if (deliveredOwner.state === 'owned') {
+       if (!validIdentity(deliveredOwner.identity, request) || !sameIdentity(identity, deliveredOwner.identity)) throw new Error('Runner ownership changed during delivery');
+@@ -118,6 +120,7 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
+     await ports.lifecycle.started(handshake);
+     await ports.handshake(handshake);
+     const exit = await ports.transport.waitExit();
++    activeRafCost()?.stage('completion');
+     ended = true;
+     await watcher.finish(exit);
+     await ports.lifecycle.finish(handshake, exit);
+diff --git a/src/os-runtime.ts b/src/os-runtime.ts
+index 64c9114..4befd86 100644
+--- a/src/os-runtime.ts
++++ b/src/os-runtime.ts
+@@ -1,3 +1,5 @@
++import { activeRafCost, rafCostBoundary } from './raf-cost-runtime.ts';
++import { basename } from 'node:path';
+ import { spawn } from 'node:child_process';
+ import { lstat, readlink, readFile, realpath } from 'node:fs/promises';
+ import { availableParallelism, loadavg, totalmem, platform, hostname } from 'node:os';
+@@ -7,7 +9,11 @@ import type { WorkspaceRoutingDependencies } from './workspace-routing.ts';
+ import type { ResourceMeasurement } from './resource-admission.ts';
+ import type { ProcessIdentity, ProcessObservation } from './session-state.ts';
+ 
+-export const executeCommand: AdapterCommandExecutor = command => new Promise((resolve, reject) => {
++export const executeCommand: AdapterCommandExecutor = async command => {
++  const profile = activeRafCost();
++  const helper = profile?.helperExecutables.includes(basename(command.executable));
++  const start = helper ? rafCostBoundary() : undefined;
++  const execute = () => new Promise<import('./agent-adapters.ts').AdapterCommandResult>((resolve, reject) => {
+   const child = spawn(command.executable, [...command.args], { cwd: command.cwd, shell: false, stdio: ['pipe', 'pipe', 'pipe'], env: { ...(command.environment ?? process.env), LC_ALL: 'C' } });
+   let stdout = '';
+   let stderr = '';
+@@ -17,7 +23,17 @@ export const executeCommand: AdapterCommandExecutor = command => new Promise((re
+   child.stdin.on('error', error => { if ((error as NodeJS.ErrnoException).code !== 'EPIPE') reject(error); });
+   child.on('close', code => resolve({ exitCode: code ?? 1, stdout, stderr }));
+   child.stdin.end(command.stdin ?? '');
+-});
++  });
++  try { return profile ? await profile.measure('child-wait', execute) : await execute(); }
++  finally {
++    if (profile && start && helper) {
++      const end = rafCostBoundary();
++      try { profile.profiler.recordChild({ stage: 'child-wait', startedAt: start.utc, completedAt: end.utc, wallMs: Math.max(0, end.monotonicMs - start.monotonicMs),
++        cpu: { userMs: null, systemMs: null, source: null, unavailableReason: 'Per-child OS CPU accounting unavailable from spawn' } }, 'helper'); }
++      catch (error) { profile.reportStorageFailure(error); }
++    }
++  }
++};
+ 
+ export async function readMachineBootIdentity(execute: AdapterCommandExecutor = executeCommand): Promise<{ machineId: string; bootId: string }> {
+   let machineId: string;
+diff --git a/src/production-entry.ts b/src/production-entry.ts
+index 5f93993..9f4350f 100644
+--- a/src/production-entry.ts
++++ b/src/production-entry.ts
+@@ -1,6 +1,8 @@
++import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
++import { commandTimingFailure, recordCommandTiming } from './command-timing.ts';
+ import { storedLaunchQueueIdentity, validateStoredQueueId } from './stored-launch-queue-events.ts';
+ import { readMachineBootIdentity } from './os-runtime.ts';
+-import { productionStateContext } from './state-migration-guard.ts';
++import { productionStateContext, type StateContext } from './state-migration-guard.ts';
+ import { createServiceHandlers } from './service-entry.ts';
+ import { createProductionServices, rafSystemCaller } from './production-runtime.ts';
+ import { fileURLToPath } from 'node:url';
+@@ -26,6 +28,7 @@ export interface ProductionEntryOptions {
+   homeDirectory: string;
+   artifactPath: string;
+   now?: () => number;
++  costStartedAt?: RafCostBoundary;
+   runIdentity?: { runId: string; tmuxSession: string };
+   serviceHostModulePath?: string;
+ }
+@@ -36,7 +39,7 @@ function failure(code: string, reason: string, source = 'production-entry'): Err
+     remediation: ['Перевірте конфігурацію та доступність потрібного компонента.'] });
+ }
+ 
+-function readConfiguration(root: string): { models: ModelCatalog; commandTiming: { emaAlpha: number }; fileName: string } {
++function readConfiguration(root: string): { models: ModelCatalog; commandTiming: { emaAlpha: number; sqliteOnlyMeanBudgetMs: number }; fileName: string } {
+   const object = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
+   const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+   const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(text);
+@@ -66,7 +69,7 @@ function readConfiguration(root: string): { models: ModelCatalog; commandTiming:
+       new Set(models.models.map((model: any) => model.id)).size !== models.models.length) {
+     throw failure('CONFIGURATION_INVALID', 'Invalid models.json configuration or version', 'models.json');
+   }
+-  return { models: models as unknown as ModelCatalog, commandTiming: { emaAlpha: settings.commandTiming.emaAlpha }, fileName: settings.state.fileName };
++  return { models: models as unknown as ModelCatalog, commandTiming: { emaAlpha: settings.commandTiming.emaAlpha, sqliteOnlyMeanBudgetMs: settings.commandTiming.sqliteOnlyMeanBudgetMs }, fileName: settings.state.fileName };
+ }
+ 
+ function canonicalRoot(path: string): string {
+@@ -83,8 +86,8 @@ function clock(options: ProductionEntryOptions): () => number {
+   return options.now ?? (() => performance.now());
+ }
+ 
+-function productionContext(options: ProductionEntryOptions, orchestratorRoot: string, fileName: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>) {
+-  const stateContext = productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
++function productionContext(options: ProductionEntryOptions, orchestratorRoot: string, fileName: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>, sharedContext?: StateContext) {
++  const stateContext = sharedContext ?? productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
+   return { stateContext, orchestratorRoot: orchestratorRoot, confRoot: join(orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
+     statePath: stateContext.statePath, tmpRoot: stateContext.tmpRoot,
+     mode: 'production' as const, commandStartedAtMs, resolveCaller };
+@@ -119,15 +122,15 @@ function commandState(orchestratorRoot: string): (store: StateStore, services: (
+   });
+ }
+ 
+-function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>, additionalHandlers: Record<string, Handler> = {}): AppRuntime {
++function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>, additionalHandlers: Record<string, Handler> = {}, commandTimingOwner?: 'production', sharedState?: { store: StateStore; context: StateContext }): AppRuntime {
+   const now = clock(options);
+   const loaded = readConfiguration(orchestratorRoot);
+   const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
+-  const context = productionContext(options, orchestratorRoot, loaded.fileName, commandStartedAtMs, resolveCaller);
++  const context = { ...productionContext(options, orchestratorRoot, loaded.fileName, commandStartedAtMs, resolveCaller, sharedState?.context), commandTimingOwner };
+   return createAppRuntime(context, {
+     additionalHandlers,
+     now, loadConfiguration: async () => ({ catalog, models: loaded.models, commandTiming: loaded.commandTiming }),
+-    openStore: async path => openStateStore(path, { context: context.stateContext }), nextRunIdentity: () => options.runIdentity ?? ({ runId: randomUUID(), tmuxSession: randomUUID() }),
++    openStore: async path => sharedState ? { ...sharedState.store, close() {} } : openStateStore(path, { context: context.stateContext }), nextRunIdentity: () => options.runIdentity ?? ({ runId: randomUUID(), tmuxSession: randomUUID() }),
+     createServices: createProductionServices, commandState: commandState(orchestratorRoot),
+   });
+ }
+@@ -140,33 +143,51 @@ export async function withProductionRuntime<T>(options: ProductionEntryOptions,
+ }
+ 
+ export async function runProductionCli(argv: readonly string[], options: ProductionEntryOptions): Promise<ExecutionResult> {
+-  if (argv[0] === 'test' && argv[1] === 'run' && !argv.includes('--help')) {
+-    const { runConfiguredTestRun } = await import('./test-run-runtime.ts');
+-    let services: Promise<RuntimeServices> | undefined;
+-    return runConfiguredTestRun(argv.slice(2), { ...options, settle: async store => {
+-      const root = canonicalRoot(options.orchestratorRoot);
+-      const loaded = readConfiguration(root);
+-      const context = productionContext(options, root, loaded.fileName, performance.now(), async () => rafSystemCaller);
+-      await settleCommandState(commandState(root)(store, () => services ??= createProductionServices(store, {
+-        catalog: JSON.parse(readFileSync(options.artifactPath, 'utf8')), models: loaded.models, commandTiming: loaded.commandTiming,
+-      }, context)));
+-    } });
+-  }
+-  const startedAtMs = performance.now();
++  const costStartedAt = options.costStartedAt ?? rafCostBoundary();
++  const now = clock(options);
++  const startedAtMs = options.costStartedAt?.monotonicMs ?? (options.now ? now() : costStartedAt.monotonicMs);
+   let runtime: AppRuntime | undefined;
++  let testExecution: ExecutionResult | undefined;
+   const unavailable = () => { throw failure('COMMAND_UNAVAILABLE', 'Production service for this operation is unavailable'); };
+   const handlers = new Proxy(Object.create(null) as Record<string, Handler>, {
+     get(_target, name) {
+       if (typeof name !== 'string') return undefined;
+-      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'runner limits', 'command stats', 'resource wait', 'service start', 'service status', 'service stop',
++      if (!['agent run', 'agent ps', 'agent update', 'agent message', 'agent close', 'agent interrupt', 'main attach', 'runner enable', 'runner disable', 'runner list', 'runner limits', 'command stats', 'resource wait', 'service start', 'service status', 'service stop', 'test run',
+         'reminder add', 'reminder list', 'reminder update', 'reminder activate', 'reminder close', 'reminder reassign', 'reminder close-all',
+         'bug list', 'bug show', 'bug comment add', 'bug status set', 'bug attachment get'].includes(name)) return unavailable;
+       return async (params: Record<string, unknown>) => {
++        let profileStore: StateStore | undefined;
++        let profile: RafCostRuntime | undefined;
++        let original: unknown;
++        let loaded: ReturnType<typeof readConfiguration> | undefined;
++        let command: CompiledCatalog['commands'][number] | undefined;
+         try {
+-          const commandStartedAtMs = options.now?.() ?? startedAtMs;
++          const commandStartedAtMs = startedAtMs;
+           const orchestratorRoot = validatedRoot(options);
+-          readConfiguration(orchestratorRoot);
+-          productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
++          loaded = readConfiguration(orchestratorRoot);
++          const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
++          command = catalog.commands.find(candidate => candidate.handlerName === name);
++          const profileContext = productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
++          const serviceHandlers = name.startsWith('service ') ? createServiceHandlers({
++            orchestratorRoot, homeDirectory: options.homeDirectory,
++            service: JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'raf.json'), 'utf8')).service,
++            hostModulePath: options.serviceHostModulePath ?? fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)),
++          }) : undefined;
++          const sqliteStartedAt = rafCostBoundary();
++          profileStore = openStateStore(profileContext.statePath, { context: profileContext });
++          profile = new RafCostRuntime(profileStore, { scope: 'command', command: name }, orchestratorRoot, 'handler', costStartedAt, sqliteStartedAt);
++          profile.install();
++          if (name === 'test run') {
++            const { runConfiguredTestRun } = await import('./test-run-runtime.ts');
++            let services: Promise<RuntimeServices> | undefined;
++            testExecution = await runConfiguredTestRun(argv.slice(2), { ...options, costStartedAt, commandTimingOwner: 'production', settle: async store => {
++              const context = productionContext(options, orchestratorRoot, loaded!.fileName, commandStartedAtMs, async () => rafSystemCaller);
++              await settleCommandState(commandState(orchestratorRoot)(store, () => services ??= createProductionServices(store, {
++                catalog, models: loaded!.models, commandTiming: loaded!.commandTiming,
++              }, context)));
++            } });
++            return null;
++          }
+           if (name.startsWith('bug ')) {
+             const [{ createBugHandlers }, { createProductionBugPorts }] = await Promise.all([import('./bug-cli.ts'), import('./bug-production.ts')]);
+             return await createBugHandlers(createProductionBugPorts({ orchestratorRoot, homeDirectory: options.homeDirectory }))[name as BugCommand](params);
+@@ -179,25 +200,35 @@ export async function runProductionCli(argv: readonly string[], options: Product
+               completed: [...result.diagnostic.completed], pending: [...result.diagnostic.pending], retrySafe: false, remediation: [result.diagnostic.remediation] });
+             return result;
+           }
+-          if (name.startsWith('service ')) {
+-            readConfiguration(orchestratorRoot);
+-            const settings = JSON.parse(readFileSync(join(orchestratorRoot, 'conf', 'raf.json'), 'utf8'));
+-            const services = createServiceHandlers({ orchestratorRoot: orchestratorRoot, homeDirectory: options.homeDirectory,
+-              service: settings.service, hostModulePath: options.serviceHostModulePath ?? fileURLToPath(new URL('./production-service-ports.ts', import.meta.url)) });
+-            return await services.handlers[name as keyof typeof services.handlers](params);
+-          }
+-          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) });
++          if (serviceHandlers) return await serviceHandlers.handlers[name as keyof typeof serviceHandlers.handlers](params);
++          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) }, 'production', name === 'agent ps' ? { store: profileStore, context: profileContext } : undefined);
+           const result = await runtime.handlers[name](params);
+           await runtime.close();
+           return result;
+         } catch (error) {
++          original = failureContext(error) ? error : failure('PRODUCTION_ENTRY_FAILED', error instanceof Error ? error.message : String(error));
+           try { await runtime?.close(); } catch {}
+-          if (failureContext(error)) throw error;
+-          throw failure('PRODUCTION_ENTRY_FAILED', error instanceof Error ? error.message : String(error));
++          throw original;
++        } finally {
++          let finalizationError: unknown;
++          try { profile?.stage('finalization'); profile?.finish(); }
++          catch (error) { if (original === undefined) finalizationError = error; else process.emitWarning(error instanceof Error ? error : String(error)); }
++          try {
++            if (profileStore && loaded) recordCommandTiming(profileStore, command, startedAtMs, now, loaded.commandTiming.emaAlpha);
++          } catch (error) { finalizationError = commandTimingFailure(error, original ?? finalizationError); }
++          finally { profileStore?.close(); }
++          if (finalizationError !== undefined) {
++            if (!testExecution) throw finalizationError;
++            testExecution.exitCode = testExecution.exitCode || 1;
++            testExecution.stderr = [testExecution.stderr, finalizationError instanceof Error ? finalizationError.message : String(finalizationError)].filter(Boolean).join('\n');
++          }
+         }
+       };
+     },
+   });
+-  try { return await runCli(argv, options.artifactPath, handlers); }
++  try {
++    const result = await runCli(argv, options.artifactPath, handlers);
++    return result.exitCode === 0 && testExecution ? testExecution : result;
++  }
+   finally { await runtime?.close(); }
+ }
+diff --git a/src/production-resource-wait.ts b/src/production-resource-wait.ts
+index 6f8fec5..685ad54 100644
+--- a/src/production-resource-wait.ts
++++ b/src/production-resource-wait.ts
+@@ -1,3 +1,4 @@
++import { measureRafCost } from './raf-cost-runtime.ts';
+ import { randomUUID } from 'node:crypto';
+ import { performance } from 'node:perf_hooks';
+ import { homedir } from 'node:os';
+@@ -40,7 +41,7 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
+   const protocol = createResourceWaitProtocol(options, {
+     monotonicNow: () => performance.now(), wallNow: now, bootIdentity: () => `${boot.machineId}/${boot.bootId}`, nextId: randomUUID,
+     schedule: (at, wake) => { const timer = setTimeout(() => { void wake().catch(error => process.emitWarning(error)); }, Math.max(0, at - performance.now())); timer.unref(); return () => clearTimeout(timer); },
+-    readSnapshot: async requests => {
++    readSnapshot: async requests => measureRafCost('resource-queue', async () => {
+       const observedAt = performance.now();
+       const paths = [...new Set([context.orchestratorRoot, homedir(), ...requests.map(request => request.developmentDirectory)])];
+       const sessions = getStore().sessionRepository.transaction(tx => tx.listSessions().filter(session => session.state === 'running' && session.process), 'read');
+@@ -52,7 +53,7 @@ export async function productionResourceWait(context: ServiceEntryContext, optio
+       if (unknown?.state === 'unknown') snapshot.reasons.push(unknown.error);
+       const observedProcesses = observations.flatMap((row, index) => row.state === 'alive' ? [{ runId: sessions[index].runId, identity: row.identity }] : []);
+       return { observedAt, data: { ...snapshot, observedProcesses } };
+-    },
++    }),
+     evaluateSnapshot: (probe, request: ResourceWaitPending) => {
+       const snapshot = probe.data as Awaited<ReturnType<ReturnType<typeof createResourceSnapshotReader>['read']>> & { observedProcesses: import('./launch-state.ts').LaunchMeasurement['observedProcesses'] };
+       const volumes = deriveResourceAdmissionVolumes({ orchestratorRoot: context.orchestratorRoot, workspace: request.developmentDirectory, home: homedir() }, snapshot.fileSystemByPath);
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index ff4aee5..9571b1c 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1,3 +1,4 @@
++import { RafCostRuntime, rafCostBoundary } from './raf-cost-runtime.ts';
+ import { sameProcessOwnership } from './process-identity.ts';
+ import { selectNativeLaunchProtocol, confirmAgySessionStart, type PrepareSessionStartChannel, type OwnedSessionStartChannel } from './agy-session-start.ts';
+ import { createRafToolSocketDirectory, rafSocketRoot, rafToolSocketRoot, rafSocketDirectory, releaseRafSocketDirectory, socketPathFits } from './raf-temporary-socket.ts';
+@@ -395,6 +396,21 @@ async function observeIdentity(identity: ProcessIdentity, execute: AdapterComman
+   if (boot.bootId === identity.evidence.bootId && boot.machineId === identity.evidence.machineId) return observation;
+   return { state: 'exited' as const, observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity belongs to a previous boot' };
+ }
++async function observeIdentities(identities: readonly ProcessIdentity[], execute: AdapterCommandExecutor) {
++  const observations = await observeProcesses(identities, { execute });
++  let boot: ReturnType<typeof bootIdentity> | undefined;
++  return Promise.all(observations.map(async (observation, index) => {
++    const identity = identities[index];
++    if (observation.state !== 'alive' || !identity.evidence.bootId) return observation;
++    try {
++      const current = await (boot ??= bootIdentity(execute));
++      if (current.bootId === identity.evidence.bootId && current.machineId === identity.evidence.machineId) return observation;
++      return { state: 'exited' as const, observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity belongs to a previous boot' };
++    } catch (error) {
++      return { state: 'unknown' as const, observedAt: observation.observedAt, error: String(error) };
++    }
++  }));
++}
+ async function processExited(execute: AdapterCommandExecutor, identity: ProcessIdentity, budget: { transitionMs: number; pollMs: number }): Promise<boolean> {
+   const deadline = Date.now() + budget.transitionMs;
+   for (;;) {
+@@ -681,7 +697,10 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+   };
+   const types = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'type')?.values?.map(row => row.id) ?? [];
+   const projects = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'project')?.values?.map(row => row.id) ?? [];
+-  const control = new AgentControlService({ repository: store.sessionRepository, scanner: { inspect: identity => observeIdentity(identity, execute) }, authority: { resolve }, reminders,
++  const control = new AgentControlService({ repository: store.sessionRepository, scanner: {
++    inspect: identity => observeIdentity(identity, execute),
++    inspectMany: identities => observeIdentities(identities, execute),
++  }, authority: { resolve }, reminders,
+     projects, agentTypes: types, agentPhases: configuration.catalog.commands.find(row => row.handlerName === 'agent update')?.parameters.find(row => row.name === 'phase')?.values?.map(row => row.id) ?? types,
+     coordinator: {
+       prepareClose: (session, options) => prepareAgentClose({
+@@ -1295,6 +1314,7 @@ export async function runProductionWorker(
+     prepareSessionStartChannel?: PrepareSessionStartChannel;
+   } = {},
+ ): Promise<void> {
++  const costStartedAt = rafCostBoundary();
+   const stateContext = productionStateContext(process.env.RAF_ORCHESTRATOR_ROOT ?? fileURLToPath(new URL('../../', import.meta.url)), fileURLToPath(import.meta.url), homedir(), 'worker');
+   const generationLease = await retainHotfixGeneration({ orchestratorRoot: stateContext.orchestratorRoot, qaHome: homedir(), environment: {}, sandboxExecutable: 'codex' }, fileURLToPath(new URL('../', import.meta.url)).replace(/\/$/, ''));
+   const channel = await consumeWrapperRequest();
+@@ -1324,7 +1344,10 @@ export async function runProductionWorker(
+   const settings = { ...configured, executable: manifest.runnerPath as string };
+   const availability = await probeRunnerAvailability(settings, { env: process.env, execute });
+   if (!availability.available) fail('RUNNER_PROTOCOL_UNAVAILABLE', availability.reason);
++  const sqliteStartedAt = rafCostBoundary();
+   const store = openStateStore(request.statePath, { context: stateContext });
++  let costProfile: RafCostRuntime | undefined;
++  let workerFailure: unknown;
+   let sessionStartChannel: OwnedSessionStartChannel | undefined;
+   let unsubscribeSessionStart: (() => void) | undefined;
+   let sessionStartWork: Promise<void> = Promise.resolve();
+@@ -1333,6 +1356,8 @@ export async function runProductionWorker(
+   let codexSandbox: PreparedCodexSandbox | undefined;
+   let toolTmuxDirectory: Awaited<ReturnType<typeof createRafToolSocketDirectory>> | undefined;
+   try {
++    costProfile = new RafCostRuntime(store, { scope: 'worker', command: null }, context.orchestratorRoot, 'preparation', costStartedAt, sqliteStartedAt);
++    costProfile.install();
+     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings.timeouts, options.execute);
+     const session = tools.current(request.runId);
+     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
+@@ -1777,7 +1802,8 @@ export async function runProductionWorker(
+       if (!handedOff) await discardFailedLaunch().catch(cleanup => process.stderr.write(`${request.runId}: failed launch cleanup: ${cleanup instanceof Error ? cleanup.message : String(cleanup)}\n`));
+       throw error;
+     }
+-  } finally { try { unsubscribeSessionStart?.(); await sessionStartWork; await sessionStartChannel?.close(); } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxDirectory) await toolTmuxDirectory.cleanup(async socket => {
++  } catch (error) { workerFailure = error; throw error; }
++  finally { try { unsubscribeSessionStart?.(); await sessionStartWork; await sessionStartChannel?.close(); } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxDirectory) await toolTmuxDirectory.cleanup(async socket => {
+         await executeCommand({ executable: 'tmux', args: ['-S', socket, 'kill-server'], environment: stateContextEnvironment(stateContext, process.env) });
+         await new Promise<void>((resolve, reject) => {
+           const connection = createConnection(socket);
+@@ -1785,5 +1811,5 @@ export async function runProductionWorker(
+           connection.once('connect', () => { clearTimeout(timer); connection.destroy(); reject(new Error('Own tool tmux server is still live')); });
+           connection.once('error', error => { clearTimeout(timer); connection.destroy(); if (['ENOENT', 'ECONNREFUSED'].includes((error as NodeJS.ErrnoException).code ?? '')) resolve(); else reject(error); });
+         });
+-      }); } finally { store.close(); await generationLease?.release(); } } } }
++      }); } finally { try { costProfile?.stage('completion'); costProfile?.finish(); } catch (error) { if (workerFailure === undefined) throw error; process.emitWarning(error instanceof Error ? error : String(error)); } finally { store.close(); await generationLease?.release(); } } } } }
+ }
+diff --git a/src/raf-cost-profile.ts b/src/raf-cost-profile.ts
+index d94ec29..fc555dc 100644
+--- a/src/raf-cost-profile.ts
++++ b/src/raf-cost-profile.ts
+@@ -77,11 +77,78 @@ export interface RafCostProfiler {
+ }
+ 
+ export function aggregateRafCostSample(previous: RafCostRow | undefined, sample: RafCostSample): RafCostRow {
+-  throw new Error('NotImplemented');
++  validateSample(sample);
++  if (previous && (previous.scope !== sample.scope || previous.command !== sample.command || previous.stage !== sample.stage || previous.executor !== sample.executor)) throw new Error('Cost profile aggregate key mismatch');
++  const measured = sample.cpu.userMs !== null;
++  const samples = (previous?.samples ?? 0) + 1;
++  const cpuSamples = (previous?.cpuSamples ?? 0) + Number(measured);
++  const cpuUnavailableSamples = samples - cpuSamples;
++  const user = (previous?.cpuUserTotalMs ?? 0) + (sample.cpu.userMs ?? 0);
++  const system = (previous?.cpuSystemTotalMs ?? 0) + (sample.cpu.systemMs ?? 0);
++  const sources = [...new Set([...(Array.isArray(previous?.cpuSource) ? previous.cpuSource : previous?.cpuSource ? [previous.cpuSource] : []), ...(sample.cpu.source ? [sample.cpu.source] : [])])].sort();
++  const reasons = [...new Set([...(previous?.unavailableReason ? previous.unavailableReason.split('; ') : []), ...(sample.cpu.unavailableReason ? [sample.cpu.unavailableReason] : [])])].sort();
++  const wallTotalMs = (previous?.wallTotalMs ?? 0) + sample.wallMs;
++  return {
++    scope: sample.scope, command: sample.command, stage: sample.stage, executor: sample.executor,
++    samples, firstSampleStartedAt: previous && previous.firstSampleStartedAt < sample.startedAt ? previous.firstSampleStartedAt : sample.startedAt,
++    updatedAt: previous && previous.updatedAt > sample.completedAt ? previous.updatedAt : sample.completedAt,
++    wallTotalMs, wallMeanMs: wallTotalMs / samples, cpuSamples, cpuUnavailableSamples,
++    cpuUserTotalMs: cpuSamples ? user : null, cpuSystemTotalMs: cpuSamples ? system : null,
++    cpuUserMeanMs: cpuSamples ? user / cpuSamples : null, cpuSystemMeanMs: cpuSamples ? system / cpuSamples : null,
++    cpuSource: sources.length > 1 ? sources : sources[0] ?? null,
++    cpuAvailability: cpuSamples === 0 ? 'unavailable' : cpuUnavailableSamples ? 'partial' : 'complete',
++    unavailableReason: reasons.length ? reasons.join('; ') : null,
++  };
+ }
+ 
+ export function createRafCostProfiler(identity: Pick<RafCostKey, 'scope' | 'command'>, ports: RafCostProfilePorts): RafCostProfiler {
+-  throw new Error('NotImplemented');
++  if (!['service', 'worker', 'command'].includes(identity.scope) ||
++      (identity.scope === 'command' ? !ports.policy.commands.includes(identity.command ?? '') : identity.command !== null)) throw new Error('Invalid cost profile scope or canonical command');
++  const checkStage = (stage: string) => { if (!ports.policy.stages.includes(stage)) throw new Error('Unknown cost profile stage'); };
++  const cpu = () => {
++    try {
++      const value = ports.cpuUsage();
++      if (![value.userMicros, value.systemMicros].every(value => Number.isFinite(value) && value >= 0)) return null;
++      return value;
++    } catch { return null; }
++  };
++  type Boundary = { stage: string; at: number; utc: string; cpu: ReturnType<typeof cpu> };
++  let active: Boundary | undefined;
++  const boundary = (stage: string): Boundary => ({ stage, at: ports.monotonicMs(), utc: ports.utcNow(), cpu: cpu() });
++  const record = (sample: RafCostSample) => {
++    validateSample(sample);
++    ports.repository.update({ scope: sample.scope, command: sample.command, stage: sample.stage, executor: sample.executor }, previous => aggregateRafCostSample(previous, sample));
++  };
++  const complete = (end: Boundary) => {
++    const start = active!;
++    active = undefined;
++    const available = start.cpu && end.cpu && end.cpu.userMicros >= start.cpu.userMicros && end.cpu.systemMicros >= start.cpu.systemMicros;
++    record({ ...identity, stage: start.stage, executor: 'self', startedAt: start.utc, completedAt: end.utc,
++      wallMs: Math.max(0, end.at - start.at), cpu: available
++        ? { userMs: (end.cpu!.userMicros - start.cpu!.userMicros) / 1000, systemMs: (end.cpu!.systemMicros - start.cpu!.systemMicros) / 1000, source: 'process.cpuUsage', unavailableReason: null }
++        : { userMs: null, systemMs: null, source: null, unavailableReason: 'Process CPU counters unavailable' } });
++  };
++  return {
++    start(stage) {
++      checkStage(stage);
++      if (active) throw new Error('Cost profile interval already started');
++      active = boundary(stage);
++    },
++    transition(stage) {
++      checkStage(stage);
++      if (!active) throw new Error('Cost profile interval not started');
++      const next = boundary(stage);
++      complete(next);
++      active = next;
++    },
++    recordChild(sample, ownership) {
++      if (ownership !== 'helper') return;
++      checkStage(sample.stage);
++      record({ ...sample, ...identity, executor: 'child' });
++    },
++    finish() { if (active) complete(boundary(active.stage)); },
++    snapshot() { return { schemaVersion: ports.policy.schemaVersion, readAt: ports.utcNow(), rows: ports.repository.readRows() }; },
++  };
+ }
+ 
+ export async function withRafCostProfile<T>(
+@@ -90,5 +157,46 @@ export async function withRafCostProfile<T>(
+   action: () => Promise<T>,
+   reportStorageError: (error: unknown, runtimeError: unknown | undefined) => void,
+ ): Promise<T> {
+-  throw new Error('NotImplemented');
++  let runtimeError: unknown;
++  let failed = false;
++  profiler.start(stage);
++  try { return await action(); }
++  catch (error) { failed = true; runtimeError = error; throw error; }
++  finally {
++    try { profiler.finish(); }
++    catch (error) {
++      try { reportStorageError(error, runtimeError); }
++      catch (reportError) { if (!failed) throw reportError; }
++      if (!failed) throw error;
++    }
++  }
++}
++
++function validateSample(sample: RafCostSample): void {
++  if (!['service', 'worker', 'command'].includes(sample.scope) || !['self', 'child'].includes(sample.executor) ||
++      typeof sample.stage !== 'string' || !sample.stage || (sample.scope === 'command' ? typeof sample.command !== 'string' || !sample.command : sample.command !== null) ||
++      !Number.isFinite(sample.wallMs) || sample.wallMs < 0 || !Number.isFinite(Date.parse(sample.startedAt)) || !Number.isFinite(Date.parse(sample.completedAt))) throw new Error('Invalid cost profile sample');
++  if (sample.cpu.userMs === null) {
++    if (sample.cpu.systemMs !== null || !sample.cpu.unavailableReason) throw new Error('Unavailable CPU requires a reason');
++  } else if (![sample.cpu.userMs, sample.cpu.systemMs].every(value => value !== null && Number.isFinite(value) && value >= 0) || !sample.cpu.source || sample.cpu.unavailableReason !== null) throw new Error('Invalid CPU measurement');
++}
++
++export function mergeRafCostRows(previous: RafCostRow | undefined, contribution: RafCostRow): RafCostRow {
++  if (!previous) return contribution;
++  const samples = previous.samples + contribution.samples;
++  const cpuSamples = previous.cpuSamples + contribution.cpuSamples;
++  const cpuUnavailableSamples = previous.cpuUnavailableSamples + contribution.cpuUnavailableSamples;
++  const sources = [...new Set([previous.cpuSource, contribution.cpuSource].flatMap(source => source === null ? [] : Array.isArray(source) ? source : [source]))].sort();
++  const reasons = [...new Set([previous.unavailableReason, contribution.unavailableReason].flatMap(reason => reason ? reason.split('; ') : []))].sort();
++  const wallTotalMs = previous.wallTotalMs + contribution.wallTotalMs;
++  const cpuUserTotalMs = cpuSamples ? (previous.cpuUserTotalMs ?? 0) + (contribution.cpuUserTotalMs ?? 0) : null;
++  const cpuSystemTotalMs = cpuSamples ? (previous.cpuSystemTotalMs ?? 0) + (contribution.cpuSystemTotalMs ?? 0) : null;
++  return { ...contribution, samples, cpuSamples, cpuUnavailableSamples,
++    firstSampleStartedAt: previous.firstSampleStartedAt < contribution.firstSampleStartedAt ? previous.firstSampleStartedAt : contribution.firstSampleStartedAt,
++    updatedAt: previous.updatedAt > contribution.updatedAt ? previous.updatedAt : contribution.updatedAt,
++    wallTotalMs, wallMeanMs: wallTotalMs / samples, cpuUserTotalMs, cpuSystemTotalMs,
++    cpuUserMeanMs: cpuSamples ? cpuUserTotalMs! / cpuSamples : null, cpuSystemMeanMs: cpuSamples ? cpuSystemTotalMs! / cpuSamples : null,
++    cpuSource: sources.length > 1 ? sources : sources[0] ?? null,
++    cpuAvailability: cpuSamples === 0 ? 'unavailable' : cpuUnavailableSamples ? 'partial' : 'complete',
++    unavailableReason: reasons.length ? reasons.join('; ') : null };
+ }
+diff --git a/src/service-host.ts b/src/service-host.ts
+index e7acbdc..608437c 100644
+--- a/src/service-host.ts
++++ b/src/service-host.ts
+@@ -1,3 +1,4 @@
++import { RafCostRuntime, rafCostBoundary, measureRafCost } from './raf-cost-runtime.ts';
+ import { runtimeResourceUsage } from './resource-usage-runtime.ts';
+ import { productionStateContext, stateFailure } from './state-migration-guard.ts';
+ import { fileURLToPath } from 'node:url';
+@@ -45,6 +46,7 @@ export async function createServicePorts(
+ ): Promise<ComposedServicePorts> {
+   const stateContext = productionStateContext(context.orchestratorRoot, fileURLToPath(import.meta.url), context.homeDirectory, 'service-store');
+   if (context.stateDirectory !== dirname(stateContext.statePath) || context.socketPath !== join(context.stateDirectory, 'service.sock')) throw stateFailure('STATE_CONTEXT_REFUSED', 'Service paths differ from selected state context');
++  const costStartedAt = rafCostBoundary();
+   if (!dependencies) return (await import('./production-service-ports.ts')).createServicePorts(context);
+   const required = [dependencies.now, dependencies.nextReminderId, dependencies.observeProcesses, dependencies.effectsForObservation,
+     dependencies.sessionValidation?.verifyMainAuthority, dependencies.sessionValidation?.verifyWorkResult, dependencies.eventPorts,
+@@ -67,9 +69,13 @@ export async function createServicePorts(
+     if (!Number.isFinite(value)) throw new Error('Service clock unavailable');
+     return value;
+   };
++  const sqliteStartedAt = rafCostBoundary();
+   const store = openStateStore(join(context.stateDirectory, fileName), { context: stateContext });
++  let profile: RafCostRuntime | undefined;
+   let queue: ReturnType<typeof createResourceWaitQueue> | undefined;
+   try {
++    profile = new RafCostRuntime(store, { scope: 'service', command: null }, context.orchestratorRoot, 'wait', costStartedAt, sqliteStartedAt);
++    profile.install();
+     const sessions = createSessionState({ repository: store.sessionRepository, ...dependencies.sessionValidation });
+     const reminders = new ReminderService({ repository: store.reminderRepository, now: () => new Date(clock()).toISOString(), nextId: dependencies.nextReminderId, approvedEventKinds: catalog.events.map((event: { id: string }) => event.id) });
+     const eventPorts = dependencies.eventPorts(store);
+@@ -172,7 +178,7 @@ export async function createServicePorts(
+       try {
+         runtimeResourceUsage(store.startupContextDatabase, context.orchestratorRoot).tracker.hostTick(clock());
+         if (!dependencies.preserveSessionState) {
+-          await reconcile();
++          await measureRafCost('reconciliation', reconcile);
+           cleanupStartupContextCompleted(new Date(clock()).toISOString(), { database: store.startupContextDatabase, flowPath: join(context.orchestratorRoot, 'conf', 'flow.json'), sessions });
+         }
+         if (closed) return;
+@@ -197,10 +203,10 @@ export async function createServicePorts(
+           const receipt = await dependencies.deliverReminder(reminder);
+           if (receipt?.delivered === true) delivered.set(reminder.id, key);
+         }
+-        await resourceQueue?.pump();
++        await measureRafCost('resource-queue', async () => resourceQueue?.pump());
+       } finally { arm(); }
+     };
+-    const refresh = () => serial(cycle);
++    const refresh = () => serial(() => measureRafCost('handler', cycle));
+     const recover = (): Promise<void> => {
+       if (closed) return Promise.reject(new Error('Service host is closed'));
+       if (!recovery) recovery = refresh().then(() => { recovered = true; });
+@@ -222,7 +228,7 @@ export async function createServicePorts(
+           const result = await resourceQueue.enqueue({ clientId: client.clientId, level: input.level, signal: client.signal }).result;
+           return result;
+         }
+-        return serial(async () => {
++        return serial(() => measureRafCost('handler', async () => {
+           if (client.signal.aborted) throw new Error('Service request cancelled');
+           const input = payload(request.payload);
+           let result: unknown;
+@@ -239,7 +245,7 @@ export async function createServicePorts(
+           }
+           await cycle();
+           return result;
+-        });
++        }));
+       },
+       shutdown: () => {
+         if (!shutdown) {
+@@ -249,7 +255,7 @@ export async function createServicePorts(
+             cancelWake = undefined;
+             resourceQueue?.close('Service stopped');
+             await tail;
+-            store.close();
++            try { profile?.stage('finalization'); profile?.finish(); } finally { store.close(); }
+           })();
+         }
+         return shutdown;
+@@ -257,6 +263,7 @@ export async function createServicePorts(
+     };
+   } catch (error) {
+     queue?.close('Service initialization failed');
++    try { profile?.finish(); } catch (failure) { process.emitWarning(failure instanceof Error ? failure : String(failure)); }
+     store.close();
+     throw error;
+   }
+diff --git a/src/state-store.ts b/src/state-store.ts
+index c3c8d5e..2020b3d 100644
+--- a/src/state-store.ts
++++ b/src/state-store.ts
+@@ -1,3 +1,5 @@
++import { aggregateRafCostSample, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
++import { readRafCostPolicy } from './raf-cost-runtime.ts';
+ import { initializeResourceUsage } from './resource-usage.ts';
+ import { accountSessionUsage } from './resource-usage-runtime.ts';
+ import type { LaunchQueueTransaction, LaunchQueueState } from './launch-queue-events.ts';
+@@ -89,10 +91,13 @@ export interface StateStore {
+   releaseQuotaLease(key: string, token: string): void;
+   recordCommandDuration(command: string, durationMs: number, alpha: number): void;
+   getCommandTiming(command: string): CommandTiming | undefined;
++  costProfileRepository: RafCostProfileRepository;
++  recordCostSample(sample: RafCostSample): void;
++  readCostProfile(): RafCostProfileSnapshot;
+ }
+ 
+-export const STATE_SCHEMA_VERSION = 16;
+-export const STATE_SCHEMA_SUPPORTED_VERSIONS = [16] as const;
++export const STATE_SCHEMA_VERSION = 17;
++export const STATE_SCHEMA_SUPPORTED_VERSIONS = [17] as const;
+ 
+ export async function retryStateOperation<T>(action: () => T, budget: { transitionMs: number; pollMs: number }): Promise<T> {
+   if (![budget.transitionMs, budget.pollMs].every(value => Number.isFinite(value) && value > 0)) throw new Error('SQLite retry requires a positive transition and polling budget');
+@@ -429,6 +434,20 @@ export function openStateStore(path: string, options?: import('./state-migration
+             `);
+             options?.afterMigrationStep?.(16);
+           }
++          if (current < 17) {
++            db.exec(`
++              CREATE TABLE raf_cost_profile (
++                scope TEXT NOT NULL,
++                command TEXT NOT NULL,
++                stage TEXT NOT NULL,
++                executor TEXT NOT NULL,
++                payload TEXT NOT NULL,
++                PRIMARY KEY (scope, command, stage, executor)
++              ) STRICT;
++              PRAGMA user_version = 17;
++            `);
++            options?.afterMigrationStep?.(17);
++          }
+         });
+       }
+       for (let attempt = 0; ; attempt++) {
+@@ -450,6 +469,22 @@ export function openStateStore(path: string, options?: import('./state-migration
+     throw error;
+   }
+ 
++  let costPolicy: ReturnType<typeof readRafCostPolicy> | undefined;
++  const profilePolicy = () => costPolicy ??= readRafCostPolicy(options?.context?.orchestratorRoot);
++  const costProfileRepository: RafCostProfileRepository = {
++    update(key, change) {
++      operation('costProfile.update', () => transaction(() => {
++        const previous = db.prepare('SELECT payload FROM raf_cost_profile WHERE scope = ? AND command = ? AND stage = ? AND executor = ?').get(key.scope, key.command ?? '', key.stage, key.executor);
++        const next = change(previous ? JSON.parse(String(previous.payload)) : undefined);
++        db.prepare(`INSERT INTO raf_cost_profile (scope, command, stage, executor, payload) VALUES (?, ?, ?, ?, ?)
++          ON CONFLICT(scope, command, stage, executor) DO UPDATE SET payload = excluded.payload`).run(key.scope, key.command ?? '', key.stage, key.executor, JSON.stringify(next));
++      }));
++    },
++    readRows() {
++      return operation('costProfile.read', () => db.prepare('SELECT payload FROM raf_cost_profile ORDER BY scope, command, stage, executor').all().map(row => JSON.parse(String(row.payload)) as RafCostRow));
++    },
++  };
++
+   function withReminderTransaction<T>(action: (tx: ReminderTransaction) => T): T {
+     let active = true;
+     const access = <R>(action: () => R): R => {
+@@ -925,6 +960,15 @@ export function openStateStore(path: string, options?: import('./state-migration
+         };
+       });
+     },
++    costProfileRepository,
++    recordCostSample(sample) {
++      const policy = profilePolicy();
++      if (!policy.stages.includes(sample.stage) || (sample.scope === 'command' && !policy.commands.includes(sample.command ?? ''))) throw new Error('Unknown cost profile key');
++      costProfileRepository.update(sample, previous => aggregateRafCostSample(previous, sample));
++    },
++    readCostProfile() {
++      return { schemaVersion: profilePolicy().schemaVersion, readAt: new Date().toISOString(), rows: costProfileRepository.readRows() };
++    },
+     recordCommandDuration(command, durationMs, alpha) {
+       if (!Number.isFinite(durationMs) || durationMs < 0) throw new Error("Duration must be finite and nonnegative");
+       if (!Number.isFinite(alpha) || alpha <= 0 || alpha > 1) throw new Error("Alpha must be in (0, 1]");
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index 03aefc9..13eea1e 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -1,3 +1,4 @@
++import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
+ import { RunnerProtocol } from './test-run-protocol.ts';
+ import { isDeepStrictEqual } from 'node:util';
+ import { resolveSandboxTestCaller } from './sandbox-test-caller.ts';
+@@ -267,7 +268,10 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
+   return ports;
+ }
+ 
+-export async function runConfiguredTestRun(argv: readonly string[], options: { orchestratorRoot: string; homeDirectory: string; settle?: (store: StateStore) => Promise<void> }): Promise<ExecutionResult> {
++export async function runConfiguredTestRun(argv: readonly string[], options: { orchestratorRoot: string; homeDirectory: string; costStartedAt?: RafCostBoundary; commandTimingOwner?: 'production'; settle?: (store: StateStore) => Promise<void> }): Promise<ExecutionResult> {
++  const costStartedAt = options.costStartedAt ?? rafCostBoundary();
++  let costProfile: RafCostRuntime | undefined;
++  let execution: ExecutionResult | undefined;
+   let store: StateStore | undefined, controlStore: StateStore | undefined;
+   let config: TestRunConfig | undefined;
+   let resultContext: StateContext | undefined;
+@@ -303,7 +307,12 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+         throw error;
+       }
+     };
++    const sqliteStartedAt = rafCostBoundary();
+     controlStore = openStore('control', controlContext);
++    if (options.commandTimingOwner !== 'production') {
++      costProfile = new RafCostRuntime(controlStore, { scope: 'command', command: 'test run' }, root, 'handler', costStartedAt, sqliteStartedAt);
++      costProfile.install();
++    }
+     const control = await sandboxTestControlSnapshot(controlStore, root, args.project, args.group);
+     const caller = control.ancestors.find(row => row.pid === process.pid);
+     if (!caller) throw Object.assign(new Error('Current caller identity is unavailable'), { code: 'CALLER_UNVERIFIED' });
+@@ -404,7 +413,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+     }
+     const output = JSON.parse(reply.stdout);
+     const stateForDelivery = resultContext;
+-    return { exitCode: reply.code, stdout: reply.stdout.trimEnd(), stderr: reply.stderr.trimEnd(),
++    return execution = { exitCode: reply.code, stdout: reply.stdout.trimEnd(), stderr: reply.stderr.trimEnd(),
+       afterDelivery: stateForDelivery && output.groupSnapshot === 'loaded' ? async () => {
+         const deliveredStore = openStore('unit', stateForDelivery);
+         try { await acknowledgeTestRunDelivery(output, sqliteTestRunState(deliveredStore)); } finally { deliveredStore.close(); }
+@@ -416,6 +425,14 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+       const hintId = config?.phases[result.phase]?.hints.setup;
+       result.hintIds = hintId ? [hintId] : []; result.hints = hintId ? [config!.hints[hintId]] : [];
+     }
+-    return { exitCode: 1, stdout: JSON.stringify(result), stderr: result.errorCode === 'CALLER_UNAUTHORIZED' && error instanceof Error ? error.message : '' };
+-  } finally { store?.close(); controlStore?.close(); }
++    return execution = { exitCode: 1, stdout: JSON.stringify(result), stderr: result.errorCode === 'CALLER_UNAUTHORIZED' && error instanceof Error ? error.message : '' };
++  } finally {
++    try { costProfile?.stage('finalization'); costProfile?.finish(); }
++    catch (error) {
++      const message = error instanceof Error ? error.message : String(error);
++      if (execution) { execution.exitCode = execution.exitCode || 1; execution.stderr = [execution.stderr, `Cost profile storage failed: ${message}`].filter(Boolean).join('\n'); }
++      else process.emitWarning(error instanceof Error ? error : String(error));
++    }
++    finally { store?.close(); controlStore?.close(); }
++  }
+ }
+diff --git a/test/app-runtime.test.ts b/test/app-runtime.test.ts
+index f3ece0f..12d9760 100644
+--- a/test/app-runtime.test.ts
++++ b/test/app-runtime.test.ts
+@@ -30,10 +30,13 @@ function fixture() {
+   let clock = 100;
+   const switches = new Map<string, boolean>();
+   const context: RuntimeContext = { orchestratorRoot: '/sandbox/orchestrator', confRoot: '/sandbox/orchestrator/conf', artifactPath: '/sandbox/catalog.json', statePath: '/sandbox/state.sqlite', tmpRoot: '/sandbox/tmp', mode: 'test', commandStartedAtMs: 10, resolveCaller: async () => { note('caller'); return { verifiedRun: 'main-1' }; } };
+-  const config: RuntimeConfiguration = { catalog, models, commandTiming: { emaAlpha: 0.37 } };
++  const config: RuntimeConfiguration = { catalog, models, commandTiming: { emaAlpha: 0.37, sqliteOnlyMeanBudgetMs: 100 } };
+   const store: StateStore = {
+     sessionRepository: { transaction: () => { throw new Error('Runtime must use owner ports'); } },
+     reminderRepository: { transaction: () => { throw new Error('Runtime must use owner ports'); } },
++    costProfileRepository: { update: () => { throw new Error('Runtime must use owner ports'); }, readRows: () => [] },
++    recordCostSample: () => { throw new Error('Runtime must use owner ports'); },
++    readCostProfile: () => ({ schemaVersion: 1, readAt: identity.startedAt, rows: [] }),
+     close: () => note('store.close'),
+     getRunnerEnabled: id => { note('getRunnerEnabled', id); return switches.get(id); },
+     initializeRunners: entries => { note('initialize', entries); for (const entry of entries) if (!switches.has(entry.id)) switches.set(entry.id, entry.initialEnabled); },
+diff --git a/test/production-entry.test.ts b/test/production-entry.test.ts
+index f8c198d..46eeb94 100644
+--- a/test/production-entry.test.ts
++++ b/test/production-entry.test.ts
+@@ -135,8 +135,8 @@ test('command stats reads existing canonical timing from the same file and recor
+   try { store.recordCommandDuration('runner list', 314, 0.37); } finally { store.close(); }
+   const data = success(await f.run(['command', 'stats']));
+   assert.ok(JSON.stringify(data).includes('runner list'));
+-  assert.ok(records(data).some(row => row.averageMs === 314));
+-  assert.ok(!records(data).some(row => row.averageMs === 0));
++  assert.ok(records((data as { commands: unknown }).commands).some(row => row.averageMs === 314));
++  assert.ok(!records((data as { commands: unknown }).commands).some(row => row.averageMs === 0));
+   const reopened = openStateStore(f.statePath);
+   try {
+     assert.equal(reopened.getCommandTiming('runner list')?.averageMs, 314);
+@@ -147,7 +147,7 @@ test('command stats reads existing canonical timing from the same file and recor
+ test('fresh command stats does not fabricate measurements for commands that never ran', async t => {
+   const f = await fixture(t);
+   const data = success(await f.run(['command', 'stats']));
+-  assert.ok(!records(data).some(row => row.averageMs === 0));
++  assert.ok(!records((data as { commands: unknown }).commands).some(row => row.averageMs === 0));
+   const store = openStateStore(f.statePath);
+   try { assert.equal(store.getCommandTiming('agent run'), undefined); } finally { store.close(); }
+ });

@@ -1,0 +1,184 @@
+[
+  {
+    "runId": "38ef7899-68f9-42b4-a36c-3f7272244bca",
+    "phase": "hotfix",
+    "group": "profile-raf-performance/agent-ps",
+    "selection": {
+      "files": [
+        "test/agent-ps-cost.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "file": "evidence/profile-raf-performance/hotfix-5.8/agent-ps-hotfix.TestRunResult.json",
+    "knownRed": 0,
+    "passed": 21,
+    "unknown": 0,
+    "unexecuted": 0
+  },
+  {
+    "runId": "f1d3e2c1-0d16-42a3-9cd5-9081f9d7ba25",
+    "phase": "red",
+    "group": "profile-raf-performance/agent-ps",
+    "selection": {
+      "files": [
+        "test/agent-ps-cost.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "file": "evidence/profile-raf-performance/hotfix-5.8/agent-ps-red-confirmed.TestRunResult.json",
+    "knownRed": 10,
+    "passed": 11,
+    "unknown": 0,
+    "unexecuted": 0
+  },
+  {
+    "runId": "83b57f1a-1d51-4f4a-89fd-29d206d53534",
+    "phase": "red",
+    "group": "profile-raf-performance/agent-ps",
+    "selection": {
+      "files": [
+        "test/agent-ps-cost.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "setup-failed",
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-setup",
+    "file": "evidence/profile-raf-performance/hotfix-5.8/agent-ps-red.TestRunResult.json",
+    "knownRed": 0,
+    "passed": 0,
+    "unknown": 1,
+    "unexecuted": 0
+  },
+  {
+    "runId": "901d9411-69c4-41bb-994a-b19aa14ae4a1",
+    "phase": "hotfix",
+    "group": "profile-raf-performance/profile",
+    "selection": {
+      "files": [
+        "test/raf-cost-profile.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "file": "evidence/profile-raf-performance/hotfix-5.8/profile-hotfix.TestRunResult.json",
+    "knownRed": 0,
+    "passed": 31,
+    "unknown": 0,
+    "unexecuted": 0
+  },
+  {
+    "runId": "e6fe98e6-3f19-4314-916c-9b485e936cce",
+    "phase": "red",
+    "group": "profile-raf-performance/profile",
+    "selection": {
+      "files": [
+        "test/raf-cost-profile.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "file": "evidence/profile-raf-performance/hotfix-5.8/profile-red.TestRunResult.json",
+    "knownRed": 28,
+    "passed": 3,
+    "unknown": 0,
+    "unexecuted": 0
+  },
+  {
+    "runId": "5d7b5447-a019-450d-807b-620a89068675",
+    "phase": "hotfix",
+    "group": "profile-raf-performance/timing-coverage",
+    "selection": {
+      "files": [
+        "test/runtime-command-timing.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "file": "evidence/profile-raf-performance/hotfix-5.8/timing-hotfix.TestRunResult.json",
+    "knownRed": 0,
+    "passed": 93,
+    "unknown": 0,
+    "unexecuted": 0
+  },
+  {
+    "runId": "cb84f120-999a-40ec-86fe-e1b2894c3a69",
+    "phase": "red",
+    "group": "profile-raf-performance/timing-coverage",
+    "selection": {
+      "files": [
+        "test/runtime-command-timing.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "file": "evidence/profile-raf-performance/hotfix-5.8/timing-red.TestRunResult.json",
+    "knownRed": 61,
+    "passed": 32,
+    "unknown": 0,
+    "unexecuted": 0
+  }
+]

@@ -1,0 +1,76 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/catalog-generator --files test/catalog-generator.test.ts",
+  "author": "raf-cfc123-scaffold",
+  "scaffoldCommit": "baa1d51cb797be7c5fb4f545675cce087c2b6da8",
+  "configCommit": "f058f771f3",
+  "runId": "ad7c370f-6897-44fc-92ad-55e3dff5a75f",
+  "cliExitCode": 1,
+  "toolChunkId": "c23740",
+  "toolOutputTruncated": true,
+  "rawStderr": "not separately exposed by exec_command",
+  "originalStdout": "truncated by exec_command; full result requested from main without rerun",
+  "observed": {
+    "outcome": "assertions-failed",
+    "passed": 0,
+    "knownRed": 42,
+    "unexecuted": 0,
+    "unknown": 0,
+    "durationMs": 749,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timeoutCount": 0,
+    "nextAction": "implement"
+  },
+  "workspace": {
+    "headAtStartedAtFromReflog": "3203c14e33a5c95d3a96486b441a4b7b8bad01f2",
+    "ownFilesClean": true,
+    "sharedTreeDirty": true,
+    "exactStatusAtSpawn": "not captured",
+    "neighborDirtyPathsObservedBeforeAndAfter": [
+      "src/test-run-etchly-integration.ts",
+      "src/test-run-etchly-inventory.ts",
+      "src/test-run-etchly.ts",
+      "src/test-run-integration-profiles.ts",
+      "src/test-run-runtime.ts",
+      "src/test-runs.ts"
+    ]
+  },
+  "fullResultDelivery": {
+    "available": false,
+    "reason": "exec_command truncated stdout; no retained full-result proof in this generation; Q97 unanswered per main",
+    "mainInstruction": "Запиши це підсумком у evidence (без повтору прогону) і заверши звіт; підтвердження red main робить за записом raf цього runId",
+    "rerun": false,
+    "sqliteReadByAuthor": false,
+    "mainVerificationRequired": true
+  },
+  "failureEvidence": {
+    "failureKinds": [
+      "assertions"
+    ],
+    "diagnosticSummary": {
+      "totalEntries": 42,
+      "retainedEntries": 42,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": true
+    },
+    "positiveScenarioMessage": "Actual message: \"NotImplemented: CatalogGenerator.compile\"",
+    "negativeScenarioMessage": "Missing source pointer agent run: NotImplemented: CatalogGenerator.compile",
+    "buildScenarioMessage": "Actual message: \"NotImplemented: CatalogGenerator.build\"",
+    "setupImportFailure": false
+  },
+  "environmentSummary": {
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "0e5f3262a8b7dc7d5a2ab40efb97dc275d3aef1969ea4cbc3abb8ca3fe4cb8db",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    }
+  }
+}

@@ -1,0 +1,164 @@
+[
+  {
+    "runId": "71f37e3c-d96b-403a-9fa4-b9437ab40068",
+    "startedAt": "2026-10-25T04:04:23.500Z",
+    "durationMs": 34208,
+    "phase": "qa",
+    "group": "complete-raf-flow-contracts/z390",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/codex-sandbox-preflight-path.test.ts",
+        "test/raf-unix-socket-paths.test.ts",
+        "test/codex-bwrap-entry.test.ts",
+        "test/codex-bwrap-evidence.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "sourceItem": "switch-raf-main-by-symlink:6.4",
+    "targetGroup": "complete-raf-flow-contracts/z390",
+    "raw": "symlink-route-z390.TestRunResult.json",
+    "tool": "symlink-route-z390.tool.json",
+    "combinedStream": "symlink-route-z390.combined-stream.txt",
+    "separateStderr": null,
+    "cliExitCode": 0,
+    "passedCount": 77,
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z390",
+    "workspaceEvidence": "symlink-route-workspace.patch, snapshot 37a8a913c39642b123ff196f9e7d2e3a57f5841c; exact concurrent shared diff was not captured atomically",
+    "verifiedCodeCommit": "63f4f50561401c6405f8e67f7911361f2303380b",
+    "headAtStartedAtFromReflog": "37a8a913c39642b123ff196f9e7d2e3a57f5841c"
+  },
+  {
+    "runId": "517b9884-fb5b-4db0-ac9c-d811b6ecabfb",
+    "startedAt": "2026-10-25T04:04:24.038Z",
+    "durationMs": 225587,
+    "phase": "qa",
+    "group": "complete-raf-flow-contracts/z389-trust-order",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/workspace-trust.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "sourceItem": "switch-raf-main-by-symlink:6.4",
+    "targetGroup": "complete-raf-flow-contracts/z389-trust-order",
+    "raw": "symlink-route-z389-trust-order.TestRunResult.json",
+    "tool": "symlink-route-z389-trust-order.tool.json",
+    "combinedStream": "symlink-route-z389-trust-order.combined-stream.txt",
+    "separateStderr": null,
+    "cliExitCode": 0,
+    "passedCount": 53,
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z389-trust-order",
+    "workspaceEvidence": "symlink-route-workspace.patch, snapshot 37a8a913c39642b123ff196f9e7d2e3a57f5841c; exact concurrent shared diff was not captured atomically",
+    "verifiedCodeCommit": "63f4f50561401c6405f8e67f7911361f2303380b",
+    "headAtStartedAtFromReflog": "37a8a913c39642b123ff196f9e7d2e3a57f5841c"
+  },
+  {
+    "runId": "89b42a6f-e5f3-4193-8ea2-cc915f1f8ecb",
+    "startedAt": "2026-10-25T04:04:24.484Z",
+    "durationMs": 1916,
+    "phase": "qa",
+    "group": "complete-raf-flow-contracts/z350",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/sandbox-test-run.test.ts",
+        "test/sandbox-test-caller-z400.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "sourceItem": "switch-raf-main-by-symlink:6.4",
+    "targetGroup": "complete-raf-flow-contracts/z350",
+    "raw": "symlink-route-z350.TestRunResult.json",
+    "tool": "symlink-route-z350.tool.json",
+    "combinedStream": "symlink-route-z350.combined-stream.txt",
+    "separateStderr": null,
+    "cliExitCode": 0,
+    "passedCount": 186,
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z350",
+    "workspaceEvidence": "symlink-route-workspace.patch, snapshot 37a8a913c39642b123ff196f9e7d2e3a57f5841c; exact concurrent shared diff was not captured atomically",
+    "verifiedCodeCommit": "63f4f50561401c6405f8e67f7911361f2303380b",
+    "headAtStartedAtFromReflog": "37a8a913c39642b123ff196f9e7d2e3a57f5841c"
+  },
+  {
+    "runId": "55ea1a9a-9c0a-4f05-b33b-c4407ef9f7cc",
+    "startedAt": "2026-10-25T04:04:23.854Z",
+    "durationMs": 1980,
+    "phase": "qa",
+    "group": "complete-raf-flow-contracts/q414-regress",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/agent-adapters.test.ts",
+        "test/session-state.test.ts",
+        "test/agent-run-queue.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "sourceItem": "switch-raf-main-by-symlink:6.4",
+    "targetGroup": "complete-raf-flow-contracts/q414-regress",
+    "raw": "symlink-route-q414-regress.TestRunResult.json",
+    "tool": "symlink-route-q414-regress.tool.json",
+    "combinedStream": "symlink-route-q414-regress.combined-stream.txt",
+    "separateStderr": null,
+    "cliExitCode": 0,
+    "passedCount": 105,
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/q414-regress",
+    "workspaceEvidence": "symlink-route-workspace.patch, snapshot 37a8a913c39642b123ff196f9e7d2e3a57f5841c; exact concurrent shared diff was not captured atomically",
+    "verifiedCodeCommit": "63f4f50561401c6405f8e67f7911361f2303380b",
+    "headAtStartedAtFromReflog": "37a8a913c39642b123ff196f9e7d2e3a57f5841c"
+  }
+]

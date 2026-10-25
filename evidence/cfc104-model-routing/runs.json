@@ -1,0 +1,174 @@
+{
+  "initialRed": {
+    "runId": "159a1647-f686-40e6-b258-be585f65d543",
+    "knownRed": 37,
+    "source": "main handoff; NotImplemented scaffold 76500147ec2ba6c64b45d2edd5423d799504cb25"
+  },
+  "group": "complete-raf-flow-contracts/model-routing",
+  "qaHomeUnchanged": true,
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/model-routing --files test/model-routing.test.ts test/model-routing-handoff.test.ts",
+      "wrapperSha": "6730c74b5ce2fae6b0f7daa05e393c5fa244b423",
+      "resultFile": "implement-1.stdout.json",
+      "cliFile": "implement-1.cli.json",
+      "stderrFile": "implement-1.stderr.txt",
+      "runId": "f554ef48-d528-4a3e-96df-824df1936463",
+      "selection": {
+        "files": [
+          "test/model-routing.test.ts",
+          "test/model-routing-handoff.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 46,
+      "knownRed": 17,
+      "unexecuted": 0,
+      "unknown": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "workspaceEvidence": "initial-workspace.json"
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/model-routing --files test/model-routing.test.ts test/model-routing-handoff.test.ts",
+      "wrapperSha": "6730c74b5ce2fae6b0f7daa05e393c5fa244b423",
+      "resultFile": "implement-2.stdout.json",
+      "cliFile": "implement-2.cli.json",
+      "stderrFile": "implement-2.stderr.txt",
+      "runId": "1a661709-750e-433b-a4e9-65fba8e3c7d0",
+      "selection": {
+        "files": [
+          "test/model-routing.test.ts",
+          "test/model-routing-handoff.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 59,
+      "knownRed": 4,
+      "unexecuted": 0,
+      "unknown": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "workspaceEvidence": null
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/model-routing --files test/model-routing.test.ts test/model-routing-handoff.test.ts",
+      "wrapperSha": "6730c74b5ce2fae6b0f7daa05e393c5fa244b423",
+      "resultFile": "implement-3.stdout.json",
+      "cliFile": "implement-3.cli.json",
+      "stderrFile": "implement-3.stderr.txt",
+      "runId": "699d261e-61d7-4ec5-a4c5-829ca84d02bd",
+      "selection": {
+        "files": [
+          "test/model-routing.test.ts",
+          "test/model-routing-handoff.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 63,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "workspaceEvidence": null
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/model-routing --files test/model-routing.test.ts test/model-routing-handoff.test.ts",
+      "wrapperSha": "6730c74b5ce2fae6b0f7daa05e393c5fa244b423",
+      "resultFile": "implement-4.stdout.json",
+      "cliFile": "implement-4.cli.json",
+      "stderrFile": "implement-4.stderr.txt",
+      "runId": "80621d10-a05f-4a65-aab5-0fa0c9f0a787",
+      "selection": {
+        "files": [
+          "test/model-routing.test.ts",
+          "test/model-routing-handoff.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 63,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "workspaceEvidence": null
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/model-routing --files test/model-routing.test.ts test/model-routing-handoff.test.ts",
+      "wrapperSha": "6730c74b5ce2fae6b0f7daa05e393c5fa244b423",
+      "resultFile": "implement-5.stdout.json",
+      "cliFile": "implement-5.cli.json",
+      "stderrFile": "implement-5.stderr.txt",
+      "transportFile": "implement-5.transport.txt",
+      "runId": "95e783ab-03c6-4e7e-98b5-0ea51ceec5a6",
+      "selection": {
+        "files": [
+          "test/model-routing.test.ts",
+          "test/model-routing-handoff.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 63,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "workspaceEvidence": [
+        "final-workspace-before.json",
+        "final-workspace-after.json"
+      ]
+    }
+  ],
+  "streamCapture": {
+    "nativeSeparateStreams": false,
+    "reason": "exec_command exposes merged output; native separate raw capture unavailable (Q97). First TestRunResult line is stdout; remaining diagnostics are stderr by CLI protocol. Both components are retained separately; full transport bytes also retained when stderr nonempty. implement-5.stderr.txt has the resource queue waiting event, not a test failure."
+  }
+}

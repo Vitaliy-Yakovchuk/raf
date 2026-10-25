@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
+import { writeFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createHash, randomUUID } from 'node:crypto';
 import { test, type TestContext } from 'node:test';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -14,6 +17,24 @@ const taskFile = `openspec/changes/${change}/tasks.md`;
 const exec = promisify(execFile);
 
 async function fixture(t: TestContext, mode = 'live', preserveAfterPane = false) {
+  const caseRunId = randomUUID();
+  const caseDirectory = fileURLToPath(new URL('../evidence/cfc24-resumed-20261025/integration-cases/', import.meta.url));
+  const casePath = join(caseDirectory, caseRunId + '.json');
+  await mkdir(caseDirectory, { recursive: true });
+  const events: unknown[] = [];
+  const evidence = (id: string, value: unknown) => {
+    events.push({ at: new Date().toISOString(), scenario: id, ...value as object });
+    writeFileSync(casePath + '.part', JSON.stringify({ caseRunId, test: t.name, events }, null, 2) + '\n');
+    renameSync(casePath + '.part', casePath);
+  };
+  t.diagnostic(JSON.stringify({ schema: 'raf-test-evidence-v1', test: { file: 'test/agent-adapters-integration.test.ts', name: t.name }, phase: 'integration', caseRunId, evidence: [casePath] }));
+  const root = fileURLToPath(new URL('../', import.meta.url));
+  const sourceFiles = ['test/agent-adapters-integration.test.ts', 'test/agent-adapters-public-fixture.ts', 'test/agent-run-fixture.ts', 'src/message-delivery.ts', 'src/agent-adapters.ts', 'src/launch-wrapper.ts', 'src/production-runtime.ts'];
+  evidence('environment-before', { mode, preserveAfterPane, node: process.version, platform: process.platform, arch: process.arch,
+    head: (await exec('git', ['rev-parse', 'HEAD'], { cwd: root })).stdout.trim(),
+    ownDiff: (await exec('git', ['diff', '--', ...sourceFiles], { cwd: root })).stdout,
+    hashes: Object.fromEntries(await Promise.all(sourceFiles.map(async file => [file, createHash('sha256').update(await readFile(join(root, file))).digest('hex')]))),
+  });
   const f = await agentRunFixture(t, mode, timeouts, 'codex', { productionQa: true, tasks: 2, commands: ['main attach'] });
   const cfg = JSON.parse(await readFile(join(f.directory, 'fixture.json'), 'utf8'));
   await mkdir(join(cfg.sourceRoot, 'dist'), { recursive: true });
@@ -50,8 +71,12 @@ setInterval(() => {
   await f.git('add', '--', taskFile);
   await f.git('commit', '-qm', 'literal adapter fixture task');
   const main = await publicAdapterMain(f, cfg, JSON.parse(await readFile(new URL('../../conf/flow.json', import.meta.url), 'utf8')).integrationTests.timeoutMs);
-  const run = (id: string) => main.command(f.runArgs(id));
-  const evidence = (id: string, value: unknown) => t.diagnostic(JSON.stringify({ scenario: id, ...value as object }));
+  evidence('private-main', { attached: main.attached, config: cfg, compiledCatalogHash: createHash('sha256').update(await readFile(cfg.artifact)).digest('hex'), tmux: await exec(cfg.tmux, ['-V']) });
+  const run = async (id: string) => {
+    const result = await main.command(f.runArgs(id));
+    evidence('public-agent-run', { id, result, state: f.inspect() });
+    return result;
+  };
   const launch = async (id: string) => {
     const cli = await run(id);
     assert.equal(cli.exitCode, 0, JSON.stringify(cli));

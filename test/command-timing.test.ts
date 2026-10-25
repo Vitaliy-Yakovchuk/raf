@@ -21,6 +21,11 @@ for (const [library, proof] of Object.entries(runtimeLibraryProofs)) {
     });
   }
 }
+test('I6 the integration classifier has a protected TypeScript parser boundary', () => {
+  const path = 'src/test-run-etchly-integration.ts';
+  const actual = createHash('sha256').update(readFileSync(new URL(`../${path}`, import.meta.url))).digest('hex');
+  assert.equal(runtimeLibraryProofs['node_modules/typescript/lib/typescript.js'].consumers[path], actual);
+});
 
 const conf = (name: string) => JSON.parse(readFileSync(new URL(`../../conf/${name}.json`, import.meta.url), 'utf8'));
 const constants = conf('raf-constants');

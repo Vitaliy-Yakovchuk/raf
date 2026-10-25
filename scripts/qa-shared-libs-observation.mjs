@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 
-// Observe persisted SessionRecord payloads, rather than CLI presentation objects.
 export function assertSharedLibraryLaunch(actor, layout, dependent) {
   assert.equal(actor.activity.cwd, layout.product);
   assert.ok(actor.process?.runnerSessionId && actor.process.pid, 'Real native identity required');

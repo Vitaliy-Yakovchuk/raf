@@ -1,0 +1,28 @@
+{
+  "item": "complete-raf-flow-contracts:Z.393.10",
+  "codeCommit": "d98de5af4530bb5cffb1dff0c048ae324c41b565",
+  "checkboxObserved": true,
+  "checkboxSetBy": "raf",
+  "checkboxCommit": {
+    "repository": "/srv/dev/work/orchestrator",
+    "sha": "7760a0b98b4cb29102475419c1c73158d69c47d4"
+  },
+  "confirmationWarnings": [
+    {
+      "stage": "source-before-final",
+      "cause": "deadline",
+      "deadline": 11725.225034,
+      "exhausted": true
+    },
+    {
+      "stage": "final-check",
+      "cause": "deadline",
+      "deadline": 11792.732258,
+      "exhausted": true
+    }
+  ],
+  "mainNotified": true,
+  "archive": null,
+  "archiveReason": "Other items remain open.",
+  "foreignWorkspaceChanges": "src/assignment-identity.ts and evidence/z39398 are not owned by this executor and were not staged."
+}

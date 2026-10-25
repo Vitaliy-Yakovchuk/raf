@@ -1,0 +1,84 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.395.3",
+  "status": "succeeded",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/z395-group-residue --files test/test-run-group-residue-z395.test.ts",
+  "repository": "/srv/dev/work/orchestrator/raf-develop",
+  "headBeforeRun": "3406f37075301064d2d1e82cb96a31be008e9a01",
+  "headAfterRun": "d5fb70567e2a87d45708465fcfbf112b779b96a6",
+  "workspaceAfterRun": "M evidence/cfc105-model-routing-current/README.md\n M evidence/cfc105-model-routing-current/coordination.json\n M src/test-runs.ts\n?? evidence/cfc105-model-routing-current/broker-stderr-boundary.json\n?? evidence/z394-state-channel-scaffold/\n?? evidence/z395-group-residue/implement/\n?? test/sandbox-state-channel-z394.test.ts\n?? test/support/",
+  "hashesAfterRun": {
+    "src/test-runs.ts": "9636842e628a24f5661888d4b64cfd31f5db5d81138035bd4dbf428ae7d3e513",
+    "src/test-run-protocol.ts": "a532d4f613c9b8a670bfe4b3cbe32e2c2df698fb904776981c7e784d9d944306",
+    "test/test-run-group-residue-z395.test.ts": "cfcabf1f23dd9a7b58d985dede2b3d7b23d67fc3258f6a773b35dff512f535bf",
+    "test/helpers/test-run-fixture.ts": "d14861fd22aa7f10aa5b7711c4772ce165ca619ae1ce196ecf55a97f6ff9e6af",
+    "/srv/dev/work/orchestrator/conf/flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "/srv/dev/work/orchestrator/conf/test-runs.json": "e34b9fc65c81ab13d6623d74b3ff4c605dc8d438fb10a60b7483cb25adf8606f"
+  },
+  "testedImplementationUnchanged": true,
+  "preparedTestsUnchanged": true,
+  "configurationChange": "Main registered z394 in b1ca8e7cf5 during first queue wait; first refusal preserved; second run uses latest configuration fingerprints embedded in full result.",
+  "runs": [
+    {
+      "artifactPrefix": "run-1",
+      "runId": "a5c4bdd5-cb42-4374-8a3b-d8d7c67e0abd",
+      "outcome": "refused",
+      "errorCode": "CONFIGURATION_INVALID",
+      "cliCode": 1,
+      "childExitCode": null,
+      "timeoutCount": 0,
+      "knownRedCount": 13,
+      "unexecuted": [
+        {
+          "file": "test/test-run-group-residue-z395.test.ts",
+          "name": "*"
+        }
+      ],
+      "cleanupComplete": true,
+      "nextAction": "fix-setup",
+      "nextActionTaken": "Same authorized command after inspecting configuration drift; no reset."
+    },
+    {
+      "artifactPrefix": "run-2",
+      "runId": "fa2b0b16-5d85-4844-a206-7cc5b02d9d52",
+      "selection": {
+        "files": [
+          "test/test-run-group-residue-z395.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "durationMs": 20353,
+      "passedCount": 29,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "bb89386e8cd26d0f150e4c72416621b133a0bee9314a34046145e3da58416a5a",
+        "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+      }
+    }
+  ],
+  "budget": "Same project/workspace/group and QA HOME as confirmed initial red and refused attempt; timeoutCount 0 throughout. No SQLite reset, second ledger, HOME or group rename.",
+  "captureLimitation": "Tool exposes merged transport. Complete unchanged JSON, raw transport and queue-stderr lines saved separately, with separate CLI and child codes. OS stdout/stderr FD separation was unavailable; not claimed byte-verified independently.",
+  "checks": {
+    "diffCheck": true,
+    "preparedTestDiffEmpty": true
+  },
+  "remaining": "Real SQLite/runner/CLI stand Z.395.4 remains open. No other assigned items or archive; tasks.md checkboxes owned by raf. No push."
+}

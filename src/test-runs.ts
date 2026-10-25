@@ -530,7 +530,17 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     else events.push(event);
   };
   const onEvent = (event: RunnerEvent) => {
-    try { const value = protocol.accept(event); if (value) recordEvent(value); }
+    try {
+      if (result.testKind === 'unit') {
+        const selected = (id: TestId) => plan.selection.files.includes(id.file) && (!plan.selection.testIds.length || containsId(plan.selection.testIds, id));
+        const ids = [...('test' in event ? [event.test] : []), ...('parent' in event && event.parent ? [event.parent] : []), ...(event.kind === 'complete' && 'expected' in event ? event.expected : [])];
+        if (ids.some(id => !selected(id))) {
+          recordEvent({ kind: 'protocol-error', diagnostic: `Runner event outside selection for group ${request.group}: ${JSON.stringify(ids.filter(id => !selected(id)))}` });
+          return;
+        }
+      }
+      const value = protocol.accept(event); if (value) recordEvent(value);
+    }
     catch { recordEvent({ kind: 'protocol-error', diagnostic: 'Invalid JSON runner protocol' }); }
   };
   let child: ManagedTestProcess | null = null, interruption: string | null = null;
@@ -593,12 +603,14 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     const group = tx.get(key);
     if (!group || group.inFlight?.runId !== result.runId) return;
     const collected = uniqueIds(events.flatMap(event => event.kind === 'complete' ? event.expected : event.kind === 'discovered' || event.kind === 'container-complete' ? [event.test] : []));
-    const completeCollection = !request.only && reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
+    const confirmed = reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
+    const confirmedPassed = confirmed ? result.passed : [];
+    const completeCollection = !request.only && confirmed;
     const removed = (id: TestId) => completeCollection && plan.selection.files.includes(id.file) && !containsId(collected, id);
     result.removed = uniqueIds([...group.knownRed, ...group.unexecuted].filter(removed));
-    group.knownRed = uniqueIds([...group.knownRed.filter(id => !removed(id) && (!events.some(event => event.kind === 'complete') || events.some(event => event.kind === 'protocol-error') || !containsId(result.passed, id))), ...result.knownRed]);
+    group.knownRed = uniqueIds([...group.knownRed.filter(id => !removed(id) && !containsId(confirmedPassed, id)), ...result.knownRed]);
     result.knownRed = group.knownRed;
-    result.unexecuted = uniqueIds([...group.unexecuted.filter(id => !removed(id) && !containsId([...result.passed, ...result.knownRed], id)), ...result.unexecuted, ...plan.selection.testIds.filter(id => !containsId([...result.passed, ...classified.knownRed], id))]);
+    result.unexecuted = uniqueIds([...group.unexecuted.filter(id => !removed(id) && !containsId([...confirmedPassed, ...result.knownRed], id)), ...result.unexecuted, ...plan.selection.testIds.filter(id => !containsId([...confirmedPassed, ...result.knownRed], id))]);
     if (result.testKind === 'integration') {
       const confirmed = reason === 'exit' && result.cleanup.complete && !classified.failureKinds.includes('setup') && events.some(event => event.kind === 'complete');
       const confirmedPassed = confirmed ? result.passed : [];
@@ -621,12 +633,15 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     }
     if (result.testKind === 'integration' && result.outcome === 'passed' && !plan.selection.files.every(file => result.passed.some(id => id.file === file))) { result.outcome = 'setup-failed'; result.failureKinds.push('setup'); }
     if (result.outcome === 'passed' && !result.unexecuted.length && !result.unknown.length && !result.knownRed.length) result.groupState = 'complete';
+    const residualKnownRed = result.testKind === 'unit' && confirmed && result.outcome === 'assertions-failed' && !classified.knownRed.length && result.knownRed.length > 0;
+    if (residualKnownRed) diagnostics?.inline({ kind: 'runner', test: null, message: `Group ${request.group} retains knownRed: ${result.knownRed.map(id => `${id.file}::${id.name}`).join(', ')}. Verify authorization for exact confirmation with --only.`, location: null, stack: [], redacted: false, truncated: false });
     if (!result.cleanup.complete) result.nextAction = 'reconcile';
     else if (result.failureKinds.includes('setup')) result.nextAction = 'fix-setup';
     else if (result.outcome === 'interrupted') result.nextAction = 'retry';
     else if (result.groupState === 'confirm-known-red') result.nextAction = 'confirm-known-red';
     else if (result.groupState === 'unverified-remainder') result.nextAction = 'review-remainder';
     else if (result.groupState === 'optimize' && result.timedOut) result.nextAction = 'optimize';
+    else if (residualKnownRed) result.nextAction = 'confirm-known-red';
     else if (result.outcome === 'passed') result.nextAction = 'complete';
     else if (config!.phases[request.phase].purpose === 'initial-red') result.nextAction = 'implement';
     else result.nextAction = result.timedOut ? 'retry' : 'fix-implementation';

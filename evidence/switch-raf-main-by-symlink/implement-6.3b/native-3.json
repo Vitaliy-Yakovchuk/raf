@@ -1,0 +1,20 @@
+{
+  "command": "node --test test/main-switch-agent-channel.integration.test.ts",
+  "sha": "aca109304f9844bb5bf337eff5ab2e75c0e7716c",
+  "executor": "main on supported host provider, clean clone, conf alongside",
+  "environment": "Isolated HOME/TMPDIR; LC_ALL=C; session environment variables unset by main",
+  "cliExitCode": 0,
+  "passed": 4,
+  "failed": 0,
+  "skipped": 0,
+  "stderrBytes": 0,
+  "versions": {
+    "node": "v26.12.1",
+    "bubblewrap": "0.11.1"
+  },
+  "source": "/srv/dev/sym63-native3.26F980",
+  "stdout": "native-3.stdout",
+  "stderr": "native-3.stderr",
+  "timeout": "No timeout reported; complete 4-test result",
+  "cleanup": "All four fixture finally/close blocks completed; host stdout contains complete test totals. No independent process-tree cleanup scan supplied for this direct host integration run."
+}

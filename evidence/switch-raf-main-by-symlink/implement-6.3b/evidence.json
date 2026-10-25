@@ -158,7 +158,7 @@
     }
   ],
   "native": {
-    "status": "pending-repeat",
+    "status": "passed",
     "owner": "main",
     "command": "node --test test/main-switch-agent-channel.integration.test.ts",
     "attempts": [
@@ -171,8 +171,18 @@
         "result": "native-2.json",
         "outcome": "failed",
         "reason": "Seccomp FD collision with inherited native mask-data descriptor; fixed dynamic free descriptor allocation, unit verified exact separate data."
+      },
+      {
+        "result": "native-3.json",
+        "outcome": "passed",
+        "sha": "aca109304f9844bb5bf337eff5ab2e75c0e7716c",
+        "cliExitCode": 0,
+        "passed": 4,
+        "failed": 0,
+        "stderrBytes": 0
       }
-    ]
+    ],
+    "finalResult": "native-3.json"
   },
   "scope": {
     "protected": [
@@ -199,5 +209,26 @@
     "reason": "Main directed no foreign unit groups; item6.4 owns declared regressionGroups."
   },
   "testChanges": "Independent implementation preceded prepared-test reads. Original 65 scaffold scenarios unchanged; five production launcher/scope/descriptor scenarios added.",
-  "captureLimit": "Tool exec_command exposes merged stdout/stderr. Every unit captured stream is a complete single TestRunResult JSON document, saved byte-for-byte; no additional stderr was observed. Separate .stderr files record this absence, not a separately available OS stream."
+  "captureLimit": "Tool exec_command exposes merged stdout/stderr. Every unit captured stream is a complete single TestRunResult JSON document, saved byte-for-byte; no additional stderr was observed. Separate .stderr files record this absence, not a separately available OS stream.",
+  "build": {
+    "final": "build-final-fd.json",
+    "cliExitCode": 0,
+    "intermediateFailure": "build-after-fd-fix.json",
+    "resolution": "Removed build-prohibited comment; behavior unchanged."
+  },
+  "limits": [
+    "Host integration proves native policy probes on the supported provider; it does not replace QA6.4 live Codex tool transcript and two-switch end-to-end scenario.",
+    "No retrofit or expanded authority for legacy agents. Existing conservative reader/slot retention remains until normal completion.",
+    "Full command-mediated Git for shared Orchestrator index is explicitly outside 6.3 by main instruction; index/objects/refs remain writable under existing grants."
+  ],
+  "completion": {
+    "unitPassed": 70,
+    "unitFailed": 0,
+    "unitResult": "unit-6-TestRunResult.json",
+    "nativePassed": 4,
+    "buildExitCode": 0,
+    "tasksEdited": false,
+    "archive": null,
+    "reason": "Other change tasks remain open; RAF owns assigned checkbox."
+  }
 }

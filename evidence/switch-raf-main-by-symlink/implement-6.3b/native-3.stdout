@@ -1,0 +1,12 @@
+✔ native write-deny protects both copies, symlink and Git metadata despite broad parent write grants (26968.493886ms)
+✔ native read-deny for SQLite sidecars and secrets survives writable aliases and child shells (14049.846164ms)
+✔ native connect-deny protects live host and peer sockets inside writable roots without closing own IPC (9411.534777ms)
+✔ native deny boundaries remain effective after host changes logical main from A to B (3183.834908ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53796.101247

@@ -1,0 +1,165 @@
+{
+  "assignment": "complete-raf-flow-contracts:2.4",
+  "base": "/tmp/cfc24-sn8fLk",
+  "sha": "d48824fd70a22877def1def26e6bb5c02b01a1c5",
+  "workspace": " M src/production-runtime.ts\n M test/agent-adapters-contract.test.ts\n?? evidence/cfc24-agent-adapters/\n?? evidence/cfc34-background-runtime/\n?? scripts/qa-agent-message.mjs\n?? scripts/qa-agent-startup.mjs\n?? src/message-delivery.ts\n",
+  "diff": "diff --git a/src/production-runtime.ts b/src/production-runtime.ts\nindex 37d8842..1ff38cd 100644\n--- a/src/production-runtime.ts\n+++ b/src/production-runtime.ts\n@@ -1,4 +1,6 @@\n import { loadCompiledCatalog } from './compiled-catalog.ts';\n+import { deliverCheckedMessage } from './message-delivery.ts';\n+import { tryWaitLease } from './resource-wait-identity.ts';\n import { runProductionModelHandoffs } from './production-model-handoff.ts';\n import { scheduleWorkerHealthSummary } from './health-summary-runtime.ts';\n import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';\n@@ -752,19 +754,41 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config\n     transport: {\n       deliver: async (identity, message) => {\n         if (!identity.evidence.tmuxSocket || !isAbsolute(identity.evidence.tmuxSocket)) return { accepted: false, reason: 'Session has no recorded tmux socket' };\n-        if ((await observeIdentity(identity, execute)).state !== 'alive') return { accepted: false, reason: 'Recipient process is not alive' };\n+        const pane = identity.evidence.tmuxPane;\n+        if (!pane || !/^%\\d+$/.test(pane)) return { accepted: false, reason: 'Session has no recorded tmux pane' };\n         const tmux = paneExecutor(identity.evidence.tmuxSocket, direct);\n         const adapter = new TmuxAgentAdapter({ execute: tmux, protocols: {} as Record<AgentRunner, RunnerProtocol> });\n-        if (identity.runner === 'main') {\n-          const pane = identity.evidence.tmuxPane;\n-          const shown = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', pane, '#{pane_id}\\t#{pane_pid}'] });\n-          if (shown.exitCode !== 0 || shown.stdout.replace(/\\n$/, '') !== `${pane}\\t${identity.pid}`) return { accepted: false, reason: 'Attached main pane no longer holds the attached process' };\n-          await adapter.deliverToPane(pane, message);\n-        } else {\n-          if (!await belongsToPane(identity, tmux)) return { accepted: false, reason: 'Recipient process no longer belongs to its tmux pane' };\n-          await adapter.deliver({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } }, message);\n+        const directory = join(context.tmpRoot, 'message-locks');\n+        await fs.mkdir(directory, { recursive: true, mode: 0o700 });\n+        const key = createHash('sha256').update(`${identity.evidence.tmuxSocket}\\0${pane}`).digest('hex');\n+        const lease = await tryWaitLease(join(directory, key), 2000);\n+        if (!lease) return { accepted: false, reason: 'Another delivery owns the recipient composer' };\n+        try {\n+          const settings = await settingsFor(identity.runner === 'main' ? 'claude' : identity.runner);\n+          const result = await deliverCheckedMessage({\n+            settings,\n+            verify: async () => {\n+              if ((await observeIdentity(identity, direct)).state !== 'alive') return false;\n+              if (identity.runner !== 'main') return belongsToPane(identity, tmux);\n+              const shown = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', pane, '#{pane_id}\\t#{pane_pid}'] });\n+              return shown.exitCode === 0 && shown.stdout.replace(/\\n$/, '') === `${pane}\\t${identity.pid}`;\n+            },\n+            capture: async () => {\n+              const result = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });\n+              if (result.exitCode !== 0) throw new Error('Recipient pane capture failed');\n+              return result.stdout;\n+            },\n+            paste: text => adapter.deliverToPane(pane, text),\n+            enter: async () => {\n+              const result = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, 'Enter'] });\n+              if (result.exitCode !== 0) throw new Error('Recipient Enter retry failed');\n+            },\n+            now: Date.now, delay: ms => new Promise(resolve => setTimeout(resolve, ms)),\n+          }, message);\n+          return result.accepted ? { accepted: true, receiptId: randomUUID() } : { accepted: false, reason: result.reason! };\n+        } finally {\n+          await lease.release();\n         }\n-        return { accepted: true, receiptId: randomUUID() };\n       },\n       interrupt: async identity => {\n         const socket = identity.evidence.tmuxSocket;\ndiff --git a/test/agent-adapters-contract.test.ts b/test/agent-adapters-contract.test.ts\nindex 89e0f5b..b2416c3 100644\n--- a/test/agent-adapters-contract.test.ts\n+++ b/test/agent-adapters-contract.test.ts\n@@ -8,6 +8,72 @@ import type {\n import { runLaunchWrapper } from '../src/launch-wrapper.ts';\n import type { LaunchOwnership, LaunchWrapperPorts, LaunchWrapperRequest } from '../src/launch-wrapper.ts';\n import type { ProcessIdentity } from '../src/session-state.ts';\n+import { deliverCheckedMessage, type MessageDeliveryPorts } from '../src/message-delivery.ts';\n+import type { ProtocolSettings } from '../src/runner-protocols.ts';\n+\n+const messageSettings = {\n+  runner: 'claude', version: 'fixture', navigation: [], markers: { ready: ['agent ready'] },\n+  native: { composer: '^\\\\$(?:\\\\s|$)', pendingPaste: { pattern: '\\\\[Pasted text #\\\\d+ \\\\+(\\\\d+) lines\\\\]', unit: 'newlines' }, working: '^Working', identity: { source: 'session_start' } },\n+  timeouts: { transitionMs: 20, pollMs: 5 },\n+} as unknown as ProtocolSettings;\n+\n+function messageHarness(frames: string[], owned = true) {\n+  let clock = 0;\n+  const pasted: string[] = [];\n+  let enters = 0;\n+  const ports: MessageDeliveryPorts = {\n+    settings: messageSettings, verify: async () => owned,\n+    capture: async () => frames.length > 1 ? frames.shift()! : frames[0],\n+    paste: async text => { pasted.push(text); }, enter: async () => { enters++; },\n+    now: () => clock, delay: async ms => { clock += ms; },\n+  };\n+  return { ports, pasted, enters: () => enters };\n+}\n+\n+test('message receipt refuses text left in composer after bounded Enter retry', async () => {\n+  const h = messageHarness(['agent ready\\n$ ', 'agent ready\\n$ [sender] hello']);\n+  assert.equal((await deliverCheckedMessage(h.ports, '[sender] hello')).accepted, false);\n+  assert.deepEqual(h.pasted, ['[sender] hello']);\n+  assert.ok(h.enters() <= 1);\n+});\n+\n+test('message receipt leaves foreign composer and shell untouched', async () => {\n+  for (const screen of ['agent ready\\n$ other draft', '$ ']) {\n+    const h = messageHarness([screen]);\n+    assert.equal((await deliverCheckedMessage(h.ports, '$(touch should-not-exist)')).accepted, false);\n+    assert.deepEqual(h.pasted, []);\n+  }\n+});\n+\n+test('message receipt requires live ownership before delivery', async () => {\n+  const h = messageHarness(['agent ready\\n$ '], false);\n+  assert.equal((await deliverCheckedMessage(h.ports, 'hello')).accepted, false);\n+  assert.deepEqual(h.pasted, []);\n+});\n+\n+test('message receipt accepts cleared native composer without semantic answer', async () => {\n+  const h = messageHarness(['agent ready\\n$ ', '[sender] hello\\nagent ready\\n$ ']);\n+  assert.equal((await deliverCheckedMessage(h.ports, '[sender] hello')).accepted, true);\n+  assert.deepEqual(h.pasted, ['[sender] hello']);\n+});\n+\n+test('message receipt cannot accept unchanged screen or lost identity', async () => {\n+  const unchanged = messageHarness(['agent ready\\n$ ']);\n+  assert.equal((await deliverCheckedMessage(unchanged.ports, 'hello')).accepted, false);\n+  const changed = messageHarness(['agent ready\\n$ ', 'hello\\nagent ready\\n$ ']);\n+  let checks = 0;\n+  changed.ports.verify = async () => ++checks < 4;\n+  assert.equal((await deliverCheckedMessage(changed.ports, 'hello')).accepted, false);\n+});\n+\n+test('message receipt accepts cleared busy queue but refuses permission screen', async () => {\n+  const queued = messageHarness(['Working\\n$ ', 'Working\\nqueued hello\\n$ ']);\n+  assert.equal((await deliverCheckedMessage(queued.ports, 'hello')).accepted, true);\n+  const blocked = messageHarness(['Permission required\\nWorking\\n$ ']);\n+  blocked.ports.settings = { ...messageSettings, markers: { permission_required: ['Permission required'] } };\n+  assert.equal((await deliverCheckedMessage(blocked.ports, 'hello')).accepted, false);\n+  assert.deepEqual(blocked.pasted, []);\n+});\n \n const selection: AdapterSelection = { runner: 'codex', model: 'selected-model', effort: 'high' };\n const brief = 'Завдання 🧪\\n\"quotes\" \\'literal\\' `no execution` $(no execution); --model other\\nlast line';\n",
+  "hashes": {
+    "src/message-delivery.ts": "a6ad1dbeac5f48a79a33d6f7fa14ec1e8af0c475a04c0ac66b3fbdf1bbda0806",
+    "src/production-runtime.ts": "80d22978e24385ead0c9f38bbd9a7695b52d1d35fd1cae554e39d4e68a3d40b0",
+    "test/agent-adapters-contract.test.ts": "a68536e1ce12baa7a5ac12d0f17d312c70f769f5642de67a694031127c774d17",
+    "scripts/qa-agent-message.mjs": "302b3d77f3ac413d47bf49e9838082ebcbe256b3a62c4ef0023afa5859fc1482"
+  },
+  "env": {
+    "HOME": "/tmp/cfc24-sn8fLk/home",
+    "RAF_QA_HOME": "/tmp/cfc24-sn8fLk/home",
+    "TMPDIR": "/tmp/cfc24-sn8fLk/tmp"
+  },
+  "commands": [
+    {
+      "name": "sha",
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "sha.stdout",
+      "stderr": "sha.stderr"
+    },
+    {
+      "name": "workspace",
+      "command": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "workspace.stdout",
+      "stderr": "workspace.stderr"
+    },
+    {
+      "name": "diff",
+      "command": [
+        "git",
+        "diff",
+        "--",
+        "src/production-runtime.ts",
+        "test/agent-adapters-contract.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "diff.stdout",
+      "stderr": "diff.stderr"
+    },
+    {
+      "name": "build",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "scripts/build.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "build.stdout",
+      "stderr": "build.stderr"
+    },
+    {
+      "name": "tmux-version",
+      "command": [
+        "tmux",
+        "-V"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "tmux-version.stdout",
+      "stderr": "tmux-version.stderr"
+    },
+    {
+      "name": "codex-version",
+      "command": [
+        "codex",
+        "--version"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "codex-version.stdout",
+      "stderr": "codex-version.stderr"
+    },
+    {
+      "name": "grok-version",
+      "command": [
+        "grok",
+        "--version"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "grok-version.stdout",
+      "stderr": "grok-version.stderr"
+    },
+    {
+      "name": "agy-version",
+      "command": [
+        "agy",
+        "--version"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "agy-version.stdout",
+      "stderr": "agy-version.stderr"
+    },
+    {
+      "name": "claude-version",
+      "command": [
+        "claude",
+        "--version"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "claude-version.stdout",
+      "stderr": "claude-version.stderr"
+    },
+    {
+      "name": "stand",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-agent-message.mjs",
+        "/srv/dev/work/orchestrator/raf-develop/evidence/cfc24-agent-adapters/stand-final",
+        "child",
+        "/tmp/cfc24-sn8fLk"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "stand.stdout",
+      "stderr": "stand.stderr"
+    }
+  ],
+  "passed": true,
+  "limitations": [
+    "Controlled native-screen fixture, not a real AI runner acceptance.",
+    "Production services with built catalog; not public compiled agent run/report integration.",
+    "No credentials copied into stand. Real runner versions alone do not close L1-L3.",
+    "Automated integration preset/file not present; no authorized test run attempted."
+  ]
+}

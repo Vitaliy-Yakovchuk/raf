@@ -1,0 +1,168 @@
+{
+  "capturedAt": "2026-10-25T13:39:27Z",
+  "head": "d48824fd70a22877def1def26e6bb5c02b01a1c5",
+  "workspace": " M scripts/qa-background-runtime.mjs\n M src/production-runtime.ts\n M test/agent-adapters-contract.test.ts\n?? evidence/cfc24-agent-adapters/\n?? evidence/cfc34-background-runtime/\n?? scripts/qa-agent-message.mjs\n?? scripts/qa-agent-startup.mjs\n?? src/message-delivery.ts\n",
+  "hashes": {
+    "src/message-delivery.ts": "a6ad1dbeac5f48a79a33d6f7fa14ec1e8af0c475a04c0ac66b3fbdf1bbda0806",
+    "src/production-runtime.ts": "80d22978e24385ead0c9f38bbd9a7695b52d1d35fd1cae554e39d4e68a3d40b0",
+    "test/agent-adapters-contract.test.ts": "a68536e1ce12baa7a5ac12d0f17d312c70f769f5642de67a694031127c774d17",
+    "scripts/qa-agent-message.mjs": "302b3d77f3ac413d47bf49e9838082ebcbe256b3a62c4ef0023afa5859fc1482",
+    "scripts/qa-agent-startup.mjs": "656d8ba2efbd97962ec3387bb2b6e24f6c46d4cf141014735ee3ff2ea7230f5c"
+  },
+  "runs": [
+    {
+      "evidence": "unit.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "runId": "e2915822-fdab-4238-b5b8-dc852720bb0e",
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "red.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "runId": "95a0e6f4-1578-4df0-8cd8-efc7862a27e3",
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "message receipt refuses text left in composer after bounded Enter retry"
+        },
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "message receipt leaves foreign composer and shell untouched"
+        },
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "message receipt requires live ownership before delivery"
+        },
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "message receipt accepts cleared native composer without semantic answer"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "evidence": "qa-failed.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "runId": "7e41c9e0-750d-4298-acb9-16a93ba4c6a8",
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "message receipt refuses text left in composer after bounded Enter retry"
+        },
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "message receipt leaves foreign composer and shell untouched"
+        },
+        {
+          "file": "test/agent-adapters-contract.test.ts",
+          "name": "message receipt accepts cleared native composer without semantic answer"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation"
+    },
+    {
+      "evidence": "qa.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "runId": "2e57d745-a476-4488-8f06-61fdc30a18b3",
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/agent-adapter-readiness.test.ts",
+          "test/agent-adapters-contract.test.ts"
+        ],
+        "testIds": []
+      },
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "qa-final-setup-failed.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "runId": "0fa991f9-8b5e-4d7c-997f-18d162066bd9",
+      "outcome": "setup-failed",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": null,
+      "nextAction": "fix-setup"
+    }
+  ],
+  "stderrLimitation": "Trusted command tool merges stdout/stderr; full unmodified TestRunResult and exact tool envelope preserved. Separate trusted-command stderr was not exposed. Stand commands retain separate stdout/stderr.",
+  "shaLimitations": "Baseline HEAD observed 9dd18529664c77fa25c517bae63e564b4ff50668; no atomic per-run Git snapshot was captured for trusted unit runs. Stand snapshots include exact SHA, workspace diff and file hashes; no tested clean-commit claim."
+}

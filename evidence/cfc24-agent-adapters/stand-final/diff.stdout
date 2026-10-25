@@ -1,0 +1,140 @@
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 37d8842..1ff38cd 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1,4 +1,6 @@
+ import { loadCompiledCatalog } from './compiled-catalog.ts';
++import { deliverCheckedMessage } from './message-delivery.ts';
++import { tryWaitLease } from './resource-wait-identity.ts';
+ import { runProductionModelHandoffs } from './production-model-handoff.ts';
+ import { scheduleWorkerHealthSummary } from './health-summary-runtime.ts';
+ import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
+@@ -752,19 +754,41 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
+     transport: {
+       deliver: async (identity, message) => {
+         if (!identity.evidence.tmuxSocket || !isAbsolute(identity.evidence.tmuxSocket)) return { accepted: false, reason: 'Session has no recorded tmux socket' };
+-        if ((await observeIdentity(identity, execute)).state !== 'alive') return { accepted: false, reason: 'Recipient process is not alive' };
++        const pane = identity.evidence.tmuxPane;
++        if (!pane || !/^%\d+$/.test(pane)) return { accepted: false, reason: 'Session has no recorded tmux pane' };
+         const tmux = paneExecutor(identity.evidence.tmuxSocket, direct);
+         const adapter = new TmuxAgentAdapter({ execute: tmux, protocols: {} as Record<AgentRunner, RunnerProtocol> });
+-        if (identity.runner === 'main') {
+-          const pane = identity.evidence.tmuxPane;
+-          const shown = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', pane, '#{pane_id}\t#{pane_pid}'] });
+-          if (shown.exitCode !== 0 || shown.stdout.replace(/\n$/, '') !== `${pane}\t${identity.pid}`) return { accepted: false, reason: 'Attached main pane no longer holds the attached process' };
+-          await adapter.deliverToPane(pane, message);
+-        } else {
+-          if (!await belongsToPane(identity, tmux)) return { accepted: false, reason: 'Recipient process no longer belongs to its tmux pane' };
+-          await adapter.deliver({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } }, message);
++        const directory = join(context.tmpRoot, 'message-locks');
++        await fs.mkdir(directory, { recursive: true, mode: 0o700 });
++        const key = createHash('sha256').update(`${identity.evidence.tmuxSocket}\0${pane}`).digest('hex');
++        const lease = await tryWaitLease(join(directory, key), 2000);
++        if (!lease) return { accepted: false, reason: 'Another delivery owns the recipient composer' };
++        try {
++          const settings = await settingsFor(identity.runner === 'main' ? 'claude' : identity.runner);
++          const result = await deliverCheckedMessage({
++            settings,
++            verify: async () => {
++              if ((await observeIdentity(identity, direct)).state !== 'alive') return false;
++              if (identity.runner !== 'main') return belongsToPane(identity, tmux);
++              const shown = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', pane, '#{pane_id}\t#{pane_pid}'] });
++              return shown.exitCode === 0 && shown.stdout.replace(/\n$/, '') === `${pane}\t${identity.pid}`;
++            },
++            capture: async () => {
++              const result = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
++              if (result.exitCode !== 0) throw new Error('Recipient pane capture failed');
++              return result.stdout;
++            },
++            paste: text => adapter.deliverToPane(pane, text),
++            enter: async () => {
++              const result = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, 'Enter'] });
++              if (result.exitCode !== 0) throw new Error('Recipient Enter retry failed');
++            },
++            now: Date.now, delay: ms => new Promise(resolve => setTimeout(resolve, ms)),
++          }, message);
++          return result.accepted ? { accepted: true, receiptId: randomUUID() } : { accepted: false, reason: result.reason! };
++        } finally {
++          await lease.release();
+         }
+-        return { accepted: true, receiptId: randomUUID() };
+       },
+       interrupt: async identity => {
+         const socket = identity.evidence.tmuxSocket;
+diff --git a/test/agent-adapters-contract.test.ts b/test/agent-adapters-contract.test.ts
+index 89e0f5b..b2416c3 100644
+--- a/test/agent-adapters-contract.test.ts
++++ b/test/agent-adapters-contract.test.ts
+@@ -8,6 +8,72 @@ import type {
+ import { runLaunchWrapper } from '../src/launch-wrapper.ts';
+ import type { LaunchOwnership, LaunchWrapperPorts, LaunchWrapperRequest } from '../src/launch-wrapper.ts';
+ import type { ProcessIdentity } from '../src/session-state.ts';
++import { deliverCheckedMessage, type MessageDeliveryPorts } from '../src/message-delivery.ts';
++import type { ProtocolSettings } from '../src/runner-protocols.ts';
++
++const messageSettings = {
++  runner: 'claude', version: 'fixture', navigation: [], markers: { ready: ['agent ready'] },
++  native: { composer: '^\\$(?:\\s|$)', pendingPaste: { pattern: '\\[Pasted text #\\d+ \\+(\\d+) lines\\]', unit: 'newlines' }, working: '^Working', identity: { source: 'session_start' } },
++  timeouts: { transitionMs: 20, pollMs: 5 },
++} as unknown as ProtocolSettings;
++
++function messageHarness(frames: string[], owned = true) {
++  let clock = 0;
++  const pasted: string[] = [];
++  let enters = 0;
++  const ports: MessageDeliveryPorts = {
++    settings: messageSettings, verify: async () => owned,
++    capture: async () => frames.length > 1 ? frames.shift()! : frames[0],
++    paste: async text => { pasted.push(text); }, enter: async () => { enters++; },
++    now: () => clock, delay: async ms => { clock += ms; },
++  };
++  return { ports, pasted, enters: () => enters };
++}
++
++test('message receipt refuses text left in composer after bounded Enter retry', async () => {
++  const h = messageHarness(['agent ready\n$ ', 'agent ready\n$ [sender] hello']);
++  assert.equal((await deliverCheckedMessage(h.ports, '[sender] hello')).accepted, false);
++  assert.deepEqual(h.pasted, ['[sender] hello']);
++  assert.ok(h.enters() <= 1);
++});
++
++test('message receipt leaves foreign composer and shell untouched', async () => {
++  for (const screen of ['agent ready\n$ other draft', '$ ']) {
++    const h = messageHarness([screen]);
++    assert.equal((await deliverCheckedMessage(h.ports, '$(touch should-not-exist)')).accepted, false);
++    assert.deepEqual(h.pasted, []);
++  }
++});
++
++test('message receipt requires live ownership before delivery', async () => {
++  const h = messageHarness(['agent ready\n$ '], false);
++  assert.equal((await deliverCheckedMessage(h.ports, 'hello')).accepted, false);
++  assert.deepEqual(h.pasted, []);
++});
++
++test('message receipt accepts cleared native composer without semantic answer', async () => {
++  const h = messageHarness(['agent ready\n$ ', '[sender] hello\nagent ready\n$ ']);
++  assert.equal((await deliverCheckedMessage(h.ports, '[sender] hello')).accepted, true);
++  assert.deepEqual(h.pasted, ['[sender] hello']);
++});
++
++test('message receipt cannot accept unchanged screen or lost identity', async () => {
++  const unchanged = messageHarness(['agent ready\n$ ']);
++  assert.equal((await deliverCheckedMessage(unchanged.ports, 'hello')).accepted, false);
++  const changed = messageHarness(['agent ready\n$ ', 'hello\nagent ready\n$ ']);
++  let checks = 0;
++  changed.ports.verify = async () => ++checks < 4;
++  assert.equal((await deliverCheckedMessage(changed.ports, 'hello')).accepted, false);
++});
++
++test('message receipt accepts cleared busy queue but refuses permission screen', async () => {
++  const queued = messageHarness(['Working\n$ ', 'Working\nqueued hello\n$ ']);
++  assert.equal((await deliverCheckedMessage(queued.ports, 'hello')).accepted, true);
++  const blocked = messageHarness(['Permission required\nWorking\n$ ']);
++  blocked.ports.settings = { ...messageSettings, markers: { permission_required: ['Permission required'] } };
++  assert.equal((await deliverCheckedMessage(blocked.ports, 'hello')).accepted, false);
++  assert.deepEqual(blocked.pasted, []);
++});
+ 
+ const selection: AdapterSelection = { runner: 'codex', model: 'selected-model', effort: 'high' };
+ const brief = 'Завдання 🧪\n"quotes" \'literal\' `no execution` $(no execution); --model other\nlast line';

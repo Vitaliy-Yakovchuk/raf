@@ -1,4 +1,6 @@
 import { loadCompiledCatalog } from './compiled-catalog.ts';
+import { deliverCheckedMessage } from './message-delivery.ts';
+import { tryWaitLease } from './resource-wait-identity.ts';
 import { runProductionModelHandoffs } from './production-model-handoff.ts';
 import { scheduleWorkerHealthSummary } from './health-summary-runtime.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
@@ -752,19 +754,41 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
     transport: {
       deliver: async (identity, message) => {
         if (!identity.evidence.tmuxSocket || !isAbsolute(identity.evidence.tmuxSocket)) return { accepted: false, reason: 'Session has no recorded tmux socket' };
-        if ((await observeIdentity(identity, execute)).state !== 'alive') return { accepted: false, reason: 'Recipient process is not alive' };
+        const pane = identity.evidence.tmuxPane;
+        if (!pane || !/^%\d+$/.test(pane)) return { accepted: false, reason: 'Session has no recorded tmux pane' };
         const tmux = paneExecutor(identity.evidence.tmuxSocket, direct);
         const adapter = new TmuxAgentAdapter({ execute: tmux, protocols: {} as Record<AgentRunner, RunnerProtocol> });
-        if (identity.runner === 'main') {
-          const pane = identity.evidence.tmuxPane;
-          const shown = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', pane, '#{pane_id}\t#{pane_pid}'] });
-          if (shown.exitCode !== 0 || shown.stdout.replace(/\n$/, '') !== `${pane}\t${identity.pid}`) return { accepted: false, reason: 'Attached main pane no longer holds the attached process' };
-          await adapter.deliverToPane(pane, message);
-        } else {
-          if (!await belongsToPane(identity, tmux)) return { accepted: false, reason: 'Recipient process no longer belongs to its tmux pane' };
-          await adapter.deliver({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } }, message);
+        const directory = join(context.tmpRoot, 'message-locks');
+        await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+        const key = createHash('sha256').update(`${identity.evidence.tmuxSocket}\0${pane}`).digest('hex');
+        const lease = await tryWaitLease(join(directory, key), 2000);
+        if (!lease) return { accepted: false, reason: 'Another delivery owns the recipient composer' };
+        try {
+          const settings = await settingsFor(identity.runner === 'main' ? 'claude' : identity.runner);
+          const result = await deliverCheckedMessage({
+            settings,
+            verify: async () => {
+              if ((await observeIdentity(identity, direct)).state !== 'alive') return false;
+              if (identity.runner !== 'main') return belongsToPane(identity, tmux);
+              const shown = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', pane, '#{pane_id}\t#{pane_pid}'] });
+              return shown.exitCode === 0 && shown.stdout.replace(/\n$/, '') === `${pane}\t${identity.pid}`;
+            },
+            capture: async () => {
+              const result = await tmux({ executable: 'tmux', args: ['capture-pane', '-p', '-t', pane] });
+              if (result.exitCode !== 0) throw new Error('Recipient pane capture failed');
+              return result.stdout;
+            },
+            paste: text => adapter.deliverToPane(pane, text),
+            enter: async () => {
+              const result = await tmux({ executable: 'tmux', args: ['send-keys', '-t', pane, 'Enter'] });
+              if (result.exitCode !== 0) throw new Error('Recipient Enter retry failed');
+            },
+            now: Date.now, delay: ms => new Promise(resolve => setTimeout(resolve, ms)),
+          }, message);
+          return result.accepted ? { accepted: true, receiptId: randomUUID() } : { accepted: false, reason: result.reason! };
+        } finally {
+          await lease.release();
         }
-        return { accepted: true, receiptId: randomUUID() };
       },
       interrupt: async identity => {
         const socket = identity.evidence.tmuxSocket;

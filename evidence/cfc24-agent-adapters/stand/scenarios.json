@@ -1,0 +1,75 @@
+{
+  "results": [
+    {
+      "id": "accepted-literal-main",
+      "receipt": {
+        "accepted": true,
+        "receiptId": "894367b2-be60-4bd0-8d2f-8d3c9e8f7cf3"
+      },
+      "screen": "agent ready accept 1\n$\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "identity": {
+        "pid": 104,
+        "startedAt": "2026-10-25T13:34:17.000Z",
+        "runner": "main",
+        "runnerSessionId": "%0",
+        "tmuxSession": "recipient",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /tmp/cfc24-4icvfR/receiver.mjs /tmp/cfc24-4icvfR/mode /tmp/cfc24-4icvfR/received.jsonl",
+          "tmuxSocket": "/tmp/cfc24-4icvfR/tmux.sock",
+          "tmuxPane": "%0",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      }
+    },
+    {
+      "id": "hold",
+      "error": "Error: Message delivery failed: Agent acceptance is unconfirmed after bounded delivery verification",
+      "before": "agent ready hold 1\n$\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "after": "agent ready hold 1\n$ [raf] must not silently succeed\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    },
+    {
+      "id": "foreign",
+      "error": "Error: Message delivery failed: Recipient has no recognized empty agent composer",
+      "before": "agent ready foreign 1\n$ other draft\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "after": "agent ready foreign 1\n$ other draft\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    },
+    {
+      "id": "shell",
+      "error": "Error: Message delivery failed: Recipient has no recognized empty agent composer",
+      "before": "shell shell 1\n$\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "after": "shell shell 1\n$\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    },
+    {
+      "id": "concurrent-delivery",
+      "results": [
+        {
+          "status": "rejected",
+          "reason": "Error: Message delivery failed: Agent acceptance is unconfirmed after bounded delivery verification"
+        },
+        {
+          "status": "rejected",
+          "reason": "Error: Message delivery failed: Another delivery owns the recipient composer"
+        }
+      ],
+      "screen": "agent ready hold 1\n$ [raf] parallel one\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    }
+  ],
+  "sqlite": {
+    "version": "3.54.0"
+  },
+  "identity": {
+    "pid": 104,
+    "startedAt": "2026-10-25T13:34:17.000Z",
+    "runner": "main",
+    "runnerSessionId": "%0",
+    "tmuxSession": "recipient",
+    "evidence": {
+      "command": "/opt/dev/node/bin/node /tmp/cfc24-4icvfR/receiver.mjs /tmp/cfc24-4icvfR/mode /tmp/cfc24-4icvfR/received.jsonl",
+      "tmuxSocket": "/tmp/cfc24-4icvfR/tmux.sock",
+      "tmuxPane": "%0",
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    }
+  }
+}

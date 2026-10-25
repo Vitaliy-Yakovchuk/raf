@@ -8,6 +8,72 @@ import type {
 import { runLaunchWrapper } from '../src/launch-wrapper.ts';
 import type { LaunchOwnership, LaunchWrapperPorts, LaunchWrapperRequest } from '../src/launch-wrapper.ts';
 import type { ProcessIdentity } from '../src/session-state.ts';
+import { deliverCheckedMessage, type MessageDeliveryPorts } from '../src/message-delivery.ts';
+import type { ProtocolSettings } from '../src/runner-protocols.ts';
+
+const messageSettings = {
+  runner: 'claude', version: 'fixture', navigation: [], markers: { ready: ['agent ready'] },
+  native: { composer: '^\\$(?:\\s|$)', pendingPaste: { pattern: '\\[Pasted text #\\d+ \\+(\\d+) lines\\]', unit: 'newlines' }, working: '^Working', identity: { source: 'session_start' } },
+  timeouts: { transitionMs: 20, pollMs: 5 },
+} as unknown as ProtocolSettings;
+
+function messageHarness(frames: string[], owned = true) {
+  let clock = 0;
+  const pasted: string[] = [];
+  let enters = 0;
+  const ports: MessageDeliveryPorts = {
+    settings: messageSettings, verify: async () => owned,
+    capture: async () => frames.length > 1 ? frames.shift()! : frames[0],
+    paste: async text => { pasted.push(text); }, enter: async () => { enters++; },
+    now: () => clock, delay: async ms => { clock += ms; },
+  };
+  return { ports, pasted, enters: () => enters };
+}
+
+test('message receipt refuses text left in composer after bounded Enter retry', async () => {
+  const h = messageHarness(['agent ready\n$ ', 'agent ready\n$ [sender] hello']);
+  assert.equal((await deliverCheckedMessage(h.ports, '[sender] hello')).accepted, false);
+  assert.deepEqual(h.pasted, ['[sender] hello']);
+  assert.ok(h.enters() <= 1);
+});
+
+test('message receipt leaves foreign composer and shell untouched', async () => {
+  for (const screen of ['agent ready\n$ other draft', '$ ']) {
+    const h = messageHarness([screen]);
+    assert.equal((await deliverCheckedMessage(h.ports, '$(touch should-not-exist)')).accepted, false);
+    assert.deepEqual(h.pasted, []);
+  }
+});
+
+test('message receipt requires live ownership before delivery', async () => {
+  const h = messageHarness(['agent ready\n$ '], false);
+  assert.equal((await deliverCheckedMessage(h.ports, 'hello')).accepted, false);
+  assert.deepEqual(h.pasted, []);
+});
+
+test('message receipt accepts cleared native composer without semantic answer', async () => {
+  const h = messageHarness(['agent ready\n$ ', '[sender] hello\nagent ready\n$ ']);
+  assert.equal((await deliverCheckedMessage(h.ports, '[sender] hello')).accepted, true);
+  assert.deepEqual(h.pasted, ['[sender] hello']);
+});
+
+test('message receipt cannot accept unchanged screen or lost identity', async () => {
+  const unchanged = messageHarness(['agent ready\n$ ']);
+  assert.equal((await deliverCheckedMessage(unchanged.ports, 'hello')).accepted, false);
+  const changed = messageHarness(['agent ready\n$ ', 'hello\nagent ready\n$ ']);
+  let checks = 0;
+  changed.ports.verify = async () => ++checks < 4;
+  assert.equal((await deliverCheckedMessage(changed.ports, 'hello')).accepted, false);
+});
+
+test('message receipt accepts cleared busy queue but refuses permission screen', async () => {
+  const queued = messageHarness(['Working\n$ ', 'Working\nqueued hello\n$ ']);
+  assert.equal((await deliverCheckedMessage(queued.ports, 'hello')).accepted, true);
+  const blocked = messageHarness(['Permission required\nWorking\n$ ']);
+  blocked.ports.settings = { ...messageSettings, markers: { permission_required: ['Permission required'] } };
+  assert.equal((await deliverCheckedMessage(blocked.ports, 'hello')).accepted, false);
+  assert.deepEqual(blocked.pasted, []);
+});
 
 const selection: AdapterSelection = { runner: 'codex', model: 'selected-model', effort: 'high' };
 const brief = 'Завдання 🧪\n"quotes" \'literal\' `no execution` $(no execution); --model other\nlast line';

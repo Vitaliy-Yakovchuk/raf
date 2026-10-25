@@ -1,0 +1,66 @@
+{
+  "base": "/tmp/cfc24-live-XNY5nx",
+  "results": [
+    {
+      "runner": "codex",
+      "directory": "/tmp/cfc24-live-XNY5nx/codex",
+      "home": "/tmp/cfc24-live-XNY5nx/codex/home",
+      "socket": "/tmp/cfc24-live-XNY5nx/codex/tmux.sock",
+      "command": [
+        "codex",
+        "--no-alt-screen"
+      ],
+      "started": {
+        "cliExitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "identity": "%0|12",
+      "screen": {
+        "cliExitCode": 0,
+        "stdout": "WARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"/tmp/cfc24-live-XNY5nx/codex\" (codex_\nhome: AbsolutePathBuf(\"/tmp/cfc24-live-XNY5nx/codex/home/.codex\"))\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+        "stderr": ""
+      },
+      "briefDelivered": false,
+      "nativeIdVerified": false,
+      "childExitCode": null,
+      "cleanup": {
+        "cliExitCode": 0,
+        "stdout": "",
+        "stderr": "",
+        "remainingPids": []
+      },
+      "claim": "Startup observation in own credential-free HOME only; no raf launch, readiness or task completion claim."
+    },
+    {
+      "runner": "claude",
+      "directory": "/tmp/cfc24-live-XNY5nx/claude",
+      "home": "/tmp/cfc24-live-XNY5nx/claude/home",
+      "socket": "/tmp/cfc24-live-XNY5nx/claude/tmux.sock",
+      "command": [
+        "claude"
+      ],
+      "started": {
+        "cliExitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "identity": "%0|103",
+      "screen": {
+        "cliExitCode": 1,
+        "stdout": "",
+        "stderr": "no server running on /tmp/cfc24-live-XNY5nx/claude/tmux.sock\n"
+      },
+      "briefDelivered": false,
+      "nativeIdVerified": false,
+      "childExitCode": null,
+      "cleanup": {
+        "cliExitCode": 1,
+        "stdout": "",
+        "stderr": "no server running on /tmp/cfc24-live-XNY5nx/claude/tmux.sock\n",
+        "remainingPids": []
+      },
+      "claim": "Startup observation in own credential-free HOME only; no raf launch, readiness or task completion claim."
+    }
+  ]
+}

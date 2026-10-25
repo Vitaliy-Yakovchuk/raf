@@ -1,0 +1,30 @@
+{
+  "syntax": {
+    "commands": [
+      "node --check src/test-run-config-dependencies.ts",
+      "node --check src/test-run-reservations.ts",
+      "node --check test/test-run-config-dependencies.test.ts"
+    ],
+    "exitCode": 0
+  },
+  "standaloneScaffoldTypes": {
+    "command": "node node_modules/typescript/bin/tsc --noEmit --strict --allowImportingTsExtensions --target esnext --module nodenext --typeRoots /usr/share/nodejs/@types --types node --skipLibCheck src/test-run-config-dependencies.ts",
+    "exitCode": 0
+  },
+  "strictTypeDelta": {
+    "command": "node evidence/monitor-raf-health/config-dependencies-scaffold/check-types.mjs",
+    "exitCode": 0,
+    "evidence": "types.json",
+    "baselineDiagnostics": 4,
+    "introducedDiagnostics": 0,
+    "authoredFileDiagnostics": 0
+  },
+  "comments": {
+    "command": "npm run check:comments",
+    "exitCode": 0
+  },
+  "diff": {
+    "command": "git diff --check",
+    "exitCode": 0
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "item": "monitor-raf-health:6.1",
+  "scope": "Only test-scaffold; no feature implementation; tasks.md remains managed by raf.",
+  "audit": {
+    "current": true,
+    "sources": [
+      "monitor-raf-health/proposal.md Why/What Changes/Non-goals",
+      "monitor-raf-health/specs/projects/raf/test-runs/spec.md, all four scenarios",
+      "monitor-raf-health/design.md Semantic snapshot",
+      "fix-raf-load-admission test-runs/resource-wait",
+      "add-raf-test-run test-runs/integration-profile.md",
+      "add-raf-test-run feature-test-authoring"
+    ],
+    "finding": "Existing runtime rejects whole configuration byte changes in src/test-run-runtime.ts:361-364. No equivalent semantic snapshot implementation found. Item remains current; no contract conflict."
+  },
+  "group": "monitor-raf-health/config-dependencies",
+  "project": "raf",
+  "profileId": "node",
+  "files": [
+    "test/test-run-config-dependencies.test.ts"
+  ],
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/config-dependencies --files test/test-run-config-dependencies.test.ts",
+  "prerequisites": [
+    "Main must review and apply conf-test-runs.patch.json; conf is outside author write scope.",
+    "Registered canonical raf-develop workspace and matching Git identity; active monitor-raf-health; live trusted test-scaffold caller with author red permission.",
+    "Node >=25.4.0; TypeScript; scripts/test-run-node.ts; src/test-run-reporter.ts. Profile node uses cwd ., executable node, argv [./scripts/test-run-node.ts], exactIds node-test-name, resultAdapter node-test-events.",
+    "environment.isolatedHome=true and stateOrigin=true; wrapper supplies the verified persistent group QA HOME/state/tmp; preserve same aggregate/HOME in implement and QA. Do not pass operational SQLite or sockets to children.",
+    "Unit timeout and limits remain conf/flow.json#/unitTests, resource estimate remains existing profile value, no new numeric defaults."
+  ],
+  "ports": {
+    "module": "src/test-run-config-dependencies.ts",
+    "surface": [
+      "testRunConfigurationManifest(scope)",
+      "captureTestRunConfiguration(dependencies, reader)",
+      "assertTestRunConfigurationUnchanged(snapshot, reader)"
+    ],
+    "scaffold": "All three bodies throw Error(NotImplemented). Reader read/revision methods are ports; revision is an opaque change token, not a semantic cancellation criterion.",
+    "runner": "Optional ResourceReservedTestRunPorts.configurationDependencies capture/recheck port; declarations only. Existing runResourceReservedTestRun must consume it; no second queue. Runtime binds reader and manifest, removes byte equality as cancellation, keeps byte hashes for diagnostics.",
+    "failure": "CONFIGURATION_INVALID with changedPointers, unreadableFiles, missingPointers, inconsistentFiles. Every address includes conf file and exact escaped JSON pointer. Diagnostic text must preserve addresses through current TestRunResult diagnostics. Unknown bytes never count as proved changed values.",
+    "races": "Capture a coherent multi-file view; verify revisions after all reads. Recheck against the ORIGINAL snapshot before reservation and at final spawn boundary, after awaitable resource beforeSpawn/markSpawning hooks. Fresh authorization is independent and takes CALLER_UNAUTHORIZED precedence. Compensate both claims after late failure without changing prior ledger."
+  },
+  "manifest": {
+    "test-runs": [
+      "selected profile (includes resourceEstimate if used)",
+      "selected escaped group",
+      "selected phase",
+      "diagnostics",
+      "temporaryArtifacts"
+    ],
+    "projects": [
+      "selected project path/profile/branchPaths",
+      "resolved referenced profile"
+    ],
+    "flow": [
+      "unitTests only for unit, integrationTests/timeoutMs only for integration",
+      "resources/<normal|hotfix>",
+      "resources/home"
+    ],
+    "constants": [
+      "selected agentPhases entry",
+      "applicable test-run command catalog/permission entry"
+    ],
+    "raf": [
+      "resourceWait",
+      "selected runnerProtocols entry when used"
+    ],
+    "readerAudit": "Implement must audit every reader and add any actually consumed dependency before handoff. Current test profile resource estimates resolve from selected conf/test-runs profile, not unused flow agent estimates. If runtime starts using flow resourceEstimates for this operation, declare the precise consumed keys. Live resource measurements are not configuration."
+  },
+  "matrix": [
+    {
+      "scenario": "manifest and pointer escaping",
+      "tests": "manifest declares; integration manifest; hotfix uses; manifest escapes"
+    },
+    {
+      "scenario": "normalized immutable snapshot",
+      "tests": "snapshot stores detached; object order and whitespace"
+    },
+    {
+      "scenario": "unrelated sections",
+      "tests": "ignores another project/profile/phase, reminders/events, retention, unused agent estimate, other tier, other kind budget"
+    },
+    {
+      "scenario": "applicable policy",
+      "tests": "17 changed-key cases, all changed keys across files"
+    },
+    {
+      "scenario": "unit/integration independence",
+      "tests": "integration ignores unit counters but refuses own timeout; unit ignores integration budget"
+    },
+    {
+      "scenario": "invalid or inconsistent input",
+      "tests": "capture/recheck x malformed/unreadable/missing/inconsistent; entire-file parse; deleted budget leaf; multi-file race"
+    },
+    {
+      "scenario": "resource-wait invariants",
+      "tests": "capture once; rechecks reservation/spawn; waiting longer than budget; second permit keeps fence/snapshot"
+    },
+    {
+      "scenario": "race permit/reservation/spawn",
+      "tests": "permit, prepare, commit, beforeSpawn, markSpawning hooks; no child; own cleanup; exact prior ledger"
+    },
+    {
+      "scenario": "authorization",
+      "tests": "revoked with changed configuration; unchanged snapshot and revocation after commit"
+    },
+    {
+      "scenario": "two projects/profiles",
+      "tests": "raf/node and etchly/other queued on shared machine; first refuses, second preserves permit identity and runs once"
+    },
+    {
+      "scenario": "global dependency and ledger",
+      "tests": "shared dependency refuses two waiters; foreign active inFlight stays byte-for-byte unchanged"
+    }
+  ],
+  "limitations": [
+    "Queue/resource ports are deterministic unit fakes with explicit permit gates; this is not live FIFO/admission or filesystem atomicity QA. 6.4 remains open.",
+    "Strict tsc of full imported graph has four pre-existing diagnostics; types.json and check-types.mjs show zero diagnostics in authored files and zero additions against the existing fixture graph. Standalone scaffold strict tsc, node syntax and check:comments pass.",
+    "Remaining change items are open; no sync/archive."
+  ]
+}

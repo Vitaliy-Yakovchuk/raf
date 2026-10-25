@@ -1,4 +1,5 @@
 import { isDeepStrictEqual } from 'node:util';
+import type { TestRunConfigurationDependencyPort } from './test-run-config-dependencies.ts';
 import type { TestRunQueueRecord } from './test-run-queue.ts';
 import type { ResourceUsageRecord, UsageFinishReason } from './resource-usage.ts';
 import type { ResourceEstimateResolution, ResourceReservationEstimate } from './resource-estimates.ts';
@@ -55,6 +56,7 @@ export interface TestRunResourcePort {
 }
 
 export interface ResourceReservedTestRunPorts extends TestRunPorts {
+  configurationDependencies?: TestRunConfigurationDependencyPort;
   resourceRoute?: TestRunResourceRoute;
   queue?: TestRunQueuePort;
   wrapperIdentity?: string;

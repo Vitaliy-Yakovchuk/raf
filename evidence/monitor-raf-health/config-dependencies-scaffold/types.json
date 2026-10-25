@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "mode": "strict semantic diagnostics compared with existing fixture dependency graph",
+  "baseline": [
+    {
+      "file": "src/resource-wait-protocol.ts",
+      "code": 7023,
+      "message": "'snapshot' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions."
+    },
+    {
+      "file": "src/test-runs.ts",
+      "code": 2339,
+      "message": "Property 'test' does not exist on type '{ kind: \"diagnostic\"; diagnostics: InlineDiagnostic[]; diagnosticSummary?: DiagnosticSummary | undefined; evidence: string[]; } | { kind: \"passed\" | \"setup-failed\" | \"assertion-failed\"; test: TestId; diagnostic?: string | undefined; inlineDiagnostic?: InlineDiagnostic | undefined; }'.\n  Property 'test' does not exist on type '{ kind: \"diagnostic\"; diagnostics: InlineDiagnostic[]; diagnosticSummary?: DiagnosticSummary | undefined; evidence: string[]; }'."
+    },
+    {
+      "file": "test/helpers/test-run-reservations-fixture.ts",
+      "code": 2488,
+      "message": "Type 'string[] | undefined' must have a '[Symbol.iterator]()' method that returns an iterator."
+    },
+    {
+      "file": "test/helpers/test-run-reservations-fixture.ts",
+      "code": 18048,
+      "message": "'config.projects.raf.profiles.node.unitFiles' is possibly 'undefined'."
+    }
+  ],
+  "current": [
+    {
+      "file": "src/resource-wait-protocol.ts",
+      "code": 7023,
+      "message": "'snapshot' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions."
+    },
+    {
+      "file": "src/test-runs.ts",
+      "code": 2339,
+      "message": "Property 'test' does not exist on type '{ kind: \"diagnostic\"; diagnostics: InlineDiagnostic[]; diagnosticSummary?: DiagnosticSummary | undefined; evidence: string[]; } | { kind: \"passed\" | \"setup-failed\" | \"assertion-failed\"; test: TestId; diagnostic?: string | undefined; inlineDiagnostic?: InlineDiagnostic | undefined; }'.\n  Property 'test' does not exist on type '{ kind: \"diagnostic\"; diagnostics: InlineDiagnostic[]; diagnosticSummary?: DiagnosticSummary | undefined; evidence: string[]; }'."
+    },
+    {
+      "file": "test/helpers/test-run-reservations-fixture.ts",
+      "code": 2488,
+      "message": "Type 'string[] | undefined' must have a '[Symbol.iterator]()' method that returns an iterator."
+    },
+    {
+      "file": "test/helpers/test-run-reservations-fixture.ts",
+      "code": 18048,
+      "message": "'config.projects.raf.profiles.node.unitFiles' is possibly 'undefined'."
+    }
+  ],
+  "introduced": [],
+  "own": []
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "op": "add",
+    "path": "/projects/raf/profiles/node/unitFiles/-",
+    "value": "test/test-run-config-dependencies.test.ts"
+  },
+  {
+    "op": "add",
+    "path": "/projects/raf/groups/monitor-raf-health~1config-dependencies",
+    "value": {
+      "profileId": "node",
+      "files": [
+        "test/test-run-config-dependencies.test.ts"
+      ]
+    }
+  }
+]

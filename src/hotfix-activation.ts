@@ -214,22 +214,29 @@ export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVer
   const qaConfig = await json(join(qaRoot, 'conf/projects.json'));
   qaConfig.projects.raf.path = 'raf-main';
   qaConfig.projects.raf.branchPaths.main = 'raf-main';
-  qaConfig.projects.raf.branchPaths.develop = snapshot.root;
-  qaConfig.projects.raf.branchPaths.hotfix = workspace.cwd;
+  qaConfig.projects.raf.branchPaths.develop = 'raf-develop';
+  qaConfig.projects.raf.branchPaths.hotfix = 'raf-hotfix';
+  delete qaConfig.projects.raf.mainCopies;
   await durable(join(qaRoot, 'conf/projects.json'), qaConfig);
   const environment = { RAF_ORCHESTRATOR_ROOT: qaRoot };
   const isolated = { ...workspace, cwd: snapshot.root };
   await prepareDependencies(host, isolated, workspace.cwd, evidenceRoot, environment);
   const qaMain = join(qaRoot, 'raf-main');
   await copyTree(snapshot.root, qaMain);
+  await git(qaRoot, 'init', '-b', 'main');
+  await fs.writeFile(join(qaRoot, '.gitmodules'), '[submodule "raf-main"]\n\tpath = raf-main\n\turl = ./raf-main\n');
   const metadata = join(qaRoot, '.git', 'modules', 'raf-main');
   await fs.mkdir(dirname(metadata), { recursive: true });
   await git(qaMain, 'init', '-b', 'main', '--separate-git-dir', metadata);
   await git(qaMain, 'fetch', '--no-tags', workspace.cwd, snapshot.commit);
   await git(qaMain, 'update-ref', 'refs/heads/main', snapshot.commit);
   await git(qaMain, 'read-tree', snapshot.commit);
+  await git(qaRoot, 'add', '.gitmodules');
+  await git(qaRoot, 'update-index', '--add', '--cacheinfo', '160000,' + snapshot.commit + ',raf-main');
+  await git(qaMain, 'worktree', 'add', '-b', 'develop', join(qaRoot, 'raf-develop'), snapshot.commit);
+  await git(qaMain, 'worktree', 'add', '-b', 'hotfix', join(qaRoot, 'raf-hotfix'), snapshot.commit);
   if (JSON.stringify(await inventory(qaMain)) !== JSON.stringify(snapshot.files)) throw new Error('Verification stand snapshot differs from sealed candidate');
-  const cli = [process.execPath, join(snapshot.root, 'bin/raf.ts')];
+  const cli = [process.execPath, join(qaMain, 'bin/raf.ts')];
   const standConfiguration = await inventory(join(qaRoot, 'conf'), new Set());
   const checkStand = async () => {
     if (JSON.stringify(await inventory(qaMain)) !== JSON.stringify(snapshot.files) || JSON.stringify(await inventory(join(qaRoot, 'conf'), new Set())) !== JSON.stringify(standConfiguration) || await git(qaMain, 'rev-parse', 'HEAD') !== snapshot.commit) throw new Error('Verification stand source/configuration fingerprint changed');
@@ -237,10 +244,10 @@ export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVer
   const specifications: { name: HotfixGateName; argv: readonly string[] }[] = [
     { name: 'build', argv: ['npm', 'run', 'build'] },
     { name: 'regression', argv: [request.regression.executable, ...request.regression.args] },
-    { name: 'runtime-import', argv: [process.execPath, '--input-type=module', '-e', `await import(${JSON.stringify(pathToFileURL(join(snapshot.root, 'src/production-entry.ts')).href)});await import(${JSON.stringify(pathToFileURL(join(snapshot.root, 'src/production-runtime.ts')).href)})`] },
+    { name: 'runtime-import', argv: [process.execPath, '--input-type=module', '-e', `await import(${JSON.stringify(pathToFileURL(join(qaMain, 'src/production-entry.ts')).href)});await import(${JSON.stringify(pathToFileURL(join(qaMain, 'src/production-runtime.ts')).href)})`] },
     { name: 'help', argv: [...cli, 'help'] },
     { name: 'agent-ps', argv: [...cli, 'agent', 'ps'] },
-    { name: 'agent-message', argv: [process.execPath, '--input-type=module', '-e', `const {withProductionRuntime}=await import(${JSON.stringify(pathToFileURL(join(snapshot.root, 'src/production-entry.ts')).href)});const {rafSystemCaller}=await import(${JSON.stringify(pathToFileURL(join(snapshot.root, 'src/production-runtime.ts')).href)});const {runCli}=await import(${JSON.stringify(pathToFileURL(join(snapshot.root, 'src/bootstrap.ts')).href)});const result=await withProductionRuntime(${JSON.stringify({ orchestratorRoot: qaRoot, homeDirectory: host.qaHome, artifactPath: join(snapshot.root, 'dist/catalog.json') })},async()=>rafSystemCaller,runtime=>runCli(${JSON.stringify(['agent', 'message', '--to', request.mainAddress, '--text', request.message])},${JSON.stringify(join(snapshot.root, 'dist/catalog.json'))},runtime.handlers));if(result.stdout)console.log(result.stdout);if(result.stderr)console.error(result.stderr);process.exitCode=result.exitCode;`, '--', '--text', request.message] },
+    { name: 'agent-message', argv: [process.execPath, '--input-type=module', '-e', `const {withProductionRuntime}=await import(${JSON.stringify(pathToFileURL(join(qaMain, 'src/production-entry.ts')).href)});const {rafSystemCaller}=await import(${JSON.stringify(pathToFileURL(join(qaMain, 'src/production-runtime.ts')).href)});const {runCli}=await import(${JSON.stringify(pathToFileURL(join(qaMain, 'src/bootstrap.ts')).href)});const result=await withProductionRuntime(${JSON.stringify({ orchestratorRoot: qaRoot, homeDirectory: host.qaHome, artifactPath: join(qaMain, 'dist/catalog.json') })},async()=>rafSystemCaller,runtime=>runCli(${JSON.stringify(['agent', 'message', '--to', request.mainAddress, '--text', request.message])},${JSON.stringify(join(qaMain, 'dist/catalog.json'))},runtime.handlers));if(result.stdout)console.log(result.stdout);if(result.stderr)console.error(result.stderr);process.exitCode=result.exitCode;`, '--', '--text', request.message] },
     { name: 'service-start', argv: [...cli, 'service', 'start'] },
     { name: 'service-ready', argv: [...cli, 'service', 'status'] },
     { name: 'service-status', argv: [...cli, 'service', 'status'] },
@@ -441,6 +448,8 @@ export async function activateHotfix(host: HotfixHost, candidate: VerifiedHotfix
       return { status: 'already-active', commit: head, fingerprint: candidate.fingerprint, generationRoot: state.current };
     }
     if (head !== candidate.workspace.baseCommit) throw new Error('Stale hotfix base commit');
+    if (route.productionDirectory !== route.repositoryIdentity) await git(route.cwd, 'fetch', '--no-tags', '--no-write-fetch-head', route.repositoryIdentity, candidate.commit);
+    await git(route.cwd, 'merge-base', '--is-ancestor', head, candidate.commit);
     const next = await generation(host, route, candidate.snapshot!.root, candidate.commit, join(candidate.snapshot!.configurationRoot, 'conf'));
     state.generations[next.root] = next;
     const prepared = join(route.control, 'prepared', randomUUID());

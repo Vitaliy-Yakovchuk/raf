@@ -101,6 +101,8 @@ export async function fixture(t: TestContext) {
     if (existsSync(join(source, name))) cpSync(join(source, name), join(main, name), { recursive: true });
   }
   if (existsSync(join(source, "node_modules"))) cpSync(join(source, "node_modules"), join(main, "node_modules"), { recursive: true, dereference: true });
+  const build = command(process.execPath, ["scripts/build.ts"], main, environment);
+  assert.equal(build.code, 0, build.stderr);
   mkdirSync(join(main, "hotfix-fixture"));
   writeFileSync(join(main, "hotfix-fixture", "a.mjs"), 'export const marker = "old";\n');
   writeFileSync(join(main, "hotfix-fixture", "b.mjs"), 'export const marker = "old";\n');

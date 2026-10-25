@@ -7,6 +7,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { acquireHotfixReader, activateHotfix, cleanupHotfixActivation, createAtomicHotfixSwitch, recoverHotfixActivation, sealHotfixSnapshot, verifyHotfixCandidate, type AtomicHotfixSwitch, type HotfixCheckpoint, type HotfixGateName, type HotfixReaderKind, type VerifiedHotfix } from "../src/hotfix-activation.ts";
 import { commitHotfix, prepareHotfixWorktree } from "../src/hotfix-worktree.ts";
+import { ensureProductionMainStore } from "../src/main-production-store.ts";
 import { childMessage, command, filesUnder, fixture, git, sha, timeoutMs, until } from "./hotfix-fixture.ts";
 
 const activationModule = new URL("../src/hotfix-activation.ts", import.meta.url).href;
@@ -71,7 +72,7 @@ function assertSealed(f: Awaited<ReturnType<typeof fixture>>, verified: Verified
   return snapshot;
 }
 
-function assertMain(f: Awaited<ReturnType<typeof fixture>>, commit: string, marker: string) {
+function assertMain(f: Awaited<ReturnType<typeof fixture>>, commit: string, marker: string, split = false) {
   assert.equal(git(f.main, f.environment, "rev-parse", "HEAD"), commit);
   assert.equal(git(f.main, f.environment, "rev-parse", "refs/heads/main"), commit);
   assert.equal(git(f.main, f.environment, "diff", "--cached", "--name-only"), "");
@@ -83,8 +84,11 @@ function assertMain(f: Awaited<ReturnType<typeof fixture>>, commit: string, mark
   assert.equal(git(f.root, f.environment, "submodule", "status", "raf-main").includes(commit), true);
   assert.equal(realpathSync(git(f.main, f.environment, "rev-parse", "--show-toplevel")), realpathSync(f.main));
   const mainGitDirectory = realpathSync(git(f.main, f.environment, "rev-parse", "--absolute-git-dir"));
-  assert.equal(mainGitDirectory, realpathSync(join(f.root, ".git", "modules", "raf-main")));
-  assert.equal(realpathSync(git(f.main, f.environment, "rev-parse", "--path-format=absolute", "--git-common-dir")), realpathSync(git(f.hotfix, f.environment, "rev-parse", "--path-format=absolute", "--git-common-dir")));
+  const sourceDirectory = realpathSync(join(f.root, ".git", "modules", "raf-main"));
+  const productionDirectory = split ? realpathSync(join(sourceDirectory, "raf-hotfix", "main.git")) : sourceDirectory;
+  assert.equal(mainGitDirectory, productionDirectory);
+  assert.equal(realpathSync(git(f.main, f.environment, "rev-parse", "--path-format=absolute", "--git-common-dir")), productionDirectory);
+  assert.equal(realpathSync(git(f.hotfix, f.environment, "rev-parse", "--path-format=absolute", "--git-common-dir")), sourceDirectory);
   const indexEntries = git(f.main, f.environment, "ls-files", "--stage").split("\n").map(line => line.replace(/ 0\t/u, "\t"));
   const commitEntries = git(f.main, f.environment, "ls-tree", "-r", commit).split("\n").map(line => line.replace(/ blob /u, " "));
   assert.deepEqual(indexEntries, commitEntries, "main index contains exactly the activated commit tree");
@@ -489,6 +493,7 @@ test("[hotfix-cleanup] activation failure remains the primary cause when cleanup
 
 test("[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication", { timeout: timeoutMs }, async t => {
   const f = await fixture(t);
+  await ensureProductionMainStore({ root: f.root });
   await f.startMain();
   const runId = randomUUID();
   const { launchHotfix } = await import("../src/hotfix-worktree.ts");
@@ -517,7 +522,7 @@ test("[hotfix-production-readers] service/worker/session identity and signed mes
   for (const nonce of [first, second]) assert.equal(inbox.split(nonce).length - 1, 1);
   assert.match(inbox, /main/iu);
   assert.equal((await f.mainCommand(["service", "stop"])).code, 0);
-  assertMain(f, verified.commit, "new");
+  assertMain(f, verified.commit, "new", true);
 });
 
 test("[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD", { timeout: timeoutMs }, async t => {

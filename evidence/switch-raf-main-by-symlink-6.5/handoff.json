@@ -1,0 +1,183 @@
+{
+  "change": "switch-raf-main-by-symlink",
+  "item": "6.5",
+  "stage": "test-scaffold",
+  "audit": {
+    "current": true,
+    "contradictions": [],
+    "basis": [
+      "proposal.md: Why / What Changes / Non-goals",
+      "specs/projects/orchestrator/branch-directories/spec.md: Початкова перевірка структури Orchestrator; Приведення Git store без втрати dirty стану; Переривання розділення stores",
+      "specs/projects/raf/workspace-routing/spec.md: Розділення source та production Git",
+      "design.md: Початкове приведення структури",
+      "openspec/changes/add-raf-test-run/specs/core/process/feature-test-authoring/spec.md: Агент тестів і каркаса"
+    ],
+    "finding": "Production service-entry.ts has no controlled layout/store preparation. The existing protected-store guard remains unchanged. The reported defect is current on the assignment baseline e29ee471974c8d0061a7fb81d5dde87b0d47d6b4."
+  },
+  "scaffold": {
+    "file": "src/production-start-layout.ts",
+    "signature": "prepareMainLayoutForProductionStart(options: ProductionStartLayoutOptions): Promise<void>",
+    "body": "throw new Error('NotImplemented');",
+    "options": [
+      "orchestratorRoot: string",
+      "publicationProvider?: MainLayoutStartOptions['publicationProvider']",
+      "onLayoutCheckpoint?: MainLayoutStartOptions['onCheckpoint']",
+      "onStoreCheckpoint?: ProductionStoreOptions['onCheckpoint']"
+    ],
+    "implementationAdded": false
+  },
+  "unit": {
+    "group": "switch-raf-main-by-symlink/production-start-layout",
+    "profileId": "node",
+    "files": [
+      "test/production-start-layout.test.ts"
+    ],
+    "count": 11,
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+    "initialResult": "red.TestRunResult.json",
+    "finalResult": "red-final.TestRunResult.json",
+    "finalRunId": "ffbc2cec-1c06-4ea0-8c99-0fc1dad49d93",
+    "outcome": "assertions-failed",
+    "knownRed": 10,
+    "passed": 1,
+    "setupImportFailures": 0,
+    "unexecuted": [],
+    "unknown": [],
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "redReview": {
+      "scope": "Unit orchestration tests replace Git, filesystem configuration and background runtime with deterministic ports; they do not claim native or real-Git execution.",
+      "missingBehaviors": [
+        "Legacy main must call recoverable protected-store conversion even when mainCopies is absent.",
+        "Configured copies must reach controlled layout conversion with the current configuration and supplied provider/checkpoints.",
+        "Writer-barrier and recovery refusals must propagate without dependent conversion.",
+        "Service start must await preparation before route resolution and generation pinning.",
+        "A rejected split must block service readiness.",
+        "Implicit resource readiness must use the same barrier.",
+        "The already-ready service fast path must still prepare layout."
+      ],
+      "passingInvariant": "service status and stop do not initiate layout mutation",
+      "initialNotImplementedCases": 4,
+      "finalNotImplementedCases": 4,
+      "otherFailures": "Target assertions, including writer refusal propagation and actual service-entry wiring; no import/collection/setup failure.",
+      "intermediateCapture": "One final-selection run had truncated CLI capture; preserved explicitly as incomplete in red-intermediate.truncated-tool-result.json. The same selection was rerun without code changes to retain the full final TestRunResult."
+    }
+  },
+  "configuration": {
+    "file": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "editedByThisAgent": false,
+    "appliedBy": "main",
+    "commit": {
+      "repository": "/srv/dev/work/orchestrator",
+      "sha": "4749ae1d39ad8d5c7d3a22859779efd0af286b74"
+    },
+    "requiredEdits": [
+      {
+        "path": "/projects/raf/profiles/node/unitFiles/-",
+        "value": "test/production-start-layout.test.ts"
+      },
+      {
+        "path": "/projects/raf/groups/switch-raf-main-by-symlink~1production-start-layout",
+        "value": {
+          "profileId": "node",
+          "files": [
+            "test/production-start-layout.test.ts"
+          ]
+        }
+      }
+    ],
+    "profilePrerequisites": {
+      "cwd": ".",
+      "executable": "node",
+      "minimumNodeVersion": "25.4.0",
+      "argv": [
+        "./scripts/test-run-node.ts"
+      ],
+      "exactIds": "node-test-name",
+      "resultAdapter": "node-test-events",
+      "checks": [
+        "node_modules/typescript/package.json",
+        "src/test-run-reporter.ts",
+        "scripts/test-run-node.ts"
+      ],
+      "environment": {
+        "isolatedHome": true,
+        "stateOrigin": true
+      },
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "branch": "develop",
+      "phase": "red",
+      "timeoutSource": "conf/flow.json#/unitTests/timeoutMs",
+      "notes": "Use the trusted raf channel and its stable group QA HOME. No direct runner, global HOME, new timeout, or test discovery."
+    }
+  },
+  "integration": {
+    "files": [
+      "test/production-start-layout.integration.test.ts"
+    ],
+    "count": 9,
+    "status": "authored-not-executed",
+    "registered": false,
+    "profileChangeRequested": false,
+    "prerequisites": [
+      "Git executable with local file protocol enabled only for fixture submodule creation",
+      "Linux Python3 renameat2 exchange provider for configured physical-copy scenarios",
+      "Isolated temporary Orchestrator root, source and production Git stores; no operational HOME or state",
+      "An authorized integration/QA assignment and explicit integration profile if run through raf"
+    ],
+    "cases": [
+      "Legacy main without mainCopies and configured A/B start: writer barrier, durable intent, protected-store split, actual channel guard admission, same code HEAD, and second-start no-op.",
+      "SIGKILL at store-prepared, store-pointer, store-registered; recovery preserves a new develop commit, source registrations, foreign source index.lock and dirty main bytes.",
+      "SIGKILL at layout intent-durable, git-relocated, link-published; recovery proves .gitmodules/gitlink correspondence.",
+      "Live activation writer refusal preserves its lock and all working state."
+    ],
+    "invariants": [
+      "HEAD and exact index/sharedindex bytes and permissions",
+      "staged binary blob unreachable from the committed tree",
+      "staged/unstaged/untracked file bytes and executable mode",
+      "source develop/hotfix cwd, .git pointers, common-dir, worktree registrations, branches and indexes",
+      "control directory generation/prefix/lease sentinels and stable main commit",
+      "no alternates in production object store",
+      "real agentChannelReadOnlyPaths refuses unsplit stores and admits proved split stores"
+    ],
+    "limits": "These prepared real-Git fixtures exercise the new production bootstrap helper plus the existing admission guard. They do not launch a native agent, real background service or validate live reader handover. Those remain separate QA/7.2 work; no integration pass is claimed."
+  },
+  "checks": [
+    {
+      "command": "node --check src/production-start-layout.ts",
+      "exitCode": 0
+    },
+    {
+      "command": "node --check test/production-start-layout.test.ts",
+      "exitCode": 0
+    },
+    {
+      "command": "node --check test/production-start-layout.integration.test.ts",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "nextStage": {
+    "item": "6.6",
+    "sameGroup": "switch-raf-main-by-symlink/production-start-layout",
+    "files": [
+      "test/production-start-layout.test.ts"
+    ],
+    "required": "Main reviews target red, then delegates implementation to a different agent. Implement the scaffold and connect service start plus implicit readiness, including the already-ready fast path, before route/pinning. Preserve the existing unsplit-store refusal. Run the same stable unit group green without changing prepared expectations.",
+    "notPerformed": [
+      "Feature implementation",
+      "Live migration/release",
+      "Native QA",
+      "Task checkbox writes",
+      "Sync/archive",
+      "Push"
+    ]
+  },
+  "taskState": "6.5 checkbox is owned by raf; other items remain open, so no archive."
+}

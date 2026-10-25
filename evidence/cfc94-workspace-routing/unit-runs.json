@@ -1,0 +1,120 @@
+{
+  "group": "complete-raf-flow-contracts/raf-workspace-routing",
+  "stableHome": true,
+  "runs": [
+    {
+      "label": "unit",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-workspace-routing --files test/workspace-routing.test.ts test/workspace-routing-contracts.test.ts",
+      "resultPath": "unit-TestRunResult.json",
+      "beforePath": "unit-before.json",
+      "toolPath": "unit-tool-result.json",
+      "stderrPath": "unit-stderr.capture.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "e60ae6c3-ac46-4287-b665-6993a6ce58d9",
+      "selection": {
+        "files": [
+          "test/workspace-routing.test.ts",
+          "test/workspace-routing-contracts.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 68,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite"
+    },
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-workspace-routing --files test/workspace-routing.test.ts test/workspace-routing-contracts.test.ts",
+      "resultPath": "red-TestRunResult.json",
+      "beforePath": "red-before.json",
+      "toolPath": "red-tool-result.json",
+      "stderrPath": "red-stderr.capture.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "29ab78c7-bb0d-4c0a-8836-a4e476213998",
+      "selection": {
+        "files": [
+          "test/workspace-routing.test.ts",
+          "test/workspace-routing-contracts.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 68,
+      "knownRed": [
+        {
+          "file": "test/workspace-routing-contracts.test.ts",
+          "name": "[QA9.4 product Git root /virtual/orchestrator] a parent branch cannot prove a product repository"
+        },
+        {
+          "file": "test/workspace-routing-contracts.test.ts",
+          "name": "[QA9.4 library Git root /virtual/orchestrator] a parent branch cannot prove shared-libs"
+        },
+        {
+          "file": "test/workspace-routing-contracts.test.ts",
+          "name": "[QA9.4 product Git root non-Git] a parent branch cannot prove a product repository"
+        },
+        {
+          "file": "test/workspace-routing-contracts.test.ts",
+          "name": "[QA9.4 library Git root non-Git] a parent branch cannot prove shared-libs"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite"
+    },
+    {
+      "label": "qa",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-workspace-routing --files test/workspace-routing.test.ts test/workspace-routing-contracts.test.ts",
+      "resultPath": "qa-TestRunResult.json",
+      "beforePath": "qa-before.json",
+      "toolPath": "qa-tool-result.json",
+      "stderrPath": "qa-stderr.capture.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "0ecd4cb2-4958-4b0c-b454-d9c8a4685def",
+      "selection": {
+        "files": [
+          "test/workspace-routing.test.ts",
+          "test/workspace-routing-contracts.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 72,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite"
+    }
+  ],
+  "streamLimitation": "Independent stderr was unavailable; passed is the reported unit outcome, not complete I1-I6 acceptance."
+}

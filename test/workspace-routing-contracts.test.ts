@@ -53,6 +53,29 @@ function refused(result: { ok: true } | Extract<WorkspaceRouteResult, { ok: fals
   for (const fragment of fragments) assert.ok(result.error.message.includes(fragment), `Missing ${fragment} in ${result.error.message}`);
 }
 
+for (const actualRoot of [root, null]) {
+  test(`[QA9.4 product Git root ${actualRoot ?? 'non-Git'}] a parent branch cannot prove a product repository`, async () => {
+    const f = fixture();
+    f.gitRoots.set(`${root}/app-release`, actualRoot);
+    refused(await f.route('app', 'release'), 'WORKSPACE_UNAVAILABLE');
+    assert.ok(!f.calls.some(call => call.operation === 'currentBranch'));
+  });
+
+  test(`[QA9.4 library Git root ${actualRoot ?? 'non-Git'}] a parent branch cannot prove shared-libs`, async () => {
+    const f = fixture();
+    const library = `${root}/shared-libs-release`;
+    f.config.projects.app.usesSharedLibs = true;
+    f.config.projects['shared-libs'] = { path: 'shared-libs-main', profile: 'product', branchPaths: { release: 'shared-libs-release' } };
+    f.kinds.set(`${root}/app-release/shared-libs`, 'symlink');
+    f.kinds.set(library, 'directory');
+    f.branches.set(library, 'release');
+    f.gitRoots.set(library, actualRoot);
+    f.dependencies.readLink = async () => '../shared-libs-release';
+    refused(await f.route('app', 'release'), 'SHARED_LIBS_UNAVAILABLE');
+    assert.ok(!f.calls.some(call => call.operation === 'currentBranch' && call.path === library));
+  });
+}
+
 function parameters(type: string, project = 'raf'): RuntimeRunParameters {
   return { id: 'workspace-contract', type, project, features: [change], phase: type, complexity: 'normal', tasks: [`${change}:9.2`] };
 }

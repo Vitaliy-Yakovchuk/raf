@@ -106,7 +106,10 @@ export async function resolveWorkspaceRoute(
     } else if (kind !== 'directory') {
       return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not an available directory.`);
     }
-    if ((rootProject || persistentHotfix) && await dependencies.gitRoot!(cwd) !== cwd) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not the registered ${rootProject ? 'Orchestrator' : 'hotfix'} Git root.`);
+    if (dependencies.gitRoot) {
+      const canonical = rootProject || persistentHotfix ? cwd : dependencies.realPath ? await dependencies.realPath(cwd) : cwd;
+      if (await dependencies.gitRoot(cwd) !== canonical) return failure('WORKSPACE_UNAVAILABLE', `Workspace ${cwd} is not the registered Git root.`);
+    }
     const actual = await dependencies.currentBranch(cwd);
     if (actual !== branch) {
       return failure('BRANCH_MISMATCH', `Workspace ${cwd} is on ${actual ?? 'detached HEAD'}; expected ${branch}.`);
@@ -136,6 +139,10 @@ export async function resolveWorkspaceRoute(
   try {
     if (await dependencies.pathKind(libraryPath) !== 'directory') {
       return failure('SHARED_LIBS_UNAVAILABLE', `Shared libraries ${libraryPath} are not an available directory.`);
+    }
+    if (dependencies.gitRoot) {
+      const canonical = dependencies.realPath ? await dependencies.realPath(libraryPath) : libraryPath;
+      if (await dependencies.gitRoot(libraryPath) !== canonical) return failure('SHARED_LIBS_UNAVAILABLE', `Shared libraries ${libraryPath} are not the registered Git root.`);
     }
     const actual = await dependencies.currentBranch(libraryPath);
     if (actual !== branch) {

@@ -1,0 +1,21 @@
+{
+  "command": "node evidence/cfc94-workspace-routing/non-git-probe.mjs",
+  "root": "/tmp/cfc94-probe-UC7gzJ",
+  "expected": "WORKSPACE_UNAVAILABLE: app-main is not a Git root",
+  "actual": {
+    "ok": false,
+    "error": {
+      "code": "WORKSPACE_UNAVAILABLE",
+      "message": "Workspace /tmp/cfc94-probe-UC7gzJ/app-main is not the registered Git root."
+    }
+  },
+  "before": {
+    "head": "refs/heads/main",
+    "status": ""
+  },
+  "after": {
+    "head": "refs/heads/main",
+    "status": ""
+  },
+  "gitRoot": "/tmp/cfc94-probe-UC7gzJ"
+}

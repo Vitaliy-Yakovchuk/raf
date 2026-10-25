@@ -1,0 +1,88 @@
+{
+  "at": "2026-10-25T13:09:04.214Z",
+  "versions": [
+    {
+      "executable": "node",
+      "argv": [
+        "--version"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "v26.12.1\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "executable": "git",
+      "argv": [
+        "--version"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "git version 2.53.0\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "executable": "tmux",
+      "argv": [
+        "-V"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "tmux 3.6\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "executable": "codex",
+      "argv": [
+        "--version"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "codex-cli 0.163.0\n",
+      "stderr": "WARNING: proceeding, even though we could not create PATH aliases: Read-only file system (os error 30)\n",
+      "error": null
+    },
+    {
+      "executable": "claude",
+      "argv": [
+        "--version"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "2.1.310 (Claude Code)\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "executable": "bwrap",
+      "argv": [
+        "--version"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "bubblewrap 0.11.1\n",
+      "stderr": "",
+      "error": null
+    },
+    {
+      "executable": "uname",
+      "argv": [
+        "-sr"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "Linux 7.0.0-30-generic\n",
+      "stderr": "",
+      "error": null
+    }
+  ],
+  "fingerprints": {
+    "src/workspace-routing.ts": "14ac20eb3405e5e946249f9b55af4632b687a26af13cbdb876e0ded0aa35fb54",
+    "test/workspace-routing.test.ts": "dc151b80d616b0ddbf743656861b5805adfbe021da40e0e3199f1596fb03533c",
+    "test/workspace-routing-contracts.test.ts": "6998a9f77490d8820c467bc322adcc57c72efa32d5fb29782c33f5a815c211bc",
+    "test/workspace-routing-integration.test.ts": "ed46a04b2373025c31b53722f56cd6ef5e79b10847d1dd8b983806c7fd485025"
+  }
+}

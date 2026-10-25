@@ -1,0 +1,5 @@
+{
+  "before": "non-git-live-before-fix.json was captured by an ad hoc node --input-type=module heredoc; its complete source was not preserved. Its command field describes a replay source, not the literal original argv.",
+  "after": "non-git-probe.mjs reconstructs that minimal public API Git/fs scenario and was executed after the fix. Complete post-fix stdout, stderr and CLI exit are saved separately.",
+  "scope": "One manual inherited-parent-branch case only. Not complete I1 and not SQLite/worker/native acceptance."
+}

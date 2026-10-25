@@ -1,0 +1,20 @@
+{
+  "command": "node --input-type=module (recorded source in non-git-probe.mjs)",
+  "root": "/tmp/cfc94-probe-CV7L7e",
+  "expected": "WORKSPACE_UNAVAILABLE: app-main is not a Git root",
+  "actual": {
+    "ok": true,
+    "project": "app",
+    "branch": "main",
+    "cwd": "/tmp/cfc94-probe-CV7L7e/app-main"
+  },
+  "before": {
+    "head": "refs/heads/main",
+    "status": ""
+  },
+  "after": {
+    "head": "refs/heads/main",
+    "status": ""
+  },
+  "gitRoot": "/tmp/cfc94-probe-CV7L7e"
+}

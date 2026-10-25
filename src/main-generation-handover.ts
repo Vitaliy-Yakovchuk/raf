@@ -245,8 +245,18 @@ export async function beginMainHandover(
   return serial(handoverTails, context, async () => {
     const { transition, created } = await context.store.transaction(state => {
       if (state.transition?.status === 'waiting') {
-        if (state.transition.to !== targetGeneration) fail('HANDOVER_IN_PROGRESS', 'Another main handover is pending');
-        return { transition: copy(state.transition), created: false };
+        if (state.transition.to === targetGeneration) return { transition: copy(state.transition), created: false };
+        const pending = state.transition;
+        if (pending.from !== targetGeneration || state.activeGeneration !== targetGeneration) fail('HANDOVER_IN_PROGRESS', 'Another main handover is pending');
+        assertCompatible(state, pending.to, targetGeneration);
+        const active = roles.map(role => state.owners[state.activeOwners[role]]?.generation);
+        if (active.some(source => source !== active[0]) || ![pending.from, pending.to].includes(active[0])) fail('MAIN_OWNER_INCONSISTENT', 'Main owners have inconsistent generations');
+        const stillOriginal = active[0] === targetGeneration;
+        const oldOwners = copy(stillOriginal ? pending.newOwners : state.activeOwners);
+        const newOwners = stillOriginal ? copy(state.activeOwners) : Object.fromEntries(roles.map(role => [role, allocateOwner(state, role, targetGeneration).ownerId])) as Record<ComponentRole, string>;
+        const reverse: HandoverTransition = { id: randomUUID(), from: pending.to, to: targetGeneration, oldOwners, newOwners, status: 'waiting' };
+        state.transition = reverse;
+        return { transition: copy(reverse), created: true };
       }
       if (state.activeGeneration !== targetGeneration) fail('MAIN_GENERATION_UNPUBLISHED', 'Target main generation is not the active publication');
       const sources = roles.map(role => state.owners[state.activeOwners[role]]?.generation);
@@ -272,7 +282,7 @@ export async function beginMainHandover(
         const state = await context.store.read();
         if (state.transition?.id !== transition.id || state.transition.status !== 'waiting') break;
         const owner = state.owners[transition.newOwners[role]];
-        if (state.transition.newOwners[role] === owner.ownerId && !await context.runtime.isAlive(owner)) await context.runtime.start(copy(owner), [...duties[role]]);
+        if (owner.phase === 'starting' && state.transition.newOwners[role] === owner.ownerId && !await context.runtime.isAlive(owner)) await context.runtime.start(copy(owner), [...duties[role]]);
       }
     }
     return transition.id;

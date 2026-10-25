@@ -25,6 +25,7 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
     cpSync(new URL(`../../conf/${name}`, import.meta.url), join(location.root, 'conf', name), { force: false });
   }
   const codeRoot = join(location.root, projects.projects.raf.branchPaths.develop);
+  mkdirSync(codeRoot, { recursive: true });
   const gitEnvironment = { ...process.env };
   for (const name of Object.keys(gitEnvironment)) if (name.startsWith('GIT_')) delete gitEnvironment[name];
   const git = (cwd: string, ...args: string[]) => {

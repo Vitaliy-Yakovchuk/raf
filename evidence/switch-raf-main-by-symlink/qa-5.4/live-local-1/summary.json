@@ -1,0 +1,4212 @@
+{
+  "outcome": "passed",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-main-generation-handover.ts",
+    "evidence/switch-raf-main-by-symlink/qa-5.4/live-local-1"
+  ],
+  "root": "/tmp/raf-handover-qa-YFq33y",
+  "sha": "cbe8a257da0a5743667fb995872cc9e75cc991c6",
+  "workspaceStatus": " M src/main-generation-handover.ts\n M test/main-generation-handover.test.ts\n?? evidence/switch-raf-main-by-symlink/qa-5.4/\n?? scripts/qa-main-generation-handover.ts\n",
+  "fingerprints": {
+    "src/main-generation-handover.ts": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b",
+    "scripts/qa-main-generation-handover.ts": "269523250c498e5b358afe7b621a280f6aaf9ff15e5da4bf21ca61fbc818b607"
+  },
+  "environment": {
+    "node": "v26.12.1",
+    "sqlite": "3.54.0",
+    "os": "7.0.0-30-generic",
+    "platform": "linux"
+  },
+  "scope": "Real isolated processes and SQLite adapters of the handover engine, atomic code-selection symlink A/B, filesystem report watcher and fenced idempotent delivery. Not a native model session or full production service/worker rollout; Git publication is covered by 4.4.",
+  "processes": [
+    {
+      "pid": 31,
+      "kind": "runner",
+      "config": {
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": null,
+      "signal": "SIGTERM",
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 31,
+          "startTicks": "26558673",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      }
+    },
+    {
+      "pid": 38,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/A",
+        "owner": {
+          "ownerId": "A-service",
+          "epoch": 1,
+          "role": "service",
+          "generation": "A",
+          "phase": "active"
+        },
+        "duties": [
+          "bugs",
+          "resource-wait"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null,
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 38,
+          "startTicks": "26558691",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "A-service",
+          "epoch": 1,
+          "role": "service",
+          "generation": "A",
+          "phase": "active"
+        },
+        "version": {
+          "id": "A",
+          "protocol": 1,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 45,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/A",
+        "owner": {
+          "ownerId": "A-worker",
+          "epoch": 1,
+          "role": "worker",
+          "generation": "A",
+          "phase": "active"
+        },
+        "duties": [
+          "reports",
+          "events",
+          "messages"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": null,
+      "signal": "SIGKILL",
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 45,
+          "startTicks": "26558716",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "A-worker",
+          "epoch": 1,
+          "role": "worker",
+          "generation": "A",
+          "phase": "active"
+        },
+        "version": {
+          "id": "A",
+          "protocol": 1,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 52,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/A",
+        "owner": {
+          "ownerId": "A-notice",
+          "epoch": 1,
+          "role": "notice",
+          "generation": "A",
+          "phase": "active"
+        },
+        "duties": [
+          "reminders"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null,
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 52,
+          "startTicks": "26558731",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "A-notice",
+          "epoch": 1,
+          "role": "notice",
+          "generation": "A",
+          "phase": "active"
+        },
+        "version": {
+          "id": "A",
+          "protocol": 1,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 59,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "drain",
+        "args": [
+          {
+            "ownerId": "A-worker",
+            "epoch": 1,
+            "role": "worker",
+            "generation": "A",
+            "phase": "active"
+          }
+        ]
+      },
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":59,\"startTicks\":\"26558748\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 66,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "pin",
+        "args": [
+          {
+            "id": "service-queue",
+            "ownerId": "A-service",
+            "kind": "resource-wait"
+          }
+        ]
+      },
+      "stdout": "{\"value\":{\"id\":\"service-queue\",\"ownerId\":\"A-service\",\"kind\":\"resource-wait\",\"generation\":\"A\"},\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":66,\"startTicks\":\"26558762\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 73,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "pin",
+        "args": [
+          {
+            "id": "deferred-import",
+            "ownerId": "A-worker",
+            "kind": "worker-import"
+          }
+        ]
+      },
+      "stdout": "{\"value\":{\"id\":\"deferred-import\",\"ownerId\":\"A-worker\",\"kind\":\"worker-import\",\"generation\":\"A\"},\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":73,\"startTicks\":\"26558776\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 80,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "begin",
+        "args": [
+          "B"
+        ]
+      },
+      "stdout": "{\"value\":\"1d29d8ce-2055-4ce0-b22f-78fcc9db5b49\",\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":80,\"startTicks\":\"26558798\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 87,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/B",
+        "owner": {
+          "ownerId": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+          "epoch": 2,
+          "role": "service",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "duties": [
+          "bugs",
+          "resource-wait"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null,
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 87,
+          "startTicks": "26558815",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+          "epoch": 2,
+          "role": "service",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "version": {
+          "id": "B",
+          "protocol": 2,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 94,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/B",
+        "owner": {
+          "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "epoch": 2,
+          "role": "worker",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "duties": [
+          "reports",
+          "events",
+          "messages"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": null,
+      "signal": "SIGKILL",
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 94,
+          "startTicks": "26558842",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "epoch": 2,
+          "role": "worker",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "version": {
+          "id": "B",
+          "protocol": 2,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 101,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/B",
+        "owner": {
+          "ownerId": "a2682ada-c3ac-4eb2-9383-21cb23674a2b",
+          "epoch": 2,
+          "role": "notice",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "duties": [
+          "reminders"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null,
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 101,
+          "startTicks": "26558858",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "a2682ada-c3ac-4eb2-9383-21cb23674a2b",
+          "epoch": 2,
+          "role": "notice",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "version": {
+          "id": "B",
+          "protocol": 2,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 108,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "advance",
+        "args": [
+          "1d29d8ce-2055-4ce0-b22f-78fcc9db5b49"
+        ]
+      },
+      "stdout": "{\"value\":{\"status\":\"waiting\",\"reason\":\"New main owner readiness is not restored: worker\"},\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":108,\"startTicks\":\"26558874\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 1,
+      "signal": null
+    },
+    {
+      "pid": 115,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "asset",
+        "args": [
+          "deferred-import",
+          "module"
+        ]
+      },
+      "stdout": "{\"value\":\"A:module\",\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":115,\"startTicks\":\"26558889\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 122,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "reusable",
+        "args": [
+          "A"
+        ]
+      },
+      "stdout": "{\"error\":\"SLOT_IN_USE: Main slot is busy: active generation, handover, owner or pinned reader\",\"code\":\"SLOT_IN_USE\",\"identity\":{\"pid\":122,\"startTicks\":\"26558907\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 1,
+      "signal": null
+    },
+    {
+      "pid": 129,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "advance",
+        "args": [
+          "1d29d8ce-2055-4ce0-b22f-78fcc9db5b49"
+        ]
+      },
+      "stdout": "{\"value\":{\"status\":\"waiting\",\"reason\":\"Old main pinned operations must drain\"},\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":129,\"startTicks\":\"26558922\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 1,
+      "signal": null
+    },
+    {
+      "pid": 136,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "finish",
+        "args": [
+          "service-queue"
+        ]
+      },
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":136,\"startTicks\":\"26558935\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 143,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "finish",
+        "args": [
+          "deferred-import"
+        ]
+      },
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":143,\"startTicks\":\"26558948\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 150,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "recover",
+        "args": []
+      },
+      "stdout": "{\"value\":{\"status\":\"complete\"},\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":150,\"startTicks\":\"26558960\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 157,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "reusable",
+        "args": [
+          "A"
+        ]
+      },
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":157,\"startTicks\":\"26558977\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 164,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "fact",
+        "args": [
+          {
+            "id": "lost-ack",
+            "kind": "report",
+            "generation": "B",
+            "protocol": 2,
+            "address": "live-agent",
+            "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+            "payload": {
+              "text": "lost-ack",
+              "status": "succeeded",
+              "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          }
+        ]
+      },
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":164,\"startTicks\":\"26558993\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 171,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "drain",
+        "args": [
+          {
+            "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+            "epoch": 2,
+            "role": "worker",
+            "generation": "B",
+            "phase": "active"
+          }
+        ]
+      },
+      "stdout": "{\"error\":\"Observer exited before acknowledgement\",\"code\":null,\"identity\":{\"pid\":171,\"startTicks\":\"26559009\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 1,
+      "signal": null
+    },
+    {
+      "pid": 178,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "recover",
+        "args": []
+      },
+      "stdout": "{\"value\":{\"status\":\"complete\"},\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":178,\"startTicks\":\"26559026\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 185,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/B",
+        "owner": {
+          "ownerId": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+          "epoch": 3,
+          "role": "worker",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "duties": [
+          "reports",
+          "events",
+          "messages"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null,
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 185,
+          "startTicks": "26559040",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+          "epoch": 3,
+          "role": "worker",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "version": {
+          "id": "B",
+          "protocol": 2,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 192,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "fact",
+        "args": [
+          {
+            "id": "event-rollback",
+            "kind": "event",
+            "generation": "B",
+            "protocol": 2,
+            "address": "live-agent",
+            "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+            "payload": {
+              "text": "event-rollback",
+              "status": "succeeded",
+              "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          }
+        ]
+      },
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":192,\"startTicks\":\"26559055\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 199,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "fact",
+        "args": [
+          {
+            "id": "message-rollback",
+            "kind": "message",
+            "generation": "B",
+            "protocol": 2,
+            "address": "live-agent",
+            "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+            "payload": {
+              "text": "message-rollback",
+              "status": "succeeded",
+              "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          }
+        ]
+      },
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":199,\"startTicks\":\"26559075\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 206,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "fact",
+        "args": [
+          {
+            "id": "reminder-rollback",
+            "kind": "reminder",
+            "generation": "B",
+            "protocol": 2,
+            "address": "live-agent",
+            "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+            "payload": {
+              "text": "reminder-rollback",
+              "status": "succeeded",
+              "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          }
+        ]
+      },
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":206,\"startTicks\":\"26559094\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 213,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "begin",
+        "args": [
+          "A"
+        ]
+      },
+      "stdout": "{\"value\":\"80cce9ea-9410-4b3b-baf4-be8e7e1b6126\",\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":213,\"startTicks\":\"26559117\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 220,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/A",
+        "owner": {
+          "ownerId": "eb52575f-1f54-4571-a8ba-a215167cd731",
+          "epoch": 3,
+          "role": "service",
+          "generation": "A",
+          "phase": "starting"
+        },
+        "duties": [
+          "bugs",
+          "resource-wait"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": null,
+      "signal": "SIGTERM",
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 220,
+          "startTicks": "26559134",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "eb52575f-1f54-4571-a8ba-a215167cd731",
+          "epoch": 3,
+          "role": "service",
+          "generation": "A",
+          "phase": "starting"
+        },
+        "version": {
+          "id": "A",
+          "protocol": 1,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 227,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/A",
+        "owner": {
+          "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "role": "worker",
+          "generation": "A",
+          "phase": "starting"
+        },
+        "duties": [
+          "reports",
+          "events",
+          "messages"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": null,
+      "signal": "SIGTERM",
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 227,
+          "startTicks": "26559151",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "role": "worker",
+          "generation": "A",
+          "phase": "starting"
+        },
+        "version": {
+          "id": "A",
+          "protocol": 1,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 234,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/A",
+        "owner": {
+          "ownerId": "e281da62-8119-444c-83c1-2cec60cee6c5",
+          "epoch": 3,
+          "role": "notice",
+          "generation": "A",
+          "phase": "starting"
+        },
+        "duties": [
+          "reminders"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": null,
+      "signal": "SIGTERM",
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 234,
+          "startTicks": "26559173",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "e281da62-8119-444c-83c1-2cec60cee6c5",
+          "epoch": 3,
+          "role": "notice",
+          "generation": "A",
+          "phase": "starting"
+        },
+        "version": {
+          "id": "A",
+          "protocol": 1,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 241,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "advance",
+        "args": [
+          "80cce9ea-9410-4b3b-baf4-be8e7e1b6126"
+        ]
+      },
+      "stdout": "{\"value\":{\"status\":\"complete\"},\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":241,\"startTicks\":\"26559189\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 248,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "reusable",
+        "args": [
+          "B"
+        ]
+      },
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":248,\"startTicks\":\"26559222\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 255,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "drain",
+        "args": [
+          {
+            "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+            "epoch": 4,
+            "role": "worker",
+            "generation": "A",
+            "phase": "active"
+          }
+        ]
+      },
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":255,\"startTicks\":\"26559240\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 262,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "recover",
+        "args": []
+      },
+      "stdout": "{\"value\":{\"status\":\"complete\"},\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":262,\"startTicks\":\"26559279\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 269,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "begin",
+        "args": [
+          "B"
+        ]
+      },
+      "stdout": "{\"error\":\"MAIN_PROTOCOL_INCOMPATIBLE: Incompatible bidirectional main protocol: report\",\"code\":\"MAIN_PROTOCOL_INCOMPATIBLE\",\"identity\":{\"pid\":269,\"startTicks\":\"26559297\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 1,
+      "signal": null
+    },
+    {
+      "pid": 276,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "begin",
+        "args": [
+          "B"
+        ]
+      },
+      "stdout": "{\"value\":\"1c1e4a88-0739-404c-bb08-ec5d029617e2\",\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":276,\"startTicks\":\"26559313\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 283,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/B",
+        "owner": {
+          "ownerId": "f67ba02a-0aa7-4e0c-b494-5ffb1202c0d1",
+          "epoch": 4,
+          "role": "service",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "duties": [
+          "bugs",
+          "resource-wait"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null,
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 283,
+          "startTicks": "26559328",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "f67ba02a-0aa7-4e0c-b494-5ffb1202c0d1",
+          "epoch": 4,
+          "role": "service",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "version": {
+          "id": "B",
+          "protocol": 2,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 290,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/B",
+        "owner": {
+          "ownerId": "1dcbc9f2-358e-45e1-9654-a85bfa661e6c",
+          "epoch": 5,
+          "role": "worker",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "duties": [
+          "reports",
+          "events",
+          "messages"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null,
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 290,
+          "startTicks": "26559345",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "1dcbc9f2-358e-45e1-9654-a85bfa661e6c",
+          "epoch": 5,
+          "role": "worker",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "version": {
+          "id": "B",
+          "protocol": 2,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 297,
+      "kind": "actor",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "slot": "/tmp/raf-handover-qa-YFq33y/B",
+        "owner": {
+          "ownerId": "31042a62-0f81-4a2a-a244-ce542f7bca06",
+          "epoch": 4,
+          "role": "notice",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "duties": [
+          "reminders"
+        ],
+        "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+        "reportDirectory": "/tmp/raf-handover-qa-YFq33y/runner"
+      },
+      "stdout": "",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null,
+      "ready": {
+        "ready": true,
+        "identity": {
+          "pid": 297,
+          "startTicks": "26559371",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "owner": {
+          "ownerId": "31042a62-0f81-4a2a-a244-ce542f7bca06",
+          "epoch": 4,
+          "role": "notice",
+          "generation": "B",
+          "phase": "starting"
+        },
+        "version": {
+          "id": "B",
+          "protocol": 2,
+          "engineHash": "753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b"
+        },
+        "restored": {
+          "runners": {
+            "46d33d61-a1ae-42ca-9117-4350e441d051": {
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "pid": 31,
+              "startedAt": "26558673",
+              "session": "live-session",
+              "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+              "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+              "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+            }
+          },
+          "resourceWait": {
+            "queue": [
+              "resource-first",
+              "resource-second"
+            ],
+            "lastGrant": 1729
+          },
+          "bugSync": {
+            "cursor": "bugs-before-switch"
+          }
+        }
+      }
+    },
+    {
+      "pid": 304,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "advance",
+        "args": [
+          "1c1e4a88-0739-404c-bb08-ec5d029617e2"
+        ]
+      },
+      "stdout": "{\"value\":{\"status\":\"waiting\",\"reason\":\"New main owner readiness is not restored: worker\"},\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":304,\"startTicks\":\"26559405\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 1,
+      "signal": null
+    },
+    {
+      "pid": 311,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "begin",
+        "args": [
+          "A"
+        ]
+      },
+      "stdout": "{\"value\":\"b7e9f4a5-7c12-4209-b80b-14c04496fb7e\",\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":311,\"startTicks\":\"26559425\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 318,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "advance",
+        "args": [
+          "b7e9f4a5-7c12-4209-b80b-14c04496fb7e"
+        ]
+      },
+      "stdout": "{\"value\":{\"status\":\"complete\"},\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":318,\"startTicks\":\"26559441\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 325,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "recover",
+        "args": []
+      },
+      "stdout": "{\"value\":{\"status\":\"complete\"},\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":325,\"startTicks\":\"26559468\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "pid": 332,
+      "kind": "command",
+      "config": {
+        "root": "/tmp/raf-handover-qa-YFq33y",
+        "operation": "reusable",
+        "args": [
+          "B"
+        ]
+      },
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":332,\"startTicks\":\"26559487\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": "",
+      "exitCode": 0,
+      "signal": null
+    }
+  ],
+  "commands": [
+    {
+      "operation": "drain",
+      "args": [
+        {
+          "ownerId": "A-worker",
+          "epoch": 1,
+          "role": "worker",
+          "generation": "A",
+          "phase": "active"
+        }
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":59,\"startTicks\":\"26558748\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "pin",
+      "args": [
+        {
+          "id": "service-queue",
+          "ownerId": "A-service",
+          "kind": "resource-wait"
+        }
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":{\"id\":\"service-queue\",\"ownerId\":\"A-service\",\"kind\":\"resource-wait\",\"generation\":\"A\"},\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":66,\"startTicks\":\"26558762\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "pin",
+      "args": [
+        {
+          "id": "deferred-import",
+          "ownerId": "A-worker",
+          "kind": "worker-import"
+        }
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":{\"id\":\"deferred-import\",\"ownerId\":\"A-worker\",\"kind\":\"worker-import\",\"generation\":\"A\"},\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":73,\"startTicks\":\"26558776\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "begin",
+      "args": [
+        "B"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":\"1d29d8ce-2055-4ce0-b22f-78fcc9db5b49\",\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":80,\"startTicks\":\"26558798\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "advance",
+      "args": [
+        "1d29d8ce-2055-4ce0-b22f-78fcc9db5b49"
+      ],
+      "cliExitCode": 1,
+      "signal": null,
+      "stdout": "{\"value\":{\"status\":\"waiting\",\"reason\":\"New main owner readiness is not restored: worker\"},\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":108,\"startTicks\":\"26558874\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "asset",
+      "args": [
+        "deferred-import",
+        "module"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":\"A:module\",\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":115,\"startTicks\":\"26558889\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "reusable",
+      "args": [
+        "A"
+      ],
+      "cliExitCode": 1,
+      "signal": null,
+      "stdout": "{\"error\":\"SLOT_IN_USE: Main slot is busy: active generation, handover, owner or pinned reader\",\"code\":\"SLOT_IN_USE\",\"identity\":{\"pid\":122,\"startTicks\":\"26558907\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "advance",
+      "args": [
+        "1d29d8ce-2055-4ce0-b22f-78fcc9db5b49"
+      ],
+      "cliExitCode": 1,
+      "signal": null,
+      "stdout": "{\"value\":{\"status\":\"waiting\",\"reason\":\"Old main pinned operations must drain\"},\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":129,\"startTicks\":\"26558922\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "finish",
+      "args": [
+        "service-queue"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":136,\"startTicks\":\"26558935\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "finish",
+      "args": [
+        "deferred-import"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":143,\"startTicks\":\"26558948\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "recover",
+      "args": [],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":{\"status\":\"complete\"},\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":150,\"startTicks\":\"26558960\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "reusable",
+      "args": [
+        "A"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":157,\"startTicks\":\"26558977\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fact",
+      "args": [
+        {
+          "id": "lost-ack",
+          "kind": "report",
+          "generation": "B",
+          "protocol": 2,
+          "address": "live-agent",
+          "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+          "payload": {
+            "text": "lost-ack",
+            "status": "succeeded",
+            "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+          }
+        }
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":164,\"startTicks\":\"26558993\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "drain",
+      "args": [
+        {
+          "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "epoch": 2,
+          "role": "worker",
+          "generation": "B",
+          "phase": "active"
+        }
+      ],
+      "cliExitCode": 1,
+      "signal": null,
+      "stdout": "{\"error\":\"Observer exited before acknowledgement\",\"code\":null,\"identity\":{\"pid\":171,\"startTicks\":\"26559009\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "recover",
+      "args": [],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":{\"status\":\"complete\"},\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":178,\"startTicks\":\"26559026\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fact",
+      "args": [
+        {
+          "id": "event-rollback",
+          "kind": "event",
+          "generation": "B",
+          "protocol": 2,
+          "address": "live-agent",
+          "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+          "payload": {
+            "text": "event-rollback",
+            "status": "succeeded",
+            "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+          }
+        }
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":192,\"startTicks\":\"26559055\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fact",
+      "args": [
+        {
+          "id": "message-rollback",
+          "kind": "message",
+          "generation": "B",
+          "protocol": 2,
+          "address": "live-agent",
+          "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+          "payload": {
+            "text": "message-rollback",
+            "status": "succeeded",
+            "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+          }
+        }
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":199,\"startTicks\":\"26559075\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "fact",
+      "args": [
+        {
+          "id": "reminder-rollback",
+          "kind": "reminder",
+          "generation": "B",
+          "protocol": 2,
+          "address": "live-agent",
+          "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+          "payload": {
+            "text": "reminder-rollback",
+            "status": "succeeded",
+            "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+          }
+        }
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":206,\"startTicks\":\"26559094\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "begin",
+      "args": [
+        "A"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":\"80cce9ea-9410-4b3b-baf4-be8e7e1b6126\",\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":213,\"startTicks\":\"26559117\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "advance",
+      "args": [
+        "80cce9ea-9410-4b3b-baf4-be8e7e1b6126"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":{\"status\":\"complete\"},\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":241,\"startTicks\":\"26559189\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "reusable",
+      "args": [
+        "B"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":248,\"startTicks\":\"26559222\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "drain",
+      "args": [
+        {
+          "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "role": "worker",
+          "generation": "A",
+          "phase": "active"
+        }
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":255,\"startTicks\":\"26559240\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "recover",
+      "args": [],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":{\"status\":\"complete\"},\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":262,\"startTicks\":\"26559279\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "begin",
+      "args": [
+        "B"
+      ],
+      "cliExitCode": 1,
+      "signal": null,
+      "stdout": "{\"error\":\"MAIN_PROTOCOL_INCOMPATIBLE: Incompatible bidirectional main protocol: report\",\"code\":\"MAIN_PROTOCOL_INCOMPATIBLE\",\"identity\":{\"pid\":269,\"startTicks\":\"26559297\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "begin",
+      "args": [
+        "B"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":\"1c1e4a88-0739-404c-bb08-ec5d029617e2\",\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":276,\"startTicks\":\"26559313\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "advance",
+      "args": [
+        "1c1e4a88-0739-404c-bb08-ec5d029617e2"
+      ],
+      "cliExitCode": 1,
+      "signal": null,
+      "stdout": "{\"value\":{\"status\":\"waiting\",\"reason\":\"New main owner readiness is not restored: worker\"},\"version\":{\"id\":\"B\",\"protocol\":2,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":304,\"startTicks\":\"26559405\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "begin",
+      "args": [
+        "A"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":\"b7e9f4a5-7c12-4209-b80b-14c04496fb7e\",\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":311,\"startTicks\":\"26559425\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "advance",
+      "args": [
+        "b7e9f4a5-7c12-4209-b80b-14c04496fb7e"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":{\"status\":\"complete\"},\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":318,\"startTicks\":\"26559441\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "recover",
+      "args": [],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":{\"status\":\"complete\"},\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":325,\"startTicks\":\"26559468\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    },
+    {
+      "operation": "reusable",
+      "args": [
+        "B"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"value\":null,\"version\":{\"id\":\"A\",\"protocol\":1,\"engineHash\":\"753eec67f56b5b2cb7892e0172439ce8bde97692503ac82a91259a0a4036171b\"},\"identity\":{\"pid\":332,\"startTicks\":\"26559487\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}\n",
+      "stderr": ""
+    }
+  ],
+  "scenarios": [
+    "A-to-B: unready refusal, old-generation deferred import and resource operation drain, report during transfer, old observer SIGKILL and recovery",
+    "B observer SIGKILL after durable delivery before acknowledgement: two attempts, one delivery, recovered ownership epoch",
+    "B-to-A rollback: both protocols, events/messages/reminders and report after transfer, unchanged runner and resource queue",
+    "Incompatible B report protocol: nonzero before new owners, original observation survives, release remains incomplete",
+    "Rollback of unready handover: original A owners preserved, B drained, pending report accepted"
+  ],
+  "snapshots": {
+    "initial": {
+      "state": {
+        "activeGeneration": "A",
+        "generations": {
+          "A": {
+            "id": "A",
+            "root": "/tmp/raf-handover-qa-YFq33y/A",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          },
+          "B": {
+            "id": "B",
+            "root": "/tmp/raf-handover-qa-YFq33y/B",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          }
+        },
+        "owners": {
+          "A-service": {
+            "ownerId": "A-service",
+            "epoch": 1,
+            "role": "service",
+            "generation": "A",
+            "phase": "active"
+          },
+          "A-worker": {
+            "ownerId": "A-worker",
+            "epoch": 1,
+            "role": "worker",
+            "generation": "A",
+            "phase": "active"
+          },
+          "A-notice": {
+            "ownerId": "A-notice",
+            "epoch": 1,
+            "role": "notice",
+            "generation": "A",
+            "phase": "active"
+          }
+        },
+        "activeOwners": {
+          "service": "A-service",
+          "worker": "A-worker",
+          "notice": "A-notice"
+        },
+        "runners": {
+          "46d33d61-a1ae-42ca-9117-4350e441d051": {
+            "address": "live-agent",
+            "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+            "pid": 31,
+            "startedAt": "26558673",
+            "session": "live-session",
+            "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+            "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+            "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+          }
+        },
+        "operations": {},
+        "facts": {},
+        "transition": null,
+        "resourceWait": {
+          "queue": [
+            "resource-first",
+            "resource-second"
+          ],
+          "lastGrant": 1729
+        },
+        "bugSync": {
+          "cursor": "bugs-before-switch"
+        }
+      },
+      "readlink": "/tmp/raf-handover-qa-YFq33y/A",
+      "deliveries": [],
+      "attempts": []
+    },
+    "unready": {
+      "state": {
+        "activeGeneration": "B",
+        "generations": {
+          "A": {
+            "id": "A",
+            "root": "/tmp/raf-handover-qa-YFq33y/A",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          },
+          "B": {
+            "id": "B",
+            "root": "/tmp/raf-handover-qa-YFq33y/B",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          }
+        },
+        "owners": {
+          "A-service": {
+            "ownerId": "A-service",
+            "epoch": 1,
+            "role": "service",
+            "generation": "A",
+            "phase": "active"
+          },
+          "A-worker": {
+            "ownerId": "A-worker",
+            "epoch": 1,
+            "role": "worker",
+            "generation": "A",
+            "phase": "active"
+          },
+          "A-notice": {
+            "ownerId": "A-notice",
+            "epoch": 1,
+            "role": "notice",
+            "generation": "A",
+            "phase": "active"
+          },
+          "aa30e02a-4ab8-4e15-8100-1d25917d84c8": {
+            "ownerId": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+            "epoch": 2,
+            "role": "service",
+            "generation": "B",
+            "phase": "starting"
+          },
+          "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf": {
+            "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+            "epoch": 2,
+            "role": "worker",
+            "generation": "B",
+            "phase": "starting"
+          },
+          "a2682ada-c3ac-4eb2-9383-21cb23674a2b": {
+            "ownerId": "a2682ada-c3ac-4eb2-9383-21cb23674a2b",
+            "epoch": 2,
+            "role": "notice",
+            "generation": "B",
+            "phase": "starting"
+          }
+        },
+        "activeOwners": {
+          "service": "A-service",
+          "worker": "A-worker",
+          "notice": "A-notice"
+        },
+        "runners": {
+          "46d33d61-a1ae-42ca-9117-4350e441d051": {
+            "address": "live-agent",
+            "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+            "pid": 31,
+            "startedAt": "26558673",
+            "session": "live-session",
+            "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+            "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+            "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+          }
+        },
+        "operations": {
+          "service-queue": {
+            "id": "service-queue",
+            "ownerId": "A-service",
+            "kind": "resource-wait",
+            "generation": "A"
+          },
+          "deferred-import": {
+            "id": "deferred-import",
+            "ownerId": "A-worker",
+            "kind": "worker-import",
+            "generation": "A"
+          }
+        },
+        "facts": {
+          "before": {
+            "fact": {
+              "id": "before",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "before",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "A-worker",
+              "epoch": 1
+            }
+          },
+          "during": {
+            "fact": {
+              "id": "during",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "during",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "pending"
+          }
+        },
+        "transition": {
+          "id": "1d29d8ce-2055-4ce0-b22f-78fcc9db5b49",
+          "from": "A",
+          "to": "B",
+          "oldOwners": {
+            "service": "A-service",
+            "worker": "A-worker",
+            "notice": "A-notice"
+          },
+          "newOwners": {
+            "service": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+            "worker": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+            "notice": "a2682ada-c3ac-4eb2-9383-21cb23674a2b"
+          },
+          "status": "waiting"
+        },
+        "resourceWait": {
+          "queue": [
+            "resource-first",
+            "resource-second"
+          ],
+          "lastGrant": 1729
+        },
+        "bugSync": {
+          "cursor": "bugs-before-switch"
+        }
+      },
+      "readlink": "/tmp/raf-handover-qa-YFq33y/B",
+      "deliveries": [
+        {
+          "id": "before",
+          "payload": "{\"id\":\"before\",\"kind\":\"report\",\"generation\":\"A\",\"protocol\":1,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"before\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "A-worker",
+          "version": "A"
+        }
+      ],
+      "attempts": [
+        {
+          "seq": 1,
+          "fact": "before",
+          "owner": "A-worker",
+          "epoch": 1,
+          "version": "A"
+        }
+      ]
+    },
+    "forward-recovered": {
+      "state": {
+        "activeGeneration": "B",
+        "generations": {
+          "A": {
+            "id": "A",
+            "root": "/tmp/raf-handover-qa-YFq33y/A",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          },
+          "B": {
+            "id": "B",
+            "root": "/tmp/raf-handover-qa-YFq33y/B",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          }
+        },
+        "owners": {
+          "A-service": {
+            "ownerId": "A-service",
+            "epoch": 1,
+            "role": "service",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "A-worker": {
+            "ownerId": "A-worker",
+            "epoch": 1,
+            "role": "worker",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "A-notice": {
+            "ownerId": "A-notice",
+            "epoch": 1,
+            "role": "notice",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "aa30e02a-4ab8-4e15-8100-1d25917d84c8": {
+            "ownerId": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+            "epoch": 2,
+            "role": "service",
+            "generation": "B",
+            "phase": "active"
+          },
+          "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf": {
+            "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+            "epoch": 2,
+            "role": "worker",
+            "generation": "B",
+            "phase": "active"
+          },
+          "a2682ada-c3ac-4eb2-9383-21cb23674a2b": {
+            "ownerId": "a2682ada-c3ac-4eb2-9383-21cb23674a2b",
+            "epoch": 2,
+            "role": "notice",
+            "generation": "B",
+            "phase": "active"
+          }
+        },
+        "activeOwners": {
+          "service": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+          "worker": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "notice": "a2682ada-c3ac-4eb2-9383-21cb23674a2b"
+        },
+        "runners": {
+          "46d33d61-a1ae-42ca-9117-4350e441d051": {
+            "address": "live-agent",
+            "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+            "pid": 31,
+            "startedAt": "26558673",
+            "session": "live-session",
+            "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+            "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+            "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+          }
+        },
+        "operations": {},
+        "facts": {
+          "before": {
+            "fact": {
+              "id": "before",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "before",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "A-worker",
+              "epoch": 1
+            }
+          },
+          "during": {
+            "fact": {
+              "id": "during",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "during",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+              "epoch": 2
+            }
+          }
+        },
+        "transition": {
+          "id": "1d29d8ce-2055-4ce0-b22f-78fcc9db5b49",
+          "from": "A",
+          "to": "B",
+          "oldOwners": {
+            "service": "A-service",
+            "worker": "A-worker",
+            "notice": "A-notice"
+          },
+          "newOwners": {
+            "service": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+            "worker": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+            "notice": "a2682ada-c3ac-4eb2-9383-21cb23674a2b"
+          },
+          "status": "complete"
+        },
+        "resourceWait": {
+          "queue": [
+            "resource-first",
+            "resource-second"
+          ],
+          "lastGrant": 1729
+        },
+        "bugSync": {
+          "cursor": "bugs-before-switch"
+        }
+      },
+      "readlink": "/tmp/raf-handover-qa-YFq33y/B",
+      "deliveries": [
+        {
+          "id": "before",
+          "payload": "{\"id\":\"before\",\"kind\":\"report\",\"generation\":\"A\",\"protocol\":1,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"before\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "A-worker",
+          "version": "A"
+        },
+        {
+          "id": "during",
+          "payload": "{\"id\":\"during\",\"kind\":\"report\",\"generation\":\"A\",\"protocol\":1,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"during\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "version": "B"
+        }
+      ],
+      "attempts": [
+        {
+          "seq": 1,
+          "fact": "before",
+          "owner": "A-worker",
+          "epoch": 1,
+          "version": "A"
+        },
+        {
+          "seq": 2,
+          "fact": "during",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "epoch": 2,
+          "version": "B"
+        }
+      ]
+    },
+    "new-observer-recovered": {
+      "state": {
+        "activeGeneration": "B",
+        "generations": {
+          "A": {
+            "id": "A",
+            "root": "/tmp/raf-handover-qa-YFq33y/A",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          },
+          "B": {
+            "id": "B",
+            "root": "/tmp/raf-handover-qa-YFq33y/B",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          }
+        },
+        "owners": {
+          "A-service": {
+            "ownerId": "A-service",
+            "epoch": 1,
+            "role": "service",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "A-worker": {
+            "ownerId": "A-worker",
+            "epoch": 1,
+            "role": "worker",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "A-notice": {
+            "ownerId": "A-notice",
+            "epoch": 1,
+            "role": "notice",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "aa30e02a-4ab8-4e15-8100-1d25917d84c8": {
+            "ownerId": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+            "epoch": 2,
+            "role": "service",
+            "generation": "B",
+            "phase": "active"
+          },
+          "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf": {
+            "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+            "epoch": 2,
+            "role": "worker",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "a2682ada-c3ac-4eb2-9383-21cb23674a2b": {
+            "ownerId": "a2682ada-c3ac-4eb2-9383-21cb23674a2b",
+            "epoch": 2,
+            "role": "notice",
+            "generation": "B",
+            "phase": "active"
+          },
+          "7b085926-c02a-44e7-ab8e-77017d0ab79a": {
+            "ownerId": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+            "epoch": 3,
+            "role": "worker",
+            "generation": "B",
+            "phase": "active"
+          }
+        },
+        "activeOwners": {
+          "service": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+          "worker": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+          "notice": "a2682ada-c3ac-4eb2-9383-21cb23674a2b"
+        },
+        "runners": {
+          "46d33d61-a1ae-42ca-9117-4350e441d051": {
+            "address": "live-agent",
+            "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+            "pid": 31,
+            "startedAt": "26558673",
+            "session": "live-session",
+            "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+            "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+            "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+          }
+        },
+        "operations": {},
+        "facts": {
+          "before": {
+            "fact": {
+              "id": "before",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "before",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "A-worker",
+              "epoch": 1
+            }
+          },
+          "during": {
+            "fact": {
+              "id": "during",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "during",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+              "epoch": 2
+            }
+          },
+          "lost-ack": {
+            "fact": {
+              "id": "lost-ack",
+              "kind": "report",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "lost-ack",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+              "epoch": 3
+            }
+          }
+        },
+        "transition": {
+          "id": "1d29d8ce-2055-4ce0-b22f-78fcc9db5b49",
+          "from": "A",
+          "to": "B",
+          "oldOwners": {
+            "service": "A-service",
+            "worker": "A-worker",
+            "notice": "A-notice"
+          },
+          "newOwners": {
+            "service": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+            "worker": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+            "notice": "a2682ada-c3ac-4eb2-9383-21cb23674a2b"
+          },
+          "status": "complete"
+        },
+        "resourceWait": {
+          "queue": [
+            "resource-first",
+            "resource-second"
+          ],
+          "lastGrant": 1729
+        },
+        "bugSync": {
+          "cursor": "bugs-before-switch"
+        }
+      },
+      "readlink": "/tmp/raf-handover-qa-YFq33y/B",
+      "deliveries": [
+        {
+          "id": "before",
+          "payload": "{\"id\":\"before\",\"kind\":\"report\",\"generation\":\"A\",\"protocol\":1,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"before\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "A-worker",
+          "version": "A"
+        },
+        {
+          "id": "during",
+          "payload": "{\"id\":\"during\",\"kind\":\"report\",\"generation\":\"A\",\"protocol\":1,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"during\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "version": "B"
+        },
+        {
+          "id": "lost-ack",
+          "payload": "{\"id\":\"lost-ack\",\"kind\":\"report\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"lost-ack\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "version": "B"
+        }
+      ],
+      "attempts": [
+        {
+          "seq": 1,
+          "fact": "before",
+          "owner": "A-worker",
+          "epoch": 1,
+          "version": "A"
+        },
+        {
+          "seq": 2,
+          "fact": "during",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "epoch": 2,
+          "version": "B"
+        },
+        {
+          "seq": 3,
+          "fact": "lost-ack",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "epoch": 2,
+          "version": "B"
+        },
+        {
+          "seq": 4,
+          "fact": "lost-ack",
+          "owner": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+          "epoch": 3,
+          "version": "B"
+        }
+      ]
+    },
+    "rollback-complete": {
+      "state": {
+        "activeGeneration": "A",
+        "generations": {
+          "A": {
+            "id": "A",
+            "root": "/tmp/raf-handover-qa-YFq33y/A",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          },
+          "B": {
+            "id": "B",
+            "root": "/tmp/raf-handover-qa-YFq33y/B",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          }
+        },
+        "owners": {
+          "A-service": {
+            "ownerId": "A-service",
+            "epoch": 1,
+            "role": "service",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "A-worker": {
+            "ownerId": "A-worker",
+            "epoch": 1,
+            "role": "worker",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "A-notice": {
+            "ownerId": "A-notice",
+            "epoch": 1,
+            "role": "notice",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "aa30e02a-4ab8-4e15-8100-1d25917d84c8": {
+            "ownerId": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+            "epoch": 2,
+            "role": "service",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf": {
+            "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+            "epoch": 2,
+            "role": "worker",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "a2682ada-c3ac-4eb2-9383-21cb23674a2b": {
+            "ownerId": "a2682ada-c3ac-4eb2-9383-21cb23674a2b",
+            "epoch": 2,
+            "role": "notice",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "7b085926-c02a-44e7-ab8e-77017d0ab79a": {
+            "ownerId": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+            "epoch": 3,
+            "role": "worker",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "eb52575f-1f54-4571-a8ba-a215167cd731": {
+            "ownerId": "eb52575f-1f54-4571-a8ba-a215167cd731",
+            "epoch": 3,
+            "role": "service",
+            "generation": "A",
+            "phase": "active"
+          },
+          "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f": {
+            "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+            "epoch": 4,
+            "role": "worker",
+            "generation": "A",
+            "phase": "active"
+          },
+          "e281da62-8119-444c-83c1-2cec60cee6c5": {
+            "ownerId": "e281da62-8119-444c-83c1-2cec60cee6c5",
+            "epoch": 3,
+            "role": "notice",
+            "generation": "A",
+            "phase": "active"
+          }
+        },
+        "activeOwners": {
+          "service": "eb52575f-1f54-4571-a8ba-a215167cd731",
+          "worker": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "notice": "e281da62-8119-444c-83c1-2cec60cee6c5"
+        },
+        "runners": {
+          "46d33d61-a1ae-42ca-9117-4350e441d051": {
+            "address": "live-agent",
+            "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+            "pid": 31,
+            "startedAt": "26558673",
+            "session": "live-session",
+            "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+            "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+            "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+          }
+        },
+        "operations": {},
+        "facts": {
+          "before": {
+            "fact": {
+              "id": "before",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "before",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "A-worker",
+              "epoch": 1
+            }
+          },
+          "during": {
+            "fact": {
+              "id": "during",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "during",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+              "epoch": 2
+            }
+          },
+          "lost-ack": {
+            "fact": {
+              "id": "lost-ack",
+              "kind": "report",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "lost-ack",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+              "epoch": 3
+            }
+          },
+          "event-rollback": {
+            "fact": {
+              "id": "event-rollback",
+              "kind": "event",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "event-rollback",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+              "epoch": 4
+            }
+          },
+          "message-rollback": {
+            "fact": {
+              "id": "message-rollback",
+              "kind": "message",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "message-rollback",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+              "epoch": 4
+            }
+          },
+          "reminder-rollback": {
+            "fact": {
+              "id": "reminder-rollback",
+              "kind": "reminder",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "reminder-rollback",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "e281da62-8119-444c-83c1-2cec60cee6c5",
+              "epoch": 3
+            }
+          },
+          "after": {
+            "fact": {
+              "id": "after",
+              "kind": "report",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "after",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+              "epoch": 4
+            }
+          }
+        },
+        "transition": {
+          "id": "80cce9ea-9410-4b3b-baf4-be8e7e1b6126",
+          "from": "B",
+          "to": "A",
+          "oldOwners": {
+            "service": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+            "worker": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+            "notice": "a2682ada-c3ac-4eb2-9383-21cb23674a2b"
+          },
+          "newOwners": {
+            "service": "eb52575f-1f54-4571-a8ba-a215167cd731",
+            "worker": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+            "notice": "e281da62-8119-444c-83c1-2cec60cee6c5"
+          },
+          "status": "complete"
+        },
+        "resourceWait": {
+          "queue": [
+            "resource-first",
+            "resource-second"
+          ],
+          "lastGrant": 1729
+        },
+        "bugSync": {
+          "cursor": "bugs-before-switch"
+        }
+      },
+      "readlink": "/tmp/raf-handover-qa-YFq33y/A",
+      "deliveries": [
+        {
+          "id": "after",
+          "payload": "{\"id\":\"after\",\"kind\":\"report\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"after\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "version": "A"
+        },
+        {
+          "id": "before",
+          "payload": "{\"id\":\"before\",\"kind\":\"report\",\"generation\":\"A\",\"protocol\":1,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"before\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "A-worker",
+          "version": "A"
+        },
+        {
+          "id": "during",
+          "payload": "{\"id\":\"during\",\"kind\":\"report\",\"generation\":\"A\",\"protocol\":1,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"during\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "version": "B"
+        },
+        {
+          "id": "event-rollback",
+          "payload": "{\"id\":\"event-rollback\",\"kind\":\"event\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"event-rollback\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "version": "A"
+        },
+        {
+          "id": "lost-ack",
+          "payload": "{\"id\":\"lost-ack\",\"kind\":\"report\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"lost-ack\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "version": "B"
+        },
+        {
+          "id": "message-rollback",
+          "payload": "{\"id\":\"message-rollback\",\"kind\":\"message\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"message-rollback\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "version": "A"
+        },
+        {
+          "id": "reminder-rollback",
+          "payload": "{\"id\":\"reminder-rollback\",\"kind\":\"reminder\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"reminder-rollback\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "e281da62-8119-444c-83c1-2cec60cee6c5",
+          "version": "A"
+        }
+      ],
+      "attempts": [
+        {
+          "seq": 1,
+          "fact": "before",
+          "owner": "A-worker",
+          "epoch": 1,
+          "version": "A"
+        },
+        {
+          "seq": 2,
+          "fact": "during",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "epoch": 2,
+          "version": "B"
+        },
+        {
+          "seq": 3,
+          "fact": "lost-ack",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "epoch": 2,
+          "version": "B"
+        },
+        {
+          "seq": 4,
+          "fact": "lost-ack",
+          "owner": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+          "epoch": 3,
+          "version": "B"
+        },
+        {
+          "seq": 5,
+          "fact": "event-rollback",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "version": "A"
+        },
+        {
+          "seq": 6,
+          "fact": "message-rollback",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "version": "A"
+        },
+        {
+          "seq": 7,
+          "fact": "reminder-rollback",
+          "owner": "e281da62-8119-444c-83c1-2cec60cee6c5",
+          "epoch": 3,
+          "version": "A"
+        },
+        {
+          "seq": 8,
+          "fact": "after",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "version": "A"
+        }
+      ]
+    },
+    "incompatible-refused": {
+      "state": {
+        "activeGeneration": "B",
+        "generations": {
+          "A": {
+            "id": "A",
+            "root": "/tmp/raf-handover-qa-YFq33y/A",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          },
+          "B": {
+            "id": "B",
+            "root": "/tmp/raf-handover-qa-YFq33y/B",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 2,
+                "accepts": [
+                  2
+                ]
+              },
+              "event": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          }
+        },
+        "owners": {
+          "A-service": {
+            "ownerId": "A-service",
+            "epoch": 1,
+            "role": "service",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "A-worker": {
+            "ownerId": "A-worker",
+            "epoch": 1,
+            "role": "worker",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "A-notice": {
+            "ownerId": "A-notice",
+            "epoch": 1,
+            "role": "notice",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "aa30e02a-4ab8-4e15-8100-1d25917d84c8": {
+            "ownerId": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+            "epoch": 2,
+            "role": "service",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf": {
+            "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+            "epoch": 2,
+            "role": "worker",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "a2682ada-c3ac-4eb2-9383-21cb23674a2b": {
+            "ownerId": "a2682ada-c3ac-4eb2-9383-21cb23674a2b",
+            "epoch": 2,
+            "role": "notice",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "7b085926-c02a-44e7-ab8e-77017d0ab79a": {
+            "ownerId": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+            "epoch": 3,
+            "role": "worker",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "eb52575f-1f54-4571-a8ba-a215167cd731": {
+            "ownerId": "eb52575f-1f54-4571-a8ba-a215167cd731",
+            "epoch": 3,
+            "role": "service",
+            "generation": "A",
+            "phase": "active"
+          },
+          "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f": {
+            "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+            "epoch": 4,
+            "role": "worker",
+            "generation": "A",
+            "phase": "active"
+          },
+          "e281da62-8119-444c-83c1-2cec60cee6c5": {
+            "ownerId": "e281da62-8119-444c-83c1-2cec60cee6c5",
+            "epoch": 3,
+            "role": "notice",
+            "generation": "A",
+            "phase": "active"
+          }
+        },
+        "activeOwners": {
+          "service": "eb52575f-1f54-4571-a8ba-a215167cd731",
+          "worker": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "notice": "e281da62-8119-444c-83c1-2cec60cee6c5"
+        },
+        "runners": {
+          "46d33d61-a1ae-42ca-9117-4350e441d051": {
+            "address": "live-agent",
+            "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+            "pid": 31,
+            "startedAt": "26558673",
+            "session": "live-session",
+            "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+            "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+            "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+          }
+        },
+        "operations": {},
+        "facts": {
+          "before": {
+            "fact": {
+              "id": "before",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "before",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "A-worker",
+              "epoch": 1
+            }
+          },
+          "during": {
+            "fact": {
+              "id": "during",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "during",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+              "epoch": 2
+            }
+          },
+          "lost-ack": {
+            "fact": {
+              "id": "lost-ack",
+              "kind": "report",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "lost-ack",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+              "epoch": 3
+            }
+          },
+          "event-rollback": {
+            "fact": {
+              "id": "event-rollback",
+              "kind": "event",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "event-rollback",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+              "epoch": 4
+            }
+          },
+          "message-rollback": {
+            "fact": {
+              "id": "message-rollback",
+              "kind": "message",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "message-rollback",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+              "epoch": 4
+            }
+          },
+          "reminder-rollback": {
+            "fact": {
+              "id": "reminder-rollback",
+              "kind": "reminder",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "reminder-rollback",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "e281da62-8119-444c-83c1-2cec60cee6c5",
+              "epoch": 3
+            }
+          },
+          "after": {
+            "fact": {
+              "id": "after",
+              "kind": "report",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "after",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+              "epoch": 4
+            }
+          }
+        },
+        "transition": {
+          "id": "80cce9ea-9410-4b3b-baf4-be8e7e1b6126",
+          "from": "B",
+          "to": "A",
+          "oldOwners": {
+            "service": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+            "worker": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+            "notice": "a2682ada-c3ac-4eb2-9383-21cb23674a2b"
+          },
+          "newOwners": {
+            "service": "eb52575f-1f54-4571-a8ba-a215167cd731",
+            "worker": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+            "notice": "e281da62-8119-444c-83c1-2cec60cee6c5"
+          },
+          "status": "complete"
+        },
+        "resourceWait": {
+          "queue": [
+            "resource-first",
+            "resource-second"
+          ],
+          "lastGrant": 1729
+        },
+        "bugSync": {
+          "cursor": "bugs-before-switch"
+        }
+      },
+      "readlink": "/tmp/raf-handover-qa-YFq33y/B",
+      "deliveries": [
+        {
+          "id": "after",
+          "payload": "{\"id\":\"after\",\"kind\":\"report\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"after\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "version": "A"
+        },
+        {
+          "id": "before",
+          "payload": "{\"id\":\"before\",\"kind\":\"report\",\"generation\":\"A\",\"protocol\":1,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"before\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "A-worker",
+          "version": "A"
+        },
+        {
+          "id": "during",
+          "payload": "{\"id\":\"during\",\"kind\":\"report\",\"generation\":\"A\",\"protocol\":1,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"during\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "version": "B"
+        },
+        {
+          "id": "event-rollback",
+          "payload": "{\"id\":\"event-rollback\",\"kind\":\"event\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"event-rollback\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "version": "A"
+        },
+        {
+          "id": "lost-ack",
+          "payload": "{\"id\":\"lost-ack\",\"kind\":\"report\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"lost-ack\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "version": "B"
+        },
+        {
+          "id": "message-rollback",
+          "payload": "{\"id\":\"message-rollback\",\"kind\":\"message\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"message-rollback\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "version": "A"
+        },
+        {
+          "id": "reminder-rollback",
+          "payload": "{\"id\":\"reminder-rollback\",\"kind\":\"reminder\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"reminder-rollback\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "e281da62-8119-444c-83c1-2cec60cee6c5",
+          "version": "A"
+        }
+      ],
+      "attempts": [
+        {
+          "seq": 1,
+          "fact": "before",
+          "owner": "A-worker",
+          "epoch": 1,
+          "version": "A"
+        },
+        {
+          "seq": 2,
+          "fact": "during",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "epoch": 2,
+          "version": "B"
+        },
+        {
+          "seq": 3,
+          "fact": "lost-ack",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "epoch": 2,
+          "version": "B"
+        },
+        {
+          "seq": 4,
+          "fact": "lost-ack",
+          "owner": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+          "epoch": 3,
+          "version": "B"
+        },
+        {
+          "seq": 5,
+          "fact": "event-rollback",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "version": "A"
+        },
+        {
+          "seq": 6,
+          "fact": "message-rollback",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "version": "A"
+        },
+        {
+          "seq": 7,
+          "fact": "reminder-rollback",
+          "owner": "e281da62-8119-444c-83c1-2cec60cee6c5",
+          "epoch": 3,
+          "version": "A"
+        },
+        {
+          "seq": 8,
+          "fact": "after",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "version": "A"
+        }
+      ]
+    },
+    "final": {
+      "state": {
+        "activeGeneration": "A",
+        "generations": {
+          "A": {
+            "id": "A",
+            "root": "/tmp/raf-handover-qa-YFq33y/A",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 1,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          },
+          "B": {
+            "id": "B",
+            "root": "/tmp/raf-handover-qa-YFq33y/B",
+            "published": true,
+            "protocols": {
+              "report": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "event": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "message": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "reminder": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              },
+              "address": {
+                "emits": 2,
+                "accepts": [
+                  1,
+                  2
+                ]
+              }
+            }
+          }
+        },
+        "owners": {
+          "A-service": {
+            "ownerId": "A-service",
+            "epoch": 1,
+            "role": "service",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "A-worker": {
+            "ownerId": "A-worker",
+            "epoch": 1,
+            "role": "worker",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "A-notice": {
+            "ownerId": "A-notice",
+            "epoch": 1,
+            "role": "notice",
+            "generation": "A",
+            "phase": "retired"
+          },
+          "aa30e02a-4ab8-4e15-8100-1d25917d84c8": {
+            "ownerId": "aa30e02a-4ab8-4e15-8100-1d25917d84c8",
+            "epoch": 2,
+            "role": "service",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf": {
+            "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+            "epoch": 2,
+            "role": "worker",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "a2682ada-c3ac-4eb2-9383-21cb23674a2b": {
+            "ownerId": "a2682ada-c3ac-4eb2-9383-21cb23674a2b",
+            "epoch": 2,
+            "role": "notice",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "7b085926-c02a-44e7-ab8e-77017d0ab79a": {
+            "ownerId": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+            "epoch": 3,
+            "role": "worker",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "eb52575f-1f54-4571-a8ba-a215167cd731": {
+            "ownerId": "eb52575f-1f54-4571-a8ba-a215167cd731",
+            "epoch": 3,
+            "role": "service",
+            "generation": "A",
+            "phase": "active"
+          },
+          "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f": {
+            "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+            "epoch": 4,
+            "role": "worker",
+            "generation": "A",
+            "phase": "active"
+          },
+          "e281da62-8119-444c-83c1-2cec60cee6c5": {
+            "ownerId": "e281da62-8119-444c-83c1-2cec60cee6c5",
+            "epoch": 3,
+            "role": "notice",
+            "generation": "A",
+            "phase": "active"
+          },
+          "f67ba02a-0aa7-4e0c-b494-5ffb1202c0d1": {
+            "ownerId": "f67ba02a-0aa7-4e0c-b494-5ffb1202c0d1",
+            "epoch": 4,
+            "role": "service",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "1dcbc9f2-358e-45e1-9654-a85bfa661e6c": {
+            "ownerId": "1dcbc9f2-358e-45e1-9654-a85bfa661e6c",
+            "epoch": 5,
+            "role": "worker",
+            "generation": "B",
+            "phase": "retired"
+          },
+          "31042a62-0f81-4a2a-a244-ce542f7bca06": {
+            "ownerId": "31042a62-0f81-4a2a-a244-ce542f7bca06",
+            "epoch": 4,
+            "role": "notice",
+            "generation": "B",
+            "phase": "retired"
+          }
+        },
+        "activeOwners": {
+          "service": "eb52575f-1f54-4571-a8ba-a215167cd731",
+          "worker": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "notice": "e281da62-8119-444c-83c1-2cec60cee6c5"
+        },
+        "runners": {
+          "46d33d61-a1ae-42ca-9117-4350e441d051": {
+            "address": "live-agent",
+            "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+            "pid": 31,
+            "startedAt": "26558673",
+            "session": "live-session",
+            "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+            "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+            "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+          }
+        },
+        "operations": {},
+        "facts": {
+          "before": {
+            "fact": {
+              "id": "before",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "before",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "A-worker",
+              "epoch": 1
+            }
+          },
+          "during": {
+            "fact": {
+              "id": "during",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "during",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+              "epoch": 2
+            }
+          },
+          "lost-ack": {
+            "fact": {
+              "id": "lost-ack",
+              "kind": "report",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "lost-ack",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+              "epoch": 3
+            }
+          },
+          "event-rollback": {
+            "fact": {
+              "id": "event-rollback",
+              "kind": "event",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "event-rollback",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+              "epoch": 4
+            }
+          },
+          "message-rollback": {
+            "fact": {
+              "id": "message-rollback",
+              "kind": "message",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "message-rollback",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+              "epoch": 4
+            }
+          },
+          "reminder-rollback": {
+            "fact": {
+              "id": "reminder-rollback",
+              "kind": "reminder",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "reminder-rollback",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "e281da62-8119-444c-83c1-2cec60cee6c5",
+              "epoch": 3
+            }
+          },
+          "after": {
+            "fact": {
+              "id": "after",
+              "kind": "report",
+              "generation": "B",
+              "protocol": 2,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "after",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+              "epoch": 4
+            }
+          },
+          "rollback-unready": {
+            "fact": {
+              "id": "rollback-unready",
+              "kind": "report",
+              "generation": "A",
+              "protocol": 1,
+              "address": "live-agent",
+              "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+              "payload": {
+                "text": "rollback-unready",
+                "status": "succeeded",
+                "reportPath": "/tmp/raf-handover-qa-YFq33y/runner/report.json"
+              }
+            },
+            "status": "accepted",
+            "acceptedBy": {
+              "ownerId": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+              "epoch": 4
+            }
+          }
+        },
+        "transition": {
+          "id": "b7e9f4a5-7c12-4209-b80b-14c04496fb7e",
+          "from": "B",
+          "to": "A",
+          "oldOwners": {
+            "service": "f67ba02a-0aa7-4e0c-b494-5ffb1202c0d1",
+            "worker": "1dcbc9f2-358e-45e1-9654-a85bfa661e6c",
+            "notice": "31042a62-0f81-4a2a-a244-ce542f7bca06"
+          },
+          "newOwners": {
+            "service": "eb52575f-1f54-4571-a8ba-a215167cd731",
+            "worker": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+            "notice": "e281da62-8119-444c-83c1-2cec60cee6c5"
+          },
+          "status": "complete"
+        },
+        "resourceWait": {
+          "queue": [
+            "resource-first",
+            "resource-second"
+          ],
+          "lastGrant": 1729
+        },
+        "bugSync": {
+          "cursor": "bugs-before-switch"
+        }
+      },
+      "readlink": "/tmp/raf-handover-qa-YFq33y/A",
+      "deliveries": [
+        {
+          "id": "after",
+          "payload": "{\"id\":\"after\",\"kind\":\"report\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"after\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "version": "A"
+        },
+        {
+          "id": "before",
+          "payload": "{\"id\":\"before\",\"kind\":\"report\",\"generation\":\"A\",\"protocol\":1,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"before\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "A-worker",
+          "version": "A"
+        },
+        {
+          "id": "during",
+          "payload": "{\"id\":\"during\",\"kind\":\"report\",\"generation\":\"A\",\"protocol\":1,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"during\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "version": "B"
+        },
+        {
+          "id": "event-rollback",
+          "payload": "{\"id\":\"event-rollback\",\"kind\":\"event\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"event-rollback\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "version": "A"
+        },
+        {
+          "id": "lost-ack",
+          "payload": "{\"id\":\"lost-ack\",\"kind\":\"report\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"lost-ack\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "version": "B"
+        },
+        {
+          "id": "message-rollback",
+          "payload": "{\"id\":\"message-rollback\",\"kind\":\"message\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"message-rollback\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "version": "A"
+        },
+        {
+          "id": "reminder-rollback",
+          "payload": "{\"id\":\"reminder-rollback\",\"kind\":\"reminder\",\"generation\":\"B\",\"protocol\":2,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"reminder-rollback\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "e281da62-8119-444c-83c1-2cec60cee6c5",
+          "version": "A"
+        },
+        {
+          "id": "rollback-unready",
+          "payload": "{\"id\":\"rollback-unready\",\"kind\":\"report\",\"generation\":\"A\",\"protocol\":1,\"address\":\"live-agent\",\"runId\":\"46d33d61-a1ae-42ca-9117-4350e441d051\",\"payload\":{\"text\":\"rollback-unready\",\"status\":\"succeeded\",\"reportPath\":\"/tmp/raf-handover-qa-YFq33y/runner/report.json\"}}",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "version": "A"
+        }
+      ],
+      "attempts": [
+        {
+          "seq": 1,
+          "fact": "before",
+          "owner": "A-worker",
+          "epoch": 1,
+          "version": "A"
+        },
+        {
+          "seq": 2,
+          "fact": "during",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "epoch": 2,
+          "version": "B"
+        },
+        {
+          "seq": 3,
+          "fact": "lost-ack",
+          "owner": "9e32ddf7-dd4c-4f97-8209-1dd5c47614cf",
+          "epoch": 2,
+          "version": "B"
+        },
+        {
+          "seq": 4,
+          "fact": "lost-ack",
+          "owner": "7b085926-c02a-44e7-ab8e-77017d0ab79a",
+          "epoch": 3,
+          "version": "B"
+        },
+        {
+          "seq": 5,
+          "fact": "event-rollback",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "version": "A"
+        },
+        {
+          "seq": 6,
+          "fact": "message-rollback",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "version": "A"
+        },
+        {
+          "seq": 7,
+          "fact": "reminder-rollback",
+          "owner": "e281da62-8119-444c-83c1-2cec60cee6c5",
+          "epoch": 3,
+          "version": "A"
+        },
+        {
+          "seq": 8,
+          "fact": "after",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "version": "A"
+        },
+        {
+          "seq": 9,
+          "fact": "rollback-unready",
+          "owner": "31e2c782-a1ef-4e5b-9d2d-d1b3960a1d2f",
+          "epoch": 4,
+          "version": "A"
+        }
+      ]
+    }
+  },
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+  "runner": {
+    "address": "live-agent",
+    "runId": "46d33d61-a1ae-42ca-9117-4350e441d051",
+    "pid": 31,
+    "startedAt": "26558673",
+    "session": "live-session",
+    "runnerSessionId": "7ea58d08-6539-4ac8-9511-180b3b91f93f",
+    "tmp": "/tmp/raf-handover-qa-YFq33y/runner",
+    "report": "/tmp/raf-handover-qa-YFq33y/runner/report.json",
+    "processIdentity": {
+      "pid": 31,
+      "startTicks": "26558673",
+      "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    }
+  },
+  "finishedAt": "2026-10-25T10:08:33.015Z"
+}

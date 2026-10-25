@@ -1,0 +1,52 @@
+diff --git a/test/main-generation-handover.test.ts b/test/main-generation-handover.test.ts
+index 2b83353..90911aa 100644
+--- a/test/main-generation-handover.test.ts
++++ b/test/main-generation-handover.test.ts
+@@ -507,3 +507,47 @@ test('retired metadata alone cannot release a slot while the old process is stil
+   await assertMainSlotReusable(f.context, 'A');
+   await f.invariant();
+ });
++
++test('rollback of an unready handover preserves the original owners and pending report', async () => {
++  const f = fixture();
++  const report = f.fact('report', 'rollback-unready-report');
++  await f.publish('B');
++  await beginMainHandover(f.context, 'B');
++  await recordMainFact(f.context, report);
++  assert.equal((await recoverMainHandover(f.context)).status, 'waiting');
++  const starts = f.starts.length;
++  await f.publish('A');
++  const rollback = await beginMainHandover(f.context, 'A');
++  const state = await f.store.read();
++  for (const id of Object.values(state.transition!.newOwners)) {
++    const owner = state.owners[id];
++    f.ready.set(id, { ownerId: id, epoch: owner.epoch, restored: true });
++  }
++  assert.equal((await advanceMainHandover(f.context, rollback)).status, 'complete');
++  assert.equal(f.starts.length, starts, 'ready original owners must not be restarted');
++  assert.equal((await f.active('worker')).ownerId, 'A-worker');
++  assert.deepEqual([...f.effects.values()], [report]);
++  await assertMainSlotReusable(f.context, 'B');
++  await f.invariant();
++});
++
++test('rollback after ownership transfer recovers fresh original-generation owners', async () => {
++  const f = fixture();
++  const originalStop = f.runtime.stop;
++  f.runtime.stop = async () => {};
++  await f.publish('B');
++  const forward = await beginMainHandover(f.context, 'B');
++  await f.readyTargets();
++  assert.equal((await advanceMainHandover(f.context, forward)).status, 'waiting');
++  assert.equal((await f.active('worker')).generation, 'B');
++  f.runtime.stop = originalStop;
++  await f.publish('A');
++  const rollback = await beginMainHandover(f.context, 'A');
++  await f.readyTargets();
++  assert.equal((await advanceMainHandover(f.context, rollback)).status, 'complete');
++  assert.equal((await f.active('worker')).generation, 'A');
++  assert.notEqual((await f.active('worker')).ownerId, 'A-worker');
++  await assert.rejects(drainMainFacts(f.context, { ownerId: 'A-worker', epoch: 1 }), /OWNER_FENCED/);
++  await assertMainSlotReusable(f.context, 'B');
++  await f.invariant();
++});

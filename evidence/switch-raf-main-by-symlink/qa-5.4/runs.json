@@ -1,0 +1,525 @@
+{
+  "repository": "/srv/dev/work/orchestrator/raf-develop",
+  "baseSha": "cbe8a257da0a5743667fb995872cc9e75cc991c6",
+  "workspaceStatus": " M src/main-generation-handover.ts\n M test/main-generation-handover.test.ts\n M test/production-qa-fixture.ts\n M test/report-confirmation-runtime.test.ts\n?? evidence/switch-raf-main-by-symlink/qa-5.4/\n?? scripts/qa-main-generation-handover.ts\n",
+  "workspacePatch": "workspace.patch",
+  "sourceItem": "switch-raf-main-by-symlink:5.4",
+  "runs": [
+    {
+      "evidence": "baseline-qa.json",
+      "stderr": "baseline-qa.stderr",
+      "toolResult": "baseline-qa.tool.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/handover --files test/main-generation-handover.test.ts",
+      "sha": "cbe8a257da0a5743667fb995872cc9e75cc991c6",
+      "runId": "5bd8a5cd-5337-4b76-afbe-1c30c710a30b",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/main-generation-handover.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 33,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "rollback-red.json",
+      "stderr": "rollback-red.stderr",
+      "toolResult": "rollback-red.tool.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/handover --files test/main-generation-handover.test.ts",
+      "sha": "cbe8a257da0a5743667fb995872cc9e75cc991c6",
+      "runId": "ecc7da90-aa87-406b-a99f-3c15f68f347e",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/main-generation-handover.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 33,
+      "knownRed": [
+        {
+          "file": "test/main-generation-handover.test.ts",
+          "name": "rollback of an unready handover preserves the original owners and pending report"
+        },
+        {
+          "file": "test/main-generation-handover.test.ts",
+          "name": "rollback after ownership transfer recovers fresh original-generation owners"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation"
+    },
+    {
+      "evidence": "rollback-qa.json",
+      "stderr": "rollback-qa.stderr",
+      "toolResult": "rollback-qa.tool.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/handover --files test/main-generation-handover.test.ts",
+      "sha": "cbe8a257da0a5743667fb995872cc9e75cc991c6",
+      "runId": "c2670037-bad4-422f-b390-6f17561b0df6",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/main-generation-handover.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 35,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "reminders-qa.json",
+      "stderr": "reminders-qa.stderr",
+      "toolResult": "reminders-qa.tool.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group add-raf-reminders/unit",
+      "sha": "cbe8a257da0a5743667fb995872cc9e75cc991c6",
+      "runId": "a23ebb11-aeb5-4dc4-97c4-ce466c45709b",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/reminder-active-update.test.ts",
+          "test/session-recovery-interrupt.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 0,
+      "knownRed": [
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 delivered active rejects a future at and later command processes preserve its receipt without redelivery"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 mixed active update rejects at text and complete binding atomically without changing addressees events or receipt"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 event-activated before due rejects a later at and preserves the accepted receipt"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 event-activated before due rejects the same at and preserves the accepted receipt"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 active without a receipt rejects at without marking delivered and retries old data until accepted"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 explicit activation also rejects an unchanged at"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 pending moved into the future is not delivered at its old time and is delivered once at its new time"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 pending rescheduled later still permits early event activation and one delivery"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 pending rescheduled later still permits early explicit activation and one delivery"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 pending updated to now activates and delivers in that command"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 pending updated to a past time activates and delivers in that command"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 active update without at allows text and binding changes while preserving time state and addressees"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 closed update at keeps REMINDER_CLOSED and does not mutate fields events or receipt"
+        },
+        {
+          "file": "test/reminder-active-update.test.ts",
+          "name": "7.2 CLI rejects active at with nonzero code explanation details and close add remediation and keeps closed error"
+        },
+        {
+          "file": "test/session-recovery-interrupt.test.ts",
+          "name": "production interrupt stops a verified busy action and preserves the live session, reminders and reservation"
+        },
+        {
+          "file": "test/session-recovery-interrupt.test.ts",
+          "name": "production interrupt refuses an unknown or idle screen without sending a key"
+        },
+        {
+          "file": "test/session-recovery-interrupt.test.ts",
+          "name": "production interrupt refuses a pane owned by an unrelated process"
+        },
+        {
+          "file": "test/session-recovery-interrupt.test.ts",
+          "name": "production interrupt requires confirmation instead of reporting success while still busy"
+        },
+        {
+          "file": "test/session-recovery-interrupt.test.ts",
+          "name": "production interrupt cannot accept a replacement PID as the preserved live session"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation"
+    },
+    {
+      "evidence": "reminders-fixture-qa.json",
+      "stderr": "reminders-fixture-qa.stderr",
+      "toolResult": "reminders-fixture-qa.tool.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group add-raf-reminders/unit --files test/reminder-active-update.test.ts",
+      "sha": "cbe8a257da0a5743667fb995872cc9e75cc991c6",
+      "runId": "2d99438d-2294-4b98-809f-73a8c6898d01",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/reminder-active-update.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 14,
+      "knownRed": [
+        {
+          "file": "test/session-recovery-interrupt.test.ts",
+          "name": "production interrupt stops a verified busy action and preserves the live session, reminders and reservation"
+        },
+        {
+          "file": "test/session-recovery-interrupt.test.ts",
+          "name": "production interrupt refuses an unknown or idle screen without sending a key"
+        },
+        {
+          "file": "test/session-recovery-interrupt.test.ts",
+          "name": "production interrupt refuses a pane owned by an unrelated process"
+        },
+        {
+          "file": "test/session-recovery-interrupt.test.ts",
+          "name": "production interrupt requires confirmation instead of reporting success while still busy"
+        },
+        {
+          "file": "test/session-recovery-interrupt.test.ts",
+          "name": "production interrupt cannot accept a replacement PID as the preserved live session"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation"
+    },
+    {
+      "evidence": "z393-refused.json",
+      "stderr": "z393-refused.stderr",
+      "toolResult": "z393-refused.tool.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z393",
+      "sha": "cbe8a257da0a5743667fb995872cc9e75cc991c6",
+      "runId": "7824a7a0-6121-4a90-bb24-e26376dd4064",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "selection": {
+        "files": [
+          "test/report-confirmation-retry.test.ts",
+          "test/report-confirmation-runtime.test.ts",
+          "test/report-confirmation-progress.test.ts",
+          "test/assignment-identity.test.ts",
+          "test/assignment-identity-qa.test.ts",
+          "test/task-checkbox-report.test.ts",
+          "test/task-checkbox-index.test.ts",
+          "test/report-commit-index.test.ts",
+          "test/reported-commits-acceptance.test.ts",
+          "test/agent-report.test.ts",
+          "test/agent-report-freshness.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "passed": 0,
+      "knownRed": [
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production worker: two repositories repair before checkbox, durable result and event are idempotent"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation: two repositories repair before checkbox, durable result and event are idempotent"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production worker: failed repairs owned commits with no checkbox or succeeded event"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation: failed repairs owned commits with no checkbox or succeeded event"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production final archive skip_specs=false: final reread repairs appended archive commit"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production final archive skip_specs=true: final reread repairs appended archive commit"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses lost launch metadata before repair"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses stale reportPath before repair"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses changed assignment source before repair"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses read-only code scope before repair"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production no-report exit leaves executor commits uninferred"
+        },
+        {
+          "file": "test/report-confirmation-progress.test.ts",
+          "name": "Z393-QA-1 confirmation progress with measured OpenSpec cost automatically accepts unchanged JSON after writer release inside the configured transition budget"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse"
+        }
+      ],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "fix-setup"
+    },
+    {
+      "evidence": "z393-subset-qa.json",
+      "stderr": "z393-subset-qa.stderr",
+      "toolResult": "z393-subset-qa.tool.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z393 --files test/report-confirmation-retry.test.ts test/report-confirmation-runtime.test.ts test/report-confirmation-progress.test.ts test/agent-report.test.ts test/agent-report-freshness.test.ts",
+      "sha": "cbe8a257da0a5743667fb995872cc9e75cc991c6",
+      "runId": "8cb1a3fc-3c62-457d-a647-a4928ba25dc5",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/report-confirmation-retry.test.ts",
+          "test/report-confirmation-runtime.test.ts",
+          "test/report-confirmation-progress.test.ts",
+          "test/agent-report.test.ts",
+          "test/agent-report-freshness.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 105,
+      "knownRed": [
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production worker: two repositories repair before checkbox, durable result and event are idempotent"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation: two repositories repair before checkbox, durable result and event are idempotent"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production worker: failed repairs owned commits with no checkbox or succeeded event"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation: failed repairs owned commits with no checkbox or succeeded event"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production final archive skip_specs=false: final reread repairs appended archive commit"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production final archive skip_specs=true: final reread repairs appended archive commit"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses lost launch metadata before repair"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses stale reportPath before repair"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses changed assignment source before repair"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses read-only code scope before repair"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production no-report exit leaves executor commits uninferred"
+        },
+        {
+          "file": "test/report-confirmation-runtime.test.ts",
+          "name": "runtime watcher retains pending on exit and automatically accepts unchanged bytes later"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse"
+        }
+      ],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation"
+    },
+    {
+      "evidence": "z393-fixed-qa.json",
+      "stderr": "z393-fixed-qa.stderr",
+      "toolResult": "z393-fixed-qa.tool.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z393 --files test/report-confirmation-retry.test.ts test/report-confirmation-runtime.test.ts test/report-confirmation-progress.test.ts test/agent-report.test.ts test/agent-report-freshness.test.ts",
+      "sha": "cbe8a257da0a5743667fb995872cc9e75cc991c6",
+      "runId": "55688de2-8d5b-4d43-8af9-381456979f85",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/report-confirmation-retry.test.ts",
+          "test/report-confirmation-runtime.test.ts",
+          "test/report-confirmation-progress.test.ts",
+          "test/agent-report.test.ts",
+          "test/agent-report-freshness.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 106,
+      "knownRed": [
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production worker: two repositories repair before checkbox, durable result and event are idempotent"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation: two repositories repair before checkbox, durable result and event are idempotent"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production worker: failed repairs owned commits with no checkbox or succeeded event"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation: failed repairs owned commits with no checkbox or succeeded event"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production final archive skip_specs=false: final reread repairs appended archive commit"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production final archive skip_specs=true: final reread repairs appended archive commit"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses lost launch metadata before repair"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses stale reportPath before repair"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses changed assignment source before repair"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production reconciliation refuses read-only code scope before repair"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production no-report exit leaves executor commits uninferred"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse"
+        }
+      ],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation"
+    }
+  ]
+}

@@ -68,7 +68,11 @@ test('runtime watcher retains pending on exit and automatically accepts unchange
   assert.equal(f.state.results.length, 0);
   assert.equal(f.state.removed, 0);
   assert.ok(f.state.pending.some(Boolean));
-  assert.ok(f.state.diagnostics.every(call => call.length === 1));
+  assert.ok(f.state.diagnostics.length > 0);
+  for (const [reason, snapshot] of f.state.diagnostics) {
+    assert.match(reason, /Confirmation pending:/);
+    assert.equal(snapshot, undefined, 'pending confirmation must not emit a rejection snapshot');
+  }
   f.state.busy = false;
   await eventually(() => f.state.results.length === 1 && f.state.removed === 1);
   assert.equal(f.state.results[0].status, 'succeeded');

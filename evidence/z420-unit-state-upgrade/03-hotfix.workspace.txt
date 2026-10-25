@@ -1,0 +1,56 @@
+14bd866dd8e1ff6be3c22dd2f773d090c9cb1332
+ M src/hotfix-origin.ts
+ M src/hotfix-runtime-inventory.ts
+ M src/os-runtime.ts
+ M src/production-entry.ts
+ M src/production-runtime.ts
+ M src/state-migration-guard.ts
+ M src/state-store.ts
+ M src/test-run-runtime.ts
+ M test/codex-unix-sockets.test.ts
+ M test/test-run-unit-state-upgrade.test.ts
+?? evidence/profile-raf-performance/hotfix-5.11/
+?? evidence/z420-unit-state-upgrade/
+?? node_modules
+?? src/test-run-unit-state.ts
+diff --git a/src/test-run-runtime.ts b/src/test-run-runtime.ts
+index f217e3d..d7a42d3 100644
+--- a/src/test-run-runtime.ts
++++ b/src/test-run-runtime.ts
+@@ -35,6 +35,7 @@ import { runSandboxTestCommand } from './sandbox-test-run.ts';
+ import { sandboxTestControlSnapshot } from './production-runtime.ts';
+ import { productionStateContext, stateContextEnvironment, canonicalStatePath, type StateContext } from './state-migration-guard.ts';
+ import { openStateStore } from './state-store.ts';
++import { prepareUnitTestState } from './test-run-unit-state.ts';
+ import { loadFlowPolicy } from './flow-policy.ts';
+ import { planTestRun, parseTestRunArgs, validateTestRunConfig, cleanupClosedTestRunGroups, testRunFailureResult } from './test-runs.ts';
+ import { cleanupTestProcessGroup, reconcileTestRunProcess } from './test-run-processes.ts';
+@@ -396,6 +397,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
+         mkdirSync(home, { recursive: true, mode: 0o700 });
+         const homeIdentity = lstatSync(home);
+         if (!homeIdentity.isDirectory() || homeIdentity.uid !== process.getuid?.() || (homeIdentity.mode & 0o077) !== 0) throw Object.assign(new Error('Unit HOME is not private'), { code: 'STATE_CONTEXT_REFUSED' });
++        await prepareUnitTestState(stateContext, key);
+         context = { integrationTests, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, activeChanges: [...control.activeChanges],
+           agentId: assignment.agentId, callerPhase: assignment.phase, sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
+           home, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome: userInfo().homedir };
+diff --git a/test/test-run-unit-state-upgrade.test.ts b/test/test-run-unit-state-upgrade.test.ts
+index f5838b7..c40602b 100644
+--- a/test/test-run-unit-state-upgrade.test.ts
++++ b/test/test-run-unit-state-upgrade.test.ts
+@@ -1,7 +1,7 @@
+ import assert from 'node:assert/strict';
+ import { execFileSync } from 'node:child_process';
+ import { createHash } from 'node:crypto';
+-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
++import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+ import { registerHooks } from 'node:module';
+ import { tmpdir } from 'node:os';
+ import { dirname, join } from 'node:path';
+@@ -39,6 +39,7 @@ test('test run upgrades its owned schema-16 unit state without losing the group
+   writeFileSync(projectsPath, JSON.stringify(projects));
+   for (const path of ['raf-main', 'raf-develop', 'raf-hotfix', 'control-home']) mkdirSync(join(root, path), { mode: 0o700 });
+   cpSync(join(source, 'src'), join(workspace, 'src'), { recursive: true });
++  symlinkSync(join(source, 'node_modules'), join(workspace, 'node_modules'));
+   writeFileSync(join(workspace, 'package.json'), '{"type":"module"}');
+   mkdirSync(join(workspace, 'bin'));
+   writeFileSync(join(workspace, 'bin/raf.ts'), '');

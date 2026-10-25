@@ -1,0 +1,17 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z420 --files test/test-run-unit-state-upgrade.test.ts",
+  "sha": "14bd866dd8e1ff6be3c22dd2f773d090c9cb1332",
+  "dirtyPaths": [
+    "src/hotfix-origin.ts",
+    "src/hotfix-runtime-inventory.ts",
+    "src/state-migration-guard.ts",
+    "src/state-store.ts",
+    "evidence/z420-unit-state-upgrade/",
+    "node_modules"
+  ],
+  "runId": "e1d2d0d0-c119-40e7-892f-d7e5f887d6a7",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "countsAsRegressionRed": false,
+  "reason": "Import failure ERR_MODULE_NOT_FOUND typescript; wrapper labeled assertions-failed, but no product behavior reached."
+}

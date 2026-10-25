@@ -1,0 +1,16 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z420 --files test/test-run-unit-state-upgrade.test.ts",
+  "sha": "14bd866dd8e1ff6be3c22dd2f773d090c9cb1332",
+  "workspaceSnapshot": "03-hotfix.workspace.txt",
+  "semanticRed": false,
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "streamCapture": "exec transport combines stdout then stderr; split at the single complete TestRunResult JSON line; raw transport preserved",
+  "nextAction": "Commit fix and evidence; main owns working raf activation.",
+  "runId": "6a9106eb-de58-4eda-960d-141cfe7de8d8",
+  "testedOwnFiles": {
+    "src/test-run-runtime.ts": "908544d994f7f0228c93461bd1f601f7f3fa14b76a1718c5a9a6806fdd872853",
+    "src/test-run-unit-state.ts": "883ca0bd650cdfc9edfd04e3847eb4aad2799379d0184858e6e023cb1221ec7e",
+    "test/test-run-unit-state-upgrade.test.ts": "8c9a3b269fbfcf340adc441b955690d5c8674d113fac7a63819557ba64d9028c"
+  }
+}

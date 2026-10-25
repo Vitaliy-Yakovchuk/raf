@@ -41,6 +41,7 @@ const architectures: Partial<Record<string, { audit: number; socket: number; ioU
   x64: { audit: 0xc000003e, socket: 41, ioUringSetup: 425, x32: true },
   arm64: { audit: 0xc00000b7, socket: 198, ioUringSetup: 425, x32: false },
 };
+const socketFamilies = { AF_UNIX: 1, AF_INET: 2, AF_INET6: 10 } as const;
 
 async function canonical(path: string): Promise<string> {
   if (!isAbsolute(path)) unavailable(`path ${path} is not absolute`);
@@ -177,15 +178,16 @@ function socketAddresses(environment: Readonly<Record<string, string | undefined
 function networkFilter(): Buffer {
   const arch = architectures[process.arch] ?? unavailable(`no network filter for architecture ${process.arch}`);
   const allow = 0x7fff0000, deny = 0x00050000 | 13;
+  const families = Object.values(socketFamilies);
   const program: [number, number, number, number][] = [
     [0x20, 0, 0, 4],
-    [0x15, 0, 7, arch.audit],
+    [0x15, 0, 6 + families.length, arch.audit],
     [0x20, 0, 0, 0],
-    arch.x32 ? [0x35, 5, 0, 0x40000000] : [0x15, 0, 0, 0xffffffff],
-    [0x15, 4, 0, arch.ioUringSetup],
-    [0x15, 0, 2, arch.socket],
+    arch.x32 ? [0x35, 4 + families.length, 0, 0x40000000] : [0x15, 0, 0, 0xffffffff],
+    [0x15, 3 + families.length, 0, arch.ioUringSetup],
+    [0x15, 0, 1 + families.length, arch.socket],
     [0x20, 0, 0, 16],
-    [0x15, 0, 1, 1],
+    ...families.map((family, index): [number, number, number, number] => [0x15, families.length - 1 - index, index === families.length - 1 ? 1 : 0, family]),
     [0x06, 0, 0, allow],
     [0x06, 0, 0, deny],
   ];
@@ -215,7 +217,20 @@ if (leaks.length) fail(3, 'hidden paths readable: ' + leaks.join(', '));
 const tcp = net.connect(port, '127.0.0.1');
 tcp.on('connect', () => fail(7, 'host loopback TCP reachable'));
 tcp.on('error', error => {
-  if (['ECONNREFUSED', 'ETIMEDOUT'].includes(error.code)) fail(7, 'host TCP not blocked: ' + error.code);
+  if (error.code !== 'ECONNREFUSED') fail(7, 'host TCP isolation unverified: ' + error.code);
+  const interfaces = fs.readFileSync('/proc/self/net/dev', 'utf8').split('\n').slice(2).map(line => line.split(':')[0].trim()).filter(Boolean);
+  if (interfaces.join(',') !== 'lo') fail(8, 'network namespace exposes host interfaces: ' + interfaces.join(', '));
+  const own = net.createServer(connection => connection.end('raf-probe-tcp'));
+  own.on('error', error => fail(9, 'loopback TCP listen failed: ' + error.code));
+  own.listen(0, '127.0.0.1', () => {
+    const client = net.connect(own.address().port, '127.0.0.1');
+    let data = '';
+    client.on('data', chunk => { data += chunk; });
+    client.on('error', error => fail(9, 'loopback TCP connect failed: ' + error.code));
+    client.on('close', () => { own.close(); if (data !== 'raf-probe-tcp') fail(9, 'loopback TCP exchange failed'); unix(); });
+  });
+});
+const unix = () => {
   const server = net.createServer(connection => connection.end('raf-probe'));
   server.on('error', error => fail(4, 'unix listen failed: ' + error.code));
   server.listen(socket, () => {
@@ -225,7 +240,7 @@ tcp.on('error', error => {
     client.on('error', error => fail(5, 'unix connect failed: ' + error.code));
     client.on('close', () => { server.close(); try { fs.unlinkSync(socket); } catch {} process.exit(data === 'raf-probe' ? 0 : 6); });
   });
-});
+};
 `;
 
 async function probe(toolSandbox: Invocation, environment: Record<string, string>, cwd: string, socket: string, hidden: readonly string[], timeoutMs: number): Promise<void> {
@@ -396,7 +411,7 @@ export async function prepareCodexSandbox(
     await fs.writeFile(join(helperDirectory, 'network.bpf'), filter, { mode: 0o400 });
     await fs.writeFile(join(helperDirectory, 'bwrap'), codexBwrapWrapper(bwrap, join(helperDirectory, 'network.bpf'), tmuxSockets, fileWrites), { mode: 0o500 });
     await fs.writeFile(join(helperDirectory, 'codex'), `#!/bin/sh\nPATH=${literal(helperDirectory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
-    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, verification: 'preflight Unix IPC, TCP denial and hidden paths' }, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: ['AF_UNIX'], ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
+    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, verification: 'preflight Unix IPC, own loopback TCP, host TCP and interface isolation, hidden paths' }, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: Object.keys(socketFamilies), ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
     const visible: string[] = [];
     for (const path of masked) if (await fs.access(path, constants.R_OK).then(() => true, () => false)) visible.push(path);
     await probe(toolSandbox, environment, cwd, probeSocket, visible, request.timeoutMs);

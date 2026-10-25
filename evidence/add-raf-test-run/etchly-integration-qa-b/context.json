@@ -1,0 +1,865 @@
+{
+  "sourceItem": "add-raf-test-run:6.2.6.3",
+  "observedAt": "2026-10-25T21:48:40.223Z",
+  "method": "Read-only Git, file metadata, hashes and JSON registration comparison. No runner, test body, Vitest discovery, D1 setup, loopback listener, process harness, operational raf state, build or install was executed.",
+  "actor": {
+    "agentId": "raf-trt6263b-qa",
+    "agentRunId": "9d1bbeb7-7ae8-4031-8157-297eff31b379",
+    "assignmentProject": "raf",
+    "assignmentPhase": "qa",
+    "executable": "/opt/dev/node/bin/node",
+    "nodeVersion": "v26.12.1",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "repositories": [
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "2ad2a44c70b2d65e9532c4f457d866eeba901ffe",
+      "branch": "develop",
+      "dirty": "?? evidence/add-raf-test-run/etchly-integration-qa-b/"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/etchly-develop",
+      "sha": "18782b2e939e4b4b9eedbece27f905a2463ef965",
+      "branch": "develop",
+      "dirty": ""
+    }
+  ],
+  "orchestratorSha": "dd39a433049e738086438daacad04a12e1fa272a",
+  "generation": {
+    "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main",
+    "files": [
+      {
+        "file": "bin/raf.ts",
+        "generation": {
+          "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/bin/raf.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/bin/raf.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 798,
+          "sha256": "8d5d1fe0e7f57220122f938bb940e7cd8d2a58396b8f9a546adff45531723666"
+        },
+        "workspace": {
+          "path": "/srv/dev/work/orchestrator/raf-develop/bin/raf.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/raf-develop/bin/raf.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 798,
+          "sha256": "8d5d1fe0e7f57220122f938bb940e7cd8d2a58396b8f9a546adff45531723666"
+        }
+      },
+      {
+        "file": "src/test-run-runtime.ts",
+        "generation": {
+          "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/src/test-run-runtime.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/src/test-run-runtime.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 46681,
+          "sha256": "355d342ff5ff58a0af3be9be407d6800443a28b2bb84d31db5ad14df7bf1aeb1"
+        },
+        "workspace": {
+          "path": "/srv/dev/work/orchestrator/raf-develop/src/test-run-runtime.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/raf-develop/src/test-run-runtime.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 46681,
+          "sha256": "355d342ff5ff58a0af3be9be407d6800443a28b2bb84d31db5ad14df7bf1aeb1"
+        }
+      },
+      {
+        "file": "src/sandbox-test-run.ts",
+        "generation": {
+          "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/src/sandbox-test-run.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/src/sandbox-test-run.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 16070,
+          "sha256": "61ca504f82f31af50c39647d1ab3ad2bc0bdd1c0e9992af04d123654e306c874"
+        },
+        "workspace": {
+          "path": "/srv/dev/work/orchestrator/raf-develop/src/sandbox-test-run.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/raf-develop/src/sandbox-test-run.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 16070,
+          "sha256": "61ca504f82f31af50c39647d1ab3ad2bc0bdd1c0e9992af04d123654e306c874"
+        }
+      },
+      {
+        "file": "src/test-run-etchly-integration.ts",
+        "generation": {
+          "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/src/test-run-etchly-integration.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/src/test-run-etchly-integration.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 19829,
+          "sha256": "18d33eff8e9fbf53048a18921031a3c0421ee50d0f350ba9487c4369e78ec70e"
+        },
+        "workspace": {
+          "path": "/srv/dev/work/orchestrator/raf-develop/src/test-run-etchly-integration.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/raf-develop/src/test-run-etchly-integration.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 19829,
+          "sha256": "18d33eff8e9fbf53048a18921031a3c0421ee50d0f350ba9487c4369e78ec70e"
+        }
+      },
+      {
+        "file": "src/test-run-etchly-inventory.ts",
+        "generation": {
+          "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/src/test-run-etchly-inventory.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/src/test-run-etchly-inventory.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 10905,
+          "sha256": "e8af2d0bb1a79e7dc81919c55071728f74457c88d7fceddab081a30caa3f3ad6"
+        },
+        "workspace": {
+          "path": "/srv/dev/work/orchestrator/raf-develop/src/test-run-etchly-inventory.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/raf-develop/src/test-run-etchly-inventory.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 10905,
+          "sha256": "e8af2d0bb1a79e7dc81919c55071728f74457c88d7fceddab081a30caa3f3ad6"
+        }
+      },
+      {
+        "file": "src/test-run-etchly.ts",
+        "generation": {
+          "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/src/test-run-etchly.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/src/test-run-etchly.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 13004,
+          "sha256": "fec68b3b4cd678bbedab436bf509a1163b885959a1a83faed91bdba675e9a4e2"
+        },
+        "workspace": {
+          "path": "/srv/dev/work/orchestrator/raf-develop/src/test-run-etchly.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/raf-develop/src/test-run-etchly.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 13004,
+          "sha256": "fec68b3b4cd678bbedab436bf509a1163b885959a1a83faed91bdba675e9a4e2"
+        }
+      },
+      {
+        "file": "src/test-run-vitest-reporter.ts",
+        "generation": {
+          "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/src/test-run-vitest-reporter.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/src/test-run-vitest-reporter.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 4562,
+          "sha256": "329eb516240261934d40e134eac538310b3daad71e58263620ed1dd1ad7dc786"
+        },
+        "workspace": {
+          "path": "/srv/dev/work/orchestrator/raf-develop/src/test-run-vitest-reporter.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/raf-develop/src/test-run-vitest-reporter.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 4562,
+          "sha256": "329eb516240261934d40e134eac538310b3daad71e58263620ed1dd1ad7dc786"
+        }
+      },
+      {
+        "file": "scripts/test-run-vitest.ts",
+        "generation": {
+          "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/scripts/test-run-vitest.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/scripts/test-run-vitest.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 2331,
+          "sha256": "972d0b52e140037f64116409f1acef11a0b86879c241c1e3f390b578a324baf1"
+        },
+        "workspace": {
+          "path": "/srv/dev/work/orchestrator/raf-develop/scripts/test-run-vitest.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/raf-develop/scripts/test-run-vitest.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 2331,
+          "sha256": "972d0b52e140037f64116409f1acef11a0b86879c241c1e3f390b578a324baf1"
+        }
+      },
+      {
+        "file": "scripts/test-run-vitest-api.ts",
+        "generation": {
+          "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/scripts/test-run-vitest-api.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/scripts/test-run-vitest-api.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 764,
+          "sha256": "de35c109403b8a0af231688907c5fc69ca95b230081f8c5c7b34842de81ec6be"
+        },
+        "workspace": {
+          "path": "/srv/dev/work/orchestrator/raf-develop/scripts/test-run-vitest-api.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/raf-develop/scripts/test-run-vitest-api.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 764,
+          "sha256": "de35c109403b8a0af231688907c5fc69ca95b230081f8c5c7b34842de81ec6be"
+        }
+      },
+      {
+        "file": "scripts/test-run-node.ts",
+        "generation": {
+          "path": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/scripts/test-run-node.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/de319c1f-fc5b-432e-884a-a25ac062c5bf/raf-main/scripts/test-run-node.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 1300,
+          "sha256": "ea9b4ce9223e9f2bd0d0904777e9a60dfad03c3431d5d38459860fe98082c001"
+        },
+        "workspace": {
+          "path": "/srv/dev/work/orchestrator/raf-develop/scripts/test-run-node.ts",
+          "exists": true,
+          "realpath": "/srv/dev/work/orchestrator/raf-develop/scripts/test-run-node.ts",
+          "kind": "file",
+          "mode": "664",
+          "bytes": 1300,
+          "sha256": "ea9b4ce9223e9f2bd0d0904777e9a60dfad03c3431d5d38459860fe98082c001"
+        }
+      }
+    ]
+  },
+  "configuration": [
+    {
+      "path": "/srv/dev/work/orchestrator/conf/test-runs.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/conf/test-runs.json",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 269377,
+      "sha256": "7c1db36a1b8cb9b5de5eca9a89ec2185d61e5ad3b19cf0b7387d8d5e938a6c48"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/conf/flow.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/conf/flow.json",
+      "kind": "file",
+      "mode": "644",
+      "bytes": 1852,
+      "sha256": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/conf/projects.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/conf/projects.json",
+      "kind": "file",
+      "mode": "644",
+      "bytes": 5070,
+      "sha256": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/conf/raf-constants.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/conf/raf-constants.json",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 104810,
+      "sha256": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e"
+    }
+  ],
+  "registrations": [
+    {
+      "pointer": "/projects/etchly/profiles/vitest-worker-d1-integration",
+      "exactPatchMatch": false
+    },
+    {
+      "pointer": "/projects/etchly/groups/bound-generation-retries-and-spend~1worker-d1-invalid-analysis",
+      "exactPatchMatch": true
+    },
+    {
+      "pointer": "/projects/etchly/groups/bound-generation-retries-and-spend~1worker-d1-accepted-source",
+      "exactPatchMatch": true
+    },
+    {
+      "pointer": "/projects/etchly/groups/bound-generation-retries-and-spend~1worker-d1-summary-language",
+      "exactPatchMatch": true
+    },
+    {
+      "pointer": "/projects/etchly/groups/add-raf-test-run~1etchly-worker-d1-smoke",
+      "exactPatchMatch": true
+    }
+  ],
+  "unitGroup": {
+    "profileId": "node",
+    "files": [
+      "test/test-run-etchly-integration.test.ts"
+    ]
+  },
+  "smoke": {
+    "group": "add-raf-test-run/etchly-worker-d1-smoke",
+    "profileId": "vitest-worker-d1-integration",
+    "files": [
+      "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+      "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+      "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts"
+    ],
+    "profile": {
+      "testKind": "integration",
+      "cwd": "worker",
+      "executable": "node",
+      "argv": [
+        "--import",
+        "../scripts/shared-library-runtime.mjs",
+        "../node_modules/vitest/vitest.mjs",
+        "run",
+        "--configLoader",
+        "runner",
+        "--project",
+        "worker-d1-integration"
+      ],
+      "exactIds": "vitest-test-name",
+      "resultAdapter": "vitest-events",
+      "environment": {
+        "isolatedHome": true,
+        "stateOrigin": true
+      },
+      "checks": [
+        "scripts/shared-library-runtime.mjs",
+        "scripts/shared-library-aliases.ts",
+        "scripts/shared-libs-path.mjs",
+        "test-support/vitest-project-files.ts",
+        "test-support/temp-resources.ts",
+        "test-support/file-budget-runner.ts",
+        "worker/vitest.config.ts",
+        "worker/wrangler.jsonc",
+        "worker/scripts/migrate.ts",
+        "worker/migrations",
+        "worker/src/test-support/shared-worker-global-setup.ts",
+        "worker/src/test-support/d1-template-global-setup.ts",
+        "worker/src/test-support/d1-template-setup.ts",
+        "worker/src/test-support/shared-worker-setup.ts",
+        "worker/src/test-support/shared-worker-runtime.ts",
+        "worker/src/test-support/live-worker.ts",
+        "worker/src/test-support/miniflare.ts",
+        "node_modules/vitest/vitest.mjs",
+        "node_modules/wrangler/package.json",
+        "node_modules/miniflare/package.json",
+        "node_modules/workerd/package.json",
+        "node_modules/esbuild/package.json",
+        "app/dist/local/index.html"
+      ],
+      "resourceEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      }
+    },
+    "inventoryCount": 623,
+    "uniqueInventoryCount": 623,
+    "missingFiles": [],
+    "unitOverlap": [],
+    "examples": [
+      {
+        "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+        "exists": true,
+        "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+        "kind": "file",
+        "mode": "664",
+        "bytes": 7217,
+        "sha256": "9de2e2aae57c8482a59081e6da71ec28c14e5d752ad6c8d96dbd570022fbb728"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+        "exists": true,
+        "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+        "kind": "file",
+        "mode": "664",
+        "bytes": 13688,
+        "sha256": "445a3b012c01b3fa0d2a4ca5a16cdfd251cf1a1cd7faf594ff4cd6a56883208c"
+      },
+      {
+        "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts",
+        "exists": true,
+        "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts",
+        "kind": "file",
+        "mode": "664",
+        "bytes": 9668,
+        "sha256": "14eafd1c50785985646e8c17e5e6e8d61475428296788eb166d80012a463dd6c"
+      }
+    ]
+  },
+  "prerequisites": [
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/scripts/shared-library-runtime.mjs",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/scripts/shared-library-runtime.mjs",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 1185,
+      "sha256": "eb907e3bdafe3cc6f5a2c34499e51cb48d7db14f11246dc6c96ee6d9e99f23d1"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/scripts/shared-library-aliases.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/scripts/shared-library-aliases.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 5156,
+      "sha256": "372e98aa4471009720c7eeb05a8e264a94bd0303e3a468bfdcc8f03aa23e23cb"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/scripts/shared-libs-path.mjs",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/scripts/shared-libs-path.mjs",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 2150,
+      "sha256": "2b67a7482c613ae710f454c5c254c5ee57672ce52872076a9ebcc2fed294ffc3"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/test-support/vitest-project-files.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/test-support/vitest-project-files.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 3912,
+      "sha256": "1fcdd85cbaaff718056142161cb88dd2c7328f4d279e9a30471ee3bfa455c2c9"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/test-support/temp-resources.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/test-support/temp-resources.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 6828,
+      "sha256": "d5aabbf45ceb135d06a49b504926db8bc5c349b9c06dcf6fffc460fb05ab8fc4"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/test-support/file-budget-runner.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/test-support/file-budget-runner.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 3330,
+      "sha256": "0bb55bea645c4290ae2a5eff104f40cdc9fa289fbe47e15a0b9d581530f3868d"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/vitest.config.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/vitest.config.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 4184,
+      "sha256": "366ff16dedad7fcd23b5d6b8ff45976c093d157fd5c6ebe2239ba5c8b6868518"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/wrangler.jsonc",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/wrangler.jsonc",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 14542,
+      "sha256": "1703d0c61e249d217ae1638499b3136d876d368bf4bb95fe2ef3331d2877d0b7"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/scripts/migrate.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/scripts/migrate.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 24379,
+      "sha256": "793e5cdae9831459aa02fc274b8261bb23d46343f051fe9a0689575be95f365b"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/migrations",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/migrations",
+      "kind": "directory",
+      "mode": "775",
+      "bytes": 20480,
+      "sha256": null
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/shared-worker-global-setup.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/shared-worker-global-setup.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 9959,
+      "sha256": "1488696b11efebe786b9610b9873b9f53c56ec34423e8c74c1d6d7503297b7b4"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/d1-template-global-setup.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/d1-template-global-setup.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 4809,
+      "sha256": "b68bc8cd342f7554dc24c03c7911aa07c7d35f7b9a956cadf61f6a13acd5e63d"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/d1-template-setup.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/d1-template-setup.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 295,
+      "sha256": "5d72ef4db5ee20cd4a07c9cabe77a0fb77bf8d91522d0fdd41c29f6504b76a2b"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/shared-worker-setup.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/shared-worker-setup.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 471,
+      "sha256": "93cdcac9b979a679a4e793b3c8d7b71e025c5b4bec7484c72d00d4db0aa33a6a"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/shared-worker-runtime.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/shared-worker-runtime.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 14073,
+      "sha256": "592660ec1fdad8bee748dabd1d13342e4a7e56a89f1b133a1787685bb76e4ba0"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/live-worker.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/live-worker.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 14620,
+      "sha256": "1a355c91812dcc76faa75eef211451c0d58e1efba1f6677ec05c41f211fec399"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/miniflare.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/miniflare.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 1397,
+      "sha256": "774a58b5dd4adc99131b37d5791a38d017e12b1269179e8341848310bc022c88"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/node_modules/vitest/vitest.mjs",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/node_modules/vitest/vitest.mjs",
+      "kind": "file",
+      "mode": "775",
+      "bytes": 43,
+      "sha256": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/node_modules/wrangler/package.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/node_modules/wrangler/package.json",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 6864,
+      "sha256": "6fb2634a7130ce179f8f6462067c7821191588a296e8e798d6f2ff52add60228"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/node_modules/miniflare/package.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/node_modules/miniflare/package.json",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 4220,
+      "sha256": "e2349545887eb236d46dacf2cd65802316cb6bf20b8a78e99753323c0a20fa06"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/node_modules/workerd/package.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/node_modules/workerd/package.json",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 676,
+      "sha256": "4f50434f4f9a43ba2539ac36b4681262dcb09e84727c5ac9d9207c832fe0ca60"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/node_modules/esbuild/package.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/node_modules/esbuild/package.json",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 3980,
+      "sha256": "9d0bc453f4e791553c4cc2298ba023b409241fd9801e494741666eb0f6051490"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/app/dist/local/index.html",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/app/dist/local/index.html",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 15841,
+      "sha256": "ddab268e2ce1e60d9b872c1d860c0e9f3f004089f37d0acb525c559d9acc5274"
+    }
+  ],
+  "executables": [
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/node_modules/workerd/bin/workerd",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/node_modules/workerd/bin/workerd",
+      "kind": "file",
+      "mode": "775",
+      "bytes": 140383608,
+      "sha256": "d7ce7f7de38dba233a2924b777b51c65a407e524154d9b66fa8d2bc0a1ff5dcf"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/node_modules/esbuild/bin/esbuild",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/node_modules/esbuild/bin/esbuild",
+      "kind": "file",
+      "mode": "775",
+      "bytes": 11427952,
+      "sha256": "e1698a3d5c6c0798fee4fd3b5cc816651f460c63d390a7a26ea4beb0b1884100"
+    }
+  ],
+  "localPackages": [
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/node_modules/vitest/package.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/node_modules/vitest/package.json",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 5932,
+      "sha256": "a28126d97bcaf567da5bed69443b7f3bcd9a7a8c38c8b66e554686b6bb2c10e0",
+      "name": "vitest",
+      "version": "4.1.11"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/node_modules/wrangler/package.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/node_modules/wrangler/package.json",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 6864,
+      "sha256": "6fb2634a7130ce179f8f6462067c7821191588a296e8e798d6f2ff52add60228",
+      "name": "wrangler",
+      "version": "4.151.3"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/node_modules/miniflare/package.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/node_modules/miniflare/package.json",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 4220,
+      "sha256": "e2349545887eb236d46dacf2cd65802316cb6bf20b8a78e99753323c0a20fa06",
+      "name": "miniflare",
+      "version": "5.20261019.1-beta"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/node_modules/workerd/package.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/node_modules/workerd/package.json",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 676,
+      "sha256": "4f50434f4f9a43ba2539ac36b4681262dcb09e84727c5ac9d9207c832fe0ca60",
+      "name": "workerd",
+      "version": "1.20261019.1"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/node_modules/esbuild/package.json",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/node_modules/esbuild/package.json",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 3980,
+      "sha256": "9d0bc453f4e791553c4cc2298ba023b409241fd9801e494741666eb0f6051490",
+      "name": "esbuild",
+      "version": "0.28.2"
+    }
+  ],
+  "localBuild": {
+    "path": "/srv/dev/work/orchestrator/etchly-develop/app/dist/local/index.html",
+    "exists": true,
+    "realpath": "/srv/dev/work/orchestrator/etchly-develop/app/dist/local/index.html",
+    "kind": "file",
+    "mode": "664",
+    "bytes": 15841,
+    "sha256": "ddab268e2ce1e60d9b872c1d860c0e9f3f004089f37d0acb525c559d9acc5274",
+    "containsDev1Favicon": false,
+    "liveBuildValidityConfirmed": false
+  },
+  "sharedLibs": {
+    "path": "/srv/dev/work/orchestrator/etchly-develop/shared-libs",
+    "exists": true,
+    "realpath": "/srv/dev/work/orchestrator/shared-libs-develop",
+    "kind": "directory",
+    "mode": "775",
+    "bytes": 4096,
+    "sha256": null,
+    "branch": "develop",
+    "resourceProtocol": {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/shared-libs/resource-protocol/node_modules",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/node_modules",
+      "kind": "directory",
+      "mode": "775",
+      "bytes": 4096,
+      "sha256": null
+    },
+    "scopedModules": {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/shared-libs/resource-protocol/node_modules/@resource-protocol",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/shared-libs-develop/resource-protocol/node_modules/@resource-protocol",
+      "kind": "directory",
+      "mode": "775",
+      "bytes": 4096,
+      "sha256": null
+    }
+  },
+  "sourceHashes": [
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/vitest.config.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/vitest.config.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 4184,
+      "sha256": "366ff16dedad7fcd23b5d6b8ff45976c093d157fd5c6ebe2239ba5c8b6868518"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/test-support/vitest-project-files.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/test-support/vitest-project-files.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 3912,
+      "sha256": "1fcdd85cbaaff718056142161cb88dd2c7328f4d279e9a30471ee3bfa455c2c9"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/test-support/temp-resources.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/test-support/temp-resources.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 6828,
+      "sha256": "d5aabbf45ceb135d06a49b504926db8bc5c349b9c06dcf6fffc460fb05ab8fc4"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/test-support/file-budget-runner.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/test-support/file-budget-runner.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 3330,
+      "sha256": "0bb55bea645c4290ae2a5eff104f40cdc9fa289fbe47e15a0b9d581530f3868d"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/scripts/shared-library-runtime.mjs",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/scripts/shared-library-runtime.mjs",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 1185,
+      "sha256": "eb907e3bdafe3cc6f5a2c34499e51cb48d7db14f11246dc6c96ee6d9e99f23d1"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/scripts/shared-library-aliases.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/scripts/shared-library-aliases.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 5156,
+      "sha256": "372e98aa4471009720c7eeb05a8e264a94bd0303e3a468bfdcc8f03aa23e23cb"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/scripts/shared-libs-path.mjs",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/scripts/shared-libs-path.mjs",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 2150,
+      "sha256": "2b67a7482c613ae710f454c5c254c5ee57672ce52872076a9ebcc2fed294ffc3"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/shared-worker-global-setup.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/shared-worker-global-setup.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 9959,
+      "sha256": "1488696b11efebe786b9610b9873b9f53c56ec34423e8c74c1d6d7503297b7b4"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/d1-template-global-setup.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/d1-template-global-setup.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 4809,
+      "sha256": "b68bc8cd342f7554dc24c03c7911aa07c7d35f7b9a956cadf61f6a13acd5e63d"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/d1-template-setup.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/d1-template-setup.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 295,
+      "sha256": "5d72ef4db5ee20cd4a07c9cabe77a0fb77bf8d91522d0fdd41c29f6504b76a2b"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/shared-worker-setup.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/shared-worker-setup.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 471,
+      "sha256": "93cdcac9b979a679a4e793b3c8d7b71e025c5b4bec7484c72d00d4db0aa33a6a"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/shared-worker-runtime.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/shared-worker-runtime.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 14073,
+      "sha256": "592660ec1fdad8bee748dabd1d13342e4a7e56a89f1b133a1787685bb76e4ba0"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/live-worker.ts",
+      "exists": true,
+      "realpath": "/srv/dev/work/orchestrator/etchly-develop/worker/src/test-support/live-worker.ts",
+      "kind": "file",
+      "mode": "664",
+      "bytes": 14620,
+      "sha256": "1a355c91812dcc76faa75eef211451c0d58e1efba1f6677ec05c41f211fec399"
+    }
+  ],
+  "lifecycle": {
+    "unitRunnerSpawnedInFirstInvocation": true,
+    "integrationRunnerSpawned": false,
+    "d1SetupConfirmed": false,
+    "bridgeCommandObserved": null,
+    "innerCommandObserved": null,
+    "ownedTestProcesses": [],
+    "ownedD1Artifacts": [],
+    "independentProcessCleanupVerification": "First unit invocation reported cleanup complete; original output truncated. Authorized repeat refused before spawn. Live D1 lifecycle is unexecuted."
+  },
+  "unavailable": [
+    "Trusted unit/control context after publication change: STATE_CONTEXT_REFUSED",
+    "Immutable project=etchly assignment/workspace for own active change",
+    "Live D1 build/dependency/loopback validation",
+    "D08 real forks/workerd deadline/interruption/concurrent/crash/recovery harness",
+    "Independent OS stdout/stderr capture; current tool combines streams",
+    "Message delivery currently fails with unregistered generation module origin"
+  ]
+}

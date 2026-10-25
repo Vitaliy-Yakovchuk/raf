@@ -1,0 +1,61 @@
+{
+  "typeDeclarations": "Borrowed installed Node type declarations from etchly-develop; no dependency installation",
+  "checks": [
+    {
+      "command": [
+        "node",
+        "--check",
+        "src/test-run-etchly-integration.ts"
+      ],
+      "code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "test/test-run-etchly-integration.test.ts"
+      ],
+      "code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "--strict",
+        "--target",
+        "esnext",
+        "--module",
+        "nodenext",
+        "--allowImportingTsExtensions",
+        "--typeRoots",
+        "/srv/dev/work/orchestrator/etchly-develop/node_modules/@types",
+        "--types",
+        "node",
+        "src/test-run-etchly-integration.ts",
+        "test/test-run-etchly-integration.test.ts"
+      ],
+      "code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "src/test-run-etchly-integration.ts",
+        "test/test-run-etchly-integration.test.ts",
+        "evidence/add-raf-test-run/etchly-integration-scaffold/"
+      ],
+      "code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

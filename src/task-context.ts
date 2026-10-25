@@ -352,7 +352,7 @@ const pointer = async (path: string, prefix: string): Promise<string | null> => 
   } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT' || (error as NodeJS.ErrnoException).code === 'ENOTDIR' || (error as NodeJS.ErrnoException).code === 'EISDIR') return null; throw error; }
 };
 
-async function gitDirectories(workspace: string): Promise<string[]> {
+export async function gitDirectories(workspace: string): Promise<string[]> {
   const dotGit = join(workspace, '.git');
   const info = await stat(dotGit).catch(() => null);
   if (!info) return [];

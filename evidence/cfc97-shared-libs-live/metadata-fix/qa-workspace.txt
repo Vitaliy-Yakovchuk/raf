@@ -1,0 +1,180 @@
+Captured immediately after qa result and build, not a claim of clean workspace.
+
+git rev-parse HEAD
+448f6c54a1235e8dc0b6c6861b9b4f26202d08fd
+
+git status --short
+ M src/production-runtime.ts
+ M src/task-context.ts
+ M test/shared-libs-launch-boundaries.test.ts
+?? evidence/cfc97-shared-libs-live/metadata-fix/
+?? evidence/cfc97-shared-libs-live/observation-fix/comment-build.json
+?? src/shared-libs-sandbox.ts
+
+git diff -- src/production-runtime.ts src/task-context.ts test/shared-libs-launch-boundaries.test.ts
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index d1d14a6..a23766c 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -29,6 +29,7 @@ import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbo
+ import { retainHotfixGeneration } from './hotfix-activation.ts';
+ import { verifyStateModule } from './state-migration-guard.ts';
+ import { agentChannelReadOnlyPaths } from './main-switch-agent-launcher.ts';
++import { sharedLibraryReadOnlyPaths } from './shared-libs-sandbox.ts';
+ import { prepareHotfixWorktree, validateHotfixTrust, startHotfixCommitPort } from './hotfix-worktree.ts';
+ import { hotfixRoute } from './hotfix-host.ts';
+ import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
+@@ -1503,6 +1504,7 @@ export async function runProductionWorker(
+       });
+       const protectsMain = rafSubcommandsFor(session.launchContext.testAssignment?.type ?? session.activity?.type ?? '') !== null;
+       const mainReadOnly = protectsMain ? await agentChannelReadOnlyPaths(context.orchestratorRoot, stateContext.homeDirectory) : [];
++      const runnerReadOnly = [...mainReadOnly, ...await sharedLibraryReadOnlyPaths(context.orchestratorRoot, await json(join(context.confRoot, 'projects.json')), session.launchContext.reportedCommits)];
+       if (settings.runner === 'claude' && !socketPathFits(join(scope.tmuxDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default'))) {
+         toolTmuxDirectory = await createRafToolSocketDirectory();
+         scope.tmuxDirectory = toolTmuxDirectory.directory;
+@@ -1511,16 +1513,16 @@ export async function runProductionWorker(
+       }
+       invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
+       deliveryEvidenceIsolated = settings.runner === 'claude';
+-      if ((hotfix || mainReadOnly.length) && settings.runner === 'claude') {
++      if ((hotfix || runnerReadOnly.length) && settings.runner === 'claude') {
+         const index = invocation.args.indexOf('--settings');
+         if (index < 0) fail('RUNNER_SANDBOX_UNAVAILABLE', 'Claude requires enforced filesystem sandbox');
+         const settingsValue = JSON.parse(invocation.args[index + 1]);
+-        settingsValue.sandbox.filesystem = { ...settingsValue.sandbox.filesystem, denyWrite: [...(settingsValue.sandbox.filesystem?.denyWrite ?? []), ...mainReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], allowWrite: [...writable.directories, ...writable.workspace] };
++        settingsValue.sandbox.filesystem = { ...settingsValue.sandbox.filesystem, denyWrite: [...(settingsValue.sandbox.filesystem?.denyWrite ?? []), ...runnerReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], allowWrite: [...writable.directories, ...writable.workspace] };
+         invocation.args[index + 1] = JSON.stringify(settingsValue);
+       }
+       if (settings.runner === 'codex' && codexInvocationSandboxMode(invocation.args) !== null) {
+         try {
+-          codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], readOnlyDirectories: [...mainReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], environment: process.env, timeoutMs: settings.timeouts.transitionMs });
++          codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], readOnlyDirectories: [...runnerReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], environment: process.env, timeoutMs: settings.timeouts.transitionMs });
+         } catch (error) {
+           if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
+           throw error;
+diff --git a/src/task-context.ts b/src/task-context.ts
+index 28f874d..5450e39 100644
+--- a/src/task-context.ts
++++ b/src/task-context.ts
+@@ -352,7 +352,7 @@ const pointer = async (path: string, prefix: string): Promise<string | null> =>
+   } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT' || (error as NodeJS.ErrnoException).code === 'ENOTDIR' || (error as NodeJS.ErrnoException).code === 'EISDIR') return null; throw error; }
+ };
+ 
+-async function gitDirectories(workspace: string): Promise<string[]> {
++export async function gitDirectories(workspace: string): Promise<string[]> {
+   const dotGit = join(workspace, '.git');
+   const info = await stat(dotGit).catch(() => null);
+   if (!info) return [];
+diff --git a/test/shared-libs-launch-boundaries.test.ts b/test/shared-libs-launch-boundaries.test.ts
+index 5b7ad7f..48c4eaa 100644
+--- a/test/shared-libs-launch-boundaries.test.ts
++++ b/test/shared-libs-launch-boundaries.test.ts
+@@ -1,6 +1,6 @@
+ import assert from 'node:assert/strict';
+ import test, { type TestContext } from 'node:test';
+-import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
++import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import { createAppRuntime, type AppRuntimeDependencies, type RuntimeConfiguration, type RuntimeContext, type RuntimeLaunch, type RuntimeRunParameters, type RuntimeServices, type RuntimeTaskContext } from '../src/app-runtime.ts';
+@@ -11,6 +11,8 @@ import type { AdapterStartRequest } from '../src/agent-adapters.ts';
+ import type { ReportedCommitLaunchContext } from '../src/reported-commits-contract.ts';
+ import type { StateStore } from '../src/state-store.ts';
+ import { assertSharedLibraryLaunch, assertSharedLibraryAcceptance } from '../scripts/qa-shared-libs-observation.mjs';
++import { sharedLibraryReadOnlyPaths } from '../src/shared-libs-sandbox.ts';
++import { protectCodexReadOnlyPaths } from '../src/codex-sandbox.ts';
+ 
+ test('live shared-libs stand observes the persisted launchContext contract', () => {
+   const layout = { product: '/stand/etchly-develop', library: '/stand/shared-libs-develop', libraryGit: '/stand/.git/modules/shared-libs/worktrees/develop', libraryCommon: '/stand/.git/modules/shared-libs' };
+@@ -42,6 +44,14 @@ function fixture(t: TestContext, branch: string, usesSharedLibs: boolean | undef
+   const libraryGit = git('shared-libs');
+   const rootGit = join(root, '.git');
+   for (const path of [cwd, library, join(root, 'shared-libs-main'), rootGit, ...projectGit, ...libraryGit]) mkdirSync(path, { recursive: true });
++  for (const [workspace, directories] of [[cwd, projectGit], [library, libraryGit]] as const) {
++    writeFileSync(join(workspace, '.git'), `gitdir: ${directories[0]}\n`);
++    writeFileSync(join(directories[0], 'HEAD'), 'ref: refs/heads/' + branch + '\n');
++    writeFileSync(join(directories[0], 'commondir'), '../..\n');
++    mkdirSync(join(directories[1], 'objects'), { recursive: true });
++  }
++  writeFileSync(join(rootGit, 'HEAD'), 'ref: refs/heads/main\n');
++  mkdirSync(join(rootGit, 'objects'), { recursive: true });
+   symlinkSync(`../shared-libs-${branch}`, link);
+   const projects: WorkspaceProjectsConfig = {
+     profiles: { product: { development: branch } },
+@@ -119,12 +129,41 @@ function fixture(t: TestContext, branch: string, usesSharedLibs: boolean | undef
+   const app = createAppRuntime(context, dependencies);
+   t.after(() => app.close());
+   const parameters: RuntimeRunParameters = { id: 'library-boundaries', type: phase, project: 'etchly', features: [change], phase, complexity: 'normal', tasks: [`${change}:9.5`] };
+-  return { root, cwd, library, link, documents, projectGit, libraryGit, rootGit, launches, contracts, briefs, starts, reservations, inspections,
++  return { root, cwd, library, link, projects, documents, projectGit, libraryGit, rootGit, launches, contracts, briefs, starts, reservations, inspections,
+     run: () => app.handlers['agent run'](parameters as unknown as Record<string, unknown>),
+     setLibraryBranch(value: string | null) { libraryBranch = value; },
+   };
+ }
+ 
++const effectiveAccess = (filesystem: Record<string, string>, target: string) => Object.entries(filesystem)
++  .filter(([path]) => target === path || target.startsWith(path + '/'))
++  .sort(([left], [right]) => right.length - left.length)[0]?.[1] ?? 'read';
++
++for (const dependency of [false, undefined]) test(`independent library Git metadata stays read-only under writable Orchestrator Git ancestor (${dependency})`, async t => {
++  const f = fixture(t, 'develop', dependency);
++  await f.run();
++  const readOnly = await sharedLibraryReadOnlyPaths(f.root, f.projects, f.contracts[0]);
++  const policy = await protectCodexReadOnlyPaths({ [f.rootGit]: 'write', [f.cwd]: 'write', ...Object.fromEntries(f.projectGit.map(path => [path, 'write'])) }, readOnly);
++  for (const path of [f.library, ...f.libraryGit]) assert.equal(effectiveAccess(policy.filesystem, join(path, 'probe.txt')), 'read', path);
++  for (const path of [f.rootGit, ...f.projectGit]) assert.equal(effectiveAccess(policy.filesystem, join(path, 'index')), 'write', path);
++});
++
++test('dependent library retains its granted worktree and Git metadata in the protected sandbox', async t => {
++  const f = fixture(t, 'develop', true);
++  await f.run();
++  const readOnly = await sharedLibraryReadOnlyPaths(f.root, f.projects, f.contracts[0]);
++  const policy = await protectCodexReadOnlyPaths(Object.fromEntries(f.contracts[0].writeBoundaries.map(path => [path, 'write'])), readOnly);
++  for (const path of [f.library, ...f.libraryGit]) assert.equal(effectiveAccess(policy.filesystem, join(path, 'probe.txt')), 'write', path);
++});
++
++test('independent launch protection does not require an available library workspace', async t => {
++  const f = fixture(t, 'develop', false);
++  await f.run();
++  rmSync(f.library, { recursive: true });
++  rmSync(join(f.root, 'shared-libs-main'), { recursive: true });
++  assert.deepEqual(await sharedLibraryReadOnlyPaths(f.root, f.projects, f.contracts[0]), []);
++});
++
+ function samePaths(actual: readonly string[] | undefined, expected: readonly string[], label: string) {
+   assert.deepEqual(new Set(actual), new Set(expected), label);
+   assert.equal(actual?.length, new Set(actual).size, `${label}: duplicate paths`);
+
+src/shared-libs-sandbox.ts
+import type { WorkspaceProjectsConfig } from './workspace-routing.ts';
+import type { ReportedCommitLaunchContext } from './reported-commits-contract.ts';
+import { realpath } from 'node:fs/promises';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { gitDirectories } from './task-context.ts';
+
+export async function sharedLibraryReadOnlyPaths(root: string, projects: WorkspaceProjectsConfig, commits?: Pick<ReportedCommitLaunchContext, 'repositories'>): Promise<string[]> {
+  const library = projects.projects['shared-libs'];
+  if (!library) return [];
+  const rootMetadata = await gitDirectories(root);
+  const repositories = commits?.repositories ?? [];
+  const allowedRoots = new Set(repositories.map(row => row.repositoryRoot));
+  const allowedMetadata = repositories.flatMap(row => [row.gitDirectory, row.commonDirectory]).filter(path => !rootMetadata.includes(path));
+  const within = (parent: string, path: string) => {
+    const suffix = relative(parent, path);
+    return suffix === '' || !isAbsolute(suffix) && suffix !== '..' && !suffix.startsWith(`..${sep}`);
+  };
+  const protectedPaths = new Set<string>();
+  for (const path of new Set(Object.values(library.branchPaths ?? {}))) {
+    let workspace: string;
+    try { workspace = await realpath(resolve(root, path)); }
+    catch (error) {
+      if (['ENOENT', 'ENOTDIR'].includes((error as NodeJS.ErrnoException).code ?? '')) continue;
+      throw error;
+    }
+    if (!allowedRoots.has(workspace)) protectedPaths.add(workspace);
+    for (const directory of await gitDirectories(workspace)) {
+      if (!rootMetadata.includes(directory) && !allowedMetadata.some(parent => within(parent, directory))) protectedPaths.add(directory);
+    }
+  }
+  return [...protectedPaths];
+}

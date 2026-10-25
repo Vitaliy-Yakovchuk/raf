@@ -1,0 +1,15 @@
+{
+  "command": "npm run build",
+  "initial": {
+    "exitCode": null,
+    "output": "\n> build\n> node scripts/build.ts\n\n"
+  },
+  "completion": {
+    "chunk_id": "4e231f",
+    "wall_time_seconds": 0.000012128,
+    "exit_code": 1,
+    "original_token_count": 104,
+    "output": "{\"code\":\"BUILD_FAILED\",\"message\":\"scripts/qa-agent-run-evidence.mjs:1:1: коментар у власному коді.\\nscripts/qa-agent-run-evidence.mjs:6:1: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"/srv/dev/work/orchestrator/raf-develop/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\n"
+  },
+  "sourceHead": "448f6c54a1235e8dc0b6c6861b9b4f26202d08fd"
+}

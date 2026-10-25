@@ -1,0 +1,87 @@
+["git","rev-parse","HEAD"]
+23968f5d892b5a20a0408282c2e99d85fb53d88e
+["git","status","--short"]
+ M test/shared-libs-launch-boundaries.test.ts
+?? evidence/cfc97-shared-libs-live/metadata-fix/
+?? evidence/cfc97-shared-libs-live/observation-fix/comment-build.json
+?? src/shared-libs-sandbox.ts
+["git","diff","--","test/shared-libs-launch-boundaries.test.ts"]
+diff --git a/test/shared-libs-launch-boundaries.test.ts b/test/shared-libs-launch-boundaries.test.ts
+index 5b7ad7f..48c4eaa 100644
+--- a/test/shared-libs-launch-boundaries.test.ts
++++ b/test/shared-libs-launch-boundaries.test.ts
+@@ -1,6 +1,6 @@
+ import assert from 'node:assert/strict';
+ import test, { type TestContext } from 'node:test';
+-import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
++import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import { createAppRuntime, type AppRuntimeDependencies, type RuntimeConfiguration, type RuntimeContext, type RuntimeLaunch, type RuntimeRunParameters, type RuntimeServices, type RuntimeTaskContext } from '../src/app-runtime.ts';
+@@ -11,6 +11,8 @@ import type { AdapterStartRequest } from '../src/agent-adapters.ts';
+ import type { ReportedCommitLaunchContext } from '../src/reported-commits-contract.ts';
+ import type { StateStore } from '../src/state-store.ts';
+ import { assertSharedLibraryLaunch, assertSharedLibraryAcceptance } from '../scripts/qa-shared-libs-observation.mjs';
++import { sharedLibraryReadOnlyPaths } from '../src/shared-libs-sandbox.ts';
++import { protectCodexReadOnlyPaths } from '../src/codex-sandbox.ts';
+ 
+ test('live shared-libs stand observes the persisted launchContext contract', () => {
+   const layout = { product: '/stand/etchly-develop', library: '/stand/shared-libs-develop', libraryGit: '/stand/.git/modules/shared-libs/worktrees/develop', libraryCommon: '/stand/.git/modules/shared-libs' };
+@@ -42,6 +44,14 @@ function fixture(t: TestContext, branch: string, usesSharedLibs: boolean | undef
+   const libraryGit = git('shared-libs');
+   const rootGit = join(root, '.git');
+   for (const path of [cwd, library, join(root, 'shared-libs-main'), rootGit, ...projectGit, ...libraryGit]) mkdirSync(path, { recursive: true });
++  for (const [workspace, directories] of [[cwd, projectGit], [library, libraryGit]] as const) {
++    writeFileSync(join(workspace, '.git'), `gitdir: ${directories[0]}\n`);
++    writeFileSync(join(directories[0], 'HEAD'), 'ref: refs/heads/' + branch + '\n');
++    writeFileSync(join(directories[0], 'commondir'), '../..\n');
++    mkdirSync(join(directories[1], 'objects'), { recursive: true });
++  }
++  writeFileSync(join(rootGit, 'HEAD'), 'ref: refs/heads/main\n');
++  mkdirSync(join(rootGit, 'objects'), { recursive: true });
+   symlinkSync(`../shared-libs-${branch}`, link);
+   const projects: WorkspaceProjectsConfig = {
+     profiles: { product: { development: branch } },
+@@ -119,12 +129,41 @@ function fixture(t: TestContext, branch: string, usesSharedLibs: boolean | undef
+   const app = createAppRuntime(context, dependencies);
+   t.after(() => app.close());
+   const parameters: RuntimeRunParameters = { id: 'library-boundaries', type: phase, project: 'etchly', features: [change], phase, complexity: 'normal', tasks: [`${change}:9.5`] };
+-  return { root, cwd, library, link, documents, projectGit, libraryGit, rootGit, launches, contracts, briefs, starts, reservations, inspections,
++  return { root, cwd, library, link, projects, documents, projectGit, libraryGit, rootGit, launches, contracts, briefs, starts, reservations, inspections,
+     run: () => app.handlers['agent run'](parameters as unknown as Record<string, unknown>),
+     setLibraryBranch(value: string | null) { libraryBranch = value; },
+   };
+ }
+ 
++const effectiveAccess = (filesystem: Record<string, string>, target: string) => Object.entries(filesystem)
++  .filter(([path]) => target === path || target.startsWith(path + '/'))
++  .sort(([left], [right]) => right.length - left.length)[0]?.[1] ?? 'read';
++
++for (const dependency of [false, undefined]) test(`independent library Git metadata stays read-only under writable Orchestrator Git ancestor (${dependency})`, async t => {
++  const f = fixture(t, 'develop', dependency);
++  await f.run();
++  const readOnly = await sharedLibraryReadOnlyPaths(f.root, f.projects, f.contracts[0]);
++  const policy = await protectCodexReadOnlyPaths({ [f.rootGit]: 'write', [f.cwd]: 'write', ...Object.fromEntries(f.projectGit.map(path => [path, 'write'])) }, readOnly);
++  for (const path of [f.library, ...f.libraryGit]) assert.equal(effectiveAccess(policy.filesystem, join(path, 'probe.txt')), 'read', path);
++  for (const path of [f.rootGit, ...f.projectGit]) assert.equal(effectiveAccess(policy.filesystem, join(path, 'index')), 'write', path);
++});
++
++test('dependent library retains its granted worktree and Git metadata in the protected sandbox', async t => {
++  const f = fixture(t, 'develop', true);
++  await f.run();
++  const readOnly = await sharedLibraryReadOnlyPaths(f.root, f.projects, f.contracts[0]);
++  const policy = await protectCodexReadOnlyPaths(Object.fromEntries(f.contracts[0].writeBoundaries.map(path => [path, 'write'])), readOnly);
++  for (const path of [f.library, ...f.libraryGit]) assert.equal(effectiveAccess(policy.filesystem, join(path, 'probe.txt')), 'write', path);
++});
++
++test('independent launch protection does not require an available library workspace', async t => {
++  const f = fixture(t, 'develop', false);
++  await f.run();
++  rmSync(f.library, { recursive: true });
++  rmSync(join(f.root, 'shared-libs-main'), { recursive: true });
++  assert.deepEqual(await sharedLibraryReadOnlyPaths(f.root, f.projects, f.contracts[0]), []);
++});
++
+ function samePaths(actual: readonly string[] | undefined, expected: readonly string[], label: string) {
+   assert.deepEqual(new Set(actual), new Set(expected), label);
+   assert.equal(actual?.length, new Set(actual).size, `${label}: duplicate paths`);

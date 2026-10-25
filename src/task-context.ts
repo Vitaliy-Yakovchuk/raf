@@ -34,6 +34,11 @@ export interface TaskContextRequest {
   readonly configuration: TaskContextConfiguration;
 }
 
+export interface TaskContextDependencies {
+  deriveSources(root: string, selected: readonly { change: string; item: { id: string; description: string } }[]): Promise<string[]>;
+  archiveWriteBoundaries(root: string, selected: readonly { change: string; item: { id: string; description: string } }[]): Promise<string[]>;
+}
+
 export interface TaskReportSchema extends Readonly<Record<string, unknown>> {
   readonly type: 'object';
   readonly required: readonly string[];
@@ -315,18 +320,18 @@ async function archiveWriteBoundaries(root: string, selected: readonly { change:
   return [...boundaries];
 }
 
-export async function deriveTaskContext(request: TaskContextRequest): Promise<DerivedTaskContext> {
+export async function deriveTaskContext(request: TaskContextRequest, dependencies: Partial<TaskContextDependencies> = {}): Promise<DerivedTaskContext> {
   const { root, parameters, assignment, configuration } = request;
   const branch = branchFor(parameters, configuration.projects);
   const selected = selectedItems(parameters, assignment);
   const changes = [...new Set(selected.map(row => row.change))];
-  const archiveBoundaries = await archiveWriteBoundaries(root, selected);
+  const archiveBoundaries = await (dependencies.archiveWriteBoundaries ?? archiveWriteBoundaries)(root, selected);
   return {
     branch,
     outcome: selected.map(({ change, item }) => `${change}:${item.id} — ${item.description}`).join('\n'),
     writeBoundaries: [...(archiveBoundaries.length ? archiveBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
-    sources: await deriveSources(root, selected),
+    sources: await (dependencies.deriveSources ?? deriveSources)(root, selected),
     reportSchema: reportSchema(configuration.reportStatuses, parameters.phase === 'qa'),
     estimate: deriveEstimate(parameters, selected, configuration),
   };

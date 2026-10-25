@@ -7,6 +7,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
 import type { TestContext } from 'node:test';
 import { createProductionServices } from '../src/production-runtime.ts';
+import { compileCatalog } from '../src/catalog.ts';
 import { executeCommand } from '../src/os-runtime.ts';
 import { openStateStore } from '../src/state-store.ts';
 import { bindWorkspaceBoundaries } from '../src/task-context.ts';
@@ -15,20 +16,27 @@ import type { AdapterCommand, AdapterCommandExecutor } from '../src/agent-adapte
 import type { AssignmentSnapshot } from '../src/assignment.ts';
 import { prepareProductionQaFixture } from './production-qa-fixture.ts';
 
+const constants = JSON.parse(await readFile(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
+const catalogModels = JSON.parse(await readFile(new URL('../../conf/models.json', import.meta.url), 'utf8'));
+const projects = JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
+const rafSettings = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+const models: RuntimeConfiguration['models'] = {
+  version: 1,
+  runners: [{ id: 'codex', initialEnabled: true }],
+  models: [{ id: 'gpt-6.1-sol', version: '6.1', runner: 'codex', effort: 'high', complexity: 'decision', enabled: true }],
+  routing: { complexityOrder: ['decision'], taskClassification: {}, runnerPreferences: [], modelTransitions: [], roleModelBindings: {} },
+};
+const catalog = compileCatalog(constants, catalogModels, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), projects);
+
 export const configuration: RuntimeConfiguration = {
-  catalog: { commands: [], reportStatuses: [{ id: 'succeeded' }, { id: 'failed' }] },
-  models: {
-    version: 1,
-    runners: [{ id: 'codex', initialEnabled: true }],
-    models: [{ id: 'gpt-6.1-sol', version: '6.1', runner: 'codex', effort: 'high', complexity: 'decision', enabled: true }],
-    routing: { complexityOrder: ['decision'], taskClassification: {}, runnerPreferences: [], modelTransitions: [], roleModelBindings: {} },
-  },
-  commandTiming: { emaAlpha: 0.1 },
-  service: JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8')).service,
+  catalog: { ...catalog, models },
+  models,
+  commandTiming: rafSettings.commandTiming,
+  service: rafSettings.service,
 };
 
 export const realFlow = JSON.parse(await readFile(new URL('../../conf/flow.json', import.meta.url), 'utf8'));
-export const fixtureResources = { normal: { ...realFlow.resources.normal, minRamBytes: 1024, minDiskBytes: 1024 }, hotfix: { ...realFlow.resources.hotfix, minRamBytes: 1024, minDiskBytes: 1024 }, home: { ...realFlow.resources.home } };
+export const fixtureResources = { normal: { ...realFlow.resources.normal, maxNormalizedLoad: Number.MAX_VALUE, minRamBytes: 1024, minDiskBytes: 1024 }, hotfix: { ...realFlow.resources.hotfix, maxNormalizedLoad: Number.MAX_VALUE, minRamBytes: 1024, minDiskBytes: 1024 }, home: { ...realFlow.resources.home } };
 export const fixtureResourceEstimates = {
   agentTypes: {
     implement: { ramBytes: 2048, diskBytesPerFileSystem: 4096 },
@@ -122,7 +130,9 @@ process.exit(result.status ?? 1);
   }));
   await writeFile(join(confRoot, 'models.json'), JSON.stringify(configuration.models));
   await writeFile(join(root, 'catalog.json'), JSON.stringify(configuration.catalog));
-  await writeFile(join(confRoot, 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'isolated.sqlite' }, commandTiming: configuration.commandTiming }));
+  await mkdir(join(cwd, 'dist'), { recursive: true });
+  await writeFile(join(cwd, 'dist', 'catalog.json'), JSON.stringify(configuration.catalog));
+  await writeFile(join(confRoot, 'raf.json'), JSON.stringify({ ...rafSettings, state: { ...rafSettings.state, fileName: 'isolated.sqlite' }, commandTiming: configuration.commandTiming }));
   const flowPath = join(confRoot, 'flow.json');
   const writeFlowResources = (resources: unknown) => writeFile(flowPath, JSON.stringify({ ...realFlow, resources, resourceEstimates: fixtureResourceEstimates }));
   const writeFlowResourceEstimates = (resourceEstimates: unknown) => writeFile(flowPath, JSON.stringify({ ...realFlow, resources: fixtureResources, resourceEstimates }));

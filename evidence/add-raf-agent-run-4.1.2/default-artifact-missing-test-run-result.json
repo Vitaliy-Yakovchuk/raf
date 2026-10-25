@@ -1,0 +1,488 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/production-runtime.test.ts",
+        "line": 153,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/production-runtime.test.ts:153:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-launch] default service composition starts the persistent worker and survives the command process exit"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "\n<fixture>/raf-prod-o2nMEt/raf-develop/src/launch-wrapper.ts:200\n        void workerOutput().catch(() => '').then(output => reject(Object.assign(new Error(`Wrapper launch ${request.runId} failed: ${String(error)}${output.trim() ? `; worker: ${output.slice(-4096).trim()}` : ''}; verify runner readiness and recover this run before retrying`), { wrapper: { terminate } })));\n                                                                                ^\n\nError: Wrapper launch fixture-run-1 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T16:33:32.317Z worker started run=fixture-run-1 pid=2198431 ppid=2198151\nfixture-run-1: worker process group=2198431 session=2198431 pidNamespace=pid:[4026531836]\n(node:2198431) Warning: Compiled catalog <fixture>/raf-prod-o2nMEt/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-o2nMEt/raf-develop/dist/catalog.json'\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:2198431) Warning: Error: Compiled catalog <fixture>/raf-prod-o2nMEt/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-o2nMEt/raf-develop/dist/catalog.json'\n(node:2198431) Warning: Error: Compiled catalog <fixture>/raf-prod-o2nMEt/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-o2nMEt/raf-develop/dist/catalog.json'\n<fixture>/raf-prod-o2nMEt/raf-develop/src/compiled-catalog.ts:7\n  catch (error) { throw new Error(`Compiled catalog ${artifactPath}: ${error instanceof Error ? error.message : String(error)}`); }\n                        ^\n\nError: Compiled catalog <fixture>/raf-prod-o2nMEt/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-o2nMEt/raf-develop/dist/catalog.json'\n    at loadCompiledCatalog (<fixture>/raf-prod-o2nMEt/raf-develop/src/compiled-catalog.ts:7:25)\n    at loadSandboxTestPhases (<fixture>/raf-prod-o2nMEt/raf-develop/src/production-runtime.ts:256:90)\n    at runnerSandboxScope (<fixture>/raf-prod-o2nMEt/raf-develop/src/production-runtime.ts:248:115)\n    at async Module.runProductionWorker (<fixture>/raf-prod-o2nMEt/raf-develop/src/production-runtime.ts:1500:21)\n    at async <fixture>/raf-prod-o2nMEt/raf-develop/[eval1]:1:100\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\n    at <fixture>/raf-prod-o2nMEt/raf-develop/src/launch-wrapper.ts:200:81 {\n  wrapper: { terminate: [AsyncFunction: terminate] }\n}\n\nNode.js v26.12.1\n\n\n\n1 !== 0\n",
+      "location": {
+        "file": "<fixture>/raf-prod-o2nMEt/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-prod-o2nMEt/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at loadSandboxTestPhases (<fixture>/raf-prod-o2nMEt/raf-develop/src/production-runtime.ts:256:90)",
+        "    at runnerSandboxScope (<fixture>/raf-prod-o2nMEt/raf-develop/src/production-runtime.ts:248:115)",
+        "    at async Module.runProductionWorker (<fixture>/raf-prod-o2nMEt/raf-develop/src/production-runtime.ts:1500:21)",
+        "    at async <fixture>/raf-prod-o2nMEt/raf-develop/[eval1]:1:100",
+        "    at <fixture>/raf-prod-o2nMEt/raf-develop/src/launch-wrapper.ts:200:81 {",
+        "    at TestContext.<anonymous> (test/production-runtime.test.ts:311:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-worker] persistent child commits the actual native process before returning the handshake"
+      },
+      "errorName": "Error",
+      "message": "Wrapper launch fixture-run-1 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T16:33:35.615Z worker started run=fixture-run-1 pid=2199175 ppid=2194039\nfixture-run-1: worker process group=2199175 session=2199175 pidNamespace=pid:[4026531836]\n(node:2199175) Warning: Compiled catalog <fixture>/raf-prod-4OlNgq/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-4OlNgq/raf-develop/dist/catalog.json'\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:2199175) Warning: Error: Compiled catalog <fixture>/raf-prod-4OlNgq/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-4OlNgq/raf-develop/dist/catalog.json'\n(node:2199175) Warning: Error: Compiled catalog <fixture>/raf-prod-4OlNgq/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-4OlNgq/raf-develop/dist/catalog.json'\n<fixture>/raf-prod-4OlNgq/raf-develop/src/compiled-catalog.ts:7\n  catch (error) { throw new Error(`Compiled catalog ${artifactPath}: ${error instanceof Error ? error.message : String(error)}`); }\n                        ^\n\nError: Compiled catalog <fixture>/raf-prod-4OlNgq/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-4OlNgq/raf-develop/dist/catalog.json'\n    at loadCompiledCatalog (<fixture>/raf-prod-4OlNgq/raf-develop/src/compiled-catalog.ts:7:25)\n    at loadSandboxTestPhases (<fixture>/raf-prod-4OlNgq/raf-develop/src/production-runtime.ts:256:90)\n    at runnerSandboxScope (<fixture>/raf-prod-4OlNgq/raf-develop/src/production-runtime.ts:248:115)\n    at async runProductionWorker (<fixture>/raf-prod-4OlNgq/raf-develop/src/production-runtime.ts:1500:21)\n    at async <fixture>/raf-prod-4OlNgq/raf-develop/[eval1]:1:378\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "location": {
+        "file": "<fixture>/raf-prod-4OlNgq/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-prod-4OlNgq/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at loadSandboxTestPhases (<fixture>/raf-prod-4OlNgq/raf-develop/src/production-runtime.ts:256:90)",
+        "    at runnerSandboxScope (<fixture>/raf-prod-4OlNgq/raf-develop/src/production-runtime.ts:248:115)",
+        "    at async runProductionWorker (<fixture>/raf-prod-4OlNgq/raf-develop/src/production-runtime.ts:1500:21)",
+        "    at async <fixture>/raf-prod-4OlNgq/raf-develop/[eval1]:1:378",
+        "    at src/launch-wrapper.ts:200:81"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-worker] unconfirmed OpenSpec success becomes failed after exit and never auto-resumes"
+      },
+      "errorName": "Error",
+      "message": "Wrapper launch fixture-run-1 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T16:33:44.243Z worker started run=fixture-run-1 pid=2200648 ppid=2194039\nfixture-run-1: worker process group=2200648 session=2200648 pidNamespace=pid:[4026531836]\n(node:2200648) Warning: Compiled catalog <fixture>/raf-prod-LHdnj2/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-LHdnj2/raf-develop/dist/catalog.json'\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:2200648) Warning: Error: Compiled catalog <fixture>/raf-prod-LHdnj2/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-LHdnj2/raf-develop/dist/catalog.json'\n(node:2200648) Warning: Error: Compiled catalog <fixture>/raf-prod-LHdnj2/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-LHdnj2/raf-develop/dist/catalog.json'\n<fixture>/raf-prod-LHdnj2/raf-develop/src/compiled-catalog.ts:7\n  catch (error) { throw new Error(`Compiled catalog ${artifactPath}: ${error instanceof Error ? error.message : String(error)}`); }\n                        ^\n\nError: Compiled catalog <fixture>/raf-prod-LHdnj2/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-LHdnj2/raf-develop/dist/catalog.json'\n    at loadCompiledCatalog (<fixture>/raf-prod-LHdnj2/raf-develop/src/compiled-catalog.ts:7:25)\n    at loadSandboxTestPhases (<fixture>/raf-prod-LHdnj2/raf-develop/src/production-runtime.ts:256:90)\n    at runnerSandboxScope (<fixture>/raf-prod-LHdnj2/raf-develop/src/production-runtime.ts:248:115)\n    at async runProductionWorker (<fixture>/raf-prod-LHdnj2/raf-develop/src/production-runtime.ts:1500:21)\n    at async <fixture>/raf-prod-LHdnj2/raf-develop/[eval1]:1:378\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "location": {
+        "file": "<fixture>/raf-prod-LHdnj2/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-prod-LHdnj2/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at loadSandboxTestPhases (<fixture>/raf-prod-LHdnj2/raf-develop/src/production-runtime.ts:256:90)",
+        "    at runnerSandboxScope (<fixture>/raf-prod-LHdnj2/raf-develop/src/production-runtime.ts:248:115)",
+        "    at async runProductionWorker (<fixture>/raf-prod-LHdnj2/raf-develop/src/production-runtime.ts:1500:21)",
+        "    at async <fixture>/raf-prod-LHdnj2/raf-develop/[eval1]:1:378",
+        "    at src/launch-wrapper.ts:200:81"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-worker] crash without a report records failed in the same SQLite and does not launch a replacement"
+      },
+      "errorName": "Error",
+      "message": "Wrapper launch fixture-run-1 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T16:33:47.342Z worker started run=fixture-run-1 pid=2201077 ppid=2194039\nfixture-run-1: worker process group=2201077 session=2201077 pidNamespace=pid:[4026531836]\n(node:2201077) Warning: Compiled catalog <fixture>/raf-prod-Ui6nI5/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-Ui6nI5/raf-develop/dist/catalog.json'\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:2201077) Warning: Error: Compiled catalog <fixture>/raf-prod-Ui6nI5/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-Ui6nI5/raf-develop/dist/catalog.json'\n(node:2201077) Warning: Error: Compiled catalog <fixture>/raf-prod-Ui6nI5/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-Ui6nI5/raf-develop/dist/catalog.json'\n<fixture>/raf-prod-Ui6nI5/raf-develop/src/compiled-catalog.ts:7\n  catch (error) { throw new Error(`Compiled catalog ${artifactPath}: ${error instanceof Error ? error.message : String(error)}`); }\n                        ^\n\nError: Compiled catalog <fixture>/raf-prod-Ui6nI5/raf-develop/dist/catalog.json: ENOENT: no such file or directory, open '<fixture>/raf-prod-Ui6nI5/raf-develop/dist/catalog.json'\n    at loadCompiledCatalog (<fixture>/raf-prod-Ui6nI5/raf-develop/src/compiled-catalog.ts:7:25)\n    at loadSandboxTestPhases (<fixture>/raf-prod-Ui6nI5/raf-develop/src/production-runtime.ts:256:90)\n    at runnerSandboxScope (<fixture>/raf-prod-Ui6nI5/raf-develop/src/production-runtime.ts:248:115)\n    at async runProductionWorker (<fixture>/raf-prod-Ui6nI5/raf-develop/src/production-runtime.ts:1500:21)\n    at async <fixture>/raf-prod-Ui6nI5/raf-develop/[eval1]:1:378\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "location": {
+        "file": "<fixture>/raf-prod-Ui6nI5/raf-develop/src/compiled-catalog.ts",
+        "line": 7,
+        "column": 25
+      },
+      "stack": [
+        "    at loadCompiledCatalog (<fixture>/raf-prod-Ui6nI5/raf-develop/src/compiled-catalog.ts:7:25)",
+        "    at loadSandboxTestPhases (<fixture>/raf-prod-Ui6nI5/raf-develop/src/production-runtime.ts:256:90)",
+        "    at runnerSandboxScope (<fixture>/raf-prod-Ui6nI5/raf-develop/src/production-runtime.ts:248:115)",
+        "    at async runProductionWorker (<fixture>/raf-prod-Ui6nI5/raf-develop/src/production-runtime.ts:1500:21)",
+        "    at async <fixture>/raf-prod-Ui6nI5/raf-develop/[eval1]:1:378",
+        "    at src/launch-wrapper.ts:200:81"
+      ],
+      "redacted": true,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 5,
+    "retainedEntries": 5,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "38be3c621e7bfbdd79a02af6e67f6194ca33fd9160acc5ebbfdd73851205675c",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "2c6f22fd-89b0-4582-b3ca-d66edf96081d",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "add-raf-agent-run/contracts",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/production-runtime.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/production-runtime.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-yMQMoQ"
+    }
+  },
+  "startedAt": "2026-10-25T16:32:58.881Z",
+  "durationMs": 52207,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] default factory returns the existing RuntimeServices without launching a runner"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] route uses configured project and actual Git branch"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] invalid resource estimate (negative RAM) fails before any run directory or process"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] invalid resource estimate (missing disk estimate) fails before any run directory or process"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] explicit zero resource estimate is known independently of positive thresholds"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] absent and opaque quota stay unknown and selection reuses model-routing"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] forged main and system claims do not authorize protected mutations or messages"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] prepared reports belong to distinct run directories and cleanup touches only its own run"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] impossible resource demand refuses without a session, reservation or tmux spawn"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] unknown process scan does not release an existing owner or report it as live"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] missing launch runner path refuses before the runner process starts"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] different launch runner path refuses before the runner process starts"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] disk admission checks development and HOME without reserving HOME or checking state and temporary volumes"
+    }
+  ],
+  "knownRed": [
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-launch] default service composition starts the persistent worker and survives the command process exit"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] persistent child commits the actual native process before returning the handshake"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] unconfirmed OpenSpec success becomes failed after exit and never auto-resumes"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] crash without a report records failed in the same SQLite and does not launch a replacement"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 9.54,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 17663545344,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 161137491968
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 8064696320
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      }
+    },
+    "remaining": {
+      "ramBytes": 13368578048,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 139662655488,
+        "/dev/mapper/home-dev": 8064696320
+      },
+      "normalizedLoad": 1.1925
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "2c6f22fd-89b0-4582-b3ca-d66edf96081d",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "6a1186e3-7b3b-4c7a-a3aa-02c7e0db8bdc",
+        "root": {
+          "pid": 2194031,
+          "startTicks": "28866481",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "add-raf-agent-run",
+          "item": "4.1.2"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "ce1f428739b2ac374bdbdf680e5327bfa350e64cb9a0429e3caabd323c720dd8"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-yMQMoQ"
+      ]
+    },
+    "preparedAt": 1792945982699,
+    "baseline": {
+      "at": 1792945982721,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1792945982743,
+    "lastObservedAt": 1792946031044,
+    "finishedAt": 1792946031073,
+    "finishReason": "exit",
+    "peakRamBytes": 356483072,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 356483072,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Usage observer reattached; the interval since the previous persisted sample is unverified",
+      "Process liveness unknown during reconciliation",
+      "RAM measurement unavailable",
+      "Process scan could not establish every process identity",
+      "A process disappeared or RSS was unavailable during sample",
+      "Root process identity is unavailable or changed",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": {
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+    "waited": true
+  }
+}

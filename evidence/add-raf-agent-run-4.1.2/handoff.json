@@ -1,0 +1,139 @@
+{
+  "assignment": "add-raf-agent-run:4.1.2",
+  "audit": {
+    "applicable": true,
+    "sources": [
+      "openspec/changes/add-raf-agent-run/proposal.md",
+      "openspec/changes/add-raf-agent-run/tasks.md#4.1.2",
+      "openspec/changes/add-raf-test-run/specs/core/process/feature-test-authoring/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md"
+    ],
+    "finding": "Чинна production-фікстура передавала catalog без constants та інших обов'язкових полів скомпільованого артефакту. Доручення актуальне й узгоджене зі стадією test-scaffold."
+  },
+  "changes": [
+    "Каталог компілюється з чинних raf-constants/models/projects через compileCatalog; synthetic models збережено в RuntimeConfiguration та catalog.models.",
+    "Той самий каталог записується в context.artifactPath та стандартний raf-develop/dist/catalog.json для default loader у worker.",
+    "Ізольований conf/raf.json успадковує актуальну runtime-конфігурацію, включно з service, costProfile та повним commandTiming; state.fileName лишається isolated.sqlite.",
+    "Синтетичні normal/hotfix thresholds fixtureResources мають maxNormalizedLoad=Number.MAX_VALUE: перевірки старту не залежать від стороннього CPU-навантаження хоста; зовнішній допуск raf test run та робочі conf не змінені."
+  ],
+  "invariants": {
+    "assertionsFile": "test/production-runtime.test.ts",
+    "assertionsGitBlob": "7dfdb694b6301e92d356cf6a282e9367c02757af",
+    "assertionsUnchanged": true,
+    "productionImplementationChanged": false,
+    "newPublicMethods": [],
+    "taskCheckboxesEdited": false
+  },
+  "selection": {
+    "project": "raf",
+    "phase": "red",
+    "group": "add-raf-agent-run/contracts",
+    "files": [
+      "test/production-runtime.test.ts"
+    ],
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-agent-run/contracts --files test/production-runtime.test.ts",
+    "keepSameGroupForNextStage": true
+  },
+  "profileHandoff": {
+    "configuration": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "profileId": "node",
+    "unitFilesPointer": "/projects/raf/profiles/node/unitFiles",
+    "unitFilesAdditions": [],
+    "groupsPointer": "/projects/raf/groups/add-raf-agent-run~1contracts",
+    "groupsAdditions": {},
+    "reason": "test/production-runtime.test.ts уже зареєстровано в node.unitFiles і contracts.files; жодних доповнень conf не потрібно. Main має звірити чинні записи перед наступним red.",
+    "prerequisites": {
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "branch": "develop",
+      "node": "v26.12.1",
+      "openspec": "1.14.3",
+      "tmux": "3.6",
+      "checks": [
+        "node_modules/typescript/package.json",
+        "src/test-run-reporter.ts",
+        "scripts/test-run-node.ts"
+      ],
+      "argv": [
+        "./scripts/test-run-node.ts"
+      ],
+      "exactIds": "node-test-name",
+      "resultAdapter": "node-test-events",
+      "environment": {
+        "isolatedHome": true,
+        "stateOrigin": true
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "privateTmpProvidedByChannel": true
+    }
+  },
+  "attempts": [
+    {
+      "file": "catalog-only-test-run-result.json",
+      "runId": "33f1c0c1-654d-4962-bab8-5b53cc94f5c3",
+      "cliExitCode": 1,
+      "classification": "15 passed / 5 knownRed; reportStatuses усунуто; service/costProfile setup-помилки ще не дозволяли вважати решту поведінковим red."
+    },
+    {
+      "file": "runtime-settings-test-run-result.json",
+      "runId": "0b667889-8108-4ef1-9bf5-bc459ef1b890",
+      "cliExitCode": 1,
+      "classification": "13 passed / 7 knownRed; runtime settings виправлено; 6 відмов через реальне CPU-навантаження хоста не є доказом відсутньої поведінки."
+    },
+    {
+      "file": "default-artifact-missing-test-run-result.json",
+      "runId": "2c6f22fd-89b0-4582-b3ca-d66edf96081d",
+      "cliExitCode": 1,
+      "classification": "15 passed / 5 knownRed; host-load залежність усунуто; worker setup ще не мав стандартного dist/catalog.json."
+    },
+    {
+      "file": "red-test-run-result.json",
+      "runId": "485ffe1d-7a26-46eb-9db2-1ce8bbecc2cb",
+      "cliExitCode": 1,
+      "classification": "19 passed / 1 knownRed; лише ERR_ASSERTION у test/production-runtime.test.ts:153, без setup/import помилок.",
+      "durationMs": 72410,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false
+    }
+  ],
+  "remainingAssertion": {
+    "test": {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+    },
+    "location": {
+      "file": "test/production-runtime.test.ts",
+      "line": 153,
+      "column": 10
+    },
+    "assertion": "assert.deepEqual(task.writeBoundaries, [f.changeRoot, f.questionsPath]);",
+    "classification": "Залишкове поведінкове твердження про вузький контекст, не помилка каталогу/імпорту/setup. Потрібен аудит main/4.1; сам результат не доводить дефект production.",
+    "inference": "Фікстура за замовчуванням має лише один пункт. Чинна archiveWriteBoundaries може розширювати права останнього виконавця; можливе застаріле очікування assertion. Фактичні expected/actual були редаговані адаптером, тому це лише висновок зі статичного коду.",
+    "sources": [
+      "test/production-fixture.ts:fixture",
+      "test/production-runtime.test.ts:153",
+      "src/task-context.ts:archiveWriteBoundaries",
+      "openspec/specs/projects/orchestrator/autonomous-development/spec.md#Архівація останнім виконавцем"
+    ],
+    "assertionsChanged": false
+  },
+  "completion": {
+    "fixtureRepairSatisfied": true,
+    "fullSuitePassed": false,
+    "archivePerformed": false,
+    "otherOpenAssignedChangeItems": [
+      "4.1",
+      "4.2"
+    ],
+    "note": "Ставить галочку 4.1.2 raf за succeeded; інші пункти не виконувалися."
+  }
+}

@@ -1,0 +1,488 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/production-runtime.test.ts",
+        "line": 153,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/production-runtime.test.ts:153:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-launch] default service composition starts the persistent worker and survives the command process exit"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "\n<fixture>/raf-prod-gFwazD/raf-develop/src/resource-usage.ts:231\n    const cadence = this.configuration.raf.service.hostTickIntervalMs;\n                                                   ^\n\nTypeError: Cannot read properties of undefined (reading 'hostTickIntervalMs')\n    at new ResourceUsageTracker (<fixture>/raf-prod-gFwazD/raf-develop/src/resource-usage.ts:231:52)\n    at runtimeResourceUsage (<fixture>/raf-prod-gFwazD/raf-develop/src/resource-usage-runtime.ts:112:51)\n    at accountSessionUsage (<fixture>/raf-prod-gFwazD/raf-develop/src/resource-usage-runtime.ts:125:48)\n    at <fixture>/raf-prod-gFwazD/raf-develop/src/state-store.ts:620:82\n    at access (<fixture>/raf-prod-gFwazD/raf-develop/src/state-store.ts:580:14)\n    at Object.putSession (<fixture>/raf-prod-gFwazD/raf-develop/src/state-store.ts:615:30)\n    at reserveLaunchInTransaction (<fixture>/raf-prod-gFwazD/raf-develop/src/launch-state.ts:104:6)\n    at Object.reserveLaunch (<fixture>/raf-prod-gFwazD/raf-develop/src/production-runtime.ts:1267:26)\n    at <fixture>/raf-prod-gFwazD/raf-develop/src/task-reservations.ts:330:31\n    at withSessionTransaction (<fixture>/raf-prod-gFwazD/raf-develop/src/state-store.ts:673:18)\n\nNode.js v26.12.1\n\n\n\n1 !== 0\n",
+      "location": {
+        "file": "<fixture>/raf-prod-gFwazD/raf-develop/src/resource-usage.ts",
+        "line": 231,
+        "column": 52
+      },
+      "stack": [
+        "    at new ResourceUsageTracker (<fixture>/raf-prod-gFwazD/raf-develop/src/resource-usage.ts:231:52)",
+        "    at runtimeResourceUsage (<fixture>/raf-prod-gFwazD/raf-develop/src/resource-usage-runtime.ts:112:51)",
+        "    at accountSessionUsage (<fixture>/raf-prod-gFwazD/raf-develop/src/resource-usage-runtime.ts:125:48)",
+        "    at <fixture>/raf-prod-gFwazD/raf-develop/src/state-store.ts:620:82",
+        "    at access (<fixture>/raf-prod-gFwazD/raf-develop/src/state-store.ts:580:14)",
+        "    at Object.putSession (<fixture>/raf-prod-gFwazD/raf-develop/src/state-store.ts:615:30)",
+        "    at reserveLaunchInTransaction (<fixture>/raf-prod-gFwazD/raf-develop/src/launch-state.ts:104:6)",
+        "    at Object.reserveLaunch (<fixture>/raf-prod-gFwazD/raf-develop/src/production-runtime.ts:1267:26)",
+        "    at <fixture>/raf-prod-gFwazD/raf-develop/src/task-reservations.ts:330:31",
+        "    at withSessionTransaction (<fixture>/raf-prod-gFwazD/raf-develop/src/state-store.ts:673:18)",
+        "    at TestContext.<anonymous> (test/production-runtime.test.ts:311:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-worker] persistent child commits the actual native process before returning the handshake"
+      },
+      "errorName": "Error",
+      "message": "Wrapper launch fixture-run-1 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T16:29:22.355Z worker started run=fixture-run-1 pid=2176917 ppid=2172502\nfixture-run-1: worker process group=2176917 session=2176917 pidNamespace=pid:[4026531836]\n<fixture>/raf-prod-pquQPP/raf-develop/src/raf-cost-runtime.ts:53\n    if (!Array.isArray(settings.helperExecutables) || settings.helperExecutables.some((name         ) => typeof name !== 'string' || !name)) throw new Error('Invalid conf/raf.json#<external>/helperExecutables');\n                                ^\n\nTypeError: Cannot read properties of undefined (reading 'helperExecutables')\n    at new RafCostRuntime (<fixture>/raf-prod-pquQPP/raf-develop/src/raf-cost-runtime.ts:53:33)\n    at runProductionWorker (<fixture>/raf-prod-pquQPP/raf-develop/src/production-runtime.ts:1466:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async <fixture>/raf-prod-pquQPP/raf-develop/[eval1]:1:378\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "location": {
+        "file": "<fixture>/raf-prod-pquQPP/raf-develop/src/raf-cost-runtime.ts",
+        "line": 53,
+        "column": 33
+      },
+      "stack": [
+        "    at new RafCostRuntime (<fixture>/raf-prod-pquQPP/raf-develop/src/raf-cost-runtime.ts:53:33)",
+        "    at runProductionWorker (<fixture>/raf-prod-pquQPP/raf-develop/src/production-runtime.ts:1466:19)",
+        "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+        "    at async <fixture>/raf-prod-pquQPP/raf-develop/[eval1]:1:378",
+        "    at src/launch-wrapper.ts:200:81"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-worker] unconfirmed OpenSpec success becomes failed after exit and never auto-resumes"
+      },
+      "errorName": "Error",
+      "message": "Wrapper launch fixture-run-1 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T16:29:30.929Z worker started run=fixture-run-1 pid=2178034 ppid=2172502\nfixture-run-1: worker process group=2178034 session=2178034 pidNamespace=pid:[4026531836]\n<fixture>/raf-prod-xzuU9m/raf-develop/src/raf-cost-runtime.ts:53\n    if (!Array.isArray(settings.helperExecutables) || settings.helperExecutables.some((name         ) => typeof name !== 'string' || !name)) throw new Error('Invalid conf/raf.json#<external>/helperExecutables');\n                                ^\n\nTypeError: Cannot read properties of undefined (reading 'helperExecutables')\n    at new RafCostRuntime (<fixture>/raf-prod-xzuU9m/raf-develop/src/raf-cost-runtime.ts:53:33)\n    at runProductionWorker (<fixture>/raf-prod-xzuU9m/raf-develop/src/production-runtime.ts:1466:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async <fixture>/raf-prod-xzuU9m/raf-develop/[eval1]:1:378\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "location": {
+        "file": "<fixture>/raf-prod-xzuU9m/raf-develop/src/raf-cost-runtime.ts",
+        "line": 53,
+        "column": 33
+      },
+      "stack": [
+        "    at new RafCostRuntime (<fixture>/raf-prod-xzuU9m/raf-develop/src/raf-cost-runtime.ts:53:33)",
+        "    at runProductionWorker (<fixture>/raf-prod-xzuU9m/raf-develop/src/production-runtime.ts:1466:19)",
+        "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+        "    at async <fixture>/raf-prod-xzuU9m/raf-develop/[eval1]:1:378",
+        "    at src/launch-wrapper.ts:200:81"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/production-runtime.test.ts",
+        "name": "[production-worker] crash without a report records failed in the same SQLite and does not launch a replacement"
+      },
+      "errorName": "Error",
+      "message": "Wrapper launch fixture-run-1 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T16:29:33.715Z worker started run=fixture-run-1 pid=2178361 ppid=2172502\nfixture-run-1: worker process group=2178361 session=2178361 pidNamespace=pid:[4026531836]\n<fixture>/raf-prod-ifjckl/raf-develop/src/raf-cost-runtime.ts:53\n    if (!Array.isArray(settings.helperExecutables) || settings.helperExecutables.some((name         ) => typeof name !== 'string' || !name)) throw new Error('Invalid conf/raf.json#<external>/helperExecutables');\n                                ^\n\nTypeError: Cannot read properties of undefined (reading 'helperExecutables')\n    at new RafCostRuntime (<fixture>/raf-prod-ifjckl/raf-develop/src/raf-cost-runtime.ts:53:33)\n    at runProductionWorker (<fixture>/raf-prod-ifjckl/raf-develop/src/production-runtime.ts:1466:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async <fixture>/raf-prod-ifjckl/raf-develop/[eval1]:1:378\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "location": {
+        "file": "<fixture>/raf-prod-ifjckl/raf-develop/src/raf-cost-runtime.ts",
+        "line": 53,
+        "column": 33
+      },
+      "stack": [
+        "    at new RafCostRuntime (<fixture>/raf-prod-ifjckl/raf-develop/src/raf-cost-runtime.ts:53:33)",
+        "    at runProductionWorker (<fixture>/raf-prod-ifjckl/raf-develop/src/production-runtime.ts:1466:19)",
+        "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+        "    at async <fixture>/raf-prod-ifjckl/raf-develop/[eval1]:1:378",
+        "    at src/launch-wrapper.ts:200:81"
+      ],
+      "redacted": true,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 5,
+    "retainedEntries": 5,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "9c97a2c68da69db1a9ec25b248c10e8636fa45c019199a8734c96755a9c30d15",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "33f1c0c1-654d-4962-bab8-5b53cc94f5c3",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "add-raf-agent-run/contracts",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/production-runtime.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/production-runtime.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-hXQyTR"
+    }
+  },
+  "startedAt": "2026-10-25T16:28:22.406Z",
+  "durationMs": 76047,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] default factory returns the existing RuntimeServices without launching a runner"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] route uses configured project and actual Git branch"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] invalid resource estimate (negative RAM) fails before any run directory or process"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] invalid resource estimate (missing disk estimate) fails before any run directory or process"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] explicit zero resource estimate is known independently of positive thresholds"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] absent and opaque quota stay unknown and selection reuses model-routing"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] forged main and system claims do not authorize protected mutations or messages"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] prepared reports belong to distinct run directories and cleanup touches only its own run"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] impossible resource demand refuses without a session, reservation or tmux spawn"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] unknown process scan does not release an existing owner or report it as live"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] missing launch runner path refuses before the runner process starts"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] different launch runner path refuses before the runner process starts"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] disk admission checks development and HOME without reserving HOME or checking state and temporary volumes"
+    }
+  ],
+  "knownRed": [
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-launch] default service composition starts the persistent worker and survives the command process exit"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] persistent child commits the actual native process before returning the handshake"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] unconfirmed OpenSpec success becomes failed after exit and never auto-resumes"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] crash without a report records failed in the same SQLite and does not launch a replacement"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 9.49,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 17795723264,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 161428025344
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 8065671168
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 0,
+        "diskBytes": {}
+      }
+    },
+    "remaining": {
+      "ramBytes": 15648239616,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 150690607104,
+        "/dev/mapper/home-dev": 8065671168
+      },
+      "normalizedLoad": 1.18625
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "33f1c0c1-654d-4962-bab8-5b53cc94f5c3",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "a7e950dd-e247-4eda-9a7d-d502a275beb0",
+        "root": {
+          "pid": 2172489,
+          "startTicks": "28841542",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "add-raf-agent-run",
+          "item": "4.1.2"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "fe04e65650a13fd1cee279cfcf39bede32f710af13a7750f8152a4d8ede85cbf"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-hXQyTR"
+      ]
+    },
+    "preparedAt": 1792945733297,
+    "baseline": {
+      "at": 1792945733329,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1792945733350,
+    "lastObservedAt": 1792945778396,
+    "finishedAt": 1792945778430,
+    "finishReason": "exit",
+    "peakRamBytes": 445587456,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 445587456,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Usage observer reattached; the interval since the previous persisted sample is unverified",
+      "Process liveness unknown during reconciliation",
+      "RAM measurement unavailable",
+      "Process scan could not establish every process identity",
+      "A process disappeared or RSS was unavailable during sample",
+      "Root identity changed during sample",
+      "Root process identity is unavailable or changed",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": {
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+    "waited": true
+  }
+}

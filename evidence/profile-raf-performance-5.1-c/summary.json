@@ -1,0 +1,281 @@
+{
+  "item": "profile-raf-performance:5.1",
+  "session": "raf-prp51c-hotfix",
+  "status": "failed",
+  "reason": "z393 did not pass: setup-failed with setup and assertion failureKinds; 324 passed, 2 knownRed, 1 unexecuted. CLI/child 1, no timeout, complete cleanup. Main explicitly directed failed if z393 is not passed.",
+  "audit": "Current tasks.md 5.1 continuation note limits work to inherited fix f4eeb215 regressions; no runtime edits or repeat red/fix. Other tasks remain open; no archive.",
+  "runs": [
+    {
+      "runId": "835173d5-8eb1-4539-9d11-2c2243aec677",
+      "group": "complete-raf-flow-contracts/z393",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/report-confirmation-retry.test.ts",
+          "test/report-confirmation-runtime.test.ts",
+          "test/report-confirmation-progress.test.ts",
+          "test/assignment-identity.test.ts",
+          "test/assignment-identity-qa.test.ts",
+          "test/task-checkbox-report.test.ts",
+          "test/task-checkbox-index.test.ts",
+          "test/report-commit-index.test.ts",
+          "test/reported-commits-acceptance.test.ts",
+          "test/agent-report.test.ts",
+          "test/agent-report-freshness.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/report-confirmation-retry.test.ts",
+          "test/report-confirmation-runtime.test.ts",
+          "test/report-confirmation-progress.test.ts",
+          "test/assignment-identity.test.ts",
+          "test/assignment-identity-qa.test.ts",
+          "test/task-checkbox-report.test.ts",
+          "test/task-checkbox-index.test.ts",
+          "test/report-commit-index.test.ts",
+          "test/reported-commits-acceptance.test.ts",
+          "test/agent-report.test.ts",
+          "test/agent-report-freshness.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+          "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+          "TMPDIR": "/tmp/r-VvovFB"
+        }
+      },
+      "outcome": "setup-failed",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "failureKinds": [
+        "setup",
+        "assertions"
+      ],
+      "knownRed": [
+        {
+          "file": "test/report-confirmation-progress.test.ts",
+          "name": "Z393-QA-1 confirmation progress with measured OpenSpec cost automatically accepts unchanged JSON after writer release inside the configured transition budget"
+        },
+        {
+          "file": "test/reported-commits-acceptance.test.ts",
+          "name": "[reported-commits Z.370.1] production final archive skip_specs=false: final reread repairs appended archive commit"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/assignment-identity-qa.test.ts",
+          "name": "[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse"
+        }
+      ],
+      "unknown": [],
+      "removed": [],
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-setup",
+      "diagnostics": [
+        {
+          "kind": "assertion",
+          "test": {
+            "file": "test/report-confirmation-progress.test.ts",
+            "name": "Z393-QA-1 confirmation progress with measured OpenSpec cost automatically accepts unchanged JSON after writer release inside the configured transition budget"
+          },
+          "errorName": "AssertionError",
+          "errorCode": "ERR_ASSERTION",
+          "message": "Released writer must allow durable acceptance within the unchanged budget\n\n0 !== 1\n",
+          "location": {
+            "file": "test/report-confirmation-progress.test.ts",
+            "line": 276,
+            "column": 20
+          },
+          "stack": [
+            "    at Object.assertAccepted (test/report-confirmation-progress.test.ts:276:20)",
+            "    at TestContext.<anonymous> (test/report-confirmation-progress.test.ts:323:17)",
+            "    at async Test.run (node:internal/test_runner/test:1409:7)",
+            "    at async Promise.all (index 0)",
+            "    at async Suite.run (node:internal/test_runner/test:1905:7)",
+            "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+          ],
+          "redacted": false,
+          "truncated": false
+        },
+        {
+          "kind": "assertion",
+          "test": {
+            "file": "test/reported-commits-acceptance.test.ts",
+            "name": "[reported-commits Z.370.1] production final archive skip_specs=false: final reread repairs appended archive commit"
+          },
+          "errorName": "AssertionError",
+          "errorCode": "ERR_ASSERTION",
+          "message": "Assertion failed (strictEqual)",
+          "location": {
+            "file": "test/reported-commits-acceptance.test.ts",
+            "line": 728,
+            "column": 12
+          },
+          "stack": [
+            "    at TestContext.<anonymous> (test/reported-commits-acceptance.test.ts:728:12)",
+            "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+            "    at async Test.run (node:internal/test_runner/test:1409:7)",
+            "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+          ],
+          "redacted": true,
+          "truncated": false
+        }
+      ],
+      "diagnosticSummary": {
+        "totalEntries": 2,
+        "retainedEntries": 2,
+        "omittedEntries": 0,
+        "truncated": false,
+        "redacted": true
+      },
+      "environmentSummary": {
+        "executable": "node",
+        "runtimeVersion": "v26.12.1",
+        "adapter": "node-test-events",
+        "isolation": "process",
+        "configurationFingerprints": {
+          "flow": "34636e00082226eb8a1ae440e7fad48638862edf5bd0f870a7d1cf96f97f3ac6",
+          "testRuns": "82ff1c7b15910d25787ec762607a5c5d11cf805125b4b6261b630db3d966744b",
+          "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+        },
+        "tmpPathBytes": 13,
+        "privateRunTmp": true
+      },
+      "durationMs": 231761,
+      "cliExitCode": 1,
+      "passedCount": 324,
+      "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z393",
+      "sourceChange": "profile-raf-performance",
+      "sourceItem": "5.1",
+      "headAtLaunch": "e0c203ae94a81575ddb0a58e557165796799db00",
+      "headAtReturn": "e0c203ae94a81575ddb0a58e557165796799db00",
+      "result": "evidence/profile-raf-performance-5.1-c/z393.stdout.json",
+      "stderr": "evidence/profile-raf-performance-5.1-c/z393.stderr",
+      "cli": "evidence/profile-raf-performance-5.1-c/z393.cli.json"
+    }
+  ],
+  "inheritedWorkerIdle": {
+    "runId": "604603c5-080c-4cc5-99b0-f35db98a97b5",
+    "group": "fix-raf-load-admission/worker-idle",
+    "phase": "hotfix",
+    "selection": {
+      "files": [
+        "test/agent-adapters.test.ts",
+        "test/agent-control.test.ts",
+        "test/launch-wrapper.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/agent-adapters.test.ts",
+        "test/agent-control.test.ts",
+        "test/launch-wrapper.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+        "statePath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685/.raf/tmp",
+        "TMPDIR": "/tmp/r-fyZgQ3"
+      }
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "timeoutCount": 0,
+    "groupSnapshot": "loaded",
+    "groupState": "complete",
+    "nextAction": "complete",
+    "diagnostics": [],
+    "environmentSummary": {
+      "executable": "node",
+      "runtimeVersion": "v26.12.1",
+      "adapter": "node-test-events",
+      "isolation": "process",
+      "configurationFingerprints": {
+        "flow": "34636e00082226eb8a1ae440e7fad48638862edf5bd0f870a7d1cf96f97f3ac6",
+        "testRuns": "82ff1c7b15910d25787ec762607a5c5d11cf805125b4b6261b630db3d966744b",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      },
+      "tmpPathBytes": 13,
+      "privateRunTmp": true
+    },
+    "cliExitCode": 0,
+    "passedCount": 84,
+    "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle",
+    "sourceChange": "profile-raf-performance",
+    "sourceItem": "5.1",
+    "headAtReturn": "fc8bcf87888e082670b48ecc13c9ec089d4f0ad7",
+    "result": "evidence/profile-raf-performance-5.1-continuation/worker-idle.stdout.json",
+    "stderr": "evidence/profile-raf-performance-5.1-continuation/worker-idle.stderr",
+    "cli": "evidence/profile-raf-performance-5.1-continuation/worker-idle.cli.json"
+  },
+  "inheritedEvidence": {
+    "summary": "evidence/profile-raf-performance-5.1/summary.json",
+    "commit": "2b37b59b0412366c5d3e2ddf64f3cf16d7f8480a",
+    "red": {
+      "runId": "07aa27a8-63ba-4a4d-b4fd-a53006942be8",
+      "result": "evidence/profile-raf-performance-5.1/red.stdout.json",
+      "cli": "evidence/profile-raf-performance-5.1/red.cli.json",
+      "assertion": "29 origin inventory revalidations != 0"
+    },
+    "fix": "f4eeb215458de4fbf54f7ede45a9e06fa2cd2626",
+    "green": {
+      "runId": "8d48ae5d-05c2-4071-bc80-1e3dc9101348",
+      "result": "evidence/profile-raf-performance-5.1/green-counts.stdout.json",
+      "cli": "evidence/profile-raf-performance-5.1/green-counts.cli.json",
+      "counts": {
+        "firstGitCommands": 18,
+        "repeatedGitCommands": 11,
+        "originRevalidations": 0
+      }
+    },
+    "build": {
+      "evidence": "evidence/profile-raf-performance-5.1/build-final.json",
+      "exitCode": 0
+    },
+    "comments": {
+      "evidence": "evidence/profile-raf-performance-5.1/check-comments-final.json",
+      "exitCode": 0
+    }
+  },
+  "workspaceContext": "evidence/profile-raf-performance-5.1-c/workspace-context.json",
+  "cpu": {
+    "owner": "main",
+    "status": "Open in main; not claimed passed or a missing step of this continuation. Main will record actual before/after values in tasks.md before transfer.",
+    "directory": "/srv/dev/p51-stand/r2",
+    "lastObserved": "rw-before.out exists and is empty; no CPU result available at completion.",
+    "mainDirection": "[main] main: якщо z393 passed — звітуй succeeded для 5.1. Живий CPU-стенд за домовленістю виконує main; у звіті познач його як відкритий у main, а не як свій невиконаний крок. Результати стенда main запише в tasks.md перед перенесенням. Якщо z393 не passed — звіт failed."
+  },
+  "runtimeChangesByThisSession": false,
+  "checkboxChangedByThisSession": false,
+  "archive": null,
+  "archiveReason": "Other tasks remain open; no archive or spec sync performed.",
+  "nextAction": "Main addresses z393 setup/assertion diagnostics and supplies CPU stand evidence before transfer. Preserve original QA HOME/group aggregate, knownRed and unexecuted; no repeat authorized in this session."
+}

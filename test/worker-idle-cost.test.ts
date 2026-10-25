@@ -55,18 +55,24 @@ test('worker report confirmation reuses its verified environment across checkbox
   const execute = runtimeExecution(context, undefined, true);
   assert.equal(validations, 1, 'worker must validate its environment before reuse');
   validations = 0;
-  const first = await confirmReportedTasks(f.store, context, execute, request, report, configured, f.execute);
+  let identityGitCommands = 0;
+  const identityExecute: typeof execute = command => {
+    if (command.executable === 'git') identityGitCommands++;
+    return f.execute(command);
+  };
+  const first = await confirmReportedTasks(f.store, context, execute, request, report, configured, identityExecute);
   assert.equal(first.ok, true, JSON.stringify(first));
   assert.equal(first.commits.length, 1);
   assert.ok(commands.some(command => command.index), 'checkbox commit must use its isolated Git index');
   assert.ok(commands.filter(command => command.index).every(command => command.home === f.home));
   const firstGitCommands = commands.length;
   commands.length = 0;
-  const repeated = await confirmReportedTasks(f.store, context, execute, request, report, configured, f.execute);
+  const repeated = await confirmReportedTasks(f.store, context, execute, request, report, configured, identityExecute);
   assert.equal(repeated.ok, true, JSON.stringify(repeated));
   assert.deepEqual(repeated.commits, first.commits, 'rechecking a report preserves checkbox provenance');
   assert.ok(commands.length > 0, 'fresh Git verification remains enabled');
-  t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', test: { file: 'test/worker-idle-cost.test.ts', name: t.name }, message: JSON.stringify({ firstGitCommands, repeatedGitCommands: commands.length, originRevalidations: validations }), location: null, stack: [], redacted: false, truncated: false }] }));
+  t.diagnostic(JSON.stringify({ diagnostics: [{ kind: 'runner', test: { file: 'test/worker-idle-cost.test.ts', name: t.name }, message: JSON.stringify({ firstGitCommands, repeatedGitCommands: commands.length, originRevalidations: validations, identityGitCommands }), location: null, stack: [], redacted: false, truncated: false }] }));
+  assert.ok(identityGitCommands >= firstGitCommands + commands.length, 'checkbox Git operations must honor the identity executor');
   assert.equal(validations, 0, 'waiting worker must not revalidate its origin inventory per checkbox Git operation');
   assert.match(await readFile(f.tasksPath, 'utf8'), /\[x\] 2\.1/);
   assert.match(await readFile(f.tasksPath, 'utf8'), /\[ \] 2\.2/);

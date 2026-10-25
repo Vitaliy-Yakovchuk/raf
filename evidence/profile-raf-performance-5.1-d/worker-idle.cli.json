@@ -1,0 +1,17 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "sha": "3dbdb0efaab8aa774a932b2cfd6eded00ada1975",
+  "uncommitted": [
+    "src/production-runtime.ts",
+    "test/worker-idle-cost.test.ts"
+  ],
+  "sourceItem": "profile-raf-performance:5.1",
+  "rawOutput": "worker-idle.stdout.json",
+  "stderr": "worker-idle.stderr",
+  "captureNote": "Copied complete untruncated tool result verbatim after local orchestration expression .then raised TypeError after text(result). CLI exit_code 0 and child exitCode 0 precede that local error. No rerun.",
+  "runId": "7a944e30-1879-4e0e-8078-124ef3e2f040",
+  "groupState": "complete",
+  "nextAction": "complete"
+}

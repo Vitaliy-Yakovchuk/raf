@@ -1,0 +1,280 @@
+{
+  "item": "profile-raf-performance:5.1",
+  "status": "incomplete",
+  "defect": "Checkbox Git bypassed the verified worker executor and recomputed the full hotfix origin inventory for each Git command during report retries",
+  "fix": {
+    "sha": "f4eeb215458de4fbf54f7ede45a9e06fa2cd2626",
+    "behavior": "Reuse existing worker environment snapshot; preserve per-command scratch Git index, automatic retry, fresh source/provenance verification and events"
+  },
+  "counts": {
+    "scope": "confirmReportedTasks; one item; repeated call with existing checkbox journal; excludes outer report validator",
+    "firstGitSpawn": 18,
+    "repeatedGitSpawn": 11,
+    "originRevalidationsBefore": 29,
+    "originRevalidationsAfter": 0,
+    "beforeScope": "29 across first and repeated confirmation",
+    "fullWorkerRetryGitSpawn": null,
+    "fullWorkerRetryReason": "Not measured by narrow unit seam; depends on saved repositories, reported commits and retry stage"
+  },
+  "runs": [
+    {
+      "runId": "8d48ae5d-05c2-4071-bc80-1e3dc9101348",
+      "group": "profile-raf-performance/worker-idle-cost",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "groupSnapshot": "loaded",
+      "nextAction": "complete",
+      "evidence": "evidence/profile-raf-performance-5.1/green-counts.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts",
+      "sha": "1ab4375f2a6cbd626e2422cc8fd50cdeaa3e0e70",
+      "launchSha": "f406d25e28f0cf52760af78b56e50da7bcacafcb",
+      "workspaceChanges": [
+        "own untracked evidence/profile-raf-performance-5.1 files",
+        "preexisting untracked node_modules",
+        "foreign modified test/test-run-diagnostics-sanitize.test.ts",
+        "foreign modified test/test-run-refusal-diagnostics.test.ts"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    },
+    {
+      "runId": "b7593d3f-4b03-4ff5-9b9c-36cd88f85c96",
+      "group": "profile-raf-performance/worker-idle-cost",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "groupSnapshot": "loaded",
+      "nextAction": "complete",
+      "evidence": "evidence/profile-raf-performance-5.1/green.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts",
+      "sha": "f4eeb215458de4fbf54f7ede45a9e06fa2cd2626",
+      "launchSha": null,
+      "workspaceChanges": [
+        "untracked evidence/profile-raf-performance-5.1",
+        "preexisting untracked node_modules"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    },
+    {
+      "runId": "a0eca986-f7b1-49c3-8771-691efa393b12",
+      "group": "profile-raf-performance/worker-idle-cost",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/worker-idle-cost.test.ts",
+          "name": "worker report confirmation reuses its verified environment across checkbox Git operations and repeated reports"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "groupSnapshot": "loaded",
+      "nextAction": "implement",
+      "evidence": "evidence/profile-raf-performance-5.1/red-fixture.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts",
+      "sha": "161ee19581100210779f4fab7c5fa50d48bfbb5d",
+      "launchSha": "5351a30df336680350d90d64cf3d33731fdc506a",
+      "workspaceChanges": [
+        "untracked evidence/profile-raf-performance-5.1",
+        "preexisting untracked node_modules"
+      ],
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "interpretation": "Fixture setup failure, not target regression red"
+    },
+    {
+      "runId": "73c582f5-cfc2-45a1-a5eb-b9a907a0a6fc",
+      "group": "profile-raf-performance/worker-idle-cost",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": null,
+      "groupSnapshot": "unavailable",
+      "nextAction": "fix-setup",
+      "evidence": "evidence/profile-raf-performance-5.1/red-refused.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts",
+      "sha": "5351a30df336680350d90d64cf3d33731fdc506a",
+      "launchSha": null,
+      "workspaceChanges": [
+        "?? node_modules"
+      ],
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "interpretation": "Inventory refusal, not red"
+    },
+    {
+      "runId": "07aa27a8-63ba-4a4d-b4fd-a53006942be8",
+      "group": "profile-raf-performance/worker-idle-cost",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/worker-idle-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/worker-idle-cost.test.ts",
+          "name": "worker report confirmation reuses its verified environment across checkbox Git operations and repeated reports"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "groupSnapshot": "loaded",
+      "nextAction": "implement",
+      "evidence": "evidence/profile-raf-performance-5.1/red.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/worker-idle-cost --files test/worker-idle-cost.test.ts",
+      "sha": "9a8c851bed373bd78bd62858449b946bd73fc0fc",
+      "launchSha": null,
+      "workspaceChanges": [
+        "untracked evidence/profile-raf-performance-5.1",
+        "preexisting untracked node_modules"
+      ],
+      "cliExitCode": 1,
+      "childExitCode": 1
+    },
+    {
+      "runId": "e26e6d56-867d-494f-9804-4a329f252076",
+      "group": "fix-raf-load-admission/worker-idle",
+      "phase": "hotfix",
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": null,
+      "groupSnapshot": "unavailable",
+      "nextAction": "fix-setup",
+      "evidence": "evidence/profile-raf-performance-5.1/worker-idle-refused.stdout.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group fix-raf-load-admission/worker-idle",
+      "sha": "f4eeb215458de4fbf54f7ede45a9e06fa2cd2626",
+      "launchSha": null,
+      "workspaceChanges": [
+        "untracked evidence/profile-raf-performance-5.1",
+        "preexisting untracked node_modules"
+      ],
+      "cliExitCode": 1,
+      "childExitCode": null
+    }
+  ],
+  "checks": [
+    {
+      "evidence": "evidence/profile-raf-performance-5.1/build-final.json",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "sha": "1ab4375f2a6cbd626e2422cc8fd50cdeaa3e0e70",
+      "qaHome": "/tmp/p51-build-qa",
+      "exitCode": 0,
+      "signal": null
+    },
+    {
+      "evidence": "evidence/profile-raf-performance-5.1/check-comments-final.json",
+      "command": [
+        "npm",
+        "run",
+        "check:comments"
+      ],
+      "sha": "1ab4375f2a6cbd626e2422cc8fd50cdeaa3e0e70",
+      "qaHome": "/tmp/p51-build-qa",
+      "exitCode": 0,
+      "signal": null
+    }
+  ],
+  "pending": [
+    {
+      "group": "fix-raf-load-admission/worker-idle",
+      "reason": "CALLER_UNAUTHORIZED: immutable launch snapshot lacks regression grant",
+      "refusedRunId": "e26e6d56-867d-494f-9804-4a329f252076",
+      "nextAction": "Continuation with new trusted snapshot and same runtime fix"
+    },
+    {
+      "group": "complete-raf-flow-contracts/z393",
+      "reason": "Not invoked: same missing immutable grants; main confirmed both require continuation",
+      "nextAction": "Continuation with trusted regression grant"
+    },
+    {
+      "kind": "60-second CPU before/after",
+      "reason": "No completed measurement; previous stands stopped in resource wait; index-lock stand committed for main",
+      "beforeCommand": "node scripts/profile-worker-idle-stand.ts before-report report",
+      "beforeRuntime": "161ee19581100210779f4fab7c5fa50d48bfbb5d",
+      "standScript": "1ab4375f2a6cbd626e2422cc8fd50cdeaa3e0e70",
+      "afterCommand": "node scripts/profile-worker-idle-stand.ts after-report report",
+      "afterRuntime": "1ab4375f2a6cbd626e2422cc8fd50cdeaa3e0e70"
+    }
+  ],
+  "archive": null,
+  "archiveReason": "Other tasks remain open. Assignment checkbox belongs to raf and has not been changed."
+}

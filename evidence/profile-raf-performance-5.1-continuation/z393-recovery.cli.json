@@ -1,0 +1,17 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z393",
+  "sourceChange": "profile-raf-performance",
+  "sourceItem": "5.1",
+  "targetGroup": "complete-raf-flow-contracts/z393",
+  "cliExitCode": 1,
+  "childExitCode": null,
+  "streamCapture": "Complete unchanged TestRunResult line; tool output contains no other lines. No result reserialization.",
+  "authorization": "main explicitly authorized one retry in original successful worker-idle command form, after preceding EROFS and missing raf executable.",
+  "interpretation": "Returned recovery setup-failed for original runId; original child exit/protocol unavailable. Not a new verified test pass; group requires reconcile.",
+  "workspaceContext": "workspace-context.json",
+  "headAtReturn": "fc8bcf87888e082670b48ecc13c9ec089d4f0ad7",
+  "workspaceStatusAtReturn": "?? evidence/profile-raf-performance-5.1-continuation/\n?? node_modules\n",
+  "stdoutSha256": "ace6c09e3dcb6bed642096b9d0fcd820b703413f5d3a325973cff0ed684d3f37",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "capturedAt": "2026-10-24T22:47:18.729241+00:00"
+}

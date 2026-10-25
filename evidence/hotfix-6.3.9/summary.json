@@ -1,0 +1,166 @@
+{
+  "assignment": {
+    "change": "add-raf-test-run",
+    "item": "6.3.9",
+    "agent": "raf-trt639-hotfix",
+    "repository": "/srv/dev/work/orchestrator/raf-hotfix"
+  },
+  "audit": {
+    "current": true,
+    "sources": [
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/proposal.md#Why",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/proposal.md#What Changes",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/proposal.md#Non-goals",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/tasks.md#6.3.9",
+      "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md",
+      "/srv/dev/work/orchestrator/openspec/specs/core/process/unit-test-runs/spec.md",
+      "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/autonomous-development/spec.md#Аудит та вилучення неактуальних змін",
+      "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/parallel-development/spec.md"
+    ],
+    "conclusion": "Дефект актуальний: у planTestRun відсутність будь-якого configuredInventory файла блокувала raf до spawn. Доручення 6.3.9 уточнює межу наявності для спільного інвентарю raf. Наявні діагностичні тести уточнено до selected missing. Повний інвентар etchly та інші профілі не змінені.",
+    "scope": "Лише 6.3.9. Галочки tasks.md не змінено. Інші пункти відкриті; sync/archive не виконується."
+  },
+  "implementation": "Для raf requiredInventory містить лише вибрані зареєстровані unit-файли. configuredInventory збережено для перевірок реєстрації, профілю та повного набору; локальний canonicalInventory і заборона повного прогону не змінені.",
+  "regression": {
+    "directions": [
+      "raf-develop with an unselected raf-hotfix-only test",
+      "raf-hotfix with an unselected raf-develop-only test"
+    ],
+    "selection": [
+      "explicit files",
+      "configured preset"
+    ],
+    "guards": [
+      "selected absent file refuses INVENTORY_INCOMPLETE before spawn",
+      "all local unit files refuse UNSAFE_SELECTION even with another workspace-only entry"
+    ],
+    "newCases": 8
+  },
+  "testFirst": {
+    "testCommit": "01bd24882dc182765d4cc0845086bba17d7516e4",
+    "productionChangedOnlyAfterRed": true,
+    "redRequestObservedHead": "f4eeb215458de4fbf54f7ede45a9e06fa2cd2626",
+    "redQueuedHeadFile": "red-head.txt",
+    "redDirtyPatch": "red-workspace.patch",
+    "redStatus": "red-status.txt",
+    "hotfixHeadFile": "hotfix-head.txt",
+    "hotfixDirtyPatch": "hotfix-workspace.patch",
+    "hotfixStatus": "hotfix-status.txt",
+    "headNote": "Shared HEAD advanced through unrelated commits during queue wait; red-head.txt records the later queued observation, not a claimed exact execution SHA. No production edit for this assignment existed before the completed red. Test-only commit retains the regression patch."
+  },
+  "group": {
+    "id": "add-raf-test-run/refusal-diagnostics",
+    "sameSelection": true,
+    "sameQaHome": true,
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+    "reset": false,
+    "renamed": false,
+    "timeoutCount": 0,
+    "state": "complete",
+    "nextAction": "complete"
+  },
+  "runs": [
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-test-run/refusal-diagnostics --files test/test-run-refusal-diagnostics.test.ts test/test-run-diagnostics-sanitize.test.ts",
+      "runId": "0c6fb992-9ca3-46a5-b9e9-e22fdb52a6b3",
+      "result": "red.result.json",
+      "merged": "red.merged.txt",
+      "cli": "red.cli.json",
+      "stderrExtracted": "red.stderr-extracted.jsonl",
+      "outcome": "assertions-failed",
+      "childExitCode": 1,
+      "cliExitCode": 1,
+      "passed": 39,
+      "knownRed": [
+        {
+          "file": "test/test-run-refusal-diagnostics.test.ts",
+          "name": "raf inventory: raf-develop runs files while an unselected test exists only in raf-hotfix"
+        },
+        {
+          "file": "test/test-run-refusal-diagnostics.test.ts",
+          "name": "raf inventory: raf-develop runs preset while an unselected test exists only in raf-hotfix"
+        },
+        {
+          "file": "test/test-run-refusal-diagnostics.test.ts",
+          "name": "raf inventory: raf-develop refuses its full local suite despite tests present only in raf-hotfix"
+        },
+        {
+          "file": "test/test-run-refusal-diagnostics.test.ts",
+          "name": "raf inventory: raf-hotfix runs files while an unselected test exists only in raf-develop"
+        },
+        {
+          "file": "test/test-run-refusal-diagnostics.test.ts",
+          "name": "raf inventory: raf-hotfix runs preset while an unselected test exists only in raf-develop"
+        },
+        {
+          "file": "test/test-run-refusal-diagnostics.test.ts",
+          "name": "raf inventory: raf-hotfix refuses its full local suite despite tests present only in raf-develop"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "phase": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/refusal-diagnostics --files test/test-run-refusal-diagnostics.test.ts test/test-run-diagnostics-sanitize.test.ts",
+      "runId": "a5feed4e-da54-45dd-b80d-88e34e8d3e73",
+      "result": "hotfix.result.json",
+      "merged": "hotfix.merged.txt",
+      "cli": "hotfix.cli.json",
+      "stderrExtracted": "hotfix.stderr-extracted.jsonl",
+      "outcome": "passed",
+      "childExitCode": 0,
+      "cliExitCode": 0,
+      "passed": 45,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    }
+  ],
+  "capture": {
+    "complete": true,
+    "limitation": "exec_command повертає об’єднані stdout/stderr. Повний merged-вивід збережено; незмінений перший JSON-рядок TestRunResult і queue stderr-рядок витягнуто окремо. Main прийняв цей доказ для red і hotfix, підтвердив, що redirect оминає канал.",
+    "redirectedAttempt": {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/563ccbff-783a-4787-944a-a13463827544/raf-main/bin/raf.ts test run --project raf --phase hotfix --group add-raf-test-run/refusal-diagnostics --files test/test-run-refusal-diagnostics.test.ts test/test-run-diagnostics-sanitize.test.ts > evidence/hotfix-6.3.9/hotfix.stdout.json 2> evidence/hotfix-6.3.9/hotfix.stderr.txt",
+      "outcome": "CLI failed before test launch",
+      "errorCode": "PRODUCTION_ENTRY_FAILED",
+      "cause": "EROFS creating activation.lock under sandbox",
+      "runId": null,
+      "childExitCode": null,
+      "cliExitCode": 1,
+      "stdout": "hotfix.redirected.stdout.json",
+      "stderr": "hotfix.redirected.stderr.txt",
+      "cli": "hotfix.redirected.cli.json",
+      "resolution": "Cause inspected and reported to main; subsequent plain authorized command used the same group, selection and QA HOME. This attempt is not counted as red or pass."
+    }
+  },
+  "checks": [
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "context": {
+    "unnecessary": [],
+    "missing": []
+  }
+}

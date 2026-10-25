@@ -1,0 +1,14 @@
+diff --git a/src/test-runs.ts b/src/test-runs.ts
+index 415c1ae..648d818 100644
+--- a/src/test-runs.ts
++++ b/src/test-runs.ts
+@@ -343,7 +343,8 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
+     if (!fact || fact.kind !== 'file' || fact.realpath !== resolve(context.workspace, file) || fact.unit || fact.testKind && fact.testKind !== 'integration') failure('CONFIGURATION_INVALID', `conf/test-runs.json#/projects/${request.project}/profiles/${id}/integrationFiles: ${file}`);
+   }
+   const configuredInventory = [...new Set(Object.values(project.profiles).flatMap(p => p.testKind === 'integration' ? [] : p.unitFiles ?? []))];
+-  const missing = configuredInventory.filter(file => !env.unitFiles.includes(file) || env.files[file]?.kind !== 'file');
++  const requiredInventory = request.project === 'raf' ? configuredInventory.filter(file => files.includes(file)) : configuredInventory;
++  const missing = requiredInventory.filter(file => !env.unitFiles.includes(file) || env.files[file]?.kind !== 'file');
+   const unexpected = env.unitFiles.filter(file => !configuredInventory.includes(file));
+   if (missing.length || unexpected.length) {
+     const pointers = Object.entries(project.profiles).filter(([, profile]) => (profile.unitFiles ?? []).some(file => missing.includes(file)) || unexpected.length).map(([id]) => `conf/test-runs.json#/projects/${request.project}/profiles/${id}/unitFiles`);

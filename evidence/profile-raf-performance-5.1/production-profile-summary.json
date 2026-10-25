@@ -1,0 +1,79 @@
+{
+  "source": "/srv/dev/p51-stand/worker-683650-hot.cpuprofile",
+  "recordedBy": "main; inspector outside sandbox; closed after capture",
+  "durationMs": 15078.804,
+  "top": [
+    {
+      "name": "(idle)",
+      "url": "",
+      "line": 0,
+      "selfMs": 12099.485
+    },
+    {
+      "name": "spawn",
+      "url": "",
+      "line": 0,
+      "selfMs": 1195.858
+    },
+    {
+      "name": "lstat",
+      "url": "",
+      "line": 0,
+      "selfMs": 308.457
+    },
+    {
+      "name": "read",
+      "url": "",
+      "line": 0,
+      "selfMs": 202.328
+    },
+    {
+      "name": "open",
+      "url": "",
+      "line": 0,
+      "selfMs": 186.021
+    },
+    {
+      "name": "update",
+      "url": "",
+      "line": 0,
+      "selfMs": 118.831
+    },
+    {
+      "name": "(garbage collector)",
+      "url": "",
+      "line": 0,
+      "selfMs": 107.874
+    },
+    {
+      "name": "fstat",
+      "url": "",
+      "line": 0,
+      "selfMs": 95.086
+    },
+    {
+      "name": "(program)",
+      "url": "",
+      "line": 0,
+      "selfMs": 73.662
+    },
+    {
+      "name": "normalizeString",
+      "url": "node:path",
+      "line": 92,
+      "selfMs": 71.028
+    },
+    {
+      "name": "getStatsFromBinding",
+      "url": "node:internal/fs/utils",
+      "line": 763,
+      "selfMs": 61.751
+    },
+    {
+      "name": "close",
+      "url": "",
+      "line": 0,
+      "selfMs": 60.566
+    }
+  ]
+}

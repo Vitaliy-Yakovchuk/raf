@@ -1,0 +1,128 @@
+{
+  "sourceItem": "profile-raf-performance:5.1",
+  "phase": "hotfix",
+  "workspace": "/srv/dev/work/orchestrator/raf-hotfix",
+  "baseSha": "3dbdb0efaab8aa774a932b2cfd6eded00ada1975",
+  "audit": {
+    "sources": [
+      "openspec/changes/profile-raf-performance/tasks.md#5.1",
+      "openspec/changes/profile-raf-performance/proposal.md#Non-goals",
+      "openspec/specs/projects/orchestrator/autonomous-development/spec.md#Аудит та вилучення неактуальних змін"
+    ],
+    "conclusion": "Актуальна втрата identityExecute доведена окремою red-регресією. Причинний зв'язок Z.370.1 з f4eeb215 не підтверджений: файл пройшов до виправлення, сценарій skip_specs=true один раз упав у повній групі й пройшов адресно без наступної runtime-зміни. CPU-оптимізацію збережено за детермінованим лічильником; живий CPU не виміряно."
+  },
+  "implementation": {
+    "files": [
+      "src/production-runtime.ts",
+      "test/worker-idle-cost.test.ts"
+    ],
+    "behavior": "Checkbox Git honors identityExecute; cached verified worker environment is reused for the raw identity port, including HOME and per-operation GIT_INDEX_FILE. WeakMap shares the runtime environment supplier without changing default execution, event observation, polling intervals, budgets or configuration.",
+    "counter": {
+      "before": {
+        "git": 29,
+        "identityGit": 0,
+        "originRevalidations": 0
+      },
+      "after": {
+        "git": 29,
+        "identityGit": 29,
+        "originRevalidations": 0
+      }
+    },
+    "testFirst": "identity-red.stdout.json captures the genuine assertions-failed before source modification. Red fixture forwarded the custom port through cached execute; final fixture forwards through raw f.execute, strengthening the HOME/index guard. identity-red-test.patch is reconstructed from that recorded red fixture, without claiming it is an untouched git diff."
+  },
+  "diagnostic": {
+    "file": "test/reported-commits-acceptance.test.ts",
+    "behavior": "Preserve failed final-archive fixture agent ps stderr in runner diagnostics; assertions and budgets unchanged.",
+    "patch": "z370-diagnostic.patch"
+  },
+  "tests": [
+    {
+      "evidence": "z370-before",
+      "runId": "5df1fb0a-4bc9-4570-b1b3-72ea4bd9eb43",
+      "cli": 1,
+      "child": 0,
+      "interpretation": "80 selected tests passed before this patch, including both production final archive skip_specs branches. Aggregate remained red/unexecuted; not a group pass."
+    },
+    {
+      "evidence": "identity-red",
+      "runId": "efd72919-442e-49f6-b76f-cad6d797ba2a",
+      "cli": 1,
+      "child": 1,
+      "interpretation": "Genuine assertion red: identity executor received zero checkbox Git commands."
+    },
+    {
+      "evidence": "identity-green",
+      "runId": "7541fdb8-775d-491d-bfce-edae09140cc8",
+      "cli": 0,
+      "child": 0,
+      "interpretation": "Same stable group and QA HOME; identity=29, origin revalidations=0, HOME/index/provenance intact; complete."
+    },
+    {
+      "evidence": "z393-after",
+      "runId": "8c30bd59-4fda-47bf-b220-febb4af75c28",
+      "cli": 1,
+      "child": 1,
+      "interpretation": "323 passed, 3 knownRed, 1 inherited unexecuted; setup-failed/assertions, cleanup complete, not timed out. Not pass."
+    },
+    {
+      "evidence": "worker-idle",
+      "runId": "7a944e30-1879-4e0e-8078-124ef3e2f040",
+      "cli": 0,
+      "child": 0,
+      "interpretation": "84 passed, no knownRed/unexecuted/unknown, cleanup complete, complete group. Local result-printing TypeError occurred after the successful returned CLI result; complete result copied verbatim from untruncated tool response."
+    },
+    {
+      "evidence": "z370-selection-refused",
+      "runId": "f3cac69c-bc1b-468b-8104-ffc5c7f4e7a2",
+      "cli": 1,
+      "child": null,
+      "interpretation": "SELECTION_CONFLICT for combining --files/--only, no child. Read current parser then corrected selection without resetting group."
+    },
+    {
+      "evidence": "z370-only",
+      "runId": "5b70c1f8-2e98-4dd8-83c5-4a1775e98d05",
+      "cli": 1,
+      "child": 0,
+      "interpretation": "Z.370.1 skip_specs=true passed; aggregate retains two Z393-QA-1 reds plus identity QA unexecuted. No further runtime fix between full and targeted runs; not a group pass."
+    }
+  ],
+  "remaining": {
+    "knownRed": [
+      {
+        "file": "test/report-confirmation-progress.test.ts",
+        "name": "Z393-QA-1 confirmation progress with measured OpenSpec cost automatically accepts unchanged JSON after writer release inside the configured transition budget"
+      },
+      {
+        "file": "test/report-confirmation-progress.test.ts",
+        "name": "Z393-QA-1 confirmation progress with measured OpenSpec cost the next automatic cycle completes a prepared journal after the first budget is exhausted"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "test/assignment-identity-qa.test.ts",
+        "name": "[identity-qa-live] actual ordinal task labels retain exact identity through completion archive and name reuse"
+      }
+    ],
+    "unknown": [],
+    "group": "complete-raf-flow-contracts/z393",
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "note": "Main explicitly identified Z393-QA-1 as preexisting on live ac92e03. Do not claim green z393 or repair unrelated old defects under this item."
+  },
+  "cpu": {
+    "evidence": "cpu-before.stderr",
+    "outcome": "unexecuted",
+    "before": null,
+    "after": null,
+    "seconds": null,
+    "reason": "EACCES /tmp/raf-ipc-1000 during isolated stand setup; worker never launched. Main explicitly prohibited bypassing sandbox and took live 60-second before/after measurement ownership.",
+    "cleanup": "Own fixture removed; transient stand script removed; derivation preserved in cpu-stand.patch."
+  },
+  "completion": {
+    "item": "5.1",
+    "fullyAccepted": false,
+    "reason": "No full green z393 and no causal red/fix of Z.370.1. Live CPU measurement remains pending with main per steering. No task checkboxes changed, no archive: other change items remain open.",
+    "mainNotified": true
+  }
+}

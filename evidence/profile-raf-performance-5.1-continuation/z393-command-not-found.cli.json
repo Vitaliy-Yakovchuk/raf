@@ -1,0 +1,13 @@
+{
+  "command": "raf test run --project raf --phase hotfix --group complete-raf-flow-contracts/z393",
+  "sourceChange": "profile-raf-performance",
+  "sourceItem": "5.1",
+  "targetGroup": "complete-raf-flow-contracts/z393",
+  "cliExitCode": 127,
+  "childExitCode": null,
+  "testRunResult": null,
+  "error": "raf: command not found",
+  "started": false,
+  "authorization": "main explicitly requested this exact replacement command after confirming prior invocation never started",
+  "nextAction": "Request valid trusted channel from main; no alias or local bypass."
+}

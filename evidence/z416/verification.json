@@ -1,0 +1,212 @@
+{
+  "item": "complete-raf-flow-contracts:Z.416",
+  "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+  "group": "complete-raf-flow-contracts/z416-protocol-size",
+  "files": [
+    "test/test-run-protocol-size.test.ts"
+  ],
+  "acceptedRedRunId": "45dfe054-6941-421d-b06a-fff2d7578c0e",
+  "greenRunId": "e500a14e-9ff0-4d35-9ff1-d619655cc39a",
+  "runs": [
+    {
+      "attempt": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z416-protocol-size --files test/test-run-protocol-size.test.ts",
+      "sha": "09737917d4f8c25ced2371c7d07e3b4764544dfa",
+      "workspaceSnapshot": "evidence/z416/red.workspace.json",
+      "workspacePatch": "evidence/z416/red.workspace.patch",
+      "result": "evidence/z416/red.TestRunResult.json",
+      "stderr": "evidence/z416/red.stderr",
+      "toolCapture": "evidence/z416/red.tool.json",
+      "cliExitCodeFile": "evidence/z416/red.cli-exit-code",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "25ca09fc-a15a-4568-bc03-bed207df813f",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/test-run-protocol-size.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "setup-failed",
+      "passed": 1,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "nextAction": "fix-setup",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "acceptedInitialRed": false,
+      "note": "Fixture output interception broke Node runner serialization; setup-failed is not red."
+    },
+    {
+      "attempt": "red2",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z416-protocol-size --files test/test-run-protocol-size.test.ts",
+      "sha": "09737917d4f8c25ced2371c7d07e3b4764544dfa",
+      "workspaceSnapshot": "evidence/z416/red2.workspace.json",
+      "workspacePatch": "evidence/z416/red2.workspace.patch",
+      "result": "evidence/z416/red2.TestRunResult.json",
+      "stderr": "evidence/z416/red2.stderr",
+      "toolCapture": "evidence/z416/red2.tool.json",
+      "cliExitCodeFile": "evidence/z416/red2.cli-exit-code",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "72838c4a-c49b-4466-b636-6e87027b4f98",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/test-run-protocol-size.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 2,
+      "knownRed": 12,
+      "unexecuted": 0,
+      "unknown": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "acceptedInitialRed": false,
+      "note": "Intended size assertions reproduced; state fixture also failed at profile.environments.runtime proof. Not used as clean initial red."
+    },
+    {
+      "attempt": "red3",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z416-protocol-size --files test/test-run-protocol-size.test.ts",
+      "sha": "09737917d4f8c25ced2371c7d07e3b4764544dfa",
+      "workspaceSnapshot": "evidence/z416/red3.workspace.json",
+      "workspacePatch": "evidence/z416/red3.workspace.patch",
+      "result": "evidence/z416/red3.TestRunResult.json",
+      "stderr": "evidence/z416/red3.stderr",
+      "toolCapture": "evidence/z416/red3.tool.json",
+      "cliExitCodeFile": "evidence/z416/red3.cli-exit-code",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "45dfe054-6941-421d-b06a-fff2d7578c0e",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/test-run-protocol-size.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 7,
+      "knownRed": 7,
+      "unexecuted": 0,
+      "unknown": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "acceptedInitialRed": true,
+      "note": "Clean initial assertion red before production edits: 7 intended assertion failures, 7 controls passed."
+    },
+    {
+      "attempt": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z416-protocol-size --files test/test-run-protocol-size.test.ts",
+      "sha": "4ca708c534e2b1870da2514b8c5ec1b5d9926593",
+      "workspaceSnapshot": "evidence/z416/hotfix.workspace.json",
+      "workspacePatch": "evidence/z416/hotfix.workspace.patch",
+      "result": "evidence/z416/hotfix.TestRunResult.json",
+      "stderr": "evidence/z416/hotfix.stderr",
+      "toolCapture": "evidence/z416/hotfix.tool.json",
+      "cliExitCodeFile": "evidence/z416/hotfix.cli-exit-code",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "e500a14e-9ff0-4d35-9ff1-d619655cc39a",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/test-run-protocol-size.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 16,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "acceptedInitialRed": false,
+      "note": "16 passed; the long duration is admission waiting, not test execution timeout. Includes both version-1 compatibility checks."
+    }
+  ],
+  "capture": {
+    "format": "Complete unchanged TestRunResult JSON lines and full tool outputs; CLI exit codes stored separately from child exitCode.",
+    "streams": "The command port returns stdout followed by stderr in tool.output. The first JSON line is TestRunResult; the remaining bytes are CLI stderr (admission waiting diagnostics where present). No output truncation occurred."
+  },
+  "checks": [
+    {
+      "name": "final-build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "RAF_QA_HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "sha": "4ca708c534e2b1870da2514b8c5ec1b5d9926593",
+      "exitCode": 0,
+      "stdout": "evidence/z416/final-build.stdout",
+      "stderr": "evidence/z416/final-build.stderr"
+    },
+    {
+      "name": "final-check-comments",
+      "command": [
+        "npm",
+        "run",
+        "check:comments"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "RAF_QA_HOME": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "sha": "4ca708c534e2b1870da2514b8c5ec1b5d9926593",
+      "exitCode": 0,
+      "stdout": "evidence/z416/final-check-comments.stdout",
+      "stderr": "evidence/z416/final-check-comments.stderr"
+    }
+  ],
+  "coverage": [
+    "Node and Vitest reporter lifecycles: 400 identities across 54 files; legacy completion JSON is larger than twice maxProtocolLineBytes.",
+    "Group and exact selection; full passed and mixed assertion/skipped identities through real runtime stream parser with mocked child spawn.",
+    "UTF-8 fragmented into 997-byte buffers.",
+    "One excessive individual line retains the exact Runner protocol line exceeds configured limit error.",
+    "Missing final, missing expected, duplicate expected, wrong count remain setup-failed.",
+    "Vitest batch wrapper rejects missing final/wrong count and accepts complete inventories across two mocked batches.",
+    "Version-1 runtime receives legacy completion for both reporters; version-2 runtime advertises support in actual spawn options."
+  ],
+  "limitsUnchanged": true,
+  "newCliOptions": false,
+  "scope": "Only Z.416; unit fixtures mock child spawn and Vitest lifecycle. No real Etchly group or foreign regression group was run.",
+  "archive": {
+    "performed": false,
+    "reason": "Other items remain open; checkbox updates belong to raf."
+  }
+}

@@ -1,3 +1,4 @@
+import { normalizeRunnerEvents, RunnerProtocol, type CanonicalRunnerEvent } from './test-run-protocol.ts';
 import type { StateAccessFailure, RecoveryDelivery } from './test-run-state-recovery.ts';
 import { profileFiles, profileTestKind, prepareTestRunProfile, testRunTimeoutPolicy, validateProfileInventories } from './test-run-integration-profiles.ts';
 import type { TestKind, TimeoutPolicy } from './test-run-integration-profiles.ts';
@@ -130,6 +131,8 @@ export type RunnerEvent =
   | { kind: 'container-complete'; test: TestId }
   | { kind: 'passed' | 'assertion-failed' | 'setup-failed'; test: TestId; diagnostic?: string; inlineDiagnostic?: InlineDiagnostic }
   | { kind: 'complete'; expected: TestId[]; adapter?: 'vitest-events' }
+  | { kind: 'expected'; test: TestId }
+  | { kind: 'complete'; expectedCount: number; adapter?: 'vitest-events' }
   | { kind: 'file-setup-failed'; inlineDiagnostic?: InlineDiagnostic }
   | { kind: 'protocol-error'; diagnostic: string };
 
@@ -385,7 +388,7 @@ export function classifyRunnerResult(events: readonly RunnerEvent[], exit: Child
   let passed: TestId[] = [], knownRed: TestId[] = [], unknown: TestId[] = [], expected: TestId[] = [];
   const completedContainers: TestId[] = [];
   let complete = false, setup = false, vitest = false;
-  for (const event of events) {
+  for (const event of normalizeRunnerEvents(events)) {
     if (event.kind === 'discovered') {
       expected = uniqueIds([...expected, event.test]);
     } else if (event.kind === 'container-complete') completedContainers.push(event.test);
@@ -508,9 +511,10 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   }
   if (!reserved) return pendingResult ?? attach();
   deadline = (reserved as TestRunGroup).inFlight!.deadlineMs;
-  const events: RunnerEvent[] = [];
+  const events: CanonicalRunnerEvent[] = [];
+  const protocol = new RunnerProtocol();
   let temporary: RunTemporaryReservation | undefined;
-  const onEvent = (event: RunnerEvent) => {
+  const recordEvent = (event: CanonicalRunnerEvent) => {
     if (event.kind === 'diagnostic') {
       for (const entry of event.diagnostics) diagnostics?.inline(entry);
       if (event.diagnosticSummary) diagnostics?.omitted(event.diagnosticSummary.omittedEntries, event.diagnosticSummary.redacted, event.diagnosticSummary.truncated);
@@ -520,8 +524,12 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     if ('inlineDiagnostic' in event && event.inlineDiagnostic) diagnostics?.inline(event.inlineDiagnostic);
     else if (event.kind === 'protocol-error') diagnostics?.protocolError(event.diagnostic);
     else if (event.kind === 'assertion-failed' || event.kind === 'setup-failed') diagnostics?.failure({ test: event.test, origin: event.kind === 'assertion-failed' ? 'test-body' : 'unknown', error: event.diagnostic });
-    if ('diagnostic' in event || 'inlineDiagnostic' in event) { const { diagnostic, inlineDiagnostic, ...facts } = event as any; events.push(facts as RunnerEvent); }
+    if ('diagnostic' in event || 'inlineDiagnostic' in event) { const { diagnostic, inlineDiagnostic, ...facts } = event as any; events.push(facts as CanonicalRunnerEvent); }
     else events.push(event);
+  };
+  const onEvent = (event: RunnerEvent) => {
+    try { const value = protocol.accept(event); if (value) recordEvent(value); }
+    catch { recordEvent({ kind: 'protocol-error', diagnostic: 'Invalid JSON runner protocol' }); }
   };
   let child: ManagedTestProcess | null = null, interruption: string | null = null;
   let cancelDeadline = () => {}, unsubscribe = () => {};
@@ -563,6 +571,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     try { const cleaned = await ports.cleanupTemporary(temporary, result.cleanup.complete); if (cleaned.diagnostic) diagnostics?.inline(cleaned.diagnostic); if (cleaned.cleanup !== 'complete') result.cleanup.complete = false; }
     catch (error) { diagnostics?.failure({ test: null, origin: 'fixture-setup', error }); result.cleanup.complete = false; }
   }
+  try { protocol.finish(); } catch { recordEvent({ kind: 'protocol-error', diagnostic: 'Incomplete runner expected inventory' }); }
   diagnostics?.stderrChunk(Buffer.from(exit.stderr));
   if (exit.stderrTruncated) diagnostics?.markStderrTruncated();
   if (child && reason === 'exit') diagnostics?.childExit({ ...exit, validProtocol: events.some(e => e.kind === 'complete') && !events.some(e => e.kind === 'protocol-error') });

@@ -1,0 +1,15 @@
+{
+  "item": "Z.416",
+  "auditedSha": "4ca708c534e2b1870da2514b8c5ec1b5d9926593",
+  "newCircumstance": "Main confirmed the supplied trusted runner generation cannot be replaced during this launch.",
+  "resolution": "Reuse RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: 1 or absent preserves complete.expected; 2 advertises streamed expected plus final expectedCount. New parser accepts both formats; diagnostics remain enabled for 1 and 2.",
+  "invariants": [
+    "No conf limits changed",
+    "No CLI parameter added",
+    "Inventory count, duplicate and EOF completeness checked",
+    "Same QA HOME and group aggregate across all runs"
+  ],
+  "consistentWithAssignment": true,
+  "verification": "verification.json",
+  "noArchive": "Other open items remain in complete-raf-flow-contracts/tasks.md; executor does not alter checkboxes."
+}

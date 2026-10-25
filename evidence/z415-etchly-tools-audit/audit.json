@@ -1,0 +1,164 @@
+{
+  "item": "complete-raf-flow-contracts:Z.415",
+  "decision": "rejected-as-conflicting-before-implementation",
+  "reason": "Z.415 вимагає unit-факти та успішний preflight для профілю Vitest tools. Чинна предметна вимога прямо виключає tools із unitFiles; дизайн забороняє tools/app-integration і вимагає окремого обґрунтування перекласифікації. Поточний проєкт tools виконує browser-vite globalSetup. Виконання hotfix у заявленому обсязі суперечить цим обмеженням.",
+  "workspaces": [
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+      "sha": "2027228f1080bf7fb845fca3552db0efe970a8cc",
+      "dirty": "?? node_modules"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/etchly-develop",
+      "sha": "c83fc10832e9bed416bd98252e4eb3f58943966e",
+      "dirty": ""
+    }
+  ],
+  "sources": [
+    {
+      "id": "assignment",
+      "path": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md",
+      "sha256": "dc7ec137696e18ae78cbdd10afe605f942d73f4a4fea2b47f08a98dd04de57e9",
+      "excerpts": [
+        {
+          "line": 1041,
+          "text": "- [ ] Z.415 [hotfix] Баг робочої raf (main 2026-10-25, raf-main 2027228): тести Etchly з Vitest-проєкту tools (app/vitest.config.ts, name \"tools\", include tools/**/*.test.ts) неможливо запустити через raf test run. Статичний інвентар Etchly (src/test-run-etchly-inventory.ts) спостерігає лише класифікацію testProjectFiles проєктів app і worker та shared-пакети, тож профіль з --project tools і його unitFiles дають INVENTORY_INCOMPLETE «missing …» для кожного файлу, а сама реєстрація такого профілю валить preflight усіх груп Etchly (виконавець etchly-r1037-impl, reduce-etchly-codebase:2.13.7, run e7b42d0f, 33 файли app/tools/**; conf відкочено f5f4845b76). Спершу червоний регресійний тест: інвентар зі статичною конфігурацією, що має проєкт tools поряд з app, повертає факти unit для файлів tools із профілем, прив’язаним до --project tools, і preflight групи з цього профілю проходить; файл tools, не включений у unitFiles, далі дає точну відмову, без discovery fallback і без послаблення перевірки хешів аудиту. Далі виправлення тим самим агентом; нові хеші аудиту — лише за статичним переглядом. Перевірка: нова група у фазі hotfix і наявні групи інвентаря Etchly."
+        }
+      ]
+    },
+    {
+      "id": "unitContract",
+      "path": "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md",
+      "sha256": "dc8551ca8eeaee944ebe97fca8a34c3558f6decab313709785e711c0ab040b91",
+      "excerpts": [
+        {
+          "line": 33,
+          "text": "Raf SHALL підтримувати etchly через наявну схему profiles/groups за etchly-profile.md: локальний Vitest із preload, cwd workspace, unit-project filter, явний unitFiles, exactIds=vitest-test-name та resultAdapter=vitest-events. Node unit-файли SHALL використовувати чинний Node-адаптер. Integration, tools, D1/harness, built і тести зовнішніх бібліотек SHALL не входити до unitFiles. Чинні авторизація, ізоляція, бюджет і груповий облік SHALL зберігатися."
+        },
+        {
+          "line": 48,
+          "text": "- **THEN** raf повертає конкретну причину відмови до spawn у межах чинної авторизації/відбору; файл не реєструється unit для обходу обмеження, а невідома група не отримує автоматичного дозволу"
+        }
+      ]
+    },
+    {
+      "id": "profileDesign",
+      "path": "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/etchly-profile.md",
+      "sha256": "e0bd44529d773611ab632b7689893c2c3f975c236ec7083ea31bfec4c60886dd",
+      "excerpts": [
+        {
+          "line": 9,
+          "text": "Main підтвердив помилку попереднього прикладу: worker/scripts/concept-import/native-continuation.test.ts класифіковано integration чинним worker/vitest.config.ts і testProjectFiles. Його запуск не є позитивним прийманням 5.4. Integration, D1, live-worker/harness, tools/browser-stand, built, performance, fuzz і mutation залишаються поза unit-командою. Локальний worker-d1-integration отримує окремий integration-профіль у 6.2.6 за [etchly-integration-profile.md](etchly-integration-profile.md), з integrationFiles та власним conf-бюджетом, без перенесення файлів у unitFiles. Наявність суфікса .test.ts або кешу браузера не робить такий файл unit. Переосмислення класифікації потребує предметного обґрунтування в окремій зміні, а не додавання integration-файлу до unitFiles."
+        },
+        {
+          "line": 65,
+          "text": "Ізоляція HOME не повинна губити довірений PLAYWRIGHT_BROWSERS_PATH хоста: коли допустимий unit-fixture справді використовує браузер, перевіряється переданий хостом кеш; на цьому хості main перевірив /home/dev/.cache/ms-playwright. Цей шлях не зашивається в код чи універсальний профіль; неавторизоване перевизначення виконавцем не приймається. Відсутній потрібний браузер — setup без install. Наявність кешу не дозволяє tools/app-integration чи інший стендовий проєкт."
+        }
+      ]
+    },
+    {
+      "id": "appConfig",
+      "path": "/srv/dev/work/orchestrator/etchly-develop/app/vitest.config.ts",
+      "sha256": "5535fb7bb99d08daf1009bfaeadaaa3073ebf244e451b5e5d3949c9cbab8c088",
+      "excerpts": [
+        {
+          "line": 94,
+          "text": "\t\t\t\t\tname: \"tools\","
+        },
+        {
+          "line": 96,
+          "text": "\t\t\t\t\tinclude: [\"tools/**/*.test.ts\"],"
+        },
+        {
+          "line": 98,
+          "text": "\t\t\t\t\tglobalSetup: [\"./tools/screens/browser-vite.global-setup.ts\"],"
+        },
+        {
+          "line": 125,
+          "text": "\t\t\t\t\t\tglobalSetup: [\"./tools/screens/browser-vite.global-setup.ts\", \"./tools/user-paths/critical-flow.global-setup.ts\"],"
+        }
+      ]
+    },
+    {
+      "id": "globalSetup",
+      "path": "/srv/dev/work/orchestrator/etchly-develop/app/tools/screens/browser-vite.global-setup.ts",
+      "sha256": "3a6411f4619d42ccd906dfb9b5f076a078356e3b2cdcf5ad5af967f4d89b20d5",
+      "excerpts": [
+        {
+          "line": 1,
+          "text": "import { prepareBrowserViteCache } from \"./browser-vite.ts\";"
+        },
+        {
+          "line": 3,
+          "text": "export default async function browserViteGlobalSetup(): Promise<void> {"
+        },
+        {
+          "line": 4,
+          "text": "\tawait prepareBrowserViteCache();"
+        },
+        {
+          "line": 5,
+          "text": "}"
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "path": "/srv/dev/work/orchestrator/raf-hotfix/src/test-run-etchly-inventory.ts",
+      "sha256": "b8669079c952ae1028b84a17eb65249fa775666b1012aaeb172a409aec0abc48",
+      "excerpts": [
+        {
+          "line": 71,
+          "text": "    if (current[file] !== expected) fail(`changed source ${file}`);"
+        },
+        {
+          "line": 77,
+          "text": "  for (const name of ['app', 'worker']) {"
+        }
+      ]
+    },
+    {
+      "id": "auditPolicy",
+      "path": "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/autonomous-development/spec.md",
+      "sha256": "2ab2c7ca636764513d2e2da81efb8f8be38cec9cf50c6d7d36e548a9d9798c36",
+      "excerpts": [
+        {
+          "line": 121,
+          "text": "Агент SHALL сам перевіряти актуальність та узгодженість доручених змін із чинними вимогами й фактичним станом, читаючи лише релевантні джерела. Він MAY відмовитися від суперечливої або неактуальної задачі. У такому разі SHALL записати failed із конкретними причинами, ID змін/пунктів і посиланнями на докази; невиконане SHALL не позначатися виконаним. Обґрунтована відмова SHALL вважатися нормальним результатом аудиту, а не вимогою виконати задачу всупереч висновкам."
+        },
+        {
+          "line": 126,
+          "text": "- **THEN** агент пояснює відмову в answer і reason відповідних failed-пунктів JSON, залишає фактичний стан tasks.md та передає висновок main"
+        }
+      ]
+    }
+  ],
+  "tests": {
+    "executed": false,
+    "reason": "Аудит суперечності передує реалізації. Регресія, що вимагає забороненої unit-класифікації, не створювалася. Не було spawn, TestRunResult або переходу red → hotfix.",
+    "runId": null,
+    "outcome": null,
+    "cleanup": null,
+    "timedOut": null,
+    "knownRed": null,
+    "unexecuted": null,
+    "unknown": null,
+    "groupState": "not-read",
+    "nextAction": "Main перевіряє висновок і уточнює предметну класифікацію та assignment. Для чужої add-raf-test-run/etchly-profiles потрібна кінцева regressionGroups декларація та довірений launch snapshot."
+  },
+  "coordination": {
+    "recipient": "main",
+    "receiptId": "3b5059ac-9b45-4dcd-999a-f497359c8ce2",
+    "accepted": true,
+    "mainConfirmation": {
+      "sender": "main",
+      "decision": "Висновок підтверджено; Z.415 скасувати після закриття",
+      "instruction": "Тестів і коду не запускати/не змінювати; завершити обґрунтованим failed з аудитом.",
+      "received": "2026-10-25"
+    }
+  },
+  "codeChanged": false,
+  "auditHashesChanged": false,
+  "taskCheckboxesChanged": false,
+  "archive": null
+}

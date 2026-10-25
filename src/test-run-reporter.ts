@@ -1,3 +1,4 @@
+import { completeRunnerProtocol } from './test-run-protocol.ts';
 import { readFileSync } from 'node:fs';
 import { TestRunDiagnostics, diagnosticFailureFromNodeEvent, validateDiagnosticLimits } from './test-run-diagnostics.ts';
 import type { RunnerEvent, TestId } from './test-runs.ts';
@@ -14,7 +15,7 @@ export default async function* report(source: AsyncIterable<any>, selected?: Tes
   for await (const event of source) {
     const data = event.data;
     if (event.type === 'test:diagnostic' && typeof data.message === 'string') {
-      if (process.env.RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL !== '1') continue;
+      if (!['1', '2'].includes(process.env.RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL ?? '')) continue;
       let details: any;
       try { details = JSON.parse(data.message); } catch { continue; }
       if (!details || typeof details !== 'object') continue;
@@ -102,5 +103,5 @@ export default async function* report(source: AsyncIterable<any>, selected?: Tes
     }
   }
   if (protocolFailed) yield JSON.stringify({ kind: 'protocol-error', diagnostic: 'Missing structured test identity' }) + '\n';
-  yield JSON.stringify({ kind: 'complete', expected: selected ?? expected }) + '\n';
+  for (const event of completeRunnerProtocol(selected ?? expected)) yield JSON.stringify(event) + '\n';
 }

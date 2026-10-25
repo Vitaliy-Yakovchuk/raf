@@ -1,0 +1,303 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.398.1",
+  "stage": "test-scaffold",
+  "audit": {
+    "requirements": "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/agent-control/spec.md#requirement-безпечна-проєкція-launchcontext-у-списку-агентів",
+    "scenarios": "openspec/changes/complete-raf-flow-contracts/z398-ps-projection-design.md S01–S07",
+    "currentAuthoringContract": "openspec/changes/add-raf-test-run/specs/core/process/feature-test-authoring/spec.md",
+    "resolution": "Чинний контракт і явний бриф скасували сліпі обмеження та вимагають власний red; застарілий текст task/design про заборону читання/прогону не застосовано. Очікування задано delta/S01–S07. Source-аудит z398-ps-audit.json не читався; справжній runtime hook не копіювався.",
+    "newProductionSurface": [],
+    "scaffold": "Чинних createProductionServices(...).control.ps() та AgentControlService.ps() достатньо. Нові production методи/класи не потрібні; логіка фічі не реалізована.",
+    "tasks": "Z.398.1 залишається без власної галочки; її ставить raf. Інші пункти відкриті; sync/archive не застосовується."
+  },
+  "files": {
+    "test/agent-ps-projection.test.ts": "a8b344da14c1905b59d6e8f93d7e73b36c7d9d9381dd52ef1eae9e9442a7a7dc",
+    "test/agent-ps-projection-fixture.ts": "312b3d6912b910da1014abcf36692570bd5c81e84b28b2f22ca0131c21f97e84",
+    "test/agent-ps-projection-contract.ts": "94c75a13943fd5b2d692c4c51f74319cda046de61ea8ecf1bcc4c851e1ecf316",
+    "test/agent-ps-projection-cli.test.ts": "baa1e090a756c82ef9fb7c649b430d98a307c4eabe926aea37295f61b57fb397",
+    "test/helpers/agent-ps-projection-actor.mjs": "9328b30f247366ff28213a5718215ac623b5a7ac3a25e20cf28489de49adc1b0"
+  },
+  "unit": {
+    "group": "complete-raf-flow-contracts/z398-ps-projection",
+    "profileId": "node",
+    "files": [
+      "test/agent-ps-projection.test.ts"
+    ],
+    "inventoryAddition": {
+      "pointer": "conf/test-runs.json#/projects/raf/profiles/node/unitFiles",
+      "append": [
+        "test/agent-ps-projection.test.ts"
+      ]
+    },
+    "preset": {
+      "pointer": "conf/test-runs.json#/projects/raf/groups/complete-raf-flow-contracts/z398-ps-projection",
+      "value": {
+        "profileId": "node",
+        "files": [
+          "test/agent-ps-projection.test.ts"
+        ]
+      }
+    },
+    "registration": "Main підтвердив Orchestrator 79d24cbc3a; поточний запис прочитано, власних змін conf немає.",
+    "observedPreset": {
+      "profileId": "node",
+      "files": [
+        "test/agent-ps-projection.test.ts"
+      ]
+    },
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z398-ps-projection --files test/agent-ps-projection.test.ts",
+    "nextPhaseCommand": "raf test run --project raf --phase implement --group complete-raf-flow-contracts/z398-ps-projection --files test/agent-ps-projection.test.ts",
+    "fixture": "In-memory SQLite; isolated TMPDIR-owned scratch; mocked process listing/ancestry/boot identity at existing OS port. Does not launch provider/tmux/CLI. Calls the production public service, not a test sanitizer.",
+    "runId": "4cbaca71-b873-4fd5-815f-92d9b0f0dceb",
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 2,
+    "knownRed": 36,
+    "diagnosticKinds": [
+      "assertion"
+    ],
+    "fullResult": "evidence/z398-ps-projection/red.json",
+    "inventory": [
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S01 exact own leaf allowlist for verified test-scaffold"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S01 exact own leaf allowlist for verified main"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S01 exact own leaf allowlist for verified implement"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S02 foreign contexts omitted with addresses and state retained for test-scaffold"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S02 foreign contexts omitted with addresses and state retained for main"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S03 reused address does not grant the previous run context"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S03 unverified caller claim absent grants no context"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S03 unverified caller claim environment grants no context"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S03 unverified caller claim sender grants no context"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S03 verified caller outranks a claimed foreign run ID"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S04 raw escaped and encoded synthetic runtime hook never survives serialization"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 source cannot escape through modelHandoff"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 source cannot escape through result.proof"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 source cannot escape through process.evidence.command"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 source cannot escape through observation"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 source cannot escape through futureContainer"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S06 old records omit missing allowed leaves without reconstructing sources"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S07 repeated public ps retains internal report identity reservation and context"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S07 WORKER_RESULT_PENDING remains retryable without losing full internal context"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 0 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 1 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 2 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 3 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 4 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 5 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 6 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 7 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 8 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 9 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 10 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 11 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 12 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 13 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 14 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 encoded-only proof form 15 is omitted without a plaintext copy"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S07 internal reconciliation accepts a report with full context before public projection"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S05 reconciliation error never includes raw source or fallback record"
+      },
+      {
+        "file": "test/agent-ps-projection.test.ts",
+        "name": "Z398.S06 a session without launch metadata stays absent and addressable"
+      }
+    ],
+    "prerequisites": [
+      "Зареєстрований node unitFiles і точний preset до red.",
+      "Чинні conf/flow.json, conf/test-runs.json, conf/projects.json та стабільний snapshot під час preflight/черги.",
+      "Node з TypeScript stripping, node:sqlite та node:module registerHooks; залежності робочого дерева.",
+      "Raf надає окремий unit HOME/state та приватний TMPDIR; групу/ledger/HOME не скидати.",
+      "timeout виключно conf/flow.json#/unitTests/timeoutMs."
+    ],
+    "testedInputSha256": {
+      "test/agent-ps-projection.test.ts": "a8b344da14c1905b59d6e8f93d7e73b36c7d9d9381dd52ef1eae9e9442a7a7dc",
+      "test/agent-ps-projection-fixture.ts": "312b3d6912b910da1014abcf36692570bd5c81e84b28b2f22ca0131c21f97e84",
+      "test/agent-ps-projection-contract.ts": "5c7706e0d480415164ae376368755751ba0cfe0316ece88177f84037889303fb"
+    }
+  },
+  "integration": {
+    "executed": false,
+    "reason": "Окремий сценарій підготовлений для наступного integration/QA етапу; unit red не є живим CLI доказом.",
+    "group": "complete-raf-flow-contracts/z398-ps-projection-cli",
+    "profileId": "node-integration",
+    "files": [
+      "test/agent-ps-projection-cli.test.ts"
+    ],
+    "inventoryAddition": {
+      "pointer": "conf/test-runs.json#/projects/raf/profiles/node-integration/integrationFiles",
+      "append": [
+        "test/agent-ps-projection-cli.test.ts"
+      ]
+    },
+    "preset": {
+      "pointer": "conf/test-runs.json#/projects/raf/groups/complete-raf-flow-contracts/z398-ps-projection-cli",
+      "value": {
+        "profileId": "node-integration",
+        "files": [
+          "test/agent-ps-projection-cli.test.ts"
+        ]
+      }
+    },
+    "observedPresetAtHandoff": null,
+    "commandAfterRegistrationAndAuthorization": "raf test run --project raf --phase integration --group complete-raf-flow-contracts/z398-ps-projection-cli",
+    "prerequisites": [
+      "Main перевіряє й реєструє integrationFiles/preset; CLI-файл не входить до unitFiles.",
+      "Ізольований QA HOME/state/TMPDIR; node-integration за projects/raf/test-runs; timeout тільки conf/flow.json#/integrationTests/timeoutMs.",
+      "Node, git, реальні ps, tmux і openspec 1.14.3; доступні TypeScript dependency та local Git submodule/worktree setup.",
+      "production-fixture({productionQa:true,externalHome:true}) створює лише тимчасовий root/HOME/state і реальний develop/public bin/raf.ts; operational state/credentials не успадковуються.",
+      "Синтетичні actor-процеси реально живі; pid/startedAt/command/machineId/bootId з OS. CLI є їхнім нащадком; немає підміни verified caller, scanner або sanitizer.",
+      "Поточна реалізація очікувано має assertion-red після CLI exit 0; spawn/import/catalog/route/caller failure не підтверджує S04.",
+      "Сценарій захоплює весь stdout/stderr; actor cleanup у finally плюс cleanup дерева зовнішнього runner. Не обрізати output, не використовувати живі hook або чужий HOME/state."
+    ],
+    "inventory": [
+      "Z398 CLI S01-S07 verified real ancestry isolated public ps and complete cleanup"
+    ],
+    "registrationHandoff": "Main 2026-10-25 підтвердив: integrationFiles/preset буде зареєстровано після випуску Z.424 у робочу raf, бо поточна спільна реєстрація develop-файлу ламає hotfix-прогони. Це передумова подальшого запуску, не доказ виконання CLI."
+  },
+  "scenarioCoverage": {
+    "S01": "Literal exact nested allowlist; three verified roles; real CLI own and main.",
+    "S02": "Foreign launchContext property absent, not empty; addresses/runId/state/activity/observation remain.",
+    "S03": "Finished previous run plus reused address, verified current run, spoofed claims, unverified caller, actual actor ancestry/reused address in CLI.",
+    "S04": "Synthetic marker/source in raw/JSON/double JSON/URL/base64/base64url/hex/unicode forms; full CLI stdout and stderr.",
+    "S05": "Independent modelHandoff/result.proof/process.evidence.command/observation/futureContainer injections; 16 encoded-only proof cases; reconciliation error/fallback check.",
+    "S06": "Unknown top-level/nested fields fail closed; partial legacy allowlisted leaves; absent metadata stays absent.",
+    "S07": "Durable launch/process/result/reportAcceptance/reservations; full internal report processing and observation; repeated public ps; retryable WORKER_RESULT_PENDING."
+  },
+  "earlierAttempts": [
+    {
+      "file": "evidence/z398-ps-projection/initial-red.json",
+      "interpretation": "Первинні 19 падінь включали одну власну помилку fixture finishedAt; виправлено. Цей прогін не є остаточним доказом."
+    },
+    {
+      "file": "evidence/z398-ps-projection/configuration-drift.json",
+      "interpretation": "Refused до тестів через зміну unitFiles у черзі; не red. Повторено з новим snapshot."
+    }
+  ],
+  "sourceProvenance": {
+    "baselineAtCorrectedRunStart": "b947daed00dce0ed44c6581e57fd57608d1a0ac4",
+    "baselineNote": "HEAD до corrected run 2026-10-25T23:20:07Z за git log; tests тоді untracked, їхні SHA256 наведено вище. Наступні паралельні коміти не змінювали чотири цільові production-файли.",
+    "latestTargetProductionCommit": "1c85a39b6b53193a8862ac7438afa41dd70e1c02",
+    "productionSha256": {
+      "src/production-runtime.ts": "e421ef27d4f608a4e36ee7b0683805a8e2bcbec0b79fa02c3b5c135cb077a413",
+      "src/agent-control.ts": "39639ecc03d58d1b4e5a7f4ebea68abb73046a49b931373b77f71f4a8b530987",
+      "src/session-state.ts": "e0c9765aaacc3c9ecc7314e3780040a2d34403fb95a5dfce4bdbf1d79a809cf9",
+      "src/os-runtime.ts": "d831bcb59f9d8e69c7fa3fccf107df7d2dfd304aacc052a8d2358e8622d1866e"
+    },
+    "postRunChange": "Removed one empty EOF line in test/agent-ps-projection-contract.ts for git diff --check; no executable content changed. Final file SHA256 and tested input SHA256 are recorded separately; no further test execution."
+  },
+  "limitations": [
+    "Integration сценарій не запускався; success/live confidentiality/cleanup через CLI ще не підтверджені.",
+    "Unit використовує підмінені OS observation ports; це не live доказ.",
+    "Реальний подальший CLI прогін має окремо зберегти TestRunResult, CLI/child exit, stdout/stderr та cleanup."
+  ]
+}

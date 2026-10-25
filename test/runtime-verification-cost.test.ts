@@ -431,8 +431,9 @@ for (const state of ['empty', 'many', 'missing', 'reuse', 'old-machine', 'old-bo
       assert.deepEqual(current.process, row.process);
       if (state === 'unknown') {
         assert.equal(current.state, 'running');
-        assert.equal(current.observation?.state, 'unknown');
+        if (current.observation) assert.equal(current.observation.state, 'unknown');
         assert.equal(inspect.sessionRepository.transaction(tx => tx.listReservations()).some(reservation => reservation.runId === row.runId), true);
+        assert.equal(inspect.startupContextDatabase.prepare('SELECT COUNT(*) AS n FROM verification_events').get()!.n, 0);
       }
       if (['missing', 'reuse'].includes(state) || ['old-machine', 'old-boot'].includes(state) && row.addressId === 'agent-1') {
         assert.equal(current.state, 'finished');
@@ -442,6 +443,19 @@ for (const state of ['empty', 'many', 'missing', 'reuse', 'old-machine', 'old-bo
     }
     assert.equal(cost.full, 1, 'Full command includes exactly one independent origin admission');
     assert.equal(cost.content.length, f.inventory.files.length);
+    if (['missing', 'reuse', 'old-machine', 'old-boot'].includes(state)) {
+      const events = inspect.startupContextDatabase.prepare('SELECT payload FROM verification_events ORDER BY rowid').all();
+      const reservations = inspect.sessionRepository.transaction(tx => tx.listReservations());
+      os.reset(); meter.reset(); opens = 0; closes = 0; contexts = 0; lifecycle.length = 0;
+      const repeated = await runProductionCli(['agent', 'ps'], { orchestratorRoot: f.root, homeDirectory: f.home, artifactPath: join(f.root, 'catalog.json') });
+      assert.equal(repeated.exitCode, 0, repeated.stderr);
+      assert.deepEqual(JSON.parse(repeated.stdout).map((row: SessionRecord) => row.addressId).sort(), expected);
+      assert.deepEqual(inspect.startupContextDatabase.prepare('SELECT payload FROM verification_events ORDER BY rowid').all(), events, 'Recovery events are committed once across repeated commands');
+      assert.deepEqual(inspect.sessionRepository.transaction(tx => tx.listReservations()), reservations);
+      assert.equal(os.scanCount() <= (expected.length ? 1 : 0), true);
+      assert.equal(opens, 1); assert.equal(closes, 1); assert.equal(contexts, 1);
+      assertSingleInventory(meter, f);
+    }
   });
 }
 

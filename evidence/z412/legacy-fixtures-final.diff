@@ -1,0 +1,68 @@
+diff --git a/test/spec-design-commit.test.ts b/test/spec-design-commit.test.ts
+index f4b49c0..ed6e4b1 100644
+--- a/test/spec-design-commit.test.ts
++++ b/test/spec-design-commit.test.ts
+@@ -78,7 +78,7 @@ async function fixture(t: TestContext, linkedOrchestrator = false) {
+   await Promise.all([
+     writeFile(join(change, 'proposal.md'), '# Document only\n'),
+     writeFile(join(change, 'design.md'), '# Document design\n'),
+-    writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Write assigned documents\n'),
++    writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Write assigned documents\n- [ ] 1.2 Unselected remaining work\n'),
+     writeFile(spec, '## ADDED Requirements\n'),
+     writeFile(questions, '# Questions\n'),
+   ]);
+diff --git a/test/task-context.test.ts b/test/task-context.test.ts
+index 7f5fbec..2b49fcd 100644
+--- a/test/task-context.test.ts
++++ b/test/task-context.test.ts
+@@ -37,10 +37,10 @@ const fixtureResourceEstimates = {
+ };
+ 
+ const descriptions = {
+-  a11: 'Вивести контекст за conf/flow.json. Перевірка: node --test test/a.test.ts дає код 0.',
++  a11: 'Вивести контекст за `conf/flow.json`. Перевірка: node --test test/a.test.ts дає код 0.',
+   a12: 'Друге завдання зміни A. Перевірка: ручний огляд звіту.',
+   b11: 'Завдання зміни B з тим самим номером. Перевірка: інший доказ для B.',
+-  c11: 'Прочитати conf/missing-source.json перед роботою. Перевірка: файл прочитано.',
++  c11: 'Прочитати `conf/missing-source.json` перед роботою. Перевірка: файл прочитано.',
+ };
+ 
+ const changes: Record<string, { tasksMd: string; items: { id: string; description: string }[] }> = {
+@@ -195,7 +195,7 @@ async function harness(t: TestContext, w: Workspace, override: (services: Runtim
+   const runtime = createAppRuntime(context, {
+     loadConfiguration: async () => configuration,
+     openStore: async path => (store = openStateStore(path)),
+-    createServices: async (opened, config, ctx) => override(await createProductionServices(opened, config, ctx, { execute })),
++    createServices: async (opened, config, ctx) => override({ ...await createProductionServices(opened, config, ctx, { execute }), agentQueue: undefined }),
+     nextRunIdentity: () => ({ runId: randomUUID(), tmuxSession: randomUUID() }),
+     now: () => Date.now(),
+   });
+@@ -312,6 +312,7 @@ test('[task-context] 4. outcome зберігає зміна:пункт і дос
+ 
+ test('[task-context] 5. межі запису: spec без cwd коду, implement із cwd; каталоги змін і файл питань', async t => {
+   const w = await workspace(t);
++  await writeFile(join(w.root, 'openspec/changes/change-b/tasks.md'), changes['change-b'].tasksMd + '- [ ] 1.2 Unselected remaining work\n');
+   const tasks = ['change-a:1.1', 'change-b:1.1'];
+   const cwd = join(w.root, 'raf-develop');
+   const expected = [join(w.root, 'openspec', 'changes', 'change-a'), join(w.root, 'openspec', 'changes', 'change-b'), join(w.root, 'questions', 'projects', 'raf', 'questions.md')];
+diff --git a/test/z12-fixture.ts b/test/z12-fixture.ts
+index 232b6dc..f5a44ba 100644
+--- a/test/z12-fixture.ts
++++ b/test/z12-fixture.ts
+@@ -66,7 +66,7 @@ export async function z12Fixture(t: TestContext) {
+   await Promise.all([
+     writeFile(join(change, 'proposal.md'), '# Z12 fixture\n'),
+     writeFile(join(change, 'design.md'), '# Z12 fixture design\n'),
+-    writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Prepare assigned documents\n'),
++    writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Prepare assigned documents\n- [ ] 1.2 Unselected remaining work\n'),
+     writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify(constants)),
+     writeFile(join(confRoot, 'flow.json'), JSON.stringify(flow)),
+     writeFile(join(confRoot, 'test-runs.json'), JSON.stringify(json('test-runs.json'))),
+@@ -120,6 +120,7 @@ export async function productionPreparation(t: TestContext, f: Awaited<ReturnTyp
+   const reserved: Parameters<RuntimeServices['reserve']>[0][] = [];
+   const createServices = async (): Promise<RuntimeServices> => ({
+     ...await getServices(),
++    agentQueue: undefined,
+     assignment: { validate: async () => ({ ok: true, snapshot: f.assignment }), compose: async () => 'Z12 fixture brief' },
+     routingSnapshot: async () => ({ runnerEnabled: { codex: true }, cliAvailable: { codex: true }, quotas: [] }),
+     selectModel: () => ({ status: 'selected', runner: 'codex', model: 'fixture-model', effort: 'fixture-effort', reason: 'fixture', quota: 'unknown' }),

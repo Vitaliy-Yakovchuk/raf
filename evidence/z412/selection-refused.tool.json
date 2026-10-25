@@ -1,0 +1,18 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z412 --files test/task-context-final-archive.test.ts test/spec-design-commit.test.ts test/task-context-z12.test.ts test/task-context.test.ts --only 'test/task-context.test.ts::[task-context] 1. agent run без файла task-context/<id>.json виводить контекст і оцінку типу незалежно від порогів рівня' 'test/task-context-z12.test.ts::[task-context] Z.12 spec: profile main and canonical root reach production preparation without branchPaths'",
+  "chunk_id": "ac766e",
+  "wall_time_seconds": 0.046151477,
+  "exit_code": 1,
+  "original_token_count": 466,
+  "output": "{\"testKind\":null,\"timeoutPolicy\":null,\"callerPhase\":null,\"diagnostics\":[{\"kind\":\"preflight\",\"test\":null,\"errorName\":\"Error\",\"errorCode\":\"SELECTION_CONFLICT\",\"message\":\"SELECTION_CONFLICT: SELECTION_CONFLICT\",\"location\":{\"file\":\"<external>/test-runs.ts\",\"line\":245,\"column\":80},\"stack\":[\"    at failure (<external>/test-runs.ts:245:80)\",\"    at parseTestRunArgs (<external>/test-runs.ts:267:36)\",\"    at runConfiguredTestRun (<external>/test-run-runtime.ts:289:18)\",\"    at runProductionCli (<external>/production-entry.ts:146:12)\",\"    at async Module.runPublicCli (<external>/cli.ts:160:14)\",\"    at async <external>/raf.ts:6:5\"],\"redacted\":true,\"truncated\":false}],\"diagnosticSummary\":{\"totalEntries\":1,\"retainedEntries\":1,\"omittedEntries\":0,\"truncated\":false,\"redacted\":true},\"environmentSummary\":{\"executable\":\"/opt/dev/node/bin/node\",\"runtimeVersion\":\"v26.12.1\",\"adapter\":\"unavailable\",\"isolation\":\"unavailable\",\"configurationFingerprints\":{\"flow\":\"\",\"testRuns\":\"\",\"projects\":\"\"},\"tmpPathBytes\":0,\"privateRunTmp\":false},\"runId\":\"e6c74638-0560-409c-bf4e-7a05d7d531a2\",\"project\":\"raf\",\"workspace\":\"\",\"phase\":\"hotfix\",\"group\":\"complete-raf-flow-contracts/z412\",\"profileId\":null,\"selection\":{\"files\":[],\"testIds\":[]},\"command\":null,\"startedAt\":\"2026-10-25T02:04:26.884Z\",\"durationMs\":0,\"exitCode\":null,\"signal\":null,\"timedOut\":false,\"cleanup\":{\"complete\":true,\"remainingPids\":[]},\"outcome\":\"refused\",\"failureKinds\":[\"refusal\"],\"passed\":[],\"knownRed\":[],\"unexecuted\":[],\"unknown\":[],\"removed\":[],\"stateAccess\":null,\"groupSnapshot\":\"unavailable\",\"groupState\":null,\"timeoutCount\":null,\"nextAction\":\"fix-setup\",\"hintIds\":[\"refusal\"],\"hints\":[\"Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін.\"],\"evidence\":[],\"errorCode\":\"SELECTION_CONFLICT\"}\n",
+  "stderr": null,
+  "stderrReason": "The trusted test channel supplies combined output only; main explicitly accepted null separate stderr.",
+  "workspaceHead": "749eabfc1909b9205aa1717b7e7d81968c69001a",
+  "ownUncommitted": [
+    "test/spec-design-commit.test.ts",
+    "test/z12-fixture.ts",
+    "test/task-context.test.ts",
+    "evidence/z412/"
+  ],
+  "fixtureState": "temporary fixture diagnostics; no child started"
+}

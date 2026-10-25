@@ -1,0 +1,137 @@
+{
+  "assignment": "review-agent-startup-context:3.32.1",
+  "group": "review-agent-startup-context/assigned-review-package",
+  "audit": {
+    "baseCommit": "f62125a19390f0a5875f06bc6b61ba072720bf8a",
+    "finding": "Дефект присутній: ORDER BY rowid LIMIT 1 не враховує доручення. Попередній контракт найстаршого пакета уточнено за прямим дорученням 3.32.1 та погодженням main.",
+    "sources": [
+      "openspec/changes/review-agent-startup-context/proposal.md",
+      "openspec/changes/review-agent-startup-context/tasks.md:3.32.1",
+      "openspec/changes/review-agent-startup-context/specs/projects/raf/startup-context-trace/spec.md#Прив'язка агента аналізу до пакета",
+      "openspec/specs/core/process/test-first/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md"
+    ]
+  },
+  "runs": [
+    {
+      "phase": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase red --group review-agent-startup-context/assigned-review-package --files test/startup-context-lifecycle.test.ts test/startup-context-runtime.test.ts",
+      "sha": "2ad4b4a63cf3e2cde0d964861efe0c3ab2471204",
+      "workspaceEvidence": "red.workspace.json",
+      "patch": "red.patch",
+      "result": "red.stdout.json",
+      "stderr": "red.stderr",
+      "cli": "red.cli.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "4bc3f178-b8af-4f7f-b6d1-bb140047e475",
+      "selection": {
+        "files": [
+          "test/startup-context-lifecycle.test.ts",
+          "test/startup-context-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 13,
+      "knownRed": [
+        {
+          "file": "test/startup-context-lifecycle.test.ts",
+          "name": "reservation binds and closes only the assigned package among several open packages"
+        },
+        {
+          "file": "test/startup-context-lifecycle.test.ts",
+          "name": "reservation refuses missing or ambiguous assignment package IDs without binding any open package"
+        },
+        {
+          "file": "test/startup-context-lifecycle.test.ts",
+          "name": "reservation refuses unknown, bound or closed assigned packages without falling back"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "phase": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase hotfix --group review-agent-startup-context/assigned-review-package --files test/startup-context-lifecycle.test.ts test/startup-context-runtime.test.ts",
+      "sha": "2ad4b4a63cf3e2cde0d964861efe0c3ab2471204",
+      "workspaceEvidence": "hotfix.workspace.json",
+      "patch": "hotfix.patch",
+      "result": "hotfix.stdout.json",
+      "stderr": "hotfix.stderr",
+      "cli": "hotfix.cli.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "3c752d70-9ec3-42bc-8449-5d686eb8660b",
+      "selection": {
+        "files": [
+          "test/startup-context-lifecycle.test.ts",
+          "test/startup-context-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 16,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    }
+  ],
+  "isolation": {
+    "sameQaHome": true,
+    "groupAndAggregateReset": false,
+    "foreignRegression": false
+  },
+  "streamCapture": "Незмінені stdout/stderr та код CLI скопійовані з результату власного дозволеного каналу до його штатного прибирання; розміри звірено з result.json. Child exitCode збережено окремо всередині TestRunResult.",
+  "checks": [
+    {
+      "command": "node scripts/build.ts",
+      "result": "build.cli.json",
+      "code": 0
+    },
+    {
+      "command": "git diff --check",
+      "code": 0
+    },
+    {
+      "command": "openspec validate review-agent-startup-context --strict --no-interactive",
+      "code": 0,
+      "note": "Початкове strict-попередження через довжину уточненої вимоги усунуто скороченням нормативного абзацу; сценарії збережено."
+    }
+  ],
+  "limits": "Живі запуски context-review, історичні прив'язки та активація main не виконувалися. Інші пункти зміни відкриті, archive не застосовується.",
+  "filesSha256": {
+    "build.cli.json": "84477f9df2f3fb1b50e8540dc3785de50acba75c41b60ea38f64325b89e36224",
+    "build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build.stdout": "6b221728df48245796b480b3b0cf763e71b934f46c28dd6ed12d4578dc8a4aef",
+    "hotfix.cli.json": "bab29563840ca7186b09839d55ad1200d8ab37a6667086b757458013588c9644",
+    "hotfix.patch": "5f588340b40dccdec9776aef11a96c3ab952fd25b5691395b593d95cbf76f7db",
+    "hotfix.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "hotfix.stdout.json": "404fdfc228160d454c27968e6d7905ef7c48d54850680964a3af63be9f18ad0e",
+    "hotfix.workspace.json": "f7b7fd310759abc0b5182a50198a07163bf9dac442c40a1127e5ffb17035d7b8",
+    "red.cli.json": "118848282e6230843812e85d6d62dbd2dd5ce40239f59792bc328235e270fd92",
+    "red.patch": "172b5f354f88d50f451f6e33c9f23f8582e4b1d1b83d63e9667c5b0f93fe895c",
+    "red.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "red.stdout.json": "cee569bd8081eec3bc316b2c47886e9b8e8156dfc10be0848d508d9a5ae0bbcc",
+    "red.workspace.json": "ab7d5e4541fb04516956293f5e2ece5941c93d2a89f3391015217346cf50cb9a"
+  }
+}

@@ -1,0 +1,187 @@
+{
+  "context": {
+    "branch": "develop",
+    "outcome": "archive-demo-sync:7.2 — Finish change",
+    "writeBoundaries": [
+      "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/changes/",
+      "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/specs/demo/existing/",
+      "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/specs/demo/new/",
+      "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/questions/projects/raf/questions.md"
+    ],
+    "workspaceWritable": false,
+    "sources": [
+      "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/changes/archive-demo-sync/proposal.md — мета й межі зміни archive-demo-sync, секції Why/What Changes/Non-goals; читати зараз",
+      "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/changes/archive-demo-sync/tasks.md — лише вибрані пункти й «Джерела за етапом»; за потреби конкретного контракту шукай у /srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/changes/archive-demo-sync релевантну секцію design або повну вимогу delta зі сценаріями; каталог не є дорученням читати всі файли"
+    ],
+    "reportSchema": {
+      "type": "object",
+      "required": [
+        "status",
+        "answer",
+        "changes",
+        "commits"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "commits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "repository",
+              "sha"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "repository": {
+                "type": "string"
+              },
+              "sha": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "context": {
+          "type": "object",
+          "required": [
+            "unnecessary",
+            "missing"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "unnecessary": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "source",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "missing": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "description",
+                  "foundAt"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "foundAt": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "status": {
+          "enum": [
+            "succeeded",
+            "failed"
+          ]
+        },
+        "answer": {
+          "type": "string"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "items"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "archive": {
+                "type": "string"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "status"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "enum": [
+                        "succeeded",
+                        "failed"
+                      ]
+                    },
+                    "reason": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "estimate": {
+      "status": "UNKNOWN",
+      "reason": "Missing or invalid resource estimate: conf/flow.json#/resourceEstimates",
+      "confPointer": "conf/flow.json#/resourceEstimates"
+    }
+  },
+  "boundaries": [
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/changes",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/specs/demo/existing",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/specs/demo/new",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/questions/projects/raf/questions.md"
+  ],
+  "permissions": {
+    ":root": "read",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/run-sync": "write",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/qa-home": "write",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/tmp": "write",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/changes": "write",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/specs/demo/existing": "write",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/specs/demo/new": "write",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/raf-develop": "read"
+  },
+  "assignment": {
+    "root": "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync",
+    "baselineArchives": [],
+    "changes": [
+      {
+        "id": "archive-demo-sync",
+        "items": [
+          {
+            "id": "7.2",
+            "description": "Finish change"
+          }
+        ]
+      }
+    ]
+  }
+}

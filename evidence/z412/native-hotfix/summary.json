@@ -1,0 +1,53 @@
+{
+  "kind": "integration",
+  "base": "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv",
+  "home": "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/qa-home",
+  "output": "/srv/dev/work/orchestrator/raf-hotfix/evidence/z412/native-hotfix",
+  "captures": [
+    {
+      "label": "sync-denied",
+      "executable": "bwrap",
+      "args": [
+        "--ro-bind",
+        "/",
+        "/",
+        "--bind",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/run-sync",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/run-sync",
+        "--bind",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/qa-home",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/qa-home",
+        "--bind",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/tmp",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/tmp",
+        "--bind",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/changes",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/changes",
+        "--bind",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/specs/demo/existing",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/specs/demo/existing",
+        "--bind",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/specs/demo/new",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/specs/demo/new",
+        "--chdir",
+        "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/raf-develop",
+        "--",
+        "/opt/dev/node/bin/node",
+        "--input-type=module",
+        "-e",
+        "import { writeFileSync } from 'node:fs'; const denied = [\"/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/openspec/specs/demo/unrelated/spec.md\",\"/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/conf/foreign.json\",\"/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/raf-develop/foreign.txt\"]; for (const path of denied) { try { writeFileSync(path, 'forbidden'); throw new Error('write permitted: ' + path); } catch (error) { if (!['EACCES', 'EPERM', 'EROFS'].includes(error.code)) throw error; } }"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv/sync/raf-develop",
+      "code": 1,
+      "signal": null,
+      "error": null
+    }
+  ],
+  "cases": [],
+  "cleanup": {
+    "removed": "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-ysctKv",
+    "completed": true
+  },
+  "outcome": "failed",
+  "error": "AssertionError [ERR_ASSERTION]: sync: denied paths probe failed: bwrap: loopback: Failed to create NETLINK_ROUTE socket: Permission denied\n\n\n1 !== 0\n\n    at file:///srv/dev/work/orchestrator/raf-hotfix/evidence/z412/archive-stand.mjs:73:12"
+}

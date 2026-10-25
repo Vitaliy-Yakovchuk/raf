@@ -1,0 +1,25 @@
+{
+  "sha": "2ad4b4a63cf3e2cde0d964861efe0c3ab2471204",
+  "branch": "hotfix",
+  "status": [
+    " M test/startup-context-lifecycle.test.ts",
+    " M test/startup-context-runtime.test.ts",
+    "?? evidence/assigned-review-package/",
+    "?? evidence/z412/",
+    "?? node_modules"
+  ],
+  "ownedPaths": [
+    "src/startup-context-lifecycle.ts",
+    "src/production-runtime.ts",
+    "test/startup-context-lifecycle.test.ts",
+    "test/startup-context-runtime.test.ts"
+  ],
+  "sourceSha256": {
+    "src/startup-context-lifecycle.ts": "fcdc8cf6b20c4b6641490b66ae8d54ce67fb35b030246559d6f1de9e6afa3b9c",
+    "src/production-runtime.ts": "a2f0043203d8530540a7c6b6a66b45bab34dd6ce9dcfb78ee62280300e0fd20f",
+    "test/startup-context-lifecycle.test.ts": "d7c38e789c7929c9c89ebf0f28bcb57563be79bd48cdf0d2e4836992ea98db05",
+    "test/startup-context-runtime.test.ts": "73a143b3455dfede8bd2333e4baec9575e276a9fa4419fb0ffdd5b403517fbbf"
+  },
+  "patch": "red.patch",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase red --group review-agent-startup-context/assigned-review-package --files test/startup-context-lifecycle.test.ts test/startup-context-runtime.test.ts"
+}

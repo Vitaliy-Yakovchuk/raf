@@ -1173,7 +1173,7 @@ export async function createProductionServices(
           synchronize(result.admission);
           if (!result.reserved) { admissionReason = result.admission.reasons.join('; '); throw new Error('RESOURCE_UNAVAILABLE'); }
           if (input.activity.phase === 'context-review') {
-            const review = reserveStartupContextReview({ runId: input.runId, phase: 'context-review', brief: '' }, { database: store.startupContextDatabase });
+            const review = reserveStartupContextReview({ runId: input.runId, phase: 'context-review', brief: '', assignment: input.assignment }, { database: store.startupContextDatabase });
             tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
           }
           const launcher = caller ? tx.getSession(caller) : undefined;

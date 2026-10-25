@@ -1,0 +1,29 @@
+{
+  "label": "sync-denied",
+  "executable": "codex",
+  "args": [
+    "--no-daemon",
+    "sandbox",
+    "-C",
+    "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-sa87Na/sync/raf-develop",
+    "-P",
+    "linux",
+    "-c",
+    "sandbox_mode=\"workspace-write\"",
+    "-c",
+    "default_permissions=\"linux\"",
+    "-c",
+    "permissions.linux.filesystem={\":root\"=\"read\",\"/srv/dev/work/orchestrator/raf-hotfix/.z412-native-sa87Na/run-sync\"=\"write\",\"/srv/dev/work/orchestrator/raf-hotfix/.z412-native-sa87Na/qa-home\"=\"write\",\"/srv/dev/work/orchestrator/raf-hotfix/.z412-native-sa87Na/tmp\"=\"write\",\"/srv/dev/work/orchestrator/raf-hotfix/.z412-native-sa87Na/sync/openspec/changes/archive-demo-sync\"=\"write\",\"/srv/dev/work/orchestrator/raf-hotfix/.z412-native-sa87Na/sync/raf-develop\"=\"read\"}",
+    "-c",
+    "permissions.linux.network.enabled=false",
+    "--",
+    "/opt/dev/node/bin/node",
+    "--input-type=module",
+    "-e",
+    "import { writeFileSync } from 'node:fs'; const denied = [\"/srv/dev/work/orchestrator/raf-hotfix/.z412-native-sa87Na/sync/openspec/specs/demo/unrelated/spec.md\",\"/srv/dev/work/orchestrator/raf-hotfix/.z412-native-sa87Na/sync/conf/foreign.json\",\"/srv/dev/work/orchestrator/raf-hotfix/.z412-native-sa87Na/sync/raf-develop/foreign.txt\"]; for (const path of denied) { try { writeFileSync(path, 'forbidden'); throw new Error('write permitted: ' + path); } catch (error) { if (!['EACCES', 'EPERM', 'EROFS'].includes(error.code)) throw error; } }"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-hotfix/.z412-native-sa87Na/sync/raf-develop",
+  "code": 1,
+  "signal": null,
+  "error": null
+}

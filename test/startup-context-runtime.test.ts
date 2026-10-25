@@ -77,12 +77,13 @@ test('service recovery captures a persisted accepted report before removing its 
   assert.equal(attempts, 3);
   assert.equal(store.sessionRepository.transaction(tx => tx.listPending()).filter(row => row.event === 'context-review.due').length, 0);
   assert.equal(listStartupContextReviewEvents(store.startupContextDatabase)[0].id, events[0].id);
-  reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'review' }, { database: store.startupContextDatabase });
+  const assignment = { root, baselineArchives: [], changes: [{ id: 'review-agent-startup-context', items: [{ id: '3.32', description: `[spec] Аналіз пакета context-review.due ${events[0].id}` }] }] };
+  reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'review', assignment }, { database: store.startupContextDatabase });
   store.sessionRepository.transaction(tx => {
     const session = { runId: 'reviewer', addressId: 'reviewer', revision: 0, state: 'reserved' as const };
     tx.putSession(session);
     closeSessionInTransaction(tx, session, at);
   });
-  const retry = reserveStartupContextReview({ runId: 'retry', phase: 'context-review', brief: 'review' }, { database: store.startupContextDatabase });
+  const retry = reserveStartupContextReview({ runId: 'retry', phase: 'context-review', brief: 'review', assignment }, { database: store.startupContextDatabase });
   assert.equal(retry.contextReviewId, events[0].id);
 });

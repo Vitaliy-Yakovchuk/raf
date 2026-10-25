@@ -37,10 +37,10 @@ const fixtureResourceEstimates = {
 };
 
 const descriptions = {
-  a11: 'Вивести контекст за conf/flow.json. Перевірка: node --test test/a.test.ts дає код 0.',
+  a11: 'Вивести контекст за `conf/flow.json`. Перевірка: node --test test/a.test.ts дає код 0.',
   a12: 'Друге завдання зміни A. Перевірка: ручний огляд звіту.',
   b11: 'Завдання зміни B з тим самим номером. Перевірка: інший доказ для B.',
-  c11: 'Прочитати conf/missing-source.json перед роботою. Перевірка: файл прочитано.',
+  c11: 'Прочитати `conf/missing-source.json` перед роботою. Перевірка: файл прочитано.',
 };
 
 const changes: Record<string, { tasksMd: string; items: { id: string; description: string }[] }> = {
@@ -195,7 +195,7 @@ async function harness(t: TestContext, w: Workspace, override: (services: Runtim
   const runtime = createAppRuntime(context, {
     loadConfiguration: async () => configuration,
     openStore: async path => (store = openStateStore(path)),
-    createServices: async (opened, config, ctx) => override(await createProductionServices(opened, config, ctx, { execute })),
+    createServices: async (opened, config, ctx) => override({ ...await createProductionServices(opened, config, ctx, { execute }), agentQueue: undefined }),
     nextRunIdentity: () => ({ runId: randomUUID(), tmuxSession: randomUUID() }),
     now: () => Date.now(),
   });
@@ -312,6 +312,7 @@ test('[task-context] 4. outcome зберігає зміна:пункт і дос
 
 test('[task-context] 5. межі запису: spec без cwd коду, implement із cwd; каталоги змін і файл питань', async t => {
   const w = await workspace(t);
+  await writeFile(join(w.root, 'openspec/changes/change-b/tasks.md'), changes['change-b'].tasksMd + '- [ ] 1.2 Unselected remaining work\n');
   const tasks = ['change-a:1.1', 'change-b:1.1'];
   const cwd = join(w.root, 'raf-develop');
   const expected = [join(w.root, 'openspec', 'changes', 'change-a'), join(w.root, 'openspec', 'changes', 'change-b'), join(w.root, 'questions', 'projects', 'raf', 'questions.md')];

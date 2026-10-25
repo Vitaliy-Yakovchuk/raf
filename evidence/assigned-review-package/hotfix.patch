@@ -1,0 +1,209 @@
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index 6fb0a49..ff4aee5 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1156,7 +1156,7 @@ export async function createProductionServices(
+           synchronize(result.admission);
+           if (!result.reserved) { admissionReason = result.admission.reasons.join('; '); throw new Error('RESOURCE_UNAVAILABLE'); }
+           if (input.activity.phase === 'context-review') {
+-            const review = reserveStartupContextReview({ runId: input.runId, phase: 'context-review', brief: '' }, { database: store.startupContextDatabase });
++            const review = reserveStartupContextReview({ runId: input.runId, phase: 'context-review', brief: '', assignment: input.assignment }, { database: store.startupContextDatabase });
+             tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
+           }
+           const launcher = caller ? tx.getSession(caller) : undefined;
+diff --git a/src/startup-context-lifecycle.ts b/src/startup-context-lifecycle.ts
+index 8d88b2f..a0ea2ba 100644
+--- a/src/startup-context-lifecycle.ts
++++ b/src/startup-context-lifecycle.ts
+@@ -1,5 +1,6 @@
+ import type { DatabaseSync } from 'node:sqlite';
+ import type { AgentReportResult } from './agent-report.ts';
++import type { AssignmentSnapshot } from './assignment.ts';
+ import type { PendingIntent, SessionRecord } from './session-state.ts';
+ import { bindStartupContextReview, settleStartupContextReview, listStartupContextReviewEvents, pruneStartupContextTraces, readStartupContextTrace, recordStartupContextCompletion, type StartupContextCapturePorts } from './startup-context.ts';
+ import { captureStartupContextJournal, type StartupContextJournal } from './startup-context-journal.ts';
+@@ -67,14 +68,19 @@ export async function finalizeStartupContextRun(
+ }
+ 
+ export function reserveStartupContextReview(
+-  input: { readonly runId: string; readonly phase: 'context-review'; readonly brief: string },
++  input: { readonly runId: string; readonly phase: 'context-review'; readonly brief: string; readonly assignment?: AssignmentSnapshot },
+   ports: Pick<StartupContextLifecyclePorts, 'database'>,
+ ): StartupContextReviewReservation {
++  const packageIds = new Set(input.assignment?.changes.flatMap(change => change.items.flatMap(item =>
++    [...item.description.matchAll(/\bcontext-review\.due\s+([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\b/giu)].map(match => match[1].toLowerCase()),
++  )));
++  if (packageIds.size !== 1) throw new Error('Exactly one context-review.due package ID is required in assigned task descriptions');
++  const [packageId] = packageIds;
+   listStartupContextReviewEvents(ports.database);
+   ports.database.exec('SAVEPOINT reserve_startup_context_review');
+   try {
+-    const row = ports.database.prepare('SELECT id, payload FROM startup_context_reviews WHERE closed_at IS NULL AND review_run_id IS NULL ORDER BY rowid LIMIT 1').get();
+-    if (!row) throw new Error('No open unbound startup context review package is available');
++    const row = ports.database.prepare('SELECT id, payload FROM startup_context_reviews WHERE id=? AND closed_at IS NULL AND review_run_id IS NULL').get(packageId);
++    if (!row) throw new Error(`Assigned startup context review package is unknown, closed or already bound: ${packageId}`);
+     const event = JSON.parse(row.payload as string);
+     bindStartupContextReview(ports.database, { eventId: row.id as string, reviewRunId: input.runId, phase: input.phase });
+     const reservation = { contextReviewId: row.id as string, runIds: event.runIds as string[], brief: `${input.brief}\n\ncontextReviewId: ${row.id}\nrunIds: ${JSON.stringify(event.runIds)}\n` };
+diff --git a/test/startup-context-lifecycle.test.ts b/test/startup-context-lifecycle.test.ts
+index caa0122..e0c1c3d 100644
+--- a/test/startup-context-lifecycle.test.ts
++++ b/test/startup-context-lifecycle.test.ts
+@@ -4,12 +4,17 @@ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import { DatabaseSync } from 'node:sqlite';
+ import test, { type TestContext } from 'node:test';
++import type { AssignmentSnapshot } from '../src/assignment.ts';
+ import type { AgentReportResult } from '../src/agent-report.ts';
+ import type { PendingIntent, SessionRecord } from '../src/session-state.ts';
+ import { cleanupStartupContextCompleted, finalizeStartupContextRun, reserveStartupContextReview, type StartupContextLifecyclePorts } from '../src/startup-context-lifecycle.ts';
+ import { listStartupContextReviewEvents, pendingStartupContextRunIds, readStartupContextTrace, recordStartupContextCompletion, type StartupContextDueEvent, type StartupContextTrace } from '../src/startup-context.ts';
+ 
+ const finishedAt = '2026-10-22T10:00:00.000Z';
++function reviewAssignment(...ids: string[]) {
++  return { root: '/fixture', baselineArchives: [], changes: [{ id: 'review-agent-startup-context', items: ids.map((id, index) => ({ id: `3.${index + 1}`, description: `[spec] Аналіз пакета context-review.due ${id} (20 runId; експорт main)` })) }] } satisfies AssignmentSnapshot;
++}
++
+ const assessment = { unnecessary: [{ source: 'brief/common', reason: 'Repeated instructions' }], missing: [{ description: 'Trace contract', foundAt: '/spec/trace.md' }] };
+ 
+ function seedTrace(runId: string): StartupContextTrace {
+@@ -221,38 +226,74 @@ test('threshold stages context-review.due for main with stable package ID and ru
+   assert.deepEqual([...f.pending.values()].filter(intent => intent.event === 'context-review.due'), beforeRetry);
+ });
+ 
+-test('reservation binds the oldest unbound package and includes package ID and source runIds in the brief', t => {
++test('reservation binds and closes only the assigned package among several open packages', async t => {
+   const f = fixture(t);
+   const first = f.seedBatch('old', '2026-10-22T08:00:00.000Z');
+-  const second = f.seedBatch('new', '2026-10-22T09:00:00.000Z');
+-  const a = reserveStartupContextReview({ runId: 'review-a', phase: 'context-review', brief: 'Review startup context' }, f.ports);
+-  assert.equal(a.contextReviewId, first.event.id);
+-  assert.deepEqual(a.runIds, first.runIds);
+-  for (const identifier of [first.event.id, ...first.runIds]) assert.ok(a.brief.includes(identifier));
+-  assert.ok(a.brief.includes('Review startup context'));
+-  const b = reserveStartupContextReview({ runId: 'review-b', phase: 'context-review', brief: 'Review startup context' }, f.ports);
+-  assert.equal(b.contextReviewId, second.event.id);
+-  assert.deepEqual(b.runIds, second.runIds);
++  const selected = f.seedBatch('assigned', '2026-10-22T09:00:00.000Z');
++  const last = f.seedBatch('new');
++  const assignment = reviewAssignment(selected.event.id);
++  assignment.changes[0].items[0].description += ` за попередньою базою ${first.event.id}`;
++  const reservation = reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review startup context', assignment }, f.ports);
++  assert.equal(reservation.contextReviewId, selected.event.id);
++  assert.deepEqual(reservation.runIds, selected.runIds);
++  for (const identifier of [selected.event.id, ...selected.runIds]) assert.ok(reservation.brief.includes(identifier));
++  for (const identifier of [first.event.id, last.event.id, ...first.runIds, ...last.runIds]) assert.equal(reservation.brief.includes(identifier), false);
++  assert.ok(reservation.brief.includes('Review startup context'));
++  f.add('reviewer', 'exited', 'context-review');
++  await finalizeStartupContextRun('reviewer', f.ports);
++  await finalizeStartupContextRun('reviewer', f.ports);
++  const rows = f.database.prepare('SELECT id, review_run_id, closed_at FROM startup_context_reviews ORDER BY rowid').all();
++  assert.deepEqual(rows.map(row => ({ ...row })), [
++    { id: first.event.id, review_run_id: null, closed_at: null },
++    { id: selected.event.id, review_run_id: 'reviewer', closed_at: finishedAt },
++    { id: last.event.id, review_run_id: null, closed_at: null },
++  ]);
++});
++
++test('reservation refuses missing or ambiguous assignment package IDs without binding any open package', t => {
++  const f = fixture(t);
++  const first = f.seedBatch('old');
++  const second = f.seedBatch('new');
++  const missing = reviewAssignment();
++  missing.changes[0].items.push({ id: '3.1', description: `Review startup context; previous package ${first.event.id}` });
++  for (const assignment of [undefined, missing, reviewAssignment(first.event.id, second.event.id)]) {
++    assert.throws(() => reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: `context-review.due ${first.event.id}`, assignment }, f.ports), /assignment|assigned|package/i);
++    assert.deepEqual(f.database.prepare('SELECT review_run_id FROM startup_context_reviews').all().map(row => row.review_run_id), [null, null]);
++  }
++});
++
++test('reservation refuses unknown, bound or closed assigned packages without falling back', async t => {
++  const f = fixture(t);
++  const first = f.seedBatch('old');
++  const selected = f.seedBatch('assigned');
++  const assignment = reviewAssignment(selected.event.id);
++  assert.throws(() => reserveStartupContextReview({ runId: 'unknown', phase: 'context-review', brief: 'Review', assignment: reviewAssignment('00000000-0000-4000-8000-000000000000') }, f.ports), /package|review/i);
++  reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review', assignment }, f.ports);
++  assert.throws(() => reserveStartupContextReview({ runId: 'other', phase: 'context-review', brief: 'Review', assignment }, f.ports), /package|review/i);
++  f.add('reviewer', 'exited', 'context-review');
++  await finalizeStartupContextRun('reviewer', f.ports);
++  assert.throws(() => reserveStartupContextReview({ runId: 'closed', phase: 'context-review', brief: 'Review', assignment }, f.ports), /package|review/i);
++  const row = f.database.prepare('SELECT review_run_id, closed_at FROM startup_context_reviews WHERE id=?').get(first.event.id);
++  assert.deepEqual({ ...row }, { review_run_id: null, closed_at: null });
+ });
+ 
+-test('reservation refuses context-review without an open unbound package and explains why', t => {
++test('reservation accepts repeated references to one assigned package', t => {
+   const f = fixture(t);
+-  assert.throws(() => reserveStartupContextReview({ runId: 'review', phase: 'context-review', brief: 'Review' }, f.ports), /(?:no|without|missing|unavailable).*(?:package|batch|review)|(?:package|batch|review).*(?:no|missing|unavailable)/i);
+-  f.seedBatch('batch');
+-  reserveStartupContextReview({ runId: 'review', phase: 'context-review', brief: 'Review' }, f.ports);
+-  assert.throws(() => reserveStartupContextReview({ runId: 'another', phase: 'context-review', brief: 'Review' }, f.ports), /package|batch|review/i);
++  const selected = f.seedBatch('assigned');
++  const reservation = reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(selected.event.id, selected.event.id) }, f.ports);
++  assert.equal(reservation.contextReviewId, selected.event.id);
+ });
+ 
+ test('successful reviewer finalize closes its bound package and excludes its run from the counter', async t => {
+   const f = fixture(t);
+-  f.seedBatch('batch');
+-  reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review' }, f.ports);
++  const batch = f.seedBatch('batch');
++  reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(batch.event.id) }, f.ports);
+   f.add('reviewer', 'exited', 'context-review');
+   await finalizeStartupContextRun('reviewer', f.ports);
+   assert.ok(readStartupContextTrace(f.database, 'reviewer'));
+   assert.deepEqual(pendingStartupContextRunIds(f.database), []);
+   assert.equal(listStartupContextReviewEvents(f.database).length, 1);
+-  assert.throws(() => reserveStartupContextReview({ runId: 'next', phase: 'context-review', brief: 'Review' }, f.ports), /package|batch|review/i);
++  assert.throws(() => reserveStartupContextReview({ runId: 'next', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(batch.event.id) }, f.ports), /package|batch|review/i);
+   f.add('ordinary'); await finalizeStartupContextRun('ordinary', f.ports);
+   assert.deepEqual(pendingStartupContextRunIds(f.database), ['ordinary']);
+ });
+@@ -261,7 +302,7 @@ for (const withReport of [true, false]) {
+   test(`failed reviewer ${withReport ? 'with failed report' : 'without report'} releases binding and retains package for retry`, async t => {
+     const f = fixture(t);
+     const batch = f.seedBatch('batch');
+-    reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review' }, f.ports);
++    reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(batch.event.id) }, f.ports);
+     f.add('reviewer', 'exited', 'context-review'); f.failReport(withReport);
+     const row = await finalizeStartupContextRun('reviewer', f.ports);
+     assert.equal(row.state, 'finished');
+@@ -269,7 +310,7 @@ for (const withReport of [true, false]) {
+     assert.equal((row.result?.proof as AgentReportResult).event, 'agent.failed');
+     cleanupStartupContextCompleted('2026-10-23T10:00:00.000Z', f.ports);
+     for (const runId of batch.runIds) assert.ok(readStartupContextTrace(f.database, runId));
+-    const retry = reserveStartupContextReview({ runId: 'retry', phase: 'context-review', brief: 'Review again' }, f.ports);
++    const retry = reserveStartupContextReview({ runId: 'retry', phase: 'context-review', brief: 'Review again', assignment: reviewAssignment(batch.event.id) }, f.ports);
+     assert.equal(retry.contextReviewId, batch.event.id);
+     assert.deepEqual(retry.runIds, batch.runIds);
+   });
+@@ -279,7 +320,7 @@ test('cleanupCompleted prunes only traces of successfully closed packages with t
+   const f = fixture(t);
+   const closed = f.seedBatch('closed');
+   const open = f.seedBatch('open');
+-  reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review' }, f.ports);
++  reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'Review', assignment: reviewAssignment(closed.event.id) }, f.ports);
+   f.add('reviewer', 'exited', 'context-review');
+   await finalizeStartupContextRun('reviewer', f.ports);
+   f.add('unbatched'); await finalizeStartupContextRun('unbatched', f.ports);
+diff --git a/test/startup-context-runtime.test.ts b/test/startup-context-runtime.test.ts
+index 3be6a06..37da709 100644
+--- a/test/startup-context-runtime.test.ts
++++ b/test/startup-context-runtime.test.ts
+@@ -77,12 +77,13 @@ test('service recovery captures a persisted accepted report before removing its
+   assert.equal(attempts, 3);
+   assert.equal(store.sessionRepository.transaction(tx => tx.listPending()).filter(row => row.event === 'context-review.due').length, 0);
+   assert.equal(listStartupContextReviewEvents(store.startupContextDatabase)[0].id, events[0].id);
+-  reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'review' }, { database: store.startupContextDatabase });
++  const assignment = { root, baselineArchives: [], changes: [{ id: 'review-agent-startup-context', items: [{ id: '3.32', description: `[spec] Аналіз пакета context-review.due ${events[0].id}` }] }] };
++  reserveStartupContextReview({ runId: 'reviewer', phase: 'context-review', brief: 'review', assignment }, { database: store.startupContextDatabase });
+   store.sessionRepository.transaction(tx => {
+     const session = { runId: 'reviewer', addressId: 'reviewer', revision: 0, state: 'reserved' as const };
+     tx.putSession(session);
+     closeSessionInTransaction(tx, session, at);
+   });
+-  const retry = reserveStartupContextReview({ runId: 'retry', phase: 'context-review', brief: 'review' }, { database: store.startupContextDatabase });
++  const retry = reserveStartupContextReview({ runId: 'retry', phase: 'context-review', brief: 'review', assignment }, { database: store.startupContextDatabase });
+   assert.equal(retry.contextReviewId, events[0].id);
+ });

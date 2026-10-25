@@ -1,0 +1,365 @@
+[
+  {
+    "path": "evidence/z412/checkbox-hotfix.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z412 --files test/task-context-final-archive.test.ts",
+    "workspaceHead": "fa871b1327ba51fb1f63e64339573e56802f7c6a",
+    "runId": "11dc313c-5178-4bc7-9d19-f4e33d271ff4",
+    "selection": {
+      "files": [
+        "test/task-context-final-archive.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 21,
+    "knownRed": 0,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "path": "evidence/z412/checkbox-red.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z412 --files test/task-context-final-archive.test.ts",
+    "workspaceHead": "fa871b1327ba51fb1f63e64339573e56802f7c6a",
+    "runId": "e4389ef6-c3f2-4769-9d2a-5c06b7051628",
+    "selection": {
+      "files": [
+        "test/task-context-final-archive.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 15,
+    "knownRed": 6,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "path": "evidence/z412/expanded-hotfix-1.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z412 --files test/task-context-final-archive.test.ts test/spec-design-commit.test.ts test/task-context-z12.test.ts test/task-context.test.ts",
+    "workspaceHead": "749eabfc1909b9205aa1717b7e7d81968c69001a",
+    "runId": "e786e630-47ca-4aeb-979b-90ca0f6b28e2",
+    "selection": {
+      "files": [
+        "test/task-context-final-archive.test.ts",
+        "test/spec-design-commit.test.ts",
+        "test/task-context-z12.test.ts",
+        "test/task-context.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 78,
+    "knownRed": 13,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "path": "evidence/z412/expanded-hotfix-2.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z412 --files test/task-context-final-archive.test.ts test/spec-design-commit.test.ts test/task-context-z12.test.ts test/task-context.test.ts",
+    "workspaceHead": "749eabfc1909b9205aa1717b7e7d81968c69001a",
+    "runId": "fb0b9b4b-59b3-499a-ba28-27614761bb3e",
+    "selection": {
+      "files": [
+        "test/task-context-final-archive.test.ts",
+        "test/spec-design-commit.test.ts",
+        "test/task-context-z12.test.ts",
+        "test/task-context.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 90,
+    "knownRed": 1,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "path": "evidence/z412/expanded-hotfix-passed.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z412 --files test/task-context-final-archive.test.ts test/spec-design-commit.test.ts test/task-context-z12.test.ts test/task-context.test.ts",
+    "workspaceHead": "749eabfc1909b9205aa1717b7e7d81968c69001a",
+    "runId": "f3fb8ac9-b18d-485b-8ff6-11e050798c26",
+    "selection": {
+      "files": [
+        "test/task-context-final-archive.test.ts",
+        "test/spec-design-commit.test.ts",
+        "test/task-context-z12.test.ts",
+        "test/task-context.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 91,
+    "knownRed": 0,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "path": "evidence/z412/expanded-red.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z412 --files test/task-context-final-archive.test.ts test/spec-design-commit.test.ts test/task-context-z12.test.ts test/task-context.test.ts",
+    "workspaceHead": "749eabfc1909b9205aa1717b7e7d81968c69001a",
+    "runId": "cd00870f-6ea6-4521-884c-71e37c264eb9",
+    "selection": {
+      "files": [
+        "test/task-context-final-archive.test.ts",
+        "test/spec-design-commit.test.ts",
+        "test/task-context-z12.test.ts",
+        "test/task-context.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 61,
+    "knownRed": 30,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "path": "evidence/z412/final-hotfix.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z412 --files test/task-context-final-archive.test.ts",
+    "workspaceHead": "fa871b1327ba51fb1f63e64339573e56802f7c6a",
+    "runId": "1140dc62-f315-4537-a1ff-b195f5abee18",
+    "selection": {
+      "files": [
+        "test/task-context-final-archive.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 22,
+    "knownRed": 0,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "path": "evidence/z412/hotfix.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z412 --files test/task-context-final-archive.test.ts",
+    "workspaceHead": "fa871b1327ba51fb1f63e64339573e56802f7c6a",
+    "runId": "6ab90c32-dbff-4103-ad2d-34f02b9bb4ad",
+    "selection": {
+      "files": [
+        "test/task-context-final-archive.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 15,
+    "knownRed": 0,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  {
+    "path": "evidence/z412/ordinal-red.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z412 --files test/task-context-final-archive.test.ts",
+    "workspaceHead": "fa871b1327ba51fb1f63e64339573e56802f7c6a",
+    "runId": "f9fde885-1427-487a-9b61-e89b30be7ec4",
+    "selection": {
+      "files": [
+        "test/task-context-final-archive.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 21,
+    "knownRed": 1,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "path": "evidence/z412/queue-diagnostic.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z412 --only 'test/task-context.test.ts::[task-context] 1. agent run без файла task-context/<id>.json виводить контекст і оцінку типу незалежно від порогів рівня' 'test/task-context-z12.test.ts::[task-context] Z.12 spec: profile main and canonical root reach production preparation without branchPaths'",
+    "workspaceHead": "749eabfc1909b9205aa1717b7e7d81968c69001a",
+    "runId": "d88eb367-9b28-4377-9b92-394244063c6b",
+    "selection": {
+      "files": [
+        "test/task-context.test.ts",
+        "test/task-context-z12.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/task-context.test.ts",
+          "name": "[task-context] 1. agent run без файла task-context/<id>.json виводить контекст і оцінку типу незалежно від порогів рівня"
+        },
+        {
+          "file": "test/task-context-z12.test.ts",
+          "name": "[task-context] Z.12 spec: profile main and canonical root reach production preparation without branchPaths"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 0,
+    "knownRed": 13,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  },
+  {
+    "path": "evidence/z412/red.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z412 --files test/task-context-final-archive.test.ts",
+    "workspaceHead": "2ad4b4a63cf3e2cde0d964861efe0c3ab2471204",
+    "runId": "081e2f1c-9693-47cc-beae-6cd306a8d6c5",
+    "selection": {
+      "files": [
+        "test/task-context-final-archive.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 4,
+    "knownRed": 11,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": "idle",
+    "nextAction": "implement"
+  },
+  {
+    "path": "evidence/z412/selection-refused.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z412 --files test/task-context-final-archive.test.ts test/spec-design-commit.test.ts test/task-context-z12.test.ts test/task-context.test.ts --only 'test/task-context.test.ts::[task-context] 1. agent run без файла task-context/<id>.json виводить контекст і оцінку типу незалежно від порогів рівня' 'test/task-context-z12.test.ts::[task-context] Z.12 spec: profile main and canonical root reach production preparation without branchPaths'",
+    "workspaceHead": "749eabfc1909b9205aa1717b7e7d81968c69001a",
+    "runId": "e6c74638-0560-409c-bf4e-7a05d7d531a2",
+    "selection": {
+      "files": [],
+      "testIds": []
+    },
+    "outcome": "refused",
+    "cliExitCode": 1,
+    "childExitCode": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 0,
+    "knownRed": 0,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": null,
+    "nextAction": "fix-setup"
+  },
+  {
+    "path": "evidence/z412/sources-diagnostic.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z412 --only 'test/task-context.test.ts::[task-context] 6. sources: файли зміни, шлях із пункту, «Джерела за етапом»; неіснуючий шлях до каталогу запуску'",
+    "workspaceHead": "749eabfc1909b9205aa1717b7e7d81968c69001a",
+    "runId": "86f99ead-c98a-4340-8ed2-cf7a4d8d814a",
+    "selection": {
+      "files": [
+        "test/task-context.test.ts"
+      ],
+      "testIds": [
+        {
+          "file": "test/task-context.test.ts",
+          "name": "[task-context] 6. sources: файли зміни, шлях із пункту, «Джерела за етапом»; неіснуючий шлях до каталогу запуску"
+        }
+      ]
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 0,
+    "knownRed": 1,
+    "unexecuted": 0,
+    "unknown": 0,
+    "groupState": "idle",
+    "nextAction": "fix-implementation"
+  }
+]

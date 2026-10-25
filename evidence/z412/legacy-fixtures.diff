@@ -1,0 +1,38 @@
+diff --git a/test/spec-design-commit.test.ts b/test/spec-design-commit.test.ts
+index f4b49c0..ed6e4b1 100644
+--- a/test/spec-design-commit.test.ts
++++ b/test/spec-design-commit.test.ts
+@@ -78,7 +78,7 @@ async function fixture(t: TestContext, linkedOrchestrator = false) {
+   await Promise.all([
+     writeFile(join(change, 'proposal.md'), '# Document only\n'),
+     writeFile(join(change, 'design.md'), '# Document design\n'),
+-    writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Write assigned documents\n'),
++    writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Write assigned documents\n- [ ] 1.2 Unselected remaining work\n'),
+     writeFile(spec, '## ADDED Requirements\n'),
+     writeFile(questions, '# Questions\n'),
+   ]);
+diff --git a/test/task-context.test.ts b/test/task-context.test.ts
+index 7f5fbec..0ca941c 100644
+--- a/test/task-context.test.ts
++++ b/test/task-context.test.ts
+@@ -312,6 +312,7 @@ test('[task-context] 4. outcome зберігає зміна:пункт і дос
+ 
+ test('[task-context] 5. межі запису: spec без cwd коду, implement із cwd; каталоги змін і файл питань', async t => {
+   const w = await workspace(t);
++  await writeFile(join(w.root, 'openspec/changes/change-b/tasks.md'), changes['change-b'].tasksMd + '- [ ] 1.2 Unselected remaining work\n');
+   const tasks = ['change-a:1.1', 'change-b:1.1'];
+   const cwd = join(w.root, 'raf-develop');
+   const expected = [join(w.root, 'openspec', 'changes', 'change-a'), join(w.root, 'openspec', 'changes', 'change-b'), join(w.root, 'questions', 'projects', 'raf', 'questions.md')];
+diff --git a/test/z12-fixture.ts b/test/z12-fixture.ts
+index 232b6dc..6e04500 100644
+--- a/test/z12-fixture.ts
++++ b/test/z12-fixture.ts
+@@ -66,7 +66,7 @@ export async function z12Fixture(t: TestContext) {
+   await Promise.all([
+     writeFile(join(change, 'proposal.md'), '# Z12 fixture\n'),
+     writeFile(join(change, 'design.md'), '# Z12 fixture design\n'),
+-    writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Prepare assigned documents\n'),
++    writeFile(join(change, 'tasks.md'), '- [ ] 1.1 Prepare assigned documents\n- [ ] 1.2 Unselected remaining work\n'),
+     writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify(constants)),
+     writeFile(join(confRoot, 'flow.json'), JSON.stringify(flow)),
+     writeFile(join(confRoot, 'test-runs.json'), JSON.stringify(json('test-runs.json'))),

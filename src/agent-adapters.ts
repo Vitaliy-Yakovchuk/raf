@@ -190,10 +190,24 @@ export class TmuxAgentAdapter {
     const browserCache = process.env.PLAYWRIGHT_BROWSERS_PATH || (process.platform === 'darwin' ? join(hostHome, 'Library', 'Caches', 'ms-playwright')
       : process.platform === 'win32' ? join(process.env.LOCALAPPDATA || join(hostHome, 'AppData', 'Local'), 'ms-playwright')
         : join(process.env.XDG_CACHE_HOME || join(hostHome, '.cache'), 'ms-playwright'));
-    await this.tmux([
+    const bootstrap = [
       'new-session', '-e', `PLAYWRIGHT_BROWSERS_PATH=${browserCache}`, '-d', '-s', request.tmuxSession, '-c', command.cwd ?? request.cwd, 'sh', '-c', 'read -r _',
       ';', 'set-option', '-p', '-t', this.target(session), 'remain-on-exit', 'on',
-      ';', 'respawn-pane', '-k', '-t', this.target(session),
+    ];
+    const respawn = ['respawn-pane', '-k', '-t', this.target(session), ...invocation];
+    if ([...bootstrap, ...respawn].reduce((bytes, value) => bytes + Buffer.byteLength(value) + 1, 0) > 12 * 1024) {
+      await this.tmux(bootstrap);
+      const tmuxQuote = (value: string): string => `'${value.replaceAll("'", "'\\''")}'`;
+      try {
+        await this.tmux(['source-file', '-'], respawn.map(tmuxQuote).join(' ') + '\n');
+      } catch (error) {
+        await this.stop(session).catch(() => undefined);
+        throw error;
+      }
+      return session;
+    }
+    await this.tmux([
+      ...bootstrap, ';', 'respawn-pane', '-k', '-t', this.target(session),
       ...invocation.map(value => value.endsWith(';') ? `${value.slice(0, -1)}\\;` : value),
     ]);
     return session;

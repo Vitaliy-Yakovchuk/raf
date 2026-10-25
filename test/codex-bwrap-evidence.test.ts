@@ -1,12 +1,54 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { spawnSync } from 'node:child_process';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
+import { TmuxAgentAdapter } from '../src/agent-adapters.ts';
 import { traceEvidence } from './helpers/z404-trace-evidence.ts';
 import { prepareHostTmuxEndpoint } from './helpers/z4044-host-tmux.mjs';
 import { configureLiveCodexTrust } from './helpers/z4044-live-trust.mjs';
 
 const helper = '/tmp/own/bwrap';
 const filter = '/tmp/own/network.bpf';
+
+for (const stdin of [undefined, 'literal input: Україна \' " $HOME $(touch NEVER) ; \\ end\n']) {
+  test(`[Z.404 E10] real tmux launches oversized literal argv${stdin === undefined ? '' : ' with stdin'} without truncation or evaluation`, async t => {
+    const root = await mkdtemp(join(tmpdir(), 'z4044-argv-'));
+    const socket = join(root, 'tmux.sock'), output = join(root, 'argv.json');
+    const run = (args: readonly string[], input?: string) => spawnSync('tmux', ['-S', socket, '-f', '/dev/null', ...args], { input, encoding: 'utf8' });
+    t.after(async () => { run(['kill-server']); await rm(root, { recursive: true, force: true }); });
+    const payload = (`Україна ' " $HOME \\ $(touch ${join(root, 'INJECTED')}) ; # %if #{pane_id}\n`).repeat(700) + 'trailing;';
+    assert.ok(Buffer.byteLength(payload) > 32 * 1024, 'exercise the tmux 16 KiB argv message limit');
+    const script = 'const fs=require("node:fs");fs.writeFileSync(process.argv[1],JSON.stringify({args:process.argv.slice(2),stdin:' + (stdin === undefined ? '""' : 'fs.readFileSync(0,"utf8")') + '}))';
+    const invocation = { executable: process.execPath, args: ['-e', script, output, '', payload], ...(stdin === undefined ? {} : { stdin }) };
+    const commands: { args: readonly string[]; stdin?: string }[] = [];
+    const adapter = new TmuxAgentAdapter({
+      execute: async command => {
+        commands.push(command);
+        const r = run(command.args, command.stdin);
+        return { exitCode: r.status ?? 1, stdout: r.stdout ?? '', stderr: r.stderr || r.error?.message || '' };
+      },
+      protocols: { codex: { invocation: () => invocation, observe: () => ({ status: 'starting' }) } } as any,
+    });
+    await adapter.startWithoutInput({ selection: { runner: 'codex', model: 'assigned', effort: 'high' }, tmuxSession: 'owned', cwd: root, reportWrapper: { wrap: command => command } });
+    let observed;
+    while (!observed) {
+      try { observed = JSON.parse(await readFile(output, 'utf8')); }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        const pane = run(['display-message', '-p', '-t', '=owned:0.0', '#{pane_dead}|#{pane_dead_status}']);
+        assert.equal(pane.status, 0, pane.stderr);
+        if (pane.stdout.startsWith('1|')) observed = JSON.parse(await readFile(output, 'utf8'));
+        else await delay(10);
+      }
+    }
+    assert.deepEqual(observed, { args: ['', payload], stdin: stdin ?? '' });
+    await assert.rejects(readFile(join(root, 'INJECTED')), { code: 'ENOENT' });
+    assert.ok(commands.every(command => command.args.reduce((size, value) => size + Buffer.byteLength(value) + 1, 0) < 12 * 1024), 'large launch travels outside tmux command argv');
+  });
+}
 
 test('[Z.404 E09] live fixture keeps alias parents private under inherited group-write umask, including subprocesses', () => {
   const module = new URL('./helpers/z4044-live-permissions.mjs', import.meta.url).href;

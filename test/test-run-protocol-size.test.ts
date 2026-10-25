@@ -32,7 +32,10 @@ async function reporterLines(t: TestContext, adapter: 'node' | 'vitest-events', 
       for (const [index, id] of ids.entries()) {
         const data = { file: join(workspace, id.file), name: id.name, nesting: 0, testId: index, entryFile: true, type: 'test' };
         yield { type: 'test:enqueue', data };
-        yield { type: 'test:pass', data: { ...data, skip: mode === 'mixed' && index === ids.length - 1 } };
+        const failed = mode === 'mixed' && index === 0;
+        yield { type: failed ? 'test:fail' : 'test:pass', data: { ...data, skip: mode === 'mixed' && index === ids.length - 1,
+          details: failed ? { error: Object.assign(new Error('product assertion'), { code: 'ERR_TEST_FAILURE', failureType: 'testCodeFailure', cause: new Error('product assertion') }) } : {},
+        } };
       }
     }
     const lines: string[] = [];
@@ -46,7 +49,8 @@ async function reporterLines(t: TestContext, adapter: 'node' | 'vitest-events', 
   try {
     const reporter = new VitestReporter();
     const tests = ids.map((id, index) => ({ name: id.name, module: { moduleId: join(workspace, id.file) },
-      result: () => mode === 'mixed' && index === ids.length - 1 ? { state: 'skipped' } : { state: 'passed' },
+      result: () => mode === 'mixed' && index === 0 ? { state: 'failed', errors: [Object.assign(new Error('product assertion'), { rafTestOrigin: 'test-body' })] }
+        : mode === 'mixed' && index === ids.length - 1 ? { state: 'skipped' } : { state: 'passed' },
     }));
     reporter.onTestModuleCollected({ children: { allTests: () => tests } });
     for (const value of tests) reporter.onTestCaseResult(value);
@@ -115,11 +119,7 @@ for (const adapter of ['node', 'vitest-events'] as const) {
   test(`Z416 ${adapter}: large collection preserves known red and unexecuted identities`, async t => {
     const lines = await reporterLines(t, adapter, 'mixed');
     const red = ids[0];
-    const rewritten = lines.map(line => {
-      const event = JSON.parse(line);
-      return event.kind === 'passed' && event.test.name === red.name ? JSON.stringify({ kind: 'assertion-failed', test: red }) + '\n' : line;
-    });
-    const events = await receive(t, rewritten);
+    const events = await receive(t, lines);
     assert.deepEqual(events.filter(event => event.kind === 'protocol-error'), []);
     const result = classifyRunnerResult(events, { exitCode: 1, signal: null, stderr: '' });
     assert.deepEqual(result.passed, ids.slice(1, -1)); assert.deepEqual(result.knownRed, [red]);
@@ -149,7 +149,7 @@ test('Z416 Vitest batch wrapper accepts a bounded large inventory and requires c
   const write = t.mock.method(process.stdout, 'write', (chunk: string | Buffer) => { output.push(chunk.toString()); return true; });
   try {
     await import(`../scripts/test-run-vitest.ts?z416=${Date.now()}`);
-    assert.equal(process.exitCode, 0, output.join(''));
+    assert.equal(process.exitCode, 0, 'a large valid inventory must pass the Vitest batch protocol gate');
     assert.equal(output.join('').includes('Vitest batch missing complete structured protocol'), false);
   } finally { write.mock.restore(); process.exitCode = previousExitCode; }
 });

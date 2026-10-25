@@ -1,0 +1,22 @@
+{
+  "source": "/srv/dev/work/orchestrator/openspec/changes/add-raf-agent-run/design.md:175",
+  "status": "unexecuted",
+  "files": [
+    "test/agent-adapters.test.ts",
+    "test/launch-wrapper.test.ts",
+    "test/initial-brief-delivery.test.ts",
+    "test/production-codex-delivery-qa.test.ts",
+    "test/production-claude-delivery-qa.test.ts"
+  ],
+  "reason": "The raf integration preset is not deployed to the authorized raf-main generation; add-raf-test-run:6.2.5 is pending its next raf deployment. No direct node --test bypass was performed.",
+  "coordination": {
+    "sender": "main",
+    "receivedOn": "2026-10-25",
+    "quote": "Integration fixture-файли з design 1.2: preset integration для raf у conf ще не перенесено в raf-main (add-raf-test-run 6.2.5, разом із наступним перенесенням raf); прямого обходу не роби, у звіті познач як невиконаний залишок із цією причиною."
+  },
+  "command": null,
+  "runId": null,
+  "cliExitCode": null,
+  "childExitCode": null,
+  "nextAction": "Deploy and configure the authorized exact integration preset, then run it through raf test run and retain the full TestRunResult and separate streams. This remainder is not passed."
+}

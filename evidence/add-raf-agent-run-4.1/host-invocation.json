@@ -1,0 +1,25 @@
+{
+  "reviewedSha": "97eacb69fbbfc83dc8e26892e8da3391827238aa",
+  "argv": [
+    "node",
+    "scripts/qa-agent-run-live.mjs",
+    "97eacb69fbbfc83dc8e26892e8da3391827238aa"
+  ],
+  "cwd": "/srv/dev/ara41q/raf",
+  "configuration": "neighbor /srv/dev/ara41q/conf copied by main; existing node_modules copied",
+  "environment": {
+    "cleaned": true,
+    "LC_ALL": "C",
+    "CODEX_HOME": "/home/dev/.codex",
+    "GIT_CONFIG_GLOBAL": "/home/dev/.gitconfig"
+  },
+  "timeoutSeconds": 5400,
+  "expectedOutput": {
+    "stdout": "/srv/dev/ara41q/stdout",
+    "stderr": "/srv/dev/ara41q/stderr",
+    "cliExitCode": "/srv/dev/ara41q/exit",
+    "sanitizedEvidence": "/srv/dev/ara41q/ev"
+  },
+  "status": "queued by main; no result received",
+  "privacy": "Do not read or include raw native transcripts. Main supplies sanitized extracts only."
+}

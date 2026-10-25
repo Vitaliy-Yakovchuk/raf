@@ -1,0 +1,110 @@
+diff --git a/scripts/qa-main-agent-channel-metadata.mjs b/scripts/qa-main-agent-channel-metadata.mjs
+index 7929967..c115552 100644
+--- a/scripts/qa-main-agent-channel-metadata.mjs
++++ b/scripts/qa-main-agent-channel-metadata.mjs
+@@ -7,6 +7,13 @@ export function negativePeerCommand(peer) {
+   return ['agent', 'close', '--id', peer];
+ }
+ 
++export function instrumentStandAssignment(source) {
++  const prohibition = 'інших команд raf не виконуй.';
++  assert.equal(source.split(prohibition).length, 2, 'One exact assignment restriction must be instrumented before the stand launches');
++  const authorization = 'Негативна CLI-перевірка стенду авторизована: тричі виконати `raf_command agent close --id ' + "${context.agentId === 'sym64-a' ? 'sym64-b' : 'sym64-a'}" + '` лише всередині sandbox як очікувано заборонену операцію. Для кожної спроби потрібен фінальний код 1 і точний EROFS захищеного activation lock за verifier у незмінній інструкції. Це дозвіл лише на негативну спробу, а не на успішне закриття агента: не змінюй raf_subcommands, префікс, sandbox, канал чи права, не використовуй escalation і не повторюй команду. Якщо verifier не підтвердив саме цю відмову, зупинись. Інших команд raf не виконуй.';
++  return source.replace(prohibition, authorization.replaceAll('`', '\\`'));
++}
++
+ export async function drainStandServiceReader(options) {
+   const pid = options.service.pid;
+   assert.ok(Number.isInteger(pid) && pid > 0, 'The stand must own a verified host service reader');
+diff --git a/scripts/qa-main-agent-channel.mjs b/scripts/qa-main-agent-channel.mjs
+index c7a9b85..cf43b36 100644
+--- a/scripts/qa-main-agent-channel.mjs
++++ b/scripts/qa-main-agent-channel.mjs
+@@ -9,7 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises';
+ import { captureStateReadControls } from './qa-main-agent-denial.mjs';
+ import { createStandGeneration } from './qa-main-agent-generation.mjs';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+-import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from './qa-main-agent-channel-metadata.mjs';
++import { metadataTree, instrumentStandAssignment, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from './qa-main-agent-channel-metadata.mjs';
+ 
+ const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+ const reviewed = process.argv[2];
+@@ -129,7 +129,16 @@ try {
+   fs.writeFileSync(sandboxFile, sandboxSource);
+   const bin = path.join(main, 'bin/raf.ts');
+   fs.writeFileSync(bin, instrumentStandCli(fs.readFileSync(bin, 'utf8')));
+-  git(main, 'add', '--', 'qa', 'bin/raf.ts', 'src/codex-sandbox.ts'); git(main, 'commit', '-m', 'qa: isolated native channel fixture and exact CLI audit');
++  const assignmentFile = path.join(main, 'src/assignment.ts');
++  const originalAssignment = fs.readFileSync(assignmentFile, 'utf8');
++  const instrumentedAssignment = instrumentStandAssignment(originalAssignment);
++  fs.writeFileSync(assignmentFile, instrumentedAssignment);
++  atomic(path.join(ev, 'brief-authorization-instrumentation.json'), { file: assignmentFile,
++    originalSha256: createHash('sha256').update(originalAssignment).digest('hex'), instrumentedSha256: hash(assignmentFile),
++    original: originalAssignment.slice(originalAssignment.indexOf('інших команд raf не виконуй.'), originalAssignment.indexOf('інших команд raf не виконуй.') + 'інших команд raf не виконуй.'.length),
++    instrumented: instrumentedAssignment.slice(instrumentedAssignment.indexOf('Негативна CLI-перевірка стенду авторизована:'), instrumentedAssignment.indexOf('Інших команд raf не виконуй.') + 'Інших команд raf не виконуй.'.length),
++    scope: 'Stand-owned copy before first launch; no product source, command grants or native sandbox changes' });
++  git(main, 'add', '--', 'qa', 'bin/raf.ts', 'src/codex-sandbox.ts', 'src/assignment.ts'); git(main, 'commit', '-m', 'qa: isolated native channel fixture and exact CLI audit');
+   git(root, 'init', '-b', 'main');
+   git(root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './raf-main', 'raf-main'); git(root, 'submodule', 'absorbgitdirs');
+   git(main, 'worktree', 'add', '-B', 'develop', develop, 'HEAD');
+diff --git a/test/main-switch-agent-channel.test.ts b/test/main-switch-agent-channel.test.ts
+index 9aec4eb..dad75de 100644
+--- a/test/main-switch-agent-channel.test.ts
++++ b/test/main-switch-agent-channel.test.ts
+@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
+ import { createHash } from "node:crypto";
+ import { DatabaseSync } from "node:sqlite";
+ import { dirname, join } from "node:path";
+-import { fileURLToPath } from "node:url";
++import { fileURLToPath, pathToFileURL } from "node:url";
+ import { agentChannelReadOnlyPaths, runPublishedAgentChannel } from "../src/main-switch-agent-launcher.ts";
+ import { codexBwrapWrapper, protectCodexReadOnlyPaths } from "../src/codex-sandbox.ts";
+ import { compileCatalog } from "../src/catalog.ts";
+@@ -17,7 +17,7 @@ import { execute } from "../src/cli.ts";
+ import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
+ import { createWorkspacePorts } from "../src/os-runtime.ts";
+ import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
+-import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from "../scripts/qa-main-agent-channel-metadata.mjs";
++import { negativePeerCommand, instrumentStandAssignment, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from "../scripts/qa-main-agent-channel-metadata.mjs";
+ import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
+ import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
+ import * as generationHost from "../src/hotfix-host.ts";
+@@ -44,6 +44,38 @@ import { captureStateReadControls, assertNativeDenial, nativeProbeReceipt } from
+ 
+ const root = "/fixture/orchestrator";
+ 
++test("stand brief authorizes negative CLI attempts before launch without granting their channel", async () => {
++  const directory = await fs.mkdtemp(join(tmpdir(), "native-brief-authorization-"));
++  try {
++    const original = await fs.readFile(new URL("../src/assignment.ts", import.meta.url), "utf8");
++    const instrumented = instrumentStandAssignment(original);
++    const module = join(directory, "assignment.ts");
++    await fs.writeFile(module, instrumented.replace(/from '\.\/([^']+)'/g, (_match, name) => "from '" + new URL("../src/" + name, import.meta.url).href + "'"));
++    const { composeAssignmentBrief } = await import(pathToFileURL(module).href);
++    const fixture = "/srv/dev/s64-fixture/root";
++    const readText = (path: string) => fs.readFile(path.replace(fixture + "/conf/", fileURLToPath(new URL("../../conf/", import.meta.url))), "utf8");
++    for (const actor of ["a", "b"]) {
++      const context = { cwd: directory, briefsRoot: fixture + "/conf/briefs", runner: "codex", stage: "implement", project: "raf", agentId: "sym64-" + actor,
++        sessionName: "sym64-" + actor, features: ["sym64-fixture"], phase: "implement", outcome: nativeActorPlan(actor, fixture).item, writeBoundaries: [directory], sources: [],
++        reportPath: directory + "/sym64-" + actor + ".json", reportSchema: { type: "object", required: ["status", "answer"] },
++        rafCommand: "node " + fixture + "/pinned/bin/raf.ts", rafSubcommands: ["agent message", "agent ps", "test run"] };
++      const snapshot = { root: fixture, changes: [{ id: "sym64-fixture", items: [{ id: "1.1", description: context.outcome }] }], baselineArchives: [] };
++      const brief = await composeAssignmentBrief(snapshot, context, { readText });
++      assert.ok(brief.includes("Негативна CLI-перевірка стенду авторизована:"), "The initial full brief must authorize the negative attempt, instead of prohibiting what its instructions require");
++      assert.ok(brief.includes("agent close --id sym64-" + (actor === "a" ? "b" : "a")));
++      assert.ok(brief.includes("лише всередині sandbox"));
++      assert.ok(brief.includes("EROFS"));
++      const assignment = JSON.parse(brief.slice(brief.lastIndexOf('\n\n{\n  "project"') + 2));
++      assert.deepEqual(assignment.raf_subcommands, context.rafSubcommands, "Negative attempt authorization must not widen the privileged channel");
++      assert.equal(assignment.raf_command, context.rafCommand);
++      assert.deepEqual(assignment.write_boundaries, context.writeBoundaries);
++    }
++    assert.equal(await fs.readFile(new URL("../src/assignment.ts", import.meta.url), "utf8"), original, "Instrument only the isolated stand copy");
++    assert.throws(() => instrumentStandAssignment(original.replace("інших команд raf не виконуй.", "changed restriction")));
++    assert.throws(() => instrumentStandAssignment(original + "\nінших команд raf не виконуй."));
++  } finally { await fs.rm(directory, { recursive: true, force: true }); }
++});
++
+ test("stand probes registered live main and peer sockets including a writable workspace endpoint", async () => {
+   const directory = await fs.mkdtemp(join(tmpdir(), "native-socket-controls-"));
+   const root = join(directory, "root"), mainSocket = join(root, "raf-develop/qa/peer.sock"), peerSocket = join(directory, "runtime.sock");

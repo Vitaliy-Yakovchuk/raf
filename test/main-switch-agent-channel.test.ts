@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { agentChannelReadOnlyPaths, runPublishedAgentChannel } from "../src/main-switch-agent-launcher.ts";
 import { codexBwrapWrapper, protectCodexReadOnlyPaths } from "../src/codex-sandbox.ts";
 import { compileCatalog } from "../src/catalog.ts";
@@ -17,7 +17,7 @@ import { execute } from "../src/cli.ts";
 import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
 import { createWorkspacePorts } from "../src/os-runtime.ts";
 import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
-import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from "../scripts/qa-main-agent-channel-metadata.mjs";
+import { negativePeerCommand, instrumentStandAssignment, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from "../scripts/qa-main-agent-channel-metadata.mjs";
 import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
 import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
 import * as generationHost from "../src/hotfix-host.ts";
@@ -43,6 +43,38 @@ import type {
 import { captureStateReadControls, assertNativeDenial, nativeProbeReceipt } from "../scripts/qa-main-agent-denial.mjs";
 
 const root = "/fixture/orchestrator";
+
+test("stand brief authorizes negative CLI attempts before launch without granting their channel", async () => {
+  const directory = await fs.mkdtemp(join(tmpdir(), "native-brief-authorization-"));
+  try {
+    const original = await fs.readFile(new URL("../src/assignment.ts", import.meta.url), "utf8");
+    const instrumented = instrumentStandAssignment(original);
+    const module = join(directory, "assignment.ts");
+    await fs.writeFile(module, instrumented.replace(/from '\.\/([^']+)'/g, (_match, name) => "from '" + new URL("../src/" + name, import.meta.url).href + "'"));
+    const { composeAssignmentBrief } = await import(pathToFileURL(module).href);
+    const fixture = "/srv/dev/s64-fixture/root";
+    const readText = (path: string) => fs.readFile(path.replace(fixture + "/conf/", fileURLToPath(new URL("../../conf/", import.meta.url))), "utf8");
+    for (const actor of ["a", "b"]) {
+      const context = { cwd: directory, briefsRoot: fixture + "/conf/briefs", runner: "codex", stage: "implement", project: "raf", agentId: "sym64-" + actor,
+        sessionName: "sym64-" + actor, features: ["sym64-fixture"], phase: "implement", outcome: nativeActorPlan(actor, fixture).item, writeBoundaries: [directory], sources: [],
+        reportPath: directory + "/sym64-" + actor + ".json", reportSchema: { type: "object", required: ["status", "answer"] },
+        rafCommand: "node " + fixture + "/pinned/bin/raf.ts", rafSubcommands: ["agent message", "agent ps", "test run"] };
+      const snapshot = { root: fixture, changes: [{ id: "sym64-fixture", items: [{ id: "1.1", description: context.outcome }] }], baselineArchives: [] };
+      const brief = await composeAssignmentBrief(snapshot, context, { readText });
+      assert.ok(brief.includes("Негативна CLI-перевірка стенду авторизована:"), "The initial full brief must authorize the negative attempt, instead of prohibiting what its instructions require");
+      assert.ok(brief.includes("agent close --id sym64-" + (actor === "a" ? "b" : "a")));
+      assert.ok(brief.includes("лише всередині sandbox"));
+      assert.ok(brief.includes("EROFS"));
+      const assignment = JSON.parse(brief.slice(brief.lastIndexOf('\n\n{\n  "project"') + 2));
+      assert.deepEqual(assignment.raf_subcommands, context.rafSubcommands, "Negative attempt authorization must not widen the privileged channel");
+      assert.equal(assignment.raf_command, context.rafCommand);
+      assert.deepEqual(assignment.write_boundaries, context.writeBoundaries);
+    }
+    assert.equal(await fs.readFile(new URL("../src/assignment.ts", import.meta.url), "utf8"), original, "Instrument only the isolated stand copy");
+    assert.throws(() => instrumentStandAssignment(original.replace("інших команд raf не виконуй.", "changed restriction")));
+    assert.throws(() => instrumentStandAssignment(original + "\nінших команд raf не виконуй."));
+  } finally { await fs.rm(directory, { recursive: true, force: true }); }
+});
 
 test("stand probes registered live main and peer sockets including a writable workspace endpoint", async () => {
   const directory = await fs.mkdtemp(join(tmpdir(), "native-socket-controls-"));

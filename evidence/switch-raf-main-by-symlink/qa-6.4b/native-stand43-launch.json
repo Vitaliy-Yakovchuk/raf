@@ -1,0 +1,10 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "failed-partial-native",
+  "reviewed": "96644a145e1bc1ab7923e98c93a7b2f59243e940",
+  "command": "CODEX_HOME=/home/dev/.codex LC_ALL=C node scripts/qa-main-agent-channel.mjs 96644a145e1bc1ab7923e98c93a7b2f59243e940 .",
+  "mainAttestation": "Diff 4b70dad..96644a1 reviewed: registered socket fixture only, no new rm/kill/secrets. Clean clone, resource wait, session environment removed. Main owns provider execution; no additional access to actual /home/dev/.raf granted or used.",
+  "nativeAcceptance": null,
+  "review": "native-partial-s64-vLTHJK/review.json",
+  "nodeExit": 1
+}

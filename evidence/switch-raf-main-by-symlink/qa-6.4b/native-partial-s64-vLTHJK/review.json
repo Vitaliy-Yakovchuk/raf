@@ -1,0 +1,167 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "failed-partial-native",
+  "reviewed": "96644a145e1bc1ab7923e98c93a7b2f59243e940",
+  "hostNodeExit": 1,
+  "exitReceipt": "host-exit.txt",
+  "finding": "Actor b correctly refused agent close: immutable generated brief prohibited it while instructions required it. Actor a passed stage1 and waited for b. Do not open next gate or count unexecuted stages as passed. Fix only stand-owned assignment generator before launch: explicit negative-attempt authorization without granting close to privileged channel.",
+  "actors": [
+    {
+      "actor": "a",
+      "runId": "8178e0f6-c6ae-4b40-8229-5cfa25b97831",
+      "runnerSessionId": "01a17221-f0b3-7bb1-a4cf-b5f44d83a4f4",
+      "stage1": "passed",
+      "stage1Results": 287,
+      "stage1NonzeroDenials": 276,
+      "stage1ForeignSocketDenials": [
+        {
+          "label": "deny foreign connection peer direct",
+          "command": [
+            "/opt/dev/node/bin/node",
+            "--input-type=module",
+            "-e",
+            "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});",
+            "/srv/dev/s64-vLTHJK/.raf/tmp/tmux/server.sock"
+          ],
+          "exitCode": 19,
+          "stderr": "ENOENT\n"
+        },
+        {
+          "label": "deny foreign connection peer child-shell",
+          "command": [
+            "/bin/sh",
+            "-c",
+            "exec \"$@\"",
+            "probe",
+            "/opt/dev/node/bin/node",
+            "--input-type=module",
+            "-e",
+            "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});",
+            "/srv/dev/s64-vLTHJK/.raf/tmp/tmux/server.sock"
+          ],
+          "exitCode": 19,
+          "stderr": "ENOENT\n"
+        },
+        {
+          "label": "deny foreign connection peer direct",
+          "command": [
+            "/opt/dev/node/bin/node",
+            "--input-type=module",
+            "-e",
+            "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});",
+            "/srv/dev/s64-vLTHJK/.raf/tmp/8178e0f6-c6ae-4b40-8229-5cfa25b97831/sym64-aliases-1/peer.sock"
+          ],
+          "exitCode": 19,
+          "stderr": "ENOENT\n"
+        },
+        {
+          "label": "deny foreign connection peer child-shell",
+          "command": [
+            "/bin/sh",
+            "-c",
+            "exec \"$@\"",
+            "probe",
+            "/opt/dev/node/bin/node",
+            "--input-type=module",
+            "-e",
+            "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});",
+            "/srv/dev/s64-vLTHJK/.raf/tmp/8178e0f6-c6ae-4b40-8229-5cfa25b97831/sym64-aliases-1/peer.sock"
+          ],
+          "exitCode": 19,
+          "stderr": "ENOENT\n"
+        },
+        {
+          "label": "deny foreign connection host-main direct",
+          "command": [
+            "/opt/dev/node/bin/node",
+            "--input-type=module",
+            "-e",
+            "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});",
+            "/srv/dev/s64-vLTHJK/root/raf-develop/qa/peer.sock"
+          ],
+          "exitCode": 19,
+          "stderr": "EACCES\n"
+        },
+        {
+          "label": "deny foreign connection host-main child-shell",
+          "command": [
+            "/bin/sh",
+            "-c",
+            "exec \"$@\"",
+            "probe",
+            "/opt/dev/node/bin/node",
+            "--input-type=module",
+            "-e",
+            "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});",
+            "/srv/dev/s64-vLTHJK/root/raf-develop/qa/peer.sock"
+          ],
+          "exitCode": 19,
+          "stderr": "EACCES\n"
+        },
+        {
+          "label": "deny foreign connection host-main direct",
+          "command": [
+            "/opt/dev/node/bin/node",
+            "--input-type=module",
+            "-e",
+            "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});",
+            "/srv/dev/s64-vLTHJK/.raf/tmp/8178e0f6-c6ae-4b40-8229-5cfa25b97831/sym64-aliases-1/host-main.sock"
+          ],
+          "exitCode": 19,
+          "stderr": "EACCES\n"
+        },
+        {
+          "label": "deny foreign connection host-main child-shell",
+          "command": [
+            "/bin/sh",
+            "-c",
+            "exec \"$@\"",
+            "probe",
+            "/opt/dev/node/bin/node",
+            "--input-type=module",
+            "-e",
+            "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});",
+            "/srv/dev/s64-vLTHJK/.raf/tmp/8178e0f6-c6ae-4b40-8229-5cfa25b97831/sym64-aliases-1/host-main.sock"
+          ],
+          "exitCode": 19,
+          "stderr": "EACCES\n"
+        }
+      ]
+    },
+    {
+      "actor": "b",
+      "runId": "de3ace5c-ab68-4358-919a-cec0a0c86814",
+      "runnerSessionId": "01a17222-4b15-77e3-9ab4-8aef5b87de27",
+      "stage1": "unexecuted",
+      "stage1Results": 0,
+      "stage1NonzeroDenials": 0,
+      "stage1ForeignSocketDenials": []
+    }
+  ],
+  "mainAttestation": "Read-only, secscan 0; cleaned native events preserve calls/results/sourceLine; no reasoning. Actual node receipt sym64m=1. Cleanup complete; service processes 0.",
+  "nativeAcceptance": null,
+  "markers": [
+    {
+      "actor": "a",
+      "marker": "after-B",
+      "cleanedLine": 19,
+      "sourceLine": 70,
+      "timestamp": "2026-10-25T08:17:51Z"
+    },
+    {
+      "actor": "b",
+      "marker": "after-B",
+      "cleanedLine": 17,
+      "sourceLine": 62,
+      "timestamp": "2026-10-25T08:17:41Z"
+    }
+  ],
+  "unexecuted": [
+    "after-A and after-rollback message/ps in both actors",
+    "actor b stage1",
+    "both actors stage2/stage3/final receipts",
+    "full native acceptance"
+  ],
+  "copiedFiles": 69,
+  "copiedBytes": 5222324
+}

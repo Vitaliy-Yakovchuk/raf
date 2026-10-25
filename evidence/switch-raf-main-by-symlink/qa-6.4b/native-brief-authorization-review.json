@@ -1,0 +1,91 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "unit-passed-native-required",
+  "audit": {
+    "sources": [
+      "proposal Why/What Changes/Non-goals",
+      "tasks 6.4 (including explicit native negative CLI probes)",
+      "autonomous-development: audit",
+      "parallel-development: shared commits"
+    ],
+    "conclusion": "6.4 remains current. The contradiction belongs to the controlled stand briefing, not the product contract: a negative CLI attempt was requested by the item, but prohibited by the generated brief. Keep its denial assertion and authorize only the attempt before first launch."
+  },
+  "partialNative": "native-partial-s64-vLTHJK/review.json",
+  "fix": [
+    "Instrument only src/assignment.ts in the stand-owned cloned main before fixture commit, launch and new inventory publication. Never mutate the actual product source or an already issued brief.",
+    "The initial user brief explicitly authorizes exactly three sandbox close attempts against the actor peer; each must have final exit1 and exact protected activation-lock EROFS. Preserve the existing verifier, full outputs and fail-stop behavior. No escalation, retries or successful close is authorized.",
+    "raf_subcommands, issued absolute prefix, writable scopes, channel dispatch, sandbox policy and all filesystem/socket/secret negatives remain unchanged. No close bridge grant is introduced.",
+    "Host records exact original/instrumented assignment digest and replacement before launch. All generations originate from that controlled source; brief hashes remain checked after switches.",
+    "Regression composes the complete real brief for both actors from the instrumented copy using current conf catalogs/templates, checks peer-specific authorization and unchanged structured grants/prefix/scopes, proves actual src unmodified, and refuses changed/ambiguous instrumentation anchors. Initial identity instrumentation reproduced the actual missing-authorization assertion before fix."
+  ],
+  "runs": [
+    {
+      "runId": "a33c226f-32d6-4057-9dad-089767f6f81d",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "stand brief authorizes negative CLI attempts before launch without granting their channel"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "optimize",
+      "nextAction": "implement",
+      "timeoutCount": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "cliExitCode": 1,
+      "passed": 90,
+      "raw": "native-brief-authorization-red.TestRunResult.json",
+      "workspace": "native-brief-authorization-red-workspace.{head.txt,status.txt,patch}",
+      "combinedBytesOutsideResult": 1513
+    },
+    {
+      "runId": "4fcb88e1-2fe6-418c-b16b-40f5d4b4b1cb",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "cliExitCode": 0,
+      "passed": 91,
+      "raw": "native-brief-authorization-qa.TestRunResult.json",
+      "workspace": "native-brief-authorization-qa-workspace.{head.txt,status.txt,patch}",
+      "combinedBytesOutsideResult": 1495
+    }
+  ],
+  "checks": "native-brief-authorization-checks.json",
+  "nativeAcceptance": null,
+  "nextAction": "Main secret-value scan, own explicit-path commit, then Main real stand44 on the reviewed clean clone. Unit and partial native evidence do not accept 6.4."
+}

@@ -1,7 +1,7 @@
 {
   "item": "switch-raf-main-by-symlink:6.4",
   "status": "pending-next-native-stand",
-  "nativeReviewedSha": "52892e0638844d2b2bcdbb92eb10f5a4ac9c61b3",
+  "nativeReviewedSha": "96644a145e1bc1ab7923e98c93a7b2f59243e940",
   "ownCommitsBeforeCompletion": [
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
@@ -74,6 +74,10 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "1c7ef3acfa12b35eaedd4befd31e9a6a1e6fad53"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "96644a145e1bc1ab7923e98c93a7b2f59243e940"
     }
   ],
   "evidenceIndexes": [
@@ -88,12 +92,13 @@
     "native-ps-audit-review.json",
     "native-denial-cleanup-review.json",
     "native-writable-audit-review.json",
-    "native-registered-sockets-review.json"
+    "native-registered-sockets-review.json",
+    "native-brief-authorization-review.json"
   ],
   "latestOwnGroup": {
-    "runId": "af4a9c17-2542-4688-9388-bf6e228f8ace",
-    "evidence": "native-registered-sockets-qa.TestRunResult.json",
-    "passed": 90,
+    "runId": "4fcb88e1-2fe6-418c-b16b-40f5d4b4b1cb",
+    "evidence": "native-brief-authorization-qa.TestRunResult.json",
+    "passed": 91,
     "cliExitCode": 0,
     "childExitCode": 0,
     "cleanup": {
@@ -119,9 +124,9 @@
   },
   "history": "All copied previous native stands are partial/failed; their read-only source manifests and the main-provided cleaned event streams remain linked from their reviews. None is acceptance of 6.4.",
   "fullUnitEvidenceAudit": {
-    "parsedTestRunResultFiles": 73,
+    "parsedTestRunResultFiles": 75,
     "allParsed": true,
-    "availableCombinedStreams": 64,
+    "availableCombinedStreams": 66,
     "allRawJsonBytesPreserved": true,
     "combinedStreamExtraBytes": [
       {
@@ -135,12 +140,20 @@
       {
         "file": "channel-fixture-qa.combined-stream.txt",
         "bytesOutsideRawTestRunResult": 1513
+      },
+      {
+        "file": "native-brief-authorization-qa.combined-stream.txt",
+        "bytesOutsideRawTestRunResult": 1495
+      },
+      {
+        "file": "native-brief-authorization-red.combined-stream.txt",
+        "bytesOutsideRawTestRunResult": 1513
       }
     ],
     "limitation": "Some historical exec tools expose combined stdout/stderr only. Separate CLI receipt explicitly distinguishes child exitCode and unavailable stderr; missing separate stderr is never invented."
   },
   "nativeAcceptance": null,
   "scope": "Only assigned item 6.4. Checkboxes are left to raf; other open items prevent archive. No push.",
-  "latestPartialNative": "native-partial-s64-ubE1lo/review.json",
-  "nextAction": "Commit registered endpoint fixture after host secret scan; Main runs complete native stand43. 6.4 remains open."
+  "latestPartialNative": "native-partial-s64-vLTHJK/review.json",
+  "nextAction": "Commit fixture-only initial negative-attempt authorization after host scan; Main runs full native stand44. 6.4 remains open."
 }

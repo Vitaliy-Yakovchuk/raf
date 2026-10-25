@@ -1,0 +1,86 @@
+{
+  "status": "partial-stage-B-only",
+  "checks": [
+    {
+      "actor": "a",
+      "command": "message after-B",
+      "audit": "cli-audit/e21ed4ce-bf81-4d32-968b-ab490e7bf1e8.json",
+      "nativeSourceLine": 75,
+      "stdoutExact": true,
+      "stdoutSha256": "4633ce741f4e5797ab091bf29ebc21b2f5161e608dbd8a11c0b5bf02e9c94f4c",
+      "cliExitCode": 0,
+      "stderr": "",
+      "senderReceipt": "Not independently supplied for this partial stand; no complete sender acceptance claimed"
+    },
+    {
+      "actor": "a",
+      "command": "ps after-B",
+      "audit": "cli-audit/1f85b70f-7c54-4e99-8213-700b38c1d16a.json",
+      "nativeSourceLine": 82,
+      "stdoutExact": true,
+      "stdoutBytes": 77221,
+      "stdoutSha256": "7690f8c583efdae56532bf8e29e1253b9c6e75547c4e9717f1a85f4c59fe690a",
+      "sessions": 3,
+      "cliExitCode": 0,
+      "stderr": ""
+    },
+    {
+      "actor": "a",
+      "command": "unauthorized close after-B",
+      "nativeSourceLine": 89,
+      "cliExitCode": 1,
+      "code": "PRODUCTION_ENTRY_FAILED",
+      "denial": "EROFS at protected activation lock",
+      "receipt": {
+        "sym64UnauthorizedCloseDenied": true,
+        "exit_code": 1,
+        "code": "EROFS",
+        "target": "/srv/dev/s64-ubE1lo/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-be8fe2b9-6fca-4832-a2f7-b15ffea89ad7"
+      }
+    },
+    {
+      "actor": "b",
+      "command": "message after-B",
+      "audit": "cli-audit/03e9c307-97bd-4a41-9c91-1a3bfdbfd32f.json",
+      "nativeSourceLine": 63,
+      "stdoutExact": true,
+      "stdoutSha256": "7e456991f1147630db5960b409aaffa150aa7b21f67746cc95d16650f59a3a11",
+      "cliExitCode": 0,
+      "stderr": "",
+      "senderReceipt": "Not independently supplied for this partial stand; no complete sender acceptance claimed"
+    },
+    {
+      "actor": "b",
+      "command": "ps after-B",
+      "audit": "cli-audit/14266524-9069-41e7-9998-ae39b987c97c.json",
+      "nativeSourceLine": 70,
+      "stdoutExact": true,
+      "stdoutBytes": 77221,
+      "stdoutSha256": "5d52e2df4ee8b322da77a4ddf5e16152e4abbe8e0edf8ea04c84d73670b96754",
+      "sessions": 3,
+      "cliExitCode": 0,
+      "stderr": ""
+    },
+    {
+      "actor": "b",
+      "command": "unauthorized close after-B",
+      "nativeSourceLine": 77,
+      "cliExitCode": 1,
+      "code": "PRODUCTION_ENTRY_FAILED",
+      "denial": "EROFS at protected activation lock",
+      "receipt": {
+        "sym64UnauthorizedCloseDenied": true,
+        "exit_code": 1,
+        "code": "EROFS",
+        "target": "/srv/dev/s64-ubE1lo/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-76861b3c-5364-45cb-adca-f059da8758f6"
+      }
+    }
+  ],
+  "unexecuted": [
+    "after-A",
+    "after-rollback",
+    "helper1 remainder after peer connect",
+    "stages2/3"
+  ],
+  "nativeAcceptance": null
+}

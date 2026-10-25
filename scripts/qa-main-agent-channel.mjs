@@ -9,7 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { captureStateReadControls } from './qa-main-agent-denial.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
-import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from './qa-main-agent-channel-metadata.mjs';
+import { metadataTree, instrumentStandAssignment, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from './qa-main-agent-channel-metadata.mjs';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const reviewed = process.argv[2];
@@ -129,7 +129,16 @@ try {
   fs.writeFileSync(sandboxFile, sandboxSource);
   const bin = path.join(main, 'bin/raf.ts');
   fs.writeFileSync(bin, instrumentStandCli(fs.readFileSync(bin, 'utf8')));
-  git(main, 'add', '--', 'qa', 'bin/raf.ts', 'src/codex-sandbox.ts'); git(main, 'commit', '-m', 'qa: isolated native channel fixture and exact CLI audit');
+  const assignmentFile = path.join(main, 'src/assignment.ts');
+  const originalAssignment = fs.readFileSync(assignmentFile, 'utf8');
+  const instrumentedAssignment = instrumentStandAssignment(originalAssignment);
+  fs.writeFileSync(assignmentFile, instrumentedAssignment);
+  atomic(path.join(ev, 'brief-authorization-instrumentation.json'), { file: assignmentFile,
+    originalSha256: createHash('sha256').update(originalAssignment).digest('hex'), instrumentedSha256: hash(assignmentFile),
+    original: originalAssignment.slice(originalAssignment.indexOf('інших команд raf не виконуй.'), originalAssignment.indexOf('інших команд raf не виконуй.') + 'інших команд raf не виконуй.'.length),
+    instrumented: instrumentedAssignment.slice(instrumentedAssignment.indexOf('Негативна CLI-перевірка стенду авторизована:'), instrumentedAssignment.indexOf('Інших команд raf не виконуй.') + 'Інших команд raf не виконуй.'.length),
+    scope: 'Stand-owned copy before first launch; no product source, command grants or native sandbox changes' });
+  git(main, 'add', '--', 'qa', 'bin/raf.ts', 'src/codex-sandbox.ts', 'src/assignment.ts'); git(main, 'commit', '-m', 'qa: isolated native channel fixture and exact CLI audit');
   git(root, 'init', '-b', 'main');
   git(root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './raf-main', 'raf-main'); git(root, 'submodule', 'absorbgitdirs');
   git(main, 'worktree', 'add', '-B', 'develop', develop, 'HEAD');

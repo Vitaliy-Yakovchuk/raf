@@ -1,0 +1,368 @@
+{
+  "runId": "de3ace5c-ab68-4358-919a-cec0a0c86814",
+  "phase": "native-preflight",
+  "control": "/srv/dev/s64-vLTHJK/root/.git/modules/raf-main/raf-hotfix",
+  "production": {
+    "mode": 16832,
+    "dev": 64513,
+    "ino": 2766568,
+    "nlink": 8,
+    "children": {
+      "HEAD": {
+        "mode": 33152,
+        "dev": 64513,
+        "ino": 2766599,
+        "nlink": 1,
+        "size": 21,
+        "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+      },
+      "config": {
+        "mode": 33152,
+        "dev": 64513,
+        "ino": 2766605,
+        "nlink": 1,
+        "size": 189,
+        "sha256": "62cac3bcd8cbf83ecc05bebb3f0d49fa0f0008717c1b5305c10b187cad8e0516"
+      },
+      "description": {
+        "mode": 33152,
+        "dev": 64513,
+        "ino": 2766569,
+        "nlink": 1,
+        "size": 73,
+        "sha256": "85ab6c163d43a17ea9cf7788308bca1466f1b0a8d1cc92e26e9bf63da4062aee"
+      },
+      "hooks": {
+        "mode": 16832,
+        "dev": 64513,
+        "ino": 2766572,
+        "nlink": 2,
+        "children": {
+          "applypatch-msg.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766575,
+            "nlink": 1,
+            "size": 478,
+            "sha256": "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7"
+          },
+          "commit-msg.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766573,
+            "nlink": 1,
+            "size": 896,
+            "sha256": "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437"
+          },
+          "fsmonitor-watchman.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766584,
+            "nlink": 1,
+            "size": 4726,
+            "sha256": "e0549964e93897b519bd8e333c037e51fff0f88ba13e086a331592bf801fa1d0"
+          },
+          "post-update.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766578,
+            "nlink": 1,
+            "size": 189,
+            "sha256": "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5"
+          },
+          "pre-applypatch.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766582,
+            "nlink": 1,
+            "size": 424,
+            "sha256": "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475"
+          },
+          "pre-commit.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766576,
+            "nlink": 1,
+            "size": 1649,
+            "sha256": "57185b7b9f05239d7ab52db045f5b89eb31348d7b2177eab214f5eb872e1971b"
+          },
+          "pre-merge-commit.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766580,
+            "nlink": 1,
+            "size": 416,
+            "sha256": "d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53"
+          },
+          "pre-push.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766574,
+            "nlink": 1,
+            "size": 1374,
+            "sha256": "ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a"
+          },
+          "pre-rebase.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766586,
+            "nlink": 1,
+            "size": 4898,
+            "sha256": "4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3"
+          },
+          "pre-receive.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766581,
+            "nlink": 1,
+            "size": 544,
+            "sha256": "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989"
+          },
+          "prepare-commit-msg.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766579,
+            "nlink": 1,
+            "size": 1492,
+            "sha256": "e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619"
+          },
+          "push-to-checkout.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766583,
+            "nlink": 1,
+            "size": 2783,
+            "sha256": "a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f"
+          },
+          "sendemail-validate.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766585,
+            "nlink": 1,
+            "size": 2308,
+            "sha256": "44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92"
+          },
+          "update.sample": {
+            "mode": 33216,
+            "dev": 64513,
+            "ino": 2766577,
+            "nlink": 1,
+            "size": 3650,
+            "sha256": "8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106"
+          }
+        }
+      },
+      "index": {
+        "mode": 33152,
+        "dev": 64513,
+        "ino": 2766591,
+        "nlink": 1,
+        "size": 1763058,
+        "sha256": "77f675322fd78a7a7be5ec5e6aac4e95b10eb90bec88e36d7d127e551e856a71"
+      },
+      "info": {
+        "mode": 16832,
+        "dev": 64513,
+        "ino": 2766570,
+        "nlink": 2,
+        "children": {
+          "exclude": {
+            "mode": 33152,
+            "dev": 64513,
+            "ino": 2766571,
+            "nlink": 1,
+            "size": 240,
+            "sha256": "6671fe83b7a07c8932ee89164d1f2793b2318058eb8b98dc5c06ee0a5a3b0ec1"
+          }
+        }
+      },
+      "logs": {
+        "mode": 16832,
+        "dev": 64513,
+        "ino": 2766598,
+        "nlink": 3,
+        "children": {
+          "HEAD": {
+            "mode": 33152,
+            "dev": 64513,
+            "ino": 2766601,
+            "nlink": 1,
+            "size": 582,
+            "sha256": "556869bc1ca3ac368ee5fd957fd898da205de34412489b28e6e3269b3b586dcb"
+          },
+          "refs": {
+            "mode": 16832,
+            "dev": 64513,
+            "ino": 2766600,
+            "nlink": 3,
+            "children": {
+              "heads": {
+                "mode": 16832,
+                "dev": 64513,
+                "ino": 2792281,
+                "nlink": 2,
+                "children": {}
+              }
+            }
+          }
+        }
+      },
+      "objects": {
+        "mode": 16832,
+        "dev": 64513,
+        "ino": 2766588,
+        "nlink": 4,
+        "children": {
+          "info": {
+            "mode": 16832,
+            "dev": 64513,
+            "ino": 2766590,
+            "nlink": 2,
+            "children": {}
+          },
+          "pack": {
+            "mode": 16832,
+            "dev": 64513,
+            "ino": 2766589,
+            "nlink": 2,
+            "children": {
+              "pack-ae3e2e2a98e4cf66d992bababc107efcab646961.idx": {
+                "mode": 33024,
+                "dev": 64513,
+                "ino": 2766596,
+                "nlink": 1,
+                "size": 362916,
+                "sha256": "7e88a8f8c4803a0e298273b067fdc779e98ccec2e64b39da1f2f7f6b79f5b853"
+              },
+              "pack-ae3e2e2a98e4cf66d992bababc107efcab646961.pack": {
+                "mode": 33024,
+                "dev": 64513,
+                "ino": 2766595,
+                "nlink": 1,
+                "size": 15349275,
+                "sha256": "503f6365cb4ea14bb64813b98d9144737493650e459a03b24c020fde9fdb9a49"
+              },
+              "pack-ae3e2e2a98e4cf66d992bababc107efcab646961.rev": {
+                "mode": 33024,
+                "dev": 64513,
+                "ino": 2766597,
+                "nlink": 1,
+                "size": 51744,
+                "sha256": "97fe0e42dc3a76e506ccba859cd6487af4a6d0fac933bb6592bec6f6690e4faa"
+              }
+            }
+          }
+        }
+      },
+      "packed-refs": {
+        "mode": 33152,
+        "dev": 64513,
+        "ino": 2792289,
+        "nlink": 1,
+        "size": 288,
+        "sha256": "1fdf575d0accadf7a623242d369801158622bec2a747fb684d024edd1ec3c826"
+      },
+      "refs": {
+        "mode": 16832,
+        "dev": 64513,
+        "ino": 2766592,
+        "nlink": 4,
+        "children": {
+          "heads": {
+            "mode": 16832,
+            "dev": 64513,
+            "ino": 2766593,
+            "nlink": 2,
+            "children": {}
+          },
+          "tags": {
+            "mode": 16832,
+            "dev": 64513,
+            "ino": 2766594,
+            "nlink": 2,
+            "children": {}
+          }
+        }
+      },
+      "worktrees": {
+        "mode": 16832,
+        "dev": 64513,
+        "ino": 2766587,
+        "nlink": 3,
+        "children": {
+          "raf-main-b": {
+            "mode": 16832,
+            "dev": 64513,
+            "ino": 2766610,
+            "nlink": 4,
+            "children": {
+              "HEAD": {
+                "mode": 33152,
+                "dev": 64513,
+                "ino": 2766617,
+                "nlink": 1,
+                "size": 41,
+                "sha256": "d6b6ed3f0639e047b33be683a4f3c5365904a04a7dbef32d27c96f9eb632b0c4"
+              },
+              "ORIG_HEAD": {
+                "mode": 33152,
+                "dev": 64513,
+                "ino": 2779107,
+                "nlink": 1,
+                "size": 41,
+                "sha256": "d6b6ed3f0639e047b33be683a4f3c5365904a04a7dbef32d27c96f9eb632b0c4"
+              },
+              "commondir": {
+                "mode": 33152,
+                "dev": 64513,
+                "ino": 2766615,
+                "nlink": 1,
+                "size": 6,
+                "sha256": "340ddcb67a6204f742cd1e28e5b462622dde7daaa8ee36001897196aacdc6d47"
+              },
+              "gitdir": {
+                "mode": 33152,
+                "dev": 64513,
+                "ino": 2766613,
+                "nlink": 1,
+                "size": 41,
+                "sha256": "2ffcef57c479d433a7816dd29ce92d08c3bfad0b64dd0385ee6ba4f7dad46304"
+              },
+              "index": {
+                "mode": 33152,
+                "dev": 64513,
+                "ino": 2766620,
+                "nlink": 1,
+                "size": 1763058,
+                "sha256": "bc36096cb55751bf1e460fa857d090959d3b82f44bbdd7f51f9253120a355803"
+              },
+              "logs": {
+                "mode": 16832,
+                "dev": 64513,
+                "ino": 2766618,
+                "nlink": 2,
+                "children": {
+                  "HEAD": {
+                    "mode": 33152,
+                    "dev": 64513,
+                    "ino": 2766619,
+                    "nlink": 1,
+                    "size": 147,
+                    "sha256": "10148f4abbee14bbe45476132fae8de52b92a351bfe1dd0f6725176fd981956f"
+                  }
+                }
+              },
+              "refs": {
+                "mode": 16832,
+                "dev": 64513,
+                "ino": 2766616,
+                "nlink": 2,
+                "children": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

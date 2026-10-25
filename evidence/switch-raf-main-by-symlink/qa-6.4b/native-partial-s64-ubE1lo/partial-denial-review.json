@@ -1,0 +1,104 @@
+{
+  "status": "partial-failed",
+  "actors": [
+    {
+      "actor": "a",
+      "completedNonzeroDenialsBeforeSocketFailure": 268,
+      "signals": [],
+      "direct": 134,
+      "childShell": 134,
+      "hiddenReadProbes": 16,
+      "hostReadControls": [
+        {
+          "path": "/srv/dev/s64-ubE1lo/.raf/state.sqlite",
+          "dev": 64513,
+          "ino": 1083479,
+          "regularFile": true
+        },
+        {
+          "path": "/srv/dev/s64-ubE1lo/.raf/state.sqlite-wal",
+          "dev": 64513,
+          "ino": 1083480,
+          "regularFile": true
+        },
+        {
+          "path": "/srv/dev/s64-ubE1lo/.raf/state.sqlite-shm",
+          "dev": 64513,
+          "ino": 1083481,
+          "regularFile": true
+        },
+        {
+          "path": "/srv/dev/s64-ubE1lo/.raf/secrets.json",
+          "dev": 64513,
+          "ino": 1083487,
+          "regularFile": true
+        }
+      ],
+      "successfulForbiddenConnect": {
+        "label": "deny foreign connection peer direct",
+        "command": [
+          "/opt/dev/node/bin/node",
+          "--input-type=module",
+          "-e",
+          "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});",
+          "/srv/dev/s64-ubE1lo/root/raf-develop/qa/peer.sock"
+        ],
+        "cliExitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": ""
+      }
+    },
+    {
+      "actor": "b",
+      "completedNonzeroDenialsBeforeSocketFailure": 268,
+      "signals": [],
+      "direct": 134,
+      "childShell": 134,
+      "hiddenReadProbes": 16,
+      "hostReadControls": [
+        {
+          "path": "/srv/dev/s64-ubE1lo/.raf/state.sqlite",
+          "dev": 64513,
+          "ino": 1083479,
+          "regularFile": true
+        },
+        {
+          "path": "/srv/dev/s64-ubE1lo/.raf/state.sqlite-wal",
+          "dev": 64513,
+          "ino": 1083480,
+          "regularFile": true
+        },
+        {
+          "path": "/srv/dev/s64-ubE1lo/.raf/state.sqlite-shm",
+          "dev": 64513,
+          "ino": 1083481,
+          "regularFile": true
+        },
+        {
+          "path": "/srv/dev/s64-ubE1lo/.raf/secrets.json",
+          "dev": 64513,
+          "ino": 1083487,
+          "regularFile": true
+        }
+      ],
+      "successfulForbiddenConnect": {
+        "label": "deny foreign connection peer direct",
+        "command": [
+          "/opt/dev/node/bin/node",
+          "--input-type=module",
+          "-e",
+          "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});",
+          "/srv/dev/s64-ubE1lo/root/raf-develop/qa/peer.sock"
+        ],
+        "cliExitCode": 0,
+        "signal": null,
+        "stdout": "",
+        "stderr": ""
+      }
+    }
+  ],
+  "hiddenTargetsSameBeforeAfter": true,
+  "nativeAcceptance": null,
+  "unexecuted": "Socket controls and all later steps after first unexpected connect; no complete QA pass"
+}

@@ -125,8 +125,6 @@ try {
   fs.writeFileSync(path.join(change, 'proposal.md'), '## Why\nIsolated native 7.2 QA.\n\n## What Changes\nExecute the exact native plan at qa/sym72-instructions.txt.\n\n## Non-goals\nNo implementation or tests in the native actor.\n');
   fs.writeFileSync(path.join(change, 'tasks.md'), '- [ ] 1.1 [implement] Execute qa/sym72-instructions.txt verbatim using the initial issued raf_command, native exec and own report_path. Keep the same live session across host switches.\n- [ ] 1.2 Host retains active fixture; unassigned.\n');
   git(root, 'add', '--', '.gitmodules', 'raf-main', 'conf', 'openspec'); git(root, 'commit', '-m', 'qa: isolated orchestrator and live actor assignment');
-  // Existing production has a registered clean generation before the migration.
-  // Keep that real owner alive: conversion must preserve its registry and state.
   const legacyService = JSON.parse(must(run('legacy-clean-start', process.execPath, [path.join(main, 'bin/raf.ts'), 'service', 'start'])));
   assert.equal(legacyService.state, 'ready');
   assert.ok(fs.lstatSync(main).isDirectory(), 'legacy bootstrap must retain the ordinary main directory');

@@ -1,0 +1,50 @@
+{
+  "commands": [
+    "npm run build",
+    "npm run check:comments"
+  ],
+  "started": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "cec380",
+        "wall_time_seconds": 1.00107446,
+        "session_id": 92599,
+        "original_token_count": 9,
+        "output": "\n> build\n> node scripts/build.ts\n\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "225774",
+        "wall_time_seconds": 1.001185158,
+        "session_id": 21027,
+        "original_token_count": 13,
+        "output": "\n> check:comments\n> node scripts/check-comments.ts\n\n"
+      }
+    }
+  ],
+  "completed": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "c35635",
+        "wall_time_seconds": 0.000011367,
+        "exit_code": 0,
+        "original_token_count": 26,
+        "output": "Каталог зібрано. Операційні команди ще не реалізовані.\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "0de414",
+        "wall_time_seconds": 0.00000692,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    }
+  ]
+}

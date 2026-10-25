@@ -1,0 +1,62 @@
+{
+  "assignment": "monitor-raf-health:3.4",
+  "status": "passed",
+  "host": {
+    "evidence": "host-attempt-6/public/summary.json",
+    "transport": "host-attempt-6/public/cli.json",
+    "sha": "9ba404760962afaa9606690193c9e63a12878817",
+    "trackedWorkspaceStatus": "",
+    "untrackedWorkspaceStatus": "node_modules\n",
+    "runId": "887761e0-8d90-49fe-8ade-7fca6c64cb83",
+    "versions": {
+      "node": "v26.12.1",
+      "tmux": "tmux 3.6",
+      "codex": "codex-cli 0.163.0",
+      "git": "git version 2.53.0"
+    },
+    "command": "node evidence/monitor-raf-health/qa-3.4/host.mjs",
+    "cliExitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "privateFixtureRemoved": true
+    },
+    "secretScanMatches": 0
+  },
+  "unit": {
+    "evidence": "scan-qa.result.json",
+    "transport": "scan-qa.transport.json",
+    "exitEvidence": "scan-qa.exit.json",
+    "workspace": "scan-qa.workspace.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase qa --group monitor-raf-health/delivery-evidence --files test/delivery-evidence.test.ts",
+    "runId": "1f9cdaf9-3c17-4086-aad6-a38b8ccbc1b3",
+    "group": "monitor-raf-health/delivery-evidence",
+    "selection": {
+      "files": [
+        "test/delivery-evidence.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete"
+  },
+  "limitations": [
+    "Synthetic deterministic TUI; real production CLI/worker/tmux and native Codex sandbox; no live provider/model request.",
+    "Visible tmux pane only, with capture limitations recorded.",
+    "Retention boundary uses explicit cleanup time derived from unchanged conf, not seven-day wall-clock waiting."
+  ],
+  "remainingTaskCount": 13,
+  "archive": null
+}

@@ -1,0 +1,125 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/report-budget",
+  "testedHeadBeforeRuns": "410ff30190e4d429378aff8e5d9673659602d55d",
+  "observedHeadAfterRuns": "d82503b8b96953e5a5d5e93fcf96019ed5645587",
+  "workspaceChanges": [
+    "src/production-runtime.ts: pass full ProtocolSettings at reconcile and worker callsites"
+  ],
+  "sourceSha256": "04aab30e580295bb0f8d73e43e52dcfb9c1f2b8d38490396a38560579f48022a",
+  "concurrentChanges": "Other agents committed scaffold evidence and an unrelated shared-libraries test during these runs; source and selected tests were not changed by this executor except the two stated product lines.",
+  "captureNote": "Native exec exposes one merged stream. Queue waiting NDJSON was interleaved (including inside a stdout JSON chunk for contracts). Known launch-queue.waiting objects and their terminating newlines were extracted without changing other bytes; reconstructed stdout is one complete valid TestRunResult. Original merged bytes are retained. stderr is a logical extraction, not independently captured bytes.",
+  "cliExitCode": 0,
+  "tool": {
+    "chunk_id": "6c8322",
+    "wall_time_seconds": 0.15989896,
+    "exit_code": 0,
+    "original_token_count": 1995
+  },
+  "runId": "b29f46c3-1079-4098-b5c0-9d9c3ee1665d",
+  "selection": {
+    "files": [
+      "test/production-report-budget.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "childExitCode": 0,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "passed": 4,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "timeoutCount": 0,
+  "nextAction": "complete",
+  "extractedQueueEvents": [
+    {
+      "kind": "launch-queue.waiting",
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+      "requestId": "b447c3d5-afa8-43c3-9eaa-1ce3abda4003",
+      "testRunId": "b29f46c3-1079-4098-b5c0-9d9c3ee1665d",
+      "admission": {
+        "level": "HOTFIX_ONLY",
+        "requestedTier": "normal",
+        "allowed": false,
+        "reasons": [
+          "normal: normalized load exceeds 1.2"
+        ],
+        "measurement": {
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "loadAverage1m": 10.66,
+          "availableCores": 8,
+          "totalRamBytes": 32852041728,
+          "availableRamBytes": 17339219968,
+          "memoryPressure": "normal",
+          "fileSystems": [
+            {
+              "id": "/dev/mapper/data-dev",
+              "totalBytes": 190143823872,
+              "availableBytes": 161448275968
+            },
+            {
+              "id": "/dev/mapper/home-dev",
+              "totalBytes": 11499937792,
+              "availableBytes": 8070631424
+            }
+          ]
+        },
+        "thresholds": {
+          "normal": {
+            "maxNormalizedLoad": 1.2,
+            "minRamFraction": 0.2,
+            "minRamBytes": 2147483648,
+            "minDiskFraction": 0.1,
+            "minDiskBytes": 10737418240
+          },
+          "hotfix": {
+            "maxNormalizedLoad": 1.5,
+            "minRamFraction": 0.1,
+            "minRamBytes": 1073741824,
+            "minDiskFraction": 0.05,
+            "minDiskBytes": 5368709120
+          },
+          "home": {
+            "minDiskBytes": 524288000
+          }
+        },
+        "reservation": {
+          "requested": {
+            "ramBytes": 2147483648,
+            "diskBytes": {
+              "/dev/mapper/data-dev": 10737418240
+            }
+          },
+          "unused": {
+            "ramBytes": 0,
+            "diskBytes": {}
+          }
+        },
+        "remaining": {
+          "ramBytes": 15191736320,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 150710857728,
+            "/dev/mapper/home-dev": 8070631424
+          },
+          "normalizedLoad": 1.3325
+        },
+        "estimate": {
+          "status": "KNOWN",
+          "sources": [
+            "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+          ],
+          "reason": null
+        },
+        "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+      }
+    }
+  ]
+}

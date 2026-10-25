@@ -989,7 +989,7 @@ export function createProductionSystemDelivery(store: StateStore, context: Runti
 
 export async function reconcileProductionReports(store: StateStore, context: RuntimeContext, catalog: RuntimeConfiguration['catalog']): Promise<readonly string[]> {
   const execute = runtimeExecution(context);
-  const tools = sessionTools(store, execute, { catalog }, context, async runner => protocolFor(await protocols(context.confRoot), runner).timeouts);
+  const tools = sessionTools(store, execute, { catalog }, context, async runner => protocolFor(await protocols(context.confRoot), runner));
   const candidates = store.sessionRepository.transaction(tx => tx.listSessions().filter(row => !row.result && ['running', 'exited'].includes(row.state) && row.launchContext?.reportPath), 'read');
   const retained: string[] = [];
   for (const session of candidates) {
@@ -1466,7 +1466,7 @@ export async function runProductionWorker(
     costProfile = new RafCostRuntime(store, { scope: 'worker', command: null }, context.orchestratorRoot, 'preparation', costStartedAt, sqliteStartedAt);
     costProfile.install();
     await settleRuntimeHealthCpu(store, context.orchestratorRoot);
-    const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings.timeouts, options.execute);
+    const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings, options.execute);
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
     const settleWorkerHealth = () => settleCommandState({ store, orchestratorRoot: context.orchestratorRoot, now: Date.now, nextReminderId: randomUUID,

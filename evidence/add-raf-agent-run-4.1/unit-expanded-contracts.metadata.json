@@ -1,0 +1,197 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/contracts",
+  "testedHeadBeforeRuns": "410ff30190e4d429378aff8e5d9673659602d55d",
+  "observedHeadAfterRuns": "d82503b8b96953e5a5d5e93fcf96019ed5645587",
+  "workspaceChanges": [
+    "src/production-runtime.ts: pass full ProtocolSettings at reconcile and worker callsites"
+  ],
+  "sourceSha256": "04aab30e580295bb0f8d73e43e52dcfb9c1f2b8d38490396a38560579f48022a",
+  "concurrentChanges": "Other agents committed scaffold evidence and an unrelated shared-libraries test during these runs; source and selected tests were not changed by this executor except the two stated product lines.",
+  "captureNote": "Native exec exposes one merged stream. Queue waiting NDJSON was interleaved (including inside a stdout JSON chunk for contracts). Known launch-queue.waiting objects and their terminating newlines were extracted without changing other bytes; reconstructed stdout is one complete valid TestRunResult. Original merged bytes are retained. stderr is a logical extraction, not independently captured bytes.",
+  "cliExitCode": 1,
+  "tool": {
+    "chunk_id": "aa6452",
+    "wall_time_seconds": 0.175428757,
+    "exit_code": 1,
+    "original_token_count": 27548
+  },
+  "runId": "9f49ada3-cf37-4428-9fb2-e46a974af531",
+  "selection": {
+    "files": [
+      "test/cli-catalog.test.ts",
+      "test/app-runtime.test.ts",
+      "test/task-context.test.ts",
+      "test/task-context-z12.test.ts",
+      "test/runner-availability.test.ts",
+      "test/agent-control.test.ts",
+      "test/session-state.test.ts",
+      "test/task-reservations.test.ts",
+      "test/resource-admission.test.ts",
+      "test/resource-estimates.test.ts",
+      "test/agent-run-admission-snapshot.test.ts",
+      "test/home-disk-admission.test.ts",
+      "test/session-recovery.test.ts",
+      "test/agent-adapters-contract.test.ts",
+      "test/launch-state.test.ts",
+      "test/production-runtime.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "assertions-failed",
+  "childExitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "passed": 614,
+  "knownRed": [
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] invalid resource estimate (negative RAM) fails before any run directory or process"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] invalid resource estimate (missing disk estimate) fails before any run directory or process"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] explicit zero resource estimate is known independently of positive thresholds"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] prepared reports belong to distinct run directories and cleanup touches only its own run"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] impossible resource demand refuses without a session, reservation or tmux spawn"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-launch] default service composition starts the persistent worker and survives the command process exit"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] persistent child commits the actual native process before returning the handshake"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] missing launch runner path refuses before the runner process starts"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] different launch runner path refuses before the runner process starts"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] unconfirmed OpenSpec success becomes failed after exit and never auto-resumes"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] crash without a report records failed in the same SQLite and does not launch a replacement"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] disk admission checks development and HOME without reserving HOME or checking state and temporary volumes"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "fix-implementation",
+  "extractedQueueEvents": [
+    {
+      "kind": "launch-queue.waiting",
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+      "requestId": "cad00943-d196-40a9-938c-b9fc32938788",
+      "testRunId": "9f49ada3-cf37-4428-9fb2-e46a974af531",
+      "admission": {
+        "level": "ANY_RUN",
+        "requestedTier": "normal",
+        "allowed": true,
+        "reasons": [
+          "All normal resource thresholds satisfied after reservations"
+        ],
+        "measurement": {
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "loadAverage1m": 9.07,
+          "availableCores": 8,
+          "totalRamBytes": 32852041728,
+          "availableRamBytes": 19893030912,
+          "memoryPressure": "normal",
+          "fileSystems": [
+            {
+              "id": "/dev/mapper/data-dev",
+              "totalBytes": 190143823872,
+              "availableBytes": 161739456512
+            },
+            {
+              "id": "/dev/mapper/home-dev",
+              "totalBytes": 11499937792,
+              "availableBytes": 8070193152
+            }
+          ]
+        },
+        "thresholds": {
+          "normal": {
+            "maxNormalizedLoad": 1.2,
+            "minRamFraction": 0.2,
+            "minRamBytes": 2147483648,
+            "minDiskFraction": 0.1,
+            "minDiskBytes": 10737418240
+          },
+          "hotfix": {
+            "maxNormalizedLoad": 1.5,
+            "minRamFraction": 0.1,
+            "minRamBytes": 1073741824,
+            "minDiskFraction": 0.05,
+            "minDiskBytes": 5368709120
+          },
+          "home": {
+            "minDiskBytes": 524288000
+          }
+        },
+        "reservation": {
+          "requested": {
+            "ramBytes": 2147483648,
+            "diskBytes": {
+              "/dev/mapper/data-dev": 10737418240
+            }
+          },
+          "unused": {
+            "ramBytes": 0,
+            "diskBytes": {}
+          }
+        },
+        "remaining": {
+          "ramBytes": 17745547264,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 151002038272,
+            "/dev/mapper/home-dev": 8070193152
+          },
+          "normalizedLoad": 1.13375
+        },
+        "estimate": {
+          "status": "KNOWN",
+          "sources": [
+            "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+          ],
+          "reason": null
+        },
+        "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+      }
+    }
+  ]
+}

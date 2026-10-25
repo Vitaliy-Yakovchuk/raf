@@ -1,0 +1,28 @@
+commit fc2f9d2d47fa564742a44e7e2cf6e503c47a0911
+Author: Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com>
+Date:   Sun Oct 25 02:27:17 2026 +0000
+
+    feat: observe raf own CPU windows from the cost profile
+
+diff --git a/src/app-runtime.ts b/src/app-runtime.ts
+index 79035e4..a808a13 100644
+--- a/src/app-runtime.ts
++++ b/src/app-runtime.ts
+@@ -1,3 +1,4 @@
++import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
+ import { measureRafCost } from './raf-cost-runtime.ts';
+ import { commandTimingFailure, recordCommandTiming } from './command-timing.ts';
+ import { runAgentWithQueue, type AgentQueueRecord, type AgentQueueValidation, type AgentQueueRequest, type AgentRunQueuePorts } from './agent-run-queue.ts';
+@@ -377,8 +378,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+       const state = await store();
+       const budget = loaded.commandTiming.sqliteOnlyMeanBudgetMs;
+       if (!Number.isFinite(budget) || budget! <= 0) throw fail('CONFIGURATION_INVALID', 'configuration', 'Invalid commandTiming.sqliteOnlyMeanBudgetMs');
++      const cpu = await settleRuntimeHealthCpu(state, context.orchestratorRoot);
++      let healthSince: string | null = null;
++      try { healthSince = state.healthCpu?.domain().since ?? null; } catch {}
+       const forcedClose = state.readForcedCloseMetrics(new Date().toISOString());
+-      return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile(), health: { readAt: forcedClose.readAt, since: forcedClose.since, forcedClose } };
++      return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile(), health: { readAt: forcedClose.readAt, since: healthSince, cpu, forcedClose } };
+     },
+   };
+   if (dependencies.commandState) for (const name of reminderCommands) builtins[name] = async params => createReminderHandlers(await statePorts())[name](params);

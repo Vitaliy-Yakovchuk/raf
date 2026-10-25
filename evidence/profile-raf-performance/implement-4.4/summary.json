@@ -1,0 +1,190 @@
+{
+  "assignment": "profile-raf-performance:4.4",
+  "status": "succeeded",
+  "language": "uk",
+  "implementationCommit": "c59701447f097fe69bf4c0ba0acda1c4b3555940",
+  "testedWorkspace": {
+    "baseHead": "34f5535833c30fdca374039dc892e9d211a566dc",
+    "ownDirtyFiles": [
+      "src/agent-control.ts",
+      "src/production-runtime.ts"
+    ],
+    "patch": "implementation.patch",
+    "allDirtyFiles": "workspace-status.txt",
+    "sha256": "source.sha256",
+    "note": "Усі три unit-прогони виконано на тих самих власних змінах; коміт c597014 містить цю реалізацію. Чужі незакомічені файли перелічено окремо та не включено в коміт."
+  },
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/profile-raf-performance/proposal.md",
+      "openspec/changes/profile-raf-performance/tasks.md#4.4",
+      "openspec/changes/profile-raf-performance/specs/projects/raf/command-timing/spec.md#Прискорення agent ps за профілем",
+      "evidence/profile-raf-performance/qa-4.1/README.md",
+      "openspec/changes/profile-raf-performance/agent-ps-scaffold-handoff.md"
+    ],
+    "baseline": "Повторне повне ps-спостереження для кожної живої identity; для двох живих identity було 2 scans.",
+    "scope": "Worker polling 9.1.1/5.1 не змінено; нових порогів, інтервалів або кешу між викликами немає."
+  },
+  "implementation": {
+    "description": "AgentControlService.ps збирає активні identity та використовує production inspectMany: observeProcesses отримує спільну свіжу таблицю, кожні PID/start/command/native ownership і machine/boot перевіряються окремо. Блоки фіналізації, SQLite, нагадувань та подій залишено. Зміна process під час прийняття звіту потребує нового спостереження.",
+    "emptyAndFinished": "Без живих identity таблиця не читається.",
+    "errors": "Помилки/неповний batch стають unknown, не доказом смерті.",
+    "testsReadAfterInitialImplementation": true,
+    "preparedTestsChanged": false,
+    "preparedTestsDiff": "prepared-tests.diff"
+  },
+  "runs": [
+    {
+      "name": "agent-ps",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "result": "/srv/dev/work/orchestrator/raf-develop/evidence/profile-raf-performance/implement-4.4/agent-ps.TestRunResult.json",
+      "cli": "/srv/dev/work/orchestrator/raf-develop/evidence/profile-raf-performance/implement-4.4/agent-ps.cli.json",
+      "stderr": "/srv/dev/work/orchestrator/raf-develop/evidence/profile-raf-performance/implement-4.4/agent-ps.stderr.txt",
+      "runId": "b495c358-b1bf-4685-82a1-ba201008905a",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "phase": "implement",
+      "group": "profile-raf-performance/agent-ps",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 14,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "stableHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    },
+    {
+      "name": "profile",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+      "result": "/srv/dev/work/orchestrator/raf-develop/evidence/profile-raf-performance/implement-4.4/profile.TestRunResult.json",
+      "cli": "/srv/dev/work/orchestrator/raf-develop/evidence/profile-raf-performance/implement-4.4/profile.cli.json",
+      "stderr": "/srv/dev/work/orchestrator/raf-develop/evidence/profile-raf-performance/implement-4.4/profile.stderr.txt",
+      "runId": "e61a8169-ca87-4f72-9371-7470fd2e661b",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts"
+        ],
+        "testIds": []
+      },
+      "phase": "implement",
+      "group": "profile-raf-performance/profile",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "passed": 30,
+      "knownRed": [
+        {
+          "file": "test/raf-cost-profile.test.ts",
+          "name": "profile: existing command stats without flags returns commands/profile, preserving EMA independently"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "stableHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    },
+    {
+      "name": "timing-coverage",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/timing-coverage --files test/runtime-command-timing.test.ts",
+      "result": "/srv/dev/work/orchestrator/raf-develop/evidence/profile-raf-performance/implement-4.4/timing-coverage.TestRunResult.json",
+      "cli": "/srv/dev/work/orchestrator/raf-develop/evidence/profile-raf-performance/implement-4.4/timing-coverage.cli.json",
+      "stderr": "/srv/dev/work/orchestrator/raf-develop/evidence/profile-raf-performance/implement-4.4/timing-coverage.stderr.txt",
+      "runId": "8661f608-04dc-426e-bbca-0e33c935a4a1",
+      "selection": {
+        "files": [
+          "test/runtime-command-timing.test.ts"
+        ],
+        "testIds": []
+      },
+      "phase": "implement",
+      "group": "profile-raf-performance/timing-coverage",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "passed": 93,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "stableHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm run build",
+      "cliExitCode": 0,
+      "stdout": "build.stdout.txt",
+      "stderr": "build.stderr.txt",
+      "exit": "build.exit.json"
+    },
+    {
+      "command": "npm run check:comments",
+      "cliExitCode": 0,
+      "stdout": "check-comments.stdout.txt",
+      "stderr": "check-comments.stderr.txt",
+      "exit": "check-comments.exit.json"
+    },
+    {
+      "command": "git diff --check",
+      "cliExitCode": 0
+    },
+    {
+      "command": "sha256sum --check evidence/profile-raf-performance/implement-4.4/source.sha256",
+      "cliExitCode": 0
+    }
+  ],
+  "knownRegression": {
+    "runId": "e61a8169-ca87-4f72-9371-7470fd2e661b",
+    "file": "test/raf-cost-profile.test.ts",
+    "line": 415,
+    "test": "profile: existing command stats without flags returns commands/profile, preserving EMA independently",
+    "reason": "Застаріла точна health fixture: після monitor-raf-health 2.3 (fc2f9d2d47fa564742a44e7e2cf6e503c47a0911) app-runtime додає health.cpu, health.since читається з state.healthCpu.domain(); fixture не має healthCpu і очікує стару форму та since=epoch. Власні зміни ps не зачіпають command stats.",
+    "sourceEvidence": "upstream-health-contract.patch",
+    "testChanged": false,
+    "acceptedByMain": true,
+    "mainInstruction": "[main] Main: падіння profile на test/raf-cost-profile.test.ts:415 — застаріла fixture після monitor-raf-health 2.3 (fc2f9d2), не твій scope; тести не змінюй. Заверши 4.4 як succeeded: agent-ps 14/14 і timing-coverage 93/93 green, profile 30/31 з точною причиною та runId e61a8169 у звіті. Застарілу fixture виправить QA 4.5, який сам фіксить знайдене.",
+    "nextAction": "QA 4.5 виправляє застарілу fixture за test-first і виконує належний прогін тієї самої групи без зміни QA HOME/агрегату."
+  },
+  "completion": {
+    "item": "4.4",
+    "checkboxOwner": "raf",
+    "tasksFileEdited": false,
+    "archived": false,
+    "reason": "4.5 і 5.1 залишаються відкритими.",
+    "performanceAcceptance": "Фактичне прискорення wall/повний CPU ще не прийнято; це окреме завдання QA 4.5."
+  }
+}

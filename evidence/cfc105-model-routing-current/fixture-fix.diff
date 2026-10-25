@@ -1,0 +1,58 @@
+diff --git a/test/model-routing-integration.test.ts b/test/model-routing-integration.test.ts
+index 48b259a..3b1a933 100644
+--- a/test/model-routing-integration.test.ts
++++ b/test/model-routing-integration.test.ts
+@@ -3 +3 @@ import { spawnSync } from 'node:child_process';
+-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
++import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+@@ -11,0 +12 @@ import { openStateStore } from '../src/state-store.ts';
++import { createSessionState } from '../src/session-state.ts';
+@@ -43 +43,0 @@ async function fixture(t: TestContext) {
+-    tmux(['kill-server']);
+@@ -45,3 +45,24 @@ async function fixture(t: TestContext) {
+-    if (existsSync(own)) spawnSync('/usr/bin/tmux', ['-S', own, 'kill-server'], { env, timeout: 10_000 });
+-    for (let attempt = 0; attempt < 50 && existsSync(socket); attempt++) await delay(20);
+-    assert.equal(existsSync(socket), false, 'owned tmux endpoint must be removed');
++    for (const endpoint of [socket, own]) {
++      if (!existsSync(endpoint)) continue;
++      const identity = lstatSync(endpoint);
++      assert.ok(identity.isSocket());
++      const killed = spawnSync('/usr/bin/tmux', ['-S', endpoint, 'kill-server'], { env, encoding: 'utf8', timeout: 10_000 });
++      assert.ifError(killed.error);
++      let inspected;
++      for (let attempt = 0; attempt < 100; attempt++) {
++        inspected = spawnSync('/usr/bin/tmux', ['-S', endpoint, 'list-sessions'], { env, encoding: 'utf8', timeout: 10_000 });
++        assert.ifError(inspected.error);
++        if (inspected.status !== 0) break;
++        await delay(20);
++      }
++      assert.notEqual(inspected!.status, 0, 'owned tmux server must stop');
++      assert.match(inspected!.stderr, /no server running|No such file/);
++      if (existsSync(endpoint)) {
++        const current = lstatSync(endpoint);
++        assert.equal(current.dev, identity.dev);
++        assert.equal(current.ino, identity.ino);
++        unlinkSync(endpoint);
++      }
++      assert.equal(existsSync(endpoint), false, 'owned tmux endpoint must be removed');
++      observations.push({ cleanup: { endpoint, killCode: killed.status, serverAbsent: inspected!.stderr, staleOwnedSocketRemoved: true } });
++    }
+@@ -58 +79 @@ if(process.argv[2]!=='--version') process.exit(97);
+-console.log(${JSON.stringify(`${protocol.runner} ${protocol.version}`)});
++console.log(${JSON.stringify(protocol.runner === 'claude' ? `${protocol.version} (Claude Code)` : `${protocol.runner} ${protocol.version}`)});
+@@ -176,0 +198,2 @@ test('I4 SQLite finalization rolls back all effects after an injected domain wri
++  const states = [first, second].map(store => createSessionState({ repository: store.sessionRepository,
++    verifyMainAuthority: () => false, verifyWorkResult: () => false }));
+@@ -181 +204 @@ test('I4 SQLite finalization rolls back all effects after an injected domain wri
+-  assert.throws(() => first.finalizeSession(old.runId, old.revision, new Date().toISOString(), {
++  assert.throws(() => states[0].finalizeSession(old.runId, old.revision, new Date().toISOString(), {
+@@ -186,2 +209,2 @@ test('I4 SQLite finalization rolls back all effects after an injected domain wri
+-  assert.deepEqual(second.listPending(), []);
+-  const attempts = await Promise.all([first, second].map(async store => store.finalizeSession(old.runId, old.revision, new Date().toISOString(), { pending: [pending], domain: [] })));
++  assert.deepEqual(states[1].listPending(), []);
++  const attempts = await Promise.all(states.map(async state => state.finalizeSession(old.runId, old.revision, new Date().toISOString(), { pending: [pending], domain: [] })));
+@@ -191,2 +214,2 @@ test('I4 SQLite finalization rolls back all effects after an injected domain wri
+-  assert.deepEqual(first.listPending(), [pending]);
+-  assert.equal(second.finalizeSession(old.runId, old.revision, new Date().toISOString(), { pending: [pending], domain: [] }), false);
++  assert.deepEqual(states[0].listPending(), [pending]);
++  assert.equal(states[1].finalizeSession(old.runId, old.revision, new Date().toISOString(), { pending: [pending], domain: [] }), false);

@@ -1,0 +1,50 @@
+{
+  "capturedAt": "2026-10-25T22:55:06.833932+00:00",
+  "head": "ffcfae61d0af25d230045d3a8703dcceff94c695",
+  "checks": [
+    {
+      "command": [
+        "npm",
+        "run",
+        "check:comments"
+      ],
+      "cliExitCode": 0,
+      "stdout": "> check:comments\n> node scripts/check-comments.ts\n",
+      "stderr": "",
+      "qualification": "Completed after responsible agent removed its comments. Initial failure remains recorded in workspace-after-green.json."
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "scripts/qa-model-routing-live.mjs"
+      ],
+      "cliExitCode": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "scripts/qa-model-routing-main.mjs"
+      ],
+      "cliExitCode": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "scripts/qa-model-routing-actor.mjs"
+      ],
+      "cliExitCode": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cliExitCode": 0
+    }
+  ],
+  "qualification": "Syntax/comment checks are not stand execution or native runner acceptance."
+}

@@ -1,0 +1,98 @@
+{
+  "capturedAt": "2026-10-25T22:52:18.388456+00:00",
+  "source": "conf/raf.json#/runnerProtocols",
+  "sha256": "32c37b18d3a7fa477b848e218234ee7218b3138348a02cb239a66230a908d357",
+  "protocols": [
+    {
+      "runner": "codex",
+      "version": "0.163.0",
+      "liveTaskVerified": false,
+      "quotaReliable": true,
+      "quotaParser": "codex_status",
+      "operationalEvidence": {
+        "source": "Installed codex-cli 0.160.0 --help, runner-protocol-evidence.md and own isolated no-model-prompt startup + /status timing probe (2026-10-22).",
+        "invocationReason": "Interactive model/effort argv from installed help; workspace-write for assigned implementation; no initial prompt; isolated no-task probe overrides sandbox to read-only. No-daemon prevents selecting shared native sessions.",
+        "budgetReason": "Successful owned tmux probe: ready 640ms, native /status transition 839ms, total 1479ms. Startup and transition each allow 10s; overall 30s includes version/IPC and OS verification. Poll 100ms observed the status-input and native-identity transitions. Margins absorb local startup/load variation; no live model-task acceptance inferred.",
+        "nativeIdentity": "Owned /status Session UUID established before brief; actual IDs are not retained in timing evidence.",
+        "serviceBudgetReason": "30s readiness bound for canonical main checkout bin/service.ts recovery; no develop fallback. Not a live service-readiness claim.",
+        "probe": {
+          "readyMs": 640,
+          "nativeStatusMs": 839,
+          "totalMs": 1479,
+          "modelTaskSent": false,
+          "nativeIdRetained": false,
+          "quotaRetained": false,
+          "accountRetained": false
+        }
+      },
+      "hasNativeDialect": true,
+      "identity": {
+        "source": "status",
+        "command": "/status",
+        "pattern": "Session:\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})",
+        "dismissKeys": []
+      }
+    },
+    {
+      "runner": "claude",
+      "version": "2.1.308",
+      "liveTaskVerified": false,
+      "quotaReliable": true,
+      "quotaParser": "claude_usage",
+      "operationalEvidence": {
+        "source": "Installed Claude Code 2.1.308 --help/--version and own isolated tmux probes (tmux -L, 2026-10-22); runner-protocol-evidence.md, розділ «Claude Code 2.1.308: протокол raf».",
+        "invocationReason": "Interactive TUI in screen-reader mode; dontAsk never shows tool prompts (anything not allowed is denied); Bash/Read/Glob/Grep allowed, edits only by per-launch Edit(/<dir>/**) rules matching --add-dir grants; Bash confined by the native sandbox with failIfUnavailable and no unsandboxed escape; no --dangerously-skip-permissions; native ID assigned by --session-id and confirmed on /status before the brief.",
+        "budgetReason": "Owned no-model probes: ready 3264 and 3292 ms in a trusted git root; /status panel showed the assigned Session ID; bracketed paste of 61 lines showed '[Pasted text #1 +60 lines]'; /exit closed the pane with status 0. Startup and transition 10 s, overall 30 s, poll 100 ms as for codex.",
+        "nativeIdentity": "Assigned UUID passed by --session-id equals the Session ID line of /status before any brief.",
+        "hostPrerequisite": "Native sandbox needs bubblewrap and socat; on this host socat is missing, so with failIfUnavailable the CLI exits 1 before readiness.",
+        "probe": {
+          "readyMs": 3292,
+          "nativeStatusMs": null,
+          "totalMs": null,
+          "modelTaskSent": true,
+          "nativeIdRetained": false,
+          "quotaRetained": false,
+          "accountRetained": false
+        },
+        "startupScreen": "Owned no-model tmux probes 2026-10-22 (claude 2.1.308, 130x45, poll 50 ms): empty pane at 0 ms, only '[Screen Reader Mode: on via flag]' from about 170-226 ms until about 3.2 s, then the ready screen in a trusted git root or the workspace trust prompt below the same line in an untrusted one; /exit closed the pane with status 0. The trust prompt was not answered.",
+        "deliveryScreen": "Own tmux -L probes 2026-10-22 (claude 2.1.308, default 80x24, poll 50 ms, sonnet/low, one-word answer, briefs of 30/30/119 lines): load-buffer + paste-buffer -p + Enter shows '$', NBSP, space, '[Pasted text #1 +N lines]' for about 110-130 ms with 'paste again to expand' in place of the ready mode line; then a spinner verb line ('Germinating…', 'Garnishing…', 'Pouncing…'; QA run 'Slithering…') above 'Tip: …', the paste hint and an empty '$' for 2-6 s, never 'esc to interrupt'; then '<Verb> for Ns · done HH:MM PM', and the ready mode line returns about 8 s after the paste. Enter right after the paste submitted it in all three probes. tmux kill-session left the claude process alive about 750 ms."
+      },
+      "hasNativeDialect": true,
+      "identity": {
+        "source": "assigned",
+        "command": "/status",
+        "pattern": "Session ID:\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})",
+        "dismissKeys": [
+          "Escape"
+        ]
+      }
+    },
+    {
+      "runner": "grok",
+      "version": "1.0.67",
+      "liveTaskVerified": false,
+      "quotaReliable": true,
+      "quotaParser": "grok_usage",
+      "operationalEvidence": {
+        "source": "Own isolated tmux probes 2026-10-22 (grok 1.0.67, 130x45): runner-protocol-evidence.md «Квоти чотирьох CLI · 2026-10-22»; quota-runners-design.md.",
+        "invocationReason": "Quota probe only: --model/--reasoning-effort from installed help, own --leader-socket in the probe directory; no native identity dialect, so raf does not launch grok tasks."
+      },
+      "hasNativeDialect": false,
+      "identity": null
+    },
+    {
+      "runner": "agy",
+      "version": "1.4.5",
+      "liveTaskVerified": false,
+      "quotaReliable": true,
+      "quotaParser": "agy_usage",
+      "operationalEvidence": {
+        "source": "Own isolated tmux probes 2026-10-22 (agy 1.4.5, 130x45): runner-protocol-evidence.md «Квоти чотирьох CLI · 2026-10-22»; quota-runners-design.md.",
+        "invocationReason": "Quota probe only: --model/--effort from installed help; no native identity before the first brief, so raf does not launch agy tasks."
+      },
+      "hasNativeDialect": false,
+      "identity": null
+    }
+  ],
+  "qualification": "Configuration is not a real CLI execution or auth/quota proof. Unknown live prerequisites remain open."
+}

@@ -21,5 +21,28 @@
       "accepted": true,
       "purpose": "Correct diagnosis: configured file missing from develop checkout"
     }
-  ]
+  ],
+  "currentHostHandoff": {
+    "reviewedSha": "7639f992200f7c7099c4456edbbea9201397ade5",
+    "script": "scripts/qa-model-routing-live.mjs",
+    "requestReceipt": "ecb411e0-55ee-44cc-83be-893b36d3fc64",
+    "mainResponse": "Host queued under host-lock, clean clone /srv/dev/cfc105h1/raf. Await rc/stdout/stderr and stand/ev.",
+    "preconditionsReceipt": "29e88960-a157-4352-99d1-cacd91e0cbe7",
+    "auditReceipt": "9be93109-0a56-44ab-b93f-69e81023c60a",
+    "oneFailedDelivery": {
+      "cliExitCode": 1,
+      "code": "HANDLER_FAILED",
+      "reason": "Recipient has no recognized empty agent composer",
+      "completed": [],
+      "pending": [],
+      "retrySafe": true,
+      "delivered": false
+    },
+    "qualification": "Main confirmed no previous addressed L1-L4 evidence after transfer. No live acceptance inferred from the coordination receipt.",
+    "latestQueueObservation": {
+      "source": "main message",
+      "message": "cfc105h1 ще в черзі host-lock (третій після sym72q3 і ara41q9; зараз виконується hwrs). Артефакти будуть у /srv/dev/cfc105h1/{stdout,stderr,exit} і стенд скрипта.",
+      "qualification": "Queue position is observational, not a live test outcome."
+    }
+  }
 }

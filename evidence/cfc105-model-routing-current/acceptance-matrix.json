@@ -1,0 +1,55 @@
+{
+  "qualification": "Interim audit; pending is not pass; final host artifact assessment is required. No task checkbox edited.",
+  "scenarios": [
+    {
+      "scenario": "I1",
+      "status": "partial",
+      "reason": "I1/I2 CLI test passed: switches, invalid/caller refusals, version stubs. Live model readiness is separate."
+    },
+    {
+      "scenario": "I2",
+      "status": "partial",
+      "reason": "Fixture agent survives disable; no native task. Disabled launch is also checked by pending host driver."
+    },
+    {
+      "scenario": "I3",
+      "status": "partial",
+      "reason": "Real predecessor process + handoff ports passed; not all production startup/pane-loss paths exercised."
+    },
+    {
+      "scenario": "I4",
+      "status": "partial",
+      "reason": "Two SQLite connections rollback and idempotence passed; Promise.all callbacks execute synchronously, so this is not proof of concurrent production reconcilers."
+    },
+    {
+      "scenario": "I5",
+      "status": "unexecuted",
+      "reason": "Full atomic JSON/OpenSpec negative matrix requires isolated launched actors and finalized predecessor; current preset lacks this full matrix."
+    },
+    {
+      "scenario": "L1",
+      "status": "pending-host",
+      "reason": "All four CLIs require real per-runner launch/identity/model/effort/brief/report. Main queued reviewed host stand 7639f992200f7c7099c4456edbbea9201397ade5."
+    },
+    {
+      "scenario": "L2",
+      "status": "pending-host",
+      "reason": "One Claude enable and native actor disable-preservation/next-launch denial await main host artifacts."
+    },
+    {
+      "scenario": "L3",
+      "status": "pending-host",
+      "reason": "Real limits/refusal must be preserved with version; no artificial exhaustion. Historical 11.4 remains bounded by its original observations."
+    },
+    {
+      "scenario": "L4",
+      "status": "unexecuted",
+      "reason": "Requires a genuine model limit/refusal plus eligible alternative and verified predecessor finalization. Sequential launches and fixture handoff do not qualify."
+    },
+    {
+      "scenario": "L5",
+      "status": "pending-host",
+      "reason": "Independent runner probes continue once each; exact missing auth/protocol/quota prerequisites recorded by host."
+    }
+  ]
+}

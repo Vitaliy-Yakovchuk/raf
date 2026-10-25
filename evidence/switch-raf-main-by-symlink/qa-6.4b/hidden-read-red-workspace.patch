@@ -1,0 +1,37 @@
+diff --git a/test/main-switch-agent-channel.test.ts b/test/main-switch-agent-channel.test.ts
+index 0d09764..4b4cfde 100644
+--- a/test/main-switch-agent-channel.test.ts
++++ b/test/main-switch-agent-channel.test.ts
+@@ -37,8 +37,32 @@ import type {
+   PublishedChannelGeneration,
+ } from "../src/main-switch-agent-channel.ts";
+ 
++import { captureStateReadControls, assertNativeDenial } from "../scripts/qa-main-agent-denial.mjs";
++
+ const root = "/fixture/orchestrator";
+ 
++test("native hidden state denial requires exact existing host controls and refuses missing fixtures", async () => {
++  const directory = await fs.mkdtemp(join(tmpdir(), "native-read-controls-"));
++  try {
++    const names = ["state.sqlite", "state.sqlite-wal", "state.sqlite-shm", "secrets.json"];
++    for (const name of names) await fs.writeFile(join(directory, name), "isolated host sentinel");
++    const controls = captureStateReadControls(directory);
++    const target = join(directory, "state.sqlite");
++    const hiddenRead = { target, control: controls[0] };
++    const masked = { cliExitCode: 1, signal: null, stderr: "Error: ENOENT: no such file or directory, open hidden alias" };
++    assert.doesNotThrow(() => assertNativeDenial(masked, hiddenRead), "Native none policy masks an existing file as ENOENT");
++    assert.throws(() => assertNativeDenial(masked), /permission denial/);
++    assert.throws(() => assertNativeDenial(masked, { target: target + ".missing", control: controls[0] }));
++    assert.throws(() => assertNativeDenial(masked, { target, control: { ...controls[0], regularFile: false } }));
++    assert.throws(() => assertNativeDenial({ ...masked, cliExitCode: 0 }, hiddenRead));
++    assert.throws(() => assertNativeDenial({ ...masked, signal: "SIGTERM" }, hiddenRead));
++    assert.throws(() => assertNativeDenial({ ...masked, stderr: "fixture setup failed" }, hiddenRead));
++    assert.doesNotThrow(() => assertNativeDenial({ ...masked, stderr: "EROFS: read-only file system" }));
++    await fs.unlink(join(directory, "state.sqlite-wal"));
++    assert.throws(() => captureStateReadControls(directory), /ENOENT/, "A missing WAL cannot become a passing denial");
++  } finally { await fs.rm(directory, { recursive: true, force: true }); }
++});
++
+ test("native stand drains only its host service reader before migration and preserves actors", { timeout: 10000 }, async () => {
+   const service = spawn(process.execPath, ["-e", "setInterval(()=>{},1000)"], { stdio: "ignore" });
+   const actor = spawn(process.execPath, ["-e", "setInterval(()=>{},1000)"], { stdio: "ignore" });

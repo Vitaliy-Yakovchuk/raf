@@ -1,0 +1,213 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "native-incomplete-awaiting-host",
+  "cause": "stand35 stopped because native none policy masks state.sqlite as ENOENT, whereas the fixture accepted only explicit permission errors.",
+  "fix": [
+    "Accept ENOENT only for a hidden-state read with a host-confirmed exact canonical regular-file target; ordinary write/create/rename/unlink probes still require permission errors.",
+    "Hold a real host read-only SQLite transaction to retain WAL/SHM after short-lived writers exit.",
+    "Host stat records before/after each stage must confirm all four hidden files keep their exact device/inode, independently of native reports.",
+    "Copy the denial helper into the actual native fixture and bind controls to stage/runId before releasing each gate."
+  ],
+  "unitRuns": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "workspace": {
+        "head": "f7a7ece09449fc7c86f467599c84f06dd8b77763",
+        "status": "hidden-read-red-workspace.status.txt",
+        "trackedPatch": "hidden-read-red-workspace.patch",
+        "newModule": "hidden-read-red-new-module.mjs"
+      },
+      "raw": "hidden-read-red.TestRunResult.json",
+      "cli": "hidden-read-red.cli-exit.json",
+      "combinedStream": "hidden-read-red.combined-stream.txt",
+      "runId": "284c86fb-313b-4df4-8cc6-de75f3dc931c",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "phase": "red",
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native hidden state denial requires exact existing host controls and refuses missing fixtures"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "cliExitCode": 1,
+      "passedCount": 101
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "workspace": {
+        "head": "f7a7ece09449fc7c86f467599c84f06dd8b77763",
+        "status": "hidden-read-qa-workspace.status.txt",
+        "trackedPatch": "hidden-read-qa-workspace.patch",
+        "newModule": "hidden-read-qa-new-module.mjs"
+      },
+      "raw": "hidden-read-qa.TestRunResult.json",
+      "cli": "hidden-read-qa.cli-exit.json",
+      "combinedStream": "hidden-read-qa.combined-stream.txt",
+      "runId": "8cdee8d1-60c7-4915-8044-fb25cc37b8c3",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "phase": "qa",
+      "outcome": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "cliExitCode": 0,
+      "passedCount": 103
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "workspace": {
+        "head": "f7a7ece09449fc7c86f467599c84f06dd8b77763",
+        "status": "native-receipt-red-workspace.status.txt",
+        "trackedPatch": "native-receipt-red-workspace.patch",
+        "newModule": "native-receipt-red-new-module.mjs"
+      },
+      "raw": "native-receipt-red.TestRunResult.json",
+      "cli": "native-receipt-red.cli-exit.json",
+      "combinedStream": "native-receipt-red.combined-stream.txt",
+      "runId": "17f3b806-3dba-4e6d-9aaf-22665b5b2b36",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "phase": "red",
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native probe stdout stays bounded while its receipt verifies the complete large report"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "cliExitCode": 1,
+      "passedCount": 103
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "workspace": {
+        "head": "f7a7ece09449fc7c86f467599c84f06dd8b77763",
+        "status": "native-receipt-qa-workspace.status.txt",
+        "trackedPatch": "native-receipt-qa-workspace.patch",
+        "newModule": "native-receipt-qa-new-module.mjs"
+      },
+      "raw": "native-receipt-qa.TestRunResult.json",
+      "cli": "native-receipt-qa.cli-exit.json",
+      "combinedStream": "native-receipt-qa.combined-stream.txt",
+      "runId": "a08ee9f8-4b9a-4dcb-a504-f90e39a88062",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "phase": "qa",
+      "outcome": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "cliExitCode": 0,
+      "passedCount": 104
+    }
+  ],
+  "checks": {
+    "npm run build": {
+      "exitCode": 0,
+      "stdout": "Каталог зібрано. Операційні команди ще не реалізовані.\n"
+    },
+    "npm run check:comments": {
+      "exitCode": 0
+    },
+    "node --check scripts/qa-main-agent-channel.mjs": {
+      "exitCode": 0
+    },
+    "node --check scripts/qa-main-agent-channel-probe.mjs": {
+      "exitCode": 0
+    },
+    "node --check scripts/qa-main-agent-denial.mjs": {
+      "exitCode": 0
+    },
+    "git diff --check": {
+      "exitCode": 0
+    }
+  },
+  "nativePartial": "native-partial-s64-kxCfru/review.json",
+  "nextAction": "Main reviews this fixture-only diff and runs the exact committed SHA on a clean isolated native provider stand. No native acceptance is claimed from unit results.",
+  "scopeAudit": "Still applies to open item 6.4; stand35 reached the first switch and independently exposed a fixture error. No assigned checkbox or unrelated source is changed. Product protected store behavior is unchanged.",
+  "stderrLimitation": "The tool exposes a combined CLI stream only. Full unmodified stream and TestRunResult are saved; separate CLI stderr is unknown and explicitly null, not invented empty.",
+  "additionalFinding": {
+    "evidence": "native-partial-s64-kxCfru/sym64-{a,b}.events.jsonl",
+    "cause": "Native actors set the inner exec_command budget to 60000, but omitted the outer functions.exec budget; native agent ps output was truncated. Full helper JSON output was also too large.",
+    "fix": "Issued actor instructions now explicitly set the outer @exec max_output_tokens60000 and inner exec_command/write_stdin limits plus functions.wait max_tokens60000. The helper prints a bounded receipt, including sha256 of the unchanged complete JSON report; host copies the complete report.",
+    "red": "17f3b806-3dba-4e6d-9aaf-22665b5b2b36",
+    "qa": "a08ee9f8-4b9a-4dcb-a504-f90e39a88062",
+    "limitation": "The new larger limits still require native transcript review. If an output is truncated, it is not accepted as exact."
+  },
+  "secretValueScan": {
+    "attestedBy": "main via agent message",
+    "result": "Final main host secret-value scan: 0 matches across all qa-6.4b and the four changed source/test files; received before commit.",
+    "scope": "entire evidence directory plus four changed source/test files"
+  }
+}

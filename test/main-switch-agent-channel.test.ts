@@ -5,6 +5,8 @@ import { once } from "node:events";
 import { setTimeout as delay } from "node:timers/promises";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
+import { createHash } from "node:crypto";
+import { DatabaseSync } from "node:sqlite";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { agentChannelReadOnlyPaths, runPublishedAgentChannel } from "../src/main-switch-agent-launcher.ts";
@@ -37,7 +39,66 @@ import type {
   PublishedChannelGeneration,
 } from "../src/main-switch-agent-channel.ts";
 
+import { captureStateReadControls, assertNativeDenial, nativeProbeReceipt } from "../scripts/qa-main-agent-denial.mjs";
+
 const root = "/fixture/orchestrator";
+
+test("native hidden state denial requires exact existing host controls and refuses missing fixtures", async () => {
+  const directory = await fs.mkdtemp(join(tmpdir(), "native-read-controls-"));
+  try {
+    const names = ["state.sqlite", "state.sqlite-wal", "state.sqlite-shm", "secrets.json"];
+    for (const name of names) await fs.writeFile(join(directory, name), "isolated host sentinel");
+    const controls = captureStateReadControls(directory);
+    const target = join(directory, "state.sqlite");
+    const hiddenRead = { target, control: controls[0] };
+    const masked = { cliExitCode: 1, signal: null, stderr: "Error: ENOENT: no such file or directory, open hidden alias" };
+    assert.doesNotThrow(() => assertNativeDenial(masked, hiddenRead), "Native none policy masks an existing file as ENOENT");
+    assert.throws(() => assertNativeDenial(masked), /permission denial/);
+    assert.throws(() => assertNativeDenial(masked, { target: target + ".missing", control: controls[0] }));
+    assert.throws(() => assertNativeDenial(masked, { target, control: { ...controls[0], regularFile: false } }));
+    assert.throws(() => assertNativeDenial({ ...masked, cliExitCode: 0 }, hiddenRead));
+    assert.throws(() => assertNativeDenial({ ...masked, signal: "SIGTERM" }, hiddenRead));
+    assert.throws(() => assertNativeDenial({ ...masked, stderr: "fixture setup failed" }, hiddenRead));
+    assert.doesNotThrow(() => assertNativeDenial({ ...masked, stderr: "EROFS: read-only file system" }));
+    await fs.unlink(join(directory, "state.sqlite-wal"));
+    assert.throws(() => captureStateReadControls(directory), /ENOENT/, "A missing WAL cannot become a passing denial");
+  } finally { await fs.rm(directory, { recursive: true, force: true }); }
+});
+
+test("native probe stdout stays bounded while its receipt verifies the complete large report", async () => {
+  const directory = await fs.mkdtemp(join(tmpdir(), "native-report-receipt-"));
+  try {
+    const report = join(directory, "stage.json");
+    const value = { stage: 1, runId: "native-receipt-fixture", status: "passed", results: [{ stderr: "large negative result".repeat(60000), cliExitCode: 1 }] };
+    const bytes = JSON.stringify(value, null, 2) + "\n";
+    await fs.writeFile(report, bytes);
+    const receipt = nativeProbeReceipt(value, report);
+    assert.ok(JSON.stringify(receipt).length < 1024, "Native tools must receive a small receipt instead of truncating the full probe report");
+    assert.equal(receipt.report, report);
+    assert.equal(receipt.sha256, createHash("sha256").update(bytes).digest("hex"));
+    assert.equal(receipt.results, 1);
+    assert.equal(receipt.runId, value.runId);
+    assert.equal(receipt.status, "passed");
+    assert.deepEqual(JSON.parse(await fs.readFile(report, "utf8")), value, "The large raw report remains complete and unchanged");
+  } finally { await fs.rm(directory, { recursive: true, force: true }); }
+});
+
+test("native host read transaction preserves SQLite sidecars after the writer exits", async () => {
+  const directory = await fs.mkdtemp(join(tmpdir(), "native-state-lifetime-"));
+  let reader: DatabaseSync | undefined;
+  let writer: DatabaseSync | undefined;
+  try {
+    writer = new DatabaseSync(join(directory, "state.sqlite"));
+    writer.exec("PRAGMA journal_mode=WAL; CREATE TABLE sentinel(value TEXT); INSERT INTO sentinel VALUES ('isolated');");
+    await fs.writeFile(join(directory, "secrets.json"), "isolated sentinel");
+    reader = new DatabaseSync(join(directory, "state.sqlite"), { readOnly: true });
+    reader.exec("BEGIN");
+    reader.prepare("SELECT count(*) FROM sqlite_schema").get();
+    const before = captureStateReadControls(directory);
+    writer.close(); writer = undefined;
+    assert.deepEqual(captureStateReadControls(directory), before, "The same host files must exist while native read probes run");
+  } finally { writer?.close(); reader?.close(); await fs.rm(directory, { recursive: true, force: true }); }
+});
 
 test("native stand drains only its host service reader before migration and preserves actors", { timeout: 10000 }, async () => {
   const service = spawn(process.execPath, ["-e", "setInterval(()=>{},1000)"], { stdio: "ignore" });

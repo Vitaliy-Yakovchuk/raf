@@ -1,0 +1,166 @@
+diff --git a/scripts/qa-main-agent-channel-probe.mjs b/scripts/qa-main-agent-channel-probe.mjs
+index b207f9e..351645b 100644
+--- a/scripts/qa-main-agent-channel-probe.mjs
++++ b/scripts/qa-main-agent-channel-probe.mjs
+@@ -1,4 +1,5 @@
+ import fs from 'node:fs';
++import { assertNativeDenial } from './qa-main-agent-denial.mjs';
+ import path from 'node:path';
+ import assert from 'node:assert/strict';
+ import { spawnSync } from 'node:child_process';
+@@ -17,12 +18,12 @@ const command = (label, executable, args, expected) => {
+   if (label.includes('foreign connection')) { assert.equal(r.status, 19, 'Socket timeout is not a denial'); assert.match(r.stderr, /EACCES|EPERM|ENOENT/); }
+   return r.stdout.trim();
+ };
+-const probe = (label, code, args, expected) => {
++const probe = (label, code, args, expected, hiddenRead) => {
+   for (const childShell of [false, true]) {
+     const argv = ['--input-type=module', '-e', code, ...args];
+     command(label + (childShell ? ' child-shell' : ' direct'), childShell ? '/bin/sh' : process.execPath,
+       childShell ? ['-c', 'exec "$@"', 'probe', process.execPath, ...argv] : argv, expected);
+-    if (expected === 'deny' && !label.includes('connection')) assert.match(results.at(-1).stderr, /EACCES|EPERM|EROFS|Permission denied|Read-only file system/, label + ' must be a permission denial');
++    if (expected === 'deny' && !label.includes('connection')) assertNativeDenial(results.at(-1), hiddenRead);
+   }
+ };
+ const atomic = (name, value) => { const p = path.join(own, name + '.json'); fs.writeFileSync(p + '.part', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(p + '.part', p); };
+@@ -87,7 +88,13 @@ try {
+       for (const op of ['write', 'rename', 'unlink']) probe('deny activation ' + op, operations[op], [path.join(prefix, 'registry.json')], 'deny');
+       probe('deny activation create', operations.create, [path.join(prefix, 'native-activation-' + stage)], 'deny');
+     }
+-    for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) for (const prefix of [path.join(alias, 'state'), path.join(path.dirname(root), '.raf')]) probe('deny state ' + name, "import{readFileSync}from'node:fs';readFileSync(process.argv[1]);", [path.join(prefix, name)], 'deny');
++    const readControls = JSON.parse(fs.readFileSync(path.join(own, 'sym64-read-controls-' + stage + '.json')));
++    assert.equal(readControls.stage, stage); assert.equal(readControls.runId, path.basename(own));
++    for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) {
++      const target = path.join(path.dirname(root), '.raf', name), control = readControls.files.find(file => file.path === target);
++      assert.ok(control, 'Host must confirm the actual hidden read target exists');
++      for (const prefix of [path.join(alias, 'state'), path.dirname(target)]) probe('deny state ' + name, "import{readFileSync}from'node:fs';readFileSync(process.argv[1]);", [path.join(prefix, name)], 'deny', { target, control });
++    }
+     for (const [name, socket] of [['peer', path.join(cwd, 'qa/peer.sock')], ['host-main', path.join(path.dirname(root), 'main.sock')]]) {
+       fs.symlinkSync(socket, path.join(alias, name + '.sock'));
+       for (const p of [socket, path.join(alias, name + '.sock')]) probe('deny foreign connection ' + name, "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});", [p], 'deny');
+diff --git a/scripts/qa-main-agent-channel.mjs b/scripts/qa-main-agent-channel.mjs
+index 689cb6a..55eaf1f 100644
+--- a/scripts/qa-main-agent-channel.mjs
++++ b/scripts/qa-main-agent-channel.mjs
+@@ -7,6 +7,7 @@ import { createServer, connect } from 'node:net';
+ import { DatabaseSync } from 'node:sqlite';
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+ import { setTimeout as delay } from 'node:timers/promises';
++import { captureStateReadControls } from './qa-main-agent-denial.mjs';
+ import { createStandGeneration } from './qa-main-agent-generation.mjs';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+ import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog } from './qa-main-agent-channel-metadata.mjs';
+@@ -31,7 +32,7 @@ const atomic = (p, value) => { fs.writeFileSync(p + '.part', JSON.stringify(valu
+ const hash = p => createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+ const summary = { status: 'failed', stand, reviewed, startedAt: new Date().toISOString(), commands: [], switches: [],
+   limitations: ['This stand tests the published agent channel with host-controlled real symlink/Git/registry fixtures. Release verification gates remain the separate 4.4 QA.', 'No unit result substitutes for native tool evidence.'] };
+-let seq = 0, pane = false, endpoint, protectedState;
++let seq = 0, pane = false, endpoint, protectedState, stateKeepAlive;
+ const run = (label, exe, args, cwd = root, budget = 120000) => {
+   const r = spawnSync(exe, args, { cwd, env, encoding: 'utf8', timeout: budget, maxBuffer: 64 * 1024 * 1024 });
+   const value = { command: [exe, ...args], cwd, cliExitCode: r.status, signal: r.signal,
+@@ -117,6 +118,7 @@ try {
+   must(run('build', 'npm', ['run', 'build'], main));
+   fs.mkdirSync(path.join(main, 'qa'), { recursive: true });
+   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-probe.mjs'), path.join(main, 'qa/sym64-probe.mjs'));
++  fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-denial.mjs'), path.join(main, 'qa/qa-main-agent-denial.mjs'));
+   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-metadata.mjs'), path.join(main, 'qa/sym64-metadata.mjs'));
+   const sandboxFile = path.join(main, 'src/codex-sandbox.ts');
+   let sandboxSource = fs.readFileSync(sandboxFile, 'utf8');
+@@ -206,6 +208,9 @@ try {
+   await controls('before');
+   summary.hostServiceDrain = await drainStandServiceReader({ service: hostService, request, processStart: hh.processStart, alive: hh.alive, wait });
+   await controls('after-host-service-drain');
++  stateKeepAlive = new DatabaseSync(path.join(stand, '.raf/state.sqlite'), { readOnly: true });
++  stateKeepAlive.exec('BEGIN');
++  stateKeepAlive.prepare('SELECT count(*) FROM sqlite_schema').get();
+   fs.writeFileSync(path.join(stand, '.raf/secrets.json'), 'sym64-isolated-secret-sentinel\n');
+   for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) assert.ok(fs.existsSync(path.join(stand, '.raf', name)), 'Host read-deny positive control: ' + name);
+   const store = await import(pathToFileURL(path.join(A, 'src/main-production-store.ts')));
+@@ -278,10 +283,16 @@ try {
+     const beforeProbe = fingerprint();
+     atomic(path.join(ev, 'metadata-before-probe-' + index + '.json'), beforeProbe);
+     summary.switches.push({ action: index === 2 ? 'rollback' : 'switch', target, previous, active: fs.realpathSync(main), preparedFrom: git(develop, 'rev-parse', 'HEAD'), before, generation });
++    const readControlsBefore = captureStateReadControls(path.join(stand, '.raf'));
++    atomic(path.join(ev, 'read-controls-before-' + index + '.json'), readControlsBefore);
+     for (const a of actors) {
++      atomic(path.join(own(a), 'sym64-read-controls-' + (index + 1) + '.json'), { stage: index + 1, runId: a.runId, files: readControlsBefore });
+       gate(a, index);
+       await wait('native gate ' + (index + 1), () => stage(a, index + 1));
+     }
++    const readControlsAfter = captureStateReadControls(path.join(stand, '.raf'));
++    atomic(path.join(ev, 'read-controls-after-' + index + '.json'), readControlsAfter);
++    assert.deepEqual(readControlsAfter, readControlsBefore, 'Hidden files must remain the same existing host files throughout native probes');
+     for (const a of actors) assert.equal(JSON.parse(fs.readFileSync(path.join(own(a), 'sym64-stage-' + (index + 1) + '.json'))).status, 'passed', 'Native probes must pass before another switch');
+     assert.deepEqual(fingerprint(), beforeProbe, 'Negative probes and shared-index access cannot change main');
+     atomic(path.join(ev, 'metadata-after-probe-' + index + '.json'), fingerprint());
+@@ -369,6 +380,7 @@ finally {
+     }
+   }
+   if (summary.cleanupErrors?.length) { summary.status = 'failed'; process.exitCode = 1; }
++  stateKeepAlive?.close();
+   summary.endedAt = new Date().toISOString(); atomic(path.join(ev, 'summary.json'), summary);
+   console.log(JSON.stringify({ status: summary.status, evidence: ev, error: summary.error?.message }));
+ }
+diff --git a/test/main-switch-agent-channel.test.ts b/test/main-switch-agent-channel.test.ts
+index 0d09764..23158ee 100644
+--- a/test/main-switch-agent-channel.test.ts
++++ b/test/main-switch-agent-channel.test.ts
+@@ -5,6 +5,7 @@ import { once } from "node:events";
+ import { setTimeout as delay } from "node:timers/promises";
+ import { promises as fs } from "node:fs";
+ import { tmpdir } from "node:os";
++import { DatabaseSync } from "node:sqlite";
+ import { dirname, join } from "node:path";
+ import { fileURLToPath } from "node:url";
+ import { agentChannelReadOnlyPaths, runPublishedAgentChannel } from "../src/main-switch-agent-launcher.ts";
+@@ -37,8 +38,49 @@ import type {
+   PublishedChannelGeneration,
+ } from "../src/main-switch-agent-channel.ts";
+ 
++import { captureStateReadControls, assertNativeDenial } from "../scripts/qa-main-agent-denial.mjs";
++
+ const root = "/fixture/orchestrator";
+ 
++test("native hidden state denial requires exact existing host controls and refuses missing fixtures", async () => {
++  const directory = await fs.mkdtemp(join(tmpdir(), "native-read-controls-"));
++  try {
++    const names = ["state.sqlite", "state.sqlite-wal", "state.sqlite-shm", "secrets.json"];
++    for (const name of names) await fs.writeFile(join(directory, name), "isolated host sentinel");
++    const controls = captureStateReadControls(directory);
++    const target = join(directory, "state.sqlite");
++    const hiddenRead = { target, control: controls[0] };
++    const masked = { cliExitCode: 1, signal: null, stderr: "Error: ENOENT: no such file or directory, open hidden alias" };
++    assert.doesNotThrow(() => assertNativeDenial(masked, hiddenRead), "Native none policy masks an existing file as ENOENT");
++    assert.throws(() => assertNativeDenial(masked), /permission denial/);
++    assert.throws(() => assertNativeDenial(masked, { target: target + ".missing", control: controls[0] }));
++    assert.throws(() => assertNativeDenial(masked, { target, control: { ...controls[0], regularFile: false } }));
++    assert.throws(() => assertNativeDenial({ ...masked, cliExitCode: 0 }, hiddenRead));
++    assert.throws(() => assertNativeDenial({ ...masked, signal: "SIGTERM" }, hiddenRead));
++    assert.throws(() => assertNativeDenial({ ...masked, stderr: "fixture setup failed" }, hiddenRead));
++    assert.doesNotThrow(() => assertNativeDenial({ ...masked, stderr: "EROFS: read-only file system" }));
++    await fs.unlink(join(directory, "state.sqlite-wal"));
++    assert.throws(() => captureStateReadControls(directory), /ENOENT/, "A missing WAL cannot become a passing denial");
++  } finally { await fs.rm(directory, { recursive: true, force: true }); }
++});
++
++test("native host read transaction preserves SQLite sidecars after the writer exits", async () => {
++  const directory = await fs.mkdtemp(join(tmpdir(), "native-state-lifetime-"));
++  let reader: DatabaseSync | undefined;
++  let writer: DatabaseSync | undefined;
++  try {
++    writer = new DatabaseSync(join(directory, "state.sqlite"));
++    writer.exec("PRAGMA journal_mode=WAL; CREATE TABLE sentinel(value TEXT); INSERT INTO sentinel VALUES ('isolated');");
++    await fs.writeFile(join(directory, "secrets.json"), "isolated sentinel");
++    reader = new DatabaseSync(join(directory, "state.sqlite"), { readOnly: true });
++    reader.exec("BEGIN");
++    reader.prepare("SELECT count(*) FROM sqlite_schema").get();
++    const before = captureStateReadControls(directory);
++    writer.close(); writer = undefined;
++    assert.deepEqual(captureStateReadControls(directory), before, "The same host files must exist while native read probes run");
++  } finally { writer?.close(); reader?.close(); await fs.rm(directory, { recursive: true, force: true }); }
++});
++
+ test("native stand drains only its host service reader before migration and preserves actors", { timeout: 10000 }, async () => {
+   const service = spawn(process.execPath, ["-e", "setInterval(()=>{},1000)"], { stdio: "ignore" });
+   const actor = spawn(process.execPath, ["-e", "setInterval(()=>{},1000)"], { stdio: "ignore" });

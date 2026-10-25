@@ -1,0 +1,32 @@
+{
+  "observedAt": "2026-10-25T05:13:32.713663+00:00",
+  "method": "os.stat only; no SQLite or secret contents read",
+  "files": [
+    {
+      "path": "/srv/dev/s64-kxCfru/.raf/state.sqlite",
+      "exists": true,
+      "dev": 64513,
+      "ino": 7360498,
+      "mode": 33152,
+      "size": 487424
+    },
+    {
+      "path": "/srv/dev/s64-kxCfru/.raf/state.sqlite-wal",
+      "exists": false,
+      "errno": 2
+    },
+    {
+      "path": "/srv/dev/s64-kxCfru/.raf/state.sqlite-shm",
+      "exists": false,
+      "errno": 2
+    },
+    {
+      "path": "/srv/dev/s64-kxCfru/.raf/secrets.json",
+      "exists": true,
+      "dev": 64513,
+      "ino": 7369993,
+      "mode": 33152,
+      "size": 31
+    }
+  ]
+}

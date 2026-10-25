@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { assertNativeDenial, nativeProbeReceipt } from './qa-main-agent-denial.mjs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -17,12 +18,12 @@ const command = (label, executable, args, expected) => {
   if (label.includes('foreign connection')) { assert.equal(r.status, 19, 'Socket timeout is not a denial'); assert.match(r.stderr, /EACCES|EPERM|ENOENT/); }
   return r.stdout.trim();
 };
-const probe = (label, code, args, expected) => {
+const probe = (label, code, args, expected, hiddenRead) => {
   for (const childShell of [false, true]) {
     const argv = ['--input-type=module', '-e', code, ...args];
     command(label + (childShell ? ' child-shell' : ' direct'), childShell ? '/bin/sh' : process.execPath,
       childShell ? ['-c', 'exec "$@"', 'probe', process.execPath, ...argv] : argv, expected);
-    if (expected === 'deny' && !label.includes('connection')) assert.match(results.at(-1).stderr, /EACCES|EPERM|EROFS|Permission denied|Read-only file system/, label + ' must be a permission denial');
+    if (expected === 'deny' && !label.includes('connection')) assertNativeDenial(results.at(-1), hiddenRead);
   }
 };
 const atomic = (name, value) => { const p = path.join(own, name + '.json'); fs.writeFileSync(p + '.part', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(p + '.part', p); };
@@ -87,7 +88,13 @@ try {
       for (const op of ['write', 'rename', 'unlink']) probe('deny activation ' + op, operations[op], [path.join(prefix, 'registry.json')], 'deny');
       probe('deny activation create', operations.create, [path.join(prefix, 'native-activation-' + stage)], 'deny');
     }
-    for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) for (const prefix of [path.join(alias, 'state'), path.join(path.dirname(root), '.raf')]) probe('deny state ' + name, "import{readFileSync}from'node:fs';readFileSync(process.argv[1]);", [path.join(prefix, name)], 'deny');
+    const readControls = JSON.parse(fs.readFileSync(path.join(own, 'sym64-read-controls-' + stage + '.json')));
+    assert.equal(readControls.stage, stage); assert.equal(readControls.runId, path.basename(own));
+    for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) {
+      const target = path.join(path.dirname(root), '.raf', name), control = readControls.files.find(file => file.path === target);
+      assert.ok(control, 'Host must confirm the actual hidden read target exists');
+      for (const prefix of [path.join(alias, 'state'), path.dirname(target)]) probe('deny state ' + name, "import{readFileSync}from'node:fs';readFileSync(process.argv[1]);", [path.join(prefix, name)], 'deny', { target, control });
+    }
     for (const [name, socket] of [['peer', path.join(cwd, 'qa/peer.sock')], ['host-main', path.join(path.dirname(root), 'main.sock')]]) {
       fs.symlinkSync(socket, path.join(alias, name + '.sock'));
       for (const p of [socket, path.join(alias, name + '.sock')]) probe('deny foreign connection ' + name, "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});", [p], 'deny');
@@ -98,6 +105,6 @@ try {
 } catch (e) { error = e.message; }
 const value = { stage, runId: path.basename(own), cwd, status: error ? 'failed' : 'passed', error, results };
 atomic(stage ? 'sym64-stage-' + stage : 'sym64-source-0', value);
-console.log(JSON.stringify(value));
+console.log(JSON.stringify(nativeProbeReceipt(value, path.join(own, (stage ? 'sym64-stage-' + stage : 'sym64-source-0') + '.json'))));
 if (error) process.exit(1);
 await wait('sym64-go-' + stage);

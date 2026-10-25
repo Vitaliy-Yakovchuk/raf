@@ -1,0 +1,120 @@
+{
+  "stage": 0,
+  "runId": "a0243364-1ebb-43db-b052-9ec9b9647cfb",
+  "cwd": "/srv/dev/s64-kxCfru/root/raf-develop",
+  "status": "passed",
+  "results": [
+    {
+      "label": "own add /srv/dev/s64-kxCfru/root/raf-develop",
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/s64-kxCfru/root/raf-develop",
+        "add",
+        "--",
+        "/srv/dev/s64-kxCfru/root/raf-develop/qa/own-a0243364-1ebb-43db-b052-9ec9b9647cfb-0.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "own commit /srv/dev/s64-kxCfru/root/raf-develop",
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/s64-kxCfru/root/raf-develop",
+        "-c",
+        "user.name=Isolated native QA",
+        "-c",
+        "user.email=qa@example.invalid",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "--only",
+        "-m",
+        "qa: own a0243364-1ebb-43db-b052-9ec9b9647cfb stage 0",
+        "--",
+        "/srv/dev/s64-kxCfru/root/raf-develop/qa/own-a0243364-1ebb-43db-b052-9ec9b9647cfb-0.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "[develop c439ff8] qa: own a0243364-1ebb-43db-b052-9ec9b9647cfb stage 0\n 1 file changed, 1 insertion(+)\n create mode 100644 qa/own-a0243364-1ebb-43db-b052-9ec9b9647cfb-0.txt\n",
+      "stderr": ""
+    },
+    {
+      "label": "own commit visible /srv/dev/s64-kxCfru/root/raf-develop",
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/s64-kxCfru/root/raf-develop",
+        "log",
+        "-1",
+        "--format=%H",
+        "--",
+        "/srv/dev/s64-kxCfru/root/raf-develop/qa/own-a0243364-1ebb-43db-b052-9ec9b9647cfb-0.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "c439ff8330c1a8a153d1eb542955523b8349c767\n",
+      "stderr": ""
+    },
+    {
+      "label": "own add /srv/dev/s64-kxCfru/root",
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/s64-kxCfru/root",
+        "add",
+        "--",
+        "/srv/dev/s64-kxCfru/root/openspec/changes/sym64-fixture/own-a0243364-1ebb-43db-b052-9ec9b9647cfb-0.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "own commit /srv/dev/s64-kxCfru/root",
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/s64-kxCfru/root",
+        "-c",
+        "user.name=Isolated native QA",
+        "-c",
+        "user.email=qa@example.invalid",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "--only",
+        "-m",
+        "qa: own a0243364-1ebb-43db-b052-9ec9b9647cfb stage 0",
+        "--",
+        "/srv/dev/s64-kxCfru/root/openspec/changes/sym64-fixture/own-a0243364-1ebb-43db-b052-9ec9b9647cfb-0.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "[main 19f2f3a] qa: own a0243364-1ebb-43db-b052-9ec9b9647cfb stage 0\n 1 file changed, 1 insertion(+)\n create mode 100644 openspec/changes/sym64-fixture/own-a0243364-1ebb-43db-b052-9ec9b9647cfb-0.txt\n",
+      "stderr": ""
+    },
+    {
+      "label": "own commit visible /srv/dev/s64-kxCfru/root",
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/s64-kxCfru/root",
+        "log",
+        "-1",
+        "--format=%H",
+        "--",
+        "/srv/dev/s64-kxCfru/root/openspec/changes/sym64-fixture/own-a0243364-1ebb-43db-b052-9ec9b9647cfb-0.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "19f2f3a4def8adc9a686066226a9dd924fba233d\n",
+      "stderr": ""
+    }
+  ]
+}

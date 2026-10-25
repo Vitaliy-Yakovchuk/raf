@@ -7,6 +7,7 @@ import { createServer, connect } from 'node:net';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import { captureStateReadControls } from './qa-main-agent-denial.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog } from './qa-main-agent-channel-metadata.mjs';
@@ -31,7 +32,7 @@ const atomic = (p, value) => { fs.writeFileSync(p + '.part', JSON.stringify(valu
 const hash = p => createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 const summary = { status: 'failed', stand, reviewed, startedAt: new Date().toISOString(), commands: [], switches: [],
   limitations: ['This stand tests the published agent channel with host-controlled real symlink/Git/registry fixtures. Release verification gates remain the separate 4.4 QA.', 'No unit result substitutes for native tool evidence.'] };
-let seq = 0, pane = false, endpoint, protectedState;
+let seq = 0, pane = false, endpoint, protectedState, stateKeepAlive;
 const run = (label, exe, args, cwd = root, budget = 120000) => {
   const r = spawnSync(exe, args, { cwd, env, encoding: 'utf8', timeout: budget, maxBuffer: 64 * 1024 * 1024 });
   const value = { command: [exe, ...args], cwd, cliExitCode: r.status, signal: r.signal,
@@ -117,6 +118,7 @@ try {
   must(run('build', 'npm', ['run', 'build'], main));
   fs.mkdirSync(path.join(main, 'qa'), { recursive: true });
   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-probe.mjs'), path.join(main, 'qa/sym64-probe.mjs'));
+  fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-denial.mjs'), path.join(main, 'qa/qa-main-agent-denial.mjs'));
   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-metadata.mjs'), path.join(main, 'qa/sym64-metadata.mjs'));
   const sandboxFile = path.join(main, 'src/codex-sandbox.ts');
   let sandboxSource = fs.readFileSync(sandboxFile, 'utf8');
@@ -142,7 +144,7 @@ try {
   fs.writeFileSync(path.join(root, 'openspec/config.yaml'), 'schema: spec-driven\n');
   fs.writeFileSync(path.join(change, '.openspec.yaml'), 'schema: spec-driven\nskip_specs: true\n');
   fs.writeFileSync(path.join(change, 'proposal.md'), '## Why\nIsolated live native channel QA.\n\n## What Changes\nHost-controlled probes only.\n\n## Non-goals\nNo product implementation or unit runs.\n');
-  const description = actor => `Controlled live QA actor ${actor}. Model and effort already selected by raf; never replace them. Do not implement, run tests, edit tasks, write report, archive, or retry failed/unknown commands. The provided helper makes only its own isolated fixture commits in develop and Orchestrator; these are authorized. In native exec tool perform this exact sequence, requesting max_output_tokens 60000 for message/ps so exact outputs are retained. First execute node qa/sym64-probe.mjs 0 <exact report_path from your brief>; wait for completion, polling a running native tool session as necessary. Then execute the issued raf_command agent message --to sym64-${actor === 'a' ? 'b' : 'a'} --text sym64-${actor}-after-B as ONE simple native tool command, using the original issued absolute raf_command unchanged. Next execute the issued raf_command agent ps in a separate native tool call. Then execute the issued raf_command ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} as a separate simple native command; this unauthorized subcommand must return a nonzero code, preserve its exact result and continue only for that expected denial. Next execute node qa/sym64-probe.mjs 1 <exact report_path>; wait for completion. Next repeat separate simple native message with text sym64-${actor}-after-A and agent ps using that same original prefix, followed by the same separate unauthorized ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} with required nonzero code. Execute node qa/sym64-probe.mjs 2 <exact report_path> and wait. After it completes repeat separate simple native message with text sym64-${actor}-after-rollback and agent ps using that same original prefix, followed by the same separate unauthorized ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} with required nonzero code. Execute node qa/sym64-probe.mjs 3 <exact report_path> and wait. Do not acknowledge received messages with tool calls, only chat. If any expected-success command fails, stop and preserve the error. The probe helper owns allowed negative actions only inside this isolated fixture. Do not change the helper or evade its checks. After completion wait for host.`;
+  const description = actor => `Controlled live QA actor ${actor}. Model and effort already selected by raf; never replace them. Do not implement, run tests, edit tasks, write report, archive, or retry failed/unknown commands. The provided helper makes only its own isolated fixture commits in develop and Orchestrator; these are authorized. In native exec tool perform this exact sequence. For EVERY functions.exec call set the first line to // @exec: {"max_output_tokens": 60000} followed by an actual newline, AND request max_output_tokens:60000 on the inner tools.exec_command/write_stdin. For functions.wait request max_tokens:60000. Both the outer tool and its inner command need the larger limit, including message/ps outputs: preserve exact outputs without truncation. Never print a full probe JSON report; the helper emits a small sha256 receipt for the complete host-copied file. First execute node qa/sym64-probe.mjs 0 <exact report_path from your brief>; wait for completion, polling a running native tool session as necessary. Then execute the issued raf_command agent message --to sym64-${actor === 'a' ? 'b' : 'a'} --text sym64-${actor}-after-B as ONE simple native tool command, using the original issued absolute raf_command unchanged. Next execute the issued raf_command agent ps in a separate native tool call. Then execute the issued raf_command ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} as a separate simple native command; this unauthorized subcommand must return a nonzero code, preserve its exact result and continue only for that expected denial. Next execute node qa/sym64-probe.mjs 1 <exact report_path>; wait for completion. Next repeat separate simple native message with text sym64-${actor}-after-A and agent ps using that same original prefix, followed by the same separate unauthorized ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} with required nonzero code. Execute node qa/sym64-probe.mjs 2 <exact report_path> and wait. After it completes repeat separate simple native message with text sym64-${actor}-after-rollback and agent ps using that same original prefix, followed by the same separate unauthorized ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} with required nonzero code. Execute node qa/sym64-probe.mjs 3 <exact report_path> and wait. Do not acknowledge received messages with tool calls, only chat. If any expected-success command fails, stop and preserve the error. The probe helper owns allowed negative actions only inside this isolated fixture. Do not change the helper or evade its checks. After completion wait for host.`;
   fs.writeFileSync(path.join(change, 'tasks.md'), `- [ ] 1.1 ${description('a')}\n- [ ] 1.2 ${description('b')}\n- [ ] 1.3 Host keeps the fixture active.\n`);
   git(root, 'add', '--', '.gitmodules', 'raf-main', 'conf', 'openspec'); git(root, 'commit', '-m', 'qa: isolated orchestrator');
   const layout = await import(pathToFileURL(path.join(main, 'src/main-layout.ts')));
@@ -206,6 +208,9 @@ try {
   await controls('before');
   summary.hostServiceDrain = await drainStandServiceReader({ service: hostService, request, processStart: hh.processStart, alive: hh.alive, wait });
   await controls('after-host-service-drain');
+  stateKeepAlive = new DatabaseSync(path.join(stand, '.raf/state.sqlite'), { readOnly: true });
+  stateKeepAlive.exec('BEGIN');
+  stateKeepAlive.prepare('SELECT count(*) FROM sqlite_schema').get();
   fs.writeFileSync(path.join(stand, '.raf/secrets.json'), 'sym64-isolated-secret-sentinel\n');
   for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) assert.ok(fs.existsSync(path.join(stand, '.raf', name)), 'Host read-deny positive control: ' + name);
   const store = await import(pathToFileURL(path.join(A, 'src/main-production-store.ts')));
@@ -278,10 +283,16 @@ try {
     const beforeProbe = fingerprint();
     atomic(path.join(ev, 'metadata-before-probe-' + index + '.json'), beforeProbe);
     summary.switches.push({ action: index === 2 ? 'rollback' : 'switch', target, previous, active: fs.realpathSync(main), preparedFrom: git(develop, 'rev-parse', 'HEAD'), before, generation });
+    const readControlsBefore = captureStateReadControls(path.join(stand, '.raf'));
+    atomic(path.join(ev, 'read-controls-before-' + index + '.json'), readControlsBefore);
     for (const a of actors) {
+      atomic(path.join(own(a), 'sym64-read-controls-' + (index + 1) + '.json'), { stage: index + 1, runId: a.runId, files: readControlsBefore });
       gate(a, index);
       await wait('native gate ' + (index + 1), () => stage(a, index + 1));
     }
+    const readControlsAfter = captureStateReadControls(path.join(stand, '.raf'));
+    atomic(path.join(ev, 'read-controls-after-' + index + '.json'), readControlsAfter);
+    assert.deepEqual(readControlsAfter, readControlsBefore, 'Hidden files must remain the same existing host files throughout native probes');
     for (const a of actors) assert.equal(JSON.parse(fs.readFileSync(path.join(own(a), 'sym64-stage-' + (index + 1) + '.json'))).status, 'passed', 'Native probes must pass before another switch');
     assert.deepEqual(fingerprint(), beforeProbe, 'Negative probes and shared-index access cannot change main');
     atomic(path.join(ev, 'metadata-after-probe-' + index + '.json'), fingerprint());
@@ -369,6 +380,7 @@ finally {
     }
   }
   if (summary.cleanupErrors?.length) { summary.status = 'failed'; process.exitCode = 1; }
+  stateKeepAlive?.close();
   summary.endedAt = new Date().toISOString(); atomic(path.join(ev, 'summary.json'), summary);
   console.log(JSON.stringify({ status: summary.status, evidence: ev, error: summary.error?.message }));
 }

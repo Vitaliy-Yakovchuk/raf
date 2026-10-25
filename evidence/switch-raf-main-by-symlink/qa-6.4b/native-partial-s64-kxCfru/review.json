@@ -1,0 +1,158 @@
+{
+  "status": "failed",
+  "assignedItem": "switch-raf-main-by-symlink:6.4",
+  "reviewed": "b1a32cd584d6af2d15353cd93659d3e78c369a63",
+  "host": "/srv/dev/s64-kxCfru/ev",
+  "native": "/srv/dev/s64-kxCfru-native.jz5BtI",
+  "hostManifestSha256": "8ab380dd1aa7b20c0ade06e529e5ec5afd2301180493f46b567545a946649bdd",
+  "nativeManifestSha256": "af1f1cd2a5c63d907841c55d46b3ae51e243a41655a7cc733e1510be321ea792",
+  "mainAttestation": {
+    "readOnly": true,
+    "secretValueScanMatches": 0,
+    "remainingStandProcesses": 0
+  },
+  "copies": [
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/summary.json",
+      "copy": "summary.json",
+      "sha256": "d9ed9d84b93a3bff10de19176fd9860b3367ca5df71e4167f2d5e8196ad5e622"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/before-controls.json",
+      "copy": "before-controls.json",
+      "sha256": "ca673f95dcdb2dc4455d9d1a82dfb5a6bf5fb0fbf92565e0a802cc05e3c72ced"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/after-host-service-drain-controls.json",
+      "copy": "after-host-service-drain-controls.json",
+      "sha256": "c0f45ce910dd04659294ca13c2b5e3d7644a0ae77349c448ca351fd9439a4be2"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/after-live-split-controls.json",
+      "copy": "after-live-split-controls.json",
+      "sha256": "4dee9d0c115160526d0421eb1a5b6bbbd4c6e488e9cdb75631c892202865c468"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/unproven-reader-held-controls.json",
+      "copy": "unproven-reader-held-controls.json",
+      "sha256": "0973e48be12dd130fe3831fcce9c6f0bbf9936177eb218b46689038ae3b66601"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/service-before-live-split-stop.json",
+      "copy": "service-before-live-split-stop.json",
+      "sha256": "83b80455661ce32b78c4eb1ff02fd01521ce5c7a7510417cec140cfbfae91fdd"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/metadata-before-probe-0.json",
+      "copy": "metadata-before-probe-0.json",
+      "sha256": "071473a6edf7a2e095906f0c28a073d32c7ac2de22864bd983d15e5bb25ba9db"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/metadata-after-exit.json",
+      "copy": "metadata-after-exit.json",
+      "sha256": "5a4607891120fb4a06d9c0aae1f9c1387151ee7a00106d723e696e2b011090ad"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/version-node.json",
+      "copy": "version-node.json",
+      "sha256": "3d324ef89e34b0daad63cb2339903ae54fb772a648f8505b20afdc5fb70672da"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/version-codex.json",
+      "copy": "version-codex.json",
+      "sha256": "8b1278cc88467911db8e906d64c3343b8df52440d97b5a96a40d476df319bcf7"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/version-git.json",
+      "copy": "version-git.json",
+      "sha256": "5bf93d6594743477143d85f0a8d9ed834b84450fc8a05175ede7c180b6804170"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/version-tmux.json",
+      "copy": "version-tmux.json",
+      "sha256": "66268f5ebacacef55fb423cb6ce4387714ec77569a564569513913978b8e5fed"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/version-bwrap.json",
+      "copy": "version-bwrap.json",
+      "sha256": "89d0ddbe93ec6762ea3e73a350210a2e231e884159b1edbc1bb79393e20c8768"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/version-uname.json",
+      "copy": "version-uname.json",
+      "sha256": "d9f859bc013887fabde80b46028d3a26a9f679247000e071ead3001a1cbc0fa5"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/sym64-a-final/run/sym64-stage-1.json",
+      "copy": "sym64-a-stage-1.json",
+      "sha256": "8980afba1bde76d4ff4e178f09fa6e1b67b8723124a42bda621a0258efa9a3b9"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/sym64-a-final/run/sym64-source-0.json",
+      "copy": "sym64-a-source-0.json",
+      "sha256": "f903f0cb6062558f8759d94f66fc174f8eda8b9cc2852129ca9fd6670f7cc6d8"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/sym64-a-final/run/codex-sandbox-a0243364-1ebb-43db-b052-9ec9b9647cfb/policy.json",
+      "copy": "sym64-a-policy.json",
+      "sha256": "c52294a36c2477c76ec73b31157eda51b0f06f973f8d9f91e65692329f195056"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/sym64-b-final/run/sym64-stage-1.json",
+      "copy": "sym64-b-stage-1.json",
+      "sha256": "c6f737f265d720bcd8ce3a7fcc4b469af1be9e01ea6485908530536742ad3f30"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/sym64-b-final/run/sym64-source-0.json",
+      "copy": "sym64-b-source-0.json",
+      "sha256": "03dd93760a4d53eb6b66606789bdf94d3af21ede3ab4d4684c1bcde4dc4e56c1"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru/ev/sym64-b-final/run/codex-sandbox-201a6941-137c-4798-866e-b90b67b45eca/policy.json",
+      "copy": "sym64-b-policy.json",
+      "sha256": "7d5dd0307ee6403bfa3e87117ccf61aa06d4849605eb1df6c85d77de944bb525"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru-native.jz5BtI/manifest.json",
+      "copy": "manifest.json",
+      "sha256": "f41fb2114c2575d65904dd14013847cc0b2d6f4c4133ee377d84b2351715f614"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru-native.jz5BtI/sym64-a.events.jsonl",
+      "copy": "sym64-a.events.jsonl",
+      "sha256": "60645faab456e394f90f7181032ef5d9ac5b69a7bca9a587a58a3cb919f4fbca"
+    },
+    {
+      "source": "/srv/dev/s64-kxCfru-native.jz5BtI/sym64-b.events.jsonl",
+      "copy": "sym64-b.events.jsonl",
+      "sha256": "4455ea03b0c4d91310207103588fba9d295208a78b291e9cd8722f1b297b45e5"
+    }
+  ],
+  "observed": {
+    "switchesCompleted": 1,
+    "actors": [
+      {
+        "actor": "a",
+        "runId": "a0243364-1ebb-43db-b052-9ec9b9647cfb",
+        "status": "failed",
+        "error": "deny state state.sqlite must be a permission denial",
+        "results": 256
+      },
+      {
+        "actor": "b",
+        "runId": "201a6941-137c-4798-866e-b90b67b45eca",
+        "status": "failed",
+        "error": "deny state state.sqlite must be a permission denial",
+        "results": 256
+      }
+    ],
+    "cause": "Both native probes rejected ENOENT for a host-existing state.sqlite hidden by the native none policy. The assertion required EACCES/EPERM/EROFS. Host stat after cleanup confirms state.sqlite and secrets.json exist; WAL/SHM were absent after cleanup, so their lifetime must also be controlled.",
+    "metadataMigration": "Reached the first switch after the production Git store live migration, so the previous reflog-normalization failure did not recur."
+  },
+  "limitations": [
+    "Only stage 1 was attempted; stages 2/3 and their controls are unexecuted. This stand is not acceptance of 6.4.",
+    "No claim that WAL/SHM existed throughout this historical stand; the new script must hold a host read transaction and stat before/after every stage.",
+    "Native events are the main-provided cleaned events; raw reasoning was neither read nor copied.",
+    "The preserved native agent ps outputs are truncated (a sourceLine57, b69), and helper stage1 stdout is also truncated. They are not exact native-output acceptance. The next issued instruction sets both outer/inner tool budgets; helper stdout becomes a bounded hash receipt."
+  ]
+}

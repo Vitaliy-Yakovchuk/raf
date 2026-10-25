@@ -1,0 +1,30 @@
+diff --git a/test/test-run-protocol-size.test.ts b/test/test-run-protocol-size.test.ts
+index 0e4f135..b564c5d 100644
+--- a/test/test-run-protocol-size.test.ts
++++ b/test/test-run-protocol-size.test.ts
+@@ -44,7 +44,11 @@ async function reporterLines(t: TestContext, adapter: 'node' | 'vitest-events',
+   }
+   environment(t, { RAF_TEST_RUN_IDS: selected ? JSON.stringify(ids) : '[]', RAF_TEST_RUN_WORKSPACE: workspace, RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(limits) });
+   const lines: string[] = [];
+-  const write = t.mock.method(fs, 'writeSync', (_fd: number, line: string) => { lines.push(line); return Buffer.byteLength(line); });
++  const writeSync = fs.writeSync;
++  const write = t.mock.method(fs, 'writeSync', (fd: number, ...args: any[]) => {
++    if (fd !== 3) return Reflect.apply(writeSync, fs, [fd, ...args]);
++    lines.push(args[0]); return Buffer.byteLength(args[0]);
++  });
+   syncBuiltinESMExports();
+   try {
+     const reporter = new VitestReporter();
+@@ -171,7 +175,11 @@ test(`Z416 Vitest batch wrapper validates large inventories across batches: ${co
+   const output: string[] = [];
+   const previousExitCode = process.exitCode;
+   process.exitCode = 0;
+-  const write = t.mock.method(process.stdout, 'write', (chunk: string | Buffer) => { output.push(chunk.toString()); return true; });
++  const stdoutWrite = process.stdout.write;
++  const write = t.mock.method(process.stdout, 'write', (chunk: string | Buffer, ...args: any[]) => {
++    if (Buffer.isBuffer(chunk) && chunk[0] === 0xff) return Reflect.apply(stdoutWrite, process.stdout, [chunk, ...args]);
++    output.push(chunk.toString()); return true;
++  });
+   try {
+     await import(`../scripts/test-run-vitest.ts?z416=${Date.now()}`);
+     assert.equal(process.exitCode, corruption === 'none' ? 0 : 1, 'the Vitest batch protocol gate must require a complete inventory');

@@ -1,0 +1,33 @@
+{
+  "assignment": "monitor-raf-health:7.4",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group monitor-raf-health/summary --files test/health-summary.test.ts",
+  "result": "unit.TestRunResult.json",
+  "toolResult": "unit.tool-result.json",
+  "stderr": "unit.stderr.txt",
+  "cliExitFile": "unit.cli-exit.txt",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "runId": "3844b20c-d809-4925-baef-2267807d8552",
+  "selection": {
+    "files": [
+      "test/health-summary.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "passedCount": 51,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "groupState": "complete",
+  "timeoutCount": 0,
+  "nextAction": "complete",
+  "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+  "workspace": "workspace-before-unit.json",
+  "capture": "Complete exec output was one valid JSON value, with no stderr observed; original tool envelope retained."
+}

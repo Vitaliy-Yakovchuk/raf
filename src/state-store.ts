@@ -15,7 +15,7 @@ import type { PendingEvent } from "./event-registry.ts";
 import { DatabaseSync } from "node:sqlite";
 import { existsSync, mkdirSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { canonicalStatePath, stateFailure, verifyStateContext } from "./state-migration-guard.ts";
+import { admitStateStore, canonicalStatePath, stateFailure } from "./state-migration-guard.ts";
 import { inspectStateSchema } from './state-schema.ts';
 import { ReminderService, type Reminder, type ReminderRepository, type ReminderTransaction } from "./reminders.ts";
 import type { ReminderSessionEffect } from "./reminder-repository.ts";
@@ -141,9 +141,10 @@ export function openStateStore(path: string, options?: import('./state-migration
     throw new Error("An explicit database path is required");
   }
 
+  const checkPaths = options?.context ? admitStateStore(options.context) : undefined;
   const checkContext = () => {
     if (!options?.context) return;
-    verifyStateContext(options.context);
+    checkPaths!();
     if (path !== options.context.statePath || canonicalStatePath(path) !== path) {
       throw stateFailure('STATE_CONTEXT_REFUSED', `State path ${path} differs from resolved context ${options.context.statePath}`);
     }

@@ -198,7 +198,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
             return result;
           }
           if (serviceHandlers) return await serviceHandlers.handlers[name as keyof typeof serviceHandlers.handlers](params);
-          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) }, 'production', name === 'agent ps' ? { store: profileStore, context: profileContext } : undefined);
+          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) }, 'production', { store: profileStore, context: profileContext });
           const result = await runtime.handlers[name](params);
           await runtime.close();
           return result;

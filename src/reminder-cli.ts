@@ -239,7 +239,8 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
   ports.store.closureNotices.stage();
   applyPendingFacts(ports, clock());
   report.pruned.push(...reminders.pruneClosed());
-  const owner: DeliveryClaimOwner = { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
+  let owner: DeliveryClaimOwner | undefined;
+  const claimOwner = () => owner ??= { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
   const active = (address: string) => ports.store.reminderRepository.transaction(tx => tx.session(address)?.active === true);
   for (const reminder of reminders.list().filter(item => item.state === 'active')) {
     const key = reminderDeliveryKey(reminder);
@@ -248,34 +249,35 @@ export async function settleCommandState(ports: CommandStatePorts): Promise<Comm
       report.undelivered.push({ id: reminder.id, reason: `Recipient session is not active: ${reminder.assignedTo}` });
       continue;
     }
-    const claimed = ports.store.reminderDeliveries.claim(reminder.id, owner, clock(), ownerAlive);
+    const claimed = ports.store.reminderDeliveries.claim(reminder.id, claimOwner(), clock(), ownerAlive);
     if (!claimed) continue;
     const receipt = await send(ports, { to: claimed.reminder.assignedTo, text: reminderDeliveryText(claimed.reminder) });
     if (receipt.accepted) {
-      ports.store.reminderDeliveries.confirm({ reminderId: reminder.id, key: claimed.key, receiptId: receipt.receiptId, deliveredAt: clock() }, owner.token);
+      ports.store.reminderDeliveries.confirm({ reminderId: reminder.id, key: claimed.key, receiptId: receipt.receiptId, deliveredAt: clock() }, owner!.token);
       report.delivered.push(reminder.id);
     } else {
-      ports.store.reminderDeliveries.release(reminder.id, owner.token);
+      ports.store.reminderDeliveries.release(reminder.id, owner!.token);
       report.undelivered.push({ id: reminder.id, reason: receipt.reason });
     }
   }
   for (const notice of ports.store.closureNotices.listUndelivered()) {
     if (!active(notice.recipient)) { ports.store.closureNotices.discard(notice.id); continue; }
-    const claimed = ports.store.closureNotices.claim(notice.id, owner, clock(), ownerAlive);
+    const claimed = ports.store.closureNotices.claim(notice.id, claimOwner(), clock(), ownerAlive);
     if (!claimed) continue;
     const receipt = await send(ports, { to: claimed.recipient, text: claimed.text });
     if (receipt.accepted) {
-      ports.store.closureNotices.markDelivered(notice.id, receipt.receiptId, clock(), owner.token);
+      ports.store.closureNotices.markDelivered(notice.id, receipt.receiptId, clock(), owner!.token);
       report.notices.push(notice.id);
-    } else ports.store.closureNotices.release(notice.id, owner.token);
+    } else ports.store.closureNotices.release(notice.id, owner!.token);
   }
   return report;
 }
 
 export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store' | 'now' | 'deliver'>): Promise<void> {
-  const owner: DeliveryClaimOwner = { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
+  let owner: DeliveryClaimOwner | undefined;
+  const claimOwner = () => owner ??= { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
   for (const notice of ports.store.resultNotices.list().filter(row => row.state === 'pending')) {
-    const claimed = ports.store.resultNotices.claim(notice.id, owner, new Date(ports.now()).toISOString(), ownerAlive);
+    const claimed = ports.store.resultNotices.claim(notice.id, claimOwner(), new Date(ports.now()).toISOString(), ownerAlive);
     if (!claimed) continue;
     let error: string | null = null;
     try {
@@ -285,7 +287,7 @@ export async function settleResultNotices(ports: Pick<CommandStatePorts, 'store'
       const receipt = await send(ports, { to: claimed.recipient, runId: target.runId, text: claimed.text });
       if (!receipt.accepted) error = receipt.reason;
     } catch (failure) { error = failure instanceof Error ? failure.message : String(failure); }
-    ports.store.resultNotices.complete(notice.id, owner.token, error);
+    ports.store.resultNotices.complete(notice.id, owner!.token, error);
   }
 }
 
@@ -310,12 +312,13 @@ export function resultNoticeViews(store: StateStore, sessions: readonly SessionR
 }
 
 async function deliverHealthSummaries(ports: CommandStatePorts): Promise<void> {
-  const owner: DeliveryClaimOwner = { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
+  let owner: DeliveryClaimOwner | undefined;
+  const claimOwner = () => owner ??= { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
   const facts = ports.store.sessionRepository.transaction(tx => tx.listPending().filter(intent => intent.event === 'raf.health-summary'), 'read');
   for (const fact of facts) {
-    const claimed = ports.store.healthSummary.claim(fact.id, owner, new Date(ports.now()).toISOString(), ownerAlive);
+    const claimed = ports.store.healthSummary.claim(fact.id, claimOwner(), new Date(ports.now()).toISOString(), ownerAlive);
     if (!claimed) continue;
     const receipt = await send(ports, { to: 'main', runId: claimed.recipientRunId, text: JSON.stringify(claimed.event) });
-    ports.store.healthSummary.complete(fact.id, owner.token, receipt.accepted);
+    ports.store.healthSummary.complete(fact.id, owner!.token, receipt.accepted);
   }
 }

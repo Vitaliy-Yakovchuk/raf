@@ -257,7 +257,7 @@ export function createHotfixRuntimeInventory(root: string, commit: string, polic
   return { version: 1, root, commit, files, directories, scopes: normalized.scopes, rootFiles: normalized.rootFiles, excludedTrees: normalized.excludedTrees, loading };
 }
 
-export function verifyHotfixRuntimeInventory(root: string, commit: string, inventory: HotfixRuntimeInventory, modulePath?: string): void {
+export function verifyHotfixRuntimeModule(root: string, commit: string, inventory: HotfixRuntimeInventory, modulePath?: string): void {
   if (!inventory || inventory.version !== 1 || inventory.root !== root || inventory.commit !== commit || !Array.isArray(inventory.files) || !inventory.files.length || !inventory.loading) refused('missing or stale trusted inventory');
   const policy = policyPaths({ ...inventory, entrypoints: inventory.loading.entrypoints });
   const protectedFiles = new Set(inventory.files.map(file => canonical(file.path)));
@@ -266,6 +266,11 @@ export function verifyHotfixRuntimeInventory(root: string, commit: string, inven
   }
   for (const path of policy.entrypoints) if (!protectedFiles.has(path)) refused('entrypoint outside inventory ' + path);
   if (modulePath && (!protectedFiles.has(relative(root, modulePath)) || ![...policy.entrypoints, ...inventory.loading.imports, ...inventory.loading.executables].includes(relative(root, modulePath)) || realpathSync(modulePath) !== modulePath)) refused('actual module outside proved loading inventory');
+}
+
+export function verifyHotfixRuntimeInventory(root: string, commit: string, inventory: HotfixRuntimeInventory, modulePath?: string): void {
+  verifyHotfixRuntimeModule(root, commit, inventory, modulePath);
+  const policy = policyPaths({ ...inventory, entrypoints: inventory.loading.entrypoints });
   const directories: { path: string; mode: number }[] = [];
   if (JSON.stringify(currentFiles(root, policy, directories)) !== JSON.stringify(inventory.files) || inventory.directories && JSON.stringify(directories) !== JSON.stringify(inventory.directories)) refused('runtime inputs changed (content/mode/addition/deletion)');
 }

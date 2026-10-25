@@ -28,6 +28,7 @@ import type { SandboxCallerControlSnapshot } from './sandbox-test-caller.ts';
 import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
 import { retainHotfixGeneration } from './hotfix-activation.ts';
 import { verifyStateModule } from './state-migration-guard.ts';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { agentChannelReadOnlyPaths } from './main-switch-agent-launcher.ts';
 import { sharedLibraryReadOnlyPaths } from './shared-libs-sandbox.ts';
 import { prepareHotfixWorktree, validateHotfixTrust, startHotfixCommitPort } from './hotfix-worktree.ts';
@@ -49,7 +50,7 @@ import { buildRunnerInvocation, observeRunnerScreen, nextRunnerAction, readNativ
 import { openStateStore, retryStateOperation, type StateStore } from './state-store.ts';
 import { validateAssignment, composeAssignmentBrief, verifyAssignmentCompletion } from './assignment.ts';
 import { createAssignmentIdentityAdapter } from './assignment-identity.ts';
-import { createWorkspacePorts, executeCommand, observeProcesses, createResourceSnapshotReader, readMachineBootIdentity } from './os-runtime.ts';
+import { createWorkspacePorts, executeCommand, observeKnownProcesses, observeProcessSnapshot, createResourceSnapshotReader, readMachineBootIdentity } from './os-runtime.ts';
 import { resolveWorkspaceRoute } from './workspace-routing.ts';
 import { selectModel, listModelAvailability, type RoutingSnapshot } from './model-routing.ts';
 import { createLaunchState, reserveLaunchInTransaction, evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
@@ -342,8 +343,19 @@ export function runtimeExecution(context: Pick<RuntimeContext, 'tmpRoot' | 'stat
   if (override) return override;
   const preparedEnvironment = snapshotEnvironment ? { ...(context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env) } : undefined;
   const environmentForCommand = () => preparedEnvironment ?? (context.stateContext ? stateContextEnvironment(context.stateContext, process.env) : process.env);
+  const observationEnvironment = { ...process.env };
+  if (context.stateContext) {
+    const state = context.stateContext;
+    Object.assign(observationEnvironment, { HOME: state.homeDirectory, RAF_HOME_DIRECTORY: state.homeDirectory,
+      RAF_ORCHESTRATOR_ROOT: state.orchestratorRoot, RAF_STATE_DIRECTORY: dirname(state.statePath), RAF_SOCKET_PATH: join(dirname(state.statePath), 'service.sock') });
+    delete observationEnvironment.ALLOW_MIGRATIONS;
+    if (state.mode === 'qa') { observationEnvironment.RAF_QA_HOME = state.homeDirectory; delete observationEnvironment.TMUX; delete observationEnvironment.TMUX_PANE; }
+    else delete observationEnvironment.RAF_QA_HOME;
+  }
   const execute: AdapterCommandExecutor = async command => {
-    const environment = { ...environmentForCommand(), ...command.environment };
+    const observation = command.executable === 'ps' || command.executable === 'tmux' &&
+      ['capture-pane', 'display-message', 'list-panes', 'list-sessions', 'show-environment'].includes(command.args[0]);
+    const environment = { ...(observation ? observationEnvironment : environmentForCommand()), ...command.environment };
     if (command.executable !== 'tmux') return executeCommand({ ...command, environment });
     const socketPath = await runtimeTmuxSocket(context, environment);
     const args = [...command.args];
@@ -361,8 +373,8 @@ async function bootIdentity(execute: AdapterCommandExecutor) {
   try { return await readMachineBootIdentity(execute); }
   catch (error) { return fail('PROCESS_IDENTITY_UNAVAILABLE', error instanceof Error ? error.message : String(error)); }
 }
-async function processRows(execute: AdapterCommandExecutor) {
-  const result = await execute({ executable: 'ps', args: ['-ww', '-axo', 'pid=,ppid=,lstart=,command='] });
+async function processRows(execute: AdapterCommandExecutor, pid?: number) {
+  const result = await execute({ executable: 'ps', args: pid === undefined ? ['-ww', '-axo', 'pid=,ppid=,lstart=,command='] : ['-ww', '-p', String(pid), '-o', 'pid=,ppid=,lstart=,command='] });
   if (result.exitCode !== 0) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Cannot inspect process ancestry');
   return result.stdout.split('\n').filter(line => line.trim()).map(line => {
     const row = line.match(/^\s*(\d+)\s+(\d+)\s+(\w{3}\s+\w{3}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/);
@@ -378,20 +390,21 @@ async function belongsToPane(identity: ProcessIdentity, execute: AdapterCommandE
     const paneId = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
     if (paneId.exitCode !== 0 || paneId.stdout.trim() !== identity.evidence.tmuxPane) return false;
   }
-  const rows = await processRows(execute);
-  const actual = rows.find(row => row.pid === identity.pid);
-  if (!actual || Date.parse(actual.startedAt) !== Date.parse(identity.startedAt) || actual.command !== identity.evidence.command) return false;
-  let pid = actual.pid;
+  if ((await observeIdentity(identity, execute)).state !== 'alive') return false;
+  let pid = identity.pid;
   const seen = new Set<number>();
   while (pid && !seen.has(pid)) {
     if (pid === Number(pane.stdout.trim())) return true;
     seen.add(pid);
-    pid = rows.find(row => row.pid === pid)?.ppid ?? 0;
+    const row = (await processRows(execute, process.platform === 'linux' ? pid : undefined)).find(row => row.pid === pid);
+    if (!row) return false;
+    if (pid === identity.pid && (Date.parse(row.startedAt) !== Date.parse(identity.startedAt) || row.command !== identity.evidence.command)) return false;
+    pid = row.ppid;
   }
   return false;
 }
 async function ownIdentity(execute: AdapterCommandExecutor, runId: string, tmuxSession: string) {
-  const row = (await processRows(execute)).find(row => row.pid === process.pid);
+  const row = (await processRows(execute, process.platform === 'linux' ? process.pid : undefined)).find(row => row.pid === process.pid);
   if (!row) return fail('PROCESS_IDENTITY_UNAVAILABLE', 'Current process identity unavailable');
   return { pid: row.pid, startedAt: row.startedAt, runner: 'raf', runnerSessionId: runId, tmuxSession, evidence: { command: row.command, runId, ...await bootIdentity(execute) } };
 }
@@ -404,18 +417,21 @@ async function ancestry(execute: AdapterCommandExecutor) {
   for (let pid = process.pid; pid && !chain.includes(pid); pid = rows.find(row => row.pid === pid)?.ppid ?? 0) chain.push(pid);
   return { rows, chain };
 }
+const processObservationPass = new AsyncLocalStorage<{ execute: AdapterCommandExecutor; observations: Map<string, Promise<ProcessObservation>>; snapshot?: ReturnType<typeof observeProcessSnapshot> }>();
 async function observeIdentity(identity: ProcessIdentity, execute: AdapterCommandExecutor) {
-  const observation = (await observeProcesses([identity], { execute }))[0];
-  if (observation.state !== 'alive' || !identity.evidence.bootId) return observation;
-  const boot = await bootIdentity(execute);
-  if (boot.bootId === identity.evidence.bootId && boot.machineId === identity.evidence.machineId) return observation;
-  return { state: 'exited' as const, observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity belongs to a previous boot' };
+  return (await observeIdentities([identity], execute))[0];
 }
 async function observeIdentities(identities: readonly ProcessIdentity[], execute: AdapterCommandExecutor) {
-  const observations = await observeProcesses(identities, { execute });
+  const pass = processObservationPass.getStore();
+  const observationsByIdentity = pass?.execute === execute ? pass.observations : new Map<string, Promise<ProcessObservation>>();
+  const key = (identity: ProcessIdentity) => JSON.stringify(identity);
+  const missing = [...new Map(identities.filter(identity => !observationsByIdentity.has(key(identity))).map(identity => [key(identity), identity])).values()];
+  const batch = pass?.execute === execute
+    ? missing.length ? (pass.snapshot ??= observeProcessSnapshot({ execute })).then(observe => observe(missing)) : Promise.resolve([])
+    : observeKnownProcesses(missing, { execute });
   let boot: ReturnType<typeof bootIdentity> | undefined;
-  return Promise.all(observations.map(async (observation, index) => {
-    const identity = identities[index];
+  missing.forEach((identity, index) => observationsByIdentity.set(key(identity), (async () => {
+    const observation = (await batch)[index];
     if (observation.state !== 'alive' || !identity.evidence.bootId) return observation;
     try {
       const current = await (boot ??= bootIdentity(execute));
@@ -424,12 +440,13 @@ async function observeIdentities(identities: readonly ProcessIdentity[], execute
     } catch (error) {
       return { state: 'unknown' as const, observedAt: observation.observedAt, error: String(error) };
     }
-  }));
+  })()));
+  return Promise.all(identities.map(identity => observationsByIdentity.get(key(identity))!));
 }
 async function processExited(execute: AdapterCommandExecutor, identity: ProcessIdentity, budget: { transitionMs: number; pollMs: number }): Promise<boolean> {
   const deadline = Date.now() + budget.transitionMs;
   for (;;) {
-    if ((await observeProcesses([identity], { execute }))[0].state === 'exited') return true;
+    if ((await observeKnownProcesses([identity], { execute }))[0].state === 'exited') return true;
     if (Date.now() >= deadline) return false;
     await new Promise(resolve => setTimeout(resolve, budget.pollMs));
   }
@@ -494,7 +511,7 @@ function recordLaunchFailure(store: StateStore, runId: string, reason: string): 
 async function waitWrapperExit(execute: AdapterCommandExecutor, wrapper: ProcessIdentity, budget: TransitionBudget): Promise<boolean> {
   const deadline = Date.now() + budget.transitionMs;
   for (;;) {
-    if ((await observeProcesses([wrapper], { execute }))[0].state === 'exited') return true;
+    if ((await observeKnownProcesses([wrapper], { execute }))[0].state === 'exited') return true;
     if (Date.now() >= deadline) return false;
     await new Promise(resolve => setTimeout(resolve, budget.pollMs));
   }
@@ -652,7 +669,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   const publish = async (rows: readonly ActivityEvent[]) => { store.sessionRepository.transaction(tx => { for (const intent of intents(rows)) tx.putPending(intent); }); };
   const finalize = async (session: SessionRecord, rows: readonly ActivityEvent[]) => {
     const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
-    if (wrapper && wrapper.pid !== process.pid) { const observed = (await observeProcesses([wrapper], { execute }))[0]; if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId} before recovery finalization`); }
+    if (wrapper && wrapper.pid !== process.pid) { const observed = (await observeKnownProcesses([wrapper], { execute }))[0]; if (observed.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${observed.state}; preserve ${session.runId} before recovery finalization`); }
     session = await acceptPendingReport(session);
     if (!session.result && await hasPendingConfirmation(context, session.runId)) return session;
     const finished = await finalizeStartupContextRun(session.runId, {
@@ -740,7 +757,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         if (observation.state === 'exited') {
           const wrapper = session.launchContext?.wrapper ?? listTaskReservations(store).find(set => set.lease.owner.runId === session.runId)?.wrapper;
           if (wrapper) {
-            const wrapperState = (await observeProcesses([wrapper], { execute }))[0];
+            const wrapperState = (await observeKnownProcesses([wrapper], { execute }))[0];
             if (wrapperState.state !== 'exited') fail('WORKER_RESULT_PENDING', `Worker result processing is ${wrapperState.state}; preserve ${session.runId} until its report/exit transition completes`);
           }
         }
@@ -806,7 +823,7 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         });
       },
       close: async identity => {
-        const observed = (await observeProcesses([identity], { execute }))[0];
+        const observed = (await observeKnownProcesses([identity], { execute }))[0];
         if (observed.state !== 'alive' || !await belongsToPane(identity, execute)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Close requires a verified live process in its owned tmux pane');
         const adapter = new TmuxAgentAdapter({ execute, protocols: {} as Record<AgentRunner, RunnerProtocol> });
         await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: '', effort: '' } });
@@ -975,7 +992,7 @@ async function reservationTools(store: StateStore, context: RuntimeContext, exec
   const projects = await json(join(context.confRoot, 'projects.json'));
   const roots = Object.fromEntries(Object.keys(projects.projects).map(project => [project, context.orchestratorRoot]));
   const identity = createAssignmentIdentityAdapter(roots, identityExecute ? { execute: identityExecute } : {});
-  return { store, deferAbandonedFinalization: true, retainPendingConfirmation: runId => hasPendingConfirmation(context, runId), currentBoot: () => bootIdentity(execute), observe: async identity => (await observeProcesses([identity], { execute }))[0], resolveTasks: identity.resolveTasks, newFence: randomUUID };
+  return { store, deferAbandonedFinalization: true, retainPendingConfirmation: runId => hasPendingConfirmation(context, runId), currentBoot: () => bootIdentity(execute), observe: identity => observeIdentity(identity, execute), resolveTasks: identity.resolveTasks, newFence: randomUUID };
 }
 
 export function createProductionSystemDelivery(store: StateStore, context: RuntimeContext, catalog: RuntimeConfiguration['catalog']) {
@@ -1197,7 +1214,7 @@ export async function createProductionServices(
       const requested = resolution.reservation;
       const estimate = { status: 'KNOWN' as const, sources: resolution.sources, reason: null };
       const candidates = tools.state.listReconciliationCandidates().filter(session => session.process);
-      const observed = await observeProcesses(candidates.map(session => session.process!), { execute });
+      const observed = await observeKnownProcesses(candidates.map(session => session.process!), { execute });
       const measured = { measurement: resourceSnapshot.measurement, observedProcesses: candidates.flatMap((session, index) => observed[index].state === 'alive' ? [{ runId: session.runId, identity: session.process! }] : []) };
       let admissionSnapshot: AdmissionSnapshot | undefined;
       const evaluate = (value: ResourceAdmissionInput): ResourceAdmission => {
@@ -1343,7 +1360,7 @@ export async function createProductionServices(
     verifyStarted: async (launch, session) => {
       const handshake = prepared.get(launch.tmuxSession)?.handshake;
       if (!handshake || !isDeepStrictEqual(session.selection, { runner: launch.selection.runner, model: launch.selection.model, effort: launch.selection.effort }) || session.tmuxSession !== launch.tmuxSession || handshake.runId !== launch.runId || handshake.address !== launch.addressId || handshake.reportPath !== join(launch.tmpRoot, launch.runId, `${launch.addressId}.json`) || handshake.identity.tmuxSession !== launch.tmuxSession || handshake.identity.runner !== launch.selection.runner || handshake.identity.evidence.runId !== launch.runId) fail('RUNNER_IDENTITY_INVALID', 'Worker handshake does not match the requested launch');
-      const observation = (await observeProcesses([handshake.identity], { execute }))[0];
+      const observation = (await observeKnownProcesses([handshake.identity], { execute }))[0];
       if (observation.state !== 'alive' || !await belongsToPane(handshake.identity, execute)) fail('RUNNER_IDENTITY_INVALID', `Runner observation is ${observation.state} or its owned pane changed`);
       return handshake.identity;
     },
@@ -1362,12 +1379,12 @@ export async function createProductionServices(
         }
       }
       if (!identity) return { stopped: false, reason: 'Runner life is unknown after worker spawn; recover this run before retry' };
-      const observation = (await observeProcesses([identity], { execute }))[0];
+      const observation = (await observeKnownProcesses([identity], { execute }))[0];
       if (observation.state === 'exited') return { stopped: true };
       if (observation.state !== 'alive' || !await belongsToPane(identity, execute)) return { stopped: false, reason: 'Runner ownership or tmux pane association unknown' };
       const adapter = new TmuxAgentAdapter({ execute, protocols: {} as Record<AgentRunner, RunnerProtocol> });
       await adapter.stop({ tmuxSession: identity.tmuxSession, selection: { runner: identity.runner as AgentRunner, model: launch.selection.model, effort: launch.selection.effort } });
-      return (await observeProcesses([identity], { execute }))[0].state === 'exited' ? { stopped: true } : { stopped: false, reason: 'Runner death not confirmed' };
+      return (await observeKnownProcesses([identity], { execute }))[0].state === 'exited' ? { stopped: true } : { stopped: false, reason: 'Runner death not confirmed' };
     },
     abortLaunch: async (runId, reason) => {
       const runner = readSession(runId)?.launchContext?.selection.runner ?? [...prepared.values()].find(row => row.launch.runId === runId)?.launch.selection.runner;
@@ -1375,7 +1392,7 @@ export async function createProductionServices(
       const session = readSession(runId);
       if (session?.state === 'running') {
         const record = [...prepared.values()].find(row => row.launch.runId === runId);
-        if (!record?.wrapperGone || !session.process || (await observeProcesses([session.process], { execute }))[0].state !== 'exited') fail('LAUNCH_RECOVERABLE', `${runId}: ${reason}; worker lifecycle owns running launch cleanup`);
+        if (!record?.wrapperGone || !session.process || (await observeKnownProcesses([session.process], { execute }))[0].state !== 'exited') fail('LAUNCH_RECOVERABLE', `${runId}: ${reason}; worker lifecycle owns running launch cleanup`);
         tools.state.commitObservation(runId, session.revision, { state: 'exited', observedAt: now(), exitCode: null, evidence: reason }, effects);
         const exited = readSession(runId)!;
         await tools.finalize(exited, exited.activity ? [{ kind: 'ended', session: exited, project: exited.activity.project }] : []);
@@ -1385,10 +1402,13 @@ export async function createProductionServices(
     },
     control: {
       ps: async () => {
-        const sessions = await tools.control.ps();
-        if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
-        await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
-        await reconcileFinishedAgentQueues({ store, current: readSession, observe: identity => observeIdentity(identity, execute), cleanReport: cleanQueuedReport });
+        const sessions = await processObservationPass.run({ execute, observations: new Map() }, async () => {
+          const sessions = await tools.control.ps();
+          if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
+          await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
+          await reconcileFinishedAgentQueues({ store, current: readSession, observe: identity => observeIdentity(identity, execute), cleanReport: cleanQueuedReport });
+          return sessions;
+        });
         await tools.deliverResults();
         const handoffs = await settleModelHandoffs(store, context, configuration, options);
         const started = handoffs.flatMap(result => result.status === 'started' ? [result.session] : []);
@@ -1583,7 +1603,7 @@ export async function runProductionWorker(
     const adapter = new TmuxAgentAdapter({ execute, protocols: { [request.selection.runner]: protocol } as Record<AgentRunner, RunnerProtocol> });
     const adapterSession: AdapterSession = { tmuxSession: request.tmuxSession, selection: request.selection };
     const ownership = async (): Promise<LaunchOwnership> => {
-      if (actual) { const durable = tools.current(request.runId)?.process; if (deferred && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; } const result = (await observeProcesses([actual], { execute }))[0]; if (result.state === 'alive') return await belongsToPane(actual, execute) ? { state: 'owned', identity: actual, processKind: 'agent' } : { state: 'mismatch', reason: 'Native runner no longer belongs to the owned tmux pane' }; return { state: result.state, reason: result.state === 'unknown' ? result.error : result.evidence }; }
+      if (actual) { const durable = tools.current(request.runId)?.process; if (deferred && durable && sameIdentity(actual, durable)) { actual = structuredClone(durable); nativeId = actual.runnerSessionId; } const result = (await observeKnownProcesses([actual], { execute }))[0]; if (result.state === 'alive') return await belongsToPane(actual, execute) ? { state: 'owned', identity: actual, processKind: 'agent' } : { state: 'mismatch', reason: 'Native runner no longer belongs to the owned tmux pane' }; return { state: result.state, reason: result.state === 'unknown' ? result.error : result.evidence }; }
       if (!nativeId && !deferred) return { state: 'unknown', reason: 'Native runner identity unavailable' };
       const pane = await execute({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${request.tmuxSession}:0.0`, '#{pane_pid}'] });
       if (pane.exitCode !== 0 || !/^\d+$/.test(pane.stdout.trim())) return { state: 'unknown', reason: 'Owned tmux pane PID unavailable' };

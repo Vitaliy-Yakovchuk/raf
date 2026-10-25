@@ -1,0 +1,10 @@
+{
+  "exitCode": 1,
+  "result": {
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "{\"code\":\"HANDLER_FAILED\",\"message\":\"Unknown or ambiguous session: force-worker\",\"details\":{\"command\":\"agent close\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Unknown or ambiguous session: force-worker\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent close\"]}"
+  },
+  "stderr": "",
+  "rawStdout": "{\"exitCode\":1,\"stdout\":\"\",\"stderr\":\"{\\\"code\\\":\\\"HANDLER_FAILED\\\",\\\"message\\\":\\\"Unknown or ambiguous session: force-worker\\\",\\\"details\\\":{\\\"command\\\":\\\"agent close\\\",\\\"stage\\\":\\\"handler\\\",\\\"source\\\":\\\"app-runtime\\\",\\\"sourceCode\\\":null,\\\"reason\\\":\\\"Unknown or ambiguous session: force-worker\\\",\\\"received\\\":null,\\\"expected\\\":null,\\\"found\\\":null,\\\"completed\\\":[],\\\"pending\\\":[],\\\"retrySafe\\\":true,\\\"admission\\\":null},\\\"remediation\\\":[\\\"Виправте причину та повторіть команду.\\\",\\\"raf help agent close\\\"]}\"}\n"
+}

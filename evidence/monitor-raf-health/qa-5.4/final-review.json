@@ -1,0 +1,314 @@
+{
+  "assignment": "monitor-raf-health:5.4",
+  "outcome": "passed",
+  "hostScriptSha": "59bcb9e928d132b3dfa7c7b1f07a80b2e8d95d1b",
+  "hostCommand": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/mrh54-src.OaCcYQ/raf-develop/scripts/qa-forced-close-live.mjs",
+    "/srv/dev/mrh54-ev4"
+  ],
+  "hostCliExitCode": 0,
+  "hostChildExitCode": 0,
+  "hostTimedOut": false,
+  "environment": {
+    "sha": "59bcb9e928d132b3dfa7c7b1f07a80b2e8d95d1b",
+    "dirty": "?? node_modules",
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6",
+    "openspec": "1.14.3"
+  },
+  "stand": {
+    "directory": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK",
+    "root": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator",
+    "home": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home",
+    "tmpRoot": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp",
+    "statePath": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/state.sqlite",
+    "timeouts": {
+      "startupMs": 10000,
+      "transitionMs": 10000,
+      "overallMs": 30000,
+      "pollMs": 100
+    },
+    "retention": {
+      "closedRemindersMs": 172800000,
+      "finishedSessionsMs": 86400000,
+      "failedDeliveryEvidenceMs": 604800000
+    },
+    "syntheticRunnerVersion": "0.0.1",
+    "sourceRafHash": "5da516443138a944fa3dfbab5b4f843a43750a85b78337557fc26cdc71fcd20f",
+    "fixtureRafHash": "8e1c9ccaba15c3e87e6505ca00fa0e4fb3be63b237b84345ae79895dddb35f86",
+    "costProfileUnchanged": true,
+    "retentionUnchanged": true,
+    "mainRoot": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-main",
+    "mainRoute": {
+      "cwd": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-main",
+      "repositoryIdentity": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-main/.git",
+      "control": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-main/.git/raf-hotfix"
+    }
+  },
+  "writer": {
+    "pid": 3310062,
+    "lockPath": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/.git/raf-task-checkbox.lock",
+    "owner": {
+      "kind": "raf-task-checkbox-lock",
+      "pid": 3310062
+    }
+  },
+  "auto": {
+    "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+    "pendingCause": "writer-busy",
+    "budgetExhausted": true,
+    "reportSha256": "f2eca5ac44ba1d29c65ead094546ebfd1fb358cc425a005d357d9bee9142e742",
+    "unchangedInodeMtimeBytes": true,
+    "acceptance": {
+      "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+      "status": "succeeded",
+      "event": "agent.succeeded"
+    },
+    "checkboxCommits": [
+      "8b22f56059c7b123f81cff31a12dad3a5e2bdc28"
+    ]
+  },
+  "force": {
+    "runId": "0404e247-cdd7-4b35-8b64-37f3dc489f70",
+    "reason": "Controlled QA force for monitor-raf-health:5.4",
+    "finishedAt": "2026-10-25T02:02:56.603Z",
+    "completedContribution": 1
+  },
+  "retention": {
+    "boundary": "2026-10-26T02:02:56.603Z",
+    "removed": 1,
+    "reasonRetainedBeforeBoundary": true,
+    "sessionRemovedAtBoundary": true
+  },
+  "stats": {
+    "stats-after-force": {
+      "readAt": "2026-10-25T02:02:57.205Z",
+      "since": "2026-10-25T02:02:28.268Z",
+      "completed": 1,
+      "refusalsByCode": {},
+      "unavailableReason": null
+    },
+    "stats-after-normal": {
+      "readAt": "2026-10-25T02:02:49.106Z",
+      "since": "2026-10-25T02:02:28.268Z",
+      "completed": 0,
+      "refusalsByCode": {},
+      "unavailableReason": null
+    },
+    "stats-after-refusals": {
+      "readAt": "2026-10-25T02:02:55.346Z",
+      "since": "2026-10-25T02:02:28.268Z",
+      "completed": 0,
+      "refusalsByCode": {},
+      "unavailableReason": null
+    },
+    "stats-after-repeat": {
+      "readAt": "2026-10-25T02:02:57.984Z",
+      "since": "2026-10-25T02:02:28.268Z",
+      "completed": 1,
+      "refusalsByCode": {
+        "HANDLER_FAILED": 1
+      },
+      "unavailableReason": null
+    },
+    "stats-after-restart": {
+      "readAt": "2026-10-25T02:03:00.217Z",
+      "since": "2026-10-25T02:02:28.268Z",
+      "completed": 1,
+      "refusalsByCode": {
+        "HANDLER_FAILED": 2,
+        "CALLER_UNVERIFIED": 1
+      },
+      "unavailableReason": null
+    },
+    "stats-after-retention": {
+      "readAt": "2026-10-25T02:03:00.565Z",
+      "since": "2026-10-25T02:02:28.268Z",
+      "completed": 1,
+      "refusalsByCode": {
+        "HANDLER_FAILED": 2,
+        "CALLER_UNVERIFIED": 1
+      },
+      "unavailableReason": null
+    },
+    "stats-before": {
+      "readAt": "2026-10-25T02:02:34.484Z",
+      "since": "2026-10-25T02:02:28.268Z",
+      "completed": 0,
+      "refusalsByCode": {},
+      "unavailableReason": null
+    },
+    "stats-while-busy": {
+      "readAt": "2026-10-25T02:02:44.943Z",
+      "since": "2026-10-25T02:02:28.268Z",
+      "completed": 0,
+      "refusalsByCode": {},
+      "unavailableReason": null
+    }
+  },
+  "expectedRefusals": [
+    {
+      "label": "normal-close-pending",
+      "argv": [
+        "agent",
+        "close",
+        "--id",
+        "force-worker"
+      ],
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "diagnostic": {
+        "code": "AGENT_RESULT_PENDING",
+        "message": "Звіт запуску 0404e247-cdd7-4b35-8b64-37f3dc489f70 та подію результату ще не прийнято.\nДочекайтеся правдивого прийняття звіту початкового доручення; резерв зберігається до підтвердженого виходу та фіналізації.\nУповноважений main може виконати raf agent close --id force-worker --force --reason TEXT, задавши власну непорожню причину; перевірки identity, main і нагадувань збережені.\nraf help agent close",
+        "details": {
+          "command": "agent close",
+          "stage": "close",
+          "source": "agent-control",
+          "sourceCode": null,
+          "reason": "Current run lacks an atomically accepted report and result event",
+          "received": {
+            "id": "force-worker",
+            "runId": "0404e247-cdd7-4b35-8b64-37f3dc489f70"
+          },
+          "expected": "Accepted report and corresponding result event for this runId",
+          "found": {
+            "id": "force-worker",
+            "runId": "0404e247-cdd7-4b35-8b64-37f3dc489f70",
+            "report": "pending",
+            "eventRecorded": false
+          },
+          "completed": [],
+          "pending": [
+            "report acceptance",
+            "close"
+          ],
+          "retrySafe": true
+        },
+        "remediation": [
+          "Дочекайтеся правдивого прийняття звіту початкового доручення; резерв зберігається до підтвердженого виходу та фіналізації.",
+          "Уповноважений main може виконати raf agent close --id force-worker --force --reason TEXT, задавши власну непорожню причину; перевірки identity, main і нагадувань збережені.",
+          "raf help agent close",
+          "raf help agent close"
+        ]
+      },
+      "evidence": "evidence/monitor-raf-health/qa-5.4/host-attempt-4/normal-close-pending.transport.json"
+    },
+    {
+      "label": "force-no-reason",
+      "argv": [
+        "agent",
+        "close",
+        "--id",
+        "force-worker",
+        "--force"
+      ],
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "diagnostic": {
+        "code": "INVALID_VALUE",
+        "message": "Примусове закриття потребує --force та непорожню --reason разом.",
+        "details": {
+          "command": "agent close",
+          "stage": "arguments",
+          "source": "cli",
+          "sourceCode": null,
+          "reason": "Примусове закриття потребує --force та непорожню --reason разом.",
+          "received": null,
+          "expected": null,
+          "found": null,
+          "completed": [],
+          "pending": [],
+          "retrySafe": true,
+          "example": "raf agent close --id worker --force --reason \"Власник скасував запуск\""
+        },
+        "remediation": [
+          "Виправте виклик: raf agent close --id worker --force --reason \"Власник скасував запуск\"",
+          "raf help agent close"
+        ]
+      },
+      "evidence": "evidence/monitor-raf-health/qa-5.4/host-attempt-4/force-no-reason.transport.json"
+    },
+    {
+      "label": "force-repeat",
+      "argv": [
+        "agent",
+        "close",
+        "--id",
+        "force-worker",
+        "--force",
+        "--reason",
+        "Repeat must not replace reason"
+      ],
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "diagnostic": {
+        "code": "HANDLER_FAILED",
+        "message": "Unknown or ambiguous session: force-worker",
+        "details": {
+          "command": "agent close",
+          "stage": "handler",
+          "source": "app-runtime",
+          "sourceCode": null,
+          "reason": "Unknown or ambiguous session: force-worker",
+          "received": null,
+          "expected": null,
+          "found": null,
+          "completed": [],
+          "pending": [],
+          "retrySafe": true,
+          "admission": null
+        },
+        "remediation": [
+          "Виправте причину та повторіть команду.",
+          "raf help agent close"
+        ]
+      },
+      "evidence": "evidence/monitor-raf-health/qa-5.4/host-attempt-4/force-repeat.transport.json"
+    }
+  ],
+  "cleanup": {
+    "complete": true,
+    "fixtureRemoved": true
+  },
+  "unit": {
+    "evidence": "utc-qa.TestRunResult.json",
+    "runId": "d5334d1b-8526-47a1-b0fb-6c5145918631",
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 31,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete"
+  },
+  "foreignRegression": {
+    "sourceItem": "monitor-raf-health:5.4",
+    "targetGroup": "complete-raf-flow-contracts/resource-wait",
+    "evidence": "resource-selected-complete.TestRunResult.json",
+    "runId": "39fdff9b-a84c-4578-8321-070fab1289fd",
+    "selectedPassed": 61,
+    "childExitCode": 0,
+    "cliExitCode": 1,
+    "outcome": "assertions-failed",
+    "inheritedKnownRedOutsideSelection": 15,
+    "nextAction": "fix-implementation; remainder belongs to its existing owner, no group reset"
+  },
+  "limitations": [
+    "Real production CLI, watcher, Git checkbox writer, SQLite and tmux processes; terminal payload is synthetic and makes no model or network calls.",
+    "Existing agentRunFixture relaxes isolated resource admission thresholds. This stand does not test resource admission or a real AI provider.",
+    "Restart replaces the isolated main caller and all command runtimes reopen SQLite; no production service is restarted.",
+    "Retention boundaries use the real cleanup operation with a future observation time from unchanged finishedSessionsMs, without waiting a day.",
+    "The fixture main caller replays its existing command inbox after restart, so refusal counters gain additional HANDLER_FAILED/CALLER_UNVERIFIED entries. These are real gate refusals; completed remains exactly one.",
+    "Argument validation rejects missing --reason before runtime; this CLI refusal is preserved with exact code and does not appear in runtime refusal accounting.",
+    "Force finalization retains an abortReason from a tmux kill-session race (session already absent); the CLI reports closed=true and durable session state is finished. This is preserved in raw summary."
+  ],
+  "archive": false,
+  "tasksEdited": false
+}

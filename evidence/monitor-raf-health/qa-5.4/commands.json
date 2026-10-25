@@ -9,7 +9,8 @@
     "host-attempt-2": "node scripts/qa-forced-close-live.mjs /srv/dev/mrh54-ev2 (cwd: clean clone at 41e76380b8bc10b478165fb26093e713236b93fa; TMPDIR on /srv/dev)",
     "utc-red": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/8d40820d-3449-4a8e-b3ed-1c3f4a1738d2/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/forced-close --files test/forced-close-metrics.test.ts",
     "utc-qa": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/8d40820d-3449-4a8e-b3ed-1c3f4a1738d2/raf-main/bin/raf.ts test run --project raf --phase qa --group monitor-raf-health/forced-close --files test/forced-close-metrics.test.ts",
-    "host-attempt-3": "/opt/dev/node/bin/node /srv/dev/mrh54-src.RfuBvr/raf-develop/scripts/qa-forced-close-live.mjs /srv/dev/mrh54-ev3"
+    "host-attempt-3": "/opt/dev/node/bin/node /srv/dev/mrh54-src.RfuBvr/raf-develop/scripts/qa-forced-close-live.mjs /srv/dev/mrh54-ev3",
+    "host-attempt-4": "/opt/dev/node/bin/node /srv/dev/mrh54-src.OaCcYQ/raf-develop/scripts/qa-forced-close-live.mjs /srv/dev/mrh54-ev4"
   },
   "regressionAuthorization": {
     "sourceChange": "monitor-raf-health",

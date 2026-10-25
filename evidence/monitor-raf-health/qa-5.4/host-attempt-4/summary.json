@@ -1,0 +1,768 @@
+{
+  "assignment": "monitor-raf-health:5.4",
+  "outcome": "passed",
+  "invocations": [
+    {
+      "label": "auto-launch",
+      "argv": [
+        "agent",
+        "run",
+        "--id",
+        "auto-worker",
+        "--type",
+        "implement",
+        "--project",
+        "raf",
+        "--features",
+        "launch-fixture",
+        "--phase",
+        "implement",
+        "--complexity",
+        "decision",
+        "--tasks",
+        "launch-failure-fixture:1.1"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "auto-launch.transport.json"
+    },
+    {
+      "label": "main-attach-initial",
+      "argv": [
+        "main",
+        "attach"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "main-attach-initial.transport.json"
+    },
+    {
+      "label": "stats-before",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "stats-before.transport.json"
+    },
+    {
+      "label": "stats-while-busy",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "stats-while-busy.transport.json"
+    },
+    {
+      "label": "normal-close",
+      "argv": [
+        "agent",
+        "close",
+        "--id",
+        "auto-worker"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "normal-close.transport.json"
+    },
+    {
+      "label": "stats-after-normal",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "stats-after-normal.transport.json"
+    },
+    {
+      "label": "force-launch",
+      "argv": [
+        "agent",
+        "run",
+        "--id",
+        "force-worker",
+        "--type",
+        "implement",
+        "--project",
+        "raf",
+        "--features",
+        "launch-fixture",
+        "--phase",
+        "implement",
+        "--complexity",
+        "decision",
+        "--tasks",
+        "launch-failure-fixture:1.2"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "force-launch.transport.json"
+    },
+    {
+      "label": "normal-close-pending",
+      "argv": [
+        "agent",
+        "close",
+        "--id",
+        "force-worker"
+      ],
+      "cliExitCode": 1,
+      "resultExitCode": 1,
+      "transportStderr": "",
+      "evidence": "normal-close-pending.transport.json"
+    },
+    {
+      "label": "force-no-reason",
+      "argv": [
+        "agent",
+        "close",
+        "--id",
+        "force-worker",
+        "--force"
+      ],
+      "cliExitCode": 1,
+      "resultExitCode": 1,
+      "transportStderr": "",
+      "evidence": "force-no-reason.transport.json"
+    },
+    {
+      "label": "stats-after-refusals",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "stats-after-refusals.transport.json"
+    },
+    {
+      "label": "force-close",
+      "argv": [
+        "agent",
+        "close",
+        "--id",
+        "force-worker",
+        "--force",
+        "--reason",
+        "Controlled QA force for monitor-raf-health:5.4"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "force-close.transport.json"
+    },
+    {
+      "label": "stats-after-force",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "stats-after-force.transport.json"
+    },
+    {
+      "label": "force-repeat",
+      "argv": [
+        "agent",
+        "close",
+        "--id",
+        "force-worker",
+        "--force",
+        "--reason",
+        "Repeat must not replace reason"
+      ],
+      "cliExitCode": 1,
+      "resultExitCode": 1,
+      "transportStderr": "",
+      "evidence": "force-repeat.transport.json"
+    },
+    {
+      "label": "stats-after-repeat",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "stats-after-repeat.transport.json"
+    },
+    {
+      "label": "main-attach-restart",
+      "argv": [
+        "main",
+        "attach"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "main-attach-restart.transport.json"
+    },
+    {
+      "label": "stats-after-restart",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "stats-after-restart.transport.json"
+    },
+    {
+      "label": "stats-after-retention",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "resultExitCode": 0,
+      "transportStderr": "",
+      "evidence": "stats-after-retention.transport.json"
+    }
+  ],
+  "assertions": [
+    "Live writer caused a bounded pending cycle; automatic watcher accepted the same inode, mtime and bytes after release without force or a reconciliation CLI call.",
+    "Normal close and refused commands add no completed force; a separate allowed force adds exactly one, preserves its first reason and finishedAt on repeat.",
+    "Fresh main/runtime and SQLite reopen preserve one contribution and reason; tmp cleanup retains reason until configured retention, then session cleanup removes reason while retaining aggregate."
+  ],
+  "limitations": [
+    "Real production CLI, watcher, Git checkbox writer, SQLite and tmux processes; terminal payload is synthetic and makes no model or network calls.",
+    "Existing agentRunFixture relaxes isolated resource admission thresholds. This stand does not test resource admission or a real AI provider.",
+    "Restart replaces the isolated main caller and all command runtimes reopen SQLite; no production service is restarted.",
+    "Retention boundaries use the real cleanup operation with a future observation time from unchanged finishedSessionsMs, without waiting a day."
+  ],
+  "environment": {
+    "sha": "59bcb9e928d132b3dfa7c7b1f07a80b2e8d95d1b",
+    "dirty": "?? node_modules",
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6",
+    "openspec": "1.14.3"
+  },
+  "stand": {
+    "directory": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK",
+    "root": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator",
+    "home": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home",
+    "tmpRoot": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp",
+    "statePath": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/state.sqlite",
+    "timeouts": {
+      "startupMs": 10000,
+      "transitionMs": 10000,
+      "overallMs": 30000,
+      "pollMs": 100
+    },
+    "retention": {
+      "closedRemindersMs": 172800000,
+      "finishedSessionsMs": 86400000,
+      "failedDeliveryEvidenceMs": 604800000
+    },
+    "syntheticRunnerVersion": "0.0.1",
+    "sourceRafHash": "5da516443138a944fa3dfbab5b4f843a43750a85b78337557fc26cdc71fcd20f",
+    "fixtureRafHash": "8e1c9ccaba15c3e87e6505ca00fa0e4fb3be63b237b84345ae79895dddb35f86",
+    "costProfileUnchanged": true,
+    "retentionUnchanged": true,
+    "mainRoot": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-main",
+    "mainRoute": {
+      "cwd": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-main",
+      "repositoryIdentity": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-main/.git",
+      "control": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-main/.git/raf-hotfix"
+    }
+  },
+  "writer": {
+    "pid": 3310062,
+    "lockPath": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/.git/raf-task-checkbox.lock",
+    "owner": {
+      "kind": "raf-task-checkbox-lock",
+      "pid": 3310062
+    }
+  },
+  "auto": {
+    "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+    "pending": {
+      "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+      "reportPath": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp/999e14b0-114b-4803-b3c1-5d0c26e2e866/auto-worker.json",
+      "launchIdentity": "{\"root\":\"/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator\",\"changes\":[{\"id\":\"launch-failure-fixture\",\"items\":[{\"id\":\"1.1\",\"description\":\"Write launch failure fixture\"}]}],\"baselineArchives\":[]}",
+      "candidateBytes": "{\"status\":\"succeeded\",\"answer\":\"Unchanged report under a real live writer\",\"commits\":[],\"context\":{\"unnecessary\":[],\"missing\":[]},\"changes\":[{\"id\":\"launch-failure-fixture\",\"items\":[{\"id\":\"1.1\",\"status\":\"succeeded\"}]}]}\n",
+      "stage": "checkbox",
+      "cause": "writer-busy",
+      "reason": "launch-failure-fixture:1.1: launch-failure-fixture:1.1: Task checkbox writer changed or is busy; retry confirmation; Remedy: Узгодьте поточний рядок, індекс і HEAD або відновіть доступ до джерела; повторіть підтвердження цього запуску.",
+      "deadline": 13718.489101,
+      "exhausted": true
+    },
+    "reportPath": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp/999e14b0-114b-4803-b3c1-5d0c26e2e866/auto-worker.json",
+    "reportSha256": "f2eca5ac44ba1d29c65ead094546ebfd1fb358cc425a005d357d9bee9142e742",
+    "before": {
+      "ino": 8388981,
+      "mtimeMs": 1792893754558.7266
+    },
+    "after": {
+      "ino": 8388981,
+      "mtimeMs": 1792893754558.7266
+    },
+    "accepted": {
+      "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+      "addressId": "auto-worker",
+      "revision": 4,
+      "state": "running",
+      "activity": {
+        "type": "implement",
+        "project": "raf",
+        "features": [
+          "launch-fixture"
+        ],
+        "phase": "implement",
+        "cwd": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-develop"
+      },
+      "launchContext": {
+        "flowPlan": [
+          {
+            "change": "launch-failure-fixture",
+            "path": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/openspec/changes/launch-failure-fixture/tasks.md",
+            "text": "## 1. Fixture\n\n- [ ] 1.1 Write launch failure fixture\n- [ ] 1.2 Write launch failure fixture 2\n- [ ] 1.3 Write launch failure fixture 3\n"
+          }
+        ],
+        "resourceUsageContext": {
+          "identity": {
+            "kind": "agent",
+            "id": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+            "fence": "f8735b5c-44b9-48c8-9750-a2d418d57841",
+            "root": null
+          },
+          "project": "raf",
+          "agentType": "implement",
+          "testProfile": null,
+          "items": [
+            {
+              "project": "raf",
+              "change": "launch-failure-fixture",
+              "item": "1.1"
+            }
+          ],
+          "requestedEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytes": {
+              "/dev/mapper/data-dev": 10737418240
+            },
+            "sources": [
+              "conf/flow.json#/resourceEstimates/agentTypes/implement"
+            ],
+            "confHash": "d1895b28caffef4873d72c1a3b6edaa17da8872d23b692dcf190ce5f289ff369"
+          },
+          "requiredFileSystems": [
+            {
+              "id": "/dev/mapper/data-dev",
+              "paths": [
+                "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator",
+                "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-develop",
+                "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home"
+              ]
+            }
+          ],
+          "attributedPaths": [
+            "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp/999e14b0-114b-4803-b3c1-5d0c26e2e866"
+          ]
+        },
+        "agentQueue": {
+          "queueId": "5d9ba1c9-0457-4244-947e-aca52d0fa3fc",
+          "requestId": "1b7259be-ba31-44f5-9ff6-475a86fdf5a6",
+          "agentId": "auto-worker",
+          "owner": {
+            "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+            "fence": "b63b6b67-aaa6-466c-aaf5-b43ec6f96143"
+          },
+          "clientIdentity": {
+            "pid": 3309311,
+            "startedAt": "23643040",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          },
+          "coordinator": null,
+          "eventHandle": null
+        },
+        "reportedCommits": {
+          "contract": "reported-commits-v1",
+          "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+          "reportPath": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp/999e14b0-114b-4803-b3c1-5d0c26e2e866/auto-worker.json",
+          "repositories": [
+            {
+              "repositoryRoot": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-develop",
+              "gitDirectory": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-develop/.git",
+              "commonDirectory": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-develop/.git",
+              "objectFormat": "sha1",
+              "launchHead": "ddb382e1185a243a3c22bfa09a352e3bd79468a8"
+            },
+            {
+              "repositoryRoot": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator",
+              "gitDirectory": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/.git",
+              "commonDirectory": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/.git",
+              "objectFormat": "sha1",
+              "launchHead": "443ef81e5ea74323c146c57c38fee61cd1df2632"
+            }
+          ],
+          "writeBoundaries": [
+            "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-develop",
+            "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/openspec/changes/launch-failure-fixture",
+            "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/questions/projects/raf/questions.md",
+            "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-develop/.git",
+            "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/.git"
+          ]
+        },
+        "reportSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "answer",
+            "changes",
+            "commits"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "commits": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "repository",
+                  "sha"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "repository": {
+                    "type": "string"
+                  },
+                  "sha": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "context": {
+              "type": "object",
+              "required": [
+                "unnecessary",
+                "missing"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "unnecessary": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "source",
+                      "reason"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "source": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "reason": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  }
+                },
+                "missing": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "description",
+                      "foundAt"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "description": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "foundAt": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "status": {
+              "enum": [
+                "succeeded",
+                "failed"
+              ]
+            },
+            "answer": {
+              "type": "string"
+            },
+            "changes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "items"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "archive": {
+                    "type": "string"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "status"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "enum": [
+                            "succeeded",
+                            "failed"
+                          ]
+                        },
+                        "reason": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "testAssignment": {
+          "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+          "agentId": "auto-worker",
+          "type": "implement",
+          "phase": "implement",
+          "project": "raf",
+          "workspace": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-develop",
+          "branch": "develop",
+          "changes": [
+            "launch-failure-fixture"
+          ]
+        },
+        "assignment": {
+          "root": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator",
+          "changes": [
+            {
+              "id": "launch-failure-fixture",
+              "items": [
+                {
+                  "id": "1.1",
+                  "description": "Write launch failure fixture"
+                }
+              ]
+            }
+          ],
+          "baselineArchives": []
+        },
+        "selection": {
+          "status": "selected",
+          "runner": "codex",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "quota": "unknown",
+          "reason": "Selected gpt-6.1-sol on codex for decision by configured policy and catalog order; quota unknown."
+        },
+        "reportPath": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp/999e14b0-114b-4803-b3c1-5d0c26e2e866/auto-worker.json",
+        "briefPath": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp/999e14b0-114b-4803-b3c1-5d0c26e2e866/brief.txt",
+        "writeBoundaries": [
+          "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-develop",
+          "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/openspec/changes/launch-failure-fixture",
+          "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/questions/projects/raf/questions.md",
+          "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-develop/.git",
+          "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/.git"
+        ],
+        "wrapper": {
+          "pid": 3309534,
+          "startedAt": "2026-10-25T02:02:29.000Z",
+          "runner": "raf",
+          "runnerSessionId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+          "tmuxSession": "84e665fd-879a-4223-8c5c-60d948404419",
+          "evidence": {
+            "command": "/opt/dev/node/bin/node --input-type=module -e const m=await import(\"file:///srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/raf-develop/src/production-runtime.ts\");await m.runProductionWorker();",
+            "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        }
+      },
+      "process": {
+        "pid": 3309666,
+        "startedAt": "2026-10-25T02:02:30.000Z",
+        "runner": "codex",
+        "runnerSessionId": "f7ee376a-5c47-4c27-9031-56ce3a2819c5",
+        "tmuxSession": "84e665fd-879a-4223-8c5c-60d948404419",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/bin/codex --model gpt-6.1-sol -c model_reasoning_effort=\"high\" --add-dir /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/openspec/changes/launch-failure-fixture --add-dir /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/questions/projects/raf/questions.md --add-dir /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/.git --add-dir /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp/999e14b0-114b-4803-b3c1-5d0c26e2e866",
+          "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "tmuxSocket": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp/tmux/server.sock"
+        }
+      },
+      "observation": {
+        "state": "alive",
+        "observedAt": "2026-10-25T02:02:33.365Z",
+        "identity": {
+          "pid": 3309666,
+          "startedAt": "2026-10-25T02:02:30.000Z",
+          "runner": "codex",
+          "runnerSessionId": "f7ee376a-5c47-4c27-9031-56ce3a2819c5",
+          "tmuxSession": "84e665fd-879a-4223-8c5c-60d948404419",
+          "evidence": {
+            "command": "/opt/dev/node/bin/node /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/bin/codex --model gpt-6.1-sol -c model_reasoning_effort=\"high\" --add-dir /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/openspec/changes/launch-failure-fixture --add-dir /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/questions/projects/raf/questions.md --add-dir /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/.git --add-dir /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp/999e14b0-114b-4803-b3c1-5d0c26e2e866",
+            "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+            "tmuxSocket": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp/tmux/server.sock"
+          }
+        }
+      },
+      "result": {
+        "status": "succeeded",
+        "response": "Unchanged report under a real live writer",
+        "proof": {
+          "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+          "at": "2026-10-25T02:02:47.339Z",
+          "context": {
+            "unnecessary": [],
+            "missing": []
+          },
+          "flowEvidence": [],
+          "commits": [],
+          "checkboxCommits": [
+            {
+              "change": "launch-failure-fixture",
+              "item": "1.1",
+              "sha": "8b22f56059c7b123f81cff31a12dad3a5e2bdc28"
+            }
+          ]
+        }
+      },
+      "reportAcceptance": {
+        "runId": "999e14b0-114b-4803-b3c1-5d0c26e2e866",
+        "status": "succeeded",
+        "event": "agent.succeeded"
+      }
+    },
+    "checkboxCommits": [
+      "8b22f56059c7b123f81cff31a12dad3a5e2bdc28"
+    ]
+  },
+  "repeat": {
+    "exitCode": 1,
+    "diagnostic": "{\"code\":\"HANDLER_FAILED\",\"message\":\"Unknown or ambiguous session: force-worker\",\"details\":{\"command\":\"agent close\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Unknown or ambiguous session: force-worker\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent close\"]}"
+  },
+  "force": {
+    "runId": "0404e247-cdd7-4b35-8b64-37f3dc489f70",
+    "reason": "Controlled QA force for monitor-raf-health:5.4",
+    "finished": {
+      "runId": "0404e247-cdd7-4b35-8b64-37f3dc489f70",
+      "addressId": "force-worker",
+      "revision": 7,
+      "state": "finished",
+      "process": {
+        "pid": 3312391,
+        "startedAt": "2026-10-25T02:02:51.000Z",
+        "runner": "codex",
+        "runnerSessionId": "e9ebc66e-8c84-4d68-808f-3a4b21302191",
+        "tmuxSession": "511d8552-1de3-4d99-a07a-4fb34a4e5b18",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/bin/codex --model gpt-6.1-sol -c model_reasoning_effort=\"high\" --add-dir /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/openspec/changes/launch-failure-fixture --add-dir /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/questions/projects/raf/questions.md --add-dir /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/orchestrator/.git --add-dir /srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp/0404e247-cdd7-4b35-8b64-37f3dc489f70",
+          "runId": "0404e247-cdd7-4b35-8b64-37f3dc489f70",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "tmuxSocket": "/srv/dev/mrh54-tmp.OS45kE/mrh54-5BM8sz/tmp/raf-lfc-Rdw3BK/home/.raf/tmp/tmux/server.sock"
+        }
+      },
+      "result": {
+        "status": "failed",
+        "response": "",
+        "proof": null,
+        "forcedClose": {
+          "reason": "Controlled QA force for monitor-raf-health:5.4"
+        }
+      },
+      "finishedAt": "2026-10-25T02:02:56.603Z",
+      "abortReason": "tmux kill-session failed: can't find session: 511d8552-1de3-4d99-a07a-4fb34a4e5b18\n"
+    },
+    "baseline": {
+      "readAt": "2026-10-25T02:02:34.484Z",
+      "since": "2026-10-25T02:02:28.268Z",
+      "completed": 0,
+      "refusalsByCode": {},
+      "unavailableReason": null
+    },
+    "afterForce": {
+      "readAt": "2026-10-25T02:02:57.205Z",
+      "since": "2026-10-25T02:02:28.268Z",
+      "completed": 1,
+      "refusalsByCode": {},
+      "unavailableReason": null
+    },
+    "refusal": {
+      "code": "INVALID_VALUE",
+      "message": "Примусове закриття потребує --force та непорожню --reason разом.",
+      "details": {
+        "command": "agent close",
+        "stage": "arguments",
+        "source": "cli",
+        "sourceCode": null,
+        "reason": "Примусове закриття потребує --force та непорожню --reason разом.",
+        "received": null,
+        "expected": null,
+        "found": null,
+        "completed": [],
+        "pending": [],
+        "retrySafe": true,
+        "example": "raf agent close --id worker --force --reason \"Власник скасував запуск\""
+      },
+      "remediation": [
+        "Виправте виклик: raf agent close --id worker --force --reason \"Власник скасував запуск\"",
+        "raf help agent close"
+      ]
+    }
+  },
+  "retention": {
+    "boundary": "2026-10-26T02:02:56.603Z",
+    "removed": 1,
+    "reasonRetainedBeforeBoundary": true,
+    "sessionRemovedAtBoundary": true
+  },
+  "cleanup": {
+    "complete": true,
+    "fixtureRemoved": true
+  }
+}

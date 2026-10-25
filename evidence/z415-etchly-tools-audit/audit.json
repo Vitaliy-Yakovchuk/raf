@@ -149,7 +149,13 @@
   "coordination": {
     "recipient": "main",
     "receiptId": "3b5059ac-9b45-4dcd-999a-f497359c8ce2",
-    "accepted": true
+    "accepted": true,
+    "mainConfirmation": {
+      "sender": "main",
+      "decision": "Висновок підтверджено; Z.415 скасувати після закриття",
+      "instruction": "Тестів і коду не запускати/не змінювати; завершити обґрунтованим failed з аудитом.",
+      "received": "2026-10-25"
+    }
   },
   "codeChanged": false,
   "auditHashesChanged": false,

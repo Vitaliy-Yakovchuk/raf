@@ -1,0 +1,12 @@
+diff --git a/test/task-checkbox-final-archive-z414.test.ts b/test/task-checkbox-final-archive-z414.test.ts
+index 53bcfb4..db0d22d 100644
+--- a/test/task-checkbox-final-archive-z414.test.ts
++++ b/test/task-checkbox-final-archive-z414.test.ts
+@@ -76,6 +76,7 @@ async function fixture(t: TestContext) {
+   t.after(async () => { store.close(); await rm(root, { recursive: true, force: true }); });
+   const boot = { machineId: 'fixture', bootId: 'fixture' };
+   const starter = { pid: process.pid, startedAt: new Date().toISOString(), runner: 'codex', runnerSessionId: runId, tmuxSession: runId, evidence: boot };
++  store.sessionRepository.transaction(tx => tx.putSession({ runId, addressId: 'executor', revision: 0, state: 'running', activity: { type: 'hotfix', project: 'raf', features: [change], phase: 'hotfix', cwd: root } }));
+   store.taskReservationRepository.transaction(tx => tx.putTaskReservation({ lease: { owner: { runId, addressId: 'executor', fence: 'fixture' }, revision: 0 }, tasks, boot, stage: 'running', starter }));
+   const context: RuntimeContext = { orchestratorRoot: root, confRoot, artifactPath: join(root, 'catalog.json'), statePath: join(root, 'isolated.sqlite'), tmpRoot, mode: 'test', commandStartedAtMs: Date.now(), resolveCaller: async () => undefined };
+   const request: AgentReportRequest = { tmpRoot, runId, address: 'executor', assignment, reportedCommits: launch };

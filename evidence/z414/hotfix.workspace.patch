@@ -1,0 +1,188 @@
+diff --git a/src/task-checkbox-report.ts b/src/task-checkbox-report.ts
+index 8ba780a..c3edeec 100644
+--- a/src/task-checkbox-report.ts
++++ b/src/task-checkbox-report.ts
+@@ -1,6 +1,6 @@
+ import { ConfirmationBudgetExhaustedError, ConfirmationTransientError, confirmationTransient, confirmationStateTransient, readConfirmationJournal, type ConfirmationBudget } from './report-confirmation-retry.ts';
+ import { constants } from 'node:fs';
+-import { lstat, realpath, open, readFile, writeFile, mkdtemp, rm, copyFile, rename } from 'node:fs/promises';
++import { lstat, realpath, open, readFile, readdir, writeFile, mkdtemp, rm, copyFile, rename } from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+ import { isAbsolute, join, relative, sep } from 'node:path';
+ import { validAgentReport, type AgentReport, type AgentReportRequest } from './agent-report.ts';
+@@ -116,6 +116,22 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+       }
+     }
+   };
++  const archiveSources = new Map<string, string>();
++  const archiveSource = async (change: string) => {
++    const known = archiveSources.get(change);
++    if (known) { await sourcePath(known); return known; }
++    const directory = join(root, 'openspec', 'changes', 'archive');
++    const claim = archives[change];
++    const candidates = claim === undefined
++      ? (await readdir(directory)).filter(name => safeName(name) && !request.assignment.baselineArchives.includes(name)
++        && (name === change || /^\d{4}-\d{2}-\d{2}-/.test(name) && name.slice(11) === change))
++      : [claim];
++    if (candidates.length !== 1) throw new Error(`Missing or ambiguous exact archive task source for ${change}`);
++    const path = join(directory, candidates[0], 'tasks.md');
++    await sourcePath(path);
++    archiveSources.set(change, path);
++    return path;
++  };
+   let lock: Awaited<ReturnType<typeof open>> | undefined;
+   let lockPath: string | undefined;
+   let ownership: ReturnType<typeof trackOwnedWriterLock> | undefined;
+@@ -125,11 +141,11 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+     if (!identity.ok) return { ...identity, commits, awaitingArchive };
+     for (const change of request.assignment.changes) {
+       current = { change: change.id, item: change.items[0]?.id ?? '' };
+-      const path = join(root, 'openspec', 'changes', change.id, 'tasks.md');
++      let path = join(root, 'openspec', 'changes', change.id, 'tasks.md');
+       try { await sourcePath(path); }
+       catch (error) {
+-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || !Object.hasOwn(archives, change.id)) throw error;
+-        continue;
++        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
++        path = await archiveSource(change.id);
+       }
+       const content = await readFile(path, 'utf8');
+       for (const item of change.items) { current = { change: change.id, item: item.id }; lineFor(content, item.id, item.description); }
+@@ -150,6 +166,16 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+       const expected = original.slice(0, row.index!) + checked(row[0]) + original.slice(row.index! + row[0].length);
+       if (row[0] !== operation.originalLine || names !== pathspec || await git(['show', `${operation.sha}:${pathspec}`]) !== expected) throw new Error('Checkbox commit is not the exact one-marker patch');
+     };
++    const verifyArchivedOperation = async (change: string, item: { id: string; description: string }) => {
++      const operation = operations.find(row => row.change === change && row.item === item.id);
++      if (!operation?.sha) throw new Error(`Missing current-run checkbox commit provenance for archived task ${change}:${item.id}`);
++      const path = await archiveSource(change);
++      const row = lineFor(await readFile(path, 'utf8'), item.id, item.description);
++      if (row[0] !== checked(operation.originalLine)) throw new Error(`Archived task row differs from the committed checkbox: ${change}:${item.id}`);
++      await verifyCommit(operation, `openspec/changes/${change}/tasks.md`, item.description);
++      if (!Object.hasOwn(archives, change)) awaitingArchive = true;
++      return operation;
++    };
+     const completed = async () => {
+       if (!request.assignment.changes.every(change => change.items.every(item => operations.some(row => row.change === change.id && row.item === item.id && row.sha)))) return false;
+       for (const change of request.assignment.changes) {
+@@ -158,13 +184,11 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+         let content: string;
+         try { await sourcePath(path); content = await readFile(path, 'utf8'); }
+         catch (error) {
+-          if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || !Object.hasOwn(archives, change.id)) throw error;
++          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+           if ((await git(['ls-files', '--stage', '--', pathspec])).trim() || (await git(['ls-tree', 'HEAD', '--', pathspec])).trim()) return false;
+           for (const item of change.items) {
+             current = { change: change.id, item: item.id };
+-            const operation = operations.find(row => row.change === change.id && row.item === item.id);
+-            if (!operation?.sha) return false;
+-            await verifyCommit(operation, pathspec, item.description);
++            await verifyArchivedOperation(change.id, item);
+           }
+           continue;
+         }
+@@ -299,26 +323,22 @@ async function prepare(request: AgentReportRequest, report: AgentReport, ports:
+       try { await sourcePath(path); }
+       catch (error) {
+         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+-        if (!Object.hasOwn(archives, change.id)) throw new Error(`Exact archive claim is required for ${change.id}`);
+         for (const item of change.items) {
+           current = { change: change.id, item: item.id };
+-          const operation = operations.find(row => row.change === change.id && row.item === item.id);
+-          if (operation) {
+-            const pathspec = `openspec/changes/${change.id}/tasks.md`;
+-            await verifyCommit(operation, pathspec, item.description);
+-            await withIndexLock(async env => {
+-              const staged = (await git(['ls-files', '--stage', '--', pathspec], env)).trim();
+-              const owned = (await git(['ls-tree', operation.sha!, '--', pathspec])).trim();
+-              const entry = owned.match(/^(\d+) blob ([a-f0-9]+)\t/);
+-              if (!entry || staged !== `${entry[1]} ${entry[2]} 0\t${pathspec}`) return false;
+-              const head = (await git(['rev-parse', 'HEAD'])).trim();
+-              if ((await git(['ls-tree', head, '--', pathspec])).trim()) return false;
+-              await git(['update-index', '--force-remove', '--', pathspec], env);
+-              if ((await git(['rev-parse', 'HEAD'])).trim() !== head) throw new Error('HEAD changed during archive index repair; retry confirmation');
+-              return true;
+-            });
+-            commits.push({ ...current, sha: operation.sha! });
+-          }
++          const operation = await verifyArchivedOperation(change.id, item);
++          const pathspec = `openspec/changes/${change.id}/tasks.md`;
++          await withIndexLock(async env => {
++            const staged = (await git(['ls-files', '--stage', '--', pathspec], env)).trim();
++            const owned = (await git(['ls-tree', operation.sha!, '--', pathspec])).trim();
++            const entry = owned.match(/^(\d+) blob ([a-f0-9]+)\t/);
++            if (!entry || staged !== `${entry[1]} ${entry[2]} 0\t${pathspec}`) return false;
++            const head = (await git(['rev-parse', 'HEAD'])).trim();
++            if ((await git(['ls-tree', head, '--', pathspec])).trim()) return false;
++            await git(['update-index', '--force-remove', '--', pathspec], env);
++            if ((await git(['rev-parse', 'HEAD'])).trim() !== head) throw new Error('HEAD changed during archive index repair; retry confirmation');
++            return true;
++          });
++          commits.push({ ...current, sha: operation.sha! });
+         }
+         continue;
+       }
+diff --git a/test/task-checkbox-final-archive-z414.test.ts b/test/task-checkbox-final-archive-z414.test.ts
+index 53bcfb4..411b36f 100644
+--- a/test/task-checkbox-final-archive-z414.test.ts
++++ b/test/task-checkbox-final-archive-z414.test.ts
+@@ -18,6 +18,7 @@ import type { TaskCheckboxOperation } from '../src/task-checkbox-report.ts';
+ 
+ const change = 'final-checkbox-source';
+ const archive = `2026-10-25-${change}`;
++const oldArchive = `2026-10-24-${change}`;
+ const pathspec = `openspec/changes/${change}/tasks.md`;
+ const original = '# Tasks\n\n- [ ] 5.1 Finish assigned work\n';
+ const checked = original.replace('[ ]', '[x]');
+@@ -31,6 +32,8 @@ async function fixture(t: TestContext) {
+   await mkdir(confRoot);
+   await writeFile(join(confRoot, 'projects.json'), JSON.stringify({ projects: { raf: {} } }));
+   await writeFile(join(root, pathspec), original);
++  await mkdir(join(root, 'openspec/changes/archive', oldArchive), { recursive: true });
++  await writeFile(join(root, 'openspec/changes/archive', oldArchive, 'tasks.md'), checked);
+   const environment = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' };
+   for (const key of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE']) delete environment[key];
+   const git = (...args: string[]) => execFileSync('git', args, { cwd: root, env: environment, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+@@ -39,7 +42,7 @@ async function fixture(t: TestContext) {
+   git('config', 'user.email', 'z414@example.invalid');
+   git('config', 'commit.gpgsign', 'false');
+   git('config', 'core.hooksPath', '/dev/null');
+-  git('add', '--', pathspec);
++  git('add', '--', 'openspec');
+   git('commit', '-qm', 'Launch source');
+   const runId = 'same-final-executor';
+   const tmpRoot = join(root, 'reports');
+@@ -49,7 +52,7 @@ async function fixture(t: TestContext) {
+   git('add', '--', 'result.txt');
+   git('commit', '-qm', 'Executor result');
+   const executor = git('rev-parse', 'HEAD');
+-  const assignment = { root, baselineArchives: [], changes: [{ id: change, items: [{ id: '5.1', description: 'Finish assigned work' }] }] };
++  const assignment = { root, baselineArchives: [oldArchive], changes: [{ id: change, items: [{ id: '5.1', description: 'Finish assigned work' }] }] };
+   const execute: AdapterCommandExecutor = async command => {
+     if (command.executable !== 'openspec') return executeCommand({ ...command, environment: { ...environment, ...command.environment } });
+     if (command.args[0] === '--version') return { exitCode: 0, stdout: '1.14.3\n', stderr: '' };
+@@ -76,6 +79,7 @@ async function fixture(t: TestContext) {
+   t.after(async () => { store.close(); await rm(root, { recursive: true, force: true }); });
+   const boot = { machineId: 'fixture', bootId: 'fixture' };
+   const starter = { pid: process.pid, startedAt: new Date().toISOString(), runner: 'codex', runnerSessionId: runId, tmuxSession: runId, evidence: boot };
++  store.sessionRepository.transaction(tx => tx.putSession({ runId, addressId: 'executor', revision: 0, state: 'running', activity: { type: 'hotfix', project: 'raf', features: [change], phase: 'hotfix', cwd: root } }));
+   store.taskReservationRepository.transaction(tx => tx.putTaskReservation({ lease: { owner: { runId, addressId: 'executor', fence: 'fixture' }, revision: 0 }, tasks, boot, stage: 'running', starter }));
+   const context: RuntimeContext = { orchestratorRoot: root, confRoot, artifactPath: join(root, 'catalog.json'), statePath: join(root, 'isolated.sqlite'), tmpRoot, mode: 'test', commandStartedAtMs: Date.now(), resolveCaller: async () => undefined };
+   const request: AgentReportRequest = { tmpRoot, runId, address: 'executor', assignment, reportedCommits: launch };
+@@ -93,6 +97,7 @@ async function fixture(t: TestContext) {
+   const diagnostics: string[] = [];
+   const read = () => readPendingAgentReport(request, {
+     fs: { readText: async () => JSON.stringify(report) }, now: () => new Date().toISOString(),
++    confirmationRetry: { runner: 'codex', protocol: async () => protocol },
+     diagnostic: async reason => { diagnostics.push(reason); },
+     isCurrentReport: async () => true,
+     verifyAssignmentSourceIdentity: async () => {
+@@ -154,7 +159,7 @@ for (const invalid of ['missing archive', 'changed description', 'changed row',
+       await rename(f.archived, retained);
+       await cp(retained, f.archived, { recursive: true });
+     }
+-    if (invalid === 'old archive') report = { ...report, changes: [{ ...report.changes[0], archive: `2026-10-24-${change}` }] };
++    if (invalid === 'old archive') report = { ...report, changes: [{ ...report.changes[0], archive: oldArchive }] };
+     if (invalid === 'wrong claim') report = { ...report, changes: [{ ...report.changes[0], archive: '2026-10-25-other' }] };
+     if (invalid === 'foreign journal') await writeFile(join(f.request.tmpRoot, f.request.runId, 'task-checkbox-operations.json'), JSON.stringify((await f.journal()).map(row => ({ ...row, runId: 'foreign-run' }))));
+     const head = f.git('rev-parse', 'HEAD');

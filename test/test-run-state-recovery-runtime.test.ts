@@ -223,11 +223,20 @@ for (const testKind of ['unit', 'integration'] as const) {
       const host = await prepareStateRecoveryHost({ root, testKind, checkpoint: 'after-spawn', child: 'early-exit', initialTimeoutCount: 1 });
       try {
         const execution = await host.normal(mode);
+        const rejectedPreset = testKind === 'integration' && mode === 'refused';
         assert.equal(execution.result.outcome, mode);
         assert.equal(execution.result.stateAccess, null);
-        assert.equal(execution.result.testKind, testKind);
+        assert.equal(execution.result.testKind, rejectedPreset ? null : testKind);
         assert.equal(execution.result.phase, testKind === 'unit' ? 'qa' : 'integration');
         assert.equal(execution.result.timedOut, false);
+        if (rejectedPreset) {
+          assert.equal(execution.result.errorCode, 'CALLER_UNAUTHORIZED');
+          assert.equal(execution.result.groupSnapshot, 'unavailable');
+          assert.equal(execution.result.callerPhase, null);
+          assert.equal(execution.result.timeoutPolicy, null);
+          assert.equal(execution.result.timeoutCount, null);
+          assert.deepEqual(execution.result.selection, { files: [], testIds: [] });
+        }
         if (mode === 'passed') {
           assert.equal(execution.cliCode, 0);
           assert.equal(execution.result.exitCode, 0);

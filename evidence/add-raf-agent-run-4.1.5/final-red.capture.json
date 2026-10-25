@@ -1,0 +1,25 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-agent-run/message-serialization --files test/production-message-serialization.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "capture": "exec_command merged output; stdout is the single TestRunResult line; stderr is the launch-queue.waiting line, per CLI stream contract. No native channel manifest was supplied.",
+  "outputTruncated": false,
+  "workspaceBeforeRun": {
+    "head": "c13173074f1561404b401f568808c98aacdefda4",
+    "status": [
+      "?? evidence/add-raf-agent-run-4.1.5/",
+      "?? evidence/add-raf-test-run/etchly-integration-qa-b/host2-result-index.json",
+      "?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.cli-code.txt",
+      "?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/d08/results/green.result.json",
+      "?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.cli-code.txt",
+      "?? evidence/add-raf-test-run/etchly-integration-qa-b/host2/smoke/results/preset.result.json",
+      "?? test/production-message-serialization.test.ts"
+    ],
+    "sha256": {
+      "src/production-runtime.ts": "158c17505260b8384e283c99eb441c905a209d9e3557f166efec542b2f791ce6",
+      "src/resource-wait-identity.ts": "f0f49e6725e729c498b87ad4e3fc0a1f0a2fb82f715035ee981b2301f8c7e6c5",
+      "src/message-delivery.ts": "491135b259c164f6ac323c5e388d11d9a28708beb24a731cbfcc47b754d6c50b",
+      "test/production-message-serialization.test.ts": "43d5208dce734d01301b8d2356346e9b1396f588b0020690388432d126b4ff17"
+    }
+  }
+}

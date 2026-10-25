@@ -1,0 +1,56 @@
+{
+  "project": "raf",
+  "group": "add-raf-agent-run/message-serialization",
+  "profileId": "node",
+  "unitFilesAppend": [
+    "test/production-message-serialization.test.ts"
+  ],
+  "groupsSet": {
+    "add-raf-agent-run/message-serialization": {
+      "profileId": "node",
+      "files": [
+        "test/production-message-serialization.test.ts"
+      ]
+    }
+  },
+  "configurationRegistration": {
+    "repository": "/srv/dev/work/orchestrator",
+    "sha": "582b3c6867bb17a2ecbb1f852991af223effcb5a",
+    "by": "main",
+    "confirmedBeforeAuthorRed": true
+  },
+  "prerequisites": {
+    "workspace": "/srv/dev/work/orchestrator/raf-develop",
+    "branch": "develop",
+    "activeChange": "add-raf-agent-run",
+    "callerPhase": "test-scaffold",
+    "requestedPhase": "red",
+    "executable": "node",
+    "node": ">=25.4.0",
+    "argv": [
+      "./scripts/test-run-node.ts"
+    ],
+    "exactIds": "node-test-name",
+    "resultAdapter": "node-test-events",
+    "checks": [
+      "node_modules/typescript/package.json",
+      "src/test-run-reporter.ts",
+      "scripts/test-run-node.ts"
+    ],
+    "environment": {
+      "isolatedHome": true,
+      "stateOrigin": true
+    },
+    "resourceEstimateSource": "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate",
+    "timeoutPolicySource": "conf/flow.json#/unitTests",
+    "testDoubles": [
+      "OS process observation",
+      "tmux command execution",
+      "nonblocking tryWaitLease",
+      "Date/setTimeout"
+    ],
+    "externalModelsOrTmux": false
+  },
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-agent-run/message-serialization --files test/production-message-serialization.test.ts",
+  "nextStages": "Keep project/workspace/group/profile/files unchanged; implement/qa use their actual authorized phase. Main reviews this author's assertion red; no foreign-group grant is required for this assigned change."
+}

@@ -19,7 +19,8 @@ await fs.mkdir(cleanEnv.HOME, { mode: 0o700 });
 const originalEnv = { ...process.env };
 const git = (...args) => spawnSync('git', ['-C', source, ...args], { env: cleanEnv, encoding: 'utf8' });
 const revision = git('rev-parse', 'HEAD').stdout.trim();
-const sourceStatus = git('status', '--porcelain').stdout;
+const sourceStatus = git('status', '--porcelain', '--untracked-files=no').stdout;
+const untrackedStatus = git('ls-files', '--others', '--exclude-standard').stdout;
 const realCodex = spawnSync('/bin/sh', ['-c', 'command -v codex'], { env: cleanEnv, encoding: 'utf8' }).stdout.trim();
 assert.ok(realCodex.startsWith('/'));
 const versions = Object.fromEntries([['node', process.execPath, ['--version']], ['tmux', '/usr/bin/tmux', ['-V']], ['codex', realCodex, ['--version']], ['git', '/usr/bin/git', ['--version']]].map(([name, executable, args]) => {
@@ -34,6 +35,7 @@ const steps = [];
 const checks = [];
 let fixture;
 let failure;
+let stage = 'imports';
 let cleanupComplete = false;
 const publicJson = async (name, value) => fs.writeFile(join(output, name), JSON.stringify(value, null, 2) + '\n', { mode: 0o600 });
 const secret = randomUUID().replaceAll('-', '');
@@ -47,7 +49,9 @@ try {
   const { agentRunFixture, alive, until } = await import('../../../test/agent-run-fixture.ts');
   const { prepareCodexSandbox } = await import('../../../src/codex-sandbox.ts');
   const { privateDeliveryEvidencePorts, cleanupExpiredDeliveryEvidence } = await import('../../../src/delivery-evidence-storage.ts');
+  stage = 'prepare isolated production fixture';
   fixture = await agentRunFixture({ after: callback => after.push(callback) }, 'delivery', { startupMs: 20000, transitionMs: 15000, overallMs: 90000 }, 'codex', { productionQa: true, commands: ['agent message', 'agent ps'], tasks: 2 });
+  stage = 'configure isolated fixture';
   const root = join(fixture.directory, 'orchestrator');
   const cfgPath = join(fixture.directory, 'fixture.json');
   const cfg = JSON.parse(await fs.readFile(cfgPath, 'utf8'));
@@ -84,10 +88,13 @@ try {
     await publicJson('cli.json', steps);
     return result;
   };
+  stage = 'positive agent ps';
   const ps = await fixture.command(['agent', 'ps']);
   safe(ps);
-  assert.equal(ps.exitCode, 0);
-  steps.push({ command: ['agent', 'ps'], ...ps });
+  steps.push({ command: ['node', cfg.commandPath, cfgPath, JSON.stringify(['agent', 'ps'])], ...ps });
+  await publicJson('cli.json', steps);
+  assert.equal(ps.exitCode, 0, 'Positive agent ps failed; see cli.json');
+  stage = 'failed launch with control markers';
   const outcome = await run('mrh34-failed-a', ['1.1']);
   assert.equal(outcome.exitCode, 1, 'Expected failed launch CLI code');
   const error = JSON.parse(outcome.result.stderr);
@@ -97,6 +104,7 @@ try {
   assert.ok(session);
   const runId = session.runId;
   const recordPath = join(fixture.tmpRoot, '.delivery-evidence', runId, 'frame.json');
+  stage = 'verify private decision frame';
   const recordBytes = await fs.readFile(recordPath);
   const record = JSON.parse(recordBytes);
   const decision = await fs.readFile(join(fixture.tmpRoot, '.last-capture'));
@@ -126,6 +134,7 @@ try {
   await until(fixture.owned, pids => pids.length === 0, 'Failed launch process cleanup', 15000);
   check('Ordinary failed launch cleanup retained raw while removing launch resources');
   for (const id of ['own-probe', 'neighbour-probe']) {
+    stage = id;
     const runDirectory = join(fixture.tmpRoot, id);
     await fs.mkdir(runDirectory, { mode: 0o700 });
     const sandbox = await prepareCodexSandbox({ runId: id, invocation: { executable: realCodex, args: ['--sandbox', 'workspace-write'], liveTaskVerified: true }, scope: { hidden: [join(cfg.home, '.raf'), fixture.tmpRoot], readable: [runDirectory], tmuxDirectory: runDirectory, excludedCommands: [] }, cwd: cfg.sourceRoot, runDirectory, writableDirectories: [runDirectory], environment: { ...cleanEnv, HOME: cfg.home, RAF_QA_HOME: cfg.home, TMPDIR: fixture.directory }, timeoutMs: 30000 });
@@ -148,6 +157,7 @@ try {
       check(id + ': real sandbox denies raw and permits own control', { denialCliCode: direct.status });
     } finally { await sandbox.cleanup(); await fs.rm(runDirectory, { recursive: true, force: true }); }
   }
+  stage = 'configured retention cleanup';
   const ports = privateDeliveryEvidencePorts(fixture.tmpRoot, async () => {});
   const neighbour = structuredClone(record);
   neighbour.runId = 'retention-neighbour'; neighbour.reference = randomUUID();
@@ -162,6 +172,7 @@ try {
   await cleanupExpiredDeliveryEvidence(fixture.tmpRoot, record.expiresAt);
   assert.ok(await ports.read(neighbour.runId));
   check('Configured expiry boundary and idempotent cleanup preserve later neighbour', { retentionSource: 'conf/flow.json#/retention/failedDeliveryEvidenceMs', retentionMs: retention, clock: 'Explicit cleanup timestamp at actual record expiry; no wall clock or conf changes' });
+  stage = 'private write failure';
   await fs.rename(join(fixture.tmpRoot, '.delivery-evidence'), join(fixture.tmpRoot, '.retained-private-evidence'));
   await fs.writeFile(join(fixture.tmpRoot, '.delivery-evidence'), 'blocked store', { mode: 0o600 });
   const unavailable = await run('mrh34-failed-b', ['1.2']);
@@ -171,6 +182,7 @@ try {
   assert.match(secondary.message, /Unknown native input or screen during initial brief submission.*Delivery evidence unavailable: storage:/s);
   assert.equal(JSON.parse(secondary.message.split('deliveryEvidence=')[1]).availability, 'unavailable');
   check('Private write failure remains secondary to original LAUNCH_FAILED');
+  stage = 'scan Git for control markers';
   const tracked = git('ls-files', '-z').stdout.split('\0').filter(Boolean);
   for (const path of tracked) {
     const content = await fs.readFile(join(source, path)).catch(() => Buffer.alloc(0));
@@ -178,7 +190,7 @@ try {
   }
   check('Control markers absent from tracked Git content');
 } catch (error) {
-  failure = { name: error.name, code: error.code ?? null, message: error.message };
+  failure = { stage, name: error.name, code: error.code ?? null, message: error.message, stack: String(error.stack).split('\n').filter(line => /^\s*at /u.test(line)).slice(0, 12) };
   if (markers.some(marker => failure.message.includes(marker))) failure.message = 'Assertion failed involving private control data; raw error withheld';
 } finally {
   for (const callback of after.reverse()) {
@@ -189,7 +201,7 @@ try {
   Object.assign(process.env, originalEnv);
   safe(steps); safe(checks); safe(failure);
   await publicJson('cli.json', steps);
-  const report = { status: failure ? 'failed' : 'passed', assignment: 'monitor-raf-health:3.4', revision, sourceStatus, versions, platform: { os: process.platform, arch: process.arch }, isolation: 'Private /srv/dev fixture, own HOME/TMPDIR/state; real production CLI/worker/tmux and Codex sandbox; deterministic synthetic TUI, no live model or provider request', checks, failure, cleanup: { complete: cleanupComplete, privateFixtureRemoved: cleanupComplete }, unitRun: 'Separate authorized raf test run; not invoked by this host script' };
+  const report = { status: failure ? 'failed' : 'passed', assignment: 'monitor-raf-health:3.4', revision, sourceStatus, untrackedStatus, versions, platform: { os: process.platform, arch: process.arch }, isolation: 'Private /srv/dev fixture, own HOME/TMPDIR/state; real production CLI/worker/tmux and Codex sandbox; deterministic synthetic TUI, no live model or provider request', checks, failure, cleanup: { complete: cleanupComplete, privateFixtureRemoved: cleanupComplete }, unitRun: 'Separate authorized raf test run; not invoked by this host script' };
   safe(report);
   await publicJson('summary.json', report);
   console.log(JSON.stringify({ ...report, evidenceDirectory: output }));

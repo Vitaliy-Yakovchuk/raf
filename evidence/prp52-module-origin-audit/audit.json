@@ -1,0 +1,187 @@
+{
+  "assignment": {
+    "change": "profile-raf-performance",
+    "item": "5.2",
+    "agentId": "raf-prp52-hotfix",
+    "runId": "1ddd392d-60d8-4511-a9bb-0b747495dc64"
+  },
+  "status": "failed",
+  "workspace": {
+    "repository": "/srv/dev/work/orchestrator/raf-hotfix",
+    "head": "57d3e63022f52ba5878b01e102d3b65782e0686f",
+    "branch": "hotfix",
+    "initialStatus": "?? node_modules",
+    "codeChanges": [],
+    "testChanges": [],
+    "tasksModified": false
+  },
+  "conclusion": "Реалізацію не розпочато через суперечність із контрактом точного snapshot. Main підтвердив завершення failed і наступну spec-стадію. Чинний текст не називає evidence дослівно; висновок про його охоплення випливає з повної незмінної копії, повної відповідності джерелу та перевірки state guard точного snapshot за тим самим реєстром. Окремого runtime inventory контракт не визначає. Збереження повного activation fingerprint саме по собі не усуває цю суперечність для state guard.",
+  "sources": [
+    {
+      "path": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/specs/projects/raf/workspace-routing/spec.md",
+      "sha256": "7556772afbbf2b101975c055386976412595870027bc551b9f92b0695334ee78",
+      "startLine": 71,
+      "endLine": 78,
+      "text": "### Requirement: Перевірений hotfix активується цілісно\n\nMain SHALL активувати hotfix після комітів, build, цільових тестів і справжнього CLI smoke незмінного snapshot із raf-hotfix. Публікація SHALL серіалізуватися, звіряти base/HEAD і fingerprint та атомарно перемикати покоління. Читачі SHALL виконувати ціле старе або нове покоління, включно з recovery; файли, сесії й повідомлення SHALL зберігатися. Після активації main SHALL перенести виправлення в develop за чинним flow без втрати паралельної роботи.\n\n#### Scenario: Обов'язковий smoke кандидата\n\n- **WHEN** кандидат підготовлено до публікації\n- **THEN** після штатного build і цільових тестів на ізольованому стані перевіряються імпорт production CLI/runtime, agent ps, доставка agent message та старт/готовність/зупинка служби; сам build, node --check, коміт чи succeeded-звіт не означає активації"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/specs/projects/raf/state-store/spec.md",
+      "sha256": "020e4992e04e138fa4e97f9712a6491bccfa17240df995febb859e39e453086f",
+      "startLine": 98,
+      "endLine": 110,
+      "text": "### Requirement: Захист робочої бази від іншої гілки raf\n\nraf SHALL перед першим доступом до стану перевіряти фактичне дерево коду за conf/projects.json#/projects/raf/path і канонічний шлях стану для всіх production-входів. Develop SHALL не відкривати робочу ~/.raf. Help і відмови парсера SHALL не потребувати runtime чи state context і не звертатися до стану. Помилки конфігурації, файлового доступу й контексту SHALL розрізнятися за сценаріями нижче; fallback заборонений.\n\n#### Scenario: Кандидат hotfix і активоване покоління\n\n- **WHEN** непублікований hotfix виконує CLI зі зверненням до робочого стану або процес намагається підставити шлях production-покоління\n- **THEN** guard відмовляє STATE_CONTEXT_REFUSED до доступу; build/smoke кандидата працюють лише з явно ізольованим QA HOME, а легітимний доступ активованого коду потребує перевірки його фактичного походження\n\n#### Scenario: Незмінні production-покоління під час активації\n\n- **WHEN** механізм атомарної активації workspace-routing залишає процесу поточний або ще використовуваний попередній snapshot виконуваного коду\n- **THEN** доступ до робочого стану дозволений лише після перевірки фактичних модулів, канонічного шляху й точного snapshot за довіреним механізмом активації; env, cwd, назва каталогу, detached HEAD і база main не є доказом; непублікований кандидат лишається QA-only, правила схем, aliases і явної міграції збережені"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/hotfix-worktree-design.md",
+      "sha256": "c3c64e914c9dc1c619e036aeb88068de91b863aeb973ed1650d431cc25d4f1ec",
+      "startLine": 22,
+      "endLine": 28,
+      "text": "## Перевірка точного snapshot\n\nАгенти комітять у hotfix; main контролює перевірку та публікацію. Build/test/deploy виконуються засобами проєкту за Q56; служба не стає build/deploy системою, нової публічної команди raf немає. Наявні внутрішні порти verify/activate/recover/reader використовуються повторно; зміни типів фіксує test-scaffold, нові тіла — лише NotImplemented до іншого implement-агента.\n\nMain узгоджує коротку паузу письменників для одержання цілісного snapshot із raf-hotfix. Перед перевірками потрібні чисті source/індекс і включення поточного main; чужі незакомічені файли не стираються. Snapshot включає main `baseCommit`, hotfix commit/tree, виконувані source, артефакти build та конфігураційні входи з hash/identity. Штатна збірка створює очікувані артефакти; вони включаються в fingerprint. Якщо build змінює tracked входи, main спершу фіксує належний коміт і повторює повну перевірку остаточного snapshot, не додає build-коміт після green.\n\nПеревірка проходить на точному стані raf-hotfix; для збереження результату main запечатує повну незмінну копію, без Git worktree й без спільних writable hardlinks. Якщо gates виконуються на цій копії, доводиться повна відповідність джерелу raf-hotfix, артефактам і conf; це не другий кандидат виконавця. До/після копіювання, gates і перед активацією повторно звіряються HEAD/source/artifacts/conf; бар'єр і fingerprint не дозволяють змішану копію. Будь-яка зміна, включно з чужим новим комітом або rebuild після green, анулює доказ і вимагає нового snapshot та всіх gates. Після запечатування письменники можуть продовжити роботу, але їхня нова версія не активується зі старим доказом. Перевірки не беруть source із живого main як fallback; fixture містить усі потрібні conf/briefs."
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/hotfix-worktree-design.md",
+      "sha256": "c3c64e914c9dc1c619e036aeb88068de91b863aeb973ed1650d431cc25d4f1ec",
+      "startLine": 45,
+      "endLine": 51,
+      "text": "1. Публікатор бере один міжпроцесний lock активації main. Повторно перевіряє поточні main HEAD=`baseCommit`, Git-індекс і чистоту живого дерева, відсутність конфлікту з іншою активацією, fingerprint перевіреного snapshot hotfix, незмінність його HEAD/входів і всі gates. Наявні локальні tracked/untracked файли не стираються й не stash-яться автоматично: забруднений target відхиляється. Конкурентний переможець робить інший перевірений snapshot застарілим; його перенесення на нову базу потребує нових build/smoke.\n2. Готує повний незмінний snapshot поза живим pathname на тому самому файловому томі. Механізм має одну точку атомарного перемикання всього дерева: наприклад підтримуваний ОС atomic directory exchange. Якщо обрано indirection поколінь, main gitlink/підмодуль і зареєстрований робочий маршрут мають лишитися коректними; не можна мовчки замінити main-підмодуль довільним symlink. Конкретний provider, перевірка його підтримки та Git relocation/recovery задаються каркасом і перевіряються на реальному filesystem; unsupported/EXDEV — відмова без пофайлового fallback. Нові залежності проходять чинний dependency-decisions.\n3. Читачі — CLI, службові entrypoints, worker, hook/notice X.1 та відкладені imports — мають стабільне покоління протягом операції. Це забезпечує прив'язка процесу до незмінного snapshot або перевірене припинення/дренування читачів перед перемиканням. Сам lock публікатора не зупиняє Node import за абсолютним raf-main pathname. Служба/worker не можуть утримувати старі модулі й дочитувати нові з рухомого шляху. Сесії runner і їхня адресація не закриваються; за потреби перезапуску хостового компонента доставка зберігається чинним механізмом. Результати message не губляться й не дублюються через повтор активації.\n4. До зміни refs/дерева фіксує мінімальний durable intent: попередній/новий snapshot, base/target commit, ownership, фазу. Файлове перемикання й Git ref/index metadata не є однією Git-транзакцією: потрібні gate входу читачів та ідемпотентне recovery. Під час невизначеної фази нові читачі виконують повне попереднє покоління або чекають у чинному бюджеті з явною помилкою; не виконують змішаний шлях. Після аварії recovery під lock звіряє фактичний snapshot і завершує узгодження до наступної публікації. Не виводить фазу лише з наявності каталогу.\n5. Успіх означає: робочий маршрут показує весь перевірений snapshot, main ref/HEAD/індекс узгоджені з його commit, main-підмодуль/gitlink збережений, smoke активованого покоління успішний. Збій після перемикання повертає попередній повний snapshot атомарно або завершує підтверджений новий; поки факт не доведений, активація не succeeded. Попередній snapshot і метадані не видаляються до завершення recovery та виходу читачів. Перемикання коду не мігрує SQLite: rollback коду не є downgrade стану.\n\nДовірений реєстр активних/ще використовуваних production-поколінь, якщо він потрібний provider, недоступний на запис кандидату. State guard перевіряє фактичні модулі й точний snapshot за ним; env з generation ID не є доказом. Кандидат із базою main лишається QA-only. Підміна production-snapshot також відхиляється. Після завершення й звільнення читачів тимчасовий intent/старі покоління прибираються, не накопичуються як історія. Первинну помилку перевірки/активації не замінює помилка cleanup."
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/raf-hotfix/src/hotfix-origin.ts",
+      "sha256": "600b77327ce71caac1cdb857c0e8b5ff3de2805068c311fea5a76db8655d9c59",
+      "startLine": 12,
+      "endLine": 40,
+      "text": "function inventory(root: string): { path: string; sha256: string; mode: number }[] {\n  const files: { path: string; sha256: string; mode: number }[] = [];\n  function walk(directory: string) {\n    for (const name of readdirSync(directory).sort()) {\n      if (directory === root && ['.git', 'node_modules'].includes(name)) continue;\n      const path = join(directory, name);\n      const info = lstatSync(path);\n      if (info.isSymbolicLink()) throw new Error('Generation symlink');\n      if (info.isDirectory()) walk(path);\n      else if (info.isFile() && info.nlink === 1) files.push({ path: relative(root, path), sha256: createHash('sha256').update(readFileSync(path)).digest('hex'), mode: info.mode & 0o777 });\n      else throw new Error('Generation alias');\n    }\n  }\n  walk(root);\n  return files;\n}\nexport function hotfixModuleOrigin(orchestratorRoot: string, productionRoot: string, modulePath: string, qa: boolean): string | undefined {\n  const common = git(productionRoot, 'rev-parse', '--path-format=absolute', '--git-common-dir');\n  const control = join(realpathSync(common), 'raf-hotfix');\n  const root = dirname(dirname(modulePath));\n  if (realpathSync(root) !== root || !['src', 'bin', 'scripts'].includes(relative(root, modulePath).split('/')[0])) return undefined;\n  try {\n    const state = json(join(control, 'registry.json'));\n    const generation = state.generations?.[root];\n    if (generation && root.startsWith(join(control, 'generations') + '/') && generation.root === root) {\n      if (createHash('sha256').update(JSON.stringify(inventory(root))).digest('hex') !== generation.fingerprint) return undefined;\n      return root;\n    }\n  } catch {}"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/raf-hotfix/src/hotfix-host.ts",
+      "sha256": "c779d99134228b8d51cebe910082cc862a9d3bac6cbeb2eebc599e7ee1432386",
+      "startLine": 127,
+      "endLine": 145,
+      "text": "export async function inventory(root: string, omit = new Set(['.git', 'node_modules'])): Promise<{ path: string; sha256: string; mode: number }[]> {\n  const files: { path: string; sha256: string; mode: number }[] = [];\n  async function walk(directory: string) {\n    for (const name of (await fs.readdir(directory)).sort()) {\n      if (directory === root && omit.has(name)) continue;\n      const path = join(directory, name);\n      const info = await fs.lstat(path);\n      if (info.isSymbolicLink()) throw new Error('Snapshot symlink refused: ' + path);\n      if (info.isDirectory()) await walk(path);\n      else if (info.isFile() && info.nlink === 1) files.push({ path: relative(root, path), sha256: hash(await fs.readFile(path)), mode: info.mode & 0o777 });\n      else throw new Error('Snapshot file alias or unsupported type: ' + path);\n    }\n  }\n  await walk(root);\n  return files;\n}\nexport async function copyTree(source: string, target: string): Promise<void> {\n  await fs.cp(source, target, { recursive: true, dereference: false, errorOnExist: true, force: false, filter: path => !['.git', 'node_modules'].includes(relative(source, path).split(sep)[0]) });\n  if (await exists(join(source, 'node_modules'))) await fs.cp(join(source, 'node_modules'), join(target, 'node_modules'), { recursive: true, dereference: true });"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/raf-hotfix/src/hotfix-activation.ts",
+      "sha256": "fd16ae7f499396b6cc16b7e51a8c19363b5f9499ee288a24393f949a131836ad",
+      "startLine": 280,
+      "endLine": 289,
+      "text": "async function generation(host: HotfixHost, route: Awaited<ReturnType<typeof mainRoute>>, source: string, commit: string, configurationRoot = join(host.orchestratorRoot, 'conf')): Promise<Generation> {\n  const parent = join(route.control, 'generations', randomUUID());\n  const root = join(parent, 'raf-main');\n  await fs.mkdir(parent, { recursive: true, mode: 0o700 });\n  await durable(join(parent, 'ownership.json'), { root, orchestratorRoot: host.orchestratorRoot, repositoryIdentity: route.repositoryIdentity });\n  await copyTree(source, root);\n  await fs.cp(configurationRoot, join(parent, 'conf'), { recursive: true, dereference: false });\n  const files = await inventory(root);\n  return { root, commit, fingerprint: hash(JSON.stringify(files)), files };\n}"
+    },
+    {
+      "path": "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/autonomous-development/spec.md",
+      "sha256": "2ab2c7ca636764513d2e2da81efb8f8be38cec9cf50c6d7d36e548a9d9798c36",
+      "startLine": 119,
+      "endLine": 136,
+      "text": "### Requirement: Аудит та вилучення неактуальних змін\n\nАгент SHALL сам перевіряти актуальність та узгодженість доручених змін із чинними вимогами й фактичним станом, читаючи лише релевантні джерела. Він MAY відмовитися від суперечливої або неактуальної задачі. У такому разі SHALL записати failed із конкретними причинами, ID змін/пунктів і посиланнями на докази; невиконане SHALL не позначатися виконаним. Обґрунтована відмова SHALL вважатися нормальним результатом аудиту, а не вимогою виконати задачу всупереч висновкам.\n\n#### Scenario: Виконавець виявив суперечність\n\n- **WHEN** доручена задача суперечить чинній вимозі або вже втратила актуальність\n- **THEN** агент пояснює відмову в answer і reason відповідних failed-пунктів JSON, залишає фактичний стан tasks.md та передає висновок main\n\n### Requirement: Main коригує changes після аудиту\n\nMain SHALL сам перевіряти причини відмови та змінювати відповідні changes: уточнювати обсяг, прибирати неактуальні пункти або вилучати неактуальну зміну цілком. Вилучення SHALL бути допустимим скасуванням, а не успішною реалізацією чи archive. Main SHALL враховувати залежності та чинні доручення; відсутність вилученої зміни SHALL не підтверджувати succeeded. Зміна затвердженого flow SHALL залишатися в межах projects/orchestrator/flow-approval.\n\n#### Scenario: Main підтвердив неактуальність\n\n- **WHEN** main перевірив докази та підтвердив, що зміну більше не потрібно реалізовувати\n- **THEN** він прибирає її з changes, узгоджує залежні задачі та повідомляє залучених виконавців, не проставляючи фіктивні галочки й не архівуючи її як виконану\n"
+    }
+  ],
+  "implementationObservation": "hotfixModuleOrigin повторно обчислює SHA256 JSON повного inventory і порівнює generation.fingerprint; generation() записує fingerprint того самого повного inventory. Обидва inventory пропускають лише кореневі .git/node_modules. Це read-only аналіз коду, не вимір продуктивності й не red.",
+  "verification": {
+    "unit": {
+      "executed": false,
+      "reason": "Обрана дозволена гілка обґрунтованої відмови до реалізації. Тести не створювалися; main не реєструє групу.",
+      "group": "profile-raf-performance/module-origin-cost",
+      "runId": null,
+      "outcome": "not-run",
+      "cliExitCode": null,
+      "childExitCode": null,
+      "knownRed": null,
+      "unexecuted": null,
+      "unknown": null,
+      "timeout": null,
+      "cleanup": "not-applicable",
+      "groupState": "not-created; no test run or timeout budget consumed",
+      "nextAction": "Main оформлює spec; після уточнення контракту автор hotfix спершу пише тест і сам запускає red, далі hotfix з тим самим group/HOME/ledger."
+    },
+    "build": {
+      "executed": false,
+      "reason": "Код не змінювався; обґрунтована відмова до реалізації."
+    },
+    "livePerformance": {
+      "executed": false,
+      "reason": "Before/after стенд належить main; виправлення не створено. Один agent ps використовувався лише для перевірки адресата main; його урізаний вивід не є доказом продуктивності."
+    },
+    "archive": {
+      "executed": false,
+      "reason": "5.2 не виконано, інші пункти зміни відкриті."
+    }
+  },
+  "coordination": {
+    "recipient": "main",
+    "messages": [
+      {
+        "receiptId": "e8c190de-bf21-42e3-874c-c1e169d8bdd1",
+        "purpose": "Початкова звірка контракту, потреби реєстрації групи та foreign grants."
+      },
+      {
+        "receiptId": "f0641d86-9394-49e4-acf6-16362928edec",
+        "purpose": "Передано висновок failed з адресами суперечності й пропозицією окремої delta."
+      }
+    ],
+    "mainDecision": "Прийнято: завершуй обґрунтованим failed. Групу не реєструю. Далі main оформить [spec] у profile-raf-performance за пропозицією."
+  },
+  "proposedDelta": {
+    "applied": false,
+    "owner": "main; наступний [spec] у profile-raf-performance",
+    "addresses": [
+      {
+        "path": "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/workspace-routing/spec.md",
+        "section": "Requirement: Перевірений hotfix активується цілісно",
+        "action": "Уточнити відмінність повного activation fingerprint і runtime inventory; повні activation gates, recovery та exact-snapshot залишити чинними."
+      },
+      {
+        "path": "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/state-store/spec.md",
+        "section": "Requirement: Захист робочої бази від іншої гілки raf / Scenario: Незмінні production-покоління під час активації",
+        "action": "Замінити неоднозначну перевірку точного snapshot на перевірку фактичного production-origin за окремим довіреним runtime inventory з посиланням на workspace-routing."
+      },
+      {
+        "path": "openspec/changes/complete-raf-flow-contracts/hotfix-worktree-design.md",
+        "section": "Перевірка точного snapshot, абзаци 26 і 28; алгоритм публікації, абзаци 45–51",
+        "action": "Зберегти повну копію/відповідність і анулювання activation gates після будь-якої зміни; у абзаці 51 явно описати відмінну область runtime guard."
+      }
+    ],
+    "requirement": {
+      "title": "Повний snapshot активації та походження виконуваного коду",
+      "text": "Main SHALL запечатувати й перевіряти повний activation snapshot за чинними exact-snapshot gates, включно з evidence, документацією, source, build-артефактами та конфігураційними входами; зміна будь-якого входу до завершення публікації SHALL анулювати gates. Довірена публікація SHALL окремо визначати повний консервативний runtime inventory усіх файлів, які raf може завантажити, виконати або прочитати як код чи конфігурацію пакета: source/entrypoints, відкладені imports, дочірні executable/scripts, build-артефакти, кореневі й вкладені package metadata та інші фактичні входи резолюції/завантаження. Для кожного захищеного файла SHALL фіксуватися канонічний відносний шлях, вміст і значущий mode. Опис областей inventory та всіх входів SHALL бути явним і перевіреним; недоведена повнота чи невідомий loadable вхід SHALL давати відмову, без автоматичного довірення за назвою каталогу або лише розширенням. Runtime state guard SHALL при кожній перевірці походження звіряти поточний повний набір цих входів із довіреним runtime inventory того самого активованого або утримуваного покоління й відхиляти зміну, додавання, видалення чи alias будь-якого такого входу до доступу до production state. Evidence та документація SHALL виключатися з runtime inventory лише коли вони не є виконуваними/завантажуваними чи package-config входами; така оптимізація SHALL не змінювати повного activation snapshot, публікації, recovery й закріплення покоління. Кількість читань вмісту під час однієї runtime-origin перевірки SHALL не залежати від кількості виключених evidence/документів. Новий кеш, поріг чи інтервал перевірки SHALL не додаватися."
+    },
+    "stateStoreScenarioReplacement": "- WHEN процес виконує поточне або ще використовуване попереднє опубліковане покоління\n- THEN доступ до робочого стану дозволений лише після перевірки фактичних модулів, канонічного шляху та повного runtime inventory цього покоління за довіреним механізмом активації workspace-routing; runtime inventory відокремлений від повного activation snapshot за відповідною вимогою; env, cwd, назва каталогу, detached HEAD і база main не є доказом; непублікований кандидат лишається QA-only, правила схем, aliases і явної міграції збережені.",
+    "designReplacementParagraph51": "Довірений реєстр активних/ще використовуваних production-поколінь недоступний на запис кандидату й пов’язує повний activation snapshot та окремий повний runtime inventory з одним поколінням/commit. Full activation fingerprint залишається доказом незмінної повної копії для sealing, gates, публікації та recovery. State guard перевіряє фактичні модулі й поточний runtime inventory за реєстром; він не перечитує виключені не-runtime evidence/документи. Визначення областей, повнота, додавання/видалення, modes і alias-захист runtime inventory мають бути доведені відповідними сценаріями workspace-routing. Env з generation ID не є доказом, кандидат лишається QA-only. Решта правил утримання поколінь, cleanup та збереження первинної помилки чинна.",
+    "scenarios": [
+      {
+        "title": "Evidence не збільшує роботу runtime guard",
+        "when": "До покоління з незмінним runtime inventory додаються численні не-runtime evidence JSON/log і документи.",
+        "then": "Одна перевірка походження читає ту саму кількість runtime-файлів; результат походження однаковий. Це не дозволяє використати старі activation gates для зміненого повного snapshot."
+      },
+      {
+        "title": "Зміна завантажуваного входу",
+        "when": "Змінено source, lazy import, script/child executable, артефакт або root/nested package-config вхід, навіть при незмінному entrypoint.",
+        "then": "Походження відхиляється до production state; mode та byte mutations перевіряються окремо."
+      },
+      {
+        "title": "Додавання або видалення завантажуваного входу",
+        "when": "У захищеній області додано новий loadable/package-config файл або видалено відомий, зокрема змінено результат module/package resolution.",
+        "then": "Походження відхиляється; перевірка лише переліку раніше відомих файлів не є достатньою."
+      },
+      {
+        "title": "Alias або обхід області",
+        "when": "Файл чи каталог замінено symlink/hardlink, змінено canonical root, шлях виходить за покоління або executable/package metadata маскується в evidence/docs.",
+        "then": "Походження відхиляється або файл входить до консервативного runtime inventory; назва каталогу не створює винятку із захисту, недоведена область дає явну відмову."
+      },
+      {
+        "title": "Повний activation snapshot незмінний",
+        "when": "Після sealing/gates і перед завершенням публікації змінено навіть виключений з runtime inventory evidence чи документ.",
+        "then": "Повний activation fingerprint/gates відхиляє публікацію; потрібні новий snapshot і всі gates; live код, metadata та чужа робота не змінюються."
+      },
+      {
+        "title": "Утримане попереднє покоління",
+        "when": "Публікація перемикає покоління, поки читач має lease попереднього.",
+        "then": "Обидва покоління перевіряються проти власного довіреного runtime inventory; deferred imports не змішуються; cleanup/recovery зберігає чинні гарантії."
+      },
+      {
+        "title": "Недоведений або застарілий inventory",
+        "when": "У реєстрі немає перевіреного runtime inventory, його область неповна або змінився механізм завантаження.",
+        "then": "Runtime доступ відхиляється з конкретною причиною або використовує чинну повну перевірку; немає тихого приймання неповного набору чи довіри до нового неактивованого коду."
+      }
+    ],
+    "verificationPlan": "Після spec: автор пише test/hotfix-origin-cost.test.ts, комітить і сам виконує initial red; main реєструє одну власну групу profile-raf-performance/module-origin-cost з новим файлом і test/state-migration-guard.test.ts, test/service-entry.test.ts, test/production-entry.test.ts, test/hotfix-activation.test.ts, test/hotfix-worktree.test.ts. Далі виправлення тим самим hotfix-автором, hotfix з тим самим group/HOME/ledger; незмінені повні TestRunResult/stderr/CLI і child exit окремо; build/check:comments; live agent ps before/after на стенді main. Наявних тестів не послаблювати."
+  }
+}

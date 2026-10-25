@@ -1,0 +1,17 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/s72-bDaBYe/root/raf-hotfix",
+    "merge",
+    "--ff-only",
+    "68cc68a3576b5be854ea33183abe3af6b131dcfe"
+  ],
+  "cwd": "/srv/dev/s72-bDaBYe/root/raf-hotfix",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "Updating 019f06c..68cc68a\nFast-forward\n qa/staged.txt    | 2 +-\n qa/unstaged.txt  | 2 +-\n qa/untracked.txt | 1 +\n 3 files changed, 3 insertions(+), 2 deletions(-)\n create mode 100644 qa/untracked.txt\n",
+  "stderr": ""
+}

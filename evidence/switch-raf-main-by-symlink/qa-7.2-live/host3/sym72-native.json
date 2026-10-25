@@ -1,0 +1,21 @@
+{
+  "status": "failed",
+  "answer": "Виконав native wait 0 і raf agent ps. Дозволена команда agent message --to main --text sym72-native-stage-0 завершилася з CLI code 1: HANDLER_FAILED, Recipient has no recognized empty agent composer. Точний stdout/stderr/code збережено в sym72-native-stage-0.json у теці запуску. QA-план наказує після ненульового коду зупинити залежні кроки, тому ack 0, стадії 1–4 і цільовий unit-прогін не виконані. Робоче дерево raf-develop чисте; код не змінювався. Власних git-комітів немає: результат є лише звітом і доказом у теці запуску.",
+  "changes": [
+    {
+      "id": "sym72-fixture",
+      "items": [
+        {
+          "id": "1.1",
+          "status": "failed",
+          "reason": "План qa/sym72-instructions.txt зупинено після agent message stage 0: CLI code 1 HANDLER_FAILED — отримувач main не має розпізнаного порожнього composer. Доказ: sym72-native-stage-0.json; wait 0 завершився з кодом 0, agent ps показав addressId main. Залежні кроки та тест не виконувалися."
+        }
+      ]
+    }
+  ],
+  "commits": [],
+  "context": {
+    "unnecessary": [],
+    "missing": []
+  }
+}

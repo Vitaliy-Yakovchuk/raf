@@ -9,7 +9,7 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
 import type { ProductionStoreOptions } from '../src/main-production-store.ts';
 import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
 import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
-import { prepareLegacyLiveProjects, prepareLiveProjects } from '../scripts/qa-main-symlink-fixture.ts';
+import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation } from '../scripts/qa-main-symlink-fixture.ts';
 import { CatalogGenerator } from '../src/catalog-generator.ts';
 import { productionBindings } from '../src/production-bindings.ts';
 
@@ -329,4 +329,20 @@ test('production QA fixture: store refusal prevents entry preparation', async t 
     error => error === f.storeFailure);
   assert.equal(entryPrepared, false);
   assert.equal(f.layoutCalls.length, 0);
+});
+
+test('native main fixture: actual Claude invocation retains external auth selectors without substituting a stdin receiver', () => {
+  const config = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+  const protocol = config.runnerProtocols.find((p: any) => p.runner === 'claude');
+  const selectors = { CODEX_HOME: '/host/provider-codex', CLAUDE_CONFIG_DIR: '/host/provider-claude' };
+  const before = structuredClone({ protocol, selectors });
+  const id = '8d180acd-e68c-4b55-8f88-9fd0b7142afe';
+  const invocation = prepareLiveMainInvocation(protocol, selectors, id);
+  assert.equal(invocation.executable, protocol.executable, 'main must run the actual configured Claude CLI');
+  assert.deepEqual(invocation.args.slice(0, protocol.baseArgs.length), protocol.baseArgs);
+  assert.ok(invocation.args.includes(id), 'native identity must be assigned, then confirmed through /status');
+  assert.deepEqual(invocation.env, selectors, 'existing selectors are passed through without reading or copying authentication');
+  assert.deepEqual({ protocol, selectors }, before);
+  assert.throws(() => prepareLiveMainInvocation(protocol, { CODEX_HOME: selectors.CODEX_HOME }, id), /CLAUDE_CONFIG_DIR/);
+  assert.throws(() => prepareLiveMainInvocation(protocol, { ...selectors, CLAUDE_CONFIG_DIR: 'relative' }, id), /absolute|CLAUDE_CONFIG_DIR/);
 });

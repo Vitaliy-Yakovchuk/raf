@@ -1,0 +1,79 @@
+{
+  "workspaceSha": "a01c63629ca1b3ff512236404079c5c7bb755688",
+  "mainConfStabilized": "3eb94513a3",
+  "commands": {
+    "red": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+    "qa": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts"
+  },
+  "runs": [
+    {
+      "phase": "red",
+      "runId": "918fc5fa-2763-4859-8591-17b4f7ee24e4",
+      "outcome": "assertions-failed",
+      "childExitCode": 1,
+      "cliCode": 1,
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "passed": 17,
+      "knownRed": [
+        {
+          "file": "test/production-start-layout.test.ts",
+          "name": "native main fixture: actual Claude invocation retains external auth selectors without substituting a stdin receiver"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "implement",
+      "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    },
+    {
+      "phase": "qa",
+      "runId": "4d5a4508-3191-46a2-a7de-be7ecbbc6297",
+      "outcome": "passed",
+      "childExitCode": 0,
+      "cliCode": 0,
+      "selection": {
+        "files": [
+          "test/production-start-layout.test.ts"
+        ],
+        "testIds": []
+      },
+      "passed": 18,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "removed": [],
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "home": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+    }
+  ],
+  "coordination": {
+    "receipt": "edb6556c-896a-44e1-bbed-544999ceff27",
+    "mainConfirmedStableAndRetry": true,
+    "noSrcOverlap": true
+  },
+  "verification": {
+    "syntax": 0,
+    "commentPolicy": 0
+  },
+  "liveGreenPending": true
+}

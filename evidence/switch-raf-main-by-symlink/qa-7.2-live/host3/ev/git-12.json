@@ -1,0 +1,17 @@
+{
+  "command": [
+    "git",
+    "--no-optional-locks",
+    "-C",
+    "/srv/dev/s72-bDaBYe/root",
+    "commit",
+    "-m",
+    "qa: isolated orchestrator and live actor assignment"
+  ],
+  "cwd": "/srv/dev/s72-bDaBYe/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "[main (root-commit) b8d9b87] qa: isolated orchestrator and live actor assignment\n 30 files changed, 9082 insertions(+)\n create mode 100644 .gitmodules\n create mode 100644 conf/README.md\n create mode 100644 conf/briefs/README.md\n create mode 100644 conf/briefs/completion.md\n create mode 100644 conf/briefs/runners/agy.md\n create mode 100644 conf/briefs/runners/claude.md\n create mode 100644 conf/briefs/runners/codex.md\n create mode 100644 conf/briefs/runners/grok.md\n create mode 100644 conf/briefs/tasks/context-review.md\n create mode 100644 conf/briefs/tasks/coordinator.md\n create mode 100644 conf/briefs/tasks/design.md\n create mode 100644 conf/briefs/tasks/hotfix.md\n create mode 100644 conf/briefs/tasks/implement.md\n create mode 100644 conf/briefs/tasks/main.md\n create mode 100644 conf/briefs/tasks/qa.md\n create mode 100644 conf/briefs/tasks/spec.md\n create mode 100644 conf/briefs/tasks/test-scaffold.md\n create mode 100644 conf/flow.json\n create mode 100644 conf/models.json\n create mode 100644 conf/project-priorities.json\n create mode 100644 conf/projects.json\n create mode 100644 conf/raf-constants.json\n create mode 100644 conf/raf.json\n create mode 100644 conf/temporary-exceptions.json\n create mode 100644 conf/test-runs.json\n create mode 100644 openspec/changes/sym72-fixture/.openspec.yaml\n create mode 100644 openspec/changes/sym72-fixture/proposal.md\n create mode 100644 openspec/changes/sym72-fixture/tasks.md\n create mode 100644 openspec/config.yaml\n create mode 160000 raf-main\n",
+  "stderr": ""
+}

@@ -1,0 +1,241 @@
+diff --git a/scripts/qa-main-symlink-fixture.ts b/scripts/qa-main-symlink-fixture.ts
+index 0a223bd..cfd2364 100644
+--- a/scripts/qa-main-symlink-fixture.ts
++++ b/scripts/qa-main-symlink-fixture.ts
+@@ -1,3 +1,6 @@
++import assert from 'node:assert/strict';
++import path from 'node:path';
++
+ export function prepareLiveProjects(configuration: { projects: Record<string, any> }) {
+   const projects = structuredClone(configuration);
+   Object.assign(projects.projects.raf, {
+@@ -12,3 +15,16 @@ export function prepareLegacyLiveProjects(configuration: { projects: Record<stri
+   delete projects.projects.raf.mainCopies;
+   return projects;
+ }
++
++export function prepareLiveMainInvocation(protocol: { executable: string; baseArgs: string[]; sessionIdFlag: string | null }, selectors: Record<string, string | undefined>, sessionId: string) {
++  const env: Record<string, string> = {};
++  for (const key of ['CODEX_HOME', 'CLAUDE_CONFIG_DIR']) {
++    const value = selectors[key];
++    assert.ok(value && path.isAbsolute(value), key + ' must be an absolute existing host selector');
++    env[key] = value;
++  }
++  assert.ok(protocol.executable && protocol.sessionIdFlag, 'Native Claude protocol must support an assigned session');
++  assert.match(sessionId, /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/);
++  return { executable: protocol.executable,
++    args: [...protocol.baseArgs, protocol.sessionIdFlag, sessionId, 'Ти — main-приймач ізольованого QA-стенда. На кожне повідомлення відповідай лише ACK і чекай наступного. Не використовуй інструментів, не запускай команд, не змінюй файлів або налаштувань.'], env };
++}
+diff --git a/scripts/qa-main-symlink-live.md b/scripts/qa-main-symlink-live.md
+index c40671f..1aceb96 100644
+--- a/scripts/qa-main-symlink-live.md
++++ b/scripts/qa-main-symlink-live.md
+@@ -3,13 +3,23 @@ Host channel for `switch-raf-main-by-symlink:7.2`, authorized by main in this se
+ Run once from a clean reviewed raf clone. The clone needs installed ignored `node_modules`; its parent needs a copy of Orchestrator `conf`. Use the existing host provider selector, without copying credentials or changing models/effort:
+ 
+ ```
+-LC_ALL=C CODEX_HOME=/home/dev/.codex node scripts/qa-main-symlink-live.mjs FULL_REVIEWED_COMMIT_SHA
++LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REVIEWED_COMMIT_SHA
+ ```
+ 
+ The first stdout record names `/srv/dev/s72-*/ev`. Preserve complete stdout, stderr and host exit code separately, and return that evidence directory. No unit commands run. The setup's committed QA instructions and CLI output audit do not modify validators, sandbox, routing, native grants or report acceptance. All native RAF commands must be separate direct tools using the original brief prefix. Native tool transcripts, sessions, original brief, exact CLI results, real service output, release gates and Git/state snapshots are archived.
+ 
++The host must retain its existing absolute `CODEX_HOME` and `CLAUDE_CONFIG_DIR` selectors in the invocation environment. The script reads their paths from env, passes them explicitly to its new tmux session, and neither reads nor copies authentication files. Main's pane runs the configured genuine Claude executable and base arguments, with an assigned UUID confirmed through the native `/status` UI and an empty composer confirmed with the actual runner protocol. Its default model and effort are not overridden. The Node coordinator owns only the host command queue; Claude owns terminal input and receives actual messages through the production delivery validator.
++
++Host3 on `da07afe4a1bd13a2cc56389bd56d03eb7502b4d4` already completed `actual-start` on `/srv/dev/s72-bDaBYe`. Do not run that scenario again. The first actor failed on its first message because the former Node stdin receiver had no recognized Claude composer. Main stopped only the driver with SIGTERM/15 and retained the stand. Use this addressed continuation from a clean reviewed clone with dependencies; its parent conf is not copied over the preserved stand:
++
++```
++LC_ALL=C node scripts/qa-main-symlink-live.mjs FULL_REVIEWED_COMMIT_SHA --resume-after-start /srv/dev/s72-bDaBYe
++```
++
++This verifies the original completed/pending boundary, requires no publication or earlier continuation, retains the existing product code/build/Git/SQLite and real service, and replaces only the invalid fixture main pane. It closes the accepted failed actor attempt before launching the first actor for the still unexecuted two-switch chain. The continuation driver SHA and preserved product SHA are recorded separately. It creates fresh `ev-native-main` and `commands-native-main` directories and refuses existing paths instead of repeating an unknown invocation. Return the complete new evidence directory plus host stdout/stderr/exit. The original `ev` and its initial failure remain evidence.
++
+ The fixture first registers a clean ordinary legacy production main with actual `service start`, while `mainCopies` is absent. This establishes the existing immutable generation through the real CLI, rather than making an unverified dirty clone its first generation. That real service stays alive. The fixture then enables `mainCopies`, writes staged/unstaged/untracked sentinels, and invokes actual `service start` for conversion. Both before/after Git states are captured; there is no direct layout/store call or injected registry in setup. The release engine uses real verification/activation gates, cross-store fetches and real compatibility probes on an isolated SQLite snapshot. The host registers complete immutable generations as the publication storage adapter; it never substitutes release gates with hand-built success objects. Native agents retain their original launch identity. The hotfix worktree remains permanent.
+ 
+ Handover is deliberately an assertion, not an always-true port: actual `service start` must return readiness in the newly registered generation. An old ready service does not prove handover and stops the dependent scenario with failure. No forced service restart or agent kill is used to manufacture a passing transition. During the second transition the same native actor writes its actual report, and production must accept it exactly once. A full pass additionally needs review of the returned native transcript and pending/report/ownership artifacts against the delta; the driver's exit zero alone is not the final QA verdict.
+ 
+-On failure, `summary.json` retains completed and unexecuted steps plus the original failure. Review the exact artifacts before any continuation; do not replay completed scenarios or blindly rerun unknown commands. Cleanup targets only this stand's registered actor, tmux endpoints and verified stand-owned service processes. All artifacts remain available; credentials are never archived. These files prepare a reviewable host action and do not claim that live QA has already run.
++On failure, `summary.json` retains completed and unexecuted steps plus the original failure. Review the exact artifacts before any continuation; do not replay completed scenarios or blindly rerun unknown commands. A failed continuation retains the stand and live processes, marks cleanup incomplete, and remains failed. Successful completion cleans up only this stand's registered actor, tmux endpoints and verified stand-owned service processes. All artifacts remain available; credentials are never archived. These files prepare a reviewable host action and do not claim that the remaining live QA has run.
+diff --git a/scripts/qa-main-symlink-live.mjs b/scripts/qa-main-symlink-live.mjs
+index 35b4ec0..1a428bf 100644
+--- a/scripts/qa-main-symlink-live.mjs
++++ b/scripts/qa-main-symlink-live.mjs
+@@ -13,18 +13,24 @@ import { prepareLegacyLiveProjects, prepareLiveProjects } from './qa-main-symlin
+ 
+ const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
+ assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
+-assert.equal(process.env.CODEX_HOME, '/home/dev/.codex');
++const resume = process.argv[3] === '--resume-after-start';
++assert.ok(process.argv.length === 3 || resume && process.argv.length === 5);
++for (const key of ['CODEX_HOME', 'CLAUDE_CONFIG_DIR']) assert.ok(path.isAbsolute(process.env[key] ?? ''), key + ' must be an existing absolute host selector');
+ assert.equal(process.env.LC_ALL, 'C');
+ process.umask(0o077);
+-const stand = fs.mkdtempSync('/srv/dev/s72-'), root = path.join(stand, 'root'), ev = path.join(stand, 'ev');
++const stand = resume ? fs.realpathSync(process.argv[4]) : fs.mkdtempSync('/srv/dev/s72-');
++assert.match(stand, /^\/srv\/dev\/s72-[A-Za-z0-9]+$/);
++const root = path.join(stand, 'root'), ev = path.join(stand, resume ? 'ev-native-main' : 'ev');
++const commands = path.join(stand, resume ? 'commands-native-main' : 'commands');
+ const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop'), hotfix = path.join(root, 'raf-hotfix');
+ const socket = path.join(develop, 'node_modules/.sym72/peer.sock');
+-for (const p of [root, ev, path.join(stand, 'commands')]) fs.mkdirSync(p, { recursive: true });
++if (!resume) fs.mkdirSync(root);
++for (const p of [ev, commands]) fs.mkdirSync(p);
+ const env = { ...process.env, HOME: stand, RAF_QA_HOME: stand, TMPDIR: stand,
+   XDG_CONFIG_HOME: path.join(stand, '.config'), GIT_CONFIG_GLOBAL: path.join(stand, 'gitconfig') };
+ for (const key of Object.keys(env)) if (key.startsWith('GIT_') && key !== 'GIT_CONFIG_GLOBAL' ||
+-  key.startsWith('RAF_') && key !== 'RAF_QA_HOME' || ['TMUX', 'TMUX_PANE', 'NODE_OPTIONS', 'NODE_PATH', 'CLAUDE_CONFIG_DIR'].includes(key)) delete env[key];
+-fs.writeFileSync(env.GIT_CONFIG_GLOBAL, '[user]\n name = Isolated QA\n email = qa@example.invalid\n[commit]\n gpgsign = false\n');
++  key.startsWith('RAF_') && key !== 'RAF_QA_HOME' || ['TMUX', 'TMUX_PANE', 'NODE_OPTIONS', 'NODE_PATH'].includes(key)) delete env[key];
++if (!resume) fs.writeFileSync(env.GIT_CONFIG_GLOBAL, '[user]\n name = Isolated QA\n email = qa@example.invalid\n[commit]\n gpgsign = false\n');
+ const atomic = (p, value) => { fs.writeFileSync(p + '.part', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(p + '.part', p); };
+ const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+ const hash = p => createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+@@ -42,12 +48,21 @@ const must = r => { assert.equal(r.error, null); assert.equal(r.signal, null); a
+ const git = (cwd, ...args) => must(run('git-' + (++sequence), 'git', ['--no-optional-locks', '-C', cwd, ...args], cwd));
+ const wait = async (label, check, budget = 1200000) => {
+   const deadline = Date.now() + budget;
+-  while (Date.now() < deadline) { const value = await check(); if (value) return value; await delay(300); }
++  while (Date.now() < deadline) {
++    const value = await check(); if (value) return value;
++    if (actor) {
++      const latest = sessions().find(s => s.runId === actor.runId);
++      if (latest?.result?.status === 'failed' || latest?.state === 'failed') throw Error('Native actor failed before ' + label + '; inspect exact report ' + actor.launchContext.reportPath);
++      try { assert.deepEqual(identity(actor.process.pid), summary.actorIdentity ?? identity(actor.process.pid)); }
++      catch { throw Error('Native process lost before ' + label + '; no dependent retry'); }
++    }
++    await delay(300);
++  }
+   throw Error('Unexecuted remainder: ' + label);
+ };
+ const request = async (label, args, budget = 1200000) => {
+   const target = path.join(ev, label + '.json'); assert.ok(!fs.existsSync(target), 'Never repeat an unknown invocation');
+-  atomic(path.join(stand, 'commands', String(++sequence).padStart(5, '0') + '.json'), { label, args, budget });
++  atomic(path.join(commands, String(++sequence).padStart(5, '0') + '.json'), { label, args, budget });
+   return wait(label, () => fs.existsSync(target) && read(target), budget + 10000);
+ };
+ const database = operation => {
+@@ -102,7 +117,9 @@ async function archiveNative(label) {
+ console.log(JSON.stringify({ stand, evidence: ev, reviewed }));
+ try {
+   assert.equal(git(source, 'rev-parse', 'HEAD'), reviewed); assert.equal(git(source, 'status', '--porcelain'), '', 'Clean reviewed clone required');
+-  for (const [exe, args] of [['node', ['--version']], ['codex', ['--version']], ['git', ['--version']], ['tmux', ['-V']], ['bwrap', ['--version']], ['uname', ['-a']]]) must(run('version-' + exe, exe, args));
++  for (const [exe, args] of [['node', ['--version']], ['codex', ['--version']], ['claude', ['--version']], ['git', ['--version']], ['tmux', ['-V']], ['bwrap', ['--version']], ['uname', ['-a']]]) must(run('version-' + exe, exe, args));
++  const A = path.join(root, 'raf-main-a'), B = path.join(root, 'raf-main-b');
++  if (!resume) {
+   fs.cpSync(path.join(path.dirname(source), 'conf'), path.join(root, 'conf'), { recursive: true });
+   const projects = prepareLiveProjects(read(path.join(root, 'conf/projects.json')));
+   atomic(path.join(root, 'conf/projects.json'), prepareLegacyLiveProjects(projects));
+@@ -143,14 +160,36 @@ try {
+   const baseline = git(main, 'rev-parse', 'HEAD');
+   git(root, 'update-index', '--add', '--cacheinfo', '160000', baseline, 'raf-main-a');
+   for (const cwd of [develop, hotfix]) { git(cwd, 'fetch', '--no-tags', main, baseline); git(cwd, 'merge', '--ff-only', baseline); }
+-  const A = path.join(root, 'raf-main-a'), B = path.join(root, 'raf-main-b');
+   for (const cwd of [B, develop, hotfix]) for (const name of ['node_modules', 'dist']) fs.cpSync(path.join(A, name), path.join(cwd, name), { recursive: true, dereference: true });
+-  const paneSource = fs.readFileSync(path.join(source, 'test/helpers/z4044-main-pane.mjs'), 'utf8');
+-  fs.writeFileSync(path.join(stand, 'main-pane.mjs'), paneSource);
++  } else {
++    const previous = read(path.join(stand, 'ev/summary.json'));
++    assert.equal(previous.reviewed, 'da07afe4a1bd13a2cc56389bd56d03eb7502b4d4');
++    assert.deepEqual(previous.completed, ['actual-start']);
++    assert.deepEqual(previous.pending, summary.pending.slice(1));
++    assert.equal(fs.realpathSync(main), A);
++    for (const name of ['publication-intent.json', 'published.json', 'ev-native-main/launch.json']) assert.equal(fs.existsSync(path.join(stand, name)), false, 'No previous publication or unknown continuation');
++    assert.equal(git(main, 'status', '--porcelain'), '');
++    summary.resumedFrom = { stand, summary: path.join(stand, 'ev/summary.json'), reviewed: previous.reviewed, conversionBefore: path.join(stand, 'ev/conversion-before.json'), conversionAfter: path.join(stand, 'ev/conversion-after.json'), productHead: git(A, 'rev-parse', 'HEAD') };
++    currentService = JSON.parse(read(path.join(stand, 'ev/actual-initial-start.json')).stdout);
++    complete('actual-start');
++    must(run('replace-invalid-main-fixture', 'tmux', ['-S', socket, 'kill-session', '-t', 'sym72-main']));
++  }
+   env.SYM64_AUDIT = path.join(develop, 'node_modules/.sym72/audit'); fs.mkdirSync(env.SYM64_AUDIT, { recursive: true });
+-  must(run('main-pane', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym72-main', '-x', '180', '-y', '50', process.execPath, path.join(stand, 'main-pane.mjs'), stand])); pane = true;
+-  mainRecord = JSON.parse(must(await wait('main attach', () => fs.existsSync(path.join(stand, 'main-ready.json')) && read(path.join(stand, 'main-ready.json')))));
++  must(run('main-pane', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym72-main', '-x', '180', '-y', '50',
++    ...['CODEX_HOME', 'CLAUDE_CONFIG_DIR', 'SYM64_AUDIT'].flatMap(key => ['-e', key + '=' + env[key]]),
++    process.execPath, path.join(source, 'scripts/qa-main-symlink-pane.mjs'), stand, ev, commands])); pane = true;
++  mainRecord = JSON.parse(must(await wait('main attach', () => {
++    if (fs.existsSync(path.join(ev, 'native-main-error.json'))) throw Error(read(path.join(ev, 'native-main-error.json')).message);
++    return fs.existsSync(path.join(ev, 'main-ready.json')) && read(path.join(ev, 'main-ready.json'));
++  }, 180000)));
+   assert.equal(mainRecord.tmuxSocket, socket);
++  if (resume) {
++    const old = sessions().find(s => s.addressId === 'sym72-native');
++    assert.equal(old?.runId, '566b52f3-80eb-4193-8140-e38e2bcb64e1');
++    assert.equal(old.result?.status, 'failed', 'Only the accepted failed initial attempt may be cleaned up');
++    if (old.state !== 'finished') must(await request('close-failed-native-attempt', ['agent', 'close', '--id', old.addressId, '--force']));
++    summary.closedFailedNativeAttempt = { runId: old.runId, report: old.launchContext.reportPath, status: old.result.status };
++  }
+   must(await request('runner-list', ['runner', 'list'])); must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
+   hh = await import(pathToFileURL(path.join(A, 'src/hotfix-host.ts'))); activation = await import(pathToFileURL(path.join(A, 'src/hotfix-activation.ts')));
+   const host = { orchestratorRoot: root, qaHome: stand, environment: env, sandboxExecutable: 'codex' };
+@@ -164,9 +203,10 @@ try {
+     const registryFile = path.join(route.control, 'registry.json'), registry = read(registryFile);
+     registry.generations[target] = value; registry.current = target; await hh.durable(registryFile, registry); return value;
+   });
+-  await register(A);
+-  must(await request('launch', ['agent', 'run', '--id', 'sym72-native', '--type', 'implement', '--project', 'raf', '--features', 'sym72-fixture', '--phase', 'implement', '--complexity', 'mechanical', '--tasks', 'sym72-fixture:1.1']));
+-  actor = await wait('native registration', () => sessions().find(s => s.addressId === 'sym72-native' && s.state === 'running'));
++  if (!resume) await register(A);
++  const actorId = resume ? 'sym72-native-2' : 'sym72-native';
++  must(await request('launch', ['agent', 'run', '--id', actorId, '--type', 'implement', '--project', 'raf', '--features', 'sym72-fixture', '--phase', 'implement', '--complexity', 'mechanical', '--tasks', 'sym72-fixture:1.1']));
++  actor = await wait('native registration', () => sessions().find(s => s.addressId === actorId && s.state === 'running'));
+   assert.equal(actor.launchContext.selection.runner, 'codex', 'Existing configuration must select native codex');
+   await wait('native initial barrier', () => ready(0));
+   summary.actor = actor; summary.actorIdentity = identity(actor.process.pid); summary.actorBriefSha256 = hash(actor.launchContext.briefPath);
+@@ -301,15 +341,19 @@ try {
+ } finally {
+   try { await archiveNative('native-final'); } catch (error) { summary.archiveError = String(error); summary.status = 'failed'; process.exitCode = 1; }
+   if (env.SYM64_AUDIT) try { summary.cliAudit = archiveStandAudit(env.SYM64_AUDIT, ev); } catch (error) { summary.auditError = String(error); summary.status = 'failed'; process.exitCode = 1; }
+-  if (pane) {
++  if (summary.status === 'succeeded' && pane) {
+     if (actor) try { const latest = sessions().find(s => s.runId === actor.runId); if (latest?.state !== 'finished') must(await request('cleanup-actor', ['agent', 'close', '--id', actor.addressId, '--force'], 120000)); } catch (error) { summary.cleanup.actorError = String(error); }
+     try { must(await request('cleanup-service', ['service', 'stop'], 120000)); } catch (error) { summary.cleanup.serviceError = String(error); }
+     run('cleanup-main', 'tmux', ['-S', socket, 'kill-server']);
+   }
+-  const services = await stopStandServices(root); summary.cleanup.services = services;
+-  if (actor?.process?.evidence?.tmuxSocket) run('cleanup-runner-tmux', 'tmux', ['-S', actor.process.evidence.tmuxSocket, 'kill-server']);
+-  summary.cleanup.complete = services.complete && !summary.cleanup.actorError && !summary.cleanup.serviceError;
+-  if (!summary.cleanup.complete) { summary.status = 'failed'; process.exitCode = 1; }
++  if (summary.status === 'succeeded') {
++    const services = await stopStandServices(root); summary.cleanup.services = services;
++    if (actor?.process?.evidence?.tmuxSocket) run('cleanup-runner-tmux', 'tmux', ['-S', actor.process.evidence.tmuxSocket, 'kill-server']);
++    summary.cleanup.complete = services.complete && !summary.cleanup.actorError && !summary.cleanup.serviceError;
++    if (!summary.cleanup.complete) { summary.status = 'failed'; process.exitCode = 1; }
++  } else {
++    summary.cleanup = { complete: false, retained: true, stand, reason: 'Preserve the exact failed boundary and live identities for addressed continuation; do not replay completed scenarios or manually restart services.' };
++  }
+   summary.finishedAt = new Date().toISOString(); atomic(path.join(ev, 'summary.json'), summary);
+   console.log(JSON.stringify({ status: summary.status, evidence: ev, completed: summary.completed, pending: summary.pending, cleanup: summary.cleanup }));
+ }
+diff --git a/test/production-start-layout.test.ts b/test/production-start-layout.test.ts
+index 07df96e..1b2878f 100644
+--- a/test/production-start-layout.test.ts
++++ b/test/production-start-layout.test.ts
+@@ -9,7 +9,7 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
+ import type { ProductionStoreOptions } from '../src/main-production-store.ts';
+ import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
+ import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
+-import { prepareLegacyLiveProjects, prepareLiveProjects } from '../scripts/qa-main-symlink-fixture.ts';
++import { prepareLegacyLiveProjects, prepareLiveProjects, prepareLiveMainInvocation } from '../scripts/qa-main-symlink-fixture.ts';
+ import { CatalogGenerator } from '../src/catalog-generator.ts';
+ import { productionBindings } from '../src/production-bindings.ts';
+ 
+@@ -330,3 +330,19 @@ test('production QA fixture: store refusal prevents entry preparation', async t
+   assert.equal(entryPrepared, false);
+   assert.equal(f.layoutCalls.length, 0);
+ });
++
++test('native main fixture: actual Claude invocation retains external auth selectors without substituting a stdin receiver', () => {
++  const config = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
++  const protocol = config.runnerProtocols.find((p: any) => p.runner === 'claude');
++  const selectors = { CODEX_HOME: '/host/provider-codex', CLAUDE_CONFIG_DIR: '/host/provider-claude' };
++  const before = structuredClone({ protocol, selectors });
++  const id = '8d180acd-e68c-4b55-8f88-9fd0b7142afe';
++  const invocation = prepareLiveMainInvocation(protocol, selectors, id);
++  assert.equal(invocation.executable, protocol.executable, 'main must run the actual configured Claude CLI');
++  assert.deepEqual(invocation.args.slice(0, protocol.baseArgs.length), protocol.baseArgs);
++  assert.ok(invocation.args.includes(id), 'native identity must be assigned, then confirmed through /status');
++  assert.deepEqual(invocation.env, selectors, 'existing selectors are passed through without reading or copying authentication');
++  assert.deepEqual({ protocol, selectors }, before);
++  assert.throws(() => prepareLiveMainInvocation(protocol, { CODEX_HOME: selectors.CODEX_HOME }, id), /CLAUDE_CONFIG_DIR/);
++  assert.throws(() => prepareLiveMainInvocation(protocol, { ...selectors, CLAUDE_CONFIG_DIR: 'relative' }, id), /absolute|CLAUDE_CONFIG_DIR/);
++});

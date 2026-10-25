@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/s72-bDaBYe/root/raf-main/bin/raf.ts",
+    "runner",
+    "limits",
+    "--runners",
+    "codex"
+  ],
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "[{\"runner\":\"codex\",\"collected\":true,\"reason\":\"fresh\",\"observedAt\":\"2026-10-25T23:27:43.790Z\",\"ageMs\":884,\"pools\":[{\"id\":\"shared\",\"label\":\"Weekly limit\",\"windows\":[{\"name\":\"weekly\",\"label\":\"Weekly limit\",\"state\":\"measured\",\"used\":0.27,\"remaining\":0.73,\"resetAt\":\"2026-11-01T06:10:00.000Z\",\"resetUncertaintyMs\":60000,\"explanation\":null}]}],\"credits\":null,\"issues\":[]}]\n",
+  "stderr": ""
+}

@@ -1,0 +1,24 @@
+{
+  "command": [
+    "tmux",
+    "-S",
+    "/srv/dev/s72-bDaBYe/root/raf-develop/node_modules/.sym72/peer.sock",
+    "new-session",
+    "-d",
+    "-s",
+    "sym72-main",
+    "-x",
+    "180",
+    "-y",
+    "50",
+    "/opt/dev/node/bin/node",
+    "/srv/dev/s72-bDaBYe/main-pane.mjs",
+    "/srv/dev/s72-bDaBYe"
+  ],
+  "cwd": "/srv/dev/s72-bDaBYe/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": ""
+}

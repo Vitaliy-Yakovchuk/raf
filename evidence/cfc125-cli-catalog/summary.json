@@ -1,0 +1,158 @@
+{
+  "assignment": {
+    "change": "complete-raf-flow-contracts",
+    "item": "12.5",
+    "outcome": "succeeded"
+  },
+  "audit": {
+    "current": true,
+    "sources": [
+      "proposal.md Why/What Changes",
+      "tasks.md 12.1–12.5",
+      "specs/projects/raf/cli-catalog/spec.md",
+      "cfc122-catalog-design.md"
+    ],
+    "conclusion": "12.4 позначено виконаним; 12.5 актуальний. Інші відкриті QA-пункти діагностики та функціональності не виконувалися."
+  },
+  "platform": {
+    "os": "Linux-7.0.0-30-generic-x86_64-with-glibc2.43",
+    "node": "v26.12.1",
+    "environment": "Локальний CLI на Linux; реальні дочірні Node-процеси; ізольовані Git/submodule/worktree і HOME/SQLite. Зовнішні runners та tmux для help не потрібні."
+  },
+  "unit": {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/catalog-generator --files test/catalog-generator.test.ts",
+    "workspaceShaObservedBeforeInvocation": "46c9acce373dc2dbac511b0d5e9018922ced260e",
+    "workspaceUncommittedObservedBeforeInvocation": [
+      "src/event-catalog.ts",
+      "src/event-registry.ts",
+      "src/reminder-cli.ts",
+      "src/service-host.ts",
+      "test/command-timing.test.ts",
+      "src/archive-events-runtime.ts",
+      "evidence/cfc104-model-routing/",
+      "evidence/cfc44-command-timing/",
+      "evidence/cfc53-event-registry/"
+    ],
+    "snapshotLimit": "Спільний workspace змінювався іншими виконавцями; SHA є спостереженням безпосередньо перед викликом, а не блокуванням HEAD на час child. Точні окремі snapshots стендів з SHA та хешами dirty-файлів — workspace-*.json.",
+    "runId": "b50cc8a0-d0ac-4813-a067-7597ffc5db18",
+    "selection": {
+      "files": [
+        "test/catalog-generator.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "passedCount": 42,
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "group": "complete-raf-flow-contracts/catalog-generator",
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "evidence": [
+      "unit.stdout.json",
+      "unit.stderr",
+      "unit.cli-code.txt",
+      "unit.tool-result.json"
+    ],
+    "capture": "exec_command відобразив stdout та stderr разом. Повний незмінений tool envelope збережено; перший JSON-рядок TestRunResult і наступний launch-queue.waiting рядок розділено в окремі файли без редагування байтів. Їх конкатенація перевірена проти original output; stderr не приписується child exitCode."
+  },
+  "userScenarios": [
+    {
+      "scenario": "Збірка actual scripts/build.ts на копії коду та production conf",
+      "result": "passed",
+      "evidence": [
+        "commands.json #001",
+        "001.stdout",
+        "001.stderr",
+        "catalog-before.json"
+      ]
+    },
+    {
+      "scenario": "raf help <command> та raf <command> --help для всіх 30 затверджених команд",
+      "result": "passed",
+      "details": "Однакові байти результатів, також 13 кореневих/групових help. Conf тимчасово відсутній, PATH не містить зовнішніх програм, HOME лишився порожнім.",
+      "evidence": [
+        "commands.json #002–074"
+      ]
+    },
+    {
+      "scenario": "Дозволені значення всіх enum-параметрів",
+      "result": "passed",
+      "details": "128 значень перевірено реальним bin/raf.ts; trailing unknown option доводить проходження перевірки значення до guard без runtime. launchableByRaf=false очікувано TYPE_NOT_LAUNCHABLE. Це не доказ успішного бізнес-виконання команд.",
+      "evidence": [
+        "commands.json #075–218"
+      ]
+    },
+    {
+      "scenario": "Невідомі значення/команди/довідка й довідковий набір без parser option",
+      "result": "passed",
+      "details": "16 невідомих enum значень і 6 негативних викликів відхилено до runtime; check run/release run не з’явилися як доступні.",
+      "evidence": [
+        "commands.json"
+      ]
+    },
+    {
+      "scenario": "Успішний runtime виклик runner list",
+      "result": "passed",
+      "details": "Реальна ізольована SQLite, CLI exit 0. Готовність операцій кожної команди не заявляється.",
+      "evidence": [
+        "finish-commands.json #finish-001",
+        "finish-001.stdout",
+        "finish-001.stderr"
+      ]
+    },
+    {
+      "scenario": "Зміна JSON без rebuild, потім rebuild із новими значеннями parser/help",
+      "result": "passed",
+      "details": "Старий artifact не змінився до rebuild; після rebuild parser/help приймають fixture sentinel та відхиляють попередній resource level. Sentinel замінює всі входження hotfix у скопійованих constants, включно з agentPhase та текстом. Це лише тестова копія, не нове затверджене продуктове значення.",
+      "evidence": [
+        "finish-commands.json #finish-002–008",
+        "catalog-before.json",
+        "catalog-rebuilt.json"
+      ]
+    },
+    {
+      "scenario": "Некоректний каталог під час rebuild",
+      "result": "passed",
+      "details": "Дубль команди дає BUILD_FAILED, попередній artifact байт у байт збережений, help працює, тимчасових артефактів немає.",
+      "evidence": [
+        "finish-commands.json #finish-009–010",
+        "finish-009.stderr"
+      ]
+    }
+  ],
+  "standAttempts": [
+    {
+      "command": "node evidence/cfc125-cli-catalog/run-stand.mts",
+      "cliExitCode": 1,
+      "evidence": [
+        "stand-result.json",
+        "commands.json",
+        "225.stderr"
+      ],
+      "interpretation": "Перший драйвер помилково очікував успішний runner disable без зареєстрованого caller. Фактична CALLER_UNVERIFIED є чинним захистом, не дефектом parser/build і не assertion-red продукту. Перші завершені 12.5-сценарії збережені, не повторені. runtime=0 у первісному result правдивий; первісна фраза про виконання перемикачів не є доказом їх успіху."
+    },
+    {
+      "command": "node evidence/cfc125-cli-catalog/run-stand.mts --finish",
+      "cliExitCode": 0,
+      "evidence": [
+        "finish-stand-result.json",
+        "finish-commands.json"
+      ],
+      "interpretation": "Виконано лише залишок: runner list і rebuild. Початковий artifact перенесено незмінним із catalog-before.json. Обидва ізольовані стенди видалено після завершення всіх child."
+    }
+  ],
+  "defects": [],
+  "workspaceScope": "Лише evidence/cfc125-cli-catalog. Production-код, тести, conf, questions і tasks.md не редагувалися. Чужі зміни не комітити.",
+  "finalRelevantSourceCheck": "git diff ed8854de5703c105be81334d3247004ba1bebc79 HEAD -- src/cli.ts src/cli-arguments.ts src/catalog.ts src/catalog-generator.ts src/catalog-schema.ts src/production-bindings.ts scripts/build.ts: порожній перед комітом.",
+  "nextAction": "Raf ставить галочку лише 12.5 після прийняття succeeded. Інші пункти відкриті: sync/archive не застосовуються; push не виконувався."
+}

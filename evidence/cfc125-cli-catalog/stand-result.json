@@ -1,0 +1,22 @@
+{
+  "outcome": "failed",
+  "runId": "cfc125-yKPvnS",
+  "platform": "linux",
+  "arch": "x64",
+  "node": "v26.12.1",
+  "counts": {
+    "help": 30,
+    "allowed": 128,
+    "rejected": 22,
+    "runtime": 0,
+    "rebuild": 0
+  },
+  "childProcesses": "synchronous children all exited before cleanup",
+  "cleanup": {
+    "complete": true,
+    "directory": "/tmp/cfc125-yKPvnS"
+  },
+  "fixtureOnlyCatalogMutation": "CFC125_QA_ONLY replaces one existing resource level only in the copied conf; working catalog unchanged",
+  "parserAcceptance": "Each configured enum is accepted up to a trailing unknown-option guard; runner switches also execute against real isolated SQLite",
+  "scope": "CLI catalog/help/parser/build only; availability of each business operation is not claimed"
+}

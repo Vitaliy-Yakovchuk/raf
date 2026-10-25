@@ -1,0 +1,138 @@
+{
+  "program": "raf",
+  "commands": [
+    {
+      "path": [
+        "command",
+        "stats"
+      ],
+      "description": "Прочитати ковзаючу статистику тривалості команд.",
+      "parameters": [],
+      "output": "JSON статистики команд із budgetMs або null, якщо бюджет для команди не визначено.",
+      "errors": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help command stats.",
+      "prerequisites": "Валідний state context та налаштовані commandTiming.",
+      "sideEffects": "Читає поточні EMA-агрегати команд; не створює історичного журналу.",
+      "examples": [
+        "raf command stats"
+      ],
+      "errorCodes": [
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        }
+      ],
+      "handlerName": "command stats",
+      "valueSources": {},
+      "metadata": {
+        "path": [
+          "command",
+          "stats"
+        ],
+        "description": "Прочитати ковзаючу статистику тривалості команд.",
+        "parameters": [],
+        "output": "JSON статистики команд із budgetMs або null, якщо бюджет для команди не визначено.",
+        "errors": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help command stats.",
+        "prerequisites": "Валідний state context та налаштовані commandTiming.",
+        "sideEffects": "Читає поточні EMA-агрегати команд; не створює історичного журналу.",
+        "examples": [
+          "raf command stats"
+        ],
+        "errorCodes": [
+          "UNKNOWN_COMMAND",
+          "UNKNOWN_ARGUMENT",
+          "DUPLICATE_ARGUMENT",
+          "MISSING_VALUE",
+          "MISSING_REQUIRED",
+          "INVALID_VALUE",
+          "HANDLER_FAILED",
+          "HANDLER_UNAVAILABLE",
+          "COMMAND_UNAVAILABLE",
+          "CATALOG_UNAVAILABLE",
+          "CONFIGURATION_INVALID",
+          "PRODUCTION_ENTRY_FAILED",
+          "STATE_CONTEXT_REFUSED",
+          "TIMING_FAILED"
+        ]
+      },
+      "usage": "raf command stats"
+    }
+  ],
+  "reportStatuses": [
+    {
+      "id": "succeeded",
+      "description": "Доручення виконано успішно",
+      "event": "agent.succeeded"
+    },
+    {
+      "id": "failed",
+      "description": "Доручення не виконано повністю або процес упав без валідного succeeded",
+      "event": "agent.failed"
+    }
+  ]
+}

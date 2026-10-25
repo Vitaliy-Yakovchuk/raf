@@ -1,0 +1,274 @@
+{
+  "program": "raf",
+  "commands": [
+    {
+      "path": [
+        "runner",
+        "enable"
+      ],
+      "valueSources": {
+        "runner": [
+          {
+            "id": "codex",
+            "initialEnabled": true
+          },
+          {
+            "id": "grok",
+            "initialEnabled": true
+          },
+          {
+            "id": "agy",
+            "initialEnabled": true
+          },
+          {
+            "id": "claude",
+            "initialEnabled": false
+          }
+        ]
+      },
+      "description": "Дозволити runner для нових запусків.",
+      "parameters": [
+        {
+          "name": "runner",
+          "option": "--runner",
+          "required": true,
+          "multiple": false,
+          "description": "Runner із каталогу.",
+          "type": "string",
+          "values": [
+            {
+              "id": "codex",
+              "initialEnabled": true
+            },
+            {
+              "id": "grok",
+              "initialEnabled": true
+            },
+            {
+              "id": "agy",
+              "initialEnabled": true
+            },
+            {
+              "id": "claude",
+              "initialEnabled": false
+            }
+          ],
+          "requirement": "required"
+        }
+      ],
+      "output": "JSON {runner, enabled}; exit 0 після збереження перемикача.",
+      "errors": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help runner enable.",
+      "prerequisites": "Уповноважений викликач; --runner із статичного models.json#/runners.",
+      "sideEffects": "Ідемпотентно вмикає runner у SQLite; не змінює conf/models.json, квоти чи enabled конкретної моделі.",
+      "examples": [
+        "raf runner enable --runner codex"
+      ],
+      "errorCodes": [
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        },
+        {
+          "id": "CALLER_UNAUTHORIZED",
+          "description": "caller unauthorized",
+          "exitCode": 1
+        },
+        {
+          "id": "CALLER_UNVERIFIED",
+          "description": "caller unverified",
+          "exitCode": 1
+        },
+        {
+          "id": "NO_ENABLED_MODELS",
+          "description": "no enabled models",
+          "exitCode": 1
+        },
+        {
+          "id": "NO_SUITABLE_CAPACITY",
+          "description": "no suitable capacity",
+          "exitCode": 1
+        },
+        {
+          "id": "QUOTA_COLLECTION_FAILED",
+          "description": "quota",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_DELIVERY_UNAVAILABLE",
+          "description": "Runner is not on its known native input before initial brief delivery",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_IDENTITY_INVALID",
+          "description": "Worker handshake does not match the requested launch",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_IDENTITY_UNAVAILABLE",
+          "description": "runner identity unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_PROTOCOL_UNAVAILABLE",
+          "description": "conf/raf.json#runnerProtocols requires versioned installed runner settings and measured time budgets",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_SANDBOX_UNAVAILABLE",
+          "description": "runner sandbox unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_UNAVAILABLE",
+          "description": "Selected runner/model is no longer available",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_WORKSPACE_UNTRUSTED",
+          "description": "runner workspace untrusted",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_WRITE_SCOPE_INVALID",
+          "description": "Declared write boundary is not a file or directory",
+          "exitCode": 1
+        }
+      ],
+      "handlerName": "runner enable",
+      "metadata": {
+        "path": [
+          "runner",
+          "enable"
+        ],
+        "valueSources": {
+          "runner": "models.json#/runners"
+        },
+        "description": "Дозволити runner для нових запусків.",
+        "parameters": [
+          {
+            "name": "runner",
+            "option": "--runner",
+            "required": true,
+            "multiple": false,
+            "description": "Runner із каталогу."
+          }
+        ],
+        "output": "JSON {runner, enabled}; exit 0 після збереження перемикача.",
+        "errors": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help runner enable.",
+        "prerequisites": "Уповноважений викликач; --runner із статичного models.json#/runners.",
+        "sideEffects": "Ідемпотентно вмикає runner у SQLite; не змінює conf/models.json, квоти чи enabled конкретної моделі.",
+        "examples": [
+          "raf runner enable --runner codex"
+        ],
+        "errorCodes": [
+          "UNKNOWN_COMMAND",
+          "UNKNOWN_ARGUMENT",
+          "DUPLICATE_ARGUMENT",
+          "MISSING_VALUE",
+          "MISSING_REQUIRED",
+          "INVALID_VALUE",
+          "HANDLER_FAILED",
+          "HANDLER_UNAVAILABLE",
+          "COMMAND_UNAVAILABLE",
+          "CATALOG_UNAVAILABLE",
+          "CONFIGURATION_INVALID",
+          "PRODUCTION_ENTRY_FAILED",
+          "STATE_CONTEXT_REFUSED",
+          "TIMING_FAILED",
+          "CALLER_UNAUTHORIZED",
+          "CALLER_UNVERIFIED",
+          "NO_ENABLED_MODELS",
+          "NO_SUITABLE_CAPACITY",
+          "QUOTA_COLLECTION_FAILED",
+          "RUNNER_DELIVERY_UNAVAILABLE",
+          "RUNNER_IDENTITY_INVALID",
+          "RUNNER_IDENTITY_UNAVAILABLE",
+          "RUNNER_PROTOCOL_UNAVAILABLE",
+          "RUNNER_SANDBOX_UNAVAILABLE",
+          "RUNNER_UNAVAILABLE",
+          "RUNNER_WORKSPACE_UNTRUSTED",
+          "RUNNER_WRITE_SCOPE_INVALID"
+        ]
+      },
+      "usage": "raf runner enable --runner <runner>"
+    }
+  ],
+  "reportStatuses": [
+    {
+      "id": "succeeded",
+      "description": "Доручення виконано успішно",
+      "event": "agent.succeeded"
+    },
+    {
+      "id": "failed",
+      "description": "Доручення не виконано повністю або процес упав без валідного succeeded",
+      "event": "agent.failed"
+    }
+  ]
+}

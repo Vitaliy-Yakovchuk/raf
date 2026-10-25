@@ -1,0 +1,183 @@
+[
+  {
+    "id": "finish-001",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "list"
+    ],
+    "cwd": "/tmp/cfc125-HAOhiz/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-HAOhiz/home",
+    "noRuntime": false,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "fae2dfa96c43e884d01bc1ed400eff40473cb4ff882df968ca34f995c25ae7a9",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "finish-002",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "resource",
+      "wait"
+    ],
+    "cwd": "/tmp/cfc125-HAOhiz/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-HAOhiz/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "b219051d7d1b490627112bc9fd0c02b543f8920c35dfffe2a98800c052555de6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "finish-003",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "resource",
+      "wait",
+      "--level",
+      "hotfix",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-HAOhiz/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-HAOhiz/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "8f2b42c1d32e0a60ed4f399899cb003bc155c09e0d701cbecd1529e01d837982"
+  },
+  {
+    "id": "finish-004",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "resource",
+      "wait",
+      "--level",
+      "CFC125_QA_ONLY",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-HAOhiz/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-HAOhiz/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "8027183d9598a69d7c4a81749b2e5ecb1e6029d59d4b233b878a418aa0665a62"
+  },
+  {
+    "id": "finish-005",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "scripts/build.ts"
+    ],
+    "cwd": "/tmp/cfc125-HAOhiz/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-HAOhiz/home",
+    "noRuntime": false,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "ed0ccde81df5db924589edbe84daff851a9a80f593f3e925c52e6989357b65c3",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "finish-006",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "resource",
+      "wait"
+    ],
+    "cwd": "/tmp/cfc125-HAOhiz/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-HAOhiz/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "1a54700adcfbc0bd586714a97f00ca16a8b2daa96c4542af163e0eef72f9579e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "finish-007",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "resource",
+      "wait",
+      "--level",
+      "hotfix",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-HAOhiz/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-HAOhiz/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "662b1e873f82fcac127c52328fd06e5d2304f19dcd07fcd2511c1255d6b66b38"
+  },
+  {
+    "id": "finish-008",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "resource",
+      "wait",
+      "--level",
+      "CFC125_QA_ONLY",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-HAOhiz/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-HAOhiz/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "8f2b42c1d32e0a60ed4f399899cb003bc155c09e0d701cbecd1529e01d837982"
+  },
+  {
+    "id": "finish-009",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "scripts/build.ts"
+    ],
+    "cwd": "/tmp/cfc125-HAOhiz/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-HAOhiz/home",
+    "noRuntime": false,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "0938a273a11d80216f5daf8a4c6b843a395f0adcd5df16c6b4c8c1da669b6d85"
+  },
+  {
+    "id": "finish-010",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "resource",
+      "wait"
+    ],
+    "cwd": "/tmp/cfc125-HAOhiz/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-HAOhiz/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "1a54700adcfbc0bd586714a97f00ca16a8b2daa96c4542af163e0eef72f9579e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

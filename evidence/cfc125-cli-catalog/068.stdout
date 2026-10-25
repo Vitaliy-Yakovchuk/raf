@@ -1,0 +1,216 @@
+{
+  "program": "raf",
+  "commands": [
+    {
+      "path": [
+        "bug",
+        "comment",
+        "add"
+      ],
+      "description": "Додати коментар до жука в Dash і після успіху записати його в локальну базу.",
+      "parameters": [
+        {
+          "name": "bug",
+          "option": "--bug",
+          "required": true,
+          "multiple": false,
+          "description": "Повний канонічний ключ жука.",
+          "type": "string",
+          "requirement": "required"
+        },
+        {
+          "name": "text-file",
+          "option": "--text-file",
+          "required": true,
+          "multiple": false,
+          "description": "UTF-8 файл коментаря; - означає stdin.",
+          "type": "string",
+          "requirement": "required"
+        }
+      ],
+      "output": "JSON із серверним comment_id, ревізією жука та записаним коментарем; код 0 лише після відповіді сервера й локального запису.",
+      "errors": "Ненульовий код і JSON із кодом сервера (застаріла ревізія, оренда, доступ, жук відсутній) або BUG_WRITE_UNKNOWN для невідомого результату чи BUG_WRITE_INVALID_RESPONSE; локальна база не змінюється.",
+      "prerequisites": "База жуків із цим жуком; служба raf не потрібна (background-runtime «Межі служби raf»); секрет розділу й мережевий доступ до MCP Dash. До реалізації команда має явно повідомляти недоступність.",
+      "sideEffects": "MCP comment_problem у Dash від actor raf; одна транзакція bugs.sqlite з коментарем і станом жука з відповіді сервера.",
+      "examples": [
+        "raf bug comment add --bug raf:1 --text-file comment.txt"
+      ],
+      "errorCodes": [
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_COMMAND_FAILED",
+          "description": "bug command failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_CONFIG_INVALID",
+          "description": "bug config invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_SECTION_UNAVAILABLE",
+          "description": "bug section unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_INVALID_RESPONSE",
+          "description": "bug write invalid response",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REJECTED",
+          "description": "bug write rejected",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REPLY_TARGET_MISSING",
+          "description": "bug write reply target missing",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_UNKNOWN",
+          "description": "bug write unknown",
+          "exitCode": 1
+        }
+      ],
+      "handlerName": "bug comment add",
+      "valueSources": {},
+      "metadata": {
+        "path": [
+          "bug",
+          "comment",
+          "add"
+        ],
+        "description": "Додати коментар до жука в Dash і після успіху записати його в локальну базу.",
+        "parameters": [
+          {
+            "name": "bug",
+            "option": "--bug",
+            "required": true,
+            "multiple": false,
+            "description": "Повний канонічний ключ жука."
+          },
+          {
+            "name": "text-file",
+            "option": "--text-file",
+            "required": true,
+            "multiple": false,
+            "description": "UTF-8 файл коментаря; - означає stdin."
+          }
+        ],
+        "output": "JSON із серверним comment_id, ревізією жука та записаним коментарем; код 0 лише після відповіді сервера й локального запису.",
+        "errors": "Ненульовий код і JSON із кодом сервера (застаріла ревізія, оренда, доступ, жук відсутній) або BUG_WRITE_UNKNOWN для невідомого результату чи BUG_WRITE_INVALID_RESPONSE; локальна база не змінюється.",
+        "prerequisites": "База жуків із цим жуком; служба raf не потрібна (background-runtime «Межі служби raf»); секрет розділу й мережевий доступ до MCP Dash. До реалізації команда має явно повідомляти недоступність.",
+        "sideEffects": "MCP comment_problem у Dash від actor raf; одна транзакція bugs.sqlite з коментарем і станом жука з відповіді сервера.",
+        "examples": [
+          "raf bug comment add --bug raf:1 --text-file comment.txt"
+        ],
+        "errorCodes": [
+          "UNKNOWN_COMMAND",
+          "UNKNOWN_ARGUMENT",
+          "DUPLICATE_ARGUMENT",
+          "MISSING_VALUE",
+          "MISSING_REQUIRED",
+          "INVALID_VALUE",
+          "HANDLER_FAILED",
+          "HANDLER_UNAVAILABLE",
+          "COMMAND_UNAVAILABLE",
+          "CATALOG_UNAVAILABLE",
+          "CONFIGURATION_INVALID",
+          "PRODUCTION_ENTRY_FAILED",
+          "STATE_CONTEXT_REFUSED",
+          "TIMING_FAILED",
+          "BUG_COMMAND_FAILED",
+          "BUG_CONFIG_INVALID",
+          "BUG_SECTION_UNAVAILABLE",
+          "BUG_WRITE_INVALID_RESPONSE",
+          "BUG_WRITE_REJECTED",
+          "BUG_WRITE_REPLY_TARGET_MISSING",
+          "BUG_WRITE_UNKNOWN"
+        ]
+      },
+      "usage": "raf bug comment add --bug <bug> --text-file <text-file>"
+    }
+  ],
+  "reportStatuses": [
+    {
+      "id": "succeeded",
+      "description": "Доручення виконано успішно",
+      "event": "agent.succeeded"
+    },
+    {
+      "id": "failed",
+      "description": "Доручення не виконано повністю або процес упав без валідного succeeded",
+      "event": "agent.failed"
+    }
+  ]
+}

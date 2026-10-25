@@ -1,0 +1,211 @@
+{
+  "program": "raf",
+  "commands": [
+    {
+      "path": [
+        "resource",
+        "wait"
+      ],
+      "description": "Очікувати ресурсного допуску через чергу служби raf; код 0 означає наданий дозвіл.",
+      "requiresService": true,
+      "recordDuration": false,
+      "parameters": [
+        {
+          "name": "level",
+          "option": "--level",
+          "required": true,
+          "description": "Рівень ресурсного допуску, якого потрібно дочекатися.",
+          "type": "string",
+          "multiple": false,
+          "values": [
+            {
+              "id": "hotfix",
+              "description": "Допуск за hotfix-порогами resource-admission",
+              "priority": 0
+            },
+            {
+              "id": "normal",
+              "description": "Допуск за звичайними порогами resource-admission",
+              "priority": 1
+            }
+          ],
+          "requirement": "required"
+        }
+      ],
+      "valueSources": {
+        "level": [
+          {
+            "id": "hotfix",
+            "description": "Допуск за hotfix-порогами resource-admission",
+            "priority": 0
+          },
+          {
+            "id": "normal",
+            "description": "Допуск за звичайними порогами resource-admission",
+            "priority": 1
+          }
+        ]
+      },
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help resource wait.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій.",
+      "examples": [
+        "raf resource wait --level hotfix"
+      ],
+      "errorCodes": [
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        },
+        {
+          "id": "RESOURCE_ESTIMATE_UNKNOWN",
+          "description": "resource estimate unknown",
+          "exitCode": 1
+        },
+        {
+          "id": "RESOURCE_UNAVAILABLE",
+          "description": "Resource admission is unknown",
+          "exitCode": 1
+        },
+        {
+          "id": "RESOURCE_WAIT_FAILED",
+          "description": "resource wait failed",
+          "exitCode": 1
+        },
+        {
+          "id": "RESOURCE_WAIT_UNAVAILABLE",
+          "description": "Resource queue is unavailable",
+          "exitCode": 1
+        }
+      ],
+      "handlerName": "resource wait",
+      "metadata": {
+        "path": [
+          "resource",
+          "wait"
+        ],
+        "description": "Очікувати ресурсного допуску через чергу служби raf; код 0 означає наданий дозвіл.",
+        "requiresService": true,
+        "recordDuration": false,
+        "parameters": [
+          {
+            "name": "level",
+            "option": "--level",
+            "required": true,
+            "description": "Рівень ресурсного допуску, якого потрібно дочекатися."
+          }
+        ],
+        "valueSources": {
+          "level": "raf-constants.json#/resourceWaitLevels"
+        },
+        "output": "JSON-результат; код 0 лише при успішній операції.",
+        "errors": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help resource wait.",
+        "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+        "sideEffects": "Див. контракт відповідної команди; help не виконує операцій.",
+        "examples": [
+          "raf resource wait --level hotfix"
+        ],
+        "errorCodes": [
+          "UNKNOWN_COMMAND",
+          "UNKNOWN_ARGUMENT",
+          "DUPLICATE_ARGUMENT",
+          "MISSING_VALUE",
+          "MISSING_REQUIRED",
+          "INVALID_VALUE",
+          "HANDLER_FAILED",
+          "HANDLER_UNAVAILABLE",
+          "COMMAND_UNAVAILABLE",
+          "CATALOG_UNAVAILABLE",
+          "CONFIGURATION_INVALID",
+          "PRODUCTION_ENTRY_FAILED",
+          "STATE_CONTEXT_REFUSED",
+          "TIMING_FAILED",
+          "RESOURCE_ESTIMATE_UNKNOWN",
+          "RESOURCE_UNAVAILABLE",
+          "RESOURCE_WAIT_FAILED",
+          "RESOURCE_WAIT_UNAVAILABLE"
+        ]
+      },
+      "usage": "raf resource wait --level <level>"
+    }
+  ],
+  "reportStatuses": [
+    {
+      "id": "succeeded",
+      "description": "Доручення виконано успішно",
+      "event": "agent.succeeded"
+    },
+    {
+      "id": "failed",
+      "description": "Доручення не виконано повністю або процес упав без валідного succeeded",
+      "event": "agent.failed"
+    }
+  ]
+}

@@ -1,0 +1,406 @@
+{
+  "program": "raf",
+  "commands": [
+    {
+      "path": [
+        "agent",
+        "message"
+      ],
+      "description": "Передати повідомлення агенту з перевіреним відправником.",
+      "parameters": [
+        {
+          "name": "to",
+          "option": "--to",
+          "required": true,
+          "multiple": false,
+          "description": "Адреса одержувача з ps.",
+          "type": "string",
+          "requirement": "required"
+        },
+        {
+          "name": "text",
+          "option": "--text",
+          "required": true,
+          "multiple": false,
+          "description": "Текст повідомлення.",
+          "type": "string",
+          "requirement": "required"
+        }
+      ],
+      "output": "JSON receipt; exit 0 лише для підтвердженої доставки.",
+      "errors": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help agent message.",
+      "prerequisites": "Адресу одержувача отримано через agent ps; відправник перевірений та має право доставки.",
+      "sideEffects": "Доставляє текст активному адресату через його адаптер; receipt підтверджує доставку за контрактом каналу.",
+      "examples": [
+        "raf agent message --to main --text \"Приклад повідомлення\""
+      ],
+      "errorCodes": [
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        },
+        {
+          "id": "AGENT_RESULT_PENDING",
+          "description": "agent result pending",
+          "exitCode": 1
+        },
+        {
+          "id": "CALLER_UNAUTHORIZED",
+          "description": "caller unauthorized",
+          "exitCode": 1
+        },
+        {
+          "id": "CALLER_UNVERIFIED",
+          "description": "caller unverified",
+          "exitCode": 1
+        },
+        {
+          "id": "LAUNCH_CANCELLED",
+          "description": "Launch client interrupted",
+          "exitCode": 1
+        },
+        {
+          "id": "LAUNCH_FAILED",
+          "description": "launch failed",
+          "exitCode": 1
+        },
+        {
+          "id": "LAUNCH_FENCE_LOST",
+          "description": "Admission does not belong to this launch client",
+          "exitCode": 1
+        },
+        {
+          "id": "LAUNCH_PRECONDITION_FAILED",
+          "description": "launch precondition failed",
+          "exitCode": 1
+        },
+        {
+          "id": "LAUNCH_RECOVERABLE",
+          "description": "Task reservation cannot be released before verified process exit",
+          "exitCode": 1
+        },
+        {
+          "id": "NOTIFY_TARGET_INVALID",
+          "description": "preflight",
+          "exitCode": 1
+        },
+        {
+          "id": "REPORT_INVALID",
+          "description": "report invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "REPORT_UNVERIFIED",
+          "description": "report unverified",
+          "exitCode": 1
+        },
+        {
+          "id": "RESOURCE_ESTIMATE_UNKNOWN",
+          "description": "resource estimate unknown",
+          "exitCode": 1
+        },
+        {
+          "id": "RESOURCE_UNAVAILABLE",
+          "description": "Resource admission is unknown",
+          "exitCode": 1
+        },
+        {
+          "id": "RESOURCE_WAIT_FAILED",
+          "description": "resource wait failed",
+          "exitCode": 1
+        },
+        {
+          "id": "RESOURCE_WAIT_UNAVAILABLE",
+          "description": "Resource queue is unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_DELIVERY_UNAVAILABLE",
+          "description": "Runner is not on its known native input before initial brief delivery",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_IDENTITY_INVALID",
+          "description": "Worker handshake does not match the requested launch",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_IDENTITY_UNAVAILABLE",
+          "description": "runner identity unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_PROTOCOL_UNAVAILABLE",
+          "description": "conf/raf.json#runnerProtocols requires versioned installed runner settings and measured time budgets",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_SANDBOX_UNAVAILABLE",
+          "description": "runner sandbox unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_UNAVAILABLE",
+          "description": "Selected runner/model is no longer available",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_WORKSPACE_UNTRUSTED",
+          "description": "runner workspace untrusted",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_WRITE_SCOPE_INVALID",
+          "description": "Declared write boundary is not a file or directory",
+          "exitCode": 1
+        },
+        {
+          "id": "SESSION_CLOSE_BLOCKED",
+          "description": "close",
+          "exitCode": 1
+        },
+        {
+          "id": "SESSION_NOT_ACTIVE",
+          "description": "session not active",
+          "exitCode": 1
+        },
+        {
+          "id": "SESSION_UNAVAILABLE",
+          "description": "Session activity unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_CLAIM_LOST",
+          "description": "Worker handoff lost its task reservation",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_CLAIM_REQUIRED",
+          "description": "Durable launch and task claims required before spawn",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_CONTEXT_CHANGED",
+          "description": "Launch task context changed while waiting",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_CONTEXT_MISMATCH",
+          "description": "task context mismatch",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_IDENTITY_INVALID",
+          "description": "A nonempty task snapshot set is required",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_IDENTITY_MISMATCH",
+          "description": "OpenSpec returned a different task identity",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_LIVENESS_UNKNOWN",
+          "description": "task liveness unknown",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_NOT_COMPLETED",
+          "description": "task not completed",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_RESERVED",
+          "description": "task reserved",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_SOURCE_MISSING",
+          "description": "task source missing",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_SOURCE_UNKNOWN",
+          "description": "OpenSpec task resolution failed",
+          "exitCode": 1
+        },
+        {
+          "id": "WORKSPACE_MISMATCH",
+          "description": "workspace mismatch",
+          "exitCode": 1
+        },
+        {
+          "id": "WORKSPACE_UNAVAILABLE",
+          "description": "Workspace route changed while waiting",
+          "exitCode": 1
+        }
+      ],
+      "handlerName": "agent message",
+      "valueSources": {},
+      "metadata": {
+        "path": [
+          "agent",
+          "message"
+        ],
+        "description": "Передати повідомлення агенту з перевіреним відправником.",
+        "parameters": [
+          {
+            "name": "to",
+            "option": "--to",
+            "required": true,
+            "multiple": false,
+            "description": "Адреса одержувача з ps."
+          },
+          {
+            "name": "text",
+            "option": "--text",
+            "required": true,
+            "multiple": false,
+            "description": "Текст повідомлення."
+          }
+        ],
+        "output": "JSON receipt; exit 0 лише для підтвердженої доставки.",
+        "errors": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help agent message.",
+        "prerequisites": "Адресу одержувача отримано через agent ps; відправник перевірений та має право доставки.",
+        "sideEffects": "Доставляє текст активному адресату через його адаптер; receipt підтверджує доставку за контрактом каналу.",
+        "examples": [
+          "raf agent message --to main --text \"Приклад повідомлення\""
+        ],
+        "errorCodes": [
+          "UNKNOWN_COMMAND",
+          "UNKNOWN_ARGUMENT",
+          "DUPLICATE_ARGUMENT",
+          "MISSING_VALUE",
+          "MISSING_REQUIRED",
+          "INVALID_VALUE",
+          "HANDLER_FAILED",
+          "HANDLER_UNAVAILABLE",
+          "COMMAND_UNAVAILABLE",
+          "CATALOG_UNAVAILABLE",
+          "CONFIGURATION_INVALID",
+          "PRODUCTION_ENTRY_FAILED",
+          "STATE_CONTEXT_REFUSED",
+          "TIMING_FAILED",
+          "AGENT_RESULT_PENDING",
+          "CALLER_UNAUTHORIZED",
+          "CALLER_UNVERIFIED",
+          "LAUNCH_CANCELLED",
+          "LAUNCH_FAILED",
+          "LAUNCH_FENCE_LOST",
+          "LAUNCH_PRECONDITION_FAILED",
+          "LAUNCH_RECOVERABLE",
+          "NOTIFY_TARGET_INVALID",
+          "REPORT_INVALID",
+          "REPORT_UNVERIFIED",
+          "RESOURCE_ESTIMATE_UNKNOWN",
+          "RESOURCE_UNAVAILABLE",
+          "RESOURCE_WAIT_FAILED",
+          "RESOURCE_WAIT_UNAVAILABLE",
+          "RUNNER_DELIVERY_UNAVAILABLE",
+          "RUNNER_IDENTITY_INVALID",
+          "RUNNER_IDENTITY_UNAVAILABLE",
+          "RUNNER_PROTOCOL_UNAVAILABLE",
+          "RUNNER_SANDBOX_UNAVAILABLE",
+          "RUNNER_UNAVAILABLE",
+          "RUNNER_WORKSPACE_UNTRUSTED",
+          "RUNNER_WRITE_SCOPE_INVALID",
+          "SESSION_CLOSE_BLOCKED",
+          "SESSION_NOT_ACTIVE",
+          "SESSION_UNAVAILABLE",
+          "TASK_CLAIM_LOST",
+          "TASK_CLAIM_REQUIRED",
+          "TASK_CONTEXT_CHANGED",
+          "TASK_CONTEXT_MISMATCH",
+          "TASK_IDENTITY_INVALID",
+          "TASK_IDENTITY_MISMATCH",
+          "TASK_LIVENESS_UNKNOWN",
+          "TASK_NOT_COMPLETED",
+          "TASK_RESERVED",
+          "TASK_SOURCE_MISSING",
+          "TASK_SOURCE_UNKNOWN",
+          "WORKSPACE_MISMATCH",
+          "WORKSPACE_UNAVAILABLE"
+        ]
+      },
+      "usage": "raf agent message --to <to> --text <text>"
+    }
+  ],
+  "reportStatuses": [
+    {
+      "id": "succeeded",
+      "description": "Доручення виконано успішно",
+      "event": "agent.succeeded"
+    },
+    {
+      "id": "failed",
+      "description": "Доручення не виконано повністю або процес упав без валідного succeeded",
+      "event": "agent.failed"
+    }
+  ]
+}

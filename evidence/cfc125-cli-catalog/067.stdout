@@ -1,0 +1,1024 @@
+{
+  "program": "raf",
+  "commands": [
+    {
+      "path": [
+        "bug",
+        "list"
+      ],
+      "description": "Переглянути локальні жуки з фільтрами.",
+      "parameters": [
+        {
+          "name": "project",
+          "option": "--project",
+          "required": false,
+          "multiple": false,
+          "description": "Канонічний проєкт, наприклад projects/etchly.",
+          "type": "string",
+          "requirement": "optional"
+        },
+        {
+          "name": "status",
+          "option": "--status",
+          "required": false,
+          "multiple": false,
+          "description": "Фільтр за статусом серверного контракту.",
+          "type": "string",
+          "requirement": "optional"
+        },
+        {
+          "name": "cursor",
+          "option": "--cursor",
+          "required": false,
+          "multiple": false,
+          "description": "Позиція наступної сторінки.",
+          "type": "string",
+          "requirement": "optional"
+        },
+        {
+          "name": "limit",
+          "option": "--limit",
+          "required": false,
+          "multiple": false,
+          "description": "Розмір сторінки в межах конфігурації.",
+          "type": "string",
+          "requirement": "optional"
+        }
+      ],
+      "output": "JSON зі сторінкою жуків, continuation cursor та станом синхронізації.",
+      "errors": "Ненульовий код та стисла достатня діагностика за cli-catalog.",
+      "prerequisites": "База жуків; служба raf не потрібна (background-runtime «Межі служби raf»); авторизація чинного bugs-api для мережевих дій. До реалізації команда має явно повідомляти недоступність.",
+      "sideEffects": "Читання локальної бази; фонову синхронізацію виконує служба.",
+      "examples": [
+        "raf bug list"
+      ],
+      "errorCodes": [
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_COMMAND_FAILED",
+          "description": "bug command failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_CONFIG_INVALID",
+          "description": "bug config invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_SECTION_UNAVAILABLE",
+          "description": "bug section unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_INVALID_RESPONSE",
+          "description": "bug write invalid response",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REJECTED",
+          "description": "bug write rejected",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REPLY_TARGET_MISSING",
+          "description": "bug write reply target missing",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_UNKNOWN",
+          "description": "bug write unknown",
+          "exitCode": 1
+        }
+      ],
+      "handlerName": "bug list",
+      "valueSources": {},
+      "metadata": {
+        "path": [
+          "bug",
+          "list"
+        ],
+        "description": "Переглянути локальні жуки з фільтрами.",
+        "parameters": [
+          {
+            "name": "project",
+            "option": "--project",
+            "required": false,
+            "multiple": false,
+            "description": "Канонічний проєкт, наприклад projects/etchly."
+          },
+          {
+            "name": "status",
+            "option": "--status",
+            "required": false,
+            "multiple": false,
+            "description": "Фільтр за статусом серверного контракту."
+          },
+          {
+            "name": "cursor",
+            "option": "--cursor",
+            "required": false,
+            "multiple": false,
+            "description": "Позиція наступної сторінки."
+          },
+          {
+            "name": "limit",
+            "option": "--limit",
+            "required": false,
+            "multiple": false,
+            "description": "Розмір сторінки в межах конфігурації."
+          }
+        ],
+        "output": "JSON зі сторінкою жуків, continuation cursor та станом синхронізації.",
+        "errors": "Ненульовий код та стисла достатня діагностика за cli-catalog.",
+        "prerequisites": "База жуків; служба raf не потрібна (background-runtime «Межі служби raf»); авторизація чинного bugs-api для мережевих дій. До реалізації команда має явно повідомляти недоступність.",
+        "sideEffects": "Читання локальної бази; фонову синхронізацію виконує служба.",
+        "examples": [
+          "raf bug list"
+        ],
+        "errorCodes": [
+          "UNKNOWN_COMMAND",
+          "UNKNOWN_ARGUMENT",
+          "DUPLICATE_ARGUMENT",
+          "MISSING_VALUE",
+          "MISSING_REQUIRED",
+          "INVALID_VALUE",
+          "HANDLER_FAILED",
+          "HANDLER_UNAVAILABLE",
+          "COMMAND_UNAVAILABLE",
+          "CATALOG_UNAVAILABLE",
+          "CONFIGURATION_INVALID",
+          "PRODUCTION_ENTRY_FAILED",
+          "STATE_CONTEXT_REFUSED",
+          "TIMING_FAILED",
+          "BUG_COMMAND_FAILED",
+          "BUG_CONFIG_INVALID",
+          "BUG_SECTION_UNAVAILABLE",
+          "BUG_WRITE_INVALID_RESPONSE",
+          "BUG_WRITE_REJECTED",
+          "BUG_WRITE_REPLY_TARGET_MISSING",
+          "BUG_WRITE_UNKNOWN"
+        ]
+      },
+      "usage": "raf bug list [--project <project>] [--status <status>] [--cursor <cursor>] [--limit <limit>]"
+    },
+    {
+      "path": [
+        "bug",
+        "show"
+      ],
+      "description": "Переглянути локального жука та його коментарі.",
+      "parameters": [
+        {
+          "name": "bug",
+          "option": "--bug",
+          "required": true,
+          "multiple": false,
+          "description": "Повний ключ, наприклад projects/etchly/bug#344.",
+          "type": "string",
+          "requirement": "required"
+        }
+      ],
+      "output": "JSON жука, коментарів, метаданих вкладень та стану синхронізації.",
+      "errors": "Ненульовий код та стисла достатня діагностика за cli-catalog.",
+      "prerequisites": "База жуків; служба raf не потрібна (background-runtime «Межі служби raf»); авторизація чинного bugs-api для мережевих дій. До реалізації команда має явно повідомляти недоступність.",
+      "sideEffects": "Читання локальної бази без автоматичного завантаження вкладень.",
+      "examples": [
+        "raf bug show --bug raf:1"
+      ],
+      "errorCodes": [
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_COMMAND_FAILED",
+          "description": "bug command failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_CONFIG_INVALID",
+          "description": "bug config invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_SECTION_UNAVAILABLE",
+          "description": "bug section unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_INVALID_RESPONSE",
+          "description": "bug write invalid response",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REJECTED",
+          "description": "bug write rejected",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REPLY_TARGET_MISSING",
+          "description": "bug write reply target missing",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_UNKNOWN",
+          "description": "bug write unknown",
+          "exitCode": 1
+        }
+      ],
+      "handlerName": "bug show",
+      "valueSources": {},
+      "metadata": {
+        "path": [
+          "bug",
+          "show"
+        ],
+        "description": "Переглянути локального жука та його коментарі.",
+        "parameters": [
+          {
+            "name": "bug",
+            "option": "--bug",
+            "required": true,
+            "multiple": false,
+            "description": "Повний ключ, наприклад projects/etchly/bug#344."
+          }
+        ],
+        "output": "JSON жука, коментарів, метаданих вкладень та стану синхронізації.",
+        "errors": "Ненульовий код та стисла достатня діагностика за cli-catalog.",
+        "prerequisites": "База жуків; служба raf не потрібна (background-runtime «Межі служби raf»); авторизація чинного bugs-api для мережевих дій. До реалізації команда має явно повідомляти недоступність.",
+        "sideEffects": "Читання локальної бази без автоматичного завантаження вкладень.",
+        "examples": [
+          "raf bug show --bug raf:1"
+        ],
+        "errorCodes": [
+          "UNKNOWN_COMMAND",
+          "UNKNOWN_ARGUMENT",
+          "DUPLICATE_ARGUMENT",
+          "MISSING_VALUE",
+          "MISSING_REQUIRED",
+          "INVALID_VALUE",
+          "HANDLER_FAILED",
+          "HANDLER_UNAVAILABLE",
+          "COMMAND_UNAVAILABLE",
+          "CATALOG_UNAVAILABLE",
+          "CONFIGURATION_INVALID",
+          "PRODUCTION_ENTRY_FAILED",
+          "STATE_CONTEXT_REFUSED",
+          "TIMING_FAILED",
+          "BUG_COMMAND_FAILED",
+          "BUG_CONFIG_INVALID",
+          "BUG_SECTION_UNAVAILABLE",
+          "BUG_WRITE_INVALID_RESPONSE",
+          "BUG_WRITE_REJECTED",
+          "BUG_WRITE_REPLY_TARGET_MISSING",
+          "BUG_WRITE_UNKNOWN"
+        ]
+      },
+      "usage": "raf bug show --bug <bug>"
+    },
+    {
+      "path": [
+        "bug",
+        "comment",
+        "add"
+      ],
+      "description": "Додати коментар до жука в Dash і після успіху записати його в локальну базу.",
+      "parameters": [
+        {
+          "name": "bug",
+          "option": "--bug",
+          "required": true,
+          "multiple": false,
+          "description": "Повний канонічний ключ жука.",
+          "type": "string",
+          "requirement": "required"
+        },
+        {
+          "name": "text-file",
+          "option": "--text-file",
+          "required": true,
+          "multiple": false,
+          "description": "UTF-8 файл коментаря; - означає stdin.",
+          "type": "string",
+          "requirement": "required"
+        }
+      ],
+      "output": "JSON із серверним comment_id, ревізією жука та записаним коментарем; код 0 лише після відповіді сервера й локального запису.",
+      "errors": "Ненульовий код і JSON із кодом сервера (застаріла ревізія, оренда, доступ, жук відсутній) або BUG_WRITE_UNKNOWN для невідомого результату чи BUG_WRITE_INVALID_RESPONSE; локальна база не змінюється.",
+      "prerequisites": "База жуків із цим жуком; служба raf не потрібна (background-runtime «Межі служби raf»); секрет розділу й мережевий доступ до MCP Dash. До реалізації команда має явно повідомляти недоступність.",
+      "sideEffects": "MCP comment_problem у Dash від actor raf; одна транзакція bugs.sqlite з коментарем і станом жука з відповіді сервера.",
+      "examples": [
+        "raf bug comment add --bug raf:1 --text-file comment.txt"
+      ],
+      "errorCodes": [
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_COMMAND_FAILED",
+          "description": "bug command failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_CONFIG_INVALID",
+          "description": "bug config invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_SECTION_UNAVAILABLE",
+          "description": "bug section unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_INVALID_RESPONSE",
+          "description": "bug write invalid response",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REJECTED",
+          "description": "bug write rejected",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REPLY_TARGET_MISSING",
+          "description": "bug write reply target missing",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_UNKNOWN",
+          "description": "bug write unknown",
+          "exitCode": 1
+        }
+      ],
+      "handlerName": "bug comment add",
+      "valueSources": {},
+      "metadata": {
+        "path": [
+          "bug",
+          "comment",
+          "add"
+        ],
+        "description": "Додати коментар до жука в Dash і після успіху записати його в локальну базу.",
+        "parameters": [
+          {
+            "name": "bug",
+            "option": "--bug",
+            "required": true,
+            "multiple": false,
+            "description": "Повний канонічний ключ жука."
+          },
+          {
+            "name": "text-file",
+            "option": "--text-file",
+            "required": true,
+            "multiple": false,
+            "description": "UTF-8 файл коментаря; - означає stdin."
+          }
+        ],
+        "output": "JSON із серверним comment_id, ревізією жука та записаним коментарем; код 0 лише після відповіді сервера й локального запису.",
+        "errors": "Ненульовий код і JSON із кодом сервера (застаріла ревізія, оренда, доступ, жук відсутній) або BUG_WRITE_UNKNOWN для невідомого результату чи BUG_WRITE_INVALID_RESPONSE; локальна база не змінюється.",
+        "prerequisites": "База жуків із цим жуком; служба raf не потрібна (background-runtime «Межі служби raf»); секрет розділу й мережевий доступ до MCP Dash. До реалізації команда має явно повідомляти недоступність.",
+        "sideEffects": "MCP comment_problem у Dash від actor raf; одна транзакція bugs.sqlite з коментарем і станом жука з відповіді сервера.",
+        "examples": [
+          "raf bug comment add --bug raf:1 --text-file comment.txt"
+        ],
+        "errorCodes": [
+          "UNKNOWN_COMMAND",
+          "UNKNOWN_ARGUMENT",
+          "DUPLICATE_ARGUMENT",
+          "MISSING_VALUE",
+          "MISSING_REQUIRED",
+          "INVALID_VALUE",
+          "HANDLER_FAILED",
+          "HANDLER_UNAVAILABLE",
+          "COMMAND_UNAVAILABLE",
+          "CATALOG_UNAVAILABLE",
+          "CONFIGURATION_INVALID",
+          "PRODUCTION_ENTRY_FAILED",
+          "STATE_CONTEXT_REFUSED",
+          "TIMING_FAILED",
+          "BUG_COMMAND_FAILED",
+          "BUG_CONFIG_INVALID",
+          "BUG_SECTION_UNAVAILABLE",
+          "BUG_WRITE_INVALID_RESPONSE",
+          "BUG_WRITE_REJECTED",
+          "BUG_WRITE_REPLY_TARGET_MISSING",
+          "BUG_WRITE_UNKNOWN"
+        ]
+      },
+      "usage": "raf bug comment add --bug <bug> --text-file <text-file>"
+    },
+    {
+      "path": [
+        "bug",
+        "status",
+        "set"
+      ],
+      "description": "Змінити статус жука в Dash і після успіху записати новий стан у локальну базу.",
+      "parameters": [
+        {
+          "name": "bug",
+          "option": "--bug",
+          "required": true,
+          "multiple": false,
+          "description": "Повний канонічний ключ жука.",
+          "type": "string",
+          "requirement": "required"
+        },
+        {
+          "name": "status",
+          "option": "--status",
+          "required": true,
+          "multiple": false,
+          "description": "Цільовий статус життєвого циклу bugs-api (BUG_STATUSES libs/bugs-api); допустимі переходи перевіряє сервер.",
+          "type": "string",
+          "requirement": "required"
+        }
+      ],
+      "output": "JSON зі станом жука з відповіді сервера, записаним локально; код 0 лише після відповіді сервера й локального запису.",
+      "errors": "Ненульовий код і JSON із кодом сервера (застаріла ревізія, оренда, доступ, жук відсутній) або BUG_WRITE_UNKNOWN для невідомого результату чи BUG_WRITE_INVALID_RESPONSE; локальна база не змінюється.",
+      "prerequisites": "База жуків із цим жуком; служба raf не потрібна (background-runtime «Межі служби raf»); секрет розділу й мережевий доступ до MCP Dash. До реалізації команда має явно повідомляти недоступність.",
+      "sideEffects": "MCP set_problem_status у Dash від actor raf; одна транзакція bugs.sqlite зі станом жука з відповіді; in_progress — claim з орендою actor raf.",
+      "examples": [
+        "raf bug status set --bug raf:1 --status example"
+      ],
+      "errorCodes": [
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_COMMAND_FAILED",
+          "description": "bug command failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_CONFIG_INVALID",
+          "description": "bug config invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_SECTION_UNAVAILABLE",
+          "description": "bug section unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_INVALID_RESPONSE",
+          "description": "bug write invalid response",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REJECTED",
+          "description": "bug write rejected",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REPLY_TARGET_MISSING",
+          "description": "bug write reply target missing",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_UNKNOWN",
+          "description": "bug write unknown",
+          "exitCode": 1
+        }
+      ],
+      "handlerName": "bug status set",
+      "valueSources": {},
+      "metadata": {
+        "path": [
+          "bug",
+          "status",
+          "set"
+        ],
+        "description": "Змінити статус жука в Dash і після успіху записати новий стан у локальну базу.",
+        "parameters": [
+          {
+            "name": "bug",
+            "option": "--bug",
+            "required": true,
+            "multiple": false,
+            "description": "Повний канонічний ключ жука."
+          },
+          {
+            "name": "status",
+            "option": "--status",
+            "required": true,
+            "multiple": false,
+            "description": "Цільовий статус життєвого циклу bugs-api (BUG_STATUSES libs/bugs-api); допустимі переходи перевіряє сервер."
+          }
+        ],
+        "output": "JSON зі станом жука з відповіді сервера, записаним локально; код 0 лише після відповіді сервера й локального запису.",
+        "errors": "Ненульовий код і JSON із кодом сервера (застаріла ревізія, оренда, доступ, жук відсутній) або BUG_WRITE_UNKNOWN для невідомого результату чи BUG_WRITE_INVALID_RESPONSE; локальна база не змінюється.",
+        "prerequisites": "База жуків із цим жуком; служба raf не потрібна (background-runtime «Межі служби raf»); секрет розділу й мережевий доступ до MCP Dash. До реалізації команда має явно повідомляти недоступність.",
+        "sideEffects": "MCP set_problem_status у Dash від actor raf; одна транзакція bugs.sqlite зі станом жука з відповіді; in_progress — claim з орендою actor raf.",
+        "examples": [
+          "raf bug status set --bug raf:1 --status example"
+        ],
+        "errorCodes": [
+          "UNKNOWN_COMMAND",
+          "UNKNOWN_ARGUMENT",
+          "DUPLICATE_ARGUMENT",
+          "MISSING_VALUE",
+          "MISSING_REQUIRED",
+          "INVALID_VALUE",
+          "HANDLER_FAILED",
+          "HANDLER_UNAVAILABLE",
+          "COMMAND_UNAVAILABLE",
+          "CATALOG_UNAVAILABLE",
+          "CONFIGURATION_INVALID",
+          "PRODUCTION_ENTRY_FAILED",
+          "STATE_CONTEXT_REFUSED",
+          "TIMING_FAILED",
+          "BUG_COMMAND_FAILED",
+          "BUG_CONFIG_INVALID",
+          "BUG_SECTION_UNAVAILABLE",
+          "BUG_WRITE_INVALID_RESPONSE",
+          "BUG_WRITE_REJECTED",
+          "BUG_WRITE_REPLY_TARGET_MISSING",
+          "BUG_WRITE_UNKNOWN"
+        ]
+      },
+      "usage": "raf bug status set --bug <bug> --status <status>"
+    },
+    {
+      "path": [
+        "bug",
+        "attachment",
+        "get"
+      ],
+      "description": "Отримати доступ до вкладення жука або коментаря з лінивим кешуванням.",
+      "parameters": [
+        {
+          "name": "bug",
+          "option": "--bug",
+          "required": true,
+          "multiple": false,
+          "description": "Повний канонічний ключ жука.",
+          "type": "string",
+          "requirement": "required"
+        },
+        {
+          "name": "attachment",
+          "option": "--attachment",
+          "required": true,
+          "multiple": false,
+          "description": "Серверний ID вкладення з метаданих жука або коментаря.",
+          "type": "string",
+          "requirement": "required"
+        }
+      ],
+      "output": "JSON з доступним локальним шляхом і метаданими вкладення; помилка не повертає удаваного шляху.",
+      "errors": "Ненульовий код та стисла достатня діагностика за cli-catalog.",
+      "prerequisites": "База жуків; служба raf не потрібна (background-runtime «Межі служби raf»); авторизація чинного bugs-api для мережевих дій. До реалізації команда має явно повідомляти недоступність.",
+      "sideEffects": "Перевірка доступу, завантаження за відсутності валідного кешу, оновлення lastReadAt у базі жуків і застосування бюджету кешу.",
+      "examples": [
+        "raf bug attachment get --bug raf:1 --attachment attachment-id"
+      ],
+      "errorCodes": [
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_COMMAND_FAILED",
+          "description": "bug command failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_CONFIG_INVALID",
+          "description": "bug config invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_SECTION_UNAVAILABLE",
+          "description": "bug section unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_INVALID_RESPONSE",
+          "description": "bug write invalid response",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REJECTED",
+          "description": "bug write rejected",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REPLY_TARGET_MISSING",
+          "description": "bug write reply target missing",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_UNKNOWN",
+          "description": "bug write unknown",
+          "exitCode": 1
+        }
+      ],
+      "handlerName": "bug attachment get",
+      "valueSources": {},
+      "metadata": {
+        "path": [
+          "bug",
+          "attachment",
+          "get"
+        ],
+        "description": "Отримати доступ до вкладення жука або коментаря з лінивим кешуванням.",
+        "parameters": [
+          {
+            "name": "bug",
+            "option": "--bug",
+            "required": true,
+            "multiple": false,
+            "description": "Повний канонічний ключ жука."
+          },
+          {
+            "name": "attachment",
+            "option": "--attachment",
+            "required": true,
+            "multiple": false,
+            "description": "Серверний ID вкладення з метаданих жука або коментаря."
+          }
+        ],
+        "output": "JSON з доступним локальним шляхом і метаданими вкладення; помилка не повертає удаваного шляху.",
+        "errors": "Ненульовий код та стисла достатня діагностика за cli-catalog.",
+        "prerequisites": "База жуків; служба raf не потрібна (background-runtime «Межі служби raf»); авторизація чинного bugs-api для мережевих дій. До реалізації команда має явно повідомляти недоступність.",
+        "sideEffects": "Перевірка доступу, завантаження за відсутності валідного кешу, оновлення lastReadAt у базі жуків і застосування бюджету кешу.",
+        "examples": [
+          "raf bug attachment get --bug raf:1 --attachment attachment-id"
+        ],
+        "errorCodes": [
+          "UNKNOWN_COMMAND",
+          "UNKNOWN_ARGUMENT",
+          "DUPLICATE_ARGUMENT",
+          "MISSING_VALUE",
+          "MISSING_REQUIRED",
+          "INVALID_VALUE",
+          "HANDLER_FAILED",
+          "HANDLER_UNAVAILABLE",
+          "COMMAND_UNAVAILABLE",
+          "CATALOG_UNAVAILABLE",
+          "CONFIGURATION_INVALID",
+          "PRODUCTION_ENTRY_FAILED",
+          "STATE_CONTEXT_REFUSED",
+          "TIMING_FAILED",
+          "BUG_COMMAND_FAILED",
+          "BUG_CONFIG_INVALID",
+          "BUG_SECTION_UNAVAILABLE",
+          "BUG_WRITE_INVALID_RESPONSE",
+          "BUG_WRITE_REJECTED",
+          "BUG_WRITE_REPLY_TARGET_MISSING",
+          "BUG_WRITE_UNKNOWN"
+        ]
+      },
+      "usage": "raf bug attachment get --bug <bug> --attachment <attachment>"
+    }
+  ],
+  "reportStatuses": [
+    {
+      "id": "succeeded",
+      "description": "Доручення виконано успішно",
+      "event": "agent.succeeded"
+    },
+    {
+      "id": "failed",
+      "description": "Доручення не виконано повністю або процес упав без валідного succeeded",
+      "event": "agent.failed"
+    }
+  ]
+}

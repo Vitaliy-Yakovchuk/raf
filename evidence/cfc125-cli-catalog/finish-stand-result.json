@@ -1,0 +1,22 @@
+{
+  "outcome": "passed",
+  "runId": "cfc125-HAOhiz",
+  "platform": "linux",
+  "arch": "x64",
+  "node": "v26.12.1",
+  "counts": {
+    "help": 0,
+    "allowed": 0,
+    "rejected": 0,
+    "runtime": 1,
+    "rebuild": 5
+  },
+  "childProcesses": "synchronous children all exited before cleanup",
+  "cleanup": {
+    "complete": true,
+    "directory": "/tmp/cfc125-HAOhiz"
+  },
+  "fixtureOnlyCatalogMutation": "CFC125_QA_ONLY replaces one existing resource level only in the copied conf; working catalog unchanged",
+  "parserAcceptance": "Each configured enum is accepted up to a trailing unknown-option guard; runner list also executes against real isolated SQLite",
+  "scope": "CLI catalog/help/parser/build only; availability of each business operation is not claimed"
+}

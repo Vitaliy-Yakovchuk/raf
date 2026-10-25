@@ -1,0 +1,4310 @@
+[
+  {
+    "id": "001",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "scripts/build.ts"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": false,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "ed0ccde81df5db924589edbe84daff851a9a80f593f3e925c52e6989357b65c3",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "002",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "agent",
+      "run"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "53d460c32a03e37edcd9d38408a39f3c4daa3aaf41fee7827ecd12d5fa4d4680",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "003",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "53d460c32a03e37edcd9d38408a39f3c4daa3aaf41fee7827ecd12d5fa4d4680",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "004",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "agent",
+      "message"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "5ec6a54ba3751d47d5402163b994e887d4a98c95d770f07f5cedd158c63c504d",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "005",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "message",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "5ec6a54ba3751d47d5402163b994e887d4a98c95d770f07f5cedd158c63c504d",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "006",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "agent",
+      "ps"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "707216927536578a4ea666da3d8393b0d3964867a23186c147026c6e263699c0",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "007",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "ps",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "707216927536578a4ea666da3d8393b0d3964867a23186c147026c6e263699c0",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "008",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "agent",
+      "update"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "9e2c64abb070e8123cb0419359f680d0be9a5a35f899ca6f1fa3c183a857f631",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "009",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "9e2c64abb070e8123cb0419359f680d0be9a5a35f899ca6f1fa3c183a857f631",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "010",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "agent",
+      "close"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "20400c9d40750045e159bddc6f8f07dbbfe19c9cbae1483f8029f562c55670fc",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "011",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "close",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "20400c9d40750045e159bddc6f8f07dbbfe19c9cbae1483f8029f562c55670fc",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "012",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "agent",
+      "interrupt"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "9073914fce68bd3e42ac41ef75200670d8b88b82b123f95909b7ebb4b1f020b6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "013",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "interrupt",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "9073914fce68bd3e42ac41ef75200670d8b88b82b123f95909b7ebb4b1f020b6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "014",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "main",
+      "attach"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "4bf17498532dae2144e6f2f6cb52c5044d8ed5883ce30b98e1bf3596411de427",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "015",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "main",
+      "attach",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "4bf17498532dae2144e6f2f6cb52c5044d8ed5883ce30b98e1bf3596411de427",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "016",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "runner",
+      "enable"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "79a87ee8c7cd82d513be9b061c216211a3a7aee03c181d737042f9875fe27853",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "017",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "enable",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "79a87ee8c7cd82d513be9b061c216211a3a7aee03c181d737042f9875fe27853",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "018",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "runner",
+      "disable"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "3b8a191f9bac63d619e680f6686614a89a61f8dde18176ebc25e1d99c2fdae6b",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "019",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "disable",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "3b8a191f9bac63d619e680f6686614a89a61f8dde18176ebc25e1d99c2fdae6b",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "020",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "runner",
+      "list"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "1de1455de2cae2542b03112ec9b26cd10b2b5f6f9ab90c628d1cf3aa696de0d0",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "021",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "list",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "1de1455de2cae2542b03112ec9b26cd10b2b5f6f9ab90c628d1cf3aa696de0d0",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "022",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "service",
+      "start"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "f8cca750772711a3010ffc916e07780e3c4d812fe86ff477c5171d7ba355ad54",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "023",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "service",
+      "start",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "f8cca750772711a3010ffc916e07780e3c4d812fe86ff477c5171d7ba355ad54",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "024",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "service",
+      "status"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "19ec58a15a5bcd26091ebe72911f15b19927718939b499d71df6a9a06943407f",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "025",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "service",
+      "status",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "19ec58a15a5bcd26091ebe72911f15b19927718939b499d71df6a9a06943407f",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "026",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "service",
+      "stop"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "a0107be093cc198eb9c16ecde82704d2e6adb783769d81ccd2fbb595038dd1ed",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "027",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "service",
+      "stop",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "a0107be093cc198eb9c16ecde82704d2e6adb783769d81ccd2fbb595038dd1ed",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "028",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "reminder",
+      "add"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "2c0004cd91c03734218c01152541a2670720774962067842a6d78866a3cb36fb",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "029",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "2c0004cd91c03734218c01152541a2670720774962067842a6d78866a3cb36fb",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "030",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "reminder",
+      "list"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "1e93348da8105311b30ccf778c07b12c8ccf058ae9d2a66423c377748466b9a5",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "031",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "list",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "1e93348da8105311b30ccf778c07b12c8ccf058ae9d2a66423c377748466b9a5",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "032",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "reminder",
+      "update"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "489ce2ac1790fdf2aa3de52f4b0bae436ac81dec8c1c3993e9eec8c224a909d3",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "033",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "489ce2ac1790fdf2aa3de52f4b0bae436ac81dec8c1c3993e9eec8c224a909d3",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "034",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "reminder",
+      "activate"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "62c5ba988920d433842219f131fc9fc8b75071f60c2c271057e7f4c46a407fc0",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "035",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "activate",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "62c5ba988920d433842219f131fc9fc8b75071f60c2c271057e7f4c46a407fc0",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "036",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "reminder",
+      "close"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "69507492a70ae8136a028b663289a74b5c82e381baad0540cc3200450885324b",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "037",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "close",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "69507492a70ae8136a028b663289a74b5c82e381baad0540cc3200450885324b",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "038",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "reminder",
+      "reassign"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "daa345bf31a6494244da58f0e39b9f631de795e0be892c82273c4999917b631e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "039",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "reassign",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "daa345bf31a6494244da58f0e39b9f631de795e0be892c82273c4999917b631e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "040",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "reminder",
+      "close-all"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "8f6dd60fbe1f000c936204ab19a6bce84f54c2e09e609462ea14b3453ef619e8",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "041",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "close-all",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "8f6dd60fbe1f000c936204ab19a6bce84f54c2e09e609462ea14b3453ef619e8",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "042",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "command",
+      "stats"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "1445c4ccfdc6cc19f40ab2e0da289160042df1989f0536ef53f61113af3cc1ae",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "043",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "command",
+      "stats",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "1445c4ccfdc6cc19f40ab2e0da289160042df1989f0536ef53f61113af3cc1ae",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "044",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "29cbd703cdd8a5068d69cfd413aa5c24e8685530141e636eeecf73cab8e77554",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "045",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "29cbd703cdd8a5068d69cfd413aa5c24e8685530141e636eeecf73cab8e77554",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "046",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "runner",
+      "limits"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "2a2ebe48ef23cfadbb8f7af9396ee01a40eb14164a8184cc1fca5137cd16e47c",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "047",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "limits",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "2a2ebe48ef23cfadbb8f7af9396ee01a40eb14164a8184cc1fca5137cd16e47c",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "048",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "resource",
+      "wait"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "b219051d7d1b490627112bc9fd0c02b543f8920c35dfffe2a98800c052555de6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "049",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "resource",
+      "wait",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "b219051d7d1b490627112bc9fd0c02b543f8920c35dfffe2a98800c052555de6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "050",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "bug",
+      "list"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "17cdfb743de4cc61786cb83e9537f2d780a52af28139a95c1f36d77c1f208298",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "051",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "bug",
+      "list",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "17cdfb743de4cc61786cb83e9537f2d780a52af28139a95c1f36d77c1f208298",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "052",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "bug",
+      "show"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "7c20b774cca54fde456d3a7eae4d9de401b498b72506bf86d15ca45e1e038461",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "053",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "bug",
+      "show",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "7c20b774cca54fde456d3a7eae4d9de401b498b72506bf86d15ca45e1e038461",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "054",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "bug",
+      "comment",
+      "add"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "c95c4c112fa89820cad4f5c4b31f8ad3b83f20178d58899476b08ff71d53f44e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "055",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "bug",
+      "comment",
+      "add",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "c95c4c112fa89820cad4f5c4b31f8ad3b83f20178d58899476b08ff71d53f44e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "056",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "bug",
+      "status",
+      "set"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "285fb75d5b115c7865b14011d0b4944c7d2bc0f06f6bf76ab2dc98b50e775203",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "057",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "bug",
+      "status",
+      "set",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "285fb75d5b115c7865b14011d0b4944c7d2bc0f06f6bf76ab2dc98b50e775203",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "058",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "bug",
+      "attachment",
+      "get"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "488d515095230431f5587cf5ce4dbe68bb26225fc24bd322b56d288d16b52b29",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "059",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "bug",
+      "attachment",
+      "get",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "488d515095230431f5587cf5ce4dbe68bb26225fc24bd322b56d288d16b52b29",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "060",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "test",
+      "run"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "7bf679ae89f6bf922d9c14cc34f5ef29b1f2f006360d257cf02d9356b2d5b1c2",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "061",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "7bf679ae89f6bf922d9c14cc34f5ef29b1f2f006360d257cf02d9356b2d5b1c2",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "062",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "3b0772dbeede3cba8788df670bba27ee2fbf772b98b01e5d058ea4cea10095a4",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "063",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "agent"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "196e61604326fec7234e41232caaa3c4fdcb103c91a5ac7b330fbb2d0604db4b",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "064",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "runner"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "6adf7dca9d8a262a0fa3b54799a35614f1e8d3fa7eba5c83b1060e82f90e86d7",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "065",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "service"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "d279182f3246a5f8fc835091a62f3f85cbe6e02a6120532df5f95e5e0dcb2c4c",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "066",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "reminder"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "da0bc410b6d71ba8dea3703a683bc5efe457fade582ebffa2aa41e160b36cbde",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "067",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "bug"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "a60574f40779aa8c92ab2e1209be9950d4acfd3804b2cd4336a9913d97915059",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "068",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "bug",
+      "comment"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "c95c4c112fa89820cad4f5c4b31f8ad3b83f20178d58899476b08ff71d53f44e",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "069",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "bug",
+      "status"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "285fb75d5b115c7865b14011d0b4944c7d2bc0f06f6bf76ab2dc98b50e775203",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "070",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "bug",
+      "attachment"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "488d515095230431f5587cf5ce4dbe68bb26225fc24bd322b56d288d16b52b29",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "071",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "resource"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "b219051d7d1b490627112bc9fd0c02b543f8920c35dfffe2a98800c052555de6",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "072",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "command"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "1445c4ccfdc6cc19f40ab2e0da289160042df1989f0536ef53f61113af3cc1ae",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "073",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "test"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "7bf679ae89f6bf922d9c14cc34f5ef29b1f2f006360d257cf02d9356b2d5b1c2",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "074",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "main"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 0,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "4bf17498532dae2144e6f2f6cb52c5044d8ed5883ce30b98e1bf3596411de427",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "075",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--type",
+      "main",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "b38423372076edb36c93db0868f6502eec91f397e1eac786dfc0a208f7bc9f2c"
+  },
+  {
+    "id": "076",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--type",
+      "hotfix",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "077",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--type",
+      "spec",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "078",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--type",
+      "design",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "079",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--type",
+      "test-scaffold",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "080",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--type",
+      "implement",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "081",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--type",
+      "coordinator",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "082",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--type",
+      "qa",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "083",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--type",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "b86ebec6945e32d8b73fec4e222a2863ce5ceefbe7b0bcb245e3699dac618716"
+  },
+  {
+    "id": "084",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "etchly",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "085",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "stitchly",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "086",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "crm",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "087",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "company",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "088",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "invite",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "089",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "vitaliy-page",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "090",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "ramus-enterprise",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "091",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "shared-libs",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "092",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "dash",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "093",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "ramus-cloud",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "094",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "raf",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "095",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "orchestrator",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "096",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--project",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "31bd95da09a49e7c702760d162b0e0bb5e7181c98816c5baa2a44dbac411ec09"
+  },
+  {
+    "id": "097",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--phase",
+      "main",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "098",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--phase",
+      "hotfix",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "099",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--phase",
+      "spec",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "100",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--phase",
+      "design",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "101",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--phase",
+      "test-scaffold",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "102",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--phase",
+      "implement",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "103",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--phase",
+      "coordinator",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "104",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--phase",
+      "qa",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "105",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--phase",
+      "context-review",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "106",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--phase",
+      "red",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "107",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--phase",
+      "integration",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "108",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--phase",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "213e00df683ca13a8b460eaeb1b3e361069ecdcef559e4979c9df8192ac3cde8"
+  },
+  {
+    "id": "109",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--complexity",
+      "mechanical",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "110",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--complexity",
+      "ordinary",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "111",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--complexity",
+      "decision",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "34861357ad4137221023d5595710d8bcde77e873ae39adcf1e29ca44621c1835"
+  },
+  {
+    "id": "112",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "run",
+      "--complexity",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "091817bf6ff0e620eeb270b131f7feeff3aebdcb15db58840bf67f3e6089a0a0"
+  },
+  {
+    "id": "113",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "etchly",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "114",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "stitchly",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "115",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "crm",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "116",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "company",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "117",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "invite",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "118",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "vitaliy-page",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "119",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "ramus-enterprise",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "120",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "shared-libs",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "121",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "dash",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "122",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "ramus-cloud",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "123",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "raf",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "124",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "orchestrator",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "125",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--project",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "ef6d7e252d5aaa8362e63ca69de725542a72ee09dbd22b34a59eb9b36e51cb41"
+  },
+  {
+    "id": "126",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--phase",
+      "main",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "127",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--phase",
+      "hotfix",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "128",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--phase",
+      "spec",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "129",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--phase",
+      "design",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "130",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--phase",
+      "test-scaffold",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "131",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--phase",
+      "implement",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "132",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--phase",
+      "coordinator",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "133",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--phase",
+      "qa",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "134",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--phase",
+      "context-review",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "135",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--phase",
+      "red",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "136",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--phase",
+      "integration",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7e5d4fe912bb5efd75460950932b5bd668414afbfa5b741495dc3200f1f08736"
+  },
+  {
+    "id": "137",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "agent",
+      "update",
+      "--phase",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "ec28c84294e64de79fc38ed43575f8312772363ee05612b4f4ccaae3c02ef20c"
+  },
+  {
+    "id": "138",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "enable",
+      "--runner",
+      "codex",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "3c2fd9f8e820fd2480f21217235cb6472c4f9b810deda05200702d7b6257ffb6"
+  },
+  {
+    "id": "139",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "enable",
+      "--runner",
+      "grok",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "3c2fd9f8e820fd2480f21217235cb6472c4f9b810deda05200702d7b6257ffb6"
+  },
+  {
+    "id": "140",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "enable",
+      "--runner",
+      "agy",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "3c2fd9f8e820fd2480f21217235cb6472c4f9b810deda05200702d7b6257ffb6"
+  },
+  {
+    "id": "141",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "enable",
+      "--runner",
+      "claude",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "3c2fd9f8e820fd2480f21217235cb6472c4f9b810deda05200702d7b6257ffb6"
+  },
+  {
+    "id": "142",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "enable",
+      "--runner",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "fcdc5926e37faf13c5fcfd8769379cd4a02131047b61e1a74323de4416974dc5"
+  },
+  {
+    "id": "143",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "disable",
+      "--runner",
+      "codex",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7c11285300949eed5da044e782555d55d4acdc134f3694eeb6c80d6c51e20d36"
+  },
+  {
+    "id": "144",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "disable",
+      "--runner",
+      "grok",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7c11285300949eed5da044e782555d55d4acdc134f3694eeb6c80d6c51e20d36"
+  },
+  {
+    "id": "145",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "disable",
+      "--runner",
+      "agy",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7c11285300949eed5da044e782555d55d4acdc134f3694eeb6c80d6c51e20d36"
+  },
+  {
+    "id": "146",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "disable",
+      "--runner",
+      "claude",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7c11285300949eed5da044e782555d55d4acdc134f3694eeb6c80d6c51e20d36"
+  },
+  {
+    "id": "147",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "disable",
+      "--runner",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "83635751eb00422caf58f48e4015994d87b121f96ba40683fc0b679c1fe356f2"
+  },
+  {
+    "id": "148",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "agent.report-rejected",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "149",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "agent.started",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "150",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "agent.activity-changed",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "151",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "agent.interrupted",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "152",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "agent.closed",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "153",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "reminder.activated",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "154",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "reminder.closed",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "155",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "openspec.archived",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "156",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "deployment.completed",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "157",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "agent.succeeded",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "158",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "agent.failed",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "159",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "context-review.due",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "160",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "launch-queue.drained",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "161",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "raf.cpu-exceeded",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "162",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "raf.health-summary",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "163",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "afbad0b9a13aeb5c66cb71cf17bed8eef5c38b439a2a0163f80eb88cac2cf7aa"
+  },
+  {
+    "id": "164",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event-action",
+      "activate",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "165",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event-action",
+      "close",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "c1419610b5bca9ff81cea1fbb14c3b85d2dbf7e532621761679edd96d8c1cdf4"
+  },
+  {
+    "id": "166",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "add",
+      "--event-action",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "337dc4041c9d2824ebdc8213eed305b63bcc87a68f8f6d03554660fc18d1f865"
+  },
+  {
+    "id": "167",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "agent.report-rejected",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "168",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "agent.started",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "169",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "agent.activity-changed",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "170",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "agent.interrupted",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "171",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "agent.closed",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "172",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "reminder.activated",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "173",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "reminder.closed",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "174",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "openspec.archived",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "175",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "deployment.completed",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "176",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "agent.succeeded",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "177",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "agent.failed",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "178",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "context-review.due",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "179",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "launch-queue.drained",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "180",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "raf.cpu-exceeded",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "181",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "raf.health-summary",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "182",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "ab28d642ecb2607798bc990f1841d9182723d70263959537ae61352de2ed1f35"
+  },
+  {
+    "id": "183",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event-action",
+      "activate",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "184",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event-action",
+      "close",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a3726c8d34339610ba18f1238b6221b7b50845d0b8acdd7e5e4740f70c297e9e"
+  },
+  {
+    "id": "185",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "reminder",
+      "update",
+      "--event-action",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "a86be25275435eaf1643d46ca645b1c0d606a8287d3c81760d589b2caf745408"
+  },
+  {
+    "id": "186",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "limits",
+      "--runners",
+      "codex",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "91fdef24fa4eb281e4dab19d9d0599453248221b52163e47dd0f8120e1313a49"
+  },
+  {
+    "id": "187",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "limits",
+      "--runners",
+      "grok",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "91fdef24fa4eb281e4dab19d9d0599453248221b52163e47dd0f8120e1313a49"
+  },
+  {
+    "id": "188",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "limits",
+      "--runners",
+      "agy",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "91fdef24fa4eb281e4dab19d9d0599453248221b52163e47dd0f8120e1313a49"
+  },
+  {
+    "id": "189",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "limits",
+      "--runners",
+      "claude",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "91fdef24fa4eb281e4dab19d9d0599453248221b52163e47dd0f8120e1313a49"
+  },
+  {
+    "id": "190",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "limits",
+      "--runners",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "b5bb283dd387d7a7be26d6fcaab6175048a89cbd87fad6224c67c7883d641435"
+  },
+  {
+    "id": "191",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "resource",
+      "wait",
+      "--level",
+      "hotfix",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "8f2b42c1d32e0a60ed4f399899cb003bc155c09e0d701cbecd1529e01d837982"
+  },
+  {
+    "id": "192",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "resource",
+      "wait",
+      "--level",
+      "normal",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "8f2b42c1d32e0a60ed4f399899cb003bc155c09e0d701cbecd1529e01d837982"
+  },
+  {
+    "id": "193",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "resource",
+      "wait",
+      "--level",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "aad0789aa03e99fadc6555adee4c1f3f72a8b3a4f29acdde3140405d94dddf9e"
+  },
+  {
+    "id": "194",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "etchly",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "195",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "stitchly",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "196",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "crm",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "197",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "company",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "198",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "invite",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "199",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "vitaliy-page",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "200",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "ramus-enterprise",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "201",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "shared-libs",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "202",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "dash",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "203",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "ramus-cloud",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "204",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "raf",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "205",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "orchestrator",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "206",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--project",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "317612b987c1c0385bc872ff683374c290c3f2c58d7a81b173a1516319834ee2"
+  },
+  {
+    "id": "207",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--phase",
+      "main",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "208",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--phase",
+      "hotfix",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "209",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--phase",
+      "spec",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "210",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--phase",
+      "design",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "211",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--phase",
+      "test-scaffold",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "212",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--phase",
+      "implement",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "213",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--phase",
+      "coordinator",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "214",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--phase",
+      "qa",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "215",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--phase",
+      "context-review",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "216",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--phase",
+      "red",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "217",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--phase",
+      "integration",
+      "--cfc125-parser-guard"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "e8a351afc8bff4d9dd4bba667ccc8a35537939dc46d7cb82fe7169de19cfc115"
+  },
+  {
+    "id": "218",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "test",
+      "run",
+      "--phase",
+      "cfc125-unknown-value"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "5aabd2bd09faeb6e44c2bedbe5ffa4f6c4ed6a08811df139c1fec565a6f79c6d"
+  },
+  {
+    "id": "219",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "unknown-command"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "2246218275872b2333eef1d83ff7814bd343a348b4d4330d8c377c52ec66baa1"
+  },
+  {
+    "id": "220",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "help",
+      "unknown-command"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "6ff234d13e52d73e8d6d74f4264036a868bb7cfdedc3d6f45218c72428461a88"
+  },
+  {
+    "id": "221",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "unknown-command"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7fd16bad0cab12cb0e70b8d50c9092d12424322fc7ec9556a1a990c93353409f"
+  },
+  {
+    "id": "222",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "check",
+      "run"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "4395fb5768bc0427e04b06ab96b8fd9ccce7406a928670d6ca595dc0f047a8d0"
+  },
+  {
+    "id": "223",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "release",
+      "run"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "7034aaee5c3d5da5b5dfdb63538db364df8e4b5a769b54857e4d319aefdca498"
+  },
+  {
+    "id": "224",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "list",
+      "--runner",
+      "codex"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": true,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "6e37afcc15dc66620dca8eb3b7ee2aa53adcdfd5aec97fe52ebe6b54304d0008"
+  },
+  {
+    "id": "225",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "bin/raf.ts",
+      "runner",
+      "disable",
+      "--runner",
+      "codex"
+    ],
+    "cwd": "/tmp/cfc125-yKPvnS/orchestrator/raf-develop",
+    "isolatedHome": "/tmp/cfc125-yKPvnS/home",
+    "noRuntime": false,
+    "exitCode": 1,
+    "signal": null,
+    "error": null,
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSha256": "3bdabfb43313bbc3a707651869ceb5716996eea764ddcd14d867ffc59d8cb8f5"
+  }
+]

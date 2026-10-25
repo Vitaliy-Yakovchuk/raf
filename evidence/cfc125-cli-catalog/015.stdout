@@ -1,0 +1,246 @@
+{
+  "program": "raf",
+  "commands": [
+    {
+      "path": [
+        "main",
+        "attach"
+      ],
+      "description": "Зареєструвати наявну сесію з поточної tmux-панелі як main без її запуску (Q81).",
+      "parameters": [],
+      "output": "JSON з адресним ID main, tmux socket/session/pane, PID і boot identity панелі; код 0 і для повторного виклику з тієї ж панелі.",
+      "errors": "Ненульовий код і JSON із причиною та кроком виправлення: виклик поза tmux або інша панель main ще жива.",
+      "prerequisites": "Виклик із tmux-панелі сесії main; скіл start робить це сам. Параметрів немає: панель визначається за середовищем tmux процесу виклику.",
+      "sideEffects": "Записує або підтверджує сесію main у SQLite стану; не запускає, не перезапускає й не зупиняє процесів.",
+      "examples": [
+        "raf main attach"
+      ],
+      "errorCodes": [
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_BASE_STALE",
+          "description": "Stale main base: ",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_FACT_CONFLICT",
+          "description": "Conflicting main fact identity",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_FACT_IDENTITY",
+          "description": "Fact address/runId differs from runner identity",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_GENERATION_ACTIVE",
+          "description": "Main owners already use the target generation",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_GENERATION_UNPUBLISHED",
+          "description": "Unpublished or changed production origin",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_GIT_CHANGED",
+          "description": "Main Git metadata changed: ",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_GIT_INCONSISTENT",
+          "description": "Main physical Git/gitlink/.gitmodules layout mismatch",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_HANDOVER_INCOMPLETE",
+          "description": "Main handover failed; previous slot retained for rollback",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_HANDOVER_MISSING",
+          "description": "Unknown main handover transition",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_HANDOVER_STALE",
+          "description": "Main handover changed during readiness",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_NOT_LAUNCHABLE",
+          "description": "preflight",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_OPERATION_CONFLICT",
+          "description": "Pinned operation identity conflict",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_OPERATION_MISSING",
+          "description": "Pinned main operation is missing",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_OWNER_FENCED",
+          "description": "Stale or inactive owner epoch",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_OWNER_INCONSISTENT",
+          "description": "Main owners have inconsistent generations",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_PROTOCOL_INCOMPATIBLE",
+          "description": "Incompatible bidirectional main protocol: ",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_RECOVERY_REQUIRED",
+          "description": "Pending publication intent requires recovery before preparation",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_SLOT_BUSY",
+          "description": "Inactive main slot busy: activation, handover or readers pending",
+          "exitCode": 1
+        }
+      ],
+      "handlerName": "main attach",
+      "valueSources": {},
+      "metadata": {
+        "path": [
+          "main",
+          "attach"
+        ],
+        "description": "Зареєструвати наявну сесію з поточної tmux-панелі як main без її запуску (Q81).",
+        "parameters": [],
+        "output": "JSON з адресним ID main, tmux socket/session/pane, PID і boot identity панелі; код 0 і для повторного виклику з тієї ж панелі.",
+        "errors": "Ненульовий код і JSON із причиною та кроком виправлення: виклик поза tmux або інша панель main ще жива.",
+        "prerequisites": "Виклик із tmux-панелі сесії main; скіл start робить це сам. Параметрів немає: панель визначається за середовищем tmux процесу виклику.",
+        "sideEffects": "Записує або підтверджує сесію main у SQLite стану; не запускає, не перезапускає й не зупиняє процесів.",
+        "examples": [
+          "raf main attach"
+        ],
+        "errorCodes": [
+          "UNKNOWN_COMMAND",
+          "UNKNOWN_ARGUMENT",
+          "DUPLICATE_ARGUMENT",
+          "MISSING_VALUE",
+          "MISSING_REQUIRED",
+          "INVALID_VALUE",
+          "HANDLER_FAILED",
+          "HANDLER_UNAVAILABLE",
+          "COMMAND_UNAVAILABLE",
+          "CATALOG_UNAVAILABLE",
+          "CONFIGURATION_INVALID",
+          "PRODUCTION_ENTRY_FAILED",
+          "STATE_CONTEXT_REFUSED",
+          "TIMING_FAILED",
+          "MAIN_BASE_STALE",
+          "MAIN_FACT_CONFLICT",
+          "MAIN_FACT_IDENTITY",
+          "MAIN_GENERATION_ACTIVE",
+          "MAIN_GENERATION_UNPUBLISHED",
+          "MAIN_GIT_CHANGED",
+          "MAIN_GIT_INCONSISTENT",
+          "MAIN_HANDOVER_INCOMPLETE",
+          "MAIN_HANDOVER_MISSING",
+          "MAIN_HANDOVER_STALE",
+          "MAIN_NOT_LAUNCHABLE",
+          "MAIN_OPERATION_CONFLICT",
+          "MAIN_OPERATION_MISSING",
+          "MAIN_OWNER_FENCED",
+          "MAIN_OWNER_INCONSISTENT",
+          "MAIN_PROTOCOL_INCOMPATIBLE",
+          "MAIN_RECOVERY_REQUIRED",
+          "MAIN_SLOT_BUSY"
+        ]
+      },
+      "usage": "raf main attach"
+    }
+  ],
+  "reportStatuses": [
+    {
+      "id": "succeeded",
+      "description": "Доручення виконано успішно",
+      "event": "agent.succeeded"
+    },
+    {
+      "id": "failed",
+      "description": "Доручення не виконано повністю або процес упав без валідного succeeded",
+      "event": "agent.failed"
+    }
+  ]
+}

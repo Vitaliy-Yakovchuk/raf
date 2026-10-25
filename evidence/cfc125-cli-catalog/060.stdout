@@ -1,0 +1,399 @@
+{
+  "program": "raf",
+  "commands": [
+    {
+      "path": [
+        "test",
+        "run"
+      ],
+      "description": "Запустити адресну unit-групу або integration-сценарій (фаза integration) за політикою фази.",
+      "parameters": [
+        {
+          "name": "project",
+          "option": "--project",
+          "required": true,
+          "multiple": false,
+          "description": "Зареєстрований проєкт.",
+          "type": "string",
+          "values": [
+            {
+              "id": "etchly"
+            },
+            {
+              "id": "stitchly"
+            },
+            {
+              "id": "crm"
+            },
+            {
+              "id": "company"
+            },
+            {
+              "id": "invite"
+            },
+            {
+              "id": "vitaliy-page"
+            },
+            {
+              "id": "ramus-enterprise"
+            },
+            {
+              "id": "shared-libs"
+            },
+            {
+              "id": "dash"
+            },
+            {
+              "id": "ramus-cloud"
+            },
+            {
+              "id": "raf"
+            },
+            {
+              "id": "orchestrator"
+            }
+          ],
+          "requirement": "required"
+        },
+        {
+          "name": "phase",
+          "option": "--phase",
+          "required": true,
+          "multiple": false,
+          "description": "Фаза прогону.",
+          "type": "string",
+          "values": [
+            {
+              "id": "main",
+              "description": "Головний координатор"
+            },
+            {
+              "id": "hotfix",
+              "description": "Вузьке виправлення"
+            },
+            {
+              "id": "spec",
+              "description": "Вимоги, контракти й план"
+            },
+            {
+              "id": "design",
+              "description": "UI/UX та макети"
+            },
+            {
+              "id": "test-scaffold",
+              "description": "Тести, інваріанти й каркас"
+            },
+            {
+              "id": "implement",
+              "description": "Реалізація фічі"
+            },
+            {
+              "id": "coordinator",
+              "description": "Ведення напряму та його виконавців"
+            },
+            {
+              "id": "qa",
+              "description": "QA з погляду користувача"
+            },
+            {
+              "id": "context-review",
+              "description": "Аналіз стартового контексту за подією context-review.due; тип агента spec"
+            },
+            {
+              "id": "red",
+              "description": "Початковий unit-red, який підтверджує main"
+            },
+            {
+              "id": "integration",
+              "description": "Фаза локального integration-прогону; не тип агента або етап розробки"
+            }
+          ],
+          "requirement": "required"
+        },
+        {
+          "name": "group",
+          "option": "--group",
+          "required": true,
+          "multiple": false,
+          "description": "Стабільна група <change>/<group>: unit-група або точний preset integration-сценарію.",
+          "type": "string",
+          "requirement": "required"
+        },
+        {
+          "name": "files",
+          "option": "--files",
+          "required": false,
+          "multiple": true,
+          "description": "Точні відносні файли групи одним списком після одного --files (прапорець не повторювати).",
+          "type": "string",
+          "requirement": "optional"
+        },
+        {
+          "name": "only",
+          "option": "--only",
+          "required": false,
+          "multiple": true,
+          "description": "Лише knownRed IDs у форматі file::name; для integration-профілю не дозволено.",
+          "type": "string",
+          "requirement": "optional"
+        }
+      ],
+      "valueSources": {
+        "project": [
+          {
+            "id": "etchly"
+          },
+          {
+            "id": "stitchly"
+          },
+          {
+            "id": "crm"
+          },
+          {
+            "id": "company"
+          },
+          {
+            "id": "invite"
+          },
+          {
+            "id": "vitaliy-page"
+          },
+          {
+            "id": "ramus-enterprise"
+          },
+          {
+            "id": "shared-libs"
+          },
+          {
+            "id": "dash"
+          },
+          {
+            "id": "ramus-cloud"
+          },
+          {
+            "id": "raf"
+          },
+          {
+            "id": "orchestrator"
+          }
+        ],
+        "phase": [
+          {
+            "id": "main",
+            "description": "Головний координатор"
+          },
+          {
+            "id": "hotfix",
+            "description": "Вузьке виправлення"
+          },
+          {
+            "id": "spec",
+            "description": "Вимоги, контракти й план"
+          },
+          {
+            "id": "design",
+            "description": "UI/UX та макети"
+          },
+          {
+            "id": "test-scaffold",
+            "description": "Тести, інваріанти й каркас"
+          },
+          {
+            "id": "implement",
+            "description": "Реалізація фічі"
+          },
+          {
+            "id": "coordinator",
+            "description": "Ведення напряму та його виконавців"
+          },
+          {
+            "id": "qa",
+            "description": "QA з погляду користувача"
+          },
+          {
+            "id": "context-review",
+            "description": "Аналіз стартового контексту за подією context-review.due; тип агента spec"
+          },
+          {
+            "id": "red",
+            "description": "Початковий unit-red, який підтверджує main"
+          },
+          {
+            "id": "integration",
+            "description": "Фаза локального integration-прогону; не тип агента або етап розробки"
+          }
+        ]
+      },
+      "output": "JSON TestRunResult з testKind, timeoutPolicy і callerPhase; код 0 лише для passed.",
+      "errors": "Ненульовий код для refused, setup-failed, assertions-failed, timed-out, interrupted та unverified-remainder.",
+      "prerequisites": "Активна зміна, налаштований профіль, перевірене робоче дерево та ізольований QA HOME для raf-develop/hotfix.",
+      "sideEffects": "Адресний процес unit- або integration-тестів, його дерево та активний агрегат SQLite вибраного HOME; без історії прогонів.",
+      "examples": [
+        "raf test run --project etchly --phase main --group complete-raf-flow-contracts/catalog-generator"
+      ],
+      "errorCodes": [
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        },
+        {
+          "id": "TEST_RUN_PLAN_CHANGED",
+          "description": "test run plan changed",
+          "exitCode": 1
+        }
+      ],
+      "handlerName": "test run",
+      "metadata": {
+        "path": [
+          "test",
+          "run"
+        ],
+        "description": "Запустити адресну unit-групу або integration-сценарій (фаза integration) за політикою фази.",
+        "parameters": [
+          {
+            "name": "project",
+            "option": "--project",
+            "required": true,
+            "multiple": false,
+            "description": "Зареєстрований проєкт."
+          },
+          {
+            "name": "phase",
+            "option": "--phase",
+            "required": true,
+            "multiple": false,
+            "description": "Фаза прогону."
+          },
+          {
+            "name": "group",
+            "option": "--group",
+            "required": true,
+            "multiple": false,
+            "description": "Стабільна група <change>/<group>: unit-група або точний preset integration-сценарію."
+          },
+          {
+            "name": "files",
+            "option": "--files",
+            "required": false,
+            "multiple": true,
+            "description": "Точні відносні файли групи одним списком після одного --files (прапорець не повторювати)."
+          },
+          {
+            "name": "only",
+            "option": "--only",
+            "required": false,
+            "multiple": true,
+            "description": "Лише knownRed IDs у форматі file::name; для integration-профілю не дозволено."
+          }
+        ],
+        "valueSources": {
+          "project": "projects.json#/projects",
+          "phase": "raf-constants.json#/agentPhases"
+        },
+        "output": "JSON TestRunResult з testKind, timeoutPolicy і callerPhase; код 0 лише для passed.",
+        "errors": "Ненульовий код для refused, setup-failed, assertions-failed, timed-out, interrupted та unverified-remainder.",
+        "prerequisites": "Активна зміна, налаштований профіль, перевірене робоче дерево та ізольований QA HOME для raf-develop/hotfix.",
+        "sideEffects": "Адресний процес unit- або integration-тестів, його дерево та активний агрегат SQLite вибраного HOME; без історії прогонів.",
+        "examples": [
+          "raf test run --project etchly --phase main --group complete-raf-flow-contracts/catalog-generator"
+        ],
+        "errorCodes": [
+          "UNKNOWN_COMMAND",
+          "UNKNOWN_ARGUMENT",
+          "DUPLICATE_ARGUMENT",
+          "MISSING_VALUE",
+          "MISSING_REQUIRED",
+          "INVALID_VALUE",
+          "HANDLER_FAILED",
+          "HANDLER_UNAVAILABLE",
+          "COMMAND_UNAVAILABLE",
+          "CATALOG_UNAVAILABLE",
+          "CONFIGURATION_INVALID",
+          "PRODUCTION_ENTRY_FAILED",
+          "STATE_CONTEXT_REFUSED",
+          "TIMING_FAILED",
+          "TEST_RUN_PLAN_CHANGED"
+        ]
+      },
+      "usage": "raf test run --project <project> --phase <phase> --group <group> [--files <files> [<files> ...]] [--only <only> [<only> ...]]"
+    }
+  ],
+  "reportStatuses": [
+    {
+      "id": "succeeded",
+      "description": "Доручення виконано успішно",
+      "event": "agent.succeeded"
+    },
+    {
+      "id": "failed",
+      "description": "Доручення не виконано повністю або процес упав без валідного succeeded",
+      "event": "agent.failed"
+    }
+  ]
+}

@@ -137,11 +137,15 @@ child.on('close',async exitCode=>{let result=null;try{result=stdout.trim()?JSON.
       return record(label, argv, await json(prefix + '.done'));
     };
     const metrics = async label => {
+      const before = Date.now();
       const r = await command(label, ['command', 'stats']);
       assert.equal(r.exitCode, 0);
       const value = JSON.parse(r.result.stdout).health.forcedClose;
       assert.equal(value.unavailableReason, null);
       assert.ok(value.since);
+      const readAt = Date.parse(value.readAt);
+      assert.ok(readAt >= before && readAt <= Date.now(), `Expected current UTC readAt, got ${value.readAt}`);
+      assert.ok(Date.parse(value.since) <= readAt, `Accounting start exceeds readAt: ${value.since}`);
       return value;
     };
     await attach('initial');

@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/usr/bin/tmux",
+    "-L",
+    "raf-lfc-0729a48d",
+    "new-session",
+    "-d",
+    "-s",
+    "main",
+    "-c",
+    "/srv/dev/mrh54-tmp.MsagSv/mrh54-p9q9yG/tmp/raf-lfc-BgVV7B/orchestrator",
+    "/opt/dev/node/bin/node",
+    "/srv/dev/mrh54-tmp.MsagSv/mrh54-p9q9yG/tmp/raf-lfc-BgVV7B/main-caller.mjs",
+    "/srv/dev/mrh54-tmp.MsagSv/mrh54-p9q9yG/tmp/raf-lfc-BgVV7B/fixture.json"
+  ],
+  "code": 0,
+  "stdout": "",
+  "stderr": ""
+}

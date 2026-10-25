@@ -1,0 +1,66 @@
+{
+  "commands": [
+    "npm run build",
+    "npm run check:comments",
+    "node --check scripts/qa-forced-close-live.mjs",
+    "git diff --check"
+  ],
+  "starts": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "03c1b4",
+        "wall_time_seconds": 1.001692945,
+        "session_id": 43296,
+        "original_token_count": 9,
+        "output": "\n> build\n> node scripts/build.ts\n\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "05842f",
+        "wall_time_seconds": 1.001347132,
+        "session_id": 45702,
+        "original_token_count": 13,
+        "output": "\n> check:comments\n> node scripts/check-comments.ts\n\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "3f950b",
+        "wall_time_seconds": 0.121504495,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "1f8e5a",
+        "wall_time_seconds": 0.14052824,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    }
+  ],
+  "completions": [
+    {
+      "chunk_id": "2d8afe",
+      "wall_time_seconds": 1.1317e-05,
+      "exit_code": 0,
+      "original_token_count": 26,
+      "output": "\u041a\u0430\u0442\u0430\u043b\u043e\u0433 \u0437\u0456\u0431\u0440\u0430\u043d\u043e. \u041e\u043f\u0435\u0440\u0430\u0446\u0456\u0439\u043d\u0456 \u043a\u043e\u043c\u0430\u043d\u0434\u0438 \u0449\u0435 \u043d\u0435 \u0440\u0435\u0430\u043b\u0456\u0437\u043e\u0432\u0430\u043d\u0456.\n"
+    },
+    {
+      "chunk_id": "eedc75",
+      "wall_time_seconds": 9.534e-06,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  ]
+}

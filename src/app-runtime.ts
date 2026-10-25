@@ -377,7 +377,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const state = await store();
       const budget = loaded.commandTiming.sqliteOnlyMeanBudgetMs;
       if (!Number.isFinite(budget) || budget! <= 0) throw fail('CONFIGURATION_INVALID', 'configuration', 'Invalid commandTiming.sqliteOnlyMeanBudgetMs');
-      const forcedClose = state.readForcedCloseMetrics(new Date(dependencies.now()).toISOString());
+      const forcedClose = state.readForcedCloseMetrics(new Date().toISOString());
       return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile(), health: { readAt: forcedClose.readAt, since: forcedClose.since, forcedClose } };
     },
   };
@@ -405,7 +405,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
     } catch (error) {
       original = error;
       if (name === 'agent close' && (params.force === true || params.reason !== undefined) && opening) {
-        try { (await opening).recordForcedCloseRefusal(failureContext(error)?.code ?? 'HANDLER_FAILED', new Date(dependencies.now()).toISOString()); }
+        try { (await opening).recordForcedCloseRefusal(failureContext(error)?.code ?? 'HANDLER_FAILED', new Date().toISOString()); }
         catch { }
       }
       if (failureContext(error)) throw error;

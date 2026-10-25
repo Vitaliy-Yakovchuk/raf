@@ -11,6 +11,8 @@ import { loadFlowPolicy } from '../src/flow-policy.ts';
 import { openStateStore } from '../src/state-store.ts';
 import { createSessionState, type SessionRecord, type SessionRepository, type TransitionEffects } from '../src/session-state.ts';
 import { mainRoute } from '../src/hotfix-host.ts';
+import { createAppRuntime, type AppRuntimeDependencies, type RuntimeConfiguration, type RuntimeContext } from '../src/app-runtime.ts';
+import type { StateStore } from '../src/state-store.ts';
 import { configureForcedCloseStand, forcedCloseStandPrefix, prepareForcedCloseMain } from '../scripts/qa-forced-close-config.mjs';
 import {
   forcedCloseMetricsPeriod, readForcedCloseMetrics,
@@ -50,6 +52,49 @@ test('forced-close live stand creates its registered main Git root before worker
 test('forced-close live stand respects its host disk TMPDIR', () => {
   assert.equal(forcedCloseStandPrefix({ TMPDIR: '/srv/dev/qa-scratch' }), '/srv/dev/qa-scratch/mrh54-');
   assert.equal(forcedCloseStandPrefix({}), '/srv/dev/mrh54-');
+});
+
+function healthRuntime() {
+  const refusals: { code: string; at: string }[] = [];
+  const store = {
+    initializeRunners() {},
+    readForcedCloseMetrics: (readAt: string) => ({ readAt, since: at(0), completed: 0, refusalsByCode: {}, unavailableReason: null }),
+    readCostProfile: () => ({}),
+    getCommandTiming: () => undefined,
+    recordForcedCloseRefusal: (code: string, at: string) => refusals.push({ code, at }),
+    close() {},
+  } as unknown as StateStore;
+  const context: RuntimeContext = { orchestratorRoot: '/unit/root', confRoot: '/unit/root/conf', artifactPath: '/unit/catalog.json', statePath: '/unit/state.sqlite', tmpRoot: '/unit/tmp', mode: 'test', commandStartedAtMs: 100, commandTimingOwner: 'production', resolveCaller: async () => null };
+  const config = { catalog: { commands: ['command stats', 'agent close'].map(name => ({ handlerName: name, path: name.split(' '), metadata: {} })) }, models: { runners: [] }, commandTiming: { emaAlpha: 0.1, sqliteOnlyMeanBudgetMs: 100 } } as unknown as RuntimeConfiguration;
+  const dependencies: AppRuntimeDependencies = {
+    loadConfiguration: async () => config, openStore: async () => store,
+    createServices: async () => { throw new Error('Controlled authorization refusal'); },
+    nextRunIdentity: () => { throw new Error('Health must not launch'); }, now: () => 266,
+  };
+  return { app: createAppRuntime(context, dependencies), refusals };
+}
+
+test('forced-close command stats uses UTC wall time despite monotonic duration clock', async () => {
+  const { app } = healthRuntime();
+  const before = Date.now();
+  try {
+    const result = await app.handlers['command stats']({}) as { health: { readAt: string; forcedClose: ForcedCloseMetricsSnapshot } };
+    const observed = Date.parse(result.health.readAt);
+    assert.ok(observed >= before && observed <= Date.now(), result.health.readAt);
+    assert.equal(result.health.forcedClose.readAt, result.health.readAt);
+  } finally { await app.close(); }
+});
+
+test('forced-close refusal accounting receives UTC wall time despite monotonic duration clock', async () => {
+  const { app, refusals } = healthRuntime();
+  const before = Date.now();
+  try {
+    await assert.rejects(app.handlers['agent close']({ id: 'worker', force: true, reason: 'Controlled QA reason' }));
+    assert.equal(refusals.length, 1);
+    const observed = Date.parse(refusals[0].at);
+    assert.ok(observed >= before && observed <= Date.now(), refusals[0].at);
+    assert.equal(refusals[0].code, 'HANDLER_FAILED');
+  } finally { await app.close(); }
 });
 
 function fixture(t: TestContext) {

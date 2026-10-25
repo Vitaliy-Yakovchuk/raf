@@ -643,6 +643,71 @@
       "childExitCode": 0,
       "passed": 29,
       "evidence": "host-main-qa.TestRunResult.json"
+    },
+    {
+      "runId": "d56cb68e-51a0-4a83-b24c-d43b4864faab",
+      "group": "monitor-raf-health/forced-close",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/forced-close-metrics.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "knownRed": [
+        {
+          "file": "test/forced-close-metrics.test.ts",
+          "name": "forced-close command stats uses UTC wall time despite monotonic duration clock"
+        },
+        {
+          "file": "test/forced-close-metrics.test.ts",
+          "name": "forced-close refusal accounting receives UTC wall time despite monotonic duration clock"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 29,
+      "evidence": "utc-red.TestRunResult.json"
+    },
+    {
+      "runId": "d5334d1b-8526-47a1-b0fb-6c5145918631",
+      "group": "monitor-raf-health/forced-close",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/forced-close-metrics.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 31,
+      "evidence": "utc-qa.TestRunResult.json"
     }
   ],
   "aggregatePreserved": true,

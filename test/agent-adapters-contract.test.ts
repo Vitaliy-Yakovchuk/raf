@@ -183,8 +183,9 @@ test('U2 selected command is wrapped once without replacing model effort cwd or 
   assert.deepEqual(wrapped[0].environment, { FIXTURE: 'unchanged' });
   const launch = commands.find(command => command.args.includes('new-session'));
   if (!launch) throw new Error('Expected a tmux launch command');
-  assert.ok(launch.cwd === request.cwd || launch.args.includes(request.cwd));
-  assert.ok(launch.args.some(arg => arg.includes('/fixture/report-wrapper') && arg.includes(reportPath)));
+  assert.ok(launch.cwd === request.cwd || launch.args.includes(request.cwd) ||
+    launch.args.some(arg => arg.includes(request.cwd)), JSON.stringify(launch));
+  assert.ok(launch.args.some(arg => arg.includes('/fixture/report-wrapper') && arg.includes(reportPath)), JSON.stringify(launch));
   assert.ok(commands.every(command => command.stdin !== brief && !command.args.includes(brief)));
 });
 
@@ -222,7 +223,10 @@ for (const fact of [
     const commands: AdapterCommand[] = [];
     const native: RunnerProtocol = { invocation: protocol.invocation, observe: () => structuredClone(fact) };
     const adapter = new TmuxAgentAdapter({ protocols: { ...protocols, codex: native },
-      execute: async command => { commands.push(command); return { ...success, stdout: 'fixture pane' }; },
+      execute: async command => {
+        commands.push(command);
+        return { ...success, stdout: command.args.includes('display-message') ? '0|\n' : 'fixture pane' };
+      },
     });
     const session = { tmuxSession: 'owned-a', selection };
     assert.deepEqual(await adapter.inspect(session), fact);

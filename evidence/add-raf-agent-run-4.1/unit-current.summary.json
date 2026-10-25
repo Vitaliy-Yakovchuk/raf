@@ -1,0 +1,48 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/contracts",
+  "testedHead": "5e026d3f2a727e6b9747d6c2b53ca5e0047e64e2",
+  "workspaceStatus": "clean",
+  "reason": "Repeat after hotfix 6.6 merge and runtimeLoaderProofs correction; native stand restarted by main at parent 8c769876b74a0df681ca6f0144012bc68b76bc99.",
+  "runId": "a8e1569a-cd6c-45fe-9f07-3660fbc3642b",
+  "selection": {
+    "files": [
+      "test/cli-catalog.test.ts",
+      "test/app-runtime.test.ts",
+      "test/task-context.test.ts",
+      "test/task-context-z12.test.ts",
+      "test/runner-availability.test.ts",
+      "test/agent-control.test.ts",
+      "test/session-state.test.ts",
+      "test/task-reservations.test.ts",
+      "test/resource-admission.test.ts",
+      "test/resource-estimates.test.ts",
+      "test/agent-run-admission-snapshot.test.ts",
+      "test/home-disk-admission.test.ts",
+      "test/session-recovery.test.ts",
+      "test/agent-adapters-contract.test.ts",
+      "test/launch-state.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "passed": 608,
+  "knownRed": 0,
+  "unexecuted": 0,
+  "unknown": 0,
+  "removed": 0,
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "timeoutCount": 0,
+  "nextAction": "complete",
+  "aggregateHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+  "captureNote": "Native exec exposes merged output; the complete output parses as exactly one TestRunResult with no additional stderr text. Independent byte-level stderr capture is unavailable."
+}

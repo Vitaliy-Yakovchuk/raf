@@ -1,0 +1,14 @@
+{
+  "attempt": 1,
+  "reviewedSha": "97eacb69fbbfc83dc8e26892e8da3391827238aa",
+  "sourceArtifacts": "/srv/dev/ara41q/{stdout,stderr,exit,ev}",
+  "result": "failed before live scenarios; full original streams copied",
+  "cause": "PRODUCTION_ENTRY_FAILED: unproved dynamic loading in src/test-run-etchly-inventory.ts",
+  "resolutionByMain": {
+    "commit": "8c769876b74a0df681ca6f0144012bc68b76bc99",
+    "reportedVerification": "red/green I6 7/7",
+    "restartedAtSha": "8c769876b74a0df681ca6f0144012bc68b76bc99",
+    "outputDirectory": "/srv/dev/ara41q2"
+  },
+  "cleanup": "Original summary reports complete=false, service-stop CLI failed with the same inventory refusal; stopStandServices reports complete=true with no remaining processes; owned raw tmux server stopped. No native actors launched. Do not relabel original cleanup as passed."
+}

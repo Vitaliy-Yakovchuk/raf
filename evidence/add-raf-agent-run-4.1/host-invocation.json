@@ -20,6 +20,17 @@
     "cliExitCode": "/srv/dev/ara41q/exit",
     "sanitizedEvidence": "/srv/dev/ara41q/ev"
   },
-  "status": "queued by main; no result received",
-  "privacy": "Do not read or include raw native transcripts. Main supplies sanitized extracts only."
+  "status": "first attempt failed before scenarios; main restarted on loader-proof fix; second result pending",
+  "privacy": "Do not read or include raw native transcripts. Main supplies sanitized extracts only.",
+  "restart": {
+    "reviewedSha": "8c769876b74a0df681ca6f0144012bc68b76bc99",
+    "argv": [
+      "node",
+      "scripts/qa-agent-run-live.mjs",
+      "8c769876b74a0df681ca6f0144012bc68b76bc99"
+    ],
+    "outputDirectory": "/srv/dev/ara41q2",
+    "scriptsUnchanged": true,
+    "authorization": "main message 2026-10-25: loader proof fixed; same reviewed scripts restarted"
+  }
 }

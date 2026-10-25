@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { spawn } from 'node:child_process';
+import { appendFileSync } from 'node:fs';
 import { mkdtemp, readFile, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
@@ -71,20 +72,27 @@ for (const testKind of ['unit', 'integration'] as const) {
           assert.ok(host.command.argv.includes('test') && host.command.argv.includes('run'));
           assert.ok(host.command.argv.includes(testKind === 'unit' ? 'qa' : 'integration'));
           await host.setMainAvailability('unavailable');
+          await Promise.all(['stdout', 'stderr'].map(stream => writeFile(join(host!.evidencePath, `original.${stream}`), '')));
           cli = spawn(host.command.executable, host.command.argv, {
             cwd: host.command.cwd, env: host.command.env, shell: false, stdio: ['ignore', 'pipe', 'pipe'],
           });
           const stdout: Buffer[] = [], stderr: Buffer[] = [];
           let outputBytes = 0;
           let outputOverflow = false;
-          const collect = (target: Buffer[]) => (chunk: Buffer) => {
+          const collect = (target: Buffer[], stream: 'stdout' | 'stderr') => (chunk: Buffer) => {
             outputBytes += chunk.length;
-            if (outputBytes <= 1024 * 1024) target.push(chunk);
+            if (outputBytes <= 1024 * 1024) {
+              target.push(chunk);
+              appendFileSync(join(host!.evidencePath, `original.${stream}`), chunk);
+            }
             else outputOverflow = true;
           };
-          cli.stdout!.on('data', collect(stdout)); cli.stderr!.on('data', collect(stderr));
+          cli.stdout!.on('data', collect(stdout, 'stdout')); cli.stderr!.on('data', collect(stderr, 'stderr'));
           const closed = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((accept, reject) => {
-            cli!.once('error', reject); cli!.once('exit', (code, signal) => accept({ code, signal }));
+            cli!.once('error', reject); cli!.once('exit', (code, signal) => {
+              appendFileSync(join(host!.evidencePath, 'original.cli-exit.json'), JSON.stringify({ code, signal }) + '\n');
+              accept({ code, signal });
+            });
           });
           assert.ok(cli.pid);
           wrapperIdentity = await identity(cli.pid!);

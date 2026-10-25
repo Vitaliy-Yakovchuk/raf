@@ -2,7 +2,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs';
 import { userInfo } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { RecoveryGroup, RecoveryInFlight, StateRecoveryResult } from '../../src/test-run-state-recovery.ts';
@@ -75,7 +75,8 @@ export async function prepareStateRecoveryHost(input: {
   const unitHome = join(unitOwner, createHash('sha256').update(JSON.stringify([root, 'raf', workspace])).digest('hex'));
   const checkpointPath = join(root, 'checkpoint.json');
   const childReleasePath = join(root, 'release');
-  const evidencePath = join(root, 'evidence');
+  const evidenceRoot = process.env.RAF_STATE_RECOVERY_EVIDENCE_ROOT;
+  const evidencePath = evidenceRoot ? join(resolve(evidenceRoot), basename(root)) : join(root, 'evidence');
   const metadata = join(root, 'observations.json');
   const settings = join(root, 'receiver.json');
   const originalPath = join(root, 'original.json');
@@ -113,9 +114,11 @@ export async function prepareStateRecoveryHost(input: {
   const callerId = 'state-recovery-stand';
   const controllerIdentity = identity(process.pid);
   if (!controllerIdentity) throw new Error('Cannot prove stand caller identity');
-  const wait = async (ready: () => boolean, label: string) => {
-    while (Date.now() < deadlineMs) { if (ready()) return; await delay(10); }
-    throw new Error(`Stand budget exhausted: ${label}`);
+  const wait = async (ready: () => boolean, label: string, until = deadlineMs) => {
+    while (!ready()) {
+      if (Date.now() >= until) throw new Error(`Stand budget exhausted: ${label}`);
+      await delay(10);
+    }
   };
   const track = () => {
     if (existsSync(originalPath)) {
@@ -127,13 +130,20 @@ export async function prepareStateRecoveryHost(input: {
   };
   const finish = async () => {
     track();
-    for (const row of owned.values()) if (same(row)) { try { process.kill(row.pid, 'SIGKILL'); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error; } }
-    await wait(() => [...owned.values()].every(row => !same(row)), 'identity cleanup');
-    unitStore?.close(); unitStore = undefined;
-    controllerStore?.close(); controllerStore = undefined;
-    return { remainingOwned: [...owned.values()].filter(same), operationalStateOpened: false };
+    try {
+      for (const [name, path] of Object.entries({ checkpoint: checkpointPath, original: originalPath, observations: metadata, receiver: settings })) {
+        if (existsSync(path)) cpSync(path, join(evidencePath, `${name}.json`));
+      }
+      for (const row of owned.values()) if (same(row)) { try { process.kill(row.pid, 'SIGKILL'); } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error; } }
+      await wait(() => [...owned.values()].every(row => !same(row)), 'identity cleanup', Date.now() + budget);
+      return { remainingOwned: [...owned.values()].filter(same), operationalStateOpened: false };
+    } finally {
+      unitStore?.close(); unitStore = undefined;
+      controllerStore?.close(); controllerStore = undefined;
+    }
   };
   try {
+    mkdirSync(evidencePath, { recursive: true, mode: 0o700 });
     for (const directory of ['conf', 'evidence', 'control', 'u', 't', 'main-origin', 'openspec/changes/add-raf-test-run', 'raf-develop/test']) mkdirSync(join(root, directory), { recursive: true, mode: 0o700 });
     for (const directory of ['src', 'bin', 'scripts', 'dist']) cpSync(join(source, directory), join(workspace, directory), { recursive: true });
     cpSync(join(source, 'package.json'), join(workspace, 'package.json'));
@@ -159,6 +169,9 @@ export async function prepareStateRecoveryHost(input: {
     config.projects = { raf: { profiles: { [profileId]: profile }, groups: { [groupId]: { profileId, files: [file] } } } };
     config.temporaryArtifacts = { ...config.temporaryArtifacts, root: join(root, 't'), minimumNestedSocketPathBytes: 1 };
     json(join(root, 'conf/test-runs.json'), config);
+    const constants = read(join(root, 'conf/raf-constants.json'));
+    constants.commands.find((command: { path: string[] }) => command.path.join(' ') === 'test run').examples = [`raf test run --project raf --phase ${phase} --group ${groupId}`];
+    json(join(root, 'conf/raf-constants.json'), constants);
     json(settings, { mode: 'crash', availability: 'unavailable', recipientGeneration: 0 });
     json(metadata, { spawnRuns: [], releasedRuns: [] });
     const hookSource = `import {existsSync,readFileSync,writeFileSync,readdirSync} from 'node:fs';
@@ -169,7 +182,7 @@ function identity(pid){try{const r=readFileSync('/proc/'+pid+'/stat','utf8');con
 function tree(pid){const rows=readdirSync('/proc').filter(n=>/^\\d+$/.test(n)).flatMap(n=>{try{const r=readFileSync('/proc/'+n+'/stat','utf8');const f=r.slice(r.lastIndexOf(')')+2).split(' ');return f[0]==='Z'?[]:[{pid:Number(n),ppid:Number(f[1]),pgid:Number(f[2]),start:f[19],boot}];}catch{return [];}});const owned=new Set([pid,...rows.filter(r=>r.pgid===pid).map(r=>r.pid)]);for(let size=-1;size!==owned.size;){size=owned.size;for(const r of rows)if(owned.has(r.ppid))owned.add(r.pid);}return rows.filter(r=>owned.has(r.pid)).map(({pid,start,boot})=>({pid,start,boot}));}
 export function capture(group){if(!group.inFlight?.processIdentity)return;const m=read(meta);if(!m.spawnRuns.includes(group.inFlight.runId)){m.spawnRuns.push(group.inFlight.runId);json(meta,m);const pid=JSON.parse(group.inFlight.processIdentity).pid;json(original,{flight:group.inFlight,wrapper:identity(process.pid),tree:tree(pid)});}}
 export function released(runId){const m=read(meta);if(!m.releasedRuns.includes(runId)){m.releasedRuns.push(runId);json(meta,m);}}
-export async function checkpoint(name,runId){if(read(settings).mode!=='crash'||name!==${JSON.stringify(input.checkpoint)})return;json(${JSON.stringify(checkpointPath)},{name,runId,atMs:Date.now()});await new Promise((_,reject)=>setTimeout(()=>reject(new Error('Stand checkpoint watchdog')),${budget * 10}));}
+export async function checkpoint(name,runId){if(read(settings).mode!=='crash'||name!==${JSON.stringify(input.checkpoint)})return;const path=${JSON.stringify(checkpointPath)};if(existsSync(path)){const previous=read(path);if(previous.name===name&&previous.runId===runId)return;throw new Error('Stand checkpoint belongs to another run');}json(path,{name,runId,atMs:Date.now()});await new Promise((_,reject)=>setTimeout(()=>reject(new Error('Stand checkpoint watchdog')),${budget * 10}));}
 export function mayReturn(){return read(settings).mode==='normal';}
 export async function receipt(reply){const current=read(settings);if(current.availability==='unavailable')return {accepted:false,receiptId:null,forwarded:false};const receiptId=reply.delivery?.receiptId??('stand-receipt-'+reply.recovery.runId);return {accepted:true,receiptId,forwarded:current.availability==='forwarded'};}
 `;

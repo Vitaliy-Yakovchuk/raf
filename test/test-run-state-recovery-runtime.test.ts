@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { spawn } from 'node:child_process';
+import { appendFileSync } from 'node:fs';
 import { mkdtemp, readFile, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
@@ -42,7 +43,8 @@ function original(after: HostExecution, before: HostSnapshot) {
   assert.equal(after.result.phase, flight.phase);
   assert.equal(after.result.callerPhase, flight.callerPhase);
   assert.deepEqual(after.result.selection, flight.selection);
-  assert.deepEqual(after.result.command, flight.command);
+  const command = before.group.lastResult?.runId === flight.runId ? before.group.lastResult.command : flight.command;
+  assert.deepEqual(after.result.command, command);
   assert.deepEqual(after.result.timeoutPolicy, flight.timeoutPolicy);
   assert.deepEqual(after.result.knownRed, before.group.knownRed);
   assert.deepEqual(after.result.unexecuted, before.group.unexecuted);
@@ -65,26 +67,34 @@ for (const testKind of ['unit', 'integration'] as const) {
         try {
           host = await prepareStateRecoveryHost({ root, testKind, checkpoint: name, child, initialTimeoutCount: 1 });
           assert.ok(Number.isFinite(host.deadlineMs) && host.deadlineMs > Date.now());
-          inside(host.home, root); inside(host.checkpointPath, root); inside(host.childReleasePath, root); inside(host.evidencePath, root);
+          inside(host.home, root); inside(host.checkpointPath, root); inside(host.childReleasePath, root);
+          inside(host.evidencePath, process.env.RAF_STATE_RECOVERY_EVIDENCE_ROOT || root);
           assert.equal(host.command.env.HOME, host.home);
           assert.equal(host.command.env.RAF_QA_HOME, host.home);
           assert.ok(host.command.argv.includes('test') && host.command.argv.includes('run'));
           assert.ok(host.command.argv.includes(testKind === 'unit' ? 'qa' : 'integration'));
           await host.setMainAvailability('unavailable');
+          await Promise.all(['stdout', 'stderr'].map(stream => writeFile(join(host!.evidencePath, `original.${stream}`), '')));
           cli = spawn(host.command.executable, host.command.argv, {
             cwd: host.command.cwd, env: host.command.env, shell: false, stdio: ['ignore', 'pipe', 'pipe'],
           });
           const stdout: Buffer[] = [], stderr: Buffer[] = [];
           let outputBytes = 0;
           let outputOverflow = false;
-          const collect = (target: Buffer[]) => (chunk: Buffer) => {
+          const collect = (target: Buffer[], stream: 'stdout' | 'stderr') => (chunk: Buffer) => {
             outputBytes += chunk.length;
-            if (outputBytes <= 1024 * 1024) target.push(chunk);
+            if (outputBytes <= 1024 * 1024) {
+              target.push(chunk);
+              appendFileSync(join(host!.evidencePath, `original.${stream}`), chunk);
+            }
             else outputOverflow = true;
           };
-          cli.stdout!.on('data', collect(stdout)); cli.stderr!.on('data', collect(stderr));
+          cli.stdout!.on('data', collect(stdout, 'stdout')); cli.stderr!.on('data', collect(stderr, 'stderr'));
           const closed = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((accept, reject) => {
-            cli!.once('error', reject); cli!.once('exit', (code, signal) => accept({ code, signal }));
+            cli!.once('error', reject); cli!.once('exit', (code, signal) => {
+              appendFileSync(join(host!.evidencePath, 'original.cli-exit.json'), JSON.stringify({ code, signal }) + '\n');
+              accept({ code, signal });
+            });
           });
           assert.ok(cli.pid);
           wrapperIdentity = await identity(cli.pid!);
@@ -215,11 +225,20 @@ for (const testKind of ['unit', 'integration'] as const) {
       const host = await prepareStateRecoveryHost({ root, testKind, checkpoint: 'after-spawn', child: 'early-exit', initialTimeoutCount: 1 });
       try {
         const execution = await host.normal(mode);
+        const rejectedPreset = testKind === 'integration' && mode === 'refused';
         assert.equal(execution.result.outcome, mode);
         assert.equal(execution.result.stateAccess, null);
-        assert.equal(execution.result.testKind, testKind);
+        assert.equal(execution.result.testKind, rejectedPreset ? null : testKind);
         assert.equal(execution.result.phase, testKind === 'unit' ? 'qa' : 'integration');
         assert.equal(execution.result.timedOut, false);
+        if (rejectedPreset) {
+          assert.equal(execution.result.errorCode, 'CALLER_UNAUTHORIZED');
+          assert.equal(execution.result.groupSnapshot, 'unavailable');
+          assert.equal(execution.result.callerPhase, null);
+          assert.equal(execution.result.timeoutPolicy, null);
+          assert.equal(execution.result.timeoutCount, null);
+          assert.deepEqual(execution.result.selection, { files: [], testIds: [] });
+        }
         if (mode === 'passed') {
           assert.equal(execution.cliCode, 0);
           assert.equal(execution.result.exitCode, 0);

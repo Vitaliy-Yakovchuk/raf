@@ -60,6 +60,8 @@ function fixture(t: TestContext, cwd = 'bugs-api', spawnFailed?: () => void) {
 test('6.7 Vitest setup ENOENT before OS spawn releases the group and preserves its retry budget', async t => {
   let spawning = false, failedSpawns = 0, osSpawns = 0;
   const f = fixture(t, 'bugs-api', () => { spawning = false; failedSpawns++; });
+  const unrelated = 'bugs-api/src/unrelated.test.ts';
+  f.profile.unitFiles.push(unrelated);
   rmSync(join(f.workspace, 'bugs-api/vitest.config.ts'));
   const h = new RunHarness();
   const shared = machine();
@@ -92,7 +94,7 @@ test('6.7 Vitest setup ENOENT before OS spawn releases the group and preserves i
   const ports = { ...h.ports, machineId: 'machine', resources,
     resourceRoute: { branchPaths: { hotfix: f.workspace } },
     preflight: async () => ({ ...h.environment, canonicalWorkspace: f.workspace, canonicalCwd: f.workspace,
-      unitFiles: [f.file], files: { [f.file]: { kind: 'file' as const, realpath: join(f.workspace, f.file), unit: true } } }),
+      unitFiles: [f.file, unrelated], files: Object.fromEntries([f.file, unrelated].map(file => [file, { kind: 'file' as const, realpath: join(f.workspace, file), unit: true }])) }),
     spawn: async (...args: Parameters<typeof f.ports.spawn>) => {
       const managed = await f.ports.spawn(...args);
       spawning = false;

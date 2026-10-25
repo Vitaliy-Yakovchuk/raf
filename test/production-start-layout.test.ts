@@ -57,6 +57,7 @@ function fixture(t: TestContext, copies = false) {
   const startCalls: ProductionStartLayoutOptions[] = [];
   const f = {
     projects, events, storeCalls, layoutCalls, startCalls,
+    alreadyReady: false,
     storeFailure: undefined as Error | undefined,
     startFailure: undefined as Error | undefined,
     startGate: undefined as Promise<void> | undefined,
@@ -93,7 +94,7 @@ function fixture(t: TestContext, copies = false) {
     background(_options: unknown, deps: BackgroundRuntimeDependencies) {
       const start = async () => {
         events.push('background:start');
-        const mainPath = await deps.resolveMainPath();
+        const mainPath = f.alreadyReady ? generation : await deps.resolveMainPath();
         events.push('background:ready');
         return { exitCode: 0, state: 'ready', serviceEpoch: 'same-generation', resourceWaitReady: true, mainPath };
       };
@@ -134,7 +135,7 @@ test('start: writer barrier refusal propagates and prevents dependent layout con
   assert.equal(f.layoutCalls.length, 0);
 });
 
-test('start: recovery uses the existing store intent and forwards store checkpoints', async t => {
+test('start: delegates store checkpoints to recoverable store conversion', async t => {
   const f = fixture(t);
   const checkpoints: string[] = [];
   await prepareMainLayoutForProductionStart({ orchestratorRoot: root,
@@ -191,6 +192,14 @@ test('resource readiness: implicit service start uses the same layout preparatio
   assert.equal(f.startCalls.length, 1);
   assert.ok(f.events.indexOf('prepare:complete') < f.events.indexOf('pin'));
   assert.equal(endpoint.serviceEpoch, 'same-generation');
+});
+
+test('service start: an already ready background service cannot bypass layout preparation', async t => {
+  const f = fixture(t);
+  f.alreadyReady = true;
+  await service().handlers['service start']({});
+  assert.equal(f.startCalls.length, 1, 'the readiness fast path must not skip the initial protected-store conversion');
+  assert.ok(f.events.indexOf('prepare:complete') < f.events.indexOf('background:ready'));
 });
 
 test('service status and stop do not initiate layout mutation', async t => {

@@ -1,0 +1,64 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/contracts --files test/cli-catalog.test.ts test/app-runtime.test.ts test/task-context.test.ts test/task-context-z12.test.ts test/runner-availability.test.ts test/agent-control.test.ts test/session-state.test.ts test/task-reservations.test.ts test/resource-admission.test.ts test/resource-estimates.test.ts test/agent-run-admission-snapshot.test.ts test/home-disk-admission.test.ts test/session-recovery.test.ts test/agent-adapters-contract.test.ts test/launch-state.test.ts test/production-runtime.test.ts test/main-session-accounting.test.ts",
+  "capturedAt": "2026-10-25T22:54:16.637933+00:00",
+  "workspaceHead": "3047d44c053876246a7082252d4fe9bcf20a6ecf",
+  "workspaceStatus": " M evidence/add-raf-test-run/etchly-integration-qa-b/README.md\n M evidence/add-raf-test-run/etchly-integration-qa-b/audit.json\n M evidence/add-raf-test-run/etchly-integration-qa-b/coverage.md\n M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n M evidence/cfc105-model-routing-current/fixture-fix.diff\n M scripts/qa-agent-adapters-live.ts\n M test/agent-adapters-integration.test.ts\n?? evidence/add-raf-test-run/etchly-integration-qa-b/integrity-check.json\n?? evidence/cfc105-model-routing-current/acceptance-matrix.json\n?? evidence/cfc105-model-routing-current/native-prerequisites.json\n?? evidence/cfc24-resumed-20261025/\n?? test/agent-adapters-public-fixture.ts\n",
+  "sourceSha256": {
+    "src/production-runtime.ts": "e421ef27d4f608a4e36ee7b0683805a8e2bcbec0b79fa02c3b5c135cb077a413",
+    "src/sandbox-test-run.ts": "c0435f568f7f1264fdc135c7dcfdc41d22142affe36124a20a581aa81da5c822",
+    "scripts/qa-agent-run-live.mjs": "8dbebfd0b47d0c598f81a1f61b37b732d9c00523643bc5aa5a3aacaff95d7793"
+  },
+  "configurationSha256": "34a2ca6801bc4c1d0e368ea57418ce534eb404bb15593fc466cd7c263e46a176",
+  "selectedFiles": [
+    "test/cli-catalog.test.ts",
+    "test/app-runtime.test.ts",
+    "test/task-context.test.ts",
+    "test/task-context-z12.test.ts",
+    "test/runner-availability.test.ts",
+    "test/agent-control.test.ts",
+    "test/session-state.test.ts",
+    "test/task-reservations.test.ts",
+    "test/resource-admission.test.ts",
+    "test/resource-estimates.test.ts",
+    "test/agent-run-admission-snapshot.test.ts",
+    "test/home-disk-admission.test.ts",
+    "test/session-recovery.test.ts",
+    "test/agent-adapters-contract.test.ts",
+    "test/launch-state.test.ts",
+    "test/production-runtime.test.ts",
+    "test/main-session-accounting.test.ts"
+  ],
+  "runId": "6f2fba0c-cb51-491f-9c28-fb09b1b18113",
+  "outcome": "assertions-failed",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "timeoutCount": 0,
+  "knownRed": [
+    {
+      "file": "test/main-session-accounting.test.ts",
+      "name": "raf main attach is allowed from a new pane after the boot identity of the registered main changed"
+    },
+    {
+      "file": "test/main-session-accounting.test.ts",
+      "name": "agent and raf messages to main reach exactly the registered pane"
+    },
+    {
+      "file": "test/main-session-accounting.test.ts",
+      "name": "forged senders cannot speak to or as main while verified senders keep their signatures"
+    },
+    {
+      "file": "test/main-session-accounting.test.ts",
+      "name": "attach and delivery treat a hostile tmux session name as data"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "groupState": "idle",
+  "nextAction": "fix-implementation",
+  "streamCapture": "The CLI tool returned merged stdout/stderr. Original merged output retained byte-for-byte; complete launch-queue.waiting NDJSON records extracted as logical stderr. Stream-level timing/order is unavailable."
+}

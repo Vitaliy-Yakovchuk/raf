@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-10-25T22:50:14.347729+00:00",
+  "verifiedAt": "2026-10-25T23:00:38.965010+00:00",
   "files": {
     "build-clean.cli-exit-code": {
       "bytes": 2,
@@ -56,6 +56,30 @@
     "build.stdout": {
       "bytes": 34,
       "sha256": "c48e33da5f21252654ab0ca1201b82220f592f32114df6e790e9bcfe02f5e169"
+    },
+    "contracts-accounting.cli-exit-code": {
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "contracts-accounting.merged-output": {
+      "bytes": 101610,
+      "sha256": "7d721c6450e465a0638a199348a49d56b6136c2addbea783a450321a867887f1"
+    },
+    "contracts-accounting.metadata.json": {
+      "bytes": 3911,
+      "sha256": "2b61c21fd4f86a1fd1a9a7ea948961e0291c2eeec378ba1e919d82feb4294a36"
+    },
+    "contracts-accounting.stderr": {
+      "bytes": 1511,
+      "sha256": "faf8b3ec1a9122e7f128952e1a10ad323502be828121bc8a3b380a6aca549d59"
+    },
+    "contracts-accounting.stdout.json": {
+      "bytes": 100099,
+      "sha256": "1fdce12df049a5b3fc61df89c77d217bff9e10554995c95bdc8a8535ceeac77c"
+    },
+    "contracts-coverage-with-accounting.json": {
+      "bytes": 2682,
+      "sha256": "2c73ae23391cbe61ab7f58cff9a627e6b2fefe2674e61911066c9e9bf49643a1"
     },
     "contracts-coverage.json": {
       "bytes": 2638,
@@ -215,11 +239,11 @@
     },
     "integration-selection.json": {
       "bytes": 2555,
-      "sha256": "8030647bca65de7ac5338729013c34b8bdeb364f8bdd1937f0a9a038ba30dd4e"
+      "sha256": "ea4127861d174eb4be7749662d650ed1bf04b427b9cd67106da99823d185eccf"
     },
     "multiline-audit.md": {
-      "bytes": 16502,
-      "sha256": "1cfd05f4dbffe6beec18de133c1ba13253ddc23d35095b780d8907cb879dba29"
+      "bytes": 18739,
+      "sha256": "4e56ee0da7b38d801192204b0753edf9a964cf44e30b79d25178b3b8fdc28f25"
     },
     "serialization-build.cli-exit-code": {
       "bytes": 2,
@@ -497,6 +521,27 @@
       },
       "groupState": "idle",
       "nextAction": "fix-setup",
+      "verifiedPass": false
+    },
+    {
+      "stdout": "contracts-accounting.stdout.json",
+      "metadata": "contracts-accounting.metadata.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "6f2fba0c-cb51-491f-9c28-fb09b1b18113",
+      "group": "add-raf-agent-run/contracts",
+      "outcome": "assertions-failed",
+      "passed": 642,
+      "knownRed": 4,
+      "unexecuted": 0,
+      "unknown": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
       "verifiedPass": false
     }
   ]

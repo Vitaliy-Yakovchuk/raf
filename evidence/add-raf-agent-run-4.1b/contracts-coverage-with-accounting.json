@@ -1,0 +1,110 @@
+{
+  "runId": "6f2fba0c-cb51-491f-9c28-fb09b1b18113",
+  "testedHead": "3047d44c053876246a7082252d4fe9bcf20a6ecf",
+  "scope": "Design 1.2 unit selection including main-session-accounting plus all previous configured contracts files",
+  "files": {
+    "test/cli-catalog.test.ts": {
+      "passed": 22,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/app-runtime.test.ts": {
+      "passed": 54,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/task-context.test.ts": {
+      "passed": 26,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/task-context-z12.test.ts": {
+      "passed": 19,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/runner-availability.test.ts": {
+      "passed": 12,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/agent-control.test.ts": {
+      "passed": 39,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/session-state.test.ts": {
+      "passed": 18,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/task-reservations.test.ts": {
+      "passed": 58,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/resource-admission.test.ts": {
+      "passed": 35,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/resource-estimates.test.ts": {
+      "passed": 193,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/agent-run-admission-snapshot.test.ts": {
+      "passed": 43,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/home-disk-admission.test.ts": {
+      "passed": 32,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/session-recovery.test.ts": {
+      "passed": 13,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/agent-adapters-contract.test.ts": {
+      "passed": 35,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/launch-state.test.ts": {
+      "passed": 10,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/production-runtime.test.ts": {
+      "passed": 20,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/main-session-accounting.test.ts": {
+      "passed": 13,
+      "knownRed": 4,
+      "unexecuted": 0,
+      "unknown": 0
+    }
+  },
+  "limitation": "This run found a stale positive fixture that treats a non-native shell as a deliverable composer. It is not green; its four knownRed remain in the same contracts group aggregate. Tests were not modified."
+}

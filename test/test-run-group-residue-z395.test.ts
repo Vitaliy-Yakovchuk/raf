@@ -124,12 +124,49 @@ for (const dimension of ['project', 'workspace', 'group'] as const) {
   });
 }
 
+for (const dimension of ['project', 'workspace', 'group'] as const) {
+  test(`Z395 U2 green in another ${dimension} cannot confirm the target exact ID`, async () => {
+    const h = residue();
+    const targetContext = clone(h.context);
+    const targetEnvironment = clone(h.environment);
+    const foreignKey: TestRunGroupKey = { ...key };
+    if (dimension === 'project') {
+      foreignKey.project = 'orchestrator';
+      h.config.projects.orchestrator = clone(h.config.projects.raf);
+      h.context.projectWorkspaces.orchestrator = [key.workspace];
+    }
+    if (dimension === 'group') {
+      foreignKey.group = 'complete-raf-flow-contracts/foreign-fixture';
+      h.context.activeChanges.push('complete-raf-flow-contracts');
+      h.config.projects.raf.groups[foreignKey.group] = { profileId: 'node', files: [a.file] };
+    }
+    if (dimension === 'workspace') {
+      foreignKey.workspace = '/work/raf-hotfix';
+      h.context.workspace = h.context.cwd = foreignKey.workspace;
+      h.environment.canonicalWorkspace = h.environment.canonicalCwd = foreignKey.workspace;
+      for (const [file, fact] of Object.entries(h.environment.files)) fact.realpath = `${foreignKey.workspace}/${file}`;
+    }
+    h.events = green(a);
+    const foreign = await execute(h, { project: foreignKey.project, group: foreignKey.group, files: [a.file] });
+    assert.equal(foreign.result.outcome, 'passed', JSON.stringify(foreign.result));
+    assert.equal(foreign.code, 0);
+    assert.deepEqual(h.state.get()?.knownRed, [a, sibling]);
+    h.context = targetContext;
+    h.environment = targetEnvironment;
+    h.events = green(b);
+    const target = await execute(h, { files: [b.file] });
+    assert.deepEqual(target.result.knownRed, [a, sibling]);
+    assert.equal(target.result.timeoutCount, 0);
+    assert.notEqual(target.code, 0);
+  });
+}
+
 for (const kind of ['discovered', 'passed', 'assertion-failed', 'complete'] as const) {
   for (const exact of [false, true]) {
     test(`Z395 U3 rejects off-selection ${kind} IDs in ${exact ? 'exact-name' : 'file'} selection`, async () => {
       const h = residue();
       const selected = exact ? a : b;
-      const outsider = exact ? sibling : a;
+      const outsider: TestId = { file: a.file, name: 'forged off-selection runner ID' };
       const event: RunnerEvent = kind === 'complete' ? { kind, expected: [selected, outsider] } : { kind, test: outsider };
       h.events = kind === 'complete' ? [{ kind: 'passed', test: selected }, event] : [{ kind: 'passed', test: selected }, event, { kind: 'complete', expected: [selected] }];
       const { result, code } = await execute(h, exact ? { files: undefined, only: [a] } : { files: [b.file] });
@@ -140,6 +177,8 @@ for (const kind of ['discovered', 'passed', 'assertion-failed', 'complete'] as c
       assert.ok(!result.passed.some(id => id.file === outsider.file && id.name === outsider.name));
       assert.deepEqual(result.knownRed, [a, sibling], JSON.stringify(result));
       assert.deepEqual(h.state.get()?.knownRed, [a, sibling]);
+      assert.deepEqual(result.unexecuted, [pending]);
+      assert.deepEqual(h.state.get()?.unexecuted, [pending]);
       assert.deepEqual(result.removed, []);
       assert.equal(result.timeoutCount, 0);
       assert.notEqual(code, 0);

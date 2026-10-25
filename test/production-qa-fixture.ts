@@ -24,7 +24,7 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
   assert.ifError(initialized.error);
   assert.equal(initialized.status, 0, initialized.stderr);
 
-  const names = ['HOME', 'RAF_QA_HOME', 'TMUX', 'TMUX_PANE'] as const;
+  const names = ['HOME', 'RAF_QA_HOME', 'RAF_ORCHESTRATOR_ROOT', 'TMUX', 'TMUX_PANE'] as const;
   const inherited = Object.fromEntries(names.map(name => [name, process.env[name]]));
   t.after(() => {
     for (const name of names) {
@@ -34,6 +34,7 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
   });
   process.env.HOME = location.home;
   process.env.RAF_QA_HOME = location.home;
+  process.env.RAF_ORCHESTRATOR_ROOT = location.root;
   delete process.env.TMUX;
   delete process.env.TMUX_PANE;
 

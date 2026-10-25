@@ -214,6 +214,11 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
   return { ...f, cwd, settings, request, runtimeLaunch, services, session, launch, inputs, paths, configsUnchanged, runId, task, derived };
 }
 
+test('[workspace-trust] production QA fixture selects its own worker Orchestrator root', async t => {
+  const f = await fixture(t, { productionQa: true });
+  assert.equal(process.env.RAF_ORCHESTRATOR_ROOT, f.root, 'worker must not inherit the outer raf session root');
+});
+
 for (const runner of ['codex', 'claude'] as const) {
   for (const type of ['spec', 'design'] as const) {
     test(`[workspace-trust] Z.12 ${runner}/${type}: verified Orchestrator main root is trusted once without expanding write scope`, { timeout: z12Timeout }, async t => {

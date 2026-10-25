@@ -144,10 +144,12 @@ test.after(() => hooks.deregister());
 
 function argv(command: CompiledCommand): string[] {
   const literals: Record<string, string> = { id: 'unit-agent', to: 'unit-recipient', text: 'unit payload',
+    type: 'implement', phase: 'implement',
     features: 'profile-raf-performance', tasks: 'profile-raf-performance:3.3', group: 'profile-raf-performance/timing-coverage',
     at: '2026-10-25T10:00:00.000Z', bug: 'projects/raf/bug#1', 'text-file': '/unit/comment.txt', status: 'open', attachment: 'unit-attachment' };
   return [...command.path, ...command.parameters.filter(parameter => parameter.required).flatMap(parameter => [parameter.option,
-    parameter.values?.[0]?.id ?? literals[parameter.name] ?? 'unit-value'])];
+    parameter.values?.find(value => value.id === literals[parameter.name])?.id ??
+    parameter.values?.find(value => value.launchableByRaf !== false)?.id ?? literals[parameter.name] ?? 'unit-value'])];
 }
 
 function invoke(args: string[], f: ReturnType<typeof fixture>) {

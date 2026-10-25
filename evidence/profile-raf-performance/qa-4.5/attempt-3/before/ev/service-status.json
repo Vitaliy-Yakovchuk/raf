@@ -1,0 +1,32 @@
+{
+  "label": "service-status",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-xkU78f/root/raf-main/bin/raf.ts",
+    "service",
+    "status"
+  ],
+  "cwd": "/srv/dev/p45-xkU78f/root/raf-main",
+  "startedAt": "2026-10-25T03:48:36.850Z",
+  "finishedAt": "2026-10-25T03:48:38.614Z",
+  "wallMs": 1763.7042920000004,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 291,
+  "stderrBytes": 0,
+  "loadAverage": [
+    4.43,
+    4.55,
+    3.45
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1244.961,
+    "cpuSystemMs": 934.539,
+    "wallMs": 1739.669954,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 2179.5
+}

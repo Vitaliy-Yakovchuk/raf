@@ -1,0 +1,92 @@
+{
+  "main": "/srv/dev/p45-xkU78f/root/raf-main",
+  "statePath": "/srv/dev/p45-xkU78f/home/.raf/state.sqlite",
+  "sessions": [
+    {
+      "runId": "main",
+      "addressId": "main",
+      "revision": 1,
+      "state": "running",
+      "activity": {
+        "type": "main",
+        "project": "raf",
+        "features": [
+          "profile-raf-performance"
+        ],
+        "phase": "main",
+        "cwd": "/srv/dev/p45-xkU78f/root/raf-main"
+      },
+      "process": {
+        "pid": 3803805,
+        "startedAt": "2026-10-25T03:48:39.000Z",
+        "runner": "main",
+        "runnerSessionId": "qa-live-main",
+        "tmuxSession": "qa-live-main",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /srv/dev/p45d-src.NxwGId/raf-develop/scripts/qa-agent-ps-comparison.mjs actor /srv/dev/p45-xkU78f/qa-live-main.ready.json",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      }
+    },
+    {
+      "runId": "qa-hotfix",
+      "addressId": "qa-hotfix",
+      "revision": 1,
+      "state": "running",
+      "activity": {
+        "type": "hotfix",
+        "project": "raf",
+        "features": [
+          "profile-raf-performance"
+        ],
+        "phase": "hotfix",
+        "cwd": "/srv/dev/p45-xkU78f/root/raf-main"
+      },
+      "process": {
+        "pid": 3803814,
+        "startedAt": "2026-10-25T03:48:39.000Z",
+        "runner": "main",
+        "runnerSessionId": "qa-live-hotfix",
+        "tmuxSession": "qa-live-hotfix",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /srv/dev/p45d-src.NxwGId/raf-develop/scripts/qa-agent-ps-comparison.mjs actor /srv/dev/p45-xkU78f/qa-live-hotfix.ready.json",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      }
+    },
+    {
+      "runId": "qa-finished",
+      "addressId": "qa-finished",
+      "revision": 3,
+      "state": "finished",
+      "finishedAt": "2026-10-25T03:48:40.709Z",
+      "process": {
+        "pid": 3803826,
+        "startedAt": "2026-10-25T03:48:39.000Z",
+        "runner": "main",
+        "runnerSessionId": "qa-gone",
+        "tmuxSession": "qa-gone",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /srv/dev/p45d-src.NxwGId/raf-develop/scripts/qa-agent-ps-comparison.mjs actor /srv/dev/p45-xkU78f/qa-gone.ready.json",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "result": {
+        "status": "succeeded",
+        "response": "",
+        "proof": null
+      }
+    }
+  ],
+  "reservations": [
+    {
+      "runId": "qa-hotfix",
+      "resource": "ram",
+      "amount": 1
+    }
+  ],
+  "reminders": []
+}

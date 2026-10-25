@@ -1,0 +1,32 @@
+{
+  "label": "unverifiable-warmup",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-foIlvS/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-foIlvS/root/raf-main",
+  "startedAt": "2026-10-25T03:47:26.814Z",
+  "finishedAt": "2026-10-25T03:47:29.027Z",
+  "wallMs": 2213.7368680000072,
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 0,
+  "stderrBytes": 525,
+  "loadAverage": [
+    5.2,
+    4.74,
+    3.43
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1434.422,
+    "cpuSystemMs": 1204.383,
+    "wallMs": 2185.88087,
+    "childExitCode": 1
+  },
+  "cpuFullMs": 2638.8050000000003
+}

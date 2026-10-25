@@ -1,0 +1,1053 @@
+{
+  "version": 1,
+  "agentTypes": [
+    {
+      "id": "main",
+      "description": "Головний координатор",
+      "launchableByRaf": false
+    },
+    {
+      "id": "hotfix",
+      "description": "Вузьке виправлення",
+      "launchableByRaf": true
+    },
+    {
+      "id": "spec",
+      "description": "Вимоги, контракти й план",
+      "launchableByRaf": true
+    },
+    {
+      "id": "design",
+      "description": "UI/UX та макети",
+      "launchableByRaf": true
+    },
+    {
+      "id": "test-scaffold",
+      "description": "Тести, інваріанти й каркас",
+      "launchableByRaf": true
+    },
+    {
+      "id": "implement",
+      "description": "Реалізація фічі",
+      "launchableByRaf": true
+    },
+    {
+      "id": "coordinator",
+      "description": "Ведення напряму та його виконавців",
+      "launchableByRaf": true
+    },
+    {
+      "id": "qa",
+      "description": "QA з погляду користувача",
+      "launchableByRaf": true
+    }
+  ],
+  "reportStatuses": [
+    {
+      "id": "succeeded",
+      "description": "Доручення виконано успішно",
+      "event": "agent.succeeded"
+    },
+    {
+      "id": "failed",
+      "description": "Доручення не виконано повністю або процес упав без валідного succeeded",
+      "event": "agent.failed"
+    }
+  ],
+  "eventIdKinds": {
+    "agentAddress": "Адресний ID агента з raf agent ps; не глобально унікальний ID запуску",
+    "reminderId": "ID нагадування raf",
+    "changeId": "ID зміни OpenSpec без дати архівації",
+    "deploymentId": "ID операції викладки raf",
+    "contextReviewId": "Унікальний ID пакета слідів старту для аналізу; перелік runId міститься в даних події",
+    "resourceQueueId": "Стабільний ID черги запусків машини в оперативному state-домені raf",
+    "rafInstanceId": "Стабільний непрозорий ID health-домену основної SQLite raf; перезапуск чи перемикання покоління його не змінює"
+  },
+  "events": [
+    {
+      "id": "agent.report-rejected",
+      "idKind": "agentAddress",
+      "description": "Записаний звіт поточного запуску агента не прийнято"
+    },
+    {
+      "id": "agent.started",
+      "idKind": "agentAddress",
+      "description": "Агент запущений"
+    },
+    {
+      "id": "agent.activity-changed",
+      "idKind": "agentAddress",
+      "description": "Змінено проєкт, фічі або стадію"
+    },
+    {
+      "id": "agent.interrupted",
+      "idKind": "agentAddress",
+      "description": "Процес перервано, агент не закритий"
+    },
+    {
+      "id": "agent.closed",
+      "idKind": "agentAddress",
+      "description": "Остаточне закриття"
+    },
+    {
+      "id": "reminder.activated",
+      "idKind": "reminderId",
+      "description": "Нагадування активоване"
+    },
+    {
+      "id": "reminder.closed",
+      "idKind": "reminderId",
+      "description": "Нагадування закрите"
+    },
+    {
+      "id": "openspec.archived",
+      "idKind": "changeId",
+      "description": "Успішна архівація завершена"
+    },
+    {
+      "id": "deployment.completed",
+      "idKind": "deploymentId",
+      "description": "Середовище підтвердило версію"
+    },
+    {
+      "id": "agent.succeeded",
+      "idKind": "agentAddress",
+      "description": "Успішний результат роботи агента"
+    },
+    {
+      "id": "agent.failed",
+      "idKind": "agentAddress",
+      "description": "Невдалий результат роботи агента або падіння без валідного succeeded поточного запуску"
+    },
+    {
+      "id": "context-review.due",
+      "idKind": "contextReviewId",
+      "description": "Для main готовий пакет завершених запусків зі слідом старту; потрібен spec-аналіз із фазою context-review"
+    },
+    {
+      "id": "launch-queue.drained",
+      "idKind": "resourceQueueId",
+      "description": "Покоління черги запусків машини спорожніло незалежно від результатів запусків"
+    },
+    {
+      "id": "raf.cpu-exceeded",
+      "idKind": "rafInstanceId",
+      "description": "Виміряний власний CPU raf за завершене вікно перевищив поріг"
+    },
+    {
+      "id": "raf.health-summary",
+      "idKind": "rafInstanceId",
+      "description": "Підсумок стану raf для main за завершений інтервал"
+    }
+  ],
+  "reminderBindingActions": [
+    {
+      "id": "activate",
+      "description": "Подія активує нагадування, якщо воно ще очікує свого часу"
+    },
+    {
+      "id": "close",
+      "description": "Подія закриває незавершене нагадування"
+    }
+  ],
+  "commands": [
+    {
+      "path": [
+        "agent",
+        "run"
+      ],
+      "valueSources": {
+        "type": "raf-constants.json#/agentTypes",
+        "project": "projects.json#/projects",
+        "phase": "raf-constants.json#/agentPhases",
+        "complexity": "models.json#/routing/complexityOrder"
+      },
+      "description": "Запустити окремого виконавця за вибраними пунктами OpenSpec.",
+      "parameters": [
+        {
+          "name": "id",
+          "option": "--id",
+          "required": true,
+          "multiple": false,
+          "description": "Адресне ім’я агента."
+        },
+        {
+          "name": "type",
+          "option": "--type",
+          "required": true,
+          "multiple": false,
+          "description": "Тип агента, доступний для запуску."
+        },
+        {
+          "name": "project",
+          "option": "--project",
+          "required": true,
+          "multiple": false,
+          "description": "Канонічний проєкт."
+        },
+        {
+          "name": "features",
+          "option": "--features",
+          "required": true,
+          "multiple": true,
+          "description": "Перелік фіч."
+        },
+        {
+          "name": "phase",
+          "option": "--phase",
+          "required": true,
+          "multiple": false,
+          "description": "Поточна фаза роботи; context-review використовується для аналізу стартового контексту агентом spec."
+        },
+        {
+          "name": "complexity",
+          "option": "--complexity",
+          "required": true,
+          "multiple": false,
+          "description": "Потрібна складність моделі."
+        },
+        {
+          "name": "tasks",
+          "option": "--tasks",
+          "required": true,
+          "multiple": true,
+          "description": "Доручення: назва-зміни:номер-пункту; можна передати кілька значень."
+        },
+        {
+          "name": "notify",
+          "option": "--notify",
+          "required": false,
+          "multiple": false,
+          "description": "ID активного агента, який отримає повідомлення про результат; без параметра — той, хто запустив."
+        }
+      ],
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій.",
+      "examples": [
+        "raf agent run --id hotfix-demo --type hotfix --project raf --features cli --phase implement --complexity ordinary --tasks complete-raf-flow-contracts:B.3"
+      ]
+    },
+    {
+      "path": [
+        "agent",
+        "message"
+      ],
+      "description": "Передати повідомлення агенту з перевіреним відправником.",
+      "parameters": [
+        {
+          "name": "to",
+          "option": "--to",
+          "required": true,
+          "multiple": false,
+          "description": "Адреса одержувача з ps."
+        },
+        {
+          "name": "text",
+          "option": "--text",
+          "required": true,
+          "multiple": false,
+          "description": "Текст повідомлення."
+        }
+      ],
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "agent",
+        "ps"
+      ],
+      "description": "Показати активних агентів після звірки процесів.",
+      "parameters": [],
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "agent",
+        "update"
+      ],
+      "valueSources": {
+        "project": "projects.json#/projects",
+        "phase": "raf-constants.json#/agentPhases"
+      },
+      "description": "Оновити облік діяльності без зміни початкового доручення.",
+      "parameters": [
+        {
+          "name": "id",
+          "option": "--id",
+          "required": true,
+          "multiple": false,
+          "description": "Адреса агента."
+        },
+        {
+          "name": "project",
+          "option": "--project",
+          "required": false,
+          "multiple": false,
+          "description": "Новий проєкт."
+        },
+        {
+          "name": "features",
+          "option": "--features",
+          "required": false,
+          "multiple": true,
+          "description": "Новий перелік фіч."
+        },
+        {
+          "name": "phase",
+          "option": "--phase",
+          "required": false,
+          "multiple": false,
+          "description": "Поточна фаза роботи; context-review використовується для аналізу стартового контексту агентом spec."
+        }
+      ],
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "agent",
+        "close"
+      ],
+      "description": "Закрити виконавця після прийняття звіту та події результату; явний force потребує причини.",
+      "parameters": [
+        {
+          "name": "id",
+          "option": "--id",
+          "required": true,
+          "multiple": false,
+          "description": "Адреса виконавця."
+        },
+        {
+          "name": "force",
+          "type": "boolean",
+          "option": "--force",
+          "required": false,
+          "multiple": false,
+          "default": false,
+          "description": "Явно дозволити закриття без прийнятого звіту та події; обов’язкова непорожня --reason. Не обходить нагадування, авторизацію або захист main."
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "option": "--reason",
+          "required": false,
+          "multiple": false,
+          "description": "Непорожня після trim причина примусового закриття; обов’язкова лише з --force, без нього заборонена. Зберігається в результаті запуску після cleanup."
+        }
+      ],
+      "output": "JSON {closed, unfinished, result?}; для примусового закриття також forcedClose {reason}. Код 0 лише після підтвердженого штатного завершення операції.",
+      "errors": "AGENT_RESULT_PENDING (exit 1): звіт поточного runId не прийнято або подію результату ще не зафіксовано; без зупинки/cleanup/failed через close. Некоректні force/reason відхиляються до runtime чинною помилкою аргументів. Інші помилки нагадувань, авторизації, процесу й фіналізації — за чинними контрактами; JSON із причиною, runId, побічними діями та кроком виправлення.",
+      "prerequisites": "Уповноважений викликач, живий виконавець із перевіреною process identity (не main). Звичайний close потребує прийнятого звіту цього runId й відповідної agent.succeeded/agent.failed; інакше лише явні --force --reason TEXT. Чинні правила нагадувань обов’язкові в обох режимах.",
+      "sideEffects": "Звичайна відмова gate не зупиняє процес і не прибирає tmp/резерв. Дозволений force надійно зберігає result.forcedClose.reason перед зупинкою; без прийнятого звіту фіксує failed з причиною. Прийнятий результат не переписується. Фіналізація й нагадування — за чинними контрактами; причина живе до finishedSessionsMs.",
+      "examples": [
+        "raf agent close --id worker",
+        "raf agent close --id worker --force --reason \"Власник скасував запуск до звіту\""
+      ]
+    },
+    {
+      "path": [
+        "agent",
+        "interrupt"
+      ],
+      "description": "Перервати поточну дію зі збереженням живої сесії.",
+      "parameters": [
+        {
+          "name": "id",
+          "option": "--id",
+          "required": true,
+          "multiple": false,
+          "description": "Адреса виконавця."
+        }
+      ],
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "main",
+        "attach"
+      ],
+      "description": "Зареєструвати наявну сесію з поточної tmux-панелі як main без її запуску (Q81).",
+      "parameters": [],
+      "output": "JSON з адресним ID main, tmux socket/session/pane, PID і boot identity панелі; код 0 і для повторного виклику з тієї ж панелі.",
+      "errors": "Ненульовий код і JSON із причиною та кроком виправлення: виклик поза tmux або інша панель main ще жива.",
+      "prerequisites": "Виклик із tmux-панелі сесії main; скіл start робить це сам. Параметрів немає: панель визначається за середовищем tmux процесу виклику.",
+      "sideEffects": "Записує або підтверджує сесію main у SQLite стану; не запускає, не перезапускає й не зупиняє процесів.",
+      "examples": [
+        "raf main attach"
+      ]
+    },
+    {
+      "path": [
+        "runner",
+        "enable"
+      ],
+      "valueSources": {
+        "runner": "models.json#/runners"
+      },
+      "description": "Дозволити runner для нових запусків.",
+      "parameters": [
+        {
+          "name": "runner",
+          "option": "--runner",
+          "required": true,
+          "multiple": false,
+          "description": "Runner із каталогу."
+        }
+      ],
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "runner",
+        "disable"
+      ],
+      "valueSources": {
+        "runner": "models.json#/runners"
+      },
+      "description": "Заборонити runner для нових запусків, не зупиняючи поточні.",
+      "parameters": [
+        {
+          "name": "runner",
+          "option": "--runner",
+          "required": true,
+          "multiple": false,
+          "description": "Runner із каталогу."
+        }
+      ],
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "runner",
+        "list"
+      ],
+      "valueSources": {
+        "runner": "models.json#/runners"
+      },
+      "description": "Показати runners, моделі, класи складності та збережені квоти.",
+      "parameters": [],
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "service",
+        "start"
+      ],
+      "description": "Запустити службу raf із робочого main і перевірити готовність.",
+      "parameters": [],
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "service",
+        "status"
+      ],
+      "description": "Показати фактичний стан служби та відому причину зупинки.",
+      "parameters": [],
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "service",
+        "stop"
+      ],
+      "description": "Зупинити службу без закриття агентів і нагадувань.",
+      "parameters": [],
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "reminder",
+        "add"
+      ],
+      "valueSources": {
+        "event": "raf-constants.json#/events",
+        "event-action": "raf-constants.json#/reminderBindingActions"
+      },
+      "description": "Створити нагадування з обов’язковим адресатом і часом.",
+      "parameters": [
+        {
+          "name": "to",
+          "option": "--to",
+          "required": true,
+          "multiple": false,
+          "description": "Адресний ID активної сесії з raf agent ps, включно з main; стає первинним і поточним адресатом."
+        },
+        {
+          "name": "at",
+          "option": "--at",
+          "required": true,
+          "multiple": false,
+          "description": "Обов’язковий час активації ISO 8601 з явним зсувом або Z; обов’язковий і для подієвої прив’язки."
+        },
+        {
+          "name": "text",
+          "option": "--text",
+          "required": true,
+          "multiple": false,
+          "description": "Непорожній зміст нагадування."
+        },
+        {
+          "name": "event",
+          "option": "--event",
+          "required": false,
+          "multiple": false,
+          "description": "Тип події з events; задається разом з --event-id та --event-action або не задається жоден із трьох."
+        },
+        {
+          "name": "event-id",
+          "option": "--event-id",
+          "required": false,
+          "multiple": false,
+          "description": "ID об’єкта події, сумісний з idKind обраного типу за eventIdKinds."
+        },
+        {
+          "name": "event-action",
+          "option": "--event-action",
+          "required": false,
+          "multiple": false,
+          "description": "Дія прив’язки з reminderBindingActions: activate або close."
+        }
+      ],
+      "output": "JSON запису нагадування: id, createdFor (первинний адресат), assignedTo (поточний адресат), text, at, binding {kind, id, action} або null, state (pending|active|closed), closedAt, closeReason; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд».",
+      "prerequisites": "Служба raf не потрібна: команда виконується прямими запитами до SQLite за background-runtime «Межі служби raf».",
+      "sideEffects": "Одна транзакція SQLite: запис нагадування; якщо час уже настав — одразу active і подія reminder.activated. Доставку виконує ця сама команда після транзакції з позначкою в SQLite проти дубля.",
+      "examples": [
+        "raf reminder add --to main --at 2026-10-22T18:00:00+03:00 --text \"Перевірити викладку\"",
+        "raf reminder add --to hotfix-demo --at 2026-10-23T09:00:00Z --text \"Архівувати зміну\" --event openspec.archived --event-id add-raf-reminders --event-action close"
+      ]
+    },
+    {
+      "path": [
+        "reminder",
+        "list"
+      ],
+      "description": "Показати поточні нагадування.",
+      "parameters": [
+        {
+          "name": "to",
+          "option": "--to",
+          "required": false,
+          "multiple": false,
+          "description": "Фільтр за поточним адресатом (assignedTo); без нього — усі збережені нагадування, включно із закритими до прибирання."
+        }
+      ],
+      "output": "JSON-масив записів нагадування (поля як у reminder add); код 0 і для порожнього переліку.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд».",
+      "prerequisites": "Служба raf не потрібна: команда виконується прямими запитами до SQLite за background-runtime «Межі служби raf».",
+      "sideEffects": "Активує нагадування, чий час настав (з подією reminder.activated), і показує актуальний стан; після цього доставляє недоставлені активні нагадування з позначкою в SQLite."
+    },
+    {
+      "path": [
+        "reminder",
+        "update"
+      ],
+      "valueSources": {
+        "event": "raf-constants.json#/events",
+        "event-action": "raf-constants.json#/reminderBindingActions"
+      },
+      "description": "Оновити текст, прив’язку або час pending нагадування; active з --at відхиляється.",
+      "parameters": [
+        {
+          "name": "id",
+          "option": "--id",
+          "required": true,
+          "multiple": false,
+          "description": "ID незакритого нагадування."
+        },
+        {
+          "name": "at",
+          "option": "--at",
+          "required": false,
+          "multiple": false,
+          "description": "Новий час ISO 8601 з явним зсувом або Z лише для pending. Для active — REMINDER_ACTIVE: закрийте нагадування через reminder close та створіть нове через reminder add."
+        },
+        {
+          "name": "text",
+          "option": "--text",
+          "required": false,
+          "multiple": false,
+          "description": "Новий непорожній текст."
+        },
+        {
+          "name": "event",
+          "option": "--event",
+          "required": false,
+          "multiple": false,
+          "description": "Тип події нової прив’язки; трійка --event/--event-id/--event-action замінює наявну прив’язку повністю."
+        },
+        {
+          "name": "event-id",
+          "option": "--event-id",
+          "required": false,
+          "multiple": false,
+          "description": "ID об’єкта події нової прив’язки."
+        },
+        {
+          "name": "event-action",
+          "option": "--event-action",
+          "required": false,
+          "multiple": false,
+          "description": "Дія нової прив’язки: activate або close."
+        }
+      ],
+      "output": "JSON запису нагадування: id, createdFor (первинний адресат), assignedTo (поточний адресат), text, at, binding {kind, id, action} або null, state (pending|active|closed), closedAt, closeReason; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд».",
+      "prerequisites": "Служба raf не потрібна: команда виконується прямими запитами до SQLite за background-runtime «Межі служби raf».",
+      "sideEffects": "Одна транзакція: змінює лише передані поля; первинний і поточний адресати не змінюються. Для active з --at відхиляє всю операцію з REMINDER_ACTIVE, навіть із тим самим часом чи іншими полями; поля, стан, події та ключ/позначка доставки незмінні. Закрийте через reminder close і створіть нове через reminder add. Pending з новим часом, що настав, активується без дубліката; active без --at дозволено; closed дає REMINDER_CLOSED. Потрібен хоча б один із --at, --text або повна трійка прив’язки."
+    },
+    {
+      "path": [
+        "reminder",
+        "activate"
+      ],
+      "description": "Активувати нагадування.",
+      "parameters": [
+        {
+          "name": "id",
+          "option": "--id",
+          "required": true,
+          "multiple": false,
+          "description": "ID незакритого нагадування."
+        }
+      ],
+      "output": "JSON запису нагадування: id, createdFor (первинний адресат), assignedTo (поточний адресат), text, at, binding {kind, id, action} або null, state (pending|active|closed), closedAt, closeReason; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд».",
+      "prerequisites": "Служба raf не потрібна: команда виконується прямими запитами до SQLite за background-runtime «Межі служби raf».",
+      "sideEffects": "Одна транзакція: pending → active з подією reminder.activated; повтор для active не змінює запис і не створює події; настання часу пізніше не створює дубліката."
+    },
+    {
+      "path": [
+        "reminder",
+        "close"
+      ],
+      "description": "Закрити нагадування з причиною.",
+      "parameters": [
+        {
+          "name": "id",
+          "option": "--id",
+          "required": true,
+          "multiple": false,
+          "description": "ID нагадування."
+        },
+        {
+          "name": "reason",
+          "option": "--reason",
+          "required": true,
+          "multiple": false,
+          "description": "Непорожня причина або результат закриття."
+        }
+      ],
+      "output": "JSON запису нагадування: id, createdFor (первинний адресат), assignedTo (поточний адресат), text, at, binding {kind, id, action} або null, state (pending|active|closed), closedAt, closeReason; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд».",
+      "prerequisites": "Служба raf не потрібна: команда виконується прямими запитами до SQLite за background-runtime «Межі служби raf».",
+      "sideEffects": "Одна транзакція: state closed, closedAt, closeReason і подія reminder.closed; повтор для закритого не змінює closedAt і причину. tasks.md і продуктові результати не змінюються (Q58)."
+    },
+    {
+      "path": [
+        "reminder",
+        "reassign"
+      ],
+      "description": "Змінити поточного адресата без зміни первинного.",
+      "parameters": [
+        {
+          "name": "id",
+          "option": "--id",
+          "required": true,
+          "multiple": false,
+          "description": "ID незакритого нагадування."
+        },
+        {
+          "name": "to",
+          "option": "--to",
+          "required": true,
+          "multiple": false,
+          "description": "Адресний ID активної сесії з raf agent ps, включно з main; інших обмежень немає (Q43)."
+        }
+      ],
+      "output": "JSON запису нагадування: id, createdFor (первинний адресат), assignedTo (поточний адресат), text, at, binding {kind, id, action} або null, state (pending|active|closed), closedAt, closeReason; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд».",
+      "prerequisites": "Служба raf не потрібна: команда виконується прямими запитами до SQLite за background-runtime «Межі служби raf».",
+      "sideEffects": "Одна транзакція: змінює лише assignedTo; createdFor, текст, час, прив’язка й стан зберігаються. Активне нагадування доставляється новому адресату цією ж командою."
+    },
+    {
+      "path": [
+        "reminder",
+        "close-all"
+      ],
+      "description": "Закрити всі нагадування за первинним адресатом.",
+      "parameters": [
+        {
+          "name": "created-for",
+          "option": "--created-for",
+          "required": true,
+          "multiple": false,
+          "description": "Первинний адресний ID агента (createdFor); поточний адресат не впливає на відбір."
+        },
+        {
+          "name": "reason",
+          "option": "--reason",
+          "required": true,
+          "multiple": false,
+          "description": "Непорожня причина або результат закриття."
+        }
+      ],
+      "output": "JSON-масив записів, закритих цим викликом; порожній масив і код 0, якщо незавершених немає.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд».",
+      "prerequisites": "Служба raf не потрібна: команда виконується прямими запитами до SQLite за background-runtime «Межі служби raf».",
+      "sideEffects": "Одна транзакція: закриває всі незавершені нагадування з цим createdFor, включно з відкладеними й перепризначеними, та створює reminder.closed для кожного; уже закриті не змінюються (Q58)."
+    },
+    {
+      "path": [
+        "command",
+        "stats"
+      ],
+      "description": "Прочитати ковзаючу статистику тривалості команд.",
+      "parameters": [],
+      "output": "JSON-об’єкт {commands, profile, health}: commands — попередні рядки EMA тривалості команд; profile — {schemaVersion, readAt, rows} профілю витрат raf за profile-raf-performance «Перегляд профілю чинною command stats»; health — {readAt, since, cpu, forcedClose, summary, error, unavailableReason}: CPU із межами та повнотою, накопичені force-лічильники, останній підсумок {startedAt, completedAt, dueAt, delivery, delayed}, точна помилка конфігурації або причина недоступності за monitor-raf-health. Код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "help"
+      ],
+      "description": "Детальна довідка для заданого шляху команди; --help тієї самої команди повертає еквівалентний результат.",
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "runner",
+        "limits"
+      ],
+      "description": "Зчитати поточні ліміти явно вибраних runners через tmux, оновити SQLite та вивести результат для кожного runner.",
+      "parameters": [
+        {
+          "name": "runners",
+          "option": "--runners",
+          "required": true,
+          "multiple": true,
+          "description": "Непорожній перелік runners для збору лімітів."
+        }
+      ],
+      "valueSources": {
+        "runners": "models.json#/runners"
+      },
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "resource",
+        "wait"
+      ],
+      "description": "Очікувати ресурсного допуску через чергу служби raf; код 0 означає наданий дозвіл.",
+      "requiresService": true,
+      "recordDuration": false,
+      "parameters": [
+        {
+          "name": "level",
+          "option": "--level",
+          "required": true,
+          "description": "Рівень ресурсного допуску, якого потрібно дочекатися."
+        }
+      ],
+      "valueSources": {
+        "level": "raf-constants.json#/resourceWaitLevels"
+      },
+      "output": "JSON-результат; код 0 лише при успішній операції.",
+      "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+      "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+      "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "path": [
+        "bug",
+        "list"
+      ],
+      "description": "Переглянути локальні жуки з фільтрами.",
+      "parameters": [
+        {
+          "name": "project",
+          "option": "--project",
+          "required": false,
+          "multiple": false,
+          "description": "Канонічний проєкт, наприклад projects/etchly."
+        },
+        {
+          "name": "status",
+          "option": "--status",
+          "required": false,
+          "multiple": false,
+          "description": "Фільтр за статусом серверного контракту."
+        },
+        {
+          "name": "cursor",
+          "option": "--cursor",
+          "required": false,
+          "multiple": false,
+          "description": "Позиція наступної сторінки."
+        },
+        {
+          "name": "limit",
+          "option": "--limit",
+          "required": false,
+          "multiple": false,
+          "description": "Розмір сторінки в межах конфігурації."
+        }
+      ],
+      "output": "JSON зі сторінкою жуків, continuation cursor та станом синхронізації.",
+      "errors": "Ненульовий код та стисла достатня діагностика за cli-catalog.",
+      "prerequisites": "База жуків; служба raf не потрібна (background-runtime «Межі служби raf»); авторизація чинного bugs-api для мережевих дій. До реалізації команда має явно повідомляти недоступність.",
+      "sideEffects": "Читання локальної бази; фонову синхронізацію виконує служба."
+    },
+    {
+      "path": [
+        "bug",
+        "show"
+      ],
+      "description": "Переглянути локального жука та його коментарі.",
+      "parameters": [
+        {
+          "name": "bug",
+          "option": "--bug",
+          "required": true,
+          "multiple": false,
+          "description": "Повний ключ, наприклад projects/etchly/bug#344."
+        }
+      ],
+      "output": "JSON жука, коментарів, метаданих вкладень та стану синхронізації.",
+      "errors": "Ненульовий код та стисла достатня діагностика за cli-catalog.",
+      "prerequisites": "База жуків; служба raf не потрібна (background-runtime «Межі служби raf»); авторизація чинного bugs-api для мережевих дій. До реалізації команда має явно повідомляти недоступність.",
+      "sideEffects": "Читання локальної бази без автоматичного завантаження вкладень."
+    },
+    {
+      "path": [
+        "bug",
+        "comment",
+        "add"
+      ],
+      "description": "Додати коментар до жука в Dash і після успіху записати його в локальну базу.",
+      "parameters": [
+        {
+          "name": "bug",
+          "option": "--bug",
+          "required": true,
+          "multiple": false,
+          "description": "Повний канонічний ключ жука."
+        },
+        {
+          "name": "text-file",
+          "option": "--text-file",
+          "required": true,
+          "multiple": false,
+          "description": "UTF-8 файл коментаря; - означає stdin."
+        }
+      ],
+      "output": "JSON із серверним comment_id, ревізією жука та записаним коментарем; код 0 лише після відповіді сервера й локального запису.",
+      "errors": "Ненульовий код і JSON із кодом сервера (застаріла ревізія, оренда, доступ, жук відсутній) або BUG_WRITE_UNKNOWN для невідомого результату чи BUG_WRITE_INVALID_RESPONSE; локальна база не змінюється.",
+      "prerequisites": "База жуків із цим жуком; служба raf не потрібна (background-runtime «Межі служби raf»); секрет розділу й мережевий доступ до MCP Dash. До реалізації команда має явно повідомляти недоступність.",
+      "sideEffects": "MCP comment_problem у Dash від actor raf; одна транзакція bugs.sqlite з коментарем і станом жука з відповіді сервера."
+    },
+    {
+      "path": [
+        "bug",
+        "status",
+        "set"
+      ],
+      "description": "Змінити статус жука в Dash і після успіху записати новий стан у локальну базу.",
+      "parameters": [
+        {
+          "name": "bug",
+          "option": "--bug",
+          "required": true,
+          "multiple": false,
+          "description": "Повний канонічний ключ жука."
+        },
+        {
+          "name": "status",
+          "option": "--status",
+          "required": true,
+          "multiple": false,
+          "description": "Цільовий статус життєвого циклу bugs-api (BUG_STATUSES libs/bugs-api); допустимі переходи перевіряє сервер."
+        }
+      ],
+      "output": "JSON зі станом жука з відповіді сервера, записаним локально; код 0 лише після відповіді сервера й локального запису.",
+      "errors": "Ненульовий код і JSON із кодом сервера (застаріла ревізія, оренда, доступ, жук відсутній) або BUG_WRITE_UNKNOWN для невідомого результату чи BUG_WRITE_INVALID_RESPONSE; локальна база не змінюється.",
+      "prerequisites": "База жуків із цим жуком; служба raf не потрібна (background-runtime «Межі служби raf»); секрет розділу й мережевий доступ до MCP Dash. До реалізації команда має явно повідомляти недоступність.",
+      "sideEffects": "MCP set_problem_status у Dash від actor raf; одна транзакція bugs.sqlite зі станом жука з відповіді; in_progress — claim з орендою actor raf."
+    },
+    {
+      "path": [
+        "bug",
+        "attachment",
+        "get"
+      ],
+      "description": "Отримати доступ до вкладення жука або коментаря з лінивим кешуванням.",
+      "parameters": [
+        {
+          "name": "bug",
+          "option": "--bug",
+          "required": true,
+          "multiple": false,
+          "description": "Повний канонічний ключ жука."
+        },
+        {
+          "name": "attachment",
+          "option": "--attachment",
+          "required": true,
+          "multiple": false,
+          "description": "Серверний ID вкладення з метаданих жука або коментаря."
+        }
+      ],
+      "output": "JSON з доступним локальним шляхом і метаданими вкладення; помилка не повертає удаваного шляху.",
+      "errors": "Ненульовий код та стисла достатня діагностика за cli-catalog.",
+      "prerequisites": "База жуків; служба raf не потрібна (background-runtime «Межі служби raf»); авторизація чинного bugs-api для мережевих дій. До реалізації команда має явно повідомляти недоступність.",
+      "sideEffects": "Перевірка доступу, завантаження за відсутності валідного кешу, оновлення lastReadAt у базі жуків і застосування бюджету кешу."
+    },
+    {
+      "path": [
+        "test",
+        "run"
+      ],
+      "description": "Запустити адресну unit-групу за політикою фази.",
+      "parameters": [
+        {
+          "name": "project",
+          "option": "--project",
+          "required": true,
+          "multiple": false,
+          "description": "Зареєстрований проєкт."
+        },
+        {
+          "name": "phase",
+          "option": "--phase",
+          "required": true,
+          "multiple": false,
+          "description": "Фаза прогону."
+        },
+        {
+          "name": "group",
+          "option": "--group",
+          "required": true,
+          "multiple": false,
+          "description": "Стабільна група <change>/<unit-group>."
+        },
+        {
+          "name": "files",
+          "option": "--files",
+          "required": false,
+          "multiple": true,
+          "description": "Точні відносні unit-файли одним списком після одного --files (прапорець не повторювати)."
+        },
+        {
+          "name": "only",
+          "option": "--only",
+          "required": false,
+          "multiple": true,
+          "description": "Лише knownRed IDs у форматі file::name."
+        }
+      ],
+      "valueSources": {
+        "project": "projects.json#/projects",
+        "phase": "raf-constants.json#/agentPhases"
+      },
+      "output": "JSON TestRunResult; код 0 лише для passed.",
+      "errors": "Ненульовий код для refused, setup-failed, assertions-failed, timed-out, interrupted та unverified-remainder.",
+      "prerequisites": "Активна зміна, налаштований профіль, перевірене робоче дерево та ізольований QA HOME для raf-develop/hotfix.",
+      "sideEffects": "Адресний процес unit-тестів, його дерево та активний агрегат SQLite вибраного HOME; без історії прогонів."
+    }
+  ],
+  "resourceWaitLevels": [
+    {
+      "id": "hotfix",
+      "description": "Допуск за hotfix-порогами resource-admission",
+      "priority": 0
+    },
+    {
+      "id": "normal",
+      "description": "Допуск за звичайними порогами resource-admission",
+      "priority": 1
+    }
+  ],
+  "agentPhases": [
+    {
+      "id": "main",
+      "description": "Головний координатор"
+    },
+    {
+      "id": "hotfix",
+      "description": "Вузьке виправлення"
+    },
+    {
+      "id": "spec",
+      "description": "Вимоги, контракти й план"
+    },
+    {
+      "id": "design",
+      "description": "UI/UX та макети"
+    },
+    {
+      "id": "test-scaffold",
+      "description": "Тести, інваріанти й каркас"
+    },
+    {
+      "id": "implement",
+      "description": "Реалізація фічі"
+    },
+    {
+      "id": "coordinator",
+      "description": "Ведення напряму та його виконавців"
+    },
+    {
+      "id": "qa",
+      "description": "QA з погляду користувача"
+    },
+    {
+      "id": "context-review",
+      "description": "Аналіз стартового контексту за подією context-review.due; тип агента spec"
+    },
+    {
+      "id": "red",
+      "description": "Початковий unit-red, який підтверджує main"
+    }
+  ]
+}

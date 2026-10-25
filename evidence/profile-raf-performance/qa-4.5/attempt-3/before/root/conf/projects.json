@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "profiles": {
+    "product": {
+      "development": "develop",
+      "integration": "main",
+      "candidate": "pre-release",
+      "candidateSource": "main",
+      "production": "release",
+      "environments": {
+        "dev1": "main",
+        "prod": "release"
+      }
+    },
+    "dash": {
+      "development": "develop",
+      "integration": "main",
+      "candidate": null,
+      "production": "main",
+      "environments": {
+        "prod": "main"
+      }
+    },
+    "ramus-cloud": {
+      "development": "develop",
+      "integration": null,
+      "candidate": "pre-release",
+      "candidateSource": "develop",
+      "production": "release",
+      "environments": {
+        "dev1": "develop",
+        "prod": "release"
+      }
+    },
+    "raf": {
+      "development": "develop",
+      "integration": "main",
+      "candidate": null,
+      "production": "main",
+      "environments": {
+        "runtime": "main"
+      }
+    },
+    "orchestrator": {
+      "development": "main",
+      "integration": null,
+      "candidate": null,
+      "production": null,
+      "environments": {}
+    },
+    "library": {
+      "development": "develop",
+      "integration": "main",
+      "candidate": null,
+      "production": null,
+      "environments": {}
+    },
+    "product-no-stand": {
+      "development": "develop",
+      "integration": "main",
+      "candidate": "pre-release",
+      "candidateSource": "main",
+      "production": "release",
+      "environments": {
+        "prod": "release"
+      }
+    }
+  },
+  "projects": {
+    "raf": {
+      "path": "raf-main",
+      "profile": "raf",
+      "branchPaths": {
+        "main": "raf-main",
+        "develop": "raf-develop",
+        "hotfix": "raf-hotfix"
+      },
+      "usesSharedLibs": false
+    },
+    "orchestrator": {
+      "path": ".",
+      "profile": "orchestrator"
+    }
+  },
+  "layout": {
+    "directoryPattern": "{project}-{branch}",
+    "sharedLibrariesLink": "shared-libs",
+    "sharedLibrariesTarget": "../shared-libs-{branch}"
+  }
+}

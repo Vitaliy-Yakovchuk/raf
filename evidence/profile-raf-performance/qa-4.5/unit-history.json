@@ -1,0 +1,659 @@
+{
+  "scope": "All own unit runs for 4.5; inherited scaffold red and workspace snapshots are linked separately",
+  "inheritedAgentPsRed": "/srv/dev/work/orchestrator/openspec/changes/profile-raf-performance/agent-ps-red.json",
+  "policy": "Stable group and isolated QA HOME were never reset. No timeout or unit exception was used. Setup-only ENOENT layout-fixture-failure is preserved but is not the qualifying assertion red; layout-red is the explicit 0 !== 1 counter. Initial profile-red preceded main clarification; profile-qa-failing is the own QA red.",
+  "groups": {
+    "profile-raf-performance/agent-ps": {
+      "homes": [
+        "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+      ],
+      "runs": [
+        "30f6ac73-8c30-42cb-952a-e18ad13a0715",
+        "523fb23b-905f-4bc6-8adb-1d7901d835e4",
+        "0c9bdda6-efea-4628-b24d-0cadd2552961",
+        "134bde56-2aa0-409c-a912-0b93804a0bcd",
+        "99afbdfe-ee90-49ad-a269-0b96755e3b24",
+        "7bfe3c89-dea6-455d-b6a0-0e2a97764b54",
+        "36a19580-09ea-4bb1-a399-b63992672f46",
+        "867d32ca-55f5-463e-9225-d4c85f379f8f",
+        "57ad4c30-a4d3-41be-9c7a-a7deb5ab35f5",
+        "80599710-70e4-4215-b8e3-17b7fbe6814b",
+        "37fff8df-da8a-4de2-a1e5-6dd0557a2a33"
+      ],
+      "lastOutcome": "passed",
+      "lastGroupState": "complete",
+      "lastNextAction": "complete"
+    },
+    "profile-raf-performance/profile": {
+      "homes": [
+        "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+      ],
+      "runs": [
+        "1882c5ba-cc81-4029-bf0f-c04d40e09158",
+        "75882e6a-67e7-4764-b4ef-44a53958be4a",
+        "227ec585-9457-4a7f-bcd2-8a4d4bc271fe"
+      ],
+      "lastOutcome": "passed",
+      "lastGroupState": "complete",
+      "lastNextAction": "complete"
+    }
+  },
+  "runs": [
+    {
+      "evidence": "agent-ps-qa.TestRunResult.json",
+      "resultSha256": "3dbf626d16251041ecf001ea60c409f30588e80fd7632d71fec907d58f60d571",
+      "stderr": "agent-ps-qa.stderr.txt",
+      "stderrSha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "cliEvidence": "agent-ps-qa.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "runId": "30f6ac73-8c30-42cb-952a-e18ad13a0715",
+      "startedAt": "2026-10-25T02:52:08.500Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/agent-ps",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 14,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "profile-red.TestRunResult.json",
+      "resultSha256": "0bd19b7d611899b0d1b2e8bba0a0d56bc46eeb0e6e0a37bbe3cf95558a99691b",
+      "stderr": "profile-red.stderr.txt",
+      "stderrSha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "cliEvidence": "profile-red.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+      "runId": "1882c5ba-cc81-4029-bf0f-c04d40e09158",
+      "startedAt": "2026-10-25T02:53:14.967Z",
+      "phase": "red",
+      "group": "profile-raf-performance/profile",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 30,
+      "knownRed": [
+        {
+          "file": "test/raf-cost-profile.test.ts",
+          "name": "profile: existing command stats without flags returns commands/profile, preserving EMA independently"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "implement",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "profile-qa-failing.TestRunResult.json",
+      "resultSha256": "aaa6a692f048b75ab018066590bdbd72a1bdcdee75b849c2c04c50a15bbbf9a6",
+      "stderr": "profile-qa-failing.stderr.txt",
+      "stderrSha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "cliEvidence": "profile-qa-failing.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+      "runId": "75882e6a-67e7-4764-b4ef-44a53958be4a",
+      "startedAt": "2026-10-25T02:54:49.253Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/profile",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 30,
+      "knownRed": [
+        {
+          "file": "test/raf-cost-profile.test.ts",
+          "name": "profile: existing command stats without flags returns commands/profile, preserving EMA independently"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "profile-qa-green.TestRunResult.json",
+      "resultSha256": "389d03365e35c78b6ca33aaf0616360679562c21ee3942d635c09ac65d52a0a0",
+      "stderr": "profile-qa-green.stderr.txt",
+      "stderrSha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "cliEvidence": "profile-qa-green.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+      "runId": "227ec585-9457-4a7f-bcd2-8a4d4bc271fe",
+      "startedAt": "2026-10-25T02:55:00.973Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/profile",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 31,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "agent-ps-double-open-red.TestRunResult.json",
+      "resultSha256": "9ee6d232607e177a4c539b412bed789111dde0fde06ae048c52df5d201f3ebd4",
+      "stderr": "agent-ps-double-open-red.stderr.txt",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cliEvidence": "agent-ps-double-open-red.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "runId": "523fb23b-905f-4bc6-8adb-1d7901d835e4",
+      "startedAt": "2026-10-25T03:13:00.829Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/agent-ps",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 14,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production empty: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production live: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production finished: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production missing: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production pid-reused: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production unverifiable: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production scan-failure: one SQLite connection owns profile, runtime and finalization"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "agent-ps-double-open-intermediate.TestRunResult.json",
+      "resultSha256": "73234d8e6f7c816ee1111732d1eb2ec7e3cb2d8b41773dc5477b200311048a66",
+      "stderr": "agent-ps-double-open-intermediate.stderr.txt",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cliEvidence": "agent-ps-double-open-intermediate.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "runId": "0c9bdda6-efea-4628-b24d-0cadd2552961",
+      "startedAt": "2026-10-25T03:16:44.668Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/agent-ps",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 14,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production empty: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production live: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production finished: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production missing: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production pid-reused: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production unverifiable: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production scan-failure: one SQLite connection owns profile, runtime and finalization"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "agent-ps-double-open-green.TestRunResult.json",
+      "resultSha256": "9fb2926ab29bdeec5db7456e85013a5cdf6fbd567ed65e34d496ca26025b1682",
+      "stderr": "agent-ps-double-open-green.stderr.txt",
+      "stderrSha256": "cfd16edcbd39521db1aa91a59a7772d086dbb1460b9d3dc761d369deef29d8c4",
+      "cliEvidence": "agent-ps-double-open-green.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "runId": "134bde56-2aa0-409c-a912-0b93804a0bcd",
+      "startedAt": "2026-10-25T03:17:15.216Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/agent-ps",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 21,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "conf-copy-red.TestRunResult.json",
+      "resultSha256": "79cfa132a3fe2dbff25fa40f00626345252025fa66dcdb5f9a444e8e12889b95",
+      "stderr": "conf-copy-red.stderr.txt",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cliEvidence": "conf-copy-red.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "runId": "99afbdfe-ee90-49ad-a269-0b96755e3b24",
+      "startedAt": "2026-10-25T03:31:38.660Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/agent-ps",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 21,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps live harness: read-only source conf remains immutable and its owned copy is writable"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "conf-copy-green.TestRunResult.json",
+      "resultSha256": "d823f7bd4007fe733fe09a30b1fb443def85bb590ba69c62979f678a7149cb38",
+      "stderr": "conf-copy-green.stderr.txt",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cliEvidence": "conf-copy-green.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "runId": "7bfe3c89-dea6-455d-b6a0-0e2a97764b54",
+      "startedAt": "2026-10-25T03:32:31.917Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/agent-ps",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 22,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "layout-fixture-failure.TestRunResult.json",
+      "resultSha256": "1757ae6aa86d654215bc32d90efdbdb9912868ca87bf3b3e2151552c0a1d443d",
+      "stderr": "layout-fixture-failure.stderr.txt",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cliEvidence": "layout-fixture-failure.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "runId": "36a19580-09ea-4bb1-a399-b63992672f46",
+      "startedAt": "2026-10-25T03:38:25.138Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/agent-ps",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 22,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps live harness: develop belongs to the registered module store before production starts"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "layout-red.TestRunResult.json",
+      "resultSha256": "e0cdaa72d6a5fdc04993fbabaaafaa90e59c5596aee98e6bdf3c6ce7c766ac26",
+      "stderr": "layout-red.stderr.txt",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cliEvidence": "layout-red.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "runId": "867d32ca-55f5-463e-9225-d4c85f379f8f",
+      "startedAt": "2026-10-25T03:38:43.791Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/agent-ps",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 22,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps live harness: develop belongs to the registered module store before production starts"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "layout-green.TestRunResult.json",
+      "resultSha256": "f98eb50abeedd45b001799fea88539e178ff878632562d91cb7f0152606a400b",
+      "stderr": "layout-green.stderr.txt",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cliEvidence": "layout-green.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "runId": "57ad4c30-a4d3-41be-9c7a-a7deb5ab35f5",
+      "startedAt": "2026-10-25T03:39:00.953Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/agent-ps",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 23,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "context-red.TestRunResult.json",
+      "resultSha256": "d276f0966e2c2ef2d23aa861e03b4204b13b7ae6672372954fd923b977f60616",
+      "stderr": "context-red.stderr.txt",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cliEvidence": "context-red.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "runId": "80599710-70e4-4215-b8e3-17b7fbe6814b",
+      "startedAt": "2026-10-25T03:54:08.025Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/agent-ps",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 16,
+      "knownRed": [
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production empty: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production live: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production finished: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production missing: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production pid-reused: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production unverifiable: one SQLite connection owns profile, runtime and finalization"
+        },
+        {
+          "file": "test/agent-ps-cost.test.ts",
+          "name": "agent ps production scan-failure: one SQLite connection owns profile, runtime and finalization"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    },
+    {
+      "evidence": "context-green.TestRunResult.json",
+      "resultSha256": "be1655289b228628a70ab1039d1b603d5493405cd6a1e090c4842f855d8532f2",
+      "stderr": "context-green.stderr.txt",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cliEvidence": "context-green.cli.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+      "runId": "37fff8df-da8a-4de2-a1e5-6dd0557a2a33",
+      "startedAt": "2026-10-25T03:54:26.263Z",
+      "phase": "qa",
+      "group": "profile-raf-performance/agent-ps",
+      "selection": {
+        "files": [
+          "test/agent-ps-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 23,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop"
+    }
+  ]
+}

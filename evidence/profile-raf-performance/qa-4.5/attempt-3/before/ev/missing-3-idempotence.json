@@ -1,0 +1,32 @@
+{
+  "label": "missing-3-idempotence",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-xkU78f/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-xkU78f/root/raf-main",
+  "startedAt": "2026-10-25T03:51:55.469Z",
+  "finishedAt": "2026-10-25T03:51:57.995Z",
+  "wallMs": 2525.5209519999917,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 3,
+  "stderrBytes": 0,
+  "loadAverage": [
+    2.74,
+    3.57,
+    3.27
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1716.496,
+    "cpuSystemMs": 1366.983,
+    "wallMs": 2476.144519,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 3083.4790000000003
+}

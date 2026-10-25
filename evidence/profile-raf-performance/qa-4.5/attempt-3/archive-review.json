@@ -1,0 +1,143 @@
+{
+  "source": "main message 2026-10-25 stand26 completed: both passed, read-only, secscan clean; stdout/stderr p45d-run-*",
+  "harnessSha": "f9abba613502a94e0be66aba26fcea8018c5369c",
+  "commands": [
+    [
+      "node",
+      "scripts/qa-agent-ps-comparison.mjs",
+      "535441d79f5b18d70442c9a7374c1037c428fee7",
+      "/srv/dev/p45-wzWK2O/root/conf",
+      "5"
+    ],
+    [
+      "node",
+      "scripts/qa-agent-ps-comparison.mjs",
+      "1212a1330a2b097620bd491e5cc8d2f549c774b9",
+      "/srv/dev/p45-wzWK2O/root/conf",
+      "5"
+    ]
+  ],
+  "series": [
+    {
+      "host": "/srv/dev/p45-foIlvS",
+      "manifestSha256": "ef991758375ed8de1aae84213cbc5cadbfaa411d7f392bf190c36ab523c19217",
+      "manifestFiles": 20518,
+      "copiedAndVerified": 647,
+      "readOnlySource": true,
+      "harnessCliExitCode": 0,
+      "secscan": "clean per main",
+      "status": "passed",
+      "cleanup": {
+        "complete": true,
+        "service": {
+          "pid": 3779366,
+          "identity": {
+            "pid": 3779366,
+            "startedAt": "24242521",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          },
+          "token": "3bee338f-21ba-4cd3-baa6-495c069df787",
+          "mainPath": "/srv/dev/p45-foIlvS/root/.git/modules/raf-main/raf-hotfix/generations/4e99e223-bfe5-4af0-a43f-60b3f2d6977a/raf-main",
+          "state": "stopped",
+          "stopReason": "Service stopped normally"
+        },
+        "actors": [
+          {
+            "pid": 3780641,
+            "exitCode": 0,
+            "signal": null
+          },
+          {
+            "pid": 3780654,
+            "exitCode": 0,
+            "signal": null
+          },
+          {
+            "pid": 3780662,
+            "exitCode": 0,
+            "signal": null
+          }
+        ],
+        "remainingProcesses": [],
+        "integrityCheck": [
+          {
+            "integrity_check": "ok"
+          }
+        ]
+      },
+      "samples": 30,
+      "commands": 135
+    },
+    {
+      "host": "/srv/dev/p45-xkU78f",
+      "manifestSha256": "fedb04c33860aad83c8997899c77f5d20f8b345ae4ee40c7aed4bc46ba13ba45",
+      "manifestFiles": 17827,
+      "copiedAndVerified": 647,
+      "readOnlySource": true,
+      "harnessCliExitCode": 0,
+      "secscan": "clean per main",
+      "status": "passed",
+      "cleanup": {
+        "complete": true,
+        "service": {
+          "pid": 3803486,
+          "identity": {
+            "pid": 3803486,
+            "startedAt": "24279708",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          },
+          "token": "18778913-6dd6-4cab-9528-642815127882",
+          "mainPath": "/srv/dev/p45-xkU78f/root/.git/modules/raf-main/raf-hotfix/generations/cc884029-6e2c-4d70-9d10-8c9a73d406de/raf-main",
+          "state": "stopped",
+          "stopReason": "Service stopped normally"
+        },
+        "actors": [
+          {
+            "pid": 3803805,
+            "exitCode": 0,
+            "signal": null
+          },
+          {
+            "pid": 3803814,
+            "exitCode": 0,
+            "signal": null
+          },
+          {
+            "pid": 3803826,
+            "exitCode": 0,
+            "signal": null
+          }
+        ],
+        "remainingProcesses": [],
+        "integrityCheck": [
+          {
+            "integrity_check": "ok"
+          }
+        ]
+      },
+      "samples": 30,
+      "commands": 135
+    }
+  ],
+  "harnessLogs": {
+    "/srv/dev/p45d-run-535441d.stdout": {
+      "sha256": "d9bae1c0cffd4a99a032195cc5d2811299d3b2a67ae4a2da089ee697953bb898",
+      "bytes": 241
+    },
+    "/srv/dev/p45d-run-535441d.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/srv/dev/p45d-run-1212a13.stdout": {
+      "sha256": "bb4ae2e4c742c88863a33608cdfca934c3eaa80af44c330993d991202e6039a0",
+      "bytes": 241
+    },
+    "/srv/dev/p45d-run-1212a13.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "verdict": "All favorable means, semantics and complete CPU verified; PID reuse/unknown wall differences overlap noise materially; not final acceptance. Next: a592802 removes second construction of the same context; new matched pair required."
+}

@@ -1,32 +1,8 @@
 {
   "basis": "The same broker aggregate persists across phases, SHA and selections. Earlier passed tests are retained; this is not a claim that all tests ran in one final command.",
-  "targetCases": 256,
-  "qaPassedCases": 237,
+  "targetCases": 259,
+  "qaPassedCases": 246,
   "remainingKnownRed": [
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
-    },
     {
       "file": "test/hotfix-activation.test.ts",
       "name": "[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup"
@@ -80,7 +56,7 @@
       "name": "[hotfix-gates] shared new-HEAD changing during regression cannot receive a green proof"
     }
   ],
-  "latestResult": "batch4.TestRunResult.json",
+  "latestResult": "batch7.TestRunResult.json",
   "cases": [
     {
       "test": {
@@ -460,14 +436,24 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-recovery] SIGKILL at after-cleanup, new process recovery and retry converge without duplicate delivery"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch7.TestRunResult.json",
+          "runId": "a156d0c2-5c75-42e5-83ee-9f4e415d769a"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-recovery] SIGKILL at after-index, new process recovery and retry converge without duplicate delivery"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch6-retry.TestRunResult.json",
+          "runId": "17733609-aa6a-4010-ae8a-81b96f38f826"
+        }
+      ]
     },
     {
       "test": {
@@ -486,14 +472,24 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch6-retry.TestRunResult.json",
+          "runId": "17733609-aa6a-4010-ae8a-81b96f38f826"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-recovery] SIGKILL at after-smoke, new process recovery and retry converge without duplicate delivery"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch6-retry.TestRunResult.json",
+          "runId": "17733609-aa6a-4010-ae8a-81b96f38f826"
+        }
+      ]
     },
     {
       "test": {
@@ -512,7 +508,12 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-recovery] SIGKILL at before-cleanup, new process recovery and retry converge without duplicate delivery"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch7.TestRunResult.json",
+          "runId": "a156d0c2-5c75-42e5-83ee-9f4e415d769a"
+        }
+      ]
     },
     {
       "test": {
@@ -825,7 +826,12 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-state-origin] candidate and forged env cannot access fixture production DB; real activated and retained generations can"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch7.TestRunResult.json",
+          "runId": "a156d0c2-5c75-42e5-83ee-9f4e415d769a"
+        }
+      ]
     },
     {
       "test": {
@@ -852,6 +858,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -886,6 +896,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -916,6 +930,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -950,6 +968,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -980,6 +1002,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1014,6 +1040,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1044,6 +1074,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1078,6 +1112,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1108,6 +1146,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1142,6 +1184,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1172,6 +1218,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1206,6 +1256,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1236,6 +1290,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1270,6 +1328,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1300,6 +1362,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1334,6 +1400,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1364,6 +1434,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1398,6 +1472,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1428,6 +1506,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1462,6 +1544,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1492,6 +1578,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1526,6 +1616,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1556,6 +1650,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1590,6 +1688,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1620,6 +1722,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1654,6 +1760,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1684,6 +1794,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1718,6 +1832,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1748,6 +1866,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1782,6 +1904,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1812,6 +1938,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1846,6 +1976,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1876,6 +2010,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1910,6 +2048,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -1940,6 +2082,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -1974,6 +2120,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2004,6 +2154,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2038,6 +2192,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2068,6 +2226,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2102,6 +2264,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2132,6 +2298,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2166,6 +2336,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2196,6 +2370,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2230,6 +2408,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2260,6 +2442,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2294,6 +2480,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2316,6 +2506,10 @@
         {
           "result": "final-other-qa.TestRunResult.json",
           "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2342,6 +2536,10 @@
           "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2366,6 +2564,10 @@
           "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2388,6 +2590,10 @@
         {
           "result": "final-other-qa.TestRunResult.json",
           "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2422,6 +2628,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2452,6 +2662,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2486,6 +2700,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2518,8 +2736,48 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] fixture SIGKILL stops both QA and production services before removing their home"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] fixture cleanup stops both QA and production services before removing their home"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] fixture timeout stops both QA and production services before removing their home"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         }
       ]
     },
@@ -2532,6 +2790,10 @@
         {
           "result": "payload-qa-final.TestRunResult.json",
           "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         }
       ]
     },
@@ -2560,6 +2822,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2594,6 +2860,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2624,6 +2894,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2658,6 +2932,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2688,6 +2966,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2722,6 +3004,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2752,6 +3038,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2786,6 +3076,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2816,6 +3110,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2850,6 +3148,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2880,6 +3182,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2914,6 +3220,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -2944,6 +3254,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -2978,6 +3292,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3008,6 +3326,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3042,6 +3364,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3072,6 +3398,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3106,6 +3436,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3136,6 +3470,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3170,6 +3508,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3200,6 +3542,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3234,6 +3580,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3264,6 +3614,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3298,6 +3652,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3328,6 +3686,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3362,6 +3724,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3392,6 +3758,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3426,6 +3796,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3456,6 +3830,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3490,6 +3868,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3520,6 +3902,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3554,6 +3940,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3580,6 +3970,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3610,6 +4004,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3636,6 +4034,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3670,6 +4072,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3700,6 +4106,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3734,6 +4144,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3764,6 +4178,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3798,6 +4216,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3828,6 +4250,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",
@@ -3862,6 +4288,10 @@
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
         },
         {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
+        },
+        {
           "result": "stable-preset.TestRunResult.json",
           "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64"
         }
@@ -3892,6 +4322,10 @@
         {
           "result": "intermediate-preset.TestRunResult.json",
           "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333"
+        },
+        {
+          "result": "lifecycle-qa.TestRunResult.json",
+          "runId": "2c62e372-33be-45bf-adcc-765dbbc01422"
         },
         {
           "result": "stable-preset.TestRunResult.json",

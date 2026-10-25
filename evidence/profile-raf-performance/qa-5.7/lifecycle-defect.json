@@ -1,0 +1,14 @@
+{
+  "reportedBy": "main host07:42UTC",
+  "observation": "Detached fixture service PPID1 retained after /tmp/hf-* removal; main terminated it.",
+  "rootCause": "Fixture t.after stops only QA HOME and ignores service stop result; production service uses working-home. SIGKILL skips hooks.",
+  "testOnlyChange": "Three actual service regressions: explicit cleanup, child node:test timeout, owner SIGKILL. Full service process identities are observed and parent finally kills only matching owned identities.",
+  "initialRed": "7971b1d9-48bb-4b96-ac79-a71a88710587: all three explicit assertion failures; 98 passed, no timeout, complete cleanup",
+  "buildExit": 0,
+  "interruptedHarness": "44815a4a: cleanup and SIGKILL assertions valid; timeout case explicitly interrupted by main and excluded",
+  "fix": "Fixture-only inherited owner watchdog with full PID/start/boot identity and private service registry; stop both homes with bounded CLI, wait real exit, identity-checked TERM/KILL fallback before deleting root",
+  "qa": "2c62e372-33be-45bf-adcc-765dbbc01422:101 passed,child0,CLI1 solely16 retained knownRed; diagnostics[],cleanup complete,timeoutfalse",
+  "fixSha": "4b70dad265834c8657f992fef0663e96afb7ab86",
+  "build": 0,
+  "comments": 0
+}

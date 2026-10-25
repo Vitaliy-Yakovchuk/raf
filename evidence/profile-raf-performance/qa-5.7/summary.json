@@ -132,6 +132,18 @@
       "cliExitCode": 0,
       "stdout": "comments-payload-final.stdout",
       "stderr": "comments-payload-final.stderr"
+    },
+    "build-lifecycle-final": {
+      "command": "npm run build",
+      "cliExitCode": 0,
+      "stdout": "build-lifecycle-final.stdout",
+      "stderr": "build-lifecycle-final.stderr"
+    },
+    "comments-lifecycle-final": {
+      "command": "npm run check:comments",
+      "cliExitCode": 0,
+      "stdout": "comments-lifecycle-final.stdout",
+      "stderr": "comments-lifecycle-final.stderr"
     }
   },
   "initialQa": {
@@ -148,7 +160,8 @@
   "groupPolicy": "Same project/workspace/group/HOME/aggregate; current preset added by main, no foreign regression group invocation.",
   "archive": null,
   "pending": [
-    "19 knownRed hotfix-activation scenarios must actually pass in the same aggregate"
+    "13 previously red activation scenarios must actually pass",
+    "New matched host after96644a1 after main protocol merge"
   ],
   "qaFixShas": [
     "c50b4c6d331f807f8a0f5533e0341d75ba3ae8a2",
@@ -211,7 +224,7 @@
     "unknown": 0
   },
   "stand34": {
-    "acceptance": "intermediate; final require alias fix awaits host after",
+    "acceptance": "intermediate only; final host acceptance is finalHost on4a0bc11",
     "before": "before/summary.json",
     "after": "intermediate-after/summary.json",
     "comparison": "intermediate-comparison.json",
@@ -253,15 +266,23 @@
     "harnessSha256": "2723e90855d4ba02f0a47df8e8677507b9ae59e6feac03934a5fd943e9eb16b1"
   },
   "unitProgress": {
-    "latest": "batch4.TestRunResult.json",
-    "qaPassedUnique": 237,
-    "targetCases": 256,
-    "knownRed": 19,
-    "active": null,
-    "selection": "7 knownRed IDs",
-    "sourceCommit": "4a0bc11ec74917da83049bf2c0fd0b628ea88ac6",
-    "fixtureChanges": "payload-fix-workspace.patch",
-    "nextAction": "Wait for explicit main conf ready; then resume remaining knownRed IDs"
+    "latest": "batch7.TestRunResult.json",
+    "qaPassedUnique": 246,
+    "targetCases": 259,
+    "knownRed": 13,
+    "active": "batch8:3 cleanup/concurrency IDs",
+    "fixtureSourceSha": "4b70dad265834c8657f992fef0663e96afb7ab86",
+    "nextAction": "Wait for full result, then remaining exact knownRed batches without dropping gates."
   },
-  "fixturePayloadFixSha": "b636ad6239bf135f16ebf7056d0942fecd29a938"
+  "fixturePayloadFixSha": "b636ad6239bf135f16ebf7056d0942fecd29a938",
+  "status": "in-progress",
+  "latestResult": "batch7.TestRunResult.json",
+  "timeoutCount": 1,
+  "groupState": "optimize",
+  "knownRed": 13,
+  "unexecuted": 0,
+  "unknown": 0,
+  "nextAction": "Three exact knownRed IDs per confirmation, same aggregate/HOME; all nested regressions and gates retained.",
+  "fixtureLifecycleFixSha": "4b70dad265834c8657f992fef0663e96afb7ab86",
+  "requestedFinalHostSourceSha": "96644a145e1bc1ab7923e98c93a7b2f59243e940"
 }

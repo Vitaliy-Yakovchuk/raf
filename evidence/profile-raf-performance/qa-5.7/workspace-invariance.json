@@ -1,0 +1,30 @@
+{
+  "head": "96644a145e1bc1ab7923e98c93a7b2f59243e940",
+  "previousHostSourceSha": "4a0bc11ec74917da83049bf2c0fd0b628ea88ac6",
+  "fixtureSourceSha": "4b70dad265834c8657f992fef0663e96afb7ab86",
+  "gitObjectIdentityChecks": {
+    "src": false,
+    "bin": true,
+    "package.json": true,
+    "package-lock.json": true,
+    "scripts/qa-agent-ps-comparison.mjs": true,
+    "src/hotfix-activation.ts": true,
+    "src/hotfix-runtime-loaders.ts": true,
+    "src/hotfix-runtime-inventory.ts": true,
+    "ownFixtureFilesUnchanged": true
+  },
+  "otherSourceChanges": [
+    "src/test-run-protocol.ts",
+    "src/test-run-reporter.ts",
+    "src/test-run-runtime.ts",
+    "src/test-run-vitest-reporter.ts",
+    "src/test-runs.ts"
+  ],
+  "otherScriptChanges": [
+    "scripts/qa-main-agent-channel-metadata.mjs",
+    "scripts/qa-main-agent-channel-probe.mjs",
+    "scripts/qa-main-agent-channel.mjs",
+    "scripts/test-run-vitest.ts"
+  ],
+  "note": "Merge8cea001 includes main4ca708c test inventory protocol fix; overall src equality is false. Own product fix files/bin/package/harness unchanged. Requested matching final host after96644a1, no latest-HEAD performance claim until verified."
+}

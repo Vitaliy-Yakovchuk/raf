@@ -1,0 +1,44 @@
+{
+  "brokerDiagnosticLimits": [
+    {
+      "result": "intermediate-preset.TestRunResult.json",
+      "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333",
+      "outcome": "assertions-failed",
+      "diagnosticSummary": {
+        "totalEntries": 54,
+        "retainedEntries": 54,
+        "omittedEntries": 0,
+        "truncated": true,
+        "redacted": true
+      },
+      "truncatedEntries": 1
+    },
+    {
+      "result": "stable-preset.TestRunResult.json",
+      "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64",
+      "outcome": "assertions-failed",
+      "diagnosticSummary": {
+        "totalEntries": 49,
+        "retainedEntries": 49,
+        "omittedEntries": 0,
+        "truncated": true,
+        "redacted": true
+      },
+      "truncatedEntries": 1
+    },
+    {
+      "result": "store-red.result.json",
+      "runId": "5dcdfd61-fef7-4b5a-98b2-f357e9b47d8b",
+      "outcome": "assertions-failed",
+      "diagnosticSummary": {
+        "totalEntries": 1,
+        "retainedEntries": 1,
+        "omittedEntries": 0,
+        "truncated": true,
+        "redacted": true
+      },
+      "truncatedEntries": 1
+    }
+  ],
+  "interpretation": "Original complete TestRunResult JSON is retained unchanged. Some early failing-run diagnostic entries were redacted/truncated by the broker itself; these runs are not pass evidence. Final acceptance requires diagnostics empty and nontruncated plus group complete."
+}

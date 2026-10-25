@@ -1,0 +1,195 @@
+{
+  "baselineSha": "0e022cd356a9bf7760328839fcb7f39103ebce30",
+  "afterSha": "4a0bc11ec74917da83049bf2c0fd0b628ea88ac6",
+  "samplesPerCase": 5,
+  "commandsPerSeries": 135,
+  "rows": [
+    {
+      "case": "empty",
+      "semanticsPreserved": true,
+      "observedRangesStrictlyImprove": true,
+      "externalWallMs": {
+        "beforeMean": 3960.012872000002,
+        "afterMean": 1179.3033482000005,
+        "reductionPercent": 70.2197092201775,
+        "beforeRange": [
+          3678.5182649999915,
+          4443.068549000003
+        ],
+        "afterRange": [
+          1069.6014450000002,
+          1324.1582799999996
+        ]
+      },
+      "cpuFullMs": {
+        "beforeMean": 4296.9328000000005,
+        "afterMean": 1404.0883999999999,
+        "reductionPercent": 67.32347315275679,
+        "beforeRange": [
+          4045.1620000000003,
+          4995.37
+        ],
+        "afterRange": [
+          1280.7469999999998,
+          1478.5859999999998
+        ]
+      }
+    },
+    {
+      "case": "live",
+      "semanticsPreserved": true,
+      "observedRangesStrictlyImprove": true,
+      "externalWallMs": {
+        "beforeMean": 4910.445470799995,
+        "afterMean": 1322.4636775999984,
+        "reductionPercent": 73.0683563138204,
+        "beforeRange": [
+          4019.0879259999783,
+          5867.402750000008
+        ],
+        "afterRange": [
+          1245.795192999998,
+          1388.4285479999962
+        ]
+      },
+      "cpuFullMs": {
+        "beforeMean": 5126.3704,
+        "afterMean": 1693.1362000000001,
+        "reductionPercent": 66.97202761626433,
+        "beforeRange": [
+          4415.607,
+          6193.962
+        ],
+        "afterRange": [
+          1588.9699999999998,
+          1793.1419999999998
+        ]
+      }
+    },
+    {
+      "case": "finished",
+      "semanticsPreserved": true,
+      "observedRangesStrictlyImprove": true,
+      "externalWallMs": {
+        "beforeMean": 3931.3412138000012,
+        "afterMean": 1164.4011041999997,
+        "reductionPercent": 70.38158122442648,
+        "beforeRange": [
+          3665.3836080000037,
+          4369.710192000028
+        ],
+        "afterRange": [
+          1085.0596039999946,
+          1275.2994880000042
+        ]
+      },
+      "cpuFullMs": {
+        "beforeMean": 4344.7338,
+        "afterMean": 1456.7866,
+        "reductionPercent": 66.47006083548779,
+        "beforeRange": [
+          4108.366999999999,
+          4771.6849999999995
+        ],
+        "afterRange": [
+          1328.37,
+          1585.479
+        ]
+      }
+    },
+    {
+      "case": "missing",
+      "semanticsPreserved": true,
+      "observedRangesStrictlyImprove": true,
+      "externalWallMs": {
+        "beforeMean": 4377.517998599995,
+        "afterMean": 1325.5580553999957,
+        "reductionPercent": 69.71895818991648,
+        "beforeRange": [
+          4013.599048999953,
+          4710.1898180000135
+        ],
+        "afterRange": [
+          1274.3168139999907,
+          1408.79978999999
+        ]
+      },
+      "cpuFullMs": {
+        "beforeMean": 4805.6842,
+        "afterMean": 1630.9822,
+        "reductionPercent": 66.06139454606692,
+        "beforeRange": [
+          4472.231,
+          5293.317999999999
+        ],
+        "afterRange": [
+          1540.221,
+          1793.919
+        ]
+      }
+    },
+    {
+      "case": "pid-reused",
+      "semanticsPreserved": true,
+      "observedRangesStrictlyImprove": true,
+      "externalWallMs": {
+        "beforeMean": 4377.540043799998,
+        "afterMean": 1375.5790175999923,
+        "reductionPercent": 68.57643782040888,
+        "beforeRange": [
+          3975.9826259999536,
+          4575.4664420000045
+        ],
+        "afterRange": [
+          1332.5673709999828,
+          1437.688003999996
+        ]
+      },
+      "cpuFullMs": {
+        "beforeMean": 4703.099800000001,
+        "afterMean": 1708.259,
+        "reductionPercent": 63.6780193352478,
+        "beforeRange": [
+          4387.779,
+          4984.418
+        ],
+        "afterRange": [
+          1589.998,
+          1853.92
+        ]
+      }
+    },
+    {
+      "case": "unverifiable",
+      "semanticsPreserved": true,
+      "observedRangesStrictlyImprove": true,
+      "externalWallMs": {
+        "beforeMean": 4281.373509799992,
+        "afterMean": 1338.5130917999952,
+        "reductionPercent": 68.73636255430269,
+        "beforeRange": [
+          4050.136547000031,
+          4464.555791000021
+        ],
+        "afterRange": [
+          1272.2739989999973,
+          1402.0917360000021
+        ]
+      },
+      "cpuFullMs": {
+        "beforeMean": 4583.0846,
+        "afterMean": 1707.4894,
+        "reductionPercent": 62.743663950693815,
+        "beforeRange": [
+          4427.308,
+          4808.687
+        ],
+        "afterRange": [
+          1541.471,
+          1826.585
+        ]
+      }
+    }
+  ],
+  "interpretation": "Measured on the recorded warm-cache host and pinned configuration; all six observed ranges improve, without a universal performance claim."
+}

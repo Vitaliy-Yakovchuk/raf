@@ -1,0 +1,262 @@
+diff --git a/test/hotfix-fixture.ts b/test/hotfix-fixture.ts
+index 50d2aba..f33b023 100644
+--- a/test/hotfix-fixture.ts
++++ b/test/hotfix-fixture.ts
+@@ -9,6 +9,8 @@ import type { TestContext } from "node:test";
+ import type { HotfixHost, HotfixWorkspace } from "../src/hotfix-worktree.ts";
+ import { commitHotfix, prepareHotfixWorktree } from "../src/hotfix-worktree.ts";
+ import { verifyHotfixCandidate, type VerifiedHotfix } from "../src/hotfix-activation.ts";
++import { observeWaitIdentity, readWaitIdentity } from "../src/resource-wait-identity.ts";
++import type { ResourceWaitIdentity } from "../src/resource-wait-protocol.ts";
+ 
+ const source = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+ const confSource = process.env.HOTFIX_FIXTURE_CONF ?? join(dirname(source), "conf");
+@@ -40,9 +42,9 @@ export async function until<T>(read: () => T | undefined, budget: number, poll:
+   throw new Error("Fixture readiness deadline exceeded");
+ }
+ 
+-export function command(executable: string, args: readonly string[], cwd: string, environment: Record<string, string>): { code: number; stdout: string; stderr: string } {
++export function command(executable: string, args: readonly string[], cwd: string, environment: Record<string, string>, deadline = timeoutMs): { code: number; stdout: string; stderr: string } {
+   try {
+-    return { code: 0, stdout: execFileSync(executable, [...args], { cwd, env: environment, encoding: "utf8", timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024 }), stderr: "" };
++    return { code: 0, stdout: execFileSync(executable, [...args], { cwd, env: environment, encoding: "utf8", timeout: deadline, maxBuffer: 16 * 1024 * 1024 }), stderr: "" };
+   } catch (error) {
+     const e = error as { status?: number; stdout?: string; stderr?: string; code?: string };
+     if (e.status === undefined || e.status === null) throw error;
+@@ -200,8 +202,8 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
+ `);
+   const socket = join(home, "main.sock");
+   const childProcesses = new Set<ChildProcess>();
++  const serviceOwners = join(root, "fixture-services.jsonl");
+   t.after(async () => {
+-    command(process.execPath, [join(main, "bin", "raf.ts"), "service", "stop"], main, environment);
+     await Promise.all([...childProcesses].map(child => new Promise<void>(resolveExit => {
+       if (child.exitCode !== null || child.signalCode !== null) { resolveExit(); return; }
+       child.once("exit", () => resolveExit());
+@@ -209,11 +211,77 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
+     })));
+     command("tmux", ["-S", socket, "kill-server"], root, environment);
+     command("tmux", ["-S", join(home, ".raf", "tmp", "tmux", "server.sock"), "kill-server"], root, environment);
++    const stopResults = [false, true].map(production => {
++      try { return cli(main, ["service", "stop"], production, {}, budget); }
++      catch (error) { return { code: null, stdout: "", stderr: String(error) }; }
++    });
++    writeFileSync(join(root, "fixture-stop-results.json"), JSON.stringify(stopResults), { mode: 0o600 });
++    const owners: { identity: ResourceWaitIdentity; entry: string }[] = existsSync(serviceOwners)
++      ? readFileSync(serviceOwners, "utf8").trim().split("\n").filter(Boolean).map(line => JSON.parse(line)) : [];
++    for (const { identity, entry } of owners) {
++      assert.ok(entry.startsWith(root + "/") && entry.endsWith("/bin/service.ts"), "Only fixture-owned services may be stopped");
++      async function signalOwned(signal: NodeJS.Signals) {
++        const observed = await observeWaitIdentity(identity);
++        assert.notEqual(observed.state, "unknown", "Service ownership must be verified before cleanup");
++        if (observed.state === "alive") {
++          try { process.kill(identity.pid, signal); }
++          catch (error) { if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error; }
++        }
++      }
++      let state = await observeWaitIdentity(identity);
++      async function awaitStopped() {
++        const deadline = Date.now() + budget;
++        do {
++          state = await observeWaitIdentity(identity);
++          if (state.state === "dead") return;
++          await delay(poll);
++        } while (Date.now() < deadline);
++        throw new Error(`Fixture service PID ${identity.pid} did not exit`);
++      }
++      if (stopResults.some(result => result.code !== 0)) await signalOwned("SIGTERM");
++      try { await awaitStopped(); }
++      catch {
++        await signalOwned("SIGTERM");
++        try { await awaitStopped(); }
++        catch { await signalOwned("SIGKILL"); await awaitStopped(); }
++      }
++      assert.equal((await observeWaitIdentity(identity)).state, "dead", "Service must exit before fixture removal");
++    }
+     rmSync(root, { recursive: true, force: true });
+   });
+-  const host: HotfixHost = { orchestratorRoot: root, qaHome: home, environment: { ...environment, PATH: `${binary}:${environment.PATH}` }, sandboxExecutable: realCodex };
+   const osHomePreload = join(root, "os-home.mjs");
+   writeFileSync(osHomePreload, `import os from 'node:os';import {syncBuiltinESMExports} from 'node:module';const original=os.userInfo;os.userInfo=(options)=>({...original(options),homedir:${JSON.stringify(workingHome)}});syncBuiltinESMExports();`);
++  const lifecyclePreload = join(root, "fixture-lifecycle.mjs");
++  const owner = await readWaitIdentity();
++  const rootIdentity = lstatSync(root);
++  writeFileSync(lifecyclePreload, `import fs from 'node:fs';
++import {resolve} from 'node:path';
++const root=${JSON.stringify(root)};
++const entry=resolve(process.argv[1]??'.');
++if(entry.startsWith(root+'/')&&entry.endsWith('/bin/service.ts')){
++ const {readWaitIdentity,observeWaitIdentity}=await import(${JSON.stringify(new URL("../src/resource-wait-identity.ts", import.meta.url).href)});
++ const identity=await readWaitIdentity();
++ fs.appendFileSync(${JSON.stringify(serviceOwners)},JSON.stringify({identity,entry})+'\\n',{mode:0o600});
++ let checking=false;
++ const timer=setInterval(async()=>{
++  if(checking)return;
++  checking=true;
++  try{
++   let gone=false;
++   try{const stat=fs.lstatSync(root);gone=stat.dev!==${rootIdentity.dev}||stat.ino!==${rootIdentity.ino};}
++   catch(error){if(error.code==='ENOENT')gone=true;else throw error;}
++   if(gone||(await observeWaitIdentity(${JSON.stringify(owner)})).state==='dead'){
++    clearInterval(timer);
++    setTimeout(()=>process.kill(process.pid,'SIGKILL'),${budget / 2}).unref();
++    process.kill(process.pid,'SIGTERM');
++   }
++  }finally{checking=false;}
++ },${poll});
++ timer.unref();
++}
++`);
++  environment.NODE_OPTIONS = `--import=${osHomePreload} --import=${lifecyclePreload}`;
++  const host: HotfixHost = { orchestratorRoot: root, qaHome: home, environment: { ...environment, PATH: `${binary}:${environment.PATH}` }, sandboxExecutable: realCodex };
+   async function startMain() {
+     const result = command("tmux", ["-S", socket, "new-session", "-d", "-s", "hotfix-fixture-main", "-x", "200", "-y", "60", process.execPath, pane], root, environment);
+     assert.equal(result.code, 0, result.stderr);
+@@ -242,10 +310,10 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
+       gitConfig: sha(join(root, ".git", "modules", "raf-main", "config"))
+     };
+   }
+-  function cli(cwd: string, args: readonly string[], production = false, extra: Record<string, string> = {}) {
++  function cli(cwd: string, args: readonly string[], production = false, extra: Record<string, string> = {}, deadline = timeoutMs) {
+     const env = { ...environment, ...extra, HOME: production ? workingHome : home };
+     if (production) delete (env as Record<string, string | undefined>).RAF_QA_HOME;
+-    return command(process.execPath, ["--import", osHomePreload, join(cwd, "bin", "raf.ts"), ...args], cwd, env);
++    return command(process.execPath, ["--import", osHomePreload, join(cwd, "bin", "raf.ts"), ...args], cwd, env, deadline);
+   }
+   async function candidate(marker = "new") {
+     const workspace = await prepareHotfixWorktree(host, randomUUID());
+diff --git a/test/hotfix-origin-cost.test.ts b/test/hotfix-origin-cost.test.ts
+index 8e9ec49..2df26c6 100644
+--- a/test/hotfix-origin-cost.test.ts
++++ b/test/hotfix-origin-cost.test.ts
+@@ -7,15 +7,129 @@ import { syncBuiltinESMExports } from 'node:module';
+ import { tmpdir } from 'node:os';
+ import { dirname, join, relative } from 'node:path';
+ import { test, type TestContext } from 'node:test';
++import { setTimeout as delay } from 'node:timers/promises';
+ import { inventory as activationInventory } from '../src/hotfix-host.ts';
+ import { hotfixModuleOrigin } from '../src/hotfix-origin.ts';
+ import { createHotfixRuntimeInventory, type HotfixRuntimeInventory } from '../src/hotfix-runtime-inventory.ts';
+ import { resolveStateContext, verifyStateContext, type StateEntryPoint } from '../src/state-migration-guard.ts';
+-import { childMessage, fixture as activationFixture } from './hotfix-fixture.ts';
++import { childMessage, fixture as activationFixture, timeoutMs } from './hotfix-fixture.ts';
++import { observeWaitIdentity, readWaitIdentity } from '../src/resource-wait-identity.ts';
++import type { ResourceWaitIdentity } from '../src/resource-wait-protocol.ts';
+ 
+ const commit = '1'.repeat(40);
+ const digest = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
+ 
++for (const mode of ['cleanup', 'timeout', 'SIGKILL'] as const) {
++  test(`[module-origin-cost] fixture ${mode} stops both QA and production services before removing their home`, { timeout: timeoutMs }, async t => {
++    const root = fs.mkdtempSync(join(tmpdir(), 'fixture-owner-'));
++    const script = join(root, 'owner.mjs');
++    let report: { root: string; services: ResourceWaitIdentity[]; budget: number; poll: number } | undefined;
++    let stderr = '';
++    fs.writeFileSync(script, `import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import fs from 'node:fs';
++import { syncBuiltinESMExports } from 'node:module';
++import { fixture } from ${JSON.stringify(new URL('./hotfix-fixture.ts', import.meta.url).href)};
++import { ensureProductionMainStore } from ${JSON.stringify(new URL('../src/main-production-store.ts', import.meta.url).href)};
++import { readWaitIdentity } from ${JSON.stringify(new URL('../src/resource-wait-identity.ts', import.meta.url).href)};
++const hooks=[];
++const f=await fixture({after:hook=>hooks.push(hook)});
++const services=[];
++const progress=()=>process.send({kind:'progress',root:f.root,services,budget:f.budget,poll:f.poll});
++progress();
++await ensureProductionMainStore({root:f.root});
++for(const production of [false,true]){
++ const started=f.cli(f.main,['service','start'],production,production?{NODE_OPTIONS:(f.environment.NODE_OPTIONS??'')+' --import='+f.osHomePreload}:{});
++ assert.equal(started.code,0,started.stderr);
++ const status=JSON.parse(started.stdout);
++ assert.equal(status.state,'ready');
++ services.push(await readWaitIdentity(status.pid));
++ progress();
++}
++const remove=fs.rmSync;
++fs.rmSync=(path,...args)=>{
++ if(path===f.root)for(const identity of services){
++  let alive=false;
++  try{
++   const stat=fs.readFileSync('/proc/'+identity.pid+'/stat','utf8');
++   const fields=stat.slice(stat.lastIndexOf(')')+2).split(' ');
++   alive=fields[19]===identity.startedAt&&!['Z','X'].includes(fields[0]);
++  }catch(error){if(error.code!=='ENOENT')throw error;}
++  assert.equal(alive,false,'fixture home must not be removed before owned service exits');
++ }
++ return remove(path,...args);
++};
++syncBuiltinESMExports();
++const ready=()=>new Promise((resolve,reject)=>process.send({kind:'ready',root:f.root,services,budget:f.budget,poll:f.poll},error=>error?reject(error):resolve()));
++const mode=${JSON.stringify(mode)};
++const triggered=new Promise(resolve=>process.once('message',resolve));
++await ready();
++if(mode==='timeout'){
++ await triggered;
++ await test('intentional fixture owner timeout',{timeout:f.poll},async t=>{
++  const hold=setInterval(()=>{},f.poll);
++  t.after(()=>clearInterval(hold));
++  for(const hook of hooks)t.after(hook);
++  await new Promise(()=>{});
++ });
++ process.disconnect();
++}else{
++ if(mode==='cleanup'){
++  await triggered;
++  for(const hook of hooks)await hook();
++  process.disconnect();
++ }else setInterval(()=>{},f.poll);
++}
++`);
++    const child = childProcess.spawn(process.execPath, [script], { stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
++    child.stderr.on('data', chunk => { stderr += chunk; });
++    child.on('message', value => {
++      if (value && typeof value === 'object' && 'kind' in value && value.kind === 'progress') report = value as typeof report;
++    });
++    const exited = once(child, 'exit');
++    t.after(async () => {
++      if (child.exitCode === null && child.signalCode === null) { child.kill('SIGKILL'); await exited; }
++      for (const identity of report?.services ?? []) {
++        if ((await observeWaitIdentity(identity)).state === 'alive') process.kill(identity.pid, 'SIGKILL');
++        assert.equal(await serviceStopped(identity, report!.budget, report!.poll), true);
++      }
++      if (report) fs.rmSync(report.root, { recursive: true, force: true });
++      fs.rmSync(root, { recursive: true, force: true });
++    });
++    report = await childMessage(child, value => value.kind === 'ready', timeoutMs).catch(error => {
++      throw new Error(`${error.message}\n${stderr}`);
++    });
++    assert.equal(report!.services.length, 2, 'the regression starts real services in both homes');
++    for (const identity of report!.services) assert.equal((await observeWaitIdentity(identity)).state, 'alive');
++    if (mode === 'SIGKILL') child.kill('SIGKILL');
++    if (mode !== 'SIGKILL') child.send(mode);
++    let timer: ReturnType<typeof setTimeout> | undefined;
++    const completed = await Promise.race([
++      exited,
++      new Promise<undefined>(resolveExit => { timer = setTimeout(resolveExit, report!.budget * 4); })
++    ]);
++    clearTimeout(timer);
++    assert.ok(completed, 'fixture owner must finish cleanup within its transition budgets');
++    const [code, signal] = completed;
++    if (mode === 'SIGKILL') assert.equal(signal, 'SIGKILL');
++    else assert.equal(code, mode === 'timeout' ? 1 : 0, stderr);
++    for (const identity of report!.services) {
++      const stopped = await serviceStopped(identity, report!.budget, report!.poll);
++      assert.equal(stopped, true, `${mode} must not orphan service PID ${identity.pid} after fixture cleanup`);
++    }
++    if (mode !== 'SIGKILL') assert.equal(fs.existsSync(report!.root), false);
++  });
++}
++
++async function serviceStopped(identity: ResourceWaitIdentity, budget: number, poll: number): Promise<boolean> {
++  const deadline = Date.now() + budget;
++  do {
++    if ((await observeWaitIdentity(identity)).state === 'dead') return true;
++    await delay(poll);
++  } while (Date.now() < deadline);
++  return false;
++}
++
+ test('[module-origin-cost] forked publisher preserves a full snapshot payload beyond exec environment limits', async t => {
+   const f = await activationFixture(t);
+   const payload = { marker: 'full-snapshot-payload', proof: 'x'.repeat(256 * 1024) };

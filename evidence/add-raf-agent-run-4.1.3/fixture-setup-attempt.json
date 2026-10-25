@@ -1,0 +1,453 @@
+{
+  "attempt": 1,
+  "exitCode": 1,
+  "acceptedBehavioralRed": false,
+  "result": {
+    "testKind": "unit",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "callerPhase": "test-scaffold",
+    "diagnostics": [
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/production-worker-pane.test.ts",
+          "name": "worker codex: durable process evidence records the launch tmux socket and pane"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "unit worker must reach its durable start boundary: Error: ENOENT: no such file or directory, open '<external>/test-runs.json'\n+ actual - expected\n\n+ Error: ENOENT: no such file or directory, open '<external>/test-runs.json'\n+     at readFileSync (node:fs:624:20)\n+     at requireText (src/flow-runtime.ts:58:39)\n+     at flowEvidencePorts (src/flow-runtime.ts:44:29)\n+     at reportedCommitPorts (src/production-runtime.ts?worker-pane-unit:580:63)\n+     at runProductionWorker (src/production-runtime.ts?worker-pane-unit:1852:10)\n+     at async fixture (test/production-worker-pane.test.ts:188:19)\n+     at async TestContext.<anonymous> (test/production-worker-pane.test.ts:200:15)\n+     at async Test.run (node:internal/test_runner/test:1409:7)\n+     at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {\n+   code: 'ENOENT',\n+   errno: -2,\n+   path: '<external>/test-runs.json',\n+   syscall: 'open'\n+ }\n- Error: unit cutoff after durable worker start\n-     at fixture (test/production-worker-pane.test.ts:113:20)\n-     at TestContext.<anonymous> (test/production-worker-pane.test.ts:200:21)\n-     at Test.runInAsyncScope (node:async_hooks:226:14)\n-     at Test.run (node:internal/test_runner/test:1402:25)\n-     at Test.start (node:internal/test_runner/test:1262:17)\n-     at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n",
+        "location": {
+          "file": "test/production-worker-pane.test.ts",
+          "line": 189,
+          "column": 10
+        },
+        "stack": [
+          "    at fixture (test/production-worker-pane.test.ts:189:10)",
+          "    at async TestContext.<anonymous> (test/production-worker-pane.test.ts:200:15)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+        ],
+        "redacted": true,
+        "truncated": false
+      },
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/production-worker-pane.test.ts",
+          "name": "worker codex: agent message reaches the recorded pane and confirms native acceptance"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "unit worker must reach its durable start boundary: Error: ENOENT: no such file or directory, open '<external>/test-runs.json'\n+ actual - expected\n\n+ Error: ENOENT: no such file or directory, open '<external>/test-runs.json'\n+     at readFileSync (node:fs:624:20)\n+     at requireText (src/flow-runtime.ts:58:39)\n+     at flowEvidencePorts (src/flow-runtime.ts:44:29)\n+     at reportedCommitPorts (src/production-runtime.ts?worker-pane-unit:580:63)\n+     at runProductionWorker (src/production-runtime.ts?worker-pane-unit:1852:10)\n+     at async fixture (test/production-worker-pane.test.ts:188:19)\n+     at async TestContext.<anonymous> (test/production-worker-pane.test.ts:206:15)\n+     at async Test.run (node:internal/test_runner/test:1409:7)\n+     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {\n+   code: 'ENOENT',\n+   errno: -2,\n+   path: '<external>/test-runs.json',\n+   syscall: 'open'\n+ }\n- Error: unit cutoff after durable worker start\n-     at fixture (test/production-worker-pane.test.ts:113:20)\n-     at TestContext.<anonymous> (test/production-worker-pane.test.ts:206:21)\n-     at Test.runInAsyncScope (node:async_hooks:226:14)\n-     at Test.run (node:internal/test_runner/test:1402:25)\n-     at Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n-     at Test.postRun (node:internal/test_runner/test:1542:19)\n-     at Test.run (node:internal/test_runner/test:1467:12)\n-     at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n",
+        "location": {
+          "file": "test/production-worker-pane.test.ts",
+          "line": 189,
+          "column": 10
+        },
+        "stack": [
+          "    at fixture (test/production-worker-pane.test.ts:189:10)",
+          "    at async TestContext.<anonymous> (test/production-worker-pane.test.ts:206:15)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": true,
+        "truncated": false
+      },
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/production-worker-pane.test.ts",
+          "name": "worker codex: authorized interrupt reaches the recorded pane and confirms idle"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "unit worker must reach its durable start boundary: Error: ENOENT: no such file or directory, open '<external>/test-runs.json'\n+ actual - expected\n\n+ Error: ENOENT: no such file or directory, open '<external>/test-runs.json'\n+     at readFileSync (node:fs:624:20)\n+     at requireText (src/flow-runtime.ts:58:39)\n+     at flowEvidencePorts (src/flow-runtime.ts:44:29)\n+     at reportedCommitPorts (src/production-runtime.ts?worker-pane-unit:580:63)\n+     at runProductionWorker (src/production-runtime.ts?worker-pane-unit:1852:10)\n+     at async fixture (test/production-worker-pane.test.ts:188:19)\n+     at async TestContext.<anonymous> (test/production-worker-pane.test.ts:218:15)\n+     at async Test.run (node:internal/test_runner/test:1409:7)\n+     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {\n+   code: 'ENOENT',\n+   errno: -2,\n+   path: '<external>/test-runs.json',\n+   syscall: 'open'\n+ }\n- Error: unit cutoff after durable worker start\n-     at fixture (test/production-worker-pane.test.ts:113:20)\n-     at TestContext.<anonymous> (test/production-worker-pane.test.ts:218:21)\n-     at Test.runInAsyncScope (node:async_hooks:226:14)\n-     at Test.run (node:internal/test_runner/test:1402:25)\n-     at Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n-     at Test.postRun (node:internal/test_runner/test:1542:19)\n-     at Test.run (node:internal/test_runner/test:1467:12)\n-     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n",
+        "location": {
+          "file": "test/production-worker-pane.test.ts",
+          "line": 189,
+          "column": 10
+        },
+        "stack": [
+          "    at fixture (test/production-worker-pane.test.ts:189:10)",
+          "    at async TestContext.<anonymous> (test/production-worker-pane.test.ts:218:15)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": true,
+        "truncated": false
+      },
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/production-worker-pane.test.ts",
+          "name": "worker claude: durable process evidence records the launch tmux socket and pane"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "unit worker must reach its durable start boundary: Error: ENOENT: no such file or directory, open '<external>/test-runs.json'\n+ actual - expected\n\n+ Error: ENOENT: no such file or directory, open '<external>/test-runs.json'\n+     at readFileSync (node:fs:624:20)\n+     at requireText (src/flow-runtime.ts:58:39)\n+     at flowEvidencePorts (src/flow-runtime.ts:44:29)\n+     at reportedCommitPorts (src/production-runtime.ts?worker-pane-unit:580:63)\n+     at runProductionWorker (src/production-runtime.ts?worker-pane-unit:1852:10)\n+     at async fixture (test/production-worker-pane.test.ts:188:19)\n+     at async TestContext.<anonymous> (test/production-worker-pane.test.ts:200:15)\n+     at async Test.run (node:internal/test_runner/test:1409:7)\n+     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {\n+   code: 'ENOENT',\n+   errno: -2,\n+   path: '<external>/test-runs.json',\n+   syscall: 'open'\n+ }\n- Error: unit cutoff after durable worker start\n-     at fixture (test/production-worker-pane.test.ts:113:20)\n-     at TestContext.<anonymous> (test/production-worker-pane.test.ts:200:21)\n-     at Test.runInAsyncScope (node:async_hooks:226:14)\n-     at Test.run (node:internal/test_runner/test:1402:25)\n-     at Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n-     at Test.postRun (node:internal/test_runner/test:1542:19)\n-     at Test.run (node:internal/test_runner/test:1467:12)\n-     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n",
+        "location": {
+          "file": "test/production-worker-pane.test.ts",
+          "line": 189,
+          "column": 10
+        },
+        "stack": [
+          "    at fixture (test/production-worker-pane.test.ts:189:10)",
+          "    at async TestContext.<anonymous> (test/production-worker-pane.test.ts:200:15)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": true,
+        "truncated": false
+      },
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/production-worker-pane.test.ts",
+          "name": "worker claude: agent message reaches the recorded pane and confirms native acceptance"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "unit worker must reach its durable start boundary: Error: ENOENT: no such file or directory, open '<external>/test-runs.json'\n+ actual - expected\n\n+ Error: ENOENT: no such file or directory, open '<external>/test-runs.json'\n+     at readFileSync (node:fs:624:20)\n+     at requireText (src/flow-runtime.ts:58:39)\n+     at flowEvidencePorts (src/flow-runtime.ts:44:29)\n+     at reportedCommitPorts (src/production-runtime.ts?worker-pane-unit:580:63)\n+     at runProductionWorker (src/production-runtime.ts?worker-pane-unit:1852:10)\n+     at async fixture (test/production-worker-pane.test.ts:188:19)\n+     at async TestContext.<anonymous> (test/production-worker-pane.test.ts:206:15)\n+     at async Test.run (node:internal/test_runner/test:1409:7)\n+     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {\n+   code: 'ENOENT',\n+   errno: -2,\n+   path: '<external>/test-runs.json',\n+   syscall: 'open'\n+ }\n- Error: unit cutoff after durable worker start\n-     at fixture (test/production-worker-pane.test.ts:113:20)\n-     at TestContext.<anonymous> (test/production-worker-pane.test.ts:206:21)\n-     at Test.runInAsyncScope (node:async_hooks:226:14)\n-     at Test.run (node:internal/test_runner/test:1402:25)\n-     at Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n-     at Test.postRun (node:internal/test_runner/test:1542:19)\n-     at Test.run (node:internal/test_runner/test:1467:12)\n-     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n",
+        "location": {
+          "file": "test/production-worker-pane.test.ts",
+          "line": 189,
+          "column": 10
+        },
+        "stack": [
+          "    at fixture (test/production-worker-pane.test.ts:189:10)",
+          "    at async TestContext.<anonymous> (test/production-worker-pane.test.ts:206:15)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": true,
+        "truncated": false
+      },
+      {
+        "kind": "assertion",
+        "test": {
+          "file": "test/production-worker-pane.test.ts",
+          "name": "worker claude: authorized interrupt reaches the recorded pane and confirms idle"
+        },
+        "errorName": "AssertionError",
+        "errorCode": "ERR_ASSERTION",
+        "message": "unit worker must reach its durable start boundary: Error: ENOENT: no such file or directory, open '<external>/test-runs.json'\n+ actual - expected\n\n+ Error: ENOENT: no such file or directory, open '<external>/test-runs.json'\n+     at readFileSync (node:fs:624:20)\n+     at requireText (src/flow-runtime.ts:58:39)\n+     at flowEvidencePorts (src/flow-runtime.ts:44:29)\n+     at reportedCommitPorts (src/production-runtime.ts?worker-pane-unit:580:63)\n+     at runProductionWorker (src/production-runtime.ts?worker-pane-unit:1852:10)\n+     at async fixture (test/production-worker-pane.test.ts:188:19)\n+     at async TestContext.<anonymous> (test/production-worker-pane.test.ts:218:15)\n+     at async Test.run (node:internal/test_runner/test:1409:7)\n+     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {\n+   code: 'ENOENT',\n+   errno: -2,\n+   path: '<external>/test-runs.json',\n+   syscall: 'open'\n+ }\n- Error: unit cutoff after durable worker start\n-     at fixture (test/production-worker-pane.test.ts:113:20)\n-     at TestContext.<anonymous> (test/production-worker-pane.test.ts:218:21)\n-     at Test.runInAsyncScope (node:async_hooks:226:14)\n-     at Test.run (node:internal/test_runner/test:1402:25)\n-     at Test.processPendingSubtests (node:internal/test_runner/test:974:18)\n-     at Test.postRun (node:internal/test_runner/test:1542:19)\n-     at Test.run (node:internal/test_runner/test:1467:12)\n-     at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)\n",
+        "location": {
+          "file": "test/production-worker-pane.test.ts",
+          "line": 189,
+          "column": 10
+        },
+        "stack": [
+          "    at fixture (test/production-worker-pane.test.ts:189:10)",
+          "    at async TestContext.<anonymous> (test/production-worker-pane.test.ts:218:15)",
+          "    at async Test.run (node:internal/test_runner/test:1409:7)",
+          "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+        ],
+        "redacted": true,
+        "truncated": false
+      }
+    ],
+    "diagnosticSummary": {
+      "totalEntries": 6,
+      "retainedEntries": 6,
+      "omittedEntries": 0,
+      "truncated": false,
+      "redacted": true
+    },
+    "environmentSummary": {
+      "executable": "node",
+      "runtimeVersion": "v26.12.1",
+      "adapter": "node-test-events",
+      "isolation": "process",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "19b93941bdd68d57254d87c2da65aa06d4529455c48e417d400dfd13e5a7bcfc",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      },
+      "tmpPathBytes": 13,
+      "privateRunTmp": true
+    },
+    "runId": "d4052a0e-a988-4dfb-ba0d-433d6592d925",
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-develop",
+    "phase": "red",
+    "group": "add-raf-agent-run/worker-pane",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/production-worker-pane.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/production-worker-pane.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+        "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+        "TMPDIR": "/tmp/r-jECq3r"
+      }
+    },
+    "startedAt": "2026-10-25T17:27:34.723Z",
+    "durationMs": 24125,
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "outcome": "assertions-failed",
+    "failureKinds": [
+      "assertions"
+    ],
+    "passed": [],
+    "knownRed": [
+      {
+        "file": "test/production-worker-pane.test.ts",
+        "name": "worker codex: durable process evidence records the launch tmux socket and pane"
+      },
+      {
+        "file": "test/production-worker-pane.test.ts",
+        "name": "worker codex: agent message reaches the recorded pane and confirms native acceptance"
+      },
+      {
+        "file": "test/production-worker-pane.test.ts",
+        "name": "worker codex: authorized interrupt reaches the recorded pane and confirms idle"
+      },
+      {
+        "file": "test/production-worker-pane.test.ts",
+        "name": "worker claude: durable process evidence records the launch tmux socket and pane"
+      },
+      {
+        "file": "test/production-worker-pane.test.ts",
+        "name": "worker claude: agent message reaches the recorded pane and confirms native acceptance"
+      },
+      {
+        "file": "test/production-worker-pane.test.ts",
+        "name": "worker claude: authorized interrupt reaches the recorded pane and confirms idle"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "stateAccess": null,
+    "groupSnapshot": "loaded",
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "hintIds": [
+      "red-assertions"
+    ],
+    "hints": [
+      "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+    ],
+    "evidence": [],
+    "admission": {
+      "level": "ANY_RUN",
+      "requestedTier": "normal",
+      "allowed": true,
+      "reasons": [
+        "All normal resource thresholds satisfied after reservations"
+      ],
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 9.46,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 15525298176,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "totalBytes": 190143823872,
+            "availableBytes": 158862094336
+          },
+          {
+            "id": "/dev/mapper/home-dev",
+            "totalBytes": 11499937792,
+            "availableBytes": 8036945920
+          }
+        ]
+      },
+      "thresholds": {
+        "normal": {
+          "maxNormalizedLoad": 1.2,
+          "minRamFraction": 0.2,
+          "minRamBytes": 2147483648,
+          "minDiskFraction": 0.1,
+          "minDiskBytes": 10737418240
+        },
+        "hotfix": {
+          "maxNormalizedLoad": 1.5,
+          "minRamFraction": 0.1,
+          "minRamBytes": 1073741824,
+          "minDiskFraction": 0.05,
+          "minDiskBytes": 5368709120
+        },
+        "home": {
+          "minDiskBytes": 524288000
+        }
+      },
+      "reservation": {
+        "requested": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        },
+        "unused": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        }
+      },
+      "remaining": {
+        "ramBytes": 11230330880,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 137387257856,
+          "/dev/mapper/home-dev": 8036945920
+        },
+        "normalizedLoad": 1.1825
+      },
+      "estimate": {
+        "status": "KNOWN",
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "reason": null
+      },
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+    },
+    "resourceUsage": {
+      "context": {
+        "identity": {
+          "kind": "test",
+          "id": "d4052a0e-a988-4dfb-ba0d-433d6592d925",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "fence": "704704bb-c98a-44b9-adb2-986bccc37b37",
+          "root": {
+            "pid": 2381588,
+            "startTicks": "29196012",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        },
+        "project": "raf",
+        "agentType": null,
+        "testProfile": "node",
+        "items": [
+          {
+            "project": "raf",
+            "change": "add-raf-agent-run",
+            "item": "4.1.3"
+          }
+        ],
+        "requestedEstimate": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          },
+          "sources": [
+            "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+          ],
+          "confHash": "bd867d339bba4ccc73f2d74c0e9453b24c64f786920cac1363a8b1638956e687"
+        },
+        "requiredFileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "paths": [
+              "/srv/dev/work/orchestrator",
+              "/srv/dev/work/orchestrator/raf-develop"
+            ]
+          }
+        ],
+        "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+        "attributedPaths": [
+          "/tmp/r-jECq3r"
+        ]
+      },
+      "preparedAt": 1792949277991,
+      "baseline": {
+        "at": 1792949278021,
+        "disk": [
+          {
+            "fileSystemId": "/dev/mapper/data-dev",
+            "files": [],
+            "complete": false,
+            "reasons": [
+              "No run-owned output scope is available on this filesystem"
+            ]
+          }
+        ]
+      },
+      "startedAt": 1792949278050,
+      "lastObservedAt": 1792949278805,
+      "finishedAt": 1792949278834,
+      "finishReason": "exit",
+      "peakRamBytes": 35278848,
+      "peakDiskBytes": {
+        "/dev/mapper/data-dev": null
+      },
+      "ram": {
+        "peakBytes": 35278848,
+        "currentBytes": null,
+        "method": {
+          "name": "rss-sampled",
+          "scope": "verified process tree; simultaneous RSS sum",
+          "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+        },
+        "completeness": "partial",
+        "reasons": [
+          "RAM measurement unavailable"
+        ]
+      },
+      "disk": {
+        "/dev/mapper/data-dev": {
+          "peakBytes": null,
+          "currentBytes": null,
+          "method": {
+            "name": "allocated-files-sampled",
+            "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+          },
+          "completeness": "unknown",
+          "reasons": [
+            "Changes in shared development directories cannot be fully attributed to this run",
+            "No run-owned output scope is available on this filesystem",
+            "Disk observation or pre-spawn baseline unavailable",
+            "Disk attribution is partial"
+          ]
+        }
+      },
+      "completeness": "partial",
+      "reasons": [
+        "Changes in shared development directories cannot be fully attributed to this run",
+        "No run-owned output scope is available on this filesystem",
+        "Disk observation or pre-spawn baseline unavailable",
+        "Disk attribution is partial",
+        "Usage observer reattached; the interval since the previous persisted sample is unverified",
+        "Process liveness unknown during reconciliation",
+        "RAM measurement unavailable",
+        "Root process identity is unavailable or changed",
+        "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+        "Final measurement completeness is unverified"
+      ]
+    },
+    "queue": {
+      "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+      "waited": true
+    }
+  },
+  "otherOutput": [
+    "{\"kind\":\"launch-queue.waiting\",\"queueId\":\"15392981-91bf-41d4-857c-5fc6d4899263\",\"requestId\":\"bac895cd-21f9-4a92-8b28-7affbcc35f9d\",\"testRunId\":\"d4052a0e-a988-4dfb-ba0d-433d6592d925\",\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":5.62,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":17320181760,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"/dev/mapper/data-dev\",\"totalBytes\":190143823872,\"availableBytes\":158868254720},{\"id\":\"/dev/mapper/home-dev\",\"totalBytes\":11499937792,\"availableBytes\":8037466112}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.2,\"minRamFraction\":0.2,\"minRamBytes\":2147483648,\"minDiskFraction\":0.1,\"minDiskBytes\":10737418240},\"hotfix\":{\"maxNormalizedLoad\":1.5,\"minRamFraction\":0.1,\"minRamBytes\":1073741824,\"minDiskFraction\":0.05,\"minDiskBytes\":5368709120},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}},\"unused\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}}},\"remaining\":{\"ramBytes\":13025214464,\"diskBytes\":{\"/dev/mapper/data-dev\":137393418240,\"/dev/mapper/home-dev\":8037466112},\"normalizedLoad\":0.7025},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate\"],\"reason\":null},\"queueId\":\"15392981-91bf-41d4-857c-5fc6d4899263\"}}"
+  ]
+}

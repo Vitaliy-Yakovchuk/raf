@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import childProcess from 'node:child_process';
-import fs from 'node:fs';
+import fs, { readFileSync as boundReadFileSync } from 'node:fs';
+import { readFile as boundReadFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { registerHooks, syncBuiltinESMExports } from 'node:module';
 import operatingSystem, { tmpdir } from 'node:os';
@@ -28,6 +29,42 @@ const catalog = compileCatalog(constants, models, constants.commands.map((row: {
 const commit = '1'.repeat(40);
 const hash = (value: Buffer | string) => createHash('sha256').update(value).digest('hex');
 const bridgeKey = Symbol.for('raf.runtime-verification-cost.fixture');
+const fsTargets = [[fs, 'Sync'], [fs.promises, '']] as const;
+const fsOperations = ['readFile', 'readdir', 'lstat', 'stat', 'realpath', 'readlink', 'open', 'opendir'];
+const realFs = fsTargets.map(([target, suffix]) => {
+  const object = target as unknown as Record<string, (...args: any[]) => any>;
+  return { target, object, entries: fsOperations.map(name => [name + suffix, object[name + suffix]] as const) };
+});
+type FsTap = { before?(operation: string, args: any[]): void; after?(operation: string, args: any[], value: any): any };
+const fsTaps = new WeakMap<TestContext, FsTap[]>();
+function realFsLeaks() {
+  const leaks = realFs.flatMap(({ object, entries }) => entries.filter(([operation, original]) => object[operation] !== original).map(([operation]) => operation));
+  if (boundReadFileSync !== realFs[0].object.readFileSync) leaks.push('esm:readFileSync');
+  if (boundReadFile !== realFs[1].object.readFile) leaks.push('esm:readFile');
+  return leaks;
+}
+function fsInterposition(t: TestContext) {
+  const existing = fsTaps.get(t);
+  if (existing) return existing;
+  assert.deepEqual(realFsLeaks(), [], 'A previous fixture left an fs interposition installed');
+  const taps: FsTap[] = [];
+  fsTaps.set(t, taps);
+  for (const { target, object, entries } of realFs) for (const [operation, original] of entries) {
+    const settle = (args: any[], value: any) => taps.reduce((current, tap) => tap.after ? tap.after(operation, args, current) : current, value);
+    t.mock.method(object, operation, target === fs.promises
+      ? async function (...args: any[]) {
+        for (const tap of [...taps].reverse()) tap.before?.(operation, args);
+        return settle(args, await Reflect.apply(original, target, args));
+      }
+      : function (...args: any[]) {
+        for (const tap of [...taps].reverse()) tap.before?.(operation, args);
+        return settle(args, Reflect.apply(original, target, args));
+      });
+  }
+  syncBuiltinESMExports();
+  t.after(() => { t.mock.restoreAll(); syncBuiltinESMExports(); assert.deepEqual(realFsLeaks(), [], 'fs interposition restored to module-load originals'); });
+  return taps;
+}
 const runtimeUrl = new URL('../src/production-runtime.ts?runtime-verification-cost', import.meta.url).href;
 const entryUrl = new URL('../src/production-entry.ts?runtime-verification-cost', import.meta.url).href;
 const osUrl = new URL('../src/os-runtime.ts', import.meta.url).href;
@@ -123,18 +160,9 @@ type GenerationFixture = ReturnType<typeof generationFixture>;
 
 function fileMeter(t: TestContext, generation: string) {
   const log: { operation: string; path: string }[] = [];
-  for (const [target, suffix] of [[fs, 'Sync'], [fs.promises, '']] as const) {
-    for (const name of ['readFile', 'readdir', 'lstat', 'stat', 'realpath', 'readlink', 'open', 'opendir']) {
-      const object = target as unknown as Record<string, (...args: any[]) => any>;
-      const operation = name + suffix;
-      const original = object[operation];
-      t.mock.method(object, operation, function (...args: any[]) {
-        log.push({ operation, path: args[0] instanceof URL ? fileURLToPath(args[0]) : String(args[0]) });
-        return Reflect.apply(original, target, args);
-      });
-    }
-  }
-  syncBuiltinESMExports();
+  fsInterposition(t).push({ before(operation, args) {
+    log.push({ operation, path: args[0] instanceof URL ? fileURLToPath(args[0]) : String(args[0]) });
+  } });
   const snapshot = () => {
     const inside = log.filter(row => row.path === generation || row.path.startsWith(generation + '/'));
     return { traversal: inside.filter(row => /^readdir|^opendir/.test(row.operation)),
@@ -317,15 +345,17 @@ function processFixture(t: TestContext) {
   const procReads: string[] = [];
   const allCommands: AdapterCommand[] = [];
   const allProcReads: string[] = [];
-  const beforeRead = (path: fs.PathLike) => {
+  const procTarget = (path: fs.PathLike) => {
     const name = String(path);
-    const target = identities.find(identity => name.startsWith('/proc/' + identity.pid + '/'));
-    if (target) {
+    return identities.some(identity => name.startsWith('/proc/' + identity.pid + '/')) ? name : undefined;
+  };
+  const beforeRead = (path: fs.PathLike) => {
+    const name = procTarget(path);
+    if (name) {
       procReads.push(name); allProcReads.push(name); reads++;
       if (mode === 'denied' || mode === 'disappeared' && reads > 1) throw Object.assign(new Error('Controlled OS read refusal'), { code: mode === 'denied' ? 'EACCES' : 'ENOENT' });
       if (mode === 'missing') throw Object.assign(new Error('Controlled missing process'), { code: 'ENOENT' });
     }
-    return target ? name : undefined;
   };
   const transformRead = (name: string | undefined, value: Buffer | string) => {
     if (name) {
@@ -341,17 +371,11 @@ function processFixture(t: TestContext) {
     }
     return value;
   };
-  const originalAsyncRead = fs.promises.readFile;
-  t.mock.method(fs.promises, 'readFile', async (path: fs.PathLike, ...args: unknown[]) => {
-    const name = beforeRead(path);
-    return transformRead(name, await Reflect.apply(originalAsyncRead, fs.promises, [path, ...args]));
+  const isRead = (operation: string) => operation === 'readFile' || operation === 'readFileSync';
+  fsInterposition(t).push({
+    before(operation, args) { if (isRead(operation)) beforeRead(args[0]); },
+    after(operation, args, value) { return isRead(operation) ? transformRead(procTarget(args[0]), value) : value; },
   });
-  const originalSyncRead = fs.readFileSync;
-  t.mock.method(fs, 'readFileSync', (path: fs.PathLike, ...args: unknown[]) => {
-    const name = beforeRead(path);
-    return transformRead(name, Reflect.apply(originalSyncRead, fs, [path, ...args]));
-  });
-  syncBuiltinESMExports();
   const execute: AdapterCommandExecutor = async command => {
     commands.push(structuredClone(command));
     allCommands.push(structuredClone(command));
@@ -369,7 +393,7 @@ function processFixture(t: TestContext) {
   const previous = (globalThis as any)[bridgeKey];
   const state = { boot: async () => boot };
   (globalThis as any)[bridgeKey] = state;
-  t.after(() => { (globalThis as any)[bridgeKey] = previous; t.mock.restoreAll(); syncBuiltinESMExports(); });
+  t.after(() => { (globalThis as any)[bridgeKey] = previous; });
   const globalScans = (rows: AdapterCommand[]) => rows.filter(command => command.args.includes('-axo') || command.args.includes('-ax') || command.args.includes('-ef')).length;
   const scanCount = () => globalScans(commands);
   const targetedCost = (pid: number) => allProcReads.filter(path => path.startsWith('/proc/' + pid + '/')).length
@@ -380,6 +404,40 @@ function processFixture(t: TestContext) {
     resetAll() { allCommands.length = 0; allProcReads.length = 0; commands.length = 0; procReads.length = 0; reads = 0; },
     mode(value: OSMode) { mode = value; reads = 0; }, reset() { commands.length = 0; procReads.length = 0; reads = 0; } };
 }
+
+test('fixture isolation: layered process and file fixtures restore real fs for the next fixture', { skip: process.platform !== 'linux' }, async t => {
+  for (const order of ['process-then-meter', 'meter-then-process'] as const) for (const mode of ['missing', 'denied', 'disappeared'] as const) {
+    let pid = 0;
+    await t.test(`${order} ${mode}`, async inner => {
+      const f = generationFixture(inner);
+      const meter = order === 'meter-then-process' ? fileMeter(inner, f.generation) : undefined;
+      const os = processFixture(inner);
+      const outer = meter ?? fileMeter(inner, f.generation);
+      os.mode(mode);
+      pid = os.identities[0].pid;
+      const reads = mode === 'disappeared' ? 2 : 1;
+      for (let i = 1; i < reads; i++) fs.readFileSync(`/proc/${pid}/stat`);
+      assert.throws(() => fs.readFileSync(`/proc/${pid}/stat`), /Controlled/);
+      os.mode(mode);
+      for (let i = 1; i < reads; i++) await fs.promises.readFile(`/proc/${pid}/stat`);
+      await assert.rejects(fs.promises.readFile(`/proc/${pid}/cmdline`), /Controlled/);
+      fs.readFileSync(join(f.generation, 'src/state-store.ts'));
+      assert.equal(outer.snapshot().content.length, 1, 'Meter still observes runtime content through the shared interposition');
+    });
+    assert.deepEqual(realFsLeaks(), [], `${order} ${mode} leaves no fs wrapper behind`);
+    assert.match(fs.readFileSync(`/proc/${pid}/stat`, 'utf8'), new RegExp('^' + pid + ' '));
+    assert.match(String(await fs.promises.readFile(`/proc/${pid}/stat`, 'utf8')), new RegExp('^' + pid + ' '));
+    await t.test(`${order} ${mode} next independent fixture`, async inner => {
+      const next = processFixture(inner);
+      const meter = fileMeter(inner, tmpdir());
+      assert.match(fs.readFileSync(`/proc/${pid}/stat`, 'utf8'), new RegExp('^' + pid + ' '));
+      assert.match(String(await fs.promises.readFile(`/proc/${pid}/cmdline`)), /\S/);
+      assert.deepEqual(next.procReads, [`/proc/${pid}/stat`, `/proc/${pid}/cmdline`], 'The next fixture sees its own alive mode, not the previous refusal');
+      assert.equal(meter.log.filter(row => row.path.startsWith('/proc/')).length, 2);
+    });
+    assert.deepEqual(realFsLeaks(), []);
+  }
+});
 
 for (const state of ['empty', 'many', 'missing', 'reuse', 'old-machine', 'old-boot', 'unknown'] as const) {
   test(`whole agent ps ${state}: inventory/store/profile/finalization and one process pass`, async t => {

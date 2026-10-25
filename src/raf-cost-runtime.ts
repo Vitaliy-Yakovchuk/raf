@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -30,8 +31,12 @@ export class RafCostRuntime {
   private storageFailure: unknown;
   private readonly pending = new Map<string, RafCostRow>();
   private readonly repository: RafCostProfileRepository;
+  private readonly intervalToken = randomUUID();
+  private readonly store: StateStore;
   constructor(store: StateStore, identity: Pick<RafCostKey, 'scope' | 'command'>, root: string, idle: string, initial = rafCostBoundary(), sqliteStartedAt?: RafCostBoundary) {
     this.idle = idle;
+    this.store = store;
+    try { store.healthCpu?.interval(this.intervalToken, initial.utc); } catch (error) { process.emitWarning(String(error)); }
     this.repository = store.costProfileRepository;
     const repository: RafCostProfileRepository = identity.scope === 'command' ? {
       update: (key, change) => {
@@ -83,7 +88,11 @@ export class RafCostRuntime {
     this.stopped = true;
     if (background === this) background = undefined;
     this.profiler.finish();
-    for (const contribution of this.pending.values()) this.repository.update(contribution, previous => mergeRafCostRows(previous, contribution));
+    for (const contribution of this.pending.values()) {
+      if (this.store.mergeCostContribution) this.store.mergeCostContribution(contribution);
+      else this.repository.update(contribution, previous => mergeRafCostRows(previous, contribution));
+    }
+    try { this.store.healthCpu?.interval(this.intervalToken, null); } catch (error) { process.emitWarning(String(error)); }
     this.pending.clear();
     if (this.storageFailure) throw this.storageFailure;
   }

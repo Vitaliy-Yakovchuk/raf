@@ -1,3 +1,4 @@
+import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { RafCostRuntime, rafCostBoundary } from './raf-cost-runtime.ts';
 import { prepareFlowBrief } from './flow-brief.ts';
 import { flowSources, flowEvidencePorts, checkFlowPlan, acceptedFlowEvidence } from './flow-runtime.ts';
@@ -1356,6 +1357,7 @@ export async function runProductionWorker(
   try {
     costProfile = new RafCostRuntime(store, { scope: 'worker', command: null }, context.orchestratorRoot, 'preparation', costStartedAt, sqliteStartedAt);
     costProfile.install();
+    await settleRuntimeHealthCpu(store, context.orchestratorRoot);
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings.timeouts, options.execute);
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
@@ -1831,5 +1833,5 @@ export async function runProductionWorker(
           connection.once('connect', () => { clearTimeout(timer); connection.destroy(); reject(new Error('Own tool tmux server is still live')); });
           connection.once('error', error => { clearTimeout(timer); connection.destroy(); if (['ENOENT', 'ECONNREFUSED'].includes((error as NodeJS.ErrnoException).code ?? '')) resolve(); else reject(error); });
         });
-      }); } finally { try { costProfile?.stage('completion'); costProfile?.finish(); } catch (error) { if (workerFailure === undefined) throw error; process.emitWarning(error instanceof Error ? error : String(error)); } finally { store.close(); await generationLease?.release(); } } } } }
+      }); } finally { try { costProfile?.stage('completion'); costProfile?.finish(); await settleRuntimeHealthCpu(store, context.orchestratorRoot); } catch (error) { if (workerFailure === undefined) throw error; process.emitWarning(error instanceof Error ? error : String(error)); } finally { store.close(); await generationLease?.release(); } } } } }
 }

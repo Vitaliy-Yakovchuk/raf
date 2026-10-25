@@ -58,6 +58,7 @@ export interface RafCostProfileState {
 export interface RafCostProfileRepository {
   update(key: RafCostKey, change: (previous: RafCostRow | undefined) => RafCostRow): void;
   readRows(): RafCostRow[];
+  recordSample?(sample: RafCostSample): void;
 }
 
 export interface RafCostProfilePorts {
@@ -117,7 +118,8 @@ export function createRafCostProfiler(identity: Pick<RafCostKey, 'scope' | 'comm
   const boundary = (stage: string): Boundary => ({ stage, at: ports.monotonicMs(), utc: ports.utcNow(), cpu: cpu() });
   const record = (sample: RafCostSample) => {
     validateSample(sample);
-    ports.repository.update({ scope: sample.scope, command: sample.command, stage: sample.stage, executor: sample.executor }, previous => aggregateRafCostSample(previous, sample));
+    if (ports.repository.recordSample) ports.repository.recordSample(sample);
+    else ports.repository.update({ scope: sample.scope, command: sample.command, stage: sample.stage, executor: sample.executor }, previous => aggregateRafCostSample(previous, sample));
   };
   const complete = (end: Boundary) => {
     const start = active!;

@@ -1,3 +1,4 @@
+import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { measureRafCost } from './raf-cost-runtime.ts';
 import { commandTimingFailure, recordCommandTiming } from './command-timing.ts';
 import { runAgentWithQueue, type AgentQueueRecord, type AgentQueueValidation, type AgentQueueRequest, type AgentRunQueuePorts } from './agent-run-queue.ts';
@@ -377,8 +378,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const state = await store();
       const budget = loaded.commandTiming.sqliteOnlyMeanBudgetMs;
       if (!Number.isFinite(budget) || budget! <= 0) throw fail('CONFIGURATION_INVALID', 'configuration', 'Invalid commandTiming.sqliteOnlyMeanBudgetMs');
+      const cpu = await settleRuntimeHealthCpu(state, context.orchestratorRoot);
+      let healthSince: string | null = null;
+      try { healthSince = state.healthCpu?.domain().since ?? null; } catch {}
       const forcedClose = state.readForcedCloseMetrics(new Date().toISOString());
-      return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile(), health: { readAt: forcedClose.readAt, since: forcedClose.since, forcedClose } };
+      return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile(), health: { readAt: forcedClose.readAt, since: healthSince, cpu, forcedClose } };
     },
   };
   if (dependencies.commandState) for (const name of reminderCommands) builtins[name] = async params => createReminderHandlers(await statePorts())[name](params);

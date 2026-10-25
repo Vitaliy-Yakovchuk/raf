@@ -1,3 +1,4 @@
+import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
 import { commandTimingFailure, recordCommandTiming } from './command-timing.ts';
 import { storedLaunchQueueIdentity, validateStoredQueueId } from './stored-launch-queue-events.ts';
@@ -213,6 +214,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
           let finalizationError: unknown;
           try { profile?.stage('finalization'); profile?.finish(); }
           catch (error) { if (original === undefined) finalizationError = error; else process.emitWarning(error instanceof Error ? error : String(error)); }
+          if (profileStore) await settleRuntimeHealthCpu(profileStore, options.orchestratorRoot);
           try {
             if (profileStore && loaded) recordCommandTiming(profileStore, command, startedAtMs, now, loaded.commandTiming.emaAlpha);
           } catch (error) { finalizationError = commandTimingFailure(error, original ?? finalizationError); }

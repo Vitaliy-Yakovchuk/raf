@@ -1,4 +1,6 @@
-import { aggregateRafCostSample, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
+import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, healthCpuKey } from './health-cpu-storage.ts';
+import type { RafHealthCpuProfileReading, RafHealthCpuTransaction } from './health-cpu.ts';
+import { aggregateRafCostSample, mergeRafCostRows, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
 import { initializeForcedCloseMetricsInTransaction, recordForcedCloseFinalizationInTransaction, recordForcedCloseRefusalInTransaction, readForcedCloseMetrics, type ForcedCloseMetricsSnapshot } from './forced-close-metrics.ts';
 import { readRafCostPolicy } from './raf-cost-runtime.ts';
 import { initializeResourceUsage } from './resource-usage.ts';
@@ -94,7 +96,15 @@ export interface StateStore {
   getCommandTiming(command: string): CommandTiming | undefined;
   costProfileRepository: RafCostProfileRepository;
   recordCostSample(sample: RafCostSample): void;
+  mergeCostContribution(row: RafCostRow): void;
   readCostProfile(): RafCostProfileSnapshot;
+  healthCpu: {
+    domain(): { rafInstanceId: string; since: string };
+    readProfile(): RafHealthCpuProfileReading;
+    transaction<T>(action: (tx: RafHealthCpuTransaction) => T): T;
+    interval(token: string, startedAt: string | null): void;
+    coverage(startedAt: string | null): void;
+  };
   readForcedCloseMetrics(readAt?: string): ForcedCloseMetricsSnapshot;
   recordForcedCloseRefusal(code: string, observedAt: string): void;
 }
@@ -458,6 +468,9 @@ export function openStateStore(path: string, options?: import('./state-migration
           }
         });
       }
+      if (version() >= 18) {
+        try { transaction(() => initializeHealthCpu(db)); } catch (error) { process.emitWarning(String(error)); }
+      }
       for (let attempt = 0; ; attempt++) {
         try {
           const journal = db.prepare("PRAGMA journal_mode").get();
@@ -479,13 +492,28 @@ export function openStateStore(path: string, options?: import('./state-migration
 
   let costPolicy: ReturnType<typeof readRafCostPolicy> | undefined;
   const profilePolicy = () => costPolicy ??= readRafCostPolicy(options?.context?.orchestratorRoot);
+  function updateCostRow(key: RafCostSample | RafCostRow | import('./raf-cost-profile.ts').RafCostKey, change: (previous: RafCostRow | undefined) => RafCostRow): RafCostRow {
+    const previous = db.prepare('SELECT payload FROM raf_cost_profile WHERE scope=? AND command=? AND stage=? AND executor=?').get(key.scope, key.command ?? '', key.stage, key.executor);
+    const next = change(previous ? JSON.parse(String(previous.payload)) : undefined);
+    db.prepare(`INSERT INTO raf_cost_profile(scope, command, stage, executor, payload) VALUES(?, ?, ?, ?, ?)
+      ON CONFLICT(scope, command, stage, executor) DO UPDATE SET payload=excluded.payload`).run(key.scope, key.command ?? '', key.stage, key.executor, JSON.stringify(next));
+    return next;
+  }
+  const recordCoverage = (startedAt: string | null, row?: RafCostRow, samples = 0) => {
+    if (Number(db.prepare('PRAGMA user_version').get()?.user_version) < 18) return;
+    try { transaction(() => recordHealthCpuCoverage(db, startedAt, row, samples)); } catch (error) { process.emitWarning(String(error)); }
+  };
   const costProfileRepository: RafCostProfileRepository = {
+    recordSample(sample) {
+      operation('costProfile.sample', () => transaction(() => {
+        const next = updateCostRow(sample, previous => aggregateRafCostSample(previous, sample));
+        recordCoverage(sample.startedAt, next, 1);
+      }));
+    },
     update(key, change) {
       operation('costProfile.update', () => transaction(() => {
-        const previous = db.prepare('SELECT payload FROM raf_cost_profile WHERE scope = ? AND command = ? AND stage = ? AND executor = ?').get(key.scope, key.command ?? '', key.stage, key.executor);
-        const next = change(previous ? JSON.parse(String(previous.payload)) : undefined);
-        db.prepare(`INSERT INTO raf_cost_profile (scope, command, stage, executor, payload) VALUES (?, ?, ?, ?, ?)
-          ON CONFLICT(scope, command, stage, executor) DO UPDATE SET payload = excluded.payload`).run(key.scope, key.command ?? '', key.stage, key.executor, JSON.stringify(next));
+        updateCostRow(key, change);
+        recordCoverage(null);
       }));
     },
     readRows() {
@@ -972,11 +1000,44 @@ export function openStateStore(path: string, options?: import('./state-migration
         };
       });
     },
+    healthCpu: {
+      domain: () => operation('healthCpu.domain', () => { const state = readHealthCpu(db); return { rafInstanceId: state.rafInstanceId, since: state.since }; }),
+      interval: (token, startedAt) => operation('healthCpu.interval', () => transaction(() => {
+        const state = readHealthCpu(db);
+        if (startedAt === null) delete state.open[token]; else state.open[token] = startedAt;
+        saveHealthCpu(db, state);
+      })),
+      coverage: startedAt => operation('healthCpu.coverage', () => transaction(() => recordHealthCpuCoverage(db, startedAt))),
+      readProfile: () => operation('healthCpu.read', () => transaction(() => {
+        const profile = { schemaVersion: profilePolicy().schemaVersion, readAt: new Date().toISOString(), rows: costProfileRepository.readRows() };
+        return healthCpuReading(readHealthCpu(db), profile, Number(process.hrtime.bigint()) / 1e6);
+      }, false)),
+      transaction: action => operation('healthCpu.transaction', () => transaction(() => {
+        const state = readHealthCpu(db);
+        const previous = state.cpu.baseline;
+        const result = action({ state: state.cpu, recordEvent: event => eventRepository.transaction(tx => tx.savePending({
+          key: JSON.stringify([event.type, event.rafInstanceId, event.startedAt, event.completedAt]),
+          event: { kind: event.type, id: event.rafInstanceId }, data: event,
+        })) });
+        if (state.cpu.baseline !== previous) {
+          state.outside = 0; state.attributionComplete = true;
+          state.samples = Object.fromEntries(state.cpu.baseline!.profile.rows.map(row => [healthCpuKey(row), row.samples]));
+        }
+        saveHealthCpu(db, state);
+        return result;
+      })),
+    },
     costProfileRepository,
+    mergeCostContribution(row) {
+      operation('costProfile.merge', () => transaction(() => {
+        const next = updateCostRow(row, previous => mergeRafCostRows(previous, row));
+        recordCoverage(row.firstSampleStartedAt, next, row.samples);
+      }));
+    },
     recordCostSample(sample) {
       const policy = profilePolicy();
       if (!policy.stages.includes(sample.stage) || (sample.scope === 'command' && !policy.commands.includes(sample.command ?? ''))) throw new Error('Unknown cost profile key');
-      costProfileRepository.update(sample, previous => aggregateRafCostSample(previous, sample));
+      costProfileRepository.recordSample!(sample);
     },
     readCostProfile() {
       return { schemaVersion: profilePolicy().schemaVersion, readAt: new Date().toISOString(), rows: costProfileRepository.readRows() };

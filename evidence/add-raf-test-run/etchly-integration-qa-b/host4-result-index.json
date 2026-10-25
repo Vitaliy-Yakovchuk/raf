@@ -1,0 +1,324 @@
+[
+  {
+    "runId": "efae84a6-dcd7-4250-aa9a-bf8e4467d900",
+    "selection": {
+      "files": [
+        "worker/src/raf-etchly-lifecycle-qa.test.ts"
+      ],
+      "testIds": []
+    },
+    "testKind": "integration",
+    "callerPhase": "qa",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 60000
+    },
+    "outcome": "assertions-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+        "name": "real fork, workerd and D1"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "incomplete",
+    "timeoutCount": 0,
+    "nextAction": "complete-integration",
+    "mode": "d08",
+    "label": "assertions",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "rafSha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
+    "etchlySha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host4/d08/results/assertions.input.json"
+      ],
+      "cwd": "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop"
+    },
+    "cliCode": 1,
+    "childExitCode": 1,
+    "resultPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/assertions.result.json",
+    "stderrPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/assertions.stderr",
+    "resultSha256": "9e956a1a2a2b05cbf94470bafd312b097860d1a882d0d1ec7f2b909da6c78689"
+  },
+  {
+    "runId": "3d7d5339-7d0a-4bc2-b325-963089468acf",
+    "selection": {
+      "files": [
+        "worker/src/raf-etchly-lifecycle-qa.test.ts"
+      ],
+      "testIds": []
+    },
+    "testKind": "integration",
+    "callerPhase": "qa",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 60000
+    },
+    "outcome": "passed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "mode": "d08",
+    "label": "green",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "rafSha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
+    "etchlySha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host4/d08/results/green.input.json"
+      ],
+      "cwd": "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop"
+    },
+    "cliCode": 0,
+    "childExitCode": 0,
+    "resultPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/green.result.json",
+    "stderrPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/green.stderr",
+    "resultSha256": "56f5950a02d5ee85455c063b7f4681831083e428f769b35647b6a48f5a3b7a76"
+  },
+  {
+    "runId": "3c29cc8f-e279-4367-814f-1815e13774e9",
+    "selection": {
+      "files": [
+        "worker/src/raf-etchly-lifecycle-qa.test.ts"
+      ],
+      "testIds": []
+    },
+    "testKind": "integration",
+    "callerPhase": "qa",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 60000
+    },
+    "outcome": "timed-out",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": true,
+    "knownRed": [
+      {
+        "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+        "name": "real fork, workerd and D1"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+        "name": "real fork, workerd and D1"
+      }
+    ],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "incomplete",
+    "timeoutCount": 1,
+    "nextAction": "complete-integration",
+    "mode": "d08",
+    "label": "hang",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "rafSha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
+    "etchlySha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host4/d08/results/hang.input.json"
+      ],
+      "cwd": "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop"
+    },
+    "cliCode": 1,
+    "childExitCode": null,
+    "resultPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/hang.result.json",
+    "stderrPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/hang.stderr",
+    "resultSha256": "8bafebb66e0e3eac3687f398e409fffc27a529c3ad97a48838f1fc4c8480771f"
+  },
+  {
+    "runId": "656dc443-f8c6-4a4b-ad53-edff365f8457",
+    "selection": {
+      "files": [
+        "worker/src/raf-etchly-lifecycle-qa.test.ts"
+      ],
+      "testIds": []
+    },
+    "testKind": "integration",
+    "callerPhase": "qa",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 60000
+    },
+    "outcome": "timed-out",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": true,
+    "knownRed": [
+      {
+        "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+        "name": "real fork, workerd and D1"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+        "name": "real fork, workerd and D1"
+      }
+    ],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "incomplete",
+    "timeoutCount": 2,
+    "nextAction": "complete-integration",
+    "mode": "d08",
+    "label": "interrupt",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "rafSha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
+    "etchlySha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host4/d08/results/interrupt.input.json"
+      ],
+      "cwd": "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop"
+    },
+    "cliCode": 1,
+    "childExitCode": null,
+    "resultPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/interrupt.result.json",
+    "stderrPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/interrupt.stderr",
+    "resultSha256": "d2461551449b0bc76cfcfcc14c16c0bfe8e4328f22dc04dcb452dc5d9a6f0ecf"
+  },
+  {
+    "runId": "1d00026d-8033-4fc3-8ef0-42f8b3489988",
+    "selection": {
+      "files": [
+        "worker/src/raf-etchly-lifecycle-qa.test.ts"
+      ],
+      "testIds": []
+    },
+    "testKind": "integration",
+    "callerPhase": "qa",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 60000
+    },
+    "outcome": "setup-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+        "name": "real fork, workerd and D1"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "incomplete",
+    "timeoutCount": 0,
+    "nextAction": "complete-integration",
+    "mode": "d08",
+    "label": "setup",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "rafSha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
+    "etchlySha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host4/d08/results/setup.input.json"
+      ],
+      "cwd": "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop"
+    },
+    "cliCode": 1,
+    "childExitCode": 1,
+    "resultPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/setup.result.json",
+    "stderrPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/setup.stderr",
+    "resultSha256": "88513fb21b2ed3587ce8abefccf7d66fe5af7ee92e6dbf7ea68da1e934452257"
+  },
+  {
+    "runId": "f6a88e10-bead-4362-bc27-01b0219b11d3",
+    "selection": {
+      "files": [
+        "worker/src/raf-etchly-lifecycle-qa.test.ts"
+      ],
+      "testIds": []
+    },
+    "testKind": "integration",
+    "callerPhase": "qa",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/integrationTests/timeoutMs",
+      "timeoutMs": 60000
+    },
+    "outcome": "setup-failed",
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [
+      {
+        "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+        "name": "real fork, workerd and D1"
+      }
+    ],
+    "unexecuted": [
+      {
+        "file": "worker/src/raf-etchly-lifecycle-qa.test.ts",
+        "name": "real fork, workerd and D1"
+      }
+    ],
+    "unknown": [],
+    "groupSnapshot": "loaded",
+    "groupState": "incomplete",
+    "timeoutCount": 0,
+    "nextAction": "complete-integration",
+    "mode": "d08",
+    "label": "skip",
+    "sourceItem": "add-raf-test-run:6.2.6.3",
+    "rafSha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
+    "etchlySha": "b8a769ccca3cd281ab80278cedc173d6df9a3dc9",
+    "command": {
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "/srv/dev/raf-etchly-6263b-host4/d08/raf-develop/scripts/qa-etchly-integration-host.mjs",
+        "--worker",
+        "/srv/dev/raf-etchly-6263b-host4/d08/results/skip.input.json"
+      ],
+      "cwd": "/srv/dev/raf-etchly-6263b-host4/d08/etchly-develop"
+    },
+    "cliCode": 1,
+    "childExitCode": 0,
+    "resultPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/skip.result.json",
+    "stderrPath": "evidence/add-raf-test-run/etchly-integration-qa-b/host4/d08/results/skip.stderr",
+    "resultSha256": "6ba3a90e5d15de6345dc52fd06c0ea0882e30fc43b6e26e50b8360f4cef73aeb"
+  }
+]

@@ -101,14 +101,18 @@ if (mode === 'setup') throw new Error('Controlled import failure');
 
 async function host(root, output, mode, budget, watchdogMs) {
   const marker = assertStand(root);
-  assert(['smoke', 'd08'].includes(mode));
+  assert(['smoke', 'd08', 'd08-remainder'].includes(mode));
   assert(Number.isSafeInteger(budget) && budget > 0, 'Explicit stand integration budget is required');
   assert(Number.isSafeInteger(watchdogMs) && watchdogMs > budget, 'Explicit outer host watchdog must exceed one integration budget');
   assert(!inside(output, path.join(root, 'etchly-develop')));
   fs.mkdirSync(output, { mode: 0o700 });
   const workspace = path.join(root, 'etchly-develop');
   const home = path.join(root, 'qa-home');
-  fs.mkdirSync(home, { mode: 0o700 });
+  if (mode === 'd08-remainder') {
+    assert.equal(fs.realpathSync(home), home);
+    assert.equal(fs.statSync(home).uid, process.getuid());
+    assert.equal(fs.statSync(home).mode & 0o077, 0);
+  } else fs.mkdirSync(home, { mode: 0o700 });
   const configPath = path.join(root, 'conf/test-runs.json'), flowPath = path.join(root, 'conf/flow.json');
   const savedConfig = fs.readFileSync(configPath), savedFlow = fs.readFileSync(flowPath);
   const conf = JSON.parse(savedConfig), flow = JSON.parse(savedFlow);
@@ -189,9 +193,9 @@ async function host(root, output, mode, budget, watchdogMs) {
     while (!interrupted) {
       const flight = keyGroup()?.inFlight;
       const temp = flight?.temporary?.temporary?.path;
-      if (temp && fs.existsSync(path.join(temp, 'tmp', 'qa-d1-ready.json'))) {
+      if (temp && fs.existsSync(path.join(temp, 'qa-d1-ready.json'))) {
         track();
-        const proof = json(path.join(temp, 'tmp', 'qa-d1-ready.json'));
+        const proof = json(path.join(temp, 'qa-d1-ready.json'));
         assert.equal(proof.proof, 1);
         assert([...owned.values()].some(row => row.argv.some(value => /(?:^|\/)workerd$/.test(value))), 'A real workerd identity must be observed');
         write(path.join(output, 'ready-' + flight.runId + '.json'), { flight, proof, processes: [...owned.values()] });
@@ -206,7 +210,7 @@ async function host(root, output, mode, budget, watchdogMs) {
   try {
     flow.integrationTests.timeoutMs = budget;
     write(flowPath, flow);
-    if (mode === 'd08') {
+    if (mode !== 'smoke') {
       assert(!fs.existsSync(path.join(workspace, fixtureFile)) && !fs.existsSync(path.join(workspace, modeFile)));
       fs.writeFileSync(path.join(workspace, fixtureFile), fixture);
       fixtureCreated = true;
@@ -214,14 +218,25 @@ async function host(root, output, mode, budget, watchdogMs) {
       conf.projects.etchly.groups[group] = { profileId: 'vitest-worker-d1-integration', files: [fixtureFile] };
       write(configPath, conf);
       const setMode = value => { write(path.join(workspace, modeFile), { mode: value }); modeCreated = true; };
-      for (const [value, expected] of [['green', 'passed'], ['assertions', 'assertions-failed'], ['setup', 'setup-failed'], ['skip', 'setup-failed'], ['hang', 'timed-out']]) {
+      const originalGroup = keyGroup();
+      if (mode === 'd08-remainder') {
+        assert(originalGroup && !originalGroup.inFlight && !originalGroup.delivery?.pending, 'Continue only a settled own group');
+        assert.equal(originalGroup.lastResult?.cleanup?.complete, true);
+      } else assert.equal(originalGroup, undefined);
+      const baseline = originalGroup?.timeoutCount ?? 0;
+      summary.initialGroup = originalGroup ?? null;
+      summary.initialTimeoutCount = baseline;
+      const prefix = mode === 'd08-remainder' ? [['hang', 'timed-out']] : [['green', 'passed'], ['assertions', 'assertions-failed'], ['setup', 'setup-failed'], ['skip', 'setup-failed'], ['hang', 'timed-out']];
+      for (const [value, expected] of prefix) {
         setMode(value);
-        const row = await launch(value).done; expect(row, expected);
-        if (value === 'hang') assert.equal(row.result.timeoutCount, 1);
+        const run = launch(value);
+        if (value === 'hang') await ready(run);
+        const row = await run.done; expect(row, expected);
+        if (value === 'hang') assert.equal(row.result.timeoutCount, baseline + 1);
       }
       setMode('hang');
       const interrupt = launch('interrupt'); await ready(interrupt); interrupt.child.kill('SIGINT');
-      const interruptedRow = await interrupt.done; expect(interruptedRow, 'interrupted'); assert.equal(interruptedRow.result.timeoutCount, 1);
+      const interruptedRow = await interrupt.done; expect(interruptedRow, 'interrupted'); assert.equal(interruptedRow.result.timeoutCount, baseline + 1);
       const concurrent = launch('concurrent-owner'); await ready(concurrent);
       const refused = await launch('concurrent-refused').done;
       assert.equal(refused.cliCode, 1); assert.equal(refused.result?.errorCode, 'GROUP_IN_FLIGHT');
@@ -232,12 +247,12 @@ async function host(root, output, mode, budget, watchdogMs) {
       while (Date.now() <= original.deadlineMs && !interrupted) await delay(Math.min(100, original.deadlineMs - Date.now() + 1));
       const recovered = await launch('recovery').done;
       assert.equal(recovered.cliCode, 1); assert.equal(recovered.result?.errorCode, 'GROUP_IN_FLIGHT');
-      assert.equal(keyGroup().inFlight, null); assert.equal(keyGroup().timeoutCount, 2);
+      assert.equal(keyGroup().inFlight, null); assert.equal(keyGroup().timeoutCount, baseline + 2);
       const delivery = await launch('recovery-delivery').done; expect(delivery, 'timed-out');
       assert.equal(delivery.result.runId, original.runId);
       assert(!fs.existsSync(path.join(output, 'recovery-delivery.spawn.json')));
       setMode('green'); const green = await launch('after-recovery').done; expect(green, 'passed');
-      assert.equal(green.result.timeoutCount, 2, 'Recovery must not count the same timeout twice');
+      assert.equal(green.result.timeoutCount, baseline + 2, 'Recovery must not count the same timeout twice');
     } else {
       const files = conf.projects.etchly.groups[group].files;
       assert.equal(files.length, 3); assert.equal(new Set(files).size, 3);
@@ -292,6 +307,6 @@ async function host(root, output, mode, budget, watchdogMs) {
 if (process.argv[2] === '--worker') await worker(process.argv[3]);
 else {
   const [root, output, mode, budget, watchdog] = process.argv.slice(2);
-  assert(root && output && mode && budget && watchdog, 'Usage: node scripts/qa-etchly-integration-host.mjs STAND_ROOT NEW_OUTPUT smoke|d08 STAND_INTEGRATION_BUDGET_MS HOST_WATCHDOG_MS');
+  assert(root && output && mode && budget && watchdog, 'Usage: node scripts/qa-etchly-integration-host.mjs STAND_ROOT NEW_OUTPUT smoke|d08|d08-remainder STAND_INTEGRATION_BUDGET_MS HOST_WATCHDOG_MS');
   await host(path.resolve(root), path.resolve(output), mode, Number(budget), Number(watchdog));
 }

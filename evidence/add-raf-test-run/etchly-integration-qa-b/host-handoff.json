@@ -73,5 +73,37 @@
     "expected": "prepare/driver/suite rc0; smoke 11 and D08 12 captures; complete cleanup; D09 not proved",
     "evidence": "host3/manifest.json"
   },
-  "d08Fix": "Use installed Miniflare5 convertV4MiniflareOptions with workers array. Next host continuation restricted to d08; live green pending."
+  "d08Fix": "Use installed Miniflare5 convertV4MiniflareOptions with workers array. Next host continuation restricted to d08; live green pending.",
+  "d08Continuation": {
+    "sha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
+    "root": "/srv/dev/raf-etchly-6263b-host4",
+    "mode": "d08",
+    "status": "Queued by main; results pending",
+    "deliveryReceipt": "43bdaade-b3b6-4256-8924-d443f41a50a2"
+  },
+  "d09RequestReceipt": "03b459db-bcc8-41d3-899c-e057c022e6d7",
+  "host4": {
+    "root": "/srv/dev/raf-etchly-6263b-host4/d08",
+    "rafSha": "744c65299e1ee109ea53f4c4eaac69b1b63150c4",
+    "status": "failed",
+    "prepareCliCode": 0,
+    "driverCliCode": 1,
+    "captures": 6,
+    "passedPrefix": [
+      "green",
+      "assertions",
+      "setup",
+      "skip"
+    ],
+    "observerDefect": "extra tmp path prevented D1-ready detection; no SIGINT sent, hang and interrupt both reached deadline",
+    "timeoutCount": 2,
+    "readyProofs": 0,
+    "cleanup": {
+      "configuration": true,
+      "flow": true,
+      "etchlyDirty": ""
+    },
+    "liveOwnedAfterEmergencyCleanup": [],
+    "continuation": "same HOME/group, corrected ready path; d08-remainder skips passed prefix, baseline timeout2 → expected4; new results-continuation"
+  }
 }

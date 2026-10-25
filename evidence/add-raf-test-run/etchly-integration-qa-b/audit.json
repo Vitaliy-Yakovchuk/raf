@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-25T22:33:17.828354+00:00",
+  "sourceItem": "add-raf-test-run:6.2.6.3",
+  "sourceTask": "/srv/dev/work/orchestrator/openspec/changes/add-raf-test-run/tasks.md:180",
+  "sourceTaskText": "- [ ] 6.2.6.3 [qa] Не автор scaffold і не implement: перевірити D01–D09, unit-групу add-raf-test-run/etchly-integration з --phase qa й узгоджені unit-регресії. Після сумісного rollout і готових локальних dependencies/app build одержати належне project=etchly доручення власної active change=add-raf-test-run та самому через довірений канал виконати `raf test run --project etchly --phase integration --group add-raf-test-run/etchly-worker-d1-smoke` (рівно три файли контракту); окремо preset і його exact --files та негативні відбори/передумови. У керованому власному integration-стенді перевірити D08 deadline/interruption/concurrent/crash/recovery з реальними forks/workerd і cleanup, без читання робочого стану raf. Зберегти source item, etchly/raf SHA й dirty context, generation/conf hashes, фактичні bridge/внутрішні executable/argv/cwd, callerPhase/testKind/timeoutPolicy, повні JSON/stderr/CLI code, підтверджений D1 setup і відсутність власних залишених процесів/артефактів. Повний green/cleanup — CLI 0; timeout/setup/skip/частковий результат не закриває integration, unit-моки й прогін main не замінюють живий канал виконавця. Чужі задачі bound-generation-retries-and-spend не закривати, grants не розширювати; недоступні сценарії лишаються відкритими.",
+  "taskFileSha256": "b677d57b626f32606cd48784f5544fef41d8210382b0dfc44a4abdcfcd52f02b",
+  "auditRequirement": "openspec/specs/projects/orchestrator/autonomous-development/spec.md:153",
+  "result": "Assigned item remains active and consistent. Environment setup failures and own fixture errors do not make it obsolete; no scope expansion, criterion relaxation or owner-waiver.",
+  "newCircumstances": [
+    "Host quota remediation and one authorized separate retry",
+    "Missing concept-base snapshot fixed in own prepare",
+    "Installed Miniflare5 fixture options fixed using etchly adapter",
+    "Etchly retry assertion remains open; no authority to write etchly source",
+    "Main schedules proper project=etchly launch of same item only after this report and working raf rollout"
+  ],
+  "writeScope": "Own raf scripts and evidence only; tasks.md untouched by explicit main instruction; no bound-generation tasks modified.",
+  "remainingPrerequisites": [
+    "D08 host4 result for own fixture fix",
+    "Working raf switch to release unit hold",
+    "Proper immutable project=etchly assignment with active change add-raf-test-run for own trusted integration channel"
+  ]
+}

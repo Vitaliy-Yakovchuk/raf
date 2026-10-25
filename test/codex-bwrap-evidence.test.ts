@@ -7,6 +7,19 @@ import { configureLiveCodexTrust } from './helpers/z4044-live-trust.mjs';
 const helper = '/tmp/own/bwrap';
 const filter = '/tmp/own/network.bpf';
 
+test('[Z.404 E08] live trust survives Codex dotted-key splitting for mktemp paths and pins the quota cwd', () => {
+  const root = '/tmp/z4044c-live2.fJPF5N/"owned"/root';
+  const configuration = { runnerProtocols: [{ runner: 'codex', baseArgs: [], quota: { args: ['--sandbox', 'read-only'] } }] };
+  const trust = configureLiveCodexTrust(configuration, root);
+  assert.equal(trust.overrides.length, 1, 'one top-level TOML projects table; quoted paths cannot be CLI dotted keys');
+  const separator = trust.overrides[0].indexOf('=');
+  assert.deepEqual(trust.overrides[0].slice(0, separator).split('.'), ['projects'], 'Codex splits the override key literally at every dot');
+  const value = trust.overrides[0].slice(separator + 1);
+  assert.equal(value, '{' + trust.gitRoots.map(directory => `${JSON.stringify(directory)}={trust_level="trusted"}`).join(',') + '}');
+  assert.equal(trust.quotaCwd, root + '/raf-main');
+  assert.deepEqual(configuration.runnerProtocols[0].quota.args.slice(-2), ['-C', trust.quotaCwd], 'effective quota cwd is an exact registered Git root, independent of tmux respawn cwd');
+});
+
 test('[Z.404 E07] live fixture supplies scoped trust to both real quota probe and workers without changing their policies', () => {
   const root = '/tmp/own isolated/"stand"/root';
   const configuration = { runnerProtocols: [
@@ -15,12 +28,13 @@ test('[Z.404 E07] live fixture supplies scoped trust to both real quota probe an
   ] };
   const before = structuredClone(configuration);
   const gitRoots = [root, ...['raf-main', 'raf-develop', 'raf-hotfix'].map(name => root + '/' + name)];
-  const overrides = gitRoots.map(directory => `projects.${JSON.stringify(directory)}.trust_level="trusted"`);
+  const overrides = ['projects={' + gitRoots.map(directory => `${JSON.stringify(directory)}={trust_level="trusted"}`).join(',') + '}'];
+  const quotaCwd = root + '/raf-main';
   const args = overrides.flatMap(value => ['-c', value]);
   const trust = configureLiveCodexTrust(configuration, root);
-  assert.deepEqual(configuration.runnerProtocols[0].quota.args, [...before.runnerProtocols[0].quota.args, ...args], 'quota must not depend on persisting trust to the shared CODEX_HOME');
+  assert.deepEqual(configuration.runnerProtocols[0].quota.args, [...before.runnerProtocols[0].quota.args, ...args, '-C', quotaCwd], 'quota must not depend on persisting trust to the shared CODEX_HOME');
   assert.deepEqual(configuration.runnerProtocols[0].baseArgs, [...before.runnerProtocols[0].baseArgs, ...args], 'workers use the same owned Git roots');
-  assert.deepEqual(trust, { gitRoots, overrides });
+  assert.deepEqual(trust, { gitRoots, overrides, quotaCwd });
   const restored = structuredClone(configuration);
   restored.runnerProtocols[0].baseArgs = before.runnerProtocols[0].baseArgs;
   restored.runnerProtocols[0].quota.args = before.runnerProtocols[0].quota.args;

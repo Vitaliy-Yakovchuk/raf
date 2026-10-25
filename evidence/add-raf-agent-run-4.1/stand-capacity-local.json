@@ -1,0 +1,31 @@
+{
+  "note": "Read-only local observation of proposed stand parent; this does not launch or validate the host stand.",
+  "measurements": [
+    {
+      "directory": "/srv/dev",
+      "dev": 64513,
+      "totalBytes": 190143823872,
+      "availableBytes": 163263725568
+    },
+    {
+      "directory": "/tmp",
+      "dev": 36,
+      "totalBytes": 25769803776,
+      "availableBytes": 14679109632
+    }
+  ],
+  "estimate": {
+    "status": "KNOWN",
+    "reservation": {
+      "ramBytes": 2147483648,
+      "diskBytes": {
+        "stand-volume": 10737418240
+      }
+    },
+    "sources": [
+      "conf/flow.json#/resourceEstimates/agentTypes/implement"
+    ],
+    "reason": null,
+    "confPointer": null
+  }
+}

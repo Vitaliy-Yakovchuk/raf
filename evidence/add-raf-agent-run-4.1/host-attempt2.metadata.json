@@ -1,0 +1,180 @@
+{
+  "reviewedSha": "8c769876b74a0df681ca6f0144012bc68b76bc99",
+  "status": "failed",
+  "cliExitCode": 1,
+  "checks": [],
+  "unexecuted": [
+    "detached-native-types-and-narrow-context",
+    "unregistered-and-env-forged-sender",
+    "main-close-interrupt-protection",
+    "attached-non-agent-no-input-or-enter",
+    "native-receipts-literal-signatures-and-concurrency",
+    "immutable-context-after-messages",
+    "real-native-system-to-main"
+  ],
+  "cleanup": {
+    "complete": true,
+    "errors": [],
+    "services": {
+      "complete": true,
+      "processes": [],
+      "remaining": []
+    }
+  },
+  "queueWaitingEvents": 59,
+  "firstWaiting": {
+    "kind": "launch-queue.waiting",
+    "queueId": "23c1dfc9-c2a0-4680-a8b7-bfda508aafa4",
+    "requestId": "c9c7d1dd-d260-4357-82ab-83fc0378533a",
+    "agentId": "ar41-a",
+    "admission": {
+      "level": "NO_RESOURCES",
+      "requestedTier": "normal",
+      "allowed": false,
+      "reasons": [
+        "normal: insufficient disk on tmpfs after reservations: 2234212352 bytes available, threshold 10737418240 bytes",
+        "hotfix: insufficient disk on tmpfs after reservations: 2234212352 bytes available, threshold 5368709120 bytes"
+      ],
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 6.01,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 17558142976,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "tmpfs",
+            "totalBytes": 25769803776,
+            "availableBytes": 12971630592
+          }
+        ]
+      },
+      "thresholds": {
+        "normal": {
+          "maxNormalizedLoad": 1.2,
+          "minRamFraction": 0.2,
+          "minRamBytes": 2147483648,
+          "minDiskFraction": 0.1,
+          "minDiskBytes": 10737418240
+        },
+        "hotfix": {
+          "maxNormalizedLoad": 1.5,
+          "minRamFraction": 0.1,
+          "minRamBytes": 1073741824,
+          "minDiskFraction": 0.05,
+          "minDiskBytes": 5368709120
+        },
+        "home": {
+          "minDiskBytes": 524288000
+        }
+      },
+      "reservation": {
+        "requested": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "tmpfs": 10737418240
+          }
+        },
+        "unused": {
+          "ramBytes": 0,
+          "diskBytes": {}
+        }
+      },
+      "remaining": {
+        "ramBytes": 15410659328,
+        "diskBytes": {
+          "tmpfs": 2234212352
+        },
+        "normalizedLoad": 0.75125
+      },
+      "estimate": {
+        "status": "KNOWN",
+        "sources": [
+          "conf/flow.json#/resourceEstimates/agentTypes/implement"
+        ],
+        "reason": null
+      },
+      "queueId": "23c1dfc9-c2a0-4680-a8b7-bfda508aafa4"
+    }
+  },
+  "lastWaiting": {
+    "kind": "launch-queue.waiting",
+    "queueId": "23c1dfc9-c2a0-4680-a8b7-bfda508aafa4",
+    "requestId": "c9c7d1dd-d260-4357-82ab-83fc0378533a",
+    "agentId": "ar41-a",
+    "admission": {
+      "level": "NO_RESOURCES",
+      "requestedTier": "normal",
+      "allowed": false,
+      "reasons": [
+        "normal: insufficient disk on tmpfs after reservations: 2221895680 bytes available, threshold 10737418240 bytes",
+        "hotfix: insufficient disk on tmpfs after reservations: 2221895680 bytes available, threshold 5368709120 bytes"
+      ],
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 6.32,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 17784733696,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "tmpfs",
+            "totalBytes": 25769803776,
+            "availableBytes": 12959313920
+          }
+        ]
+      },
+      "thresholds": {
+        "normal": {
+          "maxNormalizedLoad": 1.2,
+          "minRamFraction": 0.2,
+          "minRamBytes": 2147483648,
+          "minDiskFraction": 0.1,
+          "minDiskBytes": 10737418240
+        },
+        "hotfix": {
+          "maxNormalizedLoad": 1.5,
+          "minRamFraction": 0.1,
+          "minRamBytes": 1073741824,
+          "minDiskFraction": 0.05,
+          "minDiskBytes": 5368709120
+        },
+        "home": {
+          "minDiskBytes": 524288000
+        }
+      },
+      "reservation": {
+        "requested": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "tmpfs": 10737418240
+          }
+        },
+        "unused": {
+          "ramBytes": 0,
+          "diskBytes": {}
+        }
+      },
+      "remaining": {
+        "ramBytes": 15637250048,
+        "diskBytes": {
+          "tmpfs": 2221895680
+        },
+        "normalizedLoad": 0.79
+      },
+      "estimate": {
+        "status": "KNOWN",
+        "sources": [
+          "conf/flow.json#/resourceEstimates/agentTypes/implement"
+        ],
+        "reason": null
+      },
+      "queueId": "23c1dfc9-c2a0-4680-a8b7-bfda508aafa4"
+    }
+  },
+  "sourceArtifacts": "/srv/dev/ara41q2/{stdout,stderr,exit,ev-clean}",
+  "privacy": "Only main-sanitized evidence copied; main reports secscan 0, identity-* and raw native files excluded.",
+  "classification": "Correct NO_RESOURCES on development filesystem; stand capacity defect, not admission arithmetic defect."
+}

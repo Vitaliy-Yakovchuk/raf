@@ -6,7 +6,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 const [operation, report, value] = process.argv.slice(2);
 assert.ok(path.isAbsolute(report));
 const own = path.dirname(report);
-assert.match(own, /^\/tmp\/ar41-[^/]+\/\.raf\/tmp\/[a-f0-9-]+$/);
+assert.match(own, /^\/srv\/dev\/ar41-[^/]+\/\.raf\/tmp\/[a-f0-9-]+$/);
 const write = (name, data) => {
   const file = path.join(own, 'ar41-' + name + '.json');
   fs.writeFileSync(file + '.part', JSON.stringify(data) + '\n');

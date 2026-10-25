@@ -13,7 +13,7 @@ export function instrumentAgentRunCli(code) {
 export async function begin() {
   const directory = process.env.AR41_AUDIT;
   if (!directory || process.argv[2] !== 'agent' || process.argv[3] !== 'message') return null;
-  assert.match(directory, /^\/tmp\/ar41-[^/]+\/root\/raf-develop\/qa\/ar41-audit$/);
+  assert.match(directory, /^\/srv\/dev\/ar41-[^/]+\/root\/raf-develop\/qa\/ar41-audit$/);
   const argv = process.argv.slice(2), call = { id: randomUUID(), directory, argv, pid: process.pid, enteredAt: Date.now() };
   const text = argv[argv.indexOf('--text') + 1];
   const concurrent = text?.match(/^AR41_RECEIVE:concurrent-([ab]) /);

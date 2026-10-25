@@ -16,7 +16,7 @@ assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
 assert.equal(process.env.CODEX_HOME, '/home/dev/.codex', 'Use existing auth selector without copying credentials');
 assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
-const stand = fs.mkdtempSync('/tmp/ar41-');
+const stand = fs.mkdtempSync('/srv/dev/ar41-');
 const root = path.join(stand, 'root'), ev = path.join(stand, 'ev');
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop');
 const mainSocket = path.join(stand, 'main.sock');
@@ -64,6 +64,45 @@ const request = async (label, args, budget = 900000) => {
   return wait(label, () => fs.existsSync(target) && JSON.parse(fs.readFileSync(target)), budget + 10000);
 };
 const cli = (label, args, environment = env) => run(label, process.execPath, [path.join(main, 'bin/raf.ts'), ...args], main, 120000, environment);
+const launch = async (name, item) => {
+  const label = 'launch-' + name;
+  const result = await request(label, ['agent', 'run', '--id', 'ar41-' + name, '--type', 'implement', '--project', 'raf', '--features', 'ar41-fixture', '--phase', 'implement', '--complexity', 'mechanical', '--tasks', 'ar41-fixture:' + item]);
+  const waiting = (result.stdout + '\n' + result.stderr).split('\n').flatMap(line => {
+    try { const event = JSON.parse(line); return event.kind === 'launch-queue.waiting' ? [event] : []; } catch { return []; }
+  });
+  (summary.launches ??= []).push({ label, cliExitCode: result.cliExitCode, signal: result.signal, waitingEvents: waiting.length,
+    firstWaiting: waiting[0] ?? null, lastWaiting: waiting.at(-1) ?? null, originalResult: label + '.json' });
+  if (result.cliExitCode !== 0 || result.signal) {
+    throw Error(`Launch ${name} did not complete within its single request: exit=${result.cliExitCode}, signal=${result.signal}, queue=${waiting.at(-1)?.queueId ?? 'none'}, reasons=${JSON.stringify(waiting.at(-1)?.admission?.reasons ?? [result.error ?? 'See original result'])}. No launch retry was issued.`);
+  }
+  return result;
+};
+const checkDiskCapacity = async () => {
+  const flow = JSON.parse(fs.readFileSync(path.join(root, 'conf/flow.json')));
+  const volumes = new Map();
+  for (const [kind, directory] of [['development', root], ['development', develop], ['home', stand]]) {
+    const id = 'dev:' + fs.statSync(directory).dev;
+    const volume = volumes.get(id) ?? { id, directories: [], development: false };
+    volume.directories.push(directory); volume.development ||= kind === 'development'; volumes.set(id, volume);
+  }
+  const ids = [...volumes.values()].filter(v => v.development).map(v => v.id);
+  const { resolveAgentResourceEstimate } = await import(pathToFileURL(path.join(main, 'src/resource-estimates.ts')));
+  const estimates = ['1.1', '1.2'].map(item => resolveAgentResourceEstimate({ flow, type: 'implement', project: 'raf',
+    tasks: [{ project: 'raf', change: 'ar41-fixture', item }], fileSystemIds: ids }));
+  for (const estimate of estimates) assert.equal(estimate.status, 'KNOWN', JSON.stringify(estimate));
+  const capacity = [...volumes.values()].map(volume => {
+    const measured = fs.statfsSync(volume.directories[0], { bigint: true });
+    const availableBytes = Number(measured.bavail * measured.bsize), totalBytes = Number(measured.blocks * measured.bsize);
+    assert.ok(Number.isSafeInteger(availableBytes) && Number.isSafeInteger(totalBytes) && totalBytes > 0);
+    const reservedBytes = volume.development ? estimates.reduce((sum, estimate) => sum + estimate.reservation.diskBytes[volume.id], 0) : 0;
+    const thresholdBytes = volume.development ? Math.max(flow.resources.normal.minDiskBytes, totalBytes * flow.resources.normal.minDiskFraction) : flow.resources.home.minDiskBytes;
+    return { ...volume, availableBytes, totalBytes, reservedBytes, thresholdBytes, requiredAvailableBytes: reservedBytes + thresholdBytes,
+      sufficient: availableBytes - reservedBytes >= thresholdBytes };
+  });
+  summary.diskCapacity = { estimates, volumes: capacity, method: 'stat.dev deduplication and statfs bavail; conservative simultaneous unused estimates for both actors; measured after fixture copies; production admission remains authoritative' };
+  atomic(path.join(ev, 'disk-capacity.json'), summary.diskCapacity);
+  assert.ok(capacity.every(v => v.sufficient), 'Insufficient stand disk for both configured estimates plus normal threshold; see disk-capacity.json. No agent run issued. Use an owned stand on a filesystem with sufficient actual space; do not lower conf thresholds or estimates.');
+};
 const sessions = () => {
   const db = new DatabaseSync(path.join(stand, '.raf/state.sqlite'), { readOnly: true });
   try { return db.prepare('SELECT payload FROM sessions').all().map(row => JSON.parse(row.payload)); } finally { db.close(); }
@@ -147,6 +186,7 @@ try {
   }
   env.AR41_AUDIT = path.join(develop, 'qa/ar41-audit');
   fs.mkdirSync(env.AR41_AUDIT);
+  await checkDiskCapacity();
   for (const endpoint of [mainSocket, path.join(stand, '.raf/service.sock')]) assert.ok(Buffer.byteLength(endpoint) <= 107);
   must(tmux('main-start-raw', mainSocket, ['-f', '/dev/null', 'new-session', '-d', '-s', 'ar41-main', '-x', '180', '-y', '50', process.execPath, path.join(source, 'scripts/qa-agent-run-main.mjs'), stand, 'raw']));
   mainStarted = true;
@@ -155,7 +195,7 @@ try {
   must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
   must(await request('service-start', ['service', 'start']));
   for (const [name, item] of [['a', '1.1'], ['b', '1.2']]) {
-    must(await request('launch-' + name, ['agent', 'run', '--id', 'ar41-' + name, '--type', 'implement', '--project', 'raf', '--features', 'ar41-fixture', '--phase', 'implement', '--complexity', 'mechanical', '--tasks', 'ar41-fixture:' + item]));
+    await launch(name, item);
     const actor = await wait('registered ' + name, () => sessions().find(s => s.addressId === 'ar41-' + name && s.state === 'running'));
     actors.push(actor);
     await wait('native ready ' + name, () => fs.existsSync(path.join(own(actor), 'ar41-ready-1.json')));
@@ -269,12 +309,19 @@ try {
 } catch (error) { summary.error = { message: error.message, stack: error.stack }; }
 finally {
   summary.cleanup = { complete: true, errors: [] };
+  try {
+    if (fs.existsSync(path.join(stand, '.raf/state.sqlite'))) {
+      for (const actor of sessions().filter(a => ['ar41-a', 'ar41-b'].includes(a.addressId) && a.state !== 'finished')) {
+        if (!actors.some(a => a.runId === actor.runId)) actors.push(actor);
+      }
+    }
+  } catch (e) { summary.cleanup.errors.push('Discover partial launches: ' + e.message); }
   if (env.AR41_AUDIT && fs.existsSync(env.AR41_AUDIT)) fs.cpSync(env.AR41_AUDIT, path.join(ev, 'cli-audit'), { recursive: true });
   for (const actor of actors) {
     try {
       const dest = path.join(ev, actor.addressId); fs.mkdirSync(dest, { recursive: true });
-      fs.copyFileSync(transcript(actor), path.join(dest, 'native.jsonl'));
-      fs.cpSync(own(actor), path.join(dest, 'run'), { recursive: true, filter: p => { const st = fs.lstatSync(p); return st.isDirectory() || st.isFile(); } });
+      if (actor.process?.runnerSessionId) fs.copyFileSync(transcript(actor), path.join(dest, 'native.jsonl'));
+      if (actor.launchContext?.reportPath && fs.existsSync(own(actor))) fs.cpSync(own(actor), path.join(dest, 'run'), { recursive: true, filter: p => { const st = fs.lstatSync(p); return st.isDirectory() || st.isFile(); } });
       atomic(path.join(dest, 'session.json'), actor);
     } catch (e) { summary.cleanup.errors.push('Evidence capture: ' + e.message); }
     if (mainStarted) {
@@ -288,7 +335,8 @@ finally {
   }
   try { summary.cleanup.services = await stopStandServices(root); }
   catch (e) { summary.cleanup.errors.push(e.message); }
-  const sockets = new Set(actors.map(a => a.process.evidence.tmuxSocket)); sockets.add(mainSocket);
+  const sockets = new Set(actors.map(a => a.process?.evidence?.tmuxSocket).filter(Boolean));
+  sockets.add(path.join(stand, '.raf/tmp/tmux/server.sock')); sockets.add(mainSocket);
   for (const [i, socket] of [...sockets].entries()) {
     try {
       assert.ok(socket.startsWith(stand + '/'), 'Cleanup may touch only exact owned stand sockets');
@@ -298,6 +346,7 @@ finally {
     } catch (e) { summary.cleanup.errors.push(e.message); }
   }
   for (const actor of actors) {
+    if (!actor.process?.pid) continue;
     try {
       await wait('actor exit ' + actor.addressId, () => {
         try { const stat = fs.readFileSync('/proc/' + actor.process.pid + '/stat', 'utf8'); return /\) [ZX] /.test(stat); }

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 
 const [stand, mode] = process.argv.slice(2);
-assert.match(stand, /^\/tmp\/ar41-[^/]+$/);
+assert.match(stand, /^\/srv\/dev\/ar41-[^/]+$/);
 assert.ok(['raw', 'native'].includes(mode));
 const cli = path.join(stand, 'root/raf-main/bin/raf.ts');
 const atomic = (file, value) => {

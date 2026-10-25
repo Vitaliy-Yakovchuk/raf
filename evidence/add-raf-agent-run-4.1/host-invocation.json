@@ -20,7 +20,7 @@
     "cliExitCode": "/srv/dev/ara41q/exit",
     "sanitizedEvidence": "/srv/dev/ara41q/ev"
   },
-  "status": "first attempt failed before scenarios; main restarted on loader-proof fix; second result pending",
+  "status": "two failed pre-scenario attempts retained; stand capacity fix prepared for main review and another host attempt",
   "privacy": "Do not read or include raw native transcripts. Main supplies sanitized extracts only.",
   "restart": {
     "reviewedSha": "8c769876b74a0df681ca6f0144012bc68b76bc99",
@@ -32,5 +32,16 @@
     "outputDirectory": "/srv/dev/ara41q2",
     "scriptsUnchanged": true,
     "authorization": "main message 2026-10-25: loader proof fixed; same reviewed scripts restarted"
+  },
+  "nextAttempt": {
+    "commandTemplate": [
+      "node",
+      "scripts/qa-agent-run-live.mjs",
+      "<reviewed-full-SHA>"
+    ],
+    "standPrefix": "/srv/dev/ar41-",
+    "configurationChanges": "none to resource thresholds or estimates",
+    "preflight": "production resolver for both exact items; actual statfs capacity after all stand copies",
+    "queue": "one original request; no retry after timeout or failure; first/last waiting facts retained"
   }
 }

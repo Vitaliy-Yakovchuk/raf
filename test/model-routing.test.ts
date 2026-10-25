@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { selectModel, listModelAvailability, type ModelCatalog, type RoutingSnapshot } from '../src/model-routing.ts';
+import { classifyModelTask, selectModel, listModelAvailability, type ModelCatalog, type RoutingSnapshot } from '../src/model-routing.ts';
 
 function fixture(): { catalog: ModelCatalog; snapshot: RoutingSnapshot } {
   return {
@@ -26,6 +26,86 @@ function fixture(): { catalog: ModelCatalog; snapshot: RoutingSnapshot } {
 }
 
 describe('model-routing configured selection', () => {
+  it('U1 classifies tasks from the current catalog after classification and complexity names change', () => {
+    const { catalog, snapshot } = fixture();
+    catalog.routing.taskClassification = { judgment: ['investigate'], routine: ['copy'] };
+    assert.equal(classifyModelTask(catalog, 'investigate'), 'judgment');
+    assert.equal(classifyModelTask(catalog, 'copy'), 'routine');
+    catalog.routing.complexityOrder = ['basic', 'advanced'];
+    catalog.models[0].complexity = 'basic';
+    catalog.models[1].complexity = catalog.models[2].complexity = 'advanced';
+    catalog.routing.taskClassification = { basic: ['investigate'], advanced: ['copy'] };
+    assert.equal(classifyModelTask(catalog, 'investigate'), 'basic');
+    const complexity = classifyModelTask(catalog, 'copy');
+    assert.equal(complexity, 'advanced');
+    const selected = selectModel(catalog, snapshot, { complexity: complexity! });
+    assert.equal(selected.status, 'selected');
+    if (selected.status === 'selected') assert.notEqual(selected.model, 'small');
+  });
+
+  it('U1 an unclassified task has no implicit complexity or role rule', () => {
+    const { catalog } = fixture();
+    for (const task of ['implement', 'main', 'hotfix', 'unknown-task']) {
+      assert.equal(classifyModelTask(catalog, task), null);
+    }
+  });
+
+  it('U1 rereads complexity order, effort, transitions and role bindings without provider rules', () => {
+    const { catalog, snapshot } = fixture();
+    catalog.routing.modelTransitions = [{ from: 'small', to: ['alternative', 'large'] }];
+    catalog.models[2].effort = 'custom-effort';
+    let selected = selectModel(catalog, snapshot, { complexity: 'judgment', previousModel: 'small', role: 'main' });
+    assert.equal(selected.status, 'selected');
+    if (selected.status === 'selected') {
+      assert.equal(selected.model, 'alternative');
+      assert.equal(selected.effort, 'custom-effort');
+    }
+    catalog.routing.modelTransitions[0].to = ['large', 'alternative'];
+    selected = selectModel(catalog, snapshot, { complexity: 'judgment', previousModel: 'small', role: 'main' });
+    assert.equal(selected.status, 'selected');
+    if (selected.status === 'selected') assert.equal(selected.model, 'large');
+    catalog.routing.roleModelBindings.main = ['alternative'];
+    selected = selectModel(catalog, snapshot, { complexity: 'judgment', previousModel: 'small', role: 'main' });
+    assert.equal(selected.status, 'selected');
+    if (selected.status === 'selected') assert.equal(selected.model, 'alternative');
+    catalog.routing.complexityOrder.reverse();
+    catalog.routing.roleModelBindings = {};
+    catalog.routing.modelTransitions = [];
+    selected = selectModel(catalog, snapshot, { complexity: 'routine', role: 'main' });
+    assert.equal(selected.status, 'selected');
+    if (selected.status === 'selected') assert.equal(selected.model, 'small');
+    assert.deepEqual(listModelAvailability(catalog, snapshot).find(row => row.model === 'large')?.supportedComplexities, ['judgment']);
+  });
+
+  for (const unavailable of ['runner', 'model', 'cli', 'quota'] as const) {
+    it(`U2 excludes the preferred candidate when its ${unavailable} is unavailable`, () => {
+      const { catalog, snapshot } = fixture();
+      catalog.routing.runnerPreferences = [{ complexity: 'judgment', runners: ['beta', 'alpha'] }];
+      if (unavailable === 'runner') snapshot.runnerEnabled.beta = false;
+      if (unavailable === 'model') catalog.models[2].enabled = false;
+      if (unavailable === 'cli') snapshot.cliAvailable.beta = false;
+      if (unavailable === 'quota') snapshot.quotas[2].status = 'exhausted';
+      const before = structuredClone({ catalog, snapshot });
+      const selected = selectModel(catalog, snapshot, { complexity: 'judgment' });
+      assert.equal(selected.status, 'selected');
+      if (selected.status === 'selected') assert.equal(selected.model, 'large');
+      assert.deepEqual({ catalog, snapshot }, before);
+    });
+  }
+
+  it('U2 unknown quota remains selectable and explicit, without a probe or confirmed capacity', () => {
+    const { catalog, snapshot } = fixture();
+    snapshot.quotas = [];
+    const selected = selectModel(catalog, snapshot, { complexity: 'judgment' });
+    assert.equal(selected.status, 'selected');
+    if (selected.status === 'selected') {
+      assert.equal(selected.quota, 'unknown');
+      assert.match(selected.reason, /unknown/i);
+    }
+    assert.ok(listModelAvailability(catalog, snapshot).every(row => row.available && row.quota === 'unknown'));
+    assert.deepEqual(snapshot.quotas, []);
+  });
+
   it('uses configured runner priority and returns actual effort with a reason', () => {
     const { catalog, snapshot } = fixture();
     catalog.routing.runnerPreferences = [{ complexity: 'judgment', runners: ['beta', 'alpha'] }];

@@ -1,0 +1,40 @@
+{
+  "project": "raf",
+  "profileId": "node",
+  "unitFilesAdd": [
+    "test/model-routing-handoff.test.ts"
+  ],
+  "groups": {
+    "complete-raf-flow-contracts/model-routing": {
+      "profileId": "node",
+      "files": [
+        "test/model-routing.test.ts",
+        "test/model-routing-handoff.test.ts"
+      ]
+    },
+    "complete-raf-flow-contracts/model-routing-signals": {
+      "profileId": "node",
+      "files": [
+        "test/runner-protocols.test.ts",
+        "test/quota-screens.test.ts"
+      ]
+    }
+  },
+  "preconditions": {
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "branch": "develop",
+    "adapter": "node-test-events",
+    "exactIds": "node-test-name",
+    "environment": {
+      "isolatedHome": true,
+      "stateOrigin": true
+    },
+    "checks": [
+      "node_modules/typescript/package.json",
+      "src/test-run-reporter.ts",
+      "scripts/test-run-node.ts"
+    ],
+    "policy": "conf/flow.json#/unitTests",
+    "isolation": "Pure functions and memory-backed ports; no real SQLite, OS processes, tmux, network or provider calls. Existing app-runtime/cli modules invoked only through injected memory state/services. Signals group unchanged, reused as existing coverage."
+  }
+}

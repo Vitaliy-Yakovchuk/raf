@@ -52,6 +52,10 @@ export type ModelSelection =
   | { status: 'selected'; runner: string; model: string; effort: string; reason: string; quota: 'available' | 'unknown' }
   | { status: 'waiting'; code: 'NO_ENABLED_MODELS' | 'NO_SUITABLE_CAPACITY'; reason: string };
 
+export function classifyModelTask(catalog: ModelCatalog, task: string): string | null {
+  throw new Error('NotImplemented');
+}
+
 export function selectModel(catalog: ModelCatalog, snapshot: RoutingSnapshot, request: ModelRequest): ModelSelection {
   const availability = listModelAvailability(catalog, snapshot);
   if (!availability.some(model => model.enabled)) {

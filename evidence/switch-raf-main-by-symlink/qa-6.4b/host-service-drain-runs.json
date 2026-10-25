@@ -1,0 +1,87 @@
+[
+  {
+    "runId": "8d384aac-88c4-4727-9ff5-d2c5eb670af2",
+    "startedAt": "2026-10-25T04:20:40.325Z",
+    "phase": "red",
+    "group": "switch-raf-main-by-symlink/agent-channel",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/main-switch-agent-channel.test.ts",
+        "test/service-entry.test.ts",
+        "test/workspace-routing.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [
+      {
+        "file": "test/main-switch-agent-channel.test.ts",
+        "name": "native stand drains only its host service reader before migration and preserves actors"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "raw": "host-service-drain-red.TestRunResult.json",
+    "tool": "host-service-drain-red.tool.json",
+    "combinedStream": "host-service-drain-red.combined-stream.txt",
+    "separateStderr": null,
+    "cliExitCode": 1,
+    "passedCount": 98,
+    "workspaceSnapshotHead": "a5c28dd3ac8addb366d5e2a04d6383b8cdecc8a5",
+    "ownPatch": "host-service-drain-workspace.patch",
+    "patchSha256": "7ad24c55f999d02aefde464eba55bf2ff161744b4cbfdd7219db9b5990a6c528",
+    "workspaceLimitation": "Final own diff preserved; exact shared diff at run start was not atomically captured.",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+    "headAtStartedAtFromReflog": "a5c28dd3ac8addb366d5e2a04d6383b8cdecc8a5"
+  },
+  {
+    "runId": "a8ad3b77-c93d-4336-9a81-54d63ef10109",
+    "startedAt": "2026-10-25T04:21:41.020Z",
+    "phase": "qa",
+    "group": "switch-raf-main-by-symlink/agent-channel",
+    "profileId": "node",
+    "selection": {
+      "files": [
+        "test/main-switch-agent-channel.test.ts",
+        "test/service-entry.test.ts",
+        "test/workspace-routing.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "exitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "raw": "host-service-drain-qa.TestRunResult.json",
+    "tool": "host-service-drain-qa.tool.json",
+    "combinedStream": "host-service-drain-qa.combined-stream.txt",
+    "separateStderr": null,
+    "cliExitCode": 0,
+    "passedCount": 99,
+    "workspaceSnapshotHead": "a5c28dd3ac8addb366d5e2a04d6383b8cdecc8a5",
+    "ownPatch": "host-service-drain-workspace.patch",
+    "patchSha256": "7ad24c55f999d02aefde464eba55bf2ff161744b4cbfdd7219db9b5990a6c528",
+    "workspaceLimitation": "Final own diff preserved; exact shared diff at run start was not atomically captured.",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+    "headAtStartedAtFromReflog": "a5c28dd3ac8addb366d5e2a04d6383b8cdecc8a5"
+  }
+]

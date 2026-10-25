@@ -1,0 +1,37 @@
+{
+  "stand": "/srv/dev/s64-u4gAJU",
+  "status": "failed-before-switch",
+  "reviewed": "63f4f50561401c6405f8e67f7911361f2303380b",
+  "hostManifest": "/srv/dev/s64-u4gAJU/ev.sha256",
+  "hostManifestSha256": "659b4063227693e59f71593ab3e84f522eb917d600854f7439a2cd960567ce77",
+  "cleanedNative": "/srv/dev/s64-u4gAJU-native.ss9PNQ",
+  "cleanedManifestSha256": "0f547973fd2f4282277f430ce4f778f643f926a18edae143735de8fa8c28b306",
+  "mainAttests": "read-only and secscan zero matches; original tool calls/outputs unchanged; edits zero",
+  "sourceNativeHashesVerifiedAgainstHostManifest": true,
+  "cause": "The host-owned service worker was still a live unprotected reader when the stand simulated a legacy source store. Both native readers retained verified protection. Product guard correctly refused.",
+  "readerSummary": [
+    {
+      "pid": 3901769,
+      "start": "24435219",
+      "nativeProtection": true
+    },
+    {
+      "pid": 3900940,
+      "start": "24432938",
+      "nativeProtection": false
+    },
+    {
+      "pid": 3903787,
+      "start": "24438752",
+      "nativeProtection": true
+    }
+  ],
+  "unprovenReaderHeld": {
+    "leaseFile": "/srv/dev/s64-u4gAJU/root/.git/modules/raf-main/raf-hotfix/readers/0057a27c-e854-4b30-819a-a0b75293f345.json",
+    "pid": 3901769,
+    "start": "24435219",
+    "method": "Host temporarily removed the proof from an existing live reader lease; its actual native scope remained unchanged."
+  },
+  "cleanupErrors": null,
+  "nextAction": "Gracefully stop only the stand service and verify its exit before synthetic legacy split, while preserving native actors and all endpoint controls; repeat real stand after review."
+}

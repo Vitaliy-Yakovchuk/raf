@@ -8,7 +8,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
-import { metadataTree, negativePeerCommand } from './qa-main-agent-channel-metadata.mjs';
+import { metadataTree, negativePeerCommand, drainStandServiceReader } from './qa-main-agent-channel-metadata.mjs';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const reviewed = process.argv[2];
@@ -44,7 +44,7 @@ const must = r => { assert.equal(r.cliExitCode, 0, r.stderr || r.error); return 
 const git = (cwd, ...args) => must(run('git-' + (++seq), 'git', ['--no-optional-locks', '-C', cwd, ...args], cwd));
 const wait = async (label, read, budget = 900000) => {
   const end = Date.now() + budget;
-  while (Date.now() < end) { const v = read(); if (v) return v; await delay(300); }
+  while (Date.now() < end) { const v = await read(); if (v) return v; await delay(300); }
   throw Error('Unexecuted remainder: ' + label);
 };
 const request = async (label, args, budget = 900000) => {
@@ -70,7 +70,11 @@ async function controls(label) {
   must(run(label + '-tmux', 'tmux', ['-S', socket, 'list-sessions']));
   const ps = await request(label + '-ps', ['agent', 'ps']); must(ps);
   const live = sessions();
-  for (const a of actors) assert.equal(live.find(s => s.runId === a.runId)?.state, 'running');
+  for (const a of actors) {
+    const current = live.find(s => s.runId === a.runId);
+    assert.equal(current?.state, 'running');
+    for (const field of ['pid', 'startedAt', 'runnerSessionId']) assert.equal(current.process?.[field], a.process?.[field], 'Native actor identity must survive host controls: ' + field);
+  }
   atomic(path.join(ev, label + '-controls.json'), { response, sessions: live, active: fs.realpathSync(main) });
 }
 function copyTranscript(record, label) {
@@ -150,7 +154,7 @@ try {
   must(run('main-start', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym64-main', '-x', '180', '-y', '50', process.execPath, path.join(source, 'test/helpers/z4044-main-pane.mjs'), stand])); pane = true;
   must(await wait('main attach', () => fs.existsSync(path.join(stand, 'main-ready.json')) && JSON.parse(fs.readFileSync(path.join(stand, 'main-ready.json')))));
   must(await request('runner-list', ['runner', 'list'])); must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
-  must(await request('service-start', ['service', 'start']));
+  const hostService = JSON.parse(must(await request('service-start', ['service', 'start'])));
   endpoint = createServer(c => c.end('sym64-host-alive'));
   await new Promise((resolve, reject) => { endpoint.once('error', reject); endpoint.listen(path.join(develop, 'qa/peer.sock'), resolve); });
   const common = git(develop, 'rev-parse', '--path-format=absolute', '--git-common-dir');
@@ -199,6 +203,8 @@ try {
   atomic(path.join(ev, 'metadata-after-refused-launch.json'), metadataTree(production));
   summary.actors = actors.map(s => ({ runId: s.runId, address: s.addressId, process: s.process, selection: s.selection, launchContext: s.launchContext, briefSha256: hash(s.launchContext.briefPath) }));
   await controls('before');
+  summary.hostServiceDrain = await drainStandServiceReader({ service: hostService, request, processStart: hh.processStart, alive: hh.alive, wait });
+  await controls('after-host-service-drain');
   fs.writeFileSync(path.join(stand, '.raf/secrets.json'), 'sym64-isolated-secret-sentinel\n');
   for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) assert.ok(fs.existsSync(path.join(stand, '.raf', name)), 'Host read-deny positive control: ' + name);
   const store = await import(pathToFileURL(path.join(A, 'src/main-production-store.ts')));

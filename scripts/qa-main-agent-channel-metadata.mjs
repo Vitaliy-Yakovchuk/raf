@@ -1,9 +1,22 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import assert from 'node:assert/strict';
 
 export function negativePeerCommand(peer) {
   return ['agent', 'close', '--id', peer];
+}
+
+export async function drainStandServiceReader(options) {
+  const pid = options.service.pid;
+  assert.ok(Number.isInteger(pid) && pid > 0, 'The stand must own a verified host service reader');
+  const start = await options.processStart(pid);
+  assert.ok(start && await options.alive(pid, start), 'The host service identity must still be live before draining');
+  const result = await options.request('service-before-live-split-stop', ['service', 'stop']);
+  assert.equal(result.cliExitCode, 0, result.stderr || result.error);
+  assert.equal(JSON.parse(result.stdout).state, 'stopped', 'The host service must acknowledge a graceful stop');
+  await options.wait('host service reader exit before migration', async () => !await options.alive(pid, start));
+  return { pid, start, result };
 }
 
 export function metadataTree(directory) {

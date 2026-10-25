@@ -1,0 +1,142 @@
+diff --git a/scripts/qa-main-agent-channel-metadata.mjs b/scripts/qa-main-agent-channel-metadata.mjs
+index 1be46c7..c3f4913 100644
+--- a/scripts/qa-main-agent-channel-metadata.mjs
++++ b/scripts/qa-main-agent-channel-metadata.mjs
+@@ -1,11 +1,24 @@
+ import fs from 'node:fs';
+ import path from 'node:path';
+ import { createHash } from 'node:crypto';
++import assert from 'node:assert/strict';
+ 
+ export function negativePeerCommand(peer) {
+   return ['agent', 'close', '--id', peer];
+ }
+ 
++export async function drainStandServiceReader(options) {
++  const pid = options.service.pid;
++  assert.ok(Number.isInteger(pid) && pid > 0, 'The stand must own a verified host service reader');
++  const start = await options.processStart(pid);
++  assert.ok(start && await options.alive(pid, start), 'The host service identity must still be live before draining');
++  const result = await options.request('service-before-live-split-stop', ['service', 'stop']);
++  assert.equal(result.cliExitCode, 0, result.stderr || result.error);
++  assert.equal(JSON.parse(result.stdout).state, 'stopped', 'The host service must acknowledge a graceful stop');
++  await options.wait('host service reader exit before migration', async () => !await options.alive(pid, start));
++  return { pid, start, result };
++}
++
+ export function metadataTree(directory) {
+   const stat = fs.lstatSync(directory);
+   const entry = { mode: stat.mode, dev: stat.dev, ino: stat.ino, nlink: stat.nlink };
+diff --git a/scripts/qa-main-agent-channel.mjs b/scripts/qa-main-agent-channel.mjs
+index 3bcd014..23d9c69 100644
+--- a/scripts/qa-main-agent-channel.mjs
++++ b/scripts/qa-main-agent-channel.mjs
+@@ -8,7 +8,7 @@ import { DatabaseSync } from 'node:sqlite';
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+ import { setTimeout as delay } from 'node:timers/promises';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+-import { metadataTree, negativePeerCommand } from './qa-main-agent-channel-metadata.mjs';
++import { metadataTree, negativePeerCommand, drainStandServiceReader } from './qa-main-agent-channel-metadata.mjs';
+ 
+ const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+ const reviewed = process.argv[2];
+@@ -44,7 +44,7 @@ const must = r => { assert.equal(r.cliExitCode, 0, r.stderr || r.error); return
+ const git = (cwd, ...args) => must(run('git-' + (++seq), 'git', ['--no-optional-locks', '-C', cwd, ...args], cwd));
+ const wait = async (label, read, budget = 900000) => {
+   const end = Date.now() + budget;
+-  while (Date.now() < end) { const v = read(); if (v) return v; await delay(300); }
++  while (Date.now() < end) { const v = await read(); if (v) return v; await delay(300); }
+   throw Error('Unexecuted remainder: ' + label);
+ };
+ const request = async (label, args, budget = 900000) => {
+@@ -70,7 +70,11 @@ async function controls(label) {
+   must(run(label + '-tmux', 'tmux', ['-S', socket, 'list-sessions']));
+   const ps = await request(label + '-ps', ['agent', 'ps']); must(ps);
+   const live = sessions();
+-  for (const a of actors) assert.equal(live.find(s => s.runId === a.runId)?.state, 'running');
++  for (const a of actors) {
++    const current = live.find(s => s.runId === a.runId);
++    assert.equal(current?.state, 'running');
++    for (const field of ['pid', 'startedAt', 'runnerSessionId']) assert.equal(current.process?.[field], a.process?.[field], 'Native actor identity must survive host controls: ' + field);
++  }
+   atomic(path.join(ev, label + '-controls.json'), { response, sessions: live, active: fs.realpathSync(main) });
+ }
+ function copyTranscript(record, label) {
+@@ -150,7 +154,7 @@ try {
+   must(run('main-start', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym64-main', '-x', '180', '-y', '50', process.execPath, path.join(source, 'test/helpers/z4044-main-pane.mjs'), stand])); pane = true;
+   must(await wait('main attach', () => fs.existsSync(path.join(stand, 'main-ready.json')) && JSON.parse(fs.readFileSync(path.join(stand, 'main-ready.json')))));
+   must(await request('runner-list', ['runner', 'list'])); must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
+-  must(await request('service-start', ['service', 'start']));
++  const hostService = JSON.parse(must(await request('service-start', ['service', 'start'])));
+   endpoint = createServer(c => c.end('sym64-host-alive'));
+   await new Promise((resolve, reject) => { endpoint.once('error', reject); endpoint.listen(path.join(develop, 'qa/peer.sock'), resolve); });
+   const common = git(develop, 'rev-parse', '--path-format=absolute', '--git-common-dir');
+@@ -199,6 +203,8 @@ try {
+   atomic(path.join(ev, 'metadata-after-refused-launch.json'), metadataTree(production));
+   summary.actors = actors.map(s => ({ runId: s.runId, address: s.addressId, process: s.process, selection: s.selection, launchContext: s.launchContext, briefSha256: hash(s.launchContext.briefPath) }));
+   await controls('before');
++  summary.hostServiceDrain = await drainStandServiceReader({ service: hostService, request, processStart: hh.processStart, alive: hh.alive, wait });
++  await controls('after-host-service-drain');
+   fs.writeFileSync(path.join(stand, '.raf/secrets.json'), 'sym64-isolated-secret-sentinel\n');
+   for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) assert.ok(fs.existsSync(path.join(stand, '.raf', name)), 'Host read-deny positive control: ' + name);
+   const store = await import(pathToFileURL(path.join(A, 'src/main-production-store.ts')));
+diff --git a/test/main-switch-agent-channel.test.ts b/test/main-switch-agent-channel.test.ts
+index 2d1ec83..a1d609c 100644
+--- a/test/main-switch-agent-channel.test.ts
++++ b/test/main-switch-agent-channel.test.ts
+@@ -1,6 +1,8 @@
+ import assert from "node:assert/strict";
+ import test from "node:test";
+-import { execFileSync, spawnSync } from "node:child_process";
++import { execFileSync, spawnSync, spawn } from "node:child_process";
++import { once } from "node:events";
++import { setTimeout as delay } from "node:timers/promises";
+ import { promises as fs } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { dirname, join } from "node:path";
+@@ -12,7 +14,8 @@ import { execute } from "../src/cli.ts";
+ import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
+ import { createWorkspacePorts } from "../src/os-runtime.ts";
+ import { prepareProductionQaFixture } from "./production-qa-fixture.ts";
+-import { negativePeerCommand } from "../scripts/qa-main-agent-channel-metadata.mjs";
++import { negativePeerCommand, drainStandServiceReader } from "../scripts/qa-main-agent-channel-metadata.mjs";
++import { alive, processStart } from "../src/hotfix-host.ts";
+ import {
+   assessAgentChannelSlotReuse,
+   compileAgentChannelNativePolicy,
+@@ -33,6 +36,35 @@ import type {
+ 
+ const root = "/fixture/orchestrator";
+ 
++test("native stand drains only its host service reader before migration and preserves actors", { timeout: 10000 }, async () => {
++  const service = spawn(process.execPath, ["-e", "setInterval(()=>{},1000)"], { stdio: "ignore" });
++  const actor = spawn(process.execPath, ["-e", "setInterval(()=>{},1000)"], { stdio: "ignore" });
++  await Promise.all([once(service, "spawn"), once(actor, "spawn")]);
++  const serviceStart = await processStart(service.pid!);
++  const actorStart = await processStart(actor.pid!);
++  try {
++    const commands: string[][] = [];
++    await drainStandServiceReader({ service: { pid: service.pid }, processStart, alive,
++      request: async (_label: string, command: string[]) => {
++        commands.push(command);
++        service.kill("SIGTERM");
++        return { cliExitCode: 0, stdout: JSON.stringify({ state: "stopped" }) };
++      },
++      wait: async (_label: string, ready: () => Promise<boolean>) => { while (!await ready()) await delay(10); },
++    });
++    assert.equal(await alive(service.pid!, serviceStart), false, "A successful fixture drain must wait for the actual service reader exit");
++    assert.deepEqual(commands, [["service", "stop"]]);
++    assert.equal(await alive(actor.pid!, actorStart), true, "Draining a host service must preserve the native actor identity");
++    await assert.rejects(drainStandServiceReader({ service: { pid: actor.pid }, processStart, alive,
++      request: async () => ({ cliExitCode: 1, stdout: "", stderr: "fixture stop refused" }),
++      wait: async () => assert.fail("A failed stop cannot permit migration"),
++    }), /fixture stop refused/);
++    assert.equal(await alive(actor.pid!, actorStart), true);
++  } finally {
++    for (const child of [service, actor]) if (child.exitCode === null && child.signalCode === null) { const exited = once(child, "exit"); child.kill("SIGTERM"); await exited; }
++  }
++});
++
+ test("native QA negative CLI probe exercises protected runtime rather than public catalog output", async () => {
+   const configuration = async (name: string) => JSON.parse(await fs.readFile(new URL('../../conf/' + name, import.meta.url), 'utf8'));
+   const constants = await configuration('raf-constants.json');

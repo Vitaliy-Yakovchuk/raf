@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawnSync, spawn } from "node:child_process";
+import { once } from "node:events";
+import { setTimeout as delay } from "node:timers/promises";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -12,7 +14,8 @@ import { execute } from "../src/cli.ts";
 import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
 import { createWorkspacePorts } from "../src/os-runtime.ts";
 import { prepareProductionQaFixture } from "./production-qa-fixture.ts";
-import { negativePeerCommand } from "../scripts/qa-main-agent-channel-metadata.mjs";
+import { negativePeerCommand, drainStandServiceReader } from "../scripts/qa-main-agent-channel-metadata.mjs";
+import { alive, processStart } from "../src/hotfix-host.ts";
 import {
   assessAgentChannelSlotReuse,
   compileAgentChannelNativePolicy,
@@ -32,6 +35,35 @@ import type {
 } from "../src/main-switch-agent-channel.ts";
 
 const root = "/fixture/orchestrator";
+
+test("native stand drains only its host service reader before migration and preserves actors", { timeout: 10000 }, async () => {
+  const service = spawn(process.execPath, ["-e", "setInterval(()=>{},1000)"], { stdio: "ignore" });
+  const actor = spawn(process.execPath, ["-e", "setInterval(()=>{},1000)"], { stdio: "ignore" });
+  await Promise.all([once(service, "spawn"), once(actor, "spawn")]);
+  const serviceStart = await processStart(service.pid!);
+  const actorStart = await processStart(actor.pid!);
+  try {
+    const commands: string[][] = [];
+    await drainStandServiceReader({ service: { pid: service.pid }, processStart, alive,
+      request: async (_label: string, command: string[]) => {
+        commands.push(command);
+        service.kill("SIGTERM");
+        return { cliExitCode: 0, stdout: JSON.stringify({ state: "stopped" }) };
+      },
+      wait: async (_label: string, ready: () => Promise<boolean>) => { while (!await ready()) await delay(10); },
+    });
+    assert.equal(await alive(service.pid!, serviceStart), false, "A successful fixture drain must wait for the actual service reader exit");
+    assert.deepEqual(commands, [["service", "stop"]]);
+    assert.equal(await alive(actor.pid!, actorStart), true, "Draining a host service must preserve the native actor identity");
+    await assert.rejects(drainStandServiceReader({ service: { pid: actor.pid }, processStart, alive,
+      request: async () => ({ cliExitCode: 1, stdout: "", stderr: "fixture stop refused" }),
+      wait: async () => assert.fail("A failed stop cannot permit migration"),
+    }), /fixture stop refused/);
+    assert.equal(await alive(actor.pid!, actorStart), true);
+  } finally {
+    for (const child of [service, actor]) if (child.exitCode === null && child.signalCode === null) { const exited = once(child, "exit"); child.kill("SIGTERM"); await exited; }
+  }
+});
 
 test("native QA negative CLI probe exercises protected runtime rather than public catalog output", async () => {
   const configuration = async (name: string) => JSON.parse(await fs.readFile(new URL('../../conf/' + name, import.meta.url), 'utf8'));

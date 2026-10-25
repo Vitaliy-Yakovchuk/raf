@@ -10,7 +10,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { captureStateReadControls } from './qa-main-agent-denial.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
-import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage } from './qa-main-agent-channel-metadata.mjs';
+import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt } from './qa-main-agent-channel-metadata.mjs';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const reviewed = process.argv[2];
@@ -79,9 +79,7 @@ async function controls(label) {
   }
   atomic(path.join(ev, label + '-controls.json'), { response, sessions: live, active: fs.realpathSync(main) });
 }
-function copyTranscript(record, label) {
-  const target = path.join(ev, label); fs.mkdirSync(target, { recursive: true });
-  fs.cpSync(own(record), path.join(target, 'run'), { recursive: true, filter: p => { const s = fs.lstatSync(p); return s.isFile() || s.isDirectory(); } });
+function nativeTranscriptPath(record) {
   const native = record.process?.runnerSessionId;
   assert.ok(native, 'native session ID required');
   const found = [];
@@ -91,7 +89,12 @@ function copyTranscript(record, label) {
   } };
   walk(path.join(env.CODEX_HOME, 'sessions'));
   assert.equal(found.length, 1, 'One exact native transcript required');
-  fs.copyFileSync(found[0], path.join(target, 'native.jsonl'));
+  return found[0];
+}
+function copyTranscript(record, label) {
+  const target = path.join(ev, label); fs.mkdirSync(target, { recursive: true });
+  fs.cpSync(own(record), path.join(target, 'run'), { recursive: true, filter: p => { const s = fs.lstatSync(p); return s.isFile() || s.isDirectory(); } });
+  fs.copyFileSync(nativeTranscriptPath(record), path.join(target, 'native.jsonl'));
   atomic(path.join(target, 'session.json'), record);
   return path.join(target, 'native.jsonl');
 }
@@ -310,7 +313,14 @@ try {
     await controls('after-' + index);
   }
   const current = sessions();
-  summary.transcripts = actors.map(a => copyTranscript(current.find(s => s.runId === a.runId), a.addressId));
+  summary.transcripts = await captureCompletedNativeActors({ actors,
+    gate: a => gate(a, 3),
+    wait: async a => {
+      const completion = await wait('native final CLI completion ' + a.addressId, () => nativeCompletionReceipt(fs.readFileSync(nativeTranscriptPath(a), 'utf8'), a.runId), 180000);
+      (summary.nativeCompletions ??= []).push(completion);
+    },
+    capture: () => actors.map(a => copyTranscript(current.find(s => s.runId === a.runId), a.addressId)),
+  });
   summary.actorCommits = actors.flatMap(a => ['sym64-source-0.json', ...[1, 2, 3].map(n => 'sym64-stage-' + n + '.json')].flatMap(name => {
     const proof = JSON.parse(fs.readFileSync(path.join(ev, a.addressId, 'run', name)));
     return proof.results.filter(result => result.label.startsWith('own commit visible ')).map(result => {

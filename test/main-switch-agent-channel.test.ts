@@ -16,7 +16,7 @@ import { execute } from "../src/cli.ts";
 import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
 import { createWorkspacePorts } from "../src/os-runtime.ts";
 import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
-import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage } from "../scripts/qa-main-agent-channel-metadata.mjs";
+import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt } from "../scripts/qa-main-agent-channel-metadata.mjs";
 import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
 import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
 import * as generationHost from "../src/hotfix-host.ts";
@@ -42,6 +42,32 @@ import type {
 import { captureStateReadControls, assertNativeDenial, nativeProbeReceipt } from "../scripts/qa-main-agent-denial.mjs";
 
 const root = "/fixture/orchestrator";
+
+test("native final transcript waits for both final gates and native CLI completion", async () => {
+  const released: string[] = [];
+  const finished: string[] = [];
+  const snapshots = await captureCompletedNativeActors({ actors: ["a", "b"],
+    gate: (actor: string) => released.push(actor),
+    wait: async (actor: string) => { assert.deepEqual(released, ["a", "b"]); finished.push(actor); },
+    capture: () => { assert.deepEqual(finished.sort(), ["a", "b"], "Copying before helper 3 exits leaves its native result unexecuted"); return ["a-native", "b-native"]; },
+  });
+  assert.deepEqual(snapshots, ["a-native", "b-native"]);
+});
+
+test("native final receipt requires the exact run and an actual completed exec output", () => {
+  const call = { type: "response_item", payload: { type: "custom_tool_call", name: "exec", call_id: "native-finish" } };
+  const result = (receipt: object) => ({ type: "response_item", timestamp: "2026-10-25T00:00:00Z", payload: { type: "custom_tool_call_output", call_id: "native-finish", output: [{ type: "input_text", text: JSON.stringify(receipt) }] } });
+  const receipt = { sym64NativeCompleted: 3, runId: "native-a", finalCliExitCode: 0 };
+  const transcript = (...events: object[]) => events.map(event => JSON.stringify(event)).join("\n") + "\n";
+  assert.deepEqual(nativeCompletionReceipt(transcript(call, result(receipt)), "native-a").receipt, receipt);
+  assert.equal(nativeCompletionReceipt(transcript(result(receipt)), "native-a"), false);
+  assert.equal(nativeCompletionReceipt(transcript(call), "native-a"), false);
+  assert.equal(nativeCompletionReceipt(transcript(call, result(receipt)), "native-b"), false);
+  assert.equal(nativeCompletionReceipt(transcript(call, result({ ...receipt, finalCliExitCode: 1 })), "native-a"), false);
+  assert.equal(nativeCompletionReceipt(transcript(call, result({ ...receipt, sym64NativeCompleted: 2 })), "native-a"), false);
+  assert.equal(nativeCompletionReceipt(transcript(call, { ...result(receipt), type: "event_msg" }), "native-a"), false);
+  assert.equal(nativeCompletionReceipt(transcript(call) + '{"partial":', "native-a"), false);
+});
 
 test("native actor assignment stays small enough for complete repeated ps output", () => {
   const actors = ["a", "b"].map(nativeActorPlan);

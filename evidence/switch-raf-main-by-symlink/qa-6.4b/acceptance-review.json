@@ -54,6 +54,10 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "5104f2be57b5f2220aa3f5006e9f90fc2e80c308"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "63d83a9084207ca24046f109b310abc27fbcfb5e"
     }
   ],
   "evidenceIndexes": [
@@ -63,15 +67,16 @@
     "runtime-inventory-regressions.json",
     "hidden-read-review.json",
     "redactions-manifest.json",
-    "native-gates-review.json"
+    "native-gates-review.json",
+    "native-finish-review.json"
   ],
   "latestOwnGroup": {
     "group": "switch-raf-main-by-symlink/agent-channel",
-    "runId": "170c2072-77dd-4a8e-ac78-52da8bd3b0c2",
-    "raw": "native-gates-qa.TestRunResult.json",
+    "runId": "4efd8d72-9378-46eb-b072-e688f1d36d79",
+    "raw": "native-finish-qa.TestRunResult.json",
     "cliExitCode": 0,
     "childExitCode": 0,
-    "passed": 106,
+    "passed": 108,
     "outcome": "passed",
     "cleanup": {
       "complete": true,
@@ -96,7 +101,7 @@
   },
   "history": "All copied previous native stands are partial/failed; their read-only source manifests and the main-provided cleaned event streams remain linked from their reviews. None is acceptance of 6.4.",
   "fullUnitEvidenceAudit": {
-    "parsedTestRunResultFiles": 60,
+    "parsedTestRunResultFiles": 62,
     "allParsed": true,
     "combinedStreams": "Complete raw JSON is unchanged. channel-fixture-qa has a 1513-byte combined-stream prefix plus the exact raw JSON; every other available combined-stream file is byte-identical to its raw JSON."
   },

@@ -55,7 +55,7 @@ function documents(): Record<TestRunConfigurationFile, ConfigurationValue> {
     },
     'conf/raf-constants.json': {
       agentPhases: [{ id: 'red' }, { id: 'qa' }],
-      commands: [{ path: ['test', 'run'], permissions: ['red'] }, { path: ['stats'] }],
+      commands: [{ path: ['test', 'run'], parameters: [{ name: 'phase', option: '--phase', required: true, multiple: false }] }, { path: ['stats'] }],
       events: [{ type: 'reminder' }],
     },
     'conf/raf.json': {
@@ -186,6 +186,7 @@ const applicable: { name: string; file: TestRunConfigurationFile; path: string[]
   { name: 'selected argv', file: 'conf/test-runs.json', path: ['projects', 'raf', 'profiles', 'node', 'argv'], pointer: '/projects/raf/profiles/node/argv', value: ['changed'] },
   { name: 'selected files', file: 'conf/test-runs.json', path: ['projects', 'raf', 'groups', request.group, 'files'], pointer: `${presetPointer}/files`, value: ['test/other.test.ts'] },
   { name: 'isolation', file: 'conf/test-runs.json', path: ['projects', 'raf', 'profiles', 'node', 'environment', 'isolatedHome'], pointer: '/projects/raf/profiles/node/environment/isolatedHome', value: false },
+  { name: 'profile resource estimate', file: 'conf/test-runs.json', path: ['projects', 'raf', 'profiles', 'node', 'resourceEstimate'], pointer: '/projects/raf/profiles/node/resourceEstimate', value: { ramBytes: 101, diskBytesPerFileSystem: 201 } },
   { name: 'allowed phase', file: 'conf/test-runs.json', path: ['phases', 'red', 'allowed'], pointer: '/phases/red/allowed', value: false },
   { name: 'diagnostics', file: 'conf/test-runs.json', path: ['diagnostics', 'maxEntries'], pointer: '/diagnostics/maxEntries', value: 65 },
   { name: 'temporary artifacts', file: 'conf/test-runs.json', path: ['temporaryArtifacts', 'root'], pointer: '/temporaryArtifacts/root', value: '/tmp/other' },
@@ -196,7 +197,7 @@ const applicable: { name: string; file: TestRunConfigurationFile; path: string[]
   { name: 'unit timeout limit', file: 'conf/flow.json', path: ['unitTests', 'maxGroupTimeouts'], pointer: '/unitTests/maxGroupTimeouts', value: 3 },
   { name: 'admission tier', file: 'conf/flow.json', path: ['resources', 'normal', 'minRamBytes'], pointer: '/resources/normal/minRamBytes', value: 101 },
   { name: 'home disk admission', file: 'conf/flow.json', path: ['resources', 'home', 'minDiskBytes'], pointer: '/resources/home/minDiskBytes', value: 201 },
-  { name: 'command permission', file: 'conf/raf-constants.json', path: ['commands', '0', 'permissions'], pointer: '/commands/0/permissions', value: ['qa'] },
+  { name: 'command argument contract', file: 'conf/raf-constants.json', path: ['commands', '0', 'parameters', '0', 'required'], pointer: '/commands/0/parameters/0/required', value: false },
   { name: 'agent phase', file: 'conf/raf-constants.json', path: ['agentPhases', '0', 'id'], pointer: '/agentPhases/0/id', value: 'qa' },
   { name: 'resource wait policy', file: 'conf/raf.json', path: ['resourceWait', 'grantIntervalMs'], pointer: '/resourceWait/grantIntervalMs', value: 11 },
   { name: 'runner policy', file: 'conf/raf.json', path: ['runnerProtocols', 'codex', 'timeouts', 'pollMs'], pointer: '/runnerProtocols/codex/timeouts/pollMs', value: 21 },

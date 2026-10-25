@@ -1,7 +1,7 @@
 {
   "item": "switch-raf-main-by-symlink:6.4",
   "status": "pending-next-native-stand",
-  "nativeReviewedSha": "96644a145e1bc1ab7923e98c93a7b2f59243e940",
+  "nativeReviewedSha": "dda183b331b1a2942e14892047e3b9965b5ca963",
   "ownCommitsBeforeCompletion": [
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
@@ -78,6 +78,10 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "96644a145e1bc1ab7923e98c93a7b2f59243e940"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "dda183b331b1a2942e14892047e3b9965b5ca963"
     }
   ],
   "evidenceIndexes": [
@@ -93,12 +97,13 @@
     "native-denial-cleanup-review.json",
     "native-writable-audit-review.json",
     "native-registered-sockets-review.json",
-    "native-brief-authorization-review.json"
+    "native-brief-authorization-review.json",
+    "native-helper-cli-review.json"
   ],
   "latestOwnGroup": {
-    "runId": "4fcb88e1-2fe6-418c-b16b-40f5d4b4b1cb",
-    "evidence": "native-brief-authorization-qa.TestRunResult.json",
-    "passed": 91,
+    "runId": "cc4a8903-136b-4bfd-b037-5533af60526f",
+    "evidence": "native-helper-cli-qa.TestRunResult.json",
+    "passed": 92,
     "cliExitCode": 0,
     "childExitCode": 0,
     "cleanup": {
@@ -124,9 +129,9 @@
   },
   "history": "All copied previous native stands are partial/failed; their read-only source manifests and the main-provided cleaned event streams remain linked from their reviews. None is acceptance of 6.4.",
   "fullUnitEvidenceAudit": {
-    "parsedTestRunResultFiles": 75,
+    "parsedTestRunResultFiles": 77,
     "allParsed": true,
-    "availableCombinedStreams": 66,
+    "availableCombinedStreams": 68,
     "allRawJsonBytesPreserved": true,
     "combinedStreamExtraBytes": [
       {
@@ -154,6 +159,6 @@
   },
   "nativeAcceptance": null,
   "scope": "Only assigned item 6.4. Checkboxes are left to raf; other open items prevent archive. No push.",
-  "latestPartialNative": "native-partial-s64-vLTHJK/review.json",
-  "nextAction": "Commit fixture-only initial negative-attempt authorization after host scan; Main runs full native stand44. 6.4 remains open."
+  "latestPartialNative": "native-partial-s64-uhDBd0/review.json",
+  "nextAction": "Host secret scan/review; commit fixture/test/evidence; Main executes clean-clone live stand45."
 }

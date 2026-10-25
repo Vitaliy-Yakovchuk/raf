@@ -17,7 +17,7 @@ import { execute } from "../src/cli.ts";
 import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
 import { createWorkspacePorts } from "../src/os-runtime.ts";
 import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
-import { negativePeerCommand, instrumentStandAssignment, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from "../scripts/qa-main-agent-channel-metadata.mjs";
+import { negativePeerCommand, nativeCloseProbe, instrumentStandAssignment, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from "../scripts/qa-main-agent-channel-metadata.mjs";
 import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
 import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
 import * as generationHost from "../src/hotfix-host.ts";
@@ -43,6 +43,42 @@ import type {
 import { captureStateReadControls, assertNativeDenial, nativeProbeReceipt } from "../scripts/qa-main-agent-denial.mjs";
 
 const root = "/fixture/orchestrator";
+
+test("native sandbox helper executes negative CLI from the immutable issued brief and preserves actual results", async () => {
+  const directory = await fs.mkdtemp(join(tmpdir(), "native-cli-probe-"));
+  try {
+    const root = join(directory, "root"), runId = "b04f65c5-afc1-40e5-be5c-321861b51cf7";
+    const entry = join(root, ".git/modules/raf-main/raf-hotfix/generations", runId, "raf-main/bin/raf.ts");
+    const trace = join(directory, "trace.jsonl"), mode = join(directory, "mode");
+    const target = root + "/.git/modules/raf-main/raf-hotfix/activation.lock.owner-" + runId;
+    const stderr = JSON.stringify({ code: "PRODUCTION_ENTRY_FAILED", message: "EROFS: read-only file system, mkdir '" + target + "'" }) + "\n";
+    await fs.mkdir(dirname(entry), { recursive: true });
+    await fs.mkdir(join(root, "raf-develop"), { recursive: true });
+    await fs.writeFile(mode, "1");
+    await fs.writeFile(entry, "import fs from 'node:fs';fs.appendFileSync(" + JSON.stringify(trace) + ",JSON.stringify(process.argv.slice(2))+'\\n');process.stderr.write(" + JSON.stringify(stderr) + ");process.exitCode=Number(fs.readFileSync(" + JSON.stringify(mode) + ",'utf8'));\n");
+    const results: any[] = [];
+    let last: any;
+    for (const agentId of ["sym64-a", "sym64-b"]) for (const stage of [1, 2, 3]) {
+      const assignment = { project: "raf", root, agent_id: agentId, report_path: join(directory, ".raf/tmp", runId, agentId + ".json"), raf_command: "node " + entry, raf_subcommands: ["agent message", "agent ps", "test run"] };
+      const brief = "Immutable native assignment\n\n" + JSON.stringify(assignment, null, 2);
+      const control = { stage, runId, agentId, briefSha256: createHash("sha256").update(brief).digest("hex") };
+      last = { brief, control, root };
+      const receipt = nativeCloseProbe(last, results);
+      assert.equal(results.length, (agentId === "sym64-a" ? 0 : 3) + stage, "Each native stage must actually execute its denied CLI probe without asking the actor to invoke a non-granted privileged command");
+      assert.deepEqual(results.at(-1).command, ["node", entry, "agent", "close", "--id", agentId === "sym64-a" ? "sym64-b" : "sym64-a"]);
+      assert.equal(results.at(-1).issuedPrefix, assignment.raf_command);
+      assert.equal(results.at(-1).stdout, ""); assert.equal(results.at(-1).stderr, stderr);
+      assert.equal(results.at(-1).cliExitCode, 1); assert.equal(results.at(-1).signal, null);
+      assert.equal(receipt.sym64UnauthorizedCloseDenied, true);
+    }
+    assert.equal((await fs.readFile(trace, "utf8")).trimEnd().split("\n").length, 6);
+    for (const changed of [{ ...last, brief: last.brief + " " }, { ...last, control: { ...last.control, agentId: "sym64-a" } }, { ...last, control: { ...last.control, stage: 0 } }]) assert.throws(() => nativeCloseProbe(changed, results));
+    assert.equal((await fs.readFile(trace, "utf8")).trimEnd().split("\n").length, 6, "Changed identity or brief must fail before executing any CLI");
+    await fs.writeFile(mode, "0");
+    assert.throws(() => nativeCloseProbe(last, results), /exit-one/);
+    assert.equal(results.at(-1).cliExitCode, 0, "An unexpected successful close must retain its actual code and fail the stage");
+  } finally { await fs.rm(directory, { recursive: true, force: true }); }
+});
 
 test("stand brief authorizes negative CLI attempts before launch without granting their channel", async () => {
   const directory = await fs.mkdtemp(join(tmpdir(), "native-brief-authorization-"));

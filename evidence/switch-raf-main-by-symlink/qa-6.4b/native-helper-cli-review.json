@@ -1,0 +1,81 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "fixture-fix-unit-green-native-pending",
+  "finding": "Stand44 actor a stopped despite explicit initial negative authorization because close is absent from privileged raf_subcommands; b completed exact EROFS denial and stage1. This is fixture instruction ambiguity, not native sandbox escape.",
+  "partialNative": "native-partial-s64-uhDBd0/review.json",
+  "partialChannel": "native-partial-s64-uhDBd0/partial-channel-output-review.json",
+  "fix": "Negative close runs once inside the same native sandbox helper at stages1/2/3, like all other negative probes. It reads unchanged initial brief, verifies its host-recorded sha256/runId/agent/root, rejects any close channel grant or changed generation prefix, runs the exact issued node entry with actual peer, preserves stdout/stderr/status/signal, and accepts only exact protected activation-lock EROFS with actual exit1. The actor issues only separate simple message/ps native commands. No privileged grant, provider boundary, product source, trust registry or actual owner state is changed.",
+  "regression": "Real child process with a controlled unit CLI verifies all six actor/stage invocations and exact args/output/exit; altered brief/identity/stage refuses before spawn; actual exit0 is retained and fails. This unit stub is not native sandbox proof.",
+  "runs": [
+    {
+      "phase": "red",
+      "sourceItem": "switch-raf-main-by-symlink:6.4",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "workspace": "native-helper-cli-red.workspace.json",
+      "runId": "470cc180-3c5a-4a01-952d-5de27c3af51f",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 91,
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native sandbox helper executes negative CLI from the immutable issued brief and preserves actual results"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "optimize",
+      "timeoutCount": 1,
+      "nextAction": "implement",
+      "evidence": "native-helper-cli-red.TestRunResult.json",
+      "stderr": null,
+      "stderrLimitation": "Tool exposes only combined stdout/stderr; exact unmodified combined stream retained."
+    },
+    {
+      "phase": "qa",
+      "sourceItem": "switch-raf-main-by-symlink:6.4",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "workspace": "native-helper-cli-qa.workspace.json",
+      "runId": "cc4a8903-136b-4bfd-b037-5533af60526f",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 92,
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 1,
+      "nextAction": "complete",
+      "evidence": "native-helper-cli-qa.TestRunResult.json",
+      "stderr": null,
+      "stderrLimitation": "Tool exposes only combined stdout/stderr; exact unmodified combined stream retained."
+    }
+  ],
+  "checks": "native-helper-cli-checks.json",
+  "nativeAcceptance": null,
+  "nextAction": "Host secret scan/review; commit fixture/test/evidence; Main executes clean-clone live stand45."
+}

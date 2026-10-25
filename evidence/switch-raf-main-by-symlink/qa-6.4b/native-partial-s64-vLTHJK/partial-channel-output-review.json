@@ -1,0 +1,132 @@
+{
+  "status": "partial-only-not-native-acceptance",
+  "results": [
+    {
+      "actor": "a",
+      "command": "node /srv/dev/s64-vLTHJK/root/.git/modules/raf-main/raf-hotfix/generations/aa503e6e-68ca-4328-9244-98f5528ab88f/raf-main/bin/raf.ts agent message --to sym64-b --text sym64-a-after-B",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "sym64-b",
+        "--text",
+        "sym64-a-after-B"
+      ],
+      "sourceLine": 70,
+      "cleanedLine": 19,
+      "timestamp": "2026-10-25T08:17:51.567Z",
+      "preliminary": false,
+      "outputSourceLine": 73,
+      "exitCode": 0,
+      "auditFile": "cli-audit/4e1a78ff-ca0b-4680-b264-1db3f2a00f21.json",
+      "fullNativeStdoutEqualsAuditPlusNewline": true,
+      "stdoutSha256": "67b35a737ce282f7057b0b6dcdd8b2e45d5346dc7770b6f7f133575027c9dd83",
+      "stdoutCharacters": 69,
+      "stderr": ""
+    },
+    {
+      "actor": "a",
+      "command": "node /srv/dev/s64-vLTHJK/root/.git/modules/raf-main/raf-hotfix/generations/aa503e6e-68ca-4328-9244-98f5528ab88f/raf-main/bin/raf.ts agent ps",
+      "argv": [
+        "agent",
+        "ps"
+      ],
+      "sourceLine": 77,
+      "cleanedLine": 21,
+      "timestamp": "2026-10-25T08:17:59.380Z",
+      "preliminary": false,
+      "outputSourceLine": 80,
+      "exitCode": 0,
+      "auditFile": "cli-audit/4cd81577-b406-4c63-b908-3edc650ad7c3.json",
+      "fullNativeStdoutEqualsAuditPlusNewline": true,
+      "stdoutSha256": "2c6896ac7648e42d0a5128955524846b087a9b05ff154e3b585b5456b725cf21",
+      "stdoutCharacters": 77341,
+      "stderr": "",
+      "sessions": 3
+    },
+    {
+      "actor": "a",
+      "command": "node /srv/dev/s64-vLTHJK/root/.git/modules/raf-main/raf-hotfix/generations/aa503e6e-68ca-4328-9244-98f5528ab88f/raf-main/bin/raf.ts agent close --id sym64-b",
+      "argv": [
+        "agent",
+        "close",
+        "--id",
+        "sym64-b"
+      ],
+      "sourceLine": 84,
+      "cleanedLine": 23,
+      "timestamp": "2026-10-25T08:18:06.453Z",
+      "preliminary": false,
+      "outputSourceLine": 87,
+      "exitCode": 1,
+      "expectedFilesystemDenial": {
+        "code": "PRODUCTION_ENTRY_FAILED",
+        "message": "EROFS: read-only file system, mkdir '/srv/dev/s64-vLTHJK/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-51385505-b5b7-48e2-b347-65f2655134b7'"
+      }
+    },
+    {
+      "actor": "b",
+      "command": "node /srv/dev/s64-vLTHJK/root/.git/modules/raf-main/raf-hotfix/generations/aa503e6e-68ca-4328-9244-98f5528ab88f/raf-main/bin/raf.ts agent ps",
+      "argv": [
+        "agent",
+        "ps"
+      ],
+      "sourceLine": 48,
+      "cleanedLine": 13,
+      "timestamp": "2026-10-25T08:17:26.833Z",
+      "preliminary": true,
+      "outputSourceLine": 51,
+      "exitCode": 0,
+      "auditFile": "cli-audit/5fe530d3-2dec-486b-8228-89dcefc498d7.json",
+      "fullNativeStdoutEqualsAuditPlusNewline": true,
+      "stdoutSha256": "cad3389a6d6ce0160ae373f9417efff59ac6844bbb67f4a946a4a2842a26a975",
+      "stdoutCharacters": 77339,
+      "stderr": "",
+      "sessions": 3
+    },
+    {
+      "actor": "b",
+      "command": "node /srv/dev/s64-vLTHJK/root/.git/modules/raf-main/raf-hotfix/generations/aa503e6e-68ca-4328-9244-98f5528ab88f/raf-main/bin/raf.ts agent message --to 'sym64-a' --text 'sym64-b-after-B'",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "sym64-a",
+        "--text",
+        "sym64-b-after-B"
+      ],
+      "sourceLine": 62,
+      "cleanedLine": 17,
+      "timestamp": "2026-10-25T08:17:41.925Z",
+      "preliminary": false,
+      "outputSourceLine": 65,
+      "exitCode": 0,
+      "auditFile": "cli-audit/50bf659f-4a62-48e4-b3a7-3d9b5fedd51d.json",
+      "fullNativeStdoutEqualsAuditPlusNewline": true,
+      "stdoutSha256": "a323478e24b1d6680f1d524275c54d84be4efb9505bdaf31961254b178cab522",
+      "stdoutCharacters": 69,
+      "stderr": ""
+    },
+    {
+      "actor": "b",
+      "command": "node /srv/dev/s64-vLTHJK/root/.git/modules/raf-main/raf-hotfix/generations/aa503e6e-68ca-4328-9244-98f5528ab88f/raf-main/bin/raf.ts agent ps",
+      "argv": [
+        "agent",
+        "ps"
+      ],
+      "sourceLine": 71,
+      "cleanedLine": 19,
+      "timestamp": "2026-10-25T08:17:49.868Z",
+      "preliminary": false,
+      "outputSourceLine": 74,
+      "exitCode": 0,
+      "auditFile": "cli-audit/0c1ced71-1ba3-4822-857d-0090b05dba57.json",
+      "fullNativeStdoutEqualsAuditPlusNewline": true,
+      "stdoutSha256": "353d2fe1a027824d3d004aaa6356cfccef76ce1135112ac5850355197f7141df",
+      "stdoutCharacters": 77341,
+      "stderr": "",
+      "sessions": 3
+    }
+  ],
+  "limits": "Only afterB message/ps for both actors and a negative close exist; b has one additional preliminary ps. A/rollback calls and b negative close are unexecuted. Authenticated incoming sender proof not independently supplied for this partial stand; no final acceptance claim."
+}

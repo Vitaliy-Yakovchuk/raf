@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { assertNativeDenial, nativeProbeReceipt } from './qa-main-agent-denial.mjs';
+import { nativeCloseProbe } from './qa-main-agent-channel-metadata.mjs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -48,6 +49,9 @@ try {
     ownCommits();
     atomic('sym64-source-0', { status: 'passed', results });
   } else {
+    const readControls = JSON.parse(fs.readFileSync(path.join(own, 'sym64-read-controls-' + stage + '.json')));
+    assert.equal(readControls.stage, stage); assert.equal(readControls.runId, path.basename(own));
+    nativeCloseProbe({ brief: fs.readFileSync(path.join(own, 'brief.txt'), 'utf8'), control: readControls, root }, results);
     const alias = path.join(own, 'sym64-aliases-' + stage); fs.mkdirSync(alias);
     const source = command('source common', 'git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], 'allow');
     const control = path.join(source, 'raf-hotfix'), production = path.join(control, 'main.git');
@@ -88,8 +92,6 @@ try {
       for (const op of ['write', 'rename', 'unlink']) probe('deny activation ' + op, operations[op], [path.join(prefix, 'registry.json')], 'deny');
       probe('deny activation create', operations.create, [path.join(prefix, 'native-activation-' + stage)], 'deny');
     }
-    const readControls = JSON.parse(fs.readFileSync(path.join(own, 'sym64-read-controls-' + stage + '.json')));
-    assert.equal(readControls.stage, stage); assert.equal(readControls.runId, path.basename(own));
     for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) {
       const target = path.join(path.dirname(root), '.raf', name), control = readControls.files.find(file => file.path === target);
       assert.ok(control, 'Host must confirm the actual hidden read target exists');

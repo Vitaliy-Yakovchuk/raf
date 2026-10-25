@@ -1,0 +1,117 @@
+{
+  "status": "partial-only-not-native-acceptance",
+  "results": [
+    {
+      "actor": "a",
+      "command": "node /srv/dev/s64-uhDBd0/root/.git/modules/raf-main/raf-hotfix/generations/6a4844c7-5cf2-41e7-b5af-8b49bd416c05/raf-main/bin/raf.ts agent message --to sym64-b --text sym64-a-after-B",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "sym64-b",
+        "--text",
+        "sym64-a-after-B"
+      ],
+      "sourceLine": 54,
+      "cleanedLine": 15,
+      "timestamp": "2026-10-25T08:51:34.317Z",
+      "outputSourceLine": 65,
+      "exitCode": 0,
+      "fullNativeOutputSha256": "50256db777ec2ba0a56284ddf0dc8c915ce61db8e91b81f2fc71f2f4e9a9a1de",
+      "characters": 69,
+      "matchingAuditFiles": [
+        "cli-audit/2ee40cc0-251e-4c5e-9db3-17b13c464579.json"
+      ],
+      "fullNativeStdoutEqualsAuditPlusNewline": true,
+      "stderr": ""
+    },
+    {
+      "actor": "a",
+      "command": "node /srv/dev/s64-uhDBd0/root/.git/modules/raf-main/raf-hotfix/generations/6a4844c7-5cf2-41e7-b5af-8b49bd416c05/raf-main/bin/raf.ts agent ps",
+      "argv": [
+        "agent",
+        "ps"
+      ],
+      "sourceLine": 69,
+      "cleanedLine": 19,
+      "timestamp": "2026-10-25T08:51:42.592Z",
+      "outputSourceLine": 72,
+      "exitCode": 0,
+      "fullNativeOutputSha256": "8408a5df2f49d9eed1bce7cfac489e33f6129edbaadd7fcdd40c45036b86eadc",
+      "characters": 77500,
+      "matchingAuditFiles": [
+        "cli-audit/63be051f-28a7-44d2-932c-88d81edff5a0.json"
+      ],
+      "fullNativeStdoutEqualsAuditPlusNewline": true,
+      "stderr": "",
+      "sessions": 3
+    },
+    {
+      "actor": "b",
+      "command": "node /srv/dev/s64-uhDBd0/root/.git/modules/raf-main/raf-hotfix/generations/6a4844c7-5cf2-41e7-b5af-8b49bd416c05/raf-main/bin/raf.ts agent message --to sym64-a --text sym64-b-after-B",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "sym64-a",
+        "--text",
+        "sym64-b-after-B"
+      ],
+      "sourceLine": 36,
+      "cleanedLine": 9,
+      "timestamp": "2026-10-25T08:51:34.285Z",
+      "outputSourceLine": 47,
+      "exitCode": 0,
+      "fullNativeOutputSha256": "ca4262044da11bc66bb1bc7f63cc1fd1f30c97bde1d697975db80c4d96e59707",
+      "characters": 69,
+      "matchingAuditFiles": [
+        "cli-audit/7bd99602-b798-49a5-a359-8cea9767a730.json"
+      ],
+      "fullNativeStdoutEqualsAuditPlusNewline": true,
+      "stderr": ""
+    },
+    {
+      "actor": "b",
+      "command": "node /srv/dev/s64-uhDBd0/root/.git/modules/raf-main/raf-hotfix/generations/6a4844c7-5cf2-41e7-b5af-8b49bd416c05/raf-main/bin/raf.ts agent ps",
+      "argv": [
+        "agent",
+        "ps"
+      ],
+      "sourceLine": 51,
+      "cleanedLine": 13,
+      "timestamp": "2026-10-25T08:51:42.717Z",
+      "outputSourceLine": 54,
+      "exitCode": 0,
+      "fullNativeOutputSha256": "e79455b7afd5eec3873794dc155c99231a572b8dfcb6e483aed7749e122d89f8",
+      "characters": 77500,
+      "matchingAuditFiles": [
+        "cli-audit/8591f316-d89a-43fd-8622-f501b4d4f335.json"
+      ],
+      "fullNativeStdoutEqualsAuditPlusNewline": true,
+      "stderr": "",
+      "sessions": 3
+    },
+    {
+      "actor": "b",
+      "command": "node /srv/dev/s64-uhDBd0/root/.git/modules/raf-main/raf-hotfix/generations/6a4844c7-5cf2-41e7-b5af-8b49bd416c05/raf-main/bin/raf.ts agent close --id sym64-a",
+      "argv": [
+        "agent",
+        "close",
+        "--id",
+        "sym64-a"
+      ],
+      "sourceLine": 60,
+      "cleanedLine": 15,
+      "timestamp": "2026-10-25T08:51:54.852Z",
+      "outputSourceLine": 63,
+      "exitCode": 1,
+      "fullNativeOutputSha256": "198de14b29f48dce09d69fe3b4729e804bd43b815125785dc89449cd2572a38e",
+      "characters": 202,
+      "expectedFilesystemDenial": {
+        "code": "PRODUCTION_ENTRY_FAILED",
+        "message": "EROFS: read-only file system, mkdir '/srv/dev/s64-uhDBd0/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-7ce02bab-eb07-4768-9284-3fd970237541'"
+      }
+    }
+  ],
+  "limits": "Both after-B message/ps have complete exact native output; b has expected close EROFS/1 and stage1 passed. Actor a refused close/stage1. A/rollback and final completions unexecuted. Sender attribution in native execution is actor run identity; independent incoming receipt evidence is not claimed."
+}

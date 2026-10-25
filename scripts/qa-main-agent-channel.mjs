@@ -116,7 +116,7 @@ try {
   fs.mkdirSync(path.join(main, 'qa'), { recursive: true });
   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-probe.mjs'), path.join(main, 'qa/sym64-probe.mjs'));
   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-denial.mjs'), path.join(main, 'qa/qa-main-agent-denial.mjs'));
-  fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-metadata.mjs'), path.join(main, 'qa/sym64-metadata.mjs'));
+  fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-metadata.mjs'), path.join(main, 'qa/qa-main-agent-channel-metadata.mjs'));
   for (const actor of ['a', 'b']) fs.writeFileSync(path.join(main, 'qa/sym64-instructions-' + actor + '.txt'), nativeActorPlan(actor, root).instructions + '\n');
   const sandboxFile = path.join(main, 'src/codex-sandbox.ts');
   let sandboxSource = fs.readFileSync(sandboxFile, 'utf8');
@@ -124,7 +124,7 @@ try {
   const afterProbe = '    await recordProductionSandboxProtection(request.readOnlyDirectories ?? [], join(directory, \'policy.json\'));';
   assert.equal(sandboxSource.split(beforeProbe).length, 2);
   assert.equal(sandboxSource.split(afterProbe).length, 2);
-  sandboxSource = sandboxSource.replace(beforeProbe, `    const qaMetadata = await import('../qa/sym64-metadata.mjs');\n    qaMetadata.capturePolicy(request.readOnlyDirectories ?? [], request.runId, 'compiled');\n${beforeProbe}`)
+  sandboxSource = sandboxSource.replace(beforeProbe, `    const qaMetadata = await import('../qa/qa-main-agent-channel-metadata.mjs');\n    qaMetadata.capturePolicy(request.readOnlyDirectories ?? [], request.runId, 'compiled');\n${beforeProbe}`)
     .replace(afterProbe, `    qaMetadata.capturePolicy(request.readOnlyDirectories ?? [], request.runId, 'native-preflight');\n${afterProbe}`);
   fs.writeFileSync(sandboxFile, sandboxSource);
   const bin = path.join(main, 'bin/raf.ts');
@@ -290,7 +290,7 @@ try {
     const socketControlsBefore = captureStandSocketControls(root, mainRecord, actors);
     atomic(path.join(ev, 'socket-controls-before-' + index + '.json'), socketControlsBefore);
     await releaseNativeStage({ actors,
-      writeControls: a => atomic(path.join(own(a), 'sym64-read-controls-' + (index + 1) + '.json'), { stage: index + 1, runId: a.runId, files: readControlsBefore, sockets: socketControlsBefore }),
+      writeControls: a => atomic(path.join(own(a), 'sym64-read-controls-' + (index + 1) + '.json'), { stage: index + 1, runId: a.runId, agentId: a.addressId, briefSha256: summary.actors.find(s => s.runId === a.runId).briefSha256, files: readControlsBefore, sockets: socketControlsBefore }),
       gate: a => gate(a, index),
       wait: a => wait('native gate ' + (index + 1), () => stage(a, index + 1)),
     });

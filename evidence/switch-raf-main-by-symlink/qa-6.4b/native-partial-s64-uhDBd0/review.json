@@ -1,0 +1,49 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "failed-partial-native",
+  "reviewed": "dda183b331b1a2942e14892047e3b9965b5ca963",
+  "hostNodeExit": 1,
+  "exitReceipt": "host-exit.txt",
+  "finding": "Actor a recognized explicit initial authorization but later refused direct close because raf_subcommands omits close. Actor b completed expected close denial and passed stage1; the host correctly refused to switch without a. Move exact denied CLI attempt into the same native sandbox helper with full actual subprocess result; do not widen privileged channel.",
+  "actors": [
+    {
+      "actor": "sym64-a",
+      "runId": "6fb04c53-4214-4a31-bb90-92bca985122b",
+      "runnerSessionId": "01a17240-fe7a-7861-ad8c-a86619a83b45",
+      "briefSha256": "02539821a006cd6574a97a25748d92d17bd38697ddcabee56a7012354e68468b",
+      "stage1": "unexecuted",
+      "stage1Results": 0
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "4359a2b8-19f7-42d8-a249-448370246656",
+      "runnerSessionId": "01a17241-50ae-7421-b0cf-283c937b8eb0",
+      "briefSha256": "8614f1212199a6d0ae1d8bd8ab5ed931b838b04ca897634a3d41429fae7c173f",
+      "stage1": "passed",
+      "stage1Results": 287
+    }
+  ],
+  "switches": [
+    {
+      "action": "switch",
+      "target": "a829ae5a97078a2bf8fd20c11cfc4abd0f9b79b4",
+      "previous": "/srv/dev/s64-uhDBd0/root/raf-main-a",
+      "active": "/srv/dev/s64-uhDBd0/root/raf-main-b"
+    }
+  ],
+  "cleanup": {
+    "complete": true,
+    "processes": [],
+    "remaining": []
+  },
+  "mainAttestation": "Read-only archive and cleaned native/messages supplied by Main, secscan 0; node receipt sym64m=1. Raw reasoning not read or copied.",
+  "nativeAcceptance": null,
+  "unexecuted": [
+    "actor a stage1/negative CLI",
+    "both actors after-A/after-rollback",
+    "both actors stages2/3/completion receipts",
+    "full native acceptance"
+  ],
+  "copiedFiles": 67,
+  "copiedBytes": 5075138
+}

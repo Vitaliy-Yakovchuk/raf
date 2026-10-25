@@ -1,0 +1,159 @@
+{
+  "assignment": {
+    "change": "switch-raf-main-by-symlink",
+    "item": "6.6",
+    "phase": "implement",
+    "agent": "raf-sym66-impl"
+  },
+  "audit": {
+    "current": true,
+    "contradictions": [],
+    "sources": [
+      "proposal.md: Why / What Changes / Non-goals",
+      "tasks.md: 6.5, 6.6, 7.1–7.3",
+      "design.md: Початкове приведення структури; Захищений Git store",
+      "specs/projects/orchestrator/branch-directories/spec.md: Початкова перевірка структури Orchestrator; Приведення Git store без втрати dirty стану; Переривання розділення stores",
+      "specs/projects/raf/workspace-routing/spec.md: Дозволений канал агента переживає перемикання main / Розділення source та production Git"
+    ],
+    "finding": "Дефект актуальний: каркас production bootstrap кидав NotImplemented, service start не готував protected store. Пункт реалізовано без змін scope інших пунктів."
+  },
+  "implementation": {
+    "commit": "3203c14e33a5c95d3a96486b441a4b7b8bad01f2",
+    "paths": [
+      "src/production-start-layout.ts",
+      "src/service-entry.ts",
+      "src/main-layout-paths.ts",
+      "src/main-layout.ts"
+    ],
+    "behavior": [
+      "Актуальний conf читається перед підготовкою. Наявні перевірки конфігурації mainCopies винесено в спільний pure helper і застосовано перед store mutation. За відсутності mainCopies доводиться тільки store звичайного main без вигаданих слотів.",
+      "ensureProductionMainStore виконується під його чинним writer barrier/durable recovery до залежного ensureMainLayoutForStart; checkpoint callback передано.",
+      "Явний service start, implicit resource readiness, request з автостартом і direct service entry готують layout перед залежною роботою. Вже готова служба не обходить preparation. Status/stop зберігають read/control поведінку.",
+      "Наявний agentChannelReadOnlyPaths та prepared tests не змінено."
+    ],
+    "independentImplementation": "Підготовлені тести вперше прочитано після незалежної реалізації та першого цільового прогону. Єдине падіння виправлено зміною порядку store/layout; очікування тесту збережено."
+  },
+  "verification": {
+    "primaryRun": "verified",
+    "workspaceBefore": "verified-workspace-before.json",
+    "workspaceAfter": "verified-workspace-after.json",
+    "runs": [
+      {
+        "label": "initial",
+        "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+        "result": "initial.TestRunResult.json",
+        "toolResult": "initial.tool-result.json",
+        "stderr": "initial.stderr",
+        "cliExitCode": 1,
+        "childExitCode": 1,
+        "runId": "6e1ca139-86fc-47c2-a77d-8af1493fb98f",
+        "selection": {
+          "files": [
+            "test/production-start-layout.test.ts"
+          ],
+          "testIds": []
+        },
+        "outcome": "assertions-failed",
+        "timedOut": false,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "passed": 10,
+        "knownRed": [
+          {
+            "file": "test/production-start-layout.test.ts",
+            "name": "start: writer barrier refusal propagates and prevents dependent layout conversion"
+          }
+        ],
+        "unexecuted": [],
+        "unknown": [],
+        "groupSnapshot": "loaded",
+        "groupState": "idle",
+        "timeoutCount": 0,
+        "nextAction": "fix-implementation"
+      },
+      {
+        "label": "green",
+        "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+        "result": "green.TestRunResult.json",
+        "toolResult": "green.tool-result.json",
+        "stderr": "green.stderr",
+        "cliExitCode": 0,
+        "childExitCode": 0,
+        "runId": "4653ac82-c88a-4c14-b489-e9bab1a301af",
+        "selection": {
+          "files": [
+            "test/production-start-layout.test.ts"
+          ],
+          "testIds": []
+        },
+        "outcome": "passed",
+        "timedOut": false,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "passed": 11,
+        "knownRed": [],
+        "unexecuted": [],
+        "unknown": [],
+        "groupSnapshot": "loaded",
+        "groupState": "complete",
+        "timeoutCount": 0,
+        "nextAction": "complete"
+      },
+      {
+        "label": "verified",
+        "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+        "result": "verified.TestRunResult.json",
+        "toolResult": "verified.tool-result.json",
+        "stderr": "verified.stderr",
+        "cliExitCode": 0,
+        "childExitCode": 0,
+        "runId": "8344534c-e61b-4e12-bd5b-5c01a739efbc",
+        "selection": {
+          "files": [
+            "test/production-start-layout.test.ts"
+          ],
+          "testIds": []
+        },
+        "outcome": "passed",
+        "timedOut": false,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "passed": 11,
+        "knownRed": [],
+        "unexecuted": [],
+        "unknown": [],
+        "groupSnapshot": "loaded",
+        "groupState": "complete",
+        "timeoutCount": 0,
+        "nextAction": "complete"
+      }
+    ],
+    "checks": "checks.json",
+    "preparedTestsAndGuardUnchanged": true,
+    "sameQaHomeAndStableGroup": true,
+    "proofCapture": "Повні tool envelopes збережено. Кожний merged output є одним TestRunResult JSON із завершальним newline; додаткових stderr diagnostics немає, окремі stderr файли мають 0 bytes. Окремі CLI codes не підмінені child exitCode. JSON bytes звірені з tool output.",
+    "resourceUsageLimit": "Sampled RAM/disk usage має partial/unknown completeness за незміненим TestRunResult; це не змінює підтверджений результат тестів."
+  },
+  "limits": [
+    "Реальні Git integration fixtures 6.5 (9 сценаріїв) цим unit-прогоном не виконувались; це не native/live QA.",
+    "Повторний QA 6.4 не входить до 6.6; живе перенесення виконує main після QA 7.2 за дорученням.",
+    "Немає змін conf, prepared tests, задач 7.1–7.3, tasks checkboxes, live stores, push або archive. Чужі незакомічені файли залишені власникам."
+  ],
+  "handoff": {
+    "itemStatus": "succeeded",
+    "checkboxOwner": "raf",
+    "otherOpenItems": [
+      "7.1",
+      "7.2",
+      "7.3"
+    ],
+    "archive": false,
+    "nextAction": "main приймає 6.6 і продовжує чинні 7.1/7.2; живе перенесення лише після QA 7.2."
+  }
+}

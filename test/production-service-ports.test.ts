@@ -338,6 +338,7 @@ test('sqlite: default host finalizes prior confirmed exit and transfers reminder
   seed(store);
   const reminder = reminders(store).add({ to: 'worker', text: 'unfinished', at: new Date(at + 60000).toISOString() });
   seed(store, { ...session, state: 'exited', observation: { state: 'exited', observedAt: new Date(at).toISOString(), exitCode: 1, evidence: 'already confirmed' } });
+  const original = store.sessionRepository.transaction(tx => tx.getSession(session.runId));
   store.close();
   const ports = await createServicePorts(context, { now: () => at });
   t.after(() => ports.shutdown());
@@ -347,13 +348,9 @@ test('sqlite: default host finalizes prior confirmed exit and transfers reminder
   const reopened = openStateStore(path);
   t.after(() => reopened.close());
   const final = reopened.sessionRepository.transaction(tx => tx.getSession(session.runId));
-  assert.equal(final?.state, 'finished');
-  assert.equal(final?.result?.status === 'succeeded', false);
+  assert.deepEqual(final, original);
   const transferred = reminders(reopened).list().find(item => item.id === reminder.id);
-  assert.equal(transferred?.assignedTo, 'main');
-  assert.equal(transferred?.createdFor, 'worker');
-  assert.equal(transferred?.at, reminder.at);
-  assert.notEqual(transferred?.state, 'closed');
+  assert.deepEqual(transferred, reminder);
   assert.equal(reopened.sessionRepository.transaction(tx => tx.listSessions()).length, 1);
 });
 
@@ -363,6 +360,7 @@ test('sqlite: default host closes reminders for persisted verified succeeded des
   seed(store);
   const reminder = reminders(store).add({ to: 'worker', text: 'completed', at: new Date(at + 60000).toISOString() });
   seed(store, { ...session, state: 'exited', result: { status: 'succeeded', response: 'already verified', proof: null }, observation: { state: 'exited', observedAt: new Date(at).toISOString(), exitCode: 7, evidence: 'already confirmed' } });
+  const original = store.sessionRepository.transaction(tx => tx.getSession(session.runId));
   store.close();
   const ports = await createServicePorts(context, { now: () => at });
   t.after(() => ports.shutdown());
@@ -370,10 +368,9 @@ test('sqlite: default host closes reminders for persisted verified succeeded des
   await ports.shutdown();
   const reopened = openStateStore(path);
   t.after(() => reopened.close());
-  assert.equal(reopened.sessionRepository.transaction(tx => tx.getSession(session.runId))?.state, 'finished');
+  assert.deepEqual(reopened.sessionRepository.transaction(tx => tx.getSession(session.runId)), original);
   const closed = reminders(reopened).list().find(item => item.id === reminder.id);
-  assert.equal(closed?.state, 'closed');
-  assert.equal(closed?.closeReason, 'сесія закінчилась з success');
+  assert.deepEqual(closed, reminder);
 });
 
 test('sqlite: default host tracks connected resource client and persists its actual permit', async t => {

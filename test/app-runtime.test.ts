@@ -37,6 +37,7 @@ function fixture() {
     costProfileRepository: { update: () => { throw new Error('Runtime must use owner ports'); }, readRows: () => [] },
     recordCostSample: () => { throw new Error('Runtime must use owner ports'); },
     readCostProfile: () => ({ schemaVersion: 1, readAt: identity.startedAt, rows: [] }),
+    readForcedCloseMetrics: readAt => ({ readAt: readAt!, since: identity.startedAt, completed: 0, refusalsByCode: {}, unavailableReason: null }),
     close: () => note('store.close'),
     getRunnerEnabled: id => { note('getRunnerEnabled', id); return switches.get(id); },
     initializeRunners: entries => { note('initialize', entries); for (const entry of entries) if (!switches.has(entry.id)) switches.set(entry.id, entry.initialEnabled); },
@@ -365,7 +366,13 @@ test('timing write failure preserves structured operation error and redacts secr
   assert.notEqual(result.exitCode, 0);
   for (const value of ['SCAN_UNAVAILABLE', 'reconcile', 'identity', 'EACCES', 'loaded', 'scan']) assert.ok(result.stderr.includes(value));
   assert.ok(!result.stderr.includes('private'));
-  assert.ok(!result.stderr.includes('timing unavailable'));
+  assert.match(result.stderr, /Command timing storage failed: timing unavailable/);
+  const failure = JSON.parse(result.stderr);
+  assert.equal(failure.code, 'SCAN_UNAVAILABLE');
+  assert.match(failure.message, /^scan token=.*; Command timing storage failed: timing unavailable$/);
+  assert.deepEqual(failure.details.completed, ['loaded']);
+  assert.deepEqual(failure.details.pending, ['scan']);
+  assert.deepEqual(failure.remediation, ['fix scanner', 'raf help agent ps']);
 });
 
 test('unavailable explicit state path is never replaced by working home database', async () => {

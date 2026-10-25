@@ -402,15 +402,18 @@ function statsFixture(rows: RafCostRow[] = []) {
 
 test('profile: existing command stats without flags returns commands/profile, preserving EMA independently', async () => {
   const f = statsFixture();
+  const startedAt = Date.now();
   const result = await execute(['command', 'stats'], f.catalog, f.app.handlers);
+  const finishedAt = Date.now();
   await f.app.close();
   assert.equal(result.exitCode, 0, result.stderr);
   const body = JSON.parse(result.stdout);
   assert.equal(Array.isArray(body), false, 'stats changes from array to commands/profile object');
   assert.ok(Array.isArray(body.commands));
   assert.deepEqual(Object.keys(body).sort(), ['commands', 'health', 'profile']);
-  assert.deepEqual(body.health, { readAt: new Date(150).toISOString(), since: epoch,
-    forcedClose: { readAt: new Date(150).toISOString(), since: epoch, completed: 0, refusalsByCode: {}, unavailableReason: null } });
+  assert.ok(Date.parse(body.health.readAt) >= startedAt && Date.parse(body.health.readAt) <= finishedAt);
+  assert.deepEqual(body.health, { readAt: body.health.readAt, since: epoch,
+    forcedClose: { readAt: body.health.readAt, since: epoch, completed: 0, refusalsByCode: {}, unavailableReason: null } });
   const ps = body.commands.find((row: { command: string }) => row.command === 'agent ps');
   assert.equal(ps.command, 'agent ps');
   assert.equal(ps.averageMs, 23.25);

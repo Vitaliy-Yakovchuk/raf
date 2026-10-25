@@ -185,7 +185,7 @@ try {
     const r = spawnSync('git', ['-c', 'user.name=Profile QA', '-c', 'user.email=profile-qa@example.invalid', '-c', 'commit.gpgSign=false', '-c', 'core.hooksPath=/dev/null', ...args], { cwd, env: process.env, encoding: 'utf8' });
     assert.equal(r.status, 0, r.stderr); return r.stdout.trim();
   };
-  git(main, ['init', '-q', '--initial-branch=main']);
+  git(main, ['init', '-q', '--initial-branch=main', '--separate-git-dir', join(f.root, 'main-git')]);
   git(main, ['add', '--', 'src', 'bin', 'scripts', 'package.json']);
   git(main, ['commit', '-q', '-m', 'Isolated profile QA main']);
   const { compileCatalog } = await import('../src/catalog.ts');
@@ -247,6 +247,21 @@ p.stage('wait');await new Promise(r=>setTimeout(r,100));p.stage('handler');
 await executeCommand({executable:'git',args:['--version']});p.stage('finalization');
 if(process.argv[2]==='crash'){writeFileSync(process.argv[3],'completed');await new Promise(()=>setInterval(()=>{},1000));}else{p.finish();store.close();console.log(JSON.stringify({before,after:process.cpuUsage(),resourceUsage:process.resourceUsage()}));}
 `);
+  await scenario('profile boundaries add no helper spawn or polling resources', async () => {
+    const probe = join(base, 'boundary-probe.mjs');
+    await writeFile(probe, `import { createHook } from 'node:async_hooks';
+import { openStateStore } from ${JSON.stringify(pathToFileURL(join(f!.cwd, 'src/state-store.ts')).href)};
+import { RafCostRuntime } from ${JSON.stringify(pathToFileURL(join(f!.cwd, 'src/raf-cost-runtime.ts')).href)};
+const store=openStateStore(${JSON.stringify(f!.statePath)});const resources=[];
+const hook=createHook({init(id,type){if(['PROCESSWRAP','Timeout','Immediate','TIMERWRAP'].includes(type))resources.push(type);}});
+hook.enable();const p=new RafCostRuntime(store,{scope:'worker',command:null},${JSON.stringify(f!.root)},'handler');p.install();
+for(let i=0;i<20;i++){p.stage('wait');p.stage('handler');}p.finish();hook.disable();store.close();console.log(JSON.stringify({resources,boundaries:40}));
+`);
+    const result = await child([probe]);
+    assert.equal(result.code, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout).resources, []);
+    return result;
+  });
   await scenario('concurrent SQLite writers and actual CPU accounting', async () => {
     const before = f!.store.readCostProfile();
     const writers = await Promise.all([child([contributor]), child([contributor]), child([contributor])]);

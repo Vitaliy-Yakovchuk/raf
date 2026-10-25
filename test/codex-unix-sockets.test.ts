@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { chmod, mkdir, mkdtemp, open, readFile, readdir, realpath, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { createConnection, createServer, type Server } from 'node:net';
+import { networkInterfaces } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { test, type TestContext } from 'node:test';
@@ -210,10 +211,10 @@ function denied(result: Result, probes: readonly Probe[]): void {
   success(result, 'sandbox probe must execute; failed startup is not access denial');
   const observations: Observation[] = JSON.parse(result.stdout);
   assert.deepEqual(observations.map(value => value.id), probes.map(value => value.id));
-  for (const observation of observations) {
+  for (const [index, observation] of observations.entries()) {
     assert.equal(observation.ok, false, `${observation.id}: host resource was accessible`);
     assert.ok(observation.error, `${observation.id}: missing denial category`);
-    assert.notEqual(observation.error, 'ECONNREFUSED', `${observation.id}: a dead listener is not isolation`);
+    if (probes[index].kind !== 'tcp') assert.notEqual(observation.error, 'ECONNREFUSED', `${observation.id}: a dead listener is not isolation`);
     assert.notEqual(observation.error, 'ETIMEDOUT', `${observation.id}: timeout is not demonstrated isolation`);
     assert.notEqual(observation.error, 'SQLITE_TOOL_UNAVAILABLE', 'missing sqlite3 is not isolation');
   }
@@ -265,6 +266,80 @@ test('Y.2 real sandbox: Node Unix listen/connect/exchange in workspace and own r
   assert.equal(result.stdout, 'own-ipc-ok');
   for (const path of paths) await assert.rejects(stat(path), { code: 'ENOENT' });
   await hostControls(f.probes, f.listeners, f.cwd);
+});
+
+async function hostTcpTargets(disposers: Disposer[]): Promise<{ port: number; hosts: string[] }> {
+  const server = createServer(socket => { socket.on('error', () => {}); socket.end('host-tcp-alive'); });
+  server.on('error', () => {});
+  disposers.push(async () => { if (server.listening) await new Promise<void>(done => server.close(() => done())); });
+  const listening = async (host: string) => { server.listen({ port: 0, host, ipv6Only: false }); await Promise.race([once(server, 'listening'), once(server, 'error').then(([error]) => { throw error; })]); };
+  await listening('::').catch(() => listening('0.0.0.0'));
+  const address = server.address();
+  assert.ok(typeof address === 'object' && address !== null);
+  const candidates = ['127.0.0.1', '::1', ...Object.values(networkInterfaces()).flat().filter(value => value && !value.internal && !value.address.startsWith('fe80')).map(value => value!.address)];
+  const hosts: string[] = [];
+  for (const host of new Set(candidates)) {
+    const reached = hostConnect({ id: host, kind: 'tcp', path: host, port: address.port }).then(() => true, () => false);
+    if (await Promise.race([reached, new Promise<boolean>(done => setTimeout(() => done(false), 2000).unref())])) hosts.push(host);
+  }
+  assert.ok(hosts.includes('127.0.0.1'), 'host must reach its own loopback TCP fixture');
+  return { port: address.port, hosts };
+}
+
+test('Z.421 real sandbox: own loopback TCP listen/connect works in the unshared network namespace; host TCP addresses and raf sockets stay unreachable', { timeout: timeoutMs }, async t => {
+  const f = await fixture(t);
+  const prepared = await prepare(f);
+  const host = await hostTcpTargets(f.disposers);
+  const sockets = f.probes.filter(probe => probe.kind === 'socket');
+  const result = await tool(prepared, f, `
+    import {createServer,createConnection} from 'node:net';
+    import {readFileSync} from 'node:fs';
+    import {once} from 'node:events';
+    const {port,hosts,sockets}=JSON.parse(process.argv[1]);
+    const exchange=async address=>{
+      const server=createServer(socket=>socket.once('data',data=>socket.end(data)));
+      try {
+        server.listen(0,address); await Promise.race([once(server,'listening'),once(server,'error').then(([error])=>{throw error;})]);
+        const socket=createConnection({host:address,port:server.address().port});
+        await Promise.race([once(socket,'connect'),once(socket,'error').then(([error])=>{throw error;})]);
+        socket.write('own-tcp');
+        const [data]=await once(socket,'data'); socket.destroy();
+        return {ok:data.toString()==='own-tcp',error:null};
+      } catch(error) { return {ok:false,error:error.code ?? error.message}; }
+      finally { if(server.listening) await new Promise(done=>server.close(done)); }
+    };
+    const attempt=target=>new Promise(resolve=>{
+      const socket=createConnection(target);
+      const timer=setTimeout(()=>{socket.destroy();resolve({ok:false,error:'ETIMEDOUT'});},5000);
+      socket.once('connect',()=>{clearTimeout(timer);socket.destroy();resolve({ok:true,error:null});});
+      socket.once('error',error=>{clearTimeout(timer);resolve({ok:false,error:error.code});});
+    });
+    const own={ipv4:await exchange('127.0.0.1')};
+    const interfaces=readFileSync('/proc/self/net/dev','utf8').split('\\n').slice(2).map(line=>line.split(':')[0].trim()).filter(Boolean);
+    const hostTcp=[];
+    for(const address of hosts) hostTcp.push({address,...await attempt({host:address,port})});
+    const unix=[];
+    for(const path of sockets) unix.push({path,...await attempt(path)});
+    process.stdout.write(JSON.stringify({own,interfaces,hostTcp,unix}));
+  `, [JSON.stringify({ port: host.port, hosts: host.hosts, sockets: sockets.map(probe => probe.path) })]);
+  success(result, 'loopback TCP probe must execute inside the real Codex sandbox');
+  const output = JSON.parse(result.stdout);
+  assert.deepEqual(output.own.ipv4, { ok: true, error: null }, `own 127.0.0.1 listen/connect must work inside the sandbox: ${JSON.stringify(output.own.ipv4)}`);
+  assert.deepEqual(output.interfaces, ['lo'], 'sandbox network namespace must expose only its own loopback, never host interfaces');
+  assert.deepEqual(output.hostTcp.map((value: { address: string }) => value.address), host.hosts);
+  for (const value of output.hostTcp) {
+    assert.equal(value.ok, false, `host TCP ${value.address}:${host.port} must stay unreachable`);
+    assert.ok(['ECONNREFUSED', 'ENETUNREACH', 'EHOSTUNREACH', 'EADDRNOTAVAIL'].includes(value.error), `host TCP ${value.address}: expected namespace isolation, got ${value.error}`);
+  }
+  assert.equal(output.unix.length, sockets.length);
+  for (const value of output.unix) {
+    assert.equal(value.ok, false, `host control socket ${value.path} must stay unreachable`);
+    assert.ok(['EACCES', 'EPERM', 'ENOENT', 'ENOTDIR'].includes(value.error), `host control socket ${value.path}: got ${value.error}`);
+  }
+  for (const address of host.hosts) await hostConnect({ id: address, kind: 'tcp', path: address, port: host.port });
+  await hostControls(f.probes, f.listeners, f.cwd);  const policy = JSON.parse(await readFile(join(prepared.policyPaths[0], 'policy.json'), 'utf8'));
+  assert.equal(policy.network.namespace, 'unshared', 'TCP is opened only inside the agent network namespace');
+  assert.deepEqual([...policy.network.socketFamilies].sort(), ['AF_INET', 'AF_INET6', 'AF_UNIX']);
 });
 
 test('Y.2 real sandbox: own tmux server executes a command and cleans only itself', { timeout: timeoutMs }, async t => {

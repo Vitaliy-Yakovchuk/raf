@@ -1,0 +1,165 @@
+{
+  "sha": "bf3f00a2db234945ec41c1b7a7bb3af43a96e8ff",
+  "workspaceStatusBefore": " M evidence/add-raf-agent-run-4.1b/multiline-audit.md\n M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n?? evidence/add-raf-agent-run-4.1b/artifact-verification.json\n?? evidence/add-raf-agent-run-4.1b/build-repaired.cli-exit-code\n?? evidence/add-raf-agent-run-4.1b/build-repaired.metadata.json\n?? evidence/add-raf-agent-run-4.1b/build-repaired.stderr\n?? evidence/add-raf-agent-run-4.1b/build-repaired.stdout\n?? evidence/add-raf-agent-run-4.1b/contracts-coverage.json\n?? evidence/add-raf-agent-run-4.1b/host-27a-review.json\n?? evidence/add-raf-agent-run-4.1b/integration-selection.json\n",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/contracts",
+  "fixtureRepair": "ac9a49eeabc85a476bc864d9b1ed0bdb1e62f54b",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "runId": "ce13e2d8-39e3-4e0a-8f38-f053ad103d8a",
+  "outcome": "assertions-failed",
+  "passed": 594,
+  "knownRed": [
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-launch] default service composition starts the persistent worker and survives the command process exit"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] persistent child commits the actual native process before returning the handshake"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] unconfirmed OpenSpec success becomes failed after exit and never auto-resumes"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] crash without a report records failed in the same SQLite and does not launch a replacement"
+    },
+    {
+      "file": "test/runner-availability.test.ts",
+      "name": "[runner-availability] 15. runner list знаходить codex за назвою через підмінений PATH"
+    },
+    {
+      "file": "test/runner-availability.test.ts",
+      "name": "[runner-availability] 15. runner list без codex у PATH показує недоступність з причиною PATH"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "crash is finalized without resume and hands unfinished reminders to inactive main by the raf registry"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "a later check by another command after crash finalization neither resumes the session nor repeats the handoff"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "one closure notice reaches the other project participants only after final closure and never announces a rejoin"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "failed finalization write rolls back session closure, reservation release, handoff and agent.closed; the next check repeats it"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "two observers of one exit commit a single transition, handoff and closure event"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "crash of main keeps its reminders at the main address and hands nothing elsewhere"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "accepted succeeded before a crash closes every reminder created for the session and keeps foreign ones"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "failed result with a crash hands reminders to main instead of closing them"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "close-all racing a reassignment leaves every reminder of the primary address closed and reports REMINDER_CLOSED"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "process scan error is not a death: no closure, handoff or notice"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "agent death while its tmux shell lives on is still detected by PID evidence in one check"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "a reused PID with another start time or command is not the old agent"
+    },
+    {
+      "file": "test/session-recovery.test.ts",
+      "name": "event and reminder action bound to the failure fact run once across repeated checks by separate commands"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] default factory returns the existing RuntimeServices without launching a runner"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] assignment uses authoritative OpenSpec argv and the configured root"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] compose reuses runner, stage and completion templates with the exact report path"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] route uses configured project and actual Git branch"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] task context is derived from parameters, OpenSpec snapshot and conf instead of a trusted file"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] invalid resource estimate (negative RAM) fails before any run directory or process"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] invalid resource estimate (missing disk estimate) fails before any run directory or process"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] explicit zero resource estimate is known independently of positive thresholds"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] absent and opaque quota stay unknown and selection reuses model-routing"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] forged main and system claims do not authorize protected mutations or messages"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] prepared reports belong to distinct run directories and cleanup touches only its own run"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] impossible resource demand refuses without a session, reservation or tmux spawn"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] unknown process scan does not release an existing owner or report it as live"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] missing launch runner path refuses before the runner process starts"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-worker] different launch runner path refuses before the runner process starts"
+    },
+    {
+      "file": "test/production-runtime.test.ts",
+      "name": "[production-factory] disk admission checks development and HOME without reserving HOME or checking state and temporary volumes"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "timeoutCount": 0,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "nextAction": "fix-implementation",
+  "streamCapture": "exec_command merges stdout/stderr. Exact launch-queue.waiting JSON record extracted without reformatting; original merged output preserved. Independent byte ordering of stderr is unavailable."
+}

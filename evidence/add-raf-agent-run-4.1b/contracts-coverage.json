@@ -1,0 +1,108 @@
+{
+  "runId": "68aea465-5fc2-47e9-86a0-c14223cd203a",
+  "testedHead": "26dd251d44efc48f41e68cf1ae004b8008d9331b",
+  "scope": "Own 4.1 full configured contracts group; unit evidence only",
+  "files": {
+    "test/cli-catalog.test.ts": {
+      "passed": 22,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/app-runtime.test.ts": {
+      "passed": 54,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/task-context.test.ts": {
+      "passed": 26,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/task-context-z12.test.ts": {
+      "passed": 19,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/runner-availability.test.ts": {
+      "passed": 12,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/agent-control.test.ts": {
+      "passed": 39,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/session-state.test.ts": {
+      "passed": 18,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/task-reservations.test.ts": {
+      "passed": 58,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/resource-admission.test.ts": {
+      "passed": 35,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/resource-estimates.test.ts": {
+      "passed": 193,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/agent-run-admission-snapshot.test.ts": {
+      "passed": 43,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/home-disk-admission.test.ts": {
+      "passed": 32,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/session-recovery.test.ts": {
+      "passed": 13,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/agent-adapters-contract.test.ts": {
+      "passed": 35,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/launch-state.test.ts": {
+      "passed": 10,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0
+    },
+    "test/production-runtime.test.ts": {
+      "passed": 16,
+      "knownRed": 4,
+      "unexecuted": 0,
+      "unknown": 0
+    }
+  },
+  "limitations": [
+    "These passed IDs establish isolated behavior, not actual native tmux message acceptance.",
+    "Four production-runtime IDs remain red due to missing main copies in productionQa fixture; owner is repairing the fixture.",
+    "Live host QA and integration scenarios retain their separate results and unexecuted status."
+  ]
+}

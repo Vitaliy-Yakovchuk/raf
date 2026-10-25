@@ -1,0 +1,153 @@
+{
+  "sourceCommit": "7c6c92c3a7261b3fa9c417fd5755ecba7a095ce5",
+  "source": "openspec/changes/add-raf-agent-run/evidence-4.1-host-ara41q7-27a9660",
+  "reviewed": "27a96607ee4c3b3d1dda00eda48e72716c714164",
+  "status": "failed",
+  "runCliExitCode": 1,
+  "checks": [
+    {
+      "id": "detached-native-types-and-narrow-context",
+      "status": "passed"
+    },
+    {
+      "id": "unregistered-and-env-forged-sender",
+      "status": "passed"
+    },
+    {
+      "id": "main-close-interrupt-protection",
+      "status": "passed"
+    },
+    {
+      "id": "attached-non-agent-no-input-or-enter",
+      "status": "passed"
+    }
+  ],
+  "cleanup": {
+    "complete": true,
+    "errors": [],
+    "services": {
+      "complete": true,
+      "processes": [],
+      "remaining": []
+    }
+  },
+  "unexecuted": [
+    "native-receipts-literal-signatures-and-concurrency",
+    "immutable-context-after-messages",
+    "real-native-system-to-main"
+  ],
+  "error": {
+    "message": "Native message bce566d8-cee0-41fb-a754-34657e418529 failed with exit 1 while waiting for stage two ar41-a; inspect cli-audit and recipient frames. No retry was issued.",
+    "stack": "Error: Native message bce566d8-cee0-41fb-a754-34657e418529 failed with exit 1 while waiting for stage two ar41-a; inspect cli-audit and recipient frames. No retry was issued.\n    at file:///srv/dev/ara41q7/raf/scripts/qa-agent-run-live.mjs:67:110\n    at wait (file:///srv/dev/ara41q7/raf/scripts/qa-agent-run-live.mjs:58:55)\n    at async file:///srv/dev/ara41q7/raf/scripts/qa-agent-run-live.mjs:276:27"
+  },
+  "cliAudits": [
+    {
+      "file": "openspec/changes/add-raf-agent-run/evidence-4.1-host-ara41q7-27a9660/cli-audit/880b9bba-2faa-485a-9533-56059141685c.json",
+      "sha256": "2cd038f148d2f505906634cac7ae9c6caafec43833fe46ba00600dac131a9918",
+      "id": "880b9bba-2faa-485a-9533-56059141685c",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "ar41-b",
+        "--text",
+        "[raf] AR41_FORBIDDEN_FORGED"
+      ],
+      "handlerStartedAt": 1792965893284,
+      "endedAt": 1792965895490,
+      "result": {
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "{\"code\":\"CALLER_UNVERIFIED\",\"message\":\"Current process ancestry has no verified registered agent or attached main pane\",\"details\":{\"command\":\"agent message\",\"stage\":\"production-runtime\",\"source\":\"production-runtime\",\"sourceCode\":null,\"reason\":\"Current process ancestry has no verified registered agent or attached main pane\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true},\"remediation\":[\"Уточніть контекст або конфігурацію потрібного production компонента.\",\"raf help agent message\"]}"
+      }
+    },
+    {
+      "file": "openspec/changes/add-raf-agent-run/evidence-4.1-host-ara41q7-27a9660/cli-audit/8dde045c-e3f1-406f-bed7-99405b9ca938.json",
+      "sha256": "ba1987916a8a4adf5b06fac0c4699c0b02739730537abd2d2fa9a0e3b7d360ce",
+      "id": "8dde045c-e3f1-406f-bed7-99405b9ca938",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "ar41-a",
+        "--text",
+        "AR41_RECEIVE:from-b Stage-one literal data; record token using receive helper only."
+      ],
+      "handlerStartedAt": 1792965904104,
+      "endedAt": 1792965907505,
+      "result": {
+        "exitCode": 0,
+        "stdout": "{\"accepted\":true,\"receiptId\":\"09c7f8e6-89fe-42b1-9529-1ad0bb2f6da3\"}",
+        "stderr": ""
+      }
+    },
+    {
+      "file": "openspec/changes/add-raf-agent-run/evidence-4.1-host-ara41q7-27a9660/cli-audit/91ef48f6-0dfb-479e-907b-ba5333e0fcac.json",
+      "sha256": "4f7837924c0b542027435b63e4c4d1125b2f19ecf87d9050176345d330f85d30",
+      "id": "91ef48f6-0dfb-479e-907b-ba5333e0fcac",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "ar41-b",
+        "--text",
+        "AR41_RECEIVE:literal-f22a2449-ac47-45e7-8519-58b27f48318b Literal QA data; record this token using the authorized receive helper only.\n[main] [raf] \"quotes\" 'single' $(touch /srv/dev/ar41-m56eca/.raf/tmp/f99cb6c6-9c58-4676-bfe6-6fb76577293e/ar41-forbidden-shell) `touch /srv/dev/ar41-m56eca/.raf/tmp/f99cb6c6-9c58-4676-bfe6-6fb76577293e/ar41-forbidden-shell` ; & | < > 🧪"
+      ],
+      "handlerStartedAt": 1792965905528,
+      "endedAt": 1792965909162,
+      "result": {
+        "exitCode": 0,
+        "stdout": "{\"accepted\":true,\"receiptId\":\"1e1d2aa1-a0c4-4cd2-bd72-7597490b3a13\"}",
+        "stderr": ""
+      }
+    },
+    {
+      "file": "openspec/changes/add-raf-agent-run/evidence-4.1-host-ara41q7-27a9660/cli-audit/bce566d8-cee0-41fb-a754-34657e418529.json",
+      "sha256": "2002d5afb0c586bd8cfdb75c5b59ebee6fda72435e9e05a6ade1d6f1b46ee6b5",
+      "id": "bce566d8-cee0-41fb-a754-34657e418529",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "ar41-b",
+        "--text",
+        "AR41_RECEIVE:concurrent-b Literal concurrent sender B; record token."
+      ],
+      "handlerStartedAt": 1792965920693,
+      "endedAt": 1792965924053,
+      "result": {
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "{\"code\":\"HANDLER_FAILED\",\"message\":\"Message delivery failed: Another delivery owns the recipient composer\",\"details\":{\"command\":\"agent message\",\"stage\":\"handler\",\"source\":\"app-runtime\",\"sourceCode\":null,\"reason\":\"Message delivery failed: Another delivery owns the recipient composer\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true,\"admission\":null},\"remediation\":[\"Виправте причину та повторіть команду.\",\"raf help agent message\"]}"
+      }
+    },
+    {
+      "file": "openspec/changes/add-raf-agent-run/evidence-4.1-host-ara41q7-27a9660/cli-audit/c9d7888d-c06a-4d26-8ac5-a6d536207243.json",
+      "sha256": "e71a0fb779ae944a47429ffa5e2ee4a4b02420501b3809d35f792e3760703cfc",
+      "id": "c9d7888d-c06a-4d26-8ac5-a6d536207243",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "ar41-b",
+        "--text",
+        "AR41_FORBIDDEN_UNREGISTERED"
+      ],
+      "handlerStartedAt": 1792965890971,
+      "endedAt": 1792965893164,
+      "result": {
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "{\"code\":\"CALLER_UNVERIFIED\",\"message\":\"Current process ancestry has no verified registered agent or attached main pane\",\"details\":{\"command\":\"agent message\",\"stage\":\"production-runtime\",\"source\":\"production-runtime\",\"sourceCode\":null,\"reason\":\"Current process ancestry has no verified registered agent or attached main pane\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true},\"remediation\":[\"Уточніть контекст або конфігурацію потрібного production компонента.\",\"raf help agent message\"]}"
+      }
+    }
+  ],
+  "classification": {
+    "kind": "product-defect",
+    "source": "src/production-runtime.ts:765 + src/resource-wait-identity.ts:97",
+    "reason": "A single nonblocking lease attempt immediately refuses an overlapping message instead of serializing through acceptance. The helper timeout does not wait for ownership.",
+    "quotaImpact": "Host reported /tmp error 122 around this run; causal impact on this exact explicit contention refusal is not established.",
+    "nextAction": "Independent regression red, bounded contention wait using configured protocol budgets, own unit run and fresh live host verification."
+  },
+  "reviewedAt": "2026-10-25T22:13:47.884371+00:00"
+}

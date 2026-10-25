@@ -1,0 +1,71 @@
+{
+  "checkedAt": "2026-10-25T22:02:52.568Z",
+  "source": "/srv/dev/work/orchestrator/conf/test-runs.json",
+  "sha256": "1e39dc504f26933acb34f5dc6aceba5d5e024ebde8e8bf9178e175e26f6a44b3",
+  "groups": {
+    "add-raf-agent-run/contracts": {
+      "profileId": "node",
+      "files": [
+        "test/cli-catalog.test.ts",
+        "test/app-runtime.test.ts",
+        "test/task-context.test.ts",
+        "test/task-context-z12.test.ts",
+        "test/runner-availability.test.ts",
+        "test/agent-control.test.ts",
+        "test/session-state.test.ts",
+        "test/task-reservations.test.ts",
+        "test/resource-admission.test.ts",
+        "test/resource-estimates.test.ts",
+        "test/agent-run-admission-snapshot.test.ts",
+        "test/home-disk-admission.test.ts",
+        "test/session-recovery.test.ts",
+        "test/agent-adapters-contract.test.ts",
+        "test/launch-state.test.ts",
+        "test/production-runtime.test.ts"
+      ]
+    },
+    "add-raf-agent-run/report-budget": {
+      "profileId": "node",
+      "files": [
+        "test/production-report-budget.test.ts"
+      ]
+    },
+    "add-raf-agent-run/worker-pane": {
+      "profileId": "node",
+      "files": [
+        "test/production-worker-pane.test.ts"
+      ]
+    },
+    "add-raf-agent-run/host-evidence": {
+      "profileId": "node",
+      "files": [
+        "test/qa-agent-run-evidence.test.ts"
+      ]
+    },
+    "add-raf-agent-run/sandbox-multiline": {
+      "profileId": "node",
+      "files": [
+        "test/sandbox-command-multiline.test.ts"
+      ]
+    }
+  },
+  "profiles": {
+    "node": {
+      "testKind": "unit",
+      "integrationFiles": [],
+      "unitFileCount": 231
+    }
+  },
+  "requiredFiles": [
+    "test/agent-adapters.test.ts",
+    "test/launch-wrapper.test.ts",
+    "test/initial-brief-delivery.test.ts",
+    "test/production-codex-delivery-qa.test.ts",
+    "test/production-claude-delivery-qa.test.ts"
+  ],
+  "status": "unexecuted",
+  "command": null,
+  "runId": null,
+  "reason": "No integration preset or integrationFiles for add-raf-agent-run. Existing own groups use unit profile. Integration scenarios cannot be passed through unit phase or a fabricated preset.",
+  "nextAction": "Main configures and deploys an authorized exact integration profile/preset, then its authorized executor retains TestRunResult and actual CLI/child codes. Live host QA remains separate."
+}

@@ -123,6 +123,7 @@ export interface RuntimeServices {
 }
 
 export interface AppRuntimeDependencies {
+  resolveGitWriteBoundaries?: typeof resolveGitWriteBoundaries;
   loadConfiguration(context: RuntimeContext): Promise<RuntimeConfiguration>;
   openStore(path: string): Promise<StateStore>;
   createServices(store: StateStore, config: RuntimeConfiguration, context: RuntimeContext): Promise<RuntimeServices>;
@@ -250,7 +251,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const route = await api.route({ root: context.orchestratorRoot, project: params.project, branch: task.branch, ...(hotfix ? { hotfixRunId: identity.runId } : {}) });
       if (!route.ok) throw fail(route.error.code, 'workspace', route.error.message);
       const workspaceBoundaries = bindWorkspaceBoundaries(task, route.cwd);
-      const gitBoundaries = hotfix ? [] : await resolveGitWriteBoundaries(route.cwd, context.orchestratorRoot, !task.workspaceWritable ? task.writeBoundaries : undefined);
+      const gitBoundaries = hotfix ? [] : await (dependencies.resolveGitWriteBoundaries ?? resolveGitWriteBoundaries)(route.cwd, context.orchestratorRoot, !task.workspaceWritable ? task.writeBoundaries : undefined);
       const commitOwnWork = task.workspaceWritable || gitBoundaries.length > 0;
       const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
       const policy = handoff ? { ...loaded.models, models: loaded.models.models.filter(model => model.id !== handoff.causeModel) } : loaded.models;

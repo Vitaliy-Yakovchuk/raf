@@ -8,6 +8,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+import { metadataTree } from './qa-main-agent-channel-metadata.mjs';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const reviewed = process.argv[2];
@@ -29,7 +30,7 @@ const atomic = (p, value) => { fs.writeFileSync(p + '.part', JSON.stringify(valu
 const hash = p => createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 const summary = { status: 'failed', stand, reviewed, startedAt: new Date().toISOString(), commands: [], switches: [],
   limitations: ['This stand tests the published agent channel with host-controlled real symlink/Git/registry fixtures. Release verification gates remain the separate 4.4 QA.', 'No unit result substitutes for native tool evidence.'] };
-let seq = 0, pane = false, endpoint;
+let seq = 0, pane = false, endpoint, protectedState;
 const run = (label, exe, args, cwd = root, budget = 120000) => {
   const r = spawnSync(exe, args, { cwd, env, encoding: 'utf8', timeout: budget, maxBuffer: 64 * 1024 * 1024 });
   const value = { command: [exe, ...args], cwd, cliExitCode: r.status, signal: r.signal,
@@ -111,13 +112,23 @@ try {
   must(run('build', 'npm', ['run', 'build'], main));
   fs.mkdirSync(path.join(main, 'qa'), { recursive: true });
   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-probe.mjs'), path.join(main, 'qa/sym64-probe.mjs'));
+  fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-metadata.mjs'), path.join(main, 'qa/sym64-metadata.mjs'));
+  const sandboxFile = path.join(main, 'src/codex-sandbox.ts');
+  let sandboxSource = fs.readFileSync(sandboxFile, 'utf8');
+  const beforeProbe = '    const visible: string[] = [];';
+  const afterProbe = '    await recordProductionSandboxProtection(request.readOnlyDirectories ?? [], join(directory, \'policy.json\'));';
+  assert.equal(sandboxSource.split(beforeProbe).length, 2);
+  assert.equal(sandboxSource.split(afterProbe).length, 2);
+  sandboxSource = sandboxSource.replace(beforeProbe, `    const qaMetadata = await import('../qa/sym64-metadata.mjs');\n    qaMetadata.capturePolicy(request.readOnlyDirectories ?? [], request.runId, 'compiled');\n${beforeProbe}`)
+    .replace(afterProbe, `    qaMetadata.capturePolicy(request.readOnlyDirectories ?? [], request.runId, 'native-preflight');\n${afterProbe}`);
+  fs.writeFileSync(sandboxFile, sandboxSource);
   const bin = path.join(main, 'bin/raf.ts');
   let cli = fs.readFileSync(bin, 'utf8');
   const insertion = "if (result.stdout)";
   assert.ok(cli.includes(insertion));
   cli = cli.replace(insertion, `if (process.env.SYM64_AUDIT) { const fs = await import('node:fs'); const p = await import('node:path'); fs.writeFileSync(p.join(process.env.SYM64_AUDIT, crypto.randomUUID()+'.json'), JSON.stringify({module:import.meta.url,argv:process.argv.slice(2),result})); }\n${insertion}`);
   fs.writeFileSync(bin, cli);
-  git(main, 'add', '--', 'qa', 'bin/raf.ts'); git(main, 'commit', '-m', 'qa: isolated native channel fixture and exact CLI audit');
+  git(main, 'add', '--', 'qa', 'bin/raf.ts', 'src/codex-sandbox.ts'); git(main, 'commit', '-m', 'qa: isolated native channel fixture and exact CLI audit');
   git(root, 'init', '-b', 'main');
   git(root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './raf-main', 'raf-main'); git(root, 'submodule', 'absorbgitdirs');
   git(main, 'worktree', 'add', '-B', 'develop', develop, 'HEAD');
@@ -144,6 +155,7 @@ try {
   await new Promise((resolve, reject) => { endpoint.once('error', reject); endpoint.listen(path.join(develop, 'qa/peer.sock'), resolve); });
   const common = git(develop, 'rev-parse', '--path-format=absolute', '--git-common-dir');
   const control = path.join(common, 'raf-hotfix'), production = path.join(control, 'main.git');
+  protectedState = { production };
   const host = { orchestratorRoot: root, qaHome: stand, environment: env, sandboxExecutable: 'codex' };
   const hh = await import(pathToFileURL(path.join(A, 'src/hotfix-host.ts')));
   const activation = await import(pathToFileURL(path.join(A, 'src/hotfix-activation.ts')));
@@ -157,11 +169,34 @@ try {
     const file = path.join(route.control, 'registry.json'), state = JSON.parse(fs.readFileSync(file));
     state.generations[target] = value; state.current = target; await hh.durable(file, state); return value;
   });
+  git(A, 'pack-refs', '--all', '--prune');
+  fs.mkdirSync(path.join(production, 'logs/refs/heads'), { recursive: true });
+  assert.equal(fs.existsSync(path.join(production, 'refs/heads/main')), false, 'Packed main must have no loose ref');
+  const beforeCompilation = metadataTree(production);
+  atomic(path.join(ev, 'metadata-before-policy.json'), beforeCompilation);
   for (const [actor, item] of [['a', '1.1'], ['b', '1.2']]) {
     must(await request('launch-' + actor, ['agent', 'run', '--id', 'sym64-' + actor, '--type', 'implement', '--project', 'raf', '--features', 'sym64-fixture', '--phase', 'implement', '--complexity', 'mechanical', '--tasks', 'sym64-fixture:' + item]));
     const record = await wait('registered ' + actor, () => sessions().find(s => s.addressId === 'sym64-' + actor && s.state === 'running'));
     actors.push(record); await wait('native initial gate ' + actor, () => stage(record, 0));
+    for (const phase of ['compiled', 'native-preflight']) {
+      const captured = JSON.parse(fs.readFileSync(path.join(env.SYM64_AUDIT, 'policy-' + record.runId + '-' + phase + '.json')));
+      assert.deepEqual(captured.production, beforeCompilation, phase + ' cannot create host metadata mountpoints');
+    }
+    assert.deepEqual(metadataTree(production), beforeCompilation, 'Successful native launch cannot create metadata mountpoints');
   }
+  atomic(path.join(ev, 'metadata-after-native-launch.json'), metadataTree(production));
+  const unavailableProduction = path.join(control, 'native-unavailable-main.git');
+  fs.renameSync(production, unavailableProduction);
+  try {
+    const refused = await request('missing-production-launch', ['agent', 'run', '--id', 'sym64-refused', '--type', 'implement', '--project', 'raf', '--features', 'sym64-fixture', '--phase', 'implement', '--complexity', 'mechanical', '--tasks', 'sym64-fixture:1.3']);
+    assert.ok(Number.isInteger(refused.cliExitCode) && refused.cliExitCode !== 0 && !refused.signal, 'Missing protected store must refuse launch');
+    assert.equal(fs.existsSync(production), false, 'Refused launch cannot create missing protected store');
+    const rejected = sessions().find(s => s.addressId === 'sym64-refused');
+    assert.ok(!rejected?.process?.runnerSessionId, 'Missing store must refuse before native runner');
+    summary.refusedLaunch = { result: refused, session: rejected ?? null };
+  } finally { fs.renameSync(unavailableProduction, production); }
+  assert.deepEqual(metadataTree(production), beforeCompilation, 'Refused launch cannot change existing metadata');
+  atomic(path.join(ev, 'metadata-after-refused-launch.json'), metadataTree(production));
   summary.actors = actors.map(s => ({ runId: s.runId, address: s.addressId, process: s.process, selection: s.selection, launchContext: s.launchContext, briefSha256: hash(s.launchContext.briefPath) }));
   await controls('before');
   fs.writeFileSync(path.join(stand, '.raf/secrets.json'), 'sym64-isolated-secret-sentinel\n');
@@ -178,6 +213,18 @@ try {
   fs.renameSync(production, path.join(control, 'native-retained-main.git'));
   fs.unlinkSync(path.join(control, 'main-store.json'));
   summary.liveSplit = { source: common, control, production, readersBefore: fs.readdirSync(path.join(control, 'readers')).map(name => JSON.parse(fs.readFileSync(path.join(control, 'readers', name)))) };
+  const leaseFile = fs.readdirSync(path.join(control, 'readers')).map(name => path.join(control, 'readers', name))
+    .find(file => file.endsWith('.json') && JSON.parse(fs.readFileSync(file)).nativeProtection);
+  assert.ok(leaseFile, 'A real live pinned reader with native protection is required');
+  const leaseBytes = fs.readFileSync(leaseFile), unprovenReader = JSON.parse(leaseBytes);
+  delete unprovenReader.nativeProtection;
+  try {
+    fs.writeFileSync(leaseFile, JSON.stringify(unprovenReader));
+    await assert.rejects(store.ensureProductionMainStore({ root }), /live reader has unknown protection/);
+    assert.equal(fs.existsSync(production), false, 'Unproven pinned reader must hold transition before publishing P');
+    summary.unprovenReaderHeld = { leaseFile, pid: unprovenReader.pid, start: unprovenReader.start, method: 'Host temporarily removed the proof from an existing live reader lease; its actual native scope remained unchanged.' };
+    await controls('unproven-reader-held');
+  } finally { fs.writeFileSync(leaseFile, leaseBytes); }
   const sourceBefore = git(develop, 'rev-parse', 'HEAD');
   await store.ensureProductionMainStore({ root, onCheckpoint: async checkpoint => {
     if (checkpoint !== 'store-prepared') return;
@@ -197,6 +244,7 @@ try {
   assert.equal(git(root, 'rev-parse', 'HEAD'), summary.liveSplit.orchestratorDuring, 'Migration cannot restore Orchestrator refs');
   assert.equal(git(A, 'rev-parse', '--path-format=absolute', '--git-common-dir'), production);
   assert.equal(git(B, 'rev-parse', '--path-format=absolute', '--git-common-dir'), production);
+  fs.mkdirSync(path.join(production, 'logs/refs/heads'), { recursive: true });
   await controls('after-live-split');
   let rollbackCommit;
   for (const [index, slot] of [B, A, B].entries()) {
@@ -212,12 +260,15 @@ try {
     git(root, 'update-index', '--add', '--cacheinfo', '160000', git(slot, 'rev-parse', 'HEAD'), path.basename(slot));
     git(root, 'config', '-f', '.gitmodules', 'submodule.raf-main.path', path.basename(slot)); git(root, 'add', '--', '.gitmodules');
     const generation = await register(slot);
-    const metadataTree = directory => Object.fromEntries(fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).map(entry => {
-      const file = path.join(directory, entry.name), info = fs.lstatSync(file);
-      return [entry.name, entry.isDirectory() ? metadataTree(file) : { sha256: hash(file), mode: info.mode, ino: info.ino, nlink: info.nlink }];
-    }));
+    if (index !== 1) git(slot, 'pack-refs', '--all', '--prune');
+    assert.equal(fs.existsSync(path.join(production, 'refs/heads/main')), index === 1, 'Exercise packed and loose main explicitly');
+    const hostLock = path.join(production, 'refs/heads/qa-native-host.lock');
+    const descriptor = fs.openSync(hostLock, 'wx', 0o600);
+    fs.writeFileSync(descriptor, target + '\n'); fs.closeSync(descriptor);
+    const lawfulLock = metadataTree(hostLock);
     const fingerprint = () => ({ production: metadataTree(production), active: fs.readlinkSync(main), a: hash(path.join(A, 'bin/raf.ts')), b: hash(path.join(B, 'bin/raf.ts')), modules: hash(path.join(root, '.gitmodules')), mainRef: git(slot, 'rev-parse', 'refs/heads/main') });
     const beforeProbe = fingerprint();
+    atomic(path.join(ev, 'metadata-before-probe-' + index + '.json'), beforeProbe);
     summary.switches.push({ action: index === 2 ? 'rollback' : 'switch', target, previous, active: fs.realpathSync(main), preparedFrom: git(develop, 'rev-parse', 'HEAD'), before, generation });
     for (const a of actors) {
       gate(a, index);
@@ -225,12 +276,31 @@ try {
     }
     for (const a of actors) assert.equal(JSON.parse(fs.readFileSync(path.join(own(a), 'sym64-stage-' + (index + 1) + '.json'))).status, 'passed', 'Native probes must pass before another switch');
     assert.deepEqual(fingerprint(), beforeProbe, 'Negative probes and shared-index access cannot change main');
+    atomic(path.join(ev, 'metadata-after-probe-' + index + '.json'), fingerprint());
+    assert.deepEqual(metadataTree(hostLock), lawfulLock, 'A lawful host lock must retain bytes, mode and inode');
+    fs.unlinkSync(hostLock);
+    git(slot, 'update-ref', 'refs/heads/qa-native-host', target);
+    git(slot, 'update-ref', '-d', 'refs/heads/qa-native-host');
+    const previousHead = git(previous, 'rev-parse', 'HEAD');
+    git(previous, 'checkout', '--detach', previousHead);
+    git(previous, 'commit', '--allow-empty', '-m', 'qa: host Git remains writable during native probes');
+    const hostCommit = git(previous, 'rev-parse', 'HEAD');
+    git(previous, 'checkout', '--detach', previousHead);
+    (summary.hostGitControls ??= []).push({ index, hostLock, lawfulLock, hostCommit, restoredHead: previousHead, sourceHead: git(develop, 'rev-parse', 'HEAD'), orchestratorHead: git(root, 'rev-parse', 'HEAD') });
     await controls('after-' + index);
   }
   const current = sessions();
   summary.transcripts = actors.map(a => copyTranscript(current.find(s => s.runId === a.runId), a.addressId));
+  summary.actorCommits = actors.flatMap(a => ['sym64-source-0.json', ...[1, 2, 3].map(n => 'sym64-stage-' + n + '.json')].flatMap(name => {
+    const proof = JSON.parse(fs.readFileSync(path.join(ev, a.addressId, 'run', name)));
+    return proof.results.filter(result => result.label.startsWith('own commit visible ')).map(result => {
+      assert.equal(result.cliExitCode, 0);
+      const oid = result.stdout.trim(); assert.match(oid, /^[a-f0-9]{40}$/);
+      return { runId: a.runId, repository: result.label.slice('own commit visible '.length), oid };
+    });
+  }));
   for (const a of actors) assert.equal(hash(a.launchContext.briefPath), summary.actors.find(s => s.runId === a.runId).briefSha256, 'Issued brief must not change');
-  const audits = fs.readdirSync(env.SYM64_AUDIT).map(f => JSON.parse(fs.readFileSync(path.join(env.SYM64_AUDIT, f))));
+  const audits = fs.readdirSync(env.SYM64_AUDIT).filter(f => !f.startsWith('policy-')).map(f => JSON.parse(fs.readFileSync(path.join(env.SYM64_AUDIT, f))));
   for (const a of actors) {
     const transcript = fs.readFileSync(summary.transcripts[actors.indexOf(a)], 'utf8');
     assert.match(transcript, /exec_command|shell_command/);
@@ -245,6 +315,8 @@ try {
     }
   }
   summary.status = 'native-completed-review-required';
+  protectedState.beforeExit = metadataTree(production);
+  atomic(path.join(ev, 'metadata-before-exit.json'), protectedState.beforeExit);
   summary.nextAction = 'Inspect native tool result events against cli-audit raw exact outputs, sender receipts, generation roots and all three live ps results before accepting 6.4. This status is deliberately not an automatic pass.';
 } catch (error) { summary.error = { message: error.message, stack: error.stack }; process.exitCode = 1; }
 finally {
@@ -272,6 +344,22 @@ finally {
     if (summary.tmuxCleanup.cliExitCode !== 0) (summary.cleanupErrors ??= []).push('Owned main tmux server failed to stop');
   }
   if (endpoint) await new Promise(resolve => endpoint.close(resolve));
+  for (const commit of summary.actorCommits ?? []) {
+    try {
+      assert.ok([develop, root].includes(commit.repository));
+      git(commit.repository, 'cat-file', '-e', commit.oid + '^{commit}');
+      git(commit.repository, 'merge-base', '--is-ancestor', commit.oid, 'HEAD');
+      commit.verifiedAfterExit = true;
+    } catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
+  }
+  if (protectedState && fs.existsSync(protectedState.production)) {
+    const afterExit = metadataTree(protectedState.production);
+    atomic(path.join(ev, 'metadata-after-exit.json'), afterExit);
+    if (protectedState.beforeExit) {
+      try { assert.deepEqual(afterExit, protectedState.beforeExit, 'Native exit cannot change protected metadata'); }
+      catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
+    }
+  }
   if (summary.cleanupErrors?.length) { summary.status = 'failed'; process.exitCode = 1; }
   summary.endedAt = new Date().toISOString(); atomic(path.join(ev, 'summary.json'), summary);
   console.log(JSON.stringify({ status: summary.status, evidence: ev, error: summary.error?.message }));

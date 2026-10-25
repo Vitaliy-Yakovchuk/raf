@@ -73,6 +73,9 @@ try {
         }
       }
       for (const target of ['index.lock', 'HEAD.lock', 'config.worktree', 'config.worktree.lock', 'packed-refs.lock', 'refs/heads/main.lock', 'logs/refs/heads/main.lock']) probe('deny production create ' + target, operations.create, [path.join(prefix, target)], 'deny');
+      probe('deny production directory create', "import{mkdirSync}from'node:fs';mkdirSync(process.argv[1]);", [path.join(prefix, 'native-directory-' + stage)], 'deny');
+      probe('deny production directory rename', operations.rename, [path.join(prefix, 'refs/heads')], 'deny');
+      probe('deny Git environment common redirect', "import{spawnSync}from'node:child_process';const r=spawnSync('git',['update-ref','refs/heads/native-env-denied','HEAD'],{env:{...process.env,GIT_DIR:process.argv[1],GIT_COMMON_DIR:process.argv[1]},stdio:'inherit'});process.exit(r.status??1);", [prefix], 'deny');
     }
     for (const slot of ['raf-main-a', 'raf-main-b']) {
       const directory = command('slot directory ' + slot, 'git', ['-C', path.join(root, slot), 'rev-parse', '--absolute-git-dir'], 'allow');

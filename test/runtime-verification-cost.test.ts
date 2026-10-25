@@ -590,7 +590,7 @@ for (const queued of [false, true]) for (const count of [1, 4]) for (const scena
     const adapter = new TmuxAgentAdapter({ execute: async command => {
       operations.push(command.args[0]);
       return { exitCode: 0, stdout: '', stderr: '' };
-    }, protocols: { codex: { invocation: () => ({ executable: 'unit-runner', args: [] }), observe: () => ({ status: 'starting' }) } } as any);
+    }, protocols: { codex: { invocation: () => ({ executable: 'unit-runner', args: [] }), observe: () => ({ status: 'starting' }) } } } as any);
     t.mock.method(adapter, 'startWithoutInput', async (request: any) => ({ tmuxSession: request.tmuxSession, selection: request.selection }));
     t.mock.method(adapter, 'inspect', async () => {
       pass++; os.reset();

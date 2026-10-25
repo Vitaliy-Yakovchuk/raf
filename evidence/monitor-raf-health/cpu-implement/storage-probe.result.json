@@ -1,0 +1,7 @@
+{
+  "command": "node evidence/monitor-raf-health/cpu-implement/storage-probe.mjs",
+  "exitCode": 0,
+  "kind": "in-memory SQLite probe, fixture counters; not live QA",
+  "stdout": "domain UUID; coverage/deltas; atomic event/boundary; deduplication; interval tracking; buffered metadata; partial unknown writes; rollback; failure isolation: passed",
+  "stderr": "(node:2) Warning: Error: no such table: raf_health_cpu\n(Use `node --trace-warnings ...` to show where the warning was created)\n"
+}

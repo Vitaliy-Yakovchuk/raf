@@ -1,0 +1,364 @@
+diff --git a/src/app-runtime.ts b/src/app-runtime.ts
+index 79035e4..160e622 100644
+--- a/src/app-runtime.ts
++++ b/src/app-runtime.ts
+@@ -1,3 +1,4 @@
++import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
+ import { measureRafCost } from './raf-cost-runtime.ts';
+ import { commandTimingFailure, recordCommandTiming } from './command-timing.ts';
+ import { runAgentWithQueue, type AgentQueueRecord, type AgentQueueValidation, type AgentQueueRequest, type AgentRunQueuePorts } from './agent-run-queue.ts';
+@@ -377,8 +378,9 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
+       const state = await store();
+       const budget = loaded.commandTiming.sqliteOnlyMeanBudgetMs;
+       if (!Number.isFinite(budget) || budget! <= 0) throw fail('CONFIGURATION_INVALID', 'configuration', 'Invalid commandTiming.sqliteOnlyMeanBudgetMs');
++      const cpu = await settleRuntimeHealthCpu(state, context.orchestratorRoot);
+       const forcedClose = state.readForcedCloseMetrics(new Date().toISOString());
+-      return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile(), health: { readAt: forcedClose.readAt, since: forcedClose.since, forcedClose } };
++      return { commands: loaded.catalog.commands.filter(command => command.handlerName !== 'help').map(command => ({ command: command.path.join(' '), budgetMs: command.handlerName === 'command stats' || command.metadata.sqliteOnly === true ? budget : null, ...(state.getCommandTiming(command.path.join(' ')) ?? { averageMs: null, updatedAt: null }) })), profile: state.readCostProfile(), health: { readAt: forcedClose.readAt, since: state.healthCpu?.domain().since ?? forcedClose.since, cpu, forcedClose } };
+     },
+   };
+   if (dependencies.commandState) for (const name of reminderCommands) builtins[name] = async params => createReminderHandlers(await statePorts())[name](params);
+diff --git a/src/event-catalog.ts b/src/event-catalog.ts
+index 7301d23..97d3d37 100644
+--- a/src/event-catalog.ts
++++ b/src/event-catalog.ts
+@@ -24,7 +24,7 @@ export function loadEventCatalog(orchestratorRoot: string): EventCatalog {
+ export function validateEventObjectId(idKind: string, id: string): boolean {
+   if (typeof id !== 'string' || !id.trim() || id !== id.trim() || /[\s/\\\0]/.test(id)) return false;
+   if (idKind === 'agentAddress' || idKind === 'reminderId' || idKind === 'contextReviewId') return /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(id);
+-  if (idKind === 'resourceQueueId') return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
++  if (idKind === 'resourceQueueId' || idKind === 'rafInstanceId') return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+   if (idKind === 'changeId') return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id);
+   return idKind === 'deploymentId';
+ }
+diff --git a/src/health-cpu.ts b/src/health-cpu.ts
+index c730dec..da7a7f5 100644
+--- a/src/health-cpu.ts
++++ b/src/health-cpu.ts
+@@ -89,14 +89,106 @@ export function evaluateRafHealthCpuWindow(
+   current: RafHealthCpuProfileReading,
+   policy: RafHealthCpuPolicy,
+ ): RafHealthCpuAssessment {
+-  throw new Error('NotImplemented');
++  const result: RafHealthCpuAssessment = {
++    availability: 'unavailable', reason: null, startedAt: baseline?.profile.readAt ?? null,
++    completedAt: current.profile.readAt, wallMs: baseline ? current.monotonicMs - baseline.monotonicMs : null,
++    cpuUserMs: null, cpuSystemMs: null, cores: null, thresholdCores: policy.cpuThresholdCores,
++    exceeded: false, sources: [], scopes: null, error: null,
++  };
++  const unavailable = (reason: string, availability: 'partial' | 'unavailable' = 'unavailable') => ({ ...result, availability, reason });
++  if (!baseline) return unavailable('Missing initial profile baseline');
++  if (!baseline.accumulationId || !current.accumulationId) return unavailable('Unknown profile accumulation start');
++  if (baseline.accumulationId !== current.accumulationId || baseline.profile.schemaVersion !== current.profile.schemaVersion) return unavailable('Profile accumulation changed or reset');
++  if (!Number.isFinite(result.wallMs) || result.wallMs! <= 0 || !Number.isFinite(Date.parse(result.startedAt!)) || !Number.isFinite(Date.parse(result.completedAt)) || Date.parse(result.completedAt) <= Date.parse(result.startedAt!)) return unavailable('Invalid profile window boundaries');
++  if (result.wallMs! < policy.cpuWindowMs) return unavailable('CPU window not yet complete', 'partial');
++  const coverage = current.coverage;
++  if (!coverage) return unavailable('Profile interval coverage unavailable');
++  if (!coverage.attributionComplete) return unavailable('Profile attribution incomplete', 'partial');
++  if (coverage.openOwnIntervals !== 0) return unavailable('Unfinished own CPU intervals', 'partial');
++  if (coverage.outOfWindowOwnIntervals !== 0) return unavailable('Own CPU intervals outside window', 'partial');
++  if (coverage.overlappingSelfIntervals !== 0) return unavailable('Overlapping self CPU intervals', 'partial');
++  if (Date.parse(coverage.startedAt) !== Date.parse(result.startedAt!) || Date.parse(coverage.completedAt) !== Date.parse(result.completedAt)) return unavailable('Profile coverage does not match window boundaries', 'partial');
++  const key = (value: RafCostKey) => JSON.stringify([value.scope, value.command, value.stage, value.executor]);
++  const before = new Map(baseline.profile.rows.map(row => [key(row), row]));
++  const after = new Map(current.profile.rows.map(row => [key(row), row]));
++  const attributions = new Map(current.attributions.map(value => [key(value.key), value]));
++  if (after.size !== current.profile.rows.length || attributions.size !== current.attributions.length) return unavailable('Duplicate profile attribution or aggregate key');
++  const scopes: RafHealthCpuScopeTotals = { service: { cpuUserMs: 0, cpuSystemMs: 0 }, worker: { cpuUserMs: 0, cpuSystemMs: 0 }, command: { cpuUserMs: 0, cpuSystemMs: 0 } };
++  const sources = new Set<string>();
++  let measuredSamples = 0;
++  for (const [id, previous] of before) {
++    const attribution = attributions.get(id) ?? baseline.attributions.find(value => key(value.key) === id);
++    if (!after.has(id) && attribution && (attribution.ownership === 'self' || attribution.ownership === 'helper') && !attribution.duplicateOf) return unavailable('Profile own aggregate disappeared or reset');
++  }
++  for (const [id, row] of after) {
++    const attribution = attributions.get(id);
++    if (!attribution) return unavailable('Missing profile ownership attribution', 'partial');
++    if (attribution.ownership === 'payload' || attribution.ownership === 'raf' || attribution.duplicateOf) continue;
++    if ((attribution.ownership === 'self') !== (row.executor === 'self')) return unavailable('Invalid profile ownership attribution');
++    const previous = before.get(id);
++    if (previous && (previous.firstSampleStartedAt !== row.firstSampleStartedAt || row.samples < previous.samples)) return unavailable('Profile aggregate reset');
++    const deltaSamples = row.samples - (previous?.samples ?? 0);
++    if (!Number.isSafeInteger(deltaSamples) || deltaSamples < 0) return unavailable('Invalid profile sample count');
++    const unavailableSamples = row.cpuUnavailableSamples - (previous?.cpuUnavailableSamples ?? 0);
++    if (unavailableSamples < 0) return unavailable('Profile CPU aggregate reset');
++    if (unavailableSamples > 0 || (deltaSamples > 0 && row.cpuSamples - (previous?.cpuSamples ?? 0) !== deltaSamples)) return unavailable(row.unavailableReason ?? 'Profile CPU incomplete or unavailable', row.cpuAvailability === 'partial' ? 'partial' : 'unavailable');
++    if (!deltaSamples) {
++      if (previous && (row.cpuUserTotalMs !== previous.cpuUserTotalMs || row.cpuSystemTotalMs !== previous.cpuSystemTotalMs)) return unavailable('Profile counters changed without completed samples');
++      continue;
++    }
++    measuredSamples += deltaSamples;
++    if (!previous && Date.parse(row.firstSampleStartedAt) < Date.parse(result.startedAt!)) return unavailable('New profile row includes out-of-window intervals', 'partial');
++    if (!Number.isFinite(Date.parse(row.updatedAt)) || Date.parse(row.updatedAt) > Date.parse(result.completedAt) || Date.parse(row.updatedAt) < Date.parse(result.startedAt!)) return unavailable('Profile sample lies outside window', 'partial');
++    const user = row.cpuUserTotalMs === null ? NaN : row.cpuUserTotalMs - (previous?.cpuUserTotalMs ?? 0);
++    const system = row.cpuSystemTotalMs === null ? NaN : row.cpuSystemTotalMs - (previous?.cpuSystemTotalMs ?? 0);
++    if (![user, system].every(value => Number.isFinite(value) && value >= 0)) return unavailable('Invalid or reset profile CPU counters');
++    if (!scopes[row.scope]) return unavailable('Unknown profile CPU scope');
++    scopes[row.scope].cpuUserMs += user;
++    scopes[row.scope].cpuSystemMs += system;
++    for (const source of Array.isArray(row.cpuSource) ? row.cpuSource : row.cpuSource ? [row.cpuSource] : []) sources.add(source);
++  }
++  if (!measuredSamples) return unavailable('No completed measured own CPU samples');
++  const cpuUserMs = Object.values(scopes).reduce((sum, scope) => sum + scope.cpuUserMs, 0);
++  const cpuSystemMs = Object.values(scopes).reduce((sum, scope) => sum + scope.cpuSystemMs, 0);
++  const cores = (cpuUserMs + cpuSystemMs) / result.wallMs!;
++  if (!Number.isFinite(cores)) return unavailable('Invalid profile CPU total');
++  return { ...result, availability: 'complete', reason: null, cpuUserMs, cpuSystemMs, cores, scopes, sources: [...sources].sort(), exceeded: cores > policy.cpuThresholdCores };
+ }
+ 
+ export async function observeRafHealthCpu(
+   context: RafHealthCpuContext,
+   ports: RafHealthCpuPorts,
+ ): Promise<RafHealthCpuAssessment | null> {
+-  throw new Error('NotImplemented');
++  if (!context.enabled || context.entry !== 'runtime') return null;
++  const health = (context.configuration as { health?: Partial<RafHealthCpuPolicy> } | null)?.health;
++  const invalid = !Number.isFinite(health?.cpuWindowMs) || health!.cpuWindowMs! <= 0 ? 'cpuWindowMs'
++    : !Number.isFinite(health?.cpuThresholdCores) || health!.cpuThresholdCores! < 0 ? 'cpuThresholdCores' : null;
++  const report = (reason: string) => { try { ports.reportUnavailable(reason); } catch {} };
++  if (invalid) {
++    const pointer = `conf/raf.json#/health/${invalid}`;
++    const reason = `Invalid ${pointer}`;
++    report(reason);
++    return { availability: 'unavailable', reason, startedAt: null, completedAt: new Date().toISOString(), wallMs: null, cpuUserMs: null, cpuSystemMs: null, cores: null, thresholdCores: null, exceeded: false, sources: [], scopes: null, error: { code: 'CONFIGURATION_INVALID', pointer } };
++  }
++  try {
++    const current = await ports.readProfile();
++    return await ports.transaction(transaction => {
++      const baseline = transaction.state.baseline;
++      if (baseline && baseline.accumulationId === current.accumulationId && baseline.monotonicMs >= current.monotonicMs && transaction.state.lastAssessment) return transaction.state.lastAssessment;
++      const assessment = evaluateRafHealthCpuWindow(baseline, current, health as RafHealthCpuPolicy);
++      if (assessment.exceeded) transaction.recordEvent({ type: 'raf.cpu-exceeded', rafInstanceId: context.rafInstanceId,
++        startedAt: assessment.startedAt!, completedAt: assessment.completedAt, wallMs: assessment.wallMs!,
++        cpuUserMs: assessment.cpuUserMs!, cpuSystemMs: assessment.cpuSystemMs!, cores: assessment.cores!,
++        thresholdCores: assessment.thresholdCores!, sources: assessment.sources, scopes: assessment.scopes! });
++      if (!baseline || baseline.accumulationId !== current.accumulationId || current.monotonicMs - baseline.monotonicMs >= health!.cpuWindowMs!) transaction.state.baseline = current;
++      transaction.state.lastAssessment = assessment;
++      return assessment;
++    });
++  } catch (error) {
++    const reason = error instanceof Error ? error.message : String(error);
++    report(reason);
++    return { availability: 'unavailable', reason, startedAt: null, completedAt: new Date().toISOString(), wallMs: null, cpuUserMs: null, cpuSystemMs: null, cores: null, thresholdCores: health!.cpuThresholdCores!, exceeded: false, sources: [], scopes: null, error: null };
++  }
+ }
+ 
+ export async function withRafHealthCpu<T>(
+@@ -104,5 +196,6 @@ export async function withRafHealthCpu<T>(
+   ports: RafHealthCpuPorts,
+   operation: () => Promise<T>,
+ ): Promise<T> {
+-  throw new Error('NotImplemented');
++  try { return await operation(); }
++  finally { try { await observeRafHealthCpu(context, ports); } catch {} }
+ }
+diff --git a/src/production-entry.ts b/src/production-entry.ts
+index 0723a22..f9ec4fb 100644
+--- a/src/production-entry.ts
++++ b/src/production-entry.ts
+@@ -1,3 +1,4 @@
++import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
+ import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
+ import { commandTimingFailure, recordCommandTiming } from './command-timing.ts';
+ import { storedLaunchQueueIdentity, validateStoredQueueId } from './stored-launch-queue-events.ts';
+@@ -213,6 +214,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
+           let finalizationError: unknown;
+           try { profile?.stage('finalization'); profile?.finish(); }
+           catch (error) { if (original === undefined) finalizationError = error; else process.emitWarning(error instanceof Error ? error : String(error)); }
++          if (profileStore) await settleRuntimeHealthCpu(profileStore, options.orchestratorRoot);
+           try {
+             if (profileStore && loaded) recordCommandTiming(profileStore, command, startedAtMs, now, loaded.commandTiming.emaAlpha);
+           } catch (error) { finalizationError = commandTimingFailure(error, original ?? finalizationError); }
+diff --git a/src/production-runtime.ts b/src/production-runtime.ts
+index f7215e2..343cae9 100644
+--- a/src/production-runtime.ts
++++ b/src/production-runtime.ts
+@@ -1,3 +1,4 @@
++import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
+ import { RafCostRuntime, rafCostBoundary } from './raf-cost-runtime.ts';
+ import { prepareFlowBrief } from './flow-brief.ts';
+ import { flowSources, flowEvidencePorts, checkFlowPlan, acceptedFlowEvidence } from './flow-runtime.ts';
+@@ -1356,6 +1357,7 @@ export async function runProductionWorker(
+   try {
+     costProfile = new RafCostRuntime(store, { scope: 'worker', command: null }, context.orchestratorRoot, 'preparation', costStartedAt, sqliteStartedAt);
+     costProfile.install();
++    await settleRuntimeHealthCpu(store, context.orchestratorRoot);
+     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings.timeouts, options.execute);
+     const session = tools.current(request.runId);
+     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
+@@ -1831,5 +1833,5 @@ export async function runProductionWorker(
+           connection.once('connect', () => { clearTimeout(timer); connection.destroy(); reject(new Error('Own tool tmux server is still live')); });
+           connection.once('error', error => { clearTimeout(timer); connection.destroy(); if (['ENOENT', 'ECONNREFUSED'].includes((error as NodeJS.ErrnoException).code ?? '')) resolve(); else reject(error); });
+         });
+-      }); } finally { try { costProfile?.stage('completion'); costProfile?.finish(); } catch (error) { if (workerFailure === undefined) throw error; process.emitWarning(error instanceof Error ? error : String(error)); } finally { store.close(); await generationLease?.release(); } } } } }
++      }); } finally { try { costProfile?.stage('completion'); costProfile?.finish(); await settleRuntimeHealthCpu(store, context.orchestratorRoot); } catch (error) { if (workerFailure === undefined) throw error; process.emitWarning(error instanceof Error ? error : String(error)); } finally { store.close(); await generationLease?.release(); } } } } }
+ }
+diff --git a/src/raf-cost-profile.ts b/src/raf-cost-profile.ts
+index fc555dc..3e5cece 100644
+--- a/src/raf-cost-profile.ts
++++ b/src/raf-cost-profile.ts
+@@ -58,6 +58,7 @@ export interface RafCostProfileState {
+ export interface RafCostProfileRepository {
+   update(key: RafCostKey, change: (previous: RafCostRow | undefined) => RafCostRow): void;
+   readRows(): RafCostRow[];
++  recordSample?(sample: RafCostSample): void;
+ }
+ 
+ export interface RafCostProfilePorts {
+@@ -117,7 +118,8 @@ export function createRafCostProfiler(identity: Pick<RafCostKey, 'scope' | 'comm
+   const boundary = (stage: string): Boundary => ({ stage, at: ports.monotonicMs(), utc: ports.utcNow(), cpu: cpu() });
+   const record = (sample: RafCostSample) => {
+     validateSample(sample);
+-    ports.repository.update({ scope: sample.scope, command: sample.command, stage: sample.stage, executor: sample.executor }, previous => aggregateRafCostSample(previous, sample));
++    if (ports.repository.recordSample) ports.repository.recordSample(sample);
++    else ports.repository.update({ scope: sample.scope, command: sample.command, stage: sample.stage, executor: sample.executor }, previous => aggregateRafCostSample(previous, sample));
+   };
+   const complete = (end: Boundary) => {
+     const start = active!;
+diff --git a/src/raf-cost-runtime.ts b/src/raf-cost-runtime.ts
+index f6b94f9..b82e281 100644
+--- a/src/raf-cost-runtime.ts
++++ b/src/raf-cost-runtime.ts
+@@ -1,3 +1,4 @@
++import { randomUUID } from 'node:crypto';
+ import { AsyncLocalStorage } from 'node:async_hooks';
+ import { readFileSync } from 'node:fs';
+ import { join } from 'node:path';
+@@ -30,8 +31,12 @@ export class RafCostRuntime {
+   private storageFailure: unknown;
+   private readonly pending = new Map<string, RafCostRow>();
+   private readonly repository: RafCostProfileRepository;
++  private readonly intervalToken = randomUUID();
++  private readonly store: StateStore;
+   constructor(store: StateStore, identity: Pick<RafCostKey, 'scope' | 'command'>, root: string, idle: string, initial = rafCostBoundary(), sqliteStartedAt?: RafCostBoundary) {
+     this.idle = idle;
++    this.store = store;
++    try { store.healthCpu?.interval(this.intervalToken, initial.utc); } catch (error) { process.emitWarning(String(error)); }
+     this.repository = store.costProfileRepository;
+     const repository: RafCostProfileRepository = identity.scope === 'command' ? {
+       update: (key, change) => {
+@@ -83,7 +88,11 @@ export class RafCostRuntime {
+     this.stopped = true;
+     if (background === this) background = undefined;
+     this.profiler.finish();
+-    for (const contribution of this.pending.values()) this.repository.update(contribution, previous => mergeRafCostRows(previous, contribution));
++    for (const contribution of this.pending.values()) {
++      if (this.store.mergeCostContribution) this.store.mergeCostContribution(contribution);
++      else this.repository.update(contribution, previous => mergeRafCostRows(previous, contribution));
++    }
++    try { this.store.healthCpu?.interval(this.intervalToken, null); } catch (error) { process.emitWarning(String(error)); }
+     this.pending.clear();
+     if (this.storageFailure) throw this.storageFailure;
+   }
+diff --git a/src/state-store.ts b/src/state-store.ts
+index e777209..b326325 100644
+--- a/src/state-store.ts
++++ b/src/state-store.ts
+@@ -1,4 +1,7 @@
+-import { aggregateRafCostSample, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
++import { performance } from 'node:perf_hooks';
++import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, healthCpuKey } from './health-cpu-storage.ts';
++import type { RafHealthCpuProfileReading, RafHealthCpuTransaction } from './health-cpu.ts';
++import { aggregateRafCostSample, mergeRafCostRows, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
+ import { initializeForcedCloseMetricsInTransaction, recordForcedCloseFinalizationInTransaction, recordForcedCloseRefusalInTransaction, readForcedCloseMetrics, type ForcedCloseMetricsSnapshot } from './forced-close-metrics.ts';
+ import { readRafCostPolicy } from './raf-cost-runtime.ts';
+ import { initializeResourceUsage } from './resource-usage.ts';
+@@ -94,7 +97,15 @@ export interface StateStore {
+   getCommandTiming(command: string): CommandTiming | undefined;
+   costProfileRepository: RafCostProfileRepository;
+   recordCostSample(sample: RafCostSample): void;
++  mergeCostContribution(row: RafCostRow): void;
+   readCostProfile(): RafCostProfileSnapshot;
++  healthCpu: {
++    domain(): { rafInstanceId: string; since: string };
++    readProfile(): RafHealthCpuProfileReading;
++    transaction<T>(action: (tx: RafHealthCpuTransaction) => T): T;
++    interval(token: string, startedAt: string | null): void;
++    coverage(startedAt: string | null): void;
++  };
+   readForcedCloseMetrics(readAt?: string): ForcedCloseMetricsSnapshot;
+   recordForcedCloseRefusal(code: string, observedAt: string): void;
+ }
+@@ -458,6 +469,7 @@ export function openStateStore(path: string, options?: import('./state-migration
+           }
+         });
+       }
++      if (version() >= 18) transaction(() => initializeHealthCpu(db));
+       for (let attempt = 0; ; attempt++) {
+         try {
+           const journal = db.prepare("PRAGMA journal_mode").get();
+@@ -479,13 +491,24 @@ export function openStateStore(path: string, options?: import('./state-migration
+ 
+   let costPolicy: ReturnType<typeof readRafCostPolicy> | undefined;
+   const profilePolicy = () => costPolicy ??= readRafCostPolicy(options?.context?.orchestratorRoot);
++  function updateCostRow(key: RafCostSample | RafCostRow | import('./raf-cost-profile.ts').RafCostKey, change: (previous: RafCostRow | undefined) => RafCostRow): RafCostRow {
++    const previous = db.prepare('SELECT payload FROM raf_cost_profile WHERE scope=? AND command=? AND stage=? AND executor=?').get(key.scope, key.command ?? '', key.stage, key.executor);
++    const next = change(previous ? JSON.parse(String(previous.payload)) : undefined);
++    db.prepare(`INSERT INTO raf_cost_profile(scope, command, stage, executor, payload) VALUES(?, ?, ?, ?, ?)
++      ON CONFLICT(scope, command, stage, executor) DO UPDATE SET payload=excluded.payload`).run(key.scope, key.command ?? '', key.stage, key.executor, JSON.stringify(next));
++    return next;
++  }
+   const costProfileRepository: RafCostProfileRepository = {
++    recordSample(sample) {
++      operation('costProfile.sample', () => transaction(() => {
++        const next = updateCostRow(sample, previous => aggregateRafCostSample(previous, sample));
++        if (Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) recordHealthCpuCoverage(db, sample.startedAt, next, 1);
++      }));
++    },
+     update(key, change) {
+       operation('costProfile.update', () => transaction(() => {
+-        const previous = db.prepare('SELECT payload FROM raf_cost_profile WHERE scope = ? AND command = ? AND stage = ? AND executor = ?').get(key.scope, key.command ?? '', key.stage, key.executor);
+-        const next = change(previous ? JSON.parse(String(previous.payload)) : undefined);
+-        db.prepare(`INSERT INTO raf_cost_profile (scope, command, stage, executor, payload) VALUES (?, ?, ?, ?, ?)
+-          ON CONFLICT(scope, command, stage, executor) DO UPDATE SET payload = excluded.payload`).run(key.scope, key.command ?? '', key.stage, key.executor, JSON.stringify(next));
++        updateCostRow(key, change);
++        if (Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) recordHealthCpuCoverage(db, null);
+       }));
+     },
+     readRows() {
+@@ -972,11 +995,44 @@ export function openStateStore(path: string, options?: import('./state-migration
+         };
+       });
+     },
++    healthCpu: {
++      domain: () => operation('healthCpu.domain', () => { const state = readHealthCpu(db); return { rafInstanceId: state.rafInstanceId, since: state.since }; }),
++      interval: (token, startedAt) => operation('healthCpu.interval', () => transaction(() => {
++        const state = readHealthCpu(db);
++        if (startedAt === null) delete state.open[token]; else state.open[token] = startedAt;
++        saveHealthCpu(db, state);
++      })),
++      coverage: startedAt => operation('healthCpu.coverage', () => transaction(() => recordHealthCpuCoverage(db, startedAt))),
++      readProfile: () => operation('healthCpu.read', () => transaction(() => {
++        const profile = { schemaVersion: profilePolicy().schemaVersion, readAt: new Date().toISOString(), rows: costProfileRepository.readRows() };
++        return healthCpuReading(readHealthCpu(db), profile, performance.timeOrigin + performance.now());
++      }, false)),
++      transaction: action => operation('healthCpu.transaction', () => transaction(() => {
++        const state = readHealthCpu(db);
++        const previous = state.cpu.baseline;
++        const result = action({ state: state.cpu, recordEvent: event => eventRepository.transaction(tx => tx.savePending({
++          key: JSON.stringify([event.type, event.rafInstanceId, event.startedAt, event.completedAt]),
++          event: { kind: event.type, id: event.rafInstanceId }, data: event,
++        })) });
++        if (state.cpu.baseline !== previous) {
++          state.outside = 0; state.attributionComplete = true;
++          state.samples = Object.fromEntries(state.cpu.baseline!.profile.rows.map(row => [healthCpuKey(row), row.samples]));
++        }
++        saveHealthCpu(db, state);
++        return result;
++      })),
++    },
+     costProfileRepository,
++    mergeCostContribution(row) {
++      operation('costProfile.merge', () => transaction(() => {
++        const next = updateCostRow(row, previous => mergeRafCostRows(previous, row));
++        if (Number(db.prepare('PRAGMA user_version').get()?.user_version) >= 18) recordHealthCpuCoverage(db, row.firstSampleStartedAt, next, row.samples);
++      }));
++    },
+     recordCostSample(sample) {
+       const policy = profilePolicy();
+       if (!policy.stages.includes(sample.stage) || (sample.scope === 'command' && !policy.commands.includes(sample.command ?? ''))) throw new Error('Unknown cost profile key');
+-      costProfileRepository.update(sample, previous => aggregateRafCostSample(previous, sample));
++      costProfileRepository.recordSample!(sample);
+     },
+     readCostProfile() {
+       return { schemaVersion: profilePolicy().schemaVersion, readAt: new Date().toISOString(), rows: costProfileRepository.readRows() };

@@ -1,0 +1,12 @@
+{
+  "command": "git diff --cached --check",
+  "cliExitCode": 2,
+  "diagnostic": "evidence/profile-raf-performance/qa-5.7/comments-latest.stdout:4: new blank line at EOF.",
+  "assessment": "Expected verbatim npm stdout ends in a blank line. Preserve the raw evidence unchanged; this is not a test failure or a source whitespace defect.",
+  "sourceAndMetadataCheck": {
+    "command": "git diff --check HEAD^ HEAD -- '*.ts' '*.mjs' '*.json' '*.md'",
+    "cliExitCode": 0
+  },
+  "evidenceCommit": "985a59141a1f1ead0e219bb0a67f5b4f6297cbc8",
+  "allTestsAndHostPassed": true
+}

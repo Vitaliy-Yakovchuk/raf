@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import childProcess from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { once } from 'node:events';
 import fs from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
@@ -10,9 +11,23 @@ import { inventory as activationInventory } from '../src/hotfix-host.ts';
 import { hotfixModuleOrigin } from '../src/hotfix-origin.ts';
 import { createHotfixRuntimeInventory, type HotfixRuntimeInventory } from '../src/hotfix-runtime-inventory.ts';
 import { resolveStateContext, verifyStateContext, type StateEntryPoint } from '../src/state-migration-guard.ts';
+import { childMessage, fixture as activationFixture } from './hotfix-fixture.ts';
 
 const commit = '1'.repeat(40);
 const digest = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
+
+test('[module-origin-cost] forked publisher preserves a full snapshot payload beyond exec environment limits', async t => {
+  const f = await activationFixture(t);
+  const payload = { marker: 'full-snapshot-payload', proof: 'x'.repeat(256 * 1024) };
+  let child: ReturnType<typeof f.forkModule> | undefined;
+  assert.doesNotThrow(() => {
+    child = f.forkModule('const p=hotfixFixturePayload;await new Promise((resolve,reject)=>process.send(p,error=>error?reject(error):resolve()));process.disconnect();', payload);
+  }, 'a growing full snapshot must not prevent the publisher process from starting');
+  assert.ok(child);
+  const exited = once(child, 'exit');
+  assert.deepEqual(await childMessage(child, value => value.marker === payload.marker, f.budget), payload);
+  assert.equal((await exited)[0], 0);
+});
 const runtimeInputs = {
   'bin/raf.ts': "import '../src/state-store.ts';\n",
   'src/state-store.ts': "import './lazy.mjs'; import 'origin-dep'; import {spawn} from 'node:child_process'; export const load=()=>import('./dynamic.mjs'); export const child=()=>spawn(process.execPath,['scripts/helper']);\n",

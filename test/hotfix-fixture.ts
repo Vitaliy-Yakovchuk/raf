@@ -267,8 +267,10 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
   }
   function forkModule(body: string, payload: unknown) {
     const script = join(root, `child-${randomUUID()}.mjs`);
-    writeFileSync(script, body);
-    const child = spawn(process.execPath, [script], { cwd: root, env: { ...environment, HOTFIX_FIXTURE_PAYLOAD: JSON.stringify(payload) }, stdio: ["ignore", "pipe", "pipe", "ipc"] });
+    const payloadFile = `${script}.json`;
+    writeFileSync(payloadFile, JSON.stringify(payload), { mode: 0o600 });
+    writeFileSync(script, `const hotfixFixturePayload = JSON.parse((await import('node:fs')).readFileSync(${JSON.stringify(payloadFile)}, 'utf8'));\n${body}`);
+    const child = spawn(process.execPath, [script], { cwd: root, env: environment, stdio: ["ignore", "pipe", "pipe", "ipc"] });
     childProcesses.add(child);
     return child;
   }

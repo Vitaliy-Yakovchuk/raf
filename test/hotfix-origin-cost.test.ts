@@ -298,6 +298,28 @@ for (const source of ["export const load=()=>import(process.env.UNKNOWN_MODULE);
   });
 }
 
+for (const metadataPath of ['package.json', 'node_modules/origin-dep/package.json']) {
+  test(`[module-origin-cost] package bin maps cannot execute excluded inputs: ${metadataPath}`, async t => {
+    const f = await fixture(t);
+    const metadata = JSON.parse(fs.readFileSync(join(f.generation, metadataPath), 'utf8'));
+    metadata.bin = { tool: metadataPath === 'package.json' ? 'docs/child.payload' : '../../docs/child.payload' };
+    f.write(join(f.generation, metadataPath), JSON.stringify(metadata));
+    f.write(join(f.generation, 'docs/child.payload'), 'process.exit(0);\n');
+    assert.throws(() => createHotfixRuntimeInventory(f.generation, commit, f.policy), /outside protected inventory/i);
+  });
+}
+
+test('[module-origin-cost] package bin maps record protected executable targets', async t => {
+  const f = await fixture(t);
+  const metadata = JSON.parse(fs.readFileSync(join(f.generation, 'package.json'), 'utf8'));
+  delete metadata.scripts;
+  metadata.bin = { tool: 'scripts/helper' };
+  f.write(join(f.generation, 'src/state-store.ts'), 'export {};\n');
+  f.write(join(f.generation, 'package.json'), JSON.stringify(metadata));
+  const manifest = createHotfixRuntimeInventory(f.generation, commit, f.policy);
+  assert.ok(manifest.loading.executables.includes('scripts/helper'));
+});
+
 for (const tree of ['evidence', 'docs']) {
   for (const mutation of ['bytes', 'add', 'delete', 'mode', 'symlink', 'hardlink'] as const) {
     test(`[module-origin-cost] full activation fingerprint still detects ${mutation} in excluded ${tree}`, async t => {

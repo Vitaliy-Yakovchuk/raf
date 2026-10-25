@@ -196,7 +196,16 @@ function proveLoading(root: string, files: readonly HotfixRuntimeFile[], entrypo
         }
       }
     }
-    for (const key of ['main', 'module', 'exports', 'imports', 'bin']) {
+    if (metadata.bin !== undefined) {
+      const targets = typeof metadata.bin === 'string' ? [metadata.bin] :
+        metadata.bin && typeof metadata.bin === 'object' && !Array.isArray(metadata.bin) ? Object.values(metadata.bin) : refused('invalid package bin ' + path);
+      for (const target of targets) {
+        if (typeof target !== 'string' || !target || isAbsolute(target)) refused('invalid package bin target ' + path);
+        const child = protectedPath(resolve(root, dirname(path), target));
+        executables.add(child);
+      }
+    }
+    for (const key of ['main', 'module', 'exports', 'imports']) {
       const value = metadata[key];
       if (typeof value === 'string' && !value.startsWith('.') && !value.includes('*')) {
         if (key !== 'imports') protectedPath(resolve(root, dirname(path), value));

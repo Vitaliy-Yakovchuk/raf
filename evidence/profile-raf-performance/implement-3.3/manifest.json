@@ -1,0 +1,224 @@
+{
+  "assignment": "profile-raf-performance:3.3",
+  "initialImplementationCompletedBeforeTestRead": true,
+  "configuration": "Точні unitFiles/groups вже наявні в conf/test-runs.json; conf не змінювався.",
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/timing-coverage --files test/runtime-command-timing.test.ts",
+      "result": "timing-1-result.json",
+      "toolResult": "timing-1-tool-result.json",
+      "stderr": "timing-1-stderr.txt",
+      "cliExitFile": "timing-1-cli-exit.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "43749006-9d10-444e-ab6f-34f7afd6f075",
+      "selection": {
+        "files": [
+          "test/runtime-command-timing.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 90,
+      "knownRed": [
+        {
+          "file": "test/runtime-command-timing.test.ts",
+          "name": "timing dispatch: test run success"
+        },
+        {
+          "file": "test/runtime-command-timing.test.ts",
+          "name": "timing dispatch: test run failure"
+        },
+        {
+          "file": "test/runtime-command-timing.test.ts",
+          "name": "timing dispatch: test run waits for its result, excludes subsequent process lifetime and payload CPU"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "baseSha": "9f0e40cbe3f4a44a84abf5242096500b82814c10",
+      "workspaceDirty": true,
+      "sourceState": "Початкова незалежна реалізація: test run фіналізувався в test-run-runtime; історичний проміжний diff не збережений."
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/timing-coverage --files test/runtime-command-timing.test.ts",
+      "result": "timing-2-result.json",
+      "toolResult": "timing-2-tool-result.json",
+      "stderr": "timing-2-stderr.txt",
+      "cliExitFile": "timing-2-cli-exit.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "3d459b51-6ce9-454b-a845-bf50dd6ad08f",
+      "selection": {
+        "files": [
+          "test/runtime-command-timing.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 93,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "baseSha": "9f0e40cbe3f4a44a84abf5242096500b82814c10",
+      "workspaceDirty": true,
+      "sourceState": "Фінальна production-реалізація; profile fixture ще без сумісності health."
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+      "result": "profile-1-result.json",
+      "toolResult": "profile-1-tool-result.json",
+      "stderr": "profile-1-stderr.txt",
+      "cliExitFile": "profile-1-cli-exit.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "3d768d7b-280b-47a1-925b-3161e070970f",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 28,
+      "knownRed": [
+        {
+          "file": "test/raf-cost-profile.test.ts",
+          "name": "profile: existing command stats without flags returns commands/profile, preserving EMA independently"
+        },
+        {
+          "file": "test/raf-cost-profile.test.ts",
+          "name": "profile: stats keeps readAt separate from completed sample time, even with the service off"
+        },
+        {
+          "file": "test/raf-cost-profile.test.ts",
+          "name": "profile: current stats completion is visible to the next read, never to its own snapshot"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "baseSha": "9f0e40cbe3f4a44a84abf5242096500b82814c10",
+      "workspaceDirty": true,
+      "sourceState": "Фінальна production-реалізація; profile fixture ще без сумісності health."
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+      "result": "profile-2-result.json",
+      "toolResult": "profile-2-tool-result.json",
+      "stderr": "profile-2-stderr.txt",
+      "cliExitFile": "profile-2-cli-exit.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "36347c76-7366-4445-b064-e3dfb5b8979c",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 31,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "baseSha": "9f0e40cbe3f4a44a84abf5242096500b82814c10",
+      "workspaceDirty": true,
+      "sourceState": "Фінальна production-реалізація та виправлена health fixture; implementation.patch і source-fingerprints.json."
+    }
+  ],
+  "checks": {
+    "initial": {
+      "build": [
+        {
+          "chunk_id": "2d0787",
+          "wall_time_seconds": 1.000842527,
+          "session_id": 13556,
+          "original_token_count": 9,
+          "output": "\n> build\n> node scripts/build.ts\n\n"
+        },
+        {
+          "chunk_id": "291884",
+          "wall_time_seconds": 0.000032859,
+          "exit_code": 0,
+          "original_token_count": 26,
+          "output": "Каталог зібрано. Операційні команди ще не реалізовані.\n"
+        }
+      ],
+      "comments": [
+        {
+          "chunk_id": "9136d6",
+          "wall_time_seconds": 1.001426311,
+          "session_id": 44767,
+          "original_token_count": 13,
+          "output": "\n> check:comments\n> node scripts/check-comments.ts\n\n"
+        },
+        {
+          "chunk_id": "12cf1d",
+          "wall_time_seconds": 0.000009704,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      ]
+    },
+    "final": {
+      "build": {
+        "command": "npm run build",
+        "exitCode": 0,
+        "stdout": "\n> build\n> node scripts/build.ts\n\nКаталог зібрано. Операційні команди ще не реалізовані.\n",
+        "stderr": ""
+      },
+      "comments": {
+        "command": "npm run check:comments",
+        "exitCode": 0,
+        "stdout": "\n> check:comments\n> node scripts/check-comments.ts\n\n",
+        "stderr": ""
+      }
+    }
+  },
+  "stderrCapture": "Кожний завершений host tool output містив один повний JSON та переведення рядка; додаткових stderr-байтів не спостережено. Сирі tool-result.json збережено без усічення.",
+  "fixtureCorrection": {
+    "cause": "39f3098c87f15d4e62146b1fb3da8f03185b425b додав command stats.health і readForcedCloseMetrics, але test/raf-cost-profile.test.ts досі очікував тільки commands/profile і не мав методу fake StateStore.",
+    "sources": [
+      "src/app-runtime.ts:command stats",
+      "src/forced-close-metrics.ts:ForcedCloseMetricsSnapshot",
+      "/srv/dev/work/orchestrator/openspec/changes/monitor-raf-health/design.md:25",
+      "/srv/dev/work/orchestrator/openspec/changes/monitor-raf-health/specs/projects/raf/health-monitoring/spec.md:38-39"
+    ],
+    "change": "Додано missing port fixture; точне очікування keys та health. Assertions EMA/CPU лишились незмінними."
+  },
+  "scope": "Живі QA-сценарії пункту 3.4 не виконувались; відкриті задачі існують, archive не застосовується.",
+  "implementationCommit": "71770afeb1e609954c98d36a0b8414e2c13c61c3"
+}

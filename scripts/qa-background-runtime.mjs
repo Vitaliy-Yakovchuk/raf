@@ -22,15 +22,18 @@ const load = (code, name) => import(pathToFileURL(path.join(code, 'src', name + 
 
 if (process.argv[2] === 'pane') {
   const config = read(process.argv[3]);
-  let input = '';
+  let input = '', serial = 0, last = '';
+  const draw = () => process.stdout.write('\x1b[?2004h\x1b[2J\x1b[H' + 'CFC34 owned native-screen receiver ' + serial + '\n' + last + '\n' + "don't ask on (shift+tab to cycle)" + '\n$ ' + input);
+  draw();
   process.stdin.setRawMode(true); process.stdin.setEncoding('utf8'); process.stdin.resume();
   process.stdin.on('data', chunk => {
     input += chunk;
     for (;;) {
       const index = input.search(/[\r\n]/); if (index < 0) break;
       const line = input.slice(0, index).replace(/\x1b\[(?:200|201)~/g, ''); input = input.slice(index + 1);
-      if (line) fs.appendFileSync(config.received, JSON.stringify({ text: line, pid: process.pid }) + '\n');
+      if (line) { fs.appendFileSync(config.received, JSON.stringify({ text: line, pid: process.pid }) + '\n'); last = line; serial++; }
     }
+    draw();
   });
   const run = request => {
     const args = [path.join(config.main, 'bin/raf.ts'), ...request.args];
@@ -74,7 +77,7 @@ if (process.argv[2] === 'pane') {
     if (input.op === 'prepare') {
       const {ensureProductionMainStore}=await load(input.code,'main-production-store'); process.stdout.write(JSON.stringify(await ensureProductionMainStore({root:input.root})));
     } else if (input.op === 'seed') {
-      store.taskReservationRepository.transaction(tx => { for (const session of input.sessions) { tx.putSession(session); if (input.reserve) { const process = session.process; tx.putReservation({runId:session.runId,resource:'qa-fixture',amount:1}); tx.putTaskReservation({lease:{owner:{runId:session.runId,addressId:session.addressId,fence:'owned-fixture'},revision:0},boot:{machineId:process.evidence.machineId,bootId:process.evidence.bootId},stage:'running',starter:process,agent:process,tasks:[{key:{project:'raf',changeId:'owned-fixture',taskId:'1'},changeInstance:'owned-fixture-instance',fingerprint:'owned-fixture-fingerprint'}]}); } } });
+      store.taskReservationRepository.transaction(tx => { for (const session of input.sessions) { tx.putSession(session); if (input.reserve) { const process = session.process; tx.putReservation({runId:session.runId,resource:'qa-fixture',amount:1,resourceBundle:{machineId:process.evidence.machineId,resources:{ramBytes:1024,diskBytes:{}}}}); tx.putTaskReservation({lease:{owner:{runId:session.runId,addressId:session.addressId,fence:'owned-fixture'},revision:0},boot:{machineId:process.evidence.machineId,bootId:process.evidence.bootId},stage:'running',starter:process,agent:process,tasks:[{key:{project:'raf',changeId:'owned-fixture',taskId:'1'},changeInstance:'owned-fixture-instance',fingerprint:'owned-fixture-fingerprint'}]}); } } });
       process.stdout.write(JSON.stringify({ seeded: input.sessions.map(row => row.addressId) }));
     } else if (input.op === 'identity') {
       const {readWaitIdentity}=await load(input.code,'resource-wait-identity');
@@ -103,10 +106,10 @@ if (process.argv[2] === 'pane') {
   const env = { PATH: process.env.PATH, HOME: home, RAF_QA_HOME: home, RAF_ORCHESTRATOR_ROOT: root, TMPDIR: tmp, TERM: 'xterm', TZ: 'UTC', LANG: 'C.UTF-8',
     GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'Background QA', GIT_AUTHOR_EMAIL: 'qa@example.invalid', GIT_COMMITTER_NAME: 'Background QA', GIT_COMMITTER_EMAIL: 'qa@example.invalid' };
   const summary = { assignment: 'complete-raf-flow-contracts:3.4', status: 'failed', base, root, home, state, bugs, output,
-    command: [process.execPath, script, ...process.argv.slice(2)], versions: { node: process.version, os: os.release(), platform: process.platform, sqlite: db(':memory:', d => d.prepare('SELECT sqlite_version() AS version').get().version, false) }, scenarios: [], commands: [], cleanup: {}, limitations: ['Live tmux recipient is an owned stdin CLI receiver; no external AI provider credentials are copied or exercised.', 'Fixture service entry records origin and injects recovery/crash only for explicit fault scenarios; I6 uses default production ports without sharedDelivery injection.'] };
+    command: [process.execPath, script, ...process.argv.slice(2)], versions: { node: process.version, os: os.release(), platform: process.platform, sqlite: db(':memory:', d => d.prepare('SELECT sqlite_version() AS version').get().version, false) }, scenarios: [], commands: [], cleanup: {}, limitations: ['Live tmux recipient is an owned stdin CLI receiver displaying configured Claude native-screen context and empty composer; this is a controlled screen fixture, not a real AI runner acceptance; no external AI provider credentials are copied or exercised.', 'Fixture service entry records origin and injects recovery/crash only for explicit fault scenarios; I6 uses default production ports without sharedDelivery injection.'] };
   const flush = () => atomic(path.join(output, 'summary.json'), summary);
   let sequence = 0, upstream, servicePid, upstreamErrors = '';
-  summary.selection = only ? ['I6'] : noTcp ? ['I1','I2','I3','I4','I5','I7'] : ['I1','I2','I3','I4','I5','I6','I7'];
+  summary.selection = process.argv.find(arg=>arg.startsWith('--scenarios='))?.slice(12).split(',') ?? (only ? ['I6'] : noTcp ? ['I1','I2','I3','I4','I5','I7'] : ['I1','I2','I3','I4','I5','I6','I7']);
   const sockets = [], processes = [];
   const run = (label, executable, args, cwd = root) => {
     const start = performance.now();
@@ -241,7 +244,7 @@ if (process.argv[2] === 'pane') {
     });
     await scenario('I5', async () => {
       atomic(path.join(base, 'mode.json'), { mode: 'normal' }); const first = start();
-      const grant = must(cli('grant-before-restart', ['resource', 'wait', '--level', 'normal'])); const before = sql().resource_wait_protocol_state; stop(); const readyAt = performance.now(); const second = start();
+      const grant = must(cli('grant-before-restart', ['resource', 'wait', '--level', 'normal'])); const before = sql().resource_wait_protocol_state; stop(); const second = start(); const readyAt = performance.now();
       const next = must(cli('grant-after-restart', ['resource', 'wait', '--level', 'normal'])); const elapsed = performance.now() - readyAt;
       assert.ok(elapsed >= settings.resourceWait.grantIntervalMs); assert.notEqual(first.serviceEpoch, second.serviceEpoch); const after = sql().resource_wait_protocol_state;
       const args = [path.join(main, 'bin/raf.ts'), 'resource', 'wait', '--level', 'normal']; const client = spawn(process.execPath, args, { cwd: main, env, stdio: ['ignore', 'pipe', 'pipe'] }); processes.push(client);

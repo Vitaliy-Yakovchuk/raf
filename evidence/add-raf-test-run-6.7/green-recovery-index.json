@@ -1,0 +1,142 @@
+[
+  {
+    "scenario": "ev/raf-state-recovery-host-kbAoKw/scenario.json",
+    "testKind": "integration",
+    "checkpoint": "before-commit",
+    "child": "early-exit",
+    "runId": "7e2c83ec-f579-4c8c-9c31-13001ff17563",
+    "outcome": "setup-failed",
+    "timeoutCount": 1,
+    "cleanup": {
+      "remainingOwned": [],
+      "operationalStateOpened": false
+    },
+    "deliveryPendingAfterConcurrent": true
+  },
+  {
+    "scenario": "ev/raf-state-recovery-host-72EmQf/scenario.json",
+    "testKind": "unit",
+    "checkpoint": "after-spawn",
+    "child": "alive-through-deadline",
+    "runId": "2fc375e9-f424-42cf-9f90-edb350370bac",
+    "outcome": "timed-out",
+    "timeoutCount": 2,
+    "cleanup": {
+      "remainingOwned": [],
+      "operationalStateOpened": false
+    },
+    "deliveryPendingAfterConcurrent": true
+  },
+  {
+    "scenario": "ev/raf-state-recovery-host-1za1qy/scenario.json",
+    "testKind": "integration",
+    "checkpoint": "before-commit",
+    "child": "alive-through-deadline",
+    "runId": "f3702caa-51a0-49da-b44b-a83bbf3ac308",
+    "outcome": "timed-out",
+    "timeoutCount": 2,
+    "cleanup": {
+      "remainingOwned": [],
+      "operationalStateOpened": false
+    },
+    "deliveryPendingAfterConcurrent": true
+  },
+  {
+    "scenario": "ev/raf-state-recovery-host-fN9pEL/scenario.json",
+    "testKind": "integration",
+    "checkpoint": "after-spawn",
+    "child": "alive-through-deadline",
+    "runId": "b11cfc7f-66ad-4892-876f-b3ee69e93478",
+    "outcome": "timed-out",
+    "timeoutCount": 2,
+    "cleanup": {
+      "remainingOwned": [],
+      "operationalStateOpened": false
+    },
+    "deliveryPendingAfterConcurrent": true
+  },
+  {
+    "scenario": "ev/raf-state-recovery-host-SwEsE1/scenario.json",
+    "testKind": "unit",
+    "checkpoint": "after-commit-before-delivery",
+    "child": "early-exit",
+    "runId": "f280460d-269c-4f2a-8bef-41d24f3012bd",
+    "outcome": "passed",
+    "timeoutCount": 1,
+    "cleanup": {
+      "remainingOwned": [],
+      "operationalStateOpened": false
+    },
+    "deliveryPendingAfterConcurrent": true
+  },
+  {
+    "scenario": "ev/raf-state-recovery-host-84ddhT/scenario.json",
+    "testKind": "unit",
+    "checkpoint": "before-commit",
+    "child": "alive-through-deadline",
+    "runId": "cceb3e28-70fb-4b45-ab8b-efb1625b0e59",
+    "outcome": "timed-out",
+    "timeoutCount": 2,
+    "cleanup": {
+      "remainingOwned": [],
+      "operationalStateOpened": false
+    },
+    "deliveryPendingAfterConcurrent": true
+  },
+  {
+    "scenario": "ev/raf-state-recovery-host-maAbQk/scenario.json",
+    "testKind": "integration",
+    "checkpoint": "after-spawn",
+    "child": "early-exit",
+    "runId": "5b934896-11f0-492d-ac7d-804c944eb15c",
+    "outcome": "setup-failed",
+    "timeoutCount": 1,
+    "cleanup": {
+      "remainingOwned": [],
+      "operationalStateOpened": false
+    },
+    "deliveryPendingAfterConcurrent": true
+  },
+  {
+    "scenario": "ev/raf-state-recovery-host-ZoBXLF/scenario.json",
+    "testKind": "unit",
+    "checkpoint": "before-commit",
+    "child": "early-exit",
+    "runId": "46e8ad3d-a6b2-4c30-a07d-48079c434255",
+    "outcome": "setup-failed",
+    "timeoutCount": 1,
+    "cleanup": {
+      "remainingOwned": [],
+      "operationalStateOpened": false
+    },
+    "deliveryPendingAfterConcurrent": true
+  },
+  {
+    "scenario": "ev/raf-state-recovery-host-ctdHcs/scenario.json",
+    "testKind": "integration",
+    "checkpoint": "after-commit-before-delivery",
+    "child": "early-exit",
+    "runId": "8e30a83a-cc6b-4d51-95af-e5c390e26b09",
+    "outcome": "passed",
+    "timeoutCount": 1,
+    "cleanup": {
+      "remainingOwned": [],
+      "operationalStateOpened": false
+    },
+    "deliveryPendingAfterConcurrent": true
+  },
+  {
+    "scenario": "ev/raf-state-recovery-host-31hq51/scenario.json",
+    "testKind": "unit",
+    "checkpoint": "after-spawn",
+    "child": "early-exit",
+    "runId": "60015549-54b9-496d-a795-1df77f8aa98d",
+    "outcome": "setup-failed",
+    "timeoutCount": 1,
+    "cleanup": {
+      "remainingOwned": [],
+      "operationalStateOpened": false
+    },
+    "deliveryPendingAfterConcurrent": true
+  }
+]

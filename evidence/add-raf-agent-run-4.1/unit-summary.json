@@ -1,0 +1,94 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "implement",
+  "runId": "8fdc543c-53a5-4472-ac27-6cc816487d91",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "implement",
+  "group": "add-raf-agent-run/contracts",
+  "selection": {
+    "files": [
+      "test/cli-catalog.test.ts",
+      "test/app-runtime.test.ts",
+      "test/task-context.test.ts",
+      "test/task-context-z12.test.ts",
+      "test/runner-availability.test.ts",
+      "test/agent-control.test.ts",
+      "test/session-state.test.ts",
+      "test/task-reservations.test.ts",
+      "test/resource-admission.test.ts",
+      "test/resource-estimates.test.ts",
+      "test/agent-run-admission-snapshot.test.ts",
+      "test/home-disk-admission.test.ts",
+      "test/session-recovery.test.ts",
+      "test/agent-adapters-contract.test.ts",
+      "test/launch-state.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/cli-catalog.test.ts",
+      "test/app-runtime.test.ts",
+      "test/task-context.test.ts",
+      "test/task-context-z12.test.ts",
+      "test/runner-availability.test.ts",
+      "test/agent-control.test.ts",
+      "test/session-state.test.ts",
+      "test/task-reservations.test.ts",
+      "test/resource-admission.test.ts",
+      "test/resource-estimates.test.ts",
+      "test/agent-run-admission-snapshot.test.ts",
+      "test/home-disk-admission.test.ts",
+      "test/session-recovery.test.ts",
+      "test/agent-adapters-contract.test.ts",
+      "test/launch-state.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-W49WaG"
+    }
+  },
+  "startedAt": "2026-10-25T14:52:47.523Z",
+  "durationMs": 18915,
+  "exitCode": 0,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "passed",
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "timeoutCount": 0,
+  "nextAction": "complete",
+  "counts": {
+    "passed": 608,
+    "knownRed": 0,
+    "unexecuted": 0,
+    "unknown": 0,
+    "removed": 0
+  },
+  "cliExitCode": 0,
+  "rawResult": {
+    "file": "unit.stdout.json",
+    "bytes": 88984,
+    "sha256": "abe2305124289d61ff63591adcb6111d6d4cd24c955cf29d369c010cfc09d846",
+    "completeJson": true
+  },
+  "stderr": {
+    "file": "unit.stderr",
+    "note": "Tool returned exactly one complete JSON and no other text; native exec tool merges stdout/stderr. Empty stderr artifact records this observed lack of extra output, not an independent byte-level capture."
+  }
+}

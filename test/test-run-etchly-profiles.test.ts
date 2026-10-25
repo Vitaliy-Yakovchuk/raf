@@ -473,6 +473,81 @@ test('missing Etchly audited prerequisite is environment setup rather than stale
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+const auditedRootPackage = readFileSync(new URL('./fixtures/etchly-audited-package.json', import.meta.url), 'utf8');
+
+async function observeRootPackage(source: string, nextSource?: string): Promise<unknown> {
+  const root = mkdtempSync(join(tmpdir(), 'raf-etchly-package-audit-'));
+  try {
+    writeFileSync(join(root, 'package.json'), source);
+    if (nextSource !== undefined) writeFileSync(join(root, 'vitest.config.ts'), nextSource);
+    return await observeEtchlyInventory(root, {});
+  } finally { rmSync(root, { recursive: true, force: true }); }
+}
+
+async function assertRootPackageAccepted(source: string): Promise<void> {
+  await assert.rejects(observeRootPackage(source), (error: any) => {
+    assert.equal(error.code, 'ENVIRONMENT_INVALID', 'a reviewed root manifest must reach the next prerequisite check');
+    assert.match(error.message, /missing audited source vitest\.config\.ts/);
+    return true;
+  });
+}
+
+test('reviewed root package reaches the next audited source check', async () => {
+  await assertRootPackageAccepted(auditedRootPackage);
+});
+
+for (const change of ['add', 'edit', 'remove'] as const) {
+  test(`root package scripts-only ${change} does not invalidate the fixed runner inventory`, async () => {
+    const manifest = JSON.parse(auditedRootPackage);
+    if (change === 'add') manifest.scripts['test:live-model-evals'] = 'npm run test:live-model-evals --workspace worker --';
+    if (change === 'edit') manifest.scripts.test = 'node scripts/other-test-entry.mjs';
+    if (change === 'remove') delete manifest.scripts;
+    await assertRootPackageAccepted(JSON.stringify(manifest));
+  });
+}
+
+test('root package JSON formatting and object key order do not change the audited execution contract', async () => {
+  const reorder = (value: any): any => Array.isArray(value) ? value.map(reorder)
+    : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).reverse().map(([key, entry]) => [key, reorder(entry)])) : value;
+  await assertRootPackageAccepted(JSON.stringify(reorder(JSON.parse(auditedRootPackage)), null, 4));
+});
+
+for (const [field, value] of [
+  ['workspaces', ['app']], ['type', 'commonjs'], ['dependencies', { vitest: '0.0.0' }],
+  ['devDependencies', {}], ['overrides', {}], ['imports', { '#runner': './unreviewed.js' }],
+  ['exports', './unreviewed.js'], ['engines', { node: '>=99' }], ['packageManager', 'npm@0.0.0'],
+  ['unreviewedSetting', true],
+] as const) {
+  test(`root package change to ${field} still refuses before inventory classification`, async () => {
+    const manifest = { ...JSON.parse(auditedRootPackage), [field]: value };
+    await assert.rejects(observeRootPackage(JSON.stringify(manifest)), (error: any) => {
+      assert.equal(error.code, 'INVENTORY_INCOMPLETE');
+      assert.match(error.message, /changed source package\.json/);
+      return true;
+    });
+  });
+}
+
+for (const source of ['{', 'null', '[]', '"manifest"']) {
+  test(`invalid root package ${source} fails closed as an inventory refusal`, async () => {
+    await assert.rejects(observeRootPackage(source), (error: any) => {
+      assert.equal(error.code, 'INVENTORY_INCOMPLETE');
+      assert.match(error.message, /package\.json/);
+      return true;
+    });
+  });
+}
+
+test('accepting root scripts changes preserves the byte hash guard on the next runner source', async () => {
+  const manifest = JSON.parse(auditedRootPackage);
+  manifest.scripts['test:live-model-evals'] = 'npm run test:live-model-evals --workspace worker --';
+  await assert.rejects(observeRootPackage(JSON.stringify(manifest), 'export default {};'), (error: any) => {
+    assert.equal(error.code, 'INVENTORY_INCOMPLETE');
+    assert.match(error.message, /changed source vitest\.config\.ts/);
+    return true;
+  });
+});
+
 for (const [label, profileId, preset, dom] of [
   ['app explicit files', 'vitest-app', false, true],
   ['product-defaults preset', 'vitest-app', true, true],

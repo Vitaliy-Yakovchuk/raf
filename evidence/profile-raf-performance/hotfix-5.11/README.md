@@ -1,6 +1,6 @@
 # 5.11: стан доказів
 
-Кандидат реалізації: `11d07f787de0ec08839a19e174774662a822a6da`. Реалізовано спільний синхронний origin-допуск, один process snapshot на прохід `agent ps`, адресне Linux-очікування, повторне використання store профілю/runtime й відкладене створення delivery claim owner. Тести не змінено. Чекбокс 5.11 не змінювався.
+Кандидат реалізації: `4f089dcd6646f698dc8ab09d8c0592687b8f27f0`; основне виправлення — `11d07f787de0ec08839a19e174774662a822a6da`, додаткова консервативна обробка суперечливих targeted OS-фактів — `4f089dcd6646f698dc8ab09d8c0592687b8f27f0`. Реалізовано спільний синхронний origin-допуск, один process snapshot на прохід `agent ps`, адресне Linux-очікування, повторне використання store профілю/runtime й відкладене створення delivery claim owner. Тести не змінено. Чекбокс 5.11 не змінювався.
 
 ## Unit і перевірки
 
@@ -10,7 +10,7 @@
 
 Останній власний запуск `5f1c3dbb-5831-4579-bac7-8c6c48782df9` має child 0, але CLI 1, outcome `setup-failed`, cleanup incomplete: SQLite `database is locked` під час ResourceUsageRepository.merge. Дозволений main один повтор повної групи повернув той самий runId і старий `--only`: це replay, а не новий прогін. Main завів Z.422 і заборонив повтори до його випуску. HOME та назву групи не змінювали. **Unit green наразі не підтверджено.**
 
-`checks.json` фіксує build та check:comments exit 0 після фінального src diff. `candidate.patch` — цей diff до коміту. У shared worktree чужі зміни тестів/Z.422 не входять до власних комітів.
+`checks.json` фіксує build та check:comments exit 0 після фінального src diff. `candidate.patch` — початковий diff 11d07f78 до коміту; `candidate-followup.patch` — додаткова правка 4f089dcd. `latestSourceChecks.workspaceAtRun` вказує фактичний HEAD та незакомічений src під час останніх перевірок і еквівалентний наступний коміт. У shared worktree чужі зміни тестів/Z.422 не входять до власних комітів.
 
 Чужі групи без grant не запускались; main прийняв точні команди для `profile-raf-performance/module-origin-cost` (включно з generation/origin preset) та `profile-raf-performance/agent-ps`.
 
@@ -22,7 +22,7 @@
 
 ```sh
 LC_ALL=C CODEX_HOME=/home/dev/.codex node scripts/qa-runtime-verification-host.mjs run 30eaf7f91d52ca7ca71e205ab35d70f4985dd852 /srv/dev/work/orchestrator/conf 3 /srv/dev/prp511-before
-LC_ALL=C CODEX_HOME=/home/dev/.codex node scripts/qa-runtime-verification-host.mjs run 11d07f787de0ec08839a19e174774662a822a6da /srv/dev/work/orchestrator/conf 3 /srv/dev/prp511-after
+LC_ALL=C CODEX_HOME=/home/dev/.codex node scripts/qa-runtime-verification-host.mjs run 4f089dcd6646f698dc8ab09d8c0592687b8f27f0 /srv/dev/work/orchestrator/conf 3 /srv/dev/prp511-after
 node scripts/qa-runtime-verification-host.mjs compare /srv/dev/prp511-before/summary.json /srv/dev/prp511-after/summary.json /srv/dev/prp511-comparison
 ```
 

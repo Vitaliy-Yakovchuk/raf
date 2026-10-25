@@ -41,5 +41,33 @@
       }
     ],
     "limitation": "Preparation and syntax checks only; host live series not executed by this agent."
+  },
+  "latestSourceChecks": {
+    "commands": [
+      {
+        "command": "HOME=/tmp/prp511-check-home RAF_QA_HOME=/tmp/prp511-check-home node scripts/build.ts",
+        "cliExitCode": 0,
+        "stdout": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n",
+        "stderr": ""
+      },
+      {
+        "command": "HOME=/tmp/prp511-check-home RAF_QA_HOME=/tmp/prp511-check-home node scripts/check-comments.ts",
+        "cliExitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "git diff --check",
+        "cliExitCode": 0
+      }
+    ],
+    "recordedAt": "2026-10-25T22:44:52.369122+00:00",
+    "workspaceAtRun": {
+      "head": "d7116833a2b42e5ef4ace6b051cce05928fa223d",
+      "uncommittedPaths": [
+        "src/os-runtime.ts"
+      ],
+      "equivalentCommittedSource": "4f089dcd6646f698dc8ab09d8c0592687b8f27f0"
+    }
   }
 }

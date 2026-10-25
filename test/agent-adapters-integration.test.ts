@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { agentRunFixture, alive, exists, until } from './agent-run-fixture.ts';
 import { publicAdapterMain } from './agent-adapters-public-fixture.ts';
 
@@ -9,8 +11,9 @@ const settings = JSON.parse(await readFile(new URL('../../conf/raf.json', import
 const timeouts = settings.runnerProtocols.find((row: { runner: string }) => row.runner === 'codex').timeouts;
 const change = 'launch-failure-fixture';
 const taskFile = `openspec/changes/${change}/tasks.md`;
+const exec = promisify(execFile);
 
-async function fixture(t: TestContext, mode = 'live') {
+async function fixture(t: TestContext, mode = 'live', preserveAfterPane = false) {
   const f = await agentRunFixture(t, mode, timeouts, 'codex', { productionQa: true, tasks: 2, commands: ['main attach'] });
   const cfg = JSON.parse(await readFile(join(f.directory, 'fixture.json'), 'utf8'));
   await mkdir(join(cfg.sourceRoot, 'dist'), { recursive: true });
@@ -32,7 +35,6 @@ process.exitCode = result.status;
   script = script.replace("assignment = candidate;", "assignment = candidate; writeFileSync(c.control + '/' + candidate.agent_id + '.literal', input);");
   script += String.raw`
 process.stdout.on('error', () => {});
-process.on('SIGHUP', () => {});
 setInterval(() => {
   try {
     const request = JSON.parse(readFileSync(c.control + '/exit.json', 'utf8'));
@@ -40,6 +42,7 @@ setInterval(() => {
   } catch {}
 }, 20);
 `;
+  if (preserveAfterPane) script += "\nprocess.on('SIGHUP', () => {});\n";
   await writeFile(runner, script, { mode: 0o700 });
   const tasks = join(cfg.root, taskFile);
   const literal = 'literal 🧪 "quote" $(touch ' + join(f.directory, 'must-not-exist') + ') `false`';
@@ -153,3 +156,66 @@ for (const payload of ['failed', 'partial', 'invalid', 'zero-without-report']) {
     f.evidence('I3-' + payload, { runId: result.runId, childExitCode: 0, final: current });
   });
 }
+
+test('[I2] missing pane cannot release a live runner before its verified exit', async t => {
+  const f = await fixture(t, 'live', true);
+  const { result, session } = await f.launch('adapter-pane');
+  await exec(f.cfg.tmux, ['-L', f.cfg.tmuxLabel, 'kill-pane', '-t', session.process!.evidence.tmuxPane!], { env: { ...process.env, TMUX_TMPDIR: f.directory } });
+  assert.equal(alive(session.process!.pid), true, 'runner survives disappearance of its pane');
+  const observation = await f.main.command(['agent', 'ps']);
+  const before = f.inspect();
+  assert.ok(before.sessions.find(row => row.runId === result.runId)?.state !== 'finished');
+  assert.equal(before.claims.length, 1, 'pane loss is not verified exit');
+  assert.equal(before.admission.length, 1);
+  await writeFile(join(f.control, 'exit.json'), JSON.stringify({ pid: session.process!.pid, code: 7 }));
+  await until(() => alive(session.process!.pid), value => !value, 'process exits after missing pane', timeouts.overallMs);
+  await f.ps();
+  await until(() => f.inspect(), value => !value.claims.length && !value.admission.length, 'claims released after verified exit', timeouts.overallMs);
+  f.evidence('I2-pane-process', { runId: result.runId, observation, before, after: f.inspect() });
+});
+
+test('[I2] unconfirmed cleanup preserves the delivery failure and reservation until verified exit', async t => {
+  const f = await fixture(t, 'delivery', true);
+  const outcome = await f.run('adapter-unconfirmed');
+  assert.equal(outcome.exitCode, 1, JSON.stringify(outcome));
+  const failure = JSON.parse(outcome.result.stderr);
+  assert.equal(failure.code, 'LAUNCH_RECOVERABLE');
+  assert.equal(failure.details.retrySafe, false);
+  assert.ok(failure.details.pending.length);
+  assert.match(failure.message, /unknown/i);
+  assert.match(failure.message, /cleanup|confirmation|confirmed/i);
+  const before = f.inspect();
+  assert.equal(before.claims.length, 1);
+  assert.equal(before.admission.length, 1);
+  const live = (await f.runners()).filter(alive);
+  assert.equal(live.length, 1);
+  await writeFile(join(f.control, 'exit.json'), JSON.stringify({ pid: live[0], code: 7 }));
+  await until(() => alive(live[0]), value => !value, 'unconfirmed runner eventually exits', timeouts.overallMs);
+  await f.ps();
+  await until(() => f.inspect(), value => !value.claims.length && !value.admission.length, 'reconciliation releases only after actual exit', timeouts.overallMs);
+  f.evidence('I2-unconfirmed-exit', { outcome, before, after: f.inspect() });
+});
+
+test('[I3] a late report for old run A cannot complete reused address run B', async t => {
+  const f = await fixture(t);
+  const a = await f.launch('adapter-reused');
+  await writeFile(join(f.control, 'exit.json'), JSON.stringify({ pid: a.session.process!.pid, code: 0 }));
+  await until(() => alive(a.session.process!.pid), value => !value, 'old A exits', timeouts.overallMs);
+  await f.ps();
+  await until(() => f.inspect(), value => !value.claims.length && !value.admission.length, 'A releases its reservation after exit', timeouts.overallMs);
+  const cliB = await f.main.command(f.runArgs('adapter-reused', 'implement', ['1.2']));
+  assert.equal(cliB.exitCode, 0, JSON.stringify(cliB));
+  const b = JSON.parse(cliB.result.stdout);
+  assert.notEqual(a.result.runId, b.runId);
+  await mkdir(join(a.session.launchContext!.reportPath, '..'), { recursive: true });
+  await publish(a.session.launchContext!.reportPath, report('succeeded'));
+  await f.ps();
+  const current = f.inspect();
+  const active = current.sessions.find(row => row.runId === b.runId)!;
+  assert.equal(active.state, 'running');
+  assert.equal(active.result, undefined);
+  assert.ok(current.claims.every(row => row.lease.owner.runId === b.runId));
+  assert.match(await readFile(join(f.cfg.root, taskFile), 'utf8'), /- \[ \] 1\.1 /);
+  assert.match(await readFile(join(f.cfg.root, taskFile), 'utf8'), /- \[ \] 1\.2 /);
+  f.evidence('I3-old-A-current-B', { a: a.result.runId, b: b.runId, lateReport: a.session.launchContext!.reportPath, current });
+});

@@ -12,14 +12,14 @@ export async function publicAdapterMain(f: AgentRunFixture, cfg: any, budget: nu
   const worker = join(directory, 'main.mjs');
   await fs.writeFile(worker, String.raw`
 import fs from 'node:fs';
-import {spawnSync} from 'node:child_process';
+import {execFile} from 'node:child_process';
 const c=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
 const directory=process.argv[3], budget=Number(process.argv[4]);
-const run=args=>{const r=spawnSync(process.execPath,[c.sourceRoot+'/bin/raf.ts',...args],{cwd:c.sourceRoot,env:process.env,encoding:'utf8',timeout:budget,maxBuffer:64*1024*1024});return {exitCode:r.status,signal:r.signal,error:r.error?.message,stdout:r.stdout??'',stderr:r.stderr??''};};
+const run=args=>new Promise(resolve=>execFile(process.execPath,[c.sourceRoot+'/bin/raf.ts',...args],{cwd:c.sourceRoot,env:process.env,encoding:'utf8',timeout:budget,maxBuffer:64*1024*1024},(error,stdout,stderr)=>resolve({exitCode:error?(typeof error.code==='number'?error.code:null):0,signal:error?.signal??null,error:error?.message,stdout,stderr})));
 const atomic=(p,v)=>{fs.writeFileSync(p+'.part',JSON.stringify(v));fs.renameSync(p+'.part',p);};
-atomic(directory+'/attached.json',run(['main','attach']));
+atomic(directory+'/attached.json',await run(['main','attach']));
 process.stdin.resume();
-setInterval(()=>{for(const name of fs.readdirSync(directory).filter(n=>n.endsWith('.request'))){const p=directory+'/'+name;const args=JSON.parse(fs.readFileSync(p));fs.renameSync(p,p+'.running');atomic(p+'.result',run(args));fs.renameSync(p+'.running',p+'.done');}},25);
+setInterval(()=>{for(const name of fs.readdirSync(directory).filter(n=>n.endsWith('.request'))){const p=directory+'/'+name;const args=JSON.parse(fs.readFileSync(p));fs.renameSync(p,p+'.running');run(args).then(result=>{atomic(p+'.result',result);fs.renameSync(p+'.running',p+'.done');});}},25);
 `);
   const env: NodeJS.ProcessEnv = { ...process.env, HOME: cfg.home, RAF_QA_HOME: cfg.home, RAF_ORCHESTRATOR_ROOT: cfg.root, TMPDIR: f.directory, TMUX_TMPDIR: f.directory, PATH: join(f.directory, 'bin') + ':' + process.env.PATH, RAF_AGENT_RUN_FIXTURE: join(f.directory, 'fixture.json') };
   delete env.TMUX;

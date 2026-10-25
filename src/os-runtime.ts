@@ -111,7 +111,7 @@ export async function observeKnownProcesses(identities: readonly ProcessIdentity
       await Promise.all(selected.map(async pid => {
         try {
           const after = platform() === 'linux' ? await stamp(pid) : '';
-          facts.set(pid, before.get(pid) !== after ? exited('Process identity changed during targeted observation') : rows.get(pid) ?? exited('PID absent from successful targeted observation'));
+          facts.set(pid, before.get(pid) !== after ? exited('Process identity changed during targeted observation') : rows.get(pid) ?? unknown('PID present in targeted stat but absent from process observation'));
         } catch (error) { facts.set(pid, unknown('Process disappeared or became unreadable during targeted observation: ' + String(error))); }
       }));
     } catch (error) { for (const pid of selected) facts.set(pid, unknown(String(error))); }

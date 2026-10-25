@@ -1,0 +1,9 @@
+file:///srv/dev/mrh34-src.4TkVBT/raf-develop/evidence/monitor-raf-health/qa-3.4/host.mjs:46
+  for (const marker of markers) assert.ok(!text.includes(marker), 'Control secret reached a public artifact');
+                                                ^
+
+TypeError: Cannot read properties of undefined (reading 'includes')
+    at safe (file:///srv/dev/mrh34-src.4TkVBT/raf-develop/evidence/monitor-raf-health/qa-3.4/host.mjs:46:49)
+    at file:///srv/dev/mrh34-src.4TkVBT/raf-develop/evidence/monitor-raf-health/qa-3.4/host.mjs:203:30
+
+Node.js v26.12.1

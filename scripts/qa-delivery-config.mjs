@@ -9,3 +9,10 @@ export function configureDeliveryStand(raf, original) {
 export function parsePublicDeliveryEvidence(message) {
   return JSON.parse(message.split('deliveryEvidence=')[1].split('\n')[0]);
 }
+import assert from 'node:assert/strict';
+
+
+export function assertPublicArtifact(value, markers) {
+  const text = typeof value === 'string' ? value : JSON.stringify(value) ?? '';
+  for (const marker of markers) assert.ok(!text.includes(marker), 'Control secret reached a public artifact');
+}

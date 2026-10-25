@@ -1,0 +1,153 @@
+[
+  {
+    "command": [
+      "node",
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/command.mjs",
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/fixture.json",
+      "[\"agent\",\"ps\"]"
+    ],
+    "exitCode": 0,
+    "result": {
+      "exitCode": 0,
+      "stdout": "[]",
+      "stderr": ""
+    },
+    "stderr": ""
+  },
+  {
+    "command": [
+      "node",
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/command.mjs",
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/fixture.json",
+      "[\"agent\",\"run\",\"--id\",\"mrh34-failed-a\",\"--type\",\"implement\",\"--project\",\"raf\",\"--features\",\"launch-fixture\",\"--phase\",\"implement\",\"--complexity\",\"decision\",\"--tasks\",\"launch-failure-fixture:1.1\"]"
+    ],
+    "exitCode": 1,
+    "result": {
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "{\"code\":\"LAUNCH_FAILED\",\"message\":\"Wrapper launch 153190bf-7fdb-425e-b5bb-54aec5810683 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T02:05:55.832Z worker started run=153190bf-7fdb-425e-b5bb-54aec5810683 pid=3349356 ppid=3348714\\n153190bf-7fdb-425e-b5bb-54aec5810683: worker process group=3349356 session=3349356 pidNamespace=pid:[4026531836]\\nfile:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/cli.ts:31\\n  const error = new Error(context.message);\\n                ^\\n\\nError: Unknown native input or screen during initial brief submission; deliveryEvidence={\\\"availability\\\":\\\"available\\\",\\\"reference\\\":\\\"151ca502-95a6-4537-ba47-f7bcebe5b151\\\",\\\"unavailableReason\\\":null,\\\"metadata\\\":{\\\"runId\\\":\\\"153190bf-7fdb-425e-b5bb-54aec5810683\\\",\\\"runner\\\":\\\"codex\\\",\\\"version\\\":\\\"0.0.1\\\",\\\"generation\\\":\\\"6e0cf0c0ebe7336fa5e25ce265385b7d0940e3d05cda922c736a7494bb44bf34\\\",\\\"capturedAt\\\":\\\"2026-10-25T02:05:58.449Z\\\",\\\"phase\\\":\\\"awaiting_acceptance\\\",\\\"method\\\":\\\"tmux capture-pane -p\\\",\\\"limitations\\\":[\\\"Visible pane only; scrollback and earlier frames are not captured\\\"],\\\"firstFailureAt\\\":\\\"2026-10-25T02:05:58.587Z\\\",\\\"expiresAt\\\":\\\"2026-11-01T02:05:58.587Z\\\"},\\\"diagnostic\\\":{\\\"runner\\\":\\\"codex\\\",\\\"phase\\\":\\\"awaiting_acceptance\\\",\\\"observation\\\":\\\"unknown_screen\\\",\\\"composer\\\":\\\"missing\\\",\\\"pending\\\":\\\"none\\\",\\\"retried\\\":false,\\\"truncated\\\":false,\\\"screen\\\":\\\"Session: [redacted-id]\\\\nUnknown native transition\\\\n[redacted-account]\\\\napi_key=[redacted] [redacted] [redacted]\\\\nWorkspace: [redacted-path]\\\\nMRH34 FRAME END\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\"}}\\n    at commandFailure (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/cli.ts:31:17)\\n    at transport.deliver (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/production-runtime.ts:1717:33)\\n    at async RafCostRuntime.measure (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/raf-cost-runtime.ts:75:18)\\n    at async runLaunchWrapper (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/launch-wrapper.ts:113:5)\\n    at async Module.runProductionWorker (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/production-runtime.ts:1820:11)\\n    at async file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/[eval1]:1:120\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying (runId: 153190bf-7fdb-425e-b5bb-54aec5810683)\",\"details\":{\"command\":\"agent run\",\"stage\":\"starting\",\"source\":\"agent-run-queue\",\"sourceCode\":null,\"reason\":\"Wrapper launch 153190bf-7fdb-425e-b5bb-54aec5810683 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T02:05:55.832Z worker started run=153190bf-7fdb-425e-b5bb-54aec5810683 pid=3349356 ppid=3348714\\n153190bf-7fdb-425e-b5bb-54aec5810683: worker process group=3349356 session=3349356 pidNamespace=pid:[4026531836]\\nfile:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/cli.ts:31\\n  const error = new Error(context.message);\\n                ^\\n\\nError: Unknown native input or screen during initial brief submission; deliveryEvidence={\\\"availability\\\":\\\"available\\\",\\\"reference\\\":\\\"151ca502-95a6-4537-ba47-f7bcebe5b151\\\",\\\"unavailableReason\\\":null,\\\"metadata\\\":{\\\"runId\\\":\\\"153190bf-7fdb-425e-b5bb-54aec5810683\\\",\\\"runner\\\":\\\"codex\\\",\\\"version\\\":\\\"0.0.1\\\",\\\"generation\\\":\\\"6e0cf0c0ebe7336fa5e25ce265385b7d0940e3d05cda922c736a7494bb44bf34\\\",\\\"capturedAt\\\":\\\"2026-10-25T02:05:58.449Z\\\",\\\"phase\\\":\\\"awaiting_acceptance\\\",\\\"method\\\":\\\"tmux capture-pane -p\\\",\\\"limitations\\\":[\\\"Visible pane only; scrollback and earlier frames are not captured\\\"],\\\"firstFailureAt\\\":\\\"2026-10-25T02:05:58.587Z\\\",\\\"expiresAt\\\":\\\"2026-11-01T02:05:58.587Z\\\"},\\\"diagnostic\\\":{\\\"runner\\\":\\\"codex\\\",\\\"phase\\\":\\\"awaiting_acceptance\\\",\\\"observation\\\":\\\"unknown_screen\\\",\\\"composer\\\":\\\"missing\\\",\\\"pending\\\":\\\"none\\\",\\\"retried\\\":false,\\\"truncated\\\":false,\\\"screen\\\":\\\"Session: [redacted-id]\\\\nUnknown native transition\\\\n[redacted-account]\\\\napi_key=[redacted] [redacted] [redacted]\\\\nWorkspace: [redacted-path]\\\\nMRH34 FRAME END\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\"}}\\n    at commandFailure (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/cli.ts:31:17)\\n    at transport.deliver (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/production-runtime.ts:1717:33)\\n    at async RafCostRuntime.measure (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/raf-cost-runtime.ts:75:18)\\n    at async runLaunchWrapper (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/launch-wrapper.ts:113:5)\\n    at async Module.runProductionWorker (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/production-runtime.ts:1820:11)\\n    at async file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/[eval1]:1:120\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"received\":{\"runId\":\"153190bf-7fdb-425e-b5bb-54aec5810683\"},\"expected\":null,\"found\":null,\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[],\"retrySafe\":true,\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":4.3,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":21378846720,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"/dev/mapper/data-dev\",\"totalBytes\":190143823872,\"availableBytes\":177484984320}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.2,\"minRamBytes\":1,\"minDiskFraction\":0.1,\"minDiskBytes\":1},\"hotfix\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.1,\"minRamBytes\":1,\"minDiskFraction\":0.05,\"minDiskBytes\":1},\"home\":{\"minDiskBytes\":1,\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamBytes\":1}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":19231363072,\"diskBytes\":{\"/dev/mapper/data-dev\":166747566080},\"normalizedLoad\":0.5375},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/flow.json#/resourceEstimates/agentTypes/implement\"],\"reason\":null},\"queueId\":\"a4144039-65e7-4f81-abf4-423920568c55\"},\"cleanup\":{\"state\":\"released\",\"reason\":\"Wrapper launch 153190bf-7fdb-425e-b5bb-54aec5810683 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T02:05:55.832Z worker started run=153190bf-7fdb-425e-b5bb-54aec5810683 pid=3349356 ppid=3348714\\n153190bf-7fdb-425e-b5bb-54aec5810683: worker process group=3349356 session=3349356 pidNamespace=pid:[4026531836]\\nfile:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/cli.ts:31\\n  const error = new Error(context.message);\\n                ^\\n\\nError: Unknown native input or screen during initial brief submission; deliveryEvidence={\\\"availability\\\":\\\"available\\\",\\\"reference\\\":\\\"151ca502-95a6-4537-ba47-f7bcebe5b151\\\",\\\"unavailableReason\\\":null,\\\"metadata\\\":{\\\"runId\\\":\\\"153190bf-7fdb-425e-b5bb-54aec5810683\\\",\\\"runner\\\":\\\"codex\\\",\\\"version\\\":\\\"0.0.1\\\",\\\"generation\\\":\\\"6e0cf0c0ebe7336fa5e25ce265385b7d0940e3d05cda922c736a7494bb44bf34\\\",\\\"capturedAt\\\":\\\"2026-10-25T02:05:58.449Z\\\",\\\"phase\\\":\\\"awaiting_acceptance\\\",\\\"method\\\":\\\"tmux capture-pane -p\\\",\\\"limitations\\\":[\\\"Visible pane only; scrollback and earlier frames are not captured\\\"],\\\"firstFailureAt\\\":\\\"2026-10-25T02:05:58.587Z\\\",\\\"expiresAt\\\":\\\"2026-11-01T02:05:58.587Z\\\"},\\\"diagnostic\\\":{\\\"runner\\\":\\\"codex\\\",\\\"phase\\\":\\\"awaiting_acceptance\\\",\\\"observation\\\":\\\"unknown_screen\\\",\\\"composer\\\":\\\"missing\\\",\\\"pending\\\":\\\"none\\\",\\\"retried\\\":false,\\\"truncated\\\":false,\\\"screen\\\":\\\"Session: [redacted-id]\\\\nUnknown native transition\\\\n[redacted-account]\\\\napi_key=[redacted] [redacted] [redacted]\\\\nWorkspace: [redacted-path]\\\\nMRH34 FRAME END\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\"}}\\n    at commandFailure (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/cli.ts:31:17)\\n    at transport.deliver (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/production-runtime.ts:1717:33)\\n    at async RafCostRuntime.measure (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/raf-cost-runtime.ts:75:18)\\n    at async runLaunchWrapper (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/launch-wrapper.ts:113:5)\\n    at async Module.runProductionWorker (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/production-runtime.ts:1820:11)\\n    at async file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/[eval1]:1:120\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[]}},\"remediation\":[\"Перевірте стан запуску перед повторним викликом.\",\"raf help agent run\"]}"
+    },
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/own-probe/codex-sandbox-own-probe/codex",
+      "--no-daemon",
+      "sandbox",
+      "-C",
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop",
+      "-P",
+      "linux",
+      "-c",
+      "sandbox_mode=\"workspace-write\"",
+      "-c",
+      "default_permissions=\"linux\"",
+      "-c",
+      "permissions.linux.filesystem={\":root\"=\"read\",\":slash_tmp\"=\"write\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/own-probe\"=\"write\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop\"=\"read\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/.git\"=\"read\",\"/home/dev/.raf\"=\"none\",\"/tmp/raf-ipc-1000\"=\"none\",\"/tmp/raf-tools-1000\"=\"none\",\"/run\"=\"none\",\"/tmp/tmux-1000\"=\"none\",\"/tmp/cc-socks\"=\"none\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf\"=\"none\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/own-probe/codex-sandbox-own-probe\"=\"read\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/own-probe/tmux-1000\"=\"write\"}",
+      "-c",
+      "permissions.linux.network.enabled=true",
+      "--",
+      "/opt/dev/node/bin/node",
+      "-e",
+      "const fs=require('fs'); if(fs.readFileSync(\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/own-probe/control\",'utf8')!=='readable-control')process.exit(12); for(const path of [\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/.delivery-evidence/153190bf-7fdb-425e-b5bb-54aec5810683/frame.json\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/.control-frame\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/.delivery-evidence\"]) { try { fs.readFileSync(path); process.exit(13); } catch(e) { if(!['EACCES','EPERM','ENOENT','EISDIR'].includes(e.code))process.exit(14); } } console.log('PRIVATE_RAW_DENIED; OWN_CONTROL_READABLE');"
+    ],
+    "cliExitCode": 0,
+    "stdout": "PRIVATE_RAW_DENIED; OWN_CONTROL_READABLE\n",
+    "stderr": "",
+    "signal": null
+  },
+  {
+    "command": [
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/own-probe/codex-sandbox-own-probe/codex",
+      "--no-daemon",
+      "sandbox",
+      "-C",
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop",
+      "-P",
+      "linux",
+      "-c",
+      "sandbox_mode=\"workspace-write\"",
+      "-c",
+      "default_permissions=\"linux\"",
+      "-c",
+      "permissions.linux.filesystem={\":root\"=\"read\",\":slash_tmp\"=\"write\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/own-probe\"=\"write\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop\"=\"read\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/.git\"=\"read\",\"/home/dev/.raf\"=\"none\",\"/tmp/raf-ipc-1000\"=\"none\",\"/tmp/raf-tools-1000\"=\"none\",\"/run\"=\"none\",\"/tmp/tmux-1000\"=\"none\",\"/tmp/cc-socks\"=\"none\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf\"=\"none\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/own-probe/codex-sandbox-own-probe\"=\"read\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/own-probe/tmux-1000\"=\"write\"}",
+      "-c",
+      "permissions.linux.network.enabled=true",
+      "--",
+      "/usr/bin/cat",
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/.delivery-evidence/153190bf-7fdb-425e-b5bb-54aec5810683/frame.json"
+    ],
+    "cliExitCode": 1,
+    "stdout": "",
+    "stderr": "cat: /srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/.delivery-evidence/153190bf-7fdb-425e-b5bb-54aec5810683/frame.json: No such file or directory\n",
+    "signal": null
+  },
+  {
+    "command": [
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/neighbour-probe/codex-sandbox-neighbour-probe/codex",
+      "--no-daemon",
+      "sandbox",
+      "-C",
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop",
+      "-P",
+      "linux",
+      "-c",
+      "sandbox_mode=\"workspace-write\"",
+      "-c",
+      "default_permissions=\"linux\"",
+      "-c",
+      "permissions.linux.filesystem={\":root\"=\"read\",\":slash_tmp\"=\"write\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/neighbour-probe\"=\"write\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop\"=\"read\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/.git\"=\"read\",\"/home/dev/.raf\"=\"none\",\"/tmp/raf-ipc-1000\"=\"none\",\"/tmp/raf-tools-1000\"=\"none\",\"/run\"=\"none\",\"/tmp/tmux-1000\"=\"none\",\"/tmp/cc-socks\"=\"none\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf\"=\"none\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/neighbour-probe/codex-sandbox-neighbour-probe\"=\"read\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/neighbour-probe/tmux-1000\"=\"write\"}",
+      "-c",
+      "permissions.linux.network.enabled=true",
+      "--",
+      "/opt/dev/node/bin/node",
+      "-e",
+      "const fs=require('fs'); if(fs.readFileSync(\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/neighbour-probe/control\",'utf8')!=='readable-control')process.exit(12); for(const path of [\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/.delivery-evidence/153190bf-7fdb-425e-b5bb-54aec5810683/frame.json\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/.control-frame\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/.delivery-evidence\"]) { try { fs.readFileSync(path); process.exit(13); } catch(e) { if(!['EACCES','EPERM','ENOENT','EISDIR'].includes(e.code))process.exit(14); } } console.log('PRIVATE_RAW_DENIED; OWN_CONTROL_READABLE');"
+    ],
+    "cliExitCode": 0,
+    "stdout": "PRIVATE_RAW_DENIED; OWN_CONTROL_READABLE\n",
+    "stderr": "",
+    "signal": null
+  },
+  {
+    "command": [
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/neighbour-probe/codex-sandbox-neighbour-probe/codex",
+      "--no-daemon",
+      "sandbox",
+      "-C",
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop",
+      "-P",
+      "linux",
+      "-c",
+      "sandbox_mode=\"workspace-write\"",
+      "-c",
+      "default_permissions=\"linux\"",
+      "-c",
+      "permissions.linux.filesystem={\":root\"=\"read\",\":slash_tmp\"=\"write\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/neighbour-probe\"=\"write\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop\"=\"read\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/.git\"=\"read\",\"/home/dev/.raf\"=\"none\",\"/tmp/raf-ipc-1000\"=\"none\",\"/tmp/raf-tools-1000\"=\"none\",\"/run\"=\"none\",\"/tmp/tmux-1000\"=\"none\",\"/tmp/cc-socks\"=\"none\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf\"=\"none\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/neighbour-probe/codex-sandbox-neighbour-probe\"=\"read\",\"/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/neighbour-probe/tmux-1000\"=\"write\"}",
+      "-c",
+      "permissions.linux.network.enabled=true",
+      "--",
+      "/usr/bin/cat",
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/.delivery-evidence/153190bf-7fdb-425e-b5bb-54aec5810683/frame.json"
+    ],
+    "cliExitCode": 1,
+    "stdout": "",
+    "stderr": "cat: /srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/home/.raf/tmp/.delivery-evidence/153190bf-7fdb-425e-b5bb-54aec5810683/frame.json: No such file or directory\n",
+    "signal": null
+  },
+  {
+    "command": [
+      "node",
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/command.mjs",
+      "/srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/fixture.json",
+      "[\"agent\",\"run\",\"--id\",\"mrh34-failed-b\",\"--type\",\"implement\",\"--project\",\"raf\",\"--features\",\"launch-fixture\",\"--phase\",\"implement\",\"--complexity\",\"decision\",\"--tasks\",\"launch-failure-fixture:1.2\"]"
+    ],
+    "exitCode": 1,
+    "result": {
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "{\"code\":\"LAUNCH_FAILED\",\"message\":\"Wrapper launch eeb7af25-08cf-489d-a861-4a01b61890f8 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T02:06:03.530Z worker started run=eeb7af25-08cf-489d-a861-4a01b61890f8 pid=3351377 ppid=3350710\\neeb7af25-08cf-489d-a861-4a01b61890f8: worker process group=3351377 session=3351377 pidNamespace=pid:[4026531836]\\nDelivery evidence cleanup unavailable\\nfile:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/cli.ts:31\\n  const error = new Error(context.message);\\n                ^\\n\\nError: Unknown native input or screen during initial brief submission; Delivery evidence unavailable: storage: Invalid private evidence directory; deliveryEvidence={\\\"availability\\\":\\\"unavailable\\\",\\\"reference\\\":null,\\\"unavailableReason\\\":\\\"Delivery evidence unavailable: storage: Invalid private evidence directory\\\",\\\"metadata\\\":null,\\\"diagnostic\\\":null}\\n    at commandFailure (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/cli.ts:31:17)\\n    at transport.deliver (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/production-runtime.ts:1717:33)\\n    at async RafCostRuntime.measure (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/raf-cost-runtime.ts:75:18)\\n    at async runLaunchWrapper (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/launch-wrapper.ts:113:5)\\n    at async Module.runProductionWorker (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/production-runtime.ts:1820:11)\\n    at async file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/[eval1]:1:120\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying (runId: eeb7af25-08cf-489d-a861-4a01b61890f8)\",\"details\":{\"command\":\"agent run\",\"stage\":\"starting\",\"source\":\"agent-run-queue\",\"sourceCode\":null,\"reason\":\"Wrapper launch eeb7af25-08cf-489d-a861-4a01b61890f8 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T02:06:03.530Z worker started run=eeb7af25-08cf-489d-a861-4a01b61890f8 pid=3351377 ppid=3350710\\neeb7af25-08cf-489d-a861-4a01b61890f8: worker process group=3351377 session=3351377 pidNamespace=pid:[4026531836]\\nDelivery evidence cleanup unavailable\\nfile:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/cli.ts:31\\n  const error = new Error(context.message);\\n                ^\\n\\nError: Unknown native input or screen during initial brief submission; Delivery evidence unavailable: storage: Invalid private evidence directory; deliveryEvidence={\\\"availability\\\":\\\"unavailable\\\",\\\"reference\\\":null,\\\"unavailableReason\\\":\\\"Delivery evidence unavailable: storage: Invalid private evidence directory\\\",\\\"metadata\\\":null,\\\"diagnostic\\\":null}\\n    at commandFailure (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/cli.ts:31:17)\\n    at transport.deliver (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/production-runtime.ts:1717:33)\\n    at async RafCostRuntime.measure (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/raf-cost-runtime.ts:75:18)\\n    at async runLaunchWrapper (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/launch-wrapper.ts:113:5)\\n    at async Module.runProductionWorker (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/production-runtime.ts:1820:11)\\n    at async file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/[eval1]:1:120\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"received\":{\"runId\":\"eeb7af25-08cf-489d-a861-4a01b61890f8\"},\"expected\":null,\"found\":null,\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[],\"retrySafe\":true,\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":4.18,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":21629018112,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"/dev/mapper/data-dev\",\"totalBytes\":190143823872,\"availableBytes\":177484697600}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.2,\"minRamBytes\":1,\"minDiskFraction\":0.1,\"minDiskBytes\":1},\"hotfix\":{\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamFraction\":0.1,\"minRamBytes\":1,\"minDiskFraction\":0.05,\"minDiskBytes\":1},\"home\":{\"minDiskBytes\":1,\"maxNormalizedLoad\":1.7976931348623157e+308,\"minRamBytes\":1}},\"reservation\":{\"requested\":{\"ramBytes\":2147483648,\"diskBytes\":{\"/dev/mapper/data-dev\":10737418240}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":19481534464,\"diskBytes\":{\"/dev/mapper/data-dev\":166747279360},\"normalizedLoad\":0.5225},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/flow.json#/resourceEstimates/agentTypes/implement\"],\"reason\":null},\"queueId\":\"a4144039-65e7-4f81-abf4-423920568c55\"},\"cleanup\":{\"state\":\"released\",\"reason\":\"Wrapper launch eeb7af25-08cf-489d-a861-4a01b61890f8 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T02:06:03.530Z worker started run=eeb7af25-08cf-489d-a861-4a01b61890f8 pid=3351377 ppid=3350710\\neeb7af25-08cf-489d-a861-4a01b61890f8: worker process group=3351377 session=3351377 pidNamespace=pid:[4026531836]\\nDelivery evidence cleanup unavailable\\nfile:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/cli.ts:31\\n  const error = new Error(context.message);\\n                ^\\n\\nError: Unknown native input or screen during initial brief submission; Delivery evidence unavailable: storage: Invalid private evidence directory; deliveryEvidence={\\\"availability\\\":\\\"unavailable\\\",\\\"reference\\\":null,\\\"unavailableReason\\\":\\\"Delivery evidence unavailable: storage: Invalid private evidence directory\\\",\\\"metadata\\\":null,\\\"diagnostic\\\":null}\\n    at commandFailure (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/cli.ts:31:17)\\n    at transport.deliver (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/production-runtime.ts:1717:33)\\n    at async RafCostRuntime.measure (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/raf-cost-runtime.ts:75:18)\\n    at async runLaunchWrapper (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/launch-wrapper.ts:113:5)\\n    at async Module.runProductionWorker (file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/src/production-runtime.ts:1820:11)\\n    at async file:///srv/dev/mrh34-GWztKS/raf-lfc-KsNUtH/orchestrator/raf-develop/[eval1]:1:120\\n\\nNode.js v26.12.1; verify runner readiness and recover this run before retrying\",\"completed\":[\"launch claims\",\"resource reservation\",\"report cleanup\"],\"pending\":[]}},\"remediation\":[\"Перевірте стан запуску перед повторним викликом.\",\"raf help agent run\"]}"
+    },
+    "stderr": ""
+  }
+]

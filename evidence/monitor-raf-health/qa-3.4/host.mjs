@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { randomUUID, createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { configureDeliveryStand, parsePublicDeliveryEvidence } from '../../../scripts/qa-delivery-config.mjs';
+import { assertPublicArtifact, configureDeliveryStand, parsePublicDeliveryEvidence } from '../../../scripts/qa-delivery-config.mjs';
 
 const source = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const base = await fs.mkdtemp('/srv/dev/mrh34-');
@@ -41,10 +41,7 @@ let cleanupComplete = false;
 const publicJson = async (name, value) => fs.writeFile(join(output, name), JSON.stringify(value, null, 2) + '\n', { mode: 0o600 });
 const secret = randomUUID().replaceAll('-', '');
 const markers = ['mail-' + secret + '@example.invalid', 'api-' + secret, 'bearer-' + secret, '/private/customer-' + secret];
-const safe = value => {
-  const text = typeof value === 'string' ? value : JSON.stringify(value);
-  for (const marker of markers) assert.ok(!text.includes(marker), 'Control secret reached a public artifact');
-};
+const safe = value => assertPublicArtifact(value, markers);
 const check = (name, details = {}) => checks.push({ name, passed: true, ...details });
 try {
   const { agentRunFixture, alive, until } = await import('../../../test/agent-run-fixture.ts');

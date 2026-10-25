@@ -1,0 +1,13 @@
+{
+  "source": "/srv/dev/mrh34-attempt5",
+  "cliExitCode": 1,
+  "secretScanMatches": 0,
+  "review": "Main returned read-only evidence after scan. Host finally safe(undefined) failed after private fixture cleanup. Missing summary is not pass.",
+  "cleanupObservation": {
+    "privateFixtureExists": false,
+    "topLevel": [
+      "public"
+    ]
+  },
+  "nextAction": "Fix final scanner with red/qa and rerun reviewed host script; main authorized to remove isolated home remainder."
+}

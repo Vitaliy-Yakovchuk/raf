@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { configureDeliveryStand, parsePublicDeliveryEvidence } from '../scripts/qa-delivery-config.mjs';
+import { assertPublicArtifact, configureDeliveryStand, parsePublicDeliveryEvidence } from '../scripts/qa-delivery-config.mjs';
 import { deliveryDiagnostic } from '../src/delivery-diagnostic.ts';
 import {
   cleanupFailedDeliveryEvidence, preserveFailedDeliveryEvidence, readFailedDeliveryEvidenceRetention,
@@ -15,6 +15,11 @@ const settings = { runner: 'codex', version: '0.163.0', markers: { ready: ['Ask 
 } } as ProtocolSettings;
 const at = (ms: number) => new Date(Date.UTC(2026, 9, 24) + ms).toISOString();
 const retentionMs = 4000;
+test('[MRH 3.4] delivery stand scans absent failure without hiding real marker leaks', () => {
+  assert.doesNotThrow(() => assertPublicArtifact(undefined, ['control-marker']));
+  assert.doesNotThrow(() => assertPublicArtifact({ passed: true }, ['control-marker']));
+  assert.throws(() => assertPublicArtifact({ screen: 'control-marker' }, ['control-marker']), /Control secret/);
+});
 test('[MRH 3.4] delivery stand reads linked diagnostic before worker stack suffix', () => {
   const evidence = { availability: 'available', reference: 'test-reference', diagnostic: { screen: 'quoted "frame"\nwith {braces}' } };
   const message = `Wrapper launch failed: Error: Unknown native input; deliveryEvidence=${JSON.stringify(evidence)}\n    at commandFailure (file:///isolated/src/cli.ts:31:17)\nNode.js v26.12.1; verify runner readiness`;

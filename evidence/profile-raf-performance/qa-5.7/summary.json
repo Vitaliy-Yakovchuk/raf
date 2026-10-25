@@ -14,49 +14,124 @@
   ],
   "codeChecks": {
     "publication-smoke": {
+      "command": "node evidence/profile-raf-performance/implement-5.6/publication-smoke.mjs",
       "cliExitCode": 1,
       "stdout": "publication-smoke.stdout",
       "stderr": "publication-smoke.stderr"
     },
     "publication-smoke-final": {
+      "command": "node evidence/profile-raf-performance/implement-5.6/publication-smoke.mjs",
       "cliExitCode": 0,
       "stdout": "publication-smoke-final.stdout",
       "stderr": "publication-smoke-final.stderr"
     },
     "build": {
+      "command": "npm run build",
       "cliExitCode": 0,
       "stdout": "build.stdout",
       "stderr": "build.stderr"
     },
     "comments": {
+      "command": "npm run check:comments",
       "cliExitCode": 0,
       "stdout": "comments.stdout",
       "stderr": "comments.stderr"
     },
     "build-final": {
+      "command": "npm run build",
       "cliExitCode": 0,
       "stdout": "build-final.stdout",
       "stderr": "build-final.stderr"
     },
     "comments-final": {
+      "command": "npm run check:comments",
       "cliExitCode": 0,
       "stdout": "comments-final.stdout",
       "stderr": "comments-final.stderr"
     },
     "build-require": {
+      "command": "npm run build",
       "cliExitCode": 0,
       "stdout": "build-require.stdout",
       "stderr": "build-require.stderr"
     },
     "comments-require": {
+      "command": "npm run check:comments",
       "cliExitCode": 0,
       "stdout": "comments-require.stdout",
       "stderr": "comments-require.stderr"
     },
     "publication-smoke-require": {
+      "command": "node evidence/profile-raf-performance/implement-5.6/publication-smoke.mjs",
       "cliExitCode": 0,
       "stdout": "publication-smoke-require.stdout",
       "stderr": "publication-smoke-require.stderr"
+    },
+    "build-publication-final": {
+      "command": "npm run build",
+      "cliExitCode": 0,
+      "stdout": "build-publication-final.stdout",
+      "stderr": "build-publication-final.stderr"
+    },
+    "build-stand": {
+      "command": "npm run build",
+      "cliExitCode": 0,
+      "stdout": "build-stand.stdout",
+      "stderr": "build-stand.stderr"
+    },
+    "build-stand-final": {
+      "command": "npm run build",
+      "cliExitCode": 0,
+      "stdout": "build-stand-final.stdout",
+      "stderr": "build-stand-final.stderr"
+    },
+    "comments-publication-final": {
+      "command": "npm run check:comments",
+      "cliExitCode": 0,
+      "stdout": "comments-publication-final.stdout",
+      "stderr": "comments-publication-final.stderr"
+    },
+    "comments-stand-final": {
+      "command": "npm run check:comments",
+      "cliExitCode": 0,
+      "stdout": "comments-stand-final.stdout",
+      "stderr": "comments-stand-final.stderr"
+    },
+    "comments-stand": {
+      "command": "npm run check:comments",
+      "cliExitCode": 0,
+      "stdout": "comments-stand.stdout",
+      "stderr": "comments-stand.stderr"
+    },
+    "publication-smoke-stand": {
+      "command": "node evidence/profile-raf-performance/implement-5.6/publication-smoke.mjs",
+      "cliExitCode": 0,
+      "stdout": "publication-smoke-stand.stdout",
+      "stderr": "publication-smoke-stand.stderr"
+    },
+    "publication-smoke-stand-final": {
+      "command": "node evidence/profile-raf-performance/implement-5.6/publication-smoke.mjs",
+      "cliExitCode": 0,
+      "stdout": "publication-smoke-stand-final.stdout",
+      "stderr": "publication-smoke-stand-final.stderr"
+    },
+    "publication-smoke-publication-final": {
+      "command": "node evidence/profile-raf-performance/implement-5.6/publication-smoke.mjs",
+      "cliExitCode": 0,
+      "stdout": "publication-smoke-publication-final.stdout",
+      "stderr": "publication-smoke-publication-final.stderr"
+    },
+    "build-payload-final": {
+      "command": "npm run build",
+      "cliExitCode": 0,
+      "stdout": "build-payload-final.stdout",
+      "stderr": "build-payload-final.stderr"
+    },
+    "comments-payload-final": {
+      "command": "npm run check:comments",
+      "cliExitCode": 0,
+      "stdout": "comments-payload-final.stdout",
+      "stderr": "comments-payload-final.stderr"
     }
   },
   "initialQa": {
@@ -73,7 +148,7 @@
   "groupPolicy": "Same project/workspace/group/HOME/aggregate; current preset added by main, no foreign regression group invocation.",
   "archive": null,
   "pending": [
-    "47 knownRed hotfix-activation scenarios must actually pass in the same aggregate"
+    "19 knownRed hotfix-activation scenarios must actually pass in the same aggregate"
   ],
   "qaFixShas": [
     "c50b4c6d331f807f8a0f5533e0341d75ba3ae8a2",
@@ -176,5 +251,17 @@
     "manifests": "before/provenance.json + after-final/provenance.json",
     "cleanup": "complete, service stopped, remainingProcesses=[], SQLite integrity ok",
     "harnessSha256": "2723e90855d4ba02f0a47df8e8677507b9ae59e6feac03934a5fd943e9eb16b1"
-  }
+  },
+  "unitProgress": {
+    "latest": "batch4.TestRunResult.json",
+    "qaPassedUnique": 237,
+    "targetCases": 256,
+    "knownRed": 19,
+    "active": null,
+    "selection": "7 knownRed IDs",
+    "sourceCommit": "4a0bc11ec74917da83049bf2c0fd0b628ea88ac6",
+    "fixtureChanges": "payload-fix-workspace.patch",
+    "nextAction": "Wait for explicit main conf ready; then resume remaining knownRed IDs"
+  },
+  "fixturePayloadFixSha": "b636ad6239bf135f16ebf7056d0942fecd29a938"
 }

@@ -1,88 +1,8 @@
 {
   "basis": "The same broker aggregate persists across phases, SHA and selections. Earlier passed tests are retained; this is not a claim that all tests ran in one final command.",
-  "targetCases": 255,
-  "qaPassedCases": 216,
+  "targetCases": 256,
+  "qaPassedCases": 237,
   "remainingKnownRed": [
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-snapshot] commit after green invalidates activation"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-snapshot] sealed-artifact after green invalidates activation"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-snapshot] sealed-configuration after green invalidates activation"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-snapshot] forged-report after green invalidates activation"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-atomic] unsupported refuses activation without checkout/reset/copy fallback"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-atomic] EXDEV refuses activation without checkout/reset/copy fallback"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-concurrency] local tracked survives rejected publication byte for byte"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-concurrency] local untracked survives rejected publication byte for byte"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-concurrency] local index survives rejected publication byte for byte"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-reader] cli process retains one generation across deferred import and switch"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-reader] service process retains one generation across deferred import and switch"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-reader] worker process retains one generation across deferred import and switch"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-reader] hook process retains one generation across deferred import and switch"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-reader] notice process retains one generation across deferred import and switch"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
-    },
     {
       "file": "test/hotfix-activation.test.ts",
       "name": "[hotfix-recovery] SIGKILL at after-refs, new process recovery and retry converge without duplicate delivery"
@@ -160,14 +80,19 @@
       "name": "[hotfix-gates] shared new-HEAD changing during regression cannot receive a green proof"
     }
   ],
-  "latestResult": "batch1.TestRunResult.json",
+  "latestResult": "batch4.TestRunResult.json",
   "cases": [
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-atomic] EXDEV refuses activation without checkout/reset/copy fallback"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch2.TestRunResult.json",
+          "runId": "7fb06bc7-ab7c-412c-b539-e79500bc1f2b"
+        }
+      ]
     },
     {
       "test": {
@@ -190,7 +115,12 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-atomic] unsupported refuses activation without checkout/reset/copy fallback"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch2.TestRunResult.json",
+          "runId": "7fb06bc7-ab7c-412c-b539-e79500bc1f2b"
+        }
+      ]
     },
     {
       "test": {
@@ -232,28 +162,48 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-concurrency] local index survives rejected publication byte for byte"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch3.TestRunResult.json",
+          "runId": "e436dc3a-6565-480d-bb25-a7bac7c20810"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-concurrency] local tracked survives rejected publication byte for byte"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch3.TestRunResult.json",
+          "runId": "e436dc3a-6565-480d-bb25-a7bac7c20810"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-concurrency] local untracked survives rejected publication byte for byte"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch3.TestRunResult.json",
+          "runId": "e436dc3a-6565-480d-bb25-a7bac7c20810"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch4.TestRunResult.json",
+          "runId": "03682eed-d67d-481e-ad2e-85122d2a8f79"
+        }
+      ]
     },
     {
       "test": {
@@ -450,35 +400,60 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-reader] cli process retains one generation across deferred import and switch"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch3.TestRunResult.json",
+          "runId": "e436dc3a-6565-480d-bb25-a7bac7c20810"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-reader] hook process retains one generation across deferred import and switch"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch4.TestRunResult.json",
+          "runId": "03682eed-d67d-481e-ad2e-85122d2a8f79"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-reader] notice process retains one generation across deferred import and switch"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch4.TestRunResult.json",
+          "runId": "03682eed-d67d-481e-ad2e-85122d2a8f79"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-reader] service process retains one generation across deferred import and switch"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch3.TestRunResult.json",
+          "runId": "e436dc3a-6565-480d-bb25-a7bac7c20810"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-reader] worker process retains one generation across deferred import and switch"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch3.TestRunResult.json",
+          "runId": "e436dc3a-6565-480d-bb25-a7bac7c20810"
+        }
+      ]
     },
     {
       "test": {
@@ -499,7 +474,12 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch4.TestRunResult.json",
+          "runId": "03682eed-d67d-481e-ad2e-85122d2a8f79"
+        }
+      ]
     },
     {
       "test": {
@@ -520,7 +500,12 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch4.TestRunResult.json",
+          "runId": "03682eed-d67d-481e-ad2e-85122d2a8f79"
+        }
+      ]
     },
     {
       "test": {
@@ -534,14 +519,24 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch4.TestRunResult.json",
+          "runId": "03682eed-d67d-481e-ad2e-85122d2a8f79"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch4.TestRunResult.json",
+          "runId": "03682eed-d67d-481e-ad2e-85122d2a8f79"
+        }
+      ]
     },
     {
       "test": {
@@ -574,7 +569,12 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-snapshot] commit after green invalidates activation"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch2.TestRunResult.json",
+          "runId": "7fb06bc7-ab7c-412c-b539-e79500bc1f2b"
+        }
+      ]
     },
     {
       "test": {
@@ -593,28 +593,48 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-snapshot] forged-report after green invalidates activation"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch2.TestRunResult.json",
+          "runId": "7fb06bc7-ab7c-412c-b539-e79500bc1f2b"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch2.TestRunResult.json",
+          "runId": "7fb06bc7-ab7c-412c-b539-e79500bc1f2b"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-snapshot] sealed-artifact after green invalidates activation"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch2.TestRunResult.json",
+          "runId": "7fb06bc7-ab7c-412c-b539-e79500bc1f2b"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-snapshot] sealed-configuration after green invalidates activation"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch2.TestRunResult.json",
+          "runId": "7fb06bc7-ab7c-412c-b539-e79500bc1f2b"
+        }
+      ]
     },
     {
       "test": {
@@ -814,6 +834,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -837,6 +865,14 @@
         "name": "[module-origin-cost] a new potential input new-package/package.json cannot be trusted automatically"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -862,6 +898,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -885,6 +929,14 @@
         "name": "[module-origin-cost] a new potential input node_modules/origin-dep/new.payload cannot be trusted automatically"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -910,6 +962,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -933,6 +993,14 @@
         "name": "[module-origin-cost] a new potential input src/new-package/package.json cannot be trusted automatically"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -958,6 +1026,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -981,6 +1057,14 @@
         "name": "[module-origin-cost] a retained reader uses its own inventory after the main route advances"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1006,6 +1090,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1029,6 +1121,14 @@
         "name": "[module-origin-cost] bytes of dist/catalog.json refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1054,6 +1154,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1077,6 +1185,14 @@
         "name": "[module-origin-cost] bytes of node_modules/origin-dep/index.js refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1102,6 +1218,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1125,6 +1249,14 @@
         "name": "[module-origin-cost] bytes of node_modules/origin-dep/package.json refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1150,6 +1282,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1173,6 +1313,14 @@
         "name": "[module-origin-cost] bytes of package-lock.json refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1198,6 +1346,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1221,6 +1377,14 @@
         "name": "[module-origin-cost] bytes of scripts/helper refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1246,6 +1410,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1269,6 +1441,14 @@
         "name": "[module-origin-cost] bytes of src/lazy.mjs refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1294,6 +1474,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1317,6 +1505,14 @@
         "name": "[module-origin-cost] bytes of src/state-store.ts refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1342,6 +1538,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1365,6 +1569,14 @@
         "name": "[module-origin-cost] cli refuses changed dependencies before touching state"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1390,6 +1602,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1413,6 +1633,14 @@
         "name": "[module-origin-cost] delete of dist/catalog.json refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1438,6 +1666,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1461,6 +1697,14 @@
         "name": "[module-origin-cost] delete of node_modules/origin-dep/index.js refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1486,6 +1730,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1509,6 +1761,14 @@
         "name": "[module-origin-cost] delete of node_modules/origin-dep/package.json refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1534,6 +1794,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1557,6 +1825,14 @@
         "name": "[module-origin-cost] delete of package-lock.json refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1582,6 +1858,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1605,6 +1889,14 @@
         "name": "[module-origin-cost] delete of scripts/helper refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1630,6 +1922,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1653,6 +1953,14 @@
         "name": "[module-origin-cost] delete of src/lazy.mjs refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1678,6 +1986,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1701,6 +2017,14 @@
         "name": "[module-origin-cost] delete of src/state-store.ts refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1726,6 +2050,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1749,6 +2081,14 @@
         "name": "[module-origin-cost] directory-symlink in src refuses despite identical bytes"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1774,6 +2114,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1797,6 +2145,14 @@
         "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: export const load=()=>import(process.env.UNKNOWN_MODULE);"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1822,6 +2178,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1845,6 +2209,14 @@
         "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: import {readFileSync} from 'node:fs'; readFileSync(new URL('../docs/package.json', import.meta.url));"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1870,6 +2242,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -1893,6 +2273,14 @@
         "name": "[module-origin-cost] extra published evidence and docs add zero guard file operations"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -1918,6 +2306,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "final-other-qa.TestRunResult.json",
           "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
         },
@@ -1933,6 +2329,14 @@
         "name": "[module-origin-cost] factory require aliases cannot load excluded inputs: import {createRequire as factory} from 'node:module'; const load=factory(import.meta.url);"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "final-other-qa.TestRunResult.json",
           "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
@@ -1950,6 +2354,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "final-other-qa.TestRunResult.json",
           "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
         },
@@ -1966,6 +2378,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "final-other-qa.TestRunResult.json",
           "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
         },
@@ -1981,6 +2401,14 @@
         "name": "[module-origin-cost] file-hardlink in node_modules/origin-dep refuses despite identical bytes"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2006,6 +2434,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2029,6 +2465,14 @@
         "name": "[module-origin-cost] file-symlink in node_modules/origin-dep refuses despite identical bytes"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2054,6 +2498,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2074,9 +2526,29 @@
     {
       "test": {
         "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] forked publisher preserves a full snapshot payload beyond exec environment limits"
+      },
+      "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        }
+      ]
+    },
+    {
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
         "name": "[module-origin-cost] full activation fingerprint still detects add in excluded docs"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2102,6 +2574,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2125,6 +2605,14 @@
         "name": "[module-origin-cost] full activation fingerprint still detects bytes in excluded docs"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2150,6 +2638,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2173,6 +2669,14 @@
         "name": "[module-origin-cost] full activation fingerprint still detects delete in excluded docs"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2198,6 +2702,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2221,6 +2733,14 @@
         "name": "[module-origin-cost] full activation fingerprint still detects hardlink in excluded docs"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2246,6 +2766,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2269,6 +2797,14 @@
         "name": "[module-origin-cost] full activation fingerprint still detects mode in excluded docs"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2294,6 +2830,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2317,6 +2861,14 @@
         "name": "[module-origin-cost] full activation fingerprint still detects symlink in excluded docs"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2342,6 +2894,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2365,6 +2925,14 @@
         "name": "[module-origin-cost] hook refuses changed dependencies before touching state"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2390,6 +2958,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2413,6 +2989,14 @@
         "name": "[module-origin-cost] missing-file runtime inventory fails closed with an intact full fingerprint"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2438,6 +3022,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2461,6 +3053,14 @@
         "name": "[module-origin-cost] mode of bin/raf.ts refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2486,6 +3086,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2509,6 +3117,14 @@
         "name": "[module-origin-cost] mode of dist/runtime.js refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2534,6 +3150,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2557,6 +3181,14 @@
         "name": "[module-origin-cost] mode of node_modules/origin-dep/nested/package.json refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2582,6 +3214,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2605,6 +3245,14 @@
         "name": "[module-origin-cost] mode of node_modules/origin-dep/table.payload refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2630,6 +3278,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2653,6 +3309,14 @@
         "name": "[module-origin-cost] mode of package.json refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2678,6 +3342,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2701,6 +3373,14 @@
         "name": "[module-origin-cost] mode of src/dynamic.mjs refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2726,6 +3406,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2749,6 +3437,14 @@
         "name": "[module-origin-cost] mode of src/nested/package.json refuses immediately after a successful guard"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2774,6 +3470,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2797,6 +3501,14 @@
         "name": "[module-origin-cost] notice refuses changed dependencies before touching state"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2822,6 +3534,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2846,6 +3566,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "final-other-qa.TestRunResult.json",
           "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
         },
@@ -2865,6 +3593,14 @@
         "name": "[module-origin-cost] package bin maps cannot execute excluded inputs: package.json"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "final-other-qa.TestRunResult.json",
           "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
@@ -2886,6 +3622,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "final-other-qa.TestRunResult.json",
           "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6"
         },
@@ -2905,6 +3649,14 @@
         "name": "[module-origin-cost] refused provenance preserves existing state and sidecars byte for byte"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2930,6 +3682,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -2953,6 +3713,14 @@
         "name": "[module-origin-cost] service-store refuses changed dependencies before touching state"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -2978,6 +3746,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -3001,6 +3777,14 @@
         "name": "[module-origin-cost] unsupported-version runtime inventory fails closed with an intact full fingerprint"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
@@ -3026,6 +3810,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -3050,6 +3842,14 @@
       },
       "qaPassEvidence": [
         {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
+        {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"
         },
@@ -3073,6 +3873,14 @@
         "name": "[module-origin-cost] wrong-root runtime inventory fails closed with an intact full fingerprint"
       },
       "qaPassEvidence": [
+        {
+          "result": "payload-qa-final.TestRunResult.json",
+          "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7"
+        },
+        {
+          "result": "payload-qa.TestRunResult.json",
+          "runId": "23409427-3ab6-4e3a-a675-2daab9485910"
+        },
         {
           "result": "qa.TestRunResult.json",
           "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f"

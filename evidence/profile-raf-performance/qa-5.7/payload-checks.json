@@ -1,0 +1,20 @@
+[
+  {
+    "label": "build-payload-final",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exitCode": 0
+  },
+  {
+    "label": "comments-payload-final",
+    "command": [
+      "npm",
+      "run",
+      "check:comments"
+    ],
+    "exitCode": 0
+  }
+]

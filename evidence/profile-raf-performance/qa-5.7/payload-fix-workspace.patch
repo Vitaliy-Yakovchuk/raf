@@ -1,0 +1,147 @@
+diff --git a/test/hotfix-activation.test.ts b/test/hotfix-activation.test.ts
+index 9d0aca9..4df3cc5 100644
+--- a/test/hotfix-activation.test.ts
++++ b/test/hotfix-activation.test.ts
+@@ -297,7 +297,7 @@ test("[hotfix-concurrency] two publisher processes from one base produce one win
+   assert.equal(readFileSync(join(sealedA.root, "hotfix-fixture/a.mjs"), "utf8"), 'export const marker = "new-a";\n');
+   const hotfixBefore = hotfixIdentity(f);
+   const body = `import {activateHotfix} from ${JSON.stringify(activationModule)};
+-const p=JSON.parse(process.env.HOTFIX_FIXTURE_PAYLOAD);
++const p=hotfixFixturePayload;
+ process.send({ready:true});await new Promise(resolve=>process.once('message',resolve));
+ try {const result=await activateHotfix(p.host,p.candidate);process.send({ok:true,result});}
+ catch(error){process.send({ok:false,error:error.message});}process.disconnect();`;
+@@ -328,7 +328,7 @@ for (const kind of ["cli", "service", "worker", "hook", "notice"] as readonly Ho
+     const hotfixBefore = hotfixIdentity(f);
+     const body = `import {acquireHotfixReader} from ${JSON.stringify(activationModule)};
+ import {pathToFileURL} from 'node:url';import {join} from 'node:path';import {execFileSync} from 'node:child_process';
+-const p=JSON.parse(process.env.HOTFIX_FIXTURE_PAYLOAD);const lease=await acquireHotfixReader(p.host,p.kind);
++const p=hotfixFixturePayload;const lease=await acquireHotfixReader(p.host,p.kind);
+ const first=await import(pathToFileURL(join(lease.generationRoot,'hotfix-fixture/a.mjs')));
+ process.send({first:first.marker,root:lease.generationRoot,commit:lease.commit});
+ await new Promise(resolve=>process.once('message',resolve));
+@@ -370,7 +370,7 @@ for (const phase of checkpoints) {
+     const delivered = await f.mainCommand(["agent", "message", "--to", "main", "--text", nonce]);
+     assert.equal(delivered.code, 0, delivered.stderr);
+     const body = `import {activateHotfix} from ${JSON.stringify(activationModule)};
+-const p=JSON.parse(process.env.HOTFIX_FIXTURE_PAYLOAD);
++const p=hotfixFixturePayload;
+ await activateHotfix(p.host,p.candidate,{checkpoint:async phase=>{
+  if(phase===p.phase){process.send({phase});await new Promise(()=>{});}
+ }});process.disconnect();`;
+@@ -379,7 +379,7 @@ await activateHotfix(p.host,p.candidate,{checkpoint:async phase=>{
+     if (["after-switch", "after-refs", "after-index"].includes(phase)) {
+       const enteringBody = `import {acquireHotfixReader} from ${JSON.stringify(activationModule)};
+ import fs from 'node:fs';import {join} from 'node:path';
+-const p=JSON.parse(process.env.HOTFIX_FIXTURE_PAYLOAD);
++const p=hotfixFixturePayload;
+ try {const lease=await acquireHotfixReader(p.host,'cli');
+ const pair=['a.mjs','b.mjs'].map(name=>fs.readFileSync(join(lease.generationRoot,'hotfix-fixture',name),'utf8'));
+ process.send({observed:pair});await lease.release();}
+@@ -395,7 +395,7 @@ catch(error){process.send({refused:error.message});}process.disconnect();`;
+     publisher.kill("SIGKILL");
+     await exited;
+     const recoveryBody = `import {recoverHotfixActivation} from ${JSON.stringify(activationModule)};
+-const p=JSON.parse(process.env.HOTFIX_FIXTURE_PAYLOAD);const result=await recoverHotfixActivation(p.host);process.send({recovered:result});process.disconnect();`;
++const p=hotfixFixturePayload;const result=await recoverHotfixActivation(p.host);process.send({recovered:result});process.disconnect();`;
+     const restarted = f.forkModule(recoveryBody, { host: f.host });
+     const recovered = await childMessage(restarted, m => m.recovered, timeoutMs);
+     assert.equal(recovered.recovered.pending, false);
+@@ -531,7 +531,7 @@ test("[hotfix-snapshot] sealing waits for the shared writer and captures its com
+   const liveBefore = f.liveIdentity();
+   const body = String.raw`import {withHotfixWriter} from ${JSON.stringify(hostModule)};
+ import {writeFileSync} from 'node:fs';import {join} from 'node:path';import {execFileSync} from 'node:child_process';
+-const p=JSON.parse(process.env.HOTFIX_FIXTURE_PAYLOAD);
++const p=hotfixFixturePayload;
+ const git=(...args)=>execFileSync('git',['-C',p.workspace.cwd,...args],{env:process.env,encoding:'utf8'}).trim();
+ await withHotfixWriter(p.host,async()=>{
+  const released=new Promise(resolve=>process.once('message',resolve));process.send({holding:true});await released;
+@@ -564,7 +564,7 @@ test("[hotfix-snapshot] the shared writer cannot enter during copy and resumes w
+   const { workspace, committed } = await f.candidate();
+   const body = String.raw`import {withHotfixWriter} from ${JSON.stringify(hostModule)};
+ import {writeFileSync} from 'node:fs';import {join} from 'node:path';import {execFileSync} from 'node:child_process';
+-const p=JSON.parse(process.env.HOTFIX_FIXTURE_PAYLOAD);
++const p=hotfixFixturePayload;
+ const go=new Promise(resolve=>process.once('message',resolve));process.send({ready:true});await go;process.send({attempting:true});
+ await withHotfixWriter(p.host,async()=>{
+  for(const name of ['a.mjs','b.mjs'])writeFileSync(join(p.workspace.cwd,'hotfix-fixture',name),'export const marker = "next-writer";\n');
+@@ -640,7 +640,7 @@ test("[hotfix-concurrency] duplicate publishers of the same sealed proof exchang
+   const exchangeLog = join(f.root, "exchanges.jsonl");
+   const body = String.raw`import {activateHotfix,createAtomicHotfixSwitch} from ${JSON.stringify(activationModule)};
+ import {appendFileSync} from 'node:fs';
+-const p=JSON.parse(process.env.HOTFIX_FIXTURE_PAYLOAD);const real=createAtomicHotfixSwitch();
++const p=hotfixFixturePayload;const real=createAtomicHotfixSwitch();
+ const switchProvider={probe:(...args)=>real.probe(...args),exchange:async(...args)=>{appendFileSync(p.log,JSON.stringify(args)+'\n');await real.exchange(...args);}};
+ const go=new Promise(resolve=>process.once('message',resolve));process.send({ready:true});await go;
+ try{process.send({result:await activateHotfix(p.host,p.verified,{switchProvider})});}
+@@ -731,7 +731,7 @@ test("[hotfix-recovery] recovery reconciles only the sealed target while a later
+   await f.startMain();
+   const verified = await f.verified();
+   const body = `import {activateHotfix} from ${JSON.stringify(activationModule)};
+-const p=JSON.parse(process.env.HOTFIX_FIXTURE_PAYLOAD);
++const p=hotfixFixturePayload;
+ await activateHotfix(p.host,p.verified,{checkpoint:async phase=>{if(phase==='after-switch'){process.send({switched:true});await new Promise(()=>{});}}});`;
+   const publisher = f.forkModule(body, { host: f.host, verified });
+   await childMessage(publisher, value => value.switched, timeoutMs);
+@@ -746,7 +746,7 @@ await activateHotfix(p.host,p.verified,{checkpoint:async phase=>{if(phase==='aft
+   git(f.hotfix, f.environment, "add", "hotfix-fixture/b.mjs");
+   const expected = hotfixIdentity(f);
+   const recoveryBody = `import {recoverHotfixActivation} from ${JSON.stringify(activationModule)};
+-const p=JSON.parse(process.env.HOTFIX_FIXTURE_PAYLOAD);process.send({result:await recoverHotfixActivation(p.host)});process.disconnect();`;
++const p=hotfixFixturePayload;process.send({result:await recoverHotfixActivation(p.host)});process.disconnect();`;
+   const recovery = f.forkModule(recoveryBody, { host: f.host });
+   const recovered = await childMessage(recovery, value => value.result, timeoutMs);
+   assert.equal(recovered.result.pending, false);
+diff --git a/test/hotfix-fixture.ts b/test/hotfix-fixture.ts
+index 8757926..50d2aba 100644
+--- a/test/hotfix-fixture.ts
++++ b/test/hotfix-fixture.ts
+@@ -267,8 +267,10 @@ setInterval(()=>{if(!fs.existsSync(${JSON.stringify(queue)}))return;
+   }
+   function forkModule(body: string, payload: unknown) {
+     const script = join(root, `child-${randomUUID()}.mjs`);
+-    writeFileSync(script, body);
+-    const child = spawn(process.execPath, [script], { cwd: root, env: { ...environment, HOTFIX_FIXTURE_PAYLOAD: JSON.stringify(payload) }, stdio: ["ignore", "pipe", "pipe", "ipc"] });
++    const payloadFile = `${script}.json`;
++    writeFileSync(payloadFile, JSON.stringify(payload), { mode: 0o600 });
++    writeFileSync(script, `const hotfixFixturePayload = JSON.parse((await import('node:fs')).readFileSync(${JSON.stringify(payloadFile)}, 'utf8'));\n${body}`);
++    const child = spawn(process.execPath, [script], { cwd: root, env: environment, stdio: ["ignore", "pipe", "pipe", "ipc"] });
+     childProcesses.add(child);
+     return child;
+   }
+diff --git a/test/hotfix-origin-cost.test.ts b/test/hotfix-origin-cost.test.ts
+index e1959c8..8e9ec49 100644
+--- a/test/hotfix-origin-cost.test.ts
++++ b/test/hotfix-origin-cost.test.ts
+@@ -1,6 +1,7 @@
+ import assert from 'node:assert/strict';
+ import childProcess from 'node:child_process';
+ import { createHash } from 'node:crypto';
++import { once } from 'node:events';
+ import fs from 'node:fs';
+ import { syncBuiltinESMExports } from 'node:module';
+ import { tmpdir } from 'node:os';
+@@ -10,9 +11,23 @@ import { inventory as activationInventory } from '../src/hotfix-host.ts';
+ import { hotfixModuleOrigin } from '../src/hotfix-origin.ts';
+ import { createHotfixRuntimeInventory, type HotfixRuntimeInventory } from '../src/hotfix-runtime-inventory.ts';
+ import { resolveStateContext, verifyStateContext, type StateEntryPoint } from '../src/state-migration-guard.ts';
++import { childMessage, fixture as activationFixture } from './hotfix-fixture.ts';
+ 
+ const commit = '1'.repeat(40);
+ const digest = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
++
++test('[module-origin-cost] forked publisher preserves a full snapshot payload beyond exec environment limits', async t => {
++  const f = await activationFixture(t);
++  const payload = { marker: 'full-snapshot-payload', proof: 'x'.repeat(256 * 1024) };
++  let child: ReturnType<typeof f.forkModule> | undefined;
++  assert.doesNotThrow(() => {
++    child = f.forkModule('const p=hotfixFixturePayload;await new Promise((resolve,reject)=>process.send(p,error=>error?reject(error):resolve()));process.disconnect();', payload);
++  }, 'a growing full snapshot must not prevent the publisher process from starting');
++  assert.ok(child);
++  const exited = once(child, 'exit');
++  assert.deepEqual(await childMessage(child, value => value.marker === payload.marker, f.budget), payload);
++  assert.equal((await exited)[0], 0);
++});
+ const runtimeInputs = {
+   'bin/raf.ts': "import '../src/state-store.ts';\n",
+   'src/state-store.ts': "import './lazy.mjs'; import 'origin-dep'; import {spawn} from 'node:child_process'; export const load=()=>import('./dynamic.mjs'); export const child=()=>spawn(process.execPath,['scripts/helper']);\n",

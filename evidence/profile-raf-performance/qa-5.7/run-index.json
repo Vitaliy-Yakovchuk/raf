@@ -67,6 +67,180 @@
       "timeoutCount": 0
     },
     {
+      "result": "batch2.TestRunResult.json",
+      "runId": "7fb06bc7-ab7c-412c-b539-e79500bc1f2b",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-snapshot] commit after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-snapshot] same-tree-HEAD after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-snapshot] sealed-artifact after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-snapshot] sealed-configuration after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-snapshot] forged-report after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-atomic] unsupported refuses activation without checkout/reset/copy fallback' 'test/hotfix-activation.test.ts::[hotfix-atomic] EXDEV refuses activation without checkout/reset/copy fallback'",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] commit after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] same-tree-HEAD after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] sealed-artifact after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] sealed-configuration after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] forged-report after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-atomic] unsupported refuses activation without checkout/reset/copy fallback"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-atomic] EXDEV refuses activation without checkout/reset/copy fallback"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 804447,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 7,
+      "knownRed": 32,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "batch3.TestRunResult.json",
+      "runId": "e436dc3a-6565-480d-bb25-a7bac7c20810",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-concurrency] local tracked survives rejected publication byte for byte' 'test/hotfix-activation.test.ts::[hotfix-concurrency] local untracked survives rejected publication byte for byte' 'test/hotfix-activation.test.ts::[hotfix-concurrency] local index survives rejected publication byte for byte' 'test/hotfix-activation.test.ts::[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser' 'test/hotfix-activation.test.ts::[hotfix-reader] cli process retains one generation across deferred import and switch' 'test/hotfix-activation.test.ts::[hotfix-reader] service process retains one generation across deferred import and switch' 'test/hotfix-activation.test.ts::[hotfix-reader] worker process retains one generation across deferred import and switch'",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-concurrency] local tracked survives rejected publication byte for byte"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-concurrency] local untracked survives rejected publication byte for byte"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-concurrency] local index survives rejected publication byte for byte"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-reader] cli process retains one generation across deferred import and switch"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-reader] service process retains one generation across deferred import and switch"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-reader] worker process retains one generation across deferred import and switch"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 983677,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 6,
+      "knownRed": 26,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "batch4.TestRunResult.json",
+      "runId": "03682eed-d67d-481e-ad2e-85122d2a8f79",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser' 'test/hotfix-activation.test.ts::[hotfix-reader] hook process retains one generation across deferred import and switch' 'test/hotfix-activation.test.ts::[hotfix-reader] notice process retains one generation across deferred import and switch' 'test/hotfix-activation.test.ts::[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery' 'test/hotfix-activation.test.ts::[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery' 'test/hotfix-activation.test.ts::[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery' 'test/hotfix-activation.test.ts::[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery'",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-concurrency] two publisher processes from one base produce one winner and a stale loser"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-reader] hook process retains one generation across deferred import and switch"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-reader] notice process retains one generation across deferred import and switch"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-recovery] SIGKILL at before-intent, new process recovery and retry converge without duplicate delivery"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-recovery] SIGKILL at after-intent, new process recovery and retry converge without duplicate delivery"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-recovery] SIGKILL at before-switch, new process recovery and retry converge without duplicate delivery"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-recovery] SIGKILL at after-switch, new process recovery and retry converge without duplicate delivery"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 1096362,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 7,
+      "knownRed": 19,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
       "result": "bin-red.TestRunResult.json",
       "runId": "76057f9d-c7d2-48da-a8eb-45abdff49adb",
       "phase": "red",
@@ -253,6 +427,93 @@
       "unknown": 0,
       "groupState": "idle",
       "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "payload-qa-final.TestRunResult.json",
+      "runId": "ebf51b2d-84f2-4d9d-915e-7dbbf412f4e7",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 7961,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 98,
+      "knownRed": 26,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "payload-qa.TestRunResult.json",
+      "runId": "23409427-3ab6-4e3a-a675-2daab9485910",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 7804,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 97,
+      "knownRed": 27,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "payload-red.TestRunResult.json",
+      "runId": "2ec7b0d9-6ec4-4c37-a31b-ed82fce461d8",
+      "phase": "red",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 7893,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 97,
+      "knownRed": 27,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
       "timeoutCount": 0
     },
     {

@@ -163,7 +163,7 @@ try {
   await register(A);
   must(await request('launch', ['agent', 'run', '--id', 'sym72-native', '--type', 'implement', '--project', 'raf', '--features', 'sym72-fixture', '--phase', 'implement', '--complexity', 'mechanical', '--tasks', 'sym72-fixture:1.1']));
   actor = await wait('native registration', () => sessions().find(s => s.addressId === 'sym72-native' && s.state === 'running'));
-  assert.equal(actor.selection.runner, 'codex', 'Existing configuration must select native codex');
+  assert.equal(actor.launchContext.selection.runner, 'codex', 'Existing configuration must select native codex');
   await wait('native initial barrier', () => ready(0));
   summary.actor = actor; summary.actorIdentity = identity(actor.process.pid); summary.actorBriefSha256 = hash(actor.launchContext.briefPath);
   gate(0); await wait('native original-prefix commands before switch', () => fs.existsSync(path.join(own(), 'sym72-ack-0.json')));

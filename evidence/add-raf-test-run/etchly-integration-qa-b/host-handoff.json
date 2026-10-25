@@ -1,0 +1,22 @@
+{
+  "sourceItem": "add-raf-test-run:6.2.6.3",
+  "recipient": "main",
+  "recipientSource": "raf agent ps verified address",
+  "scriptsCommit": "26dd251d44efc48f41e68cf1ae004b8008d9331b",
+  "followupCommit": "df2ff8047166a45046b50fcc231ac6e9e82ae20c",
+  "command": "bash /srv/dev/work/orchestrator/raf-develop/scripts/qa-etchly-integration-suite.sh /srv/dev/work/orchestrator /tmp/raf-etchly-6263b-host df2ff8047166a45046b50fcc231ac6e9e82ae20c b8a769ccca3cd281ab80278cedc173d6df9a3dc9 171441decdf6de1e57482e816f7db683765ce7f6",
+  "deliveries": [
+    {"purpose": "Initial script command and full unit result notification", "cliCode": 0, "accepted": true, "receiptId": "0fa245d3-2954-4489-98be-29fc9bcb5813"},
+    {"purpose": "Hold D08 until own-fork stall fixture follow-up", "cliCode": 0, "accepted": true, "receiptId": "e3c36108-b55c-4edf-b709-d8c518af39df"},
+    {"purpose": "Follow-up SHA, unchanged criteria, request host captures and repaired unit context", "cliCode": 0, "accepted": true, "receiptId": "3f1f6bc1-287b-4973-b387-c8a8273ad401"}
+  ],
+  "syntax": {
+    "commands": ["node --check scripts/qa-etchly-integration-host.mjs", "node --check scripts/qa-etchly-integration-prepare.mjs", "bash -n scripts/qa-etchly-integration-suite.sh", "git diff --check"],
+    "exitCodes": [0, 0, 0, 0],
+    "boundary": "Syntax and whitespace only; no host preparation/test runtime was executed by QA in sandbox."
+  },
+  "hostResultsReceived": false,
+  "hostQueue": "Main confirmed suite on df2ff804 is queued behind two runs under host flock; results pending.",
+  "unitHold": "Main: STATE_CONTEXT_REFUSED likely same cause as Z.420 (QA state migration); raf-z420-hotfix is fixing it. Do not run unit until main confirms repair.",
+  "d09OwnTrustedCallerProved": false
+}

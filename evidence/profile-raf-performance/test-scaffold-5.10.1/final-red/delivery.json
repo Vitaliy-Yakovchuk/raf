@@ -1,0 +1,44 @@
+{
+  "source": "Claude Code background Bash output file of the single raf test run command (stdout and stderr merged by the tool; line 1 is the stderr queue event, line 2 the stdout TestRunResult), split by line without modification",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/runtime-verification-cost --files test/runtime-verification-cost.test.ts",
+  "cliCode": 1,
+  "childExitCode": 1,
+  "runId": "78561e4c-9c2e-4cc7-b8c9-f714194829fe",
+  "outcome": "assertions-failed",
+  "stdoutBytes": 66463,
+  "stdoutSha256": "283808aa44e4da18682eb1b7f5f9d5f6c967b2aa1302518c4c28f4a891345b6e",
+  "stderrBytes": 1512,
+  "stderrSha256": "41f71361fd2f09e0f834b22ca2054cb9adb8ac77cd13a3921fd0f1d6ec6dbe86",
+  "testFileSha256": "21a5f99356bd431febf8e6555736212ccfbb7d3f95617287b85d15b08ce66b24",
+  "comparisonWith510": {
+    "knownRedIdenticalTo510": true,
+    "knownRedOnlyNew": [],
+    "knownRedOnlyOld": [],
+    "passedOnlyOld": [],
+    "passedAdded": [
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture",
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture meter-then-process denied",
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture meter-then-process denied next independent fixture",
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture meter-then-process disappeared",
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture meter-then-process disappeared next independent fixture",
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture meter-then-process missing",
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture meter-then-process missing next independent fixture",
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture process-then-meter denied",
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture process-then-meter denied next independent fixture",
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture process-then-meter disappeared",
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture process-then-meter disappeared next independent fixture",
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture process-then-meter missing",
+      "fixture isolation: layered process and file fixtures restore real fs for the next fixture process-then-meter missing next independent fixture"
+    ],
+    "oldRunId": "95a1a052-4abb-409f-bbc8-82fb76c1dc1f",
+    "oldCounts": {
+      "passed": 28,
+      "knownRed": 63
+    },
+    "newCounts": {
+      "passed": 41,
+      "knownRed": 63
+    },
+    "controlledFixtureMessagesInDiagnostics": 0
+  }
+}

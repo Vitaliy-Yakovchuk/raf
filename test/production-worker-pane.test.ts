@@ -118,7 +118,7 @@ async function fixture(t: TestContext, runner: 'codex' | 'claude') {
     lease: { owner: { runId, fence: 'unit-fence' } },
     calls: [] as AdapterCommand[], handshake: undefined as unknown,
     nativeId: '11111111-1111-4111-8111-111111111111',
-    busy: false, accepted: '', buffer: '', interrupted: false,
+    busy: false, accepted: '', buffer: '', interrupted: false, statusVisible: false,
     expectedSocket: join(context.tmpRoot, 'tmux/server.sock'), pane: '%27',
     metadata(path: string) {
       if (path.endsWith('server.sock')) throw Object.assign(new Error('unit socket absent'), { code: 'ENOENT' });
@@ -134,7 +134,7 @@ async function fixture(t: TestContext, runner: 'codex' | 'claude') {
     screen() {
       const identity = runner === 'codex' ? `Session: ${f.nativeId}` : `Session ID: ${f.nativeId}`;
       const composer = runner === 'codex' ? '› ' : '$ ';
-      return `${identity}\n${settings.markers.ready![0]}\n${f.accepted}\n${f.busy ? '• Working (0s • esc to interrupt)\n' : ''}${composer}`;
+      return `${f.statusVisible ? identity : ''}\n${settings.markers.ready![0]}\n${f.accepted}\n${f.busy ? '• Working (0s • esc to interrupt)\n' : ''}${composer}`;
     },
     async execute(command: AdapterCommand): Promise<AdapterCommandResult> {
       f.calls.push(structuredClone(command));
@@ -160,6 +160,7 @@ async function fixture(t: TestContext, runner: 'codex' | 'claude') {
       if (action === 'load-buffer') { f.buffer = command.stdin!; return ok(); }
       if (action === 'paste-buffer') return ok();
       if (action === 'send-keys') {
+        if (args.includes('/status')) f.statusVisible = true;
         if (args.at(-1) === 'Enter' && f.buffer) { f.accepted = f.buffer; f.buffer = ''; f.busy = true; }
         if (args.at(-1) === 'Escape') { f.busy = false; f.interrupted = true; }
         return ok();

@@ -1,0 +1,25 @@
+{
+  "sourceSha": "dfded6ef5713ce43347c7bd9eec68b9f747166b1",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "runId": "6f606260-2959-47ff-893e-896e2f2363c6",
+  "command": "raf test run --project raf --phase red --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+  "result": "red-TestRunResult.json",
+  "resultExtraction": {
+    "source": "read-only active test_run_groups.lastResult; exact project/workspace/group",
+    "reason": "Tool presentation truncated stdout; no command rerun or history scan."
+  },
+  "assertions": {
+    "passed": 51,
+    "knownRed": 38,
+    "unexecuted": 0,
+    "unknown": 0
+  },
+  "costEvidence": {
+    "smallFileOperations": 56,
+    "largeFileOperations": 368,
+    "additionalEvidenceRuns": 24,
+    "additionalFilesPerRun": 3
+  },
+  "followup": "Correct the fixture dynamic import extension (.loader to .mjs) and add existing state/sidecar preservation coverage; final source and red are recorded separately."
+}

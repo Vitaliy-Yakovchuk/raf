@@ -15,9 +15,9 @@ const commit = '1'.repeat(40);
 const digest = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
 const runtimeInputs = {
   'bin/raf.ts': "import '../src/state-store.ts';\n",
-  'src/state-store.ts': "import './lazy.mjs'; import 'origin-dep'; import {spawn} from 'node:child_process'; export const load=()=>import('./dynamic.loader'); export const child=()=>spawn(process.execPath,['scripts/helper']);\n",
+  'src/state-store.ts': "import './lazy.mjs'; import 'origin-dep'; import {spawn} from 'node:child_process'; export const load=()=>import('./dynamic.mjs'); export const child=()=>spawn(process.execPath,['scripts/helper']);\n",
   'src/lazy.mjs': 'export const lazy = true;\n',
-  'src/dynamic.loader': 'export const dynamic = true;\n',
+  'src/dynamic.mjs': 'export const dynamic = true;\n',
   'src/nested/package.json': '{"type":"module"}\n',
   'scripts/helper': 'process.stdout.write("helper");\n',
   'dist/catalog.json': '{"commands":[]}\n',
@@ -66,7 +66,7 @@ async function fixture(t: TestContext, evidenceCount = 0) {
     scopes: ['bin', 'dist', 'node_modules', 'scripts', 'src'],
     rootFiles: ['package-lock.json', 'package.json'], excludedTrees: ['docs', 'evidence'],
     loading: { entrypoints: ['bin/raf.ts', 'src/state-store.ts'],
-      imports: ['src/lazy.mjs', 'src/dynamic.loader', 'node_modules/origin-dep/index.js'],
+      imports: ['src/lazy.mjs', 'src/dynamic.mjs', 'node_modules/origin-dep/index.js'],
       executables: ['scripts/helper'],
       packageConfigurations: files.filter(file => file.path.endsWith('package.json') || file.path === 'package-lock.json').map(file => file.path),
     },
@@ -258,6 +258,17 @@ for (const entryPoint of ['cli', 'worker', 'service-store', 'hook', 'notice', 'r
     assert.equal(fs.existsSync(state), false, 'refusal must not create SQLite, WAL, SHM or the state directory');
   });
 }
+
+test('[module-origin-cost] refused provenance preserves existing state and sidecars byte for byte', async t => {
+  const f = await fixture(t);
+  const context = f.context();
+  const paths = ['', '-wal', '-shm'].map(suffix => context.statePath + suffix);
+  for (const path of paths) f.write(path, `existing state sentinel: ${path}\n`);
+  const before = paths.map(path => fs.readFileSync(path));
+  fs.appendFileSync(join(f.generation, 'node_modules/origin-dep/index.js'), '\nchanged');
+  assert.throws(() => verifyStateContext(context), { code: 'STATE_CONTEXT_REFUSED' });
+  assert.deepEqual(paths.map(path => fs.readFileSync(path)), before, 'provenance validation must finish before any state access');
+});
 
 test('[module-origin-cost] the publication inventory builder includes runtime dependencies and unconventional inputs', async t => {
   const f = await fixture(t);

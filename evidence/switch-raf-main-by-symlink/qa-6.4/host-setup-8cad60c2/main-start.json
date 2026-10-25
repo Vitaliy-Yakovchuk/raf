@@ -1,0 +1,24 @@
+{
+  "command": [
+    "tmux",
+    "-S",
+    "/tmp/s64-yM8G2B/main.sock",
+    "new-session",
+    "-d",
+    "-s",
+    "sym64-main",
+    "-x",
+    "180",
+    "-y",
+    "50",
+    "/opt/dev/node/bin/node",
+    "/srv/dev/sym64-src.Y1776D/raf-develop/test/helpers/z4044-main-pane.mjs",
+    "/tmp/s64-yM8G2B"
+  ],
+  "cwd": "/tmp/s64-yM8G2B/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": ""
+}

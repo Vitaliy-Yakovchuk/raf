@@ -1,0 +1,19 @@
+{
+  "command": [
+    "git",
+    "-C",
+    "/srv/dev/s64-8bMrnn/root/raf-main",
+    "worktree",
+    "add",
+    "-b",
+    "hotfix",
+    "/srv/dev/s64-8bMrnn/root/raf-hotfix",
+    "HEAD"
+  ],
+  "cwd": "/srv/dev/s64-8bMrnn/root/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "HEAD is now at 08065e2 qa: isolated native channel fixture and exact CLI audit\n",
+  "stderr": "Preparing worktree (new branch 'hotfix')\n"
+}

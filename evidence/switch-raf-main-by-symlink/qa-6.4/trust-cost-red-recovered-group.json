@@ -1,0 +1,1738 @@
+[
+  {
+    "workspace": "/srv/dev/work/orchestrator/raf-develop",
+    "payload": {
+      "key": {
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "group": "switch-raf-main-by-symlink/qa64-trust-fixture"
+      },
+      "testKind": "unit",
+      "profileId": "node",
+      "timeoutCount": 0,
+      "state": "idle",
+      "selection": {
+        "files": [
+          "test/workspace-trust.test.ts"
+        ],
+        "testIds": []
+      },
+      "knownRed": [
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: verified Orchestrator main root is trusted once without expanding write scope"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: sticky root prompt receives only one navigation answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: root exception rejects unregistered without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: root exception rejects subdirectory without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: root exception rejects outside-symlink without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: changed-branch at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: detached-head at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/spec: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: verified Orchestrator main root is trusted once without expanding write scope"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: sticky root prompt receives only one navigation answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: root exception rejects unregistered without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: root exception rejects subdirectory without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: root exception rejects outside-symlink without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: changed-branch at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: detached-head at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 codex/design: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: verified Orchestrator main root is trusted once without expanding write scope"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: sticky root prompt receives only one navigation answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: root exception rejects unregistered without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: root exception rejects subdirectory without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: root exception rejects outside-symlink without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: changed-branch at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: detached-head at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/spec: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: verified Orchestrator main root is trusted once without expanding write scope"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: sticky root prompt receives only one navigation answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: root exception rejects unregistered without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: root exception rejects subdirectory without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: root exception rejects outside-symlink without answering"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: changed-branch at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: detached-head at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] Z.12 claude/design: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: registered branch directory — raf confirms the trust prompt with protocol navigation keys and the launch continues"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: trust prompt that stays after the confirmation keys — RUNNER_WORKSPACE_UNTRUSTED without a second answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: unregistered workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: outside-symlink workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] codex: subdirectory workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: registered branch directory — raf confirms the trust prompt with protocol navigation keys and the launch continues"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: trust prompt that stays after the confirmation keys — RUNNER_WORKSPACE_UNTRUSTED without a second answer"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: unregistered workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: outside-symlink workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] claude: subdirectory workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+        },
+        {
+          "file": "test/workspace-trust.test.ts",
+          "name": "[workspace-trust] production trust fixture supplies the worker cost policy"
+        }
+      ],
+      "unexecuted": [],
+      "inFlight": null,
+      "lastResult": {
+        "testKind": "unit",
+        "timeoutPolicy": {
+          "source": "conf/flow.json#/unitTests/timeoutMs",
+          "timeoutMs": 1200000
+        },
+        "callerPhase": "qa",
+        "diagnostics": [
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] production trust fixture supplies the worker cost policy"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "worker requires the configured cost policy before runner readiness\n+ actual - expected\n\n+ undefined\n- {\n-   helperExecutables: [\n-     'git',\n-     'tmux',\n-     'ps',\n-     'df',\n-     'sysctl',\n-     'vm_stat'\n-   ],\n-   schemaVersion: 1,\n-   stages: [\n-     'startup/config',\n-     'sqlite',\n-     'reconciliation',\n-     'handler',\n-     'child-wait',\n-     'finalization',\n-     'bug-sync',\n-     'resource-queue',\n-     'wait',\n-     'preparation',\n-     'delivery',\n-     'runner-observation',\n-     'runner-wait',\n-     'completion',\n-     'shared-work'\n-   ]\n- }\n",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 225,
+              "column": 10
+            },
+            "stack": [
+              "    at TestContext.<anonymous> (test/workspace-trust.test.ts:225:10)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": false,
+            "truncated": false
+          },
+          {
+            "kind": "test-failure",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/spec: verified Orchestrator main root is trusted once without expanding write scope"
+            },
+            "errorName": "Error",
+            "message": "Wrapper launch trust-codex-registered-spec failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T01:36:44.521Z worker started run=trust-codex-registered-spec pid=3139181 ppid=3138542\ntrust-codex-registered-spec: worker process group=3139181 session=3139181 pidNamespace=pid:[4026531836]\n<fixture>/raf-prod-eshc4h/orchestrator/raf-develop/src/raf-cost-runtime.ts:48\n    if (!Array.isArray(settings.helperExecutables) || settings.helperExecutables.some((name         ) => typeof name !== 'string' || !name)) throw new Error('Invalid conf/raf.json#<external>/helperExecutables');\n                                ^\n\nTypeError: Cannot read properties of undefined (reading 'helperExecutables')\n    at new RafCostRuntime (<fixture>/raf-prod-eshc4h/orchestrator/raf-develop/src/raf-cost-runtime.ts:48:33)\n    at runProductionWorker (<fixture>/raf-prod-eshc4h/orchestrator/raf-develop/src/production-runtime.ts:1354:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async <fixture>/raf-prod-eshc4h/orchestrator/[eval1]:1:417\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+            "location": {
+              "file": "<fixture>/raf-prod-eshc4h/orchestrator/raf-develop/src/raf-cost-runtime.ts",
+              "line": 48,
+              "column": 33
+            },
+            "stack": [
+              "    at new RafCostRuntime (<fixture>/raf-prod-eshc4h/orchestrator/raf-develop/src/raf-cost-runtime.ts:48:33)",
+              "    at runProductionWorker (<fixture>/raf-prod-eshc4h/orchestrator/raf-develop/src/production-runtime.ts:1354:19)",
+              "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+              "    at async <fixture>/raf-prod-eshc4h/orchestrator/[eval1]:1:417",
+              "    at src/launch-wrapper.ts:199:81"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/spec: sticky root prompt receives only one navigation answer"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 257,
+              "column": 7
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:257:7)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/spec: root exception rejects unregistered without answering"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 268,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:268:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/spec: root exception rejects subdirectory without answering"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 268,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:268:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/spec: root exception rejects outside-symlink without answering"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 268,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:268:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/spec: changed-branch at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/spec: detached-head at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/spec: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/spec: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "test-failure",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/design: verified Orchestrator main root is trusted once without expanding write scope"
+            },
+            "errorName": "Error",
+            "message": "Wrapper launch trust-codex-registered-design failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T01:37:01.064Z worker started run=trust-codex-registered-design pid=3141705 ppid=3138542\ntrust-codex-registered-design: worker process group=3141705 session=3141705 pidNamespace=pid:[4026531836]\n<fixture>/raf-prod-5OcbhU/orchestrator/raf-develop/src/raf-cost-runtime.ts:48\n    if (!Array.isArray(settings.helperExecutables) || settings.helperExecutables.some((name         ) => typeof name !== 'string' || !name)) throw new Error('Invalid conf/raf.json#<external>/helperExecutables');\n                                ^\n\nTypeError: Cannot read properties of undefined (reading 'helperExecutables')\n    at new RafCostRuntime (<fixture>/raf-prod-5OcbhU/orchestrator/raf-develop/src/raf-cost-runtime.ts:48:33)\n    at runProductionWorker (<fixture>/raf-prod-5OcbhU/orchestrator/raf-develop/src/production-runtime.ts:1354:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async <fixture>/raf-prod-5OcbhU/orchestrator/[eval1]:1:417\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+            "location": {
+              "file": "<fixture>/raf-prod-5OcbhU/orchestrator/raf-develop/src/raf-cost-runtime.ts",
+              "line": 48,
+              "column": 33
+            },
+            "stack": [
+              "    at new RafCostRuntime (<fixture>/raf-prod-5OcbhU/orchestrator/raf-develop/src/raf-cost-runtime.ts:48:33)",
+              "    at runProductionWorker (<fixture>/raf-prod-5OcbhU/orchestrator/raf-develop/src/production-runtime.ts:1354:19)",
+              "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+              "    at async <fixture>/raf-prod-5OcbhU/orchestrator/[eval1]:1:417",
+              "    at src/launch-wrapper.ts:199:81"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/design: sticky root prompt receives only one navigation answer"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 257,
+              "column": 7
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:257:7)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/design: root exception rejects unregistered without answering"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 268,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:268:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/design: root exception rejects subdirectory without answering"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 268,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:268:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/design: root exception rejects outside-symlink without answering"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 268,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:268:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/design: changed-branch at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/design: detached-head at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/design: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 codex/design: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "test-failure",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/spec: verified Orchestrator main root is trusted once without expanding write scope"
+            },
+            "errorName": "Error",
+            "message": "Wrapper launch trust-claude-registered-spec failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T01:37:18.764Z worker started run=trust-claude-registered-spec pid=3143845 ppid=3138542\ntrust-claude-registered-spec: worker process group=3143845 session=3143845 pidNamespace=pid:[4026531836]\n<fixture>/raf-prod-g3qivc/orchestrator/raf-develop/src/raf-cost-runtime.ts:48\n    if (!Array.isArray(settings.helperExecutables) || settings.helperExecutables.some((name         ) => typeof name !== 'string' || !name)) throw new Error('Invalid conf/raf.json#<external>/helperExecutables');\n                                ^\n\nTypeError: Cannot read properties of undefined (reading 'helperExecutables')\n    at new RafCostRuntime (<fixture>/raf-prod-g3qivc/orchestrator/raf-develop/src/raf-cost-runtime.ts:48:33)\n    at runProductionWorker (<fixture>/raf-prod-g3qivc/orchestrator/raf-develop/src/production-runtime.ts:1354:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async <fixture>/raf-prod-g3qivc/orchestrator/[eval1]:1:417\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+            "location": {
+              "file": "<fixture>/raf-prod-g3qivc/orchestrator/raf-develop/src/raf-cost-runtime.ts",
+              "line": 48,
+              "column": 33
+            },
+            "stack": [
+              "    at new RafCostRuntime (<fixture>/raf-prod-g3qivc/orchestrator/raf-develop/src/raf-cost-runtime.ts:48:33)",
+              "    at runProductionWorker (<fixture>/raf-prod-g3qivc/orchestrator/raf-develop/src/production-runtime.ts:1354:19)",
+              "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+              "    at async <fixture>/raf-prod-g3qivc/orchestrator/[eval1]:1:417",
+              "    at src/launch-wrapper.ts:199:81"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/spec: sticky root prompt receives only one navigation answer"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 257,
+              "column": 7
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:257:7)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/spec: root exception rejects unregistered without answering"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 268,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:268:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/spec: root exception rejects subdirectory without answering"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 268,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:268:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/spec: root exception rejects outside-symlink without answering"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 268,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:268:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/spec: changed-branch at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/spec: detached-head at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/spec: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/spec: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "test-failure",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/design: verified Orchestrator main root is trusted once without expanding write scope"
+            },
+            "errorName": "Error",
+            "message": "Wrapper launch trust-claude-registered-design failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T01:37:36.633Z worker started run=trust-claude-registered-design pid=3145806 ppid=3138542\ntrust-claude-registered-design: worker process group=3145806 session=3145806 pidNamespace=pid:[4026531836]\n<fixture>/raf-prod-KUM19O/orchestrator/raf-develop/src/raf-cost-runtime.ts:48\n    if (!Array.isArray(settings.helperExecutables) || settings.helperExecutables.some((name         ) => typeof name !== 'string' || !name)) throw new Error('Invalid conf/raf.json#<external>/helperExecutables');\n                                ^\n\nTypeError: Cannot read properties of undefined (reading 'helperExecutables')\n    at new RafCostRuntime (<fixture>/raf-prod-KUM19O/orchestrator/raf-develop/src/raf-cost-runtime.ts:48:33)\n    at runProductionWorker (<fixture>/raf-prod-KUM19O/orchestrator/raf-develop/src/production-runtime.ts:1354:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async <fixture>/raf-prod-KUM19O/orchestrator/[eval1]:1:417\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+            "location": {
+              "file": "<fixture>/raf-prod-KUM19O/orchestrator/raf-develop/src/raf-cost-runtime.ts",
+              "line": 48,
+              "column": 33
+            },
+            "stack": [
+              "    at new RafCostRuntime (<fixture>/raf-prod-KUM19O/orchestrator/raf-develop/src/raf-cost-runtime.ts:48:33)",
+              "    at runProductionWorker (<fixture>/raf-prod-KUM19O/orchestrator/raf-develop/src/production-runtime.ts:1354:19)",
+              "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+              "    at async <fixture>/raf-prod-KUM19O/orchestrator/[eval1]:1:417",
+              "    at src/launch-wrapper.ts:199:81"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/design: sticky root prompt receives only one navigation answer"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 257,
+              "column": 7
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:257:7)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/design: root exception rejects unregistered without answering"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 268,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:268:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/design: root exception rejects subdirectory without answering"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 268,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:268:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/design: root exception rejects outside-symlink without answering"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 268,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:268:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/design: changed-branch at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/design: detached-head at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/design: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] Z.12 claude/design: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (rejects)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 294,
+              "column": 9
+            },
+            "stack": [
+              "    at async TestContext.<anonymous> (test/workspace-trust.test.ts:294:9)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "test-failure",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] codex: registered branch directory — raf confirms the trust prompt with protocol navigation keys and the launch continues"
+            },
+            "errorName": "Error",
+            "message": "Wrapper launch trust-codex-registered failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T01:37:55.553Z worker started run=trust-codex-registered pid=3147557 ppid=3138542\ntrust-codex-registered: worker process group=3147557 session=3147557 pidNamespace=pid:[4026531836]\n<fixture>/raf-prod-8gWGRS/raf-develop/src/raf-cost-runtime.ts:48\n    if (!Array.isArray(settings.helperExecutables) || settings.helperExecutables.some((name         ) => typeof name !== 'string' || !name)) throw new Error('Invalid conf/raf.json#<external>/helperExecutables');\n                                ^\n\nTypeError: Cannot read properties of undefined (reading 'helperExecutables')\n    at new RafCostRuntime (<fixture>/raf-prod-8gWGRS/raf-develop/src/raf-cost-runtime.ts:48:33)\n    at runProductionWorker (<fixture>/raf-prod-8gWGRS/raf-develop/src/production-runtime.ts:1354:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async <fixture>/raf-prod-8gWGRS/raf-develop/[eval1]:1:378\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+            "location": {
+              "file": "<fixture>/raf-prod-8gWGRS/raf-develop/src/raf-cost-runtime.ts",
+              "line": 48,
+              "column": 33
+            },
+            "stack": [
+              "    at new RafCostRuntime (<fixture>/raf-prod-8gWGRS/raf-develop/src/raf-cost-runtime.ts:48:33)",
+              "    at runProductionWorker (<fixture>/raf-prod-8gWGRS/raf-develop/src/production-runtime.ts:1354:19)",
+              "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+              "    at async <fixture>/raf-prod-8gWGRS/raf-develop/[eval1]:1:378",
+              "    at src/launch-wrapper.ts:199:81"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] codex: trust prompt that stays after the confirmation keys — RUNNER_WORKSPACE_UNTRUSTED without a second answer"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (match)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 322,
+              "column": 12
+            },
+            "stack": [
+              "    at TestContext.<anonymous> (test/workspace-trust.test.ts:322:12)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] codex: unregistered workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (match)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 336,
+              "column": 14
+            },
+            "stack": [
+              "    at TestContext.<anonymous> (test/workspace-trust.test.ts:336:14)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] codex: outside-symlink workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (match)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 336,
+              "column": 14
+            },
+            "stack": [
+              "    at TestContext.<anonymous> (test/workspace-trust.test.ts:336:14)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] codex: subdirectory workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (match)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 336,
+              "column": 14
+            },
+            "stack": [
+              "    at TestContext.<anonymous> (test/workspace-trust.test.ts:336:14)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "test-failure",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] claude: registered branch directory — raf confirms the trust prompt with protocol navigation keys and the launch continues"
+            },
+            "errorName": "Error",
+            "message": "Wrapper launch trust-claude-registered failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T01:38:05.105Z worker started run=trust-claude-registered pid=3148617 ppid=3138542\ntrust-claude-registered: worker process group=3148617 session=3148617 pidNamespace=pid:[4026531836]\n<fixture>/raf-prod-zH1stj/raf-develop/src/raf-cost-runtime.ts:48\n    if (!Array.isArray(settings.helperExecutables) || settings.helperExecutables.some((name         ) => typeof name !== 'string' || !name)) throw new Error('Invalid conf/raf.json#<external>/helperExecutables');\n                                ^\n\nTypeError: Cannot read properties of undefined (reading 'helperExecutables')\n    at new RafCostRuntime (<fixture>/raf-prod-zH1stj/raf-develop/src/raf-cost-runtime.ts:48:33)\n    at runProductionWorker (<fixture>/raf-prod-zH1stj/raf-develop/src/production-runtime.ts:1354:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async <fixture>/raf-prod-zH1stj/raf-develop/[eval1]:1:378\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+            "location": {
+              "file": "<fixture>/raf-prod-zH1stj/raf-develop/src/raf-cost-runtime.ts",
+              "line": 48,
+              "column": 33
+            },
+            "stack": [
+              "    at new RafCostRuntime (<fixture>/raf-prod-zH1stj/raf-develop/src/raf-cost-runtime.ts:48:33)",
+              "    at runProductionWorker (<fixture>/raf-prod-zH1stj/raf-develop/src/production-runtime.ts:1354:19)",
+              "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+              "    at async <fixture>/raf-prod-zH1stj/raf-develop/[eval1]:1:378",
+              "    at src/launch-wrapper.ts:199:81"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] claude: trust prompt that stays after the confirmation keys — RUNNER_WORKSPACE_UNTRUSTED without a second answer"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (match)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 322,
+              "column": 12
+            },
+            "stack": [
+              "    at TestContext.<anonymous> (test/workspace-trust.test.ts:322:12)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] claude: unregistered workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (match)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 336,
+              "column": 14
+            },
+            "stack": [
+              "    at TestContext.<anonymous> (test/workspace-trust.test.ts:336:14)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] claude: outside-symlink workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (match)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 336,
+              "column": 14
+            },
+            "stack": [
+              "    at TestContext.<anonymous> (test/workspace-trust.test.ts:336:14)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          },
+          {
+            "kind": "assertion",
+            "test": {
+              "file": "test/workspace-trust.test.ts",
+              "name": "[workspace-trust] claude: subdirectory workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+            },
+            "errorName": "AssertionError",
+            "errorCode": "ERR_ASSERTION",
+            "message": "Assertion failed (match)",
+            "location": {
+              "file": "test/workspace-trust.test.ts",
+              "line": 336,
+              "column": 14
+            },
+            "stack": [
+              "    at TestContext.<anonymous> (test/workspace-trust.test.ts:336:14)",
+              "    at async Test.run (node:internal/test_runner/test:1409:7)",
+              "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+            ],
+            "redacted": true,
+            "truncated": false
+          }
+        ],
+        "diagnosticSummary": {
+          "totalEntries": 47,
+          "retainedEntries": 47,
+          "omittedEntries": 0,
+          "truncated": false,
+          "redacted": true
+        },
+        "environmentSummary": {
+          "executable": "node",
+          "runtimeVersion": "v26.12.1",
+          "adapter": "node-test-events",
+          "isolation": "process",
+          "configurationFingerprints": {
+            "flow": "34636e00082226eb8a1ae440e7fad48638862edf5bd0f870a7d1cf96f97f3ac6",
+            "testRuns": "c403bca9e692509e91a3610c0bcbe6608585c7054534c0e63f42c95654ecabbd",
+            "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+          },
+          "tmpPathBytes": 13,
+          "privateRunTmp": true
+        },
+        "runId": "11d3d2f7-ec0c-4c4c-8f56-1fefe7537b36",
+        "project": "raf",
+        "workspace": "/srv/dev/work/orchestrator/raf-develop",
+        "phase": "red",
+        "group": "switch-raf-main-by-symlink/qa64-trust-fixture",
+        "profileId": "node",
+        "selection": {
+          "files": [
+            "test/workspace-trust.test.ts"
+          ],
+          "testIds": []
+        },
+        "command": {
+          "executable": "node",
+          "argv": [
+            "./scripts/test-run-node.ts",
+            "test/workspace-trust.test.ts"
+          ],
+          "cwd": "/srv/dev/work/orchestrator/raf-develop",
+          "shell": false,
+          "environment": {
+            "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+            "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+            "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+            "TMPDIR": "/tmp/r-YsWehs"
+          }
+        },
+        "startedAt": "2026-10-25T01:35:08.245Z",
+        "durationMs": 184657,
+        "exitCode": 1,
+        "signal": null,
+        "timedOut": false,
+        "cleanup": {
+          "complete": true,
+          "remainingPids": []
+        },
+        "outcome": "assertions-failed",
+        "failureKinds": [
+          "assertions"
+        ],
+        "passed": [
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] production QA fixture selects its own worker Orchestrator root"
+          }
+        ],
+        "knownRed": [
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/spec: verified Orchestrator main root is trusted once without expanding write scope"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/spec: sticky root prompt receives only one navigation answer"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/spec: root exception rejects unregistered without answering"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/spec: root exception rejects subdirectory without answering"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/spec: root exception rejects outside-symlink without answering"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/spec: changed-branch at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/spec: detached-head at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/spec: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/spec: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/design: verified Orchestrator main root is trusted once without expanding write scope"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/design: sticky root prompt receives only one navigation answer"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/design: root exception rejects unregistered without answering"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/design: root exception rejects subdirectory without answering"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/design: root exception rejects outside-symlink without answering"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/design: changed-branch at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/design: detached-head at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/design: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 codex/design: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/spec: verified Orchestrator main root is trusted once without expanding write scope"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/spec: sticky root prompt receives only one navigation answer"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/spec: root exception rejects unregistered without answering"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/spec: root exception rejects subdirectory without answering"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/spec: root exception rejects outside-symlink without answering"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/spec: changed-branch at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/spec: detached-head at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/spec: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/spec: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/design: verified Orchestrator main root is trusted once without expanding write scope"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/design: sticky root prompt receives only one navigation answer"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/design: root exception rejects unregistered without answering"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/design: root exception rejects subdirectory without answering"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/design: root exception rejects outside-symlink without answering"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/design: changed-branch at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/design: detached-head at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/design: missing-navigation at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] Z.12 claude/design: unregistered-root at worker readiness cannot reuse an earlier trust decision"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] codex: registered branch directory — raf confirms the trust prompt with protocol navigation keys and the launch continues"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] codex: trust prompt that stays after the confirmation keys — RUNNER_WORKSPACE_UNTRUSTED without a second answer"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] codex: unregistered workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] codex: outside-symlink workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] codex: subdirectory workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] claude: registered branch directory — raf confirms the trust prompt with protocol navigation keys and the launch continues"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] claude: trust prompt that stays after the confirmation keys — RUNNER_WORKSPACE_UNTRUSTED without a second answer"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] claude: unregistered workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] claude: outside-symlink workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] claude: subdirectory workspace — RUNNER_WORKSPACE_UNTRUSTED without answering the prompt"
+          },
+          {
+            "file": "test/workspace-trust.test.ts",
+            "name": "[workspace-trust] production trust fixture supplies the worker cost policy"
+          }
+        ],
+        "unexecuted": [],
+        "unknown": [],
+        "removed": [],
+        "stateAccess": null,
+        "groupSnapshot": "loaded",
+        "groupState": "idle",
+        "timeoutCount": 0,
+        "nextAction": "implement",
+        "hintIds": [
+          "red-assertions"
+        ],
+        "hints": [
+          "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+        ],
+        "evidence": [],
+        "admission": {
+          "level": "ANY_RUN",
+          "requestedTier": "normal",
+          "allowed": true,
+          "reasons": [
+            "All normal resource thresholds satisfied after reservations"
+          ],
+          "measurement": {
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "loadAverage1m": 7.7,
+            "availableCores": 8,
+            "totalRamBytes": 32852041728,
+            "availableRamBytes": 20878434304,
+            "memoryPressure": "normal",
+            "fileSystems": [
+              {
+                "id": "/dev/mapper/data-dev",
+                "totalBytes": 190143823872,
+                "availableBytes": 178413842432
+              },
+              {
+                "id": "/dev/mapper/home-dev",
+                "totalBytes": 11499937792,
+                "availableBytes": 8494034944
+              }
+            ]
+          },
+          "thresholds": {
+            "normal": {
+              "maxNormalizedLoad": 1.2,
+              "minRamFraction": 0.2,
+              "minRamBytes": 2147483648,
+              "minDiskFraction": 0.1,
+              "minDiskBytes": 10737418240
+            },
+            "hotfix": {
+              "maxNormalizedLoad": 1.5,
+              "minRamFraction": 0.1,
+              "minRamBytes": 1073741824,
+              "minDiskFraction": 0.05,
+              "minDiskBytes": 5368709120
+            },
+            "home": {
+              "minDiskBytes": 524288000
+            }
+          },
+          "reservation": {
+            "requested": {
+              "ramBytes": 2147483648,
+              "diskBytes": {
+                "/dev/mapper/data-dev": 10737418240
+              }
+            },
+            "unused": {
+              "ramBytes": 2147483648,
+              "diskBytes": {
+                "/dev/mapper/data-dev": 10737418240
+              }
+            }
+          },
+          "remaining": {
+            "ramBytes": 16583467008,
+            "diskBytes": {
+              "/dev/mapper/data-dev": 156939005952,
+              "/dev/mapper/home-dev": 8494034944
+            },
+            "normalizedLoad": 0.9625
+          },
+          "estimate": {
+            "status": "KNOWN",
+            "sources": [
+              "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+            ],
+            "reason": null
+          },
+          "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+        },
+        "resourceUsage": {
+          "context": {
+            "identity": {
+              "kind": "test",
+              "id": "11d3d2f7-ec0c-4c4c-8f56-1fefe7537b36",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+              "fence": "2dc467c3-49d3-4dae-83b9-f4409454a9dc",
+              "root": {
+                "pid": 3138525,
+                "startTicks": "23488203",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            },
+            "project": "raf",
+            "agentType": null,
+            "testProfile": "node",
+            "items": [
+              {
+                "project": "raf",
+                "change": "switch-raf-main-by-symlink",
+                "item": "6.4"
+              }
+            ],
+            "requestedEstimate": {
+              "ramBytes": 2147483648,
+              "diskBytes": {
+                "/dev/mapper/data-dev": 10737418240
+              },
+              "sources": [
+                "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+              ],
+              "confHash": "9ee96dbe964dc58d166ee8e5b48691636654d4a04eca5d94c78b3d662a23d0b9"
+            },
+            "requiredFileSystems": [
+              {
+                "id": "/dev/mapper/data-dev",
+                "paths": [
+                  "/srv/dev/work/orchestrator",
+                  "/srv/dev/work/orchestrator/raf-develop"
+                ]
+              }
+            ],
+            "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+            "attributedPaths": [
+              "/tmp/r-YsWehs"
+            ]
+          },
+          "preparedAt": 1792892199920,
+          "baseline": {
+            "at": 1792892199941,
+            "disk": [
+              {
+                "fileSystemId": "/dev/mapper/data-dev",
+                "files": [],
+                "complete": false,
+                "reasons": [
+                  "No run-owned output scope is available on this filesystem"
+                ]
+              }
+            ]
+          },
+          "startedAt": 1792892199960,
+          "lastObservedAt": 1792892292860,
+          "finishedAt": 1792892292882,
+          "finishReason": "exit",
+          "peakRamBytes": 577323008,
+          "peakDiskBytes": {
+            "/dev/mapper/data-dev": null
+          },
+          "ram": {
+            "peakBytes": 577323008,
+            "currentBytes": null,
+            "method": {
+              "name": "rss-sampled",
+              "scope": "verified process tree; simultaneous RSS sum",
+              "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+            },
+            "completeness": "partial",
+            "reasons": [
+              "RAM measurement unavailable"
+            ]
+          },
+          "disk": {
+            "/dev/mapper/data-dev": {
+              "peakBytes": null,
+              "currentBytes": null,
+              "method": {
+                "name": "allocated-files-sampled",
+                "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+              },
+              "completeness": "unknown",
+              "reasons": [
+                "Changes in shared development directories cannot be fully attributed to this run",
+                "No run-owned output scope is available on this filesystem",
+                "Disk observation or pre-spawn baseline unavailable",
+                "Disk attribution is partial"
+              ]
+            }
+          },
+          "completeness": "partial",
+          "reasons": [
+            "Process scan could not establish every process identity",
+            "Changes in shared development directories cannot be fully attributed to this run",
+            "No run-owned output scope is available on this filesystem",
+            "Disk observation or pre-spawn baseline unavailable",
+            "Disk attribution is partial",
+            "Usage observer reattached; the interval since the previous persisted sample is unverified",
+            "Process liveness unknown during reconciliation",
+            "RAM measurement unavailable",
+            "Root process identity is unavailable or changed",
+            "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+            "Final measurement completeness is unverified"
+          ]
+        },
+        "queue": {
+          "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+          "waited": true
+        }
+      },
+      "delivery": {
+        "runId": "11d3d2f7-ec0c-4c4c-8f56-1fefe7537b36",
+        "pending": false,
+        "receiptId": null,
+        "returned": true,
+        "forwardedToMain": false
+      }
+    }
+  }
+]

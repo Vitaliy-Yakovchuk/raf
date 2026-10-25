@@ -1,0 +1,96 @@
+{
+  "status": "failed",
+  "stand": "/tmp/s64-2IEWjE",
+  "reviewed": "c14af41361749941511aaf50ca1e722524b59556",
+  "startedAt": "2026-10-25T01:32:25.202Z",
+  "commands": [
+    {
+      "label": "git-1",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-2",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-node",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-codex",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-git",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-tmux",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-bwrap",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "version-uname",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "identity-author",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "identity-committer",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "clone",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "git-3",
+      "cliExitCode": 0,
+      "signal": null
+    },
+    {
+      "label": "build",
+      "cliExitCode": 1,
+      "signal": null
+    }
+  ],
+  "switches": [],
+  "limitations": [
+    "This stand tests the published agent channel with host-controlled real symlink/Git/registry fixtures. Release verification gates remain the separate 4.4 QA.",
+    "No unit result substitutes for native tool evidence."
+  ],
+  "workspace": "?? node_modules",
+  "trust": {
+    "gitRoots": [
+      "/tmp/s64-2IEWjE/root",
+      "/tmp/s64-2IEWjE/root/raf-main",
+      "/tmp/s64-2IEWjE/root/raf-develop",
+      "/tmp/s64-2IEWjE/root/raf-hotfix"
+    ],
+    "overrides": [
+      "projects={\"/tmp/s64-2IEWjE/root\"={trust_level=\"trusted\"},\"/tmp/s64-2IEWjE/root/raf-main\"={trust_level=\"trusted\"},\"/tmp/s64-2IEWjE/root/raf-develop\"={trust_level=\"trusted\"},\"/tmp/s64-2IEWjE/root/raf-hotfix\"={trust_level=\"trusted\"}}"
+    ],
+    "quotaCwd": "/tmp/s64-2IEWjE/root/raf-main"
+  },
+  "error": {
+    "message": "{\"code\":\"BUILD_FAILED\",\"message\":\"scripts/qa-main-agent-channel-probe.mjs:1:1: коментар у власному коді.\\nscripts/qa-main-agent-channel-probe.mjs:42:5: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:1:1: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:19:1: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:79:3: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:115:3: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:137:3: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:141:3: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:154:3: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:175:5: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:215:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"/tmp/s64-2IEWjE/root/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\nnpm notice\nnpm notice New major version of npm available! 11.20.0 -> 12.2.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1\nnpm notice To update run: npm install -g npm@12.2.1\nnpm notice\n\n\n1 !== 0\n",
+    "stack": "AssertionError [ERR_ASSERTION]: {\"code\":\"BUILD_FAILED\",\"message\":\"scripts/qa-main-agent-channel-probe.mjs:1:1: коментар у власному коді.\\nscripts/qa-main-agent-channel-probe.mjs:42:5: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:1:1: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:19:1: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:79:3: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:115:3: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:137:3: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:141:3: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:154:3: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:175:5: коментар у власному коді.\\nscripts/qa-main-agent-channel.mjs:215:3: коментар у власному коді.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"/tmp/s64-2IEWjE/root/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\nnpm notice\nnpm notice New major version of npm available! 11.20.0 -> 12.2.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1\nnpm notice To update run: npm install -g npm@12.2.1\nnpm notice\n\n\n1 !== 0\n\n    at must (file:///srv/dev/sym64-src.YnfCtt/raf-develop/scripts/qa-main-agent-channel.mjs:44:28)\n    at file:///srv/dev/sym64-src.YnfCtt/raf-develop/scripts/qa-main-agent-channel.mjs:112:3\n    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)\n    at async node:internal/modules/esm/loader:650:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)"
+  },
+  "endedAt": "2026-10-25T01:32:30.429Z"
+}

@@ -1,0 +1,38 @@
+diff --git a/test/workspace-trust.test.ts b/test/workspace-trust.test.ts
+index f0e5995..75e7408 100644
+--- a/test/workspace-trust.test.ts
++++ b/test/workspace-trust.test.ts
+@@ -150,7 +150,7 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
+   }
+   const base = configured(runner);
+   const settings: ProtocolSettings = { ...base, timeouts: { ...base.timeouts, startupMs: 5000, transitionMs: 5000, overallMs: 15000, pollMs: 30 } };
+-  await writeFile(join(f.confRoot, 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'isolated.sqlite' }, commandTiming: configuration.commandTiming, runnerProtocols: [settings] }));
++  await writeFile(join(f.confRoot, 'raf.json'), JSON.stringify({ ...conf, state: { fileName: 'isolated.sqlite' }, commandTiming: configuration.commandTiming, runnerProtocols: [settings] }));
+   await writeFile(join(f.confRoot, 'models.json'), JSON.stringify(configuration.models));
+   f.store.initializeRunners(configuration.models.runners);
+   const cliConfigs = { [join(f.home, '.claude.json')]: '{"projects":{}}\n', [join(f.home, '.codex', 'config.toml')]: '# fixture codex config\n' };
+@@ -219,6 +219,24 @@ test('[workspace-trust] production QA fixture selects its own worker Orchestrato
+   assert.equal(process.env.RAF_ORCHESTRATOR_ROOT, f.root, 'worker must not inherit the outer raf session root');
+ });
+ 
++test('[workspace-trust] production QA fixture provisions the registered main Git root', async t => {
++  const f = await fixture(t, { productionQa: true });
++  const projects = JSON.parse(await readFile(join(f.confRoot, 'projects.json'), 'utf8'));
++  const main = join(f.root, projects.projects.raf.branchPaths.main);
++  const top = spawnSync('git', ['-C', main, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' });
++  assert.equal(top.status, 0, top.stderr);
++  assert.equal(top.stdout.trim(), main, 'registered main must have its own Git identity');
++  const branch = spawnSync('git', ['-C', main, 'symbolic-ref', '--short', 'HEAD'], { encoding: 'utf8' });
++  assert.equal(branch.status, 0, branch.stderr);
++  assert.equal(branch.stdout.trim(), 'main');
++});
++
++test('[workspace-trust] production trust fixture supplies the worker cost policy', async t => {
++  const f = await trustFixture(t, 'codex', 'registered');
++  const settings = JSON.parse(await readFile(join(f.confRoot, 'raf.json'), 'utf8'));
++  assert.deepEqual(settings.costProfile, conf.costProfile, 'worker requires the configured cost policy before runner readiness');
++});
++
+ for (const runner of ['codex', 'claude'] as const) {
+   for (const type of ['spec', 'design'] as const) {
+     test(`[workspace-trust] Z.12 ${runner}/${type}: verified Orchestrator main root is trusted once without expanding write scope`, { timeout: z12Timeout }, async t => {

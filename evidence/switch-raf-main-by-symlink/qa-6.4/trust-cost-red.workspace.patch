@@ -1,0 +1,17 @@
+diff --git a/test/workspace-trust.test.ts b/test/workspace-trust.test.ts
+index f0e5995..2ccd0ae 100644
+--- a/test/workspace-trust.test.ts
++++ b/test/workspace-trust.test.ts
+@@ -219,6 +219,12 @@ test('[workspace-trust] production QA fixture selects its own worker Orchestrato
+   assert.equal(process.env.RAF_ORCHESTRATOR_ROOT, f.root, 'worker must not inherit the outer raf session root');
+ });
+ 
++test('[workspace-trust] production trust fixture supplies the worker cost policy', async t => {
++  const f = await trustFixture(t, 'codex', 'registered');
++  const settings = JSON.parse(await readFile(join(f.confRoot, 'raf.json'), 'utf8'));
++  assert.deepEqual(settings.costProfile, conf.costProfile, 'worker requires the configured cost policy before runner readiness');
++});
++
+ for (const runner of ['codex', 'claude'] as const) {
+   for (const type of ['spec', 'design'] as const) {
+     test(`[workspace-trust] Z.12 ${runner}/${type}: verified Orchestrator main root is trusted once without expanding write scope`, { timeout: z12Timeout }, async t => {

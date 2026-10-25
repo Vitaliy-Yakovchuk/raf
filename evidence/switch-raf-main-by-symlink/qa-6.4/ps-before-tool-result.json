@@ -1,0 +1,29 @@
+{
+  "command": "issued raf_command agent ps",
+  "cliExitCode": 0,
+  "capture": "truncated by exec_command max_output_tokens; no exact full ps transcript claimed",
+  "outputSha256": "88f6b48dea8f4da259d43cdc561d81235689e16abb6d9432692ec0c127da563e",
+  "main": {
+    "runId": "b09cec83-8f8b-4a94-bd02-ee076c7ccfcc",
+    "addressId": "main",
+    "state": "running",
+    "observation": {
+      "state": "alive",
+      "observedAt": "2026-10-25T01:07:56.188Z",
+      "identity": {
+        "pid": 15315,
+        "startedAt": "2026-10-22T08:25:34.000Z",
+        "runner": "main",
+        "runnerSessionId": "%0",
+        "tmuxSession": "main",
+        "evidence": {
+          "command": "fish --login",
+          "tmuxSocket": "/tmp/tmux-1000/default",
+          "tmuxPane": "%0",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      }
+    }
+  }
+}

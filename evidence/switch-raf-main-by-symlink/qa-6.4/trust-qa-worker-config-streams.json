@@ -1,0 +1,10 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/8d40820d-3449-4a8e-b3ed-1c3f4a1738d2/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/qa64-trust-fixture --files test/workspace-trust.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "stdout": "trust-qa-worker-config-TestRunResult.json (unchanged first output line)",
+  "stderr": null,
+  "streamCapture": "Native tool returns merged output only; independent stderr unavailable.",
+  "sha": "fdea3bd9dd832a1a97454ff0bc5b21ed699a7cf6",
+  "workspace": "unit test and fixture committed; host script comments removed and committed while queue/worker active; only unrelated host scripts and own evidence changed."
+}

@@ -1,0 +1,125 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-10-25T02:34:28.014341+00:00",
+  "command": [
+    "node",
+    "evidence/profile-raf-performance/qa-4.1/verify.mjs"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-develop",
+  "cliExitCode": 0,
+  "checks": {
+    "status": "passed",
+    "manifestFiles": 490,
+    "scenarios": 6,
+    "measuredSamples": 30,
+    "commands": 135,
+    "statsCount": 60,
+    "psCount": 72,
+    "expectedFailures": 12,
+    "unexpectedFailures": 0,
+    "cleanupComplete": true
+  },
+  "source": {
+    "repository": "/srv/dev/work/orchestrator/raf-develop",
+    "sha": "1212a1330a2b097620bd491e5cc8d2f549c774b9",
+    "workspace": "host script asserted tracked-clean source; fresh isolated clone at reviewed SHA; no production optimization in this assignment"
+  },
+  "host": {
+    "runId": "p41-03l048",
+    "command": [
+      "node",
+      "scripts/qa-agent-ps-baseline.mjs",
+      "1212a1330a2b097620bd491e5cc8d2f549c774b9",
+      "/srv/dev/work/orchestrator/conf",
+      "5"
+    ],
+    "cliExitCode": 0,
+    "cliExitCodeProvenance": "main message: Host-прогін 1212a133 завершено: CLI 0, status passed; outer exit was attested by main, not recaptured by QA",
+    "stdout": "host/prp41-host1.stdout",
+    "stderr": "host/prp41-host1.stderr",
+    "childCliResults": "host/ev/<label>.json; cliExitCode distinct from outer host exit; no TestRunResult in this integration run",
+    "original": "/srv/dev/prp41-baseline-ev",
+    "manifestOriginal": "/srv/dev/prp41-baseline-ev.sha256",
+    "manifestSha256": "f3de05fda2e4ab4480d6ac1f2ad480e966b3ab0ee4d789ed0b8d01c124499a40",
+    "secretScan": {
+      "result": 0,
+      "provenance": "main message; not independently rerun by QA"
+    },
+    "summarySha256": "1f3bab4c8480183aa5a9e6ab5c854cbc1f0c410d72dbd0f1d97fe873223685ea",
+    "startedAt": "2026-10-25T02:24:01.154Z",
+    "finishedAt": "2026-10-25T02:29:38.580Z",
+    "outcome": "passed",
+    "timeout": false,
+    "signals": [],
+    "cleanup": {
+      "complete": true,
+      "service": {
+        "pid": 3471897,
+        "identity": {
+          "pid": 3471897,
+          "startedAt": "23773098",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        },
+        "token": "7cb68775-c17a-4426-9fe5-661d2474a71e",
+        "mainPath": "/srv/dev/p41-03l048/root/.git/modules/raf-main/raf-hotfix/generations/18110573-29a5-4f20-bff9-3f5b47ed34b1/raf-main",
+        "state": "stopped",
+        "stopReason": "Service stopped normally"
+      },
+      "actors": [
+        {
+          "pid": 3472703,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "pid": 3472714,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "pid": 3472723,
+          "exitCode": 0,
+          "signal": null
+        }
+      ],
+      "remainingProcesses": [],
+      "integrityCheck": [
+        {
+          "integrity_check": "ok"
+        }
+      ]
+    }
+  },
+  "unit": {
+    "executed": false,
+    "reason": "Only baseline integration scenarios are assigned by 4.1; no new functional defect or authorized unit selection",
+    "TestRunResult": null,
+    "knownRed": null,
+    "unexecuted": null,
+    "unknown": null,
+    "groupState": null
+  },
+  "coverage": {
+    "assignedItems": [
+      "profile-raf-performance:4.1"
+    ],
+    "scenarios": [
+      "empty",
+      "live",
+      "finished",
+      "missing",
+      "pid-reused",
+      "unverifiable"
+    ],
+    "unexecuted": [],
+    "unexpectedUnknown": [],
+    "expectedUnknown": "unverifiable observation; CLI1 PROCESS_SCAN_UNKNOWN, session and reservation retained"
+  },
+  "limitations": [
+    "helper CPU unavailable; no full CPU or speed acceptance",
+    "startup/config largest but internal redundancy not localized; repeated whole-table ps proven separately in reconciliation",
+    "actors real OS processes with seeded sessions; service stopped during restored samples"
+  ],
+  "nextAction": "raf checks 4.1; main prepares 4.2–4.4 from baseline, localizes startup/config if needed; 4.5 requires comparable complete CPU evidence; worker polling stays in 9.1.1/5.1; no archive while other items open"
+}

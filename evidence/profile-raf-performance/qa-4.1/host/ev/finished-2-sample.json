@@ -1,0 +1,84 @@
+{
+  "label": "finished-2",
+  "startedAt": "2026-10-25T02:26:18.359Z",
+  "finishedAt": "2026-10-25T02:26:20.659Z",
+  "cliExitCode": 0,
+  "externalWallMs": 2300.23558399998,
+  "loadBefore": {
+    "loadAverage": [
+      2.82,
+      2.98,
+      3.89
+    ],
+    "processes": 271
+  },
+  "wallMs": 2169.753551,
+  "cpuSelfMs": 2753.5440000000003,
+  "delta": [
+    {
+      "stage": "finalization",
+      "executor": "self",
+      "samples": 1,
+      "wallMs": 0.0896060000000034,
+      "cpuUserMs": 0.052,
+      "cpuSystemMs": 0.033,
+      "cpuSamples": 1,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "handler",
+      "executor": "self",
+      "samples": 2,
+      "wallMs": 667.8954529999996,
+      "cpuUserMs": 424.261,
+      "cpuSystemMs": 363.657,
+      "cpuSamples": 2,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "reconciliation",
+      "executor": "self",
+      "samples": 1,
+      "wallMs": 10.52305800000022,
+      "cpuUserMs": 21.217,
+      "cpuSystemMs": 4.998,
+      "cpuSamples": 1,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "sqlite",
+      "executor": "self",
+      "samples": 1,
+      "wallMs": 519.2819629999999,
+      "cpuUserMs": 299.348,
+      "cpuSystemMs": 270.011,
+      "cpuSamples": 1,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "startup/config",
+      "executor": "self",
+      "samples": 1,
+      "wallMs": 971.9634710000001,
+      "cpuUserMs": 921.196,
+      "cpuSystemMs": 448.771,
+      "cpuSamples": 1,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    }
+  ]
+}

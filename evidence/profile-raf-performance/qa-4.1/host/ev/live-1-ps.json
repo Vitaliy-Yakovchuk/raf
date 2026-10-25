@@ -1,0 +1,23 @@
+{
+  "label": "live-1-ps",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p41-03l048/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p41-03l048/root/raf-main",
+  "startedAt": "2026-10-25T02:25:12.833Z",
+  "finishedAt": "2026-10-25T02:25:15.484Z",
+  "wallMs": 2650.5658970000077,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 2198,
+  "stderrBytes": 0,
+  "loadAverage": [
+    3.54,
+    3.09,
+    3.99
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "label": "service-stop",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p41-03l048/root/raf-main/bin/raf.ts",
+    "service",
+    "stop"
+  ],
+  "cwd": "/srv/dev/p41-03l048/root/raf-main",
+  "startedAt": "2026-10-25T02:24:12.392Z",
+  "finishedAt": "2026-10-25T02:24:14.104Z",
+  "wallMs": 1712.084221000001,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 312,
+  "stderrBytes": 0,
+  "loadAverage": [
+    2.79,
+    2.89,
+    3.98
+  ]
+}

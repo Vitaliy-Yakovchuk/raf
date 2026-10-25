@@ -1,0 +1,23 @@
+{
+  "label": "unverifiable-2-ps",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p41-03l048/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p41-03l048/root/raf-main",
+  "startedAt": "2026-10-25T02:28:58.692Z",
+  "finishedAt": "2026-10-25T02:29:01.097Z",
+  "wallMs": 2405.035713999998,
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 0,
+  "stderrBytes": 525,
+  "loadAverage": [
+    2.76,
+    3.06,
+    3.78
+  ]
+}

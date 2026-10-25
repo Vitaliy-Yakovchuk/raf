@@ -1,0 +1,23 @@
+{
+  "label": "live-1-idempotence",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p41-03l048/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p41-03l048/root/raf-main",
+  "startedAt": "2026-10-25T02:25:17.919Z",
+  "finishedAt": "2026-10-25T02:25:20.522Z",
+  "wallMs": 2603.2263620000012,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 2198,
+  "stderrBytes": 0,
+  "loadAverage": [
+    3.42,
+    3.08,
+    3.97
+  ]
+}

@@ -70,6 +70,10 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "11577969d2e8a9b7dadf34f6b19bb587effcc8e7"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "1c7ef3acfa12b35eaedd4befd31e9a6a1e6fad53"
     }
   ],
   "evidenceIndexes": [
@@ -83,36 +87,15 @@
     "native-finish-review.json",
     "native-ps-audit-review.json",
     "native-denial-cleanup-review.json",
-    "native-writable-audit-review.json"
+    "native-writable-audit-review.json",
+    "native-registered-sockets-review.json"
   ],
   "latestOwnGroup": {
-    "runId": "1d7c970d-e17f-4ad7-8af0-2abac0d55a23",
-    "phase": "qa",
-    "selection": {
-      "files": [
-        "test/main-switch-agent-channel.test.ts"
-      ],
-      "testIds": []
-    },
-    "command": {
-      "executable": "node",
-      "argv": [
-        "./scripts/test-run-node.ts",
-        "test/main-switch-agent-channel.test.ts"
-      ],
-      "cwd": "/srv/dev/work/orchestrator/raf-develop",
-      "shell": false,
-      "environment": {
-        "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
-        "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
-        "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
-        "TMPDIR": "/tmp/r-CwtYvG"
-      }
-    },
-    "outcome": "passed",
-    "exitCode": 0,
-    "signal": null,
-    "timedOut": false,
+    "runId": "af4a9c17-2542-4688-9388-bf6e228f8ace",
+    "evidence": "native-registered-sockets-qa.TestRunResult.json",
+    "passed": 90,
+    "cliExitCode": 0,
+    "childExitCode": 0,
     "cleanup": {
       "complete": true,
       "remainingPids": []
@@ -120,22 +103,9 @@
     "knownRed": [],
     "unexecuted": [],
     "unknown": [],
-    "groupState": "complete",
-    "nextAction": "complete",
     "timeoutCount": 1,
-    "passedCount": 89,
-    "cliExitCode": 0,
-    "raw": "native-writable-audit-qa-final.TestRunResult.json",
-    "tool": "native-writable-audit-qa-final.tool.json",
-    "combinedStream": "native-writable-audit-qa-final.combined-stream.txt",
-    "cli": "native-writable-audit-qa-final.cli-exit.json",
-    "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
-    "workspace": {
-      "head": "8cea001c333351c9392f1d3841153badd4ed21a4",
-      "status": "native-writable-audit-qa-final-workspace.status.txt",
-      "patch": "native-writable-audit-qa-final-workspace.patch"
-    },
-    "acceptance": "Final own-file QA passed; native stand acceptance remains required."
+    "groupState": "complete",
+    "nextAction": "complete"
   },
   "layoutLimitation": {
     "runId": "7d1a27f6-a772-4c91-abba-9643db328b27",
@@ -149,30 +119,28 @@
   },
   "history": "All copied previous native stands are partial/failed; their read-only source manifests and the main-provided cleaned event streams remain linked from their reviews. None is acceptance of 6.4.",
   "fullUnitEvidenceAudit": {
-    "parsedTestRunResultFiles": 71,
+    "parsedTestRunResultFiles": 73,
     "allParsed": true,
-    "availableCombinedStreams": 62,
+    "availableCombinedStreams": 64,
     "allRawJsonBytesPreserved": true,
     "combinedStreamExtraBytes": [
       {
-        "file": "native-writable-audit-qa.TestRunResult.json",
-        "prefixBytes": 0,
-        "suffixBytes": 1470
+        "file": "native-writable-audit-qa.combined-stream.txt",
+        "bytesOutsideRawTestRunResult": 1470
       },
       {
-        "file": "native-denial-cleanup-red.TestRunResult.json",
-        "prefixBytes": 0,
-        "suffixBytes": 1513
+        "file": "native-denial-cleanup-red.combined-stream.txt",
+        "bytesOutsideRawTestRunResult": 1513
       },
       {
-        "file": "channel-fixture-qa.TestRunResult.json",
-        "prefixBytes": 1513,
-        "suffixBytes": 0
+        "file": "channel-fixture-qa.combined-stream.txt",
+        "bytesOutsideRawTestRunResult": 1513
       }
-    ]
+    ],
+    "limitation": "Some historical exec tools expose combined stdout/stderr only. Separate CLI receipt explicitly distinguishes child exitCode and unavailable stderr; missing separate stderr is never invented."
   },
   "nativeAcceptance": null,
   "scope": "Only assigned item 6.4. Checkboxes are left to raf; other open items prevent archive. No push.",
-  "latestPartialNative": "native-partial-s64-NPoWX9/review.json",
-  "nextAction": "Commit native writable audit fixture fix after secscan; Main runs complete live stand42. 6.4 remains open."
+  "latestPartialNative": "native-partial-s64-ubE1lo/review.json",
+  "nextAction": "Commit registered endpoint fixture after host secret scan; Main runs complete native stand43. 6.4 remains open."
 }

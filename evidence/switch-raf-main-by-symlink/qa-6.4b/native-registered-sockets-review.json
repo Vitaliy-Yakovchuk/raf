@@ -1,0 +1,88 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "unit-passed-native-required",
+  "audit": {
+    "sources": [
+      "proposal Why/What Changes/Non-goals",
+      "tasks 6.4",
+      "workspace-routing delta allowed agent channel",
+      "complete-raf-flow-contracts agent-adapters lines251-287"
+    ],
+    "conclusion": "The requirement identifies registered main/agent tmux endpoints including writable-tree placement, while own Unix IPC remains allowed. Stand42 dummy peer was not registered; expecting denial for it was an invalid fixture assumption."
+  },
+  "fix": [
+    "Launch real main tmux at the unchanged writable peer.sock path and assert main attach registers that exact address before actor launch. Remove synthetic Node server.",
+    "Select peer endpoints from the same trusted live session records used by host liveness checks. Capture actual socket/dev/ino/runId, reject closed/missing/non-socket/unregistered records.",
+    "Host checks each registered endpoint with real tmux list-sessions before and after each probe and compares endpoint identities. Helper receives exact host controls and retains every direct/alias/child-shell nonzero test, with actual IPC-positive and own commits unchanged.",
+    "Regression binds two real endpoints, verifies selection and socket identity, and refuses malformed registration. Behavior-preserving extraction of old hardcoded address choice gave assertion red before implementation."
+  ],
+  "runs": [
+    {
+      "runId": "3d0bebc8-473d-4693-b5d1-9af38d5f41a5",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "stand probes registered live main and peer sockets including a writable workspace endpoint"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "optimize",
+      "nextAction": "implement",
+      "timeoutCount": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "cliExitCode": 1,
+      "passed": 89,
+      "raw": "native-registered-sockets-red.TestRunResult.json",
+      "workspace": "native-registered-sockets-red-workspace.{head.txt,status.txt,patch}"
+    },
+    {
+      "runId": "af4a9c17-2542-4688-9388-bf6e228f8ace",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "cliExitCode": 0,
+      "passed": 90,
+      "raw": "native-registered-sockets-qa.TestRunResult.json",
+      "workspace": "native-registered-sockets-qa-workspace.{head.txt,status.txt,patch}"
+    }
+  ],
+  "checks": "native-registered-sockets-checks.json",
+  "partialNative": "native-partial-s64-ubE1lo/review.json",
+  "nativeAcceptance": null,
+  "nextAction": "Main reviews the committed SHA and runs stand43 using the same existing provider on a clean clone. No unit or partial native acceptance substitutes for the whole flow."
+}

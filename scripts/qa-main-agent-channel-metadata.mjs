@@ -42,6 +42,23 @@ export function capturePolicy(directories, runId, phase) {
   fs.writeFileSync(target, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
 }
 
+export function captureStandSocketControls(root, main, actors) {
+  assert.equal(main?.tmuxSocket, path.join(root, 'raf-develop/qa/peer.sock'), 'Registered main must exercise a writable workspace socket');
+  assert.ok(main.runId && actors.length, 'Registered main and peer identities are required');
+  const peers = [];
+  for (const actor of actors) {
+    assert.equal(actor.state, 'running', 'Peer must be live');
+    const socket = actor.process?.evidence?.tmuxSocket;
+    assert.ok(actor.runId && path.isAbsolute(socket ?? ''), 'Peer must have a registered tmux socket');
+    if (!peers.some(peer => peer.path === socket)) peers.push({ name: peers.length ? 'peer-' + peers.length : 'peer', path: socket, runId: actor.runId });
+  }
+  return [...peers, { name: 'host-main', path: main.tmuxSocket, runId: main.runId }].map(control => {
+    const stat = fs.lstatSync(control.path);
+    assert.ok(stat.isSocket(), 'Registered endpoint must be an existing socket');
+    return { ...control, socket: true, dev: stat.dev, ino: stat.ino };
+  });
+}
+
 export function prepareStandAudit(develop) {
   const directory = path.join(develop, 'qa/sym64-cli-audit');
   fs.mkdirSync(directory, { recursive: true });

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { execFileSync, spawnSync, spawn } from "node:child_process";
 import { once } from "node:events";
+import { createServer } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
 import { promises as fs } from "node:fs";
 import { tmpdir } from "node:os";
@@ -16,7 +17,7 @@ import { execute } from "../src/cli.ts";
 import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
 import { createWorkspacePorts } from "../src/os-runtime.ts";
 import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
-import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices, prepareStandAudit, archiveStandAudit } from "../scripts/qa-main-agent-channel-metadata.mjs";
+import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from "../scripts/qa-main-agent-channel-metadata.mjs";
 import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
 import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
 import * as generationHost from "../src/hotfix-host.ts";
@@ -42,6 +43,38 @@ import type {
 import { captureStateReadControls, assertNativeDenial, nativeProbeReceipt } from "../scripts/qa-main-agent-denial.mjs";
 
 const root = "/fixture/orchestrator";
+
+test("stand probes registered live main and peer sockets including a writable workspace endpoint", async () => {
+  const directory = await fs.mkdtemp(join(tmpdir(), "native-socket-controls-"));
+  const root = join(directory, "root"), mainSocket = join(root, "raf-develop/qa/peer.sock"), peerSocket = join(directory, "runtime.sock");
+  const servers = [createServer(), createServer()];
+  try {
+    await fs.mkdir(dirname(mainSocket), { recursive: true });
+    for (const [server, socket] of [[servers[0], mainSocket], [servers[1], peerSocket]] as const) {
+      server.listen(socket); await once(server, "listening");
+    }
+    const main = { runId: "registered-main", tmuxSocket: mainSocket };
+    const actors = [{ runId: "registered-peer", state: "running", process: { evidence: { tmuxSocket: peerSocket } } }];
+    const controls = captureStandSocketControls(root, main, actors);
+    assert.deepEqual(controls.map(control => [control.name, control.path, control.runId]), [
+      ["peer", peerSocket, "registered-peer"], ["host-main", mainSocket, "registered-main"],
+    ]);
+    for (const control of controls) {
+      const stat = await fs.lstat(control.path);
+      assert.equal(stat.isSocket(), true);
+      assert.equal(control.dev, stat.dev); assert.equal(control.ino, stat.ino);
+      assert.equal(control.socket, true);
+    }
+    assert.throws(() => captureStandSocketControls(root, { ...main, tmuxSocket: join(directory, "main.sock") }, actors), /workspace/);
+    assert.throws(() => captureStandSocketControls(root, main, [{ ...actors[0], process: { evidence: {} } }]), /registered/);
+    assert.throws(() => captureStandSocketControls(root, main, [{ ...actors[0], state: "closed" }]), /live/);
+    await fs.writeFile(join(directory, "not-socket"), "file");
+    assert.throws(() => captureStandSocketControls(root, main, [{ ...actors[0], process: { evidence: { tmuxSocket: join(directory, "not-socket") } } }]), /socket/);
+  } finally {
+    await Promise.all(servers.map(server => new Promise<void>(resolve => server.close(() => resolve()))));
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
 
 test("stand allowed CLI writes its exact audit inside the existing writable develop grant", async () => {
   const directory = await fs.mkdtemp(join(tmpdir(), "native-writable-audit-"));

@@ -95,7 +95,10 @@ try {
       assert.ok(control, 'Host must confirm the actual hidden read target exists');
       for (const prefix of [path.join(alias, 'state'), path.dirname(target)]) probe('deny state ' + name, "import{readFileSync}from'node:fs';readFileSync(process.argv[1]);", [path.join(prefix, name)], 'deny', { target, control });
     }
-    for (const [name, socket] of [['peer', path.join(cwd, 'qa/peer.sock')], ['host-main', path.join(path.dirname(root), 'main.sock')]]) {
+    assert.ok(Array.isArray(readControls.sockets) && readControls.sockets.length >= 2, 'Host must confirm registered live foreign endpoints');
+    for (const control of readControls.sockets) {
+      const { name, path: socket, runId, dev, ino } = control;
+      assert.ok(path.isAbsolute(socket) && runId && control.socket === true && Number.isInteger(dev) && Number.isInteger(ino) && ino > 0, 'Foreign endpoint needs exact registered host controls');
       fs.symlinkSync(socket, path.join(alias, name + '.sock'));
       for (const p of [socket, path.join(alias, name + '.sock')]) probe('deny foreign connection ' + name, "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',e=>{console.error(e.code);process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});", [p], 'deny');
     }

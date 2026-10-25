@@ -3,14 +3,13 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import { randomUUID, createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { createServer, connect } from 'node:net';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { captureStateReadControls } from './qa-main-agent-denial.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
-import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, stopStandServices, prepareStandAudit, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
+import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, stopStandServices, prepareStandAudit, archiveStandAudit, captureStandSocketControls } from './qa-main-agent-channel-metadata.mjs';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const reviewed = process.argv[2];
@@ -21,7 +20,7 @@ process.umask(0o077);
 const stand = fs.mkdtempSync('/srv/dev/s64-');
 const root = path.join(stand, 'root'), ev = path.join(stand, 'ev');
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop');
-const socket = path.join(stand, 'main.sock');
+const socket = path.join(develop, 'qa/peer.sock');
 for (const p of [root, ev, path.join(stand, 'commands')]) fs.mkdirSync(p, { recursive: true });
 const env = { ...process.env, HOME: stand, RAF_QA_HOME: stand, TMPDIR: stand,
   XDG_CONFIG_HOME: path.join(stand, '.config'), GIT_CONFIG_GLOBAL: path.join(stand, 'gitconfig') };
@@ -32,7 +31,7 @@ const atomic = (p, value) => { fs.writeFileSync(p + '.part', JSON.stringify(valu
 const hash = p => createHash('sha256').update(fs.readFileSync(p)).digest('hex');
 const summary = { status: 'failed', stand, reviewed, startedAt: new Date().toISOString(), commands: [], switches: [],
   limitations: ['This stand tests the published agent channel with host-controlled real symlink/Git/registry fixtures. Release verification gates remain the separate 4.4 QA.', 'No unit result substitutes for native tool evidence.'] };
-let seq = 0, pane = false, endpoint, protectedState, stateKeepAlive;
+let seq = 0, pane = false, mainRecord, protectedState, stateKeepAlive;
 const run = (label, exe, args, cwd = root, budget = 120000) => {
   const r = spawnSync(exe, args, { cwd, env, encoding: 'utf8', timeout: budget, maxBuffer: 64 * 1024 * 1024 });
   const value = { command: [exe, ...args], cwd, cliExitCode: r.status, signal: r.signal,
@@ -63,13 +62,8 @@ const stage = (record, n) => fs.existsSync(path.join(own(record), 'sym64-stage-'
 const gate = (record, n) => fs.writeFileSync(path.join(own(record), 'sym64-go-' + n), 'host');
 const actors = [];
 async function controls(label) {
-  const response = await new Promise((resolve, reject) => {
-    let data = ''; const client = connect(path.join(develop, 'qa/peer.sock'));
-    client.setTimeout(5000, () => client.destroy(Error('host endpoint timeout')));
-    client.on('error', reject); client.on('data', b => data += b); client.on('end', () => resolve(data));
-  });
-  assert.equal(response, 'sym64-host-alive');
-  must(run(label + '-tmux', 'tmux', ['-S', socket, 'list-sessions']));
+  const endpoints = captureStandSocketControls(root, mainRecord, actors);
+  for (const [index, endpoint] of endpoints.entries()) must(run(label + '-endpoint-' + index, 'tmux', ['-S', endpoint.path, 'list-sessions']));
   const ps = await request(label + '-ps', ['agent', 'ps']); must(ps);
   const live = sessions();
   for (const a of actors) {
@@ -77,7 +71,7 @@ async function controls(label) {
     assert.equal(current?.state, 'running');
     for (const field of ['pid', 'startedAt', 'runnerSessionId']) assert.equal(current.process?.[field], a.process?.[field], 'Native actor identity must survive host controls: ' + field);
   }
-  atomic(path.join(ev, label + '-controls.json'), { response, sessions: live, active: fs.realpathSync(main) });
+  atomic(path.join(ev, label + '-controls.json'), { endpoints, sessions: live, active: fs.realpathSync(main) });
 }
 function nativeTranscriptPath(record) {
   const native = record.process?.runnerSessionId;
@@ -155,11 +149,10 @@ try {
   }
   env.SYM64_AUDIT = prepareStandAudit(develop);
   must(run('main-start', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym64-main', '-x', '180', '-y', '50', process.execPath, path.join(source, 'test/helpers/z4044-main-pane.mjs'), stand])); pane = true;
-  must(await wait('main attach', () => fs.existsSync(path.join(stand, 'main-ready.json')) && JSON.parse(fs.readFileSync(path.join(stand, 'main-ready.json')))));
+  mainRecord = JSON.parse(must(await wait('main attach', () => fs.existsSync(path.join(stand, 'main-ready.json')) && JSON.parse(fs.readFileSync(path.join(stand, 'main-ready.json'))))));
+  assert.equal(mainRecord.tmuxSocket, socket, 'Main attach must register the actual writable-tree endpoint before actor launch');
   must(await request('runner-list', ['runner', 'list'])); must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
   const hostService = JSON.parse(must(await request('service-start', ['service', 'start'])));
-  endpoint = createServer(c => c.end('sym64-host-alive'));
-  await new Promise((resolve, reject) => { endpoint.once('error', reject); endpoint.listen(path.join(develop, 'qa/peer.sock'), resolve); });
   const common = git(develop, 'rev-parse', '--path-format=absolute', '--git-common-dir');
   const control = path.join(common, 'raf-hotfix'), production = path.join(control, 'main.git');
   protectedState = { production };
@@ -285,11 +278,16 @@ try {
     summary.switches.push({ action: index === 2 ? 'rollback' : 'switch', target, previous, active: fs.realpathSync(main), preparedFrom: git(develop, 'rev-parse', 'HEAD'), before, generation });
     const readControlsBefore = captureStateReadControls(path.join(stand, '.raf'));
     atomic(path.join(ev, 'read-controls-before-' + index + '.json'), readControlsBefore);
+    const socketControlsBefore = captureStandSocketControls(root, mainRecord, actors);
+    atomic(path.join(ev, 'socket-controls-before-' + index + '.json'), socketControlsBefore);
     await releaseNativeStage({ actors,
-      writeControls: a => atomic(path.join(own(a), 'sym64-read-controls-' + (index + 1) + '.json'), { stage: index + 1, runId: a.runId, files: readControlsBefore }),
+      writeControls: a => atomic(path.join(own(a), 'sym64-read-controls-' + (index + 1) + '.json'), { stage: index + 1, runId: a.runId, files: readControlsBefore, sockets: socketControlsBefore }),
       gate: a => gate(a, index),
       wait: a => wait('native gate ' + (index + 1), () => stage(a, index + 1)),
     });
+    const socketControlsAfter = captureStandSocketControls(root, mainRecord, actors);
+    atomic(path.join(ev, 'socket-controls-after-' + index + '.json'), socketControlsAfter);
+    assert.deepEqual(socketControlsAfter, socketControlsBefore, 'Registered socket identities must survive native probes');
     const readControlsAfter = captureStateReadControls(path.join(stand, '.raf'));
     atomic(path.join(ev, 'read-controls-after-' + index + '.json'), readControlsAfter);
     assert.deepEqual(readControlsAfter, readControlsBefore, 'Hidden files must remain the same existing host files throughout native probes');
@@ -375,7 +373,6 @@ finally {
     try { summary.serviceProcessCleanup = await stopStandServices(root); }
     catch (error) { (summary.cleanupErrors ??= []).push(error.message); }
   }
-  if (endpoint) await new Promise(resolve => endpoint.close(resolve));
   for (const commit of summary.actorCommits ?? []) {
     try {
       assert.ok([develop, root].includes(commit.repository));

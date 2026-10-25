@@ -1,0 +1,44 @@
+{
+  "commit": "1c7ef3acfa12b35eaedd4befd31e9a6a1e6fad53",
+  "checks": {
+    "commands": [
+      "git show --format= --check 1c7ef3acfa12b35eaedd4befd31e9a6a1e6fad53 -- scripts/qa-main-agent-channel.mjs scripts/qa-main-agent-channel-metadata.mjs test/main-switch-agent-channel.test.ts",
+      "git show --format= --check 1c7ef3acfa12b35eaedd4befd31e9a6a1e6fad53 -- evidence/switch-raf-main-by-symlink/qa-6.4b",
+      "git diff 1c7ef3acfa12b35eaedd4befd31e9a6a1e6fad53 -- scripts/qa-main-agent-channel.mjs scripts/qa-main-agent-channel-metadata.mjs test/main-switch-agent-channel.test.ts"
+    ],
+    "results": [
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "7de668",
+          "wall_time_seconds": 0.1186686,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "f8e06e",
+          "wall_time_seconds": 0.099133983,
+          "exit_code": 2,
+          "original_token_count": 346,
+          "output": "evidence/switch-raf-main-by-symlink/qa-6.4b/native-writable-audit-qa-final-workspace.patch:8: trailing whitespace.\n+ \nevidence/switch-raf-main-by-symlink/qa-6.4b/native-writable-audit-qa-final-workspace.patch:43: trailing whitespace.\n+ \nevidence/switch-raf-main-by-symlink/qa-6.4b/native-writable-audit-qa-final-workspace.patch:80: trailing whitespace.\n+ \nevidence/switch-raf-main-by-symlink/qa-6.4b/native-writable-audit-qa-final-workspace.patch:82: trailing whitespace.\n+ \nevidence/switch-raf-main-by-symlink/qa-6.4b/native-writable-audit-qa-workspace.patch:8: trailing whitespace.\n+ \nevidence/switch-raf-main-by-symlink/qa-6.4b/native-writable-audit-qa-workspace.patch:43: trailing whitespace.\n+ \nevidence/switch-raf-main-by-symlink/qa-6.4b/native-writable-audit-qa-workspace.patch:80: trailing whitespace.\n+ \nevidence/switch-raf-main-by-symlink/qa-6.4b/native-writable-audit-qa-workspace.patch:82: trailing whitespace.\n+ \nevidence/switch-raf-main-by-symlink/qa-6.4b/native-writable-audit-red-workspace.patch:8: trailing whitespace.\n+ \nevidence/switch-raf-main-by-symlink/qa-6.4b/native-writable-audit-red-workspace.patch:28: trailing whitespace.\n+ \nevidence/switch-raf-main-by-symlink/qa-6.4b/native-writable-audit-red-workspace.patch:54: trailing whitespace.\n+ \nevidence/switch-raf-main-by-symlink/qa-6.4b/native-writable-audit-red-workspace.patch:56: trailing whitespace.\n+ \n"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "342343",
+          "wall_time_seconds": 0.153676499,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    ]
+  },
+  "assessment": "Source/test check passed and own source is unchanged. Evidence-only git whitespace check is exit 2: unchanged raw git diff context contains one-space blank lines. The exact raw workspace patches are intentionally retained without rewriting evidence. This is disclosed to main and is not represented as a passed staged check.",
+  "nativeAcceptance": null
+}

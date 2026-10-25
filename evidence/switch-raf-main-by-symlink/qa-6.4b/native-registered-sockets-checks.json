@@ -1,0 +1,56 @@
+{
+  "initial": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "bda1b0",
+        "wall_time_seconds": 1.001782918,
+        "session_id": 49770,
+        "original_token_count": 9,
+        "output": "\n> build\n> node scripts/build.ts\n\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "9efe2c",
+        "wall_time_seconds": 1.001880736,
+        "session_id": 12960,
+        "original_token_count": 13,
+        "output": "\n> check:comments\n> node scripts/check-comments.ts\n\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "8b2bb0",
+        "wall_time_seconds": 0.115681451,
+        "exit_code": 0,
+        "original_token_count": 1072,
+        "output": "after-host-service-drain-controls.json\nafter-host-service-drain-ps.json\nafter-host-service-drain-ps.stderr\nafter-host-service-drain-ps.stdout\nafter-host-service-drain-tmux.json\nafter-host-service-drain-tmux.stderr\nafter-host-service-drain-tmux.stdout\nafter-live-split-controls.json\nafter-live-split-ps.json\nafter-live-split-ps.stderr\nafter-live-split-ps.stdout\nafter-live-split-tmux.json\nafter-live-split-tmux.stderr\nafter-live-split-tmux.stdout\nbefore-controls.json\nbefore-ps.json\nbefore-ps.stderr\nbefore-ps.stdout\nbefore-tmux.json\nbefore-tmux.stderr\nbefore-tmux.stdout\nbuild.json\nbuild.stderr\nbuild.stdout\ncleanup-agent-tmux-inspect.json\ncleanup-agent-tmux-inspect.stderr\ncleanup-agent-tmux-inspect.stdout\ncleanup-service.json\ncleanup-service.stderr\ncleanup-service.stdout\ncleanup-sym64-a.json\ncleanup-sym64-a.stderr\ncleanup-sym64-a.stdout\ncleanup-sym64-b.json\ncleanup-sym64-b.stderr\ncleanup-sym64-b.stdout\ncleanup-tmux.json\ncleanup-tmux.stderr\ncleanup-tmux.stdout\ncli-audit\nclone.json\nclone.stderr\nclone.stdout\ngit-1.json\ngit-1.stderr\ngit-1.stdout\ngit-10.json\ngit-10.stderr\ngit-10.stdout\ngit-11.json\ngit-11.stderr\ngit-11.stdout\ngit-12.json\ngit-12.stderr\ngit-12.stdout\ngit-16.json\ngit-16.stderr\ngit-16.stdout\ngit-17.json\ngit-17.stderr\ngit-17.stdout\ngit-2.json\ngit-2.stderr\ngit-2.stdout\ngit-24.json\ngit-24.stderr\ngit-24.stdout\ngit-25.json\ngit-25.stderr\ngit-25.stdout\ngit-26.json\ngit-26.stderr\ngit-26.stdout\ngit-28.json\ngit-28.stderr\ngit-28.stdout\ngit-29.json\ngit-29.stderr\ngit-29.stdout\ngit-3.json\ngit-3.stderr\ngit-3.stdout\ngit-30.json\ngit-30.stderr\ngit-30.stdout\ngit-31.json\ngit-31.stderr\ngit-31.stdout\ngit-32.json\ngit-32.stderr\ngit-32.stdout\ngit-33.json\ngit-33.stderr\ngit-33.stdout\ngit-34.json\ngit-34.stderr\ngit-34.stdout\ngit-36.json\ngit-36.stderr\ngit-36.stdout\ngit-37.json\ngit-37.stderr\ngit-37.stdout\ngit-38.json\ngit-38.stderr\ngit-38.stdout\ngit-39.json\ngit-39.stderr\ngit-39.stdout\ngit-4.json\ngit-4.stderr\ngit-4.stdout\ngit-40.json\ngit-40.stderr\ngit-40.stdout\ngit-41.json\ngit-41.stderr\ngit-41.stdout\ngit-42.json\ngit-42.stderr\ngit-42.stdout\ngit-43.json\ngit-43.stderr\ngit-43.stdout\ngit-44.json\ngit-44.stderr\ngit-44.stdout\ngit-45.json\ngit-45.stderr\ngit-45.stdout\ngit-46.json\ngit-46.stderr\ngit-46.stdout\ngit-47.json\ngit-47.stderr\ngit-47.stdout\ngit-48.json\ngit-48.stderr\ngit-48.stdout\ngit-49.json\ngit-49.stderr\ngit-49.stdout\ngit-5.json\ngit-5.stderr\ngit-5.stdout\ngit-50.json\ngit-50.stderr\ngit-50.stdout\ngit-51.json\ngit-51.stderr\ngit-51.stdout\ngit-52.json\ngit-52.stderr\ngit-52.stdout\ngit-53.json\ngit-53.stderr\ngit-53.stdout\ngit-6.json\ngit-6.stderr\ngit-6.stdout\ngit-7.json\ngit-7.stderr\ngit-7.stdout\ngit-8.json\ngit-8.stderr\ngit-8.stdout\ngit-9.json\ngit-9.stderr\ngit-9.stdout\nidentity-author.json\nidentity-author.stderr\nidentity-author.stdout\nidentity-committer.json\nidentity-committer.stderr\nidentity-committer.stdout\nlaunch-a.json\nlaunch-a.stderr\nlaunch-a.stdout\nlaunch-b.json\nlaunch-b.stderr\nlaunch-b.stdout\nmain-attach.json\nmain-attach.stderr\nmain-attach.stdout\nmain-inbox.bin\nmain-start.json\nmain-start.stderr\nmain-start.stdout\nmetadata-after-exit.json\nmetadata-after-native-launch.json\nmetadata-after-refused-launch.json\nmetadata-before-policy.json\nmetadata-before-probe-0.json\nmissing-production-launch.json\nmissing-production-launch.stderr\nmissing-production-launch.stdout\nread-controls-after-0.json\nread-controls-before-0.json\nrunner-limits.json\nrunner-limits.stderr\nrunner-limits.stdout\nrunner-list.json\nrunner-list.stderr\nrunner-list.stdout\nservice-before-live-split-stop.json\nservice-before-live-split-stop.stderr\nservice-before-live-split-stop.stdout\nservice-start.json\nservice-start.stderr\nservice-start.stdout\nsummary.json\nsym64-a-final\nsym64-b-final\nunproven-reader-held-controls.json\nunproven-reader-held-ps.json\nunproven-reader-held-ps.stderr\nunproven-reader-held-ps.stdout\nunproven-reader-held-tmux.json\nunproven-reader-held-tmux.stderr\nunproven-reader-held-tmux.stdout\nversion-bwrap.json\nversion-bwrap.stderr\nversion-bwrap.stdout\nversion-codex.json\nversion-codex.stderr\nversion-codex.stdout\nversion-git.json\nversion-git.stderr\nversion-git.stdout\nversion-node.json\nversion-node.stderr\nversion-node.stdout\nversion-tmux.json\nversion-tmux.stderr\nversion-tmux.stdout\nversion-uname.json\nversion-uname.stderr\nversion-uname.stdout\nsym64-a.events.jsonl\nsym64-a-assistant-messages.json\n"
+      }
+    }
+  ],
+  "completion": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "628538",
+        "wall_time_seconds": 0.000007391,
+        "exit_code": 0,
+        "original_token_count": 26,
+        "output": "Каталог зібрано. Операційні команди ще не реалізовані.\n"
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "9dc2cd",
+        "wall_time_seconds": 0.000009665,
+        "exit_code": 0,
+        "original_token_count": 0,
+        "output": ""
+      }
+    }
+  ]
+}

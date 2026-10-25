@@ -1,0 +1,67 @@
+{
+  "assignment": "complete-raf-flow-contracts:10.3",
+  "group": "complete-raf-flow-contracts/model-routing",
+  "files": {
+    "files": [
+      "test/model-routing.test.ts",
+      "test/model-routing-handoff.test.ts"
+    ],
+    "testIds": []
+  },
+  "runId": "159a1647-f686-40e6-b258-be585f65d543",
+  "outcome": "assertions-failed",
+  "callerPhase": "test-scaffold",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "passed": 26,
+  "knownRed": 37,
+  "unexecuted": 0,
+  "unknown": 0,
+  "timeoutCount": 0,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "failureKinds": [
+    "assertions"
+  ],
+  "diagnostics": {
+    "count": 37,
+    "kinds": [
+      "test-failure"
+    ],
+    "messages": [
+      "NotImplemented"
+    ]
+  },
+  "scaffoldCommit": "76500147ec2ba6c64b45d2edd5423d799504cb25",
+  "workspaceHeadObservedAfterRun": "320fc065f7410e7fdb9526670158a6cdf4e4c5a5",
+  "workspaceHeadAtSpawn": "not separately captured; all target files are unchanged from scaffoldCommit",
+  "wrapperGeneration": "3557f6a4-89a2-41a3-b963-b4343aabc699",
+  "wrapperCommit": "6730c74b5ce2fae6b0f7daa05e393c5fa244b423",
+  "wrapperCommitSource": "/srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/registry.json#generations/<exact-generation-root>/commit",
+  "configurationCommit": "537ae58a59ad461ad638918459e8a9e1bc623c29",
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "36b67c8f8a971f54cbcbc53f36933680aed0ef092e4dd721c6c857c7d49acbc8",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "stateAccess": null,
+  "stderrCapture": "not separately exposed by exec_command; complete returned tool result retained",
+  "coordinatorVerification": {
+    "status": "accepted",
+    "source": "main message in this session",
+    "quote": "Red 10.3 прийнято: runId 159a1647, assertions-failed, 37 knownRed (усі NotImplemented), unexecuted/unknown 0, cleanup complete. Закоміть докази й заверши звіт; відсутність групи signals опиши в передачі."
+  },
+  "limits": "No integration/live provider/SQLite transaction evidence claimed."
+}

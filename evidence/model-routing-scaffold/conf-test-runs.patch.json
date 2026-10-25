@@ -11,13 +11,6 @@
         "test/model-routing.test.ts",
         "test/model-routing-handoff.test.ts"
       ]
-    },
-    "complete-raf-flow-contracts/model-routing-signals": {
-      "profileId": "node",
-      "files": [
-        "test/runner-protocols.test.ts",
-        "test/quota-screens.test.ts"
-      ]
     }
   },
   "preconditions": {
@@ -36,5 +29,10 @@
     ],
     "policy": "conf/flow.json#/unitTests",
     "isolation": "Pure functions and memory-backed ports; no real SQLite, OS processes, tmux, network or provider calls. Existing app-runtime/cli modules invoked only through injected memory state/services. Signals group unchanged, reused as existing coverage."
+  },
+  "registration": {
+    "status": "applied-by-main",
+    "commit": "537ae58a59ad461ad638918459e8a9e1bc623c29",
+    "signalsGroup": "not registered: test/quota-screens.test.ts already belongs to complete-raf-flow-contracts/z390-regress; duplicate membership within one change is forbidden. Signals files unchanged; not included in this red."
   }
 }

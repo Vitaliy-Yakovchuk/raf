@@ -1,0 +1,72 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts agent ps",
+  "cliExitCode": 0,
+  "wallTimeSeconds": 0.125609854,
+  "kind": "live production read-only smoke; not the isolated candidate before/after acceptance",
+  "agents": [
+    {
+      "addressId": "main",
+      "state": "running",
+      "activity": {
+        "type": "main",
+        "project": "orchestrator",
+        "features": [],
+        "phase": "main",
+        "cwd": "/srv/dev/work/orchestrator/raf-main"
+      }
+    },
+    {
+      "addressId": "raf-trt633-qa",
+      "state": "running",
+      "activity": {
+        "type": "qa",
+        "project": "raf",
+        "features": [
+          "add-raf-test-run"
+        ],
+        "phase": "qa",
+        "cwd": "/srv/dev/work/orchestrator/raf-develop"
+      }
+    },
+    {
+      "addressId": "raf-sym64b-qa",
+      "state": "running",
+      "activity": {
+        "type": "qa",
+        "project": "raf",
+        "features": [
+          "switch-raf-main-by-symlink"
+        ],
+        "phase": "qa",
+        "cwd": "/srv/dev/work/orchestrator/raf-develop"
+      }
+    },
+    {
+      "addressId": "etchly-r1037b-impl",
+      "state": "running",
+      "activity": {
+        "type": "implement",
+        "project": "etchly",
+        "features": [
+          "reduce-etchly-codebase"
+        ],
+        "phase": "implement",
+        "cwd": "/srv/dev/work/orchestrator/etchly-develop"
+      }
+    },
+    {
+      "addressId": "raf-prp57-qa",
+      "state": "running",
+      "activity": {
+        "type": "qa",
+        "project": "raf",
+        "features": [
+          "profile-raf-performance"
+        ],
+        "phase": "qa",
+        "cwd": "/srv/dev/work/orchestrator/raf-develop"
+      }
+    }
+  ],
+  "rawNotCommitted": "Projection excludes operational launch briefs and hooks; this is not a raw ps capture."
+}

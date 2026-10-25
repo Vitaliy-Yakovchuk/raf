@@ -1,0 +1,77 @@
+{
+  "main": "/srv/dev/p45-d1xie7/root/raf-main",
+  "statePath": "/srv/dev/p45-d1xie7/home/.raf/state.sqlite",
+  "sessions": [
+    {
+      "runId": "qa-missing",
+      "addressId": "qa-missing",
+      "revision": 1,
+      "state": "running",
+      "activity": {
+        "type": "qa",
+        "project": "raf",
+        "features": [
+          "profile-raf-performance"
+        ],
+        "phase": "qa",
+        "cwd": "/srv/dev/p45-d1xie7/root/raf-main"
+      },
+      "process": {
+        "pid": 4096410,
+        "startedAt": "2026-10-25T05:08:00.000Z",
+        "runner": "main",
+        "runnerSessionId": "qa-gone",
+        "tmuxSession": "qa-gone",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /srv/dev/p57a-src.FR5Trm/raf-develop/scripts/qa-agent-ps-comparison.mjs actor /srv/dev/p45-d1xie7/qa-gone.ready.json",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      }
+    },
+    {
+      "runId": "qa-finished",
+      "addressId": "qa-finished",
+      "revision": 3,
+      "state": "finished",
+      "finishedAt": "2026-10-25T05:08:02.057Z",
+      "process": {
+        "pid": 4096410,
+        "startedAt": "2026-10-25T05:08:00.000Z",
+        "runner": "main",
+        "runnerSessionId": "qa-gone",
+        "tmuxSession": "qa-gone",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /srv/dev/p57a-src.FR5Trm/raf-develop/scripts/qa-agent-ps-comparison.mjs actor /srv/dev/p45-d1xie7/qa-gone.ready.json",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "result": {
+        "status": "succeeded",
+        "response": "",
+        "proof": null
+      }
+    }
+  ],
+  "reservations": [
+    {
+      "runId": "qa-missing",
+      "resource": "ram",
+      "amount": 1
+    }
+  ],
+  "reminders": [
+    {
+      "id": "qa-reminder",
+      "createdFor": "qa-owner",
+      "assignedTo": "qa-missing",
+      "text": "Owned baseline recovery reminder",
+      "at": "2099-01-01T00:00:00.000Z",
+      "binding": null,
+      "state": "pending",
+      "closedAt": null,
+      "closeReason": null
+    }
+  ]
+}

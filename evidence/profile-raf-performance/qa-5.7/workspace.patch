@@ -1,0 +1,234 @@
+diff --git a/evidence/switch-raf-main-by-symlink/qa-6.4b/native-partial-s64-u4gAJU/review.json b/evidence/switch-raf-main-by-symlink/qa-6.4b/native-partial-s64-u4gAJU/review.json
+index f913965..2875ad0 100644
+--- a/evidence/switch-raf-main-by-symlink/qa-6.4b/native-partial-s64-u4gAJU/review.json
++++ b/evidence/switch-raf-main-by-symlink/qa-6.4b/native-partial-s64-u4gAJU/review.json
+@@ -33,5 +33,6 @@
+     "method": "Host temporarily removed the proof from an existing live reader lease; its actual native scope remained unchanged."
+   },
+   "cleanupErrors": null,
+-  "nextAction": "Gracefully stop only the stand service and verify its exit before synthetic legacy split, while preserving native actors and all endpoint controls; repeat real stand after review."
++  "nextAction": "Gracefully stop only the stand service and verify its exit before synthetic legacy split, while preserving native actors and all endpoint controls; repeat real stand after review.",
++  "originalStandRetention": "Main deleted the original stand after this agent confirmed the committed evidence copies were sufficient; retained cleaned-native directory and copied host manifest preserve provenance."
+ }
+diff --git a/evidence/switch-raf-main-by-symlink/qa-6.4b/summary.json b/evidence/switch-raf-main-by-symlink/qa-6.4b/summary.json
+index ffd41e9..878f90a 100644
+--- a/evidence/switch-raf-main-by-symlink/qa-6.4b/summary.json
++++ b/evidence/switch-raf-main-by-symlink/qa-6.4b/summary.json
+@@ -2414,6 +2414,7 @@
+       "comments": "host-service-drain-comments.tool.json",
+       "syntax": "host-service-drain-syntax.tool.json"
+     },
+-    "nextAction": "Main review host script and run a fresh native stand; 6.4 remains open"
++    "nextAction": "Main reviewed fixture diff and launched stand33 from a clean clone; await native artifacts and review.",
++    "codeCommit": "0e022cd356a9bf7760328839fcb7f39103ebce30"
+   }
+ }
+diff --git a/scripts/qa-main-agent-channel-metadata.mjs b/scripts/qa-main-agent-channel-metadata.mjs
+index c3f4913..83c0d55 100644
+--- a/scripts/qa-main-agent-channel-metadata.mjs
++++ b/scripts/qa-main-agent-channel-metadata.mjs
+@@ -19,6 +19,10 @@ export async function drainStandServiceReader(options) {
+   return { pid, start, result };
+ }
+ 
++export function normalizeStandReflog(directory, git) {
++  return git(directory, 'reflog', 'expire', '--expire=never', '--expire-unreachable=never', 'HEAD');
++}
++
+ export function metadataTree(directory) {
+   const stat = fs.lstatSync(directory);
+   const entry = { mode: stat.mode, dev: stat.dev, ino: stat.ino, nlink: stat.nlink };
+diff --git a/scripts/qa-main-agent-channel.mjs b/scripts/qa-main-agent-channel.mjs
+index 23d9c69..325195a 100644
+--- a/scripts/qa-main-agent-channel.mjs
++++ b/scripts/qa-main-agent-channel.mjs
+@@ -8,7 +8,7 @@ import { DatabaseSync } from 'node:sqlite';
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+ import { setTimeout as delay } from 'node:timers/promises';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+-import { metadataTree, negativePeerCommand, drainStandServiceReader } from './qa-main-agent-channel-metadata.mjs';
++import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog } from './qa-main-agent-channel-metadata.mjs';
+ 
+ const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+ const reviewed = process.argv[2];
+@@ -216,6 +216,7 @@ try {
+   fs.writeFileSync(path.join(A, '.git'), 'gitdir: ' + path.relative(A, common) + '\n');
+   fs.writeFileSync(path.join(B, '.git'), 'gitdir: ' + path.relative(B, legacyB) + '\n');
+   git(root, '--git-dir=' + common, 'config', 'core.worktree', A);
++  normalizeStandReflog(B, git);
+   fs.renameSync(production, path.join(control, 'native-retained-main.git'));
+   fs.unlinkSync(path.join(control, 'main-store.json'));
+   summary.liveSplit = { source: common, control, production, readersBefore: fs.readdirSync(path.join(control, 'readers')).map(name => JSON.parse(fs.readFileSync(path.join(control, 'readers', name)))) };
+diff --git a/test/main-switch-agent-channel.test.ts b/test/main-switch-agent-channel.test.ts
+index a1d609c..6f08e45 100644
+--- a/test/main-switch-agent-channel.test.ts
++++ b/test/main-switch-agent-channel.test.ts
+@@ -13,8 +13,8 @@ import { compileCatalog } from "../src/catalog.ts";
+ import { execute } from "../src/cli.ts";
+ import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
+ import { createWorkspacePorts } from "../src/os-runtime.ts";
+-import { prepareProductionQaFixture } from "./production-qa-fixture.ts";
+-import { negativePeerCommand, drainStandServiceReader } from "../scripts/qa-main-agent-channel-metadata.mjs";
++import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
++import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog } from "../scripts/qa-main-agent-channel-metadata.mjs";
+ import { alive, processStart } from "../src/hotfix-host.ts";
+ import {
+   assessAgentChannelSlotReuse,
+@@ -517,9 +517,19 @@ async function publishedLauncherFixture() {
+     await fs.writeFile(join(root, "conf/projects.json"), JSON.stringify({ version: 1, profiles: { fixture: { production: "main", environments: { runtime: "main" } } }, projects: { raf: { profile: "fixture", path: "raf-main", branchPaths: { main: "raf-main", develop: "raf-develop" }, mainCopies: ["raf-main-a", "raf-main-b"] } } }));
+     await fs.writeFile(join(root, "conf/raf.json"), JSON.stringify({ version: 1, state: { fileName: "state.sqlite" }, runnerProtocols: [{ runner: "codex", timeouts: { transitionMs: 10000 } }] }));
+     const common = git("rev-parse", "--path-format=absolute", "--git-common-dir");
+-    for (const name of ["src", "package.json"]) await fs.cp(join(source, name), join(root, "raf-develop", name), { recursive: true });
++    for (const directory of [A, join(root, "raf-develop")]) {
++      await fs.cp(join(source, "src"), join(directory, "src"), { recursive: true });
++      await fs.cp(join(source, "scripts"), join(directory, "scripts"), { recursive: true });
++      await fs.writeFile(join(directory, "package.json"), '{"type":"module"}\n');
++    }
++    await fs.copyFile(join(source, "bin/service.ts"), join(A, "bin/service.ts"));
++    git("add", "--", "src", "bin", "scripts", "package.json");
++    git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "-m", "Complete published runtime fixture");
++    execFileSync("git", ["-C", root, "add", "--", "raf-main-a", ".gitmodules"], { env: environment });
+     const { ensureProductionMainStore } = await import("../src/main-production-store.ts");
+     await ensureProductionMainStore({ root });
++    copyProductionQaDependencies(A);
++    copyProductionQaDependencies(join(root, "raf-develop"));
+     return { root, A, B, home, work, source: join(root, "raf-develop"), git, common, environment };
+   } catch (error) { await fs.rm(root, { recursive: true, force: true }); throw error; }
+ }
+@@ -722,3 +732,22 @@ process.stdout.write(JSON.stringify({mask:fs.readFileSync(9,'utf8'),filter:fs.re
+     assert.deepEqual(output.args.slice(-6), ["--perms", "0700", "--tmpfs", join(root, "tmux"), "--", "/payload"]);
+   } finally { await mask?.close(); await fs.rm(root, { recursive: true, force: true }); }
+ });
++
++
++test("legacy stand reflog survives source maintenance without a false metadata conflict", async () => {
++  const f = await publishedLauncherFixture();
++  try {
++    const runGit = (cwd: string, ...args: string[]) => execFileSync("git", ["-C", cwd, ...args], { env: f.environment, encoding: "utf8" }).trim();
++    const directory = runGit(f.B, "rev-parse", "--absolute-git-dir");
++    const reflog = join(directory, "logs/HEAD");
++    const beforeHead = runGit(f.B, "rev-parse", "HEAD");
++    const original = await fs.readFile(reflog, "utf8");
++    assert.ok(original.endsWith(" +0000\n") || /[+-]\d{4}\n$/.test(original), "Git-created empty reflog messages must exercise the normalization case");
++    normalizeStandReflog(f.B, runGit);
++    const prepared = await fs.readFile(reflog, "utf8");
++    runGit(f.B, "reflog", "expire", "--expire=never", "--expire-unreachable=never", "--all");
++    assert.equal(await fs.readFile(reflog, "utf8"), prepared, "Source maintenance must not change the prepared legacy snapshot");
++    assert.equal(runGit(f.B, "rev-parse", "HEAD"), beforeHead);
++    assert.equal(prepared.replace(/\t(?=\n)/g, ""), original.replace(/\t(?=\n)/g, ""), "Normalization must retain every reflog entry and commit");
++  } finally { await fs.rm(f.root, { recursive: true, force: true }); }
++});
+diff --git a/test/production-qa-fixture.ts b/test/production-qa-fixture.ts
+index d6a9acb..7d932f1 100644
+--- a/test/production-qa-fixture.ts
++++ b/test/production-qa-fixture.ts
+@@ -1,14 +1,24 @@
+ import assert from 'node:assert/strict';
+ import { spawnSync } from 'node:child_process';
+-import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync } from 'node:fs';
+-import { join } from 'node:path';
++import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, existsSync, appendFileSync } from 'node:fs';
++import { dirname, join } from 'node:path';
+ import { pathToFileURL } from 'node:url';
+ 
+ type FixtureLifecycle = { after(action: () => void): void };
+ type FixtureLocation = { root: string; home: string };
+ type ProductionCli = typeof import('../src/production-entry.ts').runProductionCli;
+ 
+-export async function prepareProductionQaFixture(t: FixtureLifecycle, location: FixtureLocation): Promise<ProductionCli> {
++export function copyProductionQaDependencies(codeRoot: string): void {
++  mkdirSync(join(codeRoot, 'node_modules'), { recursive: true });
++  cpSync(new URL('../node_modules/typescript', import.meta.url), join(codeRoot, 'node_modules/typescript'), { recursive: true, dereference: true });
++  const result = spawnSync('git', ['-C', codeRoot, 'rev-parse', '--path-format=absolute', '--git-path', 'info/exclude'], { encoding: 'utf8' });
++  assert.equal(result.status, 0, result.stderr);
++  const exclude = result.stdout.trim();
++  mkdirSync(dirname(exclude), { recursive: true });
++  if (!existsSync(exclude) || !readFileSync(exclude, 'utf8').split('\n').includes('/node_modules/')) appendFileSync(exclude, '\n/node_modules/\n');
++}
++
++export async function prepareProductionQaFixture(t: FixtureLifecycle, location: FixtureLocation, beforeLoad?: (codeRoot: string) => Promise<void>): Promise<ProductionCli> {
+   const projects = JSON.parse(readFileSync(join(location.root, 'conf', 'projects.json'), 'utf8'));
+   mkdirSync(join(location.root, projects.projects.raf.path), { recursive: true });
+   for (const name of ['flow.json', 'test-runs.json']) {
+@@ -37,6 +47,7 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location:
+   for (const name of ['src', 'bin', 'scripts', 'package.json']) {
+     cpSync(new URL(`../${name}`, import.meta.url), join(codeRoot, name), { recursive: true });
+   }
++  copyProductionQaDependencies(codeRoot);
+   const { ensureProductionMainStore } = await import('../src/main-production-store.ts');
+   await ensureProductionMainStore({ root: location.root });
+ 
+@@ -54,6 +65,7 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location:
+   delete process.env.TMUX;
+   delete process.env.TMUX_PANE;
+ 
++  await beforeLoad?.(codeRoot);
+   const entry: typeof import('../src/production-entry.ts') = await import(pathToFileURL(join(codeRoot, 'src', 'production-entry.ts')).href);
+   return entry.runProductionCli;
+ }
+diff --git a/test/service-entry.test.ts b/test/service-entry.test.ts
+index 4bb1449..bd5b26a 100644
+--- a/test/service-entry.test.ts
++++ b/test/service-entry.test.ts
+@@ -1,6 +1,6 @@
+-import { prepareProductionQaFixture } from './production-qa-fixture.ts';
++import { prepareProductionQaFixture, copyProductionQaDependencies } from './production-qa-fixture.ts';
+ import { pathToFileURL } from 'node:url';
+-import { randomUUID } from 'node:crypto';
++import { randomUUID, createHash } from 'node:crypto';
+ import { cp } from 'node:fs/promises';
+ import assert from 'node:assert/strict';
+ import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
+@@ -29,17 +29,36 @@ async function fixture(t: TestContext, mode: 'valid' | 'absent' | 'broken' = 'va
+   projects.projects.raf.path = 'configured-working-main';
+   projects.projects.raf.branchPaths.main = 'configured-working-main';
+   await writeFile(join(root, 'conf', 'projects.json'), JSON.stringify(projects));
+-  const runProductionCli = await prepareProductionQaFixture(t, { root, home: homeDirectory });
+-  const gitDirectory = execFileSync('git', ['-C', develop, 'rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim();
+-  await cp(join(develop, 'src'), join(main, 'src'), { recursive: true });
+-  await writeFile(join(main, 'package.json'), '{"type":"module"}');
+   const origin = { configuredMain: main, nonce: randomUUID() };
+-  await writeFile(join(main, 'service-fixture-origin.json'), JSON.stringify(origin));
+-  const serviceModule = join(main, 'src', 'service-entry.ts');
+-  await writeFile(serviceModule, (await readFile(serviceModule, 'utf8')) + `\nexport const serviceEntryFixtureOrigin = { moduleUrl: import.meta.url, nonce: ${JSON.stringify(origin.nonce)} };\n`);
++  const loaderProofAudit: { root: string; originalDigest: string; instrumentedDigest: string; instrumentation: string }[] = [];
++  const runProductionCli = await prepareProductionQaFixture(t, { root, home: homeDirectory }, async () => {
++    await cp(join(develop, 'src'), join(main, 'src'), { recursive: true });
++    copyProductionQaDependencies(main);
++    await writeFile(join(main, 'package.json'), '{"type":"module"}');
++    await cp(join(develop, 'bin/raf.ts'), join(main, 'bin/raf.ts'));
++    await cp(join(develop, 'scripts'), join(main, 'scripts'), { recursive: true });
++    await writeFile(join(main, 'service-fixture-origin.json'), JSON.stringify(origin));
++    const serviceModule = join(main, 'src', 'service-entry.ts');
++    const original = await readFile(serviceModule, 'utf8');
++    const instrumentation = `\nexport const serviceEntryFixtureOrigin = { moduleUrl: import.meta.url, nonce: ${JSON.stringify(origin.nonce)} };\n`;
++    await writeFile(serviceModule, original + instrumentation);
++    const originalDigest = createHash('sha256').update(original).digest('hex');
++    const instrumentedDigest = createHash('sha256').update(original + instrumentation).digest('hex');
++    for (const codeRoot of [main, develop]) {
++      const copiedProofs = join(codeRoot, 'src/hotfix-runtime-loaders.ts');
++      const proofs = await readFile(copiedProofs, 'utf8');
++      const rewritten = proofs.replace(/("src\/service-entry\.ts"\s*:\s*\{[^}]*"sha256"\s*:\s*")[a-f0-9]{64}(")/, (_match, prefix, suffix) => prefix + instrumentedDigest + suffix);
++      assert.notEqual(rewritten, proofs, 'The independently reviewed fixture export needs a new loader proof before the publisher loads');
++      await writeFile(copiedProofs, rewritten);
++      loaderProofAudit.push({ root: codeRoot, originalDigest, instrumentedDigest, instrumentation });
++    }
++  });
++  const gitDirectory = execFileSync('git', ['-C', develop, 'rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim();
+   const { createServiceHandlers }: typeof import('../src/service-entry.ts') = await import(pathToFileURL(join(develop, 'src', 'service-entry.ts')).href);
+   const { execute }: typeof import('../src/cli.ts') = await import(pathToFileURL(join(develop, 'src', 'cli.ts')).href);
+   const log = join(root, 'service-events.jsonl');
++  await writeFile(log, loaderProofAudit.map(proof => JSON.stringify({ event: 'fixture-loader-proof', ...proof })).join('\n') + '\n');
++  t.diagnostic(JSON.stringify({ fixtureLoaderProofs: loaderProofAudit }));
+   const modulePath = join(root, 'fixture-ports.ts');
+   await writeFile(modulePath, `
+ import { appendFile } from 'node:fs/promises';
+@@ -70,7 +89,7 @@ const host = await runServiceEntry();
+ await host.closed;
+ `);
+   await writeFile(join(develop, 'bin', 'service.ts'), 'throw new Error("forbidden develop worker");\n');
+-  execFileSync('git', ['-C', main, 'add', '--', 'bin', 'src', 'service-fixture-origin.json', 'package.json']);
++  execFileSync('git', ['-C', main, 'add', '--', 'bin', 'src', 'scripts', 'service-fixture-origin.json', 'package.json']);
+   execFileSync('git', ['-C', main, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '--allow-empty', '-m', 'Initialize configured main fixture']);
+   const mainCommit = execFileSync('git', ['-C', main, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+   const committedFile = (path: string): string => execFileSync('git', ['-C', main, 'show', `${mainCommit}:${path}`], { encoding: 'utf8' });

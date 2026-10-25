@@ -1,0 +1,32 @@
+{
+  "label": "missing-warmup",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-ywvDdt/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-ywvDdt/root/raf-main",
+  "startedAt": "2026-10-25T05:01:50.908Z",
+  "finishedAt": "2026-10-25T05:01:52.236Z",
+  "wallMs": 1327.6034230000078,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 3,
+  "stderrBytes": 53,
+  "loadAverage": [
+    5.22,
+    5.22,
+    4.3
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1004.1450000000001,
+    "cpuSystemMs": 684.6659999999999,
+    "wallMs": 1301.738286,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 1688.8110000000001
+}

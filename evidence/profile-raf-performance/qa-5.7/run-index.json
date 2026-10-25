@@ -1,0 +1,534 @@
+{
+  "assignment": "profile-raf-performance:5.7",
+  "status": "in-progress",
+  "workspace": "qa4a-workspace.head.txt + qa4a-workspace.status.txt + qa4a-workspace.patch; earlier red patches retained separately",
+  "transport": "transport-stderr.json",
+  "runs": [
+    {
+      "result": "bin-red.TestRunResult.json",
+      "runId": "76057f9d-c7d2-48da-a8eb-45abdff49adb",
+      "phase": "red",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 1854,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 91,
+      "knownRed": 2,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "result": "final-other-qa.TestRunResult.json",
+      "runId": "5c596d81-24e4-4db8-90fd-d9a0d1a5e7a6",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts test/state-migration-guard.test.ts test/service-entry.test.ts test/main-generation-handover.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts",
+          "test/state-migration-guard.test.ts",
+          "test/service-entry.test.ts",
+          "test/main-generation-handover.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 34510,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 189,
+      "knownRed": 47,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "fixture-confirm.TestRunResult.json",
+      "runId": "115b5ac3-30e3-45d4-918a-1554c2e7a60f",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-snapshot] sealed-source after green invalidates activation'",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] sealed-source after green invalidates activation"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 101220,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 0,
+      "knownRed": 49,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "fixture-red-refused.TestRunResult.json",
+      "runId": "fe9f7150-9589-4c22-acc5-7ee25cb29f35",
+      "phase": "red",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-cost --files test/hotfix-activation.test.ts --only 'test/hotfix-activation.test.ts::[hotfix-snapshot] sealed-source after green invalidates activation'",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "durationMs": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 0,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "timeoutCount": null
+    },
+    {
+      "result": "fixture-red.TestRunResult.json",
+      "runId": "0c5c8b8a-4e07-4866-b8bc-0738510b673c",
+      "phase": "red",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-snapshot] sealed-source after green invalidates activation'",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] sealed-source after green invalidates activation"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 13442,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 0,
+      "knownRed": 49,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "result": "intermediate-preset.TestRunResult.json",
+      "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts",
+          "test/hotfix-activation.test.ts",
+          "test/state-migration-guard.test.ts",
+          "test/service-entry.test.ts",
+          "test/main-generation-handover.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 711992,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 197,
+      "knownRed": 54,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "qa.TestRunResult.json",
+      "runId": "7cbd5a5a-f739-41aa-9744-30b2d66fd88f",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "durationMs": 1965,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 90,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0
+    },
+    {
+      "result": "require-red.TestRunResult.json",
+      "runId": "a5214ac6-c18e-43f5-9813-d88d14c95fa0",
+      "phase": "red",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 1806,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 93,
+      "knownRed": 58,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "result": "split-publication-qa.TestRunResult.json",
+      "runId": "b7c00ffb-2224-4a96-a3a3-99c49558d420",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication'",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 152534,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 1,
+      "knownRed": 47,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "split-publication-red.TestRunResult.json",
+      "runId": "16b3335f-cc87-4108-9d6d-0a6f8dc7dc6b",
+      "phase": "red",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication'",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 140737,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 0,
+      "knownRed": 48,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "result": "stable-preset.TestRunResult.json",
+      "runId": "003ba7fe-d3ae-4982-b13b-bfde803caf64",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts",
+          "test/hotfix-activation.test.ts",
+          "test/state-migration-guard.test.ts",
+          "test/service-entry.test.ts",
+          "test/main-generation-handover.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 860488,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 206,
+      "knownRed": 49,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "stand-origin-red.TestRunResult.json",
+      "runId": "58c240aa-e8bd-4ff1-a716-8ce332fe42cf",
+      "phase": "red",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-snapshot] sealed-source after green invalidates activation'",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] sealed-source after green invalidates activation"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 97601,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 0,
+      "knownRed": 49,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "result": "stand-qa-final.TestRunResult.json",
+      "runId": "f064653d-6da8-4885-9249-ed9ddf9dbd7b",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-snapshot] sealed-source after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication'",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] sealed-source after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 266992,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 1,
+      "knownRed": 48,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "stand-qa.TestRunResult.json",
+      "runId": "de11c057-1ecb-42c0-bf18-48e2d8f8544b",
+      "phase": "qa",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-snapshot] sealed-source after green invalidates activation' 'test/hotfix-activation.test.ts::[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication'",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] sealed-source after green invalidates activation"
+          },
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 197328,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 0,
+      "knownRed": 49,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0
+    },
+    {
+      "result": "stand-red.TestRunResult.json",
+      "runId": "d276b499-1db0-4705-af54-1778f5c179e6",
+      "phase": "red",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-snapshot] sealed-source after green invalidates activation'",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-snapshot] sealed-source after green invalidates activation"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 98086,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 0,
+      "knownRed": 49,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    },
+    {
+      "result": "store-red.result.json",
+      "runId": "5dcdfd61-fef7-4b5a-98b2-f357e9b47d8b",
+      "phase": "red",
+      "group": "profile-raf-performance/module-origin-cost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-cost --only 'test/hotfix-activation.test.ts::[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication'",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/hotfix-activation.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/hotfix-activation.test.ts",
+            "name": "[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "durationMs": 48253,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passed": 0,
+      "knownRed": 49,
+      "unexecuted": 0,
+      "unknown": 0,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0
+    }
+  ]
+}

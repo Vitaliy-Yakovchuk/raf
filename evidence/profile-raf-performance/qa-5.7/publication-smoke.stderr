@@ -1,0 +1,17 @@
+file:///srv/dev/work/orchestrator/raf-develop/src/hotfix-runtime-inventory.ts:41
+function refused(reason        )        { throw new Error('Runtime inventory completeness refused: ' + reason); }
+                                                ^
+
+Error: Runtime inventory completeness refused: unresolved loading input source-map-support from node_modules/typescript/lib/_tsc.js
+    at refused (file:///srv/dev/work/orchestrator/raf-develop/src/hotfix-runtime-inventory.ts:41:49)
+    at loadSpecifier (file:///srv/dev/work/orchestrator/raf-develop/src/hotfix-runtime-inventory.ts:109:20)
+    at inspect (file:///srv/dev/work/orchestrator/raf-develop/src/hotfix-runtime-inventory.ts:137:40)
+    at visitNode2 (/srv/dev/work/orchestrator/raf-develop/node_modules/typescript/lib/typescript.js:32551:18)
+    at forEachChildInPropertyAccessExpression (/srv/dev/work/orchestrator/raf-develop/node_modules/typescript/lib/typescript.js:32711:12)
+    at Object.forEachChild (/srv/dev/work/orchestrator/raf-develop/node_modules/typescript/lib/typescript.js:33072:35)
+    at inspect (file:///srv/dev/work/orchestrator/raf-develop/src/hotfix-runtime-inventory.ts:169:14)
+    at visitNode2 (/srv/dev/work/orchestrator/raf-develop/node_modules/typescript/lib/typescript.js:32551:18)
+    at forEachChildInCallOrNewExpression (/srv/dev/work/orchestrator/raf-develop/node_modules/typescript/lib/typescript.js:33025:10)
+    at Object.forEachChild (/srv/dev/work/orchestrator/raf-develop/node_modules/typescript/lib/typescript.js:33072:35)
+
+Node.js v26.12.1

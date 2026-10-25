@@ -1,0 +1,11 @@
+{
+  "available": false,
+  "source": "exec_command exposes combined output only",
+  "stderr": "not separately observable; not asserted empty",
+  "preserved": [
+    "full raw TestRunResult",
+    "tool result with complete combined stream",
+    "CLI exitCode separate from child exitCode"
+  ],
+  "precedent": "evidence/profile-raf-performance/implement-5.6/transport-stderr.json"
+}

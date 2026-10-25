@@ -1,0 +1,32 @@
+{
+  "label": "finished-warmup",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-jSGQXD/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-jSGQXD/root/raf-main",
+  "startedAt": "2026-10-25T04:52:49.313Z",
+  "finishedAt": "2026-10-25T04:52:53.303Z",
+  "wallMs": 3989.1891809999943,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 3,
+  "stderrBytes": 0,
+  "loadAverage": [
+    5.32,
+    4.58,
+    3.49
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 2289.598,
+    "cpuSystemMs": 2022.8160000000003,
+    "wallMs": 3964.648996,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 4312.414000000001
+}

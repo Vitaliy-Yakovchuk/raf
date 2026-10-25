@@ -1,0 +1,93 @@
+{
+  "label": "finished-1",
+  "startedAt": "2026-10-25T05:01:23.032Z",
+  "finishedAt": "2026-10-25T05:01:24.103Z",
+  "cliExitCode": 0,
+  "externalWallMs": 1071.059122999999,
+  "loadBefore": {
+    "loadAverage": [
+      6.08,
+      5.37,
+      4.32
+    ],
+    "processes": 269
+  },
+  "wallMs": 938.909236,
+  "cpuFullMs": 1344.513,
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 819.7299999999999,
+    "cpuSystemMs": 524.783,
+    "wallMs": 1047.293809,
+    "childExitCode": 0
+  },
+  "cpuSelfMs": 1184.6599999999999,
+  "delta": [
+    {
+      "stage": "finalization",
+      "executor": "self",
+      "samples": 1,
+      "wallMs": 0.1398619999999937,
+      "cpuUserMs": 0.137,
+      "cpuSystemMs": 0,
+      "cpuSamples": 1,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "handler",
+      "executor": "self",
+      "samples": 2,
+      "wallMs": 4.9032419999999775,
+      "cpuUserMs": 3.819,
+      "cpuSystemMs": 1.196,
+      "cpuSamples": 2,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "reconciliation",
+      "executor": "self",
+      "samples": 1,
+      "wallMs": 5.010283000000072,
+      "cpuUserMs": 5.124,
+      "cpuSystemMs": 0.032,
+      "cpuSamples": 1,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "sqlite",
+      "executor": "self",
+      "samples": 1,
+      "wallMs": 451.77549999999997,
+      "cpuUserMs": 230.002,
+      "cpuSystemMs": 257.687,
+      "cpuSamples": 1,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "startup/config",
+      "executor": "self",
+      "samples": 1,
+      "wallMs": 477.08034899999996,
+      "cpuUserMs": 518.016,
+      "cpuSystemMs": 168.647,
+      "cpuSamples": 1,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    }
+  ]
+}

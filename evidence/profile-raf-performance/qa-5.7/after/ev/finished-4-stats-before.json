@@ -1,0 +1,32 @@
+{
+  "label": "finished-4-stats-before",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-d1xie7/root/raf-main/bin/raf.ts",
+    "command",
+    "stats"
+  ],
+  "cwd": "/srv/dev/p45-d1xie7/root/raf-main",
+  "startedAt": "2026-10-25T05:09:25.348Z",
+  "finishedAt": "2026-10-25T05:09:27.068Z",
+  "wallMs": 1719.6307360000064,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 12437,
+  "stderrBytes": 0,
+  "loadAverage": [
+    3.47,
+    4.31,
+    4.2
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1091.126,
+    "cpuSystemMs": 915.9809999999999,
+    "wallMs": 1671.645163,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 2007.107
+}

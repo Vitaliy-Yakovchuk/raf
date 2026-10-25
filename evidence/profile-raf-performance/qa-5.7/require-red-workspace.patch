@@ -1,0 +1,32 @@
+diff --git a/test/hotfix-origin-cost.test.ts b/test/hotfix-origin-cost.test.ts
+index 0937e90..e1959c8 100644
+--- a/test/hotfix-origin-cost.test.ts
++++ b/test/hotfix-origin-cost.test.ts
+@@ -320,6 +320,27 @@ test('[module-origin-cost] package bin maps record protected executable targets'
+   assert.ok(manifest.loading.executables.includes('scripts/helper'));
+ });
+ 
++for (const factory of [
++  "import {createRequire} from 'node:module'; const load=createRequire(import.meta.url);",
++  "import {createRequire as factory} from 'node:module'; const load=factory(import.meta.url);",
++  "import * as modules from 'node:module'; const factory=modules.createRequire; const first=factory(import.meta.url); const load=first;",
++]) {
++  test(`[module-origin-cost] factory require aliases cannot load excluded inputs: ${factory}`, async t => {
++    const f = await fixture(t);
++    f.write(join(f.generation, 'src/state-store.ts'), factory + " export const config=load('../docs/config.cjs');\n");
++    f.write(join(f.generation, 'docs/config.cjs'), 'module.exports={runtime:true};\n');
++    assert.throws(() => createHotfixRuntimeInventory(f.generation, commit, f.policy), /outside protected inventory/i);
++  });
++}
++
++test('[module-origin-cost] factory require aliases record protected loads', async t => {
++  const f = await fixture(t);
++  f.write(join(f.generation, 'src/state-store.ts'), "import {createRequire as factory} from 'node:module'; const first=factory(import.meta.url); const load=first; export const config=load('./config.cjs');\n");
++  f.write(join(f.generation, 'src/config.cjs'), 'module.exports={runtime:true};\n');
++  const manifest = createHotfixRuntimeInventory(f.generation, commit, f.policy);
++  assert.ok(manifest.loading.imports.includes('src/config.cjs'));
++});
++
+ for (const tree of ['evidence', 'docs']) {
+   for (const mutation of ['bytes', 'add', 'delete', 'mode', 'symlink', 'hardlink'] as const) {
+     test(`[module-origin-cost] full activation fingerprint still detects ${mutation} in excluded ${tree}`, async t => {

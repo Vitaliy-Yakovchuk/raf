@@ -1,0 +1,97 @@
+diff --git a/src/hotfix-activation.ts b/src/hotfix-activation.ts
+index a08bd03..bd464db 100644
+--- a/src/hotfix-activation.ts
++++ b/src/hotfix-activation.ts
+@@ -214,20 +214,25 @@ export async function verifyHotfixCandidate(host: HotfixHost, request: HotfixVer
+   const qaConfig = await json(join(qaRoot, 'conf/projects.json'));
+   qaConfig.projects.raf.path = 'raf-main';
+   qaConfig.projects.raf.branchPaths.main = 'raf-main';
+-  qaConfig.projects.raf.branchPaths.develop = snapshot.root;
+-  qaConfig.projects.raf.branchPaths.hotfix = workspace.cwd;
++  qaConfig.projects.raf.branchPaths.develop = 'raf-develop';
++  qaConfig.projects.raf.branchPaths.hotfix = 'raf-hotfix';
++  delete qaConfig.projects.raf.mainCopies;
+   await durable(join(qaRoot, 'conf/projects.json'), qaConfig);
+   const environment = { RAF_ORCHESTRATOR_ROOT: qaRoot };
+   const isolated = { ...workspace, cwd: snapshot.root };
+   await prepareDependencies(host, isolated, workspace.cwd, evidenceRoot, environment);
+   const qaMain = join(qaRoot, 'raf-main');
+   await copyTree(snapshot.root, qaMain);
++  await git(qaRoot, 'init', '-b', 'main');
++  await fs.writeFile(join(qaRoot, '.gitmodules'), '[submodule "raf-main"]\n\tpath = raf-main\n\turl = ./raf-main\n');
+   const metadata = join(qaRoot, '.git', 'modules', 'raf-main');
+   await fs.mkdir(dirname(metadata), { recursive: true });
+   await git(qaMain, 'init', '-b', 'main', '--separate-git-dir', metadata);
+   await git(qaMain, 'fetch', '--no-tags', workspace.cwd, snapshot.commit);
+   await git(qaMain, 'update-ref', 'refs/heads/main', snapshot.commit);
+   await git(qaMain, 'read-tree', snapshot.commit);
++  await git(qaMain, 'worktree', 'add', '-b', 'develop', join(qaRoot, 'raf-develop'), snapshot.commit);
++  await git(qaMain, 'worktree', 'add', '-b', 'hotfix', join(qaRoot, 'raf-hotfix'), snapshot.commit);
+   if (JSON.stringify(await inventory(qaMain)) !== JSON.stringify(snapshot.files)) throw new Error('Verification stand snapshot differs from sealed candidate');
+   const cli = [process.execPath, join(snapshot.root, 'bin/raf.ts')];
+   const standConfiguration = await inventory(join(qaRoot, 'conf'), new Set());
+diff --git a/test/hotfix-activation.test.ts b/test/hotfix-activation.test.ts
+index 51db2ad..9d0aca9 100644
+--- a/test/hotfix-activation.test.ts
++++ b/test/hotfix-activation.test.ts
+@@ -7,6 +7,7 @@ import { join } from "node:path";
+ import test from "node:test";
+ import { acquireHotfixReader, activateHotfix, cleanupHotfixActivation, createAtomicHotfixSwitch, recoverHotfixActivation, sealHotfixSnapshot, verifyHotfixCandidate, type AtomicHotfixSwitch, type HotfixCheckpoint, type HotfixGateName, type HotfixReaderKind, type VerifiedHotfix } from "../src/hotfix-activation.ts";
+ import { commitHotfix, prepareHotfixWorktree } from "../src/hotfix-worktree.ts";
++import { ensureProductionMainStore } from "../src/main-production-store.ts";
+ import { childMessage, command, filesUnder, fixture, git, sha, timeoutMs, until } from "./hotfix-fixture.ts";
+ 
+ const activationModule = new URL("../src/hotfix-activation.ts", import.meta.url).href;
+@@ -71,7 +72,7 @@ function assertSealed(f: Awaited<ReturnType<typeof fixture>>, verified: Verified
+   return snapshot;
+ }
+ 
+-function assertMain(f: Awaited<ReturnType<typeof fixture>>, commit: string, marker: string) {
++function assertMain(f: Awaited<ReturnType<typeof fixture>>, commit: string, marker: string, split = false) {
+   assert.equal(git(f.main, f.environment, "rev-parse", "HEAD"), commit);
+   assert.equal(git(f.main, f.environment, "rev-parse", "refs/heads/main"), commit);
+   assert.equal(git(f.main, f.environment, "diff", "--cached", "--name-only"), "");
+@@ -83,8 +84,11 @@ function assertMain(f: Awaited<ReturnType<typeof fixture>>, commit: string, mark
+   assert.equal(git(f.root, f.environment, "submodule", "status", "raf-main").includes(commit), true);
+   assert.equal(realpathSync(git(f.main, f.environment, "rev-parse", "--show-toplevel")), realpathSync(f.main));
+   const mainGitDirectory = realpathSync(git(f.main, f.environment, "rev-parse", "--absolute-git-dir"));
+-  assert.equal(mainGitDirectory, realpathSync(join(f.root, ".git", "modules", "raf-main")));
+-  assert.equal(realpathSync(git(f.main, f.environment, "rev-parse", "--path-format=absolute", "--git-common-dir")), realpathSync(git(f.hotfix, f.environment, "rev-parse", "--path-format=absolute", "--git-common-dir")));
++  const sourceDirectory = realpathSync(join(f.root, ".git", "modules", "raf-main"));
++  const productionDirectory = split ? realpathSync(join(sourceDirectory, "raf-hotfix", "main.git")) : sourceDirectory;
++  assert.equal(mainGitDirectory, productionDirectory);
++  assert.equal(realpathSync(git(f.main, f.environment, "rev-parse", "--path-format=absolute", "--git-common-dir")), productionDirectory);
++  assert.equal(realpathSync(git(f.hotfix, f.environment, "rev-parse", "--path-format=absolute", "--git-common-dir")), sourceDirectory);
+   const indexEntries = git(f.main, f.environment, "ls-files", "--stage").split("\n").map(line => line.replace(/ 0\t/u, "\t"));
+   const commitEntries = git(f.main, f.environment, "ls-tree", "-r", commit).split("\n").map(line => line.replace(/ blob /u, " "));
+   assert.deepEqual(indexEntries, commitEntries, "main index contains exactly the activated commit tree");
+@@ -489,6 +493,7 @@ test("[hotfix-cleanup] activation failure remains the primary cause when cleanup
+ 
+ test("[hotfix-production-readers] service/worker/session identity and signed message delivery survive successful publication", { timeout: timeoutMs }, async t => {
+   const f = await fixture(t);
++  await ensureProductionMainStore({ root: f.root });
+   await f.startMain();
+   const runId = randomUUID();
+   const { launchHotfix } = await import("../src/hotfix-worktree.ts");
+@@ -517,7 +522,7 @@ test("[hotfix-production-readers] service/worker/session identity and signed mes
+   for (const nonce of [first, second]) assert.equal(inbox.split(nonce).length - 1, 1);
+   assert.match(inbox, /main/iu);
+   assert.equal((await f.mainCommand(["service", "stop"])).code, 0);
+-  assertMain(f, verified.commit, "new");
++  assertMain(f, verified.commit, "new", true);
+ });
+ 
+ test("[hotfix-snapshot] sealing waits for the shared writer and captures its complete committed HEAD", { timeout: timeoutMs }, async t => {
+diff --git a/test/hotfix-fixture.ts b/test/hotfix-fixture.ts
+index dcf1627..8757926 100644
+--- a/test/hotfix-fixture.ts
++++ b/test/hotfix-fixture.ts
+@@ -101,6 +101,8 @@ export async function fixture(t: TestContext) {
+     if (existsSync(join(source, name))) cpSync(join(source, name), join(main, name), { recursive: true });
+   }
+   if (existsSync(join(source, "node_modules"))) cpSync(join(source, "node_modules"), join(main, "node_modules"), { recursive: true, dereference: true });
++  const build = command(process.execPath, ["scripts/build.ts"], main, environment);
++  assert.equal(build.code, 0, build.stderr);
+   mkdirSync(join(main, "hotfix-fixture"));
+   writeFileSync(join(main, "hotfix-fixture", "a.mjs"), 'export const marker = "old";\n');
+   writeFileSync(join(main, "hotfix-fixture", "b.mjs"), 'export const marker = "old";\n');

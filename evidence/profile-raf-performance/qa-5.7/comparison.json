@@ -1,0 +1,1096 @@
+{
+  "evidenceIntegrity": "verified",
+  "speedAcceptance": "requires review of means and spread; integrity is not speed acceptance",
+  "before": {
+    "sha": "0e022cd356a9bf7760328839fcb7f39103ebce30",
+    "commands": 135
+  },
+  "after": {
+    "sha": "8f665165d57ae0b824f6b992824ebb6217358c83",
+    "commands": 135
+  },
+  "allCasesHaveFavorableMeans": true,
+  "comparisons": [
+    {
+      "name": "empty",
+      "semanticsPreserved": true,
+      "metrics": {
+        "wallMs": {
+          "before": {
+            "samples": 5,
+            "total": 18934.260893,
+            "mean": 3786.8521785999997,
+            "min": 3524.712707,
+            "max": 4221.30435,
+            "standardDeviation": 251.07524977684062,
+            "values": [
+              4221.30435,
+              3735.8039660000004,
+              3571.672765,
+              3880.767105,
+              3524.712707
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 5031.584948,
+            "mean": 1006.3169895999999,
+            "min": 960.5572400000001,
+            "max": 1050.744215,
+            "standardDeviation": 29.212503186550027,
+            "values": [
+              1011.200221,
+              960.5572400000001,
+              1013.73318,
+              995.3500919999999,
+              1050.744215
+            ]
+          },
+          "differenceMeanMs": -2780.5351889999997,
+          "observedRangesOverlap": false
+        },
+        "externalWallMs": {
+          "before": {
+            "samples": 5,
+            "total": 19800.06436000001,
+            "mean": 3960.012872000002,
+            "min": 3678.5182649999915,
+            "max": 4443.068549000003,
+            "standardDeviation": 274.457698488172,
+            "values": [
+              4443.068549000003,
+              3926.519036000005,
+              3719.7614490000124,
+              4032.197060999999,
+              3678.5182649999915
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 5964.273598000003,
+            "mean": 1192.8547196000006,
+            "min": 1136.0104520000023,
+            "max": 1260.3048340000023,
+            "standardDeviation": 40.27038487473635,
+            "values": [
+              1179.4647080000032,
+              1136.0104520000023,
+              1185.7449609999967,
+              1202.748642999999,
+              1260.3048340000023
+            ]
+          },
+          "differenceMeanMs": -2767.158152400001,
+          "observedRangesOverlap": false
+        },
+        "cpuSelfMs": {
+          "before": {
+            "samples": 5,
+            "total": 20373.844,
+            "mean": 4074.7688000000003,
+            "min": 3849.421,
+            "max": 4717.767,
+            "standardDeviation": 323.78027432096604,
+            "values": [
+              4717.767,
+              3919.201,
+              3849.421,
+              3917.3169999999996,
+              3970.138
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 6569.316,
+            "mean": 1313.8632,
+            "min": 1291.0629999999999,
+            "max": 1351.732,
+            "standardDeviation": 22.1106219577831,
+            "values": [
+              1317.605,
+              1291.0629999999999,
+              1292.219,
+              1316.697,
+              1351.732
+            ]
+          },
+          "differenceMeanMs": -2760.9056,
+          "observedRangesOverlap": false
+        },
+        "cpuFullMs": {
+          "before": {
+            "samples": 5,
+            "total": 21484.664,
+            "mean": 4296.9328000000005,
+            "min": 4045.1620000000003,
+            "max": 4995.37,
+            "standardDeviation": 351.9545853620323,
+            "values": [
+              4995.37,
+              4129.637,
+              4045.1620000000003,
+              4133.317999999999,
+              4181.177
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 7676.712999999999,
+            "mean": 1535.3425999999997,
+            "min": 1479.2379999999998,
+            "max": 1603.209,
+            "standardDeviation": 42.69514505233591,
+            "values": [
+              1522.126,
+              1479.2379999999998,
+              1511.728,
+              1560.4119999999998,
+              1603.209
+            ]
+          },
+          "differenceMeanMs": -2761.5902000000006,
+          "observedRangesOverlap": false
+        }
+      },
+      "favorableMeans": true,
+      "observedRangesStrictlyImprove": true,
+      "mostExpensiveStageBefore": {
+        "stage": "startup/config",
+        "wallMs": {
+          "samples": 5,
+          "total": 10868.32539,
+          "mean": 2173.665078,
+          "min": 1975.671446,
+          "max": 2595.385734,
+          "standardDeviation": 243.58788266842294,
+          "values": [
+            2595.385734,
+            1975.671446,
+            2002.029833,
+            2303.84028,
+            1991.398097
+          ]
+        }
+      },
+      "mostExpensiveStageAfter": {
+        "stage": "startup/config",
+        "wallMs": {
+          "samples": 5,
+          "total": 2453.068246,
+          "mean": 490.61364919999994,
+          "min": 460.560399,
+          "max": 530.969088,
+          "standardDeviation": 22.922089223658805,
+          "values": [
+            493.04209800000007,
+            486.30011699999994,
+            482.19654399999996,
+            460.560399,
+            530.969088
+          ]
+        }
+      }
+    },
+    {
+      "name": "live",
+      "semanticsPreserved": true,
+      "metrics": {
+        "wallMs": {
+          "before": {
+            "samples": 5,
+            "total": 23590.369172,
+            "mean": 4718.0738344,
+            "min": 3867.787921,
+            "max": 5655.313099999999,
+            "standardDeviation": 714.4626518910401,
+            "values": [
+              5655.313099999999,
+              4869.669748,
+              3928.1850680000002,
+              5269.413334999999,
+              3867.787921
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 5540.564741,
+            "mean": 1108.1129482000001,
+            "min": 1064.878232,
+            "max": 1161.7222219999999,
+            "standardDeviation": 33.15201601749164,
+            "values": [
+              1109.424315,
+              1064.878232,
+              1120.737333,
+              1083.802639,
+              1161.7222219999999
+            ]
+          },
+          "differenceMeanMs": -3609.9608862,
+          "observedRangesOverlap": false
+        },
+        "externalWallMs": {
+          "before": {
+            "samples": 5,
+            "total": 24552.227353999973,
+            "mean": 4910.445470799995,
+            "min": 4019.0879259999783,
+            "max": 5867.402750000008,
+            "standardDeviation": 736.8365408878813,
+            "values": [
+              5867.402750000008,
+              5061.160701999994,
+              4110.1016799999925,
+              5494.474296,
+              4019.0879259999783
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 6434.501171999997,
+            "mean": 1286.9002343999994,
+            "min": 1216.0102559999941,
+            "max": 1337.7307529999962,
+            "standardDeviation": 40.92088747690565,
+            "values": [
+              1305.1082490000044,
+              1216.0102559999941,
+              1302.4925650000077,
+              1273.159348999994,
+              1337.7307529999962
+            ]
+          },
+          "differenceMeanMs": -3623.5452363999957,
+          "observedRangesOverlap": false
+        },
+        "cpuSelfMs": {
+          "before": {
+            "samples": 5,
+            "total": 24347.342,
+            "mean": 4869.4684,
+            "min": 4188.469999999999,
+            "max": 5883.786,
+            "standardDeviation": 636.3726097929107,
+            "values": [
+              4825.165,
+              5219.189,
+              4188.469999999999,
+              5883.786,
+              4230.732
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 6692.139999999999,
+            "mean": 1338.4279999999999,
+            "min": 1231.047,
+            "max": 1455.7520000000002,
+            "standardDeviation": 75.35750160136686,
+            "values": [
+              1378.904,
+              1231.047,
+              1322.935,
+              1455.7520000000002,
+              1303.502
+            ]
+          },
+          "differenceMeanMs": -3531.0404,
+          "observedRangesOverlap": false
+        },
+        "cpuFullMs": {
+          "before": {
+            "samples": 5,
+            "total": 25631.852,
+            "mean": 5126.3704,
+            "min": 4415.607,
+            "max": 6193.962,
+            "standardDeviation": 668.2851410757538,
+            "values": [
+              5084.734,
+              5486.790999999999,
+              4415.607,
+              6193.962,
+              4450.758
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 7963.005999999999,
+            "mean": 1592.6011999999998,
+            "min": 1436.433,
+            "max": 1707.525,
+            "standardDeviation": 93.75822605062449,
+            "values": [
+              1665.0469999999998,
+              1436.433,
+              1594.634,
+              1707.525,
+              1559.367
+            ]
+          },
+          "differenceMeanMs": -3533.7691999999997,
+          "observedRangesOverlap": false
+        }
+      },
+      "favorableMeans": true,
+      "observedRangesStrictlyImprove": true,
+      "mostExpensiveStageBefore": {
+        "stage": "startup/config",
+        "wallMs": {
+          "samples": 5,
+          "total": 13146.00467,
+          "mean": 2629.200934,
+          "min": 1866.770903,
+          "max": 3346.75319,
+          "standardDeviation": 613.1307565621937,
+          "values": [
+            3128.357619,
+            2866.347905,
+            1937.775053,
+            3346.75319,
+            1866.770903
+          ]
+        }
+      },
+      "mostExpensiveStageAfter": {
+        "stage": "startup/config",
+        "wallMs": {
+          "samples": 5,
+          "total": 2410.188103,
+          "mean": 482.03762059999997,
+          "min": 459.170278,
+          "max": 525.273591,
+          "standardDeviation": 22.890109196514384,
+          "values": [
+            467.57510199999996,
+            459.170278,
+            478.407996,
+            479.76113599999996,
+            525.273591
+          ]
+        }
+      }
+    },
+    {
+      "name": "finished",
+      "semanticsPreserved": true,
+      "metrics": {
+        "wallMs": {
+          "before": {
+            "samples": 5,
+            "total": 18795.463705000002,
+            "mean": 3759.0927410000004,
+            "min": 3524.3871010000003,
+            "max": 4169.833912,
+            "standardDeviation": 232.41455322584966,
+            "values": [
+              3649.733322,
+              3599.055748,
+              4169.833912,
+              3852.453622,
+              3524.3871010000003
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 4773.065933,
+            "mean": 954.6131866,
+            "min": 917.084433,
+            "max": 988.185619,
+            "standardDeviation": 25.693727333284723,
+            "values": [
+              977.95069,
+              940.868685,
+              917.084433,
+              948.976506,
+              988.185619
+            ]
+          },
+          "differenceMeanMs": -2804.4795544000003,
+          "observedRangesOverlap": false
+        },
+        "externalWallMs": {
+          "before": {
+            "samples": 5,
+            "total": 19656.706069000007,
+            "mean": 3931.3412138000012,
+            "min": 3665.3836080000037,
+            "max": 4369.710192000028,
+            "standardDeviation": 242.1986134215018,
+            "values": [
+              3835.947913000011,
+              3797.087049999973,
+              4369.710192000028,
+              3988.577305999992,
+              3665.3836080000037
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 5704.287937999994,
+            "mean": 1140.8575875999989,
+            "min": 1095.310725999996,
+            "max": 1175.3317180000013,
+            "standardDeviation": 27.667328363039072,
+            "values": [
+              1162.5928140000033,
+              1139.7191049999965,
+              1095.310725999996,
+              1131.333574999997,
+              1175.3317180000013
+            ]
+          },
+          "differenceMeanMs": -2790.4836262000026,
+          "observedRangesOverlap": false
+        },
+        "cpuSelfMs": {
+          "before": {
+            "samples": 5,
+            "total": 20712.468,
+            "mean": 4142.4936,
+            "min": 3923.646,
+            "max": 4542.075999999999,
+            "standardDeviation": 243.81100343552953,
+            "values": [
+              3943.6870000000004,
+              3993.4610000000002,
+              4542.075999999999,
+              4309.598,
+              3923.646
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 6513.733,
+            "mean": 1302.7466,
+            "min": 1173.144,
+            "max": 1416.9900000000002,
+            "standardDeviation": 82.60578175793755,
+            "values": [
+              1416.9900000000002,
+              1290.511,
+              1173.144,
+              1273.302,
+              1359.7859999999998
+            ]
+          },
+          "differenceMeanMs": -2839.747,
+          "observedRangesOverlap": false
+        },
+        "cpuFullMs": {
+          "before": {
+            "samples": 5,
+            "total": 21723.668999999998,
+            "mean": 4344.7338,
+            "min": 4108.366999999999,
+            "max": 4771.6849999999995,
+            "standardDeviation": 249.84238158118805,
+            "values": [
+              4143.113,
+              4221.338,
+              4771.6849999999995,
+              4479.166,
+              4108.366999999999
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 7604.402,
+            "mean": 1520.8804,
+            "min": 1385.038,
+            "max": 1635.962,
+            "standardDeviation": 83.2030998379267,
+            "values": [
+              1635.962,
+              1536.177,
+              1385.038,
+              1487.089,
+              1560.136
+            ]
+          },
+          "differenceMeanMs": -2823.8534,
+          "observedRangesOverlap": false
+        }
+      },
+      "favorableMeans": true,
+      "observedRangesStrictlyImprove": true,
+      "mostExpensiveStageBefore": {
+        "stage": "startup/config",
+        "wallMs": {
+          "samples": 5,
+          "total": 10992.979362000002,
+          "mean": 2198.5958724,
+          "min": 1941.555527,
+          "max": 2674.146174,
+          "standardDeviation": 259.5580131644868,
+          "values": [
+            2006.945349,
+            2123.752213,
+            2674.146174,
+            2246.580099,
+            1941.555527
+          ]
+        }
+      },
+      "mostExpensiveStageAfter": {
+        "stage": "startup/config",
+        "wallMs": {
+          "samples": 5,
+          "total": 2413.412419,
+          "mean": 482.68248380000006,
+          "min": 445.039267,
+          "max": 532.216085,
+          "standardDeviation": 30.56321646590999,
+          "values": [
+            532.216085,
+            445.039267,
+            456.92256,
+            485.13362500000005,
+            494.10088200000007
+          ]
+        }
+      }
+    },
+    {
+      "name": "missing",
+      "semanticsPreserved": true,
+      "metrics": {
+        "wallMs": {
+          "before": {
+            "samples": 5,
+            "total": 20966.544633,
+            "mean": 4193.308926600001,
+            "min": 3811.305394,
+            "max": 4522.53354,
+            "standardDeviation": 227.49669672125555,
+            "values": [
+              3811.305394,
+              4256.5519540000005,
+              4522.53354,
+              4202.285335,
+              4173.86841
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 5702.838383,
+            "mean": 1140.5676766000001,
+            "min": 1078.430401,
+            "max": 1195.1702109999999,
+            "standardDeviation": 40.66048352608483,
+            "values": [
+              1195.1702109999999,
+              1164.584496,
+              1078.430401,
+              1113.4684860000002,
+              1151.184789
+            ]
+          },
+          "differenceMeanMs": -3052.7412500000005,
+          "observedRangesOverlap": false
+        },
+        "externalWallMs": {
+          "before": {
+            "samples": 5,
+            "total": 21887.589992999972,
+            "mean": 4377.517998599995,
+            "min": 4013.599048999953,
+            "max": 4710.1898180000135,
+            "standardDeviation": 223.6699567283168,
+            "values": [
+              4013.599048999953,
+              4450.179639000038,
+              4710.1898180000135,
+              4377.981614999997,
+              4335.639871999971
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 6618.950570999994,
+            "mean": 1323.7901141999987,
+            "min": 1273.1980070000136,
+            "max": 1371.24184599999,
+            "standardDeviation": 37.199518097098085,
+            "values": [
+              1371.24184599999,
+              1351.6941099999967,
+              1273.1980070000136,
+              1288.7970109999878,
+              1334.019597000006
+            ]
+          },
+          "differenceMeanMs": -3053.727884399996,
+          "observedRangesOverlap": false
+        },
+        "cpuSelfMs": {
+          "before": {
+            "samples": 5,
+            "total": 22748.956,
+            "mean": 4549.7912,
+            "min": 4211.189,
+            "max": 4998.710000000001,
+            "standardDeviation": 260.778292053154,
+            "values": [
+              4211.189,
+              4620.719999999999,
+              4998.710000000001,
+              4424.590999999999,
+              4493.746000000001
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 7345.2,
+            "mean": 1469.04,
+            "min": 1361.103,
+            "max": 1548.3419999999999,
+            "standardDeviation": 70.07053231708745,
+            "values": [
+              1524.217,
+              1548.3419999999999,
+              1361.103,
+              1415.685,
+              1495.853
+            ]
+          },
+          "differenceMeanMs": -3080.7511999999997,
+          "observedRangesOverlap": false
+        },
+        "cpuFullMs": {
+          "before": {
+            "samples": 5,
+            "total": 24028.421,
+            "mean": 4805.6842,
+            "min": 4472.231,
+            "max": 5293.317999999999,
+            "standardDeviation": 273.814864482847,
+            "values": [
+              4472.231,
+              4863.4259999999995,
+              5293.317999999999,
+              4692.461,
+              4706.985000000001
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 8642.851999999999,
+            "mean": 1728.5703999999998,
+            "min": 1619.204,
+            "max": 1830.8110000000001,
+            "standardDeviation": 75.74075355210034,
+            "values": [
+              1768.6309999999999,
+              1830.8110000000001,
+              1619.204,
+              1666.7050000000002,
+              1757.5009999999997
+            ]
+          },
+          "differenceMeanMs": -3077.1138,
+          "observedRangesOverlap": false
+        }
+      },
+      "favorableMeans": true,
+      "observedRangesStrictlyImprove": true,
+      "mostExpensiveStageBefore": {
+        "stage": "startup/config",
+        "wallMs": {
+          "samples": 5,
+          "total": 10885.346409,
+          "mean": 2177.0692817999998,
+          "min": 1858.623127,
+          "max": 2519.800568,
+          "standardDeviation": 211.06659478109736,
+          "values": [
+            1858.623127,
+            2217.120539,
+            2519.800568,
+            2134.922098,
+            2154.8800770000003
+          ]
+        }
+      },
+      "mostExpensiveStageAfter": {
+        "stage": "sqlite",
+        "wallMs": {
+          "samples": 5,
+          "total": 2394.282072,
+          "mean": 478.8564144,
+          "min": 437.893056,
+          "max": 507.864738,
+          "standardDeviation": 27.305219817516353,
+          "values": [
+            504.98580000000004,
+            507.864738,
+            437.893056,
+            457.1885209999999,
+            486.349957
+          ]
+        }
+      }
+    },
+    {
+      "name": "pid-reused",
+      "semanticsPreserved": true,
+      "metrics": {
+        "wallMs": {
+          "before": {
+            "samples": 5,
+            "total": 21039.212815000003,
+            "mean": 4207.842563,
+            "min": 3798.5542370000003,
+            "max": 4413.156566,
+            "standardDeviation": 216.3790375757101,
+            "values": [
+              4192.24662,
+              4311.307823,
+              4413.156566,
+              4323.947569,
+              3798.5542370000003
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 5888.488426,
+            "mean": 1177.6976852,
+            "min": 1110.376436,
+            "max": 1276.6471760000002,
+            "standardDeviation": 70.3625703384915,
+            "values": [
+              1110.376436,
+              1249.201866,
+              1276.6471760000002,
+              1125.739012,
+              1126.523936
+            ]
+          },
+          "differenceMeanMs": -3030.1448778000004,
+          "observedRangesOverlap": false
+        },
+        "externalWallMs": {
+          "before": {
+            "samples": 5,
+            "total": 21887.70021899999,
+            "mean": 4377.540043799998,
+            "min": 3975.9826259999536,
+            "max": 4575.4664420000045,
+            "standardDeviation": 212.090423006397,
+            "values": [
+              4362.480373999977,
+              4473.67712800001,
+              4575.4664420000045,
+              4500.093649000046,
+              3975.9826259999536
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 6725.470115000004,
+            "mean": 1345.0940230000008,
+            "min": 1280.5606360000093,
+            "max": 1439.130628999992,
+            "standardDeviation": 65.91169539199645,
+            "values": [
+              1313.3407569999981,
+              1408.2815770000161,
+              1439.130628999992,
+              1284.1565159999882,
+              1280.5606360000093
+            ]
+          },
+          "differenceMeanMs": -3032.4460207999973,
+          "observedRangesOverlap": false
+        },
+        "cpuSelfMs": {
+          "before": {
+            "samples": 5,
+            "total": 22405.448999999997,
+            "mean": 4481.0898,
+            "min": 4173.474999999999,
+            "max": 4762.387,
+            "standardDeviation": 208.3399780449256,
+            "values": [
+              4658.610000000001,
+              4392.678,
+              4762.387,
+              4418.299,
+              4173.474999999999
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 6907.665,
+            "mean": 1381.533,
+            "min": 1297.061,
+            "max": 1476.1230000000003,
+            "standardDeviation": 69.51401706130945,
+            "values": [
+              1433.6390000000001,
+              1476.1230000000003,
+              1391.817,
+              1309.0249999999999,
+              1297.061
+            ]
+          },
+          "differenceMeanMs": -3099.5568,
+          "observedRangesOverlap": false
+        },
+        "cpuFullMs": {
+          "before": {
+            "samples": 5,
+            "total": 23515.499000000003,
+            "mean": 4703.099800000001,
+            "min": 4387.779,
+            "max": 4984.418,
+            "standardDeviation": 213.50509986639622,
+            "values": [
+              4894.057999999999,
+              4607.704,
+              4984.418,
+              4641.540000000001,
+              4387.779
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 8005.72,
+            "mean": 1601.144,
+            "min": 1496.995,
+            "max": 1724.252,
+            "standardDeviation": 92.83979787354129,
+            "values": [
+              1724.252,
+              1686.018,
+              1596.658,
+              1501.797,
+              1496.995
+            ]
+          },
+          "differenceMeanMs": -3101.9558000000006,
+          "observedRangesOverlap": false
+        }
+      },
+      "favorableMeans": true,
+      "observedRangesStrictlyImprove": true,
+      "mostExpensiveStageBefore": {
+        "stage": "startup/config",
+        "wallMs": {
+          "samples": 5,
+          "total": 10675.716142,
+          "mean": 2135.1432283999998,
+          "min": 1907.0961169999998,
+          "max": 2236.2083119999998,
+          "standardDeviation": 117.42435247502422,
+          "values": [
+            2156.62232,
+            2169.2403339999996,
+            2236.2083119999998,
+            2206.549059,
+            1907.0961169999998
+          ]
+        }
+      },
+      "mostExpensiveStageAfter": {
+        "stage": "startup/config",
+        "wallMs": {
+          "samples": 5,
+          "total": 2558.3746910000004,
+          "mean": 511.6749382000001,
+          "min": 472.973626,
+          "max": 556.152927,
+          "standardDeviation": 30.872571630305263,
+          "values": [
+            472.973626,
+            556.152927,
+            536.98278,
+            505.23995199999996,
+            487.02540600000003
+          ]
+        }
+      }
+    },
+    {
+      "name": "unverifiable",
+      "semanticsPreserved": true,
+      "metrics": {
+        "wallMs": {
+          "before": {
+            "samples": 5,
+            "total": 20588.990604,
+            "mean": 4117.7981208,
+            "min": 3881.5658569999996,
+            "max": 4302.889507,
+            "standardDeviation": 138.33059199767933,
+            "values": [
+              4191.053116,
+              4107.592027999999,
+              4105.890096000001,
+              3881.5658569999996,
+              4302.889507
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 5663.920851,
+            "mean": 1132.7841702,
+            "min": 1097.651605,
+            "max": 1152.055391,
+            "standardDeviation": 18.464973423987395,
+            "values": [
+              1097.651605,
+              1136.620014,
+              1152.055391,
+              1136.339371,
+              1141.2544699999999
+            ]
+          },
+          "differenceMeanMs": -2985.0139506,
+          "observedRangesOverlap": false
+        },
+        "externalWallMs": {
+          "before": {
+            "samples": 5,
+            "total": 21406.86754899996,
+            "mean": 4281.373509799992,
+            "min": 4050.136547000031,
+            "max": 4464.555791000021,
+            "standardDeviation": 137.56994157443683,
+            "values": [
+              4364.330310999998,
+              4271.347177999909,
+              4256.497722,
+              4050.136547000031,
+              4464.555791000021
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 6510.232282000012,
+            "mean": 1302.0464564000024,
+            "min": 1247.202512000018,
+            "max": 1353.3603909999947,
+            "standardDeviation": 34.68539350885535,
+            "values": [
+              1247.202512000018,
+              1309.2231500000053,
+              1353.3603909999947,
+              1287.6483299999963,
+              1312.7978989999974
+            ]
+          },
+          "differenceMeanMs": -2979.3270533999894,
+          "observedRangesOverlap": false
+        },
+        "cpuSelfMs": {
+          "before": {
+            "samples": 5,
+            "total": 21789.868000000002,
+            "mean": 4357.9736,
+            "min": 4210.089,
+            "max": 4560.818,
+            "standardDeviation": 127.32463350286943,
+            "values": [
+              4560.818,
+              4385.775000000001,
+              4233.393,
+              4210.089,
+              4399.793
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 6852.133,
+            "mean": 1370.4266,
+            "min": 1295.2389999999998,
+            "max": 1468.693,
+            "standardDeviation": 58.840702248018815,
+            "values": [
+              1295.2389999999998,
+              1334.388,
+              1359.315,
+              1468.693,
+              1394.498
+            ]
+          },
+          "differenceMeanMs": -2987.5470000000005,
+          "observedRangesOverlap": false
+        },
+        "cpuFullMs": {
+          "before": {
+            "samples": 5,
+            "total": 22915.423000000003,
+            "mean": 4583.0846,
+            "min": 4427.308,
+            "max": 4808.687,
+            "standardDeviation": 134.51756595270373,
+            "values": [
+              4808.687,
+              4596.4130000000005,
+              4465.097,
+              4427.308,
+              4617.918
+            ]
+          },
+          "after": {
+            "samples": 5,
+            "total": 7955.097,
+            "mean": 1591.0194,
+            "min": 1503.3039999999999,
+            "max": 1681.877,
+            "standardDeviation": 61.19328147305066,
+            "values": [
+              1503.3039999999999,
+              1550.196,
+              1595.762,
+              1681.877,
+              1623.958
+            ]
+          },
+          "differenceMeanMs": -2992.0652,
+          "observedRangesOverlap": false
+        }
+      },
+      "favorableMeans": true,
+      "observedRangesStrictlyImprove": true,
+      "mostExpensiveStageBefore": {
+        "stage": "startup/config",
+        "wallMs": {
+          "samples": 5,
+          "total": 10269.833435,
+          "mean": 2053.966687,
+          "min": 1864.1393759999999,
+          "max": 2240.066033,
+          "standardDeviation": 120.93480444494165,
+          "values": [
+            2067.7848839999997,
+            2015.628095,
+            2082.215047,
+            1864.1393759999999,
+            2240.066033
+          ]
+        }
+      },
+      "mostExpensiveStageAfter": {
+        "stage": "startup/config",
+        "wallMs": {
+          "samples": 5,
+          "total": 2477.275625,
+          "mean": 495.45512500000007,
+          "min": 457.34698000000003,
+          "max": 525.8742360000001,
+          "standardDeviation": 25.16190545532388,
+          "values": [
+            457.34698000000003,
+            485.193114,
+            525.8742360000001,
+            488.28094899999996,
+            520.580346
+          ]
+        }
+      }
+    }
+  ],
+  "normalization": "Only known actor PIDs/commands, fixture base paths and lifecycle timestamps; reminder dates, addresses, revisions, results, reservations and event content remain checked."
+}

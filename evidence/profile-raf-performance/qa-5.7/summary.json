@@ -1,0 +1,166 @@
+{
+  "assignment": "profile-raf-performance:5.7",
+  "implementationSha": "a66ad12857a36dec17772b92d59b50d611bcd349",
+  "baselineSha": "0e022cd356a9bf7760328839fcb7f39103ebce30",
+  "qaFixSha": "c50b4c6d331f807f8a0f5533e0341d75ba3ae8a2",
+  "ownFiles": [
+    "src/hotfix-runtime-inventory.ts",
+    "src/hotfix-runtime-loaders.ts",
+    "test/hotfix-origin-cost.test.ts",
+    "evidence/profile-raf-performance/qa-5.7/",
+    "src/hotfix-activation.ts",
+    "test/hotfix-activation.test.ts",
+    "test/hotfix-fixture.ts"
+  ],
+  "codeChecks": {
+    "publication-smoke": {
+      "cliExitCode": 1,
+      "stdout": "publication-smoke.stdout",
+      "stderr": "publication-smoke.stderr"
+    },
+    "publication-smoke-final": {
+      "cliExitCode": 0,
+      "stdout": "publication-smoke-final.stdout",
+      "stderr": "publication-smoke-final.stderr"
+    },
+    "build": {
+      "cliExitCode": 0,
+      "stdout": "build.stdout",
+      "stderr": "build.stderr"
+    },
+    "comments": {
+      "cliExitCode": 0,
+      "stdout": "comments.stdout",
+      "stderr": "comments.stderr"
+    },
+    "build-final": {
+      "cliExitCode": 0,
+      "stdout": "build-final.stdout",
+      "stderr": "build-final.stderr"
+    },
+    "comments-final": {
+      "cliExitCode": 0,
+      "stdout": "comments-final.stdout",
+      "stderr": "comments-final.stderr"
+    },
+    "build-require": {
+      "cliExitCode": 0,
+      "stdout": "build-require.stdout",
+      "stderr": "build-require.stderr"
+    },
+    "comments-require": {
+      "cliExitCode": 0,
+      "stdout": "comments-require.stdout",
+      "stderr": "comments-require.stderr"
+    },
+    "publication-smoke-require": {
+      "cliExitCode": 0,
+      "stdout": "publication-smoke-require.stdout",
+      "stderr": "publication-smoke-require.stderr"
+    }
+  },
+  "initialQa": {
+    "result": "qa.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts"
+  },
+  "defectRed": {
+    "result": "bin-red.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+    "workspace": "red-workspace.patch",
+    "baseSha": "612329b4b7cb9c88d8c5182be1dfd560b5ca4c6a"
+  },
+  "transportStderr": "transport-stderr.json",
+  "groupPolicy": "Same project/workspace/group/HOME/aggregate; current preset added by main, no foreign regression group invocation.",
+  "archive": null,
+  "pending": [
+    "47 knownRed hotfix-activation scenarios must actually pass in the same aggregate",
+    "final host after4a comparison"
+  ],
+  "qaFixShas": [
+    "c50b4c6d331f807f8a0f5533e0341d75ba3ae8a2",
+    "8f665165d57ae0b824f6b992824ebb6217358c83",
+    "4a0bc11ec74917da83049bf2c0fd0b628ea88ac6"
+  ],
+  "fixtureSourceSha": "b1a32cd584d6af2d15353cd93659d3e78c369a63",
+  "intermediatePreset": {
+    "runId": "0f0c3841-4794-4b25-8e39-f9b6f2a83333",
+    "outcome": "assertions-failed",
+    "selection": {
+      "files": [
+        "test/hotfix-origin-cost.test.ts",
+        "test/hotfix-activation.test.ts",
+        "test/state-migration-guard.test.ts",
+        "test/service-entry.test.ts",
+        "test/main-generation-handover.test.ts"
+      ],
+      "testIds": []
+    },
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "nextAction": "fix-implementation",
+    "durationMs": 711992,
+    "result": "intermediate-preset.TestRunResult.json",
+    "cliCode": 1,
+    "passed": 197,
+    "knownRed": 54,
+    "unexecuted": 0,
+    "unknown": 0
+  },
+  "requireAliasRed": {
+    "runId": "a5214ac6-c18e-43f5-9813-d88d14c95fa0",
+    "outcome": "assertions-failed",
+    "selection": {
+      "files": [
+        "test/hotfix-origin-cost.test.ts"
+      ],
+      "testIds": []
+    },
+    "exitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "nextAction": "implement",
+    "durationMs": 1806,
+    "result": "require-red.TestRunResult.json",
+    "cliCode": 1,
+    "passed": 93,
+    "knownRed": 58,
+    "unexecuted": 0,
+    "unknown": 0
+  },
+  "stand34": {
+    "acceptance": "intermediate; final require alias fix awaits host after",
+    "before": "before/summary.json",
+    "after": "intermediate-after/summary.json",
+    "comparison": "intermediate-comparison.json",
+    "verificationCliExitCode": 0,
+    "evidenceIntegrity": "verified",
+    "commandsPerSeries": 135,
+    "restoredSamplesPerSeries": 30,
+    "harnessSha256": "2723e90855d4ba02f0a47df8e8677507b9ae59e6feac03934a5fd943e9eb16b1",
+    "configuration": "/srv/dev/p57-conf.AwZAJz",
+    "manifestVerification": "before/provenance.json + intermediate-after/provenance.json"
+  },
+  "intermediateHost8f": {
+    "before": "before/summary.json",
+    "after": "after/summary.json",
+    "comparison": "comparison.json",
+    "verificationCliExitCode": 0,
+    "evidenceIntegrity": "verified",
+    "allCasesHaveFavorableMeans": true,
+    "allCasesRangesStrictlyImprove": true,
+    "sourceSha": "8f665165d57ae0b824f6b992824ebb6217358c83",
+    "baselineSha": "0e022cd356a9bf7760328839fcb7f39103ebce30",
+    "command": "node scripts/qa-agent-ps-comparison.mjs 8f665165d57ae0b824f6b992824ebb6217358c83 /srv/dev/p57-conf.AwZAJz 5",
+    "manifests": "before/provenance.json + after/provenance.json",
+    "cleanup": "complete, service stopped, remainingProcesses=[], SQLite integrity ok"
+  }
+}

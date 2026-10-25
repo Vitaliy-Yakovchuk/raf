@@ -6,7 +6,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 const [stageText, report] = process.argv.slice(2), stage = Number(stageText);
 assert.ok([0, 1, 2].includes(stage) && path.isAbsolute(report));
 const cwd = fs.realpathSync(process.cwd()), root = path.dirname(cwd), own = path.dirname(report);
-assert.match(root, /^\/tmp\/s64-[^/]+\/root$/);
+assert.match(root, /^\/srv\/dev\/s64-[^/]+\/root$/);
 assert.ok(own.startsWith(path.dirname(root) + '/.raf/tmp/'));
 const results = [];
 const probe = (label, code, args, expected) => {

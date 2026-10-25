@@ -15,7 +15,7 @@ assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
 assert.equal(process.env.CODEX_HOME, '/home/dev/.codex', 'Use the existing provider selector; never copy auth');
 assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
-const stand = fs.mkdtempSync('/tmp/s64-');
+const stand = fs.mkdtempSync('/srv/dev/s64-');
 const root = path.join(stand, 'root'), ev = path.join(stand, 'ev');
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop');
 const socket = path.join(stand, 'main.sock');
@@ -210,10 +210,25 @@ finally {
       try { const result = await request('cleanup-' + a.addressId, ['agent', 'close', '--id', a.addressId, '--force', '--reason', 'Host-owned isolated QA cleanup'], 60000); (summary.cleanup ??= []).push(result); } catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
     }
     try { (summary.cleanup ??= []).push(await request('cleanup-service', ['service', 'stop'], 60000)); } catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
-    summary.agentTmuxCleanup = run('cleanup-agent-tmux', 'tmux', ['-S', path.join(stand, '.raf/tmp/tmux/server.sock'), 'kill-server']);
+    const agentSocket = path.join(stand, '.raf/tmp/tmux/server.sock');
+    if (!fs.existsSync(agentSocket)) summary.agentTmuxCleanup = { outcome: 'not-created-or-already-removed', command: null, cliExitCode: null };
+    else {
+      const inspected = run('cleanup-agent-tmux-inspect', 'tmux', ['-S', agentSocket, 'list-sessions']);
+      if (inspected.cliExitCode === 0) {
+        summary.agentTmuxCleanup = run('cleanup-agent-tmux', 'tmux', ['-S', agentSocket, 'kill-server']);
+        if (summary.agentTmuxCleanup.cliExitCode !== 0) (summary.cleanupErrors ??= []).push('Owned agent tmux server failed to stop');
+      } else if (inspected.cliExitCode === 1 && inspected.signal === null && inspected.stderr.trim() === 'no server running on ' + agentSocket) {
+        summary.agentTmuxCleanup = { outcome: 'already-stopped', command: null, cliExitCode: null, verification: inspected };
+      } else {
+        summary.agentTmuxCleanup = { outcome: 'verification-failed', verification: inspected };
+        (summary.cleanupErrors ??= []).push('Owned agent tmux server state is unknown');
+      }
+    }
     summary.tmuxCleanup = run('cleanup-tmux', 'tmux', ['-S', socket, 'kill-server']);
+    if (summary.tmuxCleanup.cliExitCode !== 0) (summary.cleanupErrors ??= []).push('Owned main tmux server failed to stop');
   }
   if (endpoint) await new Promise(resolve => endpoint.close(resolve));
+  if (summary.cleanupErrors?.length) { summary.status = 'failed'; process.exitCode = 1; }
   summary.endedAt = new Date().toISOString(); atomic(path.join(ev, 'summary.json'), summary);
   console.log(JSON.stringify({ status: summary.status, evidence: ev, error: summary.error?.message }));
 }

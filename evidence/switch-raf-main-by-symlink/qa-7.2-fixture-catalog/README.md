@@ -1,0 +1,7 @@
+Host 1 (bd4050a): npm build failed because stand setup removed registered projects referenced by unchanged catalog examples. Full host stdout/stderr/code and actual ev are in ../qa-7.2-live/host1; its setup failure is not a unit red or a completed live scenario. Main confirmed completed=[], pending=8, cleanup complete; a corrected full first execution does not repeat completed QA.
+
+Own assertion red: b23b5f73-a143-45d5-a845-2a3162f4c82a, CLI/child 1/1, 15 passed, 1 knownRed (catalog examples on isolated fixture), unknown/unexecuted/removed empty, cleanup complete, timedOut false, group idle, next implement. Actual CatalogGenerator + production bindings + configured sources execute in the regression; no imported setup failure.
+
+Fix: prepareLiveProjects preserves the full configured project registry and changes only raf paths in a cloned configuration. The stand uses this same helper. Catalog validator/examples and source conf remain unchanged.
+
+Own qa: aeb86d87-37fb-403f-8684-bb44849559ca, CLI/child 0/0, all 16 passed, knownRed/unknown/unexecuted/removed empty, cleanup complete, timedOut false, group complete, next complete. Group/files/QA HOME and aggregate unchanged. TestRunResult, logical stderr, original merged output, CLI code and exact command/SHA/diff are retained separately. This unit green establishes fixture/catalog consistency, not successful native live steps; those await the corrected host execution.

@@ -1,0 +1,13 @@
+{
+  "workspaceShaAtRed": "07af33a3a9386b8e24ae23b5fcc017e6b15b6de0",
+  "workspaceShaAtQa": "b140a0611d7177ebaf33d8c472de7afbf5b1c29a",
+  "selection": [
+    "test/production-start-layout.test.ts"
+  ],
+  "group": "switch-raf-main-by-symlink/production-start-layout",
+  "commands": {
+    "red": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts",
+    "qa": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/c5d1e9bf-30a3-43b8-ae1e-0aec877403cf/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/production-start-layout --files test/production-start-layout.test.ts"
+  },
+  "streams": "Full tool output saved unchanged. First LF-terminated record is unchanged TestRunResult, remaining launch-queue.waiting record is logical stderr; native byte stream provenance is unavailable."
+}

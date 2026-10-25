@@ -9,6 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
+import { prepareLiveProjects } from './qa-main-symlink-fixture.ts';
 
 const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
 assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
@@ -103,9 +104,7 @@ try {
   assert.equal(git(source, 'rev-parse', 'HEAD'), reviewed); assert.equal(git(source, 'status', '--porcelain'), '', 'Clean reviewed clone required');
   for (const [exe, args] of [['node', ['--version']], ['codex', ['--version']], ['git', ['--version']], ['tmux', ['-V']], ['bwrap', ['--version']], ['uname', ['-a']]]) must(run('version-' + exe, exe, args));
   fs.cpSync(path.join(path.dirname(source), 'conf'), path.join(root, 'conf'), { recursive: true });
-  const projects = read(path.join(root, 'conf/projects.json'));
-  projects.projects = { raf: projects.projects.raf, orchestrator: projects.projects.orchestrator };
-  Object.assign(projects.projects.raf, { path: 'raf-main', branchPaths: { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' }, mainCopies: ['raf-main-a', 'raf-main-b'] });
+  const projects = prepareLiveProjects(read(path.join(root, 'conf/projects.json')));
   atomic(path.join(root, 'conf/projects.json'), projects);
   const settings = read(path.join(root, 'conf/raf.json')); summary.trust = configureLiveCodexTrust(settings, root); atomic(path.join(root, 'conf/raf.json'), settings);
   must(run('clone', 'git', ['clone', '--no-hardlinks', '--no-checkout', source, main])); git(main, 'checkout', '-B', 'main', reviewed);

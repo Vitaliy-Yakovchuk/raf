@@ -1,0 +1,55 @@
+diff --git a/scripts/qa-main-symlink-live.mjs b/scripts/qa-main-symlink-live.mjs
+index 67b33df..4cbd71a 100644
+--- a/scripts/qa-main-symlink-live.mjs
++++ b/scripts/qa-main-symlink-live.mjs
+@@ -9,6 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+ import { createStandGeneration } from './qa-main-agent-generation.mjs';
+ import { instrumentStandCli, stopStandServices, archiveStandAudit } from './qa-main-agent-channel-metadata.mjs';
++import { prepareLiveProjects } from './qa-main-symlink-fixture.ts';
+ 
+ const source = path.resolve(import.meta.dirname, '..'), reviewed = process.argv[2];
+ assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
+@@ -103,9 +104,7 @@ try {
+   assert.equal(git(source, 'rev-parse', 'HEAD'), reviewed); assert.equal(git(source, 'status', '--porcelain'), '', 'Clean reviewed clone required');
+   for (const [exe, args] of [['node', ['--version']], ['codex', ['--version']], ['git', ['--version']], ['tmux', ['-V']], ['bwrap', ['--version']], ['uname', ['-a']]]) must(run('version-' + exe, exe, args));
+   fs.cpSync(path.join(path.dirname(source), 'conf'), path.join(root, 'conf'), { recursive: true });
+-  const projects = read(path.join(root, 'conf/projects.json'));
+-  projects.projects = { raf: projects.projects.raf, orchestrator: projects.projects.orchestrator };
+-  Object.assign(projects.projects.raf, { path: 'raf-main', branchPaths: { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' }, mainCopies: ['raf-main-a', 'raf-main-b'] });
++  const projects = prepareLiveProjects(read(path.join(root, 'conf/projects.json')));
+   atomic(path.join(root, 'conf/projects.json'), projects);
+   const settings = read(path.join(root, 'conf/raf.json')); summary.trust = configureLiveCodexTrust(settings, root); atomic(path.join(root, 'conf/raf.json'), settings);
+   must(run('clone', 'git', ['clone', '--no-hardlinks', '--no-checkout', source, main])); git(main, 'checkout', '-B', 'main', reviewed);
+diff --git a/test/production-start-layout.test.ts b/test/production-start-layout.test.ts
+index 352a0a5..ebef9cb 100644
+--- a/test/production-start-layout.test.ts
++++ b/test/production-start-layout.test.ts
+@@ -9,6 +9,9 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
+ import type { ProductionStoreOptions } from '../src/main-production-store.ts';
+ import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
+ import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
++import { prepareLiveProjects } from '../scripts/qa-main-symlink-fixture.ts';
++import { CatalogGenerator } from '../src/catalog-generator.ts';
++import { productionBindings } from '../src/production-bindings.ts';
+ 
+ const root = '/unit/production-start/orchestrator';
+ const home = '/unit/production-start/home';
+@@ -66,6 +69,17 @@ const { createServiceHandlers } = await import(serviceUrl) as typeof import('../
+ const { prepareProductionQaFixture } = await import(qaFixtureUrl) as typeof import('./production-qa-fixture.ts');
+ test.after(() => hooks.deregister());
+ 
++test('native actual-start fixture: configured catalog examples remain valid on the isolated stand', () => {
++  const config = (name: string) => JSON.parse(readFileSync(new URL(`../../conf/${name}`, import.meta.url), 'utf8'));
++  const projects = config('projects.json');
++  const original = structuredClone(projects);
++  const isolated = prepareLiveProjects(projects);
++  assert.doesNotThrow(() => new CatalogGenerator().compile({
++    constants: config('raf-constants.json'), models: config('models.json'), projects: isolated,
++  }, productionBindings()));
++  assert.deepEqual(projects, original, 'stand setup must not mutate the source configuration');
++});
++
+ function fixture(t: TestContext, copies = false) {
+   const projects = {
+     raf: { path: 'raf-main', profile: 'raf', branchPaths: { main: 'raf-main', develop: 'raf-develop', hotfix: 'raf-hotfix' },

@@ -19,5 +19,20 @@
     "stderr",
     "full /srv/dev/s72-*/ev named by first stdout record"
   ],
-  "createdAt": "2026-10-25T22:31:02.344884+00:00"
+  "createdAt": "2026-10-25T22:31:02.344884+00:00",
+  "revisionUpdate": {
+    "reviewedSha": "07af33a3a9386b8e24ae23b5fcc017e6b15b6de0",
+    "command": "LC_ALL=C CODEX_HOME=/home/dev/.codex node scripts/qa-main-symlink-live.mjs 07af33a3a9386b8e24ae23b5fcc017e6b15b6de0",
+    "receipt": {
+      "accepted": true,
+      "receiptId": "298da81d-36d4-4163-bf38-1e38c52a3ac6"
+    },
+    "condition": "Use only if original host invocation has not started; otherwise return first evidence for targeted continuation.",
+    "reason": "SessionRecord stores selection in launchContext; reviewed correction before declaring any stand pass.",
+    "syntaxCheck": {
+      "command": "node --check scripts/qa-main-symlink-live.mjs",
+      "cliCode": 0
+    },
+    "at": "2026-10-25T22:37:20.700690+00:00"
+  }
 }

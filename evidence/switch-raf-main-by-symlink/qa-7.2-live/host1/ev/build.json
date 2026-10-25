@@ -1,0 +1,13 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "cwd": "/srv/dev/s72-y33EcB/root/raf-main",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "\n> build\n> node scripts/build.ts\n\n",
+  "stderr": "{\"code\":\"BUILD_FAILED\",\"message\":\"raf-constants.json#/commands/29/examples/0: INVALID_VALUE: Значення параметра не підтримується.\",\"details\":{\"stage\":\"build\",\"outputPath\":\"/srv/dev/s72-y33EcB/root/raf-main/dist/catalog.json\"},\"remediation\":\"Виправте джерело каталогу та повторіть npm run build.\"}\nnpm notice\nnpm notice New major version of npm available! 11.20.0 -> 12.2.1\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1\nnpm notice To update run: npm install -g npm@12.2.1\nnpm notice\n"
+}

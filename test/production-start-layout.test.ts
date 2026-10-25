@@ -9,6 +9,9 @@ import type { MainLayoutStartOptions } from '../src/main-layout.ts';
 import type { ProductionStoreOptions } from '../src/main-production-store.ts';
 import type { ProductionStartLayoutOptions } from '../src/production-start-layout.ts';
 import type { BackgroundRuntimeDependencies } from '../src/background-runtime.ts';
+import { prepareLiveProjects } from '../scripts/qa-main-symlink-fixture.ts';
+import { CatalogGenerator } from '../src/catalog-generator.ts';
+import { productionBindings } from '../src/production-bindings.ts';
 
 const root = '/unit/production-start/orchestrator';
 const home = '/unit/production-start/home';
@@ -65,6 +68,17 @@ const { prepareMainLayoutForProductionStart } = await import(prepareUrl) as type
 const { createServiceHandlers } = await import(serviceUrl) as typeof import('../src/service-entry.ts');
 const { prepareProductionQaFixture } = await import(qaFixtureUrl) as typeof import('./production-qa-fixture.ts');
 test.after(() => hooks.deregister());
+
+test('native actual-start fixture: configured catalog examples remain valid on the isolated stand', () => {
+  const config = (name: string) => JSON.parse(readFileSync(new URL(`../../conf/${name}`, import.meta.url), 'utf8'));
+  const projects = config('projects.json');
+  const original = structuredClone(projects);
+  const isolated = prepareLiveProjects(projects);
+  assert.doesNotThrow(() => new CatalogGenerator().compile({
+    constants: config('raf-constants.json'), models: config('models.json'), projects: isolated,
+  }, productionBindings()));
+  assert.deepEqual(projects, original, 'stand setup must not mutate the source configuration');
+});
 
 function fixture(t: TestContext, copies = false) {
   const projects = {

@@ -1,0 +1,120 @@
+{
+  "stage": 0,
+  "runId": "f2703d72-1408-4ee7-ac23-83fd639eb8c4",
+  "cwd": "/srv/dev/s64-C5hj0C/root/raf-develop",
+  "status": "passed",
+  "results": [
+    {
+      "label": "own add /srv/dev/s64-C5hj0C/root/raf-develop",
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/s64-C5hj0C/root/raf-develop",
+        "add",
+        "--",
+        "/srv/dev/s64-C5hj0C/root/raf-develop/qa/own-f2703d72-1408-4ee7-ac23-83fd639eb8c4-0.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "own commit /srv/dev/s64-C5hj0C/root/raf-develop",
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/s64-C5hj0C/root/raf-develop",
+        "-c",
+        "user.name=Isolated native QA",
+        "-c",
+        "user.email=qa@example.invalid",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "--only",
+        "-m",
+        "qa: own f2703d72-1408-4ee7-ac23-83fd639eb8c4 stage 0",
+        "--",
+        "/srv/dev/s64-C5hj0C/root/raf-develop/qa/own-f2703d72-1408-4ee7-ac23-83fd639eb8c4-0.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "[develop 6d70491] qa: own f2703d72-1408-4ee7-ac23-83fd639eb8c4 stage 0\n 1 file changed, 1 insertion(+)\n create mode 100644 qa/own-f2703d72-1408-4ee7-ac23-83fd639eb8c4-0.txt\n",
+      "stderr": ""
+    },
+    {
+      "label": "own commit visible /srv/dev/s64-C5hj0C/root/raf-develop",
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/s64-C5hj0C/root/raf-develop",
+        "log",
+        "-1",
+        "--format=%H",
+        "--",
+        "/srv/dev/s64-C5hj0C/root/raf-develop/qa/own-f2703d72-1408-4ee7-ac23-83fd639eb8c4-0.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "6d704913c81ee778470c686034d6ce2b57b81e89\n",
+      "stderr": ""
+    },
+    {
+      "label": "own add /srv/dev/s64-C5hj0C/root",
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/s64-C5hj0C/root",
+        "add",
+        "--",
+        "/srv/dev/s64-C5hj0C/root/openspec/changes/sym64-fixture/own-f2703d72-1408-4ee7-ac23-83fd639eb8c4-0.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "label": "own commit /srv/dev/s64-C5hj0C/root",
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/s64-C5hj0C/root",
+        "-c",
+        "user.name=Isolated native QA",
+        "-c",
+        "user.email=qa@example.invalid",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "--only",
+        "-m",
+        "qa: own f2703d72-1408-4ee7-ac23-83fd639eb8c4 stage 0",
+        "--",
+        "/srv/dev/s64-C5hj0C/root/openspec/changes/sym64-fixture/own-f2703d72-1408-4ee7-ac23-83fd639eb8c4-0.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "[main 4e541c8] qa: own f2703d72-1408-4ee7-ac23-83fd639eb8c4 stage 0\n 1 file changed, 1 insertion(+)\n create mode 100644 openspec/changes/sym64-fixture/own-f2703d72-1408-4ee7-ac23-83fd639eb8c4-0.txt\n",
+      "stderr": ""
+    },
+    {
+      "label": "own commit visible /srv/dev/s64-C5hj0C/root",
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/s64-C5hj0C/root",
+        "log",
+        "-1",
+        "--format=%H",
+        "--",
+        "/srv/dev/s64-C5hj0C/root/openspec/changes/sym64-fixture/own-f2703d72-1408-4ee7-ac23-83fd639eb8c4-0.txt"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "4e541c8044ac485e679b41a9a826d5d8ffe47a86\n",
+      "stderr": ""
+    }
+  ]
+}

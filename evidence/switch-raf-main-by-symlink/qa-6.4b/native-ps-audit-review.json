@@ -1,0 +1,109 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "native-pending",
+  "finding": "Stand38 on 37044e6 failed before helper1: actor a incorrectly perceived complete PS JSON as truncated; actor b correctly stopped because fixture audit writer EROFS masked the actual unauthorized result. See copied raw/cleaned evidence and exact host audit equality.",
+  "audit": "Assigned item remains current; changes are fixture-only, no production command grant, model/effort, runtime protection or workspace bounds changed.",
+  "fix": [
+    "Extract stand CLI instrumentation and audit only the approved message/ps commands. Unauthorized subcommands preserve their actual product stderr/exit without a privileged audit write. No new write grant or catch-and-ignore of audit errors.",
+    "After emitting unchanged full native PS stdout, emit a small completeness receipt from the actual completed exit-zero result, parsing the entire JSON session array. Refuse partial/malformed/truncated/non-array or still-running/nonzero results. This disambiguates long nested command strings; it never replaces native stdout or final host comparison.",
+    "Append the standalone verifier code to the actors unchanged full instruction files before launch. Brief and original raf_command remain unchanged after launch."
+  ],
+  "unitRuns": [
+    {
+      "runId": "f436805f-f9b3-48b4-a2ee-306b2b17a143",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "stand CLI audit preserves the actual unauthorized result without a writable audit grant"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native PS receipt verifies full large JSON and refuses partial or unfinished outputs"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "raw": "native-ps-audit-red.TestRunResult.json",
+      "tool": "native-ps-audit-red.tool.json",
+      "combinedStream": "native-ps-audit-red.combined-stream.txt",
+      "cli": "native-ps-audit-red.cli-exit.json",
+      "cliExitCode": 1,
+      "passedCount": 108,
+      "workspace": {
+        "head": "4a6839591751e2ed64ddea3ad42bc1897127c81b",
+        "status": "native-ps-audit-red-workspace.status.txt",
+        "patch": "native-ps-audit-red-workspace.patch"
+      }
+    },
+    {
+      "runId": "71b2690e-a56a-4e20-9762-a36d96687410",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "raw": "native-ps-audit-qa.TestRunResult.json",
+      "tool": "native-ps-audit-qa.tool.json",
+      "combinedStream": "native-ps-audit-qa.combined-stream.txt",
+      "cli": "native-ps-audit-qa.cli-exit.json",
+      "cliExitCode": 0,
+      "passedCount": 110,
+      "workspace": {
+        "head": "4a6839591751e2ed64ddea3ad42bc1897127c81b",
+        "status": "native-ps-audit-qa-workspace.status.txt",
+        "patch": "native-ps-audit-qa-workspace.patch"
+      }
+    }
+  ],
+  "checks": {
+    "npm run build": 0,
+    "npm run check:comments": 0,
+    "git diff --check": 0
+  },
+  "host": "native-partial-s64-C5hj0C/review.json",
+  "nextAction": "Commit and submit a new SHA for the complete real native stand; 6.4 remains open.",
+  "secretScan": {
+    "source": "Main host scan before commit: all configured secret values >=8 plus CLAUDE_CODE/SSH_CONNECTION; entire qa-6.4b (581 files, no gz) and three changed source/test paths",
+    "matches": 0
+  }
+}

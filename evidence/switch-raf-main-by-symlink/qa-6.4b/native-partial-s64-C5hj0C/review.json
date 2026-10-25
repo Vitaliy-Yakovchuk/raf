@@ -1,0 +1,54 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "partial-failed-not-acceptance",
+  "reviewedSha": "37044e606d9c837252d253995914cabec9f6c0d0",
+  "error": "Unexecuted remainder: native gate 1",
+  "nodeExitCode": 1,
+  "wrapperExitCode": 0,
+  "exitEvidence": "Main verified sym64k=1 immediately after node; wrapper final command exited 0. No host catch defect.",
+  "actors": [
+    {
+      "actor": "a",
+      "ps": [
+        {
+          "sourceLine": 107,
+          "bytes": 77207,
+          "sha256": "56f9d8dcf98041084a5d05d4fde11fcb85d26dde2e885057a943191f515eab36",
+          "sessions": 3,
+          "truncationMarker": false,
+          "audit": "f973992b-01a6-4be4-903a-1b0a7a376c95.json",
+          "cliExitCode": 0,
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "actor": "b",
+      "ps": [
+        {
+          "sourceLine": 77,
+          "bytes": 77207,
+          "sha256": "be423f468d6115d2b04268874c5aaf9f70136d43cdc6bf78dc3dc589d066993f",
+          "sessions": 3,
+          "truncationMarker": false,
+          "audit": "007b3591-e78a-400c-9b52-21b950b49848.json",
+          "cliExitCode": 0,
+          "stderr": ""
+        }
+      ]
+    }
+  ],
+  "findings": [
+    "Both actual native helper0 completed exit 0 and source0 passed; live protected-store split and one switch completed.",
+    "Actor a stopped after message/ps0, incorrectly reporting truncation; actual native output is complete parseable JSON with no tool truncation marker and matches the host CLI audit byte-for-byte.",
+    "Actor b reached unauthorized close, but fixture CLI audit attempted a write outside native scope and masked the actual product denial with EROFS. It stopped without retry.",
+    "No helper1/2/3, further switches/rollback, negative probe matrix or final native completion was executed. This stand is not acceptance."
+  ],
+  "cleanup": "Host cleanup agent-close/service-stop commands returned 0; owned agent tmux was already stopped, owned main tmux kill returned 0. No additional independent host process-list attestation was supplied for this stand.",
+  "secretScan": {
+    "source": "Main read-only evidence, nativeclean and assistant messages attestation",
+    "matches": 0
+  },
+  "sourceManifests": "source-manifests.json",
+  "copies": "copies.json"
+}

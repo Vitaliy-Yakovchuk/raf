@@ -10,7 +10,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { captureStateReadControls } from './qa-main-agent-denial.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
-import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt } from './qa-main-agent-channel-metadata.mjs';
+import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli } from './qa-main-agent-channel-metadata.mjs';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const reviewed = process.argv[2];
@@ -134,11 +134,7 @@ try {
     .replace(afterProbe, `    qaMetadata.capturePolicy(request.readOnlyDirectories ?? [], request.runId, 'native-preflight');\n${afterProbe}`);
   fs.writeFileSync(sandboxFile, sandboxSource);
   const bin = path.join(main, 'bin/raf.ts');
-  let cli = fs.readFileSync(bin, 'utf8');
-  const insertion = "if (result.stdout)";
-  assert.ok(cli.includes(insertion));
-  cli = cli.replace(insertion, `if (process.env.SYM64_AUDIT) { const fs = await import('node:fs'); const p = await import('node:path'); fs.writeFileSync(p.join(process.env.SYM64_AUDIT, crypto.randomUUID()+'.json'), JSON.stringify({module:import.meta.url,argv:process.argv.slice(2),result})); }\n${insertion}`);
-  fs.writeFileSync(bin, cli);
+  fs.writeFileSync(bin, instrumentStandCli(fs.readFileSync(bin, 'utf8')));
   git(main, 'add', '--', 'qa', 'bin/raf.ts', 'src/codex-sandbox.ts'); git(main, 'commit', '-m', 'qa: isolated native channel fixture and exact CLI audit');
   git(root, 'init', '-b', 'main');
   git(root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './raf-main', 'raf-main'); git(root, 'submodule', 'absorbgitdirs');

@@ -1,7 +1,7 @@
 {
   "item": "switch-raf-main-by-symlink:6.4",
   "status": "pending-next-native-stand",
-  "nativeReviewedSha": "5104f2be57b5f2220aa3f5006e9f90fc2e80c308",
+  "nativeReviewedSha": "37044e606d9c837252d253995914cabec9f6c0d0",
   "ownCommitsBeforeCompletion": [
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
@@ -58,6 +58,10 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "63d83a9084207ca24046f109b310abc27fbcfb5e"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "37044e606d9c837252d253995914cabec9f6c0d0"
     }
   ],
   "evidenceIndexes": [
@@ -68,15 +72,16 @@
     "hidden-read-review.json",
     "redactions-manifest.json",
     "native-gates-review.json",
-    "native-finish-review.json"
+    "native-finish-review.json",
+    "native-ps-audit-review.json"
   ],
   "latestOwnGroup": {
     "group": "switch-raf-main-by-symlink/agent-channel",
-    "runId": "4efd8d72-9378-46eb-b072-e688f1d36d79",
-    "raw": "native-finish-qa.TestRunResult.json",
+    "runId": "71b2690e-a56a-4e20-9762-a36d96687410",
+    "raw": "native-ps-audit-qa.TestRunResult.json",
     "cliExitCode": 0,
     "childExitCode": 0,
-    "passed": 108,
+    "passed": 110,
     "outcome": "passed",
     "cleanup": {
       "complete": true,
@@ -101,11 +106,11 @@
   },
   "history": "All copied previous native stands are partial/failed; their read-only source manifests and the main-provided cleaned event streams remain linked from their reviews. None is acceptance of 6.4.",
   "fullUnitEvidenceAudit": {
-    "parsedTestRunResultFiles": 62,
+    "parsedTestRunResultFiles": 64,
     "allParsed": true,
     "combinedStreams": "Complete raw JSON is unchanged. channel-fixture-qa has a 1513-byte combined-stream prefix plus the exact raw JSON; every other available combined-stream file is byte-identical to its raw JSON."
   },
   "nativeAcceptance": null,
   "scope": "Only assigned item 6.4. Checkboxes are left to raf; other open items prevent archive. No push.",
-  "latestPartialNative": "native-partial-s64-BCVFnO/review.json"
+  "latestPartialNative": "native-partial-s64-C5hj0C/review.json"
 }

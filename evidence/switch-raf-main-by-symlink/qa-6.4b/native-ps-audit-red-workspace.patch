@@ -1,0 +1,106 @@
+diff --git a/scripts/qa-main-agent-channel-metadata.mjs b/scripts/qa-main-agent-channel-metadata.mjs
+index 5410a04..59f2a9d 100644
+--- a/scripts/qa-main-agent-channel-metadata.mjs
++++ b/scripts/qa-main-agent-channel-metadata.mjs
+@@ -42,6 +42,16 @@ export function capturePolicy(directories, runId, phase) {
+   fs.writeFileSync(target, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+ }
+ 
++export function instrumentStandCli(cli) {
++  const insertion = "if (result.stdout)";
++  assert.ok(cli.includes(insertion));
++  return cli.replace(insertion, `if (process.env.SYM64_AUDIT) { const fs = await import('node:fs'); const p = await import('node:path'); fs.writeFileSync(p.join(process.env.SYM64_AUDIT, crypto.randomUUID()+'.json'), JSON.stringify({module:import.meta.url,argv:process.argv.slice(2),result})); }\n${insertion}`);
++}
++
++export function nativePsReceipt(result) {
++  return false;
++}
++
+ export function nativeActorPlan(actor) {
+   const instructions = `Controlled live QA actor ${actor}. Model and effort already selected by raf; never replace them. Do not implement, run tests, edit tasks, write report, archive, or retry failed/unknown commands. The provided helper makes only its own isolated fixture commits in develop and Orchestrator; these are authorized. In native exec tool perform this exact sequence. For EVERY functions.exec call set the first line to // @exec: {"max_output_tokens": 60000} followed by an actual newline, AND request max_output_tokens:60000 on the inner tools.exec_command/write_stdin. For functions.wait request max_tokens:60000. Both the outer tool and its inner command need the larger limit, including message/ps outputs: preserve exact outputs without truncation. Emit command stdout with text(result.output) once and command metadata separately, rather than JSON.stringify of the whole tool result. A complete parseable JSON output without an explicit tool truncation marker is complete even when large. Never print a full probe JSON report; the helper emits a small sha256 receipt for the complete host-copied file. First execute node qa/sym64-probe.mjs 0 <exact report_path from your brief>; wait for completion, polling a running native tool session as necessary. Then execute the issued raf_command agent message --to sym64-${actor === 'a' ? 'b' : 'a'} --text sym64-${actor}-after-B as ONE simple native tool command, using the original issued absolute raf_command unchanged. Next execute the issued raf_command agent ps in a separate native tool call. Then execute the issued raf_command ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} as a separate simple native command; this unauthorized subcommand must return a nonzero code, preserve its exact result and continue only for that expected denial. Next execute node qa/sym64-probe.mjs 1 <exact report_path>; wait for completion. Next repeat separate simple native message with text sym64-${actor}-after-A and agent ps using that same original prefix, followed by the same separate unauthorized ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} with required nonzero code. Execute node qa/sym64-probe.mjs 2 <exact report_path> and wait. After it completes repeat separate simple native message with text sym64-${actor}-after-rollback and agent ps using that same original prefix, followed by the same separate unauthorized ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} with required nonzero code. Execute node qa/sym64-probe.mjs 3 <exact report_path> and wait. Do not acknowledge received messages with tool calls, only chat. If any expected-success command fails, stop and preserve the error. The probe helper owns allowed negative actions only inside this isolated fixture. Do not change the helper or evade its checks. After helper 3 returns a final actual exit_code 0, make one separate functions.exec call emitting only text({sym64NativeCompleted:3,runId:"<the basename of the directory containing your exact report_path>",finalCliExitCode:0}); substitute your real runId. This is a native tool receipt, not a report file. Never emit this receipt while a tool session/cell is still running or after a failed/unknown result. Then give a final chat status and keep the native session alive for host cleanup.`;
+   return { item: `Controlled live QA actor ${actor}. Read qa/sym64-instructions-${actor}.txt and execute its complete native sequence. The host owns reports, fixture commits and final review; do not implement, run tests, edit tasks or write a report. Keep this brief and the issued raf_command unchanged across every switch.`, instructions };
+diff --git a/scripts/qa-main-agent-channel.mjs b/scripts/qa-main-agent-channel.mjs
+index 52e3a2e..14b636c 100644
+--- a/scripts/qa-main-agent-channel.mjs
++++ b/scripts/qa-main-agent-channel.mjs
+@@ -10,7 +10,7 @@ import { setTimeout as delay } from 'node:timers/promises';
+ import { captureStateReadControls } from './qa-main-agent-denial.mjs';
+ import { createStandGeneration } from './qa-main-agent-generation.mjs';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+-import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt } from './qa-main-agent-channel-metadata.mjs';
++import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli } from './qa-main-agent-channel-metadata.mjs';
+ 
+ const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+ const reviewed = process.argv[2];
+@@ -134,11 +134,7 @@ try {
+     .replace(afterProbe, `    qaMetadata.capturePolicy(request.readOnlyDirectories ?? [], request.runId, 'native-preflight');\n${afterProbe}`);
+   fs.writeFileSync(sandboxFile, sandboxSource);
+   const bin = path.join(main, 'bin/raf.ts');
+-  let cli = fs.readFileSync(bin, 'utf8');
+-  const insertion = "if (result.stdout)";
+-  assert.ok(cli.includes(insertion));
+-  cli = cli.replace(insertion, `if (process.env.SYM64_AUDIT) { const fs = await import('node:fs'); const p = await import('node:path'); fs.writeFileSync(p.join(process.env.SYM64_AUDIT, crypto.randomUUID()+'.json'), JSON.stringify({module:import.meta.url,argv:process.argv.slice(2),result})); }\n${insertion}`);
+-  fs.writeFileSync(bin, cli);
++  fs.writeFileSync(bin, instrumentStandCli(fs.readFileSync(bin, 'utf8')));
+   git(main, 'add', '--', 'qa', 'bin/raf.ts', 'src/codex-sandbox.ts'); git(main, 'commit', '-m', 'qa: isolated native channel fixture and exact CLI audit');
+   git(root, 'init', '-b', 'main');
+   git(root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './raf-main', 'raf-main'); git(root, 'submodule', 'absorbgitdirs');
+diff --git a/test/main-switch-agent-channel.test.ts b/test/main-switch-agent-channel.test.ts
+index b53e90b..7e5f23b 100644
+--- a/test/main-switch-agent-channel.test.ts
++++ b/test/main-switch-agent-channel.test.ts
+@@ -16,7 +16,7 @@ import { execute } from "../src/cli.ts";
+ import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
+ import { createWorkspacePorts } from "../src/os-runtime.ts";
+ import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
+-import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt } from "../scripts/qa-main-agent-channel-metadata.mjs";
++import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt } from "../scripts/qa-main-agent-channel-metadata.mjs";
+ import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
+ import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
+ import * as generationHost from "../src/hotfix-host.ts";
+@@ -43,6 +43,45 @@ import { captureStateReadControls, assertNativeDenial, nativeProbeReceipt } from
+ 
+ const root = "/fixture/orchestrator";
+ 
++test("stand CLI audit preserves the actual unauthorized result without a writable audit grant", async () => {
++  const directory = await fs.mkdtemp(join(tmpdir(), "native-cli-audit-"));
++  try {
++    const audit = join(directory, "audit");
++    await fs.mkdir(audit, { mode: 0o500 });
++    const cli = join(directory, "raf.mjs");
++    await fs.writeFile(cli, instrumentStandCli(`const result = process.argv[3] === 'ps' ? {exitCode:0,stdout:'[]',stderr:''} : {exitCode:1,stdout:'',stderr:'UNAUTHORIZED_COMMAND'};
++if (result.stdout) process.stdout.write(result.stdout+'\\n');
++if (result.stderr) process.stderr.write(result.stderr+'\\n');
++process.exitCode=result.exitCode;`));
++    const denied = spawnSync(process.execPath, [cli, "agent", "close", "--id", "peer"], { encoding: "utf8", env: { ...process.env, SYM64_AUDIT: audit } });
++    assert.equal(denied.status, 1);
++    assert.equal(denied.signal, null);
++    assert.equal(denied.stdout, "");
++    assert.equal(denied.stderr, "UNAUTHORIZED_COMMAND\n", "Fixture audit must not replace the actual negative command result with an EACCES/EROFS failure");
++    assert.deepEqual(await fs.readdir(audit), []);
++    await fs.chmod(audit, 0o700);
++    const allowed = spawnSync(process.execPath, [cli, "agent", "ps"], { encoding: "utf8", env: { ...process.env, SYM64_AUDIT: audit } });
++    assert.equal(allowed.status, 0, allowed.stderr);
++    assert.equal(allowed.stdout, "[]\n");
++    const records = await fs.readdir(audit);
++    assert.equal(records.length, 1);
++    assert.deepEqual(JSON.parse(await fs.readFile(join(audit, records[0]), "utf8")).result, { exitCode: 0, stdout: "[]", stderr: "" });
++  } finally { await fs.rm(directory, { recursive: true, force: true }); }
++});
++
++test("native PS receipt verifies full large JSON and refuses partial or unfinished outputs", () => {
++  const output = JSON.stringify([{ runId: "actor-a", process: { evidence: { command: "large actual launch command ".repeat(4000) } } }, { runId: "actor-b" }]) + "\n";
++  const result = { output, exit_code: 0 };
++  const receipt = nativePsReceipt(result);
++  assert.deepEqual(receipt, { sym64PsOutputComplete: true, characters: output.length, sessions: 2, exit_code: 0 });
++  assert.throws(() => nativePsReceipt({ ...result, output: output.slice(0, -20) }));
++  assert.throws(() => nativePsReceipt({ ...result, output: "Warning: truncated output\n" + output }));
++  assert.throws(() => nativePsReceipt({ ...result, output: "{}" }));
++  assert.throws(() => nativePsReceipt({ ...result, exit_code: 1 }));
++  assert.throws(() => nativePsReceipt({ output, session_id: 42 }));
++  assert.throws(() => nativePsReceipt({ ...result, session_id: 42 }));
++});
++
+ test("native final transcript waits for both final gates and native CLI completion", async () => {
+   const released: string[] = [];
+   const finished: string[] = [];

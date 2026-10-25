@@ -16,7 +16,7 @@ import { execute } from "../src/cli.ts";
 import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
 import { createWorkspacePorts } from "../src/os-runtime.ts";
 import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
-import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt } from "../scripts/qa-main-agent-channel-metadata.mjs";
+import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt } from "../scripts/qa-main-agent-channel-metadata.mjs";
 import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
 import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
 import * as generationHost from "../src/hotfix-host.ts";
@@ -42,6 +42,45 @@ import type {
 import { captureStateReadControls, assertNativeDenial, nativeProbeReceipt } from "../scripts/qa-main-agent-denial.mjs";
 
 const root = "/fixture/orchestrator";
+
+test("stand CLI audit preserves the actual unauthorized result without a writable audit grant", async () => {
+  const directory = await fs.mkdtemp(join(tmpdir(), "native-cli-audit-"));
+  try {
+    const audit = join(directory, "audit");
+    await fs.mkdir(audit, { mode: 0o500 });
+    const cli = join(directory, "raf.mjs");
+    await fs.writeFile(cli, instrumentStandCli(`const result = process.argv[3] === 'ps' ? {exitCode:0,stdout:'[]',stderr:''} : {exitCode:1,stdout:'',stderr:'UNAUTHORIZED_COMMAND'};
+if (result.stdout) process.stdout.write(result.stdout+'\\n');
+if (result.stderr) process.stderr.write(result.stderr+'\\n');
+process.exitCode=result.exitCode;`));
+    const denied = spawnSync(process.execPath, [cli, "agent", "close", "--id", "peer"], { encoding: "utf8", env: { ...process.env, SYM64_AUDIT: audit } });
+    assert.equal(denied.status, 1);
+    assert.equal(denied.signal, null);
+    assert.equal(denied.stdout, "");
+    assert.equal(denied.stderr, "UNAUTHORIZED_COMMAND\n", "Fixture audit must not replace the actual negative command result with an EACCES/EROFS failure");
+    assert.deepEqual(await fs.readdir(audit), []);
+    await fs.chmod(audit, 0o700);
+    const allowed = spawnSync(process.execPath, [cli, "agent", "ps"], { encoding: "utf8", env: { ...process.env, SYM64_AUDIT: audit } });
+    assert.equal(allowed.status, 0, allowed.stderr);
+    assert.equal(allowed.stdout, "[]\n");
+    const records = await fs.readdir(audit);
+    assert.equal(records.length, 1);
+    assert.deepEqual(JSON.parse(await fs.readFile(join(audit, records[0]), "utf8")).result, { exitCode: 0, stdout: "[]", stderr: "" });
+  } finally { await fs.rm(directory, { recursive: true, force: true }); }
+});
+
+test("native PS receipt verifies full large JSON and refuses partial or unfinished outputs", () => {
+  const output = JSON.stringify([{ runId: "actor-a", process: { evidence: { command: "large actual launch command ".repeat(4000) } } }, { runId: "actor-b" }]) + "\n";
+  const result = { output, exit_code: 0 };
+  const receipt = nativePsReceipt(result);
+  assert.deepEqual(receipt, { sym64PsOutputComplete: true, characters: output.length, sessions: 2, exit_code: 0 });
+  assert.throws(() => nativePsReceipt({ ...result, output: output.slice(0, -20) }));
+  assert.throws(() => nativePsReceipt({ ...result, output: "Warning: truncated output\n" + output }));
+  assert.throws(() => nativePsReceipt({ ...result, output: "{}" }));
+  assert.throws(() => nativePsReceipt({ ...result, exit_code: 1 }));
+  assert.throws(() => nativePsReceipt({ output, session_id: 42 }));
+  assert.throws(() => nativePsReceipt({ ...result, session_id: 42 }));
+});
 
 test("native final transcript waits for both final gates and native CLI completion", async () => {
   const released: string[] = [];

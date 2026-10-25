@@ -3,7 +3,7 @@ import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cos
 import { commandTimingFailure, recordCommandTiming } from './command-timing.ts';
 import { storedLaunchQueueIdentity, validateStoredQueueId } from './stored-launch-queue-events.ts';
 import { readMachineBootIdentity } from './os-runtime.ts';
-import { productionStateContext } from './state-migration-guard.ts';
+import { productionStateContext, type StateContext } from './state-migration-guard.ts';
 import { createServiceHandlers } from './service-entry.ts';
 import { createProductionServices, rafSystemCaller } from './production-runtime.ts';
 import { fileURLToPath } from 'node:url';
@@ -87,8 +87,8 @@ function clock(options: ProductionEntryOptions): () => number {
   return options.now ?? (() => performance.now());
 }
 
-function productionContext(options: ProductionEntryOptions, orchestratorRoot: string, fileName: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>) {
-  const stateContext = productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
+function productionContext(options: ProductionEntryOptions, orchestratorRoot: string, fileName: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>, sharedContext?: StateContext) {
+  const stateContext = sharedContext ?? productionStateContext(orchestratorRoot, fileURLToPath(import.meta.url), options.homeDirectory, 'cli');
   return { stateContext, orchestratorRoot: orchestratorRoot, confRoot: join(orchestratorRoot, 'conf'), artifactPath: options.artifactPath,
     statePath: stateContext.statePath, tmpRoot: stateContext.tmpRoot,
     mode: 'production' as const, commandStartedAtMs, resolveCaller };
@@ -123,15 +123,15 @@ function commandState(orchestratorRoot: string): (store: StateStore, services: (
   });
 }
 
-function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>, additionalHandlers: Record<string, Handler> = {}, commandTimingOwner?: 'production', sharedStore?: StateStore): AppRuntime {
+function openProductionRuntime(options: ProductionEntryOptions, orchestratorRoot: string, commandStartedAtMs: number, resolveCaller: () => Promise<unknown>, additionalHandlers: Record<string, Handler> = {}, commandTimingOwner?: 'production', sharedState?: { store: StateStore; context: StateContext }): AppRuntime {
   const now = clock(options);
   const loaded = readConfiguration(orchestratorRoot);
   const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
-  const context = { ...productionContext(options, orchestratorRoot, loaded.fileName, commandStartedAtMs, resolveCaller), commandTimingOwner };
+  const context = { ...productionContext(options, orchestratorRoot, loaded.fileName, commandStartedAtMs, resolveCaller, sharedState?.context), commandTimingOwner };
   return createAppRuntime(context, {
     additionalHandlers,
     now, loadConfiguration: async () => ({ catalog, models: loaded.models, commandTiming: loaded.commandTiming }),
-    openStore: async path => sharedStore ? { ...sharedStore, close() {} } : openStateStore(path, { context: context.stateContext }), nextRunIdentity: () => options.runIdentity ?? ({ runId: randomUUID(), tmuxSession: randomUUID() }),
+    openStore: async path => sharedState ? { ...sharedState.store, close() {} } : openStateStore(path, { context: context.stateContext }), nextRunIdentity: () => options.runIdentity ?? ({ runId: randomUUID(), tmuxSession: randomUUID() }),
     createServices: createProductionServices, commandState: commandState(orchestratorRoot),
   });
 }
@@ -202,7 +202,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
             return result;
           }
           if (serviceHandlers) return await serviceHandlers.handlers[name as keyof typeof serviceHandlers.handlers](params);
-          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) }, 'production', name === 'agent ps' ? profileStore : undefined);
+          runtime = openProductionRuntime(options, orchestratorRoot, commandStartedAtMs, async () => undefined, { 'runner limits': runnerLimits(options, orchestratorRoot, commandStartedAtMs) }, 'production', name === 'agent ps' ? { store: profileStore, context: profileContext } : undefined);
           const result = await runtime.handlers[name](params);
           await runtime.close();
           return result;

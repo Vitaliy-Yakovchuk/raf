@@ -1,0 +1,7 @@
+# Друге побудування контексту agent ps
+
+Жива діагностика diagnostic/{before,after-4.4}/operations.json показала дві productionStateContext у кожному agent ps; інвентаризація походження генерації коштує сотні ms. Після 535441d runtime вже позичає відкриту SQLite, проте будує її production context вдруге. Повторна серія stand26 має менші середні, але PID reuse wall 2442.62 → 2381.16 ms при SD 147.6/116.8 недостатньо відділяється від шуму. Ця серія не оголошується прийманням.
+
+Власний QA-red 80599710-70e4-4215-b8e3-17b7fbe6814b: сім assertion 2 !== 1 на лічильнику productionStateContext, 16 passed, CLI/child 1. Виправлення передає разом store та context, отримані цією ж командою, лише для agent ps. Інші entry points продовжують створювати власний context; resolveStateContext/verifyStateContext, перевірка provenance та живі process identity не змінюються. Це передача залежності одного виконання, без міжкомандного кешу чи нового таймера/порога.
+
+QA-green 37fff8df-da8a-4de2-a1e5-6dd0557a2a33: 23 passed, CLI/child 0; cleanup complete, timeout false, knownRed/unexecuted/unknown порожні, groupState/nextAction complete. Той самий group profile-raf-performance/agent-ps, selection test/agent-ps-cost.test.ts та QA HOME. Повні raw TestRunResult, stderr, окремі CLI/child коди, SHA й dirty diff збережено у context-{red,green}.*. Build і comments → 0 у context-{build,comments}.json. Нове живе приймання потрібне окремо; unit його не підміняє.

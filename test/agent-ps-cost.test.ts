@@ -312,7 +312,7 @@ const appUrl = new URL('../src/app-runtime.ts', import.meta.url).href;
 const entryBridge = 'const f = () => globalThis[Symbol.for("raf.agent-ps-entry.fixture")];';
 const entryDoubles: Record<string, string> = {
   'state-store.ts': `${entryBridge} export const openStateStore = () => f().openStore();`,
-  'state-migration-guard.ts': `${entryBridge} export const productionStateContext = () => f().context;`,
+  'state-migration-guard.ts': `${entryBridge} export const productionStateContext = () => f().stateContext();`,
   'app-runtime.ts': `export * from ${JSON.stringify(appUrl)}; import {createAppRuntime as create} from ${JSON.stringify(appUrl)}; export const createAppRuntime = (context, dependencies) => create(context, {...dependencies, commandState:undefined});`,
   'production-runtime.ts': `${entryBridge} export const rafSystemCaller = {}; export const createProductionServices = async () => ({control:{ps:()=>f().ps()}});`,
 };
@@ -350,10 +350,10 @@ for (const state of ['empty', 'live', 'finished', 'missing', 'pid-reused', 'unve
     const artifactPath = join(directory, 'catalog.json');
     await writeFile(artifactPath, JSON.stringify(catalog));
     const events: string[] = [];
-    let opens = 0, closes = 0;
+    let opens = 0, closes = 0, contexts = 0;
     const context = { statePath: join(directory, 'state.sqlite'), tmpRoot: join(directory, 'tmp') };
     const bridge = {
-      context, ps: f.ps,
+      context, ps: f.ps, stateContext() { contexts++; return context; },
       openStore() {
         opens++;
         let closed = false;
@@ -383,6 +383,7 @@ for (const state of ['empty', 'live', 'finished', 'missing', 'pid-reused', 'unve
     if (unknown) assert.equal(JSON.parse(result.stderr).code, 'PROCESS_SCAN_UNKNOWN');
     else assert.deepEqual(JSON.parse(result.stdout).map((row: SessionRecord) => row.addressId).sort(), state === 'live' ? ['main', 'qa-hotfix'] : []);
     assert.equal(opens, 1, 'The already opened profiling connection must serve the same agent ps runtime');
+    assert.equal(contexts, 1, 'The runtime must use the production context of its already validated profiling connection');
     assert.equal(closes, 1);
     assert.ok(events.includes('profile')); assert.ok(events.includes('ema'));
     assert.equal(events.at(-1), 'close', 'The production owner closes after profile and EMA finalization');

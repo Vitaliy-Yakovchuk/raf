@@ -11,6 +11,7 @@ import type { StateStore } from './state-store.ts';
 import type { SessionActivity, SessionRecord, ProcessIdentity } from './session-state.ts';
 import type { AssignmentSnapshot, AssignmentRequest, AssignmentValidation, AssignmentBriefContext } from './assignment.ts';
 import type { WorkspaceRouteRequest, WorkspaceRouteResult } from './workspace-routing.ts';
+import type { ModelHandoffLaunch } from './model-routing-handoff.ts';
 import type { ModelCatalog, ModelRequest, ModelSelection, ModelAvailability, RoutingSnapshot } from './model-routing.ts';
 import type { AdapterStartRequest, AdapterSession, ReportWrapper } from './agent-adapters.ts';
 import type { DeliveryReceipt, CloseResult, MainAttachment } from './agent-control.ts';
@@ -75,6 +76,7 @@ export interface RuntimeLaunch {
   commitRepositories?: readonly string[];
   notify?: NotifyTarget;
   taskContext?: { parameters: RuntimeRunParameters; context: RuntimeTaskContext };
+  handoff?: ModelHandoffLaunch;
 }
 
 export interface PreparedRuntimeReport {
@@ -135,6 +137,7 @@ const reminderCommands: readonly ReminderCommand[] = ['reminder add', 'reminder 
 export interface AppRuntime {
   handlers: Record<string, Handler>;
   close(): Promise<void>;
+  launchHandoff(parameters: RuntimeRunParameters, handoff: ModelHandoffLaunch): Promise<unknown>;
 }
 
 export function runnerLimitsHandler(available: readonly string[], collect: (runners: string[]) => Promise<CollectionResult>): Handler {
@@ -209,8 +212,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
     const state = await store();
     return { ...current, runnerEnabled: { ...current.runnerEnabled, ...Object.fromEntries((await config()).models.runners.map(runner => [runner.id, state.getRunnerEnabled(runner.id) ?? runner.initialEnabled])) } };
   };
-  const builtins: Record<string, Handler> = {
-    'agent run': async raw => {
+  const launchAgent = async (raw: Record<string, unknown>, handoff?: ModelHandoffLaunch) => {
       const params = raw as unknown as RuntimeRunParameters;
       const loaded = await config();
       const command = loaded.catalog.commands.find(command => command.handlerName === 'agent run');
@@ -232,7 +234,14 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         if (!api.resolveNotify) throw fail('NOTIFY_TARGET_INVALID', 'preflight', 'Notify target validation is unavailable');
         return api.resolveNotify(params.notify!);
       })();
-      const validation = await api.assignment.validate({ root: context.orchestratorRoot, selections: [...selections].map(([change, items]) => ({ change, items })) });
+      const validation = await api.assignment.validate({ root: context.orchestratorRoot, selections: [...selections].map(([change, items]) => ({ change, items: items.map(item => {
+        const expected = handoff?.assignment.changes.find(row => row.id === change)?.items.find(row => row.id === item.id);
+        return expected ? { ...item, expectedDescription: expected.description } : item;
+      }) })) });
+      if (handoff && (params.tasks.length !== handoff.assignment.changes.reduce((count, change) => count + change.items.length, 0) || params.tasks.some(task => {
+        const [change, item] = task.split(':');
+        return !handoff.assignment.changes.some(row => row.id === change && row.items.some(row => row.id === item));
+      }))) throw fail('INVALID_ASSIGNMENT', 'assignment', 'Handoff must contain exactly the current unfinished assignment');
       if (!validation.ok) throw fail('INVALID_ASSIGNMENT', 'assignment', `${validation.kind}: ${validation.issues.map(issue => `${issue.change}: ${issue.reason}`).join('; ')}`, { received: params.tasks, found: validation.issues });
       const assignment = validation.snapshot;
       const task = await api.resolveTask(params, assignment);
@@ -244,12 +253,14 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       const gitBoundaries = hotfix ? [] : await resolveGitWriteBoundaries(route.cwd, context.orchestratorRoot, !task.workspaceWritable ? task.writeBoundaries : undefined);
       const commitOwnWork = task.workspaceWritable || gitBoundaries.length > 0;
       const writeBoundaries = [...workspaceBoundaries, ...gitBoundaries.filter(path => !workspaceBoundaries.includes(path))];
-      const selection = api.selectModel(loaded.models, await snapshot(), { complexity: params.complexity, role: params.type });
+      const policy = handoff ? { ...loaded.models, models: loaded.models.models.filter(model => model.id !== handoff.causeModel) } : loaded.models;
+      const selection = api.selectModel(policy, await snapshot(), { complexity: params.complexity, role: params.type, ...(handoff ? { previousModel: handoff.causeModel } : {}) });
+      if (handoff && selection.status === 'selected' && (selection.runner !== handoff.selection.runner || selection.model !== handoff.selection.model || selection.effort !== handoff.selection.effort)) throw fail('RUNNER_UNAVAILABLE', 'selection', 'Routing changed before handoff launch');
       if (selection.status === 'waiting') throw fail(selection.code, 'selection', selection.reason);
       const launch: RuntimeLaunch = { ...identity, addressId: params.id,
         ...(notify ? { notify } : {}),
         activity: { type: params.type, project: params.project, features: [...params.features], phase: params.phase, cwd: route.cwd },
-        assignment, selection, statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(task.workspaceWritable ? [route.cwd, context.orchestratorRoot] : gitBoundaries.length ? [context.orchestratorRoot] : [])], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
+        assignment, selection, ...(handoff ? { handoff } : {}), statePath: context.statePath, tmpRoot: context.tmpRoot, writeBoundaries: [...writeBoundaries], commitRepositories: [...new Set(task.workspaceWritable ? [route.cwd, context.orchestratorRoot] : gitBoundaries.length ? [context.orchestratorRoot] : [])], taskContext: { parameters: params, context: { ...task, ...(route.hotfix ? { hotfix: route.hotfix, writeBoundaries: [...writeBoundaries] } : {}) } } };
       let prepared: PreparedRuntimeReport | undefined;
       let reserved = false;
       let startAttempted = false;
@@ -267,6 +278,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           ...(commitOwnWork && !hotfix ? { commitOwnWork: true, commitPaths: workspaceBoundaries, workspaceWritable: task.workspaceWritable } : {}),
           rafCommand: rafCommandFor(), ...(rafSubcommandsFor(params.type, params.phase, loaded.sandboxTestPhases) ? { rafSubcommands: rafSubcommandsFor(params.type, params.phase, loaded.sandboxTestPhases)! } : {}) });
         if (hotfix) brief += `\nHotfix raf: постійне спільне дерево ${route.cwd}, гілка hotfix, спільний індекс і HEAD; main включений до baseCommit ${route.hotfix?.baseCommit}. Кожен виконавець комітить лише власні явні шляхи; спільні файли та staged hunks узгоджуй через agent message за projects/orchestrator/parallel-development. Чужий index.lock очікуй, не видаляй. Коміт не активує main; push і активацію виконує лише main за окремими повноваженнями. Код hotfix запускай лише з ізольованим QA HOME. Коміт коду виконай довіреним портом: node ${join(context.tmpRoot, launch.runId, 'hotfix-commit.mjs')} --message <повідомлення> <власні відносні шляхи>. Cleanup прибирає лише власний запуск, спільне raf-hotfix зберігається.\n`;
+        if (handoff) brief += `\nПопередній runId: ${handoff.predecessorRunId}. Це новий запуск незавершених пунктів без resume. Причина: ${JSON.stringify(handoff.cause)}\nДокази попередньої спроби:\n${handoff.evidence.join('\n')}\n`;
         stage = 'reservation';
         if (api.agentQueue) {
           queueOwnsCleanup = true;
@@ -346,7 +358,9 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           completed: queueOwnsCleanup ? supplied?.completed ?? [] : reserved ? ['reservation'] : [], pending: queueOwnsCleanup ? [...new Set([...(supplied?.pending ?? []), ...pending])] : pending, retrySafe: queueOwnsCleanup ? supplied?.retrySafe ?? false : safe, admission: admissionSnapshot,
         });
       }
-    },
+  };
+  const builtins: Record<string, Handler> = {
+    'agent run': raw => launchAgent(raw),
     'agent ps': async () => measureRafCost('reconciliation', async () => (await service()).control.ps()),
     'agent update': async params => {
       const patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>> = {};
@@ -430,7 +444,7 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
       }
     }
   };
-  return { handlers, async close() {
+  return { handlers, launchHandoff: (parameters, handoff) => launchAgent(parameters as unknown as Record<string, unknown>, handoff), async close() {
     if (closed) return;
     closed = true;
     if (opening) {

@@ -42,7 +42,7 @@ function failure(code: string, reason: string, source = 'production-entry'): Err
     remediation: ['Перевірте конфігурацію та доступність потрібного компонента.'] });
 }
 
-function readConfiguration(root: string, catalog: CompiledCatalog): { models: ModelCatalog; commandTiming: { emaAlpha: number; sqliteOnlyMeanBudgetMs: number }; fileName: string } {
+export function readConfiguration(root: string, catalog: CompiledCatalog): { models: ModelCatalog; commandTiming: { emaAlpha: number; sqliteOnlyMeanBudgetMs: number }; fileName: string } {
   const object = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
   const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
   const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(text);

@@ -96,8 +96,10 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
             return { ok: false, failure: failure('WORKSPACE_UNAVAILABLE', 'Hotfix workspace ownership changed while waiting') };
           }
         }
-        const selection = api.selectModel(dependencies.configuration.models, await api.routingSnapshot(), {
-          role: input.activity.type, complexity: input.taskContext!.parameters.complexity });
+        const catalog = dependencies.configuration.models;
+        const policy = input.handoff ? { ...catalog, models: catalog.models.filter(model => model.id !== input.handoff!.causeModel) } : catalog;
+        const selection = api.selectModel(policy, await api.routingSnapshot(), {
+          role: input.activity.type, complexity: input.taskContext!.parameters.complexity, ...(input.handoff ? { previousModel: input.handoff.causeModel } : {}) });
         if (selection.status !== 'selected' || !isDeepStrictEqual({ runner: selection.runner, model: selection.model, effort: selection.effort },
           { runner: input.selection.runner, model: input.selection.model, effort: input.selection.effort })) return { ok: false, failure: failure('RUNNER_UNAVAILABLE', 'Selected runner/model is no longer available') };
         return { ok: true, validation: { assignment: result.snapshot, fingerprint, requested: task.requested, requiredFileSystemIds: task.requiredFileSystemIds } };

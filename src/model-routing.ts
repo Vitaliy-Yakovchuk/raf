@@ -53,7 +53,8 @@ export type ModelSelection =
   | { status: 'waiting'; code: 'NO_ENABLED_MODELS' | 'NO_SUITABLE_CAPACITY'; reason: string };
 
 export function classifyModelTask(catalog: ModelCatalog, task: string): string | null {
-  throw new Error('NotImplemented');
+  return catalog.routing.complexityOrder.find(complexity =>
+    catalog.routing.taskClassification[complexity]?.includes(task)) ?? null;
 }
 
 export function selectModel(catalog: ModelCatalog, snapshot: RoutingSnapshot, request: ModelRequest): ModelSelection {

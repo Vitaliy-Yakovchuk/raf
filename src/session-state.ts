@@ -42,6 +42,7 @@ export type DomainEffect = { id: string; domain: string; payload: unknown };
 export type TransitionEffects = { pending: readonly PendingIntent[]; domain: readonly DomainEffect[]; reportAccepted?: boolean };
 
 export type SessionLaunchContext = {
+  modelRouting?: { parameters: import('./app-runtime.ts').RuntimeRunParameters; cause?: import('./model-routing-handoff.ts').ModelHandoffObservation };
   flowQa?: import('./flow-qa-report.ts').FlowQaLaunchContext;
   flowPlan?: readonly import('./flow-task-plan.ts').FlowPlanDocument[];
   flowTestRuns?: readonly import('./flow-qa-report.ts').FlowTestRunFact[];
@@ -62,6 +63,9 @@ export type SessionLaunchContext = {
 };
 
 export type SessionRecord = SessionNotify & {
+  ownerAction?: 'paused' | 'stopped';
+  successorRunId?: string;
+  modelHandoff?: { activity: SessionActivity; launchContext: SessionLaunchContext; reason?: string };
   runId: string;
   addressId: string;
   revision: number;
@@ -124,6 +128,11 @@ export function closeSessionInTransaction(tx: SessionTransaction, session: Sessi
     addressId: session.addressId,
     revision: session.revision + 1,
     state: 'finished',
+    ...(session.ownerAction ? { ownerAction: session.ownerAction } : {}),
+    ...(session.successorRunId ? { successorRunId: session.successorRunId } : {}),
+    ...(session.activity && session.launchContext?.modelRouting && session.result?.status !== 'succeeded' && !session.result?.forcedClose && !session.ownerAction ? {
+      modelHandoff: { activity: copy(session.activity), launchContext: { ...copy(session.launchContext), modelRouting: { ...copy(session.launchContext.modelRouting), cause: session.launchContext.modelRouting.cause ?? { status: 'exited', exitCode: session.observation?.state === 'exited' ? session.observation.exitCode : null } } } },
+    } : {}),
     ...(session.process ? { process: copy(session.process) } : {}),
     ...(session.result ? { result: { status: session.result.status, response: '', proof: null, ...(session.result.forcedClose ? { forcedClose: copy(session.result.forcedClose) } : {}) } } : {}),
     ...(session.abortReason ? { abortReason: session.abortReason } : {}),
@@ -247,7 +256,7 @@ export function createSessionState(dependencies: SessionStateDependencies): Sess
       return repository.transaction(tx => {
         let removed = 0;
         for (const session of tx.listSessions()) {
-          if (session.state === 'finished' && session.finishedAt && Date.parse(session.finishedAt) <= cutoff) {
+          if (session.state === 'finished' && !session.modelHandoff && session.finishedAt && Date.parse(session.finishedAt) <= cutoff) {
             tx.deleteSession(session.runId);
             removed++;
           }

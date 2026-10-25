@@ -1,4 +1,5 @@
 import { loadCompiledCatalog } from './compiled-catalog.ts';
+import { runProductionModelHandoffs } from './production-model-handoff.ts';
 import { scheduleWorkerHealthSummary } from './health-summary-runtime.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { RafCostRuntime, rafCostBoundary } from './raf-cost-runtime.ts';
@@ -963,6 +964,18 @@ export async function reconcileProductionReports(store: StateStore, context: Run
   }
   return retained;
 }
+async function settleModelHandoffs(store: StateStore, context: RuntimeContext, configuration: RuntimeConfiguration, options: Parameters<typeof createProductionServices>[3] = {}) {
+  const execute = runtimeExecution(context, options.execute);
+  return runProductionModelHandoffs({ store, context,
+    loadConfiguration: async () => {
+      const { readConfiguration } = await import('./production-entry.ts');
+      const catalog = loadCompiledCatalog(context.artifactPath);
+      return { ...configuration, catalog, ...readConfiguration(context.orchestratorRoot, catalog) };
+    },
+    createServices: current => createProductionServices(store, current, context, options),
+    inspect: identity => observeIdentity(identity, execute), assignmentPorts: assignmentPorts(execute),
+  });
+}
 export async function createProductionServices(
   store: StateStore,
   configuration: RuntimeConfiguration,
@@ -984,6 +997,13 @@ export async function createProductionServices(
   const assignments = assignmentPorts(execute);
   const prepared = new Map<string, { testAssignment: SandboxTestAssignment; flowQa: import('./flow-qa-report.ts').FlowQaLaunchContext | null; flowPlan: readonly import('./flow-task-plan.ts').FlowPlanDocument[]; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;
+  const markOwnerAction = (id: string, action: 'paused' | 'stopped') => {
+    if (id === 'main') return;
+    store.sessionRepository.transaction(tx => {
+      const row = tx.listSessions().find(row => row.addressId === id && row.state !== 'finished');
+      if (row) tx.putSession({ ...row, revision: row.revision + 1, ownerAction: action });
+    });
+  };
   const cleanQueuedReport = async (runId: string) => {
     if (readSession(runId)?.state === 'running') fail('LAUNCH_RECOVERABLE', 'Cannot clean a running launch');
     await fs.rm(join(context.tmpRoot, runId), { recursive: true, force: true });
@@ -1191,7 +1211,7 @@ export async function createProductionServices(
         requiredFileSystems: requiredFileSystemIds.map(id => ({ id, paths: paths.filter(path => resourceSnapshot.fileSystemByPath[path] === id) })),
         attributedPaths: [join(input.tmpRoot, input.runId)],
       };
-      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { flowQa: record.flowQa ?? undefined, flowPlan: record.flowPlan, resourceUsageContext, ...(input.queueClaim ? { agentQueue: input.queueClaim.record } : {}), ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
+      const request = { runId: input.runId, addressId: input.addressId, activity: input.activity, launchContext: { ...(input.taskContext ? { modelRouting: { parameters: input.taskContext.parameters } } : {}), flowQa: record.flowQa ?? undefined, flowPlan: record.flowPlan, resourceUsageContext, ...(input.queueClaim ? { agentQueue: input.queueClaim.record } : {}), ...(record.workspaceTrustDenied ? { workspaceTrustDenied: true as const } : {}), reportedCommits: record.reportedCommits, reportSchema: record.launch.taskContext?.context.reportSchema, testAssignment, assignment: input.assignment, selection: input.selection, reportPath: input.reportPath, briefPath: join(input.tmpRoot, input.runId, 'brief.txt'), writeBoundaries: [...(record.launch.writeBoundaries ?? [])] }, resource: 'runtime', amount: requested.ramBytes, requested, requiredFileSystemIds, homeFileSystemId, estimate, mode: input.activity.type === 'hotfix' ? 'hotfix' as const : 'normal' as const };
       let admissionReason = '';
       const caller = await (async () => {
         try { const sender = await tools.resolve(await context.resolveCaller()); return sender.kind === 'agent' ? sender.runId : undefined; }
@@ -1208,9 +1228,12 @@ export async function createProductionServices(
             const target = tx.getSession(input.notify.runId);
             if (target?.state !== 'running' || target.addressId !== input.notify.addressId) fail(NOTIFY_TARGET_INVALID, `Notify target is no longer active: ${input.notify.addressId}`);
           }
+          const predecessor = input.handoff ? tx.getSession(input.handoff.predecessorRunId) : undefined;
+          if (input.handoff && (!predecessor || predecessor.state !== 'finished' || !predecessor.modelHandoff || predecessor.successorRunId || predecessor.ownerAction || predecessor.result?.status === 'succeeded' || predecessor.result?.forcedClose)) fail('LAUNCH_FENCE_LOST', 'Predecessor is not available for one new handoff launch');
           const result = reserveLaunchInTransaction(tx, request, measured, evaluate);
           synchronize(result.admission);
           if (!result.reserved) { admissionReason = result.admission.reasons.join('; '); throw new Error('RESOURCE_UNAVAILABLE'); }
+          if (predecessor) tx.putSession({ ...predecessor, revision: predecessor.revision + 1, successorRunId: input.runId, modelHandoff: undefined });
           if (input.activity.phase === 'context-review') {
             const review = reserveStartupContextReview({ runId: input.runId, phase: 'context-review', brief: '', assignment: input.assignment }, { database: store.startupContextDatabase });
             tx.putSession({ ...result.session, launchContext: { ...result.session.launchContext!, contextReview: review } });
@@ -1332,12 +1355,23 @@ export async function createProductionServices(
         await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
         await reconcileFinishedAgentQueues({ store, current: readSession, observe: identity => observeIdentity(identity, execute), cleanReport: cleanQueuedReport });
         await tools.deliverResults();
-        return resultNoticeViews(store, sessions);
+        const handoffs = await settleModelHandoffs(store, context, configuration, options);
+        const started = handoffs.flatMap(result => result.status === 'started' ? [result.session] : []);
+        return resultNoticeViews(store, [...sessions, ...started.filter(row => !sessions.some(session => session.runId === row.runId))]);
       },
       update: async (id, patch, caller) => { await tools.authorize(id, caller); const session = tools.state.listReconciliationCandidates().find(session => session.addressId === id); if (!session?.activity) fail('SESSION_UNAVAILABLE', 'Session activity unavailable'); return tools.control.update(id, { ...session.activity, ...patch }); },
       message: (input, caller) => tools.control.message(input, caller),
-      close: async (id, caller, options) => { await tools.authorize(id, caller, true); return tools.control.close(id, options); },
-      interrupt: async (id, caller) => { await tools.authorize(id, caller, true); return tools.control.interrupt(id); },
+      close: async (id, caller, options) => {
+        await tools.authorize(id, caller, true);
+        if (options && ((options.force !== undefined && typeof options.force !== 'boolean') || (options.force === true ? typeof options.reason !== 'string' || !options.reason.trim() : options.reason !== undefined))) fail('INVALID_ARGUMENT', 'Force requires a nonempty reason; reason requires force');
+        markOwnerAction(id, 'stopped');
+        return tools.control.close(id, options);
+      },
+      interrupt: async (id, caller) => {
+        await tools.authorize(id, caller, true);
+        markOwnerAction(id, 'paused');
+        return tools.control.interrupt(id);
+      },
       attachMain: tools.attachMain,
     },
     authorizeMain: async caller => { await tools.authorize('main', caller); },
@@ -1841,6 +1875,10 @@ export async function runProductionWorker(
         },
         failed: async (_runId, reason, recoverable) => {
           await retryStateOperation(() => recordLaunchFailure(store, request.runId, reason), settings.timeouts);
+          store.sessionRepository.transaction(tx => {
+            const row = tx.getSession(request.runId);
+            if (row?.launchContext?.modelRouting) tx.putSession({ ...row, revision: row.revision + 1, launchContext: { ...row.launchContext, modelRouting: { ...row.launchContext.modelRouting, cause: { status: 'failed', reason } } } });
+          });
           if (recoverable) { process.stderr.write(`${request.runId}: recoverable launch: ${reason}\n`); return; }
           const current = tools.current(request.runId);
           if (current?.state === 'running' && current.process) {
@@ -1863,7 +1901,7 @@ export async function runProductionWorker(
       },
       handshake: async handshake => { await channel.handshake({ ...handshake, warnings: availability.warnings }); handedOff = true; },
     });
-    try { await launched; }
+    try { await launched; await settleModelHandoffs(store, context, manifest.configuration, options); }
     catch (error) {
       if (!handedOff) await discardFailedLaunch().catch(cleanup => process.stderr.write(`${request.runId}: failed launch cleanup: ${cleanup instanceof Error ? cleanup.message : String(cleanup)}\n`));
       throw error;

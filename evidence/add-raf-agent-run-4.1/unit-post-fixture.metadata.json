@@ -1,0 +1,60 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/contracts",
+  "testedHeadBeforeRun": "7f5661e9dcd6c23b2da587348f8657651bf9593e",
+  "observedHeadAfterRun": "7f5661e9dcd6c23b2da587348f8657651bf9593e",
+  "workspaceChanges": [],
+  "sourceSha256": "04aab30e580295bb0f8d73e43e52dcfb9c1f2b8d38490396a38560579f48022a",
+  "fixtureSha256": "ad49cbff1f98d8e8ecf58566d59da8d332303ea1be376143084eb56a1adab0ac",
+  "fixtureCommits": [
+    "c8611ae6b29c96295988509c4fa7c7356cc818b8",
+    "7f5661e9dcd6c23b2da587348f8657651bf9593e"
+  ],
+  "captureNote": "Native exec exposes one merged stream. It returned one complete TestRunResult JSON followed by a launch-queue.waiting NDJSON line. The stdout prefix and following queue line were split at their existing newline without changing bytes; original merged output is also retained. stderr is a logical extraction, not an independently captured byte channel. The full result is stored in tool state before the display was truncated; JSON.parse of the complete stored stdout succeeded.",
+  "cliExitCode": 0,
+  "tool": {
+    "chunk_id": "a018a9",
+    "wall_time_seconds": 0.176872596,
+    "exit_code": 0,
+    "original_token_count": 23501
+  },
+  "runId": "1ecdd8fb-8b46-4919-8659-4707faba7601",
+  "selection": {
+    "files": [
+      "test/cli-catalog.test.ts",
+      "test/app-runtime.test.ts",
+      "test/task-context.test.ts",
+      "test/task-context-z12.test.ts",
+      "test/runner-availability.test.ts",
+      "test/agent-control.test.ts",
+      "test/session-state.test.ts",
+      "test/task-reservations.test.ts",
+      "test/resource-admission.test.ts",
+      "test/resource-estimates.test.ts",
+      "test/agent-run-admission-snapshot.test.ts",
+      "test/home-disk-admission.test.ts",
+      "test/session-recovery.test.ts",
+      "test/agent-adapters-contract.test.ts",
+      "test/launch-state.test.ts",
+      "test/production-runtime.test.ts"
+    ],
+    "testIds": []
+  },
+  "outcome": "passed",
+  "childExitCode": 0,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "passed": 628,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "timeoutCount": 0,
+  "nextAction": "complete",
+  "stateHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391"
+}

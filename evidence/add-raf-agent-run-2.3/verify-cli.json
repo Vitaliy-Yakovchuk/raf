@@ -1,0 +1,15 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/contracts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "transport": "exec_command combined output; entire output parsed as one TestRunResult JSON, no separate stderr text observed",
+  "chunks": [
+    {
+      "chunk_id": "0c3cb0",
+      "wall_time_seconds": 0.140282255,
+      "exit_code": 1,
+      "original_token_count": 29362,
+      "outputBytes": 113973
+    }
+  ]
+}

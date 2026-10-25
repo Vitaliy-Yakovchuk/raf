@@ -63,6 +63,15 @@ export type CloseOptions = { force?: boolean; reason?: string };
 export type CloseResult = { forcedClose?: { reason: string }; closed: boolean; unfinished: SessionCloseCheck['unfinished']; result?: WorkResult['status'] };
 export type AgentPsSession = SessionRecord & { reconciliation?: { code: 'WORKER_RESULT_PENDING'; reason: string } };
 
+class ProcessOwnershipChangedError extends Error {
+  readonly observation: ProcessObservation;
+
+  constructor(observation: ProcessObservation) {
+    super('Session is not confirmed alive: process ownership changed');
+    this.observation = observation;
+  }
+}
+
 export class AgentControlService {
   private dependencies: AgentControlDependencies;
   private closing = new Map<string, Promise<CloseResult>>();
@@ -95,8 +104,8 @@ export class AgentControlService {
 
   private checkedObservation(identity: ProcessIdentity, observation: ProcessObservation, requireOwnership = false): ProcessObservation {
     if (observation.state === 'alive' && !this.sameProcess(identity, observation.identity)) {
-      if (requireOwnership) throw new Error('Session is not confirmed alive: process ownership changed');
       observation = { state: 'exited', observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity no longer belongs to this run' };
+      if (requireOwnership) throw new ProcessOwnershipChangedError(observation);
     }
     return observation;
   }
@@ -227,7 +236,12 @@ export class AgentControlService {
     if (session.state !== 'running' || !session.process) {
       throw new Error(`Session is not confirmed alive: ${id}`);
     }
-    const observation = await this.inspect(session.process, true);
+    let observation: ProcessObservation;
+    try { observation = await this.inspect(session.process, true); }
+    catch (error) {
+      if (error instanceof ProcessOwnershipChangedError) await this.reconcile(session, error.observation);
+      throw error;
+    }
     if (observation.state !== 'alive') {
       if (observation.state === 'exited') return closeExited(observation);
       throw new Error(`Session is not confirmed alive: ${id}`);

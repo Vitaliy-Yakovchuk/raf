@@ -7,6 +7,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { createServer, connect } from 'node:net';
+import { prepareHostTmuxEndpoint } from './z4044-host-tmux.mjs';
 
 const driverFile = fileURLToPath(import.meta.url);
 const here = path.dirname(driverFile);
@@ -201,6 +202,7 @@ try {
   must(await request('runner-list', ['runner', 'list']));
   must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
   must(await request('service-start', ['service', 'start']));
+  summary.hostTmuxSentinel = prepareHostTmuxEndpoint(liveBoundaryConfig.endpoints[1], args => command('host-tmux-prepare-' + (++seq), 'tmux', args));
   summary.liveHostControlsBefore = await hostControls();
   assert.equal(git(hotfix, 'status', '--porcelain'), '', 'initial hotfix launch requires a clean fixture tree');
   const launchA = await request('launch-a', actorArgs('a', '1.1')); must(launchA);

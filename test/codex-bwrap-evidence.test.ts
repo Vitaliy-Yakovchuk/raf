@@ -1,9 +1,34 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { traceEvidence } from './helpers/z404-trace-evidence.ts';
+import { prepareHostTmuxEndpoint } from './helpers/z4044-host-tmux.mjs';
 
 const helper = '/tmp/own/bwrap';
 const filter = '/tmp/own/network.bpf';
+
+test('[Z.404 E05] registered host tmux control survives absence and closure of worker sessions', () => {
+  const endpoint = '/tmp/own-stand/.raf/tmp/tmux/server.sock';
+  const sessions = new Set<string>();
+  const execute = (args: string[]) => {
+    assert.deepEqual(args.slice(0, 2), ['-S', endpoint]);
+    if (args.includes('new-session')) {
+      const name = args[args.indexOf('-s') + 1];
+      assert.ok(name && name !== 'worker', 'host owns a separate sentinel session');
+      sessions.add(name);
+    }
+    return { cliExitCode: sessions.size ? 0 : 1, stderr: sessions.size ? '' : `no server running on ${endpoint}\n` };
+  };
+  const sentinel = prepareHostTmuxEndpoint(endpoint, execute);
+  assert.ok(sessions.has(sentinel.session), 'service start need not create a tmux server');
+  sessions.add('worker'); sessions.delete('worker');
+  assert.equal(execute(['-S', endpoint, 'list-sessions']).cliExitCode, 0, 'last worker exit must not invalidate the host deny control');
+});
+
+test('[Z.404 E06] host tmux control cannot pass when sentinel creation fails', () => {
+  assert.throws(() => prepareHostTmuxEndpoint('/tmp/own-stand/.raf/tmp/tmux/server.sock', () => ({
+    cliExitCode: 1, stderr: 'cannot create own host tmux endpoint',
+  })), /cannot create own host tmux endpoint/);
+});
 
 test('[Z.404 E01] helper pathname in another execve argv is not helper execution', () => {
   const observed = traceEvidence([

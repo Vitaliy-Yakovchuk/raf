@@ -1,0 +1,40 @@
+✖ 6.7 Vitest setup ENOENT before OS spawn releases the group and preserves its retry budget (23.378862ms)
+✔ 6.3.7 non-etchly Vitest profile at bugs-api uses the structured adapter (12.142917ms)
+✔ 6.3.7 non-etchly Vitest profile at . uses the structured adapter (9.542716ms)
+✔ 6.3.7 non-etchly Vitest profile at bugs-api with preload uses the structured adapter (9.225607ms)
+✔ 6.3.7 dependency checks resolve from workspace for a non-etchly nested profile (14.709596ms)
+✔ 6.3.7 cwd-local lookalike cannot satisfy a missing workspace dependency (11.491993ms)
+✔ 6.3.8 test-scaffold/red is rejected before the launch handler (type-first) (2.214608ms)
+✔ 6.3.8 test-scaffold/red is rejected before the launch handler (phase-first) (0.359324ms)
+✔ 6.3.8 valid launch test-scaffold/test-scaffold still reaches the handler (0.313203ms)
+✔ 6.3.8 valid launch hotfix/implement still reaches the handler (0.233192ms)
+✔ 6.3.8 valid launch spec/context-review still reaches the handler (0.138709ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 10
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 405.972751
+
+✖ failing tests:
+
+test at test/hotfix-637-638.test.ts:60:1
+✖ 6.7 Vitest setup ENOENT before OS spawn releases the group and preserves its retry budget (23.378862ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'refused'
+  - 'setup-failed'
+  
+      at TestContext.<anonymous> (file:///srv/dev/rafhx-trr67-red/raf/test/hotfix-637-638.test.ts:103:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'refused',
+    expected: 'setup-failed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

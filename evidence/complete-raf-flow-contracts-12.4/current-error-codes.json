@@ -1,0 +1,802 @@
+[
+  {
+    "id": "ACTIVITY_CONFLICT",
+    "description": "Session changed during activity update",
+    "exitCode": 1
+  },
+  {
+    "id": "ADDRESS_IN_USE",
+    "description": "address in use",
+    "exitCode": 1
+  },
+  {
+    "id": "AGENT_RESULT_PENDING",
+    "description": "agent result pending",
+    "exitCode": 1
+  },
+  {
+    "id": "ATOMIC_SWITCH_UNSUPPORTED",
+    "description": "Atomic symlink rename unsupported",
+    "exitCode": 1
+  },
+  {
+    "id": "ATTACHMENT_ACCESS_DENIED",
+    "description": "attachment access denied",
+    "exitCode": 1
+  },
+  {
+    "id": "ATTACHMENT_FETCH_FAILED",
+    "description": "attachment fetch failed",
+    "exitCode": 1
+  },
+  {
+    "id": "ATTACHMENT_INTEGRITY_FAILED",
+    "description": "attachment integrity failed",
+    "exitCode": 1
+  },
+  {
+    "id": "ATTACHMENT_NOT_FOUND",
+    "description": "attachment not found",
+    "exitCode": 1
+  },
+  {
+    "id": "ATTACHMENT_SECTION_UNAVAILABLE",
+    "description": "attachment section unavailable",
+    "exitCode": 1
+  },
+  {
+    "id": "ATTACHMENT_TOO_LARGE",
+    "description": "attachment too large",
+    "exitCode": 1
+  },
+  {
+    "id": "BRANCH_MISMATCH",
+    "description": "branch mismatch",
+    "exitCode": 1
+  },
+  {
+    "id": "BRIEF_CONTEXT_MISMATCH",
+    "description": "Existing durable brief does not match this prepared launch",
+    "exitCode": 1
+  },
+  {
+    "id": "BUG_COMMAND_FAILED",
+    "description": "bug command failed",
+    "exitCode": 1
+  },
+  {
+    "id": "BUG_CONFIG_INVALID",
+    "description": "bug config invalid",
+    "exitCode": 1
+  },
+  {
+    "id": "BUG_SECTION_UNAVAILABLE",
+    "description": "bug section unavailable",
+    "exitCode": 1
+  },
+  {
+    "id": "BUG_WRITE_INVALID_RESPONSE",
+    "description": "bug write invalid response",
+    "exitCode": 1
+  },
+  {
+    "id": "BUG_WRITE_REJECTED",
+    "description": "bug write rejected",
+    "exitCode": 1
+  },
+  {
+    "id": "BUG_WRITE_REPLY_TARGET_MISSING",
+    "description": "bug write reply target missing",
+    "exitCode": 1
+  },
+  {
+    "id": "BUG_WRITE_UNKNOWN",
+    "description": "bug write unknown",
+    "exitCode": 1
+  },
+  {
+    "id": "CALLER_UNAUTHORIZED",
+    "description": "caller unauthorized",
+    "exitCode": 1
+  },
+  {
+    "id": "CALLER_UNVERIFIED",
+    "description": "caller unverified",
+    "exitCode": 1
+  },
+  {
+    "id": "CATALOG_UNAVAILABLE",
+    "description": "catalog unavailable",
+    "exitCode": 1
+  },
+  {
+    "id": "CHANNEL_COMMAND_DENIED",
+    "description": "channel command denied",
+    "exitCode": 1
+  },
+  {
+    "id": "COMMAND_UNAVAILABLE",
+    "description": "Quota collection is unavailable in this runtime",
+    "exitCode": 1
+  },
+  {
+    "id": "COMMENT_TEXT_EMPTY",
+    "description": "Текст коментаря порожній.",
+    "exitCode": 1
+  },
+  {
+    "id": "COMMENT_TEXT_INVALID",
+    "description": "Текст коментаря не є коректним UTF-8.",
+    "exitCode": 1
+  },
+  {
+    "id": "COMMENT_TEXT_UNREADABLE",
+    "description": "comment text unreadable",
+    "exitCode": 1
+  },
+  {
+    "id": "CONFIGURATION_INVALID",
+    "description": "configuration invalid",
+    "exitCode": 1
+  },
+  {
+    "id": "COORDINATOR_ASSIGNMENT_CHANGED",
+    "description": "coordinator assignment changed",
+    "exitCode": 1
+  },
+  {
+    "id": "COORDINATOR_FENCE_LOST",
+    "description": "coordinator fence lost",
+    "exitCode": 1
+  },
+  {
+    "id": "DUPLICATE_ARGUMENT",
+    "description": "duplicate argument",
+    "exitCode": 1
+  },
+  {
+    "id": "EMPTY_SELECTION",
+    "description": "empty selection",
+    "exitCode": 1
+  },
+  {
+    "id": "ENOTSUP",
+    "description": "enotsup",
+    "exitCode": 1
+  },
+  {
+    "id": "ENVIRONMENT_INVALID",
+    "description": "environment invalid",
+    "exitCode": 1
+  },
+  {
+    "id": "EVENT_ID_INVALID",
+    "description": "event id invalid",
+    "exitCode": 1
+  },
+  {
+    "id": "EXACT_IDS_UNSUPPORTED",
+    "description": "Expected Vitest adapter",
+    "exitCode": 1
+  },
+  {
+    "id": "EXDEV",
+    "description": "Atomic symlink rename requires the same filesystem",
+    "exitCode": 1
+  },
+  {
+    "id": "GROUP_IN_FLIGHT",
+    "description": "group in flight",
+    "exitCode": 1
+  },
+  {
+    "id": "GROUP_PROFILE_MISMATCH",
+    "description": "group profile mismatch",
+    "exitCode": 1
+  },
+  {
+    "id": "GROUP_RENAME_REFUSED",
+    "description": "group rename refused",
+    "exitCode": 1
+  },
+  {
+    "id": "HANDLER_CONFLICT",
+    "description": "dispatch",
+    "exitCode": 1
+  },
+  {
+    "id": "HANDLER_FAILED",
+    "description": "handler",
+    "exitCode": 1
+  },
+  {
+    "id": "HANDLER_UNAVAILABLE",
+    "description": "Обробник команди недоступний.",
+    "exitCode": 1
+  },
+  {
+    "id": "HANDOVER_IN_PROGRESS",
+    "description": "Another main handover is pending",
+    "exitCode": 1
+  },
+  {
+    "id": "INACTIVE_CHANGE",
+    "description": "inactive change",
+    "exitCode": 1
+  },
+  {
+    "id": "INTERRUPTED",
+    "description": "interrupted",
+    "exitCode": 1
+  },
+  {
+    "id": "INVALID_ASSIGNMENT",
+    "description": "Assignment changed while waiting",
+    "exitCode": 1
+  },
+  {
+    "id": "INVALID_CONTEXT",
+    "description": "invalid context",
+    "exitCode": 1
+  },
+  {
+    "id": "INVALID_GROUP",
+    "description": "invalid group",
+    "exitCode": 1
+  },
+  {
+    "id": "INVALID_HANDLER",
+    "description": "dispatch",
+    "exitCode": 1
+  },
+  {
+    "id": "INVALID_TEST_ID",
+    "description": "Exact IDs required for every selected file",
+    "exitCode": 1
+  },
+  {
+    "id": "INVALID_VALUE",
+    "description": "Unknown event kind",
+    "exitCode": 1
+  },
+  {
+    "id": "INVENTORY_INCOMPLETE",
+    "description": "inventory incomplete",
+    "exitCode": 1
+  },
+  {
+    "id": "LAUNCH_CANCELLED",
+    "description": "Launch client interrupted",
+    "exitCode": 1
+  },
+  {
+    "id": "LAUNCH_FAILED",
+    "description": "launch failed",
+    "exitCode": 1
+  },
+  {
+    "id": "LAUNCH_FENCE_LOST",
+    "description": "Admission does not belong to this launch client",
+    "exitCode": 1
+  },
+  {
+    "id": "LAUNCH_PRECONDITION_FAILED",
+    "description": "launch precondition failed",
+    "exitCode": 1
+  },
+  {
+    "id": "LAUNCH_RECOVERABLE",
+    "description": "Task reservation cannot be released before verified process exit",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_BASE_STALE",
+    "description": "Stale main base: ",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_FACT_CONFLICT",
+    "description": "Conflicting main fact identity",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_FACT_IDENTITY",
+    "description": "Fact address/runId differs from runner identity",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_GENERATION_ACTIVE",
+    "description": "Main owners already use the target generation",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_GENERATION_UNPUBLISHED",
+    "description": "Unpublished or changed production origin",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_GIT_CHANGED",
+    "description": "Main Git metadata changed: ",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_GIT_INCONSISTENT",
+    "description": "Main physical Git/gitlink/.gitmodules layout mismatch",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_HANDOVER_INCOMPLETE",
+    "description": "Main handover failed; previous slot retained for rollback",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_HANDOVER_MISSING",
+    "description": "Unknown main handover transition",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_HANDOVER_STALE",
+    "description": "Main handover changed during readiness",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_NOT_LAUNCHABLE",
+    "description": "preflight",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_OPERATION_CONFLICT",
+    "description": "Pinned operation identity conflict",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_OPERATION_MISSING",
+    "description": "Pinned main operation is missing",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_OWNER_FENCED",
+    "description": "Stale or inactive owner epoch",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_OWNER_INCONSISTENT",
+    "description": "Main owners have inconsistent generations",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_PROTOCOL_INCOMPATIBLE",
+    "description": "Incompatible bidirectional main protocol: ",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_RECOVERY_REQUIRED",
+    "description": "Pending publication intent requires recovery before preparation",
+    "exitCode": 1
+  },
+  {
+    "id": "MAIN_SLOT_BUSY",
+    "description": "Inactive main slot busy: activation, handover or readers pending",
+    "exitCode": 1
+  },
+  {
+    "id": "MESSAGE_NOT_ACCEPTED",
+    "description": "message",
+    "exitCode": 1
+  },
+  {
+    "id": "MISSING_REQUIRED",
+    "description": "Не задано обов’язковий параметр.",
+    "exitCode": 1
+  },
+  {
+    "id": "MISSING_VALUE",
+    "description": "Потрібне значення параметра.",
+    "exitCode": 1
+  },
+  {
+    "id": "NON_PRODUCT_PROJECT",
+    "description": "non product project",
+    "exitCode": 1
+  },
+  {
+    "id": "NOTIFY_TARGET_INVALID",
+    "description": "preflight",
+    "exitCode": 1
+  },
+  {
+    "id": "NO_ENABLED_MODELS",
+    "description": "no enabled models",
+    "exitCode": 1
+  },
+  {
+    "id": "NO_SUITABLE_CAPACITY",
+    "description": "no suitable capacity",
+    "exitCode": 1
+  },
+  {
+    "id": "OWNER_FENCED",
+    "description": "Main ownership changed during handover",
+    "exitCode": 1
+  },
+  {
+    "id": "PHASE_NOT_ALLOWED",
+    "description": "phase not allowed",
+    "exitCode": 1
+  },
+  {
+    "id": "PROCESS_IDENTITY_UNAVAILABLE",
+    "description": "Runner identity changed before readiness",
+    "exitCode": 1
+  },
+  {
+    "id": "PROCESS_SCAN_UNKNOWN",
+    "description": "process scan unknown",
+    "exitCode": 1
+  },
+  {
+    "id": "PROCESS_TERMINATION_UNKNOWN",
+    "description": "process termination unknown",
+    "exitCode": 1
+  },
+  {
+    "id": "PRODUCTION_ENTRY_FAILED",
+    "description": "production entry failed",
+    "exitCode": 1
+  },
+  {
+    "id": "PROFILE_AMBIGUOUS",
+    "description": "Selection must belong to one configured profile",
+    "exitCode": 1
+  },
+  {
+    "id": "QUEUE_ASSIGNMENT_CHANGED",
+    "description": "queue assignment changed",
+    "exitCode": 1
+  },
+  {
+    "id": "QUOTA_COLLECTION_FAILED",
+    "description": "quota",
+    "exitCode": 1
+  },
+  {
+    "id": "REMINDER_ACTIVE",
+    "description": "Нагадування вже спрацювало (active); його час змінювати не можна.",
+    "exitCode": 1
+  },
+  {
+    "id": "REMINDER_BINDING_INCOMPLETE",
+    "description": "Event binding requires --event, --event-id and --event-action together",
+    "exitCode": 1
+  },
+  {
+    "id": "REMINDER_CLOSED",
+    "description": "Reminder is closed",
+    "exitCode": 1
+  },
+  {
+    "id": "REMINDER_DUPLICATE",
+    "description": "Duplicate reminder id",
+    "exitCode": 1
+  },
+  {
+    "id": "REMINDER_INVALID_TIME",
+    "description": "Invalid reminder time",
+    "exitCode": 1
+  },
+  {
+    "id": "REMINDER_NOT_FOUND",
+    "description": "reminder not found",
+    "exitCode": 1
+  },
+  {
+    "id": "REMINDER_UPDATE_EMPTY",
+    "description": "Update requires at, text or a complete event binding",
+    "exitCode": 1
+  },
+  {
+    "id": "REPORT_INVALID",
+    "description": "report invalid",
+    "exitCode": 1
+  },
+  {
+    "id": "REPORT_UNVERIFIED",
+    "description": "report unverified",
+    "exitCode": 1
+  },
+  {
+    "id": "RESERVATION_LOST",
+    "description": "reservation lost",
+    "exitCode": 1
+  },
+  {
+    "id": "RESOURCE_ESTIMATE_UNKNOWN",
+    "description": "resource estimate unknown",
+    "exitCode": 1
+  },
+  {
+    "id": "RESOURCE_UNAVAILABLE",
+    "description": "Resource admission is unknown",
+    "exitCode": 1
+  },
+  {
+    "id": "RESOURCE_WAIT_FAILED",
+    "description": "resource wait failed",
+    "exitCode": 1
+  },
+  {
+    "id": "RESOURCE_WAIT_UNAVAILABLE",
+    "description": "Resource queue is unavailable",
+    "exitCode": 1
+  },
+  {
+    "id": "ROLE_FORBIDDEN",
+    "description": "Service cannot process agent facts",
+    "exitCode": 1
+  },
+  {
+    "id": "RUNNER_DELIVERY_UNAVAILABLE",
+    "description": "Runner is not on its known native input before initial brief delivery",
+    "exitCode": 1
+  },
+  {
+    "id": "RUNNER_IDENTITY_INVALID",
+    "description": "Worker handshake does not match the requested launch",
+    "exitCode": 1
+  },
+  {
+    "id": "RUNNER_IDENTITY_UNAVAILABLE",
+    "description": "runner identity unavailable",
+    "exitCode": 1
+  },
+  {
+    "id": "RUNNER_PROTOCOL_UNAVAILABLE",
+    "description": "conf/raf.json#runnerProtocols requires versioned installed runner settings and measured time budgets",
+    "exitCode": 1
+  },
+  {
+    "id": "RUNNER_SANDBOX_UNAVAILABLE",
+    "description": "runner sandbox unavailable",
+    "exitCode": 1
+  },
+  {
+    "id": "RUNNER_UNAVAILABLE",
+    "description": "Selected runner/model is no longer available",
+    "exitCode": 1
+  },
+  {
+    "id": "RUNNER_WORKSPACE_UNTRUSTED",
+    "description": "runner workspace untrusted",
+    "exitCode": 1
+  },
+  {
+    "id": "RUNNER_WRITE_SCOPE_INVALID",
+    "description": "Declared write boundary is not a file or directory",
+    "exitCode": 1
+  },
+  {
+    "id": "RUNTIME_CLOSED",
+    "description": "context",
+    "exitCode": 1
+  },
+  {
+    "id": "SELECTION_CONFLICT",
+    "description": "selection conflict",
+    "exitCode": 1
+  },
+  {
+    "id": "SERVICE_OPERATION_FAILED",
+    "description": "service operation failed",
+    "exitCode": 1
+  },
+  {
+    "id": "SESSION_CLOSE_BLOCKED",
+    "description": "close",
+    "exitCode": 1
+  },
+  {
+    "id": "SESSION_NOT_ACTIVE",
+    "description": "session not active",
+    "exitCode": 1
+  },
+  {
+    "id": "SESSION_UNAVAILABLE",
+    "description": "Session activity unavailable",
+    "exitCode": 1
+  },
+  {
+    "id": "SHARED_LIBS_BRANCH_MISMATCH",
+    "description": "shared libs branch mismatch",
+    "exitCode": 1
+  },
+  {
+    "id": "SHARED_LIBS_LINK_INVALID",
+    "description": "shared libs link invalid",
+    "exitCode": 1
+  },
+  {
+    "id": "SHARED_LIBS_UNAVAILABLE",
+    "description": "shared libs unavailable",
+    "exitCode": 1
+  },
+  {
+    "id": "SLOT_IN_USE",
+    "description": "Target main slot still has readers or owners",
+    "exitCode": 1
+  },
+  {
+    "id": "START_COMMIT_CONFLICT",
+    "description": "Ready agent ownership could not be committed",
+    "exitCode": 1
+  },
+  {
+    "id": "STATE_CLIENT_INSPECTION_SKIPPED",
+    "description": "state client inspection skipped",
+    "exitCode": 1
+  },
+  {
+    "id": "STATE_CONTEXT_REFUSED",
+    "description": "Service paths differ from selected state context",
+    "exitCode": 1
+  },
+  {
+    "id": "STATE_FAILED",
+    "description": "state failed",
+    "exitCode": 1
+  },
+  {
+    "id": "STATE_MIGRATION_CONFLICT",
+    "description": "Transfer permit must name this exact absolute state path",
+    "exitCode": 1
+  },
+  {
+    "id": "STATE_MIGRATION_REQUIRED",
+    "description": "state migration required",
+    "exitCode": 1
+  },
+  {
+    "id": "STATE_SCHEMA_UNSUPPORTED",
+    "description": "Unsupported transfer versions or downgrade",
+    "exitCode": 1
+  },
+  {
+    "id": "TASK_CLAIM_LOST",
+    "description": "Worker handoff lost its task reservation",
+    "exitCode": 1
+  },
+  {
+    "id": "TASK_CLAIM_REQUIRED",
+    "description": "Durable launch and task claims required before spawn",
+    "exitCode": 1
+  },
+  {
+    "id": "TASK_CONTEXT_CHANGED",
+    "description": "Launch task context changed while waiting",
+    "exitCode": 1
+  },
+  {
+    "id": "TASK_CONTEXT_MISMATCH",
+    "description": "task context mismatch",
+    "exitCode": 1
+  },
+  {
+    "id": "TASK_IDENTITY_INVALID",
+    "description": "A nonempty task snapshot set is required",
+    "exitCode": 1
+  },
+  {
+    "id": "TASK_IDENTITY_MISMATCH",
+    "description": "OpenSpec returned a different task identity",
+    "exitCode": 1
+  },
+  {
+    "id": "TASK_LIVENESS_UNKNOWN",
+    "description": "task liveness unknown",
+    "exitCode": 1
+  },
+  {
+    "id": "TASK_NOT_COMPLETED",
+    "description": "task not completed",
+    "exitCode": 1
+  },
+  {
+    "id": "TASK_RESERVED",
+    "description": "task reserved",
+    "exitCode": 1
+  },
+  {
+    "id": "TASK_SOURCE_MISSING",
+    "description": "task source missing",
+    "exitCode": 1
+  },
+  {
+    "id": "TASK_SOURCE_UNKNOWN",
+    "description": "OpenSpec task resolution failed",
+    "exitCode": 1
+  },
+  {
+    "id": "TEMPORARY_DIRECTORY_INVALID",
+    "description": "temporary directory invalid",
+    "exitCode": 1
+  },
+  {
+    "id": "TEST_RUN_PLAN_CHANGED",
+    "description": "test run plan changed",
+    "exitCode": 1
+  },
+  {
+    "id": "TIMING_FAILED",
+    "description": "timing failed",
+    "exitCode": 1
+  },
+  {
+    "id": "TMUX_CONTEXT_INVALID",
+    "description": "RAF tmux directory must be private and owned by the current user",
+    "exitCode": 1
+  },
+  {
+    "id": "TYPE_NOT_LAUNCHABLE",
+    "description": "preflight",
+    "exitCode": 1
+  },
+  {
+    "id": "UNKNOWN_ARGUMENT",
+    "description": "Невідомий аргумент або зайве позиційне значення.",
+    "exitCode": 1
+  },
+  {
+    "id": "UNKNOWN_BRANCH",
+    "description": "unknown branch",
+    "exitCode": 1
+  },
+  {
+    "id": "UNKNOWN_COMMAND",
+    "description": "unknown command",
+    "exitCode": 1
+  },
+  {
+    "id": "UNKNOWN_PHASE",
+    "description": "unknown phase",
+    "exitCode": 1
+  },
+  {
+    "id": "UNKNOWN_PROJECT",
+    "description": "unknown project",
+    "exitCode": 1
+  },
+  {
+    "id": "UNKNOWN_RED_TEST",
+    "description": "Only knownRed IDs of this group may execute",
+    "exitCode": 1
+  },
+  {
+    "id": "UNSAFE_SELECTION",
+    "description": "Integration does not allow --only",
+    "exitCode": 1
+  },
+  {
+    "id": "WORKER_CONTEXT_INVALID",
+    "description": "Worker runtime envelope must be an owned private regular file",
+    "exitCode": 1
+  },
+  {
+    "id": "WORKER_CONTEXT_UNAVAILABLE",
+    "description": "worker context unavailable",
+    "exitCode": 1
+  },
+  {
+    "id": "WORKER_RESULT_PENDING",
+    "description": "worker result pending",
+    "exitCode": 1
+  },
+  {
+    "id": "WORKSPACE_MISMATCH",
+    "description": "workspace mismatch",
+    "exitCode": 1
+  },
+  {
+    "id": "WORKSPACE_UNAVAILABLE",
+    "description": "Workspace route changed while waiting",
+    "exitCode": 1
+  }
+]

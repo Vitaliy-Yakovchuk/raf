@@ -1,0 +1,2657 @@
+{
+  "source": "/srv/dev/work/orchestrator/conf/raf-constants.json",
+  "sourceSha256": "1d17665e42a4449920b5dcdfe1a0d400470705090deed008d73466c248f5a66f",
+  "operations": [
+    {
+      "op": "add",
+      "path": "/errorCodes",
+      "value": [
+        {
+          "id": "ACTIVITY_CONFLICT",
+          "description": "Session changed during activity update",
+          "exitCode": 1
+        },
+        {
+          "id": "ADDRESS_IN_USE",
+          "description": "address in use",
+          "exitCode": 1
+        },
+        {
+          "id": "AGENT_RESULT_PENDING",
+          "description": "agent result pending",
+          "exitCode": 1
+        },
+        {
+          "id": "ATOMIC_SWITCH_UNSUPPORTED",
+          "description": "Atomic symlink rename unsupported",
+          "exitCode": 1
+        },
+        {
+          "id": "ATTACHMENT_ACCESS_DENIED",
+          "description": "attachment access denied",
+          "exitCode": 1
+        },
+        {
+          "id": "ATTACHMENT_FETCH_FAILED",
+          "description": "attachment fetch failed",
+          "exitCode": 1
+        },
+        {
+          "id": "ATTACHMENT_INTEGRITY_FAILED",
+          "description": "attachment integrity failed",
+          "exitCode": 1
+        },
+        {
+          "id": "ATTACHMENT_NOT_FOUND",
+          "description": "attachment not found",
+          "exitCode": 1
+        },
+        {
+          "id": "ATTACHMENT_SECTION_UNAVAILABLE",
+          "description": "attachment section unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "ATTACHMENT_TOO_LARGE",
+          "description": "attachment too large",
+          "exitCode": 1
+        },
+        {
+          "id": "BRANCH_MISMATCH",
+          "description": "branch mismatch",
+          "exitCode": 1
+        },
+        {
+          "id": "BRIEF_CONTEXT_MISMATCH",
+          "description": "Existing durable brief does not match this prepared launch",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_COMMAND_FAILED",
+          "description": "bug command failed",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_CONFIG_INVALID",
+          "description": "bug config invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_SECTION_UNAVAILABLE",
+          "description": "bug section unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_INVALID_RESPONSE",
+          "description": "bug write invalid response",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REJECTED",
+          "description": "bug write rejected",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_REPLY_TARGET_MISSING",
+          "description": "bug write reply target missing",
+          "exitCode": 1
+        },
+        {
+          "id": "BUG_WRITE_UNKNOWN",
+          "description": "bug write unknown",
+          "exitCode": 1
+        },
+        {
+          "id": "BUILD_FAILED",
+          "description": "Не вдалося перевірити або зібрати каталог raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "CALLER_UNAUTHORIZED",
+          "description": "caller unauthorized",
+          "exitCode": 1
+        },
+        {
+          "id": "CALLER_UNVERIFIED",
+          "description": "caller unverified",
+          "exitCode": 1
+        },
+        {
+          "id": "CATALOG_UNAVAILABLE",
+          "description": "Скомпільований каталог відсутній або пошкоджений.",
+          "exitCode": 1
+        },
+        {
+          "id": "CHANNEL_COMMAND_DENIED",
+          "description": "channel command denied",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMAND_UNAVAILABLE",
+          "description": "Команда недоступна в обраному поколінні raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMENT_TEXT_EMPTY",
+          "description": "Текст коментаря порожній.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMENT_TEXT_INVALID",
+          "description": "Текст коментаря не є коректним UTF-8.",
+          "exitCode": 1
+        },
+        {
+          "id": "COMMENT_TEXT_UNREADABLE",
+          "description": "comment text unreadable",
+          "exitCode": 1
+        },
+        {
+          "id": "CONFIGURATION_INVALID",
+          "description": "Конфігурація відсутня або не відповідає контракту.",
+          "exitCode": 1
+        },
+        {
+          "id": "COORDINATOR_ASSIGNMENT_CHANGED",
+          "description": "coordinator assignment changed",
+          "exitCode": 1
+        },
+        {
+          "id": "COORDINATOR_FENCE_LOST",
+          "description": "coordinator fence lost",
+          "exitCode": 1
+        },
+        {
+          "id": "DUPLICATE_ARGUMENT",
+          "description": "Одиничний параметр передано повторно.",
+          "exitCode": 1
+        },
+        {
+          "id": "EMPTY_SELECTION",
+          "description": "empty selection",
+          "exitCode": 1
+        },
+        {
+          "id": "ENVIRONMENT_INVALID",
+          "description": "environment invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "EVENT_ID_INVALID",
+          "description": "event id invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "EXACT_IDS_UNSUPPORTED",
+          "description": "Expected Vitest adapter",
+          "exitCode": 1
+        },
+        {
+          "id": "GROUP_IN_FLIGHT",
+          "description": "group in flight",
+          "exitCode": 1
+        },
+        {
+          "id": "GROUP_PROFILE_MISMATCH",
+          "description": "group profile mismatch",
+          "exitCode": 1
+        },
+        {
+          "id": "GROUP_RENAME_REFUSED",
+          "description": "group rename refused",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_CONFLICT",
+          "description": "dispatch",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_FAILED",
+          "description": "Обробник завершився помилкою; причина невідома.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDLER_UNAVAILABLE",
+          "description": "Обробник команди недоступний.",
+          "exitCode": 1
+        },
+        {
+          "id": "HANDOVER_IN_PROGRESS",
+          "description": "Another main handover is pending",
+          "exitCode": 1
+        },
+        {
+          "id": "INACTIVE_CHANGE",
+          "description": "inactive change",
+          "exitCode": 1
+        },
+        {
+          "id": "INTERRUPTED",
+          "description": "interrupted",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_ASSIGNMENT",
+          "description": "Assignment changed while waiting",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_CONTEXT",
+          "description": "invalid context",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_GROUP",
+          "description": "invalid group",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_HANDLER",
+          "description": "dispatch",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_TEST_ID",
+          "description": "Exact IDs required for every selected file",
+          "exitCode": 1
+        },
+        {
+          "id": "INVALID_VALUE",
+          "description": "Значення або комбінація параметрів не підтримуються.",
+          "exitCode": 1
+        },
+        {
+          "id": "INVENTORY_INCOMPLETE",
+          "description": "inventory incomplete",
+          "exitCode": 1
+        },
+        {
+          "id": "LAUNCH_CANCELLED",
+          "description": "Launch client interrupted",
+          "exitCode": 1
+        },
+        {
+          "id": "LAUNCH_FAILED",
+          "description": "launch failed",
+          "exitCode": 1
+        },
+        {
+          "id": "LAUNCH_FENCE_LOST",
+          "description": "Admission does not belong to this launch client",
+          "exitCode": 1
+        },
+        {
+          "id": "LAUNCH_PRECONDITION_FAILED",
+          "description": "launch precondition failed",
+          "exitCode": 1
+        },
+        {
+          "id": "LAUNCH_RECOVERABLE",
+          "description": "Task reservation cannot be released before verified process exit",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_BASE_STALE",
+          "description": "Stale main base: ",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_FACT_CONFLICT",
+          "description": "Conflicting main fact identity",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_FACT_IDENTITY",
+          "description": "Fact address/runId differs from runner identity",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_GENERATION_ACTIVE",
+          "description": "Main owners already use the target generation",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_GENERATION_UNPUBLISHED",
+          "description": "Unpublished or changed production origin",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_GIT_CHANGED",
+          "description": "Main Git metadata changed: ",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_GIT_INCONSISTENT",
+          "description": "Main physical Git/gitlink/.gitmodules layout mismatch",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_HANDOVER_INCOMPLETE",
+          "description": "Main handover failed; previous slot retained for rollback",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_HANDOVER_MISSING",
+          "description": "Unknown main handover transition",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_HANDOVER_STALE",
+          "description": "Main handover changed during readiness",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_NOT_LAUNCHABLE",
+          "description": "preflight",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_OPERATION_CONFLICT",
+          "description": "Pinned operation identity conflict",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_OPERATION_MISSING",
+          "description": "Pinned main operation is missing",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_OWNER_FENCED",
+          "description": "Stale or inactive owner epoch",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_OWNER_INCONSISTENT",
+          "description": "Main owners have inconsistent generations",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_PROTOCOL_INCOMPATIBLE",
+          "description": "Incompatible bidirectional main protocol: ",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_RECOVERY_REQUIRED",
+          "description": "Pending publication intent requires recovery before preparation",
+          "exitCode": 1
+        },
+        {
+          "id": "MAIN_SLOT_BUSY",
+          "description": "Inactive main slot busy: activation, handover or readers pending",
+          "exitCode": 1
+        },
+        {
+          "id": "MESSAGE_NOT_ACCEPTED",
+          "description": "message",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_REQUIRED",
+          "description": "Не задано обов’язковий параметр.",
+          "exitCode": 1
+        },
+        {
+          "id": "MISSING_VALUE",
+          "description": "Параметр потребує непорожнього значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "NO_ENABLED_MODELS",
+          "description": "no enabled models",
+          "exitCode": 1
+        },
+        {
+          "id": "NO_SUITABLE_CAPACITY",
+          "description": "no suitable capacity",
+          "exitCode": 1
+        },
+        {
+          "id": "NON_PRODUCT_PROJECT",
+          "description": "non product project",
+          "exitCode": 1
+        },
+        {
+          "id": "NOTIFY_TARGET_INVALID",
+          "description": "preflight",
+          "exitCode": 1
+        },
+        {
+          "id": "OWNER_FENCED",
+          "description": "Main ownership changed during handover",
+          "exitCode": 1
+        },
+        {
+          "id": "PHASE_NOT_ALLOWED",
+          "description": "phase not allowed",
+          "exitCode": 1
+        },
+        {
+          "id": "PROCESS_IDENTITY_UNAVAILABLE",
+          "description": "Runner identity changed before readiness",
+          "exitCode": 1
+        },
+        {
+          "id": "PROCESS_SCAN_UNKNOWN",
+          "description": "process scan unknown",
+          "exitCode": 1
+        },
+        {
+          "id": "PROCESS_TERMINATION_UNKNOWN",
+          "description": "process termination unknown",
+          "exitCode": 1
+        },
+        {
+          "id": "PRODUCTION_ENTRY_FAILED",
+          "description": "Не вдалося завершити production-операцію raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "PROFILE_AMBIGUOUS",
+          "description": "Selection must belong to one configured profile",
+          "exitCode": 1
+        },
+        {
+          "id": "QUEUE_ASSIGNMENT_CHANGED",
+          "description": "queue assignment changed",
+          "exitCode": 1
+        },
+        {
+          "id": "QUOTA_COLLECTION_FAILED",
+          "description": "quota",
+          "exitCode": 1
+        },
+        {
+          "id": "REMINDER_ACTIVE",
+          "description": "Нагадування вже спрацювало (active); його час змінювати не можна.",
+          "exitCode": 1
+        },
+        {
+          "id": "REMINDER_BINDING_INCOMPLETE",
+          "description": "Event binding requires --event, --event-id and --event-action together",
+          "exitCode": 1
+        },
+        {
+          "id": "REMINDER_CLOSED",
+          "description": "Reminder is closed",
+          "exitCode": 1
+        },
+        {
+          "id": "REMINDER_DUPLICATE",
+          "description": "Duplicate reminder id",
+          "exitCode": 1
+        },
+        {
+          "id": "REMINDER_INVALID_TIME",
+          "description": "Invalid reminder time",
+          "exitCode": 1
+        },
+        {
+          "id": "REMINDER_NOT_FOUND",
+          "description": "reminder not found",
+          "exitCode": 1
+        },
+        {
+          "id": "REMINDER_UPDATE_EMPTY",
+          "description": "Update requires at, text or a complete event binding",
+          "exitCode": 1
+        },
+        {
+          "id": "REPORT_INVALID",
+          "description": "report invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "REPORT_UNVERIFIED",
+          "description": "report unverified",
+          "exitCode": 1
+        },
+        {
+          "id": "RESERVATION_LOST",
+          "description": "reservation lost",
+          "exitCode": 1
+        },
+        {
+          "id": "RESOURCE_ESTIMATE_UNKNOWN",
+          "description": "resource estimate unknown",
+          "exitCode": 1
+        },
+        {
+          "id": "RESOURCE_UNAVAILABLE",
+          "description": "Resource admission is unknown",
+          "exitCode": 1
+        },
+        {
+          "id": "RESOURCE_WAIT_FAILED",
+          "description": "resource wait failed",
+          "exitCode": 1
+        },
+        {
+          "id": "RESOURCE_WAIT_UNAVAILABLE",
+          "description": "Resource queue is unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "ROLE_FORBIDDEN",
+          "description": "Service cannot process agent facts",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_DELIVERY_UNAVAILABLE",
+          "description": "Runner is not on its known native input before initial brief delivery",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_IDENTITY_INVALID",
+          "description": "Worker handshake does not match the requested launch",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_IDENTITY_UNAVAILABLE",
+          "description": "runner identity unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_PROTOCOL_UNAVAILABLE",
+          "description": "conf/raf.json#runnerProtocols requires versioned installed runner settings and measured time budgets",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_SANDBOX_UNAVAILABLE",
+          "description": "runner sandbox unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_UNAVAILABLE",
+          "description": "Selected runner/model is no longer available",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_WORKSPACE_UNTRUSTED",
+          "description": "runner workspace untrusted",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNNER_WRITE_SCOPE_INVALID",
+          "description": "Declared write boundary is not a file or directory",
+          "exitCode": 1
+        },
+        {
+          "id": "RUNTIME_CLOSED",
+          "description": "context",
+          "exitCode": 1
+        },
+        {
+          "id": "SELECTION_CONFLICT",
+          "description": "selection conflict",
+          "exitCode": 1
+        },
+        {
+          "id": "SERVICE_OPERATION_FAILED",
+          "description": "service operation failed",
+          "exitCode": 1
+        },
+        {
+          "id": "SESSION_CLOSE_BLOCKED",
+          "description": "close",
+          "exitCode": 1
+        },
+        {
+          "id": "SESSION_NOT_ACTIVE",
+          "description": "session not active",
+          "exitCode": 1
+        },
+        {
+          "id": "SESSION_UNAVAILABLE",
+          "description": "Session activity unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "SHARED_LIBS_BRANCH_MISMATCH",
+          "description": "shared libs branch mismatch",
+          "exitCode": 1
+        },
+        {
+          "id": "SHARED_LIBS_LINK_INVALID",
+          "description": "shared libs link invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "SHARED_LIBS_UNAVAILABLE",
+          "description": "shared libs unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "SLOT_IN_USE",
+          "description": "Target main slot still has readers or owners",
+          "exitCode": 1
+        },
+        {
+          "id": "START_COMMIT_CONFLICT",
+          "description": "Ready agent ownership could not be committed",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CLIENT_INSPECTION_SKIPPED",
+          "description": "state client inspection skipped",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_CONTEXT_REFUSED",
+          "description": "Не доведено право цього покоління на контекст стану.",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_FAILED",
+          "description": "state failed",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_MIGRATION_CONFLICT",
+          "description": "Transfer permit must name this exact absolute state path",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_MIGRATION_REQUIRED",
+          "description": "state migration required",
+          "exitCode": 1
+        },
+        {
+          "id": "STATE_SCHEMA_UNSUPPORTED",
+          "description": "Unsupported transfer versions or downgrade",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_CLAIM_LOST",
+          "description": "Worker handoff lost its task reservation",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_CLAIM_REQUIRED",
+          "description": "Durable launch and task claims required before spawn",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_CONTEXT_CHANGED",
+          "description": "Launch task context changed while waiting",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_CONTEXT_MISMATCH",
+          "description": "task context mismatch",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_IDENTITY_INVALID",
+          "description": "A nonempty task snapshot set is required",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_IDENTITY_MISMATCH",
+          "description": "OpenSpec returned a different task identity",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_LIVENESS_UNKNOWN",
+          "description": "task liveness unknown",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_NOT_COMPLETED",
+          "description": "task not completed",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_RESERVED",
+          "description": "task reserved",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_SOURCE_MISSING",
+          "description": "task source missing",
+          "exitCode": 1
+        },
+        {
+          "id": "TASK_SOURCE_UNKNOWN",
+          "description": "OpenSpec task resolution failed",
+          "exitCode": 1
+        },
+        {
+          "id": "TEMPORARY_DIRECTORY_INVALID",
+          "description": "temporary directory invalid",
+          "exitCode": 1
+        },
+        {
+          "id": "TEST_RUN_PLAN_CHANGED",
+          "description": "test run plan changed",
+          "exitCode": 1
+        },
+        {
+          "id": "TIMING_FAILED",
+          "description": "timing failed",
+          "exitCode": 1
+        },
+        {
+          "id": "TMUX_CONTEXT_INVALID",
+          "description": "RAF tmux directory must be private and owned by the current user",
+          "exitCode": 1
+        },
+        {
+          "id": "TYPE_NOT_LAUNCHABLE",
+          "description": "Тип агента обліковується, але не запускається raf.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_ARGUMENT",
+          "description": "Невідомий аргумент або зайве позиційне значення.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_BRANCH",
+          "description": "unknown branch",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_COMMAND",
+          "description": "Невідомий шлях команди або довідки.",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_PHASE",
+          "description": "unknown phase",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_PROJECT",
+          "description": "unknown project",
+          "exitCode": 1
+        },
+        {
+          "id": "UNKNOWN_RED_TEST",
+          "description": "Only knownRed IDs of this group may execute",
+          "exitCode": 1
+        },
+        {
+          "id": "UNSAFE_SELECTION",
+          "description": "Integration does not allow --only",
+          "exitCode": 1
+        },
+        {
+          "id": "WORKER_CONTEXT_INVALID",
+          "description": "Worker runtime envelope must be an owned private regular file",
+          "exitCode": 1
+        },
+        {
+          "id": "WORKER_CONTEXT_UNAVAILABLE",
+          "description": "worker context unavailable",
+          "exitCode": 1
+        },
+        {
+          "id": "WORKER_RESULT_PENDING",
+          "description": "worker result pending",
+          "exitCode": 1
+        },
+        {
+          "id": "WORKSPACE_MISMATCH",
+          "description": "workspace mismatch",
+          "exitCode": 1
+        },
+        {
+          "id": "WORKSPACE_UNAVAILABLE",
+          "description": "Workspace route changed while waiting",
+          "exitCode": 1
+        }
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/0/prerequisites",
+      "value": "Уповноважений викликач; точні активні пункти OpenSpec, зареєстрований project/workspace та доступний runner. --tasks містить точні change:item, а --features — зміни доручення."
+    },
+    {
+      "op": "add",
+      "path": "/commands/0/sideEffects",
+      "value": "Резервує доручення, перевіряє sandbox і процесну ідентичність, запускає runner у tmux та доставляє бриф. JSON-звіт і перевірка комітів/галочок визначають результат роботи окремо від доставки."
+    },
+    {
+      "op": "add",
+      "path": "/commands/0/output",
+      "value": "JSON результату запуску з runId та адресою; exit 0 означає успішну операцію запуску, а не виконане доручення."
+    },
+    {
+      "op": "add",
+      "path": "/commands/0/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help agent run."
+    },
+    {
+      "op": "add",
+      "path": "/commands/0/examples",
+      "value": [
+        "raf agent run --id worker --type implement --project raf --features complete-raf-flow-contracts --phase implement --complexity ordinary --tasks complete-raf-flow-contracts:12.4"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/0/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "AGENT_RESULT_PENDING",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "LAUNCH_CANCELLED",
+        "LAUNCH_FAILED",
+        "LAUNCH_FENCE_LOST",
+        "LAUNCH_PRECONDITION_FAILED",
+        "LAUNCH_RECOVERABLE",
+        "NOTIFY_TARGET_INVALID",
+        "REPORT_INVALID",
+        "REPORT_UNVERIFIED",
+        "RESOURCE_ESTIMATE_UNKNOWN",
+        "RESOURCE_UNAVAILABLE",
+        "RESOURCE_WAIT_FAILED",
+        "RESOURCE_WAIT_UNAVAILABLE",
+        "RUNNER_DELIVERY_UNAVAILABLE",
+        "RUNNER_IDENTITY_INVALID",
+        "RUNNER_IDENTITY_UNAVAILABLE",
+        "RUNNER_PROTOCOL_UNAVAILABLE",
+        "RUNNER_SANDBOX_UNAVAILABLE",
+        "RUNNER_UNAVAILABLE",
+        "RUNNER_WORKSPACE_UNTRUSTED",
+        "RUNNER_WRITE_SCOPE_INVALID",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE",
+        "TASK_CLAIM_LOST",
+        "TASK_CLAIM_REQUIRED",
+        "TASK_CONTEXT_CHANGED",
+        "TASK_CONTEXT_MISMATCH",
+        "TASK_IDENTITY_INVALID",
+        "TASK_IDENTITY_MISMATCH",
+        "TASK_LIVENESS_UNKNOWN",
+        "TASK_NOT_COMPLETED",
+        "TASK_RESERVED",
+        "TASK_SOURCE_MISSING",
+        "TASK_SOURCE_UNKNOWN",
+        "WORKSPACE_MISMATCH",
+        "WORKSPACE_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/1/prerequisites",
+      "value": "Адресу одержувача отримано через agent ps; відправник перевірений та має право доставки."
+    },
+    {
+      "op": "add",
+      "path": "/commands/1/sideEffects",
+      "value": "Доставляє текст активному адресату через його адаптер; receipt підтверджує доставку за контрактом каналу."
+    },
+    {
+      "op": "add",
+      "path": "/commands/1/output",
+      "value": "JSON receipt; exit 0 лише для підтвердженої доставки."
+    },
+    {
+      "op": "add",
+      "path": "/commands/1/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help agent message."
+    },
+    {
+      "op": "add",
+      "path": "/commands/1/examples",
+      "value": [
+        "raf agent message --to main --text \"Приклад повідомлення\""
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/1/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "AGENT_RESULT_PENDING",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "LAUNCH_CANCELLED",
+        "LAUNCH_FAILED",
+        "LAUNCH_FENCE_LOST",
+        "LAUNCH_PRECONDITION_FAILED",
+        "LAUNCH_RECOVERABLE",
+        "NOTIFY_TARGET_INVALID",
+        "REPORT_INVALID",
+        "REPORT_UNVERIFIED",
+        "RESOURCE_ESTIMATE_UNKNOWN",
+        "RESOURCE_UNAVAILABLE",
+        "RESOURCE_WAIT_FAILED",
+        "RESOURCE_WAIT_UNAVAILABLE",
+        "RUNNER_DELIVERY_UNAVAILABLE",
+        "RUNNER_IDENTITY_INVALID",
+        "RUNNER_IDENTITY_UNAVAILABLE",
+        "RUNNER_PROTOCOL_UNAVAILABLE",
+        "RUNNER_SANDBOX_UNAVAILABLE",
+        "RUNNER_UNAVAILABLE",
+        "RUNNER_WORKSPACE_UNTRUSTED",
+        "RUNNER_WRITE_SCOPE_INVALID",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE",
+        "TASK_CLAIM_LOST",
+        "TASK_CLAIM_REQUIRED",
+        "TASK_CONTEXT_CHANGED",
+        "TASK_CONTEXT_MISMATCH",
+        "TASK_IDENTITY_INVALID",
+        "TASK_IDENTITY_MISMATCH",
+        "TASK_LIVENESS_UNKNOWN",
+        "TASK_NOT_COMPLETED",
+        "TASK_RESERVED",
+        "TASK_SOURCE_MISSING",
+        "TASK_SOURCE_UNKNOWN",
+        "WORKSPACE_MISMATCH",
+        "WORKSPACE_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/2/prerequisites",
+      "value": "Доступ до ізольованого/робочого SQLite відповідно до покоління raf та перевірені OS identity."
+    },
+    {
+      "op": "add",
+      "path": "/commands/2/sideEffects",
+      "value": "Звіряє процеси й поточні сесії, обробляє прийняті результати та належні завершення; не запускає нових агентів."
+    },
+    {
+      "op": "add",
+      "path": "/commands/2/output",
+      "value": "JSON поточних сесій з адресними ID, activity, process та observation; адресою є addressId."
+    },
+    {
+      "op": "add",
+      "path": "/commands/2/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help agent ps."
+    },
+    {
+      "op": "add",
+      "path": "/commands/2/examples",
+      "value": [
+        "raf agent ps"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/2/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "AGENT_RESULT_PENDING",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "LAUNCH_CANCELLED",
+        "LAUNCH_FAILED",
+        "LAUNCH_FENCE_LOST",
+        "LAUNCH_PRECONDITION_FAILED",
+        "LAUNCH_RECOVERABLE",
+        "NOTIFY_TARGET_INVALID",
+        "REPORT_INVALID",
+        "REPORT_UNVERIFIED",
+        "RESOURCE_ESTIMATE_UNKNOWN",
+        "RESOURCE_UNAVAILABLE",
+        "RESOURCE_WAIT_FAILED",
+        "RESOURCE_WAIT_UNAVAILABLE",
+        "RUNNER_DELIVERY_UNAVAILABLE",
+        "RUNNER_IDENTITY_INVALID",
+        "RUNNER_IDENTITY_UNAVAILABLE",
+        "RUNNER_PROTOCOL_UNAVAILABLE",
+        "RUNNER_SANDBOX_UNAVAILABLE",
+        "RUNNER_UNAVAILABLE",
+        "RUNNER_WORKSPACE_UNTRUSTED",
+        "RUNNER_WRITE_SCOPE_INVALID",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE",
+        "TASK_CLAIM_LOST",
+        "TASK_CLAIM_REQUIRED",
+        "TASK_CONTEXT_CHANGED",
+        "TASK_CONTEXT_MISMATCH",
+        "TASK_IDENTITY_INVALID",
+        "TASK_IDENTITY_MISMATCH",
+        "TASK_LIVENESS_UNKNOWN",
+        "TASK_NOT_COMPLETED",
+        "TASK_RESERVED",
+        "TASK_SOURCE_MISSING",
+        "TASK_SOURCE_UNKNOWN",
+        "WORKSPACE_MISMATCH",
+        "WORKSPACE_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/3/prerequisites",
+      "value": "Уповноважений викликач і активна адреса --id. project/features/phase — актуальні метадані сесії."
+    },
+    {
+      "op": "add",
+      "path": "/commands/3/sideEffects",
+      "value": "Оновлює лише передані метадані сесії в SQLite, без нового запуску runner."
+    },
+    {
+      "op": "add",
+      "path": "/commands/3/output",
+      "value": "JSON оновленої активності; exit 0 після збереження."
+    },
+    {
+      "op": "add",
+      "path": "/commands/3/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help agent update."
+    },
+    {
+      "op": "add",
+      "path": "/commands/3/examples",
+      "value": [
+        "raf agent update --id worker"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/3/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "AGENT_RESULT_PENDING",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "LAUNCH_CANCELLED",
+        "LAUNCH_FAILED",
+        "LAUNCH_FENCE_LOST",
+        "LAUNCH_PRECONDITION_FAILED",
+        "LAUNCH_RECOVERABLE",
+        "NOTIFY_TARGET_INVALID",
+        "REPORT_INVALID",
+        "REPORT_UNVERIFIED",
+        "RESOURCE_ESTIMATE_UNKNOWN",
+        "RESOURCE_UNAVAILABLE",
+        "RESOURCE_WAIT_FAILED",
+        "RESOURCE_WAIT_UNAVAILABLE",
+        "RUNNER_DELIVERY_UNAVAILABLE",
+        "RUNNER_IDENTITY_INVALID",
+        "RUNNER_IDENTITY_UNAVAILABLE",
+        "RUNNER_PROTOCOL_UNAVAILABLE",
+        "RUNNER_SANDBOX_UNAVAILABLE",
+        "RUNNER_UNAVAILABLE",
+        "RUNNER_WORKSPACE_UNTRUSTED",
+        "RUNNER_WRITE_SCOPE_INVALID",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE",
+        "TASK_CLAIM_LOST",
+        "TASK_CLAIM_REQUIRED",
+        "TASK_CONTEXT_CHANGED",
+        "TASK_CONTEXT_MISMATCH",
+        "TASK_IDENTITY_INVALID",
+        "TASK_IDENTITY_MISMATCH",
+        "TASK_LIVENESS_UNKNOWN",
+        "TASK_NOT_COMPLETED",
+        "TASK_RESERVED",
+        "TASK_SOURCE_MISSING",
+        "TASK_SOURCE_UNKNOWN",
+        "WORKSPACE_MISMATCH",
+        "WORKSPACE_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/4/prerequisites",
+      "value": "Уповноважений викликач, живий виконавець із перевіреною process identity (не main). Звичайний close потребує прийнятого звіту цього runId й відповідної agent.succeeded/agent.failed; інакше лише явні --force --reason TEXT. Чинні правила нагадувань обов’язкові в обох режимах."
+    },
+    {
+      "op": "add",
+      "path": "/commands/4/sideEffects",
+      "value": "Звичайна відмова gate не зупиняє процес і не прибирає tmp/резерв. Дозволений force надійно зберігає result.forcedClose.reason перед зупинкою; без прийнятого звіту фіксує failed з причиною. Прийнятий результат не переписується. Фіналізація й нагадування — за чинними контрактами; причина живе до finishedSessionsMs."
+    },
+    {
+      "op": "add",
+      "path": "/commands/4/output",
+      "value": "JSON {closed, unfinished, result?}; для примусового закриття також forcedClose {reason}. Код 0 лише після підтвердженого штатного завершення операції."
+    },
+    {
+      "op": "add",
+      "path": "/commands/4/errors",
+      "value": "AGENT_RESULT_PENDING (exit 1): звіт поточного runId не прийнято або подію результату ще не зафіксовано; без зупинки/cleanup/failed через close. Некоректні force/reason відхиляються до runtime чинною помилкою аргументів. Інші помилки нагадувань, авторизації, процесу й фіналізації — за чинними контрактами; JSON із причиною, runId, побічними діями та кроком виправлення."
+    },
+    {
+      "op": "add",
+      "path": "/commands/4/examples",
+      "value": [
+        "raf agent close --id worker",
+        "raf agent close --id worker --force --reason \"Власник скасував запуск до звіту\""
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/4/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "AGENT_RESULT_PENDING",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "LAUNCH_CANCELLED",
+        "LAUNCH_FAILED",
+        "LAUNCH_FENCE_LOST",
+        "LAUNCH_PRECONDITION_FAILED",
+        "LAUNCH_RECOVERABLE",
+        "NOTIFY_TARGET_INVALID",
+        "REPORT_INVALID",
+        "REPORT_UNVERIFIED",
+        "RESOURCE_ESTIMATE_UNKNOWN",
+        "RESOURCE_UNAVAILABLE",
+        "RESOURCE_WAIT_FAILED",
+        "RESOURCE_WAIT_UNAVAILABLE",
+        "RUNNER_DELIVERY_UNAVAILABLE",
+        "RUNNER_IDENTITY_INVALID",
+        "RUNNER_IDENTITY_UNAVAILABLE",
+        "RUNNER_PROTOCOL_UNAVAILABLE",
+        "RUNNER_SANDBOX_UNAVAILABLE",
+        "RUNNER_UNAVAILABLE",
+        "RUNNER_WORKSPACE_UNTRUSTED",
+        "RUNNER_WRITE_SCOPE_INVALID",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE",
+        "TASK_CLAIM_LOST",
+        "TASK_CLAIM_REQUIRED",
+        "TASK_CONTEXT_CHANGED",
+        "TASK_CONTEXT_MISMATCH",
+        "TASK_IDENTITY_INVALID",
+        "TASK_IDENTITY_MISMATCH",
+        "TASK_LIVENESS_UNKNOWN",
+        "TASK_NOT_COMPLETED",
+        "TASK_RESERVED",
+        "TASK_SOURCE_MISSING",
+        "TASK_SOURCE_UNKNOWN",
+        "WORKSPACE_MISMATCH",
+        "WORKSPACE_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/5/prerequisites",
+      "value": "Уповноважений викликач і перевірений живий процес за --id."
+    },
+    {
+      "op": "add",
+      "path": "/commands/5/sideEffects",
+      "value": "Надсилає адаптерне переривання поточної роботи зі збереженням сесії; не замінює close."
+    },
+    {
+      "op": "add",
+      "path": "/commands/5/output",
+      "value": "JSON підтвердження переривання; exit 0 після виконання операції."
+    },
+    {
+      "op": "add",
+      "path": "/commands/5/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help agent interrupt."
+    },
+    {
+      "op": "add",
+      "path": "/commands/5/examples",
+      "value": [
+        "raf agent interrupt --id worker"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/5/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "AGENT_RESULT_PENDING",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "LAUNCH_CANCELLED",
+        "LAUNCH_FAILED",
+        "LAUNCH_FENCE_LOST",
+        "LAUNCH_PRECONDITION_FAILED",
+        "LAUNCH_RECOVERABLE",
+        "NOTIFY_TARGET_INVALID",
+        "REPORT_INVALID",
+        "REPORT_UNVERIFIED",
+        "RESOURCE_ESTIMATE_UNKNOWN",
+        "RESOURCE_UNAVAILABLE",
+        "RESOURCE_WAIT_FAILED",
+        "RESOURCE_WAIT_UNAVAILABLE",
+        "RUNNER_DELIVERY_UNAVAILABLE",
+        "RUNNER_IDENTITY_INVALID",
+        "RUNNER_IDENTITY_UNAVAILABLE",
+        "RUNNER_PROTOCOL_UNAVAILABLE",
+        "RUNNER_SANDBOX_UNAVAILABLE",
+        "RUNNER_UNAVAILABLE",
+        "RUNNER_WORKSPACE_UNTRUSTED",
+        "RUNNER_WRITE_SCOPE_INVALID",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE",
+        "TASK_CLAIM_LOST",
+        "TASK_CLAIM_REQUIRED",
+        "TASK_CONTEXT_CHANGED",
+        "TASK_CONTEXT_MISMATCH",
+        "TASK_IDENTITY_INVALID",
+        "TASK_IDENTITY_MISMATCH",
+        "TASK_LIVENESS_UNKNOWN",
+        "TASK_NOT_COMPLETED",
+        "TASK_RESERVED",
+        "TASK_SOURCE_MISSING",
+        "TASK_SOURCE_UNKNOWN",
+        "WORKSPACE_MISMATCH",
+        "WORKSPACE_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/6/prerequisites",
+      "value": "Виклик із tmux-панелі сесії main; скіл start робить це сам. Параметрів немає: панель визначається за середовищем tmux процесу виклику."
+    },
+    {
+      "op": "add",
+      "path": "/commands/6/sideEffects",
+      "value": "Записує або підтверджує сесію main у SQLite стану; не запускає, не перезапускає й не зупиняє процесів."
+    },
+    {
+      "op": "add",
+      "path": "/commands/6/output",
+      "value": "JSON з адресним ID main, tmux socket/session/pane, PID і boot identity панелі; код 0 і для повторного виклику з тієї ж панелі."
+    },
+    {
+      "op": "add",
+      "path": "/commands/6/errors",
+      "value": "Ненульовий код і JSON із причиною та кроком виправлення: виклик поза tmux або інша панель main ще жива."
+    },
+    {
+      "op": "add",
+      "path": "/commands/6/examples",
+      "value": [
+        "raf main attach"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/6/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "MAIN_BASE_STALE",
+        "MAIN_FACT_CONFLICT",
+        "MAIN_FACT_IDENTITY",
+        "MAIN_GENERATION_ACTIVE",
+        "MAIN_GENERATION_UNPUBLISHED",
+        "MAIN_GIT_CHANGED",
+        "MAIN_GIT_INCONSISTENT",
+        "MAIN_HANDOVER_INCOMPLETE",
+        "MAIN_HANDOVER_MISSING",
+        "MAIN_HANDOVER_STALE",
+        "MAIN_NOT_LAUNCHABLE",
+        "MAIN_OPERATION_CONFLICT",
+        "MAIN_OPERATION_MISSING",
+        "MAIN_OWNER_FENCED",
+        "MAIN_OWNER_INCONSISTENT",
+        "MAIN_PROTOCOL_INCOMPATIBLE",
+        "MAIN_RECOVERY_REQUIRED",
+        "MAIN_SLOT_BUSY"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/7/prerequisites",
+      "value": "Уповноважений викликач; --runner із статичного models.json#/runners."
+    },
+    {
+      "op": "add",
+      "path": "/commands/7/sideEffects",
+      "value": "Ідемпотентно вмикає runner у SQLite; не змінює conf/models.json, квоти чи enabled конкретної моделі."
+    },
+    {
+      "op": "add",
+      "path": "/commands/7/output",
+      "value": "JSON {runner, enabled}; exit 0 після збереження перемикача."
+    },
+    {
+      "op": "add",
+      "path": "/commands/7/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help runner enable."
+    },
+    {
+      "op": "add",
+      "path": "/commands/7/examples",
+      "value": [
+        "raf runner enable --runner codex"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/7/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "NO_ENABLED_MODELS",
+        "NO_SUITABLE_CAPACITY",
+        "QUOTA_COLLECTION_FAILED",
+        "RUNNER_DELIVERY_UNAVAILABLE",
+        "RUNNER_IDENTITY_INVALID",
+        "RUNNER_IDENTITY_UNAVAILABLE",
+        "RUNNER_PROTOCOL_UNAVAILABLE",
+        "RUNNER_SANDBOX_UNAVAILABLE",
+        "RUNNER_UNAVAILABLE",
+        "RUNNER_WORKSPACE_UNTRUSTED",
+        "RUNNER_WRITE_SCOPE_INVALID"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/8/prerequisites",
+      "value": "Уповноважений викликач; --runner із статичного models.json#/runners."
+    },
+    {
+      "op": "add",
+      "path": "/commands/8/sideEffects",
+      "value": "Ідемпотентно вимикає runner у SQLite; не зупиняє вже запущені процеси й не змінює conf/models.json."
+    },
+    {
+      "op": "add",
+      "path": "/commands/8/output",
+      "value": "JSON {runner, enabled}; exit 0 після збереження перемикача."
+    },
+    {
+      "op": "add",
+      "path": "/commands/8/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help runner disable."
+    },
+    {
+      "op": "add",
+      "path": "/commands/8/examples",
+      "value": [
+        "raf runner disable --runner codex"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/8/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "NO_ENABLED_MODELS",
+        "NO_SUITABLE_CAPACITY",
+        "QUOTA_COLLECTION_FAILED",
+        "RUNNER_DELIVERY_UNAVAILABLE",
+        "RUNNER_IDENTITY_INVALID",
+        "RUNNER_IDENTITY_UNAVAILABLE",
+        "RUNNER_PROTOCOL_UNAVAILABLE",
+        "RUNNER_SANDBOX_UNAVAILABLE",
+        "RUNNER_UNAVAILABLE",
+        "RUNNER_WORKSPACE_UNTRUSTED",
+        "RUNNER_WRITE_SCOPE_INVALID"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/9/prerequisites",
+      "value": "Валідний каталог моделей та поточний SQLite; статичний набір runner у help не означає його поточну доступність."
+    },
+    {
+      "op": "add",
+      "path": "/commands/9/sideEffects",
+      "value": "Читає поточні перемикачі, придатність моделей і останні квоти; не запускає зовнішній probe для help."
+    },
+    {
+      "op": "add",
+      "path": "/commands/9/output",
+      "value": "JSON доступності моделей/runners із причинами та свіжістю квот."
+    },
+    {
+      "op": "add",
+      "path": "/commands/9/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help runner list."
+    },
+    {
+      "op": "add",
+      "path": "/commands/9/examples",
+      "value": [
+        "raf runner list"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/9/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "NO_ENABLED_MODELS",
+        "NO_SUITABLE_CAPACITY",
+        "QUOTA_COLLECTION_FAILED",
+        "RUNNER_DELIVERY_UNAVAILABLE",
+        "RUNNER_IDENTITY_INVALID",
+        "RUNNER_IDENTITY_UNAVAILABLE",
+        "RUNNER_PROTOCOL_UNAVAILABLE",
+        "RUNNER_SANDBOX_UNAVAILABLE",
+        "RUNNER_UNAVAILABLE",
+        "RUNNER_WORKSPACE_UNTRUSTED",
+        "RUNNER_WRITE_SCOPE_INVALID"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/10/prerequisites",
+      "value": "Зареєстроване дерево raf main, валідний state context і налаштований service host."
+    },
+    {
+      "op": "add",
+      "path": "/commands/10/sideEffects",
+      "value": "Ідемпотентно запускає одну фонову службу через singleton ownership/readiness; агентів не перезапускає."
+    },
+    {
+      "op": "add",
+      "path": "/commands/10/output",
+      "value": "JSON фактичного стану служби; exit 0 лише після перевіреної готовності."
+    },
+    {
+      "op": "add",
+      "path": "/commands/10/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help service start."
+    },
+    {
+      "op": "add",
+      "path": "/commands/10/examples",
+      "value": [
+        "raf service start"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/10/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "SERVICE_OPERATION_FAILED"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/11/prerequisites",
+      "value": "Валідний state context і конфігурація служби."
+    },
+    {
+      "op": "add",
+      "path": "/commands/11/sideEffects",
+      "value": "Перевіряє поточний endpoint/ownership і доступну діагностику; не запускає службу."
+    },
+    {
+      "op": "add",
+      "path": "/commands/11/output",
+      "value": "JSON поточного стану, включно з відсутністю чи невідомою діагностикою."
+    },
+    {
+      "op": "add",
+      "path": "/commands/11/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help service status."
+    },
+    {
+      "op": "add",
+      "path": "/commands/11/examples",
+      "value": [
+        "raf service status"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/11/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "SERVICE_OPERATION_FAILED"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/12/prerequisites",
+      "value": "Уповноважений викликач, state context і перевірена identity служби."
+    },
+    {
+      "op": "add",
+      "path": "/commands/12/sideEffects",
+      "value": "Штатно зупиняє лише службу; зберігає агентів, нагадування й поточний стан."
+    },
+    {
+      "op": "add",
+      "path": "/commands/12/output",
+      "value": "JSON фактичного завершення служби; exit 0 після підтвердження зупинки."
+    },
+    {
+      "op": "add",
+      "path": "/commands/12/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help service stop."
+    },
+    {
+      "op": "add",
+      "path": "/commands/12/examples",
+      "value": [
+        "raf service stop"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/12/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "SERVICE_OPERATION_FAILED"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/13/prerequisites",
+      "value": "Адресат --to активний; --at — ISO 8601 із Z/зсувом. --event, --event-id та --event-action задаються всі разом або відсутні."
+    },
+    {
+      "op": "add",
+      "path": "/commands/13/sideEffects",
+      "value": "Створює нагадування й застосовну прив’язку події в SQLite; зберігає первинного адресата."
+    },
+    {
+      "op": "add",
+      "path": "/commands/13/output",
+      "value": "JSON створеного нагадування; exit 0 після збереження."
+    },
+    {
+      "op": "add",
+      "path": "/commands/13/errors",
+      "value": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд»."
+    },
+    {
+      "op": "add",
+      "path": "/commands/13/examples",
+      "value": [
+        "raf reminder add --to main --at 2026-10-22T18:00:00+03:00 --text \"Перевірити викладку\"",
+        "raf reminder add --to hotfix-demo --at 2026-10-23T09:00:00Z --text \"Архівувати зміну\" --event openspec.archived --event-id add-raf-reminders --event-action close"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/13/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "EVENT_ID_INVALID",
+        "REMINDER_ACTIVE",
+        "REMINDER_BINDING_INCOMPLETE",
+        "REMINDER_CLOSED",
+        "REMINDER_DUPLICATE",
+        "REMINDER_INVALID_TIME",
+        "REMINDER_NOT_FOUND",
+        "REMINDER_UPDATE_EMPTY",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/14/prerequisites",
+      "value": "Валідний state context; --to, якщо заданий, фільтрує поточного адресата."
+    },
+    {
+      "op": "add",
+      "path": "/commands/14/sideEffects",
+      "value": "Читає поточні нагадування з чинною обробкою доставки та строків збереження."
+    },
+    {
+      "op": "add",
+      "path": "/commands/14/output",
+      "value": "JSON відібраних нагадувань."
+    },
+    {
+      "op": "add",
+      "path": "/commands/14/errors",
+      "value": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд»."
+    },
+    {
+      "op": "add",
+      "path": "/commands/14/examples",
+      "value": [
+        "raf reminder list"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/14/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "EVENT_ID_INVALID",
+        "REMINDER_ACTIVE",
+        "REMINDER_BINDING_INCOMPLETE",
+        "REMINDER_CLOSED",
+        "REMINDER_DUPLICATE",
+        "REMINDER_INVALID_TIME",
+        "REMINDER_NOT_FOUND",
+        "REMINDER_UPDATE_EMPTY",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/15/prerequisites",
+      "value": "Точний --id незакритого й ще не активованого нагадування; передано хоча б одну зміну. Трійка event/event-id/event-action повна."
+    },
+    {
+      "op": "add",
+      "path": "/commands/15/sideEffects",
+      "value": "Оновлює передані поля; --at не повертає активне нагадування у майбутнє й не змінює первинного адресата."
+    },
+    {
+      "op": "add",
+      "path": "/commands/15/output",
+      "value": "JSON оновленого нагадування; exit 0 після збереження."
+    },
+    {
+      "op": "add",
+      "path": "/commands/15/errors",
+      "value": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд»."
+    },
+    {
+      "op": "add",
+      "path": "/commands/15/examples",
+      "value": [
+        "raf reminder update --id worker"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/15/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "EVENT_ID_INVALID",
+        "REMINDER_ACTIVE",
+        "REMINDER_BINDING_INCOMPLETE",
+        "REMINDER_CLOSED",
+        "REMINDER_DUPLICATE",
+        "REMINDER_INVALID_TIME",
+        "REMINDER_NOT_FOUND",
+        "REMINDER_UPDATE_EMPTY",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/16/prerequisites",
+      "value": "Точний --id доступного нагадування та уповноважений викликач."
+    },
+    {
+      "op": "add",
+      "path": "/commands/16/sideEffects",
+      "value": "Активує нагадування і передає його поточному адресату за спільним каналом доставки."
+    },
+    {
+      "op": "add",
+      "path": "/commands/16/output",
+      "value": "JSON фактичного результату активації."
+    },
+    {
+      "op": "add",
+      "path": "/commands/16/errors",
+      "value": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд»."
+    },
+    {
+      "op": "add",
+      "path": "/commands/16/examples",
+      "value": [
+        "raf reminder activate --id worker"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/16/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "EVENT_ID_INVALID",
+        "REMINDER_ACTIVE",
+        "REMINDER_BINDING_INCOMPLETE",
+        "REMINDER_CLOSED",
+        "REMINDER_DUPLICATE",
+        "REMINDER_INVALID_TIME",
+        "REMINDER_NOT_FOUND",
+        "REMINDER_UPDATE_EMPTY",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/17/prerequisites",
+      "value": "Точний --id та непорожня --reason; уповноважений викликач."
+    },
+    {
+      "op": "add",
+      "path": "/commands/17/sideEffects",
+      "value": "Закриває нагадування зі збереженням причини та дозволеної історії."
+    },
+    {
+      "op": "add",
+      "path": "/commands/17/output",
+      "value": "JSON закритого нагадування; exit 0 після збереження."
+    },
+    {
+      "op": "add",
+      "path": "/commands/17/errors",
+      "value": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд»."
+    },
+    {
+      "op": "add",
+      "path": "/commands/17/examples",
+      "value": [
+        "raf reminder close --id worker --reason \"Роботу завершено\""
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/17/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "EVENT_ID_INVALID",
+        "REMINDER_ACTIVE",
+        "REMINDER_BINDING_INCOMPLETE",
+        "REMINDER_CLOSED",
+        "REMINDER_DUPLICATE",
+        "REMINDER_INVALID_TIME",
+        "REMINDER_NOT_FOUND",
+        "REMINDER_UPDATE_EMPTY",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/18/prerequisites",
+      "value": "Точний --id і активний новий адресат --to; уповноважений викликач."
+    },
+    {
+      "op": "add",
+      "path": "/commands/18/sideEffects",
+      "value": "Змінює поточного адресата, зберігаючи первинного адресата й стан нагадування."
+    },
+    {
+      "op": "add",
+      "path": "/commands/18/output",
+      "value": "JSON перепризначеного нагадування."
+    },
+    {
+      "op": "add",
+      "path": "/commands/18/errors",
+      "value": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд»."
+    },
+    {
+      "op": "add",
+      "path": "/commands/18/examples",
+      "value": [
+        "raf reminder reassign --id worker --to main"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/18/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "EVENT_ID_INVALID",
+        "REMINDER_ACTIVE",
+        "REMINDER_BINDING_INCOMPLETE",
+        "REMINDER_CLOSED",
+        "REMINDER_DUPLICATE",
+        "REMINDER_INVALID_TIME",
+        "REMINDER_NOT_FOUND",
+        "REMINDER_UPDATE_EMPTY",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/19/prerequisites",
+      "value": "--created-for визначає первинного адресата; --reason непорожня; уповноважений викликач."
+    },
+    {
+      "op": "add",
+      "path": "/commands/19/sideEffects",
+      "value": "Закриває відібрані нагадування з причиною за чинними правами, без видалення чужих."
+    },
+    {
+      "op": "add",
+      "path": "/commands/19/output",
+      "value": "JSON результату масового закриття з фактичним відбором."
+    },
+    {
+      "op": "add",
+      "path": "/commands/19/errors",
+      "value": "Ненульовий код і JSON із причиною, деталями та кроком виправлення за cli-catalog; коди перелічено в add-raf-reminders/design.md «Параметри команд»."
+    },
+    {
+      "op": "add",
+      "path": "/commands/19/examples",
+      "value": [
+        "raf reminder close-all --created-for main --reason \"Роботу завершено\""
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/19/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "EVENT_ID_INVALID",
+        "REMINDER_ACTIVE",
+        "REMINDER_BINDING_INCOMPLETE",
+        "REMINDER_CLOSED",
+        "REMINDER_DUPLICATE",
+        "REMINDER_INVALID_TIME",
+        "REMINDER_NOT_FOUND",
+        "REMINDER_UPDATE_EMPTY",
+        "SESSION_CLOSE_BLOCKED",
+        "SESSION_NOT_ACTIVE",
+        "SESSION_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/20/prerequisites",
+      "value": "Валідний state context та налаштовані commandTiming."
+    },
+    {
+      "op": "add",
+      "path": "/commands/20/sideEffects",
+      "value": "Читає поточні EMA-агрегати команд; не створює історичного журналу."
+    },
+    {
+      "op": "add",
+      "path": "/commands/20/output",
+      "value": "JSON статистики команд із budgetMs або null, якщо бюджет для команди не визначено."
+    },
+    {
+      "op": "add",
+      "path": "/commands/20/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help command stats."
+    },
+    {
+      "op": "add",
+      "path": "/commands/20/examples",
+      "value": [
+        "raf command stats"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/20/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/21/prerequisites",
+      "value": "Скомпільований артефакт цього покоління. raf, raf --help і raf help показують корінь; raf help <path> та raf <path> --help еквівалентні."
+    },
+    {
+      "op": "add",
+      "path": "/commands/21/sideEffects",
+      "value": "Лише читає каталог; SQLite, служба, Git, секрети й зовнішні runners не потрібні."
+    },
+    {
+      "op": "add",
+      "path": "/commands/21/output",
+      "value": "JSON довідки: usage, parameters/defaults/values, prerequisites, sideEffects, output, errors, examples та спільні константи."
+    },
+    {
+      "op": "add",
+      "path": "/commands/21/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help help."
+    },
+    {
+      "op": "add",
+      "path": "/commands/21/examples",
+      "value": [
+        "raf help"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/21/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/22/prerequisites",
+      "value": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом."
+    },
+    {
+      "op": "add",
+      "path": "/commands/22/sideEffects",
+      "value": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "op": "add",
+      "path": "/commands/22/output",
+      "value": "JSON-результат; код 0 лише при успішній операції."
+    },
+    {
+      "op": "add",
+      "path": "/commands/22/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help runner limits."
+    },
+    {
+      "op": "add",
+      "path": "/commands/22/examples",
+      "value": [
+        "raf runner limits --runners codex"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/22/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "CALLER_UNAUTHORIZED",
+        "CALLER_UNVERIFIED",
+        "NO_ENABLED_MODELS",
+        "NO_SUITABLE_CAPACITY",
+        "QUOTA_COLLECTION_FAILED",
+        "RUNNER_DELIVERY_UNAVAILABLE",
+        "RUNNER_IDENTITY_INVALID",
+        "RUNNER_IDENTITY_UNAVAILABLE",
+        "RUNNER_PROTOCOL_UNAVAILABLE",
+        "RUNNER_SANDBOX_UNAVAILABLE",
+        "RUNNER_UNAVAILABLE",
+        "RUNNER_WORKSPACE_UNTRUSTED",
+        "RUNNER_WRITE_SCOPE_INVALID"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/23/prerequisites",
+      "value": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом."
+    },
+    {
+      "op": "add",
+      "path": "/commands/23/sideEffects",
+      "value": "Див. контракт відповідної команди; help не виконує операцій."
+    },
+    {
+      "op": "add",
+      "path": "/commands/23/output",
+      "value": "JSON-результат; код 0 лише при успішній операції."
+    },
+    {
+      "op": "add",
+      "path": "/commands/23/errors",
+      "value": "Ненульовий код із errorCodes та JSON code/message/details/remediation. За часткового виконання перевірте completed/pending і retrySafe перед повтором; довідка: raf help resource wait."
+    },
+    {
+      "op": "add",
+      "path": "/commands/23/examples",
+      "value": [
+        "raf resource wait --level hotfix"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/23/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "RESOURCE_ESTIMATE_UNKNOWN",
+        "RESOURCE_UNAVAILABLE",
+        "RESOURCE_WAIT_FAILED",
+        "RESOURCE_WAIT_UNAVAILABLE"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/24/prerequisites",
+      "value": "База жуків; служба raf не потрібна (background-runtime «Межі служби raf»); авторизація чинного bugs-api для мережевих дій. До реалізації команда має явно повідомляти недоступність."
+    },
+    {
+      "op": "add",
+      "path": "/commands/24/sideEffects",
+      "value": "Читання локальної бази; фонову синхронізацію виконує служба."
+    },
+    {
+      "op": "add",
+      "path": "/commands/24/output",
+      "value": "JSON зі сторінкою жуків, continuation cursor та станом синхронізації."
+    },
+    {
+      "op": "add",
+      "path": "/commands/24/errors",
+      "value": "Ненульовий код та стисла достатня діагностика за cli-catalog."
+    },
+    {
+      "op": "add",
+      "path": "/commands/24/examples",
+      "value": [
+        "raf bug list"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/24/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "BUG_COMMAND_FAILED",
+        "BUG_CONFIG_INVALID",
+        "BUG_SECTION_UNAVAILABLE",
+        "BUG_WRITE_INVALID_RESPONSE",
+        "BUG_WRITE_REJECTED",
+        "BUG_WRITE_REPLY_TARGET_MISSING",
+        "BUG_WRITE_UNKNOWN"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/25/prerequisites",
+      "value": "База жуків; служба raf не потрібна (background-runtime «Межі служби raf»); авторизація чинного bugs-api для мережевих дій. До реалізації команда має явно повідомляти недоступність."
+    },
+    {
+      "op": "add",
+      "path": "/commands/25/sideEffects",
+      "value": "Читання локальної бази без автоматичного завантаження вкладень."
+    },
+    {
+      "op": "add",
+      "path": "/commands/25/output",
+      "value": "JSON жука, коментарів, метаданих вкладень та стану синхронізації."
+    },
+    {
+      "op": "add",
+      "path": "/commands/25/errors",
+      "value": "Ненульовий код та стисла достатня діагностика за cli-catalog."
+    },
+    {
+      "op": "add",
+      "path": "/commands/25/examples",
+      "value": [
+        "raf bug show --bug raf:1"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/25/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "BUG_COMMAND_FAILED",
+        "BUG_CONFIG_INVALID",
+        "BUG_SECTION_UNAVAILABLE",
+        "BUG_WRITE_INVALID_RESPONSE",
+        "BUG_WRITE_REJECTED",
+        "BUG_WRITE_REPLY_TARGET_MISSING",
+        "BUG_WRITE_UNKNOWN"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/26/prerequisites",
+      "value": "База жуків із цим жуком; служба raf не потрібна (background-runtime «Межі служби raf»); секрет розділу й мережевий доступ до MCP Dash. До реалізації команда має явно повідомляти недоступність."
+    },
+    {
+      "op": "add",
+      "path": "/commands/26/sideEffects",
+      "value": "MCP comment_problem у Dash від actor raf; одна транзакція bugs.sqlite з коментарем і станом жука з відповіді сервера."
+    },
+    {
+      "op": "add",
+      "path": "/commands/26/output",
+      "value": "JSON із серверним comment_id, ревізією жука та записаним коментарем; код 0 лише після відповіді сервера й локального запису."
+    },
+    {
+      "op": "add",
+      "path": "/commands/26/errors",
+      "value": "Ненульовий код і JSON із кодом сервера (застаріла ревізія, оренда, доступ, жук відсутній) або BUG_WRITE_UNKNOWN для невідомого результату чи BUG_WRITE_INVALID_RESPONSE; локальна база не змінюється."
+    },
+    {
+      "op": "add",
+      "path": "/commands/26/examples",
+      "value": [
+        "raf bug comment add --bug raf:1 --text-file comment.txt"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/26/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "BUG_COMMAND_FAILED",
+        "BUG_CONFIG_INVALID",
+        "BUG_SECTION_UNAVAILABLE",
+        "BUG_WRITE_INVALID_RESPONSE",
+        "BUG_WRITE_REJECTED",
+        "BUG_WRITE_REPLY_TARGET_MISSING",
+        "BUG_WRITE_UNKNOWN"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/27/prerequisites",
+      "value": "База жуків із цим жуком; служба raf не потрібна (background-runtime «Межі служби raf»); секрет розділу й мережевий доступ до MCP Dash. До реалізації команда має явно повідомляти недоступність."
+    },
+    {
+      "op": "add",
+      "path": "/commands/27/sideEffects",
+      "value": "MCP set_problem_status у Dash від actor raf; одна транзакція bugs.sqlite зі станом жука з відповіді; in_progress — claim з орендою actor raf."
+    },
+    {
+      "op": "add",
+      "path": "/commands/27/output",
+      "value": "JSON зі станом жука з відповіді сервера, записаним локально; код 0 лише після відповіді сервера й локального запису."
+    },
+    {
+      "op": "add",
+      "path": "/commands/27/errors",
+      "value": "Ненульовий код і JSON із кодом сервера (застаріла ревізія, оренда, доступ, жук відсутній) або BUG_WRITE_UNKNOWN для невідомого результату чи BUG_WRITE_INVALID_RESPONSE; локальна база не змінюється."
+    },
+    {
+      "op": "add",
+      "path": "/commands/27/examples",
+      "value": [
+        "raf bug status set --bug raf:1 --status example"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/27/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "BUG_COMMAND_FAILED",
+        "BUG_CONFIG_INVALID",
+        "BUG_SECTION_UNAVAILABLE",
+        "BUG_WRITE_INVALID_RESPONSE",
+        "BUG_WRITE_REJECTED",
+        "BUG_WRITE_REPLY_TARGET_MISSING",
+        "BUG_WRITE_UNKNOWN"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/28/prerequisites",
+      "value": "База жуків; служба raf не потрібна (background-runtime «Межі служби raf»); авторизація чинного bugs-api для мережевих дій. До реалізації команда має явно повідомляти недоступність."
+    },
+    {
+      "op": "add",
+      "path": "/commands/28/sideEffects",
+      "value": "Перевірка доступу, завантаження за відсутності валідного кешу, оновлення lastReadAt у базі жуків і застосування бюджету кешу."
+    },
+    {
+      "op": "add",
+      "path": "/commands/28/output",
+      "value": "JSON з доступним локальним шляхом і метаданими вкладення; помилка не повертає удаваного шляху."
+    },
+    {
+      "op": "add",
+      "path": "/commands/28/errors",
+      "value": "Ненульовий код та стисла достатня діагностика за cli-catalog."
+    },
+    {
+      "op": "add",
+      "path": "/commands/28/examples",
+      "value": [
+        "raf bug attachment get --bug raf:1 --attachment attachment-id"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/28/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "BUG_COMMAND_FAILED",
+        "BUG_CONFIG_INVALID",
+        "BUG_SECTION_UNAVAILABLE",
+        "BUG_WRITE_INVALID_RESPONSE",
+        "BUG_WRITE_REJECTED",
+        "BUG_WRITE_REPLY_TARGET_MISSING",
+        "BUG_WRITE_UNKNOWN"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/29/prerequisites",
+      "value": "Активна зміна, налаштований профіль, перевірене робоче дерево та ізольований QA HOME для raf-develop/hotfix."
+    },
+    {
+      "op": "add",
+      "path": "/commands/29/sideEffects",
+      "value": "Адресний процес unit- або integration-тестів, його дерево та активний агрегат SQLite вибраного HOME; без історії прогонів."
+    },
+    {
+      "op": "add",
+      "path": "/commands/29/output",
+      "value": "JSON TestRunResult з testKind, timeoutPolicy і callerPhase; код 0 лише для passed."
+    },
+    {
+      "op": "add",
+      "path": "/commands/29/errors",
+      "value": "Ненульовий код для refused, setup-failed, assertions-failed, timed-out, interrupted та unverified-remainder."
+    },
+    {
+      "op": "add",
+      "path": "/commands/29/examples",
+      "value": [
+        "raf test run --project etchly --phase main --group complete-raf-flow-contracts/catalog-generator"
+      ]
+    },
+    {
+      "op": "add",
+      "path": "/commands/29/errorCodes",
+      "value": [
+        "UNKNOWN_COMMAND",
+        "UNKNOWN_ARGUMENT",
+        "DUPLICATE_ARGUMENT",
+        "MISSING_VALUE",
+        "MISSING_REQUIRED",
+        "INVALID_VALUE",
+        "HANDLER_FAILED",
+        "HANDLER_UNAVAILABLE",
+        "COMMAND_UNAVAILABLE",
+        "CATALOG_UNAVAILABLE",
+        "CONFIGURATION_INVALID",
+        "PRODUCTION_ENTRY_FAILED",
+        "STATE_CONTEXT_REFUSED",
+        "TIMING_FAILED",
+        "TEST_RUN_PLAN_CHANGED"
+      ]
+    }
+  ]
+}

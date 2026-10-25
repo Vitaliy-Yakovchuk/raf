@@ -138,8 +138,10 @@ export function validateProfileInventories(configuration: RawConfiguration, flow
         membership.add(file);
       }
       if (kind === 'integration') {
-        if (profile.resultAdapter !== 'node-test-events') reject('CONFIGURATION_INVALID', `${pointer}/resultAdapter`);
-        if (profile.exactIds !== 'node-test-name') reject('CONFIGURATION_INVALID', `${pointer}/exactIds`);
+        if (!['node-test-events', 'vitest-events'].includes(profile.resultAdapter)) reject('CONFIGURATION_INVALID', `${pointer}/resultAdapter`);
+        if (profile.resultAdapter === 'vitest-events' && (projectId !== 'etchly' || id !== 'vitest-worker-d1-integration')) reject('CONFIGURATION_INVALID', `${pointer}/resultAdapter`);
+        if (profile.exactIds !== (profile.resultAdapter === 'vitest-events' ? 'vitest-test-name' : 'node-test-name')) reject('CONFIGURATION_INVALID', `${pointer}/exactIds`);
+        if (profile.resultAdapter === 'vitest-events' && (projectId !== 'etchly' || id !== 'vitest-worker-d1-integration' || profile.cwd !== 'worker' || profile.argv?.join('\0') !== ['--import', '../scripts/shared-library-runtime.mjs', '../node_modules/vitest/vitest.mjs', 'run', '--configLoader', 'runner', '--project', 'worker-d1-integration'].join('\0') || !profile.environment?.isolatedHome || !profile.environment?.stateOrigin)) reject('CONFIGURATION_INVALID', pointer);
         testRunTimeoutPolicy(kind, flow);
       }
     }
@@ -164,6 +166,7 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
   const files: string[] = request.files ?? request.only?.map(id => id.file) ?? preset?.files ?? [];
   if (!files.length || files.some(file => !safe(file)) || new Set(files).size !== files.length) reject('UNSAFE_SELECTION');
   if (integration && !equal(files, preset.files)) reject('UNSAFE_SELECTION');
+  const selectedFiles: string[] = integration ? [...preset.files] : files;
   const profiles = Object.entries(project.profiles).filter(([, profile]) => files.every(file => profileFiles(profile as any).includes(file)));
   if (profiles.length !== 1) reject('UNSAFE_SELECTION');
   const [profileId, profile] = profiles[0] as [string, any];
@@ -187,8 +190,14 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
     const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     argv.push(`--test-name-pattern=^(?:${testIds.map(id => escape(id.name)).join('|')})$`);
   }
-  argv.push(...files.map(file => relative(cwd, resolve(request.workspace, file))));
-  return { request, testKind, profileId, selection: { files: [...files], testIds }, command: { executable: profile.executable, argv, cwd }, timeoutPolicy: testRunTimeoutPolicy(testKind, flow), unitPolicy: flow.unitTests as PreparedTestRun['unitPolicy'] };
+  const cwdFiles = selectedFiles.map(file => relative(cwd, resolve(request.workspace, file)));
+  if (cwdFiles.some(file => !safe(file))) reject('UNSAFE_SELECTION');
+  if (profile.resultAdapter === 'vitest-events') {
+    const run = argv.indexOf('run');
+    if (run < 1) reject('CONFIGURATION_INVALID', `conf/test-runs.json#/projects/${request.project}/profiles/${profileId}/argv`);
+    argv.splice(run + 1, 0, ...cwdFiles);
+  } else argv.push(...cwdFiles);
+  return { request, testKind, profileId, selection: { files: [...selectedFiles], testIds }, command: { executable: profile.executable, argv, cwd }, timeoutPolicy: testRunTimeoutPolicy(testKind, flow), unitPolicy: flow.unitTests as PreparedTestRun['unitPolicy'] };
 }
 
 export function authorizeTestRunProfile(plan: PreparedTestRun, caller: CallerContext): CallerAuthorization {

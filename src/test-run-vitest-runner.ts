@@ -37,4 +37,9 @@ export default class StructuredVitestRunner extends Base {
     try { await super.onAfterTryTask?.(...args); }
     catch (error) { throw tagged(error, 'test-body'); }
   }
+
+  async importFile(filepath: string, source: string): Promise<unknown> {
+    try { return await super.importFile(filepath, source); }
+    catch (error) { throw tagged(error, source === 'setup' ? 'fixture-setup' : 'import'); }
+  }
 }

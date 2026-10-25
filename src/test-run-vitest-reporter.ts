@@ -23,9 +23,17 @@ export default class VitestReporter {
     this.seenErrors.add(error);
     const current = new TestRunDiagnostics(JSON.parse(process.env.RAF_TEST_RUN_DIAGNOSTICS!), { workspace: process.cwd(), qaHome: process.env.HOME ?? '', fixtureRoots: process.env.TMPDIR ? [process.env.TMPDIR] : [] });
     const disposition = current.failure({ test, origin, error });
-    const inlineDiagnostic = current.attach({ runId: '', outcome: '', failureKinds: [], knownRed: [], unexecuted: [], unknown: [], timeoutCount: 0, timedOut: false, cleanup: null, evidence: [] }, {} as any).diagnostics.at(-1);
+    const inlineDiagnostic = { ...current.attach({ runId: '', outcome: '', failureKinds: [], knownRed: [], unexecuted: [], unknown: [], timeoutCount: 0, timedOut: false, cleanup: null, evidence: [] }, {} as any).diagnostics.at(-1)!, origin };
     if (test) this.emit({ kind: disposition.failureKind === 'assertions' ? 'assertion-failed' : 'setup-failed', test, inlineDiagnostic });
     else this.emit({ kind: 'file-setup-failed', inlineDiagnostic });
+  }
+  onInit(vitest: any): void {
+    if (typeof vitest.initializeGlobalSetup !== 'function') throw new Error('Compatible Vitest global setup lifecycle required');
+    const initialize = vitest.initializeGlobalSetup.bind(vitest);
+    vitest.initializeGlobalSetup = async (...args: any[]) => {
+      try { return await initialize(...args); }
+      catch (error) { this.failure(null, 'global-setup', error); throw error; }
+    };
   }
   onTestModuleCollected(module: any): void {
     for (const test of module.children.allTests()) {
@@ -51,7 +59,7 @@ export default class VitestReporter {
     }
   }
   onTestModuleEnd(module: any): void {
-    for (const error of module.errors()) if (!this.seenErrors.has(error)) this.failure(null, 'collection', error);
+    for (const error of module.errors()) if (!this.seenErrors.has(error)) this.failure(null, ['import', 'fixture-setup'].includes(error.rafTestOrigin) ? error.rafTestOrigin : 'collection', error);
   }
   onTestSuiteResult(suite: any): void {
     for (const error of suite.errors()) if (!this.seenErrors.has(error)) this.failure(null, 'hook', error);

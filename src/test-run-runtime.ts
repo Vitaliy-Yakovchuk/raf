@@ -1,3 +1,5 @@
+import { createServer } from 'node:net';
+import { prepareEtchlyIntegrationEnvironment } from './test-run-etchly-integration.ts';
 import { testRunConfigurationManifest, captureTestRunConfiguration, assertTestRunConfigurationUnchanged } from './test-run-config-dependencies.ts';
 import type { TestRunConfigurationReader, TestRunConfigurationFile, TestRunConfigurationSnapshot } from './test-run-config-dependencies.ts';
 import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
@@ -10,7 +12,7 @@ import { createTestRunQueuePort } from './test-run-queue-runtime.ts';
 import { acknowledgeTestRunDelivery, recoverTestRun, stateOpenFailure } from './test-run-state-recovery.ts';
 import type { RecoveryStatePort } from './test-run-state-recovery.ts';
 import { observeReservedTestTree } from './test-run-resource-process.ts';
-import { profileFiles, profileTestKind } from './test-run-integration-profiles.ts';
+import { profileFiles, profileTestKind, testRunTimeoutPolicy } from './test-run-integration-profiles.ts';
 import { testWrapperIdentity } from './test-run-resource-process.ts';
 import { createTestRunResourcePort } from './test-run-resource-runtime.ts';
 import { reconcileTestRunResources } from './test-run-reservations.ts';
@@ -127,6 +129,28 @@ export function verifyEtchlyDependencies(context: TestRunContext, profiles: impo
   }, { home: context.home, tmp: context.tmpPath });
 }
 
+export async function verifyEtchlyD1Dependencies(context: TestRunContext, profiles: import('./test-runs.ts').TestRunProfile[]): Promise<void> {
+  const problems: string[] = [];
+  for (const profile of profiles.filter(profile => profile.testKind === 'integration')) {
+    for (const file of profile.checks) if (!existsSync(resolve(context.workspace, file))) problems.push(file);
+  }
+  for (const file of ['node_modules/workerd/bin/workerd', 'node_modules/esbuild/bin/esbuild']) {
+    if (!executableAvailable(resolve(context.workspace, file), context.workspace)) problems.push(`executable ${file}`);
+  }
+  const library = resolve(context.workspace, 'shared-libs/resource-protocol');
+  if (!existsSync(join(library, 'node_modules')) || !existsSync(join(library, 'node_modules/@resource-protocol'))) problems.push('shared-libs/resource-protocol/node_modules');
+  const index = resolve(context.workspace, 'app/dist/local/index.html');
+  try {
+    if (realpathSync(index) !== index || !statSync(index).isFile() || !statSync(index).size || readFileSync(index, 'utf8').includes('href="/favicon-dev1.svg"')) problems.push('app/dist/local/index.html (local environment build required)');
+  } catch { problems.push('app/dist/local/index.html (prepare local build before integration)'); }
+  if (problems.length) throw Object.assign(new Error(`Etchly D1 setup: ${problems.join(', ')}; prepare local dependencies/build without install or hidden build in the runner`), { code: 'ENVIRONMENT_INVALID' });
+  await new Promise<void>((done, fail) => {
+    const server = createServer();
+    server.once('error', error => fail(Object.assign(new Error(`Etchly D1 setup: local loopback unavailable: ${error.message}`), { code: 'ENVIRONMENT_INVALID' })));
+    server.listen(0, '127.0.0.1', () => server.close(error => error ? fail(error) : done()));
+  });
+}
+
 export function createTestRunPorts(config: TestRunConfig, stateContext: StateContext, getStore: () => StateStore, inherited: Readonly<Record<string, string | undefined>> = process.env, configurationBytes?: DiagnosticEnvironmentInput['configurationBytes'], request?: import('./test-runs.ts').ParsedTestRunArgs, bindSpawn?: (identity: string) => void, spawnFailed?: () => void): TestRunPorts {
   let state: TestRunStatePort | undefined;
   const environment = stateContextEnvironment(stateContext, inherited);
@@ -180,7 +204,10 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
       for (const profile of allProfiles) for (const file of profileFiles(profile)) {
         try { const actual = realpathSync(resolve(context.workspace, file)); files[file] = { kind: statSync(actual).isDirectory() ? 'directory' : 'file', realpath: actual, unit: profileTestKind(profile) === 'unit', testKind: profileTestKind(profile) }; } catch { }
       }
-      if (projectId === 'etchly') verifyEtchlyDependencies(context, profiles, selectedFiles.filter(file => unitFiles.includes(file)), inherited);
+      if (projectId === 'etchly') {
+        verifyEtchlyDependencies(context, profiles, selectedFiles, inherited);
+        if (profiles.some(profile => profile.testKind === 'integration')) await verifyEtchlyD1Dependencies(context, profiles);
+      }
       let gitIdentityMatches = false;
       try { gitIdentityMatches = realpathSync(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: context.cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()) === context.workspace; } catch { }
       const inheritedOperationalChannel = checkChannel(stateContext, inherited);
@@ -208,15 +235,27 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         const firstOption = options.findIndex(arg => arg.startsWith('-'));
         const files = (firstOption < 0 ? options : options.slice(0, firstOption)).map(file => relative(workspace, resolve(command.cwd, file)));
         const ids = command.environment.testIds ?? [];
-        const policy = JSON.parse(Buffer.from(snapshot.flow).toString('utf8')).unitTests;
+        const policy = command.environment.timeoutPolicy ?? testRunTimeoutPolicy(profileTestKind(vitestProfile), JSON.parse(Buffer.from(snapshot.flow).toString('utf8')));
         const batches = planVitestInvocations({ workspace, selection: { files, testIds: ids }, command } as any, vitestProfile, policy, fileURLToPath(new URL('./test-run-vitest-reporter.ts', import.meta.url)), ids);
         const localConfig = readFileSync(resolve(command.cwd, 'vitest.config.ts'), 'utf8');
         const baseRunner = localConfig.match(/\brunner:\s*["']([^"']+)["']/)?.[1];
         command.environment.vitestBatches = batches;
-        vitestEnvironment = { RAF_TEST_RUN_VITEST_BATCHES: JSON.stringify(batches), RAF_TEST_RUN_WORKSPACE: workspace, RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(config.diagnostics), ...(baseRunner ? { RAF_TEST_RUN_BASE_RUNNER: resolve(command.cwd, baseRunner) } : {}) };
+        vitestEnvironment = { RAF_TEST_RUN_VITEST_BATCHES: JSON.stringify(batches), RAF_TEST_RUN_WORKSPACE: workspace, RAF_TEST_RUN_KIND: profileTestKind(vitestProfile), RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(config.diagnostics), ...(baseRunner ? { RAF_TEST_RUN_BASE_RUNNER: resolve(command.cwd, baseRunner) } : {}) };
         command.argv = [fileURLToPath(new URL('../scripts/test-run-vitest.ts', import.meta.url))];
       }
-      const child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...environment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '2' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+      let childEnvironment = environment;
+      if (vitestProfile?.testKind === 'integration') {
+        const runRoot = command.environment.TMPDIR;
+        if (!runRoot) throw Object.assign(new Error('Etchly D1 requires a reserved private run TMPDIR'), { code: 'ENVIRONMENT_INVALID' });
+        const facts = [runRoot, stateContext.homeDirectory].map(path => { const st = lstatSync(path); return !st.isSymbolicLink() && st.isDirectory() && realpathSync(path) === path && st.uid === process.getuid!() && !(st.mode & 0o077); });
+        accessSync(runRoot, constants.W_OK);
+        if (Buffer.byteLength(resolve(runRoot, 'tmp')) > 50 || !facts.every(Boolean)) throw Object.assign(new Error('Etchly D1 HOME/TMPDIR must be canonical, private and compact'), { code: 'ENVIRONMENT_INVALID' });
+        const prepared = prepareEtchlyIntegrationEnvironment({ missingChecks: [], executableRuntime: true, compatibleBridge: true, sharedLibsBranchMatches: true, resourceProtocolInstalled: true, localBuildValid: true, privateTmpWritable: true, loopbackAvailable: true, isolatedHome: stateContext.homeDirectory, operationalHome: userInfo().homedir, stateOriginVerified: stateContext.mode === 'qa', privateRunRoot: runRoot, inheritedEnv: Object.fromEntries(Object.entries(environment).filter((entry): entry is [string, string] => entry[1] !== undefined)) });
+        if ('errorCode' in prepared) throw Object.assign(new Error(prepared.reason), { code: prepared.errorCode });
+        for (const path of prepared.ownedPaths) mkdirSync(path, { mode: 0o700 });
+        childEnvironment = prepared.env;
+      }
+      const child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...childEnvironment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: vitestProfile?.testKind === 'integration' ? childEnvironment.TMPDIR : command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '2' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
       await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', error => { spawnFailed?.(); fail(error); }); });
       const pid = child.pid!;
       const exited = new Promise<void>(done => child.once('exit', () => done()));

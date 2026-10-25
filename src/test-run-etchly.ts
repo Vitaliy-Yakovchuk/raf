@@ -1,6 +1,7 @@
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { profileFiles, profileTestKind } from './test-run-integration-profiles.ts';
 import { TestRunDiagnostics } from './test-run-diagnostics.ts';
 import type { ChildExit, RunnerClassification, TestId, TestRunCommand, TestRunPlan, TestRunProfile, UnitTestPolicy } from './test-runs.ts';
 import type { DiagnosticAttachment, DiagnosticLimits, DiagnosticOrigin, DiagnosticPaths } from './test-run-diagnostics.ts';
@@ -104,12 +105,14 @@ export function prepareEtchlyEnvironment(
 export function planVitestInvocations(
   plan: TestRunPlan,
   profile: EtchlyTestRunProfile,
-  policy: UnitTestPolicy,
+  policy: Pick<UnitTestPolicy, 'timeoutMs'>,
   trustedReporter: string,
   knownRed: readonly TestId[],
 ): TestRunCommand[] {
   const fail = (code: string, message: string): never => { throw Object.assign(new Error(message), { code }); };
   if (profile.resultAdapter !== 'vitest-events' || profile.exactIds !== 'vitest-test-name') fail('EXACT_IDS_UNSUPPORTED', 'Expected Vitest adapter');
+  if (profileTestKind(profile) === 'integration' && plan.selection.testIds.length) fail('UNSAFE_SELECTION', 'Integration does not allow --only');
+  if (!Number.isSafeInteger(policy.timeoutMs) || policy.timeoutMs <= 0) fail('CONFIGURATION_INVALID', 'Positive selected timeoutPolicy required');
   if (plan.selection.testIds.some(id => !knownRed.some(red => red.file === id.file && red.name === id.name))) fail('UNKNOWN_RED_TEST', 'Only knownRed IDs of this group may execute');
   const run = profile.argv.indexOf('run');
   if (run < 1 || !profile.argv.includes('--configLoader') || profile.argv[profile.argv.indexOf('--configLoader') + 1] !== 'runner') fail('CONFIGURATION_INVALID', 'Local Vitest run and configLoader runner required');
@@ -122,7 +125,7 @@ export function planVitestInvocations(
     const cwdFiles = batch.map(file => {
       const path = resolve(plan.workspace, file);
       const cwdFile = relative(plan.command.cwd, path);
-      if (!(profile.unitFiles ?? []).includes(file) || !cwdFile || cwdFile.startsWith('..') || isAbsolute(cwdFile)) fail('UNSAFE_SELECTION', file);
+      if (!profileFiles(profile).includes(file) || !cwdFile || cwdFile.startsWith('..') || isAbsolute(cwdFile)) fail('UNSAFE_SELECTION', file);
       return cwdFile;
     });
     const argv = [...profile.argv.slice(0, run + 1), ...cwdFiles, ...profile.argv.slice(run + 1), '--testTimeout', String(policy.timeoutMs), '--hookTimeout', String(policy.timeoutMs), '--reporter', trustedReporter];
@@ -140,9 +143,9 @@ export interface VitestBatchApi {
   }>;
 }
 
-export async function runVitestBatch(api: VitestBatchApi, argv: string[], runner: string): Promise<void> {
+export async function runVitestBatch(api: VitestBatchApi, argv: string[], runner: string, privateCache?: string): Promise<void> {
   const { filter, options } = api.parseCLI(['vitest', ...argv]);
-  const vitest = await api.createVitest('test', { ...options, watch: false, runner });
+  const vitest = await api.createVitest('test', { ...options, watch: false, runner, ...(privateCache ? { cache: false, cacheDir: privateCache } : {}) });
   try {
     for (const project of vitest.projects) {
       const allowed = project.vite?.config.server.fs.allow;
@@ -158,12 +161,12 @@ export async function runVitestBatch(api: VitestBatchApi, argv: string[], runner
   }
 }
 
-export async function runVitestBatchFromSource(api: VitestBatchApi, argv: string[], source: string, temporary: string): Promise<void> {
+export async function runVitestBatchFromSource(api: VitestBatchApi, argv: string[], source: string, temporary: string, privateCache = false): Promise<void> {
   const directory = mkdtempSync(resolve(temporary, 'vitest-runner-'));
   try {
     const runner = resolve(directory, 'test-run-vitest-runner.ts');
     copyFileSync(source, runner);
-    await runVitestBatch(api, argv, runner);
+    await runVitestBatch(api, argv, runner, privateCache ? resolve(directory, 'cache') : undefined);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

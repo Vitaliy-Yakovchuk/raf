@@ -112,7 +112,7 @@ export interface TestRunCommand {
   argv: string[];
   cwd: string;
   shell: false;
-  environment: { HOME: string; statePath: string; tmpPath: string; testIds?: TestId[]; TMPDIR?: string; vitestBatches?: TestRunCommand[] };
+  environment: { HOME: string; statePath: string; tmpPath: string; testIds?: TestId[]; TMPDIR?: string; timeoutPolicy?: TimeoutPolicy; vitestBatches?: TestRunCommand[] };
 }
 
 export interface TestRunPlan {
@@ -454,6 +454,8 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
     return attach();
   }
   result.testKind = plan.testKind ?? 'unit'; result.timeoutPolicy = testRunTimeoutPolicy(result.testKind, { unitTests: policy, integrationTests: context.integrationTests });
+  plan.timeoutPolicy = result.timeoutPolicy;
+  if (result.testKind === 'integration') plan.command.environment.timeoutPolicy = result.timeoutPolicy;
   result.profileId = plan.profileId; result.selection = plan.selection; result.command = plan.command;
   const key = { project: request.project, workspace: context.workspace, group: request.group };
   let deadline = started + result.timeoutPolicy.timeoutMs;
@@ -577,6 +579,7 @@ export async function runTestRun(request: TestRunRequest, configInput: unknown, 
   if (child && reason === 'exit') diagnostics?.childExit({ ...exit, validProtocol: events.some(e => e.kind === 'complete') && !events.some(e => e.kind === 'protocol-error') });
   const classified = classifyRunnerResult(events, exit);
   Object.assign(result, classified, { exitCode: exit.exitCode, signal: interruption ?? exit.signal, timedOut: reason === 'timeout', durationMs: ports.clock.now() - started });
+  if (result.testKind === 'integration' && result.outcome === 'unverified-remainder') { result.outcome = 'setup-failed'; result.failureKinds.push('setup'); }
   if (reason !== 'exit') {
     result.outcome = reason === 'timeout' ? 'timed-out' : 'interrupted';
     result.failureKinds = [...new Set<TestRunFailureKind>([...classified.failureKinds.filter(k => k !== 'setup' || events.some(e => e.kind === 'setup-failed' || e.kind === 'protocol-error')), reason === 'timeout' ? 'timeout' : 'interruption'])];

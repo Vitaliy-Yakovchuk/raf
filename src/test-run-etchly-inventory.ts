@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { existsSync, globSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { dirname, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { classifyEtchlyWorkerTestGraph, runtimeImports, validateEtchlyIntegrationInventories } from './test-run-etchly-integration.ts';
+import type { WorkerTestClass } from './test-run-etchly-integration.ts';
 import { auditEtchlyInventory } from './test-run-etchly.ts';
 import type { EtchlyInventoryFact } from './test-run-etchly.ts';
 import type { TestRunProfile } from './test-runs.ts';
@@ -74,14 +76,17 @@ export async function observeEtchlyInventory(workspace: string, profiles: Record
   if (realpathSync(helper) !== helper) fail('classifier symlink');
   const { testProjectFiles } = await import(pathToFileURL(helper).href);
   const facts: EtchlyInventoryFact[] = [];
+  let integrationClasses: Record<string, WorkerTestClass> = {};
   for (const name of ['app', 'worker']) {
     const source = readFileSync(resolve(workspace, name, 'vitest.config.ts'), 'utf8');
     const match = source.match(/const files = testProjectFiles\(root,\s*(\[[\s\S]*?\]),\s*(\{[\s\S]*?\}),\s*selectedTestFiles\(root\)\)/);
     if (!match) fail(`unsupported ${name}/vitest.config.ts classification`);
-    const groups = testProjectFiles(resolve(workspace, name), literal(match![1]), literal(match![2])) as Record<string, string[]>;
+    const patterns = literal(match![1]) as string[], boundaries = literal(match![2]) as Record<string, WorkerTestClass>;
+    const groups = testProjectFiles(resolve(workspace, name), patterns, boundaries) as Record<string, string[]>;
+    if (name === 'worker' && Object.values(profiles).some(profile => profile.testKind === 'integration')) integrationClasses = Object.fromEntries(Object.entries(observeWorkerGraph(resolve(workspace, name), patterns, boundaries, source)).flatMap(([kind, files]) => files.map(file => [`worker/${file}`, kind as WorkerTestClass])));
     const consentMatch = source.match(/const consentDomFiles = (\[[^;]+\]);/);
     const consent: string[] = consentMatch ? literal(consentMatch[1]) : [];
-    for (const [classification, files] of Object.entries(groups)) for (const file of files) facts.push({ file: `${name}/${file}`, classification, profileId: classification === 'unit' ? consent.includes(file) ? 'vitest-worker-consent-dom' : `vitest-${name}` : null });
+    for (const [classification, files] of Object.entries(groups)) for (const file of files) facts.push({ file: `${name}/${file}`, classification, profileId: classification === 'unit' ? consent.includes(file) ? 'vitest-worker-consent-dom' : `vitest-${name}` : name === 'worker' && classification === 'd1' ? 'vitest-worker-d1-integration' : null });
   }
   for (const name of ['assessment', 'domain', 'i18n', 'markdown', 'ui-core']) {
     const cwd = `shared/${name}`;
@@ -98,5 +103,38 @@ export async function observeEtchlyInventory(workspace: string, profiles: Record
     else fail(`unreviewed Node candidate ${file}`);
   }
   auditEtchlyInventory({ profiles: Object.fromEntries(Object.entries(profiles).map(([id, p]) => [id, p.unitFiles ?? []])), sourceHashes: reviewed.sourceHashes }, facts, current);
+  const integrationProfiles = Object.fromEntries(Object.entries(profiles).filter(([, profile]) => profile.testKind === 'integration'));
+  const failures = validateEtchlyIntegrationInventories(integrationProfiles, { existingFiles: facts.map(fact => fact.file), classifiedFiles: integrationClasses, sourceHashes: current, expectedSourceHashes: reviewed.sourceHashes });
+  if (failures.length) fail(failures.map(issue => `${issue.pointer}: ${issue.files.join(', ')}: ${issue.reason}`).join('; '));
   return facts;
+}
+
+function observeWorkerGraph(root: string, patterns: string[], boundaries: Record<string, WorkerTestClass>, config: string): Record<string, string[]> {
+  const testFiles = globSync(patterns, { cwd: root, exclude: ['**/node_modules/**', '**/.git/**'] }).sort();
+  const sources: Record<string, string> = {};
+  const pending = [...testFiles], seen = new Set<string>();
+  for (const file of pending) {
+    if (seen.has(file)) continue;
+    seen.add(file);
+    const path = resolve(root, file);
+    if (!path.startsWith(root + sep) || !existsSync(path) || !statSync(path).isFile()) continue;
+    if (realpathSync(path) !== path) fail(`worker import graph symlink ${file}`);
+    if (boundaries[file] || /\/(?:bundled-prompt-packages|ui(?:-admin)?\.source)\.ts$/.test(file)) continue;
+    const source = readFileSync(path, 'utf8');
+    sources[file] = source;
+    for (const specifier of runtimeImports(file, source)) {
+      if (!specifier.startsWith('.')) continue;
+      const base = resolve(dirname(path), specifier);
+      if (!base.startsWith(root + sep)) continue;
+      const dependency = [base, ...['.ts', '.tsx', '.js', '.mjs', '/index.ts', '/index.tsx'].map(suffix => base + suffix), ...(/\.[cm]?js$/.test(base) ? [base.replace(/\.[cm]?js$/, '.ts')] : [])].find(candidate => existsSync(candidate) && statSync(candidate).isFile());
+      if (dependency) pending.push(dependency.slice(root.length + 1));
+    }
+  }
+  const plan = config.match(/const planFiles = files\.d1!\.filter\(file => \/(.+)\/([a-z]*)\.test\(file\)\);/);
+  if (!plan) fail('unsupported worker planFiles classification');
+  const pattern = new RegExp(plan![1], plan![2]);
+  const classified = classifyEtchlyWorkerTestGraph({ sources, testFiles, boundaries, planFiles: testFiles.filter(file => pattern.test(file)) });
+  const groups: Record<string, string[]> = {};
+  for (const [file, group] of Object.entries(classified)) (groups[group] ??= []).push(file);
+  return groups;
 }

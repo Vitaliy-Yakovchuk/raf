@@ -4,7 +4,7 @@ import { StringDecoder } from 'node:string_decoder';
 import { types } from 'node:util';
 export type DiagnosticTestId = { file: string; name: string };
 export type DiagnosticLocation = { file: string; line: number | null; column: number | null };
-export type DiagnosticOrigin = 'test-body' | 'import' | 'collection' | 'hook' | 'fixture-setup' | 'unknown';
+export type DiagnosticOrigin = 'test-body' | 'import' | 'collection' | 'global-setup' | 'hook' | 'fixture-setup' | 'unknown';
 export type DiagnosticKind = 'assertion' | 'test-failure' | 'setup' | 'protocol' | 'runner' | 'preflight';
 export type DiagnosticLimits = {
   maxEntries: number;
@@ -36,6 +36,7 @@ export type NodeDiagnosticEvent = {
 };
 export type InlineDiagnostic = {
   kind: DiagnosticKind;
+  origin?: DiagnosticOrigin;
   test: DiagnosticTestId | null;
   errorName?: string;
   errorCode?: string;
@@ -268,7 +269,8 @@ export class TestRunDiagnostics {
   }
   inline(entry: InlineDiagnostic): void {
     const safe = this.diagnostic(entry.kind, { test: entry.test, origin: 'test-body', error: { name: entry.errorName, code: entry.errorCode, message: entry.message, stack: entry.stack.join('\n') }, location: entry.location });
-    this.add({ ...safe, redacted: safe.redacted || entry.redacted, truncated: safe.truncated || entry.truncated, ...(entry.unavailableReason ? { unavailableReason: this.clean(entry.unavailableReason).text } : {}) });
+    const origin = ['test-body', 'import', 'collection', 'global-setup', 'hook', 'fixture-setup', 'unknown'].includes(entry.origin ?? '') ? entry.origin : undefined;
+    this.add({ ...safe, ...(origin ? { origin } : {}), redacted: safe.redacted || entry.redacted, truncated: safe.truncated || entry.truncated, ...(entry.unavailableReason ? { unavailableReason: this.clean(entry.unavailableReason).text } : {}) });
   }
   preflight(error: unknown): void { this.add(this.diagnostic('preflight', { test: null, origin: 'fixture-setup', error })); }
   protocolChunk(chunk: Uint8Array): void {

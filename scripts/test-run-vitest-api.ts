@@ -10,4 +10,4 @@ process.env.NODE_ENV ??= 'test';
 const runner = fileURLToPath(new URL('../src/test-run-vitest-runner.ts', import.meta.url));
 const temporary = process.env.TMPDIR;
 if (!temporary) throw new Error('Trusted private Vitest temporary directory required');
-await runVitestBatchFromSource(api as any, process.argv.slice(2), runner, temporary);
+await runVitestBatchFromSource(api as any, process.argv.slice(2), runner, temporary, process.env.RAF_TEST_RUN_KIND === 'integration');

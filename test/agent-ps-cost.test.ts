@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { registerHooks } from 'node:module';
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { test, type TestContext } from 'node:test';
 import { openStateStore } from '../src/state-store.ts';
 import { failureContext } from '../src/cli-contract.ts';
+import { compileCatalog } from '../src/catalog.ts';
 import type { RuntimeConfiguration } from '../src/app-runtime.ts';
 import type { AdapterCommand, AdapterCommandExecutor } from '../src/agent-adapters.ts';
 import type { ProcessIdentity, SessionRecord, WorkResult } from '../src/session-state.ts';
@@ -253,3 +254,89 @@ test('agent ps recovery write failure preserves closure effects atomically and r
   assert.deepEqual(await f.ps(), []);
   assert.deepEqual(f.events(), events);
 });
+
+
+const entryFixture = Symbol.for('raf.agent-ps-entry.fixture');
+const entryUrl = new URL('../src/production-entry.ts?agent-ps-entry-cost-unit', import.meta.url).href;
+const appUrl = new URL('../src/app-runtime.ts', import.meta.url).href;
+const entryBridge = 'const f = () => globalThis[Symbol.for("raf.agent-ps-entry.fixture")];';
+const entryDoubles: Record<string, string> = {
+  'state-store.ts': `${entryBridge} export const openStateStore = () => f().openStore();`,
+  'state-migration-guard.ts': `${entryBridge} export const productionStateContext = () => f().context;`,
+  'app-runtime.ts': `export * from ${JSON.stringify(appUrl)}; import {createAppRuntime as create} from ${JSON.stringify(appUrl)}; export const createAppRuntime = (context, dependencies) => create(context, {...dependencies, commandState:undefined});`,
+  'production-runtime.ts': `${entryBridge} export const rafSystemCaller = {}; export const createProductionServices = async () => ({control:{ps:()=>f().ps()}});`,
+};
+const entryHooks = registerHooks({
+  resolve(specifier, context, next) {
+    if (context.parentURL === entryUrl && entryDoubles[specifier.slice(2)]) return { url: 'agent-ps-entry:' + specifier.slice(2), shortCircuit: true };
+    return next(specifier, context);
+  },
+  load(url, context, next) {
+    if (url.startsWith('agent-ps-entry:')) return { format: 'module', source: entryDoubles[url.slice('agent-ps-entry:'.length)], shortCircuit: true };
+    return next(url, context);
+  },
+});
+const { runProductionCli } = await import(entryUrl) as typeof import('../src/production-entry.ts');
+entryHooks.deregister();
+
+for (const state of ['empty', 'live', 'finished', 'missing', 'pid-reused', 'unverifiable', 'scan-failure'] as const) {
+  test(`agent ps production ${state}: one SQLite connection owns profile, runtime and finalization`, async t => {
+    const f = await fixture(t);
+    if (state !== 'empty') f.seed('finished', { finished: true, result: succeeded });
+    if (state === 'live') { f.seed('main'); f.seed('qa-hotfix'); }
+    if (['missing', 'pid-reused', 'unverifiable', 'scan-failure'].includes(state)) {
+      const target = f.seed('qa-target');
+      if (state === 'missing') f.processes.delete(target.process!.pid);
+      if (state === 'pid-reused') f.processes.get(target.process!.pid)!.command = 'foreign-command';
+      if (state === 'unverifiable') f.replaceIdentity(target, { evidence: { ...target.process!.evidence, command: '' } });
+      if (state === 'scan-failure') f.fail('exit');
+    }
+    const directory = await mkdtemp(join(tmpdir(), 'raf-ps-entry-unit-'));
+    t.after(() => rm(directory, { recursive: true, force: true }));
+    const constants = JSON.parse(await readFile(join(root, 'conf/raf-constants.json'), 'utf8'));
+    const models = JSON.parse(await readFile(join(root, 'conf/models.json'), 'utf8'));
+    const projects = JSON.parse(await readFile(join(root, 'conf/projects.json'), 'utf8'));
+    const catalog = compileCatalog(constants, models, constants.commands.map((row: {path:string[]}) => row.path.join(' ')), projects);
+    const artifactPath = join(directory, 'catalog.json');
+    await writeFile(artifactPath, JSON.stringify(catalog));
+    const events: string[] = [];
+    let opens = 0, closes = 0;
+    const context = { statePath: join(directory, 'state.sqlite'), tmpRoot: join(directory, 'tmp') };
+    const bridge = {
+      context, ps: f.ps,
+      openStore() {
+        opens++;
+        let closed = false;
+        return { ...f.store,
+          costProfileRepository: { ...f.store.costProfileRepository, update(...args: Parameters<typeof f.store.costProfileRepository.update>) {
+            assert.equal(closed, false, 'Profile flush must precede its connection close');
+            events.push('profile'); return f.store.costProfileRepository.update(...args);
+          } },
+          mergeCostContribution(...args: Parameters<NonNullable<typeof f.store.mergeCostContribution>>) {
+            assert.equal(closed, false, 'Profile flush must precede its connection close');
+            events.push('profile'); return f.store.mergeCostContribution!(...args);
+          },
+          recordCommandDuration(...args: Parameters<typeof f.store.recordCommandDuration>) {
+            assert.equal(closed, false, 'EMA finalization must precede its connection close');
+            events.push('ema'); return f.store.recordCommandDuration(...args);
+          },
+          close() { assert.equal(closed, false, 'Each owned connection closes once'); closed = true; closes++; events.push('close'); },
+        };
+      },
+    };
+    const previous = (globalThis as Record<symbol, unknown>)[entryFixture];
+    (globalThis as Record<symbol, unknown>)[entryFixture] = bridge;
+    t.after(() => { (globalThis as Record<symbol, unknown>)[entryFixture] = previous; });
+    const result = await runProductionCli(['agent', 'ps'], { orchestratorRoot: root, homeDirectory: directory, artifactPath });
+    const unknown = ['unverifiable', 'scan-failure'].includes(state);
+    assert.equal(result.exitCode, unknown ? 1 : 0, result.stderr);
+    if (unknown) assert.equal(JSON.parse(result.stderr).code, 'PROCESS_SCAN_UNKNOWN');
+    else assert.deepEqual(JSON.parse(result.stdout).map((row: SessionRecord) => row.addressId).sort(), state === 'live' ? ['main', 'qa-hotfix'] : []);
+    assert.equal(opens, 1, 'The already opened profiling connection must serve the same agent ps runtime');
+    assert.equal(closes, 1);
+    assert.ok(events.includes('profile')); assert.ok(events.includes('ema'));
+    assert.equal(events.at(-1), 'close', 'The production owner closes after profile and EMA finalization');
+    assert.ok(f.store.readCostProfile().rows.some(row => row.command === 'agent ps'));
+    assert.ok(f.store.getCommandTiming('agent ps'));
+  });
+}

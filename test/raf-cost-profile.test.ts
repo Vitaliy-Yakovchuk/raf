@@ -387,6 +387,7 @@ function statsFixture(rows: RafCostRow[] = []) {
     getCommandTiming: (command: string) => timings.get(command),
     recordCommandDuration: (command: string, duration: number) => { calls.push(`timing:${command}`); timings.set(command, { averageMs: duration, updatedAt: readAt }); },
     readCostProfile: () => { calls.push('read-profile'); return structuredClone(profile); },
+    readForcedCloseMetrics: (observedAt: string) => ({ readAt: observedAt, since: epoch, completed: 0, refusalsByCode: {}, unavailableReason: null }),
     close: () => calls.push('close'),
   } as unknown as StateStore & RafCostProfileState;
   const context: RuntimeContext = { orchestratorRoot: '/unit/orchestrator', confRoot: '/unit/orchestrator/conf', artifactPath: '/unit/catalog.json', statePath: '/unit/state.sqlite', tmpRoot: '/unit/tmp', mode: 'test', commandStartedAtMs: 100, resolveCaller: async () => { calls.push('caller'); return null; } };
@@ -407,7 +408,9 @@ test('profile: existing command stats without flags returns commands/profile, pr
   const body = JSON.parse(result.stdout);
   assert.equal(Array.isArray(body), false, 'stats changes from array to commands/profile object');
   assert.ok(Array.isArray(body.commands));
-  assert.deepEqual(Object.keys(body).sort(), ['commands', 'profile']);
+  assert.deepEqual(Object.keys(body).sort(), ['commands', 'health', 'profile']);
+  assert.deepEqual(body.health, { readAt: new Date(150).toISOString(), since: epoch,
+    forcedClose: { readAt: new Date(150).toISOString(), since: epoch, completed: 0, refusalsByCode: {}, unavailableReason: null } });
   const ps = body.commands.find((row: { command: string }) => row.command === 'agent ps');
   assert.equal(ps.command, 'agent ps');
   assert.equal(ps.averageMs, 23.25);

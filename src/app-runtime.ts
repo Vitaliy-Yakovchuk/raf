@@ -1,4 +1,5 @@
 import { measureRafCost } from './raf-cost-runtime.ts';
+import { commandTimingFailure, recordCommandTiming } from './command-timing.ts';
 import { runAgentWithQueue, type AgentQueueRecord, type AgentQueueValidation, type AgentQueueRequest, type AgentRunQueuePorts } from './agent-run-queue.ts';
 import { isAbsolute, join } from 'node:path';
 import { commandFailure, failureContext, type CommandFailureContext } from './cli-contract.ts';
@@ -29,6 +30,7 @@ export interface RuntimeContext {
   tmpRoot: string;
   mode: 'production' | 'test';
   commandStartedAtMs: number;
+  commandTimingOwner?: 'production';
   resolveCaller(): Promise<unknown>;
 }
 
@@ -407,16 +409,17 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
         catch { }
       }
       if (failureContext(error)) throw error;
-      throw fail('HANDLER_FAILED', 'handler', describe(error), { sourceCode: (error as { code?: string })?.code ?? null });
+      original = fail('HANDLER_FAILED', 'handler', describe(error), { sourceCode: (error as { code?: string })?.code ?? null });
+      throw original;
     } finally {
       await settle();
-      if (opening && configuration) {
+      if (context.commandTimingOwner !== 'production' && opening && configuration) {
         try {
           const loaded = await configuration;
           const command = loaded.catalog.commands.find(command => command.handlerName === name);
-          if (command && command.metadata.recordDuration !== false) (await opening).recordCommandDuration(command.path.join(' '), Math.max(0, dependencies.now() - context.commandStartedAtMs), loaded.commandTiming.emaAlpha);
+          recordCommandTiming(await opening, command, context.commandStartedAtMs, dependencies.now, loaded.commandTiming.emaAlpha);
         } catch (error) {
-          if (original === undefined) throw fail('TIMING_FAILED', 'timing', describe(error));
+          throw commandTimingFailure(error, original);
         }
       }
     }

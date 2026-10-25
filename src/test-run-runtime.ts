@@ -271,7 +271,7 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
   return ports;
 }
 
-export async function runConfiguredTestRun(argv: readonly string[], options: { orchestratorRoot: string; homeDirectory: string; costStartedAt?: RafCostBoundary; settle?: (store: StateStore) => Promise<void> }): Promise<ExecutionResult> {
+export async function runConfiguredTestRun(argv: readonly string[], options: { orchestratorRoot: string; homeDirectory: string; costStartedAt?: RafCostBoundary; commandTimingOwner?: 'production'; settle?: (store: StateStore) => Promise<void> }): Promise<ExecutionResult> {
   const costStartedAt = options.costStartedAt ?? rafCostBoundary();
   let costProfile: RafCostRuntime | undefined;
   let execution: ExecutionResult | undefined;
@@ -313,8 +313,10 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     };
     const sqliteStartedAt = rafCostBoundary();
     controlStore = openStore('control', controlContext);
-    costProfile = new RafCostRuntime(controlStore, { scope: 'command', command: 'test run' }, root, 'handler', costStartedAt, sqliteStartedAt);
-    costProfile.install();
+    if (options.commandTimingOwner !== 'production') {
+      costProfile = new RafCostRuntime(controlStore, { scope: 'command', command: 'test run' }, root, 'handler', costStartedAt, sqliteStartedAt);
+      costProfile.install();
+    }
     const control = await sandboxTestControlSnapshot(controlStore, root, args.project, args.group);
     const caller = control.ancestors.find(row => row.pid === process.pid);
     if (!caller) throw Object.assign(new Error('Current caller identity is unavailable'), { code: 'CALLER_UNVERIFIED' });

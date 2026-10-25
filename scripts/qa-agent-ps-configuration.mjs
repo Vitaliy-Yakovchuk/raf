@@ -11,3 +11,7 @@ export function copyAgentPsConfiguration(source, destination) {
   };
   writable(destination);
 }
+
+export function createAgentPsDevelopWorktree(setup, root, main, reviewed) {
+  setup('git', ['worktree', 'add', '-b', 'develop', path.join(root, 'raf-develop'), reviewed], main);
+}

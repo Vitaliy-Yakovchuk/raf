@@ -7,7 +7,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { DatabaseSync } from 'node:sqlite';
 import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
-import { copyAgentPsConfiguration } from './qa-agent-ps-configuration.mjs';
+import { copyAgentPsConfiguration, createAgentPsDevelopWorktree } from './qa-agent-ps-configuration.mjs';
 
 const atomic = (file, value) => {
   fs.writeFileSync(file + '.part', JSON.stringify(value, null, 2) + '\n');
@@ -154,6 +154,7 @@ sys.exit(code if code >= 0 else 128-code)
     setup('git', ['init', '-b', 'main']);
     setup('git', ['-c', 'protocol.file.allow=always', 'submodule', 'add', './raf-main', 'raf-main']);
     setup('git', ['submodule', 'absorbgitdirs']);
+    createAgentPsDevelopWorktree(setup, root, main, reviewed);
     setup('git', ['add', '--', '.gitmodules', 'raf-main', 'conf']);
     setup('git', ['commit', '-m', 'qa: isolated agent ps baseline root']);
     summary.fixtureRootCommit = setup('git', ['rev-parse', 'HEAD']);

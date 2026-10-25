@@ -1,0 +1,140 @@
+[
+  {
+    "label": "diagnostic-copied-before",
+    "host": "/srv/dev/p45-diag-gQGJIs",
+    "hostManifestSha256": "a95452915d906332be823fcb771410faa8f13a2773440bceb6dce54e6c631d4b",
+    "files": [
+      {
+        "file": "command.json",
+        "sha256": "94b41bd3887e149d70969ef2537ebd9db789731caf0cb266457ed5b497bb40af",
+        "hostManifestVerified": true
+      },
+      {
+        "file": "stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "hostManifestVerified": true
+      },
+      {
+        "file": "stderr",
+        "sha256": "edd945cfc8a2612a47b96bee4ebbfc09c224338357ca1373eb1b0b8e0b771fdd",
+        "hostManifestVerified": true
+      },
+      {
+        "file": "operations.json",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "hostManifestVerified": true
+      }
+    ],
+    "outcome": "setup-failed",
+    "cliExitCode": 1,
+    "cliExitSource": "main verified message; diagnostics command.json also records child exit",
+    "reason": "Moved active generation failed production fingerprint validation",
+    "secscan": {
+      "exitCode": 0,
+      "source": "main verified message"
+    },
+    "acceptanceSamples": 0
+  },
+  {
+    "label": "diagnostic-copied-after",
+    "host": "/srv/dev/p45-diag-WaWG7d",
+    "hostManifestSha256": "ada4549266b022325b37ca1bd5199ce66b21fb9061ed2c3d313df3ebf35d4c34",
+    "files": [
+      {
+        "file": "command.json",
+        "sha256": "d7213d4427a929ce05b690ae09bbb64158fe91722d83d061bcf9a996ebec8687",
+        "hostManifestVerified": true
+      },
+      {
+        "file": "stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "hostManifestVerified": true
+      },
+      {
+        "file": "stderr",
+        "sha256": "edd945cfc8a2612a47b96bee4ebbfc09c224338357ca1373eb1b0b8e0b771fdd",
+        "hostManifestVerified": true
+      },
+      {
+        "file": "operations.json",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "hostManifestVerified": true
+      }
+    ],
+    "outcome": "setup-failed",
+    "cliExitCode": 1,
+    "cliExitSource": "main verified message; diagnostics command.json also records child exit",
+    "reason": "Moved active generation failed production fingerprint validation",
+    "secscan": {
+      "exitCode": 0,
+      "source": "main verified message"
+    },
+    "acceptanceSamples": 0
+  },
+  {
+    "label": "comparison-readonly-after",
+    "host": "/srv/dev/p45-4B3WFA",
+    "hostManifestSha256": "e66e5086a35b73f25ad7dd485a2cc1f6e7e737dea0d049d40a53d33ba5642efa",
+    "files": [
+      {
+        "file": "summary.json",
+        "sha256": "c3bd7d5efb53a1939979de2df50e934c46a69479b79a6c526c6c3d4c976384c0",
+        "hostManifestVerified": true
+      },
+      {
+        "file": "stdout",
+        "sha256": "03dee2461776d34f27c2c27434da88f569e76a657a3fb56888c12b2f21a039d4",
+        "hostManifestVerified": false,
+        "source": "/srv/dev/p45b-run-535441d.stdout"
+      },
+      {
+        "file": "stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "hostManifestVerified": false,
+        "source": "/srv/dev/p45b-run-535441d.stderr"
+      }
+    ],
+    "outcome": "setup-failed",
+    "cliExitCode": 1,
+    "cliExitSource": "main verified message; diagnostics command.json also records child exit",
+    "reason": "New configuration copy retained read-only input permissions",
+    "secscan": {
+      "exitCode": 0,
+      "source": "main verified message"
+    },
+    "acceptanceSamples": 0
+  },
+  {
+    "label": "comparison-readonly-before",
+    "host": "/srv/dev/p45-IJgCpu",
+    "hostManifestSha256": "5f53fe86f790518a80957afeedd0bcfdd6d2f57d105e9dd6cfb69650e9da5ae2",
+    "files": [
+      {
+        "file": "summary.json",
+        "sha256": "0ba47a5573e36a89d022f7408302e83dd43967c81d703eb8459763a8a7716a28",
+        "hostManifestVerified": true
+      },
+      {
+        "file": "stdout",
+        "sha256": "4d42c7711754302176b62810aa751c887e566223d1116e977feab867310e7f3d",
+        "hostManifestVerified": false,
+        "source": "/srv/dev/p45b-run-1212a13.stdout"
+      },
+      {
+        "file": "stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "hostManifestVerified": false,
+        "source": "/srv/dev/p45b-run-1212a13.stderr"
+      }
+    ],
+    "outcome": "setup-failed",
+    "cliExitCode": 1,
+    "cliExitSource": "main verified message; diagnostics command.json also records child exit",
+    "reason": "New configuration copy retained read-only input permissions",
+    "secscan": {
+      "exitCode": 0,
+      "source": "main verified message"
+    },
+    "acceptanceSamples": 0
+  }
+]

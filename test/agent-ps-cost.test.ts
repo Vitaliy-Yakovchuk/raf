@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { chmod, mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
-import { copyAgentPsConfiguration } from '../scripts/qa-agent-ps-configuration.mjs';
+import { copyAgentPsConfiguration, createAgentPsDevelopWorktree } from '../scripts/qa-agent-ps-configuration.mjs';
+import { spawnSync } from 'node:child_process';
+import { productionStorePaths, resolveProductionStore } from '../src/main-production-store.ts';
 import { registerHooks } from 'node:module';
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
@@ -59,6 +61,32 @@ test('agent ps live harness: read-only source conf remains immutable and its own
   assert.equal(await readFile(join(destination, 'projects.json'), 'utf8'), await readFile(join(source, 'projects.json'), 'utf8'));
   await writeFile(join(destination, 'projects.json'), '{"projects":{"raf":{}}}\n');
   assert.equal(await readFile(join(source, 'projects.json'), 'utf8'), '{"projects":{}}\n');
+});
+
+test('agent ps live harness: develop belongs to the registered module store before production starts', async t => {
+  const directory = await mkdtemp(join(tmpdir(), 'raf-ps-layout-unit-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const main = join(directory, 'raf-main');
+  await mkdir(main); await mkdir(join(directory, 'conf'));
+  await writeFile(join(directory, 'conf/projects.json'), JSON.stringify({ projects: { raf: { branchPaths: { main: 'raf-main', develop: 'raf-develop' } } } }));
+  const setup = (executable: string, args: string[], cwd = directory) => {
+    const result = spawnSync(executable, args, { cwd, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr); return result.stdout.trim();
+  };
+  setup('git', ['init', '-b', 'main']);
+  setup('git', ['init', '-b', 'main'], main);
+  setup('git', ['-c', 'user.name=QA', '-c', 'user.email=qa@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '--allow-empty', '-m', 'Owned module fixture'], main);
+  const reviewed = setup('git', ['rev-parse', 'HEAD'], main);
+  setup('git', ['-c', 'protocol.file.allow=always', 'submodule', 'add', './raf-main', 'raf-main']);
+  setup('git', ['submodule', 'absorbgitdirs']);
+  createAgentPsDevelopWorktree(setup, directory, main, reviewed);
+  assert.equal(setup('git', ['worktree', 'list', '--porcelain'], main).split('\n').filter(line => line === 'branch refs/heads/develop').length, 1, 'Exactly one registered develop worktree must exist before production starts');
+  const paths = await productionStorePaths(directory);
+  assert.equal(paths.source, join(directory, '.git/modules/raf-main'));
+  assert.equal((await resolveProductionStore(directory, main)).split, false);
+  assert.equal(setup('git', ['symbolic-ref', '--short', 'HEAD'], join(directory, 'raf-develop')), 'develop');
+  assert.equal(setup('git', ['rev-parse', 'HEAD'], join(directory, 'raf-develop')), reviewed);
+  assert.equal(setup('git', ['symbolic-ref', '--short', 'HEAD'], main), 'main');
 });
 
 async function fixture(t: TestContext) {

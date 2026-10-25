@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { copyAgentPsConfiguration } from './qa-agent-ps-configuration.mjs';
+import { copyAgentPsConfiguration, createAgentPsDevelopWorktree } from './qa-agent-ps-configuration.mjs';
 
 const [fixture] = process.argv.slice(2);
 assert.ok(fixture && path.isAbsolute(fixture));
@@ -33,6 +33,7 @@ setup(process.execPath, ['scripts/build.ts'], main);
 setup('git', ['init', '-b', 'main']);
 setup('git', ['-c', 'protocol.file.allow=always', 'submodule', 'add', './raf-main', 'raf-main']);
 setup('git', ['submodule', 'absorbgitdirs']);
+createAgentPsDevelopWorktree(setup, root, main, summary.reviewed);
 setup('git', ['add', '--', '.gitmodules', 'raf-main', 'conf']);
 setup('git', ['commit', '-m', 'qa: fresh isolated diagnostic root']);
 const restore = () => {

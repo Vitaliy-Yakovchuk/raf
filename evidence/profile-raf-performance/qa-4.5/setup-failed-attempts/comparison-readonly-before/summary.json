@@ -1,0 +1,88 @@
+{
+  "status": "failed",
+  "source": "/srv/dev/p45b-src.hTF7lE/raf-develop",
+  "reviewed": "1212a1330a2b097620bd491e5cc8d2f549c774b9",
+  "base": "/srv/dev/p45-IJgCpu",
+  "startedAt": "2026-10-25T03:28:10.178Z",
+  "repetitions": 5,
+  "environment": {
+    "node": "v26.12.1",
+    "versions": {
+      "node": "26.12.1",
+      "acorn": "8.19.0",
+      "ada": "4.0.0",
+      "amaro": "1.1.11",
+      "ares": "1.34.9",
+      "brotli": "1.2.0",
+      "cldr": "48.0",
+      "icu": "78.3",
+      "libffi": "3.8.0",
+      "lief": "1.0.0",
+      "llhttp": "9.4.3",
+      "merve": "1.2.2",
+      "modules": "147",
+      "napi": "10",
+      "nbytes": "0.1.4",
+      "ncrypto": "0.0.1",
+      "nghttp2": "1.70.0",
+      "nghttp3": "",
+      "ngtcp2": "",
+      "openssl": "3.5.9",
+      "simdjson": "5.0.3",
+      "simdutf": "7.7.0",
+      "sqlite": "3.54.0",
+      "tz": "2026e",
+      "undici": "8.12.2",
+      "unicode": "17.0",
+      "uv": "1.52.1",
+      "uvwasi": "0.0.23",
+      "v8": "14.6.202.34-node.40",
+      "zlib": "1.3.2.1-motley-456ae73",
+      "zstd": "1.5.7"
+    },
+    "platform": "linux",
+    "release": "7.0.0-30-generic",
+    "cpus": 8,
+    "osRelease": "PRETTY_NAME=\"Ubuntu 26.04.1 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"26.04\"\nVERSION=\"26.04.1 LTS (Resolute Raccoon)\"\nVERSION_CODENAME=resolute\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=resolute\nLOGO=ubuntu-logo\n",
+    "mode": "fresh CLI processes; warm filesystem cache after saved warmup; no cache dropping or synthetic load; shared host external load recorded per sample; service stopped during restored samples to prevent competing reconciliation"
+  },
+  "limitations": [
+    "Fixture actors are real idle OS processes, not provider models; session records are seeded explicitly.",
+    "Production profile helper CPU remains unavailable. External Linux wait4 rusage independently measures the CLI and its synchronously reaped helper tree; provider payload is absent. This is not a speed acceptance verdict.",
+    "The service lifecycle is real. It is quiesced before snapshots so it cannot consume the ps transitions.",
+    "No worker polling implementation or optimization is included. No unit run is needed for baseline-only work."
+  ],
+  "commands": [],
+  "cases": [],
+  "cleanup": {
+    "complete": true,
+    "service": null,
+    "actors": [],
+    "remainingProcesses": []
+  },
+  "sourceWorkspace": {
+    "head": "535441d79f5b18d70442c9a7374c1037c428fee7",
+    "status": "?? node_modules",
+    "policy": "Only the exact committed SHA enters the fresh clone; unrelated workspace edits are excluded."
+  },
+  "harnessSha256": "de0a625a276ba3c9336d176a4640afd781efc0ad3a4470db8c39874feeb55e93",
+  "tools": {
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6",
+    "ps": "ps from procps-ng 4.0.4",
+    "python3": "Python 3.14.4"
+  },
+  "sourceConfiguration": {
+    "raf.json": "1485dd687b723b9e090417dd4663d2a4f8490d470622806191919152903d944c",
+    "flow.json": "c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd",
+    "projects.json": "537124a22b0d5e7c5c8bb23af46f5242bda836662e99d37f6ad0ef4b6be068cd",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "raf-constants.json": "4a9986526efe2b9751684f6a1b4d74aadb91dd0094acda2a1ac8d91e92b4e6e0",
+    "test-runs.json": "d339e31113bd74cc52a7c1d312fc2f509176f64b9eeabb44b065cdbf5095a1b3"
+  },
+  "failure": {
+    "message": "EACCES: permission denied, open '/srv/dev/p45-IJgCpu/root/conf/projects.json'",
+    "stack": "Error: EACCES: permission denied, open '/srv/dev/p45-IJgCpu/root/conf/projects.json'\n    at Object.writeFileSync (node:fs:3028:20)\n    at file:///srv/dev/p45b-src.hTF7lE/raf-develop/scripts/qa-agent-ps-comparison.mjs:142:8\n    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)\n    at async node:internal/modules/esm/loader:650:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)"
+  },
+  "finishedAt": "2026-10-25T03:28:10.250Z"
+}

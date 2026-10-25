@@ -1,0 +1,22 @@
+{
+  "reviewed": "1451bbe3f9521a0da486ec3b9cd94de3a5e863ba",
+  "fixture": "/srv/dev/p45-q27DT6-w",
+  "startedAt": "2026-10-25T03:27:57.601Z",
+  "finishedAt": "2026-10-25T03:27:58.882Z",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "--cpu-prof",
+    "--cpu-prof-dir=/srv/dev/p45-diag-WaWG7d",
+    "--cpu-prof-name=agent-ps.cpuprofile",
+    "--import",
+    "/srv/dev/p45-diag-WaWG7d/instrument.mjs",
+    "/srv/dev/p45-q27DT6-w/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-q27DT6-w/root/raf-main",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "mode": "Separate empty-state diagnostic with V8 CPU sampling and real module operation wrappers; excluded from speed acceptance series"
+}

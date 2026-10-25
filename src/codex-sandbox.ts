@@ -60,6 +60,52 @@ async function canonical(path: string): Promise<string> {
   }
 }
 
+export async function protectCodexReadOnlyPaths(
+  original: Readonly<Record<string, string>>,
+  readOnlyPaths: readonly string[],
+  writableFiles: readonly string[] = [],
+): Promise<{ filesystem: Record<string, string>; writableFiles: string[]; symlinkParents: string[] }> {
+  const filesystem = { ...original };
+  const targets = await Promise.all(readOnlyPaths.map(async path => ({ source: resolve(path), target: await canonical(path) })));
+  const protectedPath = (path: string) => targets.some(value => within(value.target, path) || within(value.source, path));
+  const parents = new Set<string>();
+  for (const { source } of targets) {
+    let cursor = dirname(source);
+    const ancestors = [source];
+    while (dirname(cursor) !== cursor) { ancestors.unshift(cursor); cursor = dirname(cursor); }
+    for (const path of ancestors) {
+      const entry = await fs.lstat(path).catch(error => {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        return null;
+      });
+      if (!entry) break;
+      if (entry.isSymbolicLink()) { parents.add(await canonical(dirname(path))); break; }
+    }
+  }
+  const accessAt = (path: string): string => Object.entries(original)
+    .map(([root, access]) => [root === ':root' ? '/' : root === ':slash_tmp' ? '/tmp' : root, access])
+    .filter(([root]) => isAbsolute(root) && within(root, path))
+    .sort(([left], [right]) => right.length - left.length)[0]?.[1] ?? 'none';
+  const files = new Set(writableFiles.filter(path => !protectedPath(path)));
+  const symlinkParents = [...parents].sort((left, right) => left.length - right.length);
+  for (const parent of symlinkParents) {
+    if (accessAt(parent) === 'write') {
+      for (const entry of await fs.readdir(parent, { withFileTypes: true })) {
+        const path = join(parent, entry.name);
+        if (entry.isSymbolicLink() || protectedPath(path) || accessAt(path) !== 'write') continue;
+        if (entry.isDirectory()) filesystem[path] = 'write';
+        else if (entry.isFile()) files.add(path);
+      }
+    }
+    filesystem[parent] = 'read';
+  }
+  for (const { source, target } of targets) {
+    if (source !== target) delete filesystem[source];
+    filesystem[target] = 'read';
+  }
+  return { filesystem, writableFiles: [...files], symlinkParents };
+}
+
 async function workspaceGitPaths(cwd: string): Promise<string[]> {
   const dotGit = join(cwd, '.git');
   const entry = await fs.stat(dotGit).catch(() => null);
@@ -238,9 +284,9 @@ export async function prepareCodexSandbox(
   const bwrap = await executable('/usr/bin/bwrap', request.environment, directory);
   const filter = networkFilter();
   const sharedTmp = !within('/tmp', directory);
-  const entries: Record<string, string> = { ':root': 'read', ...(sharedTmp ? { ':slash_tmp': 'write' } : {}) };
+  let entries: Record<string, string> = { ':root': 'read', ...(sharedTmp ? { ':slash_tmp': 'write' } : {}) };
   const compactToolTmux = !socketPathFits(join(runDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default'));
-  const fileWrites: string[] = [];
+  let fileWrites: string[] = [];
   for (const path of writable) {
     const info = await fs.stat(path).catch(error => {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') unavailable(`cannot inspect writable path ${path}`);
@@ -262,10 +308,10 @@ export async function prepareCodexSandbox(
       if ((await fs.stat(modules).catch(() => null))?.isDirectory()) entries[modules] = 'read';
     }
   }
-  for (const path of request.readOnlyDirectories ?? []) {
-    entries[await canonical(path)] = 'read';
-    entries[resolve(path)] = 'read';
-  }
+  for (const path of masked) entries[path] = 'none';
+  const protectedScope = await protectCodexReadOnlyPaths(entries, request.readOnlyDirectories ?? [], fileWrites);
+  entries = protectedScope.filesystem;
+  fileWrites = protectedScope.writableFiles;
   entries[directory] = 'read';
   for (const path of masked) entries[path] = 'none';
   const mountpoints: { path: string; parent: string; dev: number; ino: number }[] = [];
@@ -333,7 +379,7 @@ export async function prepareCodexSandbox(
       '',
     ].join('\n'), { mode: 0o500 });
     await fs.writeFile(join(helperDirectory, 'codex'), `#!/bin/sh\nPATH=${literal(helperDirectory)}:"$PATH"\nexport PATH\nexec ${literal(codex)} "$@"\n`, { mode: 0o500 });
-    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, verification: 'preflight Unix IPC, TCP denial and hidden paths' }, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: ['AF_UNIX'], ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
+    await fs.writeFile(join(directory, 'policy.json'), JSON.stringify({ runId: request.runId, profile, sandboxMode: 'workspace-write', codex, bwrap, backend: { selection: 'PATH', sharedDaemon: false, helperDirectory, verification: 'preflight Unix IPC, TCP denial and hidden paths' }, network: { codex: 'enabled', namespace: 'unshared', socketFamilies: ['AF_UNIX'], ioUring: 'denied' }, tmuxSockets: 'private tmpfs per sandboxed command', filesystem: entries, writableFiles: fileWrites, symlinkParents: protectedScope.symlinkParents, environment: { cleared: scrubbed, set: toolVariables } }, null, 2), { mode: 0o400 });
     const visible: string[] = [];
     for (const path of masked) if (await fs.access(path, constants.R_OK).then(() => true, () => false)) visible.push(path);
     await probe(toolSandbox, environment, cwd, probeSocket, visible, request.timeoutMs);

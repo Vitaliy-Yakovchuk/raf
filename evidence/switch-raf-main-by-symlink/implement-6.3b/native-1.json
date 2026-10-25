@@ -1,0 +1,11 @@
+{
+  "command": "node --test test/main-switch-agent-channel.integration.test.ts",
+  "sha": "9164caaac7cef35fa5f924e74f8bb86a3be3c566",
+  "executor": "main host",
+  "cliExitCode": 1,
+  "passed": 0,
+  "failed": 4,
+  "stderr": "empty, confirmed by main",
+  "source": "/srv/dev/sym63-native.mNg6fc",
+  "reason": "Native provider rejected lexical read-only logical main symlink under writable parent; requires read-only symlink parent and precise writable child grants."
+}

@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { agentChannelReadOnlyPaths, runPublishedAgentChannel } from "../src/main-switch-agent-launcher.ts";
+import { protectCodexReadOnlyPaths } from "../src/codex-sandbox.ts";
 import {
   assessAgentChannelSlotReuse,
   compileAgentChannelNativePolicy,
@@ -529,5 +530,33 @@ process.exitCode=await runPublishedAgentChannel(input);
     assert.notEqual(dirname(output.entrypoint), join(f.A, "bin"));
     assert.equal(output.pinned, true);
     assert.deepEqual(await fs.readdir(join(f.common, "raf-hotfix/readers")), []);
+  } finally { await fs.rm(f.root, { recursive: true, force: true }); }
+});
+
+test("logical main parent becomes read-only while existing Orchestrator Git and assigned directories remain writable", async () => {
+  const f = await publishedLauncherFixture();
+  try {
+    for (const name of [".git/objects", ".git/refs/heads", "openspec", "conf", "raf-develop", "raf-hotfix"]) await fs.mkdir(join(f.root, name), { recursive: true });
+    const index = join(f.root, ".git/index");
+    const readme = join(f.root, "README.md");
+    const secret = join(f.root, "secret.json");
+    await fs.writeFile(index, "own index");
+    await fs.writeFile(readme, "own docs");
+    await fs.writeFile(secret, "hidden");
+    await fs.writeFile(join(f.root, ".gitmodules"), "protected");
+    const original = { ":root": "read", [f.root]: "write", [join(f.root, ".git")]: "write", [secret]: "none" };
+    const result = await protectCodexReadOnlyPaths(original, [f.A, f.B, join(f.root, "raf-main"), join(f.root, ".gitmodules")], [index, join(f.root, ".gitmodules")]);
+    assert.deepEqual(result.symlinkParents, [f.root]);
+    assert.equal(result.filesystem[f.root], "read");
+    for (const name of [".git", "openspec", "conf", "raf-develop", "raf-hotfix"]) assert.equal(result.filesystem[join(f.root, name)], "write", name);
+    assert.ok(result.writableFiles.includes(index));
+    assert.ok(result.writableFiles.includes(readme));
+    assert.equal(result.writableFiles.includes(secret), false);
+    assert.equal(result.writableFiles.includes(join(f.root, ".gitmodules")), false);
+    assert.equal(result.filesystem[f.A], "read");
+    assert.equal(result.filesystem[f.B], "read");
+    assert.equal(result.filesystem[join(f.root, "raf-main")], undefined);
+    assert.equal(result.filesystem[secret], "none");
+    assert.equal(original[f.root], "write");
   } finally { await fs.rm(f.root, { recursive: true, force: true }); }
 });

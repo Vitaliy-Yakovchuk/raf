@@ -107,17 +107,47 @@
       "groupState": "complete",
       "nextAction": "complete",
       "explanation": null
+    },
+    {
+      "result": "unit-5-TestRunResult.json",
+      "cli": "unit-5-cli.json",
+      "runId": "33caff0a-1ba5-4ece-be73-abf3b38430a6",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "childExitCode": 0,
+      "explanation": "Native symlink parent guard with existing Orchestrator .git and assigned sibling directory grants: 69/69."
     }
   ],
   "native": {
-    "status": "pending",
+    "status": "pending-repeat",
     "owner": "main",
     "command": "node --test test/main-switch-agent-channel.integration.test.ts",
-    "reason": "Main will run on host supported provider with isolated HOME/TMPDIR and clean clone of implementation commit."
+    "attempts": [
+      {
+        "result": "native-1.json",
+        "outcome": "failed",
+        "reason": "Native provider rejected lexical symlink read-only policy under writable parent. Fixed by guarding the parent and retaining existing sibling grants."
+      }
+    ]
   },
   "scope": {
     "protected": [
-      "physical main copies and logical raf-main (lexical/canonical native entries)",
+      "Physical main copies and logical raf-main: canonical targets read-only; symlink parent read-only, protecting unlink/rename of the logical entry.",
       "physical main worktree metadata, main HEAD/index/config and lock counterparts",
       "raf main ref/reflog, packed-refs and lock counterparts",
       ".gitmodules",
@@ -129,7 +159,8 @@
       "Only captured simple issued command prefixes; no added subcommands or candidate prefixes"
     ],
     "notProtected": [
-      "Shared Orchestrator .git/index remains writable for authorized own OpenSpec commits; Git can therefore stage or change its gitlink entries. No complete command-mediated Git protection for this shared index is implemented."
+      "Shared Orchestrator .git/index remains writable for authorized own OpenSpec commits; Git can therefore stage or change its gitlink entries. No complete command-mediated Git protection for this shared index is implemented.",
+      "Existing allowed sibling directories under logical main parent remain writable, including Orchestrator .git/index, objects, refs and assigned OpenSpec/work directories. Existing allowed sibling files retain exact writable bindings. New or renamed entries in the parent directory itself are denied; main explicitly accepted this boundary."
     ],
     "reason": "Explicit main scope clarification: complete command-mediated Git for shared orchestrator .git/index is outside item 6.3. Exact file sandbox cannot authorize own unrelated index entries while excluding gitlink entries in the same file. .gitmodules and raf repository main metadata remain protected."
   },
@@ -138,6 +169,6 @@
     "executedByThisAgent": false,
     "reason": "Main directed no foreign unit groups; item6.4 owns declared regressionGroups."
   },
-  "testChanges": "Initial independent implementation preceded all prepared-test reads. Original 65 scaffold scenarios were kept; three production launcher/scope scenarios were added afterward.",
+  "testChanges": "Independent implementation preceded prepared-test reads. Original 65 scaffold scenarios unchanged; four production launcher/scope scenarios added, including Orchestrator root with .git and several assigned directories.",
   "captureLimit": "Tool exec_command exposes merged stdout/stderr. Every unit captured stream is a complete single TestRunResult JSON document, saved byte-for-byte; no additional stderr was observed. Separate .stderr files record this absence, not a separately available OS stream."
 }

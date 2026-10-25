@@ -1,0 +1,50 @@
+{
+  "originalBaseline": {
+    "reviewed": "1212a1330a2b097620bd491e5cc8d2f549c774b9",
+    "startedAt": "2026-10-25T02:24:01.154Z",
+    "sourceConfiguration": {
+      "raf.json": "12197c3e778a5627a8480619e458de0abd746a207b2b0de8176e7224ea772e88",
+      "flow.json": "c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd",
+      "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+      "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+      "raf-constants.json": "6f6bfb7f04174210ee2f4684188a33b3cd8df9cee659d918564f111bdd576680",
+      "test-runs.json": "b6af3dbd86d6d222d5f43af04c04bfeef38d008093168857c4d9d11e27261cc1"
+    },
+    "fixtureConfiguration": {
+      "raf.json": "3bfdf6079ffd5907e5a51143e9f8ce4f6275729b632b2542ee624bfa52d82fcd",
+      "flow.json": "c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd",
+      "projects.json": "537124a22b0d5e7c5c8bb23af46f5242bda836662e99d37f6ad0ef4b6be068cd",
+      "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+      "raf-constants.json": "6f6bfb7f04174210ee2f4684188a33b3cd8df9cee659d918564f111bdd576680",
+      "test-runs.json": "b6af3dbd86d6d222d5f43af04c04bfeef38d008093168857c4d9d11e27261cc1"
+    },
+    "fullCpu": "unknown"
+  },
+  "supplementalControl": {
+    "reviewed": "1212a1330a2b097620bd491e5cc8d2f549c774b9",
+    "startedAt": "2026-10-25T02:55:11.933Z",
+    "sourceConfiguration": {
+      "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+      "flow.json": "c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd",
+      "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+      "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+      "raf-constants.json": "4a9986526efe2b9751684f6a1b4d74aadb91dd0094acda2a1ac8d91e92b4e6e0",
+      "test-runs.json": "d339e31113bd74cc52a7c1d312fc2f509176f64b9eeabb44b065cdbf5095a1b3"
+    },
+    "fixtureConfiguration": {
+      "raf.json": "1485dd687b723b9e090417dd4663d2a4f8490d470622806191919152903d944c",
+      "flow.json": "c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd",
+      "projects.json": "537124a22b0d5e7c5c8bb23af46f5242bda836662e99d37f6ad0ef4b6be068cd",
+      "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+      "raf-constants.json": "4a9986526efe2b9751684f6a1b4d74aadb91dd0094acda2a1ac8d91e92b4e6e0",
+      "test-runs.json": "d339e31113bd74cc52a7c1d312fc2f509176f64b9eeabb44b065cdbf5095a1b3"
+    },
+    "fullCpu": "Linux wait4 rusage"
+  },
+  "changedSourceConfiguration": [
+    "raf.json",
+    "raf-constants.json",
+    "test-runs.json"
+  ],
+  "interpretation": "The supplemental control reruns the original baseline source with complete CPU accounting. It must be compared with the matched post-4.4 series at identical pinned configuration; original 4.1 means are not directly interchangeable."
+}

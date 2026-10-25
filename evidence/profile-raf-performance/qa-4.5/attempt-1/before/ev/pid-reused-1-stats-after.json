@@ -1,0 +1,32 @@
+{
+  "label": "pid-reused-1-stats-after",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-wzWK2O/root/raf-main/bin/raf.ts",
+    "command",
+    "stats"
+  ],
+  "cwd": "/srv/dev/p45-wzWK2O/root/raf-main",
+  "startedAt": "2026-10-25T02:59:17.636Z",
+  "finishedAt": "2026-10-25T02:59:20.158Z",
+  "wallMs": 2521.849763999984,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 16382,
+  "stderrBytes": 0,
+  "loadAverage": [
+    4.33,
+    3.16,
+    2.9
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1686.9640000000002,
+    "cpuSystemMs": 1356.8139999999999,
+    "wallMs": 2483.817464,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 3043.7780000000002
+}

@@ -1,0 +1,32 @@
+{
+  "label": "missing-diagnostic",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-wzWK2O/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-wzWK2O/root/raf-main",
+  "startedAt": "2026-10-25T02:59:07.177Z",
+  "finishedAt": "2026-10-25T02:59:09.764Z",
+  "wallMs": 2586.336108999996,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 3,
+  "stderrBytes": 53,
+  "loadAverage": [
+    4.57,
+    3.16,
+    2.89
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1694.2599999999998,
+    "cpuSystemMs": 1284.136,
+    "wallMs": 2542.606886,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 2978.3959999999997
+}

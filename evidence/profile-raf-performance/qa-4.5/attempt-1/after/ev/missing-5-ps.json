@@ -1,0 +1,32 @@
+{
+  "label": "missing-5-ps",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-q27DT6/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-q27DT6/root/raf-main",
+  "startedAt": "2026-10-25T03:05:07.678Z",
+  "finishedAt": "2026-10-25T03:05:10.507Z",
+  "wallMs": 2829.246838000021,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 3,
+  "stderrBytes": 53,
+  "loadAverage": [
+    3.82,
+    3.9,
+    3.35
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1742.619,
+    "cpuSystemMs": 1491.009,
+    "wallMs": 2790.17717,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 3233.6279999999997
+}

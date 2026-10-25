@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "source": {
+    "file": "deprecated/config/focus.json",
+    "field": "projectOrder",
+    "migration": "Збережено фактичний порядок масиву, а не попередні порядки з історичного source; deprecated conductor замінено на raf. Режими channels, graph і taskTags не перенесено."
+  },
+  "projectOrder": [
+    "etchly",
+    "raf",
+    "orchestrator",
+    "dash",
+    "stitchly",
+    "invite",
+    "company",
+    "ramus-cloud",
+    "ramus-enterprise",
+    "crm",
+    "vitaliy-page"
+  ],
+  "unlistedProjects": "after-listed",
+  "meaning": "Main спочатку виключає pausedProjects із вибору роботи, потім застосовує projectOrder. Порядок є перевагою серед доступних задач, не забороною роботи нижчих проєктів; залежності й блокери враховує main. Відсутність у pausedProjects означає, що проєкт не призупинений; відновлення не змінює його місця в projectOrder.",
+  "pausedProjects": [
+    "ramus-cloud",
+    "ramus-enterprise"
+  ]
+}

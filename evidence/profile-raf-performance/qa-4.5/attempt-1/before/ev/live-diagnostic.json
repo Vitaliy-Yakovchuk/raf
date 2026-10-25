@@ -1,0 +1,32 @@
+{
+  "label": "live-diagnostic",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-wzWK2O/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-wzWK2O/root/raf-main",
+  "startedAt": "2026-10-25T02:57:19.436Z",
+  "finishedAt": "2026-10-25T02:57:22.570Z",
+  "wallMs": 3133.7243889999954,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 2214,
+  "stderrBytes": 0,
+  "loadAverage": [
+    3.74,
+    2.68,
+    2.73
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1885.866,
+    "cpuSystemMs": 1674.334,
+    "wallMs": 3109.235134,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 3560.2
+}

@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "runners": [
+    {
+      "id": "codex",
+      "initialEnabled": true
+    },
+    {
+      "id": "grok",
+      "initialEnabled": true
+    },
+    {
+      "id": "agy",
+      "initialEnabled": true
+    },
+    {
+      "id": "claude",
+      "initialEnabled": false
+    }
+  ],
+  "models": [
+    {
+      "id": "grok-4.7",
+      "version": "4.7",
+      "runner": "grok",
+      "effort": "high",
+      "complexity": "decision",
+      "enabled": true
+    },
+    {
+      "id": "gemini-4-argon-high",
+      "version": "4",
+      "runner": "agy",
+      "effort": "high",
+      "complexity": "decision",
+      "enabled": true
+    },
+    {
+      "id": "claude-opus-5-5-high",
+      "version": "5.5",
+      "runner": "agy",
+      "effort": "high",
+      "complexity": "decision",
+      "enabled": true
+    },
+    {
+      "id": "claude-sonnet-5-5-high",
+      "version": "5.5",
+      "runner": "agy",
+      "effort": "high",
+      "complexity": "mechanical",
+      "enabled": true
+    },
+    {
+      "id": "gpt-oss-120b-medium",
+      "version": "120b",
+      "runner": "agy",
+      "effort": "medium",
+      "complexity": "ordinary",
+      "enabled": true
+    },
+    {
+      "id": "gemini-3.8-flash-high",
+      "version": "3.8",
+      "runner": "agy",
+      "effort": "high",
+      "complexity": "mechanical",
+      "enabled": false
+    },
+    {
+      "id": "gpt-6-luna",
+      "version": "6",
+      "runner": "codex",
+      "effort": "medium",
+      "complexity": "mechanical",
+      "enabled": true
+    },
+    {
+      "id": "gpt-6.1-sol",
+      "version": "6.1",
+      "runner": "codex",
+      "effort": "high",
+      "complexity": "decision",
+      "enabled": true
+    },
+    {
+      "id": "claude-sonnet",
+      "version": "cli",
+      "runner": "claude",
+      "effort": "high",
+      "complexity": "mechanical",
+      "enabled": true
+    },
+    {
+      "id": "claude-opus",
+      "version": "cli",
+      "runner": "claude",
+      "effort": "high",
+      "complexity": "decision",
+      "enabled": true
+    }
+  ],
+  "routing": {
+    "complexityOrder": [
+      "mechanical",
+      "ordinary",
+      "decision"
+    ],
+    "taskClassification": {
+      "mechanical": [
+        "перенесення та звірка за готовим джерелом",
+        "інвентаризація",
+        "OpenSpec sync/archive"
+      ],
+      "ordinary": [
+        "реалізація за готовою специфікацією",
+        "дефект із відомою причиною"
+      ],
+      "decision": [
+        "пошук причини",
+        "безпека",
+        "рішення без готового джерела"
+      ]
+    },
+    "runnerPreferences": [],
+    "modelTransitions": [],
+    "roleModelBindings": {}
+  }
+}

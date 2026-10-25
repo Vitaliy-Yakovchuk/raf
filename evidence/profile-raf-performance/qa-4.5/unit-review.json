@@ -1,0 +1,172 @@
+[
+  {
+    "label": "agent-ps-qa",
+    "runId": "30f6ac73-8c30-42cb-952a-e18ad13a0715",
+    "phase": "qa",
+    "group": "profile-raf-performance/agent-ps",
+    "selection": {
+      "files": [
+        "test/agent-ps-cost.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 14,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupSnapshot": "loaded",
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "evidence": "agent-ps-qa.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/agent-ps --files test/agent-ps-cost.test.ts",
+    "workspaceHeadFromReflog": "2ef750a42287e131594c9288b58e0dfc1a0d48c5",
+    "workspaceEvidence": [
+      "workspace-head-reflog.txt",
+      "workspace-head.txt",
+      "workspace-status.txt",
+      "workspace-fingerprints.json",
+      "workspace-uncommitted.json",
+      "fixture-fix.patch"
+    ],
+    "workspaceCaveat": "Shared dirty workspace. The diff/status/fingerprint snapshot was collected after the green run at HEAD c35b758; HEAD at start is reconstructed from the local reflog. Live comparisons use clean clones and do not execute dirty workspace changes."
+  },
+  {
+    "label": "profile-red",
+    "runId": "1882c5ba-cc81-4029-bf0f-c04d40e09158",
+    "phase": "red",
+    "group": "profile-raf-performance/profile",
+    "selection": {
+      "files": [
+        "test/raf-cost-profile.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 30,
+    "knownRed": [
+      {
+        "file": "test/raf-cost-profile.test.ts",
+        "name": "profile: existing command stats without flags returns commands/profile, preserving EMA independently"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupSnapshot": "loaded",
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "evidence": "profile-red.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+    "workspaceHeadFromReflog": "e70ebc750c3343c861c8356b92a7689640c80323",
+    "workspaceEvidence": [
+      "workspace-head-reflog.txt",
+      "workspace-head.txt",
+      "workspace-status.txt",
+      "workspace-fingerprints.json",
+      "workspace-uncommitted.json",
+      "fixture-fix.patch"
+    ],
+    "workspaceCaveat": "Shared dirty workspace. The diff/status/fingerprint snapshot was collected after the green run at HEAD c35b758; HEAD at start is reconstructed from the local reflog. Live comparisons use clean clones and do not execute dirty workspace changes."
+  },
+  {
+    "label": "profile-qa-failing",
+    "runId": "75882e6a-67e7-4764-b4ef-44a53958be4a",
+    "phase": "qa",
+    "group": "profile-raf-performance/profile",
+    "selection": {
+      "files": [
+        "test/raf-cost-profile.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "passed": 30,
+    "knownRed": [
+      {
+        "file": "test/raf-cost-profile.test.ts",
+        "name": "profile: existing command stats without flags returns commands/profile, preserving EMA independently"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupSnapshot": "loaded",
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "fix-implementation",
+    "evidence": "profile-qa-failing.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+    "workspaceHeadFromReflog": "1451bbe3f9521a0da486ec3b9cd94de3a5e863ba",
+    "workspaceEvidence": [
+      "workspace-head-reflog.txt",
+      "workspace-head.txt",
+      "workspace-status.txt",
+      "workspace-fingerprints.json",
+      "workspace-uncommitted.json",
+      "fixture-fix.patch"
+    ],
+    "workspaceCaveat": "Shared dirty workspace. The diff/status/fingerprint snapshot was collected after the green run at HEAD c35b758; HEAD at start is reconstructed from the local reflog. Live comparisons use clean clones and do not execute dirty workspace changes."
+  },
+  {
+    "label": "profile-qa-green",
+    "runId": "227ec585-9457-4a7f-bcd2-8a4d4bc271fe",
+    "phase": "qa",
+    "group": "profile-raf-performance/profile",
+    "selection": {
+      "files": [
+        "test/raf-cost-profile.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 31,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "groupSnapshot": "loaded",
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "evidence": "profile-qa-green.TestRunResult.json",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+    "workspaceHeadFromReflog": "1451bbe3f9521a0da486ec3b9cd94de3a5e863ba",
+    "workspaceEvidence": [
+      "workspace-head-reflog.txt",
+      "workspace-head.txt",
+      "workspace-status.txt",
+      "workspace-fingerprints.json",
+      "workspace-uncommitted.json",
+      "fixture-fix.patch"
+    ],
+    "workspaceCaveat": "Shared dirty workspace. The diff/status/fingerprint snapshot was collected after the green run at HEAD c35b758; HEAD at start is reconstructed from the local reflog. Live comparisons use clean clones and do not execute dirty workspace changes."
+  }
+]

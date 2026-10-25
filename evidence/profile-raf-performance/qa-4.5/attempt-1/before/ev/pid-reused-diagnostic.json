@@ -1,0 +1,32 @@
+{
+  "label": "pid-reused-diagnostic",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-wzWK2O/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-wzWK2O/root/raf-main",
+  "startedAt": "2026-10-25T03:00:01.795Z",
+  "finishedAt": "2026-10-25T03:00:04.348Z",
+  "wallMs": 2553.164997999964,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 3,
+  "stderrBytes": 52,
+  "loadAverage": [
+    3.84,
+    3.22,
+    2.93
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1479.269,
+    "cpuSystemMs": 1318.756,
+    "wallMs": 2506.041884,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 2798.025
+}

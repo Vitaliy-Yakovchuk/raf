@@ -1,0 +1,119 @@
+{
+  "label": "unverifiable-2",
+  "startedAt": "2026-10-25T03:06:41.189Z",
+  "finishedAt": "2026-10-25T03:06:44.241Z",
+  "cliExitCode": 1,
+  "externalWallMs": 3052.3170210000244,
+  "loadBefore": {
+    "loadAverage": [
+      5.23,
+      4.25,
+      3.52
+    ],
+    "processes": 298
+  },
+  "wallMs": 2877.9200950000004,
+  "cpuFullMs": 3240.5519999999997,
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1711.5399999999997,
+    "cpuSystemMs": 1529.0119999999997,
+    "wallMs": 3026.345355,
+    "childExitCode": 1
+  },
+  "cpuSelfMs": 3037.182,
+  "delta": [
+    {
+      "stage": "child-wait",
+      "executor": "child",
+      "samples": 1,
+      "wallMs": 31.064186000000063,
+      "cpuUserMs": null,
+      "cpuSystemMs": null,
+      "cpuSamples": 0,
+      "cpuUnavailableSamples": 1,
+      "cpuAvailability": "unavailable",
+      "cpuSource": null,
+      "unavailableReason": "Per-child OS CPU accounting unavailable from spawn"
+    },
+    {
+      "stage": "finalization",
+      "executor": "self",
+      "samples": 1,
+      "wallMs": 0.1320690000002287,
+      "cpuUserMs": 0.07,
+      "cpuSystemMs": 0.059,
+      "cpuSamples": 1,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "handler",
+      "executor": "self",
+      "samples": 2,
+      "wallMs": 862.2868359999998,
+      "cpuUserMs": 441.488,
+      "cpuSystemMs": 468.39,
+      "cpuSamples": 2,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "reconciliation",
+      "executor": "self",
+      "samples": 2,
+      "wallMs": 189.396745,
+      "cpuUserMs": 102.60199999999999,
+      "cpuSystemMs": 95.016,
+      "cpuSamples": 2,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "shared-work",
+      "executor": "self",
+      "samples": 1,
+      "wallMs": 30.875910000000204,
+      "cpuUserMs": 3.049,
+      "cpuSystemMs": 8.152,
+      "cpuSamples": 1,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "sqlite",
+      "executor": "self",
+      "samples": 1,
+      "wallMs": 722.091079,
+      "cpuUserMs": 367.77,
+      "cpuSystemMs": 415.083,
+      "cpuSamples": 1,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    },
+    {
+      "stage": "startup/config",
+      "executor": "self",
+      "samples": 1,
+      "wallMs": 1073.137456,
+      "cpuUserMs": 716.905,
+      "cpuSystemMs": 418.598,
+      "cpuSamples": 1,
+      "cpuUnavailableSamples": 0,
+      "cpuAvailability": "complete",
+      "cpuSource": "process.cpuUsage",
+      "unavailableReason": null
+    }
+  ]
+}

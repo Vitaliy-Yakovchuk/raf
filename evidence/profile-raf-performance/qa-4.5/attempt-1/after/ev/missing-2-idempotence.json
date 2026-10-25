@@ -1,0 +1,32 @@
+{
+  "label": "missing-2-idempotence",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-q27DT6/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-q27DT6/root/raf-main",
+  "startedAt": "2026-10-25T03:04:39.118Z",
+  "finishedAt": "2026-10-25T03:04:42.064Z",
+  "wallMs": 2946.6120999999985,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 3,
+  "stderrBytes": 0,
+  "loadAverage": [
+    3.88,
+    3.91,
+    3.34
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1719.647,
+    "cpuSystemMs": 1397.626,
+    "wallMs": 2916.92101,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 3117.273
+}

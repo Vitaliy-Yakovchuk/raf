@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "exceptions": [
+    {
+      "id": "raf-bootstrap-without-raf",
+      "active": false,
+      "scope": "Початкова розробка raf у raf-develop",
+      "permission": "Делегувати дочірнім агентам доступними засобами без raf до готовності й перевірки її пускача.",
+      "reason": "raf ще не має реалізованого запуску виконавців.",
+      "approvedBy": "owner",
+      "approvedOn": "2026-10-21",
+      "approval": "Даю дозвіл саме на такий порядок",
+      "order": [
+        "CLI з JSON-каталогу",
+        "SQLite",
+        "запуск і перелік агентів",
+        "брифи та звіти",
+        "перехід на запуск через raf після перевірки"
+      ],
+      "endCondition": "Пускач raf реалізований і перевірений; або власник відкликав дозвіл.",
+      "preservedRules": [
+        "готові тести й каркас до реалізації",
+        "підтверджений червоний прогін",
+        "інший агент реалізує після готовності каркаса",
+        "вузький контекст",
+        "OpenSpec та правдиві галочки",
+        "перевірки за чинним flow"
+      ],
+      "closedOn": "2026-10-22",
+      "closedBy": "main",
+      "closure": "Пускач raf реалізований і перевірений: raf-main 2be85f8; claude через raf виконав задачу з Bash наскрізь 2/2 (тест 19/19 і openspec validate, succeeded, close 0) — openspec/changes/add-raf-agent-run/qa-2026-10-22 s3-*; також 5/5 t4-*; main зареєстровано (raf main attach, панель %0); claude увімкнено, codex вимкнено до збору квот.",
+      "coveredBy": "projects/orchestrator/raf-governance «Централізований запуск агентів через raf» (launch-directly-when-raf-lacks, 2026-10-22)"
+    },
+    {
+      "id": "raf-break-glass-repair",
+      "active": false,
+      "scope": "Виправлення багів самої raf, коли потрібна для виправлення функція raf не працює",
+      "permission": "Main оформлює або доповнює OpenSpec change і запускає hotfix напряму доступним засобом; за потреби сам виправляє raf напряму. Несправна raf не є обов’язковою залежністю свого ремонту.",
+      "reason": "Неможливо виправляти raf через функцію raf, яка не працює.",
+      "approvedBy": "owner",
+      "approvedOn": "2026-10-21",
+      "approval": "Звісно, агент запускає агентів на пряму чи фіксить все напряму, якщо функцію не можна зробити через raf (по причині того що raf не працює). Це для виправлення багів в самому raf - ми не можемо правити баги в raf, за допомогою raf, якщо raf не працює",
+      "endCondition": "Для конкретного виправлення потрібна функція raf відновлена й перевірена; або власник відкликав дозвіл.",
+      "preservedRules": [
+        "OpenSpec без дублів",
+        "регресійний тест і початкове падіння до виправлення",
+        "перевірка результату",
+        "вузький контекст",
+        "не змінювати політику flow під виглядом багу"
+      ],
+      "closedOn": "2026-10-22",
+      "closedBy": "owner",
+      "closure": "Покрито загальним правилом projects/orchestrator/raf-governance «Централізований запуск агентів через raf» (зміна launch-directly-when-raf-lacks): коли потрібна функція raf відсутня або не працює, main запускає агента напряму без дозволу. Рішення власника 2026-10-22: «Тобі дозвіл на запуск не потрібен, якщо десь написано інше, прибери»."
+    },
+    {
+      "id": "etchly-parallel-before-raf-ready",
+      "active": false,
+      "scope": "Паралельна розробка Etchly у etchly-develop до готовності пускача raf",
+      "permission": "Main і явно делегований coordinator Etchly запускають виконавців доступними засобами без raf, з тим самим test-scaffold → implement → QA flow.",
+      "reason": "Власник доручив почати Etchly паралельно до завершення raf.",
+      "approvedBy": "owner",
+      "approvedOn": "2026-10-22",
+      "approval": "Запусти паралельно роботу над etchly аналогічно до raf",
+      "endCondition": "Пускач raf реалізований і перевірений — перейти на raf; або власник відкликав дозвіл.",
+      "preservedRules": [
+        "вузький контекст",
+        "аудит актуальності OpenSpec",
+        "тести й каркас до окремої реалізації",
+        "початкове падіння підтверджене",
+        "лише цільові групи тестів з timeout із conf/flow.json",
+        "QA та правдиві галочки",
+        "main визначає commit/push",
+        "не змінювати flow самовільно"
+      ],
+      "closedOn": "2026-10-22",
+      "closedBy": "main",
+      "closure": "Пускач raf реалізований і перевірений: raf-main 2be85f8; claude через raf виконав задачу з Bash наскрізь 2/2 (тест 19/19 і openspec validate, succeeded, close 0) — openspec/changes/add-raf-agent-run/qa-2026-10-22 s3-*; також 5/5 t4-*; main зареєстровано (raf main attach, панель %0); claude увімкнено, codex вимкнено до збору квот.",
+      "coveredBy": "projects/orchestrator/raf-governance «Централізований запуск агентів через raf» (launch-directly-when-raf-lacks, 2026-10-22)"
+    }
+  ]
+}

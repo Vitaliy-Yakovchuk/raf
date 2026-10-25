@@ -1,0 +1,32 @@
+{
+  "label": "unverifiable-4-ps",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-q27DT6/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-q27DT6/root/raf-main",
+  "startedAt": "2026-10-25T03:07:03.169Z",
+  "finishedAt": "2026-10-25T03:07:05.777Z",
+  "wallMs": 2608.598817000049,
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 0,
+  "stderrBytes": 525,
+  "loadAverage": [
+    4.88,
+    4.24,
+    3.54
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1674.0689999999997,
+    "cpuSystemMs": 1359.199,
+    "wallMs": 2577.807936,
+    "childExitCode": 1
+  },
+  "cpuFullMs": 3033.268
+}

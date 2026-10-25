@@ -1,0 +1,14 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--stat",
+    "1212a1330a2b097620bd491e5cc8d2f549c774b9",
+    "1451bbe3f9521a0da486ec3b9cd94de3a5e863ba",
+    "--",
+    "src"
+  ],
+  "exitCode": 0,
+  "stderr": "",
+  "interpretation": "Historical baseline/post-4.4 comparison includes concurrent health/state/profile changes. The deterministic agent-ps group independently verifies the removed duplicate process scan; broad wall/CPU differences are not uniquely attributable to that change."
+}

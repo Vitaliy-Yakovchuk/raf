@@ -1,0 +1,32 @@
+{
+  "label": "pid-reused-4-idempotence",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-wzWK2O/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-wzWK2O/root/raf-main",
+  "startedAt": "2026-10-25T02:59:49.313Z",
+  "finishedAt": "2026-10-25T02:59:51.578Z",
+  "wallMs": 2265.694478999998,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 3,
+  "stderrBytes": 0,
+  "loadAverage": [
+    4.26,
+    3.28,
+    2.95
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1416.262,
+    "cpuSystemMs": 1168.198,
+    "wallMs": 2239.120273,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 2584.46
+}

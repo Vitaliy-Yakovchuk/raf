@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "unitTests": {
+    "timeoutMs": 1200000,
+    "optimizeAfterTimeouts": 1,
+    "maxGroupTimeouts": 2
+  },
+  "resources": {
+    "normal": {
+      "maxNormalizedLoad": 1.2,
+      "minRamFraction": 0.2,
+      "minRamBytes": 2147483648,
+      "minDiskFraction": 0.1,
+      "minDiskBytes": 10737418240
+    },
+    "hotfix": {
+      "maxNormalizedLoad": 1.5,
+      "minRamFraction": 0.1,
+      "minRamBytes": 1073741824,
+      "minDiskFraction": 0.05,
+      "minDiskBytes": 5368709120
+    },
+    "home": {
+      "minDiskBytes": 524288000
+    }
+  },
+  "reminders": {
+    "unfinishedRunMs": 10800000,
+    "diskCheckMs": 21600000
+  },
+  "retention": {
+    "closedRemindersMs": 172800000,
+    "finishedSessionsMs": 86400000,
+    "failedDeliveryEvidenceMs": 604800000
+  },
+  "documents": {
+    "architectureMaxLines": 300,
+    "statusMaxLines": 80,
+    "minArchitectureDiagrams": 1
+  },
+  "startupContextReview": {
+    "runsPerReview": 20
+  },
+  "testGoals": {
+    "beforeMainMs": 600000
+  },
+  "resourceEstimates": {
+    "agentTypes": {
+      "hotfix": {
+        "ramBytes": 1073741824,
+        "diskBytesPerFileSystem": 5368709120
+      },
+      "spec": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      },
+      "design": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      },
+      "test-scaffold": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      },
+      "implement": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      },
+      "coordinator": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      },
+      "qa": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      }
+    }
+  }
+}

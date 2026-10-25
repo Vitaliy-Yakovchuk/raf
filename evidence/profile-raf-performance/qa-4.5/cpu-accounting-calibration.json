@@ -1,0 +1,18 @@
+{
+  "method": "Linux wait4 rusage",
+  "scope": "Node CLI root plus reaped Node helper",
+  "command": [
+    "/home/dev/.local/bin/node",
+    "-e",
+    "\nconst { spawnSync } = require('node:child_process');\nconst cpu = () => { const v = process.cpuUsage(); return v.user + v.system; };\nconst start = cpu(); while (cpu() - start < 100000) {}\nconst helper = spawnSync(process.execPath, ['-e', `const start = process.cpuUsage(); let used; do { used = process.cpuUsage(start); } while (used.user + used.system < 200000); console.log(JSON.stringify(process.cpuUsage()));`], {encoding:'utf8'});\nif (helper.status !== 0) process.exit(helper.status ?? 1);\nconsole.log(JSON.stringify({self:process.cpuUsage(), helper:JSON.parse(helper.stdout), helperExitCode:helper.status}));\n"
+  ],
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "measuredSelfMs": 151.35,
+  "measuredHelperMs": 252.056,
+  "fullCpuMs": 420.68899999999996,
+  "cpuUserMs": 127.574,
+  "cpuSystemMs": 293.115,
+  "wallMs": 411.15909,
+  "result": "full counter includes both independently measured contributions"
+}

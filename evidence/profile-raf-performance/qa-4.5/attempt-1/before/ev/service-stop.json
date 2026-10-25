@@ -1,0 +1,32 @@
+{
+  "label": "service-stop",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-wzWK2O/root/raf-main/bin/raf.ts",
+    "service",
+    "stop"
+  ],
+  "cwd": "/srv/dev/p45-wzWK2O/root/raf-main",
+  "startedAt": "2026-10-25T02:55:25.683Z",
+  "finishedAt": "2026-10-25T02:55:27.412Z",
+  "wallMs": 1729.2691630000008,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 312,
+  "stderrBytes": 0,
+  "loadAverage": [
+    2.04,
+    2.25,
+    2.62
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1119.346,
+    "cpuSystemMs": 812.083,
+    "wallMs": 1699.717014,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 1931.429
+}

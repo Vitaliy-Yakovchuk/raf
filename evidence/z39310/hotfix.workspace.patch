@@ -1,0 +1,200 @@
+diff --git a/src/production-agent-queue.ts b/src/production-agent-queue.ts
+index defddd1..0d4402c 100644
+--- a/src/production-agent-queue.ts
++++ b/src/production-agent-queue.ts
+@@ -63,6 +63,14 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
+     agentType: input.activity.type, owner, clientIdentity,
+     selections: input.assignment.changes.map(change => ({ change: change.id, items: change.items.map(item => item.id) })), coordinator };
+   const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null };
++  const ownsLaunch = (session: SessionRecord | undefined, record: AgentQueueRecord): boolean => {
++    const queued = session?.launchContext?.agentQueue;
++    return session?.state === 'running' && session.runId === input.runId && session.runId === record.owner.runId &&
++      session.addressId === input.addressId && session.addressId === record.agentId && !!queued &&
++      queued.queueId === record.queueId && queued.requestId === record.requestId && queued.agentId === record.agentId &&
++      queued.owner.runId === record.owner.runId && queued.owner.fence === record.owner.fence &&
++      isDeepStrictEqual(queued.clientIdentity, record.clientIdentity) && isDeepStrictEqual(queued.coordinator, record.coordinator);
++  };
+   const failure = (code: string, reason: string) => ({ code, message: reason, reason, stage: 'queue', source: 'production-agent-queue', sourceCode: null,
+     received: null, expected: null, found: null, completed: [], pending: [], retrySafe: false,
+     remediation: ['Перевірте актуальність доручення, власника й стан запуску.'] });
+@@ -116,40 +124,36 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
+       return { kind: result.admitted ? 'reserved' : 'waiting', record, admission: result.admission };
+     },
+     commitReady: async (record, process) => {
+-      const ownsLaunch = (session: SessionRecord | undefined): session is SessionRecord & { process: ProcessIdentity } => {
+-        const queued = session?.launchContext?.agentQueue;
+-        return session?.state === 'running' && session.runId === input.runId && session.runId === record.owner.runId &&
+-          session.addressId === input.addressId && session.addressId === record.agentId && !!queued &&
+-          queued.queueId === record.queueId && queued.requestId === record.requestId && queued.agentId === record.agentId &&
+-          queued.owner.runId === record.owner.runId && queued.owner.fence === record.owner.fence &&
+-          isDeepStrictEqual(queued.clientIdentity, record.clientIdentity) && isDeepStrictEqual(queued.coordinator, record.coordinator) &&
+-          !!session.process && session.process.pid === process.pid && session.process.startedAt === process.startedAt &&
++      const ownsProcess = (session: SessionRecord | undefined): session is SessionRecord & { process: ProcessIdentity } => {
++        return ownsLaunch(session, record) &&
++          !!session?.process && session.process.pid === process.pid && session.process.startedAt === process.startedAt &&
+           sameQueueNativeIdentity({ ...session.process, machineId: session.process.evidence.machineId, bootId: session.process.evidence.bootId, ...(process.runner === undefined ? { runner: undefined } : {}) }, process) &&
+           session.process.evidence.machineId === process.machineId && session.process.evidence.bootId === process.bootId;
+       };
+       const session = state.transaction(tx => tx.getSession(record.owner.runId));
+-      if (!ownsLaunch(session) || (await dependencies.observe(session.process)).state !== 'alive') return false;
++      if (!ownsProcess(session) || (await dependencies.observe(session.process)).state !== 'alive') return false;
+       if (!await api.commitStarted(record.owner.runId, session.process)) return false;
+       return state.transaction(tx => {
+         const entry = state.get(record);
+         const session = tx.getSession(record.owner.runId);
+-        if (!ownsLaunch(session)) return false;
++        if (!ownsProcess(session)) return false;
+         if (!entry) return true;
+         if (entry.phase !== 'starting' || !entry.ready || entry.record.agentId !== record.agentId) return false;
+         return state.remove(record);
+       });
+     },
+     cleanup: async (record, reason, detail) => {
+-      if (!state.transaction(() => state.get(record))) return { state: 'retained', reason: 'Launch fence is no longer owned by this client', completed: [], pending: [] };
++      const failedOwnLaunch = reason === 'launch-failed' && ownsLaunch(current(record.owner.runId), record);
++      if (!state.transaction(() => state.get(record)) && !failedOwnLaunch) return { state: 'retained', reason: 'Launch fence is no longer owned by this client', completed: [], pending: [] };
+       state.transaction(() => {
+         const entry = state.get(record);
+         if (entry && !entry.ready) state.save({ ...entry, terminalReason: entry.terminalReason ?? reason });
+       });
+       const session = current(record.owner.runId);
+-      if (session?.state === 'running' && state.transaction(() => state.get(record))?.ready) {
++      if (session?.state === 'running' && (failedOwnLaunch || state.transaction(() => state.get(record))?.ready)) {
+         if (!session.process) return { state: 'unknown', reason: 'Running agent identity is missing', completed: [], pending: ['agent reconciliation'] };
+         const observation = await dependencies.observe(session.process);
+-        if (observation.state !== 'exited') return { state: observation.state === 'alive' ? 'retained' : 'unknown', reason: 'Agent owns the launched process and reservation', completed: [], pending: [] };
++        if (observation.state !== 'exited' && !failedOwnLaunch) return { state: observation.state === 'alive' ? 'retained' : 'unknown', reason: 'Agent owns the launched process and reservation', completed: [], pending: [] };
+       }
+       if (session && session.state !== 'finished' && record.owner.runId !== input.runId) return { state: 'unknown', reason: 'Existing worker lifecycle must reconcile this launch', completed: [], pending: ['launch reconciliation'] };
+       if (session && session.state !== 'finished') {
+@@ -160,7 +164,7 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
+         if (remaining && remaining.state !== 'finished') return { state: 'unknown', reason: 'Launch cleanup is incomplete', completed: [], pending: ['launch cleanup'] };
+       }
+       await dependencies.cleanReport(record.owner.runId);
+-      const removed = state.transaction(() => state.remove(record, reason));
++      const removed = state.transaction(() => state.remove(record, reason) || failedOwnLaunch && !state.get(record) && current(record.owner.runId)?.state === 'finished');
+       return { state: removed ? 'released' : 'retained', reason: detail, completed: removed ? ['launch claims', 'resource reservation', 'report cleanup'] : [], pending: [] };
+     },
+     observe: async record => {
+diff --git a/test/agent-queue-start-result.test.ts b/test/agent-queue-start-result.test.ts
+index c469fba..fd6e473 100644
+--- a/test/agent-queue-start-result.test.ts
++++ b/test/agent-queue-start-result.test.ts
+@@ -112,10 +112,116 @@ async function fixture(t: TestContext, waited: boolean) {
+     pending: store.eventRepository.transaction(tx => tx.listPending()),
+   });
+   const reconcile = () => reconcileFinishedAgentQueues({ store, current, observe: dependencies.observe, cleanReport: dependencies.cleanReport });
+-  return { input, dependencies, production, queue, current, identity, process, ports, calls, facts, reconcile,
++  return { input, dependencies, production, queue, current, identity, process, ports, api, calls, facts, reconcile,
+     record: () => record };
+ }
+ 
++for (const waited of [false, true]) {
++  for (const reconciled of [false, true]) {
++    test(`Z.393.10 handshake timeout after durable readiness: waited=${waited}, reconciled=${reconciled} cancels its worker and releases claims`, async t => {
++      const f = await fixture(t, waited);
++      const start = f.ports.start;
++      let workerAlive = true;
++      f.api.compensate = async launch => {
++        f.calls.compensate++;
++        assert.equal(launch.runId, f.input.runId);
++        workerAlive = false;
++        return { stopped: true };
++      };
++      f.api.abortLaunch = async (runId, reason) => {
++        f.calls.abort++;
++        assert.equal(workerAlive, false, 'claims cannot be released before process termination');
++        f.queue.transaction(tx => {
++          const session = tx.getSession(runId)!;
++          tx.putSession({ ...session, state: 'finished', revision: session.revision + 1, abortReason: reason });
++          tx.deleteReservation(runId);
++          tx.deleteTaskReservation(runId);
++        });
++      };
++      f.ports.start = async (record, validation) => {
++        await start(record, validation);
++        assert.equal(f.current(f.input.runId)?.state, 'running');
++        if (reconciled) {
++          await f.reconcile();
++          assert.equal(f.queue.get(record), undefined);
++        }
++        throw new Error('Readiness handshake timeout after 30000 ms');
++      };
++      const result = await runAgentWithQueue(f.production.request, f.ports);
++      assert.equal(result.exitCode, 1);
++      const failure = JSON.parse(result.stderr);
++      assert.match(failure.message, /Readiness handshake timeout/);
++      assert.equal(workerAlive, false, 'failed launch must not leave its ready worker running');
++      assert.equal(f.calls.compensate, 1);
++      assert.equal(f.calls.abort, 1);
++      assert.equal(f.calls.cleanReport, 1);
++      assert.equal(f.current(f.input.runId)?.state, 'finished');
++      assert.deepEqual(f.facts().tasks, []);
++      assert.deepEqual(f.facts().resources, []);
++      assert.equal(f.queue.get(f.record()), undefined);
++      assert.equal(failure.details.cleanup.state, 'released');
++      assert.equal(failure.details.retrySafe, true);
++      assert.deepEqual(failure.details.pending, []);
++    });
++  }
++}
++
++test('Z.393.10 failed stop confirmation retains running claims and reports pending termination', async t => {
++  const f = await fixture(t, false);
++  const start = f.ports.start;
++  f.ports.start = async (record, validation) => {
++    await start(record, validation);
++    throw new Error('Readiness handshake timeout after 30000 ms');
++  };
++  const result = await runAgentWithQueue(f.production.request, f.ports);
++  const failure = JSON.parse(result.stderr);
++  assert.equal(result.exitCode, 1);
++  assert.equal(failure.details.cleanup.state, 'unknown');
++  assert.deepEqual(failure.details.pending, ['process termination']);
++  assert.equal(failure.details.retrySafe, false);
++  assert.equal(f.calls.compensate, 1);
++  assert.equal(f.calls.abort, 0);
++  assert.equal(f.calls.cleanReport, 0);
++  assert.equal(f.current(f.input.runId)?.state, 'running');
++  assert.equal(f.facts().tasks.length, 1);
++  assert.equal(f.facts().resources.length, 1);
++});
++
++for (const field of ['fence', 'requestId', 'queueId', 'agentId', 'runId', 'clientIdentity', 'coordinator'] as const) {
++  test(`Z.393.10 removed ready entry: stale ${field} cannot cancel another launch`, async t => {
++    const f = await fixture(t, false);
++    await runAgentWithQueue(f.production.request, f.ports);
++    const before = structuredClone(f.facts());
++    const record = structuredClone(f.record());
++    if (field === 'fence' || field === 'runId') record.owner[field] = 'stale-owner';
++    else if (field === 'clientIdentity') record.clientIdentity.pid++;
++    else if (field === 'coordinator') record.coordinator = { runId: 'other-coordinator', fence: 'other-fence' };
++    else record[field] = 'stale-launch';
++    const result = await f.production.ports.cleanup(record, 'launch-failed', 'Readiness handshake timeout');
++    assert.equal(result.state, 'retained');
++    assert.deepEqual(f.facts(), before);
++    assert.equal(f.calls.compensate, 0);
++    assert.equal(f.calls.abort, 0);
++    assert.equal(f.calls.cleanReport, 0);
++  });
++}
++
++test('Z.393.10 dead launch client reconciliation preserves the ready live worker', async t => {
++  const f = await fixture(t, false);
++  await f.ports.claimAndAdmit({ request: f.production.request, validation: {
++    assignment: f.input.assignment, fingerprint: 'start-result-assignment', requested: f.input.requested,
++    requiredFileSystemIds: f.input.requiredFileSystemIds,
++  }, tier: 'normal' });
++  await f.ports.start(f.record(), { assignment: f.input.assignment, fingerprint: 'start-result-assignment',
++    requested: f.input.requested, requiredFileSystemIds: f.input.requiredFileSystemIds });
++  const before = structuredClone(f.facts());
++  const result = await f.production.ports.cleanup(f.record(), 'client-died', 'launch client exited');
++  assert.equal(result.state, 'retained');
++  assert.deepEqual(f.facts(), before);
++  assert.equal(f.calls.compensate, 0);
++  assert.equal(f.calls.abort, 0);
++});
++
+ function assertRunning(result: Awaited<ReturnType<typeof runAgentWithQueue>>, f: Awaited<ReturnType<typeof fixture>>, waited: boolean) {
+   assert.equal(result.exitCode, 0, `A confirmed running launch must return success; received ${result.stderr}`);
+   assert.equal(result.stderr, '');

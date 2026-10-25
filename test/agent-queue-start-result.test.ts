@@ -112,9 +112,115 @@ async function fixture(t: TestContext, waited: boolean) {
     pending: store.eventRepository.transaction(tx => tx.listPending()),
   });
   const reconcile = () => reconcileFinishedAgentQueues({ store, current, observe: dependencies.observe, cleanReport: dependencies.cleanReport });
-  return { input, dependencies, production, queue, current, identity, process, ports, calls, facts, reconcile,
+  return { input, dependencies, production, queue, current, identity, process, ports, api, calls, facts, reconcile,
     record: () => record };
 }
+
+for (const waited of [false, true]) {
+  for (const reconciled of [false, true]) {
+    test(`Z.393.10 handshake timeout after durable readiness: waited=${waited}, reconciled=${reconciled} cancels its worker and releases claims`, async t => {
+      const f = await fixture(t, waited);
+      const start = f.ports.start;
+      let workerAlive = true;
+      f.api.compensate = async launch => {
+        f.calls.compensate++;
+        assert.equal(launch.runId, f.input.runId);
+        workerAlive = false;
+        return { stopped: true };
+      };
+      f.api.abortLaunch = async (runId, reason) => {
+        f.calls.abort++;
+        assert.equal(workerAlive, false, 'claims cannot be released before process termination');
+        f.queue.transaction(tx => {
+          const session = tx.getSession(runId)!;
+          tx.putSession({ ...session, state: 'finished', revision: session.revision + 1, abortReason: reason });
+          tx.deleteReservation(runId);
+          tx.deleteTaskReservation(runId);
+        });
+      };
+      f.ports.start = async (record, validation) => {
+        await start(record, validation);
+        assert.equal(f.current(f.input.runId)?.state, 'running');
+        if (reconciled) {
+          await f.reconcile();
+          assert.equal(f.queue.get(record), undefined);
+        }
+        throw new Error('Readiness handshake timeout after 30000 ms');
+      };
+      const result = await runAgentWithQueue(f.production.request, f.ports);
+      assert.equal(result.exitCode, 1);
+      const failure = JSON.parse(result.stderr);
+      assert.match(failure.message, /Readiness handshake timeout/);
+      assert.equal(workerAlive, false, 'failed launch must not leave its ready worker running');
+      assert.equal(f.calls.compensate, 1);
+      assert.equal(f.calls.abort, 1);
+      assert.equal(f.calls.cleanReport, 1);
+      assert.equal(f.current(f.input.runId)?.state, 'finished');
+      assert.deepEqual(f.facts().tasks, []);
+      assert.deepEqual(f.facts().resources, []);
+      assert.equal(f.queue.get(f.record()), undefined);
+      assert.equal(failure.details.cleanup.state, 'released');
+      assert.equal(failure.details.retrySafe, true);
+      assert.deepEqual(failure.details.pending, []);
+    });
+  }
+}
+
+test('Z.393.10 failed stop confirmation retains running claims and reports pending termination', async t => {
+  const f = await fixture(t, false);
+  const start = f.ports.start;
+  f.ports.start = async (record, validation) => {
+    await start(record, validation);
+    throw new Error('Readiness handshake timeout after 30000 ms');
+  };
+  const result = await runAgentWithQueue(f.production.request, f.ports);
+  const failure = JSON.parse(result.stderr);
+  assert.equal(result.exitCode, 1);
+  assert.equal(failure.details.cleanup.state, 'unknown');
+  assert.deepEqual(failure.details.pending, ['process termination']);
+  assert.equal(failure.details.retrySafe, false);
+  assert.equal(f.calls.compensate, 1);
+  assert.equal(f.calls.abort, 0);
+  assert.equal(f.calls.cleanReport, 0);
+  assert.equal(f.current(f.input.runId)?.state, 'running');
+  assert.equal(f.facts().tasks.length, 1);
+  assert.equal(f.facts().resources.length, 1);
+});
+
+for (const field of ['fence', 'requestId', 'queueId', 'agentId', 'runId', 'clientIdentity', 'coordinator'] as const) {
+  test(`Z.393.10 removed ready entry: stale ${field} cannot cancel another launch`, async t => {
+    const f = await fixture(t, false);
+    await runAgentWithQueue(f.production.request, f.ports);
+    const before = structuredClone(f.facts());
+    const record = structuredClone(f.record());
+    if (field === 'fence' || field === 'runId') record.owner[field] = 'stale-owner';
+    else if (field === 'clientIdentity') record.clientIdentity.pid++;
+    else if (field === 'coordinator') record.coordinator = { runId: 'other-coordinator', fence: 'other-fence' };
+    else record[field] = 'stale-launch';
+    const result = await f.production.ports.cleanup(record, 'launch-failed', 'Readiness handshake timeout');
+    assert.equal(result.state, 'retained');
+    assert.deepEqual(f.facts(), before);
+    assert.equal(f.calls.compensate, 0);
+    assert.equal(f.calls.abort, 0);
+    assert.equal(f.calls.cleanReport, 0);
+  });
+}
+
+test('Z.393.10 dead launch client reconciliation preserves the ready live worker', async t => {
+  const f = await fixture(t, false);
+  await f.ports.claimAndAdmit({ request: f.production.request, validation: {
+    assignment: f.input.assignment, fingerprint: 'start-result-assignment', requested: f.input.requested,
+    requiredFileSystemIds: f.input.requiredFileSystemIds,
+  }, tier: 'normal' });
+  await f.ports.start(f.record(), { assignment: f.input.assignment, fingerprint: 'start-result-assignment',
+    requested: f.input.requested, requiredFileSystemIds: f.input.requiredFileSystemIds });
+  const before = structuredClone(f.facts());
+  const result = await f.production.ports.cleanup(f.record(), 'client-died', 'launch client exited');
+  assert.equal(result.state, 'retained');
+  assert.deepEqual(f.facts(), before);
+  assert.equal(f.calls.compensate, 0);
+  assert.equal(f.calls.abort, 0);
+});
 
 function assertRunning(result: Awaited<ReturnType<typeof runAgentWithQueue>>, f: Awaited<ReturnType<typeof fixture>>, waited: boolean) {
   assert.equal(result.exitCode, 0, `A confirmed running launch must return success; received ${result.stderr}`);

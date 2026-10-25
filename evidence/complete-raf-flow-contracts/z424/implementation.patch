@@ -1,0 +1,51 @@
+diff --git a/src/test-run-integration-profiles.ts b/src/test-run-integration-profiles.ts
+index 6a681fa..027ab2c 100644
+--- a/src/test-run-integration-profiles.ts
++++ b/src/test-run-integration-profiles.ts
+@@ -177,9 +177,11 @@ export function prepareTestRunProfile(configuration: RawConfiguration, flow: Raw
+   for (const [id, profile] of Object.entries(project.profiles) as [string, any][]) for (const file of profileFiles(profile)) {
+     const fact = inventory.find(fact => fact.file === file);
+     const pointer = `conf/test-runs.json#/projects/${request.project}/profiles/${id}/${profileTestKind(profile) === 'unit' ? 'unitFiles' : 'integrationFiles'}`;
++    if (request.project === 'raf' && !selectedFiles.includes(file) && !fact?.exists) continue;
+     if (!fact?.exists || !fact.canonicalInsideWorkspace) reject(profileTestKind(profile) === 'integration' ? 'CONFIGURATION_INVALID' : 'INVENTORY_INCOMPLETE', pointer, file);
+     if (fact.kind !== profileTestKind(profile)) reject('CONFIGURATION_INVALID', pointer, file);
+   }
++  if (request.project === 'raf' && !integration && !request.only && equal(files, unitFiles.filter(file => inventory.some(fact => fact.file === file && fact.exists)))) reject('UNSAFE_SELECTION');
+   const cwd = resolve(request.workspace, profile.cwd);
+   if (cwd !== request.workspace && !cwd.startsWith(request.workspace + sep)) reject('UNSAFE_SELECTION');
+   if (typeof profile.executable !== 'string' || !Array.isArray(profile.argv) || /^(?:.*\/)?(?:sh|bash|dash|zsh|fish|cmd|powershell)$/.test(profile.executable) || profile.argv.some((arg: string) => ['-e', '--eval', '-c', '--command'].includes(arg))) reject('CONFIGURATION_INVALID', `conf/test-runs.json#/projects/${request.project}/profiles/${profileId}/command`);
+diff --git a/src/test-runs.ts b/src/test-runs.ts
+index abaf860..2464536 100644
+--- a/src/test-runs.ts
++++ b/src/test-runs.ts
+@@ -343,6 +343,7 @@ export function planTestRun(request: TestRunRequest, config: TestRunConfig, cont
+   }
+   for (const [id, profile] of Object.entries(project.profiles)) if (profile.testKind === 'integration') for (const file of profileFiles(profile)) {
+     const fact = env.files[file];
++    if (request.project === 'raf' && !fact) continue;
+     if (!fact || fact.kind !== 'file' || fact.realpath !== resolve(context.workspace, file) || fact.unit || fact.testKind && fact.testKind !== 'integration') failure('CONFIGURATION_INVALID', `conf/test-runs.json#/projects/${request.project}/profiles/${id}/integrationFiles: ${file}`);
+   }
+   const configuredInventory = [...new Set(Object.values(project.profiles).flatMap(p => p.testKind === 'integration' ? [] : p.unitFiles ?? []))];
+diff --git a/test/test-run-integration-profiles.test.ts b/test/test-run-integration-profiles.test.ts
+index 0f0c39f..db41719 100644
+--- a/test/test-run-integration-profiles.test.ts
++++ b/test/test-run-integration-profiles.test.ts
+@@ -486,12 +486,16 @@ for (const [label, mutation] of [
+   });
+ }
+ 
+-test('I10 stale nonselected integration inventory is also validated', () => {
++test('I10 absent nonselected raf integration registration does not block the exact preset', () => {
+   const input = fixture();
+   const stale = 'test/stale-integration.test.ts';
+   input.configuration.projects.raf.profiles['node-integration'].integrationFiles = [integrationFile, stale];
+   input.inventory.push({ file: stale, exists: false, canonicalInsideWorkspace: true, kind: 'integration' });
+-  refusal(() => prepare(input), 'CONFIGURATION_INVALID', undefined, stale);
++  const before = structuredClone(input.configuration);
++  const resolved = prepare(input);
++  assert.deepEqual(resolved.selection.files, [integrationFile]);
++  assert.equal(resolved.profileId, 'node-integration');
++  assert.deepEqual(input.configuration, before);
+ });
+ 
+ test('I12 relay preserves failure JSON, stderr, child code, diagnostics and policy independently of CLI code', async () => {

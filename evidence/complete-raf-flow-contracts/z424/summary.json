@@ -1,0 +1,422 @@
+{
+  "item": "complete-raf-flow-contracts:Z.424",
+  "status": "succeeded",
+  "answer": "Відсутні необрані реєстрації спільного інвентаря raf не блокують unit та integration в іншій гілці. Членство, наявність обраних файлів, точний preset та заборона повного unit-набору збережені. Red → green у незмінній групі й QA HOME; фінальний hotfix: 121 passed, CLI=0, child=0, cleanup complete, без залишку. Два проміжні setup-збої не зараховано як green.",
+  "workspaceContext": "workspace-context.json",
+  "runs": [
+    {
+      "label": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z424 --files test/z424-branch-inventory.test.ts",
+      "result": "red.stdout.json",
+      "stderr": "red.stderr",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "8f54364f-9e2c-4ca2-b4be-3e09f2f65c04",
+      "selection": {
+        "files": [
+          "test/z424-branch-inventory.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit files ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit preset ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit selected absent registered file refuses before state or spawn"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit present integration registration outside the workspace still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit present misclassified integration registration still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration files ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration preset ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration selected absent registered file refuses before state or spawn"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration present integration registration outside the workspace still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration present misclassified integration registration still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit files ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit preset ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit selected absent registered file refuses before state or spawn"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit present integration registration outside the workspace still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit present misclassified integration registration still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration files ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration preset ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration selected absent registered file refuses before state or spawn"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration present integration registration outside the workspace still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration present misclassified integration registration still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 unit execution passes with absent unit and integration files registered for another branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 absent other-branch entries do not permit the complete local unit suite"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "passedCount": 5
+    },
+    {
+      "label": "hotfix-setup-failed",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z424 --files test/z424-branch-inventory.test.ts",
+      "result": "hotfix-setup-failed.stdout.json",
+      "stderr": "hotfix-setup-failed.stderr",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "runId": "8c84faac-6c74-4115-8800-b95a74db2d00",
+      "selection": {
+        "files": [
+          "test/z424-branch-inventory.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "setup-failed",
+      "cleanup": {
+        "complete": false,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit files ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit preset ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit selected absent registered file refuses before state or spawn"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit present integration registration outside the workspace still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit present misclassified integration registration still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration files ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration preset ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration selected absent registered file refuses before state or spawn"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration present integration registration outside the workspace still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration present misclassified integration registration still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit files ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit preset ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit selected absent registered file refuses before state or spawn"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit present integration registration outside the workspace still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit present misclassified integration registration still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration files ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration preset ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration selected absent registered file refuses before state or spawn"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration present integration registration outside the workspace still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration present misclassified integration registration still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 unit execution passes with absent unit and integration files registered for another branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 absent other-branch entries do not permit the complete local unit suite"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "*"
+        }
+      ],
+      "unknown": [],
+      "groupState": "reconcile",
+      "timeoutCount": 0,
+      "nextAction": "reconcile",
+      "passedCount": 0
+    },
+    {
+      "label": "hotfix-reservation-lost",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z424 --files test/z424-branch-inventory.test.ts",
+      "result": "hotfix-reservation-lost.stdout.json",
+      "stderr": "hotfix-reservation-lost.stderr",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "runId": "bd5a86e5-cfaa-4b7d-b20f-011ff7fbdf23",
+      "selection": {
+        "files": [
+          "test/z424-branch-inventory.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "setup-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit files ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit preset ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit selected absent registered file refuses before state or spawn"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit present integration registration outside the workspace still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop unit present misclassified integration registration still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration files ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration preset ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration selected absent registered file refuses before state or spawn"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration present integration registration outside the workspace still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 develop integration present misclassified integration registration still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit files ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit preset ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit selected absent registered file refuses before state or spawn"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit present integration registration outside the workspace still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix unit present misclassified integration registration still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration files ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration preset ignores absent registrations from the other branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration selected absent registered file refuses before state or spawn"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration present integration registration outside the workspace still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 hotfix integration present misclassified integration registration still refuses"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 unit execution passes with absent unit and integration files registered for another branch"
+        },
+        {
+          "file": "test/z424-branch-inventory.test.ts",
+          "name": "Z424 absent other-branch entries do not permit the complete local unit suite"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-setup",
+      "passedCount": 27
+    },
+    {
+      "label": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z424 --files test/z424-branch-inventory.test.ts test/test-run-integration-profiles.test.ts",
+      "result": "hotfix.stdout.json",
+      "stderr": "hotfix.stderr",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "2788eb82-90be-461e-aea9-75b48bb0458c",
+      "selection": {
+        "files": [
+          "test/z424-branch-inventory.test.ts",
+          "test/test-run-integration-profiles.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "passedCount": 121
+    }
+  ],
+  "checks": {
+    "build": "build.tool-result.json (exit 0)",
+    "gitDiffCheck": "exit 0"
+  },
+  "scope": "Лише Z.424; live integration scenario не запускався: unit-регресії перевіряють обидва шляхи планування на ізольованих фактах. Випуск і застосування main-spec-wording.patch виконує main.",
+  "archive": "Не виконується: інші пункти complete-raf-flow-contracts відкриті; галочку Z.424 ставить raf.",
+  "fileHashes": {
+    "regression-source.ts": "68424dd10f1c57ab40870845150abf2a6e3249f4279ac3926fc66f137e9651af",
+    "hotfix-reservation-lost.stderr": "0e858f68d28f65b4986a2cfdf09742bf31841770e38f9ebbc27eb74db3958a7f",
+    "red.cli-exit-code": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "hotfix-setup-failed.cli-exit-code": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "hotfix-setup-failed.stderr": "47c450ba91378744ce1828c0cb99756164d9367b1a954f888351b0470500eff1",
+    "hotfix.stderr": "28e9b8521dbfdaf369b7f651ac58b995a5641891b95caedb65bdaf71a9c92c21",
+    "hotfix.stdout.json": "cc595a23be806a19377e504ae0109f7be459298666fb0e3276d76b85803a74c0",
+    "hotfix-reservation-lost.cli-exit-code": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "hotfix-setup-failed.tool-result.json": "e721f322e782e07c2e26389f049bda4860fe655723a409b807968a0d9c7444ef",
+    "red.stderr": "3f85036b62889d212250ec9b0319e8880601c6da94fc4a8a905479461f11aa31",
+    "hotfix.tool-result.json": "54e3be7a7a650a2a2ff64d42e7600f0dbbdcb81fc956425240ce366d8570b024",
+    "main-spec-wording.patch": "8241989b65827e245e35b73dd26a0dc91bc4e99ff431cd199a7e78aa29bee1be",
+    "red.stdout.json": "eb904fb0a756d1011214408cd9102ce93ff033b8080fdf5c02a7b085aa249bcc",
+    "hotfix-reservation-lost.tool-result.json": "3b9429d3ca440a1d3dc44212c1d69ee4ad99699459c23f608b3002d7b5dda14c",
+    "red.tool-result.json": "2e263db28c2aa9ec2d0b22df5a21f89e2a3d9382cfcae23c79a1d6ffc2a9d69b",
+    "hotfix.cli-exit-code": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "implementation.patch": "4d602486f7df53e7adc5817151554da4d8c244170eb837ede1239c1076f86d87",
+    "hotfix-reservation-lost.stdout.json": "819225eafd938822dc6d1f20e605931e8f68ebca4387248e4f38787874fbfd35",
+    "hotfix-setup-failed.stdout.json": "8f2ab03600585001892563e3ac3c8ed03ae5f2a4d119056e85070fe6206f33e6",
+    "workspace-context.json": "8543f2aa8189365de47d06f13c309e5fbdc7bdd1433e865d43d6c31fadae8217",
+    "build.tool-result.json": "6a2bd0d74929c6b2f584e54ff12f82e177557b354e8fd1e5db151de6f8206e36"
+  }
+}

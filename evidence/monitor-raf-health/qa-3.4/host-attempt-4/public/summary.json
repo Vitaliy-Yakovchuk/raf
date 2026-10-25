@@ -1,0 +1,34 @@
+{
+  "status": "failed",
+  "assignment": "monitor-raf-health:3.4",
+  "revision": "5d7553185e25bc30a6f24d2babaeda3584886c87",
+  "sourceStatus": "",
+  "untrackedStatus": "node_modules\n",
+  "versions": {
+    "node": "v26.12.1",
+    "tmux": "tmux 3.6",
+    "codex": "codex-cli 0.163.0",
+    "git": "git version 2.53.0"
+  },
+  "platform": {
+    "os": "linux",
+    "arch": "x64"
+  },
+  "isolation": "Private /srv/dev fixture, own HOME/TMPDIR/state; real production CLI/worker/tmux and Codex sandbox; deterministic synthetic TUI, no live model or provider request",
+  "checks": [],
+  "failure": {
+    "stage": "verify private decision frame",
+    "name": "SyntaxError",
+    "code": null,
+    "message": "Unexpected non-whitespace character after JSON at position 922 (line 2 column 5)",
+    "stack": [
+      "    at JSON.parse (<anonymous>)",
+      "    at file:///srv/dev/mrh34-src.csiqLD/raf-develop/evidence/monitor-raf-health/qa-3.4/host.mjs:125:31"
+    ]
+  },
+  "cleanup": {
+    "complete": true,
+    "privateFixtureRemoved": true
+  },
+  "unitRun": "Separate authorized raf test run; not invoked by this host script"
+}

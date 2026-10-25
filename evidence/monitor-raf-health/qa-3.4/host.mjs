@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { randomUUID, createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { configureDeliveryStand } from '../../../scripts/qa-delivery-config.mjs';
+import { configureDeliveryStand, parsePublicDeliveryEvidence } from '../../../scripts/qa-delivery-config.mjs';
 
 const source = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const base = await fs.mkdtemp('/srv/dev/mrh34-');
@@ -122,7 +122,7 @@ try {
   assert.equal(Date.parse(record.expiresAt) - Date.parse(record.firstFailureAt), retention);
   assert.equal((await fs.stat(recordPath)).mode & 0o777, 0o600);
   assert.equal((await fs.stat(dirname(recordPath))).mode & 0o777, 0o700);
-  const publicEvidence = JSON.parse(error.message.split('deliveryEvidence=')[1]);
+  const publicEvidence = parsePublicDeliveryEvidence(error.message);
   assert.equal(publicEvidence.availability, 'available');
   assert.equal(publicEvidence.reference, record.reference);
   safe(error); safe(session.abortReason);
@@ -181,7 +181,7 @@ try {
   const secondary = JSON.parse(unavailable.result.stderr);
   assert.equal(secondary.code, 'LAUNCH_FAILED');
   assert.match(secondary.message, /Unknown native input or screen during initial brief submission.*Delivery evidence unavailable: storage:/s);
-  assert.equal(JSON.parse(secondary.message.split('deliveryEvidence=')[1]).availability, 'unavailable');
+  assert.equal(parsePublicDeliveryEvidence(secondary.message).availability, 'unavailable');
   check('Private write failure remains secondary to original LAUNCH_FAILED');
   stage = 'scan Git for control markers';
   const tracked = git('ls-files', '-z').stdout.split('\0').filter(Boolean);

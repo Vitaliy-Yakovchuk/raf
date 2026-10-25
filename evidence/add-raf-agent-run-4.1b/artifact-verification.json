@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-10-25T22:19:19.218623+00:00",
+  "verifiedAt": "2026-10-25T22:36:26.008356+00:00",
   "files": {
     "build-clean.cli-exit-code": {
       "bytes": 2,
@@ -58,8 +58,48 @@
       "sha256": "c48e33da5f21252654ab0ca1201b82220f592f32114df6e790e9bcfe02f5e169"
     },
     "contracts-coverage.json": {
-      "bytes": 2626,
-      "sha256": "e0a02558ef611c2c3467be24b542f6a35693f5865b0c0a058bbf20dc0bc4ff75"
+      "bytes": 2638,
+      "sha256": "277bbf5a5571dfed57ac254b4bb85ed98fdb0de293ecfeb17c913226a48ce68c"
+    },
+    "contracts-green.cli-exit-code": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "contracts-green.merged-output": {
+      "bytes": 94213,
+      "sha256": "f92fe20378d62f0d03239a0da1692a61476118c3c715000fc70efc0247d1deb1"
+    },
+    "contracts-green.metadata.json": {
+      "bytes": 1540,
+      "sha256": "31f5338b898416e1d61a77de5b539bc0737cb9a765c0c356f97ccdd3c7726348"
+    },
+    "contracts-green.stderr": {
+      "bytes": 1513,
+      "sha256": "c3a21f2f8e13dca1404628da11106a2ad639320e12671fe36db1bb6a02a34706"
+    },
+    "contracts-green.stdout.json": {
+      "bytes": 92700,
+      "sha256": "5e9896b6010343fd512f83974dca9ab8ca07c1e676e9506d287c434df85e22e4"
+    },
+    "contracts-postfix.cli-exit-code": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "contracts-postfix.merged-output": {
+      "bytes": 94165,
+      "sha256": "7cd9383e72b8fb755019fc61c6be0083abcc438bcd7cab8ffbb7e8d9a888a796"
+    },
+    "contracts-postfix.metadata.json": {
+      "bytes": 1156,
+      "sha256": "7eaea5116ae327d6f5c5c098b9886d64bda3660e3638b0f0c78b4d12551b3ad6"
+    },
+    "contracts-postfix.stderr": {
+      "bytes": 1512,
+      "sha256": "9637fd7a330bb7ea6ae1d4c8ed04bc56481850ebe5357ac9665ca9f5abb28b40"
+    },
+    "contracts-postfix.stdout.json": {
+      "bytes": 92653,
+      "sha256": "9c10be4816b0e8c68c218f6797d1be80b379f23e0229dde0d738967a63872c19"
     },
     "contracts-retry.cli-exit-code": {
       "bytes": 2,
@@ -106,12 +146,84 @@
       "sha256": "f5e97a0c56a48651859a7af8a9fab703e8152e90145b0463a78641d4ab25af61"
     },
     "integration-selection.json": {
-      "bytes": 2383,
-      "sha256": "e4afbf596a4cabbd2692e90fd39f2b2fa3e9f5c72b45bbb305166fee621782e1"
+      "bytes": 2555,
+      "sha256": "8030647bca65de7ac5338729013c34b8bdeb364f8bdd1937f0a9a038ba30dd4e"
     },
     "multiline-audit.md": {
-      "bytes": 10664,
-      "sha256": "00fd41f470586778863829a90ad7bfa4c8c8486abb8480f4d52717f844812a2e"
+      "bytes": 14517,
+      "sha256": "f98a0834bbe5139e859740951478b42b63c5040e765857db052b01f0031f05e9"
+    },
+    "serialization-build.cli-exit-code": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "serialization-build.metadata.json": {
+      "bytes": 1894,
+      "sha256": "9ea9fe3f4e649b2fdb138c4a882fdb8bdad4b91f563b07edb8eacc09f2cd0d37"
+    },
+    "serialization-build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "serialization-build.stdout": {
+      "bytes": 181,
+      "sha256": "2de04d51f61e5c7b1af90d303282ca5e25e0c38ae59fa3bad2d54a65533c57ad"
+    },
+    "serialization-final-build.cli-exit-code": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "serialization-final-build.metadata.json": {
+      "bytes": 358,
+      "sha256": "85a05c53f53d7aa953c5c56ca567a3b3a53718bcf6293003b8428e812dbd2989"
+    },
+    "serialization-final-build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "serialization-final-build.stdout": {
+      "bytes": 181,
+      "sha256": "2de04d51f61e5c7b1af90d303282ca5e25e0c38ae59fa3bad2d54a65533c57ad"
+    },
+    "serialization-first.cli-exit-code": {
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "serialization-first.merged-output": {
+      "bytes": 12036,
+      "sha256": "68285e7c1899df70ed9cd73cad890bfcfc8fd37e2c6e381df8d28afc55965eb6"
+    },
+    "serialization-first.metadata.json": {
+      "bytes": 1644,
+      "sha256": "0943d17c4120bb2957bdb2def50ba5874926c0a0615738304bf30549e166d496"
+    },
+    "serialization-first.stderr": {
+      "bytes": 1511,
+      "sha256": "d87f7f939768078e3c663d9ac15a6af92330a6446216601ea35641c40571c790"
+    },
+    "serialization-first.stdout.json": {
+      "bytes": 10525,
+      "sha256": "d546cee17a9b4f6400377df3797f21fd460e56304285e77358d1f8d0e074521e"
+    },
+    "serialization-green.cli-exit-code": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "serialization-green.merged-output": {
+      "bytes": 9040,
+      "sha256": "b1b2902c759fd92b31f067fa4ff0337422eb11e8b35fcce18ba816d4f38b021c"
+    },
+    "serialization-green.metadata.json": {
+      "bytes": 1689,
+      "sha256": "a9ca1a1a97b00b148d8a07a9f5e3e8f9e62fc93d174d88ea9c2b27db1cb88f48"
+    },
+    "serialization-green.stderr": {
+      "bytes": 1511,
+      "sha256": "699cccc7d7806a56b027855ba46e7d40a78c4ecf4a1187f415287d9647d37c34"
+    },
+    "serialization-green.stdout.json": {
+      "bytes": 7529,
+      "sha256": "3d6a57918d704fa5589dca711060827f1080f9898057a8fdb530c46a2056af34"
     },
     "unit-green.cli-exit-code": {
       "bytes": 2,
@@ -151,6 +263,48 @@
     }
   },
   "runs": [
+    {
+      "stdout": "contracts-green.stdout.json",
+      "metadata": "contracts-green.metadata.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "aab578b8-379c-4215-bcbd-3a7f2eb7cc08",
+      "group": "add-raf-agent-run/contracts",
+      "outcome": "passed",
+      "passed": 629,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "verifiedPass": true
+    },
+    {
+      "stdout": "contracts-postfix.stdout.json",
+      "metadata": "contracts-postfix.metadata.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "1e1eac04-771e-4397-8946-5ed89caec789",
+      "group": "add-raf-agent-run/contracts",
+      "outcome": "passed",
+      "passed": 629,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "verifiedPass": true
+    },
     {
       "stdout": "contracts-retry.stdout.json",
       "metadata": "contracts-retry.metadata.json",
@@ -192,6 +346,48 @@
       "groupState": "idle",
       "nextAction": "fix-implementation",
       "verifiedPass": false
+    },
+    {
+      "stdout": "serialization-first.stdout.json",
+      "metadata": "serialization-first.metadata.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "9eec17c2-5073-4b3d-9411-8ef34e824b93",
+      "group": "add-raf-agent-run/message-serialization",
+      "outcome": "assertions-failed",
+      "passed": 6,
+      "knownRed": 4,
+      "unexecuted": 0,
+      "unknown": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "verifiedPass": false
+    },
+    {
+      "stdout": "serialization-green.stdout.json",
+      "metadata": "serialization-green.metadata.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "ea33801c-f27b-4bf5-9efc-93ba1a90851e",
+      "group": "add-raf-agent-run/message-serialization",
+      "outcome": "passed",
+      "passed": 10,
+      "knownRed": 0,
+      "unexecuted": 0,
+      "unknown": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "verifiedPass": true
     },
     {
       "stdout": "unit-green.stdout.json",

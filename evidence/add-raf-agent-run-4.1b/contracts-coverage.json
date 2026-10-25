@@ -1,7 +1,7 @@
 {
-  "runId": "68aea465-5fc2-47e9-86a0-c14223cd203a",
-  "testedHead": "26dd251d44efc48f41e68cf1ae004b8008d9331b",
-  "scope": "Own 4.1 full configured contracts group; unit evidence only",
+  "runId": "1e1eac04-771e-4397-8946-5ed89caec789",
+  "testedHead": "1c85a39b6b53193a8862ac7438afa41dd70e1c02",
+  "scope": "Own 4.1 full configured contracts group; final source fix; unit evidence only",
   "files": {
     "test/cli-catalog.test.ts": {
       "passed": 22,
@@ -94,15 +94,15 @@
       "unknown": 0
     },
     "test/production-runtime.test.ts": {
-      "passed": 16,
-      "knownRed": 4,
+      "passed": 20,
+      "knownRed": 0,
       "unexecuted": 0,
       "unknown": 0
     }
   },
   "limitations": [
-    "These passed IDs establish isolated behavior, not actual native tmux message acceptance.",
-    "Four production-runtime IDs remain red due to missing main copies in productionQa fixture; owner is repairing the fixture.",
-    "Live host QA and integration scenarios retain their separate results and unexecuted status."
+    "Isolated unit behavior does not prove actual native tmux acceptance.",
+    "Previous failed runs remain saved in contracts.* and contracts-retry.*; both classes of production fixture setup errors were fixed by their independent owner.",
+    "Live host QA and integration scenarios have separate evidence/status."
   ]
 }

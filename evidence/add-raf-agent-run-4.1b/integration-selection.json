@@ -1,7 +1,7 @@
 {
-  "checkedAt": "2026-10-25T22:02:52.568Z",
+  "checkedAt": "2026-10-25T22:35:38.937383+00:00",
   "source": "/srv/dev/work/orchestrator/conf/test-runs.json",
-  "sha256": "1e39dc504f26933acb34f5dc6aceba5d5e024ebde8e8bf9178e175e26f6a44b3",
+  "sha256": "d9f421e5a7e412ba7f3c63974d2b63103622cdc302709efe0f89e60c1ab56417",
   "groups": {
     "add-raf-agent-run/contracts": {
       "profileId": "node",
@@ -47,13 +47,19 @@
       "files": [
         "test/sandbox-command-multiline.test.ts"
       ]
+    },
+    "add-raf-agent-run/message-serialization": {
+      "profileId": "node",
+      "files": [
+        "test/production-message-serialization.test.ts"
+      ]
     }
   },
   "profiles": {
     "node": {
       "testKind": "unit",
       "integrationFiles": [],
-      "unitFileCount": 231
+      "unitFileCount": 232
     }
   },
   "requiredFiles": [

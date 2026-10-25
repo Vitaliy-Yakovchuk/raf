@@ -1,0 +1,24 @@
+{
+  "sha": "1c85a39b6b53193a8862ac7438afa41dd70e1c02",
+  "workspaceStatusBefore": " M evidence/add-raf-test-run/etchly-integration-qa-b/host-handoff.json\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host3/trt6263h3.log\n?? evidence/add-raf-test-run/etchly-integration-qa-b/host3/trt6263h3.log.exit\n",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/contracts",
+  "productFix": "1c85a39b6b53193a8862ac7438afa41dd70e1c02",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "runId": "1e1eac04-771e-4397-8946-5ed89caec789",
+  "outcome": "passed",
+  "passed": 629,
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "timedOut": false,
+  "timeoutCount": 0,
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "nextAction": "complete",
+  "streamCapture": "Tool merges stdout/stderr; complete launch-queue.waiting JSON extracted without reformatting; original merged bytes retained. Separate OS streams unavailable."
+}

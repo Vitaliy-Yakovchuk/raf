@@ -2,6 +2,14 @@ import type { BackgroundRuntime, BackgroundRuntimeOptions, ServiceFailure, Servi
 import type { ResourceWaitIdentity } from './resource-wait-protocol.ts';
 import type { DeliveryReceipt, MessageRequest, VerifiedSender } from './agent-control.ts';
 import type { MainNotifier } from './bug-sync.ts';
+import { isAbsolute, resolve } from 'node:path';
+
+const failure = (reason: string, error: unknown): ServiceFailure => ({
+  exitCode: 1, reason, details: error instanceof Error ? error.message : String(error),
+  remediation: 'Inspect the current service owner, configured main generation and service.log before retrying.',
+});
+const sameIdentity = (a: ResourceWaitIdentity, b: ResourceWaitIdentity) =>
+  a.pid === b.pid && a.startedAt === b.startedAt && a.machineId === b.machineId && a.bootId === b.bootId;
 
 export type ServiceLifecycleRecord = {
   pid: number;
@@ -49,23 +57,131 @@ export class ServiceLifecycleController implements BackgroundRuntime {
   }
 
   async start(): Promise<ServiceStatus | ServiceFailure> {
-    throw new Error('NotImplemented: ServiceLifecycleController.start');
+    return this.ensureReady();
   }
 
   async ensureReady(options?: { signal?: AbortSignal }): Promise<ServiceStatus | ServiceFailure> {
-    throw new Error('NotImplemented: ServiceLifecycleController.ensureReady');
+    const deadline = this.ports.now() + this.options.readinessTimeoutMs;
+    const signal = options?.signal;
+    try {
+      this.checkDeadline(deadline, signal);
+      return await this.within(deadline, signal, () => this.ports.exclusive(deadline, async () => {
+        this.checkDeadline(deadline, signal);
+        const previous = await this.ports.readRecord();
+        if (previous && previous.state !== 'stopped') {
+          const observation = await this.ports.observe(previous.identity);
+          if (observation === 'unknown') throw new Error('Service owner identity is unknown');
+          if (observation === 'alive') {
+            const ready = await this.ready(previous, deadline, signal);
+            if (ready) return ready;
+            throw new Error('Existing service owner is alive without verified readiness');
+          }
+        }
+        this.checkDeadline(deadline, signal);
+        const mainPath = await this.ports.resolveMainPath(signal);
+        if (!mainPath || !isAbsolute(mainPath) || !await this.ports.validateMainSnapshot(mainPath)) throw new Error('Configured main generation is missing or unverified');
+        const entry = resolve(mainPath, this.options.entryRelativePath);
+        if (isAbsolute(this.options.entryRelativePath) || !entry.startsWith(resolve(mainPath) + '/') || !await this.ports.entryExists(entry)) throw new Error('Service entry is missing or outside the main generation');
+        this.checkDeadline(deadline, signal);
+        const owner = await this.ports.spawn({ entry, cwd: mainPath, mainPath, deadline });
+        for (;;) {
+          this.checkDeadline(deadline, signal);
+          const record = await this.ports.readRecord();
+          if (record && sameIdentity(record.identity, owner)) {
+            if (record.state === 'failed' || record.state === 'stopped') throw new Error(record.stopReason ?? 'Service stopped before readiness');
+            if (record.mainPath !== mainPath) throw new Error('Service mainPath differs from spawned generation');
+            const ready = await this.ready(record, deadline, signal);
+            if (ready) return ready;
+          }
+          const observation = await this.ports.observe(owner);
+          if (observation !== 'alive') throw new Error(`Service owner is ${observation} before readiness`);
+          await this.ports.waitForChange(deadline, signal);
+        }
+      }));
+    } catch (error) { return failure('Service startup failed', error); }
   }
 
   async status(): Promise<ServiceStatus | ServiceFailure> {
-    throw new Error('NotImplemented: ServiceLifecycleController.status');
+    try {
+      const record = await this.ports.readRecord();
+      if (!record) return this.snapshot(null, 'stopped');
+      if (record.state === 'stopped') return this.snapshot(record, 'stopped');
+      const observation = await this.ports.observe(record.identity);
+      if (observation === 'alive') {
+        const ready = await this.ready(record, this.ports.now() + this.options.readinessTimeoutMs);
+        if (ready) return ready;
+      }
+      return this.snapshot(record, 'failed', observation === 'alive' ? record.pid : null);
+    } catch (error) { return failure('Cannot inspect service state', error); }
   }
 
   async stop(): Promise<ServiceStatus | ServiceFailure> {
-    throw new Error('NotImplemented: ServiceLifecycleController.stop');
+    const deadline = this.ports.now() + this.options.readinessTimeoutMs;
+    try {
+      return await this.ports.exclusive(deadline, async () => {
+        const owner = await this.ports.readRecord();
+        if (!owner || owner.state === 'stopped') return this.snapshot(owner, 'stopped');
+        const observation = await this.ports.observe(owner.identity);
+        if (observation === 'dead') return this.snapshot(owner, 'failed');
+        if (observation !== 'alive' || !await this.ready(owner, deadline)) throw new Error('Cannot verify current service owner for shutdown');
+        this.checkDeadline(deadline);
+        const receipt = await this.ports.shutdown(owner, deadline);
+        if (!receipt.acknowledged || !await this.ports.awaitShutdown(owner, deadline)) throw new Error('Service shutdown is not confirmed');
+        this.checkDeadline(deadline);
+        const record = await this.ports.readRecord();
+        if (!record || record.serviceEpoch !== owner.serviceEpoch || !sameIdentity(record.identity, owner.identity) || !['stopped', 'failed'].includes(record.state)) throw new Error('Shutdown record does not confirm the current service epoch');
+        return this.snapshot(record, record.state as 'stopped' | 'failed');
+      });
+    } catch (error) { return failure('Service stop failed', error); }
   }
 
   async request(request: ServiceRequest, options?: { signal?: AbortSignal }): Promise<ServiceResponse> {
-    throw new Error('NotImplemented: ServiceLifecycleController.request');
+    const ready = await this.ensureReady(options);
+    if (ready.exitCode !== 0) return ready;
+    try {
+      if (!ready.serviceEpoch || options?.signal?.aborted) throw new Error('Service request cancelled or epoch unavailable');
+      return await this.ports.exchange(request, ready.serviceEpoch, options?.signal);
+    } catch (error) { return failure('Service request failed', error); }
+  }
+
+  private checkDeadline(deadline: number, signal?: AbortSignal): void {
+    if (signal?.aborted) throw new Error('Service readiness cancelled');
+    if (this.ports.now() >= deadline) throw new Error('Service readiness deadline exhausted');
+  }
+
+  private async within<T>(deadline: number, signal: AbortSignal | undefined, operation: () => Promise<T>): Promise<T> {
+    this.checkDeadline(deadline, signal);
+    return new Promise<T>((resolve, reject) => {
+      const abort = () => finish(new Error('Service readiness cancelled'));
+      const timer = setTimeout(() => finish(new Error('Service readiness deadline exhausted')), Math.max(1, deadline - this.ports.now()));
+      const finish = (error?: unknown, value?: T) => {
+        clearTimeout(timer);
+        signal?.removeEventListener('abort', abort);
+        if (error) reject(error); else resolve(value as T);
+      };
+      signal?.addEventListener('abort', abort, { once: true });
+      Promise.resolve().then(operation).then(value => {
+        try { this.checkDeadline(deadline, signal); finish(undefined, value); } catch (error) { finish(error); }
+      }, error => finish(error));
+      if (signal?.aborted) abort();
+    });
+  }
+
+  private snapshot(record: ServiceLifecycleRecord | null, state: ServiceStatus['state'], pid: number | null = null): ServiceStatus {
+    return { exitCode: 0, state, pid, mainPath: record?.mainPath ?? null,
+      stopReason: record?.stopReason ?? null, reasonKnown: record?.stopReason != null,
+      ...(state === 'ready' && record ? { serviceEpoch: record.serviceEpoch, resourceWaitReady: true } : {}) };
+  }
+
+  private async ready(record: ServiceLifecycleRecord, deadline: number, signal?: AbortSignal): Promise<ServiceStatus | null> {
+    if (record.state !== 'ready' || !record.serviceEpoch || record.pid !== record.identity.pid) return null;
+    const handshake = await this.ports.handshake(deadline, signal);
+    this.checkDeadline(deadline, signal);
+    if (!handshake || handshake.serviceEpoch !== record.serviceEpoch || handshake.pid !== record.pid ||
+        handshake.mainPath !== record.mainPath || !sameIdentity(handshake.identity, record.identity) ||
+        !handshake.exclusiveOwner || !handshake.databaseOpen || !handshake.lastGrantLoaded || !handshake.resourceWaitReady ||
+        await this.ports.observe(record.identity) !== 'alive') return null;
+    return this.snapshot(record, 'ready', record.pid);
   }
 }
 
@@ -79,20 +195,44 @@ export type ServiceProducerPorts = {
 
 export class ServiceProducerRuntime {
   readonly ports: ServiceProducerPorts;
+  private recovery?: Promise<void>;
+  private stopping?: Promise<void>;
 
   constructor(ports: ServiceProducerPorts) {
     this.ports = ports;
   }
 
   async recover(bootstrap: { serviceEpoch: string }): Promise<void> {
-    throw new Error('NotImplemented: ServiceProducerRuntime.recover');
+    if (this.stopping) throw new Error('Service producers are stopped');
+    if (!this.recovery) this.recovery = (async () => {
+      if (!bootstrap.serviceEpoch) throw new Error('Service epoch is required');
+      await this.ports.resourceWait.start(bootstrap.serviceEpoch);
+      try {
+        await this.ports.bugSync.start({ notify: async notice => {
+          const text = notice.kind === 'new-bug' ? `New bug ${notice.bugKey}` : `New human comment ${notice.commentId} on ${notice.bugKey}`;
+          const receipt = await this.notifyMain(text);
+          if (!receipt.accepted) throw new Error(receipt.reason);
+        } });
+      } catch (error) { await this.ports.resourceWait.stop(); throw error; }
+    })();
+    return this.recovery;
   }
 
   async shutdown(): Promise<void> {
-    throw new Error('NotImplemented: ServiceProducerRuntime.shutdown');
+    if (!this.stopping) this.stopping = (async () => {
+      await this.recovery?.catch(() => {});
+      try { await this.ports.bugSync.stop(); } finally { await this.ports.resourceWait.stop(); }
+    })();
+    return this.stopping;
   }
 
   async notifyMain(text: string): Promise<DeliveryReceipt> {
-    throw new Error('NotImplemented: ServiceProducerRuntime.notifyMain');
+    if (!this.ports.sharedDelivery) return { accepted: false, reason: 'Shared main delivery transport is unavailable or unverified' };
+    try {
+      const receipt = await this.ports.sharedDelivery({ to: 'main', text }, { kind: 'system' });
+      if (!receipt || typeof receipt.accepted !== 'boolean' || receipt.accepted && !receipt.receiptId) return { accepted: false, reason: 'Shared delivery did not confirm acceptance' };
+      return receipt;
+    }
+    catch (error) { return { accepted: false, reason: error instanceof Error ? error.message : String(error) }; }
   }
 }

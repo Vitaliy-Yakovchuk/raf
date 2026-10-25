@@ -953,6 +953,16 @@ async function reservationTools(store: StateStore, context: RuntimeContext, exec
   return { store, deferAbandonedFinalization: true, retainPendingConfirmation: runId => hasPendingConfirmation(context, runId), currentBoot: () => bootIdentity(execute), observe: async identity => (await observeProcesses([identity], { execute }))[0], resolveTasks: identity.resolveTasks, newFence: randomUUID };
 }
 
+export function createProductionSystemDelivery(store: StateStore, context: RuntimeContext, catalog: RuntimeConfiguration['catalog']) {
+  const execute = runtimeExecution(context);
+  const settingsFor = async (runner: string) => protocolFor(await protocols(context.confRoot), runner);
+  const tools = sessionTools(store, execute, { catalog }, context, settingsFor);
+  return (request: import('./agent-control.ts').MessageRequest, sender: VerifiedSender) => {
+    if (sender.kind !== 'system') throw new Error('Internal delivery requires a verified system sender');
+    return tools.control.message(request, rafSystemCaller);
+  };
+}
+
 export async function reconcileProductionReports(store: StateStore, context: RuntimeContext, catalog: RuntimeConfiguration['catalog']): Promise<readonly string[]> {
   const execute = runtimeExecution(context);
   const tools = sessionTools(store, execute, { catalog }, context, async runner => protocolFor(await protocols(context.confRoot), runner).timeouts);

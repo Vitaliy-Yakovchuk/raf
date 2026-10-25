@@ -1,0 +1,72 @@
+[
+  {
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exitCode": 0,
+    "stdout": "build.stdout",
+    "stderr": "build.stderr"
+  },
+  {
+    "command": [
+      "npm",
+      "run",
+      "check:comments"
+    ],
+    "exitCode": 0,
+    "stdout": "check-comments.stdout",
+    "stderr": "check-comments.stderr"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exitCode": 0,
+    "stdout": "diff-check.stdout",
+    "stderr": "diff-check.stderr"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check",
+      "--",
+      "src/background-runtime.ts",
+      "src/production-runtime.ts",
+      "src/production-service-ports.ts",
+      "src/service-lifecycle.ts"
+    ],
+    "exitCode": 0,
+    "stdout": "staged-source-diff.stdout",
+    "stderr": "staged-source-diff.stderr"
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "exitCode": 2,
+    "stdout": "staged-evidence-diff.stdout",
+    "stderr": "staged-evidence-diff.stderr"
+  },
+  {
+    "command": [
+      "git",
+      "-c",
+      "core.whitespace=-blank-at-eof",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "exitCode": 0,
+    "stdout": "staged-diff-preserve-raw-eof.stdout",
+    "stderr": "staged-diff-preserve-raw-eof.stderr"
+  }
+]

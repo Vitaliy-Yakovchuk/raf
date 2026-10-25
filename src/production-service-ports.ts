@@ -13,6 +13,8 @@ import { evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
 import { createServicePorts as composeServicePorts } from './service-host.ts';
 import { validateEventObjectId } from './event-catalog.ts';
 import { startBugSyncService } from './bug-sync.ts';
+import { ServiceProducerRuntime } from './service-lifecycle.ts';
+import { loadCompiledCatalog } from './compiled-catalog.ts';
 import type { StateStore } from './state-store.ts';
 import type { DeliveryReceipt, MessageRequest, VerifiedSender } from './agent-control.ts';
 import type { ProcessScanDependencies, ResourceSnapshotReader } from './os-runtime.ts';
@@ -160,7 +162,7 @@ export async function createServicePorts(
   context: ServiceEntryContext,
   options?: Parameters<typeof createProductionServiceDependencies>[1],
 ): Promise<ComposedServicePorts> {
-  productionStateContext(context.orchestratorRoot, fileURLToPath(import.meta.url), context.homeDirectory, 'service-store');
+  const stateContext = productionStateContext(context.orchestratorRoot, fileURLToPath(import.meta.url), context.homeDirectory, 'service-store');
   let resourceStore: StateStore | undefined;
   const clients = new Map<string, AbortSignal>();
   const dependencies = await createProductionServiceDependencies(context, {
@@ -172,31 +174,53 @@ export async function createServicePorts(
   dependencies.disableLegacyResourceWait = true;
   dependencies.resourceWait.watchResources = () => () => {};
   const ports = await composeServicePorts(context, dependencies);
-  let resource: Awaited<ReturnType<typeof productionResourceWait>>;
+  let resource: Awaited<ReturnType<typeof productionResourceWait>> | undefined;
   let bugSync: Awaited<ReturnType<typeof startBugSyncService>>;
+  let defaultDelivery: Promise<import('./service-lifecycle.ts').SharedSystemDelivery> | undefined;
+  const sharedDelivery: import('./service-lifecycle.ts').SharedSystemDelivery = options?.sharedDelivery ?? (async (request, sender) => {
+    if (!defaultDelivery) defaultDelivery = import('./production-runtime.ts').then(module => {
+      if (!resourceStore) throw new Error('Production service state store is not bound');
+      const artifactPath = fileURLToPath(new URL('../dist/catalog.json', import.meta.url));
+      return module.createProductionSystemDelivery(resourceStore, {
+        stateContext, orchestratorRoot: context.orchestratorRoot, confRoot: join(context.orchestratorRoot, 'conf'), artifactPath,
+        statePath: stateContext.statePath, tmpRoot: stateContext.tmpRoot, mode: 'production',
+        commandStartedAtMs: performance.now(), resolveCaller: async () => undefined,
+      }, loadCompiledCatalog(artifactPath));
+    });
+    return (await defaultDelivery)(request, sender);
+  });
+  const producers = new ServiceProducerRuntime({
+    sharedDelivery,
+    resourceWait: {
+      start: async epoch => { if (!resource) throw new Error('Resource wait is not initialized'); await resource.start(epoch); },
+      stop: async () => { await resource?.stop(); },
+    },
+    bugSync: {
+      start: async notifier => {
+        bugSync = await startBugSyncService({
+          orchestratorRoot: context.orchestratorRoot, homeDirectory: context.homeDirectory, stateDirectory: context.stateDirectory,
+          now: dependencies.now, schedule: dependencies.schedule, notifier,
+        });
+      },
+      stop: async () => { await bugSync?.stop(); },
+    },
+  });
   try {
     const [constants, raf] = await Promise.all(['raf-constants.json', 'raf.json'].map(async name => JSON.parse(await readFile(join(context.orchestratorRoot, 'conf', name), 'utf8'))));
     resource = await productionResourceWait(context, readResourceWaitProtocolOptions({ constants, raf }), () => { if (!resourceStore) throw new Error('Resource state not initialized'); return resourceStore; }, options?.resourceReader, options?.now);
-    bugSync = await startBugSyncService({
-      orchestratorRoot: context.orchestratorRoot, homeDirectory: context.homeDirectory, stateDirectory: context.stateDirectory,
-      now: dependencies.now, schedule: dependencies.schedule,
-      notifier: {
-        notify: async notice => {
-          if (!options?.sharedDelivery) throw new Error('Shared main delivery transport is unavailable or unverified');
-          const text = notice.kind === 'new-bug' ? `[raf] New bug ${notice.bugKey}` : `[raf] New human comment ${notice.commentId} on ${notice.bugKey}`;
-          const receipt = await options.sharedDelivery({ to: 'main', text }, { kind: 'system' });
-          if (!receipt.accepted) throw new Error(receipt.reason);
-        },
-      },
-    });
   } catch (error) {
+    await producers.shutdown();
     await ports.shutdown();
     throw error;
   }
   return {
     ...ports,
     resourceWait: resource.attach,
-    recover: async bootstrap => { await ports.recover(); if (bootstrap?.serviceEpoch) await resource.start(bootstrap.serviceEpoch); },
+    recover: async bootstrap => {
+      await ports.recover();
+      if (!bootstrap?.serviceEpoch) throw new Error('Service epoch is required');
+      await producers.recover(bootstrap);
+    },
     handle: async (request, client) => {
       if (client.signal.aborted) throw new Error('Service request cancelled');
       clients.set(client.clientId, client.signal);
@@ -207,8 +231,7 @@ export async function createServicePorts(
     },
     shutdown: async () => {
       clients.clear();
-      await resource.stop();
-      try { await bugSync?.stop(); } finally { await ports.shutdown(); }
+      try { await producers.shutdown(); } finally { await ports.shutdown(); }
     },
   };
 }

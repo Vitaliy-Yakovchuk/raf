@@ -1,5 +1,6 @@
-import { readWaitIdentity, observeWaitIdentity, tryWaitLease } from './resource-wait-identity.ts';
+import { readWaitIdentity, observeWaitIdentity, tryWaitLease, verifyWaitPeer } from './resource-wait-identity.ts';
 import { performance } from 'node:perf_hooks';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { promisify } from 'node:util';
 import { spawn, execFile } from 'node:child_process';
 import { promises as fs, writeFileSync, renameSync } from 'node:fs';
@@ -7,6 +8,7 @@ import { join, resolve } from 'node:path';
 import { createConnection, createServer, type Socket } from 'node:net';
 import { randomUUID } from 'node:crypto';
 import { releaseOwnedWriterLocks } from './owned-writer-lock.ts';
+import { ServiceLifecycleController, type ServiceLifecycleRecord } from './service-lifecycle.ts';
 
 export type ServiceFailure = {
   exitCode: 1;
@@ -75,10 +77,6 @@ const failure = (reason: string, error: unknown): ServiceFailure => ({
   exitCode: 1, reason, details: error instanceof Error ? error.message : String(error),
   remediation: 'Check the configured raf main checkout, service entry, state directory permissions and service.log, then retry service start.',
 });
-const alive = (pid: number) => {
-  if (!Number.isSafeInteger(pid) || pid <= 0) return false;
-  try { process.kill(pid, 0); return true; } catch (error) { return (error as NodeJS.ErrnoException).code === 'EPERM'; }
-};
 const readRecord = async (directory: string): Promise<RecordState | null> => {
   try { return JSON.parse(await fs.readFile(join(directory, 'service.json'), 'utf8')); }
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null; throw error; }
@@ -90,7 +88,8 @@ const writeRecord = async (directory: string, record: RecordState) => {
 };
 const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-function exchange(socketPath: string, message: unknown, timeout?: number, signal?: AbortSignal): Promise<any> {
+function exchange(socketPath: string, message: unknown, timeout?: number, signal?: AbortSignal,
+  peer?: { identity: ServiceLifecycleRecord['identity']; timeoutMs: number }): Promise<any> {
   return new Promise((resolve, reject) => {
     const socket = createConnection(socketPath);
     let buffer = '';
@@ -105,7 +104,15 @@ function exchange(socketPath: string, message: unknown, timeout?: number, signal
     };
     const abort = () => finish(new Error('Service request cancelled'));
     const timer = timeout === undefined ? undefined : setTimeout(() => finish(new Error(`Service did not respond within ${timeout} ms`)), timeout);
-    socket.on('connect', () => socket.write(JSON.stringify(message) + '\n'));
+    socket.on('connect', () => {
+      void (async () => {
+        if (peer) {
+          await verifyWaitPeer(socket, peer.identity, peer.timeoutMs);
+          if ((await observeWaitIdentity(peer.identity)).state !== 'alive') throw new Error('Service peer identity changed');
+        }
+        if (!finished) socket.write(JSON.stringify(message) + '\n');
+      })().catch(finish);
+    });
     socket.on('data', data => {
       buffer += data.toString();
       const end = buffer.indexOf('\n');
@@ -124,125 +131,145 @@ export function createBackgroundRuntime(
   options: BackgroundRuntimeOptions,
   dependencies: BackgroundRuntimeDependencies,
 ): BackgroundRuntime {
-  const probe = async (timeout = options.readinessTimeoutMs, signal?: AbortSignal) => {
-    const response = await exchange(options.socketPath, { kind: 'status' }, timeout, signal);
+  const startup = new AsyncLocalStorage<{ child?: ReturnType<typeof spawn>; logOffset?: number }>();
+  const remaining = (deadline: number) => {
+    const value = deadline - performance.now();
+    if (value <= 0) throw new Error('Service readiness budget exhausted');
+    return Math.ceil(value);
+  };
+  const lifecycleRecord = async (): Promise<ServiceLifecycleRecord | null> => {
     const record = await readRecord(options.stateDirectory);
-    if (response.state === 'ready') {
-      if (!record || record.state !== 'ready' || response.serviceEpoch !== record.token || response.pid !== record.pid) throw new Error('Endpoint readiness differs from current service epoch');
-      if (!record.identity || (await observeWaitIdentity(record.identity)).state !== 'alive') throw new Error('Current service owner identity is unverified');
-    }
-    return response;
+    if (!record) return null;
+    if (!record.identity) throw new Error('Recorded service owner identity is unavailable');
+    return { ...record, identity: record.identity, serviceEpoch: record.token };
   };
-  const status = async (): Promise<ServiceStatus | ServiceFailure> => {
-    try {
-      try {
-        const response = await probe();
-        if (response.exitCode === 0 && response.state === 'ready' && alive(response.pid)) return response;
-      } catch {}
-      const record = await readRecord(options.stateDirectory);
-      return { exitCode: 0, state: record && record.state !== 'stopped' ? 'failed' : 'stopped',
-        pid: record && alive(record.pid) ? record.pid : null, mainPath: record?.mainPath ?? null,
-        stopReason: record?.stopReason ?? null, reasonKnown: record?.stopReason != null };
-    } catch (error) { return failure('Cannot inspect service state', error); }
-  };
-  const start = async (startOptions?: { signal?: AbortSignal }): Promise<ServiceStatus | ServiceFailure> => {
-    let lease: Awaited<ReturnType<typeof tryWaitLease>> = null;
-    let child: ReturnType<typeof spawn> | undefined;
-    const signal = startOptions?.signal;
-    const deadline = performance.now() + options.readinessTimeoutMs;
-    const remaining = () => { if (signal?.aborted) throw new Error('Service readiness cancelled'); const time = deadline - performance.now(); if (time <= 0) throw new Error('Service readiness budget exhausted'); return Math.ceil(time); };
-    const within = <T>(work: Promise<T>): Promise<T> => new Promise((resolve, reject) => {
-      const timer = setTimeout(() => { signal?.removeEventListener('abort', abort); reject(new Error('Service readiness budget exhausted')); }, remaining());
-      const abort = () => { clearTimeout(timer); signal?.removeEventListener('abort', abort); reject(new Error('Service readiness cancelled')); };
-      signal?.addEventListener('abort', abort, { once: true });
-      work.then(value => { clearTimeout(timer); signal?.removeEventListener('abort', abort); resolve(value); }, error => { clearTimeout(timer); signal?.removeEventListener('abort', abort); reject(error); });
-      if (signal?.aborted) abort();
-    });
-    const currentReady = async () => { try { const result = await within(probe(remaining(), signal)); return result.exitCode === 0 && result.state === 'ready' ? result as ServiceStatus : null; } catch { remaining(); return null; } };
-    const lock = join(options.stateDirectory, 'service-start.lock');
-    try {
+  const controller = new ServiceLifecycleController(options, {
+    now: () => performance.now(),
+    exclusive: async (deadline, operation) => {
       await fs.mkdir(options.stateDirectory, { recursive: true });
+      let lease: Awaited<ReturnType<typeof tryWaitLease>> = null;
       while (!lease) {
-        const current = await currentReady();
-        if (current) return current;
-        lease = await within(tryWaitLease(lock, remaining(), signal).then(async value => {
-          if (signal?.aborted || performance.now() >= deadline) { await value?.release(); throw new Error('Service readiness cancelled or budget exhausted'); }
-          return value;
-        }));
-        if (!lease) await pause(Math.min(25, remaining()));
+        lease = await tryWaitLease(join(options.stateDirectory, 'service-start.lock'), remaining(deadline));
+        if (!lease) await pause(Math.min(25, remaining(deadline)));
       }
-      const existing = await currentReady();
-      if (existing) return existing;
+      try { remaining(deadline); return await operation(); }
+      finally { await lease.release(); }
+    },
+    readRecord: lifecycleRecord,
+    observe: async identity => (await observeWaitIdentity(identity)).state,
+    resolveMainPath: dependencies.resolveMainPath,
+    validateMainSnapshot: async root => {
+      if (await fs.realpath(root) !== root) return false;
+      const branch = await promisify(execFile)('git', ['-C', root, 'branch', '--show-current'], { timeout: options.readinessTimeoutMs }).then(result => result.stdout.trim()).catch(() => '');
+      return branch === 'main' || !!await dependencies.validateMainSnapshot?.(root);
+    },
+    entryExists: async entry => {
+      try { return (await fs.stat(entry)).isFile(); }
+      catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false; throw error; }
+    },
+    spawn: async input => {
       const previous = await readRecord(options.stateDirectory);
-      const previousState = previous?.identity ? (await within(observeWaitIdentity(previous.identity))).state : previous && alive(previous.pid) ? 'unknown' : 'dead';
-      if (previous && previousState !== 'dead' && previous.state !== 'stopped') throw new Error(`Recorded service PID ${previous.pid} is alive but readiness failed; refusing to replace its socket`);
-      const mainPath = await within(dependencies.resolveMainPath(signal));
-      if (!mainPath) throw new Error('Configured raf main checkout is missing');
-      const root = resolve(mainPath);
-      await fs.realpath(root);
-      const branch = await promisify(execFile)('git', ['-C', root, 'branch', '--show-current'], { timeout: remaining(), signal }).then(result => result.stdout.trim()).catch(() => '');
-      if (branch !== 'main' && !await within(Promise.resolve(dependencies.validateMainSnapshot?.(root)))) throw new Error(`Configured raf main checkout is on branch ${branch || '(detached)'}, expected main`);
-      const entry = resolve(root, options.entryRelativePath);
-      if (!entry.startsWith(root + '/')) throw new Error('Service entry must be within the configured main checkout');
-      await fs.access(entry);
       try {
-        const stat = await fs.lstat(options.socketPath);
-        if (!stat.isSocket() || !previous || previousState !== 'dead') throw new Error('Socket exists without verified dead service ownership');
+        const endpoint = await fs.lstat(options.socketPath);
+        if (!endpoint.isSocket() || !previous?.identity || (await observeWaitIdentity(previous.identity)).state !== 'dead') throw new Error('Socket exists without verified dead service ownership');
+        const current = await fs.lstat(options.socketPath);
+        if (current.dev !== endpoint.dev || current.ino !== endpoint.ino) throw new Error('Service endpoint ownership changed before cleanup');
         await fs.unlink(options.socketPath);
       } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-      remaining();
+      remaining(input.deadline);
       const log = await fs.open(join(options.stateDirectory, 'service.log'), 'a', 0o600);
+      let spawned!: Promise<void>;
       try {
-        child = (dependencies.spawn ?? spawn)(dependencies.nodeExecutable ?? process.execPath, [entry], {
-          cwd: root, detached: true, stdio: ['ignore', log.fd, log.fd],
-          env: { ...process.env, RAF_STATE_DIRECTORY: options.stateDirectory, RAF_SOCKET_PATH: options.socketPath, RAF_MAIN_PATH: root },
+        const attempt = startup.getStore();
+        if (!attempt) throw new Error('Service spawn requires an active startup attempt');
+        attempt.logOffset = (await log.stat()).size;
+        const child = (dependencies.spawn ?? spawn)(dependencies.nodeExecutable ?? process.execPath, [input.entry], {
+          cwd: input.cwd, detached: true, stdio: ['ignore', log.fd, log.fd],
+          env: { ...process.env, RAF_STATE_DIRECTORY: options.stateDirectory, RAF_SOCKET_PATH: options.socketPath, RAF_MAIN_PATH: input.mainPath },
         });
+        attempt.child = child;
+        spawned = new Promise<void>((resolve, reject) => {
+          child.once('error', reject);
+          child.once('spawn', resolve);
+        });
+        void spawned.catch(() => {});
       } finally { await log.close(); }
-      let childError: Error | undefined;
-      child.on('error', error => { childError = error; });
-      child.unref();
-      while (performance.now() < deadline) {
-        if (childError) throw childError;
-        if (child.exitCode !== null || child.signalCode !== null) throw new Error(`Service exited before readiness: code=${child.exitCode}, signal=${child.signalCode}`);
-        try {
-          const result = await within(probe(remaining(), signal));
-          if (result.exitCode === 0 && result.state === 'ready' && result.pid === child.pid) return result;
-        } catch { remaining(); }
-        await pause(Math.min(25, remaining()));
-      }
-      throw new Error(`Service PID ${child.pid} did not complete recovery and readiness within ${options.readinessTimeoutMs} ms`);
-    } catch (error) {
-      if (child?.pid && child.exitCode === null && child.signalCode === null) {
-        const processToStop = child;
-        const exited = new Promise<void>(resolve => processToStop.once('exit', () => resolve()));
-        processToStop.kill('SIGTERM');
-        const escalation = setTimeout(() => processToStop.kill('SIGKILL'), options.readinessTimeoutMs);
-        try { await exited; } finally { clearTimeout(escalation); }
-      }
-      const log = await fs.readFile(join(options.stateDirectory, 'service.log'), 'utf8').catch(() => '');
-      const persisted = await readRecord(options.stateDirectory).catch(() => null);
-      if (persisted?.stopReason) error = `${error instanceof Error ? error.message : error}\n${persisted.stopReason}`;
-      if (child?.pid && persisted && persisted.pid === child.pid) {
-        await writeRecord(options.stateDirectory, { ...persisted, state: 'failed', stopReason: error instanceof Error ? error.message : String(error) }).catch(() => {});
-      }
-      return failure('Service startup failed', `${error instanceof Error ? error.message : error}${log ? '\n' + log.slice(-8192) : ''}`);
-    } finally {
-      await lease?.release();
-    }
-  };
-  return {
-    start, ensureReady: start, status,
-    stop: async () => {
-      const current = await status();
-      if (current.exitCode !== 0 || current.state !== 'ready') return current;
-      try { return await exchange(options.socketPath, { kind: 'stop' }, options.readinessTimeoutMs); }
-      catch (error) { return failure('Service stop failed', error); }
+      const processToStart = startup.getStore()!.child!;
+      await spawned;
+      processToStart.unref();
+      if (!processToStart.pid) throw new Error('Spawn did not return a service PID');
+      return readWaitIdentity(processToStart.pid);
     },
+    handshake: async (deadline, signal) => {
+      const owner = await lifecycleRecord();
+      if (!owner) return null;
+      let response: any;
+      try { response = await exchange(options.socketPath, { kind: 'status' }, remaining(deadline), signal, { identity: owner.identity, timeoutMs: remaining(deadline) }); }
+      catch (error) {
+        if (['ENOENT', 'ECONNREFUSED', 'ECONNRESET'].includes((error as NodeJS.ErrnoException).code ?? '')) return null;
+        throw error;
+      }
+      const record = await lifecycleRecord();
+      if (!record || response.exitCode !== 0 || response.state !== 'ready') return null;
+      return { ...response, identity: record.identity, exclusiveOwner: response.exclusiveOwner === true,
+        databaseOpen: response.databaseOpen === true, lastGrantLoaded: response.lastGrantLoaded === true };
+    },
+    waitForChange: async (deadline, signal) => {
+      if (signal?.aborted) throw new Error('Service readiness cancelled');
+      await pause(Math.min(25, remaining(deadline)));
+    },
+    shutdown: async (owner, deadline) => {
+      if ((await observeWaitIdentity(owner.identity)).state !== 'alive') throw new Error('Service owner changed before shutdown');
+      const response = await exchange(options.socketPath, { kind: 'stop', serviceEpoch: owner.serviceEpoch }, remaining(deadline), undefined, { identity: owner.identity, timeoutMs: remaining(deadline) });
+      return { acknowledged: response.exitCode === 0 && response.serviceEpoch === owner.serviceEpoch && ['stopped', 'failed'].includes(response.state) };
+    },
+    awaitShutdown: async (owner, deadline) => {
+      for (;;) {
+        const observation = await observeWaitIdentity(owner.identity);
+        if (observation.state === 'dead') return true;
+        if (observation.state !== 'alive') return false;
+        await pause(Math.min(25, remaining(deadline)));
+      }
+    },
+    exchange: async (request, serviceEpoch, signal) => {
+      const owner = await lifecycleRecord();
+      if (!owner || owner.serviceEpoch !== serviceEpoch) throw new Error('Service epoch changed before request');
+      return exchange(options.socketPath, { kind: 'request', request, serviceEpoch }, undefined, signal, { identity: owner.identity, timeoutMs: options.readinessTimeoutMs });
+    },
+  });
+  const start = async (startOptions?: { signal?: AbortSignal }): Promise<ServiceStatus | ServiceFailure> => startup.run({}, async () => {
+    let result = await controller.ensureReady(startOptions);
+    const attempt = startup.getStore()!;
+    const spawned = attempt.child;
+    if (result.exitCode !== 0 && spawned?.pid) {
+      try {
+        if (spawned.exitCode === null && spawned.signalCode === null) {
+          const exited = new Promise<void>(resolve => spawned.once('exit', () => resolve()));
+          spawned.kill('SIGTERM');
+          const escalation = setTimeout(() => spawned.kill('SIGKILL'), options.readinessTimeoutMs);
+          try { await exited; } finally { clearTimeout(escalation); }
+        }
+        const log = await fs.readFile(join(options.stateDirectory, 'service.log'));
+        const currentLog = log.subarray(Math.max(attempt.logOffset ?? log.length, log.length - 8192)).toString();
+        if (currentLog) result = { ...result, details: `${result.details}\n${currentLog}` };
+        const record = await readRecord(options.stateDirectory);
+        if (record?.pid === spawned.pid) await writeRecord(options.stateDirectory, { ...record, state: 'failed', stopReason: result.details });
+      } catch (error) {
+        result = failure(result.reason, `${result.details}\nStartup cleanup or diagnostic persistence failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    return result;
+  });
+  return {
+    start, ensureReady: start, status: () => controller.status(), stop: () => controller.stop(),
     request: async (request, requestOptions) => {
-      if (requestOptions?.signal?.aborted) return failure('Service request cancelled', 'The caller aborted the request');
-      const ready = await start();
+      const ready = await start(requestOptions);
       if (ready.exitCode !== 0) return ready;
-      try { return await exchange(options.socketPath, { kind: 'request', request }, undefined, requestOptions?.signal); }
+      try {
+        const owner = await lifecycleRecord();
+        if (!owner || owner.serviceEpoch !== ready.serviceEpoch) throw new Error('Service epoch changed before request');
+        return await exchange(options.socketPath, { kind: 'request', request, serviceEpoch: ready.serviceEpoch }, undefined, requestOptions?.signal, { identity: owner.identity, timeoutMs: options.readinessTimeoutMs });
+      }
       catch (error) { return failure('Service request failed', error); }
     },
   };
@@ -285,11 +312,11 @@ export async function runServiceHost(options: ServiceHostOptions): Promise<{
           resourceWaitSockets.add(socket);
           await options.handlers.resourceWait(socket, message, controller.signal);
         }
-        else if (message.kind === 'status') socket.end(JSON.stringify(serviceStatus()) + '\n');
-        else if (message.kind === 'stop') {
+        else if (message.kind === 'status') socket.end(JSON.stringify({ ...serviceStatus(), exclusiveOwner: true, databaseOpen: record.state === 'ready', lastGrantLoaded: record.state === 'ready' }) + '\n');
+        else if (message.kind === 'stop' && message.serviceEpoch === record.token) {
           await shutdown(false, socket);
           socket.end(JSON.stringify(serviceStatus()) + '\n');
-        } else if (message.kind === 'request' && !closing && record.state === 'ready') {
+        } else if (message.kind === 'request' && message.serviceEpoch === record.token && !closing && record.state === 'ready') {
           const value = await options.handlers.handle(message.request, { signal: controller.signal, clientId: randomUUID() });
           if (!controller.signal.aborted) socket.end(JSON.stringify({ exitCode: 0, value }) + '\n');
         } else socket.end(JSON.stringify(failure('Service not ready', record.state)) + '\n');

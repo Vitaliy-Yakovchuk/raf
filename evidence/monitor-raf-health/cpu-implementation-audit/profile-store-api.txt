@@ -1,0 +1,3 @@
+    readCostProfile() {
+      return { schemaVersion: profilePolicy().schemaVersion, readAt: new Date().toISOString(), rows: costProfileRepository.readRows() };
+    },

@@ -1,0 +1,21 @@
+export type RafCostProfileSnapshot = {
+  schemaVersion: number;
+  readAt: string;
+  rows: RafCostRow[];
+};
+
+export type RafCommandTimingRow = {
+  command: string;
+  averageMs: number | null;
+  updatedAt: string | null;
+  budgetMs: number | null;
+};
+
+export type RafCommandStatsResult = {
+  commands: RafCommandTimingRow[];
+  profile: RafCostProfileSnapshot;
+};
+
+export interface RafCostProfileState {
+  readCostProfile(): RafCostProfileSnapshot;
+}

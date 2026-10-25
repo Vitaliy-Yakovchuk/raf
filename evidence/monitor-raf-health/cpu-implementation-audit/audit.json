@@ -1,0 +1,61 @@
+{
+  "recordedAt": "2026-10-25T00:42:49.651339+00:00",
+  "project": "raf",
+  "change": "monitor-raf-health",
+  "item": "2.3",
+  "decision": "failed-audit",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "workspaceHead": "2da0e6d310f16a3b11f4f8f1a1c5a11a0b8f9b5a",
+  "orchestratorHead": "b61daf146c4138c23eac3277245604566c7f2507",
+  "initialWorkspaceStatus": "clean",
+  "preparedTestsRead": false,
+  "productionChanges": false,
+  "testsChanged": false,
+  "tasksChanged": false,
+  "checks": {
+    "targetUnit": {
+      "executed": false,
+      "reason": "Contract prerequisite not met; independent implementation was not started. No TestRunResult or pass claimed."
+    },
+    "build": {
+      "executed": false,
+      "reason": "No implementation changes."
+    },
+    "checkComments": {
+      "executed": false,
+      "reason": "No source changes."
+    },
+    "diffCheck": {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  },
+  "coordination": {
+    "agentPs": {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/8d40820d-3449-4a8e-b3ed-1c3f4a1738d2/raf-main/bin/raf.ts agent ps",
+      "state": "completed",
+      "retried": false,
+      "cliExitCode": 0,
+      "verifiedRecipient": {
+        "addressId": "main",
+        "runId": "b09cec83-8f8b-4a94-bd02-ee076c7ccfcc",
+        "observation": "alive"
+      }
+    },
+    "agentMessage": {
+      "executed": true,
+      "to": "main",
+      "cliExitCode": 0,
+      "result": {
+        "accepted": true,
+        "receiptId": "25774f66-9171-4038-853c-8ad85ab9457b"
+      }
+    }
+  },
+  "reasons": [
+    "monitor-raf-health:2.3 and 2.2 require accepted profile-raf-performance sections 2–3. Section 2.4 and section 3.1–3.4 remain unchecked in the source task plan.",
+    "Design explicitly requires main to agree a narrow profile API extension with its owner before health implementation when completeness cannot be established. RafCostProfileSnapshot exposes schemaVersion/readAt/rows only; readCostProfile returns exactly those fields. No production producer supplies accumulationId or window coverage/open-interval counters required by RafHealthCpuProfileReading.",
+    "Implementing a fully measured CPU window from lifetime aggregates would invent completeness; creating another profiler or changing profile rows violates the assigned design boundaries."
+  ],
+  "nextAction": "Main must resolve/accept profile §2–§3 and agree the minimum profile coverage API with its owner, then reassign 2.3. Preserve monitor-raf-health/cpu group and its existing QA HOME/knownRed aggregate. No group state was reset or exercised here."
+}

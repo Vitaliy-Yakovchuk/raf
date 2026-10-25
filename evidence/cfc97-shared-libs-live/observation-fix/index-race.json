@@ -1,0 +1,26 @@
+{
+  "commit": "34c50d1bc1631de770bbcedf4d540271217329e5",
+  "foreignPaths": [
+    "evidence/add-raf-agent-run-4.1/README.md",
+    "evidence/add-raf-agent-run-4.1/build-pane-fix.cli-exit-code",
+    "evidence/add-raf-agent-run-4.1/build-pane-fix.stderr",
+    "evidence/add-raf-agent-run-4.1/build-pane-fix.stdout",
+    "evidence/add-raf-agent-run-4.1/pane-identity-audit.md",
+    "evidence/add-raf-agent-run-4.1/unit-pane-contracts.cli-exit-code",
+    "evidence/add-raf-agent-run-4.1/unit-pane-contracts.merged-output",
+    "evidence/add-raf-agent-run-4.1/unit-pane-contracts.metadata.json",
+    "evidence/add-raf-agent-run-4.1/unit-pane-contracts.stderr",
+    "evidence/add-raf-agent-run-4.1/unit-pane-contracts.stdout.json",
+    "evidence/add-raf-agent-run-4.1/unit-pane-fix.cli-exit-code",
+    "evidence/add-raf-agent-run-4.1/unit-pane-fix.merged-output",
+    "evidence/add-raf-agent-run-4.1/unit-pane-fix.metadata.json",
+    "evidence/add-raf-agent-run-4.1/unit-pane-fix.stderr",
+    "evidence/add-raf-agent-run-4.1/unit-pane-fix.stdout.json",
+    "src/production-runtime.ts"
+  ],
+  "owner": "raf-ara41-impl",
+  "mainDecision": "звірено — 34c50d1 містить завершений і перевірений pane-фікс raf-ara41-impl (він підтвердив 6/6 + contracts 628/628 саме на цих файлах). Історію не переписуємо й не відкочуємо: зафіксуй у своїх доказах, що 34c50d1 включає чужі 16 шляхів через спільний індекс, і продовжуй;",
+  "decisionSource": "main verified sender message in raf-cfc97-qa session, 2026-10-25",
+  "notificationReceipt": "f4bfec4d-4665-4244-ae4c-116368e136d9",
+  "prevention": "All subsequent commits pass an explicit own pathspec to git commit."
+}

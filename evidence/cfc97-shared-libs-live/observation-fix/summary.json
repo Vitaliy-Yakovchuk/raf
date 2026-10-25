@@ -68,5 +68,5 @@
     }
   ],
   "liveStatus": "pending; first host failed before both probes, cleanup complete",
-  "foreignChanges": "src/production-runtime.ts and evidence/add-raf-agent-run-4.1/* were neither modified nor committed by this agent"
+  "foreignChanges": "At both unit runs src/production-runtime.ts and evidence/add-raf-agent-run-4.1/* belonged to raf-ara41-impl. They were not edited by this agent, but 16 foreign paths were concurrently staged after the cached stat and unintentionally included in commit 34c50d1bc1631de770bbcedf4d540271217329e5. Main confirmed the owner validated pane fix (6/6 and contracts 628/628) and directed keeping history without rewrite/revert. Later commits use explicit commit pathspec."
 }

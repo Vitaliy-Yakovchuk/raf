@@ -1,0 +1,120 @@
+{
+  "reviewedSha": "1973e882438755c4f322e5ac1690ba30b3e0228f",
+  "sourceCheckout": "/srv/dev/ara41q3/raf",
+  "command": [
+    "node",
+    "scripts/qa-agent-run-live.mjs",
+    "1973e882438755c4f322e5ac1690ba30b3e0228f"
+  ],
+  "status": "failed",
+  "cliExitCode": 1,
+  "startedAt": "2026-10-25T15:52:55.389Z",
+  "endedAt": "2026-10-25T15:55:08.181Z",
+  "checks": [],
+  "unexecuted": [
+    "detached-native-types-and-narrow-context",
+    "unregistered-and-env-forged-sender",
+    "main-close-interrupt-protection",
+    "attached-non-agent-no-input-or-enter",
+    "native-receipts-literal-signatures-and-concurrency",
+    "immutable-context-after-messages",
+    "real-native-system-to-main"
+  ],
+  "cleanup": {
+    "complete": true,
+    "errors": [],
+    "services": {
+      "complete": true,
+      "processes": [],
+      "remaining": []
+    }
+  },
+  "launch": {
+    "runId": "7ff3d76e-01d0-4eb0-a92b-432ef58dac12",
+    "cliExitCode": 1,
+    "signal": null,
+    "code": "LAUNCH_FAILED",
+    "admission": {
+      "level": "ANY_RUN",
+      "requestedTier": "normal",
+      "allowed": true,
+      "reasons": [
+        "All normal resource thresholds satisfied after reservations"
+      ],
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 5.05,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 20039843840,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "/dev/mapper/data-dev",
+            "totalBytes": 190143823872,
+            "availableBytes": 161725845504
+          }
+        ]
+      },
+      "thresholds": {
+        "normal": {
+          "maxNormalizedLoad": 1.2,
+          "minRamFraction": 0.2,
+          "minRamBytes": 2147483648,
+          "minDiskFraction": 0.1,
+          "minDiskBytes": 10737418240
+        },
+        "hotfix": {
+          "maxNormalizedLoad": 1.5,
+          "minRamFraction": 0.1,
+          "minRamBytes": 1073741824,
+          "minDiskFraction": 0.05,
+          "minDiskBytes": 5368709120
+        },
+        "home": {
+          "minDiskBytes": 524288000
+        }
+      },
+      "reservation": {
+        "requested": {
+          "ramBytes": 2147483648,
+          "diskBytes": {
+            "/dev/mapper/data-dev": 10737418240
+          }
+        },
+        "unused": {
+          "ramBytes": 0,
+          "diskBytes": {}
+        }
+      },
+      "remaining": {
+        "ramBytes": 17892360192,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 150988427264
+        },
+        "normalizedLoad": 0.63125
+      },
+      "estimate": {
+        "status": "KNOWN",
+        "sources": [
+          "conf/flow.json#/resourceEstimates/agentTypes/implement"
+        ],
+        "reason": null
+      },
+      "queueId": "b6e58fa2-01f0-4fce-8518-2b0b94775bce"
+    },
+    "cleanup": {
+      "state": "released",
+      "reason": "Wrapper launch 7ff3d76e-01d0-4eb0-a92b-432ef58dac12 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T15:54:58.188Z worker started run=7ff3d76e-01d0-4eb0-a92b-432ef58dac12 pid=2054178 ppid=2053461\n7ff3d76e-01d0-4eb0-a92b-432ef58dac12: worker process group=2054178 session=2054178 pidNamespace=pid:[4026531836]\nfile:///srv/dev/ar41-uuXZbH/root/.git/modules/raf-main/raf-hotfix/generations/eb5c5766-bd76-46f0-95ca-50613a43d367/raf-main/src/launch-wrapper.ts:88\n  return context ? commandFailure({ ...context, message, reason: message }) : new Error(message);\n                                                                              ^\n\nError: Invalid report confirmation budget at conf/raf.json#/runnerProtocols; accompanying cleanup failure: Invalid report confirmation budget at conf/raf.json#/runnerProtocols\n    at withAccompanyingFailure (file:///srv/dev/ar41-uuXZbH/root/.git/modules/raf-main/raf-hotfix/generations/eb5c5766-bd76-46f0-95ca-50613a43d367/raf-main/src/launch-wrapper.ts:88:79)\n    at runLaunchWrapper (file:///srv/dev/ar41-uuXZbH/root/.git/modules/raf-main/raf-hotfix/generations/eb5c5766-bd76-46f0-95ca-50613a43d367/raf-main/src/launch-wrapper.ts:143:29)\n    at async Module.runProductionWorker (file:///srv/dev/ar41-uuXZbH/root/.git/modules/raf-main/raf-hotfix/generations/eb5c5766-bd76-46f0-95ca-50613a43d367/raf-main/src/production-runtime.ts:1938:11)\n    at async file:///srv/dev/ar41-uuXZbH/root/raf-develop/[eval1]:1:175\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "completed": [
+        "launch claims",
+        "resource reservation",
+        "report cleanup"
+      ],
+      "pending": []
+    }
+  },
+  "sourceArtifacts": "/srv/dev/ara41q3/{stdout,stderr,exit,ev-clean}",
+  "privacy": "Only known CLI/summary/disk evidence from ev-clean copied; identity-* and native transcripts not read or copied.",
+  "classification": "Sufficient stand; actual admission ANY_RUN allowed. Worker fails before readiness: invalid report confirmation budget. All seven live checks unexecuted."
+}

@@ -50,7 +50,7 @@ const hooks = registerHooks({
     if (url === runtimeUrl) {
       const loaded = next(url, context);
       const source = typeof loaded.source === 'string' ? loaded.source : Buffer.from(loaded.source as Uint8Array).toString('utf8');
-      return { ...loaded, source: source + '\nexport { observeIdentity, observeIdentities };\n' };
+      return { ...loaded, source: source + '\nexport { observeIdentity, observeIdentities, belongsToPane };\n' };
     }
     return next(url, context);
   },
@@ -58,6 +58,7 @@ const hooks = registerHooks({
 const runtime = await import(runtimeUrl) as typeof import('../src/production-runtime.ts') & {
   observeIdentity(identity: ProcessIdentity, execute: AdapterCommandExecutor): Promise<ProcessObservation>;
   observeIdentities(identities: readonly ProcessIdentity[], execute: AdapterCommandExecutor): Promise<ProcessObservation[]>;
+  belongsToPane(identity: ProcessIdentity, execute: AdapterCommandExecutor): Promise<boolean>;
 };
 const { runProductionCli } = await import(entryUrl) as typeof import('../src/production-entry.ts');
 hooks.deregister();
@@ -497,6 +498,31 @@ test('extra consumers do not multiply real targeted OS reads in one identity pas
   assert.ok(single.length > 0 || helpers > 0, 'An empty fake observation is not evidence of identity');
 });
 
+for (const changed of ['pane-id', 'pane-pid', 'process-command', 'pane-denied'] as const) {
+  test(`known runner ownership observes fresh ${changed} before delivery without a global scan`, { skip: process.platform !== 'linux' }, async t => {
+    const os = processFixture(t);
+    let changedNow = false;
+    const identity = os.identities[0];
+    const execute: AdapterCommandExecutor = async command => {
+      if (basename(command.executable) === 'tmux') {
+        if (changedNow && changed === 'pane-denied') return { exitCode: 1, stdout: '', stderr: 'Pane inaccessible' };
+        const paneId = command.args.at(-1) === '#{pane_id}';
+        return { exitCode: 0, stderr: '', stdout: paneId
+          ? changedNow && changed === 'pane-id' ? '%999999' : identity.evidence.tmuxPane!
+          : String(changedNow && changed === 'pane-pid' ? 99999999 : identity.pid) };
+      }
+      const result = await os.execute(command);
+      if (command.args.some(arg => arg.includes('ppid='))) result.stdout = result.stdout.split('\n').map(line => line.replace(/^(\d+) /, '$1 0 ')).join('\n');
+      return result;
+    };
+    assert.equal(await runtime.belongsToPane(identity, execute), true);
+    await Promise.resolve(); changedNow = true; os.reset();
+    if (changed === 'process-command') os.mode('command');
+    assert.equal(await runtime.belongsToPane(identity, execute), false);
+    assert.equal(os.scanCount(), 0, 'Ownership of a known runner does not enumerate the host');
+  });
+}
+
 for (const reason of ['protected-state', 'launch', 'stop', 'delivery'] as const) {
   test(`wait boundary ${reason} has exactly one new origin operation and fresh process facts`, { skip: process.platform !== 'linux' }, async t => {
     const f = generationFixture(t);
@@ -527,8 +553,8 @@ for (const argv of [['help'], ['agent', 'ps', '--unknown'], ['unknown-command']]
   });
 }
 
-for (const count of [1, 4]) for (const scenario of ['ready', 'protected-state', 'timeout', 'unknown', 'pane-lost', 'delivery-error'] as const) {
-  test(`whole agent run ${scenario} with ${count} controlled wait passes preserves delivery and total costs`, { skip: process.platform !== 'linux' }, async t => {
+for (const queued of [false, true]) for (const count of [1, 4]) for (const scenario of ['ready', 'protected-state', 'timeout', 'unknown', 'pane-lost', 'delivery-error', 'ownership-changed'] as const) {
+  test(`whole agent run ${queued ? 'queue' : 'legacy'} ${scenario} with ${count} controlled wait passes preserves delivery and total costs`, { skip: process.platform !== 'linux' }, async t => {
     const f = generationFixture(t);
     const os = processFixture(t);
     const selected = { status: 'selected' as const, runner: 'codex' as const, model: 'unit-model', effort: 'unit-effort', reason: 'controlled selection', quota: 'unknown' as const };
@@ -566,6 +592,7 @@ for (const count of [1, 4]) for (const scenario of ['ready', 'protected-state', 
       now: () => clock, delay: async () => { clock++; await Promise.resolve(); },
       inspectOwnership: async () => {
         const observation = await runtime.observeIdentity(runner, os.execute);
+        if (scenario === 'ownership-changed') return { state: 'mismatch', reason: 'Native runner no longer owns pane' };
         return observation.state === 'alive' ? { state: 'owned', identity: runner, processKind: 'agent' } : { state: observation.state === 'unknown' ? 'unknown' : 'exited', reason: 'Controlled ownership failure' };
       } });
     const launch = { runId: 'unit-run', addressId: 'unit-agent', cwd: join(f.root, 'raf-develop'), tmpRoot: join(f.home, '.raf/tmp'),
@@ -592,6 +619,48 @@ for (const count of [1, 4]) for (const scenario of ['ready', 'protected-state', 
       abortLaunch: async () => { aborted++; },
       control: { ps: async () => [], message: async () => ({ accepted: false, reason: 'No unit recipient' }) },
     };
+    const queueOwner = { runId: launch.runId, fence: 'unit-fence' };
+    const clientRun = 'unit-launch-client';
+    const clientIdentity = { pid: os.identities[1].pid, startedAt: os.identities[1].startedAt, ...os.boot };
+    const queueRecord = { queueId: 'unit-queue', requestId: 'unit-request', agentId: launch.addressId, owner: queueOwner,
+      clientIdentity, coordinator: null, eventHandle: null };
+    const validation = { assignment: launch.assignment, fingerprint: 'unit-assignment', requested: { ramBytes: 1, diskBytes: {} }, requiredFileSystemIds: [] };
+    const admission = { level: 'ANY_RUN', requestedTier: 'normal', allowed: true, reasons: [], measurement: { machineId: os.boot.machineId,
+      loadAverage1m: null, availableCores: null, totalRamBytes: null, availableRamBytes: null, memoryPressure: null, fileSystems: [] },
+      thresholds: null, reservation: { requested: validation.requested, unused: { ramBytes: 0, diskBytes: {} } }, remaining: null,
+      estimate: { status: 'KNOWN', sources: ['unit-port'], reason: null }, queueId: queueRecord.queueId };
+    const claim = () => currentStore.sessionRepository.transaction(tx => tx.listReservations().map(row => row.runId).sort());
+    const checkOwner = (record: unknown) => assert.deepEqual(record, queueRecord, 'Queue fence and launch client remain unchanged');
+    if (queued) Object.assign(services, { agentQueue: async () => ({
+      request: { orchestratorRoot: f.root, homeDirectory: f.home, developmentDirectory: launch.cwd, project: 'raf', agentId: launch.addressId,
+        agentType: 'implement', owner: queueOwner, clientIdentity, selections: [{ change: 'profile-raf-performance', items: ['5.11'] }], coordinator: null },
+      ports: {
+        validate: async () => ({ ok: true, validation }),
+        claimAndAdmit: async () => {
+          operations.push('reserve');
+          currentStore.sessionRepository.transaction(tx => tx.putReservation({ runId: clientRun, resource: 'ram', amount: 1 }));
+          return { kind: 'reserved', record: queueRecord, admission };
+        },
+        transition: async (record: unknown, phase: string) => { checkOwner(record); operations.push(phase); return true; },
+        waitForResources: async () => { throw new Error('Readiness must not become a resource polling loop'); },
+        recheckAndReserve: async () => { throw new Error('An admitted request must not claim twice'); },
+        commitReady: async (record: unknown) => {
+          checkOwner(record); assert.deepEqual(claim(), [clientRun]);
+          currentStore.sessionRepository.transaction(tx => {
+            tx.deleteReservation(clientRun); tx.putReservation({ runId: launch.runId, resource: 'ram', amount: 1 });
+          });
+          committed++; return true;
+        },
+        cleanup: async (record: unknown) => {
+          checkOwner(record); assert.deepEqual(claim(), [clientRun]);
+          currentStore.sessionRepository.transaction(tx => tx.deleteReservation(clientRun));
+          aborted++;
+          return { state: 'released', reason: 'Verified controlled stop', completed: ['release-client-claims'], pending: [] };
+        },
+        observe: async () => ({ owner: 'client', client: 'alive', agent: 'unknown', reason: 'Controlled owner' }),
+        writeStderr: () => { throw new Error('An admitted request has no waiting progress'); },
+      },
+    }) });
     Object.assign(os.state, {
       context: () => { contexts++; return f.context(); },
       open: (path: string, options: any) => {
@@ -609,13 +678,18 @@ for (const count of [1, 4]) for (const scenario of ['ready', 'protected-state', 
     assert.equal(committed, successful ? 1 : 0);
     assert.equal(aborted, successful ? 0 : 1);
     assert.equal(operations.filter(operation => operation === 'reserve').length, 1);
-    if (!successful) assert.match(result.stderr, /primary (?:readiness|delivery)/, 'Cleanup and profiling preserve the primary failure');
+    if (!successful) assert.match(result.stderr, scenario === 'ownership-changed' ? /Verified runner ownership is required/ : /primary (?:readiness|delivery)/, 'Cleanup and profiling preserve the primary failure');
     if (successful) {
       const output = JSON.parse(result.stdout);
       assert.equal(output.runId, 'unit-run'); assert.equal(output.addressId, 'unit-agent'); assert.deepEqual(output.process, runner);
     }
     const check = openStateStore(launch.statePath); t.after(() => check.close());
     assert.ok(check.getCommandTiming('agent run')); assert.ok(check.readCostProfile().rows.some(row => row.command === 'agent run'));
+    if (queued) {
+      assert.deepEqual(check.sessionRepository.transaction(tx => tx.listReservations().map(row => row.runId)), successful ? [launch.runId] : []);
+      assert.equal(operations.filter(operation => operation === 'starting').length, 1);
+      if (successful) assert.deepEqual(JSON.parse(result.stdout).queue, { queueId: queueRecord.queueId, waited: false });
+    }
     assert.equal(opens, 1, 'One command store serves handler and profile');
     assert.equal(contexts, 1, 'Observation iterations do not rebuild production context');
     assert.equal(closes, 1);
@@ -629,6 +703,5 @@ for (const count of [1, 4]) for (const scenario of ['ready', 'protected-state', 
     assertSingleInventory(meter, f, boundaries);
     assert.equal(frames.reduce((sum, frame) => sum + frame.pids.length, 0), count * os.identities.length);
     assert.equal(operations.some(operation => ['spawn', 'exec', 'poll-helper'].includes(operation)), false);
-    void currentStore!;
   });
 }

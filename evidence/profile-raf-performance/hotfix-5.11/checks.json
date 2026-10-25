@@ -1,0 +1,45 @@
+{
+  "at": "2026-10-25T22:25:03.681455+00:00",
+  "head": "622bdd1b425b78462c497ffba588a0bb55356652",
+  "workspace": "Eight source files modified; tests unchanged; git diff --check exit 0.",
+  "checks": [
+    {
+      "command": "HOME=/tmp/prp511-check-home RAF_QA_HOME=/tmp/prp511-check-home node scripts/build.ts",
+      "cliExitCode": 0,
+      "stdout": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n",
+      "stderr": ""
+    },
+    {
+      "command": "HOME=/tmp/prp511-check-home RAF_QA_HOME=/tmp/prp511-check-home node scripts/check-comments.ts",
+      "cliExitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "harnessChecks": {
+    "at": "2026-10-25T22:32:44.986678+00:00",
+    "commands": [
+      {
+        "command": "node --check scripts/qa-runtime-verification-host.mjs",
+        "cliExitCode": 0
+      },
+      {
+        "command": "node scripts/qa-runtime-verification-host.mjs prepare /srv/dev/work/orchestrator/conf /tmp/prp511-harness-inspect",
+        "cliExitCode": 0
+      },
+      {
+        "command": "node --check /tmp/prp511-harness-inspect/native-main.mjs",
+        "cliExitCode": 0
+      },
+      {
+        "command": "node --check /tmp/prp511-harness-inspect/native-live.mjs",
+        "cliExitCode": 0
+      },
+      {
+        "command": "HOME=/tmp/prp511-check-home RAF_QA_HOME=/tmp/prp511-check-home node scripts/check-comments.ts",
+        "cliExitCode": 0
+      }
+    ],
+    "limitation": "Preparation and syntax checks only; host live series not executed by this agent."
+  }
+}

@@ -1,0 +1,350 @@
+{
+  "candidate": "11d07f787de0ec08839a19e174774662a822a6da",
+  "runs": [
+    {
+      "evidence": "hotfix-1/stdout.json",
+      "stderr": "hotfix-1/stderr.txt",
+      "cliCapture": "hotfix-1/capture-result.json",
+      "delivery": "hotfix-1/delivery.json",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/runtime-verification-cost --files test/runtime-verification-cost.test.ts",
+      "runId": "005e8875-91d2-49b8-82be-89d792b2fff6",
+      "selection": {
+        "files": [
+          "test/runtime-verification-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "childExitCode": 1,
+      "cliExitCode": 1,
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 39,
+        "knownRed": 52,
+        "unexecuted": 0,
+        "unknown": 0
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "workspaceEvidence": "hotfix-1.workspace.json",
+      "workspaceLimitation": null
+    },
+    {
+      "evidence": "hotfix-2/stdout.json",
+      "stderr": "hotfix-2/stderr.txt",
+      "cliCapture": "hotfix-2/capture-result.json",
+      "delivery": "hotfix-2/delivery.json",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/runtime-verification-cost --files test/runtime-verification-cost.test.ts",
+      "runId": "cbc4e643-6dbb-4e02-90a9-5731326d79ae",
+      "selection": {
+        "files": [
+          "test/runtime-verification-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "childExitCode": 1,
+      "cliExitCode": 1,
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 39,
+        "knownRed": 52,
+        "unexecuted": 0,
+        "unknown": 0
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "workspaceEvidence": "hotfix-2/workspace.json",
+      "workspaceLimitation": null
+    },
+    {
+      "evidence": "hotfix-diagnostic/stdout.json",
+      "stderr": "hotfix-diagnostic/stderr.txt",
+      "cliCapture": "hotfix-diagnostic/capture-result.json",
+      "delivery": "hotfix-diagnostic/delivery.json",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/runtime-verification-cost --files test/runtime-verification-cost.test.ts",
+      "runId": "492d3bf2-541c-4213-a412-3247597546e6",
+      "selection": {
+        "files": [
+          "test/runtime-verification-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "childExitCode": 1,
+      "cliExitCode": 1,
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 39,
+        "knownRed": 52,
+        "unexecuted": 0,
+        "unknown": 0
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "workspaceEvidence": "hotfix-diagnostic/workspace.json",
+      "workspaceLimitation": null
+    },
+    {
+      "evidence": "hotfix-diagnostic-2/stdout.json",
+      "stderr": "hotfix-diagnostic-2/stderr.txt",
+      "cliCapture": "hotfix-diagnostic-2/capture-result.json",
+      "delivery": "hotfix-diagnostic-2/delivery.json",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/runtime-verification-cost --files test/runtime-verification-cost.test.ts",
+      "runId": "5c3699d6-8808-4360-a027-36eb3981abe1",
+      "selection": {
+        "files": [
+          "test/runtime-verification-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "childExitCode": 1,
+      "cliExitCode": 1,
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 39,
+        "knownRed": 52,
+        "unexecuted": 0,
+        "unknown": 0
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "workspaceEvidence": "hotfix-diagnostic-2/workspace.json",
+      "workspaceLimitation": null
+    },
+    {
+      "evidence": "hotfix-fixture-fixed/stdout.json",
+      "stderr": "hotfix-fixture-fixed/stderr.txt",
+      "cliCapture": "hotfix-fixture-fixed/capture-result.json",
+      "delivery": "hotfix-fixture-fixed/delivery.json",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/runtime-verification-cost --files test/runtime-verification-cost.test.ts",
+      "runId": "5f1c3dbb-5831-4579-bac7-8c6c48782df9",
+      "selection": {
+        "files": [
+          "test/runtime-verification-cost.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/runtime-verification-cost.test.ts",
+            "name": "whole agent run queue ready with 4 controlled wait passes preserves delivery and total costs"
+          }
+        ]
+      },
+      "childExitCode": 0,
+      "cliExitCode": 1,
+      "outcome": "setup-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": false,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 1,
+        "knownRed": 52,
+        "unexecuted": 0,
+        "unknown": 0
+      },
+      "groupState": "reconcile",
+      "nextAction": "reconcile",
+      "workspaceEvidence": "hotfix-fixture-fixed/workspace.json",
+      "workspaceLimitation": null
+    },
+    {
+      "evidence": "hotfix-proc-diagnostic/stdout.json",
+      "stderr": "hotfix-proc-diagnostic/stderr.txt",
+      "cliCapture": "hotfix-proc-diagnostic/capture-result.json",
+      "delivery": "hotfix-proc-diagnostic/delivery.json",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/runtime-verification-cost --only 'test/runtime-verification-cost.test.ts::whole agent run queue ready with 4 controlled wait passes preserves delivery and total costs'",
+      "runId": "9d9a4396-6302-4bbb-906f-0ee74cac4ea4",
+      "selection": {
+        "files": [
+          "test/runtime-verification-cost.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/runtime-verification-cost.test.ts",
+            "name": "whole agent run queue ready with 4 controlled wait passes preserves delivery and total costs"
+          }
+        ]
+      },
+      "childExitCode": 1,
+      "cliExitCode": 1,
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 0,
+        "knownRed": 52,
+        "unexecuted": 0,
+        "unknown": 0
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "workspaceEvidence": null,
+      "workspaceLimitation": "Exact complete diagnostic workspace was not retained; original result remains complete. Temporary measurement wrappers were removed before candidate commit."
+    },
+    {
+      "evidence": "hotfix-single/stdout.json",
+      "stderr": "hotfix-single/stderr.txt",
+      "cliCapture": "hotfix-single/capture-result.json",
+      "delivery": "hotfix-single/delivery.json",
+      "issuedCommand": "raf test run --project raf --phase hotfix --group profile-raf-performance/runtime-verification-cost --files test/runtime-verification-cost.test.ts --only test/runtime-verification-cost.test.ts::whole agent run queue ready with 4 controlled wait passes preserves delivery and total costs",
+      "runId": "e96de5a1-3483-4263-9dc2-b39adb28ba61",
+      "selection": {
+        "files": [],
+        "testIds": []
+      },
+      "childExitCode": null,
+      "cliExitCode": 1,
+      "outcome": "refused",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 0,
+        "knownRed": 0,
+        "unexecuted": 0,
+        "unknown": 0
+      },
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "workspaceEvidence": "hotfix-single/workspace.json",
+      "workspaceLimitation": null
+    },
+    {
+      "evidence": "hotfix-single-diagnostic/stdout.json",
+      "stderr": "hotfix-single-diagnostic/stderr.txt",
+      "cliCapture": "hotfix-single-diagnostic/capture-result.json",
+      "delivery": "hotfix-single-diagnostic/delivery.json",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/runtime-verification-cost --only 'test/runtime-verification-cost.test.ts::whole agent run queue ready with 4 controlled wait passes preserves delivery and total costs'",
+      "runId": "2e17b990-a589-4ca8-96cc-3c484fcc3795",
+      "selection": {
+        "files": [
+          "test/runtime-verification-cost.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/runtime-verification-cost.test.ts",
+            "name": "whole agent run queue ready with 4 controlled wait passes preserves delivery and total costs"
+          }
+        ]
+      },
+      "childExitCode": 1,
+      "cliExitCode": 1,
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 0,
+        "knownRed": 52,
+        "unexecuted": 0,
+        "unknown": 0
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "workspaceEvidence": null,
+      "workspaceLimitation": "Exact complete diagnostic workspace was not retained; original result remains complete. Temporary measurement wrappers were removed before candidate commit."
+    },
+    {
+      "evidence": "hotfix-single-fixed/stdout.json",
+      "stderr": "hotfix-single-fixed/stderr.txt",
+      "cliCapture": "hotfix-single-fixed/capture-result.json",
+      "delivery": "hotfix-single-fixed/delivery.json",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/runtime-verification-cost --only 'test/runtime-verification-cost.test.ts::whole agent run queue ready with 4 controlled wait passes preserves delivery and total costs'",
+      "runId": "5f1c3dbb-5831-4579-bac7-8c6c48782df9",
+      "selection": {
+        "files": [
+          "test/runtime-verification-cost.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/runtime-verification-cost.test.ts",
+            "name": "whole agent run queue ready with 4 controlled wait passes preserves delivery and total costs"
+          }
+        ]
+      },
+      "childExitCode": 0,
+      "cliExitCode": 1,
+      "outcome": "setup-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": false,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 1,
+        "knownRed": 52,
+        "unexecuted": 0,
+        "unknown": 0
+      },
+      "groupState": "reconcile",
+      "nextAction": "reconcile",
+      "workspaceEvidence": "hotfix-single-fixed/workspace.json",
+      "workspaceLimitation": null
+    },
+    {
+      "evidence": "hotfix-single-known-red/stdout.json",
+      "stderr": "hotfix-single-known-red/stderr.txt",
+      "cliCapture": "hotfix-single-known-red/capture-result.json",
+      "delivery": "hotfix-single-known-red/delivery.json",
+      "issuedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group profile-raf-performance/runtime-verification-cost --only 'test/runtime-verification-cost.test.ts::whole agent run queue ready with 4 controlled wait passes preserves delivery and total costs'",
+      "runId": "1547b0bd-f556-45f5-8a66-b0b2b56b3cb2",
+      "selection": {
+        "files": [
+          "test/runtime-verification-cost.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/runtime-verification-cost.test.ts",
+            "name": "whole agent run queue ready with 4 controlled wait passes preserves delivery and total costs"
+          }
+        ]
+      },
+      "childExitCode": 1,
+      "cliExitCode": 1,
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "counts": {
+        "passed": 0,
+        "knownRed": 52,
+        "unexecuted": 0,
+        "unknown": 0
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "workspaceEvidence": null,
+      "workspaceLimitation": "Exact complete diagnostic workspace was not retained; original result remains complete. Temporary measurement wrappers were removed before candidate commit."
+    }
+  ],
+  "currentState": "Not passed. Last full command replayed prior --only runId 5f1c3dbb because cleanup did not finish. Main identified resource-usage merge SQLite contention and assigned Z.422. Do not reset HOME/group or retry before its release.",
+  "red": "Main verified author 5.10 red 95a1a052-4abb-409f-bbc8-82fb76c1dc1f (63 knownRed), then isolation-fixed author red 78561e4c-9c2e-4cc7-b8c9-f714194829fe (41 passed, same 63 knownRed); test/evidence imported by main 14bd866dd8e1ff6be3c22dd2f773d090c9cb1332 and 622bdd1. Implementation did not change tests."
+}

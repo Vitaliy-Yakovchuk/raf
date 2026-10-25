@@ -1,0 +1,234 @@
+✔ vitest-app: profile schema accepts existing fields and chooses one root-relative file (5.818891ms)
+✔ vitest-worker: profile schema accepts existing fields and chooses one root-relative file (2.201243ms)
+✔ vitest-worker-consent-dom: profile schema accepts existing fields and chooses one root-relative file (1.336073ms)
+✔ vitest-assessment: profile schema accepts existing fields and chooses one root-relative file (1.196992ms)
+✔ vitest-domain: profile schema accepts existing fields and chooses one root-relative file (0.958362ms)
+✔ vitest-i18n: profile schema accepts existing fields and chooses one root-relative file (1.068357ms)
+✔ vitest-markdown: profile schema accepts existing fields and chooses one root-relative file (1.161719ms)
+✔ vitest-ui-core: profile schema accepts existing fields and chooses one root-relative file (1.321681ms)
+✔ product-defaults explicit files and configured preset have identical canonical selection (1.253919ms)
+✔ Node root adapter and raf cwd-dot profile retain their configured argv and addresses (1.480762ms)
+✔ refuse mixed app plus worker before runner construction (1.55149ms)
+✔ refuse mixed shared workspaces before runner construction (1.602857ms)
+✔ refuse mixed Node plus Vitest before runner construction (0.554108ms)
+✔ non-unit selection refuses worker/scripts/concept-import/native-continuation.test.ts with a specific path (0.68007ms)
+✔ non-unit selection refuses app/tools/browser.test.ts with a specific path (0.539356ms)
+✔ non-unit selection refuses worker/src/test-support/live-worker.test.ts with a specific path (0.502811ms)
+✔ non-unit selection refuses shared-libs/resource-protocol/packages/store/src/store.test.ts with a specific path (0.519977ms)
+✔ unsafe or broad address refuses app (0.746661ms)
+✔ unsafe or broad address refuses app/**/*.test.ts (0.830056ms)
+✔ unsafe or broad address refuses ../outside.test.ts (0.675273ms)
+✔ unsafe or broad address refuses /outside.test.ts (0.683445ms)
+✔ unsafe or broad address refuses --config=evil.test.ts (0.958631ms)
+✔ symlink selection outside canonical workspace is refused even when classified unit (1.017491ms)
+✔ unknown group never gains a preset from a suffix or profile ID (0.648552ms)
+✔ full project inventory includes node-root and every Vitest workspace (0.616513ms)
+✔ host refuses an etchly request from a live raf implement assignment before obtaining QA state (1.065233ms)
+✔ static inventory accepts exactly one current profile for every unit and excludes integration facts (0.274856ms)
+✔ static inventory fails closed on new, naming paths and conf address (0.249758ms)
+✔ static inventory fails closed on deleted, naming paths and conf address (0.196276ms)
+✔ static inventory fails closed on reclassified, naming paths and conf address (0.132441ms)
+✔ static inventory fails closed on duplicate, naming paths and conf address (0.088894ms)
+✔ static inventory fails closed on moved-profile, naming paths and conf address (0.09182ms)
+✔ static inventory fails closed on stale-config, naming paths and conf address (0.06647ms)
+✔ static inventory fails closed on stale-graph, naming paths and conf address (0.103436ms)
+✔ isolated HOME and private TMPDIR preserve only the trusted host browser cache (0.216678ms)
+✔ missing nodeAvailable is setup/environment failure with no automatic repair (0.226603ms)
+✔ missing vitestAvailable is setup/environment failure with no automatic repair (0.072209ms)
+✔ missing adapterCompatible is setup/environment failure with no automatic repair (0.074112ms)
+✔ missing preloadAvailable is setup/environment failure with no automatic repair (0.037456ms)
+✔ missing aliasesAvailable is setup/environment failure with no automatic repair (0.031227ms)
+✔ missing configAvailable is setup/environment failure with no automatic repair (0.030777ms)
+✔ missing happyDomAvailable is setup/environment failure with no automatic repair (0.031918ms)
+✔ missing isolatedHome is setup/environment failure with no automatic repair (0.029896ms)
+✔ missing stateOrigin is setup/environment failure with no automatic repair (0.03335ms)
+✔ missing privateTmpWritable is setup/environment failure with no automatic repair (0.041132ms)
+✔ missing-library refuses environment preparation (0.142446ms)
+✔ wrong-library refuses environment preparation (0.066389ms)
+✔ wrong-library-branch refuses environment preparation (0.035293ms)
+✔ missing-browser refuses environment preparation (0.067622ms)
+✔ untrusted-cache refuses environment preparation (0.037987ms)
+✔ green structured lifecycle returns root-relative IDs despite misleading stderr (1.503947ms)
+✔ first failure preserves stopped and declaratively skipped tests as unexecuted (0.63417ms)
+✔ import AssertionError remains setup instead of red (1.215301ms)
+✔ collection AssertionError remains setup instead of red (0.602152ms)
+✔ hook AssertionError remains setup instead of red (0.421679ms)
+✔ fixture-setup AssertionError remains setup instead of red (0.369209ms)
+✔ unknown AssertionError remains setup instead of red (0.441038ms)
+✔ empty never reports passed (0.50191ms)
+✔ missing-finish never reports passed (0.530423ms)
+✔ missing-outcome never reports passed (0.197388ms)
+✔ broken-protocol never reports passed (0.52147ms)
+✔ nonzero-exit never reports passed (0.293194ms)
+✔ path-escape never reports passed (0.503803ms)
+✔ body diagnostics retain safe location and bounded redacted message through Vitest adaptation (1.085454ms)
+✔ only escapes and anchors the full test name instead of selecting matching fragments (0.36998ms)
+✔ only IDs in two files never cross-select their different names (0.329018ms)
+✔ identical full names in separate files retain separate exact file addresses (0.247715ms)
+✔ only unknown ID or a file outside selection is refused without a whole-file fallback (0.198461ms)
+✔ Node environment does not require DOM dependencies or a browser when the unit does not use them (0.107634ms)
+✔ browser fixture without a trusted host cache is setup failure even if another cache exists (0.109095ms)
+✔ absolute runner file is normalized once to the canonical root-relative identity (0.234796ms)
+✔ mixed body failure and later hook failure retain both facts without turning setup into red (0.562992ms)
+✔ unreceived outcomes stay unknown and raw FAIL/PASS text cannot manufacture a lifecycle (1.381311ms)
+✔ trusted Vitest API applies structured runner without an unsupported CLI flag (0.502ms)
+✔ missing Etchly audited prerequisite is environment setup rather than stale inventory refusal (1.278076ms)
+✔ reviewed root package reaches the next audited source check (0.601632ms)
+✖ root package scripts-only add does not invalidate the fixed runner inventory (1.468033ms)
+✖ root package scripts-only edit does not invalidate the fixed runner inventory (0.648242ms)
+✖ root package scripts-only remove does not invalidate the fixed runner inventory (0.477894ms)
+✖ root package JSON formatting and object key order do not change the audited execution contract (0.643354ms)
+✔ root package change to workspaces still refuses before inventory classification (0.422891ms)
+✔ root package change to type still refuses before inventory classification (0.317261ms)
+✔ root package change to dependencies still refuses before inventory classification (0.31113ms)
+✔ root package change to devDependencies still refuses before inventory classification (0.304531ms)
+✔ root package change to overrides still refuses before inventory classification (0.31706ms)
+✔ root package change to imports still refuses before inventory classification (0.412925ms)
+✔ root package change to exports still refuses before inventory classification (0.25769ms)
+✔ root package change to engines still refuses before inventory classification (0.265601ms)
+✔ root package change to packageManager still refuses before inventory classification (0.357041ms)
+✔ root package change to unreviewedSetting still refuses before inventory classification (0.259081ms)
+✔ invalid root package { fails closed as an inventory refusal (0.336118ms)
+✔ invalid root package null fails closed as an inventory refusal (0.28415ms)
+✔ invalid root package [] fails closed as an inventory refusal (0.271852ms)
+✔ invalid root package "manifest" fails closed as an inventory refusal (0.242066ms)
+✖ accepting root scripts changes preserves the byte hash guard on the next runner source (0.581881ms)
+✔ external trusted runner retains its filesystem identity for app explicit files (1.064352ms)
+✔ external trusted runner retains its filesystem identity for product-defaults preset (0.646609ms)
+✔ external trusted runner retains its filesystem identity for worker consent DOM (0.590924ms)
+✔ external trusted runner retains its filesystem identity for ui-core DOM (0.575391ms)
+✔ external trusted runner retains its filesystem identity for worker Node control (0.536513ms)
+✔ full explicit Etchly inventory is refused before missing runtimeAvailable (0.56109ms)
+✔ full explicit Etchly inventory is refused before missing dependenciesAvailable (0.554749ms)
+✔ full explicit Etchly inventory is refused before missing resultAdapterAvailable (0.651226ms)
+✔ full-suite-explicit refuses before Etchly browser-cache preflight failure (2.412683ms)
+✔ valid subset retains Etchly browser-cache preflight failure (1.880778ms)
+✔ generation runner is staged outside .git and cleaned after success (1.311877ms)
+✔ generation runner is staged outside .git and cleaned after failure (1.001326ms)
+ℹ tests 107
+ℹ suites 0
+ℹ pass 102
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 266.840474
+
+✖ failing tests:
+
+test at test/test-run-etchly-profiles.test.ts:500:3
+✖ root package scripts-only add does not invalidate the fixed runner inventory (1.468033ms)
+  AssertionError [ERR_ASSERTION]: a reviewed root manifest must reach the next prerequisite check
+  + actual - expected
+  
+  + 'INVENTORY_INCOMPLETE'
+  - 'ENVIRONMENT_INVALID'
+  
+      at Object.<anonymous> (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:489:12)
+      at expectedException (node:assert:547:17)
+      at expectsError (node:assert:672:21)
+      at strict.rejects (node:assert:738:3)
+      at async assertRootPackageAccepted (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:488:3)
+      at async TestContext.<anonymous> (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:505:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'INVENTORY_INCOMPLETE',
+    expected: 'ENVIRONMENT_INVALID',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-etchly-profiles.test.ts:500:3
+✖ root package scripts-only edit does not invalidate the fixed runner inventory (0.648242ms)
+  AssertionError [ERR_ASSERTION]: a reviewed root manifest must reach the next prerequisite check
+  + actual - expected
+  
+  + 'INVENTORY_INCOMPLETE'
+  - 'ENVIRONMENT_INVALID'
+  
+      at Object.<anonymous> (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:489:12)
+      at expectedException (node:assert:547:17)
+      at expectsError (node:assert:672:21)
+      at strict.rejects (node:assert:738:3)
+      at async assertRootPackageAccepted (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:488:3)
+      at async TestContext.<anonymous> (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:505:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'INVENTORY_INCOMPLETE',
+    expected: 'ENVIRONMENT_INVALID',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-etchly-profiles.test.ts:500:3
+✖ root package scripts-only remove does not invalidate the fixed runner inventory (0.477894ms)
+  AssertionError [ERR_ASSERTION]: a reviewed root manifest must reach the next prerequisite check
+  + actual - expected
+  
+  + 'INVENTORY_INCOMPLETE'
+  - 'ENVIRONMENT_INVALID'
+  
+      at Object.<anonymous> (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:489:12)
+      at expectedException (node:assert:547:17)
+      at expectsError (node:assert:672:21)
+      at strict.rejects (node:assert:738:3)
+      at async assertRootPackageAccepted (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:488:3)
+      at async TestContext.<anonymous> (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:505:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'INVENTORY_INCOMPLETE',
+    expected: 'ENVIRONMENT_INVALID',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-etchly-profiles.test.ts:509:1
+✖ root package JSON formatting and object key order do not change the audited execution contract (0.643354ms)
+  AssertionError [ERR_ASSERTION]: a reviewed root manifest must reach the next prerequisite check
+  + actual - expected
+  
+  + 'INVENTORY_INCOMPLETE'
+  - 'ENVIRONMENT_INVALID'
+  
+      at Object.<anonymous> (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:489:12)
+      at expectedException (node:assert:547:17)
+      at expectsError (node:assert:672:21)
+      at strict.rejects (node:assert:738:3)
+      at async assertRootPackageAccepted (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:488:3)
+      at async TestContext.<anonymous> (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:512:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'INVENTORY_INCOMPLETE',
+    expected: 'ENVIRONMENT_INVALID',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/test-run-etchly-profiles.test.ts:541:1
+✖ accepting root scripts changes preserves the byte hash guard on the next runner source (0.581881ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /changed source vitest\.config\.ts/. Input:
+  
+  'INVENTORY_INCOMPLETE: changed source package.json; repeat static review and reconcile conf/test-runs.json#/projects/etchly/profiles and groups'
+  
+      at Object.<anonymous> (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:546:12)
+      at expectedException (node:assert:547:17)
+      at expectsError (node:assert:672:21)
+      at strict.rejects (node:assert:738:3)
+      at async TestContext.<anonymous> (file:///srv/dev/rafhx-rtr66-red/raf/test/test-run-etchly-profiles.test.ts:544:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'INVENTORY_INCOMPLETE: changed source package.json; repeat static review and reconcile conf/test-runs.json#/projects/etchly/profiles and groups',
+    expected: /changed source vitest\.config\.ts/,
+    operator: 'match',
+    diff: 'simple'
+  }

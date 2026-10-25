@@ -1,0 +1,68 @@
+{
+	"name": "etchly",
+	"private": true,
+	"type": "module",
+	"workspaces": [
+		"shared-libs/resource-protocol/packages/*",
+		"shared/i18n",
+		"shared/markdown",
+		"shared/assessment",
+		"shared/ui-core",
+		"app",
+		"worker"
+	],
+	"scripts": {
+		"preinstall": "node scripts/shared-libs-path.mjs",
+		"check:reopened-regressions": "node app/tools/reopened-regressions/cli.ts",
+		"test:lock": "node --import ./scripts/shared-library-runtime.mjs --test scripts/dependency-lock.test.mjs scripts/worker-indexeddb-dependency.test.mjs scripts/shared-file-dependencies.standalone.test.mjs",
+		"test": "npm run supply-chain:check && npm run test:lock && npm run test:quality && node --test scripts/typecheck.test.mjs scripts/vitest-startup.test.mjs scripts/test-file-budget.test.mjs scripts/node-digest.test.mjs scripts/security-guards-budget.test.mjs && npm run test --workspaces",
+		"test:critical": "node scripts/critical-path.mjs --baseline critical-path-known-red.txt",
+		"test:critical:local": "node scripts/critical-contract.mjs",
+		"test:integration:group1": "node scripts/integration-test-groups.mjs 1",
+		"test:integration:group2": "node scripts/integration-test-groups.mjs 2",
+		"pretypecheck": "npm run test:lock",
+		"typecheck": "npm run typecheck --workspaces",
+		"validate:requirements": "npm run validate:requirements --workspace app",
+		"generate": "npm run generate --workspace shared/i18n",
+		"ci:regeneration": "npm exec --workspace @etchly/app -- vite-node tools/regeneration/cli.ts",
+		"dev:worker": "npm run dev --workspace worker",
+		"dev:stack": "npm run dev:stack --workspace worker --",
+		"smoke:stack": "npm run smoke:stack --workspace app",
+		"synthetic:monitor": "npm run synthetic:monitor --workspace @etchly/worker --",
+		"live:grok": "npm run live:grok --workspace app --",
+		"step:live": "node --import ./scripts/shared-library-runtime.mjs worker/scripts/step-live.ts",
+		"gaps:live": "node --import ./scripts/shared-library-runtime.mjs worker/scripts/step-live.ts next-module",
+		"reanalyze:iterations": "node --import ./scripts/shared-library-runtime.mjs worker/scripts/reanalyze-iterations.ts",
+		"seed": "npm run seed --workspace worker --",
+		"test-account": "npm run test-account --workspace worker --",
+		"deploy": "npm run deploy --workspace worker --",
+		"secret:put": "npm run secret:put --workspace worker --",
+		"migrate": "npm run migrate --workspace worker --",
+		"migrate:local": "npm run migrate:local --workspace worker",
+		"pentest": "node security/pentest/run.mjs",
+		"provision:plan": "npm run provision:plan --workspace worker --",
+		"supply-chain:check": "node worker/scripts/supply-chain.ts check",
+		"supply-chain:audit": "node worker/scripts/supply-chain.ts audit",
+		"mutation:manual": "node worker/scripts/manual-mutation.ts",
+		"report:feature-hours": "node worker/scripts/feature-effort.ts",
+		"test:fuzz:long": "node fuzz/run-long.mjs",
+		"validate": "npm run validate --workspace @etchly/app",
+		"qa-walk": "npm run qa-walk --workspace app --",
+		"test:quality": "node --test scripts/quality-*.test.mjs",
+		"check:quality:boundaries": "node scripts/quality-gate.mjs boundaries",
+		"check:quality": "npm run check:quality:boundaries && npm run check:quality:critical",
+		"check:quality:critical": "node scripts/quality-gate.mjs critical",
+		"check:quality:header": "node scripts/quality-header-release.mjs"
+	},
+	"devDependencies": {
+		"@stryker-mutator/core": "^10.0.0",
+		"@stryker-mutator/vitest-runner": "^10.0.0",
+		"fast-check": "^4.9.0"
+	},
+	"overrides": {
+		"katex": "^0.19.0",
+		"typed-rest-client": {
+			"qs": "^6.16.0"
+		}
+	}
+}

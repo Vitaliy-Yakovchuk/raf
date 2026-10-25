@@ -9,8 +9,27 @@ import type { EtchlyInventoryFact } from './test-run-etchly.ts';
 import type { TestRunProfile } from './test-runs.ts';
 
 const reviewed = JSON.parse(readFileSync(new URL('./test-run-etchly-audit.json', import.meta.url), 'utf8')) as { sourceHashes: Record<string, string>; nodeDecisions: { file: string; classification: string }[] };
-const hash = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex');
 const fail = (message: string): never => { throw Object.assign(new Error(`INVENTORY_INCOMPLETE: ${message}; repeat static review and reconcile conf/test-runs.json#/projects/etchly/profiles and groups`), { code: 'INVENTORY_INCOMPLETE' }); };
+
+function canonicalJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalJson);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([key, entry]) => [key, canonicalJson(entry)]));
+  return value;
+}
+
+function hash(path: string, file: string): string {
+  let source = readFileSync(path);
+  if (file === 'package.json') {
+    let manifest: unknown;
+    try { manifest = JSON.parse(source.toString('utf8')); }
+    catch { fail('invalid JSON in package.json'); }
+    if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) return fail('invalid root object in package.json');
+    const executionManifest = { ...manifest } as Record<string, unknown>;
+    delete executionManifest.scripts;
+    source = Buffer.from(JSON.stringify(canonicalJson(executionManifest)));
+  }
+  return createHash('sha256').update(source).digest('hex');
+}
 
 export function etchlyBrowserRequirements(workspace: string, files: readonly string[]): string[] {
   const pending = files.map(file => resolve(workspace, file)), seen = new Set<string>();
@@ -65,7 +84,7 @@ function literal(source: string): any {
 export async function observeEtchlyInventory(workspace: string, profiles: Record<string, TestRunProfile>): Promise<EtchlyInventoryFact[]> {
   const current: Record<string, string> = {};
   for (const [file, expected] of Object.entries(reviewed.sourceHashes)) {
-    try { current[file] = hash(resolve(workspace, file)); }
+    try { current[file] = hash(resolve(workspace, file), file); }
     catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw Object.assign(new Error(`Etchly setup: missing audited source ${file}; restore environment without install or branch changes`), { code: 'ENVIRONMENT_INVALID' });
       throw error;

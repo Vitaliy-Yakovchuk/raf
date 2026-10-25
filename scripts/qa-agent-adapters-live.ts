@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { agentRunFixture, until, alive } from '../test/agent-run-fixture.ts';
 import { buildCatalog } from '../src/bootstrap.ts';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+import { publicAdapterMain } from '../test/agent-adapters-public-fixture.ts';
 
 const exec = promisify(execFile);
 const [reviewed, runner, evidenceArg] = process.argv.slice(2);
@@ -43,7 +44,7 @@ try {
   summary.version = { command: [protocol.executable, '--version'], cliCode: 0 };
   if (runner === 'codex') assert.ok(process.env.CODEX_HOME, 'Set the existing CODEX_HOME auth selector on the host');
   if (runner === 'claude') assert.ok(process.env.CLAUDE_CONFIG_DIR, 'Set the existing CLAUDE_CONFIG_DIR auth selector on the host');
-  f = await agentRunFixture(lifecycle, 'live', protocol.timeouts, 'codex', { productionQa: true, tasks: 2 });
+  f = await agentRunFixture(lifecycle, 'live', protocol.timeouts, 'codex', { productionQa: true, tasks: 2, commands: ['main attach'] });
   const cfg = JSON.parse(await fs.readFile(join(f.directory, 'fixture.json'), 'utf8'));
   summary.stand = { directory: f.directory, root: cfg.root, home: cfg.home, statePath: cfg.statePath, tmuxLabel: cfg.tmuxLabel };
   await atomic('progress', summary);
@@ -70,7 +71,9 @@ try {
   await fs.writeFile(join(cfg.root, 'openspec/changes/launch-failure-fixture/tasks.md'), '- [ ] 1.1 ' + task + '\n- [ ] 1.2 Keep stand active for cleanup.\n');
   await f.git('add', '--', 'conf', 'openspec/changes/launch-failure-fixture/tasks.md');
   await f.git('commit', '-qm', 'Native adapter isolated QA assignment');
-  const result = await f.run('native-adapter');
+  const main = await publicAdapterMain(f, cfg, deadline);
+  summary.main = main.attached;
+  const result = await main.command(f.runArgs('native-adapter'));
   await atomic('launch', result);
   assert.equal(result.exitCode, 0, JSON.stringify(result));
   const launched = JSON.parse(result.result.stdout);
@@ -89,7 +92,7 @@ try {
   await until(() => f.inspect().sessions.find((s: any) => s.runId === launched.runId)?.result?.status, (s: any) => s === 'succeeded', 'Atomic native report accepted', deadline);
   summary.checks.push({ id: 'L1-report/L3-probes', status: 'passed' });
   await atomic('before-cleanup', f.inspect());
-  const close = await f.command(['agent', 'close', '--id', 'native-adapter', '--force', '--reason', 'Own native adapter stand cleanup after report']);
+  const close = await main.command(['agent', 'close', '--id', 'native-adapter', '--force', '--reason', 'Own native adapter stand cleanup after report']);
   await atomic('close', close);
   assert.equal(close.exitCode, 0, JSON.stringify(close));
   await until(() => alive(session.process.pid), (value: boolean) => !value, 'Verified native exit', protocol.timeouts.overallMs);

@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile, rename, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { agentRunFixture, alive, exists, until, assertFailedLaunchCleaned } from './agent-run-fixture.ts';
+import { agentRunFixture, alive, exists, until } from './agent-run-fixture.ts';
+import { publicAdapterMain } from './agent-adapters-public-fixture.ts';
 
 const settings = JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
 const timeouts = settings.runnerProtocols.find((row: { runner: string }) => row.runner === 'codex').timeouts;
@@ -10,7 +11,7 @@ const change = 'launch-failure-fixture';
 const taskFile = `openspec/changes/${change}/tasks.md`;
 
 async function fixture(t: TestContext, mode = 'live') {
-  const f = await agentRunFixture(t, mode, timeouts, 'codex', { productionQa: true, tasks: 2 });
+  const f = await agentRunFixture(t, mode, timeouts, 'codex', { productionQa: true, tasks: 2, commands: ['main attach'] });
   const cfg = JSON.parse(await readFile(join(f.directory, 'fixture.json'), 'utf8'));
   await mkdir(join(cfg.sourceRoot, 'dist'), { recursive: true });
   await writeFile(join(cfg.sourceRoot, 'dist/catalog.json'), await readFile(cfg.artifact));
@@ -45,9 +46,11 @@ setInterval(() => {
   await writeFile(tasks, (await readFile(tasks, 'utf8')).replace('Write launch failure fixture', 'Write launch failure fixture ' + literal));
   await f.git('add', '--', taskFile);
   await f.git('commit', '-qm', 'literal adapter fixture task');
+  const main = await publicAdapterMain(f, cfg, JSON.parse(await readFile(new URL('../../conf/flow.json', import.meta.url), 'utf8')).integrationTests.timeoutMs);
+  const run = (id: string) => main.command(f.runArgs(id));
   const evidence = (id: string, value: unknown) => t.diagnostic(JSON.stringify({ scenario: id, ...value as object }));
   const launch = async (id: string) => {
-    const cli = await f.run(id);
+    const cli = await run(id);
     assert.equal(cli.exitCode, 0, JSON.stringify(cli));
     assert.equal(cli.result.exitCode, 0, JSON.stringify(cli));
     const result = JSON.parse(cli.result.stdout);
@@ -68,11 +71,11 @@ setInterval(() => {
     return { result, session, assignment };
   };
   const ps = async () => {
-    const listed = await f.command(['agent', 'ps']);
+    const listed = await main.command(['agent', 'ps']);
     assert.equal(listed.exitCode, 0, JSON.stringify(listed));
     return JSON.parse(listed.result.stdout);
   };
-  return { ...f, cfg, literal, launch, ps, evidence };
+  return { ...f, run, cfg, literal, launch, ps, evidence, main };
 }
 
 async function publish(path: string, report: unknown) {
@@ -117,8 +120,17 @@ for (const mode of ['delivery', 'readiness-unknown', 'fast-exit', 'limited']) {
       await writeFile(conf, JSON.stringify(raf));
     }
     const outcome = await f.run('adapter-refused');
-    await assertFailedLaunchCleaned(f, outcome, mode);
+    assert.equal(outcome.exitCode, 1, JSON.stringify(outcome));
     const failure = JSON.parse(outcome.result.stderr);
+    assert.equal(failure.code, 'LAUNCH_FAILED');
+    assert.equal(failure.details.retrySafe, true);
+    assert.deepEqual(failure.details.pending, []);
+    assert.deepEqual((await f.runners()).filter(alive), []);
+    assert.equal(f.inspect().sessions.find(row => row.addressId === 'adapter-refused')?.state, 'finished');
+    assert.deepEqual(f.inspect().claims, []);
+    assert.deepEqual(f.inspect().admission, []);
+    assert.equal(f.inspect().sessions.find(row => row.addressId === 'main')?.state, 'running', 'foreign main remains owned and alive');
+    assert.deepEqual(await f.tmuxSessions(), ['adapter-main']);
     assert.match(failure.message, mode === 'limited' ? /limit/i : mode === 'fast-exit' ? /exit/i : /unknown/i);
     f.evidence('I2-' + mode, { outcome, final: f.inspect() });
   });

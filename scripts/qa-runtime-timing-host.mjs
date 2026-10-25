@@ -222,7 +222,7 @@ if (mode === 'actor') {
           assert.deepEqual(result.unexecuted, []); assert.deepEqual(result.unknown, []);
           if (outcome === 'pass') assert.deepEqual(result.knownRed, []); else assert.equal(result.knownRed.length, 1);
         }
-        inspect('resource wait', await request('resource-wait', ['resource', 'wait', '--level', 'ANY_RUN']), true, 0);
+        inspect('resource wait', await request('resource-wait', ['resource', 'wait', '--level', 'normal']), true, 0);
         inspect('runner list', await request('runtime-help', ['runner', 'list', '--help']), true, 0);
         inspect('runner list', await request('runtime-parser', ['runner', 'list', '--prp34-unknown']), false, 0);
         must(await request('runner-limits', ['runner', 'limits', '--runners', 'codex']));
@@ -246,7 +246,7 @@ if (mode === 'actor') {
         try {
           fs.writeFileSync(serviceRecord, '{');
           for (const operation of ['start', 'status', 'stop']) inspect('service ' + operation, await request('service-error-' + operation, ['service', operation]), false);
-          inspect('resource wait', await request('resource-error', ['resource', 'wait', '--level', 'ANY_RUN']), false, 0);
+          inspect('resource wait', await request('resource-error', ['resource', 'wait', '--level', 'normal']), false, 0);
         } finally { fs.writeFileSync(serviceRecord, saved); }
         const stats = must(await request('final-stats', ['command', 'stats'])); atomic(path.join(ev, 'commands-profile.json'), stats);
         assert.ok(Array.isArray(stats.commands)); assert.ok(Array.isArray(stats.profile.rows));

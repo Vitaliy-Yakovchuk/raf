@@ -1,0 +1,569 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "unit-passed-native-required",
+  "audit": {
+    "sources": [
+      "openspec/changes/switch-raf-main-by-symlink/tasks.md:6.4",
+      "workspace-routing delta: native channel denials",
+      "Main host orphan-service finding"
+    ],
+    "conclusion": "Item is current. Native filesystem refusal is an intended negative result; accepting only its exact protected target does not grant agent close. Service cleanup is fixture-owned, outside actor permissions; no production source or model/effort changes."
+  },
+  "findings": [
+    {
+      "source": "native-partial-s64-KoGtId/review.json",
+      "finding": "Actors stopped after the required native EROFS close denial even though PS completeness verification passed."
+    },
+    {
+      "source": "orphan-s64-erRFT9/review.json",
+      "finding": "Failed logical-main service stop was not checked and an old physical-A service outlived its fixture."
+    }
+  ],
+  "fixes": [
+    "Use a standalone exact-root/UUID/final-exit-one verifier for PRODUCTION_ENTRY_FAILED EROFS activation.lock.owner refusal. Emit it after full unchanged output; reject unrelated setup/audit/missing-file/malformed/unfinished/success results. Actor instructions explicitly continue only after this verifier succeeds.",
+    "Check CLI service stop exit and stopped state. In independent finally, scan own stand node bin/service.ts processes, pin executable/argv/start and recheck each before TERM/KILL; verify no service remains. Real-child unit covers old-slot survival, forced exit, and foreign-root peer liveness.",
+    "Register child close promises at spawn time and account for signalCode during test cleanup; waiting for close after SIGKILL otherwise hangs the new unit itself."
+  ],
+  "unitRuns": [
+    {
+      "runId": "87dd5fc9-5f32-4af0-830a-e693325ed02b",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "cliExitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native unauthorized close recognizes only the actual protected activation denial"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "stand cleanup stops a live service after a failed CLI stop without touching a peer"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "passedCount": 110,
+      "raw": "native-denial-cleanup-red.TestRunResult.json",
+      "tool": "native-denial-cleanup-red.tool.json",
+      "combinedStream": "native-denial-cleanup-red.combined-stream.txt",
+      "cli": "native-denial-cleanup-red.cli-exit.json",
+      "workspace": {
+        "head": "52892e0638844d2b2bcdbb92eb10f5a4ac9c61b3",
+        "status": "native-denial-cleanup-red-workspace.status.txt",
+        "patch": "native-denial-cleanup-red-workspace.patch"
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+          "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+          "TMPDIR": "/tmp/r-UysdMh"
+        }
+      },
+      "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts"
+    },
+    {
+      "runId": "880acf20-1511-460f-a5a2-aff9f363cad3",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+          "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+          "TMPDIR": "/tmp/r-w4sPo2"
+        }
+      },
+      "outcome": "timed-out",
+      "exitCode": null,
+      "cliExitCode": 1,
+      "signal": "SIGKILL",
+      "timedOut": true,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native unauthorized close recognizes only the actual protected activation denial"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "stand cleanup stops a live service after a failed CLI stop without touching a peer"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "stand cleanup stops a live service after a failed CLI stop without touching a peer"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native final transcript waits for both final gates and native CLI completion"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native final receipt requires the exact run and an actual completed exec output"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native actor assignment stays small enough for complete repeated ps output"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native host releases both actors before awaiting either stage"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native hidden state denial requires exact existing host controls and refuses missing fixtures"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native probe stdout stays bounded while its receipt verifies the complete large report"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native host read transaction preserves SQLite sidecars after the writer exits"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native stand drains only its host service reader before migration and preserves actors"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native QA negative CLI probe exercises protected runtime rather than public catalog output"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "unchanged absolute prefix A runs message and ps through A, A→B and reused B→A"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "an in-flight operation pins the entire old snapshot while the next call uses B"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "lease mismatch in publicationId refuses execution and releases the lease"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "lease mismatch in commit refuses execution and releases the lease"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "lease mismatch in sourceFingerprint refuses execution and releases the lease"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "lease mismatch in buildFingerprint refuses execution and releases the lease"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "lease mismatch in catalogFingerprint refuses execution and releases the lease"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "lease mismatch in root refuses execution and releases the lease"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "lease mismatch in entrypoint refuses execution and releases the lease"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "lease mismatch in executable refuses execution and releases the lease"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "a stale registry fails closed without retrying against a candidate"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "unpublished active snapshot is refused before executing any slot"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "request cwd and env cannot replace trusted origin, sender or executable"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "unregistered caller cannot inherit the original channel"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "different agent cannot inherit the original channel"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "reused run cannot inherit the original channel"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "different runner cannot inherit the original channel"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "a missing trusted grant does not fall back to request env or prefix"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "redirecting a ps-only grant never adds message authority"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "large literal stdout and stderr with nonzero status are preserved byte for byte"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "execution failure releases the pinned snapshot without replay"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "concurrent commands preserve separate outputs and release each generation lease"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts agent run --id intruder"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts agent close --id peer"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts test run --project raf --phase red"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts agent ps --unexpected"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts agent message --to peer --text hi --from main"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-b/bin/raf.ts agent ps"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main/bin/raf.ts agent ps"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-develop/bin/raf.ts agent ps"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-hotfix/bin/raf.ts agent ps"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/attacker/raf-main-a/bin/raf.ts agent ps"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: RAF_MAIN=/fixture/orchestrator/raf-main-b node /fixture/orchestrator/raf-main-a/bin/raf.ts agent ps"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: env RAF_AGENT_ID=main node /fixture/orchestrator/raf-main-a/bin/raf.ts agent ps"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: cd /fixture/orchestrator && node /fixture/orchestrator/raf-main-a/bin/raf.ts agent ps"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts agent ps; id"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts agent ps && id"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts agent ps | cat"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts agent ps > /tmp/leak"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts agent ps\nid"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: bash -c 'node /fixture/orchestrator/raf-main-a/bin/raf.ts agent ps'"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts agent message --to peer --text \"$(id)\""
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts agent message --to peer --text \"`id`\""
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "channel rejects expanded authority: node /fixture/orchestrator/raf-main-a/bin/raf.ts agent message --to peer --text hi --to main"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "quoted shell punctuation in message text stays literal data"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "a refused widening does not damage another agent's granted channel"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "slot reuse: legacy channel without safe routing"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "slot reuse: redirectable channel without proof"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "slot reuse: active pinned operation"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "slot reuse: safely redirected reader"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "slot reuse: normally completed legacy reader"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "slot reuse: reader in other slot"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy protects main code or activation path: /fixture/orchestrator/raf-main-a"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy protects main code or activation path: /fixture/orchestrator/raf-main-b"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy protects main code or activation path: /fixture/orchestrator/raf-main"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy protects main code or activation path: /fixture/orchestrator/.gitmodules"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy protects main code or activation path: /fixture/orchestrator/.git/index"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy protects main code or activation path: /fixture/orchestrator/.git/refs/heads/main"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy protects main code or activation path: /fixture/orchestrator/.git/modules/raf/index"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy protects main code or activation path: /fixture/orchestrator/.git/modules/raf/refs/heads/main"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy protects main code or activation path: /fixture/orchestrator/.git/modules/raf/worktrees/main-a"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy protects main code or activation path: /fixture/orchestrator/.git/modules/raf/worktrees/main-b"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy protects main code or activation path: /fixture/orchestrator/.git/modules/raf/activation"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy retains every baseline read/connect deny and the exact original command grants"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native policy protects canonical Git aliases as well as the spelling granted for develop"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native stand registers a complete runtime inventory before publishing each generation"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "public CLI pins the active physical main slot before loading its runtime"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "QA source registration preserves pre-existing fixture contents"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "logical main routing accepts only a canonical registered physical main worktree"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production scope protects both actual Git directories and main locks while preserving assigned Git writes"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production launcher rejects unissued origins and shell expansion before opening state"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production launcher verifies registered caller and pins published code through exact output and exit"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "logical main parent becomes read-only while existing Orchestrator Git and assigned directories remain writable"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native bwrap wrapper preserves inherited mask-data FD 9 while adding its network filter"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "legacy stand reflog survives source maintenance without a false metadata conflict"
+        }
+      ],
+      "unknown": [],
+      "groupState": "optimize",
+      "nextAction": "optimize",
+      "timeoutCount": 1,
+      "passedCount": 3,
+      "raw": "native-denial-cleanup-qa.TestRunResult.json",
+      "tool": "native-denial-cleanup-qa.tool.json",
+      "combinedStream": "native-denial-cleanup-qa.combined-stream.txt",
+      "cli": "native-denial-cleanup-qa.cli-exit.json",
+      "workspace": {
+        "head": "52892e0638844d2b2bcdbb92eb10f5a4ac9c61b3",
+        "status": "native-denial-cleanup-qa-workspace.status.txt",
+        "patch": "native-denial-cleanup-qa-workspace.patch"
+      },
+      "acceptance": "Timed out in the old loaded test close race; source changed during run as disclosed to main. Not final workspace acceptance.",
+      "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts"
+    },
+    {
+      "runId": "782976b5-6bcb-4c68-b021-37ff859d75b6",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "command": {
+        "executable": "node",
+        "argv": [
+          "./scripts/test-run-node.ts",
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "cwd": "/srv/dev/work/orchestrator/raf-develop",
+        "shell": false,
+        "environment": {
+          "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+          "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+          "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+          "TMPDIR": "/tmp/r-sGgut8"
+        }
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "cliExitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 1,
+      "passedCount": 88,
+      "raw": "native-denial-cleanup-qa-final.TestRunResult.json",
+      "tool": "native-denial-cleanup-qa-final.tool.json",
+      "combinedStream": "native-denial-cleanup-qa-final.combined-stream.txt",
+      "cli": "native-denial-cleanup-qa-final.cli-exit.json",
+      "workspace": {
+        "head": "915da7e028d53ae6e674221dd38b442b563a1716",
+        "status": "native-denial-cleanup-qa-final-workspace.status.txt",
+        "patch": "native-denial-cleanup-qa-final-workspace.patch"
+      },
+      "acceptance": "Targeted final QA passed; native host acceptance remains required.",
+      "invocation": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts"
+    }
+  ],
+  "activeRunNote": "The previous three-file invocation timed out with CLI 1, child exit null, complete cleanup and first group timeout. Its raw result is preserved. Main confirmed conf ready before the optimized final invocation.",
+  "optimization": "After the first group timeout, keep group/HOME and aggregate unchanged; use only test/main-switch-agent-channel.test.ts, the file exercising these fixture-only changes. service-entry/workspace-routing source is unchanged and previous explicit greens remain in evidence. No knownRed is removed by changing this selection.",
+  "checks": "native-denial-cleanup-final-checks.json",
+  "nativeAcceptance": null,
+  "nextAction": "Commit own paths and submit the exact resulting SHA and host command for complete native verification.",
+  "stderrLimitation": "Full exec tool records and combined streams are retained separately from raw TestRunResult and CLI/child exit codes. exec_command did not expose an independent stderr stream; cli-exit files state this instead of claiming it was empty.",
+  "secretScan": {
+    "source": "Main message in this session, 2026-10-25 07:07 UTC",
+    "scope": [
+      "evidence/switch-raf-main-by-symlink/qa-6.4b",
+      "scripts/qa-main-agent-channel.mjs",
+      "scripts/qa-main-agent-channel-metadata.mjs",
+      "test/main-switch-agent-channel.test.ts"
+    ],
+    "secretValueMatches": 0,
+    "falsePositives": "Two environment-variable names in the already committed scan description; Main confirmed they are not secret values.",
+    "scriptDiffReview": "Main reviewed the script diff and confined process/tmux cleanup and fixture deletion to owned stand resources."
+  }
+}

@@ -1,0 +1,434 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "reviewedSha": "52892e0638844d2b2bcdbb92eb10f5a4ac9c61b3",
+  "status": "failed-partial-not-acceptance",
+  "error": {
+    "message": "Unexecuted remainder: native gate 1",
+    "stack": "Error: Unexecuted remainder: native gate 1\n    at wait (file:///srv/dev/sym64l-src.ACnREQ/raf-develop/scripts/qa-main-agent-channel.mjs:50:9)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at listOnTimeout (node:internal/timers:644:9)\n    at process.processTimers (node:internal/timers:618:7)\n    at async Promise.all (index 0)\n    at async releaseNativeStage (file:///srv/dev/sym64l-src.ACnREQ/raf-develop/scripts/qa-main-agent-channel-metadata.mjs:69:3)\n    at async file:///srv/dev/sym64l-src.ACnREQ/raf-develop/scripts/qa-main-agent-channel.mjs:288:5"
+  },
+  "hostNodeExitCode": 1,
+  "hostNodeExitEvidence": "Main explicit receipt: node output redirected to sym64l-host.stdout/.stderr; echo sym64l=$? printed to wrapper stdout, actual sym64l=1. This value is an attestation, not present in the copied node streams.",
+  "actors": [
+    {
+      "address": "sym64-a",
+      "runId": "9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca",
+      "nativeSessionId": "01a171b8-59d2-7b00-9138-0c2047e59eb7",
+      "stage0": {
+        "stage": 0,
+        "runId": "9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca",
+        "cwd": "/srv/dev/s64-KoGtId/root/raf-develop",
+        "status": "passed",
+        "results": [
+          {
+            "label": "own add /srv/dev/s64-KoGtId/root/raf-develop",
+            "command": [
+              "git",
+              "-C",
+              "/srv/dev/s64-KoGtId/root/raf-develop",
+              "add",
+              "--",
+              "/srv/dev/s64-KoGtId/root/raf-develop/qa/own-9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca-0.txt"
+            ],
+            "cliExitCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "label": "own commit /srv/dev/s64-KoGtId/root/raf-develop",
+            "command": [
+              "git",
+              "-C",
+              "/srv/dev/s64-KoGtId/root/raf-develop",
+              "-c",
+              "user.name=Isolated native QA",
+              "-c",
+              "user.email=qa@example.invalid",
+              "-c",
+              "commit.gpgsign=false",
+              "commit",
+              "--only",
+              "-m",
+              "qa: own 9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca stage 0",
+              "--",
+              "/srv/dev/s64-KoGtId/root/raf-develop/qa/own-9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca-0.txt"
+            ],
+            "cliExitCode": 0,
+            "signal": null,
+            "stdout": "[develop 6ad15aa] qa: own 9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca stage 0\n 1 file changed, 1 insertion(+)\n create mode 100644 qa/own-9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca-0.txt\n",
+            "stderr": ""
+          },
+          {
+            "label": "own commit visible /srv/dev/s64-KoGtId/root/raf-develop",
+            "command": [
+              "git",
+              "-C",
+              "/srv/dev/s64-KoGtId/root/raf-develop",
+              "log",
+              "-1",
+              "--format=%H",
+              "--",
+              "/srv/dev/s64-KoGtId/root/raf-develop/qa/own-9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca-0.txt"
+            ],
+            "cliExitCode": 0,
+            "signal": null,
+            "stdout": "6ad15aa8c653c615d7f9cc57fdf08d29cb3051ca\n",
+            "stderr": ""
+          },
+          {
+            "label": "own add /srv/dev/s64-KoGtId/root",
+            "command": [
+              "git",
+              "-C",
+              "/srv/dev/s64-KoGtId/root",
+              "add",
+              "--",
+              "/srv/dev/s64-KoGtId/root/openspec/changes/sym64-fixture/own-9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca-0.txt"
+            ],
+            "cliExitCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "label": "own commit /srv/dev/s64-KoGtId/root",
+            "command": [
+              "git",
+              "-C",
+              "/srv/dev/s64-KoGtId/root",
+              "-c",
+              "user.name=Isolated native QA",
+              "-c",
+              "user.email=qa@example.invalid",
+              "-c",
+              "commit.gpgsign=false",
+              "commit",
+              "--only",
+              "-m",
+              "qa: own 9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca stage 0",
+              "--",
+              "/srv/dev/s64-KoGtId/root/openspec/changes/sym64-fixture/own-9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca-0.txt"
+            ],
+            "cliExitCode": 0,
+            "signal": null,
+            "stdout": "[main 9ef83f1] qa: own 9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca stage 0\n 1 file changed, 1 insertion(+)\n create mode 100644 openspec/changes/sym64-fixture/own-9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca-0.txt\n",
+            "stderr": ""
+          },
+          {
+            "label": "own commit visible /srv/dev/s64-KoGtId/root",
+            "command": [
+              "git",
+              "-C",
+              "/srv/dev/s64-KoGtId/root",
+              "log",
+              "-1",
+              "--format=%H",
+              "--",
+              "/srv/dev/s64-KoGtId/root/openspec/changes/sym64-fixture/own-9bb2d9f3-7b07-4ed9-b6f8-6a110b08e0ca-0.txt"
+            ],
+            "cliExitCode": 0,
+            "signal": null,
+            "stdout": "9ef83f171c0845e8086f85f5702a64a13764632c\n",
+            "stderr": ""
+          }
+        ]
+      },
+      "message": {
+        "sourceLine": 80,
+        "stdout": "{\"accepted\":true,\"receiptId\":\"04f8cb7f-d26e-4386-87ea-53ceef3403c0\"}\n",
+        "exitCode": 0,
+        "audit": "cli-audit/233249e7-5e26-48f9-b0d8-48ca2e4f23cd.json",
+        "exactMatch": true
+      },
+      "ps": {
+        "sourceLine": 91,
+        "characters": 77217,
+        "sessions": 3,
+        "sha256": "c67cd14b95fc9671169e127ec7c9298659345c93939dbc9e35709f7e9b572047",
+        "audit": "cli-audit/06d77e9f-01e5-4d25-8055-ee7dff19af83.json",
+        "exactMatch": true,
+        "completenessReceipt": {
+          "sym64PsOutputComplete": true,
+          "characters": 77217,
+          "sessions": 3,
+          "exit_code": 0
+        }
+      },
+      "unauthorizedClose": {
+        "sourceLine": 98,
+        "output": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"EROFS: read-only file system, mkdir '/srv/dev/s64-KoGtId/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-b04f65c5-afc1-40e5-be5c-321861b51cf7'\"}\n",
+        "exitCode": 1,
+        "verifiedProtectedDenial": {
+          "sym64UnauthorizedCloseDenied": true,
+          "exit_code": 1,
+          "code": "EROFS",
+          "target": "/srv/dev/s64-KoGtId/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-b04f65c5-afc1-40e5-be5c-321861b51cf7"
+        }
+      }
+    },
+    {
+      "address": "sym64-b",
+      "runId": "4f22635a-06a3-4c25-88cd-ed123fd68dd7",
+      "nativeSessionId": "01a171b8-ca3d-7340-a366-132af923f79f",
+      "stage0": {
+        "stage": 0,
+        "runId": "4f22635a-06a3-4c25-88cd-ed123fd68dd7",
+        "cwd": "/srv/dev/s64-KoGtId/root/raf-develop",
+        "status": "passed",
+        "results": [
+          {
+            "label": "own add /srv/dev/s64-KoGtId/root/raf-develop",
+            "command": [
+              "git",
+              "-C",
+              "/srv/dev/s64-KoGtId/root/raf-develop",
+              "add",
+              "--",
+              "/srv/dev/s64-KoGtId/root/raf-develop/qa/own-4f22635a-06a3-4c25-88cd-ed123fd68dd7-0.txt"
+            ],
+            "cliExitCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "label": "own commit /srv/dev/s64-KoGtId/root/raf-develop",
+            "command": [
+              "git",
+              "-C",
+              "/srv/dev/s64-KoGtId/root/raf-develop",
+              "-c",
+              "user.name=Isolated native QA",
+              "-c",
+              "user.email=qa@example.invalid",
+              "-c",
+              "commit.gpgsign=false",
+              "commit",
+              "--only",
+              "-m",
+              "qa: own 4f22635a-06a3-4c25-88cd-ed123fd68dd7 stage 0",
+              "--",
+              "/srv/dev/s64-KoGtId/root/raf-develop/qa/own-4f22635a-06a3-4c25-88cd-ed123fd68dd7-0.txt"
+            ],
+            "cliExitCode": 0,
+            "signal": null,
+            "stdout": "[develop 01fee02] qa: own 4f22635a-06a3-4c25-88cd-ed123fd68dd7 stage 0\n 1 file changed, 1 insertion(+)\n create mode 100644 qa/own-4f22635a-06a3-4c25-88cd-ed123fd68dd7-0.txt\n",
+            "stderr": ""
+          },
+          {
+            "label": "own commit visible /srv/dev/s64-KoGtId/root/raf-develop",
+            "command": [
+              "git",
+              "-C",
+              "/srv/dev/s64-KoGtId/root/raf-develop",
+              "log",
+              "-1",
+              "--format=%H",
+              "--",
+              "/srv/dev/s64-KoGtId/root/raf-develop/qa/own-4f22635a-06a3-4c25-88cd-ed123fd68dd7-0.txt"
+            ],
+            "cliExitCode": 0,
+            "signal": null,
+            "stdout": "01fee02dd6e39afa8d733e7a3cee81162cdf36aa\n",
+            "stderr": ""
+          },
+          {
+            "label": "own add /srv/dev/s64-KoGtId/root",
+            "command": [
+              "git",
+              "-C",
+              "/srv/dev/s64-KoGtId/root",
+              "add",
+              "--",
+              "/srv/dev/s64-KoGtId/root/openspec/changes/sym64-fixture/own-4f22635a-06a3-4c25-88cd-ed123fd68dd7-0.txt"
+            ],
+            "cliExitCode": 0,
+            "signal": null,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "label": "own commit /srv/dev/s64-KoGtId/root",
+            "command": [
+              "git",
+              "-C",
+              "/srv/dev/s64-KoGtId/root",
+              "-c",
+              "user.name=Isolated native QA",
+              "-c",
+              "user.email=qa@example.invalid",
+              "-c",
+              "commit.gpgsign=false",
+              "commit",
+              "--only",
+              "-m",
+              "qa: own 4f22635a-06a3-4c25-88cd-ed123fd68dd7 stage 0",
+              "--",
+              "/srv/dev/s64-KoGtId/root/openspec/changes/sym64-fixture/own-4f22635a-06a3-4c25-88cd-ed123fd68dd7-0.txt"
+            ],
+            "cliExitCode": 0,
+            "signal": null,
+            "stdout": "[main dbf4379] qa: own 4f22635a-06a3-4c25-88cd-ed123fd68dd7 stage 0\n 1 file changed, 1 insertion(+)\n create mode 100644 openspec/changes/sym64-fixture/own-4f22635a-06a3-4c25-88cd-ed123fd68dd7-0.txt\n",
+            "stderr": ""
+          },
+          {
+            "label": "own commit visible /srv/dev/s64-KoGtId/root",
+            "command": [
+              "git",
+              "-C",
+              "/srv/dev/s64-KoGtId/root",
+              "log",
+              "-1",
+              "--format=%H",
+              "--",
+              "/srv/dev/s64-KoGtId/root/openspec/changes/sym64-fixture/own-4f22635a-06a3-4c25-88cd-ed123fd68dd7-0.txt"
+            ],
+            "cliExitCode": 0,
+            "signal": null,
+            "stdout": "dbf43793976ff5ca54a6032add351b7da2ff0f74\n",
+            "stderr": ""
+          }
+        ]
+      },
+      "message": {
+        "sourceLine": 63,
+        "stdout": "{\"accepted\":true,\"receiptId\":\"dda8f977-2073-41e8-a8a0-1eeeac91d3b8\"}\n",
+        "exitCode": 0,
+        "audit": "cli-audit/4f90999a-cd97-43a4-8de7-33bccbb4f8df.json",
+        "exactMatch": true
+      },
+      "ps": {
+        "sourceLine": 70,
+        "characters": 77217,
+        "sessions": 3,
+        "sha256": "9bad9c97b17001b1f5509a91c1ec5382524bea8452d63e0d397dba0830e41a37",
+        "audit": "cli-audit/434f9f52-1510-4bc7-95eb-8069c2067698.json",
+        "exactMatch": true,
+        "completenessReceipt": {
+          "sym64PsOutputComplete": true,
+          "characters": 77217,
+          "sessions": 3,
+          "exit_code": 0
+        }
+      },
+      "unauthorizedClose": {
+        "sourceLine": 79,
+        "output": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"EROFS: read-only file system, mkdir '/srv/dev/s64-KoGtId/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-f8c3c18a-e6ab-4f66-87c7-806ac0c852fa'\"}\n",
+        "exitCode": 1,
+        "verifiedProtectedDenial": {
+          "sym64UnauthorizedCloseDenied": true,
+          "exit_code": 1,
+          "code": "EROFS",
+          "target": "/srv/dev/s64-KoGtId/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-f8c3c18a-e6ab-4f66-87c7-806ac0c852fa"
+        }
+      }
+    }
+  ],
+  "findings": [
+    "Both actors preserve complete PS output and pass the actual JSON completeness verifier; exact stdout equals the stand CLI audit.",
+    "Both unauthorized closes return actual native exit1 and EROFS at the protected activation lock. Actors stop because the fixture did not distinguish this required native filesystem denial from an expected-success service failure.",
+    "No helper1/2/3 completion or further switch/rollback acceptance; preserve all unexecuted work."
+  ],
+  "unexecuted": [
+    "native helper1 for both actors",
+    "second switch",
+    "native helper2",
+    "rollback",
+    "native helper3 and final native receipts",
+    "full metadata/endpoint/actor-commit acceptance"
+  ],
+  "cleanup": {
+    "commands": [
+      {
+        "command": [
+          "/opt/dev/node/bin/node",
+          "/srv/dev/s64-KoGtId/root/raf-main/bin/raf.ts",
+          "agent",
+          "close",
+          "--id",
+          "sym64-a",
+          "--force",
+          "--reason",
+          "Host-owned isolated QA cleanup"
+        ],
+        "cliExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "{\"closed\":true,\"unfinished\":[],\"result\":\"failed\",\"forcedClose\":{\"reason\":\"Host-owned isolated QA cleanup\"}}\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/opt/dev/node/bin/node",
+          "/srv/dev/s64-KoGtId/root/raf-main/bin/raf.ts",
+          "agent",
+          "close",
+          "--id",
+          "sym64-b",
+          "--force",
+          "--reason",
+          "Host-owned isolated QA cleanup"
+        ],
+        "cliExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "{\"closed\":true,\"unfinished\":[],\"result\":\"failed\",\"forcedClose\":{\"reason\":\"Host-owned isolated QA cleanup\"}}\n",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/opt/dev/node/bin/node",
+          "/srv/dev/s64-KoGtId/root/raf-main/bin/raf.ts",
+          "service",
+          "stop"
+        ],
+        "cliExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "{\"exitCode\":0,\"state\":\"stopped\",\"pid\":null,\"mainPath\":\"/srv/dev/s64-KoGtId/root/.git/modules/raf-main/raf-hotfix/generations/d9e83bac-53ff-4a24-8bbe-ac169348e449/raf-main\",\"stopReason\":\"Service stopped normally\",\"reasonKnown\":true}\n",
+        "stderr": ""
+      }
+    ],
+    "errors": [],
+    "agentTmux": {
+      "outcome": "already-stopped",
+      "command": null,
+      "cliExitCode": null,
+      "verification": {
+        "command": [
+          "tmux",
+          "-S",
+          "/srv/dev/s64-KoGtId/.raf/tmp/tmux/server.sock",
+          "list-sessions"
+        ],
+        "cwd": "/srv/dev/s64-KoGtId/root",
+        "cliExitCode": 1,
+        "signal": null,
+        "error": null,
+        "stdout": "",
+        "stderr": "no server running on /srv/dev/s64-KoGtId/.raf/tmp/tmux/server.sock\n"
+      }
+    },
+    "mainTmux": {
+      "command": [
+        "tmux",
+        "-S",
+        "/srv/dev/s64-KoGtId/main.sock",
+        "kill-server"
+      ],
+      "cwd": "/srv/dev/s64-KoGtId/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    "hostAttestation": "Main confirms no orphan processes remain for stand39; independent host scan is not in the copied payload."
+  },
+  "sourceManifest": "source-manifests.json",
+  "copies": "copies.json",
+  "secretScan": {
+    "source": "Main host scan for stand, cleaned native/events/messages and stdout/stderr",
+    "matches": 0
+  }
+}

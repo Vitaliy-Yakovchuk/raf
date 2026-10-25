@@ -16,7 +16,7 @@ import { execute } from "../src/cli.ts";
 import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
 import { createWorkspacePorts } from "../src/os-runtime.ts";
 import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
-import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt } from "../scripts/qa-main-agent-channel-metadata.mjs";
+import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices } from "../scripts/qa-main-agent-channel-metadata.mjs";
 import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
 import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
 import * as generationHost from "../src/hotfix-host.ts";
@@ -82,6 +82,53 @@ test("native PS receipt verifies full large JSON and refuses partial or unfinish
   assert.throws(() => nativePsReceipt({ ...result, session_id: 42 }));
 });
 
+test("native unauthorized close recognizes only the actual protected activation denial", () => {
+  const root = "/srv/dev/s64-fixture/root";
+  const target = root + "/.git/modules/raf-main/raf-hotfix/activation.lock.owner-b04f65c5-afc1-40e5-be5c-321861b51cf7";
+  const result = { exit_code: 1, output: JSON.stringify({ code: "PRODUCTION_ENTRY_FAILED", message: "EROFS: read-only file system, mkdir '" + target + "'" }) + "\n" };
+  assert.deepEqual(nativeCloseDenialReceipt(result, root), { sym64UnauthorizedCloseDenied: true, exit_code: 1, code: "EROFS", target });
+  for (const changed of [
+    { ...result, exit_code: 0 }, { ...result, session_id: 42 },
+    { ...result, output: result.output.replace("EROFS", "ENOENT") },
+    { ...result, output: result.output.replace("activation.lock.owner-", "other-") },
+    { ...result, output: result.output.replace("PRODUCTION_ENTRY_FAILED", "UNKNOWN") },
+    { ...result, output: result.output.replace(target, root + "/ev/cli-audit/result.json") },
+    { ...result, output: result.output.slice(0, -10) },
+  ]) assert.throws(() => nativeCloseDenialReceipt(changed, root));
+  assert.throws(() => nativeCloseDenialReceipt(result, root + "-other"));
+});
+
+test("stand cleanup stops a live service after a failed CLI stop without touching a peer", async () => {
+  const directory = await fs.mkdtemp(join(tmpdir(), "native-service-cleanup-"));
+  const children: ReturnType<typeof spawn>[] = [];
+  const closed: Promise<unknown>[] = [];
+  try {
+    for (const tree of ["root/raf-main-a", "peer/raf-main-a"]) {
+      const bin = join(directory, tree, "bin"); await fs.mkdir(bin, { recursive: true });
+      const script = join(bin, "service.ts");
+      await fs.writeFile(script, 'process.on("SIGTERM",()=>{});process.stdout.write("ready\\n");setInterval(()=>{},1000);');
+      const child = spawn(process.execPath, [script], { stdio: ["ignore", "pipe", "pipe"] }); children.push(child);
+      closed.push(once(child, "close"));
+      await once(child.stdout!, "data");
+    }
+    const peerStart = await processStart(children[1].pid!);
+    const failedStop = { cliExitCode: 1, stderr: "STATE_CONTEXT_REFUSED" };
+    assert.equal(failedStop.cliExitCode, 1);
+    const result = await stopStandServices(join(directory, "root"), { graceMs: 100 });
+    assert.equal(result.complete, true, "A failed logical-slot CLI stop must not leave the original physical-slot service alive");
+    assert.equal(await alive(children[0].pid!, await processStart(children[0].pid!).catch(() => "gone")), false);
+    assert.equal(await alive(children[1].pid!, peerStart), true, "Other fixture roots must stay live");
+    assert.equal(children[1].signalCode, null);
+    assert.equal(result.processes.length, 1);
+    assert.deepEqual(result.processes[0].signals, ["SIGTERM", "SIGKILL"]);
+    assert.deepEqual((await stopStandServices(join(directory, "root"))).processes, []);
+  } finally {
+    for (const child of children) { if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL"); }
+    await Promise.all(closed);
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("native final transcript waits for both final gates and native CLI completion", async () => {
   const released: string[] = [];
   const finished: string[] = [];
@@ -109,7 +156,7 @@ test("native final receipt requires the exact run and an actual completed exec o
 });
 
 test("native actor assignment stays small enough for complete repeated ps output", () => {
-  const actors = ["a", "b"].map(nativeActorPlan);
+  const actors = ["a", "b"].map(actor => nativeActorPlan(actor));
   const output = JSON.stringify(actors.map(plan => ({ assignment: plan.item, activity: { description: plan.item }, launchContext: { description: plan.item } })));
   assert.ok(Buffer.byteLength(output) < 8192, "PS repeats the assigned item; put the full workflow in a stable fixture file");
   for (const plan of actors) {

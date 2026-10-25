@@ -10,7 +10,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { captureStateReadControls } from './qa-main-agent-denial.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
-import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli } from './qa-main-agent-channel-metadata.mjs';
+import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, stopStandServices } from './qa-main-agent-channel-metadata.mjs';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const reviewed = process.argv[2];
@@ -123,7 +123,7 @@ try {
   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-probe.mjs'), path.join(main, 'qa/sym64-probe.mjs'));
   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-denial.mjs'), path.join(main, 'qa/qa-main-agent-denial.mjs'));
   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-metadata.mjs'), path.join(main, 'qa/sym64-metadata.mjs'));
-  for (const actor of ['a', 'b']) fs.writeFileSync(path.join(main, 'qa/sym64-instructions-' + actor + '.txt'), nativeActorPlan(actor).instructions + '\n');
+  for (const actor of ['a', 'b']) fs.writeFileSync(path.join(main, 'qa/sym64-instructions-' + actor + '.txt'), nativeActorPlan(actor, root).instructions + '\n');
   const sandboxFile = path.join(main, 'src/codex-sandbox.ts');
   let sandboxSource = fs.readFileSync(sandboxFile, 'utf8');
   const beforeProbe = '    const visible: string[] = [];';
@@ -346,28 +346,34 @@ try {
   summary.nextAction = 'Inspect native tool result events against cli-audit raw exact outputs, sender receipts, generation roots and all three live ps results before accepting 6.4. This status is deliberately not an automatic pass.';
 } catch (error) { summary.error = { message: error.message, stack: error.stack }; process.exitCode = 1; }
 finally {
-  if (pane) {
-    for (const a of actors) {
-      try { copyTranscript(sessions().find(s => s.runId === a.runId) ?? a, a.addressId + '-final'); } catch (e) { (summary.copyErrors ??= []).push(e.message); }
-      try { const result = await request('cleanup-' + a.addressId, ['agent', 'close', '--id', a.addressId, '--force', '--reason', 'Host-owned isolated QA cleanup'], 60000); (summary.cleanup ??= []).push(result); } catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
-    }
-    try { (summary.cleanup ??= []).push(await request('cleanup-service', ['service', 'stop'], 60000)); } catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
-    const agentSocket = path.join(stand, '.raf/tmp/tmux/server.sock');
-    if (!fs.existsSync(agentSocket)) summary.agentTmuxCleanup = { outcome: 'not-created-or-already-removed', command: null, cliExitCode: null };
-    else {
-      const inspected = run('cleanup-agent-tmux-inspect', 'tmux', ['-S', agentSocket, 'list-sessions']);
-      if (inspected.cliExitCode === 0) {
-        summary.agentTmuxCleanup = run('cleanup-agent-tmux', 'tmux', ['-S', agentSocket, 'kill-server']);
-        if (summary.agentTmuxCleanup.cliExitCode !== 0) (summary.cleanupErrors ??= []).push('Owned agent tmux server failed to stop');
-      } else if (inspected.cliExitCode === 1 && inspected.signal === null && inspected.stderr.trim() === 'no server running on ' + agentSocket) {
-        summary.agentTmuxCleanup = { outcome: 'already-stopped', command: null, cliExitCode: null, verification: inspected };
-      } else {
-        summary.agentTmuxCleanup = { outcome: 'verification-failed', verification: inspected };
-        (summary.cleanupErrors ??= []).push('Owned agent tmux server state is unknown');
+  try {
+    if (pane) {
+      for (const a of actors) {
+        try { copyTranscript(sessions().find(s => s.runId === a.runId) ?? a, a.addressId + '-final'); } catch (e) { (summary.copyErrors ??= []).push(e.message); }
+        try { const result = await request('cleanup-' + a.addressId, ['agent', 'close', '--id', a.addressId, '--force', '--reason', 'Host-owned isolated QA cleanup'], 60000); (summary.cleanup ??= []).push(result); } catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
       }
+      try { const stopped = await request('cleanup-service', ['service', 'stop'], 60000); (summary.cleanup ??= []).push(stopped); must(stopped); assert.equal(JSON.parse(stopped.stdout).state, 'stopped'); } catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
+      const agentSocket = path.join(stand, '.raf/tmp/tmux/server.sock');
+      if (!fs.existsSync(agentSocket)) summary.agentTmuxCleanup = { outcome: 'not-created-or-already-removed', command: null, cliExitCode: null };
+      else {
+        const inspected = run('cleanup-agent-tmux-inspect', 'tmux', ['-S', agentSocket, 'list-sessions']);
+        if (inspected.cliExitCode === 0) {
+          summary.agentTmuxCleanup = run('cleanup-agent-tmux', 'tmux', ['-S', agentSocket, 'kill-server']);
+          if (summary.agentTmuxCleanup.cliExitCode !== 0) (summary.cleanupErrors ??= []).push('Owned agent tmux server failed to stop');
+        } else if (inspected.cliExitCode === 1 && inspected.signal === null && inspected.stderr.trim() === 'no server running on ' + agentSocket) {
+          summary.agentTmuxCleanup = { outcome: 'already-stopped', command: null, cliExitCode: null, verification: inspected };
+        } else {
+          summary.agentTmuxCleanup = { outcome: 'verification-failed', verification: inspected };
+          (summary.cleanupErrors ??= []).push('Owned agent tmux server state is unknown');
+        }
+      }
+      summary.tmuxCleanup = run('cleanup-tmux', 'tmux', ['-S', socket, 'kill-server']);
+      if (summary.tmuxCleanup.cliExitCode !== 0) (summary.cleanupErrors ??= []).push('Owned main tmux server failed to stop');
     }
-    summary.tmuxCleanup = run('cleanup-tmux', 'tmux', ['-S', socket, 'kill-server']);
-    if (summary.tmuxCleanup.cliExitCode !== 0) (summary.cleanupErrors ??= []).push('Owned main tmux server failed to stop');
+  } catch (error) { (summary.cleanupErrors ??= []).push(error.message); }
+  finally {
+    try { summary.serviceProcessCleanup = await stopStandServices(root); }
+    catch (error) { (summary.cleanupErrors ??= []).push(error.message); }
   }
   if (endpoint) await new Promise(resolve => endpoint.close(resolve));
   for (const commit of summary.actorCommits ?? []) {

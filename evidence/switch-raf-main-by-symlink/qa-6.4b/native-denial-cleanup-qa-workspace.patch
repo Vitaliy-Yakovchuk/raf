@@ -1,0 +1,175 @@
+diff --git a/scripts/qa-main-agent-channel-metadata.mjs b/scripts/qa-main-agent-channel-metadata.mjs
+index 6ece0a2..cf4fa9d 100644
+--- a/scripts/qa-main-agent-channel-metadata.mjs
++++ b/scripts/qa-main-agent-channel-metadata.mjs
+@@ -55,10 +55,56 @@ export function nativePsReceipt(result) {
+   return { sym64PsOutputComplete: true, characters: result.output.length, sessions: sessions.length, exit_code: 0 };
+ }
+ 
+-export function nativeActorPlan(actor) {
++export function nativeCloseDenialReceipt(result, root) {
++  if (result.exit_code !== 1 || result.session_id !== undefined) throw Error('Close denial needs the actual final exit-one result');
++  const value = JSON.parse(result.output);
++  const match = /^EROFS: read-only file system, mkdir '(.+)'$/.exec(value.message ?? '');
++  const target = match?.[1], prefix = root + '/.git/modules/raf-main/raf-hotfix/activation.lock.owner-';
++  if (value.code !== 'PRODUCTION_ENTRY_FAILED' || !target?.startsWith(prefix) || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(target.slice(prefix.length))) throw Error('Close failed without the exact protected activation EROFS denial');
++  return { sym64UnauthorizedCloseDenied: true, exit_code: 1, code: 'EROFS', target };
++}
++
++export async function stopStandServices(root, options = {}) {
++  assert.ok(path.isAbsolute(root) && fs.lstatSync(root).isDirectory(), 'Cleanup requires the exact owned stand root');
++  const executable = fs.realpathSync(process.execPath);
++  const identity = pid => {
++    try {
++      const command = fs.readFileSync('/proc/' + pid + '/cmdline', 'utf8').split('\0').filter(Boolean);
++      if (command.length !== 2 || !command[1].startsWith(root + '/') || !command[1].endsWith('/bin/service.ts')) return null;
++      const exe = fs.readlinkSync('/proc/' + pid + '/exe');
++      if (exe !== executable) throw Error('Owned service has an unexpected executable');
++      const stat = fs.readFileSync('/proc/' + pid + '/stat', 'utf8');
++      const fields = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
++      if (fields[0] === 'Z') return null;
++      return { pid, start: fields[19], command, exe };
++    } catch (error) { if (['ENOENT', 'ESRCH'].includes(error.code)) return null; throw error; }
++  };
++  const scan = () => fs.readdirSync('/proc').filter(name => /^[0-9]+$/.test(name)).map(name => identity(Number(name))).filter(Boolean);
++  const processes = scan().map(process => ({ ...process, signals: [] }));
++  const same = entry => {
++    const current = identity(entry.pid);
++    return current && current.start === entry.start && JSON.stringify(current.command) === JSON.stringify(entry.command) && current.exe === entry.exe;
++  };
++  const waitForExit = async budget => {
++    const end = Date.now() + budget;
++    while (processes.some(same) && Date.now() < end) await new Promise(resolve => setTimeout(resolve, 20));
++  };
++  for (const signal of ['SIGTERM', 'SIGKILL']) {
++    for (const entry of processes) if (same(entry)) {
++      try { process.kill(entry.pid, signal); entry.signals.push(signal); }
++      catch (error) { if (error.code !== 'ESRCH') throw error; }
++    }
++    await waitForExit(signal === 'SIGTERM' ? options.graceMs ?? 5000 : 5000);
++  }
++  const remaining = scan();
++  assert.deepEqual(remaining, [], 'Owned stand services must exit even when CLI cleanup fails');
++  return { complete: true, processes, remaining };
++}
++
++export function nativeActorPlan(actor, root = '/fixture/orchestrator') {
+   const instructions = `Controlled live QA actor ${actor}. Model and effort already selected by raf; never replace them. Do not implement, run tests, edit tasks, write report, archive, or retry failed/unknown commands. The provided helper makes only its own isolated fixture commits in develop and Orchestrator; these are authorized. In native exec tool perform this exact sequence. For EVERY functions.exec call set the first line to // @exec: {"max_output_tokens": 60000} followed by an actual newline, AND request max_output_tokens:60000 on the inner tools.exec_command/write_stdin. For functions.wait request max_tokens:60000. Both the outer tool and its inner command need the larger limit, including message/ps outputs: preserve exact outputs without truncation. Emit command stdout with text(result.output) once and command metadata separately, rather than JSON.stringify of the whole tool result. A complete parseable JSON output without an explicit tool truncation marker is complete even when large. Never print a full probe JSON report; the helper emits a small sha256 receipt for the complete host-copied file. First execute node qa/sym64-probe.mjs 0 <exact report_path from your brief>; wait for completion, polling a running native tool session as necessary. Then execute the issued raf_command agent message --to sym64-${actor === 'a' ? 'b' : 'a'} --text sym64-${actor}-after-B as ONE simple native tool command, using the original issued absolute raf_command unchanged. Next execute the issued raf_command agent ps in a separate native tool call. Then execute the issued raf_command ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} as a separate simple native command; this unauthorized subcommand must return a nonzero code, preserve its exact result and continue only for that expected denial. Next execute node qa/sym64-probe.mjs 1 <exact report_path>; wait for completion. Next repeat separate simple native message with text sym64-${actor}-after-A and agent ps using that same original prefix, followed by the same separate unauthorized ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} with required nonzero code. Execute node qa/sym64-probe.mjs 2 <exact report_path> and wait. After it completes repeat separate simple native message with text sym64-${actor}-after-rollback and agent ps using that same original prefix, followed by the same separate unauthorized ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} with required nonzero code. Execute node qa/sym64-probe.mjs 3 <exact report_path> and wait. Do not acknowledge received messages with tool calls, only chat. If any expected-success command fails, stop and preserve the error. The probe helper owns allowed negative actions only inside this isolated fixture. Do not change the helper or evade its checks. After helper 3 returns a final actual exit_code 0, make one separate functions.exec call emitting only text({sym64NativeCompleted:3,runId:"<the basename of the directory containing your exact report_path>",finalCliExitCode:0}); substitute your real runId. This is a native tool receipt, not a report file. Never emit this receipt while a tool session/cell is still running or after a failed/unknown result. Then give a final chat status and keep the native session alive for host cleanup.`;
+   const psVerification = ` For EACH agent ps, keep its full original stdout via text(result.output), then in that SAME functions.exec emit text((${nativePsReceipt.toString()})(result)); use your actual result variable name. This verifier uses the actual completed tool result and parses the entire JSON array; if it throws, stop. A sym64PsOutputComplete:true receipt confirms complete JSON even if long nested launch commands look shortened to you. Do not infer truncation from length or visual appearance when this verification succeeds. Do not shorten, summarize, filter, redirect or rerun the actual ps command/output. Unauthorized close is an expected nonzero result; preserve its exact stderr and continue only for that expected denial, with no retry.`;
+-  return { item: `Controlled live QA actor ${actor}. Read qa/sym64-instructions-${actor}.txt and execute its complete native sequence. The host owns reports, fixture commits and final review; do not implement, run tests, edit tasks or write a report. Keep this brief and the issued raf_command unchanged across every switch.`, instructions: instructions + psVerification };
++  return { item: `Controlled live QA actor ${actor}. Read qa/sym64-instructions-${actor}.txt and execute its complete native sequence. The host owns reports, fixture commits and final review; do not implement, run tests, edit tasks or write a report. Keep this brief and the issued raf_command unchanged across every switch.`, instructions: instructions + psVerification + ` For EVERY unauthorized close, preserve its exact actual output via text(result.output), then in the SAME functions.exec emit text((${nativeCloseDenialReceipt.toString()})(result, ${JSON.stringify(root)})); use your actual result variable name. EROFS on this exact protected activation lock IS the expected native filesystem denial. It is not an expected-success service operation. If this verifier succeeds, continue immediately to the next probe helper without retrying close. If the verifier throws, stop. Never treat arbitrary setup errors, missing files, audit-writer errors, timeouts or unknown/nonfinal results as a successful negative probe.` };
+ }
+ 
+ export async function releaseNativeStage(options) {
+diff --git a/scripts/qa-main-agent-channel.mjs b/scripts/qa-main-agent-channel.mjs
+index 14b636c..b00a82e 100644
+--- a/scripts/qa-main-agent-channel.mjs
++++ b/scripts/qa-main-agent-channel.mjs
+@@ -10,7 +10,7 @@ import { setTimeout as delay } from 'node:timers/promises';
+ import { captureStateReadControls } from './qa-main-agent-denial.mjs';
+ import { createStandGeneration } from './qa-main-agent-generation.mjs';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+-import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli } from './qa-main-agent-channel-metadata.mjs';
++import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, stopStandServices } from './qa-main-agent-channel-metadata.mjs';
+ 
+ const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+ const reviewed = process.argv[2];
+@@ -123,7 +123,7 @@ try {
+   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-probe.mjs'), path.join(main, 'qa/sym64-probe.mjs'));
+   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-denial.mjs'), path.join(main, 'qa/qa-main-agent-denial.mjs'));
+   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-metadata.mjs'), path.join(main, 'qa/sym64-metadata.mjs'));
+-  for (const actor of ['a', 'b']) fs.writeFileSync(path.join(main, 'qa/sym64-instructions-' + actor + '.txt'), nativeActorPlan(actor).instructions + '\n');
++  for (const actor of ['a', 'b']) fs.writeFileSync(path.join(main, 'qa/sym64-instructions-' + actor + '.txt'), nativeActorPlan(actor, root).instructions + '\n');
+   const sandboxFile = path.join(main, 'src/codex-sandbox.ts');
+   let sandboxSource = fs.readFileSync(sandboxFile, 'utf8');
+   const beforeProbe = '    const visible: string[] = [];';
+@@ -346,12 +346,13 @@ try {
+   summary.nextAction = 'Inspect native tool result events against cli-audit raw exact outputs, sender receipts, generation roots and all three live ps results before accepting 6.4. This status is deliberately not an automatic pass.';
+ } catch (error) { summary.error = { message: error.message, stack: error.stack }; process.exitCode = 1; }
+ finally {
++  try {
+   if (pane) {
+     for (const a of actors) {
+       try { copyTranscript(sessions().find(s => s.runId === a.runId) ?? a, a.addressId + '-final'); } catch (e) { (summary.copyErrors ??= []).push(e.message); }
+       try { const result = await request('cleanup-' + a.addressId, ['agent', 'close', '--id', a.addressId, '--force', '--reason', 'Host-owned isolated QA cleanup'], 60000); (summary.cleanup ??= []).push(result); } catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
+     }
+-    try { (summary.cleanup ??= []).push(await request('cleanup-service', ['service', 'stop'], 60000)); } catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
++    try { const stopped = await request('cleanup-service', ['service', 'stop'], 60000); (summary.cleanup ??= []).push(stopped); must(stopped); assert.equal(JSON.parse(stopped.stdout).state, 'stopped'); } catch (e) { (summary.cleanupErrors ??= []).push(e.message); }
+     const agentSocket = path.join(stand, '.raf/tmp/tmux/server.sock');
+     if (!fs.existsSync(agentSocket)) summary.agentTmuxCleanup = { outcome: 'not-created-or-already-removed', command: null, cliExitCode: null };
+     else {
+@@ -369,6 +370,11 @@ finally {
+     summary.tmuxCleanup = run('cleanup-tmux', 'tmux', ['-S', socket, 'kill-server']);
+     if (summary.tmuxCleanup.cliExitCode !== 0) (summary.cleanupErrors ??= []).push('Owned main tmux server failed to stop');
+   }
++  } catch (error) { (summary.cleanupErrors ??= []).push(error.message); }
++  finally {
++    try { summary.serviceProcessCleanup = await stopStandServices(root); }
++    catch (error) { (summary.cleanupErrors ??= []).push(error.message); }
++  }
+   if (endpoint) await new Promise(resolve => endpoint.close(resolve));
+   for (const commit of summary.actorCommits ?? []) {
+     try {
+diff --git a/test/main-switch-agent-channel.test.ts b/test/main-switch-agent-channel.test.ts
+index 7e5f23b..2c8ffe9 100644
+--- a/test/main-switch-agent-channel.test.ts
++++ b/test/main-switch-agent-channel.test.ts
+@@ -16,7 +16,7 @@ import { execute } from "../src/cli.ts";
+ import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
+ import { createWorkspacePorts } from "../src/os-runtime.ts";
+ import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
+-import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt } from "../scripts/qa-main-agent-channel-metadata.mjs";
++import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage, captureCompletedNativeActors, nativeCompletionReceipt, instrumentStandCli, nativePsReceipt, nativeCloseDenialReceipt, stopStandServices } from "../scripts/qa-main-agent-channel-metadata.mjs";
+ import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
+ import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
+ import * as generationHost from "../src/hotfix-host.ts";
+@@ -82,6 +82,49 @@ test("native PS receipt verifies full large JSON and refuses partial or unfinish
+   assert.throws(() => nativePsReceipt({ ...result, session_id: 42 }));
+ });
+ 
++test("native unauthorized close recognizes only the actual protected activation denial", () => {
++  const root = "/srv/dev/s64-fixture/root";
++  const target = root + "/.git/modules/raf-main/raf-hotfix/activation.lock.owner-b04f65c5-afc1-40e5-be5c-321861b51cf7";
++  const result = { exit_code: 1, output: JSON.stringify({ code: "PRODUCTION_ENTRY_FAILED", message: "EROFS: read-only file system, mkdir '" + target + "'" }) + "\n" };
++  assert.deepEqual(nativeCloseDenialReceipt(result, root), { sym64UnauthorizedCloseDenied: true, exit_code: 1, code: "EROFS", target });
++  for (const changed of [
++    { ...result, exit_code: 0 }, { ...result, session_id: 42 },
++    { ...result, output: result.output.replace("EROFS", "ENOENT") },
++    { ...result, output: result.output.replace("activation.lock.owner-", "other-") },
++    { ...result, output: result.output.replace("PRODUCTION_ENTRY_FAILED", "UNKNOWN") },
++    { ...result, output: result.output.replace(target, root + "/ev/cli-audit/result.json") },
++    { ...result, output: result.output.slice(0, -10) },
++  ]) assert.throws(() => nativeCloseDenialReceipt(changed, root));
++  assert.throws(() => nativeCloseDenialReceipt(result, root + "-other"));
++});
++
++test("stand cleanup stops a live service after a failed CLI stop without touching a peer", async () => {
++  const directory = await fs.mkdtemp(join(tmpdir(), "native-service-cleanup-"));
++  const children: ReturnType<typeof spawn>[] = [];
++  try {
++    for (const tree of ["root/raf-main-a", "peer/raf-main-a"]) {
++      const bin = join(directory, tree, "bin"); await fs.mkdir(bin, { recursive: true });
++      const script = join(bin, "service.ts");
++      await fs.writeFile(script, 'process.on("SIGTERM",()=>{});process.stdout.write("ready\\n");setInterval(()=>{},1000);');
++      const child = spawn(process.execPath, [script], { stdio: ["ignore", "pipe", "pipe"] }); children.push(child);
++      await once(child.stdout!, "data");
++    }
++    const failedStop = { cliExitCode: 1, stderr: "STATE_CONTEXT_REFUSED" };
++    assert.equal(failedStop.cliExitCode, 1);
++    const result = await stopStandServices(join(directory, "root"), { graceMs: 100 });
++    assert.equal(result.complete, true, "A failed logical-slot CLI stop must not leave the original physical-slot service alive");
++    assert.equal(await alive(children[0].pid!, await processStart(children[0].pid!).catch(() => "gone")), false);
++    assert.equal(children[1].exitCode, null, "Other fixture roots must stay live");
++    assert.equal(result.processes.length, 1);
++    assert.deepEqual(result.processes[0].signals, ["SIGTERM", "SIGKILL"]);
++    assert.deepEqual((await stopStandServices(join(directory, "root"))).processes, []);
++  } finally {
++    for (const child of children) { if (child.exitCode === null) child.kill("SIGKILL"); }
++    await Promise.all(children.map(child => child.exitCode === null ? once(child, "close") : Promise.resolve()));
++    await fs.rm(directory, { recursive: true, force: true });
++  }
++});
++
+ test("native final transcript waits for both final gates and native CLI completion", async () => {
+   const released: string[] = [];
+   const finished: string[] = [];

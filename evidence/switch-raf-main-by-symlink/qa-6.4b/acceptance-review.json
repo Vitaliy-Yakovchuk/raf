@@ -1,7 +1,7 @@
 {
   "item": "switch-raf-main-by-symlink:6.4",
   "status": "pending-next-native-stand",
-  "nativeReviewedSha": "37044e606d9c837252d253995914cabec9f6c0d0",
+  "nativeReviewedSha": "52892e0638844d2b2bcdbb92eb10f5a4ac9c61b3",
   "ownCommitsBeforeCompletion": [
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
@@ -62,6 +62,10 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "37044e606d9c837252d253995914cabec9f6c0d0"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "52892e0638844d2b2bcdbb92eb10f5a4ac9c61b3"
     }
   ],
   "evidenceIndexes": [
@@ -73,15 +77,37 @@
     "redactions-manifest.json",
     "native-gates-review.json",
     "native-finish-review.json",
-    "native-ps-audit-review.json"
+    "native-ps-audit-review.json",
+    "native-denial-cleanup-review.json"
   ],
   "latestOwnGroup": {
     "group": "switch-raf-main-by-symlink/agent-channel",
-    "runId": "71b2690e-a56a-4e20-9762-a36d96687410",
-    "raw": "native-ps-audit-qa.TestRunResult.json",
+    "runId": "782976b5-6bcb-4c68-b021-37ff859d75b6",
+    "selection": {
+      "files": [
+        "test/main-switch-agent-channel.test.ts"
+      ],
+      "testIds": []
+    },
+    "command": {
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts",
+        "test/main-switch-agent-channel.test.ts"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-develop",
+      "shell": false,
+      "environment": {
+        "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+        "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+        "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+        "TMPDIR": "/tmp/r-sGgut8"
+      }
+    },
+    "raw": "native-denial-cleanup-qa-final.TestRunResult.json",
     "cliExitCode": 0,
     "childExitCode": 0,
-    "passed": 110,
+    "passed": 88,
     "outcome": "passed",
     "cleanup": {
       "complete": true,
@@ -92,7 +118,8 @@
     "unexecuted": [],
     "unknown": [],
     "groupState": "complete",
-    "nextAction": "complete"
+    "nextAction": "complete",
+    "timeoutCount": 1
   },
   "layoutLimitation": {
     "runId": "7d1a27f6-a772-4c91-abba-9643db328b27",
@@ -106,11 +133,24 @@
   },
   "history": "All copied previous native stands are partial/failed; their read-only source manifests and the main-provided cleaned event streams remain linked from their reviews. None is acceptance of 6.4.",
   "fullUnitEvidenceAudit": {
-    "parsedTestRunResultFiles": 64,
+    "parsedTestRunResultFiles": 67,
     "allParsed": true,
-    "combinedStreams": "Complete raw JSON is unchanged. channel-fixture-qa has a 1513-byte combined-stream prefix plus the exact raw JSON; every other available combined-stream file is byte-identical to its raw JSON."
+    "availableCombinedStreams": 58,
+    "allRawJsonBytesPreserved": true,
+    "combinedStreamExtraBytes": [
+      {
+        "file": "channel-fixture-qa.TestRunResult.json",
+        "prefixBytes": 1513,
+        "suffixBytes": 0
+      },
+      {
+        "file": "native-denial-cleanup-red.TestRunResult.json",
+        "prefixBytes": 0,
+        "suffixBytes": 1513
+      }
+    ]
   },
   "nativeAcceptance": null,
   "scope": "Only assigned item 6.4. Checkboxes are left to raf; other open items prevent archive. No push.",
-  "latestPartialNative": "native-partial-s64-C5hj0C/review.json"
+  "latestPartialNative": "native-partial-s64-KoGtId/review.json"
 }

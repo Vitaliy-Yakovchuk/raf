@@ -1,0 +1,115 @@
+{
+  "status": "passed",
+  "incomingSource": {
+    "source": "/srv/dev/s64-oF3uEe-incoming.HFZjSR/incoming.json",
+    "sha256": "a3460b94b07acd2e487f7274d02550f15952b76656582c520038ba64115ab47d",
+    "bytes": 3165,
+    "mainAttestation": "Read-only host export; secscan 0; redaction edits 0. Only user-role incoming deliveries from isolated native transcripts. No durable raf receipt rows exist; reminder_deliveries and delivery_claims were empty.",
+    "rawReasoningRead": false
+  },
+  "deliveries": [
+    {
+      "from": "sym64-b",
+      "fromRunId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "to": "sym64-a",
+      "toRunId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "marker": "sym64-b-after-B",
+      "status": "received-in-native-user-item",
+      "recipientSourceLine": 58,
+      "recipientTimestamp": "2026-10-25T09:38:23.404Z",
+      "recipientNativeSha256": "5406f3eb593fa15877f5a81a4690a7073e5edc52da02c9c141340273abaaf07d",
+      "senderSourceLine": 28,
+      "senderCliReceipt": {
+        "accepted": true,
+        "receiptId": "7be8e5a2-c3e3-4c9d-9f9e-56bc068e20a0"
+      },
+      "senderAudit": "cli-audit/2698431b-d60b-4954-bc24-9b77322b4ec8.json"
+    },
+    {
+      "from": "sym64-b",
+      "fromRunId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "to": "sym64-a",
+      "toRunId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "marker": "sym64-b-after-A",
+      "status": "received-in-native-user-item",
+      "recipientSourceLine": 93,
+      "recipientTimestamp": "2026-10-25T09:39:01.169Z",
+      "recipientNativeSha256": "5406f3eb593fa15877f5a81a4690a7073e5edc52da02c9c141340273abaaf07d",
+      "senderSourceLine": 57,
+      "senderCliReceipt": {
+        "accepted": true,
+        "receiptId": "3f563ab5-56b1-4931-923a-5a2f48b48f22"
+      },
+      "senderAudit": "cli-audit/1d43b0df-19e6-46d1-9080-12a22404d806.json"
+    },
+    {
+      "from": "sym64-b",
+      "fromRunId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "to": "sym64-a",
+      "toRunId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "marker": "sym64-b-after-rollback",
+      "status": "received-in-native-user-item",
+      "recipientSourceLine": 124,
+      "recipientTimestamp": "2026-10-25T09:39:39.637Z",
+      "recipientNativeSha256": "5406f3eb593fa15877f5a81a4690a7073e5edc52da02c9c141340273abaaf07d",
+      "senderSourceLine": 82,
+      "senderCliReceipt": {
+        "accepted": true,
+        "receiptId": "66043062-4e6e-4889-9a87-123274f9eae2"
+      },
+      "senderAudit": "cli-audit/3a2af59a-79e5-4c6f-90f0-690a1d0ff068.json"
+    },
+    {
+      "from": "sym64-a",
+      "fromRunId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "to": "sym64-b",
+      "toRunId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "marker": "sym64-a-after-B",
+      "status": "received-in-native-user-item",
+      "recipientSourceLine": 32,
+      "recipientTimestamp": "2026-10-25T09:38:23.585Z",
+      "recipientNativeSha256": "0e41fb73345f791df3d7c3f0320676fc11775d2b100ad38cf5e94d227b651865",
+      "senderSourceLine": 54,
+      "senderCliReceipt": {
+        "accepted": true,
+        "receiptId": "ef9b12ee-1229-42fc-8194-a20f3a55bb5b"
+      },
+      "senderAudit": "cli-audit/953fc685-74ff-4fcd-bfb3-9fa656a65d56.json"
+    },
+    {
+      "from": "sym64-a",
+      "fromRunId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "to": "sym64-b",
+      "toRunId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "marker": "sym64-a-after-A",
+      "status": "received-in-native-user-item",
+      "recipientSourceLine": 61,
+      "recipientTimestamp": "2026-10-25T09:39:00.725Z",
+      "recipientNativeSha256": "0e41fb73345f791df3d7c3f0320676fc11775d2b100ad38cf5e94d227b651865",
+      "senderSourceLine": 89,
+      "senderCliReceipt": {
+        "accepted": true,
+        "receiptId": "223b8b2e-4fb8-4f77-bade-450700e70736"
+      },
+      "senderAudit": "cli-audit/acb493ff-8a09-45af-9c6c-00bd0349c875.json"
+    },
+    {
+      "from": "sym64-a",
+      "fromRunId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "to": "sym64-b",
+      "toRunId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "marker": "sym64-a-after-rollback",
+      "status": "received-in-native-user-item",
+      "recipientSourceLine": 86,
+      "recipientTimestamp": "2026-10-25T09:39:39.883Z",
+      "recipientNativeSha256": "0e41fb73345f791df3d7c3f0320676fc11775d2b100ad38cf5e94d227b651865",
+      "senderSourceLine": 120,
+      "senderCliReceipt": {
+        "accepted": true,
+        "receiptId": "79bf7d55-a7d7-43bf-b10d-8b9dcd8ac28f"
+      },
+      "senderAudit": "cli-audit/4b3c8600-a45f-43d6-952d-5d007079500e.json"
+    }
+  ],
+  "durableReceiptLimitation": "No separate durable receipt rows exist; acceptance is demonstrated by exact native recipient user-role items plus independent sender CLI accepted receipts, linked through native source hashes and actor runIds."
+}

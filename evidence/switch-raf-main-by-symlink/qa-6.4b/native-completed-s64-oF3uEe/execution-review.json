@@ -1,0 +1,655 @@
+{
+  "status": "passed",
+  "reviewed": "4e1d2345b9d4134df73e03fb9fb2f88c6b311db1",
+  "actors": [
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "nativeSessionId": "01a1726b-ebd2-7dd0-9d22-4e563d7e0417",
+      "process": {
+        "pid": 916243,
+        "startedAt": "2026-10-25T09:37:15.000Z"
+      },
+      "briefSha256": "1a267ba7c9e77275ec27b14873f0842ef3097fc261fc5c9b2f582cab3d993e3f",
+      "issuedPrefix": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+      "policy": "sym64-a/run/codex-sandbox-9a654eb6-2791-4e77-a9da-ae9275581acb/policy.json",
+      "filesystem": {
+        ":root": "read",
+        ":slash_tmp": "write",
+        "/srv/dev/s64-oF3uEe/.raf/tmp/9a654eb6-2791-4e77-a9da-ae9275581acb": "write",
+        "/srv/dev/s64-oF3uEe/root/openspec/changes/sym64-fixture": "write",
+        "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/worktrees/raf-develop": "write",
+        "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main": "write",
+        "/srv/dev/s64-oF3uEe/root/.git": "write",
+        "/srv/dev/s64-oF3uEe/root/raf-develop": "write",
+        "/srv/dev/s64-oF3uEe/root/raf-develop/.git": "write",
+        "/home/dev/.raf": "none",
+        "/tmp/raf-ipc-1000": "none",
+        "/tmp/raf-tools-1000": "none",
+        "/run": "none",
+        "/tmp/tmux-1000": "none",
+        "/tmp/cc-socks": "none",
+        "/srv/dev/s64-oF3uEe/.raf": "none",
+        "/srv/dev/s64-oF3uEe/root/raf-develop/qa/peer.sock": "none",
+        "/srv/dev/s64-oF3uEe/root": "read",
+        "/srv/dev/s64-oF3uEe/root/raf-main-a": "read",
+        "/srv/dev/s64-oF3uEe/root/raf-main-b": "read",
+        "/srv/dev/s64-oF3uEe/root/.gitmodules": "read",
+        "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix": "read",
+        "/srv/dev/s64-oF3uEe/.raf/tmp/9a654eb6-2791-4e77-a9da-ae9275581acb/codex-sandbox-9a654eb6-2791-4e77-a9da-ae9275581acb": "read",
+        "/srv/dev/s64-oF3uEe/.raf/tmp/9a654eb6-2791-4e77-a9da-ae9275581acb/tmux-1000": "write"
+      }
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "nativeSessionId": "01a1726c-41e6-74f3-91ea-b067f22fd097",
+      "process": {
+        "pid": 918298,
+        "startedAt": "2026-10-25T09:37:37.000Z"
+      },
+      "briefSha256": "fc7d6850f8be98ebb6b33b83b6f9b01fafc3bd0e992d29e7a93c855b7586381a",
+      "issuedPrefix": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+      "policy": "sym64-b/run/codex-sandbox-3484617d-e5a2-48a9-9a20-16daa2b73ac6/policy.json",
+      "filesystem": {
+        ":root": "read",
+        ":slash_tmp": "write",
+        "/srv/dev/s64-oF3uEe/.raf/tmp/3484617d-e5a2-48a9-9a20-16daa2b73ac6": "write",
+        "/srv/dev/s64-oF3uEe/root/openspec/changes/sym64-fixture": "write",
+        "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/worktrees/raf-develop": "write",
+        "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main": "write",
+        "/srv/dev/s64-oF3uEe/root/.git": "write",
+        "/srv/dev/s64-oF3uEe/root/raf-develop": "write",
+        "/srv/dev/s64-oF3uEe/root/raf-develop/.git": "write",
+        "/home/dev/.raf": "none",
+        "/tmp/raf-ipc-1000": "none",
+        "/tmp/raf-tools-1000": "none",
+        "/run": "none",
+        "/tmp/tmux-1000": "none",
+        "/tmp/cc-socks": "none",
+        "/srv/dev/s64-oF3uEe/.raf": "none",
+        "/srv/dev/s64-oF3uEe/root/raf-develop/qa/peer.sock": "none",
+        "/srv/dev/s64-oF3uEe/root": "read",
+        "/srv/dev/s64-oF3uEe/root/raf-main-a": "read",
+        "/srv/dev/s64-oF3uEe/root/raf-main-b": "read",
+        "/srv/dev/s64-oF3uEe/root/.gitmodules": "read",
+        "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix": "read",
+        "/srv/dev/s64-oF3uEe/.raf/tmp/3484617d-e5a2-48a9-9a20-16daa2b73ac6/codex-sandbox-3484617d-e5a2-48a9-9a20-16daa2b73ac6": "read",
+        "/srv/dev/s64-oF3uEe/.raf/tmp/3484617d-e5a2-48a9-9a20-16daa2b73ac6/tmux-1000": "write"
+      }
+    }
+  ],
+  "channels": [
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "stage": 1,
+      "kind": "message",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent message --to 'sym64-b' --text 'sym64-a-after-B'",
+      "sourceLine": 54,
+      "cleanedLine": 15,
+      "outputSourceLine": 65,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 69,
+      "stdoutSha256": "a94df8219d85dd0386a8f5d76ca6768027e0039d50ec9f0e19cf1b9cf2ec1b65",
+      "exactAudit": "cli-audit/953fc685-74ff-4fcd-bfb3-9fa656a65d56.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2b692017-1455-4f08-9a70-55f3026f1e8e/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "stage": 1,
+      "kind": "ps",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent ps",
+      "sourceLine": 69,
+      "cleanedLine": 19,
+      "outputSourceLine": 72,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 77341,
+      "stdoutSha256": "6ca45a4b8522c464e83c8e007a90db01823462c731d62b7e5c22bee6fbdadecc",
+      "exactAudit": "cli-audit/d8921e3a-0956-4cef-a01e-26fc95d77ecc.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2b692017-1455-4f08-9a70-55f3026f1e8e/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "stage": 2,
+      "kind": "message",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent message --to 'sym64-b' --text 'sym64-a-after-A'",
+      "sourceLine": 89,
+      "cleanedLine": 25,
+      "outputSourceLine": 98,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 69,
+      "stdoutSha256": "d0424909b7a457f899d17ea9c21f8eab2cb306280ea53c91a6c8694b8cf70bf5",
+      "exactAudit": "cli-audit/acb493ff-8a09-45af-9c6c-00bd0349c875.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/cfb4de0d-522d-4a91-9295-704960927e89/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "stage": 2,
+      "kind": "ps",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent ps",
+      "sourceLine": 102,
+      "cleanedLine": 29,
+      "outputSourceLine": 105,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 77341,
+      "stdoutSha256": "baa116c3a2926a1c5029267c82ab9f1c1bf050ab553e39ef9abfb0a4d44c6b86",
+      "exactAudit": "cli-audit/013900c0-9adc-4fea-8f5e-5dbdb3ab8e88.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/cfb4de0d-522d-4a91-9295-704960927e89/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "stage": 3,
+      "kind": "message",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent message --to 'sym64-b' --text 'sym64-a-after-rollback'",
+      "sourceLine": 120,
+      "cleanedLine": 35,
+      "outputSourceLine": 129,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 69,
+      "stdoutSha256": "60bd1c783d8a4c99532337b1a58638b91a36937500f0319a4f6f2de6ad7280dc",
+      "exactAudit": "cli-audit/4b3c8600-a45f-43d6-952d-5d007079500e.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2303a0f2-e987-4c71-819e-409d99f27f50/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-a",
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "stage": 3,
+      "kind": "ps",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent ps",
+      "sourceLine": 131,
+      "cleanedLine": 39,
+      "outputSourceLine": 134,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 77342,
+      "stdoutSha256": "2a03d6ecd7403978584564bf99c660ca9220b4f30cb85045c2bbbbafa0b2dee8",
+      "exactAudit": "cli-audit/2f8f4f64-1c48-4441-b707-69d92c3bf244.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2303a0f2-e987-4c71-819e-409d99f27f50/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "stage": 1,
+      "kind": "message",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent message --to 'sym64-a' --text 'sym64-b-after-B'",
+      "sourceLine": 28,
+      "cleanedLine": 7,
+      "outputSourceLine": 39,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 69,
+      "stdoutSha256": "f8fbf3b2664297c2dc66de4df63b12ef9f533352978ea5a3357a73373120a382",
+      "exactAudit": "cli-audit/2698431b-d60b-4954-bc24-9b77322b4ec8.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2b692017-1455-4f08-9a70-55f3026f1e8e/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "stage": 1,
+      "kind": "ps",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent ps",
+      "sourceLine": 43,
+      "cleanedLine": 11,
+      "outputSourceLine": 46,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 77341,
+      "stdoutSha256": "6a735ade828d2692c3e92ea4eec661841e78cb1cfa723c0e8af10c4f18209d2d",
+      "exactAudit": "cli-audit/2ae6bcd5-51eb-4879-9d24-c9ebb52305a2.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2b692017-1455-4f08-9a70-55f3026f1e8e/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "stage": 2,
+      "kind": "message",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent message --to 'sym64-a' --text 'sym64-b-after-A'",
+      "sourceLine": 57,
+      "cleanedLine": 15,
+      "outputSourceLine": 66,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 69,
+      "stdoutSha256": "2c9eb6e8d5cc6155c5fc0e1720fcc697f610a22b9faf214b3143a743463f7d7f",
+      "exactAudit": "cli-audit/1d43b0df-19e6-46d1-9080-12a22404d806.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/cfb4de0d-522d-4a91-9295-704960927e89/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "stage": 2,
+      "kind": "ps",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent ps",
+      "sourceLine": 68,
+      "cleanedLine": 19,
+      "outputSourceLine": 71,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 77341,
+      "stdoutSha256": "022e4415609f5932d8c61a4df779e4e9a9d5dba1d175eb60d4c1bc8e2f9a3a26",
+      "exactAudit": "cli-audit/e98c12f1-de31-4b6a-9d50-687652b875cd.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/cfb4de0d-522d-4a91-9295-704960927e89/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "stage": 3,
+      "kind": "message",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent message --to 'sym64-a' --text 'sym64-b-after-rollback'",
+      "sourceLine": 82,
+      "cleanedLine": 23,
+      "outputSourceLine": 91,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 69,
+      "stdoutSha256": "ff8b6dac9fab4341fb77339e40237cb7323f644176f4003001b4413cd2026ecc",
+      "exactAudit": "cli-audit/3a2af59a-79e5-4c6f-90f0-690a1d0ff068.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2303a0f2-e987-4c71-819e-409d99f27f50/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    },
+    {
+      "actor": "sym64-b",
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "stage": 3,
+      "kind": "ps",
+      "command": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts agent ps",
+      "sourceLine": 93,
+      "cleanedLine": 27,
+      "outputSourceLine": 96,
+      "cliExitCode": 0,
+      "stderr": "",
+      "stdoutCharacters": 77342,
+      "stdoutSha256": "08fcd862c18c2cddca34cc8739d1e348d2c9438b054be2d931ac920de21851ef",
+      "exactAudit": "cli-audit/af81535c-c280-4644-a66c-7c001052906b.json",
+      "module": "file:///srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/2303a0f2-e987-4c71-819e-409d99f27f50/raf-main/bin/raf.ts",
+      "nativeStdoutExactlyEqualsAuditPlusNewline": true
+    }
+  ],
+  "negativeCli": [
+    {
+      "actor": "sym64-a",
+      "stage": 1,
+      "report": "sym64-a/run/sym64-stage-1.json",
+      "actualResult": {
+        "label": "deny unauthorized CLI close",
+        "stage": 1,
+        "issuedPrefix": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+        "peer": "sym64-b",
+        "command": [
+          "node",
+          "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+          "agent",
+          "close",
+          "--id",
+          "sym64-b"
+        ],
+        "cliExitCode": 1,
+        "signal": null,
+        "stdout": "",
+        "stderr": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"EROFS: read-only file system, mkdir '/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-4009d0d6-2a4c-40bc-8ae8-e9f71c4f2c93'\"}\n",
+        "error": null,
+        "receipt": {
+          "sym64UnauthorizedCloseDenied": true,
+          "exit_code": 1,
+          "code": "EROFS",
+          "target": "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-4009d0d6-2a4c-40bc-8ae8-e9f71c4f2c93"
+        }
+      }
+    },
+    {
+      "actor": "sym64-a",
+      "stage": 2,
+      "report": "sym64-a/run/sym64-stage-2.json",
+      "actualResult": {
+        "label": "deny unauthorized CLI close",
+        "stage": 2,
+        "issuedPrefix": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+        "peer": "sym64-b",
+        "command": [
+          "node",
+          "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+          "agent",
+          "close",
+          "--id",
+          "sym64-b"
+        ],
+        "cliExitCode": 1,
+        "signal": null,
+        "stdout": "",
+        "stderr": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"EROFS: read-only file system, mkdir '/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-cc61c9b1-5de7-40e5-9247-8650beb64dae'\"}\n",
+        "error": null,
+        "receipt": {
+          "sym64UnauthorizedCloseDenied": true,
+          "exit_code": 1,
+          "code": "EROFS",
+          "target": "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-cc61c9b1-5de7-40e5-9247-8650beb64dae"
+        }
+      }
+    },
+    {
+      "actor": "sym64-a",
+      "stage": 3,
+      "report": "sym64-a/run/sym64-stage-3.json",
+      "actualResult": {
+        "label": "deny unauthorized CLI close",
+        "stage": 3,
+        "issuedPrefix": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+        "peer": "sym64-b",
+        "command": [
+          "node",
+          "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+          "agent",
+          "close",
+          "--id",
+          "sym64-b"
+        ],
+        "cliExitCode": 1,
+        "signal": null,
+        "stdout": "",
+        "stderr": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"EROFS: read-only file system, mkdir '/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-ec3346a8-d4d2-41bc-85c6-2a0c89b369c6'\"}\n",
+        "error": null,
+        "receipt": {
+          "sym64UnauthorizedCloseDenied": true,
+          "exit_code": 1,
+          "code": "EROFS",
+          "target": "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-ec3346a8-d4d2-41bc-85c6-2a0c89b369c6"
+        }
+      }
+    },
+    {
+      "actor": "sym64-b",
+      "stage": 1,
+      "report": "sym64-b/run/sym64-stage-1.json",
+      "actualResult": {
+        "label": "deny unauthorized CLI close",
+        "stage": 1,
+        "issuedPrefix": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+        "peer": "sym64-a",
+        "command": [
+          "node",
+          "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+          "agent",
+          "close",
+          "--id",
+          "sym64-a"
+        ],
+        "cliExitCode": 1,
+        "signal": null,
+        "stdout": "",
+        "stderr": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"EROFS: read-only file system, mkdir '/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-567ac590-620d-4c65-bef4-399a6077f8a4'\"}\n",
+        "error": null,
+        "receipt": {
+          "sym64UnauthorizedCloseDenied": true,
+          "exit_code": 1,
+          "code": "EROFS",
+          "target": "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-567ac590-620d-4c65-bef4-399a6077f8a4"
+        }
+      }
+    },
+    {
+      "actor": "sym64-b",
+      "stage": 2,
+      "report": "sym64-b/run/sym64-stage-2.json",
+      "actualResult": {
+        "label": "deny unauthorized CLI close",
+        "stage": 2,
+        "issuedPrefix": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+        "peer": "sym64-a",
+        "command": [
+          "node",
+          "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+          "agent",
+          "close",
+          "--id",
+          "sym64-a"
+        ],
+        "cliExitCode": 1,
+        "signal": null,
+        "stdout": "",
+        "stderr": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"EROFS: read-only file system, mkdir '/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-be073d14-eade-4709-960e-5b3dbf8b0da1'\"}\n",
+        "error": null,
+        "receipt": {
+          "sym64UnauthorizedCloseDenied": true,
+          "exit_code": 1,
+          "code": "EROFS",
+          "target": "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-be073d14-eade-4709-960e-5b3dbf8b0da1"
+        }
+      }
+    },
+    {
+      "actor": "sym64-b",
+      "stage": 3,
+      "report": "sym64-b/run/sym64-stage-3.json",
+      "actualResult": {
+        "label": "deny unauthorized CLI close",
+        "stage": 3,
+        "issuedPrefix": "node /srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+        "peer": "sym64-a",
+        "command": [
+          "node",
+          "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/generations/22960f98-cf45-47df-9f27-4a10320603e3/raf-main/bin/raf.ts",
+          "agent",
+          "close",
+          "--id",
+          "sym64-a"
+        ],
+        "cliExitCode": 1,
+        "signal": null,
+        "stdout": "",
+        "stderr": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"EROFS: read-only file system, mkdir '/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-be99e98a-918c-4a0d-8980-e7f4e3ad4d22'\"}\n",
+        "error": null,
+        "receipt": {
+          "sym64UnauthorizedCloseDenied": true,
+          "exit_code": 1,
+          "code": "EROFS",
+          "target": "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix/activation.lock.owner-be99e98a-918c-4a0d-8980-e7f4e3ad4d22"
+        }
+      }
+    }
+  ],
+  "helperCompletions": [
+    {
+      "actor": "sym64-a",
+      "stage": 0,
+      "finalExitCode": 0,
+      "finalOutputSourceLine": 50,
+      "report": "sym64-a/run/sym64-source-0.json",
+      "sha256": "2ba4a9e05ed5490e63540757cdc6edc1584825cecacaabefbcc4a55b33379da8"
+    },
+    {
+      "actor": "sym64-a",
+      "stage": 1,
+      "finalExitCode": 0,
+      "finalOutputSourceLine": 85,
+      "report": "sym64-a/run/sym64-stage-1.json",
+      "sha256": "14e1aa99a28c7fa344db2a6bd728b3a9ed7f4ed7a047e594be481a3f77022469"
+    },
+    {
+      "actor": "sym64-a",
+      "stage": 2,
+      "finalExitCode": 0,
+      "finalOutputSourceLine": 118,
+      "report": "sym64-a/run/sym64-stage-2.json",
+      "sha256": "799a747b334254e49144c47b0b4fe76a4160fc0625aeade44dc4a0f8e64208ef"
+    },
+    {
+      "actor": "sym64-a",
+      "stage": 3,
+      "finalExitCode": 0,
+      "finalOutputSourceLine": 145,
+      "report": "sym64-a/run/sym64-stage-3.json",
+      "sha256": "2e806d81599a991831d0e93ba668058717a0b9f0ba84becb9bb21e2b8f006bd3"
+    },
+    {
+      "actor": "sym64-b",
+      "stage": 0,
+      "finalExitCode": 0,
+      "finalOutputSourceLine": 24,
+      "report": "sym64-b/run/sym64-source-0.json",
+      "sha256": "5a625463380689e4a1792ef788ddc2bd8889a012815358d5321f8ea0aebe97c3"
+    },
+    {
+      "actor": "sym64-b",
+      "stage": 1,
+      "finalExitCode": 0,
+      "finalOutputSourceLine": 53,
+      "report": "sym64-b/run/sym64-stage-1.json",
+      "sha256": "812182c4933bc68785aa2416addeee77be7c646e0edc84251e4a9a93d1554d43"
+    },
+    {
+      "actor": "sym64-b",
+      "stage": 2,
+      "finalExitCode": 0,
+      "finalOutputSourceLine": 78,
+      "report": "sym64-b/run/sym64-stage-2.json",
+      "sha256": "187c5e343e36b3ba95612456368283719784ab2691308aec25eebe7f8308f6f2"
+    },
+    {
+      "actor": "sym64-b",
+      "stage": 3,
+      "finalExitCode": 0,
+      "finalOutputSourceLine": 103,
+      "report": "sym64-b/run/sym64-stage-3.json",
+      "sha256": "c1268b465fd2100eba74f32cd6feac7d8fbe3b2518069a35a53272012461accc"
+    }
+  ],
+  "probeCounts": {
+    "positive": 78,
+    "total": 1756,
+    "negative": 1678
+  },
+  "actorCommits": [
+    {
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "repository": "/srv/dev/s64-oF3uEe/root/raf-develop",
+      "oid": "2db6be134f0d5539b307981655ed1bcc9d9f3276",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "repository": "/srv/dev/s64-oF3uEe/root",
+      "oid": "58dabdb11e7dc61f055e91ba8789b0ac8d56962d",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "repository": "/srv/dev/s64-oF3uEe/root/raf-develop",
+      "oid": "9797930d5c17f7f3671af7d9e421f2ea2f0b742b",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "repository": "/srv/dev/s64-oF3uEe/root",
+      "oid": "abdfa83c817be861862db64226565b8137867c51",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "repository": "/srv/dev/s64-oF3uEe/root/raf-develop",
+      "oid": "49147a125eee0c6e1a98a332f09634e91e0033e7",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "repository": "/srv/dev/s64-oF3uEe/root",
+      "oid": "23ac0dd9e4ebf3462ca5f9e450d927d8f50d9d0f",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "repository": "/srv/dev/s64-oF3uEe/root/raf-develop",
+      "oid": "20e35530e7b1616474f52fa2b31bddadb12dee5c",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+      "repository": "/srv/dev/s64-oF3uEe/root",
+      "oid": "0ca0fdc265324f09cc82483e04c7b23e385a7ff9",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "repository": "/srv/dev/s64-oF3uEe/root/raf-develop",
+      "oid": "52e004f69324a30536f939e0d08ec49fa3dbcfbd",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "repository": "/srv/dev/s64-oF3uEe/root",
+      "oid": "c875642d5ca7845d8a66dfdf6727da3e3e42d800",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "repository": "/srv/dev/s64-oF3uEe/root/raf-develop",
+      "oid": "5f6e7a2e0a4395a64e498aedb65b2b21f39ae386",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "repository": "/srv/dev/s64-oF3uEe/root",
+      "oid": "dde28590672832bf03964ccf2727664f42724fb4",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "repository": "/srv/dev/s64-oF3uEe/root/raf-develop",
+      "oid": "b96777baabba3a6e93ac41f829f095f87461d533",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "repository": "/srv/dev/s64-oF3uEe/root",
+      "oid": "aa5fba5da69d17ee88cda2848581d33cec434b4e",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "repository": "/srv/dev/s64-oF3uEe/root/raf-develop",
+      "oid": "8b831abeadb0270a5c75adcfe3ecc60f8292065d",
+      "verifiedAfterExit": true
+    },
+    {
+      "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+      "repository": "/srv/dev/s64-oF3uEe/root",
+      "oid": "e84429469fd35ea456ca8a634bfc75c9a53916da",
+      "verifiedAfterExit": true
+    }
+  ],
+  "postExitCommitProofCommands": 32,
+  "metadataUnchangedBeforeAfterEachProbeAndExit": true,
+  "hostEndpointsAndAllActorsLiveAtEveryControl": true,
+  "cleanupComplete": true,
+  "nodeExitCode": 0,
+  "nativeSource": {
+    "source": "/srv/dev/s64-oF3uEe/ev",
+    "sourceSha256": {
+      "a": "5406f3eb593fa15877f5a81a4690a7073e5edc52da02c9c141340273abaaf07d",
+      "b": "0e41fb73345f791df3d7c3f0320676fc11775d2b100ad38cf5e94d227b651865"
+    },
+    "edits": [],
+    "kept": "session_meta id/timestamp; custom/function tool calls and outputs unchanged except listed edits; task_started/complete"
+  },
+  "independentIncomingDeliveries": "delivery-review.json",
+  "nativeAcceptance": true
+}

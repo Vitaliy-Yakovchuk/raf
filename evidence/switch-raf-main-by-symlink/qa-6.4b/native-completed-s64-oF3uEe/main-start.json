@@ -1,0 +1,24 @@
+{
+  "command": [
+    "tmux",
+    "-S",
+    "/srv/dev/s64-oF3uEe/root/raf-develop/qa/peer.sock",
+    "new-session",
+    "-d",
+    "-s",
+    "sym64-main",
+    "-x",
+    "180",
+    "-y",
+    "50",
+    "/opt/dev/node/bin/node",
+    "/srv/dev/sym64m-src.kPL9mk/raf-develop/test/helpers/z4044-main-pane.mjs",
+    "/srv/dev/s64-oF3uEe"
+  ],
+  "cwd": "/srv/dev/s64-oF3uEe/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": ""
+}

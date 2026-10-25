@@ -1,0 +1,23 @@
+{
+  "assignedItem": "switch-raf-main-by-symlink:6.4",
+  "auditSources": [
+    "/srv/dev/work/orchestrator/openspec/changes/switch-raf-main-by-symlink/proposal.md",
+    "/srv/dev/work/orchestrator/openspec/changes/switch-raf-main-by-symlink/tasks.md:51-57",
+    "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/autonomous-development/spec.md:119-141"
+  ],
+  "currentAndConsistent": true,
+  "reason": "Protected P/C design, unchanged issued channel and live native denials remain the active requested behavior; final stand executes the approved isolated fixture without owner state access. Fixture fixes preserve this scope.",
+  "openItemsBeforeRafCheckbox": [
+    "5.4",
+    "6.4",
+    "7.1",
+    "7.2",
+    "7.3"
+  ],
+  "checkboxesEditedByAgent": false,
+  "archiveRequired": false,
+  "archiveReason": "Other items remain open; only raf may commit assigned checkbox.",
+  "rawUnitJsonParsed": 77,
+  "combinedStreamsWithExactRawJson": 68,
+  "unitStderrLimitation": "Historical tool returns combined stdout/stderr only; explicit null retained rather than claiming separate stderr. Native CLI audit and denied subprocesses preserve exact separate stdout/stderr/exit."
+}

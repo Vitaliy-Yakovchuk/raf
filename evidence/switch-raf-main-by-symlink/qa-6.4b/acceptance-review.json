@@ -1,7 +1,7 @@
 {
   "item": "switch-raf-main-by-symlink:6.4",
-  "status": "pending-next-native-stand",
-  "nativeReviewedSha": "dda183b331b1a2942e14892047e3b9965b5ca963",
+  "status": "passed",
+  "nativeReviewedSha": "4e1d2345b9d4134df73e03fb9fb2f88c6b311db1",
   "ownCommitsBeforeCompletion": [
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
@@ -82,6 +82,10 @@
     {
       "repository": "/srv/dev/work/orchestrator/raf-develop",
       "sha": "dda183b331b1a2942e14892047e3b9965b5ca963"
+    },
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "4e1d2345b9d4134df73e03fb9fb2f88c6b311db1"
     }
   ],
   "evidenceIndexes": [
@@ -127,7 +131,7 @@
     "cliExitCode": 1,
     "reason": "The aggregate retains historical red from test/hotfix-worktree.test.ts and test/hotfix-activation.test.ts, belonging to complete-raf-flow-contracts/z392, outside this layout preset. The aggregate was not reset. z392 was not granted or run by this item. This is not an overall layout-group pass."
   },
-  "history": "All copied previous native stands are partial/failed; their read-only source manifests and the main-provided cleaned event streams remain linked from their reviews. None is acceptance of 6.4.",
+  "history": "All prior copied native stands remain partial/failed and are not acceptance. Stand45 on exact 4e1d2345 is the first full native acceptance; raw historical evidence is unchanged.",
   "fullUnitEvidenceAudit": {
     "parsedTestRunResultFiles": 77,
     "allParsed": true,
@@ -157,8 +161,126 @@
     ],
     "limitation": "Some historical exec tools expose combined stdout/stderr only. Separate CLI receipt explicitly distinguishes child exitCode and unavailable stderr; missing separate stderr is never invented."
   },
-  "nativeAcceptance": null,
+  "nativeAcceptance": true,
   "scope": "Only assigned item 6.4. Checkboxes are left to raf; other open items prevent archive. No push.",
   "latestPartialNative": "native-partial-s64-uhDBd0/review.json",
-  "nextAction": "Host secret scan/review; commit fixture/test/evidence; Main executes clean-clone live stand45."
+  "nextAction": "Commit reviewed evidence; atomically report succeeded for 6.4. Raf owns checkbox. Other open items prevent archive.",
+  "nativeStand": "native-completed-s64-oF3uEe/execution-review.json",
+  "independentDeliveries": "native-completed-s64-oF3uEe/delivery-review.json",
+  "scopeAudit": "native-completed-s64-oF3uEe/scope-audit.json",
+  "sourceManifest": "native-completed-s64-oF3uEe/source-manifests.json",
+  "nativeExecution": {
+    "command": "CODEX_HOME=/home/dev/.codex LC_ALL=C node scripts/qa-main-agent-channel.mjs 4e1d2345b9d4134df73e03fb9fb2f88c6b311db1 .",
+    "cleanClone": true,
+    "nodeExitCode": 0,
+    "actors": [
+      {
+        "agentId": "sym64-a",
+        "runId": "9a654eb6-2791-4e77-a9da-ae9275581acb",
+        "nativeSessionId": "01a1726b-ebd2-7dd0-9d22-4e563d7e0417",
+        "briefSha256": "1a267ba7c9e77275ec27b14873f0842ef3097fc261fc5c9b2f582cab3d993e3f"
+      },
+      {
+        "agentId": "sym64-b",
+        "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+        "nativeSessionId": "01a1726c-41e6-74f3-91ea-b067f22fd097",
+        "briefSha256": "fc7d6850f8be98ebb6b33b83b6f9b01fafc3bd0e992d29e7a93c855b7586381a"
+      }
+    ],
+    "unchangedBriefs": true,
+    "switches": [
+      "A-to-B",
+      "B-to-A",
+      "rollback-to-B"
+    ],
+    "simpleMessageAndPsCommands": 12,
+    "incomingDeliveries": 6,
+    "probeCounts": {
+      "positive": 78,
+      "total": 1756,
+      "negative": 1678
+    },
+    "helperCompletionsActualZero": 8,
+    "ownCommitsStillReachableAfterExit": 16,
+    "postExitGitChecksZero": 32,
+    "metadataAndLocksPreserved": true,
+    "hostEndpointsAndOtherActorsLive": true,
+    "cleanupComplete": true,
+    "unknown": [],
+    "unexecuted": [],
+    "versions": {
+      "node": {
+        "command": [
+          "node",
+          "--version"
+        ],
+        "cwd": "/srv/dev/s64-oF3uEe/root",
+        "cliExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "v26.12.1\n",
+        "stderr": ""
+      },
+      "codex": {
+        "command": [
+          "codex",
+          "--version"
+        ],
+        "cwd": "/srv/dev/s64-oF3uEe/root",
+        "cliExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "codex-cli 0.163.0\n",
+        "stderr": ""
+      },
+      "git": {
+        "command": [
+          "git",
+          "--version"
+        ],
+        "cwd": "/srv/dev/s64-oF3uEe/root",
+        "cliExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "git version 2.53.0\n",
+        "stderr": ""
+      },
+      "tmux": {
+        "command": [
+          "tmux",
+          "-V"
+        ],
+        "cwd": "/srv/dev/s64-oF3uEe/root",
+        "cliExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "tmux 3.6\n",
+        "stderr": ""
+      },
+      "bwrap": {
+        "command": [
+          "bwrap",
+          "--version"
+        ],
+        "cwd": "/srv/dev/s64-oF3uEe/root",
+        "cliExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "bubblewrap 0.11.1\n",
+        "stderr": ""
+      },
+      "uname": {
+        "command": [
+          "uname",
+          "-a"
+        ],
+        "cwd": "/srv/dev/s64-oF3uEe/root",
+        "cliExitCode": 0,
+        "signal": null,
+        "error": null,
+        "stdout": "Linux ubuntu-32gb-hel1-1 7.0.0-30-generic #30-Ubuntu SMP PREEMPT_DYNAMIC Fri Jul 31 18:22:54 UTC 2026 x86_64 GNU/Linux\n",
+        "stderr": ""
+      }
+    }
+  }
 }

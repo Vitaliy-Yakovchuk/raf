@@ -1,0 +1,98 @@
+{
+  "sourceSha256": {
+    "sym64-a": "5406f3eb593fa15877f5a81a4690a7073e5edc52da02c9c141340273abaaf07d",
+    "sym64-b": "973dbde91291a4b7b3805d860a8efb41e25ed05d49c477d89a44e1c257229c5e",
+    "sym64-a-final": "5406f3eb593fa15877f5a81a4690a7073e5edc52da02c9c141340273abaaf07d",
+    "sym64-b-final": "0e41fb73345f791df3d7c3f0320676fc11775d2b100ad38cf5e94d227b651865"
+  },
+  "redactionEdits": 0,
+  "scope": "user-role incoming items only (event_msg.user_message, response_item message role=user); secret values and session-env markers redacted (0 edits); startup brief/environment_context items omitted (not deliveries)",
+  "items": {
+    "sym64-a": [
+      {
+        "sourceLine": 58,
+        "timestamp": "2026-10-25T09:38:23.404Z",
+        "kind": "response_item.message.user",
+        "text": "[sym64-b] sym64-b-after-B"
+      },
+      {
+        "sourceLine": 93,
+        "timestamp": "2026-10-25T09:39:01.169Z",
+        "kind": "response_item.message.user",
+        "text": "[sym64-b] sym64-b-after-A"
+      },
+      {
+        "sourceLine": 124,
+        "timestamp": "2026-10-25T09:39:39.637Z",
+        "kind": "response_item.message.user",
+        "text": "[sym64-b] sym64-b-after-rollback"
+      }
+    ],
+    "sym64-b": [
+      {
+        "sourceLine": 32,
+        "timestamp": "2026-10-25T09:38:23.585Z",
+        "kind": "response_item.message.user",
+        "text": "[sym64-a] sym64-a-after-B"
+      },
+      {
+        "sourceLine": 61,
+        "timestamp": "2026-10-25T09:39:00.725Z",
+        "kind": "response_item.message.user",
+        "text": "[sym64-a] sym64-a-after-A"
+      },
+      {
+        "sourceLine": 86,
+        "timestamp": "2026-10-25T09:39:39.883Z",
+        "kind": "response_item.message.user",
+        "text": "[sym64-a] sym64-a-after-rollback"
+      }
+    ],
+    "sym64-a-final": [
+      {
+        "sourceLine": 58,
+        "timestamp": "2026-10-25T09:38:23.404Z",
+        "kind": "response_item.message.user",
+        "text": "[sym64-b] sym64-b-after-B"
+      },
+      {
+        "sourceLine": 93,
+        "timestamp": "2026-10-25T09:39:01.169Z",
+        "kind": "response_item.message.user",
+        "text": "[sym64-b] sym64-b-after-A"
+      },
+      {
+        "sourceLine": 124,
+        "timestamp": "2026-10-25T09:39:39.637Z",
+        "kind": "response_item.message.user",
+        "text": "[sym64-b] sym64-b-after-rollback"
+      }
+    ],
+    "sym64-b-final": [
+      {
+        "sourceLine": 32,
+        "timestamp": "2026-10-25T09:38:23.585Z",
+        "kind": "response_item.message.user",
+        "text": "[sym64-a] sym64-a-after-B"
+      },
+      {
+        "sourceLine": 61,
+        "timestamp": "2026-10-25T09:39:00.725Z",
+        "kind": "response_item.message.user",
+        "text": "[sym64-a] sym64-a-after-A"
+      },
+      {
+        "sourceLine": 86,
+        "timestamp": "2026-10-25T09:39:39.883Z",
+        "kind": "response_item.message.user",
+        "text": "[sym64-a] sym64-a-after-rollback"
+      },
+      {
+        "sourceLine": 119,
+        "timestamp": "2026-10-25T09:40:10.342Z",
+        "kind": "response_item.message.user",
+        "text": "[raf] Agent sym64-a of project raf is finally closed."
+      }
+    ]
+  }
+}

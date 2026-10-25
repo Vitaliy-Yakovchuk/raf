@@ -1,0 +1,67 @@
+{
+  "runId": "3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+  "profile": "linux",
+  "sandboxMode": "workspace-write",
+  "codex": "/home/dev/.local/bin/codex",
+  "bwrap": "/usr/bin/bwrap",
+  "backend": {
+    "selection": "PATH",
+    "sharedDaemon": false,
+    "helperDirectory": "/srv/dev/s64-oF3uEe/.raf/tmp/3484617d-e5a2-48a9-9a20-16daa2b73ac6/codex-sandbox-3484617d-e5a2-48a9-9a20-16daa2b73ac6",
+    "verification": "preflight Unix IPC, TCP denial and hidden paths"
+  },
+  "network": {
+    "codex": "enabled",
+    "namespace": "unshared",
+    "socketFamilies": [
+      "AF_UNIX"
+    ],
+    "ioUring": "denied"
+  },
+  "tmuxSockets": "private tmpfs per sandboxed command",
+  "filesystem": {
+    ":root": "read",
+    ":slash_tmp": "write",
+    "/srv/dev/s64-oF3uEe/.raf/tmp/3484617d-e5a2-48a9-9a20-16daa2b73ac6": "write",
+    "/srv/dev/s64-oF3uEe/root/openspec/changes/sym64-fixture": "write",
+    "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/worktrees/raf-develop": "write",
+    "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main": "write",
+    "/srv/dev/s64-oF3uEe/root/.git": "write",
+    "/srv/dev/s64-oF3uEe/root/raf-develop": "write",
+    "/srv/dev/s64-oF3uEe/root/raf-develop/.git": "write",
+    "/home/dev/.raf": "none",
+    "/tmp/raf-ipc-1000": "none",
+    "/tmp/raf-tools-1000": "none",
+    "/run": "none",
+    "/tmp/tmux-1000": "none",
+    "/tmp/cc-socks": "none",
+    "/srv/dev/s64-oF3uEe/.raf": "none",
+    "/srv/dev/s64-oF3uEe/root/raf-develop/qa/peer.sock": "none",
+    "/srv/dev/s64-oF3uEe/root": "read",
+    "/srv/dev/s64-oF3uEe/root/raf-main-a": "read",
+    "/srv/dev/s64-oF3uEe/root/raf-main-b": "read",
+    "/srv/dev/s64-oF3uEe/root/.gitmodules": "read",
+    "/srv/dev/s64-oF3uEe/root/.git/modules/raf-main/raf-hotfix": "read",
+    "/srv/dev/s64-oF3uEe/.raf/tmp/3484617d-e5a2-48a9-9a20-16daa2b73ac6/codex-sandbox-3484617d-e5a2-48a9-9a20-16daa2b73ac6": "read",
+    "/srv/dev/s64-oF3uEe/.raf/tmp/3484617d-e5a2-48a9-9a20-16daa2b73ac6/tmux-1000": "write"
+  },
+  "writableFiles": [
+    "/srv/dev/s64-oF3uEe/root/questions/projects/raf/questions.md"
+  ],
+  "symlinkParents": [
+    "/srv/dev/s64-oF3uEe/root"
+  ],
+  "environment": {
+    "cleared": [
+      "TMUX",
+      "TMUX_PANE",
+      "SSH_AUTH_SOCK",
+      "SSH_AGENT_PID",
+      "DBUS_SESSION_BUS_ADDRESS",
+      "XDG_RUNTIME_DIR"
+    ],
+    "set": {
+      "TMUX_TMPDIR": "/srv/dev/s64-oF3uEe/.raf/tmp/3484617d-e5a2-48a9-9a20-16daa2b73ac6"
+    }
+  }
+}

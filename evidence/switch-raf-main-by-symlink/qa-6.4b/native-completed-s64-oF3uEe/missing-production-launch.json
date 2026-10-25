@@ -1,0 +1,27 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/s64-oF3uEe/root/raf-main/bin/raf.ts",
+    "agent",
+    "run",
+    "--id",
+    "sym64-refused",
+    "--type",
+    "implement",
+    "--project",
+    "raf",
+    "--features",
+    "sym64-fixture",
+    "--phase",
+    "implement",
+    "--complexity",
+    "mechanical",
+    "--tasks",
+    "sym64-fixture:1.3"
+  ],
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "{\"code\":\"STATE_CONTEXT_REFUSED\",\"message\":\"STATE_CONTEXT_REFUSED: Cannot prove state context for /srv/dev/s64-oF3uEe/root/raf-main-a/bin/raf.ts: Command failed: git -C /srv/dev/s64-oF3uEe/root/raf-main-a rev-parse --path-format=absolute --git-common-dir\"}\n"
+}

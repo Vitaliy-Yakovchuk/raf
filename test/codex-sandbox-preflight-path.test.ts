@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
-import { endianness, userInfo } from 'node:os';
+import { userInfo } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { test } from 'node:test';
 import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
@@ -8,10 +8,7 @@ import { prepareCodexSandbox } from '../src/codex-sandbox.ts';
 const linuxSunPathBytes = 108;
 
 async function fixture() {
-  const socketSyscall = new Map([['x64', 41], ['arm64', 198]]).get(process.arch);
-  assert.equal(process.platform, 'linux', 'Z390 fixture requires Linux seccomp');
-  assert.equal(endianness(), 'LE', 'Z390 fixture requires little-endian seccomp instructions');
-  assert.ok(socketSyscall !== undefined, 'Z390 fixture supports x64/arm64 socket syscalls');
+  assert.equal(process.platform, 'linux', 'Z390 fixture requires Linux namespaces');
   const root = await mkdtemp('/tmp/z390-');
   const bin = join(root, 'bin');
   const home = join(root, 'home');
@@ -27,32 +24,6 @@ async function fixture() {
   const witness = join(root, 'listening.jsonl');
   const invocations = join(root, 'codex-invocations.jsonl');
   await Promise.all([bin, accountRoot, cwd, shortRun, shortTmp, longRun, longTmp].map(path => mkdir(path, { recursive: true })));
-  const loadWordAbsolute = 0x20;
-  const jumpEqual = 0x15;
-  const returnConstant = 0x06;
-  const denyWithEperm = 0x00050001;
-  const allow = 0x7fff0000;
-  const syscallOffset = 0;
-  const firstArgumentOffset = 16;
-  const afInet = 2;
-  const afInet6 = 10;
-  const instructions: [number, number, number, number][] = [
-    [loadWordAbsolute, 0, 0, syscallOffset],
-    [jumpEqual, 0, 4, socketSyscall],
-    [loadWordAbsolute, 0, 0, firstArgumentOffset],
-    [jumpEqual, 1, 0, afInet],
-    [jumpEqual, 0, 1, afInet6],
-    [returnConstant, 0, 0, denyWithEperm],
-    [returnConstant, 0, 0, allow],
-  ];
-  const seccomp = Buffer.alloc(instructions.length * 8);
-  for (const [index, [code, jumpTrue, jumpFalse, value]] of instructions.entries()) {
-    seccomp.writeUInt16LE(code, index * 8);
-    seccomp.writeUInt8(jumpTrue, index * 8 + 2);
-    seccomp.writeUInt8(jumpFalse, index * 8 + 3);
-    seccomp.writeUInt32LE(value, index * 8 + 4);
-  }
-  await writeFile(join(bin, 'deny-tcp.bpf'), seccomp);
   await writeFile(join(accountRoot, 'fixture-marker'), 'z390-account-root');
   await writeFile(join(bin, 'socket-witness.cjs'), `
 const fs = require('node:fs');
@@ -65,7 +36,7 @@ const originalEmit = net.Server.prototype.emit;
 net.Server.prototype.emit = function(event, ...args) {
   if (event === 'listening') {
     const address = this.address();
-    if (typeof address === 'string') fs.appendFileSync(${JSON.stringify(witness)}, JSON.stringify({ address }) + '\\n');
+    fs.appendFileSync(${JSON.stringify(witness)}, JSON.stringify({ address }) + '\\n');
   }
   return Reflect.apply(originalEmit, this, [event, ...args]);
 };
@@ -109,25 +80,22 @@ for (const path of [...new Set(denied)].sort((left, right) => left.length - righ
   if (masks.some(parent => path === parent || path.startsWith(parent + '/'))) continue;
   const stat = statSync(path, { throwIfNoEntry: false });
   if (!stat) continue;
-  denyMounts.push('--perms', '000', ...(stat.isDirectory() ? ['--tmpfs', path] : ['--ro-bind-data', '4', path]));
+  denyMounts.push('--perms', '000', ...(stat.isDirectory() ? ['--tmpfs', path] : ['--ro-bind-data', '3', path]));
   masks.push(path);
 }
-const seccompFd = openSync(join(__dirname, 'deny-tcp.bpf'), 'r');
 const emptyFd = openSync('/dev/null', 'r');
-const child = spawnSync('/usr/bin/bwrap', [
-  '--die-with-parent', '--unshare-user', '--unshare-pid', '--unshare-net',
-  '--seccomp', '3',
+const child = spawnSync('bwrap', [
+  '--die-with-parent', '--unshare-user', '--unshare-pid',
   '--ro-bind', '/', '/', '--bind', '/tmp', '/tmp', '--dev', '/dev', '--proc', '/proc',
   ...${JSON.stringify(accountHomes)}.flatMap(home => ['--tmpfs', home]),
   ...denyMounts,
   '--', args[separator + 1], '--require', join(__dirname, 'socket-witness.cjs'), ...args.slice(separator + 2)
 ], {
-  stdio: ['inherit', 'inherit', 'inherit', seccompFd, emptyFd], env: process.env
+  stdio: ['inherit', 'inherit', 'inherit', emptyFd], env: process.env
 });
-closeSync(seccompFd);
 closeSync(emptyFd);
-if (child.error) { process.stderr.write('Z390 fixture requires /usr/bin/bwrap, seccomp, and user/pid/mount/network namespaces: ' + child.error.message); process.exit(98); }
-if (child.status !== 0) process.stderr.write('\\nZ390 fixture isolated probe failed; /usr/bin/bwrap, seccomp, and user/pid/mount/network namespaces are required\\n');
+if (child.error) { process.stderr.write('Z390 fixture requires the prepared bwrap backend: ' + child.error.message); process.exit(98); }
+if (child.status !== 0) process.stderr.write('\\nZ390 fixture isolated probe failed through the prepared bwrap backend\\n');
 process.exit(child.status ?? 99);
 `, { mode: 0o700 });
   await symlink('/usr/bin/bwrap', join(bin, 'bwrap'));
@@ -172,9 +140,11 @@ for (const scenario of scenarios) {
           assert.deepEqual(invocation.argv, [...invocation.globalOptions, ...invocation.args]);
         }
         const observations = (await readFile(f.witness, 'utf8')).trim().split('\n')
-          .map(line => JSON.parse(line) as { address: string });
-        assert.ok(observations.length > 0, 'preflight must actually listen on a Unix socket, rather than skip the probe');
-        for (const { address } of observations) {
+          .map(line => JSON.parse(line) as { address: string | { address: string; port: number } });
+        const unixObservations = observations.filter((value): value is { address: string } => typeof value.address === 'string');
+        assert.ok(unixObservations.length > 0, 'preflight must actually listen on a Unix socket, rather than skip the probe');
+        assert.ok(observations.some(({ address }) => typeof address === 'object' && address.address === '127.0.0.1' && address.port > 0), 'preflight must actually listen on its own loopback TCP socket under the Z.421 backend');
+        for (const { address } of unixObservations) {
           assert.ok(Buffer.byteLength(address) < linuxSunPathBytes, 'the actual listening socket must fit Linux sun_path');
         }
       } finally {

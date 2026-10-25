@@ -1,11 +1,33 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { spawnSync } from 'node:child_process';
 import { traceEvidence } from './helpers/z404-trace-evidence.ts';
 import { prepareHostTmuxEndpoint } from './helpers/z4044-host-tmux.mjs';
 import { configureLiveCodexTrust } from './helpers/z4044-live-trust.mjs';
 
 const helper = '/tmp/own/bwrap';
 const filter = '/tmp/own/network.bpf';
+
+test('[Z.404 E09] live fixture keeps alias parents private under inherited group-write umask, including subprocesses', () => {
+  const module = new URL('./helpers/z4044-live-permissions.mjs', import.meta.url).href;
+  const script = `
+    import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os';
+    import { spawnSync } from 'node:child_process';
+    import { setPrivateLiveUmask } from ${JSON.stringify(module)};
+    process.umask(0o002); setPrivateLiveUmask();
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'z4044-mode-'));
+    try {
+      const direct = path.join(root, 'qa'); fs.mkdirSync(direct);
+      const child = path.join(root, 'worktree-qa');
+      const result = spawnSync(process.execPath, ['-e', 'require("node:fs").mkdirSync(process.argv[1])', child], { encoding: 'utf8' });
+      if (result.status !== 0) throw Error(result.stderr || result.error);
+      console.log(JSON.stringify([direct, child].map(file => fs.statSync(file).mode & 0o022)));
+    } finally { fs.rmSync(root, { recursive: true, force: true }); }
+  `;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr || result.error?.message);
+  assert.deepEqual(JSON.parse(result.stdout), [0, 0], 'direct and inherited subprocess dirs satisfy the unchanged runtime alias parent guard');
+});
 
 test('[Z.404 E08] live trust survives Codex dotted-key splitting for mktemp paths and pins the quota cwd', () => {
   const root = '/tmp/z4044c-live2.fJPF5N/"owned"/root';

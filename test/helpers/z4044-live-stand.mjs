@@ -9,6 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { createServer, connect } from 'node:net';
 import { prepareHostTmuxEndpoint } from './z4044-host-tmux.mjs';
 import { configureLiveCodexTrust } from './z4044-live-trust.mjs';
+import { setPrivateLiveUmask } from './z4044-live-permissions.mjs';
 
 const driverFile = fileURLToPath(import.meta.url);
 const here = path.dirname(driverFile);
@@ -17,6 +18,7 @@ const sourceSha = process.argv[2];
 if (!/^[0-9a-f]{40}$/.test(sourceSha ?? '')) throw Error('Pass the exact reviewed raf-develop SHA');
 const outerHome = process.argv[3];
 assert.ok(outerHome && path.isAbsolute(outerHome) && outerHome === process.env.RAF_QA_HOME && outerHome === process.env.HOME && outerHome === process.env.TMPDIR, 'own isolated parent HOME required');
+const inheritedUmask = setPrivateLiveUmask();
 const standPrefix = path.join(outerHome, 'z4044-long-stand-');
 const plannedStand = standPrefix + 'XXXXXX';
 const minimumProbePath = path.join(plannedStand, '.raf/tmp', '00000000-0000-0000-0000-000000000000', '.codex-sandbox-probe-1.sock');
@@ -37,6 +39,7 @@ const env = { ...process.env, HOME: stand, RAF_QA_HOME: stand, TMPDIR: stand, CO
 for (const name of ['TMUX', 'TMUX_PANE', 'CLAUDE_CONFIG_DIR', 'RAF_ORCHESTRATOR_ROOT', 'RAF_STATE_DIRECTORY', 'RAF_SOCKET_PATH', 'ALLOW_MIGRATIONS', 'GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_COMMON_DIR', 'GIT_OBJECT_DIRECTORY', 'GIT_ALTERNATE_OBJECT_DIRECTORIES']) delete env[name];
 const deadline = Date.now() + 1500000;
 const summary = { status: 'failed', stand, standPrefix, sourceSha, driverSha256: createHash('sha256').update(fs.readFileSync(driverFile)).digest('hex'), longPathPreflight: [], startedAt: new Date().toISOString(), scenarios: {}, commands: [], cleanup: [], unitRuns: [], limitations: ['Host watchdog is not a unit timeout or a pass criterion.', 'Atomic activation belongs to Z.334.', 'No access to the working ~/.raf; live state schema is not inspected.'] };
+summary.umask = { inherited: inheritedUmask.toString(8), selected: process.umask().toString(8) };
 let paneStarted = false, syntaxOriginal, fixtureMergeTarget;
 const listeners = [], ports = [];
 const liveBoundaryConfig = { endpoints: [mainSocket, path.join(stand, '.raf/tmp/tmux/server.sock')], denyReads: ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm'].map(name => path.join(stand, '.raf', name)), ports };

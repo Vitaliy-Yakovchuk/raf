@@ -6,17 +6,17 @@ export const runtimeLoaderProofs: Readonly<Record<string, { sha256: string; proo
   },
   "src/cli.ts": {
     "targets": ["src/state-migration-guard.ts", "src/hotfix-activation.ts", "src/production-entry.ts"],
-    "sha256": "922acdf417e36773bacb6e31c9bd8d4552e127a0d5a7d864327c3e9476e9a064",
+    "sha256": "298ec9023cbad5d4cf5613aebe9847b0f06a737b5c2d7e904082de6d5047223b",
     "proof": "The bootstrap identity is checked before pinning a registered reader; dynamic targets are fixed src module names under that bootstrap or its verified reader generation."
   },
   "src/service-entry.ts": {
     "targets": ["src/production-service-ports.ts"],
-    "sha256": "9d1f8f2e51353e435ce5242ea71bbd056b627d766ab2e41431fc8d00b55b2db3",
+    "sha256": "806b850828e089dc2f56195da0c98c6df01235b583a8330fa44e9b0effcbbe0b",
     "proof": "verifyStateModule validates the selected host module against the pinned generation inventory before importing it; QA injection remains isolated."
   },
   "src/test-run-etchly-inventory.ts": {
     "targets": [],
-    "sha256": "b8669079c952ae1028b84a17eb65249fa775666b1012aaeb172a409aec0abc48",
+    "sha256": "58b857a8c2204ec371cee8b01b46bb6c6352e0a98da965d183790e4b015970f8",
     "proof": "Only the test payload classifier in the selected project is imported after every audited source hash and canonical helper path have been checked; it does not resolve into excluded generation trees."
   }
 };

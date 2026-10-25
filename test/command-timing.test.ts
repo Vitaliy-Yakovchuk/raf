@@ -6,9 +6,25 @@ import { compileCatalog } from '../src/catalog.ts';
 import { execute, type ExecutionResult } from '../src/cli.ts';
 import { commandFailure } from '../src/cli-contract.ts';
 import type { StateStore, CommandTiming } from '../src/state-store.ts';
+import { createHash } from 'node:crypto';
+import { runtimeLoaderProofs, runtimeLibraryProofs } from '../src/hotfix-runtime-loaders.ts';
+
+for (const [path, proof] of Object.entries(runtimeLoaderProofs)) {
+  test(`I6 protected startup loader proof matches ${path}`, () => {
+    assert.equal(createHash('sha256').update(readFileSync(new URL(`../${path}`, import.meta.url))).digest('hex'), proof.sha256);
+  });
+}
+for (const [library, proof] of Object.entries(runtimeLibraryProofs)) {
+  for (const [path, hash] of Object.entries(proof.consumers)) {
+    test(`I6 protected startup library boundary matches ${path} using ${library}`, () => {
+      assert.equal(createHash('sha256').update(readFileSync(new URL(`../${path}`, import.meta.url))).digest('hex'), hash);
+    });
+  }
+}
 
 const conf = (name: string) => JSON.parse(readFileSync(new URL(`../../conf/${name}.json`, import.meta.url), 'utf8'));
 const constants = conf('raf-constants');
+constants.errorCodes.push({ id: 'UNIT_OPERATION_FAILED', description: 'Synthetic timing fixture operation failure', exitCode: 1 });
 const models = conf('models');
 const catalog = compileCatalog(constants, models, constants.commands.map((command: { path: string[] }) => command.path.join(' ')), conf('projects'));
 const completedAt = '2026-10-24T10:20:30.000Z';

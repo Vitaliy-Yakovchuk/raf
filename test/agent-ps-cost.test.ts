@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm } from 'node:fs/promises';
 import { registerHooks } from 'node:module';
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
@@ -32,7 +32,7 @@ hooks.deregister();
 const configuration: RuntimeConfiguration = {
   catalog: { commands: [], reportStatuses: [{ id: 'succeeded' }, { id: 'failed' }] },
   models: { version: 1, runners: [], models: [], routing: { complexityOrder: [], taskClassification: {}, runnerPreferences: [], modelTransitions: [], roleModelBindings: {} } },
-  commandTiming: { emaAlpha: 0.1 },
+  commandTiming: JSON.parse(await readFile(new URL('../../conf/raf.json', import.meta.url), 'utf8')).commandTiming,
 };
 const start = 'Sun Oct 25 00:00:00 2026';
 const startedAt = new Date(start).toISOString();
@@ -69,7 +69,7 @@ async function fixture(t: TestContext) {
     const runId = `run-${addressId}`;
     const pid = ++nextPid;
     const command = `unit-agent --address ${addressId} --run ${runId}`;
-    const identity: ProcessIdentity = { pid, startedAt, runner: addressId === 'main' ? 'main' : 'codex', runnerSessionId: null,
+    const identity: ProcessIdentity = { pid, startedAt, runner: addressId === 'main' ? 'main' : 'codex', runnerSessionId: `native-${runId}`,
       tmuxSession: `unit-${addressId}`, evidence: { command, runId, ...boot } };
     processes.set(pid, { start, command });
     const type = options.type ?? (addressId === 'main' ? 'main' : 'hotfix');

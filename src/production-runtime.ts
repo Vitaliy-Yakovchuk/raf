@@ -402,6 +402,21 @@ async function observeIdentity(identity: ProcessIdentity, execute: AdapterComman
   if (boot.bootId === identity.evidence.bootId && boot.machineId === identity.evidence.machineId) return observation;
   return { state: 'exited' as const, observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity belongs to a previous boot' };
 }
+async function observeIdentities(identities: readonly ProcessIdentity[], execute: AdapterCommandExecutor) {
+  const observations = await observeProcesses(identities, { execute });
+  let boot: ReturnType<typeof bootIdentity> | undefined;
+  return Promise.all(observations.map(async (observation, index) => {
+    const identity = identities[index];
+    if (observation.state !== 'alive' || !identity.evidence.bootId) return observation;
+    try {
+      const current = await (boot ??= bootIdentity(execute));
+      if (current.bootId === identity.evidence.bootId && current.machineId === identity.evidence.machineId) return observation;
+      return { state: 'exited' as const, observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity belongs to a previous boot' };
+    } catch (error) {
+      return { state: 'unknown' as const, observedAt: observation.observedAt, error: String(error) };
+    }
+  }));
+}
 async function processExited(execute: AdapterCommandExecutor, identity: ProcessIdentity, budget: { transitionMs: number; pollMs: number }): Promise<boolean> {
   const deadline = Date.now() + budget.transitionMs;
   for (;;) {
@@ -690,7 +705,10 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
   };
   const types = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'type')?.values?.map(row => row.id) ?? [];
   const projects = configuration.catalog.commands.find(row => row.handlerName === 'agent run')?.parameters.find(row => row.name === 'project')?.values?.map(row => row.id) ?? [];
-  const control = new AgentControlService({ repository: store.sessionRepository, scanner: { inspect: identity => observeIdentity(identity, execute) }, authority: { resolve }, reminders,
+  const control = new AgentControlService({ repository: store.sessionRepository, scanner: {
+    inspect: identity => observeIdentity(identity, execute),
+    inspectMany: identities => observeIdentities(identities, execute),
+  }, authority: { resolve }, reminders,
     projects, agentTypes: types, agentPhases: configuration.catalog.commands.find(row => row.handlerName === 'agent update')?.parameters.find(row => row.name === 'phase')?.values?.map(row => row.id) ?? types,
     coordinator: {
       prepareClose: (session, options) => prepareAgentClose({

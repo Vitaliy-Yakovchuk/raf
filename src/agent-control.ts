@@ -23,7 +23,10 @@ export interface AgentControlCoordinator {
 export interface AgentControlDependencies {
   repository: SessionRepository;
   coordinator: AgentControlCoordinator;
-  scanner: { inspect(identity: ProcessIdentity): Promise<ProcessObservation> };
+  scanner: {
+    inspect(identity: ProcessIdentity): Promise<ProcessObservation>;
+    inspectMany?(identities: readonly ProcessIdentity[]): Promise<ProcessObservation[]>;
+  };
   authority: { resolve(caller: unknown): Promise<VerifiedSender> };
   transport: {
     deliver(target: ProcessIdentity, text: string): Promise<DeliveryReceipt>;
@@ -87,6 +90,10 @@ export class AgentControlService {
     } catch (error) {
       observation = { state: 'unknown', observedAt: new Date().toISOString(), error: String(error) };
     }
+    return this.checkedObservation(identity, observation, requireOwnership);
+  }
+
+  private checkedObservation(identity: ProcessIdentity, observation: ProcessObservation, requireOwnership = false): ProcessObservation {
     if (observation.state === 'alive' && !this.sameProcess(identity, observation.identity)) {
       if (requireOwnership) throw new Error('Session is not confirmed alive: process ownership changed');
       observation = { state: 'exited', observedAt: observation.observedAt, exitCode: null, evidence: 'Process identity no longer belongs to this run' };
@@ -95,11 +102,15 @@ export class AgentControlService {
   }
 
   private async reconcile(session: SessionRecord, observed?: ProcessObservation): Promise<SessionRecord> {
+    const process = session.process;
     if (!session.result && session.launchContext?.reportPath && (session.state === 'running' || session.state === 'exited')) {
       session = await this.dependencies.coordinator.acceptPendingReport(session);
     }
     if (session.state === 'running' && session.process) {
-      session = await this.dependencies.coordinator.observe(session, observed ?? await this.inspect(session.process));
+      const observation = observed && process && this.sameProcess(process, session.process)
+        ? this.checkedObservation(session.process, observed)
+        : await this.inspect(session.process);
+      session = await this.dependencies.coordinator.observe(session, observation);
     }
     if (session.state === 'exited') {
       session = await this.dependencies.coordinator.finalize(session, this.events(session, 'ended'));
@@ -119,10 +130,25 @@ export class AgentControlService {
 
   async ps(): Promise<AgentPsSession[]> {
     const sessions: AgentPsSession[] = [];
-    for (const candidate of this.sessions()) {
-      if (candidate.state === 'finished') continue;
+    const candidates = this.sessions().filter(session => session.state !== 'finished');
+    const observations = new Map<string, ProcessObservation>();
+    if (this.dependencies.scanner.inspectMany) {
+      const running = candidates.filter(session => session.state === 'running' && session.process);
+      if (running.length) {
+        let batch: ProcessObservation[];
+        try {
+          batch = await this.dependencies.scanner.inspectMany(running.map(session => session.process!));
+          if (batch.length !== running.length) throw new Error('Incomplete process scan');
+        } catch (error) {
+          const observedAt = new Date().toISOString();
+          batch = running.map(() => ({ state: 'unknown', observedAt, error: String(error) }));
+        }
+        running.forEach((session, index) => observations.set(session.runId, batch[index]));
+      }
+    }
+    for (const candidate of candidates) {
       try {
-        const session = await this.reconcile(candidate);
+        const session = await this.reconcile(candidate, observations.get(candidate.runId));
         if (session.state === 'running') sessions.push(session);
       } catch (error) {
         const failure = failureContext(error);

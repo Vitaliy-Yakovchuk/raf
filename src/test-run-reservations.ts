@@ -1,5 +1,5 @@
 import { isDeepStrictEqual } from 'node:util';
-import type { TestRunConfigurationDependencyPort } from './test-run-config-dependencies.ts';
+import type { TestRunConfigurationSnapshot, TestRunConfigurationDependencyPort } from './test-run-config-dependencies.ts';
 import type { TestRunQueueRecord } from './test-run-queue.ts';
 import type { ResourceUsageRecord, UsageFinishReason } from './resource-usage.ts';
 import type { ResourceEstimateResolution, ResourceReservationEstimate } from './resource-estimates.ts';
@@ -44,6 +44,7 @@ export interface TestRunResourcePort {
   finishUsage?(claim: TestRunResourceClaim, reason: UsageFinishReason): Promise<void>;
   resourceUsage?(claim: TestRunResourceClaim): Promise<ResourceUsageRecord | null>;
   markSpawning?(claim: TestRunResourceClaim): Promise<void>;
+  spawnFailed?(): void;
   estimateProfile(project: string, profileId: string): Promise<ResourceEstimateResolution>;
   prepare(request: TestRunResourceRequest): Promise<TestRunResourcePreparation>;
   commit(claim: TestRunResourceClaim): Promise<boolean>;
@@ -97,6 +98,8 @@ export async function runResourceReservedTestRun(
   let pendingOwned = false;
   let accepted = false;
   let waitError: string | null = null;
+  let configurationSnapshot: TestRunConfigurationSnapshot | undefined;
+  let preSpawnRejected = false;
   let interrupted: string | null = null;
   const controller = new AbortController();
   let unsubscribe = () => {};
@@ -116,7 +119,7 @@ export async function runResourceReservedTestRun(
   const lost = () => Object.assign(new Error('Resource reservation fence lost'), { code: 'RESERVATION_LOST' });
   const restore = async () => ports.state.transaction(tx => {
     const group = tx.get(key);
-    if (group?.inFlight?.runId !== runId) return;
+    if (group?.inFlight?.runId !== runId && !(preSpawnRejected && group?.lastResult?.runId === runId)) return;
     if (previous) tx.put(previous); else tx.delete(key);
   });
   const resourcePorts: TestRunPorts = {
@@ -143,12 +146,15 @@ export async function runResourceReservedTestRun(
       if (acquiredGroup) {
         owned = acquiredGroup;
         try {
+          configurationSnapshot = await ports.configurationDependencies?.capture();
           if (ports.queue?.claimGroup && !await ports.queue.claimGroup(runId, key)) fail('GROUP_IN_FLIGHT');
           unsubscribe = ports.subscribeInterruption(signal => { interrupted = signal; controller.abort(); });
           let permit = false;
           let mustWait = await ports.queue?.hasPending() ?? false;
           for (;;) {
             checkSignal();
+            await ports.preflight(context);
+            if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, 'reservation');
             {
               const estimate = await ports.resources.estimateProfile(request.project, plan!.profileId);
               const prepared = await ports.resources.prepare({ testRunId: runId, profileId: plan!.profileId, groupKey: key,
@@ -193,6 +199,8 @@ export async function runResourceReservedTestRun(
           acquiredGroup.inFlight!.startedAtMs = ports.clock.now();
           if (!await ports.resources.commit(claim!) || !await ports.resources.current(claim!)) throw lost();
           if (record && !await ports.queue!.transition(record, 'starting')) throw lost();
+          await ports.preflight(context);
+          if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, 'reservation');
           await ports.state.transaction(tx => {
             if (!isDeepStrictEqual(tx.get(key), previous)) throw lost();
             tx.put(owned!);
@@ -220,8 +228,17 @@ export async function runResourceReservedTestRun(
       if (!claim || !await ports.resources.current(claim)) throw lost();
       const group = await ports.state.transaction(tx => tx.get(key));
       if (group?.inFlight?.runId !== runId) throw lost();
-      await ports.resources.beforeSpawn?.(claim, command.environment.TMPDIR ? [command.environment.TMPDIR] : []);
-      await ports.resources.markSpawning?.(claim);
+      try {
+        await ports.resources.beforeSpawn?.(claim, command.environment.TMPDIR ? [command.environment.TMPDIR] : []);
+        await ports.resources.markSpawning?.(claim);
+        await ports.preflight(context);
+        if (configurationSnapshot) await ports.configurationDependencies!.recheck(configurationSnapshot, 'spawn');
+      } catch (error) {
+        preSpawnRejected = true;
+        waitError = (error as any)?.code ?? 'RUNNER_SETUP_FAILED';
+        ports.resources.spawnFailed?.();
+        throw error;
+      }
       const child = await ports.spawn(command, onEvent);
       try { await ports.resources.bindProcess(claim, child.identity); }
       catch (error) { await child.cleanup(owned!.inFlight!.deadlineMs, 'interruption'); throw error; }
@@ -273,6 +290,14 @@ export async function runResourceReservedTestRun(
           group.inFlight = owned?.inFlight ?? null; group.state = 'reconcile'; group.lastResult = result!; tx.put(group);
         });
       }
+    }
+    if (preSpawnRejected && result.cleanup.complete && (!claim || released)) {
+      await restore();
+      result.outcome = 'refused'; result.failureKinds = ['refusal']; result.exitCode = null;
+      result.errorCode = waitError; result.timedOut = false; result.nextAction = 'fix-setup';
+      result.timeoutCount = original?.timeoutCount ?? 0; result.knownRed = original?.knownRed ?? [];
+      result.unexecuted = original?.unexecuted ?? []; result.unknown = original?.unknown ?? [];
+      result.groupState = original?.state ?? 'idle';
     }
     result.resourceUsage = claim ? await ports.resources.resourceUsage?.(claim) ?? null : null;
     if (result.runId === runId) result.durationMs = ports.clock.now() - started;

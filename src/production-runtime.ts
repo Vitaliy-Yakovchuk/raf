@@ -253,13 +253,13 @@ export async function loadSandboxTestPhases(confRoot: string) {
   return validateTestRunConfig(config, constants.agentPhases.map((row: { id: string }) => row.id), flow.unitTests, flow.integrationTests).phases;
 }
 
-export async function sandboxTestControlSnapshot(store: StateStore, root: string, project: string, group: string): Promise<SandboxCallerControlSnapshot> {
+export async function sandboxTestControlSnapshot(store: StateStore, root: string, project: string, group: string, validatedConfiguration?: { projects: Record<string, unknown>; config: SandboxTestControlSnapshot['config'] }): Promise<SandboxCallerControlSnapshot> {
   const { rows, chain } = await ancestry(executeCommand);
   const boot = await readMachineBootIdentity();
   const sessions = store.sessionRepository.transaction(tx => tx.listSessions(), 'read');
   const activeChanges = (await fs.readdir(join(root, 'openspec/changes'), { withFileTypes: true })).filter(row => row.isDirectory() && row.name !== 'archive').map(row => row.name);
-  const projects = JSON.parse(await fs.readFile(join(root, 'conf/projects.json'), 'utf8')).projects;
-  const config = JSON.parse(await fs.readFile(join(root, 'conf/test-runs.json'), 'utf8'));
+  const projects = validatedConfiguration ? validatedConfiguration.projects : JSON.parse(await fs.readFile(join(root, 'conf/projects.json'), 'utf8')).projects;
+  const config = validatedConfiguration ? validatedConfiguration.config : JSON.parse(await fs.readFile(join(root, 'conf/test-runs.json'), 'utf8'));
   const workspaces: SandboxTestControlSnapshot['workspaces'][number][] = [];
   for (const [id, value] of Object.entries(projects) as [string, any][]) for (const [branch, path] of Object.entries(value.branchPaths ?? { main: value.path })) {
     const workspace = resolve(root, String(path));

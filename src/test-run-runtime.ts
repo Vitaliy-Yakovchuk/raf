@@ -1,3 +1,5 @@
+import { testRunConfigurationManifest, captureTestRunConfiguration, assertTestRunConfigurationUnchanged } from './test-run-config-dependencies.ts';
+import type { TestRunConfigurationReader, TestRunConfigurationFile, TestRunConfigurationSnapshot } from './test-run-config-dependencies.ts';
 import { RafCostRuntime, rafCostBoundary, type RafCostBoundary } from './raf-cost-runtime.ts';
 import { recordFlowTestRun } from './flow-qa-report.ts';
 import { flowTestRunStore } from './flow-runtime.ts';
@@ -31,7 +33,7 @@ import { sandboxTestControlSnapshot } from './production-runtime.ts';
 import { productionStateContext, stateContextEnvironment, canonicalStatePath, type StateContext } from './state-migration-guard.ts';
 import { openStateStore } from './state-store.ts';
 import { loadFlowPolicy } from './flow-policy.ts';
-import { parseTestRunArgs, validateTestRunConfig, cleanupClosedTestRunGroups, testRunFailureResult } from './test-runs.ts';
+import { planTestRun, parseTestRunArgs, validateTestRunConfig, cleanupClosedTestRunGroups, testRunFailureResult } from './test-runs.ts';
 import { cleanupTestProcessGroup, reconcileTestRunProcess } from './test-run-processes.ts';
 import type { ChildExit, ManagedTestProcess, RunnerEvent, TestRunConfig, TestRunContext, TestRunEnvironment, TestRunGroup, TestRunGroupKey, TestRunPorts, TestRunStatePort, TestRunTransaction } from './test-runs.ts';
 import type { ExecutionResult } from './cli.ts';
@@ -296,6 +298,17 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
     const args = parseTestRunArgs(argv);
     request = { project: args.project, phase: args.phase, group: args.group };
     const projects = read('projects.json').projects;
+    read('raf.json');
+    configuration.set('flow.json', flowBytes);
+    const revision = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
+    const configurationReader: TestRunConfigurationReader = {
+      read: async file => { const bytes = readFileSync(join(root, file)); return { text: bytes.toString('utf8'), revision: revision(bytes) }; },
+      revision: async file => revision(readFileSync(join(root, file))),
+    };
+    const initialConfigurationReader: TestRunConfigurationReader = {
+      revision: async file => revision(configuration.get(file.slice('conf/'.length))!),
+      read: async file => { const bytes = configuration.get(file.slice('conf/'.length))!; return { text: bytes.toString('utf8'), revision: revision(bytes) }; },
+    };
     const cwd = realpathSync(process.cwd());
     const workspaces: Record<string, string[]> = {};
     for (const [id, project] of Object.entries(projects) as [string, any][]) workspaces[id] = [...new Set<string>(Object.values(project.branchPaths ?? { main: project.path }).map(path => resolve(root, String(path))))];
@@ -350,25 +363,51 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         runtime = createTestRunPorts(config!, stateContext, () => store ??= openStore('unit', stateContext), { ...unitEnvironment, TMPDIR: stateContext.tmpRoot }, { flow: flowBytes, testRuns: configuration.get('test-runs.json')!, projects: configuration.get('projects.json')! }, args, resources.bindSpawn, resources.spawnFailed);
         const newTestRunId = runtime.newRunId;
         runtime.newRunId = () => { const id = newTestRunId(); flowOwnedTestIds.add(id); return id; };
+        let capturedConfiguration: TestRunConfigurationSnapshot | undefined;
         const originalPreflight = runtime.preflight;
         runtime.preflight = async value => {
-          const current = await sandboxTestControlSnapshot(controlStore!, root, args.project, args.group);
+          const current = await sandboxTestControlSnapshot(controlStore!, root, args.project, args.group, { projects, config });
           if (!isDeepStrictEqual(resolveSandboxTestCaller(current.callerEvidence), assignment) ||
               !current.activeChanges.includes(args.group.split('/')[0]) ||
-              !current.workspaces.some(row => row.workspace === workspace && row.branch === assignment.branch && row.actualBranch === assignment.branch)) {
+              execFileSync('git', ['branch', '--show-current'], { cwd: workspace, encoding: 'utf8' }).trim() !== assignment.branch) {
             throw Object.assign(new Error('Test authorization changed while waiting'), { code: 'CALLER_UNAUTHORIZED' });
           }
-          for (const [name, bytes] of configuration) if (!bytes.equals(readFileSync(join(root, 'conf', name)))) {
-            throw Object.assign(new Error('Test configuration changed while waiting'), { code: 'CONFIGURATION_INVALID' });
-          }
-          if (!flowBytes.equals(readFileSync(join(root, 'conf/flow.json')))) throw Object.assign(new Error('Flow configuration changed while waiting'), { code: 'CONFIGURATION_INVALID' });
+          if (capturedConfiguration) await assertTestRunConfigurationUnchanged(capturedConfiguration, configurationReader);
           return originalPreflight(value);
         };
         const resourceRoute = { branchPaths: Object.fromEntries(Object.entries(projects[args.project].branchPaths ?? { main: projects[args.project].path })
           .map(([branch, path]) => [branch, resolve(root, String(path))])) };
         const queue = createTestRunQueuePort(controlStore!, { root, workspace, home: controlContext.homeDirectory,
           machineId: boot.machineId, settle: async () => { await options.settle?.(controlStore!); } });
-        const reserved = Object.assign(runtime, { resourceRoute, queue, deferDelivery: true, machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
+        const configurationDependencies = {
+          capture: async () => {
+            const environment = await runtime!.preflight(context);
+            const only = args.only?.map(id => {
+              const split = id.indexOf('::');
+              return id.startsWith('{') ? JSON.parse(id) : { file: id.slice(0, split), name: id.slice(split + 2) };
+            });
+            const plan = planTestRun({ ...args, only }, config!, context, environment);
+            const dependencies = testRunConfigurationManifest({ project: args.project, profileId: plan.profileId, group: args.group,
+              phase: args.phase, testKind: plan.testKind ?? 'unit', resourceLevel: assignment.branch === 'hotfix' ? 'hotfix' : 'normal',
+              projectProfileId: projects[args.project].profile, agentPhaseIndex: phases.indexOf(args.phase),
+              commandIndex: constants.commands.findIndex((entry: any) => isDeepStrictEqual(entry.path, ['test', 'run'])) });
+            const add = (file: TestRunConfigurationFile, pointer: string) => dependencies.push({ file, pointer });
+            add('conf/raf-constants.json', '/resourceWaitLevels');
+            add('conf/raf.json', '/service');
+            for (const hint of Object.values(config!.phases[args.phase].hints)) add('conf/test-runs.json', `/hints/${hint.replaceAll('~', '~0').replaceAll('/', '~1')}`);
+            add('conf/flow.json', assignment.branch === 'hotfix' ? '/resources/normal' : '/resources/hotfix');
+            const presetKey = config!.projects[args.project].groups[args.group] ? args.group : args.group.slice(args.group.indexOf('/') + 1);
+            const groupDependency = dependencies.find(dependency => dependency.file === 'conf/test-runs.json' && dependency.pointer.includes('/groups/'))!;
+            if (config!.projects[args.project].groups[presetKey]) groupDependency.pointer = `/projects/${args.project.replaceAll('~', '~0').replaceAll('/', '~1')}/groups/${presetKey.replaceAll('~', '~0').replaceAll('/', '~1')}`;
+            else dependencies.splice(dependencies.indexOf(groupDependency), 1);
+            const snapshot = await captureTestRunConfiguration(dependencies, initialConfigurationReader);
+            await assertTestRunConfigurationUnchanged(snapshot, configurationReader);
+            capturedConfiguration = snapshot;
+            return snapshot;
+          },
+          recheck: (snapshot: TestRunConfigurationSnapshot) => assertTestRunConfigurationUnchanged(snapshot, configurationReader),
+        };
+        const reserved = Object.assign(runtime, { configurationDependencies, resourceRoute, queue, deferDelivery: true, machineId: boot.machineId, wrapperIdentity: testWrapperIdentity(), resources });
         runtime.recoverGroup = async groupKey => {
           const recovery = await recoverTestRun({ key: groupKey, authorized: true, nowMs: Date.now() }, {
             state: runtime!.state as RecoveryStatePort,

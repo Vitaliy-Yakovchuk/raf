@@ -1,0 +1,135 @@
+{
+  "assignment": "profile-raf-performance:5.4",
+  "phase": "test-scaffold",
+  "sourceSha": "4da4a6aa1916101436b64fa5c1cb709060734405",
+  "group": "profile-raf-performance/module-origin-cost",
+  "selection": {
+    "files": [
+      "test/hotfix-origin-cost.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": "raf test run --project raf --phase red --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+  "nextStages": {
+    "5.5": "Main verifies the full final TestRunResult and target assertion diagnostics.",
+    "5.6": "Independent implement author; retain this group, HOME, workspace and ledger; change phase to implement. Implement guard and trusted publication builder, keep assertions.",
+    "5.7": "Same group with phase qa, existing generation/origin groups and live agent ps before/after on main stand. Unit results do not close live acceptance."
+  },
+  "configHandoff": {
+    "file": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "unitFilesPointer": "/projects/raf/profiles/node/unitFiles",
+    "append": [
+      "test/hotfix-origin-cost.test.ts"
+    ],
+    "groupsPointer": "/projects/raf/groups/profile-raf-performance~1module-origin-cost",
+    "groupValue": {
+      "profileId": "node",
+      "files": [
+        "test/hotfix-origin-cost.test.ts"
+      ]
+    },
+    "registeredBy": "main",
+    "registrationCommit": "a9bff2ac85",
+    "tasksCommandCommit": "c047d920ac"
+  },
+  "profilePrerequisites": {
+    "profileId": "node",
+    "cwd": ".",
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts"
+    ],
+    "environment": {
+      "isolatedHome": true,
+      "stateOrigin": true
+    },
+    "checks": [
+      "node_modules/typescript/package.json",
+      "src/test-run-reporter.ts",
+      "scripts/test-run-node.ts"
+    ],
+    "exactIds": "node-test-name",
+    "resultAdapter": "node-test-events",
+    "node": ">=25.4.0",
+    "actualRuntime": "v26.12.1",
+    "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+    "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "budgetPolicy": "conf/flow.json#/unitTests; timeoutCount=0; no budget exception used"
+  },
+  "scaffold": {
+    "file": "src/hotfix-runtime-inventory.ts",
+    "signature": "createHotfixRuntimeInventory(root: string, commit: string, policy: HotfixRuntimePolicy): HotfixRuntimeInventory",
+    "body": "throw new Error('NotImplemented');",
+    "purpose": "Trusted publisher builds complete proof; runtime must not manufacture or silently refresh it.",
+    "registryContract": "registry.generations[canonicalRoot].runtimeInventory; version/root/commit/files/scopes/rootFiles/excludedTrees/loading.",
+    "policy": "Explicit search scopes, root metadata files, excluded trees, entrypoints. Publisher must prove import/child/config coverage or refuse; passing a whitelist alone is not proof."
+  },
+  "invariants": [
+    "Compare two independently registered snapshots with identical runtime inputs; 24 extra evidence runs (72 JSON/log/docs files) add zero file operations, including traversal and metadata.",
+    "Excluded docs/evidence descendants receive zero read/traversal/metadata operations in each runtime-origin check.",
+    "Each guard rereads all runtime bytes; byte, executable mode, deletion and previous success do not defer refusal.",
+    "Cover source/entrypoint, lazy and dynamic import, child script, build/catalog, root/nested metadata, loaded dependency and unconventional .payload data.",
+    "New potential inputs in runtime scopes and package resolution refuse; symlink/hardlink and directory aliases refuse even with identical bytes.",
+    "Missing, wrong root/commit, incomplete scopes/files, unsupported inventory version refuse even when full activation fingerprint matches.",
+    "Retained reader validates its own physical generation while the registered current generation changes.",
+    "CLI/worker/service/hook/notice/runner-limits state preflight refuses mutations before creating state; existing SQLite/WAL/SHM sentinel bytes remain intact.",
+    "Builder must include all runtime inputs and reject unbounded or excluded import/child/package-config loads under the explicit policy.",
+    "Production full activation inventory still includes docs/evidence and changes digest or refuses on bytes/add/delete/mode/symlink/hardlink (12 passed tests)."
+  ],
+  "unitBoundary": "Synthetic trusted publication registry and mocked Git command port; real private filesystem fixture only. No live daemon, SQLite connection, tmux, runner, activation exchange or real Git subprocess. Existing state files are sentinel bytes for the pre-access invariant. Full activation tests use the production activation inventory/hash inputs, not a live publication gate.",
+  "result": {
+    "path": "final-red-TestRunResult.json",
+    "source": "Complete raw JSON returned by the authorized raf command; captured without output truncation.",
+    "runId": "00b2a456-9f56-4b8b-bba6-603adfb99346",
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "knownRed": 39,
+    "passed": 51,
+    "unexecuted": 0,
+    "unknown": 0,
+    "timedOut": false,
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "allDiagnosticKinds": [
+      "assertion"
+    ],
+    "counter": {
+      "small": 56,
+      "large": 368
+    },
+    "setupImportFailure": false
+  },
+  "initialRun": {
+    "path": "red-TestRunResult.json",
+    "execution": "initial-red-execution.json",
+    "knownRed": 38,
+    "passed": 51,
+    "note": "Final run follows fixture-only .mjs correction and adds the existing state preservation test; no assertions were relaxed."
+  },
+  "checks": {
+    "node --check test/hotfix-origin-cost.test.ts": 0,
+    "node --check src/hotfix-runtime-inventory.ts": 0,
+    "node scripts/check-comments.ts": 0,
+    "git diff --check": 0
+  },
+  "audit": {
+    "current": true,
+    "sources": [
+      "proposal.md Why/What Changes/Non-goals",
+      "tasks.md 5.3-5.7 and stage sources",
+      "delta workspace-routing: complete requirement and scenarios",
+      "delta state-store: complete requirement and scenarios",
+      "design full activation snapshot/runtime inventory 5.3",
+      "complete-raf-flow-contracts hotfix-worktree-design: exact snapshot and activation transaction"
+    ],
+    "conclusion": "5.3 explicitly separates the full activation snapshot and runtime inventory. Regression work is current; no feature implementation, cache, threshold, timer or interval added. Other change tasks remain open; no archive attempted."
+  }
+}

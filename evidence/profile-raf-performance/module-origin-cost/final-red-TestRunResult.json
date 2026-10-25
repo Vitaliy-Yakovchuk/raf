@@ -1,0 +1,1512 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] extra published evidence and docs add zero guard file operations"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "one guard must not grow with excluded files or directory depth\n\n368 !== 56\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 130,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:130:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] one guard never traverses or reads proven non-runtime trees"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "even metadata/traversal of excluded descendants is forbidden\n+ actual - expected\n\n+ [\n+   {\n+     operation: 'lstatSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs'\n+   },\n+   {\n+     operation: 'readdirSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs'\n+   },\n+   {\n+     operation: 'lstatSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/base.md'\n+   },\n+   {\n+     operation: 'readFileSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/base.md'\n+   },\n+   {\n+     operation: 'openSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/base.md'\n+   },\n+   {\n+     operation: 'lstatSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-0'\n+   },\n+   {\n+     operation: 'readdirSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-0'\n+   },\n+   {\n+     operation: 'lstatSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-0/notes.md'\n+   },\n+   {\n+     operation: 'readFileSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-0/notes.md'\n+   },\n+   {\n+     operation: 'openSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-0/notes.md'\n+   },\n+   {\n+     operation: 'lstatSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-1'\n+   },\n+   {\n+     operation: 'readdirSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-1'\n+   },\n+   {\n+     operation: 'lstatSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-1/notes.md'\n+   },\n+   {\n+     operation: 'readFileSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-1/notes.md'\n+   },\n+   {\n+     operation: 'openSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-1/notes.md'\n+   },\n+   {\n+     operation: 'lstatSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-2'\n+   },\n+   {\n+     operation: 'readdirSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-2'\n+   },\n+   {\n+     operation: 'lstatSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-2/notes.md'\n+   },\n+   {\n+     operation: 'readFileSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-2/notes.md'\n+   },\n+   {\n+     operation: 'openSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/docs/chapter-2/notes.md'\n+   },\n+   {\n+     operation: 'lstatSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/evidence'\n+   },\n+   {\n+     operation: 'readdirSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/evidence'\n+   },\n+   {\n+     operation: 'lstatSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/evidence/base.json'\n+   },\n+   {\n+     operation: 'readFileSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/evidence/base.json'\n+   },\n+   {\n+     operation: 'openSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/evidence/base.json'\n+   },\n+   {\n+     operation: 'lstatSync',\n+     path: '<fixture>/origin-cost-8hmCFW/git-common/raf-hotfix/generations/first/raf-main/evidence/run-0'\n+   },\n+   {\n+     operation: 'readdirSync",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 144,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:144:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": true
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] every successful guard rereads runtime bytes without a success cache"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "guard 0 must reread node_modules/origin-dep/package.json",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 153,
+        "column": 59
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:153:59)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of node_modules/origin-dep/package.json refuses immediately after a successful guard"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "bytes must invalidate node_modules/origin-dep/package.json; no timer or cache may defer refusal\n+ actual - expected\n\n+ '<fixture>/origin-cost-yKvDJc/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 167,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:167:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of node_modules/origin-dep/package.json refuses immediately after a successful guard"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "mode must invalidate node_modules/origin-dep/package.json; no timer or cache may defer refusal\n+ actual - expected\n\n+ '<fixture>/origin-cost-EUJlnr/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 167,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:167:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of node_modules/origin-dep/package.json refuses immediately after a successful guard"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "delete must invalidate node_modules/origin-dep/package.json; no timer or cache may defer refusal\n+ actual - expected\n\n+ '<fixture>/origin-cost-c7bqoB/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 167,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:167:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of node_modules/origin-dep/index.js refuses immediately after a successful guard"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "bytes must invalidate node_modules/origin-dep/index.js; no timer or cache may defer refusal\n+ actual - expected\n\n+ '<fixture>/origin-cost-H5r57g/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 167,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:167:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of node_modules/origin-dep/index.js refuses immediately after a successful guard"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "mode must invalidate node_modules/origin-dep/index.js; no timer or cache may defer refusal\n+ actual - expected\n\n+ '<fixture>/origin-cost-3aOvob/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 167,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:167:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of node_modules/origin-dep/index.js refuses immediately after a successful guard"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "delete must invalidate node_modules/origin-dep/index.js; no timer or cache may defer refusal\n+ actual - expected\n\n+ '<fixture>/origin-cost-isc2jE/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 167,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:167:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of node_modules/origin-dep/table.payload refuses immediately after a successful guard"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "bytes must invalidate node_modules/origin-dep/table.payload; no timer or cache may defer refusal\n+ actual - expected\n\n+ '<fixture>/origin-cost-oZNbEo/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 167,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:167:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of node_modules/origin-dep/table.payload refuses immediately after a successful guard"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "mode must invalidate node_modules/origin-dep/table.payload; no timer or cache may defer refusal\n+ actual - expected\n\n+ '<fixture>/origin-cost-iba12i/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 167,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:167:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of node_modules/origin-dep/table.payload refuses immediately after a successful guard"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "delete must invalidate node_modules/origin-dep/table.payload; no timer or cache may defer refusal\n+ actual - expected\n\n+ '<fixture>/origin-cost-R7KsYI/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 167,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:167:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] bytes of node_modules/origin-dep/nested/package.json refuses immediately after a successful guard"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "bytes must invalidate node_modules/origin-dep/nested/package.json; no timer or cache may defer refusal\n+ actual - expected\n\n+ '<fixture>/origin-cost-XZOmQM/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 167,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:167:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] mode of node_modules/origin-dep/nested/package.json refuses immediately after a successful guard"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "mode must invalidate node_modules/origin-dep/nested/package.json; no timer or cache may defer refusal\n+ actual - expected\n\n+ '<fixture>/origin-cost-aoUtCD/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 167,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:167:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] delete of node_modules/origin-dep/nested/package.json refuses immediately after a successful guard"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "delete must invalidate node_modules/origin-dep/nested/package.json; no timer or cache may defer refusal\n+ actual - expected\n\n+ '<fixture>/origin-cost-R8p3nJ/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 167,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:167:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] a new potential input node_modules/new-package/package.json cannot be trusted automatically"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "enumerating only manifest files misses new resolution inputs\n+ actual - expected\n\n+ '<fixture>/origin-cost-1dbmNc/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 178,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:178:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] a new potential input node_modules/origin-dep/new.payload cannot be trusted automatically"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "enumerating only manifest files misses new resolution inputs\n+ actual - expected\n\n+ '<fixture>/origin-cost-ptiXwv/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 178,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:178:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] file-symlink in node_modules/origin-dep refuses despite identical bytes"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "canonical paths and unique files are part of runtime provenance\n+ actual - expected\n\n+ '<fixture>/origin-cost-UAe9wy/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 199,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:199:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] file-hardlink in node_modules/origin-dep refuses despite identical bytes"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "canonical paths and unique files are part of runtime provenance\n+ actual - expected\n\n+ '<fixture>/origin-cost-6je286/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 199,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:199:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] directory-symlink in node_modules/origin-dep refuses despite identical bytes"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "canonical paths and unique files are part of runtime provenance\n+ actual - expected\n\n+ '<fixture>/origin-cost-jb4RSV/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 199,
+        "column": 14
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:199:14)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] missing runtime inventory fails closed with an intact full fingerprint"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "a valid activation digest cannot replace a complete generation-bound runtime inventory\n+ actual - expected\n\n+ '<fixture>/origin-cost-4H1w5h/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 216,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:216:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] wrong-root runtime inventory fails closed with an intact full fingerprint"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "a valid activation digest cannot replace a complete generation-bound runtime inventory\n+ actual - expected\n\n+ '<fixture>/origin-cost-1Y82FL/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 216,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:216:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] wrong-commit runtime inventory fails closed with an intact full fingerprint"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "a valid activation digest cannot replace a complete generation-bound runtime inventory\n+ actual - expected\n\n+ '<fixture>/origin-cost-btMgp6/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 216,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:216:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] missing-file runtime inventory fails closed with an intact full fingerprint"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "a valid activation digest cannot replace a complete generation-bound runtime inventory\n+ actual - expected\n\n+ '<fixture>/origin-cost-339EQa/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 216,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:216:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] missing-scopes runtime inventory fails closed with an intact full fingerprint"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "a valid activation digest cannot replace a complete generation-bound runtime inventory\n+ actual - expected\n\n+ '<fixture>/origin-cost-KtbofC/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 216,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:216:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] unsupported-version runtime inventory fails closed with an intact full fingerprint"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "a valid activation digest cannot replace a complete generation-bound runtime inventory\n+ actual - expected\n\n+ '<fixture>/origin-cost-YceWmp/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 216,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:216:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] a retained reader uses its own inventory after the main route advances"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "new inventory must never bless the old dependency\n+ actual - expected\n\n+ '<fixture>/origin-cost-iuUTgz/git-common/raf-hotfix/generations/first/raf-main'\n- undefined\n",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 246,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:246:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] cli refuses changed dependencies before touching state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected exception.",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 257,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:257:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] worker refuses changed dependencies before touching state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected exception.",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 257,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:257:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] service-store refuses changed dependencies before touching state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected exception.",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 257,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:257:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] hook refuses changed dependencies before touching state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected exception.",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 257,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:257:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] notice refuses changed dependencies before touching state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected exception.",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 257,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:257:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] runner-limits refuses changed dependencies before touching state"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected exception.",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 257,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:257:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] refused provenance preserves existing state and sidecars byte for byte"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Missing expected exception.",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 269,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:269:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] the publication inventory builder includes runtime dependencies and unconventional inputs"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Got unwanted exception: trusted publication must build a complete runtime proof\nActual message: \"NotImplemented\"",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 276,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:276:10)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: export const load=()=>import(process.env.UNKNOWN_MODULE);"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (match)",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 294,
+        "column": 14
+      },
+      "stack": [
+        "    at Object.<anonymous> (test/hotfix-origin-cost.test.ts:294:14)",
+        "    at expectedException (node:assert:547:17)",
+        "    at expectsError (node:assert:672:21)",
+        "    at strict.throws (node:assert:728:3)",
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:293:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: import '../evidence/executable.payload';"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (match)",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 294,
+        "column": 14
+      },
+      "stack": [
+        "    at Object.<anonymous> (test/hotfix-origin-cost.test.ts:294:14)",
+        "    at expectedException (node:assert:547:17)",
+        "    at expectsError (node:assert:672:21)",
+        "    at strict.throws (node:assert:728:3)",
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:293:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: import {spawn} from 'node:child_process'; spawn(process.execPath,['docs/child.payload']);"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (match)",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 294,
+        "column": 14
+      },
+      "stack": [
+        "    at Object.<anonymous> (test/hotfix-origin-cost.test.ts:294:14)",
+        "    at expectedException (node:assert:547:17)",
+        "    at expectsError (node:assert:672:21)",
+        "    at strict.throws (node:assert:728:3)",
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:293:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: import {readFileSync} from 'node:fs'; readFileSync(new URL('../docs/package.json', import.meta.url));"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (match)",
+      "location": {
+        "file": "test/hotfix-origin-cost.test.ts",
+        "line": 294,
+        "column": 14
+      },
+      "stack": [
+        "    at Object.<anonymous> (test/hotfix-origin-cost.test.ts:294:14)",
+        "    at expectedException (node:assert:547:17)",
+        "    at expectsError (node:assert:672:21)",
+        "    at strict.throws (node:assert:728:3)",
+        "    at TestContext.<anonymous> (test/hotfix-origin-cost.test.ts:293:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 39,
+    "retainedEntries": 39,
+    "omittedEntries": 0,
+    "truncated": true,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd",
+      "testRuns": "2b353b59a25a830bf1cdb39d2755a94026b3b06d486685980819c404d752212c",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "00b2a456-9f56-4b8b-bba6-603adfb99346",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "profile-raf-performance/module-origin-cost",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/hotfix-origin-cost.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/hotfix-origin-cost.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-h0b8Vp"
+    }
+  },
+  "startedAt": "2026-10-25T04:19:33.372Z",
+  "durationMs": 1749,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of bin/raf.ts refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of bin/raf.ts refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of bin/raf.ts refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of src/state-store.ts refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of src/state-store.ts refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of src/state-store.ts refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of src/lazy.mjs refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of src/lazy.mjs refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of src/lazy.mjs refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of src/dynamic.mjs refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of src/dynamic.mjs refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of src/dynamic.mjs refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of src/nested/package.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of src/nested/package.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of src/nested/package.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of scripts/helper refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of scripts/helper refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of scripts/helper refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of dist/catalog.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of dist/catalog.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of dist/catalog.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of dist/runtime.js refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of dist/runtime.js refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of dist/runtime.js refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of package.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of package.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of package.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of package-lock.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of package-lock.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of package-lock.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] a new potential input src/new.unusual cannot be trusted automatically"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] a new potential input src/new-package/package.json cannot be trusted automatically"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] a new potential input scripts/new-child cannot be trusted automatically"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] a new potential input dist/new.js cannot be trusted automatically"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] a new potential input new-package/package.json cannot be trusted automatically"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] file-symlink in src refuses despite identical bytes"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] file-hardlink in src refuses despite identical bytes"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] directory-symlink in src refuses despite identical bytes"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] changing the canonical root rejects a pathname alias"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] full activation fingerprint still detects bytes in excluded evidence"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] full activation fingerprint still detects add in excluded evidence"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] full activation fingerprint still detects delete in excluded evidence"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] full activation fingerprint still detects mode in excluded evidence"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] full activation fingerprint still detects symlink in excluded evidence"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] full activation fingerprint still detects hardlink in excluded evidence"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] full activation fingerprint still detects bytes in excluded docs"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] full activation fingerprint still detects add in excluded docs"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] full activation fingerprint still detects delete in excluded docs"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] full activation fingerprint still detects mode in excluded docs"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] full activation fingerprint still detects symlink in excluded docs"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] full activation fingerprint still detects hardlink in excluded docs"
+    }
+  ],
+  "knownRed": [
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] extra published evidence and docs add zero guard file operations"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] one guard never traverses or reads proven non-runtime trees"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] every successful guard rereads runtime bytes without a success cache"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of node_modules/origin-dep/package.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of node_modules/origin-dep/package.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of node_modules/origin-dep/package.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of node_modules/origin-dep/index.js refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of node_modules/origin-dep/index.js refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of node_modules/origin-dep/index.js refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of node_modules/origin-dep/table.payload refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of node_modules/origin-dep/table.payload refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of node_modules/origin-dep/table.payload refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] bytes of node_modules/origin-dep/nested/package.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] mode of node_modules/origin-dep/nested/package.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] delete of node_modules/origin-dep/nested/package.json refuses immediately after a successful guard"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] a new potential input node_modules/new-package/package.json cannot be trusted automatically"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] a new potential input node_modules/origin-dep/new.payload cannot be trusted automatically"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] file-symlink in node_modules/origin-dep refuses despite identical bytes"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] file-hardlink in node_modules/origin-dep refuses despite identical bytes"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] directory-symlink in node_modules/origin-dep refuses despite identical bytes"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] missing runtime inventory fails closed with an intact full fingerprint"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] wrong-root runtime inventory fails closed with an intact full fingerprint"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] wrong-commit runtime inventory fails closed with an intact full fingerprint"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] missing-file runtime inventory fails closed with an intact full fingerprint"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] missing-scopes runtime inventory fails closed with an intact full fingerprint"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] unsupported-version runtime inventory fails closed with an intact full fingerprint"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] a retained reader uses its own inventory after the main route advances"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] cli refuses changed dependencies before touching state"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] worker refuses changed dependencies before touching state"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] service-store refuses changed dependencies before touching state"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] hook refuses changed dependencies before touching state"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] notice refuses changed dependencies before touching state"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] runner-limits refuses changed dependencies before touching state"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] the publication inventory builder includes runtime dependencies and unconventional inputs"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: export const load=()=>import(process.env.UNKNOWN_MODULE);"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: import '../evidence/executable.payload';"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: import {spawn} from 'node:child_process'; spawn(process.execPath,['docs/child.payload']);"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: import {readFileSync} from 'node:fs'; readFileSync(new URL('../docs/package.json', import.meta.url));"
+    },
+    {
+      "file": "test/hotfix-origin-cost.test.ts",
+      "name": "[module-origin-cost] refused provenance preserves existing state and sidecars byte for byte"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 1.69,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 23651803136,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 169054547968
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 8414461952
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 0,
+        "diskBytes": {}
+      }
+    },
+    "remaining": {
+      "ramBytes": 21504319488,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 158317129728,
+        "/dev/mapper/home-dev": 8414461952
+      },
+      "normalizedLoad": 0.21125
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "00b2a456-9f56-4b8b-bba6-603adfb99346",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "18b45e8c-61e3-4c01-ad8f-e63f98d0985e",
+        "root": {
+          "pid": 3911095,
+          "startTicks": "24465582",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "profile-raf-performance",
+          "item": "5.4"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "c4a98e88963c0e409e4c5facc07b90eed8c4fbbfd81d386b80ca6518809650f2"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-h0b8Vp"
+      ]
+    },
+    "preparedAt": 1792901973712,
+    "baseline": {
+      "at": 1792901973729,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1792901973749,
+    "lastObservedAt": 1792901975052,
+    "finishedAt": 1792901975086,
+    "finishReason": "exit",
+    "peakRamBytes": 29724672,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 29724672,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Process scan could not establish every process identity",
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Root process identity is unavailable or changed",
+      "RAM measurement unavailable",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": null
+}

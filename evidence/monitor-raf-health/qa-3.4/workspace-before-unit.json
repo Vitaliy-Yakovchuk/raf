@@ -1,0 +1,7 @@
+{
+  "at": "2026-10-25T01:57:01.342121+00:00",
+  "head": "8df57f490e045d2e78b7850842ad9ea93876a335",
+  "status": " M test/production-qa-fixture.ts\n M test/workspace-trust.test.ts\n?? evidence/profile-raf-performance/qa-2.4/\n?? evidence/switch-raf-main-by-symlink/qa-6.4/\n",
+  "diff": " test/production-qa-fixture.ts |  4 ++++\n test/workspace-trust.test.ts  | 54 +++++++++++++++++++++++++++++++++++++++++--\n 2 files changed, 56 insertions(+), 2 deletions(-)\n",
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase qa --group monitor-raf-health/delivery-evidence --files test/delivery-evidence.test.ts"
+}

@@ -1,0 +1,132 @@
+[
+  {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z390",
+    "sourceItem": "switch-raf-main-by-symlink:6.4",
+    "targetGroup": "complete-raf-flow-contracts/z390",
+    "runId": "38949b85-f0a1-427e-aca9-e5e75c6504d6",
+    "selection": {
+      "files": [
+        "test/codex-sandbox-preflight-path.test.ts",
+        "test/raf-unix-socket-paths.test.ts",
+        "test/codex-bwrap-entry.test.ts",
+        "test/codex-bwrap-evidence.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 77,
+    "knownRed": [],
+    "unknown": [],
+    "unexecuted": [],
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "startedAt": "2026-10-25T03:40:06.670Z",
+    "durationMs": 29800,
+    "raw": "physical-slot-z390.TestRunResult.json",
+    "queue": null
+  },
+  {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z389-trust-order",
+    "sourceItem": "switch-raf-main-by-symlink:6.4",
+    "targetGroup": "complete-raf-flow-contracts/z389-trust-order",
+    "runId": "6055d9bb-7512-44d6-93e7-f434a02432cc",
+    "selection": {
+      "files": [
+        "test/workspace-trust.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 53,
+    "knownRed": [],
+    "unknown": [],
+    "unexecuted": [],
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "startedAt": "2026-10-25T03:40:06.057Z",
+    "durationMs": 226747,
+    "raw": "physical-slot-z389-trust-order.TestRunResult.json",
+    "queue": null
+  },
+  {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z350",
+    "sourceItem": "switch-raf-main-by-symlink:6.4",
+    "targetGroup": "complete-raf-flow-contracts/z350",
+    "runId": "d6df7742-dd51-412d-89f1-02f0f1d9c19f",
+    "selection": {
+      "files": [
+        "test/sandbox-test-run.test.ts",
+        "test/sandbox-test-caller-z400.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 186,
+    "knownRed": [],
+    "unknown": [],
+    "unexecuted": [],
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "startedAt": "2026-10-25T03:40:06.903Z",
+    "durationMs": 1389,
+    "raw": "physical-slot-z350.TestRunResult.json",
+    "queue": null
+  },
+  {
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/q414-regress",
+    "sourceItem": "switch-raf-main-by-symlink:6.4",
+    "targetGroup": "complete-raf-flow-contracts/q414-regress",
+    "runId": "c533f57a-d7ee-4dd4-aad8-ba85c0c6de12",
+    "selection": {
+      "files": [
+        "test/agent-adapters.test.ts",
+        "test/session-state.test.ts",
+        "test/agent-run-queue.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 105,
+    "knownRed": [],
+    "unknown": [],
+    "unexecuted": [],
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "complete",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "startedAt": "2026-10-25T03:40:06.389Z",
+    "durationMs": 1494,
+    "raw": "physical-slot-q414-regress.TestRunResult.json",
+    "queue": null
+  }
+]

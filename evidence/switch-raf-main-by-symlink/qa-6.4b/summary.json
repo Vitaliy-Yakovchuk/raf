@@ -1361,8 +1361,8 @@
   ],
   "native": {
     "status": "awaiting-new-main-host-run-after-physical-slot-pinning",
-    "reviewedCommit": "e7d0d164222940d486cc06536a65bde7fe7726a9",
-    "command": "CODEX_HOME=/home/dev/.codex LC_ALL=C node scripts/qa-main-agent-channel.mjs e7d0d164222940d486cc06536a65bde7fe7726a9",
+    "reviewedCommit": "22032d53a2c733a1a6c37f52845b347b23b77044",
+    "command": "CODEX_HOME=/home/dev/.codex LC_ALL=C node scripts/qa-main-agent-channel.mjs 22032d53a2c733a1a6c37f52845b347b23b77044",
     "provider": "Owner ordinary Codex; main runs isolated clean clone after resource wait",
     "acceptance": "No unit or mock result substitutes for native transcript, exact commands/results, protection boundaries, host controls before/after and cleanup.",
     "hostAttempts": [
@@ -1387,7 +1387,8 @@
         "reason": "Unexecuted remainder: native gate 1; old-slot origin rejected after switch",
         "superseded": true
       }
-    ]
+    ],
+    "hostQueueAcknowledgedByMain": true
   },
   "createdAt": "2026-10-25T03:11:47.143644+00:00",
   "negativeProbeFixture": {
@@ -1434,5 +1435,379 @@
       "rawPreserved": false,
       "reason": "Tool output was not stored. Superseded by full preserved qa after adding inactive-origin assertion; not counted as complete evidence."
     }
-  }
+  },
+  "physicalSlotRuns": [
+    {
+      "runId": "5264fab6-4a0a-468f-ae09-7cb1f86aeb50",
+      "startedAt": "2026-10-25T03:34:31.698Z",
+      "phase": "red",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "public CLI pins the active physical main slot before loading its runtime"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "raw": "physical-slot-fixture-failure.TestRunResult.json",
+      "tool": "physical-slot-fixture-failure.tool.json",
+      "combinedStream": "physical-slot-fixture-failure.combined-stream.txt",
+      "separateStderr": null,
+      "cliExitCode": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "passedCount": 71,
+      "workspace": "physical-slot-workspace.patch describes final own changes; per-run shared diff was not atomically captured",
+      "workspaceSnapshotHead": "f9abba613502a94e0be66aba26fcea8018c5369c"
+    },
+    {
+      "runId": "ac730be5-9f9f-4ba6-9009-fabf71bd78ec",
+      "startedAt": "2026-10-25T03:35:42.459Z",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "public CLI pins the active physical main slot before loading its runtime"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "raw": "physical-slot-qa-duplicate-registration.TestRunResult.json",
+      "tool": "physical-slot-qa-duplicate-registration.tool.json",
+      "combinedStream": "physical-slot-qa-duplicate-registration.combined-stream.txt",
+      "separateStderr": null,
+      "cliExitCode": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "passedCount": 71,
+      "workspace": "physical-slot-workspace.patch describes final own changes; per-run shared diff was not atomically captured",
+      "workspaceSnapshotHead": "f9abba613502a94e0be66aba26fcea8018c5369c"
+    },
+    {
+      "runId": "b748aef3-1569-4571-b039-bca475dcd13c",
+      "startedAt": "2026-10-25T03:39:34.591Z",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "public CLI pins the active physical main slot before loading its runtime"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "raw": "physical-slot-qa-inactive-fixture.TestRunResult.json",
+      "tool": "physical-slot-qa-inactive-fixture.tool.json",
+      "combinedStream": "physical-slot-qa-inactive-fixture.combined-stream.txt",
+      "separateStderr": null,
+      "cliExitCode": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "passedCount": 71,
+      "workspace": "physical-slot-workspace.patch describes final own changes; per-run shared diff was not atomically captured",
+      "workspaceSnapshotHead": "f9abba613502a94e0be66aba26fcea8018c5369c"
+    },
+    {
+      "runId": "872531b3-329a-46f4-8bb1-1a6e3066e9aa",
+      "startedAt": "2026-10-25T03:36:18.772Z",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "public CLI pins the active physical main slot before loading its runtime"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "raw": "physical-slot-qa-source-registration.TestRunResult.json",
+      "tool": "physical-slot-qa-source-registration.tool.json",
+      "combinedStream": "physical-slot-qa-source-registration.combined-stream.txt",
+      "separateStderr": null,
+      "cliExitCode": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "passedCount": 71,
+      "workspace": "physical-slot-workspace.patch describes final own changes; per-run shared diff was not atomically captured",
+      "workspaceSnapshotHead": "f9abba613502a94e0be66aba26fcea8018c5369c"
+    },
+    {
+      "runId": "a6ece229-813c-4d1d-a023-52c77f527ede",
+      "startedAt": "2026-10-25T03:39:50.282Z",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "raw": "physical-slot-qa.TestRunResult.json",
+      "tool": "physical-slot-qa.tool.json",
+      "combinedStream": "physical-slot-qa.combined-stream.txt",
+      "separateStderr": null,
+      "cliExitCode": 0,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "passedCount": 72,
+      "workspace": "physical-slot-workspace.patch describes final own changes; per-run shared diff was not atomically captured",
+      "workspaceSnapshotHead": "f9abba613502a94e0be66aba26fcea8018c5369c"
+    },
+    {
+      "runId": "92d6e190-f010-4f69-9c65-e955271ad0f3",
+      "startedAt": "2026-10-25T03:35:11.411Z",
+      "phase": "red",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": [
+          {
+            "file": "test/main-switch-agent-channel.test.ts",
+            "name": "public CLI pins the active physical main slot before loading its runtime"
+          }
+        ]
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "public CLI pins the active physical main slot before loading its runtime"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "raw": "physical-slot-red.TestRunResult.json",
+      "tool": "physical-slot-red.tool.json",
+      "combinedStream": "physical-slot-red.combined-stream.txt",
+      "separateStderr": null,
+      "cliExitCode": 1,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --only 'test/main-switch-agent-channel.test.ts::public CLI pins the active physical main slot before loading its runtime'",
+      "passedCount": 0,
+      "workspace": "physical-slot-workspace.patch describes final own changes; per-run shared diff was not atomically captured",
+      "workspaceSnapshotHead": "f9abba613502a94e0be66aba26fcea8018c5369c"
+    }
+  ],
+  "physicalSlotRegressions": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z390",
+      "sourceItem": "switch-raf-main-by-symlink:6.4",
+      "targetGroup": "complete-raf-flow-contracts/z390",
+      "runId": "38949b85-f0a1-427e-aca9-e5e75c6504d6",
+      "selection": {
+        "files": [
+          "test/codex-sandbox-preflight-path.test.ts",
+          "test/raf-unix-socket-paths.test.ts",
+          "test/codex-bwrap-entry.test.ts",
+          "test/codex-bwrap-evidence.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 77,
+      "knownRed": [],
+      "unknown": [],
+      "unexecuted": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "startedAt": "2026-10-25T03:40:06.670Z",
+      "durationMs": 29800,
+      "raw": "physical-slot-z390.TestRunResult.json",
+      "queue": null
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z389-trust-order",
+      "sourceItem": "switch-raf-main-by-symlink:6.4",
+      "targetGroup": "complete-raf-flow-contracts/z389-trust-order",
+      "runId": "6055d9bb-7512-44d6-93e7-f434a02432cc",
+      "selection": {
+        "files": [
+          "test/workspace-trust.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 53,
+      "knownRed": [],
+      "unknown": [],
+      "unexecuted": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "startedAt": "2026-10-25T03:40:06.057Z",
+      "durationMs": 226747,
+      "raw": "physical-slot-z389-trust-order.TestRunResult.json",
+      "queue": null
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z350",
+      "sourceItem": "switch-raf-main-by-symlink:6.4",
+      "targetGroup": "complete-raf-flow-contracts/z350",
+      "runId": "d6df7742-dd51-412d-89f1-02f0f1d9c19f",
+      "selection": {
+        "files": [
+          "test/sandbox-test-run.test.ts",
+          "test/sandbox-test-caller-z400.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 186,
+      "knownRed": [],
+      "unknown": [],
+      "unexecuted": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "startedAt": "2026-10-25T03:40:06.903Z",
+      "durationMs": 1389,
+      "raw": "physical-slot-z350.TestRunResult.json",
+      "queue": null
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/q414-regress",
+      "sourceItem": "switch-raf-main-by-symlink:6.4",
+      "targetGroup": "complete-raf-flow-contracts/q414-regress",
+      "runId": "c533f57a-d7ee-4dd4-aad8-ba85c0c6de12",
+      "selection": {
+        "files": [
+          "test/agent-adapters.test.ts",
+          "test/session-state.test.ts",
+          "test/agent-run-queue.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 105,
+      "knownRed": [],
+      "unknown": [],
+      "unexecuted": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "startedAt": "2026-10-25T03:40:06.389Z",
+      "durationMs": 1494,
+      "raw": "physical-slot-q414-regress.TestRunResult.json",
+      "queue": null
+    }
+  ]
 }

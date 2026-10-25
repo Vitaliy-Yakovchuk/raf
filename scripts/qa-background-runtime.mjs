@@ -100,7 +100,7 @@ if (process.argv[2] === 'pane') {
   const source = path.resolve(import.meta.dirname, '..');
   const only = process.argv.includes('--only-I6'), noTcp = process.argv.includes('--no-tcp');
   const output = path.resolve(process.argv[2]); fs.mkdirSync(output, { recursive: true });
-  const base = fs.mkdtempSync('/tmp/c34-'), root = path.join(base, 'r'), home = path.join(base, 'h'), tmp = path.join(base, 't');
+  const base = fs.mkdtempSync(path.join(os.tmpdir(),'c34-')), root = path.join(base, 'r'), home = path.join(base, 'h'), tmp = path.join(base, 't');
   for (const directory of [root, home, tmp, path.join(base, 'commands')]) fs.mkdirSync(directory, { recursive: true });
   const main = path.join(root, 'raf-main'), state = path.join(home, '.raf/state.sqlite'), bugs = path.join(home, '.raf/bugs.sqlite');
   const env = { PATH: process.env.PATH, HOME: home, RAF_QA_HOME: home, RAF_ORCHESTRATOR_ROOT: root, TMPDIR: tmp, TERM: 'xterm', TZ: 'UTC', LANG: 'C.UTF-8',
@@ -157,12 +157,16 @@ if (process.argv[2] === 'pane') {
     const address = await wait('fixture HTTPS upstream', () => fs.existsSync(upstreamReady) && read(upstreamReady)); settings.bugs.origin = 'https://127.0.0.1:' + address.port;
     } else { settings.bugs.origin = 'https://127.0.0.1:9'; summary.limitations.push('I6 excluded: sandbox TCP listen returns EACCES; no fixture credential installed, bug sync does not contact upstream.'); }
     atomic(path.join(root, 'conf/raf.json'), settings);
-    git(root, 'clone', '--quiet', '--no-hardlinks', '--no-checkout', source, main); git(main, 'checkout', '-B', 'main', summary.sha);
+    fs.mkdirSync(main);
+    const entries=git(source,'ls-tree','--name-only',summary.sha).split('\n').filter(name=>!['evidence','docs'].includes(name));
+    const archive=path.join(base,'source.tar');const archiveResult=run('source-archive','git',['-C',source,'archive','--format=tar','--output='+archive,summary.sha,...entries]);assert.equal(archiveResult.cliExitCode,0,archiveResult.stderr);assert.equal(run('source-extract','tar',['-xf',archive,'-C',main]).cliExitCode,0);fs.unlinkSync(archive);
+    summary.fixtureSource={method:'git archive of exact source SHA; own minimal repository',sha:summary.sha,excludedTrees:['evidence','docs'],entries};
+    git(main,'init','-q','-b','main');git(main,'remote','add','origin',source);
     fs.cpSync(path.join(source, 'node_modules'), path.join(main, 'node_modules'), { recursive: true, dereference: true });
     const entry = `import {appendFileSync,readFileSync} from 'node:fs';\nimport {pathToFileURL} from 'node:url';\nimport {runServiceEntry} from '../src/service-entry.ts';\nconst mode=JSON.parse(readFileSync(${JSON.stringify(path.join(base, 'mode.json'))},'utf8')).mode;\nappendFileSync(${JSON.stringify(path.join(output, 'service-entry.jsonl'))},JSON.stringify({pid:process.pid,cwd:process.cwd(),entry:import.meta.url,mainPath:process.env.RAF_MAIN_PATH,mode})+'\\n');\nconst fault=mode==='gated'||mode==='recovery-fail';\nconst host=await runServiceEntry(fault?{loadPorts:async(file,context)=>{const ports=await(await import(pathToFileURL(file).href)).createServicePorts(context);return {...ports,recover:async value=>{if(mode==='recovery-fail')throw Error('CFC34 recovery failure');await new Promise(resolve=>setTimeout(resolve,120000));await ports.recover(value);}};}}:undefined);\nif(mode==='crash')setTimeout(()=>process.exit(17),500);\nawait host.closed;\n`;
     atomic(path.join(base, 'mode.json'), { mode: 'normal' }); fs.writeFileSync(path.join(main, 'bin/qa-service.ts'), entry);
     assert.equal(run('build', process.execPath, ['scripts/build.ts'], main).cliExitCode, 0);
-    git(main, 'add', '--', 'bin/qa-service.ts'); git(main, 'commit', '-m', 'qa: controlled background runtime stand entry'); summary.fixtureCommit = git(main, 'rev-parse', 'HEAD');
+    git(main, 'add', '--', ...entries, 'bin/qa-service.ts'); git(main, 'commit', '-m', 'qa: controlled background runtime stand entry'); summary.fixtureCommit = git(main, 'rev-parse', 'HEAD');
     git(root, 'init', '-q', '-b', 'main'); git(root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './raf-main', 'raf-main'); git(root, 'submodule', 'absorbgitdirs');
     git(main, 'worktree', 'add', '-B', 'develop', path.join(root, 'raf-develop'), 'HEAD'); git(main, 'worktree', 'add', '-B', 'hotfix', path.join(root, 'raf-hotfix'), 'HEAD');
     for (const name of ['dist', 'node_modules']) for (const branch of ['develop', 'hotfix']) fs.cpSync(path.join(main, name), path.join(root, 'raf-' + branch, name), { recursive: true, dereference: true });
@@ -255,17 +259,14 @@ if (process.argv[2] === 'pane') {
       atomic(path.join(output, 'I5-grants.json'), { grant, next, before, after, elapsed, interval: settings.resourceWait.grantIntervalMs, abandoned: result }); return { evidence: 'I5-grants.json' };
     });
     await scenario('I5-channel', async () => {
-      const policyFile=path.join(root,'conf/flow.json'), saved=fs.readFileSync(policyFile,'utf8'), policy=JSON.parse(saved);
-      policy.resources.normal.minRamBytes=Number.MAX_SAFE_INTEGER; policy.resources.hotfix.minRamBytes=Number.MAX_SAFE_INTEGER; atomic(policyFile,policy);
-      try {
-        atomic(path.join(base,'mode.json'),{mode:'normal'}); const owner=start(), before=sql().resource_wait_protocol_state;
-        const args=[path.join(main,'bin/raf.ts'),'resource','wait','--level','normal']; const client=spawn(process.execPath,args,{cwd:main,env,stdio:['ignore','pipe','pipe']}); processes.push(client);
-        let stdout='',stderr=''; client.stdout.on('data',value=>stdout+=value);client.stderr.on('data',value=>stderr+=value);const exited=new Promise(resolve=>client.on('close',(code,signal)=>resolve({cliExitCode:code,signal})));
-        await delay(5000);assert.equal(client.exitCode,null);assert.ok(live(owner.pid));const pendingFds=fs.readdirSync('/proc/'+client.pid+'/fd').flatMap(fd=>{try{return[fs.readlinkSync('/proc/'+client.pid+'/fd/'+fd)];}catch{return[];}});assert.ok(pendingFds.some(fd=>fd.startsWith('socket:')));
-        process.kill(owner.pid,'SIGKILL'); await wait('killed own service',()=>!live(owner.pid));const result={...(await Promise.race([exited,delay(45000).then(()=>{throw Error('channel loss client did not exit');})])),stdout,stderr,command:[process.execPath,...args]}; assert.notEqual(result.cliExitCode,0);assert.equal(result.signal,null);assert.match(stdout+stderr,/connection.*lost|service_stopped/i);
-        const abandoned=sql().resource_wait_protocol_state;assert.deepEqual(abandoned,before);const replacement=start();assert.notEqual(replacement.serviceEpoch,owner.serviceEpoch);assert.equal(client.exitCode,result.cliExitCode);assert.deepEqual(sql().resource_wait_protocol_state[0].grant_json,before[0].grant_json);stop();
-        atomic(path.join(output,'I5-channel.json'),{owner,replacement,before,abandoned,result,pendingFds,policy:{normal:policy.resources.normal,hotfix:policy.resources.hotfix},noRevive:true});return{evidence:'I5-channel.json'};
-      } finally {fs.writeFileSync(policyFile,saved);}
+      atomic(path.join(base,'mode.json'),{mode:'normal'});start();const grant=must(cli('channel-initial-grant',['resource','wait','--level','normal']));stop();const owner=start(), before=sql().resource_wait_protocol_state;
+      const args=[path.join(main,'bin/raf.ts'),'resource','wait','--level','normal']; const client=spawn(process.execPath,args,{cwd:main,env,stdio:['ignore','pipe','pipe']}); processes.push(client);
+      let stdout='',stderr=''; client.stdout.on('data',value=>stdout+=value);client.stderr.on('data',value=>stderr+=value);const exited=new Promise(resolve=>client.on('close',(code,signal)=>resolve({cliExitCode:code,signal})));
+      await delay(5000);const pendingFds=fs.existsSync('/proc/'+client.pid+'/fd')?fs.readdirSync('/proc/'+client.pid+'/fd').flatMap(fd=>{try{return[fs.readlinkSync('/proc/'+client.pid+'/fd/'+fd)];}catch{return[];}}):[];
+      atomic(path.join(output,'I5-channel-pending.json'),{owner,grant,before,pendingFds,clientExit:client.exitCode,stdout,stderr});assert.equal(client.exitCode,null);assert.ok(live(owner.pid));assert.ok(pendingFds.some(fd=>fd.startsWith('socket:')));
+      process.kill(owner.pid,'SIGKILL'); await wait('killed own service',()=>!live(owner.pid));await wait('channel loss client exit',()=>client.exitCode!==null||client.signalCode!==null);const result={...(await exited),stdout,stderr,command:[process.execPath,...args]};atomic(path.join(output,'I5-channel-result.json'),result); assert.notEqual(result.cliExitCode,0);assert.equal(result.signal,null);assert.match(stdout+stderr,/connection.*lost|service_stopped/i);
+      const abandoned=sql().resource_wait_protocol_state;assert.deepEqual(abandoned,before);const replacement=start();assert.notEqual(replacement.serviceEpoch,owner.serviceEpoch);assert.equal(client.exitCode,result.cliExitCode);assert.deepEqual(sql().resource_wait_protocol_state[0].grant_json,before[0].grant_json);stop();
+      atomic(path.join(output,'I5-channel.json'),{owner,replacement,before,abandoned,result,pendingFds,noRevive:true});return{evidence:'I5-channel.json'};
     });
     await scenario('I2', async () => {
       stop(); const saved = { ...settings.service }; settings.service.entryRelativePath = 'bin/absent.ts'; atomic(path.join(root, 'conf/raf.json'), settings);
@@ -299,9 +300,9 @@ if (process.argv[2] === 'pane') {
     summary.cleanup.remaining = remaining; summary.cleanup.complete = remaining.length === 0 && !summary.cleanup.stopError && !summary.cleanup.serviceError && !summary.cleanup.tmuxError;
     if (fs.existsSync(path.join(home, '.raf/service.log'))) fs.copyFileSync(path.join(home, '.raf/service.log'), path.join(output, 'service.log'));
     fs.writeFileSync(path.join(output,'upstream.stderr'),upstreamErrors);
-    summary.received = received(); summary.finalSql = fs.existsSync(state) ? sql() : null; summary.finalNotices = fs.existsSync(bugs) ? notices() : null;
-    summary.finalBugState=fs.existsSync(bugs)?db(bugs,d=>Object.fromEntries(['bugs','comments','sync_state'].map(table=>[table,d.prepare('SELECT * FROM '+table).all()]))):null;
-    summary.status = summary.scenarios.length === summary.selection.length && summary.scenarios.every(row => row.status === 'passed' && !row.details.remaining && !row.details.ordinaryAgent) && summary.cleanup.complete && !summary.setupError ? 'passed' : 'incomplete'; flush();
+    for(const [key,action] of Object.entries({received,finalSql:()=>fs.existsSync(state)?sql():null,finalNotices:()=>fs.existsSync(bugs)?notices():null,finalBugState:()=>fs.existsSync(bugs)?db(bugs,d=>Object.fromEntries(['bugs','comments','sync_state'].map(table=>[table,d.prepare('SELECT * FROM '+table).all()]))):null})) {try{summary[key]=action();}catch(error){(summary.evidenceErrors??=[]).push({key,error:String(error)});}}
+
+    summary.status = summary.scenarios.length === summary.selection.length && summary.scenarios.every(row => row.status === 'passed' && !row.details.remaining && !row.details.ordinaryAgent) && summary.cleanup.complete && !summary.setupError && !summary.evidenceErrors ? 'passed' : 'incomplete'; flush();
     fs.rmSync(base, { recursive: true, force: true }); summary.cleanup.fixtureRemoved = !fs.existsSync(base); flush();
   }
   console.log(JSON.stringify({ status: summary.status, evidence: path.join(output, 'summary.json'), scenarios: summary.scenarios.map(({ id, status, error }) => ({ id, status, error })), setupError: summary.setupError, cleanup: summary.cleanup }));

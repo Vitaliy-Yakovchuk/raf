@@ -223,40 +223,46 @@ export function createTestRunPorts(config: TestRunConfig, stateContext: StateCon
         inheritedOperationalChannel, unitFiles: observed ? observed.filter(f => f.classification === 'unit').map(f => f.file) : unitFiles.filter(file => files[file]?.kind === 'file'), files };
     },
     spawn: async (command, onEvent): Promise<ManagedTestProcess> => {
-      const project = request ? config.projects[request.project] : undefined;
-      const profileId = request ? project?.groups[request.group]?.profileId : undefined;
-      const profiles = profileId ? [project!.profiles[profileId]] : Object.values(config.projects).flatMap(project => Object.values(project.profiles));
-      const vitestProfile = profiles.find(p => p.resultAdapter === 'vitest-events' && command.executable === p.executable && command.argv[0] === p.argv[0] && command.argv.includes(p.argv[p.argv.indexOf('run') - 1]) && (p.cwd === '.' || command.cwd.endsWith('/' + p.cwd)) && (!p.argv.includes('--project') || command.argv[command.argv.indexOf('--project') + 1] === p.argv[p.argv.indexOf('--project') + 1]));
-      let vitestEnvironment: Record<string, string> = {};
-      if (vitestProfile) {
-        const workspace = resolve(command.cwd, relative(vitestProfile.cwd, '.'));
-        const run = command.argv.indexOf('run');
-        const options = command.argv.slice(run + 1);
-        const firstOption = options.findIndex(arg => arg.startsWith('-'));
-        const files = (firstOption < 0 ? options : options.slice(0, firstOption)).map(file => relative(workspace, resolve(command.cwd, file)));
-        const ids = command.environment.testIds ?? [];
-        const policy = command.environment.timeoutPolicy ?? testRunTimeoutPolicy(profileTestKind(vitestProfile), JSON.parse(Buffer.from(snapshot.flow).toString('utf8')));
-        const batches = planVitestInvocations({ workspace, selection: { files, testIds: ids }, command } as any, vitestProfile, policy, fileURLToPath(new URL('./test-run-vitest-reporter.ts', import.meta.url)), ids);
-        const localConfig = readFileSync(resolve(command.cwd, 'vitest.config.ts'), 'utf8');
-        const baseRunner = localConfig.match(/\brunner:\s*["']([^"']+)["']/)?.[1];
-        command.environment.vitestBatches = batches;
-        vitestEnvironment = { RAF_TEST_RUN_VITEST_BATCHES: JSON.stringify(batches), RAF_TEST_RUN_WORKSPACE: workspace, RAF_TEST_RUN_KIND: profileTestKind(vitestProfile), RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(config.diagnostics), ...(baseRunner ? { RAF_TEST_RUN_BASE_RUNNER: resolve(command.cwd, baseRunner) } : {}) };
-        command.argv = [fileURLToPath(new URL('../scripts/test-run-vitest.ts', import.meta.url))];
+      let child: ReturnType<typeof spawn>;
+      try {
+        const project = request ? config.projects[request.project] : undefined;
+        const profileId = request ? project?.groups[request.group]?.profileId : undefined;
+        const profiles = profileId ? [project!.profiles[profileId]] : Object.values(config.projects).flatMap(project => Object.values(project.profiles));
+        const vitestProfile = profiles.find(p => p.resultAdapter === 'vitest-events' && command.executable === p.executable && command.argv[0] === p.argv[0] && command.argv.includes(p.argv[p.argv.indexOf('run') - 1]) && (p.cwd === '.' || command.cwd.endsWith('/' + p.cwd)) && (!p.argv.includes('--project') || command.argv[command.argv.indexOf('--project') + 1] === p.argv[p.argv.indexOf('--project') + 1]));
+        let vitestEnvironment: Record<string, string> = {};
+        if (vitestProfile) {
+          const workspace = resolve(command.cwd, relative(vitestProfile.cwd, '.'));
+          const run = command.argv.indexOf('run');
+          const options = command.argv.slice(run + 1);
+          const firstOption = options.findIndex(arg => arg.startsWith('-'));
+          const files = (firstOption < 0 ? options : options.slice(0, firstOption)).map(file => relative(workspace, resolve(command.cwd, file)));
+          const ids = command.environment.testIds ?? [];
+          const policy = command.environment.timeoutPolicy ?? testRunTimeoutPolicy(profileTestKind(vitestProfile), JSON.parse(Buffer.from(snapshot.flow).toString('utf8')));
+          const batches = planVitestInvocations({ workspace, selection: { files, testIds: ids }, command } as any, vitestProfile, policy, fileURLToPath(new URL('./test-run-vitest-reporter.ts', import.meta.url)), ids);
+          const localConfig = readFileSync(resolve(command.cwd, 'vitest.config.ts'), 'utf8');
+          const baseRunner = localConfig.match(/\brunner:\s*["']([^"']+)["']/)?.[1];
+          command.environment.vitestBatches = batches;
+          vitestEnvironment = { RAF_TEST_RUN_VITEST_BATCHES: JSON.stringify(batches), RAF_TEST_RUN_WORKSPACE: workspace, RAF_TEST_RUN_KIND: profileTestKind(vitestProfile), RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(config.diagnostics), ...(baseRunner ? { RAF_TEST_RUN_BASE_RUNNER: resolve(command.cwd, baseRunner) } : {}) };
+          command.argv = [fileURLToPath(new URL('../scripts/test-run-vitest.ts', import.meta.url))];
+        }
+        let childEnvironment = environment;
+        if (vitestProfile?.testKind === 'integration') {
+          const runRoot = command.environment.TMPDIR;
+          if (!runRoot) throw Object.assign(new Error('Etchly D1 requires a reserved private run TMPDIR'), { code: 'ENVIRONMENT_INVALID' });
+          const facts = [runRoot, stateContext.homeDirectory].map(path => { const st = lstatSync(path); return !st.isSymbolicLink() && st.isDirectory() && realpathSync(path) === path && st.uid === process.getuid!() && !(st.mode & 0o077); });
+          accessSync(runRoot, constants.W_OK);
+          if (Buffer.byteLength(resolve(runRoot, 'tmp')) > 50 || !facts.every(Boolean)) throw Object.assign(new Error('Etchly D1 HOME/TMPDIR must be canonical, private and compact'), { code: 'ENVIRONMENT_INVALID' });
+          const prepared = prepareEtchlyIntegrationEnvironment({ missingChecks: [], executableRuntime: true, compatibleBridge: true, sharedLibsBranchMatches: true, resourceProtocolInstalled: true, localBuildValid: true, privateTmpWritable: true, loopbackAvailable: true, isolatedHome: stateContext.homeDirectory, operationalHome: userInfo().homedir, stateOriginVerified: stateContext.mode === 'qa', privateRunRoot: runRoot, inheritedEnv: Object.fromEntries(Object.entries(environment).filter((entry): entry is [string, string] => entry[1] !== undefined)) });
+          if ('errorCode' in prepared) throw Object.assign(new Error(prepared.reason), { code: prepared.errorCode });
+          for (const path of prepared.ownedPaths) mkdirSync(path, { mode: 0o700 });
+          childEnvironment = prepared.env;
+        }
+        child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...childEnvironment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: vitestProfile?.testKind === 'integration' ? childEnvironment.TMPDIR : command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '2' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+        await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', fail); });
+      } catch (error) {
+        spawnFailed?.();
+        throw error;
       }
-      let childEnvironment = environment;
-      if (vitestProfile?.testKind === 'integration') {
-        const runRoot = command.environment.TMPDIR;
-        if (!runRoot) throw Object.assign(new Error('Etchly D1 requires a reserved private run TMPDIR'), { code: 'ENVIRONMENT_INVALID' });
-        const facts = [runRoot, stateContext.homeDirectory].map(path => { const st = lstatSync(path); return !st.isSymbolicLink() && st.isDirectory() && realpathSync(path) === path && st.uid === process.getuid!() && !(st.mode & 0o077); });
-        accessSync(runRoot, constants.W_OK);
-        if (Buffer.byteLength(resolve(runRoot, 'tmp')) > 50 || !facts.every(Boolean)) throw Object.assign(new Error('Etchly D1 HOME/TMPDIR must be canonical, private and compact'), { code: 'ENVIRONMENT_INVALID' });
-        const prepared = prepareEtchlyIntegrationEnvironment({ missingChecks: [], executableRuntime: true, compatibleBridge: true, sharedLibsBranchMatches: true, resourceProtocolInstalled: true, localBuildValid: true, privateTmpWritable: true, loopbackAvailable: true, isolatedHome: stateContext.homeDirectory, operationalHome: userInfo().homedir, stateOriginVerified: stateContext.mode === 'qa', privateRunRoot: runRoot, inheritedEnv: Object.fromEntries(Object.entries(environment).filter((entry): entry is [string, string] => entry[1] !== undefined)) });
-        if ('errorCode' in prepared) throw Object.assign(new Error(prepared.reason), { code: prepared.errorCode });
-        for (const path of prepared.ownedPaths) mkdirSync(path, { mode: 0o700 });
-        childEnvironment = prepared.env;
-      }
-      const child = spawn(command.executable, command.argv, { cwd: command.cwd, env: { ...childEnvironment, ...(inherited.PLAYWRIGHT_BROWSERS_PATH ? { PLAYWRIGHT_BROWSERS_PATH: inherited.PLAYWRIGHT_BROWSERS_PATH } : {}), ...vitestEnvironment, TMPDIR: vitestProfile?.testKind === 'integration' ? childEnvironment.TMPDIR : command.environment.TMPDIR, RAF_TEST_RUN_IDS: JSON.stringify(command.environment.testIds ?? []), RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: '2' }, shell: false, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
-      await new Promise<void>((done, fail) => { child.once('spawn', done); child.once('error', error => { spawnFailed?.(); fail(error); }); });
       const pid = child.pid!;
       const exited = new Promise<void>(done => child.once('exit', () => done()));
       const identity = JSON.stringify({ pid, start: processStart(pid), boot: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim() });

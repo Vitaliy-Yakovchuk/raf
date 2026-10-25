@@ -125,14 +125,47 @@ function proveLoading(root: string, files: readonly HotfixRuntimeFile[], entrypo
     if (path.endsWith('.json')) return;
     const source = readFileSync(join(root, path), 'utf8');
     const tree = parser.createSourceFile(path, source, parser.ScriptTarget.Latest, true);
+    const factories = new Set(['createRequire']);
+    const modules = new Set<string>();
+    const requires = new Set(['require']);
+    const declarations: ts.VariableDeclaration[] = [];
+    function collect(node: ts.Node): void {
+      if (parser.isImportDeclaration(node) && ['node:module', 'module'].includes(literal(node.moduleSpecifier) ?? '')) {
+        const bindings = node.importClause?.namedBindings;
+        if (bindings && parser.isNamespaceImport(bindings)) modules.add(bindings.name.text);
+        if (bindings && parser.isNamedImports(bindings)) {
+          for (const binding of bindings.elements) if ((binding.propertyName ?? binding.name).text === 'createRequire') factories.add(binding.name.text);
+        }
+      }
+      if (parser.isVariableDeclaration(node)) declarations.push(node);
+      parser.forEachChild(node, collect);
+    }
+    collect(tree);
+    function factory(node: ts.Expression): boolean {
+      return parser.isIdentifier(node) && factories.has(node.text) ||
+        parser.isPropertyAccessExpression(node) && parser.isIdentifier(node.expression) && modules.has(node.expression.text) && node.name.text === 'createRequire';
+    }
+    function required(node: ts.Expression): boolean {
+      return parser.isIdentifier(node) && requires.has(node.text) || parser.isCallExpression(node) && factory(node.expression);
+    }
+    let changed: boolean;
+    do {
+      changed = false;
+      for (const declaration of declarations) {
+        if (!parser.isIdentifier(declaration.name) || !declaration.initializer) continue;
+        const name = declaration.name.text;
+        for (const [bindings, matches] of [[factories, factory(declaration.initializer)], [requires, required(declaration.initializer)]] as const) {
+          if (matches && !bindings.has(name)) { bindings.add(name); changed = true; }
+        }
+      }
+    } while (changed);
     function inspect(node: ts.Node): void {
       if ((parser.isImportDeclaration(node) || parser.isExportDeclaration(node)) && node.moduleSpecifier) {
         if (!(parser.isImportDeclaration(node) && node.importClause?.isTypeOnly) && !(parser.isExportDeclaration(node) && node.isTypeOnly)) loadSpecifier(literal(node.moduleSpecifier) ?? refused('nonliteral import ' + path), path);
       }
       if (parser.isCallExpression(node)) {
         const expression = node.expression.getText(tree);
-        const immediateRequire = parser.isCallExpression(node.expression) && node.expression.expression.getText(tree) === 'createRequire';
-        if (node.expression.kind === parser.SyntaxKind.ImportKeyword || expression === 'require' || immediateRequire) {
+        if (node.expression.kind === parser.SyntaxKind.ImportKeyword || required(node.expression)) {
           const specifier = literal(node.arguments[0]);
           if (specifier !== undefined) loadSpecifier(specifier, path);
           else {

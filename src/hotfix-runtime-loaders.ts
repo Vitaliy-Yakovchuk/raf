@@ -26,7 +26,7 @@ export const runtimeLibraryProofs: Readonly<Record<string, { sha256: string; con
     "sha256": "569177652966bd528c319171c7dd22860dbf72bde116cbc4f644f1d02bb12e39",
     "consumers": {
       "src/comment-policy.ts": "91781201685ddff654078c215e8ba9d1d862edc1c47480e3538a31df1d91ad2d",
-      "src/hotfix-runtime-inventory.ts": "972962af3d441f0af92a72a4b7d4099a33693da3fdfdf2d50cc795fe104388c7"
+      "src/hotfix-runtime-inventory.ts": "8fe738bd15d78f735620eec1a6bded93f81d04bdbcd221abffdbaceb875e32af"
     },
     "proof": "These exact consumers call only the synchronous parser, scanner and AST predicates/traversal APIs. They do not call TypeScript sys.require, compiler plugins, source-map installation or other module-loading APIs. The complete dependency tree and package metadata are protected."
   }

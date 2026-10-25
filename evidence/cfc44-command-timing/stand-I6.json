@@ -1,0 +1,44 @@
+{
+  "base": "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6",
+  "root": "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root",
+  "code": "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root/raf-develop",
+  "home": "/tmp/cfc44-knKBT1/I6-data-home",
+  "statePath": "/tmp/cfc44-knKBT1/I6-data-home/.raf/state.sqlite",
+  "sha": "6ac90fc946beea135ddb2f524d80616e5a37ec27",
+  "node": "v26.12.1",
+  "os": "Linux 7.0.0-30-generic",
+  "buildExit": 0,
+  "fixtureChanges": [
+    "Explicit per-worktree roots after absorb",
+    "Runner trust paths relocated to owned data-disk stand",
+    "HOME/SQLite outside Git; code and TMPDIR on data disk"
+  ],
+  "git": "git version 2.53.0",
+  "tmux": "tmux 3.6",
+  "typescript": "6.0.3",
+  "fingerprints": {
+    "raf.json": "3232f16c69aaab52a9655b0c9a8da6cdb4fffc321c965ef07453615e0fddd408",
+    "projects.json": "2bf63c9ab762c8eff5ba670eb7aff36dc1f0b2e9da080f688775adcc0e0d4502",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b"
+  },
+  "fixtureCommit": "8d3a56ec5e4303bcb9355855da028557ba160c42",
+  "rootFixtureCommit": "fc042b656112509593977d376d4b4197d9f9e0ff",
+  "I6Base": "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6",
+  "I6Home": "/tmp/cfc44-knKBT1/I6-data-home",
+  "artifacts": {
+    "dist/catalog.json": {
+      "sha256": "18779f473b0e0bf602abc18526fc57c646815369f70d7728694d3c7cc4995856",
+      "source": "Catalog copied unchanged from isolated 6ac90fc build; native Node TypeScript CLI"
+    },
+    "src/cli.ts": {
+      "sha256": "298ec9023cbad5d4cf5613aebe9847b0f06a737b5c2d7e904082de6d5047223b",
+      "source": "Catalog copied unchanged from isolated 6ac90fc build; native Node TypeScript CLI"
+    },
+    "src/hotfix-runtime-loaders.ts": {
+      "sha256": "ef67ae5ab978f99cabb810ccc368226db6369365c650192b7e9313bfe7b645a9",
+      "source": "Catalog copied unchanged from isolated 6ac90fc build; native Node TypeScript CLI"
+    }
+  },
+  "fixtureDiff": "qa/cfc44-actor.mjs | 1 +\n 1 file changed, 1 insertion(+)"
+}

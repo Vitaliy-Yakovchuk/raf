@@ -1,0 +1,53 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root/raf-main/bin/raf.ts",
+    "main",
+    "attach"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "wallMs": 4459.122755,
+  "before": null,
+  "after": {
+    "timings": [
+      {
+        "command": "main attach",
+        "average_ms": 4322.61911,
+        "updated_at": "2026-10-25T13:06:10.601Z"
+      }
+    ],
+    "sessions": [
+      {
+        "runId": "ad2f9b00-ee63-4be9-8702-074c12836593",
+        "addressId": "main",
+        "revision": 0,
+        "state": "running",
+        "activity": {
+          "type": "main",
+          "project": "orchestrator",
+          "features": [],
+          "phase": "main",
+          "cwd": "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root/raf-main"
+        },
+        "process": {
+          "pid": 39,
+          "startedAt": "2026-10-25T13:06:05.000Z",
+          "runner": "main",
+          "runnerSessionId": "%0",
+          "tmuxSession": "cfc44-main",
+          "evidence": {
+            "command": "/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/evidence/cfc44-command-timing/I6-operator.mjs pane",
+            "tmuxSocket": "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/main.sock",
+            "tmuxPane": "%0",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        }
+      }
+    ]
+  },
+  "childExitCode": null
+}

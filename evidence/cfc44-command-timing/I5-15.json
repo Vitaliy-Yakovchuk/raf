@@ -1,0 +1,392 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/cfc44-knKBT1/root/raf-develop/bin/raf.ts",
+    "command",
+    "stats"
+  ],
+  "environment": {
+    "HOME": "/tmp/cfc44-knKBT1/home",
+    "RAF_QA_HOME": "/tmp/cfc44-knKBT1/home",
+    "RAF_ORCHESTRATOR_ROOT": "/tmp/cfc44-knKBT1/root",
+    "TMPDIR": "/tmp/cfc44-knKBT1/tmp"
+  },
+  "startedAt": "2026-10-25T12:41:47.819Z",
+  "completedAt": "2026-10-25T12:41:48.497Z",
+  "wallMs": 678.076500000001,
+  "cliExitCode": 0,
+  "signal": null,
+  "childExitCode": null,
+  "childNote": "Direct CLI operation; no separate payload process",
+  "before": {
+    "timings": [
+      {
+        "command": "agent message",
+        "average_ms": 248.88482253,
+        "updated_at": "2026-10-25T12:39:36.421Z"
+      },
+      {
+        "command": "command stats",
+        "average_ms": 532.9393797495675,
+        "updated_at": "2026-10-25T12:41:47.795Z"
+      },
+      {
+        "command": "runner enable",
+        "average_ms": 0,
+        "updated_at": "2026-10-25T12:38:19.039Z"
+      }
+    ],
+    "audit": [
+      {
+        "id": 1,
+        "command": "runner enable",
+        "old_ms": null,
+        "new_ms": 0,
+        "at": "2026-10-25T12:38:19.039Z"
+      },
+      {
+        "id": 2,
+        "command": "command stats",
+        "old_ms": 227.858724,
+        "new_ms": 227.45600130000003,
+        "at": "2026-10-25T12:38:19.348Z"
+      },
+      {
+        "id": 3,
+        "command": "command stats",
+        "old_ms": 227.45600130000003,
+        "new_ms": 227.14762867000005,
+        "at": "2026-10-25T12:38:19.689Z"
+      },
+      {
+        "id": 4,
+        "command": "agent message",
+        "old_ms": null,
+        "new_ms": 251.75224599999999,
+        "at": "2026-10-25T12:38:20.043Z"
+      },
+      {
+        "id": 5,
+        "command": "agent message",
+        "old_ms": 251.75224599999999,
+        "new_ms": 250.5590557,
+        "at": "2026-10-25T12:38:20.362Z"
+      },
+      {
+        "id": 6,
+        "command": "command stats",
+        "old_ms": 227.14762867000005,
+        "new_ms": 223.64982120200003,
+        "at": "2026-10-25T12:38:20.672Z"
+      },
+      {
+        "id": 7,
+        "command": "command stats",
+        "old_ms": 223.64982120200003,
+        "new_ms": 227.03114628180003,
+        "at": "2026-10-25T12:39:36.092Z"
+      },
+      {
+        "id": 8,
+        "command": "agent message",
+        "old_ms": 250.5590557,
+        "new_ms": 248.88482253,
+        "at": "2026-10-25T12:39:36.421Z"
+      },
+      {
+        "id": 9,
+        "command": "command stats",
+        "old_ms": 227.03114628180003,
+        "new_ms": 280.47350925362,
+        "at": "2026-10-25T12:41:38.004Z"
+      },
+      {
+        "id": 10,
+        "command": "command stats",
+        "old_ms": 280.47350925362,
+        "new_ms": 319.374360728258,
+        "at": "2026-10-25T12:41:38.771Z"
+      },
+      {
+        "id": 11,
+        "command": "command stats",
+        "old_ms": 319.374360728258,
+        "new_ms": 343.3373658554322,
+        "at": "2026-10-25T12:41:39.413Z"
+      },
+      {
+        "id": 12,
+        "command": "command stats",
+        "old_ms": 343.3373658554322,
+        "new_ms": 367.77632966988904,
+        "at": "2026-10-25T12:41:40.083Z"
+      },
+      {
+        "id": 13,
+        "command": "command stats",
+        "old_ms": 367.77632966988904,
+        "new_ms": 392.6603898029001,
+        "at": "2026-10-25T12:41:40.812Z"
+      },
+      {
+        "id": 14,
+        "command": "command stats",
+        "old_ms": 392.6603898029001,
+        "new_ms": 411.3747480226101,
+        "at": "2026-10-25T12:41:41.474Z"
+      },
+      {
+        "id": 15,
+        "command": "command stats",
+        "old_ms": 411.3747480226101,
+        "new_ms": 435.6254033203491,
+        "at": "2026-10-25T12:41:42.204Z"
+      },
+      {
+        "id": 16,
+        "command": "command stats",
+        "old_ms": 435.6254033203491,
+        "new_ms": 453.4105386883142,
+        "at": "2026-10-25T12:41:42.901Z"
+      },
+      {
+        "id": 17,
+        "command": "command stats",
+        "old_ms": 453.4105386883142,
+        "new_ms": 466.0911925194828,
+        "at": "2026-10-25T12:41:43.563Z"
+      },
+      {
+        "id": 18,
+        "command": "command stats",
+        "old_ms": 466.0911925194828,
+        "new_ms": 478.43016916753453,
+        "at": "2026-10-25T12:41:44.284Z"
+      },
+      {
+        "id": 19,
+        "command": "command stats",
+        "old_ms": 478.43016916753453,
+        "new_ms": 489.19193455078107,
+        "at": "2026-10-25T12:41:44.967Z"
+      },
+      {
+        "id": 20,
+        "command": "command stats",
+        "old_ms": 489.19193455078107,
+        "new_ms": 499.96366929570297,
+        "at": "2026-10-25T12:41:45.645Z"
+      },
+      {
+        "id": 21,
+        "command": "command stats",
+        "old_ms": 499.96366929570297,
+        "new_ms": 521.9705906661327,
+        "at": "2026-10-25T12:41:46.467Z"
+      },
+      {
+        "id": 22,
+        "command": "command stats",
+        "old_ms": 521.9705906661327,
+        "new_ms": 527.2977584995194,
+        "at": "2026-10-25T12:41:47.126Z"
+      },
+      {
+        "id": 23,
+        "command": "command stats",
+        "old_ms": 527.2977584995194,
+        "new_ms": 532.9393797495675,
+        "at": "2026-10-25T12:41:47.795Z"
+      }
+    ]
+  },
+  "after": {
+    "timings": [
+      {
+        "command": "agent message",
+        "average_ms": 248.88482253,
+        "updated_at": "2026-10-25T12:39:36.421Z"
+      },
+      {
+        "command": "command stats",
+        "average_ms": 539.6890658746107,
+        "updated_at": "2026-10-25T12:41:48.480Z"
+      },
+      {
+        "command": "runner enable",
+        "average_ms": 0,
+        "updated_at": "2026-10-25T12:38:19.039Z"
+      }
+    ],
+    "audit": [
+      {
+        "id": 1,
+        "command": "runner enable",
+        "old_ms": null,
+        "new_ms": 0,
+        "at": "2026-10-25T12:38:19.039Z"
+      },
+      {
+        "id": 2,
+        "command": "command stats",
+        "old_ms": 227.858724,
+        "new_ms": 227.45600130000003,
+        "at": "2026-10-25T12:38:19.348Z"
+      },
+      {
+        "id": 3,
+        "command": "command stats",
+        "old_ms": 227.45600130000003,
+        "new_ms": 227.14762867000005,
+        "at": "2026-10-25T12:38:19.689Z"
+      },
+      {
+        "id": 4,
+        "command": "agent message",
+        "old_ms": null,
+        "new_ms": 251.75224599999999,
+        "at": "2026-10-25T12:38:20.043Z"
+      },
+      {
+        "id": 5,
+        "command": "agent message",
+        "old_ms": 251.75224599999999,
+        "new_ms": 250.5590557,
+        "at": "2026-10-25T12:38:20.362Z"
+      },
+      {
+        "id": 6,
+        "command": "command stats",
+        "old_ms": 227.14762867000005,
+        "new_ms": 223.64982120200003,
+        "at": "2026-10-25T12:38:20.672Z"
+      },
+      {
+        "id": 7,
+        "command": "command stats",
+        "old_ms": 223.64982120200003,
+        "new_ms": 227.03114628180003,
+        "at": "2026-10-25T12:39:36.092Z"
+      },
+      {
+        "id": 8,
+        "command": "agent message",
+        "old_ms": 250.5590557,
+        "new_ms": 248.88482253,
+        "at": "2026-10-25T12:39:36.421Z"
+      },
+      {
+        "id": 9,
+        "command": "command stats",
+        "old_ms": 227.03114628180003,
+        "new_ms": 280.47350925362,
+        "at": "2026-10-25T12:41:38.004Z"
+      },
+      {
+        "id": 10,
+        "command": "command stats",
+        "old_ms": 280.47350925362,
+        "new_ms": 319.374360728258,
+        "at": "2026-10-25T12:41:38.771Z"
+      },
+      {
+        "id": 11,
+        "command": "command stats",
+        "old_ms": 319.374360728258,
+        "new_ms": 343.3373658554322,
+        "at": "2026-10-25T12:41:39.413Z"
+      },
+      {
+        "id": 12,
+        "command": "command stats",
+        "old_ms": 343.3373658554322,
+        "new_ms": 367.77632966988904,
+        "at": "2026-10-25T12:41:40.083Z"
+      },
+      {
+        "id": 13,
+        "command": "command stats",
+        "old_ms": 367.77632966988904,
+        "new_ms": 392.6603898029001,
+        "at": "2026-10-25T12:41:40.812Z"
+      },
+      {
+        "id": 14,
+        "command": "command stats",
+        "old_ms": 392.6603898029001,
+        "new_ms": 411.3747480226101,
+        "at": "2026-10-25T12:41:41.474Z"
+      },
+      {
+        "id": 15,
+        "command": "command stats",
+        "old_ms": 411.3747480226101,
+        "new_ms": 435.6254033203491,
+        "at": "2026-10-25T12:41:42.204Z"
+      },
+      {
+        "id": 16,
+        "command": "command stats",
+        "old_ms": 435.6254033203491,
+        "new_ms": 453.4105386883142,
+        "at": "2026-10-25T12:41:42.901Z"
+      },
+      {
+        "id": 17,
+        "command": "command stats",
+        "old_ms": 453.4105386883142,
+        "new_ms": 466.0911925194828,
+        "at": "2026-10-25T12:41:43.563Z"
+      },
+      {
+        "id": 18,
+        "command": "command stats",
+        "old_ms": 466.0911925194828,
+        "new_ms": 478.43016916753453,
+        "at": "2026-10-25T12:41:44.284Z"
+      },
+      {
+        "id": 19,
+        "command": "command stats",
+        "old_ms": 478.43016916753453,
+        "new_ms": 489.19193455078107,
+        "at": "2026-10-25T12:41:44.967Z"
+      },
+      {
+        "id": 20,
+        "command": "command stats",
+        "old_ms": 489.19193455078107,
+        "new_ms": 499.96366929570297,
+        "at": "2026-10-25T12:41:45.645Z"
+      },
+      {
+        "id": 21,
+        "command": "command stats",
+        "old_ms": 499.96366929570297,
+        "new_ms": 521.9705906661327,
+        "at": "2026-10-25T12:41:46.467Z"
+      },
+      {
+        "id": 22,
+        "command": "command stats",
+        "old_ms": 521.9705906661327,
+        "new_ms": 527.2977584995194,
+        "at": "2026-10-25T12:41:47.126Z"
+      },
+      {
+        "id": 23,
+        "command": "command stats",
+        "old_ms": 527.2977584995194,
+        "new_ms": 532.9393797495675,
+        "at": "2026-10-25T12:41:47.795Z"
+      },
+      {
+        "id": 24,
+        "command": "command stats",
+        "old_ms": 532.9393797495675,
+        "new_ms": 539.6890658746107,
+        "at": "2026-10-25T12:41:48.480Z"
+      }
+    ]
+  }
+}

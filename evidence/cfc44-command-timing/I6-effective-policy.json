@@ -1,0 +1,49 @@
+{
+  "commandTiming": {
+    "emaAlpha": 0.1,
+    "sqliteOnlyMeanBudgetMs": 1000
+  },
+  "resourceEstimates": {
+    "agentTypes": {
+      "hotfix": {
+        "ramBytes": 1073741824,
+        "diskBytesPerFileSystem": 5368709120
+      },
+      "spec": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      },
+      "design": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      },
+      "test-scaffold": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      },
+      "implement": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      },
+      "coordinator": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      },
+      "qa": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      }
+    }
+  },
+  "unitTests": {
+    "timeoutMs": 1200000,
+    "optimizeAfterTimeouts": 1,
+    "maxGroupTimeouts": 2
+  },
+  "configPaths": [
+    "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root/conf/raf.json",
+    "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root/conf/flow.json"
+  ],
+  "noThresholdOverrides": true,
+  "at": "2026-10-25T13:07:44.697Z"
+}

@@ -1,0 +1,36 @@
+{
+  "status": "unexecuted",
+  "productSha": "cb701b1afd61fe22922455883d3c9eadf730c4db",
+  "base": "/tmp/cfc44-knKBT1/I6-fixed",
+  "state": "/tmp/cfc44-knKBT1/I6-fixed/home/.raf/state.sqlite",
+  "socket": "/tmp/cfc44-knKBT1/I6-fixed/main.sock",
+  "notes": [
+    "Separate HOME, CODEX_HOME and explicit tmux socket. Inherited runtime authentication variables retained without inspection or copying credentials.",
+    "Native runner/model/effort selected by raf configuration; no payload emulator or model override.",
+    "Integration readiness deadline is independent of unit timeout policy."
+  ],
+  "runnerVersion": "codex-cli 0.163.0",
+  "attach": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/cfc44-knKBT1/root/raf-main/bin/raf.ts",
+      "main",
+      "attach"
+    ],
+    "cwd": "/tmp/cfc44-knKBT1/root/raf-main",
+    "cliExitCode": 1,
+    "signal": null,
+    "error": null,
+    "wallMs": 1412.317684,
+    "before": null,
+    "after": null,
+    "childExitCode": null
+  },
+  "reason": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"Runtime inventory completeness refused: unproved library API boundary src/test-run-etchly-integration.ts -> node_modules/typescript/lib/typescript.js\"}\n\n\n1 !== 0\n",
+  "finalSnapshot": null,
+  "cleanup": {
+    "cliExitCode": 0,
+    "stderr": "",
+    "socket": "/tmp/cfc44-knKBT1/I6-fixed/main.sock"
+  }
+}

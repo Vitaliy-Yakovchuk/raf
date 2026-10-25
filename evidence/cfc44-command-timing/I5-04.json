@@ -1,0 +1,238 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/cfc44-knKBT1/root/raf-develop/bin/raf.ts",
+    "command",
+    "stats"
+  ],
+  "environment": {
+    "HOME": "/tmp/cfc44-knKBT1/home",
+    "RAF_QA_HOME": "/tmp/cfc44-knKBT1/home",
+    "RAF_ORCHESTRATOR_ROOT": "/tmp/cfc44-knKBT1/root",
+    "TMPDIR": "/tmp/cfc44-knKBT1/tmp"
+  },
+  "startedAt": "2026-10-25T12:41:40.107Z",
+  "completedAt": "2026-10-25T12:41:40.833Z",
+  "wallMs": 725.5015699999999,
+  "cliExitCode": 0,
+  "signal": null,
+  "childExitCode": null,
+  "childNote": "Direct CLI operation; no separate payload process",
+  "before": {
+    "timings": [
+      {
+        "command": "agent message",
+        "average_ms": 248.88482253,
+        "updated_at": "2026-10-25T12:39:36.421Z"
+      },
+      {
+        "command": "command stats",
+        "average_ms": 367.77632966988904,
+        "updated_at": "2026-10-25T12:41:40.083Z"
+      },
+      {
+        "command": "runner enable",
+        "average_ms": 0,
+        "updated_at": "2026-10-25T12:38:19.039Z"
+      }
+    ],
+    "audit": [
+      {
+        "id": 1,
+        "command": "runner enable",
+        "old_ms": null,
+        "new_ms": 0,
+        "at": "2026-10-25T12:38:19.039Z"
+      },
+      {
+        "id": 2,
+        "command": "command stats",
+        "old_ms": 227.858724,
+        "new_ms": 227.45600130000003,
+        "at": "2026-10-25T12:38:19.348Z"
+      },
+      {
+        "id": 3,
+        "command": "command stats",
+        "old_ms": 227.45600130000003,
+        "new_ms": 227.14762867000005,
+        "at": "2026-10-25T12:38:19.689Z"
+      },
+      {
+        "id": 4,
+        "command": "agent message",
+        "old_ms": null,
+        "new_ms": 251.75224599999999,
+        "at": "2026-10-25T12:38:20.043Z"
+      },
+      {
+        "id": 5,
+        "command": "agent message",
+        "old_ms": 251.75224599999999,
+        "new_ms": 250.5590557,
+        "at": "2026-10-25T12:38:20.362Z"
+      },
+      {
+        "id": 6,
+        "command": "command stats",
+        "old_ms": 227.14762867000005,
+        "new_ms": 223.64982120200003,
+        "at": "2026-10-25T12:38:20.672Z"
+      },
+      {
+        "id": 7,
+        "command": "command stats",
+        "old_ms": 223.64982120200003,
+        "new_ms": 227.03114628180003,
+        "at": "2026-10-25T12:39:36.092Z"
+      },
+      {
+        "id": 8,
+        "command": "agent message",
+        "old_ms": 250.5590557,
+        "new_ms": 248.88482253,
+        "at": "2026-10-25T12:39:36.421Z"
+      },
+      {
+        "id": 9,
+        "command": "command stats",
+        "old_ms": 227.03114628180003,
+        "new_ms": 280.47350925362,
+        "at": "2026-10-25T12:41:38.004Z"
+      },
+      {
+        "id": 10,
+        "command": "command stats",
+        "old_ms": 280.47350925362,
+        "new_ms": 319.374360728258,
+        "at": "2026-10-25T12:41:38.771Z"
+      },
+      {
+        "id": 11,
+        "command": "command stats",
+        "old_ms": 319.374360728258,
+        "new_ms": 343.3373658554322,
+        "at": "2026-10-25T12:41:39.413Z"
+      },
+      {
+        "id": 12,
+        "command": "command stats",
+        "old_ms": 343.3373658554322,
+        "new_ms": 367.77632966988904,
+        "at": "2026-10-25T12:41:40.083Z"
+      }
+    ]
+  },
+  "after": {
+    "timings": [
+      {
+        "command": "agent message",
+        "average_ms": 248.88482253,
+        "updated_at": "2026-10-25T12:39:36.421Z"
+      },
+      {
+        "command": "command stats",
+        "average_ms": 392.6603898029001,
+        "updated_at": "2026-10-25T12:41:40.812Z"
+      },
+      {
+        "command": "runner enable",
+        "average_ms": 0,
+        "updated_at": "2026-10-25T12:38:19.039Z"
+      }
+    ],
+    "audit": [
+      {
+        "id": 1,
+        "command": "runner enable",
+        "old_ms": null,
+        "new_ms": 0,
+        "at": "2026-10-25T12:38:19.039Z"
+      },
+      {
+        "id": 2,
+        "command": "command stats",
+        "old_ms": 227.858724,
+        "new_ms": 227.45600130000003,
+        "at": "2026-10-25T12:38:19.348Z"
+      },
+      {
+        "id": 3,
+        "command": "command stats",
+        "old_ms": 227.45600130000003,
+        "new_ms": 227.14762867000005,
+        "at": "2026-10-25T12:38:19.689Z"
+      },
+      {
+        "id": 4,
+        "command": "agent message",
+        "old_ms": null,
+        "new_ms": 251.75224599999999,
+        "at": "2026-10-25T12:38:20.043Z"
+      },
+      {
+        "id": 5,
+        "command": "agent message",
+        "old_ms": 251.75224599999999,
+        "new_ms": 250.5590557,
+        "at": "2026-10-25T12:38:20.362Z"
+      },
+      {
+        "id": 6,
+        "command": "command stats",
+        "old_ms": 227.14762867000005,
+        "new_ms": 223.64982120200003,
+        "at": "2026-10-25T12:38:20.672Z"
+      },
+      {
+        "id": 7,
+        "command": "command stats",
+        "old_ms": 223.64982120200003,
+        "new_ms": 227.03114628180003,
+        "at": "2026-10-25T12:39:36.092Z"
+      },
+      {
+        "id": 8,
+        "command": "agent message",
+        "old_ms": 250.5590557,
+        "new_ms": 248.88482253,
+        "at": "2026-10-25T12:39:36.421Z"
+      },
+      {
+        "id": 9,
+        "command": "command stats",
+        "old_ms": 227.03114628180003,
+        "new_ms": 280.47350925362,
+        "at": "2026-10-25T12:41:38.004Z"
+      },
+      {
+        "id": 10,
+        "command": "command stats",
+        "old_ms": 280.47350925362,
+        "new_ms": 319.374360728258,
+        "at": "2026-10-25T12:41:38.771Z"
+      },
+      {
+        "id": 11,
+        "command": "command stats",
+        "old_ms": 319.374360728258,
+        "new_ms": 343.3373658554322,
+        "at": "2026-10-25T12:41:39.413Z"
+      },
+      {
+        "id": 12,
+        "command": "command stats",
+        "old_ms": 343.3373658554322,
+        "new_ms": 367.77632966988904,
+        "at": "2026-10-25T12:41:40.083Z"
+      },
+      {
+        "id": 13,
+        "command": "command stats",
+        "old_ms": 367.77632966988904,
+        "new_ms": 392.6603898029001,
+        "at": "2026-10-25T12:41:40.812Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "statePath": "/tmp/cfc44-knKBT1/I2.sqlite",
+  "sql": "SELECT * FROM command_timings ORDER BY command",
+  "before": [
+    {
+      "command": "agent message",
+      "average_ms": 100,
+      "updated_at": "2026-10-25T12:37:28.716Z"
+    }
+  ],
+  "ready": [
+    {
+      "ready": true,
+      "pid": 10,
+      "statePath": "/tmp/cfc44-knKBT1/I2.sqlite"
+    },
+    {
+      "ready": true,
+      "pid": 11,
+      "statePath": "/tmp/cfc44-knKBT1/I2.sqlite"
+    }
+  ],
+  "results": [
+    {
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/tmp/cfc44-knKBT1/contribution.mjs",
+        "/tmp/cfc44-knKBT1/I2.sqlite",
+        "agent message",
+        "200",
+        "0.1"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"durationMs\":200,\"alpha\":0.1,\"row\":{\"averageMs\":155,\"updatedAt\":\"2026-10-25T12:37:28.888Z\"}}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/tmp/cfc44-knKBT1/contribution.mjs",
+        "/tmp/cfc44-knKBT1/I2.sqlite",
+        "agent message",
+        "600",
+        "0.1"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "{\"durationMs\":600,\"alpha\":0.1,\"row\":{\"averageMs\":155,\"updatedAt\":\"2026-10-25T12:37:28.888Z\"}}\n",
+      "stderr": ""
+    }
+  ],
+  "after": [
+    {
+      "command": "agent message",
+      "average_ms": 155,
+      "updated_at": "2026-10-25T12:37:28.888Z"
+    }
+  ],
+  "lock": {
+    "ready": {
+      "ready": true,
+      "pid": 24,
+      "statePath": "/tmp/cfc44-knKBT1/I2.sqlite"
+    },
+    "result": {
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/tmp/cfc44-knKBT1/contribution.mjs",
+        "/tmp/cfc44-knKBT1/I2.sqlite",
+        "agent message",
+        "900",
+        "0.1"
+      ],
+      "cliExitCode": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "{\"code\":\"ERR_SQLITE_ERROR\",\"errcode\":5,\"operation\":\"recordCommandDuration\",\"message\":\"State store recordCommandDuration failed (SQLite 5): database is locked\"}\n"
+    },
+    "wallMs": 273.24871,
+    "after": [
+      {
+        "command": "agent message",
+        "average_ms": 155,
+        "updated_at": "2026-10-25T12:37:28.888Z"
+      }
+    ]
+  },
+  "files": [
+    "I2.sqlite",
+    "I2.sqlite-shm",
+    "I2.sqlite-wal"
+  ]
+}

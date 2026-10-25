@@ -1,0 +1,7 @@
+{
+  "chunk_id": "ac7833",
+  "wall_time_seconds": 0.223425082,
+  "exit_code": 1,
+  "original_token_count": 300,
+  "output": "file:///srv/dev/work/orchestrator/raf-develop/[eval1]:3\ns.sessionRepository.transaction(tx=>{for(let i=0;i<120;i++)tx.save({runId:randomUUID(),addressId:'qa-current-'+i,revision:1,state:'reserved',activity:{type:'implement',project:'raf',features:['cfc44-fixture'],phase:'implement',cwd:m.code},process:null,result:null,finishedAt:null});});\n                                                              ^\n\nTypeError: tx.save is not a function\n    at file:///srv/dev/work/orchestrator/raf-develop/[eval1]:3:63\n    at withSessionTransaction (file:///tmp/cfc44-knKBT1/root/raf-develop/src/state-store.ts:673:18)\n    at file:///tmp/cfc44-knKBT1/root/raf-develop/src/state-store.ts:679:38\n    at transaction (file:///tmp/cfc44-knKBT1/root/raf-develop/src/state-store.ts:221:22)\n    at file:///tmp/cfc44-knKBT1/root/raf-develop/src/state-store.ts:679:20\n    at operation (file:///tmp/cfc44-knKBT1/root/raf-develop/src/state-store.ts:185:14)\n    at Object.transaction (file:///tmp/cfc44-knKBT1/root/raf-develop/src/state-store.ts:677:36)\n    at file:///srv/dev/work/orchestrator/raf-develop/[eval1]:3:21\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n\nNode.js v26.12.1\n"
+}

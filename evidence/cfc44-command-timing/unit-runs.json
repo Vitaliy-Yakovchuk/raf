@@ -1,0 +1,329 @@
+{
+  "aggregatePreserved": true,
+  "group": "complete-raf-flow-contracts/raf-command-timing",
+  "runs": [
+    {
+      "label": "unit-initial",
+      "runId": "2d8b6181-dee3-4886-9e07-a3b7347e5332",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-command-timing --files test/command-timing.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "sha": "9acb35ab1d1992ba1d99ea2fe86e00e21b70f7b2",
+      "shaSource": "Reconstructed from retained shared-workspace reflog at startedAt; workspace was not clean.",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceChanges": "initial-workspace.txt includes foreign uncommitted implementation; own fixture change added before unit-green",
+      "selection": {
+        "files": [
+          "test/command-timing.test.ts"
+        ],
+        "testIds": []
+      },
+      "group": "complete-raf-flow-contracts/raf-command-timing",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "outcome": "assertions-failed",
+      "knownRed": [
+        {
+          "file": "test/command-timing.test.ts",
+          "name": "U1 runtime failure records its actual duration and retains the operation code and context"
+        },
+        {
+          "file": "test/command-timing.test.ts",
+          "name": "U7 simultaneous operation and timing failures retain the primary code and expose sanitized timing diagnostics"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "stderr": null,
+      "stderrAvailability": "Original exec tool stream merges stdout/stderr; complete immutable TestRunResult plus original merged/tool output retained. No separate stderr recovery or blind rerun.",
+      "evidence": [
+        "unit-initial.TestRunResult.json",
+        "unit-initial.capture.json"
+      ]
+    },
+    {
+      "label": "unit-red",
+      "runId": "ee40457c-784f-4bc3-aee9-0f7d89cd4ec4",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-command-timing --files test/command-timing.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "sha": "9acb35ab1d1992ba1d99ea2fe86e00e21b70f7b2",
+      "shaSource": "Reconstructed from retained shared-workspace reflog at startedAt; workspace was not clean.",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceChanges": "initial-workspace.txt includes foreign uncommitted implementation; own fixture change added before unit-green",
+      "selection": {
+        "files": [
+          "test/command-timing.test.ts"
+        ],
+        "testIds": []
+      },
+      "group": "complete-raf-flow-contracts/raf-command-timing",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "outcome": "assertions-failed",
+      "knownRed": [
+        {
+          "file": "test/command-timing.test.ts",
+          "name": "U1 runtime failure records its actual duration and retains the operation code and context"
+        },
+        {
+          "file": "test/command-timing.test.ts",
+          "name": "U7 simultaneous operation and timing failures retain the primary code and expose sanitized timing diagnostics"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "stderr": null,
+      "stderrAvailability": "Original exec tool stream merges stdout/stderr; complete immutable TestRunResult plus original merged/tool output retained. No separate stderr recovery or blind rerun.",
+      "evidence": [
+        "unit-red.TestRunResult.json",
+        "unit-red.capture.json"
+      ]
+    },
+    {
+      "label": "unit-green",
+      "runId": "816408fa-9fa8-4a34-9b04-361be657a04a",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-command-timing --files test/command-timing.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "sha": "9acb35ab1d1992ba1d99ea2fe86e00e21b70f7b2",
+      "shaSource": "Reconstructed from retained shared-workspace reflog at startedAt; workspace was not clean.",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceChanges": "initial-workspace.txt includes foreign uncommitted implementation; own fixture change added before unit-green",
+      "selection": {
+        "files": [
+          "test/command-timing.test.ts"
+        ],
+        "testIds": []
+      },
+      "group": "complete-raf-flow-contracts/raf-command-timing",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "outcome": "passed",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "stderr": null,
+      "stderrAvailability": "Original exec tool stream merges stdout/stderr; complete immutable TestRunResult plus original merged/tool output retained. No separate stderr recovery or blind rerun.",
+      "evidence": [
+        "unit-green.TestRunResult.json",
+        "unit-green.capture.json"
+      ]
+    },
+    {
+      "label": "proof-red",
+      "runId": "10d61b06-25ac-4bb0-bae2-6d54040f7b0e",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-command-timing --files test/command-timing.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "sha": "633e77a43d18a13df2bfc8c1ea0bbabed8e07371",
+      "shaSource": "Reconstructed from retained shared-workspace reflog at startedAt; workspace was not clean.",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceChanges": "Own proof regression and then production proof fix were uncommitted during the corresponding red/qa; shared foreign edits were present. Exact full per-run dirty snapshot was not captured.",
+      "selection": {
+        "files": [
+          "test/command-timing.test.ts"
+        ],
+        "testIds": []
+      },
+      "group": "complete-raf-flow-contracts/raf-command-timing",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "outcome": "assertions-failed",
+      "knownRed": [
+        {
+          "file": "test/command-timing.test.ts",
+          "name": "I6 protected startup loader proof matches src/cli.ts"
+        },
+        {
+          "file": "test/command-timing.test.ts",
+          "name": "I6 protected startup loader proof matches src/service-entry.ts"
+        },
+        {
+          "file": "test/command-timing.test.ts",
+          "name": "I6 protected startup loader proof matches src/test-run-etchly-inventory.ts"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "stderr": null,
+      "stderrAvailability": "Original exec tool stream merges stdout/stderr; complete immutable TestRunResult plus original merged/tool output retained. No separate stderr recovery or blind rerun.",
+      "evidence": [
+        "proof-red.TestRunResult.json",
+        "proof-red.capture.json"
+      ]
+    },
+    {
+      "label": "proof-green",
+      "runId": "2f5efa12-c5fc-4941-b048-f94cc93dd248",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-command-timing --files test/command-timing.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "sha": "8cc44f65c0fb5787bd5daf8acef95817ae943871",
+      "shaSource": "Reconstructed from retained shared-workspace reflog at startedAt; workspace was not clean.",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceChanges": "Own proof regression and then production proof fix were uncommitted during the corresponding red/qa; shared foreign edits were present. Exact full per-run dirty snapshot was not captured.",
+      "selection": {
+        "files": [
+          "test/command-timing.test.ts"
+        ],
+        "testIds": []
+      },
+      "group": "complete-raf-flow-contracts/raf-command-timing",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "outcome": "passed",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "stderr": null,
+      "stderrAvailability": "Original exec tool stream merges stdout/stderr; complete immutable TestRunResult plus original merged/tool output retained. No separate stderr recovery or blind rerun.",
+      "evidence": [
+        "proof-green.TestRunResult.json",
+        "proof-green.capture.json"
+      ]
+    },
+    {
+      "label": "boundary-red",
+      "runId": "66e4dc3d-4038-4ba5-b115-56994a32eb44",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-command-timing --files test/command-timing.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "sha": "46797a1e494684ca60d570adff63b801aea3a13c",
+      "shaSource": "Reconstructed from retained shared-workspace reflog at startedAt; workspace was not clean.",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceChanges": "Own proof regression and then production proof fix were uncommitted during the corresponding red/qa; shared foreign edits were present. Exact full per-run dirty snapshot was not captured.",
+      "selection": {
+        "files": [
+          "test/command-timing.test.ts"
+        ],
+        "testIds": []
+      },
+      "group": "complete-raf-flow-contracts/raf-command-timing",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "outcome": "assertions-failed",
+      "knownRed": [
+        {
+          "file": "test/command-timing.test.ts",
+          "name": "I6 the integration classifier has a protected TypeScript parser boundary"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "stderr": null,
+      "stderrAvailability": "Original exec tool stream merges stdout/stderr; complete immutable TestRunResult plus original merged/tool output retained. No separate stderr recovery or blind rerun.",
+      "evidence": [
+        "boundary-red.TestRunResult.json",
+        "boundary-red.capture.json"
+      ]
+    },
+    {
+      "label": "boundary-green",
+      "runId": "c7c97e71-bae1-4753-8c5c-c05a502cbfc0",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-command-timing --files test/command-timing.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "sha": "46797a1e494684ca60d570adff63b801aea3a13c",
+      "shaSource": "Reconstructed from retained shared-workspace reflog at startedAt; workspace was not clean.",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceChanges": "Own proof regression and then production proof fix were uncommitted during the corresponding red/qa; shared foreign edits were present. Exact full per-run dirty snapshot was not captured.",
+      "selection": {
+        "files": [
+          "test/command-timing.test.ts"
+        ],
+        "testIds": []
+      },
+      "group": "complete-raf-flow-contracts/raf-command-timing",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "outcome": "passed",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "stderr": null,
+      "stderrAvailability": "Original exec tool stream merges stdout/stderr; complete immutable TestRunResult plus original merged/tool output retained. No separate stderr recovery or blind rerun.",
+      "evidence": [
+        "boundary-green.TestRunResult.json",
+        "boundary-green.capture.json"
+      ]
+    }
+  ]
+}

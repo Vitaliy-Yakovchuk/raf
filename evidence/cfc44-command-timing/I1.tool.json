@@ -1,0 +1,7 @@
+{
+  "chunk_id": "00eee4",
+  "wall_time_seconds": 0.192692847,
+  "exit_code": 0,
+  "original_token_count": 249,
+  "output": "{\n  statePath: '/tmp/cfc44-knKBT1/I1.sqlite',\n  before: null,\n  samples: [\n    {\n      durationMs: 100,\n      alpha: 0.1,\n      start: '2026-10-25T12:36:58.563Z',\n      completedAt: '2026-10-25T12:36:58.563Z',\n      row: [Object]\n    },\n    {\n      durationMs: 300,\n      alpha: 0.1,\n      start: '2026-10-25T12:36:58.564Z',\n      completedAt: '2026-10-25T12:36:58.564Z',\n      row: [Object]\n    },\n    {\n      durationMs: 50,\n      alpha: 0.1,\n      start: '2026-10-25T12:36:58.564Z',\n      completedAt: '2026-10-25T12:36:58.564Z',\n      row: [Object]\n    },\n    {\n      durationMs: 800,\n      alpha: 0.4,\n      start: '2026-10-25T12:36:58.564Z',\n      completedAt: '2026-10-25T12:36:58.565Z',\n      row: [Object]\n    }\n  ],\n  sql: 'SELECT * FROM command_timings ORDER BY command',\n  rows: [\n    [Object: null prototype] {\n      command: 'agent message',\n      average_ms: 387.8,\n      updated_at: '2026-10-25T12:36:58.564Z'\n    }\n  ],\n  sqlite: [Object: null prototype] { version: '3.54.0' }\n}\n"
+}

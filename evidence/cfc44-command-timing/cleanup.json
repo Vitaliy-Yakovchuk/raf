@@ -1,0 +1,57 @@
+{
+  "at": "2026-10-25T13:07:07.875Z",
+  "ownedProcessesBefore": [],
+  "actions": [],
+  "unitAggregatePreserved": true,
+  "sharedHomeAndTmuxUntouched": true,
+  "/tmp/cfc44-knKBT1/I6-data-home/.raf/state.sqlite": {
+    "timings": [
+      {
+        "command": "agent run",
+        "average_ms": 7463.794843,
+        "updated_at": "2026-10-25T13:06:18.306Z"
+      },
+      {
+        "command": "main attach",
+        "average_ms": 4322.61911,
+        "updated_at": "2026-10-25T13:06:10.601Z"
+      }
+    ]
+  },
+  "/tmp/cfc44-knKBT1/home/.raf/state.sqlite": {
+    "timings": [
+      {
+        "command": "agent message",
+        "average_ms": 248.88482253,
+        "updated_at": "2026-10-25T12:39:36.421Z"
+      },
+      {
+        "command": "command stats",
+        "average_ms": 539.6890658746107,
+        "updated_at": "2026-10-25T12:41:48.480Z"
+      },
+      {
+        "command": "runner enable",
+        "average_ms": 0,
+        "updated_at": "2026-10-25T12:38:19.039Z"
+      }
+    ]
+  },
+  "ownedProcessesAfter": [],
+  "fixtureGitStatus": {
+    "cliExitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "removals": [
+    {
+      "path": "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6",
+      "removed": true
+    },
+    {
+      "path": "/tmp/cfc44-knKBT1",
+      "removed": true
+    }
+  ],
+  "completedAt": "2026-10-25T13:08:51.587Z"
+}

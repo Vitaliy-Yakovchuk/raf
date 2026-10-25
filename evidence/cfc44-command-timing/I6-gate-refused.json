@@ -1,0 +1,36 @@
+{
+  "status": "unexecuted",
+  "productSha": "9acb35ab1d1992ba1d99ea2fe86e00e21b70f7b2",
+  "base": "/tmp/cfc44-knKBT1/I6",
+  "state": "/tmp/cfc44-knKBT1/I6/home/.raf/state.sqlite",
+  "socket": "/tmp/cfc44-knKBT1/I6/main.sock",
+  "notes": [
+    "Separate HOME, CODEX_HOME and explicit tmux socket. Inherited runtime authentication variables retained without inspection or copying credentials.",
+    "Native runner/model/effort selected by raf configuration; no payload emulator or model override.",
+    "Integration readiness deadline is independent of unit timeout policy."
+  ],
+  "runnerVersion": "codex-cli 0.163.0",
+  "attach": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/cfc44-knKBT1/root/raf-main/bin/raf.ts",
+      "main",
+      "attach"
+    ],
+    "cwd": "/tmp/cfc44-knKBT1/root/raf-main",
+    "cliExitCode": 1,
+    "signal": null,
+    "error": null,
+    "wallMs": 790.2240850000001,
+    "before": null,
+    "after": null,
+    "childExitCode": null
+  },
+  "reason": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"Runtime inventory completeness refused: unproved dynamic loading in src/service-entry.ts\"}\n\n\n1 !== 0\n",
+  "finalSnapshot": null,
+  "cleanup": {
+    "cliExitCode": 0,
+    "stderr": "",
+    "socket": "/tmp/cfc44-knKBT1/I6/main.sock"
+  }
+}

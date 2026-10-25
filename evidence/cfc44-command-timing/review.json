@@ -1,0 +1,51 @@
+{
+  "purpose": "Offline evidence consistency review, not a substitute for integration execution",
+  "reviewedAt": "2026-10-25T13:08:25.655Z",
+  "itemStatus": "failed",
+  "observations": {
+    "I1": {
+      "status": "passed",
+      "finalEma": 387.8
+    },
+    "I2": {
+      "status": "passed",
+      "finalEma": 155,
+      "lockCli": 1
+    },
+    "I3": {
+      "status": "passed",
+      "wrapper": [
+        "commands",
+        "profile",
+        "health"
+      ]
+    },
+    "I4": {
+      "status": "passed",
+      "crashSignal": "SIGKILL"
+    },
+    "I5": {
+      "status": "passed",
+      "finalMeanMs": 539.6890658746107,
+      "budgetMs": 1000,
+      "inferredDurationRangeMs": [
+        559.0044119999999,
+        761.4547759999999
+      ],
+      "wallArithmeticMeanMs": 705.1146520624999
+    },
+    "unit": {
+      "status": "passed",
+      "runId": "c7c97e71-bae1-4753-8c5c-c05a502cbfc0",
+      "count": 56,
+      "nextAction": "complete",
+      "stderrCapture": "Unavailable separately in exec_command; original merged stream retained without reconstruction."
+    },
+    "I6": {
+      "status": "unexecuted",
+      "reason": "RESOURCE_WAIT_FAILED / live reader has unknown protection",
+      "liveReaderRunId": "ee08e714-de16-40ac-a65f-c5a4f89f6d13",
+      "nativePayloadExitCode": null
+    }
+  }
+}

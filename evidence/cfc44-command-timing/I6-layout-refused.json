@@ -1,0 +1,39 @@
+{
+  "status": "unexecuted",
+  "productSha": "9acb35ab1d1992ba1d99ea2fe86e00e21b70f7b2",
+  "base": "/tmp/cfc44-knKBT1/I6",
+  "state": "/tmp/cfc44-knKBT1/I6/home/.raf/state.sqlite",
+  "socket": "/tmp/cfc44-knKBT1/I6/main.sock",
+  "notes": [
+    "Separate HOME, CODEX_HOME and explicit tmux socket. Inherited runtime authentication variables retained without inspection or copying credentials.",
+    "Native runner/model/effort selected by raf configuration; no payload emulator or model override.",
+    "Integration readiness deadline is independent of unit timeout policy."
+  ],
+  "fixtureCommit": "54f612d060c4c21b5de1addbae0cdb0630a03e54",
+  "fixtureTrustOverride": "projects={\"/tmp/cfc44-knKBT1/root\"={trust_level=\"trusted\"},\"/tmp/cfc44-knKBT1/root/raf-main\"={trust_level=\"trusted\"},\"/tmp/cfc44-knKBT1/root/raf-develop\"={trust_level=\"trusted\"},\"/tmp/cfc44-knKBT1/root/raf-hotfix\"={trust_level=\"trusted\"}}",
+  "rootFixtureCommit": "55200257b1a9bf171a44db7403467b388a23f043",
+  "runnerVersion": "codex-cli 0.163.0",
+  "attach": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/cfc44-knKBT1/root/raf-main/bin/raf.ts",
+      "main",
+      "attach"
+    ],
+    "cwd": "/tmp/cfc44-knKBT1/root/raf-main",
+    "cliExitCode": 1,
+    "signal": null,
+    "error": null,
+    "wallMs": 165.34709900000001,
+    "before": null,
+    "after": null,
+    "childExitCode": null
+  },
+  "reason": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"Command failed: git --no-optional-locks -C /tmp/cfc44-knKBT1/root config -f .gitmodules --get-regexp ^submodule\\\\..*\\\\.path$\\n\"}\n\n\n1 !== 0\n",
+  "finalSnapshot": null,
+  "cleanup": {
+    "cliExitCode": 0,
+    "stderr": "",
+    "socket": "/tmp/cfc44-knKBT1/I6/main.sock"
+  }
+}

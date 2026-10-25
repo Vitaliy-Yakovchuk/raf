@@ -1,0 +1,125 @@
+{
+  "commands": [
+    {
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root/raf-develop",
+        "reset",
+        "--hard",
+        "6ac90fc946beea135ddb2f524d80616e5a37ec27"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "HEAD is now at 6ac90fc fix: protect the integration classifier TypeScript parser boundary\n",
+      "stderr": "error: Path 'qa/cfc44-actor.mjs' not uptodate; will not remove from working tree.\n"
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root/raf-develop",
+        "sparse-checkout",
+        "set",
+        "/bin/",
+        "/src/",
+        "/scripts/",
+        "/test/",
+        "/package.json",
+        "/tsconfig.json"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root/raf-develop",
+        "add",
+        "--sparse",
+        "--",
+        "qa/cfc44-actor.mjs"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root/raf-develop",
+        "commit",
+        "--quiet",
+        "-m",
+        "qa: isolated long-lived timing actor"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root",
+        "add",
+        "--",
+        "conf",
+        "openspec",
+        ".gitmodules",
+        "raf-main"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root",
+        "commit",
+        "--quiet",
+        "-m",
+        "qa: isolated data disk timing stand"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root/raf-develop",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "8d3a56ec5e4303bcb9355855da028557ba160c42\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/srv/dev/work/orchestrator/raf-develop/.cfc44-I6/root",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "fc042b656112509593977d376d4b4197d9f9e0ff\n",
+      "stderr": ""
+    }
+  ]
+}

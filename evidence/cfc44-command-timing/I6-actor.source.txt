@@ -1,0 +1,1 @@
+import fs from 'node:fs';import path from 'node:path';const dir=path.dirname(process.argv[2]);fs.writeFileSync(path.join(dir,'cfc44-ready.json'),JSON.stringify({pid:process.pid,at:new Date().toISOString()}));await new Promise(resolve=>{const w=fs.watch(dir,()=>{if(fs.existsSync(path.join(dir,'cfc44-release'))){w.close();resolve();}})});

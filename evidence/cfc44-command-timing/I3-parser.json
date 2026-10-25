@@ -1,0 +1,148 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/cfc44-knKBT1/root/raf-develop/bin/raf.ts",
+    "command",
+    "stats",
+    "--unknown"
+  ],
+  "environment": {
+    "HOME": "/tmp/cfc44-knKBT1/help-home",
+    "RAF_QA_HOME": "/tmp/cfc44-knKBT1/help-home",
+    "RAF_ORCHESTRATOR_ROOT": "/tmp/cfc44-knKBT1/root",
+    "TMPDIR": "/tmp/cfc44-knKBT1/tmp"
+  },
+  "startedAt": "2026-10-25T12:38:20.784Z",
+  "completedAt": "2026-10-25T12:38:20.870Z",
+  "wallMs": 86.12228899999991,
+  "cliExitCode": 1,
+  "signal": null,
+  "childExitCode": null,
+  "childNote": "Direct CLI operation; no separate payload process",
+  "before": {
+    "timings": [
+      {
+        "command": "agent message",
+        "average_ms": 250.5590557,
+        "updated_at": "2026-10-25T12:38:20.362Z"
+      },
+      {
+        "command": "command stats",
+        "average_ms": 223.64982120200003,
+        "updated_at": "2026-10-25T12:38:20.672Z"
+      },
+      {
+        "command": "runner enable",
+        "average_ms": 0,
+        "updated_at": "2026-10-25T12:38:19.039Z"
+      }
+    ],
+    "audit": [
+      {
+        "id": 1,
+        "command": "runner enable",
+        "old_ms": null,
+        "new_ms": 0,
+        "at": "2026-10-25T12:38:19.039Z"
+      },
+      {
+        "id": 2,
+        "command": "command stats",
+        "old_ms": 227.858724,
+        "new_ms": 227.45600130000003,
+        "at": "2026-10-25T12:38:19.348Z"
+      },
+      {
+        "id": 3,
+        "command": "command stats",
+        "old_ms": 227.45600130000003,
+        "new_ms": 227.14762867000005,
+        "at": "2026-10-25T12:38:19.689Z"
+      },
+      {
+        "id": 4,
+        "command": "agent message",
+        "old_ms": null,
+        "new_ms": 251.75224599999999,
+        "at": "2026-10-25T12:38:20.043Z"
+      },
+      {
+        "id": 5,
+        "command": "agent message",
+        "old_ms": 251.75224599999999,
+        "new_ms": 250.5590557,
+        "at": "2026-10-25T12:38:20.362Z"
+      },
+      {
+        "id": 6,
+        "command": "command stats",
+        "old_ms": 227.14762867000005,
+        "new_ms": 223.64982120200003,
+        "at": "2026-10-25T12:38:20.672Z"
+      }
+    ]
+  },
+  "after": {
+    "timings": [
+      {
+        "command": "agent message",
+        "average_ms": 250.5590557,
+        "updated_at": "2026-10-25T12:38:20.362Z"
+      },
+      {
+        "command": "command stats",
+        "average_ms": 223.64982120200003,
+        "updated_at": "2026-10-25T12:38:20.672Z"
+      },
+      {
+        "command": "runner enable",
+        "average_ms": 0,
+        "updated_at": "2026-10-25T12:38:19.039Z"
+      }
+    ],
+    "audit": [
+      {
+        "id": 1,
+        "command": "runner enable",
+        "old_ms": null,
+        "new_ms": 0,
+        "at": "2026-10-25T12:38:19.039Z"
+      },
+      {
+        "id": 2,
+        "command": "command stats",
+        "old_ms": 227.858724,
+        "new_ms": 227.45600130000003,
+        "at": "2026-10-25T12:38:19.348Z"
+      },
+      {
+        "id": 3,
+        "command": "command stats",
+        "old_ms": 227.45600130000003,
+        "new_ms": 227.14762867000005,
+        "at": "2026-10-25T12:38:19.689Z"
+      },
+      {
+        "id": 4,
+        "command": "agent message",
+        "old_ms": null,
+        "new_ms": 251.75224599999999,
+        "at": "2026-10-25T12:38:20.043Z"
+      },
+      {
+        "id": 5,
+        "command": "agent message",
+        "old_ms": 251.75224599999999,
+        "new_ms": 250.5590557,
+        "at": "2026-10-25T12:38:20.362Z"
+      },
+      {
+        "id": 6,
+        "command": "command stats",
+        "old_ms": 227.14762867000005,
+        "new_ms": 223.64982120200003,
+        "at": "2026-10-25T12:38:20.672Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/cfc44-knKBT1/root/raf-main/bin/raf.ts",
+    "agent",
+    "run",
+    "--id",
+    "cfc44-actor",
+    "--type",
+    "implement",
+    "--project",
+    "raf",
+    "--features",
+    "cfc44-live",
+    "--phase",
+    "implement",
+    "--complexity",
+    "mechanical",
+    "--tasks",
+    "cfc44-live:1.1"
+  ],
+  "cwd": "/tmp/cfc44-knKBT1/root/raf-main",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "wallMs": 5927.675288999999,
+  "before": {
+    "timings": [
+      {
+        "command": "main attach",
+        "average_ms": 2922.263762,
+        "updated_at": "2026-10-25T12:57:49.306Z"
+      }
+    ],
+    "sessions": [
+      {
+        "runId": "3e55ffba-236e-4d2b-aac2-7d6faa406594",
+        "addressId": "main",
+        "revision": 0,
+        "state": "running",
+        "activity": {
+          "type": "main",
+          "project": "orchestrator",
+          "features": [],
+          "phase": "main",
+          "cwd": "/tmp/cfc44-knKBT1/root/raf-main"
+        },
+        "process": {
+          "pid": 29,
+          "startedAt": "2026-10-25T12:57:45.000Z",
+          "runner": "main",
+          "runnerSessionId": "%0",
+          "tmuxSession": "cfc44-main",
+          "evidence": {
+            "command": "/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/evidence/cfc44-command-timing/I6-operator.mjs pane",
+            "tmuxSocket": "/tmp/cfc44-knKBT1/I6-fixed/main.sock",
+            "tmuxPane": "%0",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        }
+      }
+    ]
+  },
+  "after": {
+    "timings": [
+      {
+        "command": "agent run",
+        "average_ms": 5811.758591,
+        "updated_at": "2026-10-25T12:57:55.356Z"
+      },
+      {
+        "command": "main attach",
+        "average_ms": 2922.263762,
+        "updated_at": "2026-10-25T12:57:49.306Z"
+      }
+    ],
+    "sessions": [
+      {
+        "runId": "3e55ffba-236e-4d2b-aac2-7d6faa406594",
+        "addressId": "main",
+        "revision": 0,
+        "state": "running",
+        "activity": {
+          "type": "main",
+          "project": "orchestrator",
+          "features": [],
+          "phase": "main",
+          "cwd": "/tmp/cfc44-knKBT1/root/raf-main"
+        },
+        "process": {
+          "pid": 29,
+          "startedAt": "2026-10-25T12:57:45.000Z",
+          "runner": "main",
+          "runnerSessionId": "%0",
+          "tmuxSession": "cfc44-main",
+          "evidence": {
+            "command": "/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/evidence/cfc44-command-timing/I6-operator.mjs pane",
+            "tmuxSocket": "/tmp/cfc44-knKBT1/I6-fixed/main.sock",
+            "tmuxPane": "%0",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        }
+      }
+    ]
+  },
+  "childExitCode": null
+}

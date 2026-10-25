@@ -1,0 +1,8 @@
+node --input-type=module <<'NODE'
+import fs from 'node:fs';import {DatabaseSync} from 'node:sqlite';
+const ev='evidence/cfc44-command-timing',m=JSON.parse(fs.readFileSync(ev+'/stand.json'));const {openStateStore}=await import(m.code+'/src/state-store.ts');
+const state=m.base+'/I1.sqlite',s=openStateStore(state),key='agent message',samples=[]; const read=()=>s.getCommandTiming(key)??null;const config=()=>JSON.parse(fs.readFileSync(m.root+'/conf/raf.json')).commandTiming;
+const before=read();for(const durationMs of [100,300,50]){const alpha=config().emaAlpha;const start=new Date().toISOString();s.recordCommandDuration(key,durationMs,alpha);samples.push({durationMs,alpha,start,completedAt:new Date().toISOString(),row:read()});}
+const cfg=m.root+'/conf/raf.json',original=fs.readFileSync(cfg),settings=JSON.parse(original);try{settings.commandTiming.emaAlpha=0.4;fs.writeFileSync(cfg,JSON.stringify(settings));const alpha=config().emaAlpha;const start=new Date().toISOString();s.recordCommandDuration(key,800,alpha);samples.push({durationMs:800,alpha,start,completedAt:new Date().toISOString(),row:read()});}finally{fs.writeFileSync(cfg,original);s.close();}
+const db=new DatabaseSync(state,{readOnly:true});const sql='SELECT * FROM command_timings ORDER BY command';const rows=db.prepare(sql).all();const sqlite=db.prepare('SELECT sqlite_version() AS version').get();db.close();const result={statePath:state,before,samples,sql,rows,sqlite};fs.writeFileSync(ev+'/I1.json',JSON.stringify(result,null,2)+'\n');console.log(result);
+NODE

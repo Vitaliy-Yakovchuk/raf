@@ -1,0 +1,7 @@
+{
+  "chunk_id": "b6a529",
+  "wall_time_seconds": 0.803610542,
+  "exit_code": 0,
+  "original_token_count": 137,
+  "output": "{\n  before: [\n    [Object: null prototype] {\n      command: 'agent message',\n      average_ms: 100,\n      updated_at: '2026-10-25T12:37:28.716Z'\n    }\n  ],\n  after: [\n    [Object: null prototype] {\n      command: 'agent message',\n      average_ms: 155,\n      updated_at: '2026-10-25T12:37:28.888Z'\n    }\n  ],\n  exits: [ 0, 0 ],\n  lockExit: 1,\n  lockWallMs: 273.24871,\n  lockError: '{\"code\":\"ERR_SQLITE_ERROR\",\"errcode\":5,\"operation\":\"recordCommandDuration\",\"message\":\"State store recordCommandDuration failed (SQLite 5): database is locked\"}\\n'\n}\n"
+}

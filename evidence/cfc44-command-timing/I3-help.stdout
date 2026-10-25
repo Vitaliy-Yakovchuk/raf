@@ -1,0 +1,39 @@
+{
+  "program": "raf",
+  "commands": [
+    {
+      "path": [
+        "command",
+        "stats"
+      ],
+      "handlerName": "command stats",
+      "description": "Прочитати ковзаючу статистику тривалості команд.",
+      "parameters": [],
+      "valueSources": {},
+      "metadata": {
+        "path": [
+          "command",
+          "stats"
+        ],
+        "description": "Прочитати ковзаючу статистику тривалості команд.",
+        "parameters": [],
+        "output": "JSON-об’єкт {commands, profile, health}: commands — попередні рядки EMA тривалості команд; profile — {schemaVersion, readAt, rows} профілю витрат raf за profile-raf-performance «Перегляд профілю чинною command stats»; health — {readAt, since, cpu, forcedClose, summary, error, unavailableReason}: CPU із межами та повнотою, накопичені force-лічильники, останній підсумок {startedAt, completedAt, dueAt, delivery, delayed}, точна помилка конфігурації або причина недоступності за monitor-raf-health. Код 0 лише при успішній операції.",
+        "errors": "Ненульовий код і JSON із причиною, деталями та кроком виправлення.",
+        "prerequisites": "Параметри та доступні значення визначені нижче. Реалізацію команди перевіряти за поточним інкрементом.",
+        "sideEffects": "Див. контракт відповідної команди; help не виконує операцій."
+      }
+    }
+  ],
+  "reportStatuses": [
+    {
+      "id": "succeeded",
+      "description": "Доручення виконано успішно",
+      "event": "agent.succeeded"
+    },
+    {
+      "id": "failed",
+      "description": "Доручення не виконано повністю або процес упав без валідного succeeded",
+      "event": "agent.failed"
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/cfc44-knKBT1/root/raf-develop/bin/raf.ts",
+    "command",
+    "stats"
+  ],
+  "environment": {
+    "HOME": "/tmp/cfc44-knKBT1/home",
+    "RAF_QA_HOME": "/tmp/cfc44-knKBT1/home",
+    "RAF_ORCHESTRATOR_ROOT": "/tmp/cfc44-knKBT1/root",
+    "TMPDIR": "/tmp/cfc44-knKBT1/tmp"
+  },
+  "startedAt": "2026-10-25T12:38:19.042Z",
+  "completedAt": "2026-10-25T12:38:19.369Z",
+  "wallMs": 327.364936,
+  "cliExitCode": 0,
+  "signal": null,
+  "childExitCode": null,
+  "childNote": "Direct CLI operation; no separate payload process",
+  "before": {
+    "timings": [
+      {
+        "command": "command stats",
+        "average_ms": 227.858724,
+        "updated_at": "2026-10-25T12:33:22.217Z"
+      },
+      {
+        "command": "runner enable",
+        "average_ms": 0,
+        "updated_at": "2026-10-25T12:38:19.039Z"
+      }
+    ],
+    "audit": [
+      {
+        "id": 1,
+        "command": "runner enable",
+        "old_ms": null,
+        "new_ms": 0,
+        "at": "2026-10-25T12:38:19.039Z"
+      }
+    ]
+  },
+  "after": {
+    "timings": [
+      {
+        "command": "command stats",
+        "average_ms": 227.45600130000003,
+        "updated_at": "2026-10-25T12:38:19.348Z"
+      },
+      {
+        "command": "runner enable",
+        "average_ms": 0,
+        "updated_at": "2026-10-25T12:38:19.039Z"
+      }
+    ],
+    "audit": [
+      {
+        "id": 1,
+        "command": "runner enable",
+        "old_ms": null,
+        "new_ms": 0,
+        "at": "2026-10-25T12:38:19.039Z"
+      },
+      {
+        "id": 2,
+        "command": "command stats",
+        "old_ms": 227.858724,
+        "new_ms": 227.45600130000003,
+        "at": "2026-10-25T12:38:19.348Z"
+      }
+    ]
+  }
+}

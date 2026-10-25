@@ -1,0 +1,57 @@
+{
+  "statePath": "/tmp/cfc44-knKBT1/I1.sqlite",
+  "before": null,
+  "samples": [
+    {
+      "durationMs": 100,
+      "alpha": 0.1,
+      "start": "2026-10-25T12:36:58.563Z",
+      "completedAt": "2026-10-25T12:36:58.563Z",
+      "row": {
+        "averageMs": 100,
+        "updatedAt": "2026-10-25T12:36:58.563Z"
+      }
+    },
+    {
+      "durationMs": 300,
+      "alpha": 0.1,
+      "start": "2026-10-25T12:36:58.564Z",
+      "completedAt": "2026-10-25T12:36:58.564Z",
+      "row": {
+        "averageMs": 120,
+        "updatedAt": "2026-10-25T12:36:58.564Z"
+      }
+    },
+    {
+      "durationMs": 50,
+      "alpha": 0.1,
+      "start": "2026-10-25T12:36:58.564Z",
+      "completedAt": "2026-10-25T12:36:58.564Z",
+      "row": {
+        "averageMs": 113,
+        "updatedAt": "2026-10-25T12:36:58.564Z"
+      }
+    },
+    {
+      "durationMs": 800,
+      "alpha": 0.4,
+      "start": "2026-10-25T12:36:58.564Z",
+      "completedAt": "2026-10-25T12:36:58.565Z",
+      "row": {
+        "averageMs": 387.8,
+        "updatedAt": "2026-10-25T12:36:58.564Z"
+      }
+    }
+  ],
+  "sql": "SELECT * FROM command_timings ORDER BY command",
+  "rows": [
+    {
+      "command": "agent message",
+      "average_ms": 387.8,
+      "updated_at": "2026-10-25T12:36:58.564Z"
+    }
+  ],
+  "sqlite": {
+    "version": "3.54.0"
+  }
+}

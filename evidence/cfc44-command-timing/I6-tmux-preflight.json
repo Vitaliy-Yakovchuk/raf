@@ -1,0 +1,21 @@
+{
+  "command": [
+    "tmux",
+    "-S",
+    "/tmp/cfc44-knKBT1/qa.sock",
+    "new-session",
+    "-d",
+    "-s",
+    "cfc44",
+    "sleep 300"
+  ],
+  "cliExitCode": 0,
+  "signal": null,
+  "stdout": "",
+  "stderr": "",
+  "socket": "/tmp/cfc44-knKBT1/qa.sock",
+  "cleanup": {
+    "exitCode": 0,
+    "stderr": ""
+  }
+}

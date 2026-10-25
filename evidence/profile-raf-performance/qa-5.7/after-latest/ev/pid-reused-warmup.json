@@ -1,0 +1,32 @@
+{
+  "label": "pid-reused-warmup",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-9hbxqm/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-9hbxqm/root/raf-main",
+  "startedAt": "2026-10-25T08:37:52.541Z",
+  "finishedAt": "2026-10-25T08:37:54.183Z",
+  "wallMs": 1642.4688139999926,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 3,
+  "stderrBytes": 52,
+  "loadAverage": [
+    10.8,
+    10.67,
+    9.27
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 961.1449999999999,
+    "cpuSystemMs": 710.444,
+    "wallMs": 1602.930632,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 1671.589
+}

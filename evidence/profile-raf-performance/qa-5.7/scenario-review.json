@@ -1,0 +1,160 @@
+{
+  "assignment": "profile-raf-performance:5.7",
+  "requirementSources": [
+    "specs/projects/raf/workspace-routing/spec.md: Повний snapshot активації та походження виконуваного коду; Перевірений hotfix активується цілісно",
+    "specs/projects/raf/state-store/spec.md: Захист робочої бази від іншої гілки raf"
+  ],
+  "basis": "Existing tests are mapped to requirements; fixture tests use real isolated Git/service/tmux. Counts overlap where a test supports multiple requirements. Unit timeout does not close integration scenarios.",
+  "rows": [
+    {
+      "scenario": "Незалежність runtime guard від evidence/docs",
+      "testFile": "test/hotfix-origin-cost.test.ts",
+      "testNameContains": [
+        "extra published evidence",
+        "one guard never",
+        "every successful guard"
+      ],
+      "targetCases": 3,
+      "qaPassedCases": 3,
+      "status": "passed",
+      "exactIdsAndResults": "coverage.json#/cases"
+    },
+    {
+      "scenario": "Повнота inventory та load graph",
+      "testFile": "test/hotfix-origin-cost.test.ts",
+      "testNameContains": [
+        "publication inventory builder",
+        "package bin maps",
+        "factory require aliases",
+        "excluded or unbounded"
+      ],
+      "targetCases": 12,
+      "qaPassedCases": 12,
+      "status": "passed",
+      "exactIdsAndResults": "coverage.json#/cases"
+    },
+    {
+      "scenario": "Зміна bytes/mode/delete та новий loadable вхід",
+      "testFile": "test/hotfix-origin-cost.test.ts",
+      "testNameContains": [
+        "bytes of",
+        "mode of",
+        "delete of",
+        "a new potential input"
+      ],
+      "targetCases": 49,
+      "qaPassedCases": 49,
+      "status": "passed",
+      "exactIdsAndResults": "coverage.json#/cases"
+    },
+    {
+      "scenario": "Aliases, canonical root, недоведений або застарілий inventory",
+      "testFile": "test/hotfix-origin-cost.test.ts",
+      "testNameContains": [
+        "file-hardlink",
+        "file-symlink",
+        "directory-symlink",
+        "canonical root",
+        "runtime inventory fails closed"
+      ],
+      "targetCases": 13,
+      "qaPassedCases": 13,
+      "status": "passed",
+      "exactIdsAndResults": "coverage.json#/cases"
+    },
+    {
+      "scenario": "Повний activation fingerprint включає evidence/docs",
+      "testFile": "test/hotfix-origin-cost.test.ts",
+      "testNameContains": [
+        "full activation fingerprint still"
+      ],
+      "targetCases": 12,
+      "qaPassedCases": 12,
+      "status": "passed",
+      "exactIdsAndResults": "coverage.json#/cases"
+    },
+    {
+      "scenario": "Origin перевіряється до production state усіма входами",
+      "testFile": "test/hotfix-origin-cost.test.ts",
+      "testNameContains": [
+        "before touching state",
+        "preserves existing state",
+        "retained reader"
+      ],
+      "targetCases": 8,
+      "qaPassedCases": 8,
+      "status": "passed",
+      "exactIdsAndResults": "coverage.json#/cases"
+    },
+    {
+      "scenario": "Очищення живих служб фікстури",
+      "testFile": "test/hotfix-origin-cost.test.ts",
+      "testNameContains": [
+        "fixture cleanup",
+        "fixture timeout",
+        "fixture SIGKILL"
+      ],
+      "targetCases": 3,
+      "qaPassedCases": 3,
+      "status": "passed",
+      "exactIdsAndResults": "coverage.json#/cases"
+    },
+    {
+      "scenario": "Повний sealed proof передається без E2BIG",
+      "testFile": "test/hotfix-origin-cost.test.ts",
+      "testNameContains": [
+        "full snapshot payload"
+      ],
+      "targetCases": 1,
+      "qaPassedCases": 1,
+      "status": "passed",
+      "exactIdsAndResults": "coverage.json#/cases"
+    },
+    {
+      "scenario": "Точний snapshot, CLI smoke, publication, recovery та transfer",
+      "testFile": "test/hotfix-activation.test.ts",
+      "testNameContains": [],
+      "targetCases": 66,
+      "qaPassedCases": 66,
+      "status": "passed",
+      "exactIdsAndResults": "coverage.json#/cases"
+    },
+    {
+      "scenario": "Схема, state preflight та межа parser/help",
+      "testFile": "test/state-migration-guard.test.ts",
+      "testNameContains": [],
+      "targetCases": 49,
+      "qaPassedCases": 49,
+      "status": "passed",
+      "exactIdsAndResults": "coverage.json#/cases"
+    },
+    {
+      "scenario": "Реальні service entry та production isolation",
+      "testFile": "test/service-entry.test.ts",
+      "testNameContains": [],
+      "targetCases": 10,
+      "qaPassedCases": 10,
+      "status": "passed",
+      "exactIdsAndResults": "coverage.json#/cases"
+    },
+    {
+      "scenario": "Передавання main generation",
+      "testFile": "test/main-generation-handover.test.ts",
+      "testNameContains": [],
+      "targetCases": 33,
+      "qaPassedCases": 33,
+      "status": "passed",
+      "exactIdsAndResults": "coverage.json#/cases"
+    }
+  ],
+  "liveHostComparison": {
+    "status": "passed",
+    "sourceSha": "96644a145e1bc1ab7923e98c93a7b2f59243e940",
+    "baseline": "0e022cd356a9bf7760328839fcb7f39103ebce30",
+    "queue": "p57after3",
+    "comparison": "comparison-latest.json",
+    "manifest": "after-latest/provenance.json",
+    "allCasesSemanticsPreserved": true,
+    "cleanupComplete": true
+  }
+}

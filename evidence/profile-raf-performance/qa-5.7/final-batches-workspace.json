@@ -1,0 +1,38 @@
+{
+  "batches": {
+    "batch8": {
+      "runtimeAndFixtureSourceSha": "96644a145e1bc1ab7923e98c93a7b2f59243e940",
+      "workspaceHeadDuringRun": [
+        "96644a145e1bc1ab7923e98c93a7b2f59243e940",
+        "3e5cd58bf3a4d1b3565d406e61fcbf67e9a2320e"
+      ],
+      "headChange": "Evidence-only3e5 commit; src/test/bin/package/harness unchanged"
+    },
+    "batch9": {
+      "headAtLaunch": "3e5cd58bf3a4d1b3565d406e61fcbf67e9a2320e"
+    },
+    "batch10": {
+      "headAtLaunch": "3e5cd58bf3a4d1b3565d406e61fcbf67e9a2320e"
+    },
+    "batch11": {
+      "observedHeads": [
+        "3e5cd58bf3a4d1b3565d406e61fcbf67e9a2320e",
+        "dda183b331b1a2942e14892047e3b9965b5ca963"
+      ],
+      "change": "Neighbor native fixture-only commit; own source/group inputs unchanged"
+    },
+    "batch12": {
+      "headAtLaunch": "dda183b331b1a2942e14892047e3b9965b5ca963",
+      "conf": "4296d50eec",
+      "confReady": "Main explicit confirmation before launch",
+      "preset": "Same node profile and five exact files"
+    }
+  },
+  "sourceAndFixtureIdentity": "workspace-invariance.json#/matchedFinalHost",
+  "uncommittedOwnChanges": "Only evidence/profile-raf-performance/qa-5.7 metadata/raw outputs; all own src/test committed and clean",
+  "foreignChanges": "Neighbor untracked qa-6.4b evidence only; never staged by this executor",
+  "group": "profile-raf-performance/module-origin-cost",
+  "project": "raf",
+  "phase": "qa",
+  "aggregate": "Same broker aggregate and QA HOME throughout; timeoutCount1 retained"
+}

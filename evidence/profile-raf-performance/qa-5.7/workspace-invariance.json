@@ -26,5 +26,41 @@
     "scripts/qa-main-agent-channel.mjs",
     "scripts/test-run-vitest.ts"
   ],
-  "note": "Merge8cea001 includes main4ca708c test inventory protocol fix; overall src equality is false. Own product fix files/bin/package/harness unchanged. Requested matching final host after96644a1, no latest-HEAD performance claim until verified."
+  "note": "Merge8cea001 includes main4ca708c test inventory protocol fix; overall src equality is false. Own product fix files/bin/package/harness unchanged. Requested matching final host after96644a1, no latest-HEAD performance claim until verified.",
+  "matchedFinalHost": {
+    "sourceSha": "96644a145e1bc1ab7923e98c93a7b2f59243e940",
+    "head": "3e5cd58bf3a4d1b3565d406e61fcbf67e9a2320e",
+    "gitObjectIdentityChecks": {
+      "src": true,
+      "bin": true,
+      "package.json": true,
+      "package-lock.json": true,
+      "scripts/qa-agent-ps-comparison.mjs": true,
+      "test": true
+    },
+    "workingSourceStatus": "",
+    "note": "Final host96644a1 includes all current committed src/test bytes; current own3e5 commit changes evidence only. Earlier4a audit remains historical."
+  },
+  "finalNeighborFixtureCommit": {
+    "sha": "dda183b331b1a2942e14892047e3b9965b5ca963",
+    "unchangedOwnProductionAndGroupInputs": {
+      "src": true,
+      "bin": true,
+      "package.json": true,
+      "package-lock.json": true,
+      "scripts/qa-agent-ps-comparison.mjs": true,
+      "test/hotfix-origin-cost.test.ts": true,
+      "test/hotfix-activation.test.ts": true,
+      "test/hotfix-fixture.ts": true,
+      "test/state-migration-guard.test.ts": true,
+      "test/service-entry.test.ts": true,
+      "test/main-generation-handover.test.ts": true
+    },
+    "otherChangedPaths": [
+      "scripts/qa-main-agent-channel-metadata.mjs",
+      "scripts/qa-main-agent-channel.mjs",
+      "test/main-switch-agent-channel.test.ts"
+    ],
+    "note": "Neighbor dda183b changes only native6.4 fixture scripts/test plus evidence. Measurements remain exactly pinned to96644a1; own product src/bin/package/harness and five selected unit files/hotfix-fixture match. No claim that the entire test tree is unchanged after the earlier check."
+  }
 }

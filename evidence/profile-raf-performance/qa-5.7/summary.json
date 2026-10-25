@@ -144,6 +144,20 @@
       "cliExitCode": 0,
       "stdout": "comments-lifecycle-final.stdout",
       "stderr": "comments-lifecycle-final.stderr"
+    },
+    "build-latest": {
+      "command": "npm run build",
+      "cliExitCode": 0,
+      "sha": "3e5cd58bf3a4d1b3565d406e61fcbf67e9a2320e",
+      "stdout": "build-latest.stdout",
+      "stderr": "build-latest.stderr"
+    },
+    "comments-latest": {
+      "command": "npm run check:comments",
+      "cliExitCode": 0,
+      "sha": "3e5cd58bf3a4d1b3565d406e61fcbf67e9a2320e",
+      "stdout": "comments-latest.stdout",
+      "stderr": "comments-latest.stderr"
     }
   },
   "initialQa": {
@@ -159,10 +173,7 @@
   "transportStderr": "transport-stderr.json",
   "groupPolicy": "Same project/workspace/group/HOME/aggregate; current preset added by main, no foreign regression group invocation.",
   "archive": null,
-  "pending": [
-    "13 previously red activation scenarios must actually pass",
-    "New matched host after96644a1 after main protocol merge"
-  ],
+  "pending": [],
   "qaFixShas": [
     "c50b4c6d331f807f8a0f5533e0341d75ba3ae8a2",
     "8f665165d57ae0b824f6b992824ebb6217358c83",
@@ -224,7 +235,7 @@
     "unknown": 0
   },
   "stand34": {
-    "acceptance": "intermediate only; final host acceptance is finalHost on4a0bc11",
+    "acceptance": "Intermediate only; accepted finalHost is the matched96644a1 after in after-latest/summary.json",
     "before": "before/summary.json",
     "after": "intermediate-after/summary.json",
     "comparison": "intermediate-comparison.json",
@@ -252,6 +263,45 @@
   },
   "finalHost": {
     "before": "before/summary.json",
+    "after": "after-latest/summary.json",
+    "comparison": "comparison-latest.json",
+    "verificationCliExitCode": 0,
+    "evidenceIntegrity": "verified",
+    "allCasesHaveFavorableMeans": true,
+    "allCasesRangesStrictlyImprove": true,
+    "sourceSha": "96644a145e1bc1ab7923e98c93a7b2f59243e940",
+    "baselineSha": "0e022cd356a9bf7760328839fcb7f39103ebce30",
+    "command": "node scripts/qa-agent-ps-comparison.mjs 96644a145e1bc1ab7923e98c93a7b2f59243e940 /srv/dev/p57-conf.AwZAJz 5",
+    "manifests": "before/provenance.json + after-latest/provenance.json",
+    "cleanup": "complete, service stopped, remainingProcesses=[], SQLite integrity ok",
+    "harnessSha256": "2723e90855d4ba02f0a47df8e8677507b9ae59e6feac03934a5fd943e9eb16b1",
+    "secscan": "Main confirms raw stdout/stderr secscan0; hashes verified in after-latest/provenance.json",
+    "cliExitCode": 0,
+    "status": "passed"
+  },
+  "unitProgress": {
+    "latest": "batch12.TestRunResult.json",
+    "qaPassedUnique": 259,
+    "targetCases": 259,
+    "knownRed": 0,
+    "active": null,
+    "fixtureSourceSha": "4b70dad265834c8657f992fef0663e96afb7ab86",
+    "nextAction": "complete"
+  },
+  "fixturePayloadFixSha": "b636ad6239bf135f16ebf7056d0942fecd29a938",
+  "status": "passed",
+  "latestResult": "batch12.TestRunResult.json",
+  "timeoutCount": 1,
+  "groupState": "complete",
+  "knownRed": 0,
+  "unexecuted": 0,
+  "unknown": 0,
+  "nextAction": "complete",
+  "fixtureLifecycleFixSha": "4b70dad265834c8657f992fef0663e96afb7ab86",
+  "requestedFinalHostSourceSha": "96644a145e1bc1ab7923e98c93a7b2f59243e940",
+  "finalHostPending": null,
+  "intermediateHost4a": {
+    "before": "before/summary.json",
     "after": "after-final/summary.json",
     "comparison": "comparison-final.json",
     "verificationCliExitCode": 0,
@@ -265,24 +315,9 @@
     "cleanup": "complete, service stopped, remainingProcesses=[], SQLite integrity ok",
     "harnessSha256": "2723e90855d4ba02f0a47df8e8677507b9ae59e6feac03934a5fd943e9eb16b1"
   },
-  "unitProgress": {
-    "latest": "batch7.TestRunResult.json",
-    "qaPassedUnique": 246,
-    "targetCases": 259,
-    "knownRed": 13,
-    "active": "batch8:3 cleanup/concurrency IDs",
-    "fixtureSourceSha": "4b70dad265834c8657f992fef0663e96afb7ab86",
-    "nextAction": "Wait for full result, then remaining exact knownRed batches without dropping gates."
-  },
-  "fixturePayloadFixSha": "b636ad6239bf135f16ebf7056d0942fecd29a938",
-  "status": "in-progress",
-  "latestResult": "batch7.TestRunResult.json",
-  "timeoutCount": 1,
-  "groupState": "optimize",
-  "knownRed": 13,
-  "unexecuted": 0,
-  "unknown": 0,
-  "nextAction": "Three exact knownRed IDs per confirmation, same aggregate/HOME; all nested regressions and gates retained.",
-  "fixtureLifecycleFixSha": "4b70dad265834c8657f992fef0663e96afb7ab86",
-  "requestedFinalHostSourceSha": "96644a145e1bc1ab7923e98c93a7b2f59243e940"
+  "qaFixtureFixShas": [
+    "b636ad6239bf135f16ebf7056d0942fecd29a938",
+    "4b70dad265834c8657f992fef0663e96afb7ab86"
+  ],
+  "completionScope": "Only assigned5.7;5.8 deployment stays open/main inserts deployment-follow-up.txt. No task checkbox edits, push, spec sync or archive."
 }

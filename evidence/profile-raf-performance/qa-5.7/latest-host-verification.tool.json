@@ -1,0 +1,15 @@
+{
+  "command": "node evidence/profile-raf-performance/qa-5.7/verify-comparison.mjs evidence/profile-raf-performance/qa-5.7/before/summary.json evidence/profile-raf-performance/qa-5.7/after-latest/summary.json evidence/profile-raf-performance/qa-5.7/comparison-latest.json",
+  "tool": {
+    "chunk_id": "a3c990",
+    "wall_time_seconds": 0.289204658,
+    "exit_code": 0,
+    "original_token_count": 20,
+    "output": "{\"evidenceIntegrity\":\"verified\",\"allCasesHaveFavorableMeans\":true,\"cases\":6}\n"
+  },
+  "initialWrongVerifierInvocation": {
+    "command": "node evidence/profile-raf-performance/qa-4.5/verify-comparison.mjs ...",
+    "cliExitCode": 1,
+    "reason": "Old4.5 verifier expects2baseline live scans; pinned0e baseline already has1. Correct existing5.7 verifier differs only in that expectation, unchanged from previous successful comparisons; no product defect/red."
+  }
+}

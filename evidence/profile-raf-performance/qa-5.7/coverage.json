@@ -1,62 +1,9 @@
 {
   "basis": "The same broker aggregate persists across phases, SHA and selections. Earlier passed tests are retained; this is not a claim that all tests ran in one final command.",
   "targetCases": 259,
-  "qaPassedCases": 246,
-  "remainingKnownRed": [
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-concurrency] duplicate publishers of the same sealed proof exchange main once"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-cleanup] activation and cleanup preserve the permanent hotfix inode, next commit, index and dirty work"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-recovery] recovery reconciles only the sealed target while a later shared HEAD and dirty work survive"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-cycle] main to the same hotfix to atomic main to develop repeats without losing local work"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-cycle] a develop conflict leaves transfer open and retains main, hotfix and the developer side"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-concurrency] conflicting main refresh cannot activate an old seal or erase either side"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-gates] shared source changing during regression cannot receive a green proof"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-gates] shared artifact changing during regression cannot receive a green proof"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-gates] shared configuration changing during regression cannot receive a green proof"
-    },
-    {
-      "file": "test/hotfix-activation.test.ts",
-      "name": "[hotfix-gates] shared new-HEAD changing during regression cannot receive a green proof"
-    }
-  ],
-  "latestResult": "batch7.TestRunResult.json",
+  "qaPassedCases": 259,
+  "remainingKnownRed": [],
+  "latestResult": "batch12.TestRunResult.json",
   "cases": [
     {
       "test": {
@@ -103,35 +50,60 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-cleanup] activation and cleanup preserve the permanent hotfix inode, next commit, index and dirty work"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch9.TestRunResult.json",
+          "runId": "a72b76df-4bd9-485c-a1c0-86998138451f"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-cleanup] activation failure remains the primary cause when cleanup also fails"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch8.TestRunResult.json",
+          "runId": "aca0a084-20ad-4d87-95ae-821eb61920bd"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-cleanup] live old generation and foreign resources survive; final release permits bounded idempotent cleanup"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch8.TestRunResult.json",
+          "runId": "aca0a084-20ad-4d87-95ae-821eb61920bd"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-concurrency] conflicting main refresh cannot activate an old seal or erase either side"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch11.TestRunResult.json",
+          "runId": "24311ed7-2be5-475c-9dbd-03ef5ffa628c"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-concurrency] duplicate publishers of the same sealed proof exchange main once"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch8.TestRunResult.json",
+          "runId": "aca0a084-20ad-4d87-95ae-821eb61920bd"
+        }
+      ]
     },
     {
       "test": {
@@ -186,14 +158,24 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-cycle] a develop conflict leaves transfer open and retains main, hotfix and the developer side"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch10.TestRunResult.json",
+          "runId": "9b3556be-2c7a-4e16-8d44-b8b0be3e7f9c"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-cycle] main to the same hotfix to atomic main to develop repeats without losing local work"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch10.TestRunResult.json",
+          "runId": "9b3556be-2c7a-4e16-8d44-b8b0be3e7f9c"
+        }
+      ]
     },
     {
       "test": {
@@ -296,28 +278,48 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-gates] shared artifact changing during regression cannot receive a green proof"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch11.TestRunResult.json",
+          "runId": "24311ed7-2be5-475c-9dbd-03ef5ffa628c"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-gates] shared configuration changing during regression cannot receive a green proof"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch12.TestRunResult.json",
+          "runId": "f99e4d56-38c6-4fcb-a06a-38544cd10480"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-gates] shared new-HEAD changing during regression cannot receive a green proof"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch12.TestRunResult.json",
+          "runId": "f99e4d56-38c6-4fcb-a06a-38544cd10480"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-gates] shared source changing during regression cannot receive a green proof"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch11.TestRunResult.json",
+          "runId": "24311ed7-2be5-475c-9dbd-03ef5ffa628c"
+        }
+      ]
     },
     {
       "test": {
@@ -544,14 +546,24 @@
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-recovery] recovery reconciles only the sealed target while a later shared HEAD and dirty work survive"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch9.TestRunResult.json",
+          "runId": "a72b76df-4bd9-485c-a1c0-86998138451f"
+        }
+      ]
     },
     {
       "test": {
         "file": "test/hotfix-activation.test.ts",
         "name": "[hotfix-snapshot] advanced main requires refresh and all fresh gates; an old proof never blesses the merge"
       },
-      "qaPassEvidence": []
+      "qaPassEvidence": [
+        {
+          "result": "batch9.TestRunResult.json",
+          "runId": "a72b76df-4bd9-485c-a1c0-86998138451f"
+        }
+      ]
     },
     {
       "test": {

@@ -16,7 +16,7 @@ export const runtimeLoaderProofs: Readonly<Record<string, { sha256: string; proo
   },
   "src/test-run-etchly-inventory.ts": {
     "targets": [],
-    "sha256": "58b857a8c2204ec371cee8b01b46bb6c6352e0a98da965d183790e4b015970f8",
+    "sha256": "e8af2d0bb1a79e7dc81919c55071728f74457c88d7fceddab081a30caa3f3ad6",
     "proof": "Only the test payload classifier in the selected project is imported after every audited source hash and canonical helper path have been checked; it does not resolve into excluded generation trees."
   }
 };

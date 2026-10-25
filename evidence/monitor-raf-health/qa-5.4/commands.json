@@ -1,0 +1,21 @@
+{
+  "assignment": "monitor-raf-health:5.4",
+  "commands": {
+    "forced-close": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/8d40820d-3449-4a8e-b3ed-1c3f4a1738d2/raf-main/bin/raf.ts test run --project raf --phase qa --group monitor-raf-health/forced-close --files test/forced-close-metrics.test.ts",
+    "resource-wait": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/8d40820d-3449-4a8e-b3ed-1c3f4a1738d2/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/resource-wait --files test/state-store.test.ts test/state-migration-cli.test.ts",
+    "host-stand": "node /srv/dev/work/orchestrator/raf-develop/scripts/qa-forced-close-live.mjs /srv/dev/work/orchestrator/raf-develop/evidence/monitor-raf-health/qa-5.4/host-stand"
+  },
+  "regressionAuthorization": {
+    "sourceChange": "monitor-raf-health",
+    "sourceItem": "5.4",
+    "targetGroup": "complete-raf-flow-contracts/resource-wait",
+    "handoff": "../../monitor-raf-health-5.3/handoff.json"
+  },
+  "capture": {
+    "TestRunResult": "Complete JSON line from command tool output, stored without normalization. CLI and child exit codes are separate.",
+    "stderr": "Non-result lines from merged command tool output; queue diagnostics identify the stderr content.",
+    "initial": "First refusal was copied verbatim from complete tool output; later attempts also retain the complete tool result object.",
+    "workspace": "Snapshots name observation times; refused runs never spawned child.",
+    "host": "Main executes reviewed script outside sandbox. Host raw evidence is read-only to this worker."
+  }
+}

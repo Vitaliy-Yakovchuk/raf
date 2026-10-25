@@ -1,0 +1,526 @@
+{
+  "assignment": "monitor-raf-health:5.4",
+  "scriptCommit": "423edf5eeae25a6c8a6e6010bb2ab9cc5bc43ce6",
+  "fixCommit": "9f0e40cbe3f4a44a84abf5242096500b82814c10",
+  "redAuthorization": {
+    "source": "main message during this session",
+    "reason": "Foreign regression grant permits only QA; main cannot run test with phase main. Main explicitly accepted d90cf997-14a8-41c0-aa7a-9ab9a3c080e6 as red proof and instructed immediate fix and QA in this session."
+  },
+  "runs": [
+    {
+      "evidence": "forced-final.TestRunResult.json",
+      "runId": "e83fabe3-4925-4eba-95e3-a82f4698e62f",
+      "group": "monitor-raf-health/forced-close",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/forced-close-metrics.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 26,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "forced-initial.TestRunResult.json",
+      "runId": "6a7643ec-32bb-4e4c-8517-4af4601a926b",
+      "group": "monitor-raf-health/forced-close",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/forced-close-metrics.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "passed": 0,
+      "knownRed": [],
+      "unexecuted": [
+        {
+          "file": "test/forced-close-metrics.test.ts",
+          "name": "*"
+        }
+      ],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "fix-setup"
+    },
+    {
+      "evidence": "forced-pass.TestRunResult.json",
+      "runId": "2a824840-0369-4a55-ab3f-3370387fd7bd",
+      "group": "monitor-raf-health/forced-close",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/forced-close-metrics.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 26,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete"
+    },
+    {
+      "evidence": "forced-retry.TestRunResult.json",
+      "runId": "618dddfb-b5cf-4d7b-bb7e-b5cd0c5a2477",
+      "group": "monitor-raf-health/forced-close",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/forced-close-metrics.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "passed": 0,
+      "knownRed": [],
+      "unexecuted": [
+        {
+          "file": "test/forced-close-metrics.test.ts",
+          "name": "*"
+        }
+      ],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "fix-setup"
+    },
+    {
+      "evidence": "resource-fix-attempt.TestRunResult.json",
+      "runId": "d52a7985-ce8f-411a-b072-d6de083c27ed",
+      "group": "complete-raf-flow-contracts/resource-wait",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/state-store.test.ts",
+          "test/state-migration-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 60,
+      "knownRed": [
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "start uses configured main and remains available after empty work and completed request"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "failed recovery and readiness timeout return actionable errors, never successful acceptance"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "stop preserves agent and reminder state, distinguishes normal stop, and status does not restart"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "crash fails in-flight operation and a fresh client reports actual failure instead of stale ready state"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "canceling a socket request propagates caller loss to host queue handler"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "separate command processes coordinate startup through shared state and socket"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        },
+        {
+          "file": "test/service-host.test.ts",
+          "name": "default production ports recover and shut down while incomplete explicit dependencies are rejected"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "unwired command is explicitly unavailable without state or external effects: resource wait"
+        },
+        {
+          "file": "test/resource-wait-storage.test.ts",
+          "name": "[resource-wait/storage] explicit forward migration 11 to 12 on a copy preserves legacy lastGrant and other tables"
+        },
+        {
+          "file": "test/state-migration-cli.test.ts",
+          "name": "maintenance CLI is explicit, path-bound and does not grant migration to subsequent ordinary commands"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation"
+    },
+    {
+      "evidence": "resource-initial.TestRunResult.json",
+      "runId": "25120de7-004e-4b39-b7c5-0c80c3fb3b08",
+      "group": "complete-raf-flow-contracts/resource-wait",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/state-store.test.ts",
+          "test/state-migration-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "refused",
+      "cliExitCode": 1,
+      "childExitCode": null,
+      "passed": 0,
+      "knownRed": [
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "start uses configured main and remains available after empty work and completed request"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "failed recovery and readiness timeout return actionable errors, never successful acceptance"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "stop preserves agent and reminder state, distinguishes normal stop, and status does not restart"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "crash fails in-flight operation and a fresh client reports actual failure instead of stale ready state"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "canceling a socket request propagates caller loss to host queue handler"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "separate command processes coordinate startup through shared state and socket"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        },
+        {
+          "file": "test/service-host.test.ts",
+          "name": "default production ports recover and shut down while incomplete explicit dependencies are rejected"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+        },
+        {
+          "file": "test/state-migration-cli.test.ts",
+          "name": "public QA CLI refuses nonempty unknown schema 12 without downgrade"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "unwired command is explicitly unavailable without state or external effects: resource wait"
+        },
+        {
+          "file": "test/resource-wait-storage.test.ts",
+          "name": "[resource-wait/storage] explicit forward migration 11 to 12 on a copy preserves legacy lastGrant and other tables"
+        },
+        {
+          "file": "test/state-migration-cli.test.ts",
+          "name": "public QA CLI refuses nonempty unknown schema 13 without downgrade"
+        }
+      ],
+      "unexecuted": [
+        {
+          "file": "test/state-store.test.ts",
+          "name": "*"
+        },
+        {
+          "file": "test/state-migration-cli.test.ts",
+          "name": "*"
+        }
+      ],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-setup"
+    },
+    {
+      "evidence": "resource-red-qa.TestRunResult.json",
+      "runId": "d90cf997-14a8-41c0-aa7a-9ab9a3c080e6",
+      "group": "complete-raf-flow-contracts/resource-wait",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/state-store.test.ts",
+          "test/state-migration-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 59,
+      "knownRed": [
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "start uses configured main and remains available after empty work and completed request"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "failed recovery and readiness timeout return actionable errors, never successful acceptance"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "stop preserves agent and reminder state, distinguishes normal stop, and status does not restart"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "crash fails in-flight operation and a fresh client reports actual failure instead of stale ready state"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "canceling a socket request propagates caller loss to host queue handler"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "separate command processes coordinate startup through shared state and socket"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        },
+        {
+          "file": "test/service-host.test.ts",
+          "name": "default production ports recover and shut down while incomplete explicit dependencies are rejected"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "unwired command is explicitly unavailable without state or external effects: resource wait"
+        },
+        {
+          "file": "test/resource-wait-storage.test.ts",
+          "name": "[resource-wait/storage] explicit forward migration 11 to 12 on a copy preserves legacy lastGrant and other tables"
+        },
+        {
+          "file": "test/state-store.test.ts",
+          "name": "a new explicit SQLite database has no invented runner, quota, or timing values"
+        },
+        {
+          "file": "test/state-migration-cli.test.ts",
+          "name": "maintenance CLI is explicit, path-bound and does not grant migration to subsequent ordinary commands"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation"
+    },
+    {
+      "evidence": "resource-selected-complete.TestRunResult.json",
+      "runId": "39fdff9b-a84c-4578-8321-070fab1289fd",
+      "group": "complete-raf-flow-contracts/resource-wait",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/state-store.test.ts",
+          "test/state-migration-cli.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "passed": 61,
+      "knownRed": [
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "start uses configured main and remains available after empty work and completed request"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "failed recovery and readiness timeout return actionable errors, never successful acceptance"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "stop preserves agent and reminder state, distinguishes normal stop, and status does not restart"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "crash fails in-flight operation and a fresh client reports actual failure instead of stale ready state"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "canceling a socket request propagates caller loss to host queue handler"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "separate command processes coordinate startup through shared state and socket"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        },
+        {
+          "file": "test/service-host.test.ts",
+          "name": "default production ports recover and shut down while incomplete explicit dependencies are rejected"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "unwired command is explicitly unavailable without state or external effects: resource wait"
+        },
+        {
+          "file": "test/resource-wait-storage.test.ts",
+          "name": "[resource-wait/storage] explicit forward migration 11 to 12 on a copy preserves legacy lastGrant and other tables"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation"
+    }
+  ],
+  "aggregatePreserved": true,
+  "foreignRemainder": "15 inherited knownRed outside the selected state-store and state-migration-cli files remain. Final selected child passed 61, CLI stays 1/assertions-failed. This is not a passed resource-wait group.",
+  "archive": false,
+  "tasksEdited": false
+}

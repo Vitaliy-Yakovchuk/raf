@@ -1,0 +1,39 @@
+{
+  "observedAt": "2026-10-25T01:26:36.799342+00:00",
+  "head": {
+    "code": 0,
+    "stdout": "c14af41361749941511aaf50ca1e722524b59556\n",
+    "stderr": ""
+  },
+  "workspace": {
+    "code": 0,
+    "stdout": " M test/production-qa-fixture.ts\n M test/workspace-trust.test.ts\n?? evidence/monitor-raf-health/qa-5.4/\n?? evidence/switch-raf-main-by-symlink/qa-6.4/\n",
+    "stderr": ""
+  },
+  "dirtyPatch": {
+    "code": 0,
+    "stdout": "diff --git a/test/production-qa-fixture.ts b/test/production-qa-fixture.ts\nindex 9684b2d..35f18ee 100644\n--- a/test/production-qa-fixture.ts\n+++ b/test/production-qa-fixture.ts\n@@ -24,7 +24,7 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location:\n   assert.ifError(initialized.error);\n   assert.equal(initialized.status, 0, initialized.stderr);\n \n-  const names = ['HOME', 'RAF_QA_HOME', 'TMUX', 'TMUX_PANE'] as const;\n+  const names = ['HOME', 'RAF_QA_HOME', 'RAF_ORCHESTRATOR_ROOT', 'TMUX', 'TMUX_PANE'] as const;\n   const inherited = Object.fromEntries(names.map(name => [name, process.env[name]]));\n   t.after(() => {\n     for (const name of names) {\n@@ -34,6 +34,7 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location:\n   });\n   process.env.HOME = location.home;\n   process.env.RAF_QA_HOME = location.home;\n+  process.env.RAF_ORCHESTRATOR_ROOT = location.root;\n   delete process.env.TMUX;\n   delete process.env.TMUX_PANE;\n \n",
+    "stderr": ""
+  },
+  "assignedSourceDiffSinceInitialHead": {
+    "code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "hashes": {
+    "src/state-store.ts": "6c587607ee8e0dac98e9db4202831674cc5a9aa0b49a992d87da8a58547df081",
+    "src/session-state.ts": "f8b1a75fc84013ad5ed85912cd9eb66aa2a2e4f37152571f290f66f0309f05b4",
+    "src/production-runtime.ts": "c9cdcaafa9236404f676cb8cce66fb499a2e493fd0c714c014f5e3b143d1fb04",
+    "src/task-checkbox-report.ts": "2820d87136c9ad2ce492373c0c3abc82e7619e32b8e358b1960fe0c920ba6376",
+    "src/app-runtime.ts": "1cb22fb68f3ee1beb9494d8b0f9521ca17b7c61bb438c90677a248dced36728b",
+    "test/forced-close-metrics.test.ts": "78cacc599adf9abee4cdc98c7206a9ecb0a0d8095b03f5c840e0c0ea678509c6",
+    "test/state-store.test.ts": "8f9a31f1c2cc3d2416f9d2deb772a4623f2ebb5a6e113c7eeda94cc6c66e95fe",
+    "test/state-migration-cli.test.ts": "4cdeb9b2d5ea628af3a842c2cd4b0ff1dc23ad4712429f229724932935b7b122",
+    "test/agent-run-fixture.ts": "1f806df091991c8e74c31556ba5f7248d9898758d6c1e8f60272a1b7812eace1",
+    "test/production-qa-fixture.ts": "3552994e8293eac02d3d1cea37457ab96314168982b962501657a4d2c07c0c9f",
+    "scripts/qa-forced-close-live.mjs": "ea74b4de6c2b2eefd671d8d66677f6aa19f39bfb83df2a6ae5ea08a5b270ecd7"
+  },
+  "initialObservedHead": "edc22618129cfcfb145ee1b770d84b29d290200b",
+  "scriptCommit": "423edf5eeae25a6c8a6e6010bb2ab9cc5bc43ce6",
+  "note": "This observation follows refused runs; it is not an asserted execution-time SHA. Refused runs launched no child. Foreign dirty fixture belongs to another executor."
+}

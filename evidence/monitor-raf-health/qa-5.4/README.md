@@ -1,0 +1,17 @@
+# monitor-raf-health:5.4 — докази QA
+
+Живий стенд: очікується виконання main. Власний host-скрипт: `scripts/qa-forced-close-live.mjs`, коміт `423edf5eeae25a6c8a6e6010bb2ab9cc5bc43ce6`. Термінальний runner синтетичний; CLI, watcher, Git, SQLite й tmux справжні. Автентифікаційні файли не копіюються.
+
+Власна unit-група `monitor-raf-health/forced-close` після виправлень: [forced-final.TestRunResult.json](forced-final.TestRunResult.json), runId `e83fabe3-4925-4eba-95e3-a82f4698e62f`: **passed**, 26 тестів, CLI/child `0/0`, cleanup complete, timedOut=false, knownRed/unexecuted/unknown порожні, timeoutCount=0, groupState=complete, nextAction=complete.
+
+Дозволена чужа регресія `complete-raf-flow-contracts/resource-wait`, source item `monitor-raf-health:5.4`, лише `test/state-store.test.ts` і `test/state-migration-cli.test.ts`: [resource-selected-complete.TestRunResult.json](resource-selected-complete.TestRunResult.json), runId `39fdff9b-a84c-4578-8321-070fab1289fd`: 61 passed у вибраних файлах, child=0, diagnostics=[], cleanup complete, timedOut=false, unexecuted/unknown порожні. **Результат групи assertions-failed, CLI=1**, оскільки агрегат зберігає 15 успадкованих knownRed інших файлів. GroupState=idle, nextAction=fix-implementation. Повної green групи не заявляємо, HOME та облік не скидали.
+
+Червоний доказ знайдених проблем: [resource-red-qa.TestRunResult.json](resource-red-qa.TestRunResult.json), runId `d90cf997-14a8-41c0-aa7a-9ab9a3c080e6`, CLI/child `1/1`, 2 нові assertion failures. Main у цій сесії прямо визнав цей QA-прогін red-доказом: trusted grant дозволяє виконавцю лише QA чужої групи, а main не може запускати тести через phases.main.allowed=false. Після цього виправлення зроблено в цьому самому запуску, без іншого виконавця.
+
+Виправлення `9f0e40cbe3f4a44a84abf5242096500b82814c10`: оновлено очікування підтримуваних схем до `[17,18]`; існуючий `StateMigrationPorts` передається через `runStateMigration` для детермінованого unit-виклику. Тест перевіряє refusal unknown до backup/DDL, незмінність джерела, два quiescent checks для backup/transfer і наступний звичайний CLI без глобального дозволу міграції. Публічний `scripts/migrate-state.ts` не змінено, default inspector лишається fail-closed. EACCES хостового `/proc` не приховується і не послаблює продукційну політику. Помилку першого тестового виклику Node без `--` також збережено в `resource-fix-attempt.*`, потім виправлено.
+
+Три передстартові відмови CONFIGURATION_INVALID через конкурентні записи conf залишено як refused із child=null. Це не red і не виконані тести. Повний перелік усіх восьми спроб: [unit-summary.json](unit-summary.json). Точні команди й grant: [commands.json](commands.json). SHA та dirty patches: `*-snapshot.json` і [workspace-after-refusals.json](workspace-after-refusals.json). Власна фінальна перевірка виконана після коміту виправлень; відповідні файли чисті. Build/check:comments пройшли (`fix-build.json`, `fix-comments.json`).
+
+Кожна спроба має незмінений `*.TestRunResult.json`, `*.stderr` та окремий `*.exit.json` із CLI/child code. Для всіх, крім першої відмови, також збережено весь результат command tool і combined output. Першу відмову скопійовано з повного tool output; stderr відокремлено за рядком launch-queue JSON, без зміни його змісту. Сирі результати не форматувалися. Часткова resourceUsage completeness не є доказом точних піків RAM/disk.
+
+Інші пункти зміни відкриті. Галочки не змінювалися, архівація не виконувалася.

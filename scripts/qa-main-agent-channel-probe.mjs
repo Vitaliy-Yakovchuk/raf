@@ -29,7 +29,7 @@ try {
     const common = spawnSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }); assert.equal(common.status, 0);
     fs.symlinkSync(root, path.join(alias, 'root')); fs.symlinkSync(common.stdout.trim(), path.join(alias, 'raf-git'));
     fs.symlinkSync(path.join(path.dirname(root), '.raf'), path.join(alias, 'state'));
-    const write = "import{openSync,closeSync}from'node:fs';closeSync(openSync(process.argv[1],'r+'));";
+    const write = "import{writeFileSync}from'node:fs';writeFileSync(process.argv[1],'sym64-tampered');";
     const targets = ['raf-main-a/bin/raf.ts', 'raf-main-b/bin/raf.ts', 'raf-main/bin/raf.ts', '.gitmodules'];
     for (const target of targets) for (const prefix of [root, path.join(alias, 'root')]) probe('deny write ' + target, write, [path.join(prefix, target)], 'deny');
     for (const target of ['HEAD', 'index', 'refs/heads/main', 'config', 'raf-hotfix/registry.json']) {
@@ -40,13 +40,20 @@ try {
       for (const target of ['HEAD', 'index']) probe('deny slot metadata ' + slot + '/' + target, write, [path.join(directory.stdout.trim(), target)], 'deny');
     }
     // Owner contract: shared Orchestrator index is writable; opening it must not change main.
-    probe('allow shared index', write, [path.join(root, '.git/index')], 'allow');
+    probe('allow shared index', "import{openSync,closeSync}from'node:fs';closeSync(openSync(process.argv[1],'r+'));", [path.join(root, '.git/index')], 'allow');
+    const marker = path.join(root, 'openspec/changes/sym64-fixture', `index-probe-${path.basename(own)}-${stage}.txt`);
+    fs.writeFileSync(marker, 'Own isolated index probe\n');
+    const add = spawnSync('git', ['-C', root, 'add', '--', marker], { encoding: 'utf8', timeout: 8000 });
+    results.push({ label: 'actual shared index write', command: ['git', '-C', root, 'add', '--', marker], cliExitCode: add.status, signal: add.signal, stdout: add.stdout, stderr: add.stderr });
+    assert.equal(add.status, 0, 'Own Orchestrator index write must succeed');
     for (const prefix of [root, path.join(alias, 'root')]) probe('deny symlink replacement', "import{unlinkSync}from'node:fs';unlinkSync(process.argv[1]);", [path.join(prefix, 'raf-main')], 'deny');
     for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) {
       probe('deny state ' + name, "import{readFileSync}from'node:fs';readFileSync(process.argv[1]);", [path.join(alias, 'state', name)], 'deny');
     }
-    const socket = path.join(cwd, 'qa/peer.sock'); fs.symlinkSync(socket, path.join(alias, 'peer.sock'));
-    for (const p of [socket, path.join(alias, 'peer.sock')]) probe('deny peer connection', "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',()=>{process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});", [p], 'deny');
+    for (const [name, socket] of [['peer', path.join(cwd, 'qa/peer.sock')], ['host-main', path.join(path.dirname(root), 'main.sock')]]) {
+      fs.symlinkSync(socket, path.join(alias, name + '.sock'));
+      for (const p of [socket, path.join(alias, name + '.sock')]) probe('deny foreign connection ' + name, "import{connect}from'node:net';const s=connect(process.argv[1]);s.on('error',()=>{process.exitCode=19});s.on('connect',()=>s.end());s.setTimeout(2000,()=>{s.destroy();process.exitCode=20});", [p], 'deny');
+    }
     probe('allow own IPC', "import{createServer,connect}from'node:net';const s=createServer(c=>c.end('own'));s.listen(process.argv[1],()=>{const c=connect(process.argv[1]);c.on('data',b=>process.stdout.write(b));c.on('end',()=>s.close());});", [path.join(own, 'sym64-own-' + stage + '.sock')], 'allow');
   }
 } catch (e) { error = e.message; }

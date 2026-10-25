@@ -1,0 +1,157 @@
+{
+  "assignment": "complete-raf-flow-contracts:Z.423",
+  "status": "succeeded",
+  "audit": {
+    "current": true,
+    "requirement": "openspec/specs/core/process/user-qa/spec.md#requirement-один-прохід-qa-з-виправленням",
+    "finding": "Queue diagnostics bypassed runTestRunCli stderr capture through queue.writeStderr; runConfiguredTestRun therefore recorded an empty stderr digest. The regression reproduces that exact QA rejection. Existing strict digest comparison is unchanged.",
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/proposal.md",
+      "openspec/changes/complete-raf-flow-contracts/tasks.md#Z.423",
+      "openspec/specs/core/process/test-first/spec.md",
+      "openspec/specs/core/process/unit-test-runs/spec.md",
+      "openspec/changes/add-raf-test-run/specs/projects/raf/test-runs/spec.md",
+      "openspec/specs/projects/orchestrator/autonomous-development/spec.md#requirement-аудит-та-вилучення-неактуальних-змін",
+      "openspec/specs/projects/orchestrator/parallel-development/spec.md"
+    ]
+  },
+  "group": "complete-raf-flow-contracts/z423",
+  "runs": [
+    {
+      "runId": "e245c890-9f29-4d50-b2f4-07b943298b72",
+      "selection": {
+        "files": [
+          "test/z423-queued-stderr.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/z423-queued-stderr.test.ts",
+          "name": "Z.423 queued test CLI stdout and actual stderr are accepted as QA regression proof"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "queue": {
+        "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+        "waited": true
+      },
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z423 --files test/z423-queued-stderr.test.ts",
+      "sha": "3b8545cfb83ea71992de3b4af7f59cfe3aba4872",
+      "workspaceChanges": {
+        "src/test-run-cli.ts": "e00d891f0e452ec46d267d9ae2e06aac6b310925c593e41ccf45a7a5da7ce796",
+        "test/z423-queued-stderr.test.ts": "a13fe986ed664ad6cc20b47bd035483851f9eb1617cc07328996a06c0ba1d36b",
+        "trackedSourceChanged": false,
+        "regressionUntracked": true,
+        "otherUntracked": [
+          "node_modules"
+        ]
+      },
+      "cliCode": 1,
+      "stdout": "red-e245c890-9f29-4d50-b2f4-07b943298b72.stdout.json",
+      "stderr": "red-e245c890-9f29-4d50-b2f4-07b943298b72.stderr.txt",
+      "streamManifest": "red-e245c890-9f29-4d50-b2f4-07b943298b72.capture.json",
+      "digests": "red-e245c890-9f29-4d50-b2f4-07b943298b72.digests.json"
+    },
+    {
+      "runId": "de08e03f-805f-40a6-be37-543c28c8f2f8",
+      "selection": {
+        "files": [
+          "test/z423-queued-stderr.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "queue": {
+        "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+        "waited": true
+      },
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z423 --files test/z423-queued-stderr.test.ts",
+      "sha": "3b8545cfb83ea71992de3b4af7f59cfe3aba4872",
+      "workspaceChanges": {
+        "src/test-run-cli.ts": "56d27278cc669fc0892c3f406b185980534e2fe81937efb82b5f2ea0ab12b593",
+        "test/z423-queued-stderr.test.ts": "a13fe986ed664ad6cc20b47bd035483851f9eb1617cc07328996a06c0ba1d36b",
+        "trackedSourceChanged": true,
+        "regressionUntracked": true,
+        "otherUntracked": [
+          "node_modules"
+        ]
+      },
+      "cliCode": 0,
+      "stdout": "hotfix-de08e03f-805f-40a6-be37-543c28c8f2f8.stdout.json",
+      "stderr": "hotfix-de08e03f-805f-40a6-be37-543c28c8f2f8.stderr.txt",
+      "streamManifest": "hotfix-de08e03f-805f-40a6-be37-543c28c8f2f8.capture.json",
+      "digests": "hotfix-de08e03f-805f-40a6-be37-543c28c8f2f8.digests.json"
+    }
+  ],
+  "fix": "Route queue diagnostics through the CLI stderr port in a per-invocation copy of runtime/queue. Keep broker and QA digest checks unchanged.",
+  "regression": "In-memory unit flow: resource shortage -> queue wait -> real CLI result capture -> recordFlowTestRun -> validateFlowQaReport and snapshot revalidation; modified queue stderr rejected. Initial inner red child exit 23 remains distinct from CLI code 1. Both outer broker test commands also really waited in the shared resource queue.",
+  "capture": {
+    "method": "Read only own transient codex command-transport output files once result.json matched complete stdout/stderr byte lengths; copy bytes before normal replay cleanup. Source files/channel were not modified. Capture helper was stopped after each command. Full tool responses are retained separately.",
+    "red": {
+      "stdoutBytes": 9240,
+      "stderrBytes": 1513
+    },
+    "hotfix": {
+      "stdoutBytes": 6193,
+      "stderrBytes": 1513
+    }
+  },
+  "preflightAttempt": {
+    "runId": "0a1e98d7-5a69-4546-858f-3e42cc91f3d9",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z423 --files test/z423-queued-stderr.test.ts",
+    "outcome": "refused",
+    "cliCode": 1,
+    "childExitCode": null,
+    "red": false,
+    "reason": "CONFIGURATION_INVALID: conf/test-runs.json#/projects/raf/profiles/node-integration/integrationFiles: test/agent-adapters-integration.test.ts exists only on develop. Main removed registration in conf commit 351217774a before retry.",
+    "proof": "preflight-refused.tool.json",
+    "limitation": "Separate raw stream capture had not been started for this refused preflight. The complete tool response and CLI code are retained; no pass or red is inferred from it."
+  },
+  "checks": {
+    "build": {
+      "command": "npm run build",
+      "cliCode": 0,
+      "stdout": "build.stdout.txt",
+      "stderr": "build.stderr.txt"
+    },
+    "comments": {
+      "command": "npm run check:comments",
+      "cliCode": 0,
+      "stdout": "comments.stdout.txt",
+      "stderr": "comments.stderr.txt"
+    },
+    "gitDiffCheck": 0,
+    "environment": "Build and comments executed with isolated QA HOME from the verified test result; unit broker kept the same QA HOME and group across red and hotfix."
+  },
+  "limits": {
+    "liveQaReportAgainstReleasedMain": false,
+    "activation": "Main owns release/activation; this assignment changes only the hotfix candidate.",
+    "archive": "Not applicable: 112 other open task checkboxes were present; assigned checkbox is left for raf."
+  }
+}

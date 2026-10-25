@@ -1,0 +1,75 @@
+{
+  "session": "raf-mrh73-impl",
+  "project": "raf",
+  "change": "monitor-raf-health",
+  "item": "7.3",
+  "status": "failed",
+  "observedAt": "2026-10-25T00:43:59.172129+00:00",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "launchHead": "2da0e6d310f16a3b11f4f8f1a1c5a11a0b8f9b5a",
+  "auditHead": "90d5306160068deb4a8174ede6f2b1778fd765a4",
+  "workspaceChangesBeforeEvidence": [
+    "M src/main-switch-agent-channel.ts"
+  ],
+  "reason": "Передчасний запуск 7.3: обов’язкова передумова 2.3 ще не реалізована й очікує profile-raf-performance §2–§3. Main підтвердив це та доручив завершити failed з аудитом.",
+  "taskEvidence": [
+    "- [ ] 2.3 [implement] Інший агент після 2.2: реалізувати лише «Власний CPU за профілем raf» та погоджені conf/каталог/порти за design; після прийнятого profile-raf-performance §2–§3; без другого профайлера чи admission-змін. Тести не змінювати. Група monitor-raf-health/cpu з фазою implement → passed, CLI/child 0, build/check:comments → 0; зберегти SHA/JSON/exit.",
+    "- [x] 5.3 [implement] Інший агент після 5.2: реалізувати лише «Метрика фактичних примусових закриттів» та погоджені conf/каталог/порти за design; retry використовує complete-raf-flow-contracts Z.393.1–Z.393.8, його не переписувати. Тести не змінювати. Група monitor-raf-health/forced-close з фазою implement → passed, CLI/child 0, build/check:comments → 0; зберегти SHA/JSON/exit.",
+    "- [ ] 7.3 [implement] Інший агент після 7.2: реалізувати лише «Підсумок стану для main» та погоджені conf/каталог/порти за design; після 2.3, 5.3, profile-raf-performance та погодження подій; без обробки службою чи другої системи нагадувань. Тести не змінювати. Група monitor-raf-health/summary з фазою implement → passed, CLI/child 0, build/check:comments → 0; зберегти SHA/JSON/exit."
+  ],
+  "codeEvidence": {
+    "path": "src/health-cpu.ts",
+    "notImplementedCount": 3
+  },
+  "configurationEvidence": {
+    "conf/raf.json#/health": null,
+    "conf/raf.json#/health/summaryIntervalMs": null,
+    "conf/raf-constants.json#/events/raf.health-summary": [],
+    "conf/raf-constants.json#/eventIdKinds/rafInstanceId": null
+  },
+  "requiredConfigurationBeforeRelaunch": {
+    "conf/raf.json#/health/summaryIntervalMs": 3600000,
+    "event": {
+      "id": "raf.health-summary",
+      "idKind": "rafInstanceId"
+    },
+    "eventIdKind": "rafInstanceId"
+  },
+  "sources": [
+    "/srv/dev/work/orchestrator/openspec/changes/monitor-raf-health/tasks.md:7.3, 2.3, 1.2",
+    "/srv/dev/work/orchestrator/openspec/changes/monitor-raf-health/specs/projects/raf/health-monitoring/spec.md:Підсумок стану для main",
+    "/srv/dev/work/orchestrator/openspec/specs/projects/orchestrator/autonomous-development/spec.md:Аудит та вилучення неактуальних змін"
+  ],
+  "coordination": {
+    "recipient": "main",
+    "receiptId": "c231119c-8ba1-425e-9027-bcbd91afde04",
+    "accepted": true,
+    "mainResponse": "CPU (2.3) не готовий і чекає profile-raf-performance §2–§3, тож 7.3 теж запущено передчасно. Здавай failed з аудитом. Перезапущу 7.3 після 2.3, conf внесу перед тим."
+  },
+  "implementationChanged": false,
+  "preparedTestsRead": false,
+  "testsChanged": false,
+  "tasksChanged": false,
+  "verification": {
+    "command": null,
+    "plannedCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/8d40820d-3449-4a8e-b3ed-1c3f4a1738d2/raf-main/bin/raf.ts test run --project raf --phase implement --group monitor-raf-health/summary --files test/health-summary.test.ts",
+    "selection": [
+      "test/health-summary.test.ts"
+    ],
+    "outcome": "not-run-prerequisite-not-ready",
+    "runId": null,
+    "testRunResult": null,
+    "cliExitCode": null,
+    "childExitCode": null,
+    "stderr": null,
+    "timeout": null,
+    "cleanup": null,
+    "knownRed": "not-read; aggregate unchanged",
+    "unexecuted": "entire target selection not run in this session",
+    "unknown": "no current TestRunResult; no pass claimed",
+    "groupState": "unchanged; no test run requested",
+    "build": "not run; no implementation changes",
+    "checkComments": "not run; no implementation changes"
+  },
+  "nextAction": "Main приймає profile-raf-performance §2–§3 та monitor-raf-health:2.3, додає погоджені conf/каталог і повторно запускає 7.3. Зберегти чинну групу summary та QA HOME; tasks.md і archive не змінювати."
+}

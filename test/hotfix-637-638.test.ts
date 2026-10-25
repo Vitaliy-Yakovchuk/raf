@@ -13,12 +13,16 @@ import { compileCatalog } from '../src/catalog.ts';
 import { execute } from '../src/cli.ts';
 import { createTestRunPorts } from '../src/test-run-runtime.ts';
 import { resolveStateContext } from '../src/state-migration-guard.ts';
+import { runResourceReservedTestRun } from '../src/test-run-reservations.ts';
+import { acknowledgeTestRunDelivery } from '../src/test-run-state-recovery.ts';
+import { machine } from './helpers/test-run-reservations-fixture.ts';
+import { RunHarness, fixtureGroup, policy } from './helpers/test-run-fixture.ts';
 import type { RunnerEvent, TestRunCommand, TestRunConfig, TestRunContext } from '../src/test-runs.ts';
 
 const confRoot = new URL('../../conf/', import.meta.url);
 const readConfig = (name: string) => JSON.parse(readFileSync(new URL(name, confRoot), 'utf8'));
 
-function fixture(t: TestContext, cwd = 'bugs-api') {
+function fixture(t: TestContext, cwd = 'bugs-api', spawnFailed?: () => void) {
   const root = mkdtempSync(join(tmpdir(), 'hotfix-637-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const write = (file: string, data: string) => {
@@ -48,10 +52,78 @@ function fixture(t: TestContext, cwd = 'bugs-api') {
   const config: TestRunConfig = { ...readConfig('test-runs.json'), projects: { 'shared-libs': { profiles: { vitest: profile }, groups: { 'add-raf-test-run/unit': { profileId: 'vitest', files: [file] } } } } };
   const ports = createTestRunPorts(config, state, () => { throw new Error('state store is unused'); }, inherited,
     { flow: readFileSync(new URL('flow.json', confRoot)), testRuns: Buffer.from(JSON.stringify(config)), projects: readFileSync(join(root, 'conf/projects.json')) },
-    { project: 'shared-libs', phase: 'hotfix', group: 'add-raf-test-run/unit' });
+    { project: 'shared-libs', phase: 'hotfix', group: 'add-raf-test-run/unit' }, undefined, spawnFailed);
   const context: TestRunContext = { cwd: workspace, workspace, projectWorkspaces: { 'shared-libs': [workspace] }, agentPhases: ['hotfix'], activeChanges: ['add-raf-test-run'], agentId: 'fixture', sha: 'fixture', home, statePath: state.statePath, tmpPath: state.tmpRoot, operationalHome: join(root, 'working-home') };
-  return { root, workspace, file, ports, context, write, profile };
+  return { root, workspace, file, ports, context, write, profile, config };
 }
+
+test('6.7 Vitest setup ENOENT before OS spawn releases the group and preserves its retry budget', async t => {
+  let spawning = false, failedSpawns = 0, osSpawns = 0;
+  const f = fixture(t, 'bugs-api', () => { spawning = false; failedSpawns++; });
+  rmSync(join(f.workspace, 'bugs-api/vitest.config.ts'));
+  const h = new RunHarness();
+  const shared = machine();
+  const request = { project: 'shared-libs', phase: 'red', group: 'add-raf-test-run/unit', files: [f.file] };
+  const key = { project: request.project, workspace: f.workspace, group: request.group };
+  const red = { file: f.file, name: 'previous failure' };
+  const pending = { file: f.file, name: 'not executed' };
+  h.state.seed(fixtureGroup({ key, timeoutCount: policy.optimizeAfterTimeouts, state: 'optimize',
+    selection: { files: [f.file], testIds: [] }, knownRed: [red], unexecuted: [pending] }));
+  const stdout = new PassThrough(), stderr = new PassThrough();
+  const child = Object.assign(new EventEmitter(), { pid: process.pid, stdout, stderr });
+  const mocked = t.mock.method(childProcess, 'spawn', () => {
+    osSpawns++;
+    queueMicrotask(() => {
+      child.emit('spawn');
+      setImmediate(() => {
+        for (const id of [red, pending]) stdout.write(JSON.stringify({ kind: 'passed', test: id }) + '\n');
+        stdout.write(JSON.stringify({ kind: 'complete', expected: [red, pending], adapter: 'vitest-events' }) + '\n');
+        child.emit('exit', 0, null); child.emit('close', 0, null);
+      });
+    });
+    return child;
+  });
+  syncBuiltinESMExports();
+  t.after(() => { mocked.mock.restore(); syncBuiltinESMExports(); });
+  const resources = { ...shared.resources,
+    markSpawning: async () => { spawning = true; },
+    observeTree: async () => ({ state: spawning ? 'unknown' as const : 'dead' as const, processIdentity: null, consumed: null }),
+  };
+  const ports = { ...h.ports, machineId: 'machine', resources,
+    resourceRoute: { branchPaths: { hotfix: f.workspace } },
+    preflight: async () => ({ ...h.environment, canonicalWorkspace: f.workspace, canonicalCwd: f.workspace,
+      unitFiles: [f.file], files: { [f.file]: { kind: 'file' as const, realpath: join(f.workspace, f.file), unit: true } } }),
+    spawn: async (...args: Parameters<typeof f.ports.spawn>) => {
+      const managed = await f.ports.spawn(...args);
+      spawning = false;
+      return { ...managed, cleanup: async () => ({ complete: true, remainingPids: [] }) };
+    },
+  };
+  const failed = await runResourceReservedTestRun(request, f.config, policy, f.context, ports);
+  assert.equal(failed.outcome, 'setup-failed');
+  assert.equal(failed.errorCode, 'ENOENT');
+  assert.equal(failed.exitCode, null);
+  assert.equal(failed.timedOut, false);
+  assert.equal(osSpawns, 0);
+  assert.equal(failed.cleanup.complete, true);
+  assert.equal(failed.nextAction, 'fix-setup');
+  assert.equal(failedSpawns, 1);
+  assert.equal(h.state.get(key)?.inFlight, null);
+  assert.equal(shared.claims.size, 0);
+  assert.equal(h.state.get(key)?.timeoutCount, policy.optimizeAfterTimeouts);
+  assert.deepEqual(h.state.get(key)?.knownRed, [red]);
+  assert.deepEqual(h.state.get(key)?.unexecuted, [pending]);
+  await acknowledgeTestRunDelivery(failed, h.state);
+  f.write('shared-libs/bugs-api/vitest.config.ts', 'export default {};');
+  const retried = await runResourceReservedTestRun({ ...request, phase: 'hotfix' }, f.config, policy, { ...f.context, agentId: 'next-agent', sha: 'next-sha' }, ports);
+  assert.equal(retried.outcome, 'passed');
+  assert.notEqual(retried.runId, failed.runId);
+  assert.equal(osSpawns, 1);
+  assert.equal(retried.timeoutCount, policy.optimizeAfterTimeouts);
+  assert.equal(retried.cleanup.complete, true);
+  assert.equal(h.state.get(key)?.inFlight, null);
+  assert.equal(shared.claims.size, 0);
+});
 
 for (const [cwd, preload] of [['bugs-api', false], ['.', false], ['bugs-api', true]] as const) test(`6.3.7 non-etchly Vitest profile at ${cwd}${preload ? ' with preload' : ''} uses the structured adapter`, async t => {
   const f = fixture(t, cwd);

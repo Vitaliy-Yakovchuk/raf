@@ -1,6 +1,40 @@
 # QA 4.5 — порівняння agent ps
 
-Живе приймання ще не завершено. Перша пара не довела прискорення. Виявлений у цьому проході дефект подвійного відкриття SQLite виправлено за QA red → green у 535441d79f5b18d70442c9a7374c1037c428fee7. Окрема діагностика підтвердила причину. Пара stand26 має менші середні в усіх випадках, але малий wall-виграш PID reuse не відділяється від шуму; це не pass. Друге побудування production context усунено за QA red → green у a592802c693130c26460fd7b82645636bf3c2882. Main виконає нову пару; unit не замінює ці результати.
+**Результат 4.5: failed.** Остання повна пара a592802 проти baseline source 1212a13 має більші середні wall і повний CPU в усіх шести випадках. Цілісність доказів, результати команд, SQLite й події перевірено; це не виконує вимогу прискорення. Знайдені локальні дефекти виправлено в цьому ж QA за власними red → green. Залишкова вартість повного generation inventory локалізована окремою живою діагностикою. Main відніс зміну цього контракту до 5.3–5.7; 5.2 завершено failed за аудитом exact snapshot. Галочки 4.5 й архівація не виконуються.
+
+## Остаточна пара a592802: прискорення не отримано
+
+Чистий host-клон harness a592802c693130c26460fd7b82645636bf3c2882; спочатку after a592802, потім контроль 1212a1330a2b097620bd491e5cc8d2f549c774b9. Точні команди, source workspace (тільки committed SHA, untracked node_modules), manifests, окремі harness stdout/stderr та підтвердження main — attempt-4/archive-review.json і summary кожної серії. Harness незмінний від f9abba613. Для обох — pinned conf /srv/dev/p45-wzWK2O/root/conf, однакова матриця й по п'ять відновлених seed samples; sourceConfiguration і fixtureConfiguration збігаються. Linux 7.0.0-30-generic, Ubuntu 26.04.1, Node v26.12.1, 8 CPU. Fresh CLI, прогріта файлова система, служба зупинена між setup і samples; зовнішнє навантаження спільного host записано для кожного sample. Черговість і навантаження не приховуються; із цих даних не виводиться універсальна величина сповільнення.
+
+| Випадок | wall mean до → після, ms | wall SD до / після | повний CPU mean до → після, ms | CPU SD до / після |
+| --- | ---: | ---: | ---: | ---: |
+
+| empty | 2184.35 → 2917.36 | 158.71 / 267.47 | 2524.26 → 3365.58 | 73.95 / 375.60 |
+| live | 2515.15 → 3120.15 | 184.46 / 223.99 | 2944.94 → 3730.09 | 81.05 / 296.61 |
+| finished | 2125.77 → 2779.90 | 93.53 / 242.52 | 2573.91 → 3232.27 | 71.52 / 344.10 |
+| missing | 2463.03 → 3312.16 | 145.92 / 192.50 | 3016.85 → 3965.92 | 197.98 / 245.03 |
+| pid-reused | 2493.09 → 3333.38 | 117.83 / 238.98 | 3129.79 → 3942.39 | 139.65 / 365.97 |
+| unverifiable | 2426.29 → 3331.84 | 155.61 / 391.53 | 3081.49 → 3505.43 | 229.11 / 116.02 |
+
+Усі values/min/max/SD, external wall, self і повний CPU та порівняння семантики — attempt-4/comparison.json. Повний CPU незалежно виміряний wait4, включає CLI та завершених helper-нащадків; не підмінений self CPU чи V8 samples. Офлайн verify-comparison → CLI 0, evidenceIntegrity verified, allCasesHaveFavorableMeans false; команда, stdout/stderr/CLI — attempt-4/verification.*. Кожна серія має 135 команд і 30 samples; 12 навмисних PROCESS_SCAN_UNKNOWN → CLI 1, решта ps/stats/service → CLI 0. Результат finished, reservation/reminder ownership, атомарні missing/PID-reuse closure і відсутність хибного unknown closure звірені між серіями. integrity_check ok, cleanup complete, remainingProcesses порожній. Timeout/невиконаних приймальних samples немає.
+
+Main підтвердив обидва harness CLI 0, read-only (жодного writable файла), secscan обох архівів і stdout/stderr clean. After /srv/dev/p45-cIhEtL: 28058 записів, manifest SHA256 f44d1c8a0dec6ed98fd90d01475d4d0c2d76f0cb5937941172080c47f0d10b1a; before /srv/dev/p45-NlxGJk: 18377, 449d2d1980662106aebc400381bd9b26af8eb191798708f1a4b40fd5a3e7fbb4. Локально — усі 647+647 ev/summary/conf файлів, перевірені за manifests, окремі harness logs і повні host manifests. Git/source/node_modules збережено на host; повторний hash усіх Git objects не заявляється.
+
+## Залишкова причина і межа 4.5
+
+Окрема діагностика з чистого a592802 після завершення й seal серій: `node scripts/qa-agent-ps-diagnostic.mjs /srv/dev/p45-cIhEtL` → CLI 0, новий root /srv/dev/p45-diag-vSeZT6. Read-only, secscan архіву й logs clean за main, 28360 записів manifest SHA256 6cc27b8eca2e2ba3a489e2987e8ae64e9284bb7abb6e94f013c0b686cfe42b3f. Повні command/operations/instrument/stdout/stderr/V8 profile, host manifest, окремі harness logs та hashes — diagnostic/after-context.
+
+Діагностика підтверджує виправлення: productionStateContext рівно 1, openStateStore рівно 1, verifyStateContext 4. Одне відкриття SQLite триває 1156.25 ms inclusive; вкладені verify — 1152.88 ms. Вкладені суми не додаються. V8 локалізує guard → resolveStateContext → hotfixModuleOrigin → inventory/walk/read/hash; sampled intervals не є повним CPU приймання. startup/config у empty зріс з 881.96 до 1740.87 ms, sqlite — головна інша стадія; handler після локального виправлення лише близько 6 ms. Повні stage values і host load — attempt-3/stages-load.json та attempt-4/stages-load.json, відтворення — summarize-stages.mjs.
+
+Незмінні registered inventories звірено з host manifests (generation-inventory.json, review-generation-inventory.py): baseline generation 2913 файлів, із них evidence 2461; 535441d — 3810/3344; a592802 — 6140/5670. Поточний guard читає й хешує ці evidence на перевірках походження. Зростання власних закомічених доказів також збільшує payload; його не приховано видаленням evidence чи зміною baseline. Це підтверджує джерело витрат, але не встановлює формулу часу на файл і не пояснює весь шум host. Зменшення process scan, SQLite opens і context constructions саме собою не гарантує загального прискорення.
+
+Main прямо відокремив цю вимогу від 4.5: 5.2 failed за аудитом, бо виключення evidence суперечить чинному точному snapshot; продовження — profile-raf-performance **5.3–5.7**, явний runtime inventory зі збереженням повного activation snapshot. Посилання: tasks.md 5.2 (аудит raf-hotfix 7507979f) і 5.3–5.7; повідомлення main у цій сесії. У 4.5 не послаблено provenance guard, не введено кешу, інтервалу чи нового порога. Подальшу викладку main оформить точним текстом deployment-follow-up.txt (2.3/3.3/4.4 + 535441d + a592802); develop QA не означає викладку. Інші відкриті пункти не виконувалися; зміна активна, archive відсутній.
+
+## Обмеження збереження unit stderr
+
+Повні незмінені TestRunResult, CLI transport і код CLI окремо від child exitCode збережено для всіх 14 власних прогонів у unit-history.json. Останні agent-ps QA 37fff8df-da8a-4de2-a1e5-6dd0557a2a33: 23 passed, CLI/child 0; profile QA 227ec585-9457-4a7f-bcd2-8a4d4bc271fe: 31 passed, CLI/child 0. Групи/HOME незмінні, green knownRed/unexecuted/unknown порожні, cleanup complete, timeout false, groupState/nextAction complete; unit-виняток не застосовувався.
+
+CLI exec transport надає combined output без окремих stdout/stderr каналів. Legacy *.stderr.txt зберігають байти поза JSON (подекуди launch-queue.waiting event), тому їх не можна незалежно засвідчити як окремий stderr чи назвати stderr порожнім. unit-stream-review.json явно фіксує цю прогалину та SHA всього незрізаного transport; попередні згадки «stderr збережено» слід читати з цим уточненням. Відсутніх TestRunResult немає. Живий harness захоплює stdout/stderr окремо через spawnSync; це обмеження не стосується живих доказів і не змінює failed висновок за швидкістю.
 
 ## Перша пара: прискорення не підтверджене
 
@@ -64,6 +98,6 @@ Baseline: два реальні openStateStore (531 + 481 ms, разом 1012 ms
 
 Повні values/min/max/SD, external wall/self CPU й профільні стадії — attempt-3/comparison.json та summary кожної серії. Різниця wall PID reuse лише 61.46 ms проти SD 147.58 / 116.76; unknown теж має помітний перетин розкиду. allCasesHaveFavorableMeans true означає арифметику середніх, не приймання за умовою про шум. Довільний поріг прискорення не вводиться.
 
-Подальший детермінований дефект — друге productionStateContext при позиченій SQLite — виправлено в a592802 (context-review.md). Власний qa-red 80599710 (16 passed, 7 assertions 2 !== 1, CLI/child 1) → qa-green 37fff8df (23 passed, CLI/child 0). Повні context-* докази, build/comments 0. Наступна matched пара — a592802 проти 1212a13 з тим самим harness/conf/матрицею.
+Подальший детермінований дефект — друге productionStateContext при позиченій SQLite — виправлено в a592802 (context-review.md). Власний qa-red 80599710 (16 passed, 7 assertions 2 !== 1, CLI/child 1) → qa-green 37fff8df (23 passed, CLI/child 0). Повні context-* докази, build/comments 0. Остаточна matched пара a592802 проти 1212a13 завершена failed за швидкістю; див. результати вище.
 
 unit-history.json інвентаризує всі власні прогони з повними runId, SHA raw результатів, CLI/child, group/HOME, selection і завершенням. deployment-follow-up.txt — точний запропонований main текст відкритого пункту викладки; tasks.md редагує main.

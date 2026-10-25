@@ -1,0 +1,32 @@
+{
+  "label": "service-start",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-NlxGJk/root/raf-main/bin/raf.ts",
+    "service",
+    "start"
+  ],
+  "cwd": "/srv/dev/p45-NlxGJk/root/raf-main",
+  "startedAt": "2026-10-25T04:05:25.448Z",
+  "finishedAt": "2026-10-25T04:05:32.314Z",
+  "wallMs": 6863.719746000001,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 291,
+  "stderrBytes": 0,
+  "loadAverage": [
+    7.51,
+    4.95,
+    3.89
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 2262.765,
+    "cpuSystemMs": 2225.512,
+    "wallMs": 6829.668595,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 4488.277
+}

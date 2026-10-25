@@ -1,0 +1,1036 @@
+{
+  "name": "live",
+  "seedDatabase": "/srv/dev/p45-cIhEtL/ev/live-seed.sqlite",
+  "seedSha256": "329ef90d5ca49b8d33400cbf504963fa11a5349dbfa77b7f11efe9784e4f38cb",
+  "initial": {
+    "admission_reservations": [
+      {
+        "run_id": "qa-hotfix",
+        "payload": "{\"runId\":\"qa-hotfix\",\"resource\":\"ram\",\"amount\":1}"
+      }
+    ],
+    "agent_launch_queue_entries": [],
+    "agent_launch_queues": [],
+    "closure_notices": [],
+    "command_timings": [
+      {
+        "command": "service start",
+        "average_ms": 14423.152606,
+        "updated_at": "2026-10-25T03:56:45.733Z"
+      },
+      {
+        "command": "service status",
+        "average_ms": 3364.007205,
+        "updated_at": "2026-10-25T03:56:49.295Z"
+      },
+      {
+        "command": "service stop",
+        "average_ms": 2903.539007,
+        "updated_at": "2026-10-25T03:56:52.362Z"
+      }
+    ],
+    "delivery_claims": [],
+    "pending_intents": [],
+    "qa_ps_events": [],
+    "quota_leases": [],
+    "quotas": [],
+    "raf_cost_profile": [
+      {
+        "scope": "service",
+        "command": "",
+        "stage": "startup/config",
+        "executor": "self",
+        "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:44.551Z\",\"updatedAt\":\"2026-10-25T03:56:44.552Z\",\"wallTotalMs\":1.2280980000000454,\"wallMeanMs\":1.2280980000000454,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":1.253,\"cpuSystemTotalMs\":0.17,\"cpuUserMeanMs\":1.253,\"cpuSystemMeanMs\":0.17,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "service",
+        "command": "",
+        "stage": "sqlite",
+        "executor": "self",
+        "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:44.552Z\",\"updatedAt\":\"2026-10-25T03:56:45.638Z\",\"wallTotalMs\":1085.5014350000001,\"wallMeanMs\":1085.5014350000001,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":633.94,\"cpuSystemTotalMs\":565.364,\"cpuUserMeanMs\":633.94,\"cpuSystemMeanMs\":565.364,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "service",
+        "command": "",
+        "stage": "wait",
+        "executor": "self",
+        "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"wait\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T03:56:45.638Z\",\"updatedAt\":\"2026-10-25T03:56:52.321Z\",\"wallTotalMs\":6668.450199000001,\"wallMeanMs\":3334.2250995000004,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":17.621000000000002,\"cpuSystemTotalMs\":9.971,\"cpuUserMeanMs\":8.810500000000001,\"cpuSystemMeanMs\":4.9855,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "service",
+        "command": "",
+        "stage": "handler",
+        "executor": "self",
+        "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"handler\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T03:56:45.676Z\",\"updatedAt\":\"2026-10-25T03:56:45.691Z\",\"wallTotalMs\":11.070060999999896,\"wallMeanMs\":5.535030499999948,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":3.1689999999999996,\"cpuSystemTotalMs\":0.9359999999999999,\"cpuUserMeanMs\":1.5844999999999998,\"cpuSystemMeanMs\":0.46799999999999997,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "service",
+        "command": "",
+        "stage": "shared-work",
+        "executor": "self",
+        "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"shared-work\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:45.683Z\",\"updatedAt\":\"2026-10-25T03:56:45.687Z\",\"wallTotalMs\":3.544891000000007,\"wallMeanMs\":3.544891000000007,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.189,\"cpuSystemTotalMs\":0.16,\"cpuUserMeanMs\":0.189,\"cpuSystemMeanMs\":0.16,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "command",
+        "command": "service start",
+        "stage": "startup/config",
+        "executor": "self",
+        "payload": "{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:31.310Z\",\"updatedAt\":\"2026-10-25T03:56:39.199Z\",\"wallTotalMs\":7889.548452,\"wallMeanMs\":7889.548452,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":3570.162,\"cpuSystemTotalMs\":4786.351,\"cpuUserMeanMs\":3570.162,\"cpuSystemMeanMs\":4786.351,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "command",
+        "command": "service start",
+        "stage": "sqlite",
+        "executor": "self",
+        "payload": "{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:39.199Z\",\"updatedAt\":\"2026-10-25T03:56:40.390Z\",\"wallTotalMs\":1190.7482740000005,\"wallMeanMs\":1190.7482740000005,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":580.033,\"cpuSystemTotalMs\":638.745,\"cpuUserMeanMs\":580.033,\"cpuSystemMeanMs\":638.745,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "command",
+        "command": "service start",
+        "stage": "handler",
+        "executor": "self",
+        "payload": "{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:40.390Z\",\"updatedAt\":\"2026-10-25T03:56:45.703Z\",\"wallTotalMs\":5313.479272999999,\"wallMeanMs\":5313.479272999999,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":908.457,\"cpuSystemTotalMs\":899.09,\"cpuUserMeanMs\":908.457,\"cpuSystemMeanMs\":899.09,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "command",
+        "command": "service start",
+        "stage": "finalization",
+        "executor": "self",
+        "payload": "{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:45.703Z\",\"updatedAt\":\"2026-10-25T03:56:45.704Z\",\"wallTotalMs\":0.4339959999997518,\"wallMeanMs\":0.4339959999997518,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.353,\"cpuSystemTotalMs\":0,\"cpuUserMeanMs\":0.353,\"cpuSystemMeanMs\":0,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "command",
+        "command": "service status",
+        "stage": "startup/config",
+        "executor": "self",
+        "payload": "{\"scope\":\"command\",\"command\":\"service status\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:45.931Z\",\"updatedAt\":\"2026-10-25T03:56:48.095Z\",\"wallTotalMs\":2164.899869,\"wallMeanMs\":2164.899869,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":1365.477,\"cpuSystemTotalMs\":1123.189,\"cpuUserMeanMs\":1365.477,\"cpuSystemMeanMs\":1123.189,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "command",
+        "command": "service status",
+        "stage": "sqlite",
+        "executor": "self",
+        "payload": "{\"scope\":\"command\",\"command\":\"service status\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:48.095Z\",\"updatedAt\":\"2026-10-25T03:56:49.255Z\",\"wallTotalMs\":1159.5101920000002,\"wallMeanMs\":1159.5101920000002,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":622.364,\"cpuSystemTotalMs\":624.459,\"cpuUserMeanMs\":622.364,\"cpuSystemMeanMs\":624.459,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "command",
+        "command": "service status",
+        "stage": "handler",
+        "executor": "self",
+        "payload": "{\"scope\":\"command\",\"command\":\"service status\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:49.255Z\",\"updatedAt\":\"2026-10-25T03:56:49.264Z\",\"wallTotalMs\":8.788911000000098,\"wallMeanMs\":8.788911000000098,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":25.876,\"cpuSystemTotalMs\":1.361,\"cpuUserMeanMs\":25.876,\"cpuSystemMeanMs\":1.361,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "command",
+        "command": "service status",
+        "stage": "finalization",
+        "executor": "self",
+        "payload": "{\"scope\":\"command\",\"command\":\"service status\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:49.264Z\",\"updatedAt\":\"2026-10-25T03:56:49.264Z\",\"wallTotalMs\":0.13113799999973708,\"wallMeanMs\":0.13113799999973708,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.066,\"cpuSystemTotalMs\":0.056,\"cpuUserMeanMs\":0.066,\"cpuSystemMeanMs\":0.056,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "service",
+        "command": "",
+        "stage": "finalization",
+        "executor": "self",
+        "payload": "{\"scope\":\"service\",\"command\":null,\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:52.321Z\",\"updatedAt\":\"2026-10-25T03:56:52.325Z\",\"wallTotalMs\":4.266732000000047,\"wallMeanMs\":4.266732000000047,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.255,\"cpuSystemTotalMs\":0.788,\"cpuUserMeanMs\":0.255,\"cpuSystemMeanMs\":0.788,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "command",
+        "command": "service stop",
+        "stage": "startup/config",
+        "executor": "self",
+        "payload": "{\"scope\":\"command\",\"command\":\"service stop\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:49.459Z\",\"updatedAt\":\"2026-10-25T03:56:51.277Z\",\"wallTotalMs\":1818.902801,\"wallMeanMs\":1818.902801,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":1061.408,\"cpuSystemTotalMs\":915.779,\"cpuUserMeanMs\":1061.408,\"cpuSystemMeanMs\":915.779,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "command",
+        "command": "service stop",
+        "stage": "sqlite",
+        "executor": "self",
+        "payload": "{\"scope\":\"command\",\"command\":\"service stop\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:51.277Z\",\"updatedAt\":\"2026-10-25T03:56:52.316Z\",\"wallTotalMs\":1038.916171,\"wallMeanMs\":1038.916171,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":607.891,\"cpuSystemTotalMs\":538.727,\"cpuUserMeanMs\":607.891,\"cpuSystemMeanMs\":538.727,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "command",
+        "command": "service stop",
+        "stage": "handler",
+        "executor": "self",
+        "payload": "{\"scope\":\"command\",\"command\":\"service stop\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:52.316Z\",\"updatedAt\":\"2026-10-25T03:56:52.333Z\",\"wallTotalMs\":16.965058000000226,\"wallMeanMs\":16.965058000000226,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":1.353,\"cpuSystemTotalMs\":2.338,\"cpuUserMeanMs\":1.353,\"cpuSystemMeanMs\":2.338,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      },
+      {
+        "scope": "command",
+        "command": "service stop",
+        "stage": "finalization",
+        "executor": "self",
+        "payload": "{\"scope\":\"command\",\"command\":\"service stop\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:52.333Z\",\"updatedAt\":\"2026-10-25T03:56:52.334Z\",\"wallTotalMs\":0.25825999999960914,\"wallMeanMs\":0.25825999999960914,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.134,\"cpuSystemTotalMs\":0.115,\"cpuUserMeanMs\":0.134,\"cpuSystemMeanMs\":0.115,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}"
+      }
+    ],
+    "raf_forced_close_metrics": [
+      {
+        "singleton": 1,
+        "since": "2026-10-25T03:56:40.366Z",
+        "completed": 0,
+        "refusals_json": "{}"
+      }
+    ],
+    "raf_health_cpu": [
+      {
+        "singleton": 1,
+        "payload": "{\"rafInstanceId\":\"5f63ef86-945b-44f9-aee2-2018c50ef2db\",\"since\":\"2026-10-25T03:56:40.375Z\",\"accumulationId\":\"fa9cfffd-38df-4af3-aa6b-82df3477345a\",\"cpu\":{\"baseline\":{\"profile\":{\"schemaVersion\":1,\"readAt\":\"2026-10-25T03:56:45.725Z\",\"rows\":[{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"finalization\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:45.703Z\",\"updatedAt\":\"2026-10-25T03:56:45.704Z\",\"wallTotalMs\":0.4339959999997518,\"wallMeanMs\":0.4339959999997518,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.353,\"cpuSystemTotalMs\":0,\"cpuUserMeanMs\":0.353,\"cpuSystemMeanMs\":0,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null},{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"handler\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:40.390Z\",\"updatedAt\":\"2026-10-25T03:56:45.703Z\",\"wallTotalMs\":5313.479272999999,\"wallMeanMs\":5313.479272999999,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":908.457,\"cpuSystemTotalMs\":899.09,\"cpuUserMeanMs\":908.457,\"cpuSystemMeanMs\":899.09,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null},{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:39.199Z\",\"updatedAt\":\"2026-10-25T03:56:40.390Z\",\"wallTotalMs\":1190.7482740000005,\"wallMeanMs\":1190.7482740000005,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":580.033,\"cpuSystemTotalMs\":638.745,\"cpuUserMeanMs\":580.033,\"cpuSystemMeanMs\":638.745,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null},{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:31.310Z\",\"updatedAt\":\"2026-10-25T03:56:39.199Z\",\"wallTotalMs\":7889.548452,\"wallMeanMs\":7889.548452,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":3570.162,\"cpuSystemTotalMs\":4786.351,\"cpuUserMeanMs\":3570.162,\"cpuSystemMeanMs\":4786.351,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null},{\"scope\":\"service\",\"command\":null,\"stage\":\"handler\",\"executor\":\"self\",\"samples\":2,\"firstSampleStartedAt\":\"2026-10-25T03:56:45.676Z\",\"updatedAt\":\"2026-10-25T03:56:45.691Z\",\"wallTotalMs\":11.070060999999896,\"wallMeanMs\":5.535030499999948,\"cpuSamples\":2,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":3.1689999999999996,\"cpuSystemTotalMs\":0.9359999999999999,\"cpuUserMeanMs\":1.5844999999999998,\"cpuSystemMeanMs\":0.46799999999999997,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null},{\"scope\":\"service\",\"command\":null,\"stage\":\"shared-work\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:45.683Z\",\"updatedAt\":\"2026-10-25T03:56:45.687Z\",\"wallTotalMs\":3.544891000000007,\"wallMeanMs\":3.544891000000007,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":0.189,\"cpuSystemTotalMs\":0.16,\"cpuUserMeanMs\":0.189,\"cpuSystemMeanMs\":0.16,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null},{\"scope\":\"service\",\"command\":null,\"stage\":\"sqlite\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:44.552Z\",\"updatedAt\":\"2026-10-25T03:56:45.638Z\",\"wallTotalMs\":1085.5014350000001,\"wallMeanMs\":1085.5014350000001,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":633.94,\"cpuSystemTotalMs\":565.364,\"cpuUserMeanMs\":633.94,\"cpuSystemMeanMs\":565.364,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null},{\"scope\":\"service\",\"command\":null,\"stage\":\"startup/config\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:44.551Z\",\"updatedAt\":\"2026-10-25T03:56:44.552Z\",\"wallTotalMs\":1.2280980000000454,\"wallMeanMs\":1.2280980000000454,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":1.253,\"cpuSystemTotalMs\":0.17,\"cpuUserMeanMs\":1.253,\"cpuSystemMeanMs\":0.17,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null},{\"scope\":\"service\",\"command\":null,\"stage\":\"wait\",\"executor\":\"self\",\"samples\":1,\"firstSampleStartedAt\":\"2026-10-25T03:56:45.638Z\",\"updatedAt\":\"2026-10-25T03:56:45.676Z\",\"wallTotalMs\":38.09550300000001,\"wallMeanMs\":38.09550300000001,\"cpuSamples\":1,\"cpuUnavailableSamples\":0,\"cpuUserTotalMs\":12.435,\"cpuSystemTotalMs\":9.331,\"cpuUserMeanMs\":12.435,\"cpuSystemMeanMs\":9.331,\"cpuSource\":\"process.cpuUsage\",\"cpuAvailability\":\"complete\",\"unavailableReason\":null}]},\"accumulationId\":\"fa9cfffd-38df-4af3-aa6b-82df3477345a\",\"monotonicMs\":243287807.704737,\"attributions\":[{\"key\":{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"finalization\",\"executor\":\"self\"},\"ownership\":\"self\",\"duplicateOf\":null},{\"key\":{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"handler\",\"executor\":\"self\"},\"ownership\":\"self\",\"duplicateOf\":null},{\"key\":{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"sqlite\",\"executor\":\"self\"},\"ownership\":\"self\",\"duplicateOf\":null},{\"key\":{\"scope\":\"command\",\"command\":\"service start\",\"stage\":\"startup/config\",\"executor\":\"self\"},\"ownership\":\"self\",\"duplicateOf\":null},{\"key\":{\"scope\":\"service\",\"command\":null,\"stage\":\"handler\",\"executor\":\"self\"},\"ownership\":\"self\",\"duplicateOf\":null},{\"key\":{\"scope\":\"service\",\"command\":null,\"stage\":\"shared-work\",\"executor\":\"self\"},\"ownership\":\"self\",\"duplicateOf\":null},{\"key\":{\"scope\":\"service\",\"command\":null,\"stage\":\"sqlite\",\"executor\":\"self\"},\"ownership\":\"self\",\"duplicateOf\":null},{\"key\":{\"scope\":\"service\",\"command\":null,\"stage\":\"startup/config\",\"executor\":\"self\"},\"ownership\":\"self\",\"duplicateOf\":null},{\"key\":{\"scope\":\"service\",\"command\":null,\"stage\":\"wait\",\"executor\":\"self\"},\"ownership\":\"self\",\"duplicateOf\":null}],\"coverage\":{\"startedAt\":\"2026-10-25T03:56:40.375Z\",\"completedAt\":\"2026-10-25T03:56:45.725Z\",\"openOwnIntervals\":1,\"outOfWindowOwnIntervals\":0,\"overlappingSelfIntervals\":0,\"attributionComplete\":false}},\"lastAssessment\":{\"availability\":\"partial\",\"reason\":\"CPU window not yet complete\",\"startedAt\":\"2026-10-25T03:56:45.725Z\",\"completedAt\":\"2026-10-25T03:56:52.355Z\",\"wallMs\":6630.217226982117,\"cpuUserMs\":null,\"cpuSystemMs\":null,\"cores\":null,\"thresholdCores\":1,\"exceeded\":false,\"sources\":[],\"scopes\":null,\"error\":null}},\"open\":{},\"outside\":1,\"attributionComplete\":true,\"samples\":{\"[\\\"command\\\",\\\"service start\\\",\\\"finalization\\\",\\\"self\\\"]\":1,\"[\\\"command\\\",\\\"service start\\\",\\\"handler\\\",\\\"self\\\"]\":1,\"[\\\"command\\\",\\\"service start\\\",\\\"sqlite\\\",\\\"self\\\"]\":1,\"[\\\"command\\\",\\\"service start\\\",\\\"startup/config\\\",\\\"self\\\"]\":1,\"[\\\"service\\\",null,\\\"handler\\\",\\\"self\\\"]\":2,\"[\\\"service\\\",null,\\\"shared-work\\\",\\\"self\\\"]\":1,\"[\\\"service\\\",null,\\\"sqlite\\\",\\\"self\\\"]\":1,\"[\\\"service\\\",null,\\\"startup/config\\\",\\\"self\\\"]\":1,\"[\\\"service\\\",null,\\\"wait\\\",\\\"self\\\"]\":2,\"[\\\"command\\\",\\\"service status\\\",\\\"startup/config\\\",\\\"self\\\"]\":1,\"[\\\"command\\\",\\\"service status\\\",\\\"sqlite\\\",\\\"self\\\"]\":1,\"[\\\"command\\\",\\\"service status\\\",\\\"handler\\\",\\\"self\\\"]\":1,\"[\\\"command\\\",\\\"service status\\\",\\\"finalization\\\",\\\"self\\\"]\":1,\"[\\\"service\\\",null,\\\"finalization\\\",\\\"self\\\"]\":1,\"[\\\"command\\\",\\\"service stop\\\",\\\"startup/config\\\",\\\"self\\\"]\":1,\"[\\\"command\\\",\\\"service stop\\\",\\\"sqlite\\\",\\\"self\\\"]\":1,\"[\\\"command\\\",\\\"service stop\\\",\\\"handler\\\",\\\"self\\\"]\":1,\"[\\\"command\\\",\\\"service stop\\\",\\\"finalization\\\",\\\"self\\\"]\":1}}"
+      }
+    ],
+    "raf_health_summary": [
+      {
+        "singleton": 1,
+        "payload": "{\"rafInstanceId\":\"5f63ef86-945b-44f9-aee2-2018c50ef2db\",\"since\":\"2026-10-25T03:56:40.375Z\",\"boundary\":\"2026-10-25T03:56:40.375Z\",\"forceBaseline\":{\"value\":{\"since\":\"2026-10-25T03:56:40.366Z\",\"completed\":0,\"refusalsByCode\":{}},\"availability\":\"complete\",\"reason\":null},\"lastSummary\":null}",
+        "events": "{}",
+        "refusals": "{}"
+      }
+    ],
+    "reminder_deliveries": [],
+    "reminders": [],
+    "resource_usage": [],
+    "resource_wait_protocol_state": [
+      {
+        "singleton": 1,
+        "epoch": "73d7ff08-1351-49a2-8e27-eab56b71387c",
+        "grant_json": null
+      }
+    ],
+    "resource_wait_state": [],
+    "result_notices": [],
+    "runners": [],
+    "sessions": [
+      {
+        "run_id": "main",
+        "address_id": "main",
+        "state": "running",
+        "finished_at": null,
+        "payload": "{\"runId\":\"main\",\"addressId\":\"main\",\"revision\":1,\"state\":\"running\",\"activity\":{\"type\":\"main\",\"project\":\"raf\",\"features\":[\"profile-raf-performance\"],\"phase\":\"main\",\"cwd\":\"/srv/dev/p45-cIhEtL/root/raf-main\"},\"process\":{\"pid\":3818509,\"startedAt\":\"2026-10-25T03:56:51.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"qa-live-main\",\"tmuxSession\":\"qa-live-main\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/p45e-src.3rf0Vd/raf-develop/scripts/qa-agent-ps-comparison.mjs actor /srv/dev/p45-cIhEtL/qa-live-main.ready.json\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}}"
+      },
+      {
+        "run_id": "qa-hotfix",
+        "address_id": "qa-hotfix",
+        "state": "running",
+        "finished_at": null,
+        "payload": "{\"runId\":\"qa-hotfix\",\"addressId\":\"qa-hotfix\",\"revision\":1,\"state\":\"running\",\"activity\":{\"type\":\"hotfix\",\"project\":\"raf\",\"features\":[\"profile-raf-performance\"],\"phase\":\"hotfix\",\"cwd\":\"/srv/dev/p45-cIhEtL/root/raf-main\"},\"process\":{\"pid\":3818517,\"startedAt\":\"2026-10-25T03:56:51.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"qa-live-hotfix\",\"tmuxSession\":\"qa-live-hotfix\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/p45e-src.3rf0Vd/raf-develop/scripts/qa-agent-ps-comparison.mjs actor /srv/dev/p45-cIhEtL/qa-live-hotfix.ready.json\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}}"
+      },
+      {
+        "run_id": "qa-finished",
+        "address_id": "qa-finished",
+        "state": "finished",
+        "finished_at": "2026-10-25T03:56:52.884Z",
+        "payload": "{\"runId\":\"qa-finished\",\"addressId\":\"qa-finished\",\"revision\":3,\"state\":\"finished\",\"finishedAt\":\"2026-10-25T03:56:52.884Z\",\"process\":{\"pid\":3818525,\"startedAt\":\"2026-10-25T03:56:51.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"qa-gone\",\"tmuxSession\":\"qa-gone\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/p45e-src.3rf0Vd/raf-develop/scripts/qa-agent-ps-comparison.mjs actor /srv/dev/p45-cIhEtL/qa-gone.ready.json\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}},\"result\":{\"status\":\"succeeded\",\"response\":\"\",\"proof\":null}}"
+      }
+    ],
+    "startup_context_completions": [],
+    "startup_context_reviews": [],
+    "startup_context_traces": [],
+    "task_reservation_runs": [],
+    "task_reservations": [],
+    "test_run_groups": []
+  },
+  "samples": [
+    {
+      "label": "live-1",
+      "startedAt": "2026-10-25T03:58:22.801Z",
+      "finishedAt": "2026-10-25T03:58:25.785Z",
+      "cliExitCode": 0,
+      "externalWallMs": 2984.4200580000033,
+      "loadBefore": {
+        "loadAverage": [
+          3.48,
+          3.29,
+          3.2
+        ],
+        "processes": 268
+      },
+      "wallMs": 2822.3827610000003,
+      "cpuFullMs": 3240.5069999999996,
+      "rusage": {
+        "method": "Linux wait4 rusage",
+        "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+        "cpuUserMs": 1723.6229999999998,
+        "cpuSystemMs": 1516.884,
+        "wallMs": 2959.531247,
+        "childExitCode": 0
+      },
+      "cpuSelfMs": 3023.954,
+      "delta": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "samples": 1,
+          "wallMs": 23.1965110000001,
+          "cpuUserMs": null,
+          "cpuSystemMs": null,
+          "cpuSamples": 0,
+          "cpuUnavailableSamples": 1,
+          "cpuAvailability": "unavailable",
+          "cpuSource": null,
+          "unavailableReason": "Per-child OS CPU accounting unavailable from spawn"
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 0.14954600000010032,
+          "cpuUserMs": 0.148,
+          "cpuSystemMs": 0,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "samples": 2,
+          "wallMs": 10.937751999999819,
+          "cpuUserMs": 10.609,
+          "cpuSystemMs": 3.62,
+          "cpuSamples": 2,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "reconciliation",
+          "executor": "self",
+          "samples": 2,
+          "wallMs": 325.220425,
+          "cpuUserMs": 154.765,
+          "cpuSystemMs": 135.566,
+          "cpuSamples": 2,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 23.02685500000007,
+          "cpuUserMs": 2.907,
+          "cpuSystemMs": 5.146,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 1065.1020830000002,
+          "cpuUserMs": 560.694,
+          "cpuSystemMs": 588.94,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 1397.9461000000001,
+          "cpuUserMs": 908.09,
+          "cpuSystemMs": 653.469,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        }
+      ]
+    },
+    {
+      "label": "live-2",
+      "startedAt": "2026-10-25T03:58:38.418Z",
+      "finishedAt": "2026-10-25T03:58:41.757Z",
+      "cliExitCode": 0,
+      "externalWallMs": 3338.4996180000016,
+      "loadBefore": {
+        "loadAverage": [
+          3.6,
+          3.32,
+          3.21
+        ],
+        "processes": 263
+      },
+      "wallMs": 3142.195769,
+      "cpuFullMs": 3922.312,
+      "rusage": {
+        "method": "Linux wait4 rusage",
+        "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+        "cpuUserMs": 2089.592,
+        "cpuSystemMs": 1832.72,
+        "wallMs": 3306.228864,
+        "childExitCode": 0
+      },
+      "cpuSelfMs": 3625.246,
+      "delta": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "samples": 1,
+          "wallMs": 44.624146999999994,
+          "cpuUserMs": null,
+          "cpuSystemMs": null,
+          "cpuSamples": 0,
+          "cpuUnavailableSamples": 1,
+          "cpuAvailability": "unavailable",
+          "cpuSource": null,
+          "unavailableReason": "Per-child OS CPU accounting unavailable from spawn"
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 0.12168400000018664,
+          "cpuUserMs": 0.065,
+          "cpuSystemMs": 0.053,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "samples": 2,
+          "wallMs": 4.811998000000131,
+          "cpuUserMs": 4.409,
+          "cpuSystemMs": 0.571,
+          "cpuSamples": 2,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "reconciliation",
+          "executor": "self",
+          "samples": 2,
+          "wallMs": 288.88605499999994,
+          "cpuUserMs": 141.502,
+          "cpuSystemMs": 159.96,
+          "cpuSamples": 2,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 44.47448099999974,
+          "cpuUserMs": 27.299,
+          "cpuSystemMs": 7.67,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 1027.5116240000002,
+          "cpuUserMs": 661.962,
+          "cpuSystemMs": 520.765,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 1776.389927,
+          "cpuUserMs": 1153.598,
+          "cpuSystemMs": 947.392,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        }
+      ]
+    },
+    {
+      "label": "live-3",
+      "startedAt": "2026-10-25T03:58:53.369Z",
+      "finishedAt": "2026-10-25T03:58:56.822Z",
+      "cliExitCode": 0,
+      "externalWallMs": 3452.797326,
+      "loadBefore": {
+        "loadAverage": [
+          3.39,
+          3.29,
+          3.2
+        ],
+        "processes": 262
+      },
+      "wallMs": 3242.849072,
+      "cpuFullMs": 3991.719,
+      "rusage": {
+        "method": "Linux wait4 rusage",
+        "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+        "cpuUserMs": 2106.087,
+        "cpuSystemMs": 1885.632,
+        "wallMs": 3428.892323,
+        "childExitCode": 0
+      },
+      "cpuSelfMs": 3661.589,
+      "delta": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "samples": 1,
+          "wallMs": 43.26813600000014,
+          "cpuUserMs": null,
+          "cpuSystemMs": null,
+          "cpuSamples": 0,
+          "cpuUnavailableSamples": 1,
+          "cpuAvailability": "unavailable",
+          "cpuSource": null,
+          "unavailableReason": "Per-child OS CPU accounting unavailable from spawn"
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 0.2060420000002523,
+          "cpuUserMs": 0.201,
+          "cpuSystemMs": 0,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "samples": 2,
+          "wallMs": 7.234641999999894,
+          "cpuUserMs": 7.573,
+          "cpuSystemMs": 0,
+          "cpuSamples": 2,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "reconciliation",
+          "executor": "self",
+          "samples": 2,
+          "wallMs": 272.2433159999996,
+          "cpuUserMs": 134.726,
+          "cpuSystemMs": 147.147,
+          "cpuSamples": 2,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 43.10810400000037,
+          "cpuUserMs": 2.106,
+          "cpuSystemMs": 6.23,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 1035.981633,
+          "cpuUserMs": 566.257,
+          "cpuSystemMs": 562.784,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 1884.075335,
+          "cpuUserMs": 1280.766,
+          "cpuSystemMs": 953.799,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        }
+      ]
+    },
+    {
+      "label": "live-4",
+      "startedAt": "2026-10-25T03:59:09.251Z",
+      "finishedAt": "2026-10-25T03:59:12.878Z",
+      "cliExitCode": 0,
+      "externalWallMs": 3627.374617000023,
+      "loadBefore": {
+        "loadAverage": [
+          3.52,
+          3.33,
+          3.21
+        ],
+        "processes": 262
+      },
+      "wallMs": 3456.4202450000003,
+      "cpuFullMs": 3964.938,
+      "rusage": {
+        "method": "Linux wait4 rusage",
+        "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+        "cpuUserMs": 2120.301,
+        "cpuSystemMs": 1844.6370000000002,
+        "wallMs": 3591.057473,
+        "childExitCode": 0
+      },
+      "cpuSelfMs": 3729.6879999999996,
+      "delta": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "samples": 1,
+          "wallMs": 26.05984099999978,
+          "cpuUserMs": null,
+          "cpuSystemMs": null,
+          "cpuSamples": 0,
+          "cpuUnavailableSamples": 1,
+          "cpuAvailability": "unavailable",
+          "cpuSource": null,
+          "unavailableReason": "Per-child OS CPU accounting unavailable from spawn"
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 0.12040200000001278,
+          "cpuUserMs": 0.119,
+          "cpuSystemMs": 0,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "samples": 2,
+          "wallMs": 5.5915359999999055,
+          "cpuUserMs": 5.381,
+          "cpuSystemMs": 0.43,
+          "cpuSamples": 2,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "reconciliation",
+          "executor": "self",
+          "samples": 2,
+          "wallMs": 298.9248969999999,
+          "cpuUserMs": 165.95499999999998,
+          "cpuSystemMs": 151.304,
+          "cpuSamples": 2,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 25.88320500000009,
+          "cpuUserMs": 21.499,
+          "cpuSystemMs": 7.715,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 1210.66098,
+          "cpuUserMs": 633.927,
+          "cpuSystemMs": 638.944,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 1915.239225,
+          "cpuUserMs": 1203.513,
+          "cpuSystemMs": 900.901,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        }
+      ]
+    },
+    {
+      "label": "live-5",
+      "startedAt": "2026-10-25T03:59:24.738Z",
+      "finishedAt": "2026-10-25T03:59:27.850Z",
+      "cliExitCode": 0,
+      "externalWallMs": 3112.455252999993,
+      "loadBefore": {
+        "loadAverage": [
+          3.54,
+          3.34,
+          3.22
+        ],
+        "processes": 266
+      },
+      "wallMs": 2936.919841,
+      "cpuFullMs": 3530.974,
+      "rusage": {
+        "method": "Linux wait4 rusage",
+        "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+        "cpuUserMs": 1873.636,
+        "cpuSystemMs": 1657.338,
+        "wallMs": 3087.910001,
+        "childExitCode": 0
+      },
+      "cpuSelfMs": 3289.091,
+      "delta": [
+        {
+          "stage": "child-wait",
+          "executor": "child",
+          "samples": 1,
+          "wallMs": 24.597811000000092,
+          "cpuUserMs": null,
+          "cpuSystemMs": null,
+          "cpuSamples": 0,
+          "cpuUnavailableSamples": 1,
+          "cpuAvailability": "unavailable",
+          "cpuSource": null,
+          "unavailableReason": "Per-child OS CPU accounting unavailable from spawn"
+        },
+        {
+          "stage": "finalization",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 0.14606099999991784,
+          "cpuUserMs": 0.145,
+          "cpuSystemMs": 0,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "handler",
+          "executor": "self",
+          "samples": 2,
+          "wallMs": 5.539498000000094,
+          "cpuUserMs": 5.452,
+          "cpuSystemMs": 0.279,
+          "cpuSamples": 2,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "reconciliation",
+          "executor": "self",
+          "samples": 2,
+          "wallMs": 278.1018259999996,
+          "cpuUserMs": 157.437,
+          "cpuSystemMs": 161.7,
+          "cpuSamples": 2,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "shared-work",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 24.34720200000038,
+          "cpuUserMs": 3.821,
+          "cpuSystemMs": 6.925,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "sqlite",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 1143.493888,
+          "cpuUserMs": 577.896,
+          "cpuSystemMs": 635.834,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        },
+        {
+          "stage": "startup/config",
+          "executor": "self",
+          "samples": 1,
+          "wallMs": 1485.291366,
+          "cpuUserMs": 1044.922,
+          "cpuSystemMs": 694.68,
+          "cpuSamples": 1,
+          "cpuUnavailableSamples": 0,
+          "cpuAvailability": "complete",
+          "cpuSource": "process.cpuUsage",
+          "unavailableReason": null
+        }
+      ]
+    }
+  ],
+  "diagnostic": {
+    "separateFromTimedSeries": true,
+    "psCalls": [
+      {
+        "args": [
+          "-ww",
+          "-axo",
+          "pid=,lstart=,command="
+        ]
+      }
+    ]
+  },
+  "wallMs": {
+    "samples": 5,
+    "total": 15600.767688,
+    "mean": 3120.1535376,
+    "min": 2822.3827610000003,
+    "max": 3456.4202450000003,
+    "standardDeviation": 223.98989959330663,
+    "values": [
+      2822.3827610000003,
+      3142.195769,
+      3242.849072,
+      3456.4202450000003,
+      2936.919841
+    ]
+  },
+  "externalWallMs": {
+    "samples": 5,
+    "total": 16515.54687200002,
+    "mean": 3303.109374400004,
+    "min": 2984.4200580000033,
+    "max": 3627.374617000023,
+    "standardDeviation": 230.96266977545488,
+    "values": [
+      2984.4200580000033,
+      3338.4996180000016,
+      3452.797326,
+      3627.374617000023,
+      3112.455252999993
+    ]
+  },
+  "cpuSelfMs": {
+    "samples": 5,
+    "total": 17329.568,
+    "mean": 3465.9136,
+    "min": 3023.954,
+    "max": 3729.6879999999996,
+    "standardDeviation": 268.2711799106269,
+    "values": [
+      3023.954,
+      3625.246,
+      3661.589,
+      3729.6879999999996,
+      3289.091
+    ]
+  },
+  "cpuFullMs": {
+    "samples": 5,
+    "total": 18650.45,
+    "mean": 3730.09,
+    "min": 3240.5069999999996,
+    "max": 3991.719,
+    "standardDeviation": 296.6112976182803,
+    "values": [
+      3240.5069999999996,
+      3922.312,
+      3991.719,
+      3964.938,
+      3530.974
+    ]
+  },
+  "stages": [
+    {
+      "stage": "startup/config",
+      "wallMs": {
+        "samples": 5,
+        "total": 8458.941953000001,
+        "mean": 1691.7883906000002,
+        "min": 1397.9461000000001,
+        "max": 1915.239225,
+        "standardDeviation": 211.20903259836842,
+        "values": [
+          1397.9461000000001,
+          1776.389927,
+          1884.075335,
+          1915.239225,
+          1485.291366
+        ]
+      }
+    },
+    {
+      "stage": "sqlite",
+      "wallMs": {
+        "samples": 5,
+        "total": 5482.750208,
+        "mean": 1096.5500416,
+        "min": 1027.5116240000002,
+        "max": 1210.66098,
+        "standardDeviation": 70.21230704443661,
+        "values": [
+          1065.1020830000002,
+          1027.5116240000002,
+          1035.981633,
+          1210.66098,
+          1143.493888
+        ]
+      }
+    },
+    {
+      "stage": "reconciliation",
+      "wallMs": {
+        "samples": 5,
+        "total": 1463.376518999999,
+        "mean": 292.6753037999998,
+        "min": 272.2433159999996,
+        "max": 325.220425,
+        "standardDeviation": 18.667903557726795,
+        "values": [
+          325.220425,
+          288.88605499999994,
+          272.2433159999996,
+          298.9248969999999,
+          278.1018259999996
+        ]
+      }
+    },
+    {
+      "stage": "shared-work",
+      "wallMs": {
+        "samples": 5,
+        "total": 160.83984700000065,
+        "mean": 32.16796940000013,
+        "min": 23.02685500000007,
+        "max": 44.47448099999974,
+        "standardDeviation": 9.543158927622892,
+        "values": [
+          23.02685500000007,
+          44.47448099999974,
+          43.10810400000037,
+          25.88320500000009,
+          24.34720200000038
+        ]
+      }
+    },
+    {
+      "stage": "handler",
+      "wallMs": {
+        "samples": 5,
+        "total": 34.11542599999984,
+        "mean": 6.823085199999968,
+        "min": 4.811998000000131,
+        "max": 10.937751999999819,
+        "standardDeviation": 2.2049327941084593,
+        "values": [
+          10.937751999999819,
+          4.811998000000131,
+          7.234641999999894,
+          5.5915359999999055,
+          5.539498000000094
+        ]
+      }
+    },
+    {
+      "stage": "finalization",
+      "wallMs": {
+        "samples": 5,
+        "total": 0.7437350000004699,
+        "mean": 0.14874700000009397,
+        "min": 0.12040200000001278,
+        "max": 0.2060420000002523,
+        "standardDeviation": 0.031069003897835817,
+        "values": [
+          0.14954600000010032,
+          0.12168400000018664,
+          0.2060420000002523,
+          0.12040200000001278,
+          0.14606099999991784
+        ]
+      }
+    }
+  ],
+  "mostExpensiveStage": {
+    "stage": "startup/config",
+    "wallMs": {
+      "samples": 5,
+      "total": 8458.941953000001,
+      "mean": 1691.7883906000002,
+      "min": 1397.9461000000001,
+      "max": 1915.239225,
+      "standardDeviation": 211.20903259836842,
+      "values": [
+        1397.9461000000001,
+        1776.389927,
+        1884.075335,
+        1915.239225,
+        1485.291366
+      ]
+    }
+  },
+  "externalCpu": {
+    "availability": "complete",
+    "method": "Linux wait4 rusage",
+    "scope": "CLI and synchronously reaped descendants; actors and stopped service excluded"
+  },
+  "helperCpu": {
+    "availability": "unavailable",
+    "totalMs": null
+  }
+}

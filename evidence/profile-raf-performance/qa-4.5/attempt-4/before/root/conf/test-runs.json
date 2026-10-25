@@ -1,0 +1,2745 @@
+{
+  "version": 1,
+  "phases": {
+    "main": {
+      "allowed": false,
+      "purpose": "none",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "hotfix": {
+      "allowed": true,
+      "purpose": "verification",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "spec": {
+      "allowed": false,
+      "purpose": "none",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "design": {
+      "allowed": false,
+      "purpose": "none",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "test-scaffold": {
+      "allowed": false,
+      "purpose": "none",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "implement": {
+      "allowed": true,
+      "purpose": "verification",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "coordinator": {
+      "allowed": false,
+      "purpose": "none",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "qa": {
+      "allowed": true,
+      "purpose": "verification",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "qa-assertions",
+        "timeout": "qa-timeout",
+        "interruption": "interruption"
+      }
+    },
+    "context-review": {
+      "allowed": false,
+      "purpose": "none",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "red": {
+      "allowed": true,
+      "purpose": "initial-red",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "red-assertions",
+        "timeout": "red-timeout",
+        "interruption": "interruption"
+      }
+    }
+  },
+  "hints": {
+    "refusal": "Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін.",
+    "setup": "Виправте конфігурацію, імпорт, залежності або ізоляцію середовища. Setup/import не підтверджує початковий red.",
+    "assertions": "Виправте реалізацію за вимогами; збережіть твердження підготовлених тестів.",
+    "timeout": "Застосуйте nextAction за активним агрегатом: оптимізуйте виконання/відбір; після межі підтверджуйте лише knownRed. Неперевірений залишок не є pass.",
+    "interruption": "Звірте cleanup дерева й активний агрегат перед повторним запуском тієї самої групи.",
+    "red-assertions": "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement.",
+    "red-timeout": "Початковий unit-timeout дозволяє передачу до implement за test-first; збережіть лічильник групи, відомі red й неперевірені тести.",
+    "qa-assertions": "Зафіксуйте дефект, виправте реалізацію в цьому QA-проході та повторіть адресну групу з phase qa.",
+    "qa-timeout": "Застосуйте nextAction unit-групи; unit-виняток не закриває користувацький чи стендовий QA-сценарій."
+  },
+  "projects": {
+    "raf": {
+      "profiles": {
+        "node": {
+          "cwd": ".",
+          "executable": "node",
+          "argv": [
+            "./scripts/test-run-node.ts"
+          ],
+          "unitFiles": [
+            "test/agent-adapter-readiness.test.ts",
+            "test/agent-adapters.test.ts",
+            "test/agent-close-exit.test.ts",
+            "test/agent-close-report-gate.test.ts",
+            "test/agent-control.test.ts",
+            "test/agent-coordination-control.test.ts",
+            "test/agent-queue-state.test.ts",
+            "test/agent-report-diagnostics.test.ts",
+            "test/agent-report-freshness.test.ts",
+            "test/agent-report-orphan.test.ts",
+            "test/agent-report.test.ts",
+            "test/agent-run-admission-snapshot.test.ts",
+            "test/agent-run-queue.test.ts",
+            "test/app-runtime.test.ts",
+            "test/assignment-identity-qa.test.ts",
+            "test/assignment-identity.test.ts",
+            "test/assignment-task-ids.test.ts",
+            "test/assignment.test.ts",
+            "test/background-runtime.test.ts",
+            "test/bootstrap-integration-qa.test.ts",
+            "test/bootstrap.test.ts",
+            "test/brief-composition-c2.test.ts",
+            "test/bug-attachment-cache-qa.test.ts",
+            "test/bug-attachment-cache.test.ts",
+            "test/bug-cli-qa.test.ts",
+            "test/bug-cli.test.ts",
+            "test/bug-store.test.ts",
+            "test/bug-sync-contract.test.ts",
+            "test/bug-sync-notices.test.ts",
+            "test/bug-sync-pull.test.ts",
+            "test/bug-write.test.ts",
+            "test/claude-delivery-context.test.ts",
+            "test/claude-protocol.test.ts",
+            "test/cli-catalog.test.ts",
+            "test/cli-contract-completion.test.ts",
+            "test/cli-qa.test.ts",
+            "test/codex-account-state.test.ts",
+            "test/codex-directory-permissions.test.ts",
+            "test/codex-file-write-boundaries.test.ts",
+            "test/codex-file-write-brief.test.ts",
+            "test/codex-raf-command-output.test.ts",
+            "test/codex-registered-tmux.test.ts",
+            "test/codex-state-access.test.ts",
+            "test/codex-unix-sockets.test.ts",
+            "test/comment-free-source.test.ts",
+            "test/comment-policy-qa.test.ts",
+            "test/comment-policy.test.ts",
+            "test/delivery-diagnostic.test.ts",
+            "test/event-identity-qa.test.ts",
+            "test/event-registry.test.ts",
+            "test/executor-commit-qa.test.ts",
+            "test/flow-policy-qa.test.ts",
+            "test/flow-policy.test.ts",
+            "test/home-disk-admission.test.ts",
+            "test/hotfix-activation.test.ts",
+            "test/hotfix-worktree.test.ts",
+            "test/initial-brief-delivery.test.ts",
+            "test/launch-contention.test.ts",
+            "test/launch-failure-cleanup.test.ts",
+            "test/launch-queue-events.test.ts",
+            "test/launch-state.test.ts",
+            "test/launch-wrapper-qa.test.ts",
+            "test/launch-wrapper.test.ts",
+            "test/launcher-notice-durability.test.ts",
+            "test/launcher-notice-run.test.ts",
+            "test/launcher-notice.test.ts",
+            "test/main-generation-handover.test.ts",
+            "test/main-layout.test.ts",
+            "test/main-session-accounting.test.ts",
+            "test/main-switch-agent-channel.test.ts",
+            "test/main-symlink-release.test.ts",
+            "test/main-version-compatibility.test.ts",
+            "test/model-routing.test.ts",
+            "test/os-runtime.test.ts",
+            "test/production-claude-delivery-qa.test.ts",
+            "test/production-codex-delivery-qa.test.ts",
+            "test/production-codex-writes-qa.test.ts",
+            "test/production-entry-qa.test.ts",
+            "test/production-entry-root.test.ts",
+            "test/production-entry.test.ts",
+            "test/production-launch-integration.test.ts",
+            "test/production-runner-readiness-qa.test.ts",
+            "test/production-runtime.test.ts",
+            "test/production-secrets.test.ts",
+            "test/production-service-ports-qa.test.ts",
+            "test/production-service-ports.test.ts",
+            "test/qa-bug-sync-service.test.ts",
+            "test/qa-tmux-stale-socket.test.ts",
+            "test/quota-collection.test.ts",
+            "test/quota-screens.test.ts",
+            "test/raf-stand.test.ts",
+            "test/reminder-cli.test.ts",
+            "test/reminder-delivery.test.ts",
+            "test/reminder-events.test.ts",
+            "test/reminder-repository.test.ts",
+            "test/reminder-schedule.test.ts",
+            "test/reminders.test.ts",
+            "test/report-assignment-rejection-reason.test.ts",
+            "test/report-commit-index.test.ts",
+            "test/report-rejected-events.test.ts",
+            "test/reported-commits-acceptance.test.ts",
+            "test/resource-admission.test.ts",
+            "test/resource-estimates.test.ts",
+            "test/resource-usage.test.ts",
+            "test/resource-wait-client.test.ts",
+            "test/resource-wait-protocol.test.ts",
+            "test/resource-wait-runtime.test.ts",
+            "test/resource-wait-service-stop.test.ts",
+            "test/resource-wait-storage.test.ts",
+            "test/resource-wait.test.ts",
+            "test/runner-availability.test.ts",
+            "test/runner-limits-production.test.ts",
+            "test/runner-protocols.test.ts",
+            "test/runner-version-warning.test.ts",
+            "test/sandbox-test-regression-groups.test.ts",
+            "test/sandbox-test-run.test.ts",
+            "test/secrets-store-qa.test.ts",
+            "test/secrets-store.test.ts",
+            "test/service-entry.test.ts",
+            "test/service-host.test.ts",
+            "test/session-recovery.test.ts",
+            "test/session-repository.test.ts",
+            "test/session-state.test.ts",
+            "test/spec-design-commit.test.ts",
+            "test/startup-context-journal.test.ts",
+            "test/startup-context-lifecycle.test.ts",
+            "test/startup-context-report.test.ts",
+            "test/startup-context-review.test.ts",
+            "test/startup-context-runtime.test.ts",
+            "test/startup-context-trace.test.ts",
+            "test/state-migration-cli.test.ts",
+            "test/state-migration-guard.test.ts",
+            "test/state-migration-lazy-bootstrap.test.ts",
+            "test/state-migration-lazy-cli.test.ts",
+            "test/state-store.test.ts",
+            "test/task-checkbox-index.test.ts",
+            "test/task-checkbox-report.test.ts",
+            "test/task-context-z12.test.ts",
+            "test/task-context.test.ts",
+            "test/task-reservations-qa.test.ts",
+            "test/task-reservations.test.ts",
+            "test/test-run-arguments.test.ts",
+            "test/test-run-cli.test.ts",
+            "test/test-run-diagnostics-file-level.test.ts",
+            "test/test-run-diagnostics-qa-regressions.test.ts",
+            "test/test-run-diagnostics-sanitize.test.ts",
+            "test/test-run-diagnostics.test.ts",
+            "test/test-run-etchly-profiles.test.ts",
+            "test/test-run-refusal-diagnostics.test.ts",
+            "test/test-run-reservations.test.ts",
+            "test/test-runs.test.ts",
+            "test/workspace-routing-z12.test.ts",
+            "test/workspace-routing.test.ts",
+            "test/workspace-trust.test.ts",
+            "test/report-confirmation-retry.test.ts",
+            "test/test-run-integration-profiles.test.ts",
+            "test/task-source-links-z397.test.ts",
+            "test/codex-sandbox-preflight-path.test.ts",
+            "test/test-run-integration-runtime.test.ts",
+            "test/report-confirmation-runtime.test.ts",
+            "test/sandbox-test-caller-z400.test.ts",
+            "test/test-run-selection-atomicity.test.ts",
+            "test/report-confirmation-progress.test.ts",
+            "test/raf-unix-socket-paths.test.ts",
+            "test/test-run-path.test.ts",
+            "test/test-run-state-recovery.test.ts",
+            "test/reservation-recovery-z401.test.ts",
+            "test/task-reservations-migration.test.ts",
+            "test/codex-bwrap-entry.test.ts",
+            "test/codex-bwrap-evidence.test.ts",
+            "test/task-source-relative-z408.test.ts",
+            "test/test-run-socket-path.test.ts",
+            "test/reminder-active-update.test.ts",
+            "test/agy-quota-credits.test.ts",
+            "test/agy-quota-credits-pipeline.test.ts",
+            "test/agy-session-start-protocol.test.ts",
+            "test/agy-session-start-state.test.ts",
+            "test/agy-session-start-wrapper.test.ts",
+            "test/agy-session-start-control.test.ts",
+            "test/test-run-author-red.test.ts",
+            "test/task-checkbox-lock-race.test.ts",
+            "test/agent-queue-start-result.test.ts",
+            "test/hotfix-reader-admission.test.ts",
+            "test/test-run-legacy-in-flight.test.ts",
+            "test/z404-tmux-shutdown.test.ts",
+            "test/z334-launch-wait.test.ts",
+            "test/z4044-live-alias.test.ts",
+            "test/report-confirmation-committed-z39393.test.ts",
+            "test/test-run-queue.test.ts",
+            "test/resource-wait-workload.test.ts",
+            "test/trt633-host-home.test.ts",
+            "test/hotfix-637-638.test.ts",
+            "test/hotfix-6310.test.ts",
+            "test/flow-qa-report.test.ts",
+            "test/flow-task-plan.test.ts",
+            "test/flow-brief.test.ts",
+            "test/session-recovery-interrupt.test.ts",
+            "test/service-recovery-z411.test.ts",
+            "test/writer-lock-z411.test.ts",
+            "test/test-run-browser-cache.test.ts",
+            "test/raf-cost-profile.test.ts",
+            "test/health-cpu.test.ts",
+            "test/delivery-evidence.test.ts",
+            "test/command-timing.test.ts",
+            "test/forced-close-metrics.test.ts",
+            "test/health-summary.test.ts",
+            "test/worker-idle-cost.test.ts",
+            "test/codex-raf-command-lifetime.test.ts",
+            "test/runtime-command-timing.test.ts",
+            "test/report-confirmation-deadline-z39398.test.ts",
+            "test/task-context-final-archive.test.ts",
+            "test/agent-ps-cost.test.ts",
+            "test/test-run-config-dependencies.test.ts"
+          ],
+          "exactIds": "node-test-name",
+          "resultAdapter": "node-test-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "node_modules/typescript/package.json",
+            "src/test-run-reporter.ts",
+            "scripts/test-run-node.ts"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        }
+      },
+      "groups": {
+        "add-raf-test-run/unit": {
+          "profileId": "node",
+          "files": [
+            "test/test-runs.test.ts",
+            "test/test-run-cli.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z350": {
+          "profileId": "node",
+          "files": [
+            "test/sandbox-test-run.test.ts",
+            "test/sandbox-test-caller-z400.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z373": {
+          "profileId": "node",
+          "files": [
+            "test/report-rejected-events.test.ts"
+          ]
+        },
+        "add-raf-test-run/arguments": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-arguments.test.ts"
+          ]
+        },
+        "add-raf-test-run/diagnostics": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-diagnostics.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z373-d1": {
+          "profileId": "node",
+          "files": [
+            "test/report-assignment-rejection-reason.test.ts"
+          ]
+        },
+        "fix-raf-load-admission/estimates": {
+          "profileId": "node",
+          "files": [
+            "test/resource-estimates.test.ts"
+          ]
+        },
+        "fix-raf-load-admission/test-reservations": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-reservations.test.ts"
+          ]
+        },
+        "fix-raf-load-admission/usage": {
+          "profileId": "node",
+          "files": [
+            "test/resource-usage.test.ts"
+          ]
+        },
+        "add-raf-test-run/diagnostics-file-level": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-diagnostics-file-level.test.ts"
+          ]
+        },
+        "add-raf-test-run/diagnostics-sanitize": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-diagnostics-sanitize.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/catalog": {
+          "profileId": "node",
+          "files": [
+            "test/cli-catalog.test.ts"
+          ]
+        },
+        "fix-raf-load-admission/estimates-legacy": {
+          "profileId": "node",
+          "files": [
+            "test/task-context.test.ts",
+            "test/production-runtime.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/resource-wait": {
+          "profileId": "node",
+          "files": [
+            "test/resource-wait-protocol.test.ts",
+            "test/resource-wait-client.test.ts",
+            "test/resource-wait-storage.test.ts",
+            "test/resource-wait-runtime.test.ts",
+            "test/state-store.test.ts",
+            "test/state-migration-cli.test.ts",
+            "test/production-entry.test.ts",
+            "test/production-service-ports.test.ts",
+            "test/service-entry.test.ts"
+          ]
+        },
+        "add-raf-test-run/diagnostics-qa-regressions": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-diagnostics-qa-regressions.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z386-home-disk": {
+          "profileId": "node",
+          "files": [
+            "test/home-disk-admission.test.ts",
+            "test/production-runtime.test.ts"
+          ]
+        },
+        "add-raf-test-run/refusal-diagnostics": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-refusal-diagnostics.test.ts"
+          ]
+        },
+        "add-raf-test-run/etchly-profiles": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-etchly-profiles.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/resource-wait-service-stop": {
+          "profileId": "node",
+          "files": [
+            "test/resource-wait-service-stop.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z382-admission": {
+          "profileId": "node",
+          "files": [
+            "test/agent-run-admission-snapshot.test.ts"
+          ]
+        },
+        "fix-raf-load-admission/queue-event": {
+          "profileId": "node",
+          "files": [
+            "test/launch-queue-events.test.ts"
+          ]
+        },
+        "fix-raf-load-admission/agent-queue": {
+          "profileId": "node",
+          "files": [
+            "test/agent-run-queue.test.ts",
+            "test/agent-queue-state.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z388-grok": {
+          "profileId": "node",
+          "files": [
+            "test/runner-limits-production.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z387-regress": {
+          "profileId": "node",
+          "files": [
+            "test/app-runtime.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z389-trust-order": {
+          "profileId": "node",
+          "files": [
+            "test/workspace-trust.test.ts"
+          ]
+        },
+        "switch-raf-main-by-symlink/state-compatibility": {
+          "profileId": "node",
+          "files": [
+            "test/main-version-compatibility.test.ts"
+          ]
+        },
+        "add-raf-test-run/foreign-regressions": {
+          "profileId": "node",
+          "files": [
+            "test/sandbox-test-regression-groups.test.ts"
+          ]
+        },
+        "switch-raf-main-by-symlink/layout": {
+          "profileId": "node",
+          "files": [
+            "test/main-layout.test.ts"
+          ]
+        },
+        "switch-raf-main-by-symlink/release": {
+          "profileId": "node",
+          "files": [
+            "test/main-symlink-release.test.ts"
+          ]
+        },
+        "switch-raf-main-by-symlink/handover": {
+          "profileId": "node",
+          "files": [
+            "test/main-generation-handover.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z389-fixture": {
+          "profileId": "node",
+          "files": [
+            "test/workspace-trust.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z391": {
+          "profileId": "node",
+          "files": [
+            "test/state-migration-guard.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z392": {
+          "profileId": "node",
+          "files": [
+            "test/hotfix-worktree.test.ts",
+            "test/hotfix-activation.test.ts"
+          ]
+        },
+        "add-raf-test-run/stand-scripts": {
+          "profileId": "node",
+          "files": [
+            "test/raf-stand.test.ts"
+          ]
+        },
+        "switch-raf-main-by-symlink/agent-channel": {
+          "profileId": "node",
+          "files": [
+            "test/main-switch-agent-channel.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z393": {
+          "profileId": "node",
+          "files": [
+            "test/report-confirmation-retry.test.ts",
+            "test/report-confirmation-runtime.test.ts",
+            "test/report-confirmation-progress.test.ts",
+            "test/assignment-identity.test.ts",
+            "test/assignment-identity-qa.test.ts",
+            "test/task-checkbox-report.test.ts",
+            "test/task-checkbox-index.test.ts",
+            "test/report-commit-index.test.ts",
+            "test/reported-commits-acceptance.test.ts",
+            "test/agent-report.test.ts",
+            "test/agent-report-freshness.test.ts"
+          ]
+        },
+        "add-raf-test-run/integration-profiles": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-integration-profiles.test.ts",
+            "test/test-run-integration-runtime.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z397": {
+          "profileId": "node",
+          "files": [
+            "test/task-source-links-z397.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z390": {
+          "profileId": "node",
+          "files": [
+            "test/codex-sandbox-preflight-path.test.ts",
+            "test/raf-unix-socket-paths.test.ts",
+            "test/codex-bwrap-entry.test.ts",
+            "test/codex-bwrap-evidence.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z399": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-selection-atomicity.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z390-regress": {
+          "profileId": "node",
+          "files": [
+            "test/launch-wrapper.test.ts",
+            "test/launch-wrapper-qa.test.ts",
+            "test/qa-tmux-stale-socket.test.ts",
+            "test/codex-unix-sockets.test.ts",
+            "test/codex-registered-tmux.test.ts",
+            "test/quota-collection.test.ts",
+            "test/quota-screens.test.ts",
+            "test/codex-state-access.test.ts"
+          ]
+        },
+        "add-raf-test-run/unit-path": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-path.test.ts"
+          ]
+        },
+        "add-raf-test-run/state-open-recovery": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-state-recovery.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z401": {
+          "profileId": "node",
+          "files": [
+            "test/reservation-recovery-z401.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z401-regress": {
+          "profileId": "node",
+          "files": [
+            "test/task-reservations.test.ts",
+            "test/task-reservations-qa.test.ts",
+            "test/agent-close-report-gate.test.ts",
+            "test/agent-control.test.ts",
+            "test/launch-failure-cleanup.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z401-migration": {
+          "profileId": "node",
+          "files": [
+            "test/state-migration-lazy-bootstrap.test.ts",
+            "test/state-migration-lazy-cli.test.ts",
+            "test/task-reservations-migration.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z408": {
+          "profileId": "node",
+          "files": [
+            "test/task-source-relative-z408.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z409": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-socket-path.test.ts"
+          ]
+        },
+        "add-raf-reminders/unit": {
+          "profileId": "node",
+          "files": [
+            "test/reminder-active-update.test.ts",
+            "test/session-recovery-interrupt.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/agy-credits": {
+          "profileId": "node",
+          "files": [
+            "test/agy-quota-credits.test.ts",
+            "test/agy-quota-credits-pipeline.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/q411": {
+          "profileId": "node",
+          "files": [
+            "test/agy-session-start-protocol.test.ts",
+            "test/agy-session-start-state.test.ts",
+            "test/agy-session-start-wrapper.test.ts",
+            "test/agy-session-start-control.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/q414-regress": {
+          "profileId": "node",
+          "files": [
+            "test/agent-adapters.test.ts",
+            "test/session-state.test.ts",
+            "test/agent-run-queue.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z40419-diagnostics": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-diagnostics.test.ts"
+          ]
+        },
+        "add-raf-test-run/author-red": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-author-red.test.ts",
+            "test/sandbox-test-run.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z3939": {
+          "profileId": "node",
+          "files": [
+            "test/task-checkbox-lock-race.test.ts"
+          ]
+        },
+        "fix-raf-load-admission/start-result": {
+          "profileId": "node",
+          "files": [
+            "test/agent-queue-start-result.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z384": {
+          "profileId": "node",
+          "files": [
+            "test/hotfix-reader-admission.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z410": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-legacy-in-flight.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z40441": {
+          "profileId": "node",
+          "files": [
+            "test/z404-tmux-shutdown.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z334-launch-wait": {
+          "profileId": "node",
+          "files": [
+            "test/z334-launch-wait.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z40442": {
+          "profileId": "node",
+          "files": [
+            "test/z4044-live-alias.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z39393": {
+          "profileId": "node",
+          "files": [
+            "test/report-confirmation-committed-z39393.test.ts"
+          ]
+        },
+        "fix-raf-load-admission/test-queue": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-queue.test.ts",
+            "test/resource-wait-workload.test.ts"
+          ]
+        },
+        "add-raf-test-run/trt633-host-home": {
+          "profileId": "node",
+          "files": [
+            "test/trt633-host-home.test.ts"
+          ]
+        },
+        "add-raf-test-run/hotfix-637-638": {
+          "profileId": "node",
+          "files": [
+            "test/hotfix-637-638.test.ts"
+          ]
+        },
+        "fix-raf-load-admission/worker-idle": {
+          "profileId": "node",
+          "files": [
+            "test/agent-adapters.test.ts",
+            "test/agent-control.test.ts",
+            "test/launch-wrapper.test.ts"
+          ]
+        },
+        "add-raf-test-run/hotfix-6310": {
+          "profileId": "node",
+          "files": [
+            "test/hotfix-6310.test.ts"
+          ]
+        },
+        "enforce-flow-approaches/flow-checks": {
+          "profileId": "node",
+          "files": [
+            "test/flow-qa-report.test.ts",
+            "test/flow-task-plan.test.ts",
+            "test/flow-brief.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z411": {
+          "profileId": "node",
+          "files": [
+            "test/service-recovery-z411.test.ts",
+            "test/writer-lock-z411.test.ts"
+          ]
+        },
+        "add-raf-test-run/browser-cache": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-browser-cache.test.ts"
+          ]
+        },
+        "profile-raf-performance/profile": {
+          "profileId": "node",
+          "files": [
+            "test/raf-cost-profile.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z41": {
+          "profileId": "node",
+          "files": [
+            "test/agent-adapters.test.ts"
+          ]
+        },
+        "monitor-raf-health/cpu": {
+          "profileId": "node",
+          "files": [
+            "test/health-cpu.test.ts"
+          ]
+        },
+        "monitor-raf-health/delivery-evidence": {
+          "profileId": "node",
+          "files": [
+            "test/delivery-evidence.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/raf-command-timing": {
+          "profileId": "node",
+          "files": [
+            "test/command-timing.test.ts"
+          ]
+        },
+        "monitor-raf-health/forced-close": {
+          "profileId": "node",
+          "files": [
+            "test/forced-close-metrics.test.ts"
+          ]
+        },
+        "monitor-raf-health/summary": {
+          "profileId": "node",
+          "files": [
+            "test/health-summary.test.ts"
+          ]
+        },
+        "profile-raf-performance/worker-idle-cost": {
+          "profileId": "node",
+          "files": [
+            "test/worker-idle-cost.test.ts"
+          ]
+        },
+        "add-raf-test-run/hotfix-6312": {
+          "profileId": "node",
+          "files": [
+            "test/codex-raf-command-lifetime.test.ts"
+          ]
+        },
+        "profile-raf-performance/timing-coverage": {
+          "profileId": "node",
+          "files": [
+            "test/runtime-command-timing.test.ts"
+          ]
+        },
+        "switch-raf-main-by-symlink/qa64-trust-fixture": {
+          "profileId": "node",
+          "files": [
+            "test/workspace-trust.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z39310": {
+          "profileId": "node",
+          "files": [
+            "test/agent-queue-start-result.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z39398": {
+          "profileId": "node",
+          "files": [
+            "test/report-confirmation-deadline-z39398.test.ts"
+          ]
+        },
+        "review-agent-startup-context/assigned-review-package": {
+          "profileId": "node",
+          "files": [
+            "test/startup-context-lifecycle.test.ts",
+            "test/startup-context-runtime.test.ts"
+          ]
+        },
+        "complete-raf-flow-contracts/z412": {
+          "profileId": "node",
+          "files": [
+            "test/task-context-final-archive.test.ts",
+            "test/spec-design-commit.test.ts",
+            "test/task-context-z12.test.ts",
+            "test/task-context.test.ts"
+          ]
+        },
+        "profile-raf-performance/agent-ps": {
+          "profileId": "node",
+          "files": [
+            "test/agent-ps-cost.test.ts"
+          ]
+        },
+        "monitor-raf-health/config-dependencies": {
+          "profileId": "node",
+          "files": [
+            "test/test-run-config-dependencies.test.ts"
+          ]
+        }
+      }
+    },
+    "etchly": {
+      "profiles": {
+        "vitest-app": {
+          "cwd": "app",
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../scripts/shared-library-runtime.mjs",
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "--configLoader",
+            "runner",
+            "--project",
+            "app"
+          ],
+          "unitFiles": [
+            "app/admin/composition.test.ts",
+            "app/admin/exchange/admin-channel-audit.test.ts",
+            "app/admin/exchange/admin-channel.test.tsx",
+            "app/admin/knowledge-1525-agent-tests/layout.test.ts",
+            "app/admin/knowledge-1537-agent-tests/readable.test.tsx",
+            "app/admin/routing/retired-problems-2016.test.ts",
+            "app/admin/routing/run-trace-1535.test.ts",
+            "app/admin/sections/admin-content.test.tsx",
+            "app/admin/sections/admin-copy.test.tsx",
+            "app/admin/sections/admin-dates.test.tsx",
+            "app/admin/sections/admin-models.test.tsx",
+            "app/admin/sections/admin-people-scroll.test.tsx",
+            "app/admin/sections/admin-people-unanswered.test.tsx",
+            "app/admin/sections/admin-person-sections.test.tsx",
+            "app/admin/sections/admin-route-errors.test.tsx",
+            "app/admin/sections/admin-session.test.tsx",
+            "app/admin/sections/admin-states.test.tsx",
+            "app/admin/sections/admin-users-actions-2816.test.tsx",
+            "app/admin/sections/crm-delivery.test.tsx",
+            "app/admin/sections/decision-signals.test.tsx",
+            "app/admin/sections/external-images-global.test.tsx",
+            "app/admin/sections/limits-source-overrides.test.tsx",
+            "app/admin/sections/marketing-money-limits-2258.test.tsx",
+            "app/admin/sections/observability.test.tsx",
+            "app/admin/sections/product-defaults.test.tsx",
+            "app/admin/sections/product-statistics.test.tsx",
+            "app/admin/sections/run-trace-1535.test.tsx",
+            "app/admin/sections/run-trace-layout-1535.test.ts",
+            "app/admin/sections/user-new.test.tsx",
+            "app/admin/shell/rtl-1015.test.tsx",
+            "app/admin/shell/search.test.tsx",
+            "app/admin/shell/text.test.tsx",
+            "app/admin/state/invite-quota-2266.test.ts",
+            "app/src/account-data-agent-tests/interests-on-server.test.ts",
+            "app/src/account-data-agent-tests/invites-session.test.ts",
+            "app/src/account-data-agent-tests/move-local-data.test.ts",
+            "app/src/all-iterations-agent-tests/iteration-gate.test.ts",
+            "app/src/all-iterations-agent-tests/pipeline-records-reach-server.test.ts",
+            "app/src/all-iterations-agent-tests/registry-record.test.ts",
+            "app/src/answer-draft-agent-tests/echo.test.ts",
+            "app/src/answer-draft-agent-tests/races.test.ts",
+            "app/src/answer-draft-agent-tests/start-once.test.ts",
+            "app/src/answer-draft-agent-tests/sync.test.ts",
+            "app/src/answer-loop-1175-agent-tests/answer-loop.test.ts",
+            "app/src/auth/server-sign-in.invariants.test.ts",
+            "app/src/background-save-1545-agent-tests/background-save.test.ts",
+            "app/src/big-library-936-agent-tests/delete-reconcile.test.ts",
+            "app/src/big-library-936-agent-tests/first-open.test.ts",
+            "app/src/big-library-936-agent-tests/summaries-level.test.ts",
+            "app/src/browser-reader-1580-agent-tests/reader.test.ts",
+            "app/src/bug-notice-2205-agent-tests/integration.test.tsx",
+            "app/src/bugs-page-2018-agent-tests/bugs-client.test.ts",
+            "app/src/bugs-page-2018-agent-tests/dev-report-retry-2133.test.ts",
+            "app/src/bugs-page-2018-agent-tests/durable-dev-report-2133.test.ts",
+            "app/src/bugs-page-2018-agent-tests/durable-dev-report-shell-2133.test.tsx",
+            "app/src/bugs-page-2018-agent-tests/durable-editor-shell-2133.test.tsx",
+            "app/src/bugs-page-2018-agent-tests/events-restart-v2-2133.test.ts",
+            "app/src/bugs-page-2018-agent-tests/events-v2-2133.test.ts",
+            "app/src/bugs-page-2018-agent-tests/idle-events-2142.test.ts",
+            "app/src/bugs-page-2018-agent-tests/idle-report-recovery-2142.test.ts",
+            "app/src/bugs-page-2018-agent-tests/offline-v2-2133.test.tsx",
+            "app/src/bugs-page-2018-agent-tests/proxy-2133.test.ts",
+            "app/src/bugs-page-2018-agent-tests/read-bell-injected-2133.test.tsx",
+            "app/src/bugs-page-2018-agent-tests/read-receipt-v2-2133.test.ts",
+            "app/src/bugs-page-2018-agent-tests/receiver-read-contract-2133.test.ts",
+            "app/src/bugs-page-2018-agent-tests/reply-retry-v2-2133.test.ts",
+            "app/src/bugs-page-2018-agent-tests/unread-2129.test.ts",
+            "app/src/bugs-page-2018-agent-tests/v2-2133.test.ts",
+            "app/src/catalog-take-441-agent-tests/catalog-take-command.test.ts",
+            "app/src/category-1841-agent-tests/category-1841.test.tsx",
+            "app/src/chat-budget-agent-tests/generate-variant-out-of-bounds.test.ts",
+            "app/src/chat-budget-agent-tests/split-course-hint-no-narrow.test.ts",
+            "app/src/chat-controls-right-1989-agent-tests/controls-right.test.ts",
+            "app/src/chat-diagrams-1114-agent-tests/browser.test.ts",
+            "app/src/chat-diagrams-1114-agent-tests/course-chat-line.test.tsx",
+            "app/src/chat-diagrams-1114-agent-tests/stream-render-race.test.tsx",
+            "app/src/chat-failed-turn-shown-agent-tests/reason-before-model-1904.test.ts",
+            "app/src/chat-failed-turn-shown-agent-tests/reason-unconfirmed-2789.test.ts",
+            "app/src/chat-generation-agent-tests/generation-task-board.test.ts",
+            "app/src/chat-list-897-agent-tests/chats-list-in-browser.test.ts",
+            "app/src/chat-phone-agent-tests/composer-on-phone.test.ts",
+            "app/src/chat-phone-agent-tests/feed-follows-new-lines.test.ts",
+            "app/src/chat-phone-agent-tests/new-chat-on-phone.test.ts",
+            "app/src/chat-phone-agent-tests/reply-stays-on-finish.test.ts",
+            "app/src/chat-phone-agent-tests/slow-turn-on-phone.test.ts",
+            "app/src/chat-phone-agent-tests/stays-put-on-phone.test.ts",
+            "app/src/chat-reveal-1113-agent-tests/reveal-1162.test.ts",
+            "app/src/chat-send-1110-agent-tests/course-chat-1110.test.ts",
+            "app/src/chat-size-1132-agent-tests/reader-chat-limit.test.tsx",
+            "app/src/chat-toast-not-over-h1-agent-tests/toast-not-over-h1.test.ts",
+            "app/src/choice-answer-1203-agent-tests/choice-answer-layout.test.ts",
+            "app/src/choice-metadata-1790-agent-tests/import.test.ts",
+            "app/src/choice-metadata-1790-agent-tests/metadata.test.ts",
+            "app/src/circle-seven-c-571-agent-tests/circle-seven-c-571.test.tsx",
+            "app/src/client-store-indexeddb-agent-tests/client-store.test.ts",
+            "app/src/close-share-agent-tests/course-close-command.test.ts",
+            "app/src/closing-redesign-1010-agent-tests/closing.test.tsx",
+            "app/src/closing-reload-agent-tests/close-action-hidden-while-mark-set.invariants.test.ts",
+            "app/src/closing-reload-agent-tests/gap-module-complete-1664.test.tsx",
+            "app/src/collapsed-navigation-1033-agent-tests/collapsed-navigation-browser.test.ts",
+            "app/src/collapsed-panel-1034-agent-tests/collapsed-panel-centering.test.ts",
+            "app/src/commands/commands.test.ts",
+            "app/src/commands/course-select-command.test.ts",
+            "app/src/commands/declarations.invariants.test.ts",
+            "app/src/concept-feedback-agent-tests/pipeline-feedback.test.tsx",
+            "app/src/course-iteration-target-2048-agent-tests/course-iteration-browser-2048.test.ts",
+            "app/src/course-links-u7-agent-tests/bug-links.test.tsx",
+            "app/src/course-links-u7-agent-tests/notice-links.test.tsx",
+            "app/src/course-links-u7-agent-tests/running-links.test.tsx",
+            "app/src/course-links-u7-agent-tests/variant-links.test.tsx",
+            "app/src/course-menu-1957-agent-tests/course-menu-overflow.test.ts",
+            "app/src/course-move-refused-agent-tests/refused-move-returns.test.ts",
+            "app/src/course-notice-groups-2003-agent-tests/course-notice-groups.test.tsx",
+            "app/src/course-numbers-420-agent-tests/course-numbers-consistency.test.ts",
+            "app/src/course-recommendation-agent-tests/recommendations.test.ts",
+            "app/src/data-integrity-agent-tests/client-recovery.test.ts",
+            "app/src/data-integrity-agent-tests/exchange-contract.test.ts",
+            "app/src/data/addressed-corpus.test.ts",
+            "app/src/data/archive-answer-2084.test.ts",
+            "app/src/data/automatic-source-1875.test.ts",
+            "app/src/data/corpus-review.test.ts",
+            "app/src/data/corpus.test.ts",
+            "app/src/data/course-money-privacy-2729.test.ts",
+            "app/src/data/course-tree.test.ts",
+            "app/src/data/dash-bugs-activity.test.ts",
+            "app/src/data/domain-key-agent-tests/domain-key.test.ts",
+            "app/src/data/first-screen-corpus.invariants.test.ts",
+            "app/src/data/import-honest-exit.test.ts",
+            "app/src/data/import-legacy-module-summary.test.ts",
+            "app/src/data/import-question-heading-suffix.test.ts",
+            "app/src/data/import-question-text-not-empty.test.ts",
+            "app/src/data/import-review-1490.test.ts",
+            "app/src/data/import.test.ts",
+            "app/src/data/julia-question-stems.test.ts",
+            "app/src/data/knowledge-level-mvp-retirement.test.ts",
+            "app/src/data/lettered-subquestions.test.ts",
+            "app/src/data/library-client-files.test.ts",
+            "app/src/data/library-diff-936.test.ts",
+            "app/src/data/library-first-screen.test.ts",
+            "app/src/data/library-sidecars-1405.test.ts",
+            "app/src/data/library.invariants.test.ts",
+            "app/src/data/library.test.ts",
+            "app/src/data/material-loading-1312.test.ts",
+            "app/src/data/materials.test.ts",
+            "app/src/data/no-nul-bytes.invariants.test.ts",
+            "app/src/data/platform-course.test.ts",
+            "app/src/data/questions-of-iteration.test.ts",
+            "app/src/data/startup-budget-1900.test.ts",
+            "app/src/data/tree-groups-current-fields-1839.test.ts",
+            "app/src/dedupe-shared-specs-agent-tests/session-wait.test.ts",
+            "app/src/dedupe-shared-specs-agent-tests/waiting-budget.invariants.test.ts",
+            "app/src/dedupe-shared-specs-agent-tests/waiting-rule.test.ts",
+            "app/src/desktop-sections-collapse-2041-agent-tests/desktop-sections-collapse.test.ts",
+            "app/src/deterministic-quizzes-1043-agent-tests/current-publication.test.ts",
+            "app/src/dev-reports-agent-tests/author-closure-2326.test.tsx",
+            "app/src/dev-reports-agent-tests/bounded-retry-2317.test.ts",
+            "app/src/dev-reports-agent-tests/bug-icon-notices-1750.test.tsx",
+            "app/src/dev-reports-agent-tests/bug-icon-notices-1750.visual.test.tsx",
+            "app/src/dev-reports-agent-tests/bug-notices-card-sync-1859.test.tsx",
+            "app/src/dev-reports-agent-tests/capture-delivery-2363.test.ts",
+            "app/src/dev-reports-agent-tests/capture-integrity-2312.test.tsx",
+            "app/src/dev-reports-agent-tests/delivered-detail-2238.test.tsx",
+            "app/src/dev-reports-agent-tests/delivery-diagnostics-2318.test.ts",
+            "app/src/dev-reports-agent-tests/delivery-key-race-2238.test.tsx",
+            "app/src/dev-reports-agent-tests/delivery-network-diagnostics-2318.test.ts",
+            "app/src/dev-reports-agent-tests/delivery-repair-diagnostics-2318.test.ts",
+            "app/src/dev-reports-agent-tests/delivery-retry-2238.test.ts",
+            "app/src/dev-reports-agent-tests/list-delivery-2630.test.tsx",
+            "app/src/dev-reports-agent-tests/list-performance-2281.test.tsx",
+            "app/src/dev-reports-agent-tests/local-detail-2238.test.tsx",
+            "app/src/dev-reports-agent-tests/local-detail-2238.visual.test.tsx",
+            "app/src/dev-reports-agent-tests/my-bugs-resend-2922.test.ts",
+            "app/src/dev-reports-agent-tests/offline-bugs-1914.visual.test.tsx",
+            "app/src/dev-reports-agent-tests/omission-payload-2335.test.ts",
+            "app/src/dev-reports-agent-tests/owner-queue-1302-2238.test.tsx",
+            "app/src/dev-reports-agent-tests/ownerless-queue-2238.test.ts",
+            "app/src/dev-reports-agent-tests/queue-performance-2281.test.ts",
+            "app/src/dev-reports-agent-tests/queue-recovery-2238.test.ts",
+            "app/src/dev-reports-agent-tests/queue-repair-2314.visual.test.tsx",
+            "app/src/dev-reports-agent-tests/queue-repair-guards-2314.test.ts",
+            "app/src/dev-reports-agent-tests/recovery-2317.visual.test.tsx",
+            "app/src/dev-reports-agent-tests/recovery-actions-2317.test.tsx",
+            "app/src/dev-reports-agent-tests/recovery-send-now-2238.test.tsx",
+            "app/src/dev-reports-agent-tests/reliable-delivery-2921.test.ts",
+            "app/src/dev-reports-agent-tests/reload-queue-2238.test.ts",
+            "app/src/dev-reports-agent-tests/screenshot-consent-2335.test.tsx",
+            "app/src/dev-reports-agent-tests/screenshotless-2315.test.tsx",
+            "app/src/dev-reports-agent-tests/send-latency-2287.test.tsx",
+            "app/src/dev-reports-agent-tests/status-notices-1711.test.tsx",
+            "app/src/dev-reports-agent-tests/storage-deadline-2639.test.tsx",
+            "app/src/dev-reports-agent-tests/unauthenticated-bugs-1737.test.tsx",
+            "app/src/dev-reports-agent-tests/unauthenticated-bugs-1737.visual.test.tsx",
+            "app/src/dev-reports-agent-tests/unverified-capture-receipt-2312.test.ts",
+            "app/src/dev-reports-agent-tests/webkit-delivery-2321.test.ts",
+            "app/src/dev-reports/annotations-1853.test.ts",
+            "app/src/dev-reports/automatic-command-1875.test.ts",
+            "app/src/dev-reports/automatic-problems-1875.test.ts",
+            "app/src/dev-reports/automatic-requests-1875.test.ts",
+            "app/src/dev-reports/automatic-source-1875.browser.test.ts",
+            "app/src/dev-reports/capture-content-2352.test.tsx",
+            "app/src/dev-reports/capture-deadline-2363.test.ts",
+            "app/src/dev-reports/control-layout.test.ts",
+            "app/src/dev-reports/editor-2280.visual.test.tsx",
+            "app/src/dev-reports/material-capture-deadline-2346.test.ts",
+            "app/src/dev-reports/problem-snapshot.test.ts",
+            "app/src/dev-reports/snapshot-size-1481.test.ts",
+            "app/src/dev-reports/snapshot.test.ts",
+            "app/src/display-stop-agent-tests/generation-stopped.test.tsx",
+            "app/src/exchange/connection-probe.test.ts",
+            "app/src/exchange/contract.test.ts",
+            "app/src/exchange/course-delete-2118.test.ts",
+            "app/src/exchange/course-delete-batch.test.ts",
+            "app/src/exchange/course-delete-recovery-2118.test.ts",
+            "app/src/exchange/draft-batch-2440.test.ts",
+            "app/src/exchange/exchange-answer.test.ts",
+            "app/src/exchange/exchange.test.ts",
+            "app/src/exchange/live-transport.test.ts",
+            "app/src/exchange/mock-transport.invariants.test.ts",
+            "app/src/exchange/mock-transport.test.ts",
+            "app/src/exchange/network-fault-agent-tests/queued-answers.test.ts",
+            "app/src/exchange/outgoing-queue.test.ts",
+            "app/src/exchange/page-probe.test.ts",
+            "app/src/exchange/reconnect-jitter-1900.test.ts",
+            "app/src/exchange/record-list-basic-2738.test.ts",
+            "app/src/exchange/record-list-privacy-2729.test.ts",
+            "app/src/exchange/server-version.test.ts",
+            "app/src/exchange/session-boot-guest-tree.test.ts",
+            "app/src/exchange/session-boot-throttled.test.ts",
+            "app/src/exchange/startup-batch.test.ts",
+            "app/src/exchange/test-generation-lazy.test.ts",
+            "app/src/existing-account-1866-agent-tests/browser.test.ts",
+            "app/src/failed-course-phone-1528-agent-tests/layout.test.ts",
+            "app/src/fast-typing-1102-agent-tests/answer-field.test.ts",
+            "app/src/fast-typing-1102-agent-tests/chat-composer.test.ts",
+            "app/src/fast-typing-1102-agent-tests/reader-chat.test.ts",
+            "app/src/finished-tasks-u4-2150-agent-tests/finished-tasks-u4.test.tsx",
+            "app/src/first-load-agent-tests/site-build-cache.test.ts",
+            "app/src/first-load-theme-1727-agent-tests/first-load-theme.test.ts",
+            "app/src/first-message-2356-agent-tests/visible-with-keyboard.test.ts",
+            "app/src/first-tap-1732-agent-tests/send.test.ts",
+            "app/src/font-apostrophes-1639-agent-tests/apostrophes.test.ts",
+            "app/src/gap-count-agent-tests/gap-count-on-live-records.test.ts",
+            "app/src/gap-remainder-agent-tests/remainder-open-gaps-count.test.ts",
+            "app/src/gap-remainder-agent-tests/unanswered-module-not-passed.test.ts",
+            "app/src/generated-card-agent-tests/generated-module-material.test.ts",
+            "app/src/generated-flow-agent-tests/generated-flow.invariants.test.ts",
+            "app/src/generated-flow-agent-tests/import-questions-numbered-subquestions.test.ts",
+            "app/src/generation-failure-agent-tests/round19-material-reason-2248.test.ts",
+            "app/src/generation-failure-agent-tests/round23-questions-reason-2248.test.ts",
+            "app/src/generation-failure-agent-tests/unmapped-codes-fallback.test.ts",
+            "app/src/generation-limit-agent-tests/run-status-drops-retry-time.test.ts",
+            "app/src/generation-wait-2555-agent-tests/wall-clock.test.tsx",
+            "app/src/go-on-material-agent-tests/go-on-opens-next-material.test.ts",
+            "app/src/guest-header-1619-agent-tests/header.test.ts",
+            "app/src/guest-sign-in-adds-1593-agent-tests/layout.test.ts",
+            "app/src/guest-theme-2561.browser.test.ts",
+            "app/src/header-model-agent-tests/retired-names.test.ts",
+            "app/src/human-messages-agent-tests/registry.test.ts",
+            "app/src/human-messages-agent-tests/truthful-reasons.test.ts",
+            "app/src/integration-agent-tests/critical-attempt-module.test.ts",
+            "app/src/ios-topbar-1520-agent-tests/layout.test.ts",
+            "app/src/ios-topbar-1520-agent-tests/retry.test.tsx",
+            "app/src/iteration-answer-type-agent-tests/state-answer-type.test.ts",
+            "app/src/iteration-number-agent-tests/letter-module-answer-deliver.invariants.test.ts",
+            "app/src/journal-after-generation-agent-tests/course-page-false-failure-from-notification.test.ts",
+            "app/src/journal-after-generation-agent-tests/journal-failed-generation-shows-course-title.test.ts",
+            "app/src/journal-after-generation-agent-tests/journal-reload-loses-completed-generation.test.tsx",
+            "app/src/journal-after-generation-agent-tests/journal-stale-open-chat-hides-row.test.ts",
+            "app/src/journal-u4-agent-tests/journal-results.test.tsx",
+            "app/src/journeys/test-accounts.test.tsx",
+            "app/src/language-maturity-agent-tests/language-maturity.test.tsx",
+            "app/src/learning-flow-agent-tests/focus.test.ts",
+            "app/src/learning-import-real-agent-tests/imported-course-zones.test.ts",
+            "app/src/learning-import-real-agent-tests/imported-learning-leftovers.test.tsx",
+            "app/src/learning-import-real-agent-tests/material-cross-links.test.ts",
+            "app/src/learning-import-real-agent-tests/real-library.test.ts",
+            "app/src/library-delete-2083-agent-tests/reopen-library.test.ts",
+            "app/src/library-phone-2159-agent-tests/geometry.test.ts",
+            "app/src/limit-budget-agent-tests/idle-client.test.ts",
+            "app/src/limits-agent-tests/refusal-texts.test.ts",
+            "app/src/limits-agent-tests/registry.invariants.test.ts",
+            "app/src/live-connection-936-agent-tests/client-outdated.test.ts",
+            "app/src/live-connection-936-agent-tests/connection-state.test.ts",
+            "app/src/live-connection-936-agent-tests/offline-quiet.test.ts",
+            "app/src/live-connection-936-agent-tests/positions.test.ts",
+            "app/src/live-connection-936-agent-tests/reconnect-backoff.test.ts",
+            "app/src/markdown/chat-overflow-1028.test.tsx",
+            "app/src/markdown/code-blocks.test.ts",
+            "app/src/markdown/dependency-sanitization-2965.test.ts",
+            "app/src/markdown/draw-reflow-accessibility.test.ts",
+            "app/src/markdown/explicit-anchor.test.ts",
+            "app/src/markdown/external-images-policy.test.ts",
+            "app/src/markdown/formula-marker-1692.test.ts",
+            "app/src/markdown/formula-reader-surface-1633.test.ts",
+            "app/src/markdown/gantt.test.ts",
+            "app/src/markdown/mermaid-commentary-2776.test.ts",
+            "app/src/markdown/mermaid-presentation-2316.test.tsx",
+            "app/src/markdown/reader-keyboard-1028.test.tsx",
+            "app/src/markdown/render-mermaid-code.test.ts",
+            "app/src/markdown/render-mermaid-source.test.ts",
+            "app/src/markdown/render.test.ts",
+            "app/src/markdown/rtl.test.tsx",
+            "app/src/markdown/service-anchors-2382.test.ts",
+            "app/src/markdown/shared-drawing-1028.test.tsx",
+            "app/src/markdown/table-fit.test.ts",
+            "app/src/markdown/tree-diagram.test.ts",
+            "app/src/marketing-share-2261-agent-tests/package-resolution.test.ts",
+            "app/src/marketing-share-2261-agent-tests/share-navigation.test.tsx",
+            "app/src/material-panel-1650-agent-tests/desktop-header-2388.test.ts",
+            "app/src/material-panel-1650-agent-tests/layout.test.ts",
+            "app/src/material-tex-agent-tests/paren-delimited-formulas.test.ts",
+            "app/src/menu-layout-1830-agent-tests/menu-layout.test.ts",
+            "app/src/messages/catalog-review-subscription.test.ts",
+            "app/src/messages/channel.test.ts",
+            "app/src/messages/share-content-refusal.test.ts",
+            "app/src/model-activity-agent-tests/generation-waiting-u6.test.tsx",
+            "app/src/model-activity-agent-tests/usual-duration-from-recordings.test.ts",
+            "app/src/module-caption-2557-agent-tests/caption.test.tsx",
+            "app/src/module-cost-zones-agent-tests/same-state-cost.test.ts",
+            "app/src/next-action-316-agent-tests/next-action-progress.test.ts",
+            "app/src/next-module-running-1665-agent-tests/preparing-review-geometry.test.ts",
+            "app/src/no-server-polling-1326-agent-tests/run-state-does-not-poll-after-read-error.test.ts",
+            "app/src/notices-1829-agent-tests/notices-bell-close.test.ts",
+            "app/src/notices-1855-agent-tests/notices-phone-header-overlap.test.ts",
+            "app/src/notices-badge-577-agent-tests/nine-plus-clears-bell.test.ts",
+            "app/src/notification-center-agent-tests/bell-u11.test.tsx",
+            "app/src/notification-center-agent-tests/course-published-group-2098.test.ts",
+            "app/src/notification-center-agent-tests/journal-kept.test.ts",
+            "app/src/notification-center-agent-tests/learning-priority-open-u11.test.tsx",
+            "app/src/notification-center-agent-tests/learning-priority-u11.test.ts",
+            "app/src/notification-center-agent-tests/list-read-once.test.ts",
+            "app/src/notification-center-agent-tests/notice-counter.test.ts",
+            "app/src/notification-center-agent-tests/subject-opened.test.ts",
+            "app/src/notify-over-socket-agent-tests/bounded-reconnect.test.ts",
+            "app/src/notify-over-socket-agent-tests/export-progress-events.test.ts",
+            "app/src/notify-over-socket-agent-tests/export-start-refused.test.ts",
+            "app/src/notify-over-socket-agent-tests/generation-progress-events.test.ts",
+            "app/src/notify-over-socket-agent-tests/reconnect.test.ts",
+            "app/src/notify-over-socket-agent-tests/settings-open-requests.test.ts",
+            "app/src/notify-over-socket-agent-tests/single-connection.test.ts",
+            "app/src/notify-over-socket-agent-tests/task-completions.test.ts",
+            "app/src/offline-1419-agent-tests/offline-routes.test.ts",
+            "app/src/offline-header-1623-agent-tests/layout.test.ts",
+            "app/src/offline-reader-1641-agent-tests/reload.test.ts",
+            "app/src/order-question-1808-agent-tests/order-question.test.tsx",
+            "app/src/parallel-iterations-agent-tests/abandoned-attempt-993.test.ts",
+            "app/src/parallel-iterations-agent-tests/board.test.ts",
+            "app/src/pass-carry-gaps-agent-tests/closing-and-pass-two-gaps.test.ts",
+            "app/src/phone-1197-agent-tests/layout-probes.test.ts",
+            "app/src/plan-detail-cuts-agent-tests/detail-cuts.test.tsx",
+            "app/src/platform-course-1898-agent-tests/priority.test.ts",
+            "app/src/platform-quiz-review-1398-agent-tests/guest-review-answers.test.ts",
+            "app/src/print-diagrams-1384-agent-tests/print-media-diagrams.test.tsx",
+            "app/src/print-diagrams-2042-agent-tests/print-diagram-height.test.tsx",
+            "app/src/print-paragraph-spacing-1577-agent-tests/print-spacing.test.ts",
+            "app/src/problem-button-1624-agent-tests/assets.test.tsx",
+            "app/src/problem-button-1704-agent-tests/double-click.test.ts",
+            "app/src/problem-button-1821-agent-tests/problem-form-layer.test.ts",
+            "app/src/problem-button-1973-agent-tests/failed-read.test.ts",
+            "app/src/problem-report-1752-agent-tests/problem-report-browser.test.ts",
+            "app/src/problem-report-1857-agent-tests/layers.test.ts",
+            "app/src/problem-report-2516-agent-tests/confirmation-browser.test.ts",
+            "app/src/problems-agent-tests/appearance-1746.test.ts",
+            "app/src/problems-agent-tests/appearance-1777.test.ts",
+            "app/src/problems-agent-tests/author-withdrawal-2336.test.tsx",
+            "app/src/problems-agent-tests/bug-capture-viewer-2050.test.tsx",
+            "app/src/problems-agent-tests/bug-capture-viewer-2050.visual.test.tsx",
+            "app/src/problems-agent-tests/bug-header-order-2207.test.tsx",
+            "app/src/problems-agent-tests/captures-1754.test.ts",
+            "app/src/problems-agent-tests/captures-1823.test.ts",
+            "app/src/problems-agent-tests/catalog-2286.test.tsx",
+            "app/src/problems-agent-tests/comment-1709.test.tsx",
+            "app/src/problems-agent-tests/comment-1778.test.tsx",
+            "app/src/problems-agent-tests/comment-links-1877.test.tsx",
+            "app/src/problems-agent-tests/comments-collapse-1916.test.tsx",
+            "app/src/problems-agent-tests/composer-1777.test.tsx",
+            "app/src/problems-agent-tests/composer-2044.test.tsx",
+            "app/src/problems-agent-tests/composer-2049.test.tsx",
+            "app/src/problems-agent-tests/delivery-state-2313.test.tsx",
+            "app/src/problems-agent-tests/delta-1858.test.tsx",
+            "app/src/problems-agent-tests/escape-2040.test.tsx",
+            "app/src/problems-agent-tests/escape-composer-1976.test.tsx",
+            "app/src/problems-agent-tests/filter-1825.test.tsx",
+            "app/src/problems-agent-tests/filter-scroll-2047.test.tsx",
+            "app/src/problems-agent-tests/filter-scroll-2047.visual.test.tsx",
+            "app/src/problems-agent-tests/filter-sheet-2504.test.tsx",
+            "app/src/problems-agent-tests/filter-switch-b4876d27.test.tsx",
+            "app/src/problems-agent-tests/filters-1850.test.tsx",
+            "app/src/problems-agent-tests/full-decisions-1712.test.tsx",
+            "app/src/problems-agent-tests/geometry-1559.test.ts",
+            "app/src/problems-agent-tests/geometry-1716.test.ts",
+            "app/src/problems-agent-tests/geometry-1723.test.ts",
+            "app/src/problems-agent-tests/geometry-1743.test.ts",
+            "app/src/problems-agent-tests/human-views-2274.test.tsx",
+            "app/src/problems-agent-tests/images-1741.test.tsx",
+            "app/src/problems-agent-tests/ios-inputs-2244.visual.test.tsx",
+            "app/src/problems-agent-tests/kinds-1753.test.tsx",
+            "app/src/problems-agent-tests/kinds-1791.test.tsx",
+            "app/src/problems-agent-tests/link-names-2327.test.tsx",
+            "app/src/problems-agent-tests/list-1559.test.tsx",
+            "app/src/problems-agent-tests/live-comments-1856.test.tsx",
+            "app/src/problems-agent-tests/live-order-1861.test.tsx",
+            "app/src/problems-agent-tests/loading-1876.test.tsx",
+            "app/src/problems-agent-tests/loading-1882.test.tsx",
+            "app/src/problems-agent-tests/mobile-filters-dense-cards-1864.test.tsx",
+            "app/src/problems-agent-tests/my-bugs-u21.test.tsx",
+            "app/src/problems-agent-tests/offline-detail-2100.test.tsx",
+            "app/src/problems-agent-tests/order-dates-1978.test.tsx",
+            "app/src/problems-agent-tests/own-detail-2332.test.tsx",
+            "app/src/problems-agent-tests/performance-1730.test.tsx",
+            "app/src/problems-agent-tests/phone-bug-dom-view-1845.test.tsx",
+            "app/src/problems-agent-tests/phone-bug-list-1837.test.tsx",
+            "app/src/problems-agent-tests/phone-bug-view-1836.test.tsx",
+            "app/src/problems-agent-tests/problem-types-1892.test.tsx",
+            "app/src/problems-agent-tests/swipe-capture-viewer-2125.webkit.test.tsx",
+            "app/src/problems-agent-tests/swipe-capture-viewer-2145.test.tsx",
+            "app/src/problems-agent-tests/swipe-capture-viewer-2145.visual.test.tsx",
+            "app/src/problems-agent-tests/workflow-1716.test.tsx",
+            "app/src/product-feedback-agent-tests/context-privacy-2523.test.ts",
+            "app/src/product-feedback-agent-tests/phone-1531.test.ts",
+            "app/src/question-answer-editor-agent-tests/editor.test.tsx",
+            "app/src/question-answer-editor-agent-tests/multipart-native.test.ts",
+            "app/src/question-answer-editor-agent-tests/native-integration.test.ts",
+            "app/src/question-markdown-1757-agent-tests/import.test.ts",
+            "app/src/random-choice-870-agent-tests/missing-live-1157.test.tsx",
+            "app/src/reader-chat-phone-1137-agent-tests/phone-sheet.test.ts",
+            "app/src/reader-code-size-1930-agent-tests/code-size.test.ts",
+            "app/src/reader-header-2394-agent-tests/centered.test.ts",
+            "app/src/reader-material-chat-agent-tests/admitted-question-2926.test.tsx",
+            "app/src/reader-material-chat-agent-tests/chat-markdown-999.test.tsx",
+            "app/src/reader-material-chat-agent-tests/completion-without-event-2010.test.ts",
+            "app/src/reader-material-chat-agent-tests/drawer.test.tsx",
+            "app/src/reader-material-chat-agent-tests/link-failure-2222.test.tsx",
+            "app/src/reader-material-chat-agent-tests/markdown-layout.test.ts",
+            "app/src/reader-material-chat-agent-tests/markdown-reply.test.tsx",
+            "app/src/reader-material-chat-agent-tests/material-chat-1574.test.tsx",
+            "app/src/reader-material-chat-agent-tests/reading.test.tsx",
+            "app/src/reader-material-chat-agent-tests/retry.test.tsx",
+            "app/src/reader-material-chat-agent-tests/rollback-safety.test.tsx",
+            "app/src/reader-material-chat-agent-tests/rtl-resize-1015.test.tsx",
+            "app/src/reader-material-chat-agent-tests/scroll.test.tsx",
+            "app/src/reader-material-chat-agent-tests/source-evidence-2222.test.tsx",
+            "app/src/reader-material-chat-agent-tests/status.test.tsx",
+            "app/src/reader-material-chat-agent-tests/wide-desktop.test.ts",
+            "app/src/reader-mode-agent-tests/semantic-reading.test.ts",
+            "app/src/reader-overlays-1581-agent-tests/layers.test.ts",
+            "app/src/reader-page-owner-sources-agent-tests/banner-leaks-internal-call-name.test.tsx",
+            "app/src/reader-page-owner-sources-agent-tests/sources-dropped-from-shared-page.test.tsx",
+            "app/src/reader-stream-986-agent-tests/stream-lifecycle.test.tsx",
+            "app/src/reader-stream-986-agent-tests/streaming.test.tsx",
+            "app/src/reading-mode-390-agent-tests/reading-mode.test.ts",
+            "app/src/reading-position-1994-agent-tests/content-anchors.test.ts",
+            "app/src/reading-position-1994-agent-tests/reader-restore.test.tsx",
+            "app/src/reading-position-1994-agent-tests/reading-position-sync.test.ts",
+            "app/src/ready-toast-notice-panel-agent-tests/ready-toast-over-notice-panel.test.ts",
+            "app/src/ready-toast-over-controls-agent-tests/ready-toast-leaves-controls-reachable.test.ts",
+            "app/src/reconnect-reads-1951-agent-tests/reconnect-reads.test.ts",
+            "app/src/registry/catalog-flag.test.ts",
+            "app/src/registry/chat-context.test.ts",
+            "app/src/registry/configuration-compatibility.test.ts",
+            "app/src/registry/delivery-coverage.test.ts",
+            "app/src/registry/gift-month-1310.test.ts",
+            "app/src/registry/layers.test.ts",
+            "app/src/registry/matrix.test.ts",
+            "app/src/registry/registry.test.ts",
+            "app/src/registry/resolve.invariants.test.ts",
+            "app/src/registry/scheduled-courses-default.test.ts",
+            "app/src/registry/spaced-review-removed.test.ts",
+            "app/src/review-next-917-agent-tests/toast-inside-screen.test.ts",
+            "app/src/routing/bugs-address-2244.test.ts",
+            "app/src/routing/chat-routes.test.ts",
+            "app/src/routing/knowledge-map-retirement.test.ts",
+            "app/src/routing/public-addresses.test.ts",
+            "app/src/routing/route-identities-1490.test.ts",
+            "app/src/routing/routing.test.ts",
+            "app/src/run-wait-1579-agent-tests/adjacent-course-requests-1765.test.ts",
+            "app/src/run-wait-1579-agent-tests/requests-during-wait.test.ts",
+            "app/src/run-wait-1579-agent-tests/review-transition-2247.test.ts",
+            "app/src/running-stage-disclosure-agent-tests/generation-activity.test.tsx",
+            "app/src/screen-data-2169-agent-tests/screen-data-discrepancies.test.tsx",
+            "app/src/search-phone-1842-agent-tests/open-field.test.ts",
+            "app/src/search-shared-reader-1643-agent-tests/search-to-reader.test.ts",
+            "app/src/search/index-build-excerpt-markup.test.ts",
+            "app/src/search/index-version.test.ts",
+            "app/src/search/library-membership.invariants.test.ts",
+            "app/src/search/library-membership.test.ts",
+            "app/src/search/search.test.ts",
+            "app/src/section-divider-1072-agent-tests/divider-width.test.tsx",
+            "app/src/sections-agent-tests/course-card-domain-labels-agent.test.ts",
+            "app/src/sections-agent-tests/course-classification-delivery-agent.test.ts",
+            "app/src/sections-agent-tests/course-classification-details-agent.test.ts",
+            "app/src/sections-agent-tests/course-taxonomy-lists-1524.test.tsx",
+            "app/src/sections/admin-server-data.test.tsx",
+            "app/src/sections/ai-disclaimer-agent-tests/ai-disclaimer.test.tsx",
+            "app/src/sections/chain-admissions-2266.test.tsx",
+            "app/src/sections/course-card-alignment.test.ts",
+            "app/src/sections/course-chat-variant-iterations-count.test.ts",
+            "app/src/sections/course-share-dialog-1532.test.tsx",
+            "app/src/sections/forbidden-user-text.test.tsx",
+            "app/src/sections/guest-flow-copy-2288.test.ts",
+            "app/src/sections/hebrew-public-pages.test.ts",
+            "app/src/sections/invite-dev-bugs-1910.visual.test.tsx",
+            "app/src/sections/library-guest-2879.test.tsx",
+            "app/src/sections/mcp-access.test.tsx",
+            "app/src/sections/model-routing-settings.test.tsx",
+            "app/src/sections/problem-beetle-1769.test.tsx",
+            "app/src/sections/problem-beetle-1797.test.tsx",
+            "app/src/sections/problem-beetle.test.tsx",
+            "app/src/sections/problem-beetle.visual.test.tsx",
+            "app/src/sections/public-page-language.test.ts",
+            "app/src/sections/public-pages-machine-readable.test.ts",
+            "app/src/sections/reader-rtl-2183.test.ts",
+            "app/src/sections/review-forward.test.tsx",
+            "app/src/sections/rtl-portals.test.tsx",
+            "app/src/sections/sections-dependencies-2618.test.ts",
+            "app/src/sections/sections-panel-2618.test.tsx",
+            "app/src/sections/sharing-off-screen.test.tsx",
+            "app/src/sections/technical-trace.test.tsx",
+            "app/src/sections/your-files.invariants.test.tsx",
+            "app/src/security-tests/human-answer.test.tsx",
+            "app/src/security-tests/markdown-xss.test.tsx",
+            "app/src/security-tests/model-links.test.tsx",
+            "app/src/settings-1725-agent-tests/layout.test.tsx",
+            "app/src/shared-bugs-2107-agent-tests/ownership.test.ts",
+            "app/src/shared-markdown-1003-agent-tests/browser.test.ts",
+            "app/src/shared-markdown-1003-agent-tests/render.test.ts",
+            "app/src/sharing-agent-tests/share-refusals.test.ts",
+            "app/src/sharing/attribution-agent.test.ts",
+            "app/src/sharing/circulation.test.ts",
+            "app/src/sharing/extract.test.ts",
+            "app/src/sharing/gates.test.ts",
+            "app/src/sharing/invites.test.ts",
+            "app/src/sharing/links.test.ts",
+            "app/src/sharing/material-appearance-1911.test.ts",
+            "app/src/sharing/material-share-1331.test.ts",
+            "app/src/sharing/public-reading-observer-1644.test.ts",
+            "app/src/sharing/public-summary-1548.test.ts",
+            "app/src/sharing/public-summary-formula-1684.test.ts",
+            "app/src/sharing/reader.test.ts",
+            "app/src/sharing/shared-mermaid-1554.test.ts",
+            "app/src/sharing/shared-translation-1247.test.ts",
+            "app/src/sharing/short-link-language-1601.test.tsx",
+            "app/src/sharing/topic-card.test.ts",
+            "app/src/shell/account-projects.test.ts",
+            "app/src/shell/boot-correlation.test.ts",
+            "app/src/shell/bug-button-lift.test.ts",
+            "app/src/shell/build-mode.test.ts",
+            "app/src/shell/build-version.test.ts",
+            "app/src/shell/cache-update-2238.test.ts",
+            "app/src/shell/catalog-feature.test.ts",
+            "app/src/shell/chunk-reload.test.ts",
+            "app/src/shell/empty-root-2122.test.ts",
+            "app/src/shell/first-frame.test.ts",
+            "app/src/shell/frame-all-courses-count.test.ts",
+            "app/src/shell/guest-course-algorithmic.test.ts",
+            "app/src/shell/hidden-shortcuts-actions-2589.test.tsx",
+            "app/src/shell/library-upgrade-2373.test.ts",
+            "app/src/shell/menu-browser-1865.test.ts",
+            "app/src/shell/menu-chats.test.ts",
+            "app/src/shell/on-demand.test.tsx",
+            "app/src/shell/precache-upgrade-2399.browser.test.ts",
+            "app/src/shell/reload-updated-client.test.ts",
+            "app/src/shell/server-health-update.test.ts",
+            "app/src/shell/stale-reload.invariants.test.ts",
+            "app/src/shell/stale-reload.test.ts",
+            "app/src/shell/upgrade-recovery-2122.test.ts",
+            "app/src/shell/use-waiting.test.tsx",
+            "app/src/shell/waiting-observer.test.ts",
+            "app/src/sign-in-return-2877-agent-tests/return-to.test.tsx",
+            "app/src/sign-out-clears-messages-agent-tests/sign-out-clears-messages.test.ts",
+            "app/src/sign-out-clears-storage-agent-tests/sign-out-clears-storage.test.ts",
+            "app/src/startup-1729-agent-tests/home-request-burst.test.ts",
+            "app/src/state/active-course.test.ts",
+            "app/src/state/answer-submission.test.ts",
+            "app/src/state/build-onboarding.test.ts",
+            "app/src/state/cost-privacy-1605.test.tsx",
+            "app/src/state/fact-views.invariants.test.ts",
+            "app/src/state/library-structure.test.tsx",
+            "app/src/state/panel-view.test.ts",
+            "app/src/state/progression.invariants.test.ts",
+            "app/src/state/session-boundary.invariants.test.ts",
+            "app/src/state/sharing-lazy.test.ts",
+            "app/src/state/sharing-view.test.ts",
+            "app/src/state/spending.test.tsx",
+            "app/src/state/state.test.ts",
+            "app/src/state/week-restoration-2267.test.ts",
+            "app/src/storage/documents.invariants.test.ts",
+            "app/src/storage/documents.test.ts",
+            "app/src/storage/drafts-qas-2554.test.ts",
+            "app/src/storage/library-cache.test.ts",
+            "app/src/store/a1-app-regressions.test.ts",
+            "app/src/store/answer-draft-sync-echo.test.ts",
+            "app/src/store/applied-window.test.ts",
+            "app/src/store/course-share-lazy-2030.test.ts",
+            "app/src/store/external-images-layers.test.ts",
+            "app/src/store/feature-compatibility.test.ts",
+            "app/src/store/interface-language.test.ts",
+            "app/src/store/load-chats-guest.test.ts",
+            "app/src/store/mark-read-server.test.ts",
+            "app/src/store/open-course-notices-2196.test.ts",
+            "app/src/store/source-line-budget.test.ts",
+            "app/src/stream-outdated-course-1955-agent-tests/stream-outdated-course.test.ts",
+            "app/src/subscription-2260-agent-tests/screen.test.tsx",
+            "app/src/subscription-access-agent-tests/screen.test.tsx",
+            "app/src/summary-category-tree-agent-tests/category-tree.test.tsx",
+            "app/src/summary-path-agent-tests/close-summary-path.test.ts",
+            "app/src/summary-path-agent-tests/sharing-list-summary-path.test.ts",
+            "app/src/summary-reader-alignment-1933-agent-tests/summary-reader-alignment.test.ts",
+            "app/src/summary-share-1871-agent-tests/phone-share.test.ts",
+            "app/src/summary-share-891-agent-tests/listener-throws.test.ts",
+            "app/src/summary-source-gate-agent-tests/grok-summary-share.test.ts",
+            "app/src/taxonomy-1796-agent-tests/course-visibility.test.tsx",
+            "app/src/taxonomy-1796-agent-tests/historical-summary-1839.test.ts",
+            "app/src/test-support/browser-workspace-aliases-2733.test.ts",
+            "app/src/touch-tooltips-2515-agent-tests/focus.test.tsx",
+            "app/src/usage-limits-agent-tests/exhausted-message.test.ts",
+            "app/src/user-hub-outdated-1098-agent-tests/stream-outdated-snapshot.test.ts",
+            "app/src/visual-1194-agent-tests/last-closed-one-rule.test.ts",
+            "app/src/visual-1194-agent-tests/rising-cost-order.test.ts",
+            "app/src/wait-limits-agent-tests/client-not-before-server.test.ts",
+            "app/src/words-formats-2164-agent-tests/learner-copy.test.ts",
+            "app/src/work-progress-agent-tests/evidence.test.tsx",
+            "app/src/work-progress-agent-tests/layout.test.tsx",
+            "app/src/work-progress-agent-tests/projection.test.tsx",
+            "app/src/generation-status-agent-tests/projection.test.ts",
+            "app/src/generation-status-agent-tests/ui.test.tsx"
+          ],
+          "exactIds": "vitest-test-name",
+          "resultAdapter": "vitest-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "scripts/shared-library-runtime.mjs",
+            "scripts/shared-library-aliases.ts",
+            "scripts/shared-libs-path.mjs",
+            "app/vitest.config.ts",
+            "node_modules/vitest/vitest.mjs",
+            "node_modules/happy-dom/package.json"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        },
+        "vitest-worker": {
+          "cwd": "worker",
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../scripts/shared-library-runtime.mjs",
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "--configLoader",
+            "runner",
+            "--project",
+            "worker-unit"
+          ],
+          "unitFiles": [
+            "worker/infra/bugs-cutover-typecheck-2239.test.ts",
+            "worker/infra/call-counter-migration.test.ts",
+            "worker/infra/config.test.ts",
+            "worker/infra/durable-object-purge.test.ts",
+            "worker/infra/env-values.test.ts",
+            "worker/infra/field-cipher-secret-2963.test.ts",
+            "worker/infra/generation-safety-2531.test.ts",
+            "worker/infra/mail-service.test.ts",
+            "worker/infra/no-shard-ranges.test.ts",
+            "worker/infra/prod-durable-object-migration.test.ts",
+            "worker/infra/prod-storage-eu-cutover.test.ts",
+            "worker/infra/prod-storage-eu.test.ts",
+            "worker/infra/regional-resources.test.ts",
+            "worker/infra/resource-protocol-imports-2730.test.ts",
+            "worker/infra/secret-values-guard.test.ts",
+            "worker/infra/shared-consumer-types-2242.test.ts",
+            "worker/infra/shared-library-config-2242.test.ts",
+            "worker/infra/shared-library-exports-2272.test.ts",
+            "worker/infra/shared-library-types-2242.test.ts",
+            "worker/infra/single-source.test.ts",
+            "worker/scripts/checks-composition.test.ts",
+            "worker/scripts/collect-concept-embeddings.test.ts",
+            "worker/scripts/concept-import/canonical-source.test.ts",
+            "worker/scripts/concept-import/cli-canonical-only.test.ts",
+            "worker/scripts/concept-import/cli-readiness.test.ts",
+            "worker/scripts/concept-import/cli-source-toctou.test.ts",
+            "worker/scripts/concept-import/cloudflare-adapter-native-upload.test.ts",
+            "worker/scripts/concept-import/cloudflare-adapter.test.ts",
+            "worker/scripts/concept-import/local-source.test.ts",
+            "worker/scripts/concept-import/native-adapter.test.ts",
+            "worker/scripts/dependency-remediation-2965.test.ts",
+            "worker/scripts/deploy-guest-publications.test.ts",
+            "worker/scripts/deploy-merge-gates.test.ts",
+            "worker/scripts/deploy-merge-stage-cpu.test.ts",
+            "worker/scripts/deploy-security-environment-2211.test.ts",
+            "worker/scripts/deploy-timing.test.ts",
+            "worker/scripts/destructive-storage-replacement.test.ts",
+            "worker/scripts/dev1-without-guards.test.ts",
+            "worker/scripts/eval-concept-embeddings.test.ts",
+            "worker/scripts/feature-effort.test.ts",
+            "worker/scripts/fix-preview-plan.test.ts",
+            "worker/scripts/fix-preview.test.ts",
+            "worker/scripts/full-contract-selection.test.ts",
+            "worker/scripts/generation-benchmark/compare.test.ts",
+            "worker/scripts/generation-cycle-budget.test.ts",
+            "worker/scripts/generation-smoke-cutover-retention.test.ts",
+            "worker/scripts/generation-smoke.test.ts",
+            "worker/scripts/integration-test-group.test.ts",
+            "worker/scripts/knowledge-trace.test.ts",
+            "worker/scripts/learning-import/active-course-paths-agent.test.ts",
+            "worker/scripts/learning-import/course-only-publication-agent.test.ts",
+            "worker/scripts/learning-import/resumable-course-publication.test.ts",
+            "worker/scripts/live-run-report.test.ts",
+            "worker/scripts/manual-mutation.test.ts",
+            "worker/scripts/model-relay-absent-key.test.ts",
+            "worker/scripts/model-relay-key-file.test.ts",
+            "worker/scripts/orchestrator-paths.test.ts",
+            "worker/scripts/performance-budgets.test.ts",
+            "worker/scripts/performance-cli.test.ts",
+            "worker/scripts/pipeline-package-source-1803.test.ts",
+            "worker/scripts/prod-storage-eu/freeze.test.ts",
+            "worker/scripts/prod-storage-eu/r2.test.ts",
+            "worker/scripts/prod-storage-eu/s3.test.ts",
+            "worker/scripts/reanalyze-iterations.test.ts",
+            "worker/scripts/record-accepted-output.test.ts",
+            "worker/scripts/regenerate-open-iterations.test.ts",
+            "worker/scripts/regional-migrations.test.ts",
+            "worker/scripts/release-dependencies.test.ts",
+            "worker/scripts/repair-skills-guard.test.ts",
+            "worker/scripts/resource-protocol-aliases.test.ts",
+            "worker/scripts/security-gates.test.ts",
+            "worker/scripts/stamp-artifact.test.ts",
+            "worker/scripts/stand-flows.test.ts",
+            "worker/scripts/stand-local-paths.test.ts",
+            "worker/scripts/stand-local-secret-prefix.test.ts",
+            "worker/scripts/stand-request-report.test.ts",
+            "worker/scripts/step-live.test.ts",
+            "worker/scripts/supply-chain.test.ts",
+            "worker/scripts/test-account/cli.test.ts",
+            "worker/scripts/vitest-markdown-import-2270.test.ts",
+            "worker/scripts/vitest-worker-parallelism.test.ts",
+            "worker/scripts/worktree-workspace-aliases.test.ts",
+            "worker/scripts/wrangler-auth-token-ban.test.ts",
+            "worker/scripts/zero-downtime-rollback-1980.test.ts",
+            "worker/src/access-tiers-agent-tests/default-pair.test.ts",
+            "worker/src/access-tiers-agent-tests/single-source.test.ts",
+            "worker/src/admin-roles-agent-tests/local-stack.test.ts",
+            "worker/src/ai-gateway-agent-tests/gateway-auth.test.ts",
+            "worker/src/ai-gateway-payload-logging.test.ts",
+            "worker/src/all-iterations-agent-tests/submitted-fact.test.ts",
+            "worker/src/analysis-findings-1190-agent-tests/recorded-findings.test.ts",
+            "worker/src/analysis-findings-1196-agent-tests/recorded-prior-findings.test.ts",
+            "worker/src/analysis-input-1151-agent-tests/analysis-input.test.ts",
+            "worker/src/analysis-input-1151-agent-tests/review-failure-named.test.ts",
+            "worker/src/analysis-output-1177-agent-tests/dev1-tls-output.test.ts",
+            "worker/src/analysis-wait-1169-agent-tests/analysis-wait-limits.test.ts",
+            "worker/src/answer-level-1181-agent-tests/recorded-levels.test.ts",
+            "worker/src/answer-marker-1215-agent-tests/recorded-marker.test.ts",
+            "worker/src/answer-tag-agent-tests/answer-tag.test.ts",
+            "worker/src/anthropic-openai-coverage-agent-tests/error-and-reading.test.ts",
+            "worker/src/anthropic-openai-coverage-agent-tests/web-search-adapter.test.ts",
+            "worker/src/application-agent-tests/concept-knowledge-merge-agent.test.ts",
+            "worker/src/application-agent-tests/concept-plan-decision-agent.test.ts",
+            "worker/src/application-agent-tests/concept-work-progress-agent.test.ts",
+            "worker/src/application-agent-tests/historical-chat-output-1839.test.ts",
+            "worker/src/application-agent-tests/old-domain-keys-class-1839.test.ts",
+            "worker/src/application-agent-tests/qa-cost-soft-target-agent.test.ts",
+            "worker/src/application/admin-batch.test.ts",
+            "worker/src/application/admin-registration.test.ts",
+            "worker/src/application/admin-state-encrypted.test.ts",
+            "worker/src/application/automatic-source-command-1875.test.ts",
+            "worker/src/application/automatic-source-filter-1875.test.ts",
+            "worker/src/application/catalog-review-subscription.test.ts",
+            "worker/src/application/chat-variant-classification-2343-follow-up.test.ts",
+            "worker/src/application/chat-variant-classification-2343.test.ts",
+            "worker/src/application/concept-generation-plan-prompt.test.ts",
+            "worker/src/application/concept-import-commands.test.ts",
+            "worker/src/application/concept-import-finalization-registry.test.ts",
+            "worker/src/application/concept-import-renew.test.ts",
+            "worker/src/application/concept-question-marker-order.test.ts",
+            "worker/src/application/concept-question-selection-agent.test.ts",
+            "worker/src/application/course-actions-share-1533.test.ts",
+            "worker/src/application/course-copy-sidecars.test.ts",
+            "worker/src/application/course-deletion-2118.test.ts",
+            "worker/src/application/gap-material-1774.test.ts",
+            "worker/src/application/generation-stop.test.ts",
+            "worker/src/application/iteration-choice-1795.test.ts",
+            "worker/src/application/knowledge-field-code-1839.test.ts",
+            "worker/src/application/knowledge-query-batch-1535.test.ts",
+            "worker/src/application/knowledge-query-material.test.ts",
+            "worker/src/application/knowledge-transfer-commands.test.ts",
+            "worker/src/application/known-skills-1212.test.ts",
+            "worker/src/application/share-publication-policy.test.ts",
+            "worker/src/application/share-translation-1247.test.ts",
+            "worker/src/application/usage-boundary-1605.test.ts",
+            "worker/src/application/usage-privacy-1605.test.ts",
+            "worker/src/audit-166-agent-tests/access.test.ts",
+            "worker/src/audit-166-agent-tests/decisions.test.ts",
+            "worker/src/audit-166-agent-tests/http.test.ts",
+            "worker/src/audit-166-agent-tests/writer.test.ts",
+            "worker/src/backend-security-1891-agent-tests/population-query-budget.test.ts",
+            "worker/src/bugs-admission-agent-tests/integration-red.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/author-closure-2326.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/closed-outcomes-16.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/human-views-2274.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/human-views-paging-1875.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/live-readonly.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/network-transport.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/own-detail-2332.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/product-route.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/proxy.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/query-performance-2281.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/read-receipt.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/source-view-counts-2274.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/token.test.ts",
+            "worker/src/bugs-migration-2133-agent-tests/unread-service.test.ts",
+            "worker/src/burst-admission-agent-tests/gate-imports.test.ts",
+            "worker/src/chat-budget-agent-tests/budget-bounds-single-owner.test.ts",
+            "worker/src/chat-budget-agent-tests/turn-prompt-names-bounds.test.ts",
+            "worker/src/chat-failure-reason.test.ts",
+            "worker/src/chat-generation-agent-tests/chat-row.test.ts",
+            "worker/src/chat-intent-agent-tests/turn-intent-reader.test.ts",
+            "worker/src/chat-reply-stream-agent-tests/reply-prefix.test.ts",
+            "worker/src/chat-size-1132-agent-tests/chat-room.test.ts",
+            "worker/src/chat-turn-speed-agent-tests/draft-after-reload.test.ts",
+            "worker/src/choice-findings-1285-agent-tests/choice-finding-coverage.test.ts",
+            "worker/src/choice-order-1156-agent-tests/choice-order.test.ts",
+            "worker/src/choice-question-rules-agent-tests/items-output-rules.test.ts",
+            "worker/src/concept-duplicates-1494-agent-tests/candidates.test.ts",
+            "worker/src/concept-identity-1198-agent-tests/continued-units.test.ts",
+            "worker/src/control-attributes-agent-tests/attribute-mapping.test.ts",
+            "worker/src/control-attributes-agent-tests/catalog-output-budget.test.ts",
+            "worker/src/control-attributes-agent-tests/forbidden-fields-xai-reasoning.test.ts",
+            "worker/src/control-attributes-agent-tests/step-output-budget.test.ts",
+            "worker/src/cookie-consent.test.ts",
+            "worker/src/cookie-jurisdictions.test.ts",
+            "worker/src/course-address-909-agent-tests/course-key-segment.invariants.test.ts",
+            "worker/src/course-chat-agent-tests/commands.test.ts",
+            "worker/src/course-chat-agent-tests/course-chat.invariants.test.ts",
+            "worker/src/course-chat-agent-tests/course-chat.test.ts",
+            "worker/src/course-chat-agent-tests/inference-catalog.test.ts",
+            "worker/src/course-chat-agent-tests/model-not-called.test.ts",
+            "worker/src/course-classification-agent-tests/language-registry-1015.test.ts",
+            "worker/src/course-code-agent-tests/contract.test.ts",
+            "worker/src/course-generation-pipeline/native-fixture-1508.test.ts",
+            "worker/src/course-origin-agent-tests/course-origin-erasure.test.ts",
+            "worker/src/course-sources-agent-tests/explicit-site.test.ts",
+            "worker/src/course-top-down-agent-tests/budget-breach-course-chat.test.ts",
+            "worker/src/course-top-down-agent-tests/plan-prompt-contract.test.ts",
+            "worker/src/crm-agent-tests/schedule.test.ts",
+            "worker/src/database-agent-tests/concept-work-progress-agent.test.ts",
+            "worker/src/database-agent-tests/query-list-bounds.test.ts",
+            "worker/src/database-agent-tests/sql-listing-prefix-agent.test.ts",
+            "worker/src/database-agent-tests/sql-source-roots-2211.test.ts",
+            "worker/src/database/admin-store.test.ts",
+            "worker/src/database/course-open-gaps-states.test.ts",
+            "worker/src/dev-reports-agent-tests/bugs-address-2244.test.ts",
+            "worker/src/dev-reports-agent-tests/capture-integrity-2312.test.ts",
+            "worker/src/dev-reports-agent-tests/comment-images-browser-1741.test.ts",
+            "worker/src/dev-reports-agent-tests/direct-capture-receipt-2312.test.ts",
+            "worker/src/dev-reports-agent-tests/duplicate-delivery-2238.test.ts",
+            "worker/src/dev-reports-agent-tests/omission-replay-2314.test.ts",
+            "worker/src/dev-reports-agent-tests/qa-bug-type-1901.test.ts",
+            "worker/src/dev-reports-agent-tests/queue-repair-2314.test.ts",
+            "worker/src/dev-reports-agent-tests/relay-profile-2313.test.ts",
+            "worker/src/dev-reports-agent-tests/report-retry-2238.test.ts",
+            "worker/src/dev-reports-agent-tests/screenshotless-2315.test.ts",
+            "worker/src/display-repair-agent-tests/five-attempts.test.ts",
+            "worker/src/display-repair-agent-tests/mermaid-display.test.ts",
+            "worker/src/do-short-agent-tests/durable-objects-short.invariants.test.ts",
+            "worker/src/document-action-writes-contract.test.ts",
+            "worker/src/domain/account-data.test.ts",
+            "worker/src/domain/actor.invariants.test.ts",
+            "worker/src/domain/admin-roles.invariants.test.ts",
+            "worker/src/domain/concepts/evidence-strength-mutants.test.ts",
+            "worker/src/domain/concepts/evidence-strength.test.ts",
+            "worker/src/domain/concepts/export-validation.test.ts",
+            "worker/src/domain/concepts/finding-carry-forward.test.ts",
+            "worker/src/domain/concepts/generation-canonical-units.test.ts",
+            "worker/src/domain/concepts/generation-limits.test.ts",
+            "worker/src/domain/concepts/generation-material-artifact-1168.test.ts",
+            "worker/src/domain/concepts/generation-material-note.test.ts",
+            "worker/src/domain/concepts/generation-objective-quotes.test.ts",
+            "worker/src/domain/concepts/generation-output-v2.test.ts",
+            "worker/src/domain/concepts/generation-output.test.ts",
+            "worker/src/domain/concepts/generation-pinned-render.test.ts",
+            "worker/src/domain/concepts/generation-prompt.test.ts",
+            "worker/src/domain/concepts/generation-transport-v2-shape.test.ts",
+            "worker/src/domain/concepts/generation-transport-version.test.ts",
+            "worker/src/domain/concepts/generation-unit-issuer.test.ts",
+            "worker/src/domain/concepts/import-source-validation-acceptance.test.ts",
+            "worker/src/domain/concepts/multilingual-calibration-agent.test.ts",
+            "worker/src/domain/concepts/open-question-targets.test.ts",
+            "worker/src/domain/concepts/personal-knowledge-matching-1485.test.ts",
+            "worker/src/domain/concepts/plan-decision-agent.test.ts",
+            "worker/src/domain/concepts/prompt-pack-1880.test.ts",
+            "worker/src/domain/concepts/prompt-pack-registry.test.ts",
+            "worker/src/domain/concepts/prompt.test.ts",
+            "worker/src/domain/concepts/question-finding-topic.test.ts",
+            "worker/src/domain/concepts/question-language-2096.test.ts",
+            "worker/src/domain/concepts/question-plan.test.ts",
+            "worker/src/domain/concepts/retrieval-calibration.test.ts",
+            "worker/src/domain/concepts/retrieval-index.test.ts",
+            "worker/src/domain/concepts/retrieval-query.test.ts",
+            "worker/src/domain/concepts/retrieval-ranking.test.ts",
+            "worker/src/domain/concepts/retrieval-tuning.test.ts",
+            "worker/src/domain/concepts/semantic-knowledge-merge-agent.test.ts",
+            "worker/src/domain/concepts/source-yaml.test.ts",
+            "worker/src/domain/concepts/state-agent-tests/state-validation.test.ts",
+            "worker/src/domain/concepts/taxonomy-topic.test.ts",
+            "worker/src/domain/concepts/taxonomy.test.ts",
+            "worker/src/domain/concepts/topic-level.test.ts",
+            "worker/src/domain/concepts/validated-snapshot.test.ts",
+            "worker/src/domain/derivation.invariants.test.ts",
+            "worker/src/domain/derivation.test.ts",
+            "worker/src/domain/documents-gaps-heading-suffix.test.ts",
+            "worker/src/domain/documents-prompt-package.test.ts",
+            "worker/src/domain/documents.invariants.test.ts",
+            "worker/src/domain/documents.test.ts",
+            "worker/src/domain/events.invariants.test.ts",
+            "worker/src/domain/experiment-split.test.ts",
+            "worker/src/domain/experiments.invariants.test.ts",
+            "worker/src/domain/experiments.test.ts",
+            "worker/src/domain/inference-catalog.invariants.test.ts",
+            "worker/src/domain/inference-catalog.test.ts",
+            "worker/src/domain/invite-keys.invariants.test.ts",
+            "worker/src/domain/invite-keys.test.ts",
+            "worker/src/domain/iteration-format-metadata-agent.test.ts",
+            "worker/src/domain/mcp-internal-tools.test.ts",
+            "worker/src/domain/mcp-internal.invariants.test.ts",
+            "worker/src/domain/mcp-tools.invariants.test.ts",
+            "worker/src/domain/mcp-tools.test.ts",
+            "worker/src/domain/member-months.test.ts",
+            "worker/src/domain/method-registry.invariants.test.ts",
+            "worker/src/domain/model-routing.invariants.test.ts",
+            "worker/src/domain/pipelines/carry-question-stems-2034.test.ts",
+            "worker/src/domain/pipelines/choice-explanations-1570.test.ts",
+            "worker/src/domain/pipelines/dev1-1130-question-binding.test.ts",
+            "worker/src/domain/pipelines/dev1-1176-question-objective-repeated.test.ts",
+            "worker/src/domain/pipelines/dev1-1410-misconception-signal.test.ts",
+            "worker/src/domain/pipelines/dev1-1411-luna-first-questions-repeat-gate.test.ts",
+            "worker/src/domain/pipelines/dev1-1411-sol-questions-envelope.test.ts",
+            "worker/src/domain/pipelines/order-generation-2354.test.ts",
+            "worker/src/domain/pipelines/plan-documents-agent.test.ts",
+            "worker/src/domain/pipelines/test-questions-1138-binding.test.ts",
+            "worker/src/domain/pipelines/test-questions-1920.test.ts",
+            "worker/src/domain/prompt-artifacts.invariants.test.ts",
+            "worker/src/domain/public-summary-formula-1684.test.ts",
+            "worker/src/domain/public-summary-formula-1692.test.ts",
+            "worker/src/domain/reader-material-links-2222.test.ts",
+            "worker/src/domain/reader-material-links.test.ts",
+            "worker/src/domain/reader-quote-syntax-2222.test.ts",
+            "worker/src/domain/reader-reply-evidence-2222.test.ts",
+            "worker/src/domain/records.invariants.test.ts",
+            "worker/src/domain/rules/code-spans.test.ts",
+            "worker/src/domain/rules/course-summary-quality.test.ts",
+            "worker/src/domain/rules/course-summary-reader.test.ts",
+            "worker/src/domain/rules/gap-closing.test.ts",
+            "worker/src/domain/rules/load-rating.test.ts",
+            "worker/src/domain/rules/material-window.test.ts",
+            "worker/src/domain/shared-summary-legacy.test.ts",
+            "worker/src/domain/shared-summary.invariants.test.ts",
+            "worker/src/domain/shared-summary.test.ts",
+            "worker/src/domain/shared-translation-1247.test.ts",
+            "worker/src/domain/topic-writing-node-import.test.ts",
+            "worker/src/domain/zip.invariants.test.ts",
+            "worker/src/domain/zip.test.ts",
+            "worker/src/env-example.test.ts",
+            "worker/src/eval-agent-tests/multilingual-calibration-cli-agent.test.ts",
+            "worker/src/eval-agent-tests/test-items-from-module-scenario.test.ts",
+            "worker/src/eval-harness-agent-tests/xai-recording.test.ts",
+            "worker/src/exports-agent-tests/multipart-body-agent.test.ts",
+            "worker/src/funnel-agent-tests/consent.test.ts",
+            "worker/src/funnel-agent-tests/funnel.test.ts",
+            "worker/src/funnel-agent-tests/growth-report.test.ts",
+            "worker/src/funnel-agent-tests/page-funnel.test.ts",
+            "worker/src/funnel-agent-tests/sharing.test.ts",
+            "worker/src/funnel-agent-tests/sink.test.ts",
+            "worker/src/funnel-agent-tests/subscription.test.ts",
+            "worker/src/gap-accounting-agent-tests/fixtures-read.test.ts",
+            "worker/src/gap-closing-1407-agent-tests/course-concept-skills.test.ts",
+            "worker/src/gap-closing-agent-tests/prompt-names-reader-refusals.test.ts",
+            "worker/src/gap-line-948-agent-tests/dash-in-claim-roundtrip.test.ts",
+            "worker/src/gap-module-counts-586-agent-tests/published-counts.test.ts",
+            "worker/src/gap-question-repair-2086-agent-tests/round4.test.ts",
+            "worker/src/gate/entries.test.ts",
+            "worker/src/gate/gate.invariants.test.ts",
+            "worker/src/gate/gate.test.ts",
+            "worker/src/gate/seed-token-timing.test.ts",
+            "worker/src/generated-card-agent-tests/module-path-matches-card.test.ts",
+            "worker/src/generation-diagnostics-agent-tests/hourly-fail-open.test.ts",
+            "worker/src/generation-diagnostics-agent-tests/queue-isolate.test.ts",
+            "worker/src/generation-failure-agent-tests/settled-variant-notice-583.test.ts",
+            "worker/src/generation-limit-agent-tests/retry-notice-ignores-pass.test.ts",
+            "worker/src/generation-rejections-1174-agent-tests/exact-copy-2097.test.ts",
+            "worker/src/generation-rejections-1174-agent-tests/exact-material-evidence-2093.test.ts",
+            "worker/src/generation-rejections-1174-agent-tests/material-root-told.test.ts",
+            "worker/src/generation-rejections-1174-agent-tests/optional-skill-id-2092.test.ts",
+            "worker/src/generation-rejections-1174-agent-tests/recorded-rejections.test.ts",
+            "worker/src/generation-rejections-1174-agent-tests/round16-copy-and-practice-2268.test.ts",
+            "worker/src/generation-rejections-1174-agent-tests/round25-language-2517.test.ts",
+            "worker/src/generation-rejections-1174-agent-tests/rules-stay-strict.test.ts",
+            "worker/src/generation-robustness-agent-tests/output-contract.test.ts",
+            "worker/src/generation-robustness-agent-tests/recorded-outputs-accepted.test.ts",
+            "worker/src/grok-cloud-pairs.test.ts",
+            "worker/src/grok-step-pairs.test.ts",
+            "worker/src/hebrew-language-1015.test.ts",
+            "worker/src/infra/flow-engine-packet-adoption.test.ts",
+            "worker/src/infra/flow-engine-repair-adoption.test.ts",
+            "worker/src/infra/flow-engine-reply-adoption.test.ts",
+            "worker/src/infra/root-vitest-config.test.ts",
+            "worker/src/infra/shared-library-aliases-2228.test.ts",
+            "worker/src/integrations-agent-tests/download.test.ts",
+            "worker/src/integrations-agent-tests/exports.test.ts",
+            "worker/src/iteration-number-agent-tests/module-number-archive-path.invariants.test.ts",
+            "worker/src/iteration-replay-1139-agent-tests/submit-replay.test.ts",
+            "worker/src/iteration-speed-1646-agent-tests/review-on-luna.test.ts",
+            "worker/src/knowledge-spaces-agent-tests/specification.test.ts",
+            "worker/src/learning-flow-agent-tests/measurement.test.ts",
+            "worker/src/learning-import-agent-tests/accounting.test.ts",
+            "worker/src/learning-import-agent-tests/archive.test.ts",
+            "worker/src/learning-import-agent-tests/body.test.ts",
+            "worker/src/learning-import-agent-tests/course.test.ts",
+            "worker/src/learning-import-agent-tests/dev1-apply.test.ts",
+            "worker/src/learning-import-agent-tests/iterations.test.ts",
+            "worker/src/learning-import-agent-tests/launch.test.ts",
+            "worker/src/learning-import-agent-tests/markers.test.ts",
+            "worker/src/learning-import-agent-tests/new-category.test.ts",
+            "worker/src/learning-import-agent-tests/source.test.ts",
+            "worker/src/learning-import-agent-tests/summary.test.ts",
+            "worker/src/learning-import-agent-tests/targets.test.ts",
+            "worker/src/learning-import-agent-tests/variants.test.ts",
+            "worker/src/limit-budget-agent-tests/asset-routing-budget.test.ts",
+            "worker/src/limit-budget-agent-tests/request-usage.test.ts",
+            "worker/src/limits-agent-tests/registry-migration.test.ts",
+            "worker/src/limits-agent-tests/report-asset-path-2312.test.ts",
+            "worker/src/local-grok-wire.invariants.test.ts",
+            "worker/src/local-provider-coverage.test.ts",
+            "worker/src/marketing-share-2261-agent-tests/transition-code.test.ts",
+            "worker/src/material-note-1200-agent-tests/dev1-knowledge-foundation.test.ts",
+            "worker/src/material-recovery-1495-agent-tests/reimport-cli.test.ts",
+            "worker/src/material-retry-agent-tests/prompt-names-reader-refusals.test.ts",
+            "worker/src/material-time-agent-tests/learning-course-31.test.ts",
+            "worker/src/material-time-agent-tests/learning-quality.test.ts",
+            "worker/src/material-time-agent-tests/recorded-volume.test.ts",
+            "worker/src/mcp-import-agent-tests/client.test.ts",
+            "worker/src/mcp-import-agent-tests/import.test.ts",
+            "worker/src/mermaid-questions-2350-agent-tests/stem-repair.test.ts",
+            "worker/src/migrations-agent-tests/migration-numbers.test.ts",
+            "worker/src/mimic-agent-tests/mimic-access.test.ts",
+            "worker/src/mimic-agent-tests/mimic.invariants.test.ts",
+            "worker/src/model-answer-classes-agent-tests/bad-answer-classes.test.ts",
+            "worker/src/model-call-recording-agent-tests/ollama-recorded-catalog.test.ts",
+            "worker/src/model-call-recording-agent-tests/recording-hook.test.ts",
+            "worker/src/model-needs-session-agent-tests/guard-catches-leaked-open-route.test.ts",
+            "worker/src/model-output-repair.test.ts",
+            "worker/src/module-generation-1009-agent-tests/julia-consistency.test.ts",
+            "worker/src/module-price-format-631-agent-tests/out-of-format-price.test.ts",
+            "worker/src/module-title-agent-tests/module-title.test.ts",
+            "worker/src/multilingual-course-1519-agent-tests/partial-mapping.test.ts",
+            "worker/src/native-restated-1390-agent-tests/remainder-and-question-form.test.ts",
+            "worker/src/notices-running-agent-tests/batch-read-2196.test.ts",
+            "worker/src/notices-running-agent-tests/running-read-command.test.ts",
+            "worker/src/notices-running-agent-tests/running-refused.test.ts",
+            "worker/src/oidc-agent-tests/oidc.test.ts",
+            "worker/src/openai-fence-routing.test.ts",
+            "worker/src/output-envelope-agent-tests/catalog-line.test.ts",
+            "worker/src/output-envelope-agent-tests/envelope-empty-per-step.test.ts",
+            "worker/src/output-envelope-agent-tests/envelope-reading.test.ts",
+            "worker/src/output-envelope-agent-tests/envelope-shape.test.ts",
+            "worker/src/output-envelope-agent-tests/envelope.invariants.test.ts",
+            "worker/src/output-envelope-agent-tests/lang-prose-scope.test.ts",
+            "worker/src/output-envelope-agent-tests/repair-ladder.test.ts",
+            "worker/src/output-schema-agent-tests/derivation-single-source.test.ts",
+            "worker/src/output-schema-agent-tests/order-example-schema-types.test.ts",
+            "worker/src/output-schema-agent-tests/plan-covers-schema-type.test.ts",
+            "worker/src/output-schema-agent-tests/plan-known-questions-schema-type.test.ts",
+            "worker/src/output-schema-agent-tests/wire-schema-required-fields.test.ts",
+            "worker/src/pinned-prompt-wire-1155-agent-tests/objective-quote-first-letter.test.ts",
+            "worker/src/pinned-prompt-wire-1155-agent-tests/pinned-prompt-wire.test.ts",
+            "worker/src/pipeline-owner-space.test.ts",
+            "worker/src/pipeline-packages/package-lifecycle-1803.test.ts",
+            "worker/src/pipeline-resume-agent-tests/outcome-receivers-1800.test.ts",
+            "worker/src/plan-detail-cuts-agent-tests/activity-reporter.test.ts",
+            "worker/src/plan-detail-cuts-agent-tests/plan-detail-cuts.test.ts",
+            "worker/src/platform/ai/generate-log.test.ts",
+            "worker/src/platform/ai/luna-choice-budget-1656.test.ts",
+            "worker/src/platform/ai/luna-material-json-1535.test.ts",
+            "worker/src/platform/ai/luna-questions-json-1502.test.ts",
+            "worker/src/platform/ai/luna-readiness.test.ts",
+            "worker/src/platform/ai/ollama-reasoning.test.ts",
+            "worker/src/platform/ai/pinned-questions-schema-1411.test.ts",
+            "worker/src/platform/ai/provider-cache-controls.test.ts",
+            "worker/src/platform/ai/rag-index.test.ts",
+            "worker/src/platform/analytics-budget.test.ts",
+            "worker/src/platform/bug-reply-notices-2396.test.ts",
+            "worker/src/platform/dash-problem-reader-2308.test.ts",
+            "worker/src/platform/dashboard-bugs-token.test.ts",
+            "worker/src/platform/failure-code-2056.test.ts",
+            "worker/src/platform/internal-mcp-store.test.ts",
+            "worker/src/platform/model-call-output-pass-through-2716.test.ts",
+            "worker/src/platform/owner-counts-2314.test.ts",
+            "worker/src/platform/pinned-generation-gateway-guards.test.ts",
+            "worker/src/platform/pipeline-input-bounds-968.test.ts",
+            "worker/src/platform/session-signature-timing.test.ts",
+            "worker/src/platform/socket-admission-1900.test.ts",
+            "worker/src/platform/socket-isolation-1900.test.ts",
+            "worker/src/platform/stage-trace-format-1535.test.ts",
+            "worker/src/platform/statistics-resilience.test.ts",
+            "worker/src/platform/step-live-model-override.test.ts",
+            "worker/src/platform/ui-text.test.ts",
+            "worker/src/prompt-contract-agent-tests/envelope-prompt-contract.test.ts",
+            "worker/src/prompt-contract-agent-tests/prompt-contract.invariants.test.ts",
+            "worker/src/prompt-contract-agent-tests/tool-instruction.test.ts",
+            "worker/src/prompt-package-agent-tests/package-build.test.ts",
+            "worker/src/prompt-package-agent-tests/package-caller-boundary.test.ts",
+            "worker/src/prompt-package-agent-tests/package-content-parity.test.ts",
+            "worker/src/prompt-package-agent-tests/package-form.test.ts",
+            "worker/src/prompt-package-agent-tests/package-integrity.test.ts",
+            "worker/src/prompt-package-agent-tests/package-prompt-proof.test.ts",
+            "worker/src/protocol-fuzz-agent-tests/batch.test.ts",
+            "worker/src/protocol-fuzz-agent-tests/dependency-resolution.test.ts",
+            "worker/src/protocol-fuzz-agent-tests/documents.test.ts",
+            "worker/src/protocol-fuzz-agent-tests/http.test.ts",
+            "worker/src/protocol-fuzz-agent-tests/shared-library-layout.test.ts",
+            "worker/src/protocol-fuzz-agent-tests/socket.test.ts",
+            "worker/src/provider-988-agent-tests/anthropic-messages-gateway.test.ts",
+            "worker/src/provider-988-agent-tests/compat-route.test.ts",
+            "worker/src/provider-988-agent-tests/grok-explicit-route.test.ts",
+            "worker/src/provider-conformance.invariants.test.ts",
+            "worker/src/provider-conformance.test.ts",
+            "worker/src/provider-wiring-agent-tests/provider-wiring.test.ts",
+            "worker/src/public-mcp-agent-tests/material.test.ts",
+            "worker/src/public-mcp-agent-tests/surface.test.ts",
+            "worker/src/question-envelope-agent-tests/list-item-scalar-type.test.ts",
+            "worker/src/questions-without-gaps-agent-tests/count-and-prompt.test.ts",
+            "worker/src/questions-without-gaps-agent-tests/question-count-by-context.test.ts",
+            "worker/src/questions-without-gaps-agent-tests/step-data.test.ts",
+            "worker/src/random-choice-870-agent-tests/gap-closing-answer-type.test.ts",
+            "worker/src/recorded-outputs/adjacent-led-1789.test.ts",
+            "worker/src/recorded-outputs/first-questions-1880.test.ts",
+            "worker/src/recorded-outputs/luna-default-incomplete-body.test.ts",
+            "worker/src/recorded-outputs/osnovy-python-1687.test.ts",
+            "worker/src/recorded-outputs/questions-1697.test.ts",
+            "worker/src/recorded-outputs/questions-1902.test.ts",
+            "worker/src/recorded-outputs/questions-1967.test.ts",
+            "worker/src/recorded-outputs/questions-dispatch-1697.test.ts",
+            "worker/src/recorded-outputs/reader-chat-1996.test.ts",
+            "worker/src/recorded-outputs/recorded-outputs-accepted.test.ts",
+            "worker/src/refusal-signals-agent-tests/command-markers.test.ts",
+            "worker/src/regional-shards-agent-tests/personal-paths-1860.test.ts",
+            "worker/src/regional-shards-agent-tests/registration-country-1860.test.ts",
+            "worker/src/regional-shards-agent-tests/registration-placement.test.ts",
+            "worker/src/regional-shards-agent-tests/specification.test.ts",
+            "worker/src/review-by-learning-agent-tests/briefing-reaches-prompt.test.ts",
+            "worker/src/review-stray-brace-agent-tests/stray-brace-review.test.ts",
+            "worker/src/routes-agent-tests/later-redirect.test.ts",
+            "worker/src/routes-agent-tests/public-legal-2022.test.ts",
+            "worker/src/routes-agent-tests/public-legal-machine-readable.test.ts",
+            "worker/src/routes-agent-tests/short-link-address.test.ts",
+            "worker/src/routes-agent-tests/short-zone-1480.test.ts",
+            "worker/src/routes-agent-tests/soft-404.test.ts",
+            "worker/src/routes/automatic-client-1875.test.ts",
+            "worker/src/routes/automatic-source-route-1875.test.ts",
+            "worker/src/routes/commands-envelope.test.ts",
+            "worker/src/routes/guest-first-course-publication-2257.test.ts",
+            "worker/src/routes/health-provenance.test.ts",
+            "worker/src/routes/page-policy.test.ts",
+            "worker/src/routes/public-quiz-compiled.test.ts",
+            "worker/src/routes/stage-trace-live-1535.test.ts",
+            "worker/src/security-1824-agent-tests/token-signature-timing.test.ts",
+            "worker/src/security-agent-tests/access-check-owners.test.ts",
+            "worker/src/security-agent-tests/chat-foreign-id-race.test.ts",
+            "worker/src/security-agent-tests/citation-links.test.ts",
+            "worker/src/security-agent-tests/mcp-agent-reads.test.ts",
+            "worker/src/security-agent-tests/mcp.invariants.test.ts",
+            "worker/src/security-agent-tests/ordinary-receipt-owner-guard.test.ts",
+            "worker/src/security-agent-tests/remote-command-guard.test.ts",
+            "worker/src/seed-command.test.ts",
+            "worker/src/seed-repeat-395.test.ts",
+            "worker/src/session-lifetime-agent-tests/session-past-lifetime-refused.test.ts",
+            "worker/src/shard-range-agent-tests/new-user-id.test.ts",
+            "worker/src/shared-page-agent-tests/minimal-reading-1644.test.ts",
+            "worker/src/sharing-agent-tests/public-page-1480.test.ts",
+            "worker/src/sharing-agent-tests/public-page-dark-theme.test.ts",
+            "worker/src/sharing-agent-tests/shared-mermaid-1554.test.ts",
+            "worker/src/sharing-agent-tests/shared-summary-reads.test.ts",
+            "worker/src/sharing-agent-tests/summary-page-after-prefix.test.ts",
+            "worker/src/sign-in-agent-tests/invited-email.invariants.test.ts",
+            "worker/src/sources-only-in-summary-agent-tests/reader-and-prompts.test.ts",
+            "worker/src/specification-agent-tests/specification-links.test.ts",
+            "worker/src/spending-agent-tests/spending.invariants.test.ts",
+            "worker/src/startup-batch-agent-tests/snapshot.test.ts",
+            "worker/src/step-cost-agent-tests/step-calls-registry.test.ts",
+            "worker/src/stream-no-call-limit-961-agent-tests/stream-without-call-limit.test.ts",
+            "worker/src/subscription-2260-agent-tests/ownership.test.ts",
+            "worker/src/summary-notice-603-agent-tests/summary-ready-names-course.test.ts",
+            "worker/src/technical-trace-agent-tests/reply.test.ts",
+            "worker/src/test-accounts-agent-tests/aggregate-registry-not-empty.test.ts",
+            "worker/src/test-support-agent-tests/client-response.test.ts",
+            "worker/src/test-support-agent-tests/mcp-security-scopes-2211.test.ts",
+            "worker/src/test-support-agent-tests/native-guard-session-2211.test.ts",
+            "worker/src/test-support-agent-tests/native-method-question-count.test.ts",
+            "worker/src/test-support-agent-tests/native-model-fixture-count.test.ts",
+            "worker/src/test-support/client-build-version.test.ts",
+            "worker/src/test-support/client-error-agent.test.ts",
+            "worker/src/test-support/critical-method-entry.test.ts",
+            "worker/src/test-support/method-course.test.ts",
+            "worker/src/test-support/model-fixture.test.ts",
+            "worker/src/test-support/native-method-chat-2029.test.ts",
+            "worker/src/test-support/native-method-runtime.test.ts",
+            "worker/src/test-support/native-method-wire-agent.test.ts",
+            "worker/src/test-support/native-worker-json.test.ts",
+            "worker/src/test-support/recorded-method-response.test.ts",
+            "worker/src/topic-writing-agent-tests/material-structure-2074.test.ts",
+            "worker/src/two-factor-agent-tests/crypto.test.ts",
+            "worker/src/usage-limits-agent-tests/resolve-value-removed.test.ts",
+            "worker/src/usage-limits-agent-tests/window.invariants.test.ts",
+            "worker/src/user-hub-bounded-journals-agent-tests/bounded-journals.test.ts",
+            "worker/src/user-hub-bounded-journals-agent-tests/bounded-notices.test.ts",
+            "worker/src/user-hub-bounded-journals-agent-tests/bounded-outcome-receipts.test.ts",
+            "worker/src/wait-limits-agent-tests/no-total-call-limit.test.ts",
+            "worker/src/wait-limits-agent-tests/stream-silence-journal.test.ts",
+            "worker/src/web-search-setting.test.ts",
+            "worker/src/xai-responses-agent-tests/cache-binding.test.ts",
+            "worker/src/xai-responses-agent-tests/prefix-stability.test.ts",
+            "worker/src/xai-responses-agent-tests/request-form.test.ts",
+            "worker/src/xai-responses-agent-tests/response-reading.test.ts",
+            "worker/src/xai-stream-agent-tests/live-search.test.ts",
+            "worker/src/xai-stream-agent-tests/silence-cancel-2925.test.ts",
+            "worker/src/generation-robustness-agent-tests/next-module-repair-after-refusal-411.test.ts",
+            "worker/src/domain/generation-request-reconciliation-late.test.ts",
+            "worker/src/domain/generation-safety-policy.admission.test.ts",
+            "worker/src/domain/generation-safety-policy.claims.test.ts",
+            "worker/src/domain/generation-safety-policy.declarations.test.ts",
+            "worker/src/domain/generation-safety-policy.limits.test.ts",
+            "worker/src/domain/generation-safety-policy.recovery.test.ts",
+            "worker/src/domain/generation-safety-policy.run-money.test.ts",
+            "worker/src/generation-safety-agent-tests/physical-fetch-atomic-regressions.test.ts",
+            "worker/src/generation-safety-agent-tests/request-exposure-regressions.test.ts",
+            "worker/src/generation-safety-agent-tests/request-reconciliation-regressions.test.ts",
+            "worker/src/generation-safety-agent-tests/retry-claim-admission-regressions.test.ts",
+            "worker/src/generation-status-agent-tests/projection.test.ts",
+            "worker/src/generation-status-agent-tests/replacement.test.ts",
+            "worker/src/domain/pipeline-terminal.test.ts"
+          ],
+          "exactIds": "vitest-test-name",
+          "resultAdapter": "vitest-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "scripts/shared-library-runtime.mjs",
+            "scripts/shared-library-aliases.ts",
+            "scripts/shared-libs-path.mjs",
+            "worker/vitest.config.ts",
+            "node_modules/vitest/vitest.mjs"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        },
+        "vitest-worker-consent-dom": {
+          "cwd": "worker",
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../scripts/shared-library-runtime.mjs",
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "--configLoader",
+            "runner",
+            "--project",
+            "worker-consent-dom"
+          ],
+          "unitFiles": [
+            "worker/src/cookie-consent-language.test.ts",
+            "worker/src/cookie-consent-ui.test.ts",
+            "worker/src/functional-consent.test.ts"
+          ],
+          "exactIds": "vitest-test-name",
+          "resultAdapter": "vitest-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "scripts/shared-library-runtime.mjs",
+            "scripts/shared-library-aliases.ts",
+            "scripts/shared-libs-path.mjs",
+            "worker/vitest.config.ts",
+            "node_modules/vitest/vitest.mjs",
+            "node_modules/happy-dom/package.json"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        },
+        "vitest-assessment": {
+          "cwd": "shared/assessment",
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../../scripts/shared-library-runtime.mjs",
+            "../../node_modules/vitest/vitest.mjs",
+            "run",
+            "--configLoader",
+            "runner"
+          ],
+          "unitFiles": [
+            "shared/assessment/src/assessment.invariants.test.ts",
+            "shared/assessment/src/attempt/attempt.test.ts",
+            "shared/assessment/src/formats/accept.test.ts",
+            "shared/assessment/src/formats/check.test.ts",
+            "shared/assessment/src/formats/response-formats.test.ts",
+            "shared/assessment/src/formats/weights.test.ts",
+            "shared/assessment/src/generation/generation.test.ts",
+            "shared/assessment/src/public-quiz-agent.test.ts",
+            "shared/assessment/src/public-quiz-policy.standalone.test.ts"
+          ],
+          "exactIds": "vitest-test-name",
+          "resultAdapter": "vitest-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "scripts/shared-library-runtime.mjs",
+            "scripts/shared-library-aliases.ts",
+            "scripts/shared-libs-path.mjs",
+            "shared/assessment/vitest.config.ts",
+            "node_modules/vitest/vitest.mjs"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        },
+        "vitest-domain": {
+          "cwd": "shared/domain",
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../../scripts/shared-library-runtime.mjs",
+            "../../node_modules/vitest/vitest.mjs",
+            "run",
+            "--configLoader",
+            "runner"
+          ],
+          "unitFiles": [
+            "shared/domain/analysis-catalog-readiness.test.ts",
+            "shared/domain/documents-archive-aliases.test.ts",
+            "shared/domain/documents-multipart-agent.test.ts",
+            "shared/domain/learning-course-import-agent.test.ts",
+            "shared/domain/limits-source-scenarios/limits-file.standalone.test.ts",
+            "shared/domain/limits-source-scenarios/single-source.standalone.test.ts",
+            "shared/domain/model-legacy-migration-agent.test.ts",
+            "shared/domain/model-luna-readiness.test.ts",
+            "shared/domain/question-answer-format-agent.test.ts",
+            "shared/domain/quotas-off-scenarios/limits-file-quotas.standalone.test.ts"
+          ],
+          "exactIds": "vitest-test-name",
+          "resultAdapter": "vitest-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "scripts/shared-library-runtime.mjs",
+            "scripts/shared-library-aliases.ts",
+            "scripts/shared-libs-path.mjs",
+            "shared/domain/vitest.config.ts",
+            "node_modules/vitest/vitest.mjs"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        },
+        "vitest-i18n": {
+          "cwd": "shared/i18n",
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../../scripts/shared-library-runtime.mjs",
+            "../../node_modules/vitest/vitest.mjs",
+            "run",
+            "--configLoader",
+            "runner"
+          ],
+          "unitFiles": [
+            "shared/i18n/src/catalog/completeness.test.ts",
+            "shared/i18n/src/catalog/context.test.ts",
+            "shared/i18n/src/catalog/course-overview-term.test.ts",
+            "shared/i18n/src/catalog/feature-bundles.test.ts",
+            "shared/i18n/src/catalog/generated.test.ts",
+            "shared/i18n/src/catalog/interpolate.test.ts",
+            "shared/i18n/src/catalog/module-label-distinction.test.ts",
+            "shared/i18n/src/catalog/related.test.ts",
+            "shared/i18n/src/catalog/source.test.ts",
+            "shared/i18n/src/catalog/summaries-introduction.standalone.test.ts",
+            "shared/i18n/src/catalog/terminology.test.ts",
+            "shared/i18n/src/hebrew.test.ts",
+            "shared/i18n/src/i18n.invariants.test.ts",
+            "shared/i18n/src/interface-language.invariants.test.ts",
+            "shared/i18n/src/interface-language.test.ts",
+            "shared/i18n/src/language-maturity.test.ts",
+            "shared/i18n/src/language-revisions.test.ts",
+            "shared/i18n/src/language-selection.test.ts",
+            "shared/i18n/src/languages.test.ts",
+            "shared/i18n/src/time-format.test.ts",
+            "shared/i18n/src/ui-admin/plain-language.test.ts",
+            "shared/i18n/src/ui/bug-view-context.test.ts",
+            "shared/i18n/src/ui/catalog-boundary.test.ts",
+            "shared/i18n/src/ui/count-forms.invariants.test.ts",
+            "shared/i18n/src/ui/hebrew-audit.test.ts",
+            "shared/i18n/src/ui/hebrew-public-copy.test.ts",
+            "shared/i18n/src/ui/language-name.test.ts",
+            "shared/i18n/src/ui/mono-counter-separator.test.ts",
+            "shared/i18n/src/ui/next-module-retry.standalone.test.ts",
+            "shared/i18n/src/ui/plain-language.test.ts",
+            "shared/i18n/src/ui/problem-report-action.test.ts",
+            "shared/i18n/src/ui/result-names.test.ts",
+            "shared/i18n/src/ui/skill-evidence-count.test.ts"
+          ],
+          "exactIds": "vitest-test-name",
+          "resultAdapter": "vitest-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "scripts/shared-library-runtime.mjs",
+            "scripts/shared-library-aliases.ts",
+            "scripts/shared-libs-path.mjs",
+            "shared/i18n/vitest.config.ts",
+            "node_modules/vitest/vitest.mjs"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        },
+        "vitest-markdown": {
+          "cwd": "shared/markdown",
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../../scripts/shared-library-runtime.mjs",
+            "../../node_modules/vitest/vitest.mjs",
+            "run",
+            "--configLoader",
+            "runner"
+          ],
+          "unitFiles": [
+            "shared/markdown/src/catalog/canonicity.test.ts",
+            "shared/markdown/src/diagnostics/archive-aliases.test.ts",
+            "shared/markdown/src/diagnostics/conformance.test.ts",
+            "shared/markdown/src/diagnostics/levels.test.ts",
+            "shared/markdown/src/diagnostics/limits.test.ts",
+            "shared/markdown/src/document/document.test.ts",
+            "shared/markdown/src/document/edit.test.ts",
+            "shared/markdown/src/document/format-rules.test.ts",
+            "shared/markdown/src/document/heading-anchor.test.ts",
+            "shared/markdown/src/document/links.test.ts",
+            "shared/markdown/src/document/recovery.test.ts",
+            "shared/markdown/src/fixtures/corpus.test.ts",
+            "shared/markdown/src/fixtures/fixtures.test.ts",
+            "shared/markdown/src/fixtures/no-copies.test.ts",
+            "shared/markdown/src/legacy-module-summary.test.ts",
+            "shared/markdown/src/markdown.invariants.test.ts",
+            "shared/markdown/src/mermaid-check.test.ts",
+            "shared/markdown/src/repair/heading-hub.test.ts",
+            "shared/markdown/src/repair/migrate.test.ts",
+            "shared/markdown/src/repair/repair.test.ts",
+            "shared/markdown/src/repair/third-language.test.ts",
+            "shared/markdown/src/rules.test.ts",
+            "shared/markdown/src/schemas/course-tree.test.ts",
+            "shared/markdown/src/schemas/ordered-summaries.test.ts",
+            "shared/markdown/src/schemas/question-formats.test.ts",
+            "shared/markdown/src/schemas/registry.test.ts",
+            "shared/markdown/src/schemas/score-table.test.ts",
+            "shared/markdown/src/yaml/frontmatter.standalone.test.ts",
+            "shared/markdown/src/yaml/yaml.test.ts"
+          ],
+          "exactIds": "vitest-test-name",
+          "resultAdapter": "vitest-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "scripts/shared-library-runtime.mjs",
+            "scripts/shared-library-aliases.ts",
+            "scripts/shared-libs-path.mjs",
+            "shared/markdown/vitest.config.ts",
+            "node_modules/vitest/vitest.mjs"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        },
+        "vitest-ui-core": {
+          "cwd": "shared/ui-core",
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../../scripts/shared-library-runtime.mjs",
+            "../../node_modules/vitest/vitest.mjs",
+            "run",
+            "--configLoader",
+            "runner"
+          ],
+          "unitFiles": [
+            "shared/ui-core/src/command/answer.test.tsx",
+            "shared/ui-core/src/hebrew-audit.test.tsx",
+            "shared/ui-core/src/primitives/keyboard.test.tsx",
+            "shared/ui-core/src/primitives/primitives.test.tsx",
+            "shared/ui-core/src/primitives/tooltip.test.tsx",
+            "shared/ui-core/src/search/surface.test.tsx",
+            "shared/ui-core/src/text.test.tsx"
+          ],
+          "exactIds": "vitest-test-name",
+          "resultAdapter": "vitest-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "scripts/shared-library-runtime.mjs",
+            "scripts/shared-library-aliases.ts",
+            "scripts/shared-libs-path.mjs",
+            "shared/ui-core/vitest.config.ts",
+            "node_modules/vitest/vitest.mjs",
+            "node_modules/happy-dom/package.json"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        },
+        "node-root": {
+          "cwd": ".",
+          "executable": "node",
+          "argv": [
+            "--import",
+            "./scripts/shared-library-runtime.mjs",
+            "/srv/dev/work/orchestrator/raf-main/scripts/test-run-node.ts"
+          ],
+          "unitFiles": [
+            "scripts/critical-path-baseline.test.mjs",
+            "scripts/critical-path.test.mjs",
+            "scripts/integration-test-groups.test.mjs",
+            "scripts/node-digest.test.mjs",
+            "scripts/node-runtime.test.mjs",
+            "scripts/orchestrator-paths.test.mjs",
+            "scripts/quality-boundaries.test.mjs",
+            "scripts/quality-course-cost.test.mjs",
+            "scripts/worker-indexeddb-dependency.test.mjs",
+            "scripts/merge-composition.test.mjs",
+            "scripts/shared-library-bundles.test.mjs",
+            "scripts/eval-shared-library-aliases.test.mjs"
+          ],
+          "exactIds": "node-test-name",
+          "resultAdapter": "node-test-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "scripts/shared-library-runtime.mjs",
+            "scripts/shared-library-aliases.ts",
+            "scripts/shared-libs-path.mjs",
+            "/srv/dev/work/orchestrator/raf-main/scripts/test-run-node.ts",
+            "/srv/dev/work/orchestrator/raf-main/src/test-run-reporter.ts",
+            "node_modules/typescript/lib/typescript.js"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        }
+      },
+      "groups": {
+        "reduce-etchly-codebase/product-defaults": {
+          "profileId": "vitest-app",
+          "files": [
+            "app/admin/sections/product-defaults.test.tsx"
+          ]
+        },
+        "reduce-etchly-codebase/worker-composition": {
+          "profileId": "vitest-worker",
+          "files": [
+            "worker/scripts/checks-composition.test.ts"
+          ]
+        },
+        "step-attempts-not-call-budget/next-module-repair-411": {
+          "profileId": "vitest-worker",
+          "files": [
+            "worker/src/generation-robustness-agent-tests/next-module-repair-after-refusal-411.test.ts",
+            "worker/src/generation-rejections-1174-agent-tests/rules-stay-strict.test.ts",
+            "worker/src/platform/ai/luna-material-json-1535.test.ts",
+            "worker/src/gap-question-repair-2086-agent-tests/round4.test.ts"
+          ]
+        },
+        "bound-generation-retries-and-spend/carry-gap-unit-regressions": {
+          "profileId": "vitest-worker",
+          "files": [
+            "worker/src/domain/concepts/finding-carry-forward.test.ts"
+          ]
+        },
+        "bound-generation-retries-and-spend/pinned-repair-output": {
+          "profileId": "vitest-worker",
+          "files": [
+            "worker/src/domain/concepts/generation-pinned-render.test.ts"
+          ]
+        },
+        "bound-generation-retries-and-spend/wait-literals-3.5.30-ux": {
+          "profileId": "vitest-app",
+          "files": [
+            "app/src/dev-reports/capture-deadline-2363.test.ts",
+            "app/src/dev-reports/material-capture-deadline-2346.test.ts",
+            "app/src/shell/chunk-reload.test.ts",
+            "app/src/wait-limits-agent-tests/client-not-before-server.test.ts",
+            "app/src/shell/cache-update-2238.test.ts",
+            "app/src/shell/server-health-update.test.ts"
+          ]
+        },
+        "bound-generation-retries-and-spend/provider-failure-projection": {
+          "profileId": "vitest-worker",
+          "files": [
+            "worker/src/domain/pipeline-terminal.test.ts"
+          ]
+        },
+        "bound-generation-retries-and-spend/module-price-owner-3.5.26": {
+          "profileId": "vitest-worker",
+          "files": [
+            "worker/src/module-price-format-631-agent-tests/out-of-format-price.test.ts"
+          ]
+        },
+        "fix-etchly-duplicate-migration-0222/migration-plan": {
+          "profileId": "vitest-worker",
+          "files": [
+            "worker/scripts/deploy-merge-gates.test.ts",
+            "worker/src/migrations-agent-tests/migration-numbers.test.ts"
+          ]
+        },
+        "deterministic-anonymous-quizzes/edge-deployment": {
+          "profileId": "vitest-worker",
+          "files": [
+            "worker/scripts/deploy-guest-publications.test.ts"
+          ]
+        },
+        "etchly-fast-merge-composition/early-gates": {
+          "profileId": "node-root",
+          "files": [
+            "scripts/merge-composition.test.mjs"
+          ]
+        },
+        "fix-etchly-merge-gates-branch-dirs/shared-library-runtime": {
+          "profileId": "node-root",
+          "files": [
+            "scripts/shared-library-bundles.test.mjs"
+          ]
+        },
+        "fix-etchly-merge-gates-branch-dirs/eval-shared-library-aliases": {
+          "profileId": "node-root",
+          "files": [
+            "scripts/eval-shared-library-aliases.test.mjs"
+          ]
+        }
+      }
+    },
+    "shared-libs": {
+      "profiles": {
+        "vitest-bugs-api": {
+          "cwd": "bugs-api",
+          "executable": "node",
+          "argv": [
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "--configLoader",
+            "runner"
+          ],
+          "unitFiles": [
+            "bugs-api/src/v2.test.ts",
+            "bugs-api/src/pull-sync-v2.test.ts"
+          ],
+          "exactIds": "vitest-test-name",
+          "resultAdapter": "vitest-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "node_modules/vitest/vitest.mjs",
+            "bugs-api/vitest.config.ts"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        }
+      },
+      "groups": {
+        "dash-bugs-api-for-raf-sync/pull-client": {
+          "profileId": "vitest-bugs-api",
+          "files": [
+            "bugs-api/src/pull-sync-v2.test.ts"
+          ]
+        }
+      }
+    },
+    "dash": {
+      "profiles": {
+        "vitest-worker": {
+          "cwd": "worker",
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../tools/raf-test-runtime.mjs",
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "--configLoader",
+            "runner"
+          ],
+          "unitFiles": [
+            "worker/src/bugs/raf-pull.test.ts",
+            "worker/src/bugs/v2-access.test.ts"
+          ],
+          "exactIds": "vitest-test-name",
+          "resultAdapter": "vitest-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [
+            "tools/raf-test-runtime.mjs",
+            "tools/shared-libs.ts",
+            "worker/vitest.config.ts",
+            "node_modules/vitest/vitest.mjs",
+            "node_modules/miniflare/package.json",
+            "node_modules/jose/package.json"
+          ],
+          "resourceEstimate": {
+            "ramBytes": 2147483648,
+            "diskBytesPerFileSystem": 10737418240
+          }
+        }
+      },
+      "groups": {
+        "dash-bugs-api-for-raf-sync/worker-pull": {
+          "profileId": "vitest-worker",
+          "files": [
+            "worker/src/bugs/raf-pull.test.ts"
+          ]
+        }
+      }
+    }
+  },
+  "diagnostics": {
+    "maxEntries": 64,
+    "maxMessageBytes": 4096,
+    "maxStackFrames": 16,
+    "maxStackBytes": 8192,
+    "maxTotalBytes": 65536,
+    "maxProtocolLineBytes": 65536,
+    "maxStderrBytes": 8192,
+    "redactionPatterns": []
+  },
+  "temporaryArtifacts": {
+    "root": "/tmp",
+    "minimumNestedSocketPathBytes": 80
+  }
+}

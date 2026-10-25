@@ -1,0 +1,146 @@
+{
+  "limitation": "exec_command exposes combined output without distinct stdout/stderr channels. Complete raw transport and TestRunResult are preserved. Legacy *.stderr.txt contain bytes outside the result (including a launch-queue.waiting event when present); transport stream origin cannot be independently certified. No bytes were dropped from the raw transport. Live harness uses spawnSync with distinct stdout/stderr and is unaffected.",
+  "separateUnitStderrCapture": "unavailable from this transport; not claimed verified empty",
+  "runs": [
+    {
+      "runId": "30f6ac73-8c30-42cb-952a-e18ad13a0715",
+      "rawTransport": "agent-ps-qa.cli.json",
+      "rawTestRunResult": "agent-ps-qa.TestRunResult.json",
+      "transportSha256": "3dbf626d16251041ecf001ea60c409f30588e80fd7632d71fec907d58f60d571",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "agent-ps-qa.stderr.txt",
+      "legacyStderrBytes": 1,
+      "bytesOutsideResult": 0
+    },
+    {
+      "runId": "1882c5ba-cc81-4029-bf0f-c04d40e09158",
+      "rawTransport": "profile-red.cli.json",
+      "rawTestRunResult": "profile-red.TestRunResult.json",
+      "transportSha256": "0bd19b7d611899b0d1b2e8bba0a0d56bc46eeb0e6e0a37bbe3cf95558a99691b",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "profile-red.stderr.txt",
+      "legacyStderrBytes": 1,
+      "bytesOutsideResult": 0
+    },
+    {
+      "runId": "75882e6a-67e7-4764-b4ef-44a53958be4a",
+      "rawTransport": "profile-qa-failing.cli.json",
+      "rawTestRunResult": "profile-qa-failing.TestRunResult.json",
+      "transportSha256": "aaa6a692f048b75ab018066590bdbd72a1bdcdee75b849c2c04c50a15bbbf9a6",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "profile-qa-failing.stderr.txt",
+      "legacyStderrBytes": 1,
+      "bytesOutsideResult": 0
+    },
+    {
+      "runId": "227ec585-9457-4a7f-bcd2-8a4d4bc271fe",
+      "rawTransport": "profile-qa-green.cli.json",
+      "rawTestRunResult": "profile-qa-green.TestRunResult.json",
+      "transportSha256": "389d03365e35c78b6ca33aaf0616360679562c21ee3942d635c09ac65d52a0a0",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "profile-qa-green.stderr.txt",
+      "legacyStderrBytes": 1,
+      "bytesOutsideResult": 0
+    },
+    {
+      "runId": "523fb23b-905f-4bc6-8adb-1d7901d835e4",
+      "rawTransport": "agent-ps-double-open-red.cli.json",
+      "rawTestRunResult": "agent-ps-double-open-red.TestRunResult.json",
+      "transportSha256": "9ee6d232607e177a4c539b412bed789111dde0fde06ae048c52df5d201f3ebd4",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "agent-ps-double-open-red.stderr.txt",
+      "legacyStderrBytes": 0,
+      "bytesOutsideResult": 0
+    },
+    {
+      "runId": "0c9bdda6-efea-4628-b24d-0cadd2552961",
+      "rawTransport": "agent-ps-double-open-intermediate.cli.json",
+      "rawTestRunResult": "agent-ps-double-open-intermediate.TestRunResult.json",
+      "transportSha256": "73234d8e6f7c816ee1111732d1eb2ec7e3cb2d8b41773dc5477b200311048a66",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "agent-ps-double-open-intermediate.stderr.txt",
+      "legacyStderrBytes": 0,
+      "bytesOutsideResult": 0
+    },
+    {
+      "runId": "134bde56-2aa0-409c-a912-0b93804a0bcd",
+      "rawTransport": "agent-ps-double-open-green.cli.json",
+      "rawTestRunResult": "agent-ps-double-open-green.TestRunResult.json",
+      "transportSha256": "7b1a22a0d9351943bdde7bb2404371876962f461362215f0063d2ef4d0835d6d",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "agent-ps-double-open-green.stderr.txt",
+      "legacyStderrBytes": 1470,
+      "bytesOutsideResult": 1470
+    },
+    {
+      "runId": "99afbdfe-ee90-49ad-a269-0b96755e3b24",
+      "rawTransport": "conf-copy-red.cli.json",
+      "rawTestRunResult": "conf-copy-red.TestRunResult.json",
+      "transportSha256": "79cfa132a3fe2dbff25fa40f00626345252025fa66dcdb5f9a444e8e12889b95",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "conf-copy-red.stderr.txt",
+      "legacyStderrBytes": 0,
+      "bytesOutsideResult": 0
+    },
+    {
+      "runId": "7bfe3c89-dea6-455d-b6a0-0e2a97764b54",
+      "rawTransport": "conf-copy-green.cli.json",
+      "rawTestRunResult": "conf-copy-green.TestRunResult.json",
+      "transportSha256": "d823f7bd4007fe733fe09a30b1fb443def85bb590ba69c62979f678a7149cb38",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "conf-copy-green.stderr.txt",
+      "legacyStderrBytes": 0,
+      "bytesOutsideResult": 0
+    },
+    {
+      "runId": "36a19580-09ea-4bb1-a399-b63992672f46",
+      "rawTransport": "layout-fixture-failure.cli.json",
+      "rawTestRunResult": "layout-fixture-failure.TestRunResult.json",
+      "transportSha256": "1757ae6aa86d654215bc32d90efdbdb9912868ca87bf3b3e2151552c0a1d443d",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "layout-fixture-failure.stderr.txt",
+      "legacyStderrBytes": 0,
+      "bytesOutsideResult": 0
+    },
+    {
+      "runId": "867d32ca-55f5-463e-9225-d4c85f379f8f",
+      "rawTransport": "layout-red.cli.json",
+      "rawTestRunResult": "layout-red.TestRunResult.json",
+      "transportSha256": "e0cdaa72d6a5fdc04993fbabaaafaa90e59c5596aee98e6bdf3c6ce7c766ac26",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "layout-red.stderr.txt",
+      "legacyStderrBytes": 0,
+      "bytesOutsideResult": 0
+    },
+    {
+      "runId": "57ad4c30-a4d3-41be-9c7a-a7deb5ab35f5",
+      "rawTransport": "layout-green.cli.json",
+      "rawTestRunResult": "layout-green.TestRunResult.json",
+      "transportSha256": "f98eb50abeedd45b001799fea88539e178ff878632562d91cb7f0152606a400b",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "layout-green.stderr.txt",
+      "legacyStderrBytes": 0,
+      "bytesOutsideResult": 0
+    },
+    {
+      "runId": "80599710-70e4-4215-b8e3-17b7fbe6814b",
+      "rawTransport": "context-red.cli.json",
+      "rawTestRunResult": "context-red.TestRunResult.json",
+      "transportSha256": "d276f0966e2c2ef2d23aa861e03b4204b13b7ae6672372954fd923b977f60616",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "context-red.stderr.txt",
+      "legacyStderrBytes": 0,
+      "bytesOutsideResult": 0
+    },
+    {
+      "runId": "37fff8df-da8a-4de2-a1e5-6dd0557a2a33",
+      "rawTransport": "context-green.cli.json",
+      "rawTestRunResult": "context-green.TestRunResult.json",
+      "transportSha256": "be1655289b228628a70ab1039d1b603d5493405cd6a1e090c4842f855d8532f2",
+      "transportContainsExactResultPrefix": true,
+      "legacyStderrFile": "context-green.stderr.txt",
+      "legacyStderrBytes": 0,
+      "bytesOutsideResult": 0
+    }
+  ]
+}

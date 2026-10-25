@@ -1,0 +1,15 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--stat",
+    "535441d79f5b18d70442c9a7374c1037c428fee7",
+    "a592802c693130c26460fd7b82645636bf3c2882",
+    "--",
+    "src"
+  ],
+  "cliExitCode": 0,
+  "stdout": " src/cli.ts                  | 16 ++++++++--\n src/flow-qa-report.ts       |  1 +\n src/production-entry.ts     | 14 ++++-----\n src/task-checkbox-report.ts | 72 +++++++++++++++++++++++++++++----------------\n src/test-run-diagnostics.ts |  4 +--\n 5 files changed, 69 insertions(+), 38 deletions(-)\n",
+  "stderr": "",
+  "interpretation": "The last target adds the single-context fix and the concurrent physical-main CLI pinning fix. The dominant new measured startup/SQLite cost must also account for the sealed generation payload: guard inventories include committed evidence, which grew considerably. No claim of unique whole-release attribution to the agent ps local fix."
+}

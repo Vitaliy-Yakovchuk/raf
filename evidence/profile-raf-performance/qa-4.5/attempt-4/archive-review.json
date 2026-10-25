@@ -1,0 +1,143 @@
+{
+  "source": "main verified message 2026-10-25: a592802 and 1212a13 passed, CLI 0; all three archives read-only (zero writable files), secscan archives and stdout/stderr clean",
+  "harnessSha": "a592802c693130c26460fd7b82645636bf3c2882",
+  "commands": [
+    [
+      "node",
+      "scripts/qa-agent-ps-comparison.mjs",
+      "a592802c693130c26460fd7b82645636bf3c2882",
+      "/srv/dev/p45-wzWK2O/root/conf",
+      "5"
+    ],
+    [
+      "node",
+      "scripts/qa-agent-ps-comparison.mjs",
+      "1212a1330a2b097620bd491e5cc8d2f549c774b9",
+      "/srv/dev/p45-wzWK2O/root/conf",
+      "5"
+    ]
+  ],
+  "series": [
+    {
+      "host": "/srv/dev/p45-cIhEtL",
+      "manifestSha256": "f44d1c8a0dec6ed98fd90d01475d4d0c2d76f0cb5937941172080c47f0d10b1a",
+      "manifestFiles": 28058,
+      "copiedAndVerified": 647,
+      "readOnlySource": true,
+      "harnessCliExitCode": 0,
+      "secscan": "clean per main",
+      "status": "passed",
+      "cleanup": {
+        "complete": true,
+        "service": {
+          "pid": 3818074,
+          "identity": {
+            "pid": 3818074,
+            "startedAt": "24328421",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          },
+          "token": "73d7ff08-1351-49a2-8e27-eab56b71387c",
+          "mainPath": "/srv/dev/p45-cIhEtL/root/.git/modules/raf-main/raf-hotfix/generations/d48b6690-241b-43f9-ae29-7c8613118444/raf-main",
+          "state": "stopped",
+          "stopReason": "Service stopped normally"
+        },
+        "actors": [
+          {
+            "pid": 3818509,
+            "exitCode": 0,
+            "signal": null
+          },
+          {
+            "pid": 3818517,
+            "exitCode": 0,
+            "signal": null
+          },
+          {
+            "pid": 3818525,
+            "exitCode": 0,
+            "signal": null
+          }
+        ],
+        "remainingProcesses": [],
+        "integrityCheck": [
+          {
+            "integrity_check": "ok"
+          }
+        ]
+      },
+      "samples": 30,
+      "commands": 135
+    },
+    {
+      "host": "/srv/dev/p45-NlxGJk",
+      "manifestSha256": "449d2d1980662106aebc400381bd9b26af8eb191798708f1a4b40fd5a3e7fbb4",
+      "manifestFiles": 18377,
+      "copiedAndVerified": 647,
+      "readOnlySource": true,
+      "harnessCliExitCode": 0,
+      "secscan": "clean per main",
+      "status": "passed",
+      "cleanup": {
+        "complete": true,
+        "service": {
+          "pid": 3857268,
+          "identity": {
+            "pid": 3857268,
+            "startedAt": "24381242",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          },
+          "token": "70d79ab4-329a-4517-a896-38298c0b9a21",
+          "mainPath": "/srv/dev/p45-NlxGJk/root/.git/modules/raf-main/raf-hotfix/generations/44fbf467-ead4-434e-bb69-c04979fdb067/raf-main",
+          "state": "stopped",
+          "stopReason": "Service stopped normally"
+        },
+        "actors": [
+          {
+            "pid": 3858386,
+            "exitCode": 0,
+            "signal": null
+          },
+          {
+            "pid": 3858410,
+            "exitCode": 0,
+            "signal": null
+          },
+          {
+            "pid": 3858429,
+            "exitCode": 0,
+            "signal": null
+          }
+        ],
+        "remainingProcesses": [],
+        "integrityCheck": [
+          {
+            "integrity_check": "ok"
+          }
+        ]
+      },
+      "samples": 30,
+      "commands": 135
+    }
+  ],
+  "harnessLogs": {
+    "/srv/dev/p45e-run-a592802.stdout": {
+      "sha256": "bfffd9eb4ca3ccf4d297d0a8cf872569b98eb1affb764c2987a42572ba3fca63",
+      "bytes": 241
+    },
+    "/srv/dev/p45e-run-a592802.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/srv/dev/p45e-run-1212a13.stdout": {
+      "sha256": "a2ccb8bae15af1773dee0bef5f709099e88b795c4573645472de5952d999c4c1",
+      "bytes": 241
+    },
+    "/srv/dev/p45e-run-1212a13.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "verdict": "failed performance acceptance: all six wall and complete CPU means increased; semantics/integrity/cleanup verified"
+}

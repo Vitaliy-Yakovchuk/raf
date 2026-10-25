@@ -1,0 +1,64 @@
+{
+  "host": "/srv/dev/p45-diag-vSeZT6",
+  "hostManifestSha256": "6cc27b8eca2e2ba3a489e2987e8ae64e9284bb7abb6e94f013c0b686cfe42b3f",
+  "hostManifestFiles": 28360,
+  "selectedFiles": [
+    {
+      "file": "command.json",
+      "sha256": "d9401a734ba98234194aae9154586315683735bffa9c288c51a2d3bf11fd3b2b",
+      "hostManifestVerified": true
+    },
+    {
+      "file": "operations.json",
+      "sha256": "5983cffcfa5cbc2d93ff6b06931a8fa5829f4ad2f2a61f323cc931955a7beb1e",
+      "hostManifestVerified": true
+    },
+    {
+      "file": "stdout",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "hostManifestVerified": true
+    },
+    {
+      "file": "stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "hostManifestVerified": true
+    },
+    {
+      "file": "instrument.mjs",
+      "sha256": "2d1debf2c40063f27cf7cd2fce33bbd5c29890426e3ff88cb7e193a166b7e5dc",
+      "hostManifestVerified": true
+    },
+    {
+      "file": "agent-ps.cpuprofile",
+      "sha256": "baecff96b68bec7e34aae4a7f2864230383d250db2840bb09c6cbe9f8cb2b380",
+      "hostManifestVerified": true
+    },
+    {
+      "file": "harness.stdout",
+      "source": "/srv/dev/p45f-diag-cIhEtL.stdout",
+      "sha256": "4695e80e79f85f10b63a57bffc91b0075f1a6e35c21b5ba7d44af3f763523fbe",
+      "hostManifestVerified": false
+    },
+    {
+      "file": "harness.stderr",
+      "source": "/srv/dev/p45f-diag-cIhEtL.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "hostManifestVerified": false
+    }
+  ],
+  "allSelectedManifestEntriesVerified": true,
+  "readOnlySource": true,
+  "cliExitCode": 0,
+  "harnessExitCode": 0,
+  "secscan": {
+    "exitCode": 0,
+    "source": "main verified message: all three archives and stdout/stderr clean"
+  },
+  "harnessSha": "a592802c693130c26460fd7b82645636bf3c2882",
+  "command": [
+    "node",
+    "scripts/qa-agent-ps-diagnostic.mjs",
+    "/srv/dev/p45-cIhEtL"
+  ],
+  "excludedFromSpeedAcceptance": true
+}

@@ -1,0 +1,24 @@
+{
+  "status": "failed",
+  "item": "profile-raf-performance:4.5",
+  "auditedTaskFile": "/srv/dev/work/orchestrator/openspec/changes/profile-raf-performance/tasks.md",
+  "tasksSha256": "7629ae3451be4677192b2906214724e63b5c732ccf8776e41640e6b92ec776a7",
+  "externalContinuation": [
+    "5.3",
+    "5.4",
+    "5.5",
+    "5.6",
+    "5.7"
+  ],
+  "externalReason": "Exact snapshot contract requires separate runtime inventory delta; main prohibits changing this guard in 4.5. 5.2 ended failed audit.",
+  "mainConfirmation": "2026-10-25: both series CLI 0 passed; diagnostic CLI 0; all three read-only with zero writable files; archive/log secscan clean",
+  "unitEvidence": "unit-history.json",
+  "unitTransportLimitation": "unit-stream-review.json",
+  "liveEvidence": "attempt-4/comparison.json",
+  "liveResult": "all six cases fail lower wall/nonincreasing full CPU means requirement; semantics/integrity/cleanup verified",
+  "deploymentFollowUp": "deployment-follow-up.txt",
+  "checkboxesChangedByThisAgent": false,
+  "archived": false,
+  "workspaceBeforeEvidenceCommit": " M evidence/profile-raf-performance/qa-4.5/README.md\n?? evidence/profile-raf-performance/qa-4.5/attempt-3/stages-load.json\n?? evidence/profile-raf-performance/qa-4.5/attempt-4/\n?? evidence/profile-raf-performance/qa-4.5/diagnostic/after-context/\n?? evidence/profile-raf-performance/qa-4.5/generation-inventory.json\n?? evidence/profile-raf-performance/qa-4.5/review-generation-inventory.py\n?? evidence/profile-raf-performance/qa-4.5/summarize-stages.mjs\n?? evidence/profile-raf-performance/qa-4.5/third-source-scope.json\n?? evidence/profile-raf-performance/qa-4.5/unit-stream-review.json\n",
+  "workspaceHeadBeforeEvidenceCommit": "ae62139b58523a33ff1ec41042dc5e943ce601de"
+}

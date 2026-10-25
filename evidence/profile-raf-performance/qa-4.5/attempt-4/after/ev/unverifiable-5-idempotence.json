@@ -1,0 +1,32 @@
+{
+  "label": "unverifiable-5-idempotence",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-cIhEtL/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-cIhEtL/root/raf-main",
+  "startedAt": "2026-10-25T04:05:13.744Z",
+  "finishedAt": "2026-10-25T04:05:16.879Z",
+  "wallMs": 3135.4799659999553,
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 0,
+  "stderrBytes": 525,
+  "loadAverage": [
+    7.09,
+    4.73,
+    3.81
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1710.232,
+    "cpuSystemMs": 1565.184,
+    "wallMs": 3111.147231,
+    "childExitCode": 1
+  },
+  "cpuFullMs": 3275.416
+}

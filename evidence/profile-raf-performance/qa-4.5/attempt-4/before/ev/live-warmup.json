@@ -1,0 +1,32 @@
+{
+  "label": "live-warmup",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/p45-NlxGJk/root/raf-main/bin/raf.ts",
+    "agent",
+    "ps"
+  ],
+  "cwd": "/srv/dev/p45-NlxGJk/root/raf-main",
+  "startedAt": "2026-10-25T04:06:28.052Z",
+  "finishedAt": "2026-10-25T04:06:30.604Z",
+  "wallMs": 2552.4491819999967,
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdoutBytes": 2218,
+  "stderrBytes": 0,
+  "loadAverage": [
+    7.63,
+    5.53,
+    4.16
+  ],
+  "rusage": {
+    "method": "Linux wait4 rusage",
+    "scope": "CLI plus synchronously reaped descendants; isolated service stopped; no runner payload",
+    "cpuUserMs": 1546.373,
+    "cpuSystemMs": 1245.376,
+    "wallMs": 2528.497423,
+    "childExitCode": 0
+  },
+  "cpuFullMs": 2791.749
+}

@@ -1,0 +1,52 @@
+{
+  "head": "a711b8863c9cffed5ded36f11e730c836fe6a979",
+  "status": "M bin/raf.ts\n M src/agent-adapters.ts\n M src/agent-control.ts\n M src/app-runtime.ts\n M src/bug-sync.ts\n M src/cli.ts\n M src/launch-wrapper.ts\n M src/os-runtime.ts\n M src/production-entry.ts\n M src/production-resource-wait.ts\n M src/production-runtime.ts\n M src/raf-cost-profile.ts\n M src/service-host.ts\n M src/state-store.ts\n M src/test-run-runtime.ts\n M test/app-runtime.test.ts\n M test/production-entry.test.ts\n M test/session-recovery-interrupt.test.ts\n?? evidence/profile-raf-performance/hotfix-5.8/agent-ps-hotfix.TestRunResult.json\n?? evidence/profile-raf-performance/hotfix-5.8/agent-ps-hotfix.combined-stream.txt\n?? evidence/profile-raf-performance/hotfix-5.8/agent-ps-hotfix.tool.json\n?? evidence/profile-raf-performance/hotfix-5.8/build.json\n?? evidence/profile-raf-performance/hotfix-5.8/build.stderr.txt\n?? evidence/profile-raf-performance/hotfix-5.8/build.stdout.txt\n?? evidence/profile-raf-performance/hotfix-5.8/comments.json\n?? evidence/profile-raf-performance/hotfix-5.8/comments.stderr.txt\n?? evidence/profile-raf-performance/hotfix-5.8/comments.stdout.txt\n?? evidence/profile-raf-performance/hotfix-5.8/profile-hotfix.TestRunResult.json\n?? evidence/profile-raf-performance/hotfix-5.8/profile-hotfix.combined-stream.txt\n?? evidence/profile-raf-performance/hotfix-5.8/profile-hotfix.tool.json\n?? evidence/profile-raf-performance/hotfix-5.8/timing-hotfix.TestRunResult.json\n?? evidence/profile-raf-performance/hotfix-5.8/timing-hotfix.combined-stream.txt\n?? evidence/profile-raf-performance/hotfix-5.8/timing-hotfix.tool.json\n?? evidence/rem81e/\n?? node_modules\n?? src/agent-interrupt.ts\n?? src/command-timing.ts\n?? src/raf-cost-runtime.ts",
+  "ownPaths": [
+    "bin/raf.ts",
+    "src/agent-adapters.ts",
+    "src/agent-control.ts",
+    "src/app-runtime.ts",
+    "src/bug-sync.ts",
+    "src/cli.ts",
+    "src/launch-wrapper.ts",
+    "src/os-runtime.ts",
+    "src/production-entry.ts",
+    "src/production-resource-wait.ts",
+    "src/production-runtime.ts",
+    "src/raf-cost-profile.ts",
+    "src/raf-cost-runtime.ts",
+    "src/command-timing.ts",
+    "src/service-host.ts",
+    "src/state-store.ts",
+    "src/test-run-runtime.ts",
+    "test/app-runtime.test.ts",
+    "test/production-entry.test.ts"
+  ],
+  "sha256": {
+    "bin/raf.ts": "8d5d1fe0e7f57220122f938bb940e7cd8d2a58396b8f9a546adff45531723666",
+    "src/agent-adapters.ts": "d5ff9de6c47e9a3c89107e0c8aaf9ba4002d56befd0784b722233b6f53794827",
+    "src/agent-control.ts": "ef0e9ae1d937252cbe79d22ab7586d480e51e83f48896c89db0edbd7e698d4a0",
+    "src/app-runtime.ts": "a73abf560d91ce71055d7aa99d56ac17ec15b69badf8b986c5b82694fca8f2f7",
+    "src/bug-sync.ts": "633e034f093020cf0f870bdbaec666fd310833c71d6147b857d8ab7cce9a1a3d",
+    "src/cli.ts": "cbc240f5eb05f881e472b6e45f5570fa7795f00d4a7a25060b7fb25dcbad5137",
+    "src/launch-wrapper.ts": "4169191ac813a0c8bc6e4c79cbfd355daf7e3745e88dedd669618921a7cd9db0",
+    "src/os-runtime.ts": "d831bcb59f9d8e69c7fa3fccf107df7d2dfd304aacc052a8d2358e8622d1866e",
+    "src/production-entry.ts": "32872bd8fb2f692814994ce037c00bd31e76f9f97aaf329ecb1ad6ae8bd78e7e",
+    "src/production-resource-wait.ts": "cb8eb0434224465d52719306d11f6e7d0c37faf1390688f02545e0a90f7de268",
+    "src/production-runtime.ts": "a108c0286ac5e80840f0ba9d4e6dc69396f18eb599bb13d04f08e8cddcc50dcd",
+    "src/raf-cost-profile.ts": "a06cfff6d30d8bc149a74b69f99bc2530b1617dbdbc2b402eb58f62250a968e2",
+    "src/raf-cost-runtime.ts": "d401ff2e234ea9907ecf97d9515f0e0c1893d02bc68d7976faf10bf737552032",
+    "src/command-timing.ts": "dacdaecd728af4916be585bfe8cae5998f8ecdd6d69ad83ace2b30994b67709b",
+    "src/service-host.ts": "c6bbf34bc53fc2470573d513e2decc8644260e6e4ea6e58ebb38d2b2edbf5a82",
+    "src/state-store.ts": "de95ed85d1a35630d118d7ffb0bb7ee394928790e8ee67b91076ffe2e52869b6",
+    "src/test-run-runtime.ts": "9cd970d4b188ad28dc04f28c9afb3abfada06754c9023181433b2a024dab7ea8",
+    "test/app-runtime.test.ts": "7fc947468fab9ff0faaba4e359a4c750dd80d65eade79ca50676345d86e93d7f",
+    "test/production-entry.test.ts": "047d8c39220887dbf2de75216a38b7f2b8ac1cc231ac25291b7da04f734fd1cf"
+  },
+  "foreignPaths": [
+    "node_modules",
+    "evidence/rem81e",
+    "test/session-recovery-interrupt.test.ts"
+  ],
+  "checksScope": "All hotfix group runs and build/comments use this uncommitted implementation on test commit a711b8863c9cffed5ded36f11e730c836fe6a979."
+}

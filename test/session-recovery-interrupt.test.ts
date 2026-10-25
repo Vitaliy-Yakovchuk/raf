@@ -70,6 +70,12 @@ test('production interrupt refuses an unknown or idle screen without sending a k
   assert.equal(f.calls.some(row => row.args.includes('send-keys')), false);
 });
 
+test('production interrupt refuses an unrecognized screen even when it contains a composer', async t => {
+  const f = await fixture(t, { screen: 'Unrecognized modal\n› ' });
+  await assert.rejects(f.services.control.interrupt('worker', undefined), { code: 'INTERRUPT_UNAVAILABLE' });
+  assert.equal(f.calls.some(row => row.args.includes('send-keys')), false);
+});
+
 test('production interrupt refuses a pane owned by an unrelated process', async t => {
   const f = await fixture(t, { panePid: process.pid + 100000 });
   await assert.rejects(f.services.control.interrupt('worker', undefined), { code: 'PROCESS_IDENTITY_UNAVAILABLE' });

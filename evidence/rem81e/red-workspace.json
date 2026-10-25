@@ -1,0 +1,34 @@
+{
+  "head": "a711b8863c9cffed5ded36f11e730c836fe6a979",
+  "runtimeAtRed": "src/production-runtime.ts had uncommitted 5.8 profiling edits; interrupt stub unchanged; no own implementation existed at either red run",
+  "baseRuntimeBlobSha256": "60b8750a1bc560794dae132d1df1ea670afcf21f2badbde8aa70de2893bae557",
+  "ownChangesBeforeExpandedRed": [
+    "test/session-recovery-interrupt.test.ts (new unrecognized-screen regression)",
+    "evidence/rem81e/red-*"
+  ],
+  "concurrentFilesAtRed": [
+    "bin/raf.ts",
+    "src/agent-adapters.ts",
+    "src/agent-control.ts",
+    "src/app-runtime.ts",
+    "src/bug-sync.ts",
+    "src/cli.ts",
+    "src/launch-wrapper.ts",
+    "src/os-runtime.ts",
+    "src/production-entry.ts",
+    "src/production-resource-wait.ts",
+    "src/production-runtime.ts",
+    "src/raf-cost-profile.ts",
+    "src/service-host.ts",
+    "src/state-store.ts",
+    "src/test-run-runtime.ts",
+    "test/app-runtime.test.ts",
+    "test/production-entry.test.ts"
+  ],
+  "concurrentUntracked": [
+    "node_modules",
+    "src/command-timing.ts",
+    "src/raf-cost-runtime.ts"
+  ],
+  "note": "Concurrent 5.8 transfer was committed by its owner as 6bfd2f0 before interrupt integration. Historical dirty files are declared, not represented as an exact archived snapshot."
+}

@@ -72,6 +72,7 @@ import { finalizeStartupContextRun, reserveStartupContextReview, cleanupStartupC
 import { startupContextRuntimeFiles, startupContextAcceptedReport } from './startup-context-runtime.ts';
 import { prepareCodexRafCommandAccess, codexInvocationSandboxMode, type PreparedCodexRafCommandAccess } from './codex-raf-command-access.ts';
 import { prepareCodexSandbox, CodexSandboxUnavailable, type PreparedCodexSandbox } from './codex-sandbox.ts';
+import { interruptAgentAction } from './agent-interrupt.ts';
 
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const object = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -589,7 +590,8 @@ function reportedCommitPorts(store: StateStore, context: RuntimeContext, execute
     },
   };
 }
-function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: Pick<RuntimeConfiguration, 'catalog'>, context: RuntimeContext, budgetFor: (runner: string) => Promise<TransitionBudget>, identityExecute?: AdapterCommandExecutor) {
+function sessionTools(store: StateStore, execute: AdapterCommandExecutor, configuration: Pick<RuntimeConfiguration, 'catalog'>, context: RuntimeContext, settingsFor: (runner: string) => Promise<ProtocolSettings>, identityExecute?: AdapterCommandExecutor) {
+  const budgetFor = async (runner: string) => (await settingsFor(runner)).timeouts;
   const verified = new WeakMap<object, string>();
   const mainAuthority = new WeakMap<object, ProcessIdentity>();
   const direct = identityExecute ?? executeCommand;
@@ -761,7 +763,20 @@ function sessionTools(store: StateStore, execute: AdapterCommandExecutor, config
         }
         return { accepted: true, receiptId: randomUUID() };
       },
-      interrupt: async () => fail('INTERRUPT_UNAVAILABLE', 'Runner-specific busy interrupt evidence is unavailable'),
+      interrupt: async identity => {
+        const socket = identity.evidence.tmuxSocket;
+        const pane = identity.evidence.tmuxPane;
+        if (!socket || !isAbsolute(socket) || !pane || !/^%\d+$/.test(pane)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Interrupt requires a recorded tmux socket and pane');
+        const tmux = paneExecutor(socket, direct);
+        await interruptAgentAction({
+          pane, settings: await settingsFor(identity.runner), execute: tmux,
+          verify: async () => {
+            if ((await observeIdentity(identity, direct)).state !== 'alive' || !await belongsToPane(identity, tmux)) return false;
+            const shown = await tmux({ executable: 'tmux', args: ['display-message', '-p', '-t', `=${identity.tmuxSession}:0.0`, '#{pane_id}'] });
+            return shown.exitCode === 0 && shown.stdout.trim() === pane;
+          },
+        });
+      },
       close: async identity => {
         const observed = (await observeProcesses([identity], { execute }))[0];
         if (observed.state !== 'alive' || !await belongsToPane(identity, execute)) fail('PROCESS_IDENTITY_UNAVAILABLE', 'Close requires a verified live process in its owned tmux pane');
@@ -961,8 +976,9 @@ export async function createProductionServices(
   for (const name of ['orchestratorRoot', 'confRoot', 'artifactPath', 'statePath', 'tmpRoot'] as const) if (!isAbsolute(context[name])) fail('INVALID_CONTEXT', `Absolute ${name} required`);
   if (options.workerModulePath && !isAbsolute(options.workerModulePath)) fail('INVALID_CONTEXT', 'Internal worker override must be absolute');
   const execute = runtimeExecution(context, options.execute);
-  const budgetFor = async (runner: string) => protocolFor(await protocols(context.confRoot, options.protocolSettings), runner).timeouts;
-  const tools = sessionTools(store, execute, configuration, context, budgetFor, options.execute);
+  const settingsFor = async (runner: string) => protocolFor(await protocols(context.confRoot, options.protocolSettings), runner);
+  const budgetFor = async (runner: string) => (await settingsFor(runner)).timeouts;
+  const tools = sessionTools(store, execute, configuration, context, settingsFor, options.execute);
   const assignments = assignmentPorts(execute);
   const prepared = new Map<string, { testAssignment: SandboxTestAssignment; flowQa: import('./flow-qa-report.ts').FlowQaLaunchContext | null; flowPlan: readonly import('./flow-task-plan.ts').FlowPlanDocument[]; launch: RuntimeLaunch; reportPath: string; workspaceTrustDenied: boolean; reportedCommits?: ReportedCommitLaunchContext; handshake?: LaunchHandshake; brief?: string; spawnAttempted?: boolean; wrapperFailure?: PersistentWrapperFailure['wrapper']; wrapperGone?: boolean }>();
   const readSession = tools.current;

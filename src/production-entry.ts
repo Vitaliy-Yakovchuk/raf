@@ -205,13 +205,13 @@ export async function runProductionCli(argv: readonly string[], options: Product
         } catch (error) {
           original = failureContext(error) ? error : failure('PRODUCTION_ENTRY_FAILED', error instanceof Error ? error.message : String(error));
           const diagnostic = failureContext(original);
-          if (profileStore && diagnostic) { try { profileStore.recordHealthRefusal(diagnostic.code, diagnostic.stage); } catch (healthError) { process.emitWarning(String(healthError)); } }
+          if (profileStore && diagnostic) { try { profileStore.recordHealthRefusal(diagnostic.code, diagnostic.stage); } catch (healthError) { process.emitWarning(name === 'agent ps' ? 'Agent list health recording unavailable' : String(healthError)); } }
           try { await runtime?.close(); } catch {}
           throw original;
         } finally {
           let finalizationError: unknown;
           try { profile?.stage('finalization'); profile?.finish(); }
-          catch (error) { if (original === undefined) finalizationError = error; else process.emitWarning(error instanceof Error ? error : String(error)); }
+          catch (error) { if (original === undefined) finalizationError = error; else process.emitWarning(name === 'agent ps' ? 'Agent list finalization unavailable' : error instanceof Error ? error : String(error)); }
           if (profileStore) await settleRuntimeHealthCpu(profileStore, options.orchestratorRoot);
           if (profileStore && loaded && executionCatalog && !runtime && name !== 'test run' && !name.startsWith('service ')) {
             try {
@@ -221,7 +221,7 @@ export async function runProductionCli(argv: readonly string[], options: Product
               await settleCommandState(commandState(options.orchestratorRoot, catalog)(profileStore, () => services ??= createProductionServices(profileStore!, {
                 catalog, models: loaded!.models, commandTiming: loaded!.commandTiming,
               }, context)));
-            } catch (error) { process.emitWarning(String(error)); }
+            } catch (error) { process.emitWarning(name === 'agent ps' ? 'Agent list settlement unavailable' : String(error)); }
           }
           try {
             if (profileStore && loaded) recordCommandTiming(profileStore, command, startedAtMs, now, loaded.commandTiming.emaAlpha);

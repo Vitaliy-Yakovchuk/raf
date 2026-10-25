@@ -5,7 +5,7 @@ import { commandTimingFailure, recordCommandTiming, validateCommandTiming } from
 import { runAgentWithQueue, type AgentQueueRecord, type AgentQueueValidation, type AgentQueueRequest, type AgentRunQueuePorts } from './agent-run-queue.ts';
 import { isAbsolute, join } from 'node:path';
 import { realpath } from 'node:fs/promises';
-import { commandFailure, failureContext, type CommandFailureContext } from './cli-contract.ts';
+import { commandFailure, failureContext, agentPsFailure, type CommandFailureContext } from './cli-contract.ts';
 import type { Handler } from './cli.ts';
 import type { CompiledCatalog } from './catalog.ts';
 import type { StateStore } from './state-store.ts';
@@ -24,6 +24,7 @@ import { bindWorkspaceBoundaries, rafCommandFor, resolveGitWriteBoundaries, rafS
 import { createReminderHandlers, settleCommandState, type CommandStatePorts, type ReminderCommand } from './reminder-cli.ts';
 import type { HotfixWorkspace } from './hotfix-worktree.ts';
 import type { NotifyTarget } from './launcher-notice.ts';
+import type { AgentPsView } from './agent-ps-projection.ts';
 
 export interface RuntimeContext {
   stateContext?: import('./state-migration-guard.ts').StateContext;
@@ -112,7 +113,7 @@ export interface RuntimeServices {
   compensate(launch: RuntimeLaunch, error: unknown): Promise<{ stopped: true } | { stopped: false; reason: string }>;
   abortLaunch(runId: string, reason: string): Promise<void>;
   control: {
-    ps(): Promise<SessionRecord[]>;
+    ps(caller?: unknown): Promise<AgentPsView[]>;
     update(id: string, patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>>, caller: unknown): Promise<SessionRecord>;
     message(input: { to: string; text: string }, caller: unknown): Promise<DeliveryReceipt>;
     close(id: string, caller: unknown, options?: { force?: boolean; reason?: string }): Promise<CloseResult>;
@@ -366,7 +367,11 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
   };
   const builtins: Record<string, Handler> = {
     'agent run': raw => launchAgent(raw),
-    'agent ps': async () => measureRafCost('reconciliation', async () => (await service()).control.ps()),
+    'agent ps': async () => measureRafCost('reconciliation', async () => {
+      let caller: unknown;
+      try { caller = await context.resolveCaller(); } catch {}
+      return (await service()).control.ps(caller);
+    }),
     'agent update': async params => {
       const patch: Partial<Pick<SessionActivity, 'project' | 'features' | 'phase'>> = {};
       for (const key of ['project', 'features', 'phase'] as const) {
@@ -422,12 +427,15 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
   const handlers: Record<string, Handler> = Object.create(null);
   for (const [name, handler] of Object.entries(builtins)) handlers[name] = async params => {
     let original: unknown;
+    let approvedCodes: string[] = [];
     try {
       const loaded = await config();
+      approvedCodes = loaded.catalog.errorCodes?.map(entry => entry.id) ?? [];
       if (!loaded.catalog.commands.some(command => command.handlerName === name)) throw fail('COMMAND_UNAVAILABLE', 'dispatch', 'Command absent from approved catalog');
       await store();
       return await handler(params);
     } catch (error) {
+      if (name === 'agent ps') error = agentPsFailure(error, approvedCodes);
       original = error;
       if (name === 'agent close' && (params.force === true || params.reason !== undefined) && opening) {
         try { (await opening).recordForcedCloseRefusal(failureContext(error)?.code ?? 'HANDLER_FAILED', new Date().toISOString()); }
@@ -444,7 +452,8 @@ export function createAppRuntime(context: RuntimeContext, dependencies: AppRunti
           const command = loaded.catalog.commands.find(command => command.handlerName === name);
           recordCommandTiming(await opening, command, context.commandStartedAtMs, dependencies.now, loaded.commandTiming.emaAlpha);
         } catch (error) {
-          throw commandTimingFailure(error, original);
+          const failure = commandTimingFailure(error, original);
+          throw name === 'agent ps' ? agentPsFailure(failure, approvedCodes) : failure;
         }
       }
     }

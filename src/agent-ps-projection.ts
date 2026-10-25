@@ -1,0 +1,97 @@
+import type { SessionRecord } from './session-state.ts';
+
+type ObjectValue = Record<string, unknown>;
+export type AgentPsView = {
+  runId?: string;
+  addressId?: string;
+  revision?: number;
+  state?: SessionRecord['state'];
+  launchContext?: {
+    selection?: { runner?: string; model?: string; effort?: string };
+    assignment?: { changes?: { id?: string; items?: { id?: string }[] }[] };
+  };
+} & Record<string, unknown>;
+
+const object = (value: unknown): ObjectValue | undefined => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as ObjectValue : undefined;
+const text = (value: unknown): value is string => typeof value === 'string';
+const identifier = (value: unknown): value is string => text(value) && /^[A-Za-z0-9][A-Za-z0-9._:/@+\-]*$/.test(value);
+const absolutePath = (value: unknown): value is string => text(value) && value.startsWith('/') && !/[\u0000-\u001f\u007f]/.test(value);
+const timestamp = (value: unknown): value is string => text(value) && /^\d{4}-\d\d-\d\dT[\d:.]+Z$/.test(value) && Number.isFinite(Date.parse(value));
+const integer = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value);
+const oneOf = (values: readonly string[]) => (value: unknown): value is string => text(value) && values.includes(value);
+
+function fields(input: unknown, rules: Record<string, (value: unknown) => boolean>): ObjectValue {
+  const source = object(input);
+  const result: ObjectValue = {};
+  if (source) for (const [key, valid] of Object.entries(rules)) {
+    if (Object.hasOwn(source, key) && valid(source[key])) result[key] = source[key];
+  }
+  return result;
+}
+
+function activity(input: unknown): ObjectValue {
+  const result = fields(input, { type: identifier, project: identifier, phase: identifier, cwd: absolutePath });
+  const features = object(input)?.features;
+  if (Array.isArray(features)) result.features = features.filter(identifier);
+  return result;
+}
+
+function processView(input: unknown): ObjectValue {
+  const result = fields(input, { pid: integer, startedAt: timestamp, runner: identifier, runnerSessionId: value => value === null || identifier(value), tmuxSession: identifier });
+  const source = object(input);
+  if (object(source?.evidence)) result.evidence = fields(source!.evidence, { machineId: identifier, bootId: identifier, tmuxSocket: absolutePath, tmuxPane: value => text(value) && /^%\d+$/.test(value) });
+  const native = object(source?.nativeIdentity);
+  if (native) result.nativeIdentity = fields(native, { state: oneOf(['pending', 'confirmed']), id: value => value === null || identifier(value), source: oneOf(['session_start']), observedAt: timestamp });
+  return result;
+}
+
+function observation(input: unknown): ObjectValue {
+  const source = object(input);
+  const result = fields(source, { state: oneOf(['alive', 'exited', 'unknown']), observedAt: timestamp });
+  if (source?.state === 'alive' && object(source.identity)) result.identity = processView(source.identity);
+  if (source?.state === 'exited') Object.assign(result, fields(source, { exitCode: value => value === null || integer(value), finishReason: oneOf(['exit', 'signal', 'timeout', 'spawn-failure', 'death']) }));
+  if (source?.state === 'unknown') result.error = 'Process observation unavailable';
+  return result;
+}
+
+function launchContext(input: unknown): AgentPsView['launchContext'] {
+  const source = object(input);
+  const result: NonNullable<AgentPsView['launchContext']> = {};
+  if (object(source?.selection)) result.selection = fields(source!.selection, { runner: identifier, model: identifier, effort: identifier });
+  const assignment = object(source?.assignment);
+  if (assignment) {
+    result.assignment = {};
+    if (Array.isArray(assignment.changes)) result.assignment.changes = assignment.changes.filter(value => object(value)).map(value => {
+      const change = object(value)!;
+      const projected = fields(change, { id: identifier }) as { id?: string; items?: { id?: string }[] };
+      if (Array.isArray(change.items)) projected.items = change.items.filter(value => object(value)).map(item => fields(item, { id: identifier }));
+      return projected;
+    });
+  }
+  return result;
+}
+
+export function projectAgentPs(sessions: readonly unknown[], verifiedRunId?: string): AgentPsView[] {
+  if (!Array.isArray(sessions)) throw new Error('Agent list unavailable');
+  return sessions.map(input => {
+    const source = object(input);
+    if (!source) throw new Error('Agent state unavailable');
+    const result = fields(source, { runId: identifier, addressId: identifier, revision: integer, state: oneOf(['reserved', 'running', 'exited', 'finished']), ownerAction: oneOf(['paused', 'stopped']), successorRunId: identifier, finishedAt: timestamp }) as AgentPsView;
+    if (object(source.activity)) result.activity = activity(source.activity);
+    if (object(source.process)) result.process = processView(source.process);
+    if (object(source.observation)) result.observation = observation(source.observation);
+    if (object(source.result)) result.result = fields(source.result, { status: oneOf(['succeeded', 'failed']) });
+    if (object(source.reportAcceptance)) result.reportAcceptance = fields(source.reportAcceptance, { runId: identifier, status: oneOf(['succeeded', 'failed']), event: oneOf(['agent.succeeded', 'agent.failed']) });
+    for (const key of ['notify', 'delegatedBy', 'launchedBy']) {
+      if (object(source[key])) result[key] = fields(source[key], { addressId: identifier, runId: identifier });
+    }
+    const notice = object(source.resultNotice);
+    if (notice) {
+      result.resultNotice = fields(notice, { id: identifier, recipient: identifier, state: oneOf(['pending', 'delivered']), attempts: integer });
+      if (notice.lastError !== undefined) (result.resultNotice as ObjectValue).lastError = notice.lastError === null ? null : 'Result delivery unavailable';
+    }
+    if (object(source.reconciliation)?.code === 'WORKER_RESULT_PENDING') result.reconciliation = { code: 'WORKER_RESULT_PENDING', reason: 'Worker result processing is pending' };
+    if (verifiedRunId !== undefined && source.runId === verifiedRunId && object(source.launchContext)) result.launchContext = launchContext(source.launchContext);
+    return result;
+  });
+}

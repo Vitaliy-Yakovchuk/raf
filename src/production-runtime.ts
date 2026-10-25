@@ -55,6 +55,7 @@ import { selectModel, listModelAvailability, type RoutingSnapshot } from './mode
 import { createLaunchState, reserveLaunchInTransaction, evaluateLaunchAdmissionInTransaction } from './launch-state.ts';
 import { createSessionState, closeSessionInTransaction, type ProcessIdentity, type SessionRecord, type WorkResult } from './session-state.ts';
 import { AgentControlService, MainAttachedElsewhereError, type VerifiedSender, type ActivityEvent, type MainAttachment } from './agent-control.ts';
+import { projectAgentPs } from './agent-ps-projection.ts';
 import { ReminderService, type SessionEnd } from './reminders.ts';
 import { evaluateResourceAdmission, type ResourceAdmission, type ResourceAdmissionInput } from './resource-admission.ts';
 import { buildAdmissionSnapshot, type AdmissionSnapshot } from './admission-snapshot.ts';
@@ -62,7 +63,7 @@ import { loadFlowPolicy, type FlowPolicy } from './flow-policy.ts';
 import { deriveResourceAdmissionVolumes } from './home-disk-admission.ts';
 import { claimTaskReservations, handoffTaskReservations, startTaskReservations, completeTaskReservations, releaseTaskReservations, reconcileTaskReservations, listTaskReservations, type TaskReservationDependencies, type TaskReservationLease } from './task-reservations.ts';
 import { launchPersistentWrapper, runLaunchWrapper, consumeWrapperRequest, type LaunchHandshake, type LaunchOwnership, type PersistentWrapperFailure } from './launch-wrapper.ts';
-import { commandFailure, failureContext } from './cli-contract.ts';
+import { commandFailure, failureContext, agentPsFailure } from './cli-contract.ts';
 import { loadTaskContextConfiguration, deriveTaskContext, assignmentFingerprint, writeTaskContextFile, rafCommandFor, rafSubcommandsFor } from './task-context.ts';
 import { probeRunnerAvailability, resolveRunnerExecutable } from './runner-availability.ts';
 import type { ReminderSessionEffect } from './reminder-repository.ts';
@@ -1391,15 +1392,30 @@ export async function createProductionServices(
       await release(runId, 'cancelled');
     },
     control: {
-      ps: async () => {
-        const sessions = await tools.control.ps();
-        if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
-        await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
-        await reconcileFinishedAgentQueues({ store, current: readSession, observe: identity => observeIdentity(identity, execute), cleanReport: cleanQueuedReport });
-        await tools.deliverResults();
-        const handoffs = await settleModelHandoffs(store, context, configuration, options);
-        const started = handoffs.flatMap(result => result.status === 'started' ? [result.session] : []);
-        return resultNoticeViews(store, [...sessions, ...started.filter(row => !sessions.some(session => session.runId === row.runId))]);
+      ps: async caller => {
+        try {
+          let verifiedRunId: string | undefined;
+          try {
+            const sender = await tools.resolve(caller);
+            if (sender.kind === 'agent') verifiedRunId = sender.runId;
+          } catch {}
+          const sessions = await tools.control.ps();
+          if (sessions.some(session => session.observation?.state === 'unknown')) fail('PROCESS_SCAN_UNKNOWN', 'Process scan returned unknown; reservations retained');
+          await reconcileTaskReservations(await reservationTools(store, context, execute, options.execute));
+          await reconcileFinishedAgentQueues({ store, current: readSession, observe: identity => observeIdentity(identity, execute), cleanReport: cleanQueuedReport });
+          await tools.deliverResults();
+          const handoffs = await settleModelHandoffs(store, context, configuration, options);
+          const started = handoffs.flatMap(result => result.status === 'started' ? [result.session] : []);
+          if (verifiedRunId) {
+            try {
+              const sender = await tools.resolve(caller);
+              if (sender.kind !== 'agent' || sender.runId !== verifiedRunId) verifiedRunId = undefined;
+            } catch { verifiedRunId = undefined; }
+          }
+          return projectAgentPs(resultNoticeViews(store, [...sessions, ...started.filter(row => !sessions.some(session => session.runId === row.runId))]), verifiedRunId);
+        } catch (error) {
+          throw agentPsFailure(error, configuration.catalog.errorCodes?.map(entry => entry.id));
+        }
       },
       update: async (id, patch, caller) => { await tools.authorize(id, caller); const session = tools.state.listReconciliationCandidates().find(session => session.addressId === id); if (!session?.activity) fail('SESSION_UNAVAILABLE', 'Session activity unavailable'); return tools.control.update(id, { ...session.activity, ...patch }); },
       message: (input, caller) => tools.control.message(input, caller),

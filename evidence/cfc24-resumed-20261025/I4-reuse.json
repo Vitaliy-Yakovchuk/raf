@@ -30,6 +30,223 @@
     "Source result is catalogued as unit; real OS/process assertions reused only for their executed facts, not a new integration pass.",
     "Wrapper source changed only accompanying cleanup error preservation after source proof; no socket allocation/path changes.",
     "Evidence captures concurrent shared workspace with documented attribution limitation; not an atomic clean tree snapshot.",
-    "Does not close native CLI or live platform matrix Z.390.8; no foreign regression executed."
-  ]
+    "Does not close native CLI or live platform matrix Z.390.8; no foreign regression executed.",
+    "Original per-case temporary evidence paths are listed in the full source result; their current filesystem availability has not been checked. The committed full result and unchanged source assertions are the addressed proof."
+  ],
+  "exactPassedTests": [
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 control] real short Unix listen connect and payload"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 control] real private tmux is available"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint hotfix] short: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint hotfix] long-run: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint hotfix] long-tmpdir: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint hotfix] long-both: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint hotfix] long-home-tmproot: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint hotfix] multibyte: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint wrapper] short: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint wrapper] long-run: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint wrapper] long-tmpdir: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint wrapper] long-both: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint wrapper] long-home-tmproot: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint wrapper] multibyte: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint runtime-tmux] short: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint runtime-tmux] long-run: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint runtime-tmux] long-tmpdir: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint runtime-tmux] long-both: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint runtime-tmux] long-home-tmproot: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint runtime-tmux] multibyte: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint tool-tmux] short: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint tool-tmux] long-run: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint tool-tmux] long-tmpdir: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint tool-tmux] long-both: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint tool-tmux] long-home-tmproot: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint tool-tmux] multibyte: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint quota-leader] short: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint quota-leader] long-run: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint quota-leader] long-tmpdir: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint quota-leader] long-both: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint quota-leader] long-home-tmproot: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 endpoint quota-leader] multibyte: real listen connect payload and owned cleanup"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 ownership hotfix] two concurrent runIds preserve cwd env and surviving peer"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 ownership hotfix] setup and connect failure retain foreign resources"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 ownership wrapper] two concurrent runIds preserve cwd env and surviving peer"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 ownership wrapper] setup and connect failure retain foreign resources"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 ownership runtime-tmux] two concurrent runIds preserve cwd env and surviving peer"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 ownership runtime-tmux] setup and connect failure retain foreign resources"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 ownership tool-tmux] two concurrent runIds preserve cwd env and surviving peer"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 ownership tool-tmux] setup and connect failure retain foreign resources"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 ownership quota-leader] two concurrent runIds preserve cwd env and surviving peer"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 ownership quota-leader] setup and connect failure retain foreign resources"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 wrapper ingress] short: real parent child handshake preserves report and identity"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 wrapper ingress] long-run: real parent child handshake preserves report and identity"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 wrapper ingress] long-tmpdir: real parent child handshake preserves report and identity"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 wrapper ingress] long-both: real parent child handshake preserves report and identity"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 wrapper ingress] long-home-tmproot: real parent child handshake preserves report and identity"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 wrapper ingress] multibyte: real parent child handshake preserves report and identity"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 wrapper ingress] another process cannot consume an inherited handshake request"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "name": "[Z390 wrapper ingress] forged handshake identity is refused"
+    }
+  ],
+  "sourceResult": {
+    "outcome": "passed",
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete"
+  }
 }

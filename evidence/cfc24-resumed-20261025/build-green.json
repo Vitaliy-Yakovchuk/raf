@@ -1,0 +1,23 @@
+{
+  "command": "npm run build",
+  "observedHeadAfter": "eb5e9dd3552194e2acafbddd61352af93c7a180b",
+  "ownSourceStatus": "",
+  "cliCode": 0,
+  "toolCalls": [
+    {
+      "chunk_id": "78fae2",
+      "wall_time_seconds": 1.001083562,
+      "session_id": 72839,
+      "original_token_count": 9,
+      "output": "\n> build\n> node scripts/build.ts\n\n"
+    },
+    {
+      "chunk_id": "b53520",
+      "wall_time_seconds": 0.000011777,
+      "exit_code": 0,
+      "original_token_count": 37,
+      "output": "Каталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n"
+    }
+  ],
+  "boundary": "Build check only; repeated after unrelated source comments were removed, no TestRunResult or integration acceptance."
+}

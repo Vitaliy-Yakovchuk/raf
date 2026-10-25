@@ -48,3 +48,7 @@ node scripts/qa-agent-adapters-live.ts ffcfae61d0af25d230045d3a8703dcceff94c695 
 Аналогічно grok/agy/claude; main володіє host-lock. Немає правди про їхній rc, stdout, stderr, identity чи cleanup до повернення доказів.
 
 Main тимчасово зняв integration-реєстрацію (conf 351217774a) через робочу raf Z.423/Z.424. Нових integration-команд після повідомлення про паузу не запускали. Для продовження потрібні чинний artifact із виправленнями та явне повідомлення main про повернений preset/авторизацію; обхід inventory/sandbox не використовується.
+
+## Перевірка збірки
+
+`npm run build` після усунення чужих коментарів завершився CLI 0; повний tool envelope збережено у [build-green.json](build-green.json). Початковий build-check.json містить окрему чужу source-comment відмову й повідомлення main. Збірка підтверджує компіляцію; предметні integration/native сценарії цим не закриваються.

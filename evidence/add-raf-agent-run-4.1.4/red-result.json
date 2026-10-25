@@ -1,0 +1,523 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "name": "4.1.4 single-quoted LF stays in one literal message argument"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "line": 21,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/sandbox-command-multiline.test.ts:21:12)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.start (node:internal/test_runner/test:1262:17)",
+        "    at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "name": "4.1.4 trusted channel delegates LF message exactly once without changing bytes"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "line": 42,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/sandbox-command-multiline.test.ts:42:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "name": "4.1.4 single-quoted CR stays in one literal message argument"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "line": 21,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/sandbox-command-multiline.test.ts:21:12)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "name": "4.1.4 trusted channel delegates CR message exactly once without changing bytes"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "line": 42,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/sandbox-command-multiline.test.ts:42:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "name": "4.1.4 single-quoted CRLF stays in one literal message argument"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "line": 21,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/sandbox-command-multiline.test.ts:21:12)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "name": "4.1.4 trusted channel delegates CRLF message exactly once without changing bytes"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "line": 42,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/sandbox-command-multiline.test.ts:42:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "name": "4.1.4 quoted line breaks compose with an escaped apostrophe and adjacent literal segments"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Assertion failed (deepStrictEqual)",
+      "location": {
+        "file": "test/sandbox-command-multiline.test.ts",
+        "line": 51,
+        "column": 10
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/sandbox-command-multiline.test.ts:51:10)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 7,
+    "retainedEntries": 7,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "9c3cea6d2e895797ef5134bfcd67e43a044c69dc45e1ec66d8899525c680760e",
+      "projects": "9e8fbc075ab4c7aba2570ba460ee2c730dac2bfc033afd3c1ff3b967dd167dea"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "a3a08f9e-aaf2-45f6-b488-7bdb00e46619",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "add-raf-agent-run/sandbox-multiline",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/sandbox-command-multiline.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/sandbox-command-multiline.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-BCMCbO"
+    }
+  },
+  "startedAt": "2026-10-25T21:36:59.804Z",
+  "durationMs": 21261,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 backslash-n stays distinct from an actual LF"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 rejects unquoted LF"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 rejects unquoted CR"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 rejects unquoted CRLF"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 rejects escaped LF outside quotes"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 rejects escaped CR outside quotes"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 rejects semicolon after multiline literal"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 rejects pipe after multiline literal"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 rejects NUL inside single quotes"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 rejects NUL outside quotes"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 rejects unterminated multiline literal"
+    }
+  ],
+  "knownRed": [
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 single-quoted LF stays in one literal message argument"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 trusted channel delegates LF message exactly once without changing bytes"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 single-quoted CR stays in one literal message argument"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 trusted channel delegates CR message exactly once without changing bytes"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 single-quoted CRLF stays in one literal message argument"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 trusted channel delegates CRLF message exactly once without changing bytes"
+    },
+    {
+      "file": "test/sandbox-command-multiline.test.ts",
+      "name": "4.1.4 quoted line breaks compose with an escaped apostrophe and adjacent literal segments"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 1.75,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 22804893696,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 145965883392
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 7974572032
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      }
+    },
+    "remaining": {
+      "ramBytes": 18509926400,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 124491046912,
+        "/dev/mapper/home-dev": 7974572032
+      },
+      "normalizedLoad": 0.21875
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "a3a08f9e-aaf2-45f6-b488-7bdb00e46619",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "e78f6e7f-5481-45f4-951f-b1c0888b1b57",
+        "root": {
+          "pid": 3111595,
+          "startTicks": "30692259",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "add-raf-agent-run",
+          "item": "4.1.4"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "dbe3876eddae31295b52653b7a94be4e3cee78fee756c07a5cec2b3674e46113"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-BCMCbO"
+      ]
+    },
+    "preparedAt": 1792964240105,
+    "baseline": {
+      "at": 1792964240303,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1792964240527,
+    "lastObservedAt": 1792964240993,
+    "finishedAt": 1792964241043,
+    "finishReason": "exit",
+    "peakRamBytes": 35913728,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 35913728,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Process scan could not establish every process identity",
+      "Root process identity is unavailable or changed",
+      "RAM measurement unavailable",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": {
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263",
+    "waited": true
+  }
+}

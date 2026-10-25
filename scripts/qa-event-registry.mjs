@@ -227,9 +227,10 @@ if (process.argv[2] === 'child') {
       for (const result of parallel) { assert.equal(result.cliExitCode, 0, result.stderr); assert.equal(result.signal, null); }
       const closedAt = find(binding).closedAt; assert.equal(find(binding).state, 'closed');
       command('race-reopen-repeat', ['reminder', 'list']); assert.equal(find(binding).closedAt, closedAt);
-      fixture(id); const second = remind('archive-next-cycle', 'openspec.archived', id, 'close'); command('second-cycle-baseline', ['reminder', 'list']);
       const todayArchive = path.join(root, 'openspec/changes/archive', new Date().toISOString().slice(0, 10) + '-' + id);
       fs.renameSync(todayArchive, path.join(root, 'openspec/changes/archive', '2026-04-01-' + id));
+      fixture(id); const second = remind('archive-next-cycle', 'openspec.archived', id, 'close'); command('second-cycle-baseline', ['reminder', 'list']);
+      assert.equal(find(second).state, 'pending');
       assert.equal(run('archive-next-cycle-success', 'openspec', ['archive', id, '--yes', '--skip-specs']).cliExitCode, 0);
       command('second-cycle-settle', ['reminder', 'list']); assert.equal(find(second).state, 'closed'); assert.equal(find(binding).closedAt, closedAt);
       assert.equal(pending().length, 0);

@@ -1,0 +1,142 @@
+{
+  "assignment": "complete-raf-flow-contracts:5.2",
+  "scope": "Лише test-scaffold U1–U8, без реалізації фічі; 15 наявних тестів + 13 нових = 28.",
+  "audit": {
+    "current": true,
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/specs/projects/raf/event-registry/spec.md",
+      "openspec/changes/complete-raf-flow-contracts/event-registry-design.md",
+      "openspec/changes/add-raf-test-run/specs/core/process/feature-test-authoring/spec.md"
+    ],
+    "resolution": "Чинний контракт feature-test-authoring і прямий бриф дозволяють читати production/чужі тести та вимагають власного red; старі згадки сліпого режиму не застосовуються. Очікування U1–U8 взято з нормативної delta і дизайну.",
+    "existingCoverage": "Базові Q60 archive observer сценарії вже проходять; вони не оголошуються новим red чи живою інтеграцією."
+  },
+  "publicSurface": {
+    "newMethods": [],
+    "newCommands": [],
+    "scaffold": "createEventRegistry/createArchiveObserver і всі потрібні сигнатури вже наявні. Новий каркас NotImplemented не потрібний; готові методи не замінено заглушками."
+  },
+  "unitSelection": {
+    "project": "raf",
+    "profileId": "node",
+    "group": "complete-raf-flow-contracts/raf-event-registry",
+    "files": [
+      "test/event-registry.test.ts"
+    ],
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/raf-event-registry --files test/event-registry.test.ts",
+    "nextPhases": [
+      "implement",
+      "qa"
+    ],
+    "sameGroupRequired": true
+  },
+  "configuration": {
+    "file": "conf/test-runs.json",
+    "unitFilesAdditions": [],
+    "groupAdditions": {},
+    "requiredExistingEntries": {
+      "projects.raf.profiles.node.unitFiles contains": [
+        "test/event-registry.test.ts"
+      ],
+      "projects.raf.groups.complete-raf-flow-contracts/raf-event-registry": {
+        "profileId": "node",
+        "files": [
+          "test/event-registry.test.ts"
+        ]
+      }
+    },
+    "prerequisites": [
+      "main перевіряє зареєстрований маршрут raf-develop/develop, точний inventory/preset та довірене покоління caller test-scaffold → red",
+      "Node runtime та локальні scripts/test-run-node.ts, src/test-run-reporter.ts і node_modules/typescript/package.json за node.checks",
+      "ізольований QA HOME/state/tmp та machine/boot/process-origin guards; JSON фактично підтвердив ізоляцію",
+      "загальний timeout із conf/flow.json#/unitTests/timeoutMs; незмінні ledger і group; не запускати широкі/integration selections"
+    ],
+    "observed": {
+      "complete-raf-flow-contracts/raf-event-registry": {
+        "profileId": "node",
+        "files": [
+          "test/event-registry.test.ts"
+        ]
+      }
+    },
+    "unitPolicy": {
+      "timeoutMs": 1200000,
+      "optimizeAfterTimeouts": 1,
+      "maxGroupTimeouts": 2
+    }
+  },
+  "matrix": {
+    "U1": "Чинний JSON events/eventIdKinds; canonical validateEventObjectId замість власної fixture regex; додано валідні приклади resourceQueueId/rafInstanceId; незатверджений stored pending не авторизується.",
+    "U2": "Invalid/empty/path/tmux/NUL/whitespace та несумісні UUID ID відхиляються до transaction. Окремий цільовий red: ID архіву з префіксом дати проходить canonical validator.",
+    "U3": "Explicit activate/close, точні kind/object ID; чужі й closed bindings незмінні; closedAt не поновлюється. Порт reminders у пам’яті; реальний SQL/доставка належать 5.4.",
+    "U4": "Pending duplicate/conflicting key; unresolved retry; save/apply/delete/commit failure із rollback; успіх видаляє pending, порожній dispatch без історії.",
+    "U5": "succeeded/failed/interrupted не стають closed; report-rejected обробляє explicit bindings через той самий каталог, без повторення Z.373.",
+    "U6": "Старий/unrelated archive, зникнення без архіву, active+archive, unsuccessful/partial snapshot; лише підтверджений successful snapshot дає факт.",
+    "U7": "Точний change ID після вилучення архівної дати; path/suffix не підходять; внутрішні date components ID збережено.",
+    "U8": "Повтор і конкурентні observe одноразові; emit failure retry, multi-change partial success без дубля, queued observe recovery; наступний цикл того самого ID незалежний."
+  },
+  "red": {
+    "workspaceHead": "99fa295ff2961a035adaa7c2f32e67877251c373",
+    "runId": "91b23919-fa95-4709-9c39-940807dd6496",
+    "testKind": "unit",
+    "callerPhase": "test-scaffold",
+    "outcome": "assertions-failed",
+    "passedCount": 27,
+    "knownRed": [
+      {
+        "file": "test/event-registry.test.ts",
+        "name": "U2 archive date prefix is rejected by the registry using the canonical ID validator"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "durationMs": 595,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "timeoutCount": 0,
+    "nextAction": "implement",
+    "cause": "Missing expected exception: реєстр через canonical validator приймає 2026-10-22-add-reminders як changeId; очікування U2 за дизайном і Q60. Не setup/import failure.",
+    "mainConfirmation": "Повідомлення main у цій сесії: «Red 5.2 прийнято: runId 91b23919, 1 knownRed U2 (архівна дата в ID), unknown/unexecuted порожні, cleanup complete. Заверши докази й звіт.»",
+    "stderr": {
+      "availability": "unavailable separately",
+      "reason": "exec_command повертає один output stream; він повністю містить JSON TestRunResult. Окремий stderr не надано інструментом; порожній stderr не вигадується."
+    }
+  },
+  "evidence": {
+    "fullTestRunResult": "red.stdout.json",
+    "fullToolResult": "red.tool-result.json",
+    "beforeRun": "before-run.json",
+    "sha256": {
+      "red.stdout.json": "1deffcbc58c752105217bacbdf7a3d590c997565e65bab7863eb420e13d82c32",
+      "red.tool-result.json": "db9fe987293c4e61e4b20a9c73847dc4364048ef99a92f86b241ede5a64130a4",
+      "before-run.json": "3fb9f746099268f5f31b6a45a93e983605a25cd05fc1270a779bdfe8251fc98a"
+    }
+  },
+  "testedInputs": {
+    "sha256": {
+      "test/event-registry.test.ts": "fb7dfa9a6e06c42959251226652e44dee303a10b87d5fcbab3ae1fdc996d78c0",
+      "src/event-registry.ts": "a4cdea9d19488f473b6e62433e01904b362b48e8a99d4b275fa28d8b77b8ce8a",
+      "src/event-catalog.ts": "7817fe3ce26f1e7416a75f1b3438bc8beb0996ce5c798e4bb005d939764601eb",
+      "src/compiled-catalog.ts": "5f20058845c062c69c3e3628d16786693238f2d63392cc97ed3b133b898016f5"
+    },
+    "canonicalValidatorMatchesHEAD": true,
+    "dirtyWorkspace": "Чужі незакомічені зміни перелічено в before-run.json. Зокрема src/event-catalog.ts має чужі зміни завантаження каталогу, src/compiled-catalog.ts ще untracked; тіло validateEventObjectId ідентичне HEAD. Їх не змінено/не закомічено цим виконавцем."
+  },
+  "remaining": "5.3 реалізує цільову прогалину за нормативною delta/дизайном; I1–I7, SQLite, справжній OpenSpec/watchers і production wiring перевіряє 5.4. Нових команд не додано, перевірки CLI-безпеки не розширюються. Інші відкриті пункти не виконано, sync/archive не застосовується; tasks.md не змінювався.",
+  "checks": [
+    {
+      "command": "node scripts/check-comments.ts",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check -- test/event-registry.test.ts",
+      "exitCode": 0
+    }
+  ]
+}

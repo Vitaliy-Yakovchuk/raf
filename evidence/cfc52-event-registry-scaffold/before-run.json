@@ -1,0 +1,47 @@
+{
+  "workspaceHead": "99fa295ff2961a035adaa7c2f32e67877251c373",
+  "rootHead": "2db8e3b8435b8b967a12e23868ca8888a5898cf2",
+  "workspaceStatus": " M scripts/build.ts\n M src/agent-report.ts\n M src/app-runtime.ts\n M src/catalog-generator.ts\n M src/catalog.ts\n M src/cli-arguments.ts\n M src/cli.ts\n M src/event-catalog.ts\n M src/model-routing-handoff.ts\n M src/model-routing.ts\n M src/production-agent-queue.ts\n M src/production-entry.ts\n M src/production-runtime.ts\n M src/session-state.ts\n M src/task-context.ts\n M test/command-timing.test.ts\n?? evidence/cfc104-model-routing/\n?? evidence/cfc44-command-timing/\n?? evidence/complete-raf-flow-contracts-12.4/\n?? src/catalog-schema.ts\n?? src/catalog.schema.json\n?? src/compiled-catalog.ts\n?? src/production-bindings.ts\n?? src/production-model-handoff.ts\n",
+  "configSha256": {
+    "test-runs.json": "4505149f6af453e2ad4a99013aad13807add3f1fcc7b84036a8b3ee703f6f7e1",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f"
+  },
+  "profileId": "node",
+  "profile": {
+    "cwd": ".",
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts"
+    ],
+    "exactIds": "node-test-name",
+    "resultAdapter": "node-test-events",
+    "environment": {
+      "isolatedHome": true,
+      "stateOrigin": true
+    },
+    "checks": [
+      "node_modules/typescript/package.json",
+      "src/test-run-reporter.ts",
+      "scripts/test-run-node.ts"
+    ],
+    "resourceEstimate": {
+      "ramBytes": 2147483648,
+      "diskBytesPerFileSystem": 10737418240
+    }
+  },
+  "unitFileRegistered": true,
+  "group": {
+    "complete-raf-flow-contracts/raf-event-registry": {
+      "profileId": "node",
+      "files": [
+        "test/event-registry.test.ts"
+      ]
+    }
+  },
+  "unitPolicy": {
+    "timeoutMs": 1200000,
+    "optimizeAfterTimeouts": 1,
+    "maxGroupTimeouts": 2
+  }
+}

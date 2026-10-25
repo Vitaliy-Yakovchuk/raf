@@ -1,0 +1,642 @@
+{
+  "sourceProvenance": {
+    "initialObservedHead": "8df57f490e045d2e78b7850842ad9ea93876a335",
+    "runtimeFixCommit": "33c8c4a7cd2c1c5efc526f16fde06ac3db6c7611",
+    "fixtureAndHostFixCommit": "e90114445807128ab10bb11c88a64e528d6227ac",
+    "note": "Shared unit working tree. Per-run HEAD reconstructed from local reflog excludes uncommitted changes; it is not a clean source snapshot. Own runtime preflight fix and service-port fixture updates were uncommitted for expanded-qa/profile-final (committed 33c8c4a). Recovery/UTC/app fixture fixes were uncommitted for fixtures-qa-first/fixtures-qa and z387-qa (committed e901144). Corresponding red runs preceded fixes. Atomic per-run dirty snapshots were not captured. Foreign initial dirty test/production-qa-fixture.ts and test/workspace-trust.test.ts were observed and never modified/committed by this agent. Host independently uses clean exact SHA clones."
+  },
+  "stderrCapture": {
+    "unit": "Authorized standalone broker commands; exec_command exposes combined output only. Full unchanged serialized TestRunResult and LF plus tool envelope stored separately from CLI/child exit codes. Separate stderr bytes unavailable. Historical *-stderr.txt contain placeholder LF, NOT raw stderr evidence; no claim of independently captured empty stderr.",
+    "host": "Separate child CLI stdout/stderr and outer script streams supplied read-only and secret-scanned by main."
+  },
+  "regressionGrant": {
+    "sourceItem": "profile-raf-performance:2.4",
+    "groups": [
+      "complete-raf-flow-contracts/resource-wait",
+      "complete-raf-flow-contracts/z387-regress"
+    ]
+  },
+  "runs": [
+    {
+      "evidence": "profile-result.json",
+      "sha256": "77ec3996190d78d640ce37aa7eb14bf80229560dba08977b5b2f8b4fba18ec36",
+      "runId": "ec3426c5-3a72-4d5b-8759-ad35f9bd3adf",
+      "startedAt": "2026-10-25T01:56:02.836Z",
+      "headFromReflog": "8df57f490e045d2e78b7850842ad9ea93876a335",
+      "phase": "qa",
+      "group": "profile-raf-performance/profile",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "passedCount": 31,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "stateAccess": null
+    },
+    {
+      "evidence": "resource-wait-result.json",
+      "sha256": "d38edc6cd4945f4bf4bf4e41b3e2c140f83b5965adfa6998329feabaafcb43e8",
+      "runId": "3bf6ae0b-5119-4cc5-b005-e0bc351d0a90",
+      "startedAt": "2026-10-25T01:56:29.879Z",
+      "headFromReflog": "8df57f490e045d2e78b7850842ad9ea93876a335",
+      "phase": "qa",
+      "group": "complete-raf-flow-contracts/resource-wait",
+      "selection": {
+        "files": [
+          "test/resource-wait-protocol.test.ts",
+          "test/resource-wait-client.test.ts",
+          "test/resource-wait-storage.test.ts",
+          "test/resource-wait-runtime.test.ts",
+          "test/state-store.test.ts",
+          "test/state-migration-cli.test.ts",
+          "test/production-entry.test.ts",
+          "test/production-service-ports.test.ts",
+          "test/service-entry.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/resource-wait",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "start uses configured main and remains available after empty work and completed request"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "failed recovery and readiness timeout return actionable errors, never successful acceptance"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "stop preserves agent and reminder state, distinguishes normal stop, and status does not restart"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "crash fails in-flight operation and a fresh client reports actual failure instead of stale ready state"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "canceling a socket request propagates caller loss to host queue handler"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "separate command processes coordinate startup through shared state and socket"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        },
+        {
+          "file": "test/service-host.test.ts",
+          "name": "default production ports recover and shut down while incomplete explicit dependencies are rejected"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host tracks connected resource client and persists its actual permit"
+        },
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "invalid service operational budget fails before state or child creation"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host entry recovers and shuts down without injected production ports"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passedCount": 221,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "stateAccess": null
+    },
+    {
+      "evidence": "preflight-red-result.json",
+      "sha256": "6c3c5204d80c88907b8c4e13dcaa9ecb31e3fb555068ff5b787b93e53adf18b6",
+      "runId": "691dd0cf-63ad-4240-abd9-5db0eb742dd8",
+      "startedAt": "2026-10-25T01:57:44.495Z",
+      "headFromReflog": "8df57f490e045d2e78b7850842ad9ea93876a335",
+      "phase": "red",
+      "group": "profile-raf-performance/profile",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts",
+          "test/production-entry.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts test/production-entry.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/production-entry.test.ts",
+          "name": "invalid service operational budget fails before state or child creation"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passedCount": 65,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "stateAccess": null
+    },
+    {
+      "evidence": "expanded-qa-result.json",
+      "sha256": "193db78f40d04daa1a283bff9b39710a140c49ec6f9e74dd85931226fd2e8d8c",
+      "runId": "0b54bf55-edd7-4b65-924e-e39dc34fc5df",
+      "startedAt": "2026-10-25T01:58:14.995Z",
+      "headFromReflog": "8df57f490e045d2e78b7850842ad9ea93876a335",
+      "phase": "qa",
+      "group": "profile-raf-performance/profile",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts",
+          "test/production-entry.test.ts",
+          "test/production-service-ports.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts test/production-entry.test.ts test/production-service-ports.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passedCount": 86,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "stateAccess": null
+    },
+    {
+      "evidence": "profile-final-result.json",
+      "sha256": "9675dfa78dddb6a115c131901e9f7efda2d4c5d851732e86ab2dfb8c035bc9bd",
+      "runId": "4da87763-358b-42c5-8b7f-af33e56f264a",
+      "startedAt": "2026-10-25T02:01:07.665Z",
+      "headFromReflog": "dfeb22b6a44120d92438813f67317e00125588a2",
+      "phase": "qa",
+      "group": "profile-raf-performance/profile",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts",
+          "test/production-entry.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts test/production-entry.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passedCount": 66,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "stateAccess": null
+    },
+    {
+      "evidence": "z387-result.json",
+      "sha256": "58c98e817095eda772a79b34537ccd9a6e2d2634fb25a9897f6ad94940777031",
+      "runId": "a7b9794f-efc2-4d88-b2ce-d45a1d1cc3e6",
+      "startedAt": "2026-10-25T02:01:57.580Z",
+      "headFromReflog": "59bcb9e928d132b3dfa7c7b1f07a80b2e8d95d1b",
+      "phase": "qa",
+      "group": "complete-raf-flow-contracts/z387-regress",
+      "selection": {
+        "files": [
+          "test/app-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z387-regress",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/app-runtime.test.ts",
+          "name": "command stats reads canonical command paths and does not invent zero measurements"
+        },
+        {
+          "file": "test/app-runtime.test.ts",
+          "name": "timing write failure preserves structured operation error and redacts secrets"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passedCount": 40,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "stateAccess": null
+    },
+    {
+      "evidence": "recovery-red-result.json",
+      "sha256": "c4f01ff922b059a54bc1ac52a48bc7df60f7b14f0fb26ba875bc2d770ba6ffab",
+      "runId": "dabf142b-4ed1-4c82-9c5b-a26aa658a946",
+      "startedAt": "2026-10-25T02:02:54.295Z",
+      "headFromReflog": "59bcb9e928d132b3dfa7c7b1f07a80b2e8d95d1b",
+      "phase": "red",
+      "group": "profile-raf-performance/profile",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts",
+          "test/production-entry.test.ts",
+          "test/production-service-ports.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts test/production-entry.test.ts test/production-service-ports.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit"
+        },
+        {
+          "file": "test/raf-cost-profile.test.ts",
+          "name": "profile: existing command stats without flags returns commands/profile, preserving EMA independently"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passedCount": 85,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "stateAccess": null
+    },
+    {
+      "evidence": "fixtures-red-result.json",
+      "sha256": "6e7723211948048541eca54ec7d5035ab669c1465ccd867184257f11c681eb81",
+      "runId": "42a470b4-fa79-4ec3-9e42-56890d60f0bd",
+      "startedAt": "2026-10-25T02:05:34.217Z",
+      "headFromReflog": "8c6c027fc1f4d5adfa6bc5ec69502f0394c3d083",
+      "phase": "red",
+      "group": "profile-raf-performance/profile",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts",
+          "test/production-entry.test.ts",
+          "test/production-service-ports.test.ts",
+          "test/app-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts test/production-entry.test.ts test/production-service-ports.test.ts test/app-runtime.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host finalizes prior confirmed exit and transfers reminders without fake delivery"
+        },
+        {
+          "file": "test/production-service-ports.test.ts",
+          "name": "sqlite: default host closes reminders for persisted verified succeeded despite nonzero exit"
+        },
+        {
+          "file": "test/raf-cost-profile.test.ts",
+          "name": "profile: existing command stats without flags returns commands/profile, preserving EMA independently"
+        },
+        {
+          "file": "test/app-runtime.test.ts",
+          "name": "command stats reads canonical command paths and does not invent zero measurements"
+        },
+        {
+          "file": "test/app-runtime.test.ts",
+          "name": "timing write failure preserves structured operation error and redacts secrets"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passedCount": 125,
+      "groupState": "idle",
+      "nextAction": "implement",
+      "stateAccess": null
+    },
+    {
+      "evidence": "fixtures-qa-first-result.json",
+      "sha256": "3f0d57d246bda1a25b1fa86071e91ce961a54fc2c89bac7eb7c93d826bbc9371",
+      "runId": "b3c21d90-6e44-4d71-b9dd-6c93ea09b90a",
+      "startedAt": "2026-10-25T02:06:10.632Z",
+      "headFromReflog": "6bea4aa36c63db847c1af2802a5a09b9de900c8e",
+      "phase": "qa",
+      "group": "profile-raf-performance/profile",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts",
+          "test/production-entry.test.ts",
+          "test/production-service-ports.test.ts",
+          "test/app-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts test/production-entry.test.ts test/production-service-ports.test.ts test/app-runtime.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/app-runtime.test.ts",
+          "name": "timing write failure preserves structured operation error and redacts secrets"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passedCount": 129,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "stateAccess": null
+    },
+    {
+      "evidence": "fixtures-qa-result.json",
+      "sha256": "a28330b86405d3726c3c8e3f1615b5f1bc54d26ffa5db56aea618152ee300e43",
+      "runId": "734ab306-0037-4891-96b3-a3c08cd3935e",
+      "startedAt": "2026-10-25T02:07:04.793Z",
+      "headFromReflog": "43eb3dd7af9773eac106455612dc07b4d0c5be1f",
+      "phase": "qa",
+      "group": "profile-raf-performance/profile",
+      "selection": {
+        "files": [
+          "test/raf-cost-profile.test.ts",
+          "test/production-entry.test.ts",
+          "test/production-service-ports.test.ts",
+          "test/app-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase qa --group profile-raf-performance/profile --files test/raf-cost-profile.test.ts test/production-entry.test.ts test/production-service-ports.test.ts test/app-runtime.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "passedCount": 130,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "stateAccess": null
+    },
+    {
+      "evidence": "z387-qa-result.json",
+      "sha256": "e5226b99fe3a709f61100a6b94090f4a8713d4a4cad6ed127370654d4ccaa820",
+      "runId": "02c0509e-bdea-4ad0-8e58-9738ecfb86e8",
+      "startedAt": "2026-10-25T02:07:30.529Z",
+      "headFromReflog": "9ba404760962afaa9606690193c9e63a12878817",
+      "phase": "qa",
+      "group": "complete-raf-flow-contracts/z387-regress",
+      "selection": {
+        "files": [
+          "test/app-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z387-regress",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "passedCount": 42,
+      "groupState": "complete",
+      "nextAction": "complete",
+      "stateAccess": null
+    },
+    {
+      "evidence": "resource-wait-qa-result.json",
+      "sha256": "80ed33919c25cf2efd70bb5c1a4f3a36574ce77182fbea7746e06cb91067e96f",
+      "runId": "3d2fe8d4-52af-4849-825b-e6105b8903b4",
+      "startedAt": "2026-10-25T02:07:55.585Z",
+      "headFromReflog": "e90114445807128ab10bb11c88a64e528d6227ac",
+      "phase": "qa",
+      "group": "complete-raf-flow-contracts/resource-wait",
+      "selection": {
+        "files": [
+          "test/production-entry.test.ts",
+          "test/production-service-ports.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/59a18619-5f7d-4b3c-947e-4a3010820d6e/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/resource-wait --files test/production-entry.test.ts test/production-service-ports.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 0,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "start uses configured main and remains available after empty work and completed request"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "failed recovery and readiness timeout return actionable errors, never successful acceptance"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "stop preserves agent and reminder state, distinguishes normal stop, and status does not restart"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "crash fails in-flight operation and a fresh client reports actual failure instead of stale ready state"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "canceling a socket request propagates caller loss to host queue handler"
+        },
+        {
+          "file": "test/background-runtime.test.ts",
+          "name": "separate command processes coordinate startup through shared state and socket"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        },
+        {
+          "file": "test/service-host.test.ts",
+          "name": "default production ports recover and shut down while incomplete explicit dependencies are rejected"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "passedCount": 57,
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "stateAccess": null
+    }
+  ],
+  "checks": {
+    "build": {
+      "command": "npm run build",
+      "cliExitCode": 0
+    },
+    "comments": {
+      "command": "npm run check:comments",
+      "cliExitCode": 0
+    },
+    "diff": {
+      "command": "git diff --check",
+      "cliExitCode": 0
+    },
+    "hostSyntax": {
+      "command": "node --check scripts/qa-cost-profile-host.ts",
+      "cliExitCode": 0
+    }
+  },
+  "audit": {
+    "recovery": "Active background-runtime §Межі служби requires preservation. Explicit red followed by full deep equality of original session/reminder records; stable test IDs retained.",
+    "clock": "59bcb9e uses wall UTC; test verifies real call interval and all fields.",
+    "timing": "Active command-timing simultaneous operation/statistics failure requires explicit sanitized diagnostic beside primary. Added exact primary code/completed/pending/remediation assertions.",
+    "foreignRed": "Main excluded old dirty-generation background-runtime/service-entry reds; service-host shares initial baseline. resource-wait retains 12 knownRed, no reset or false pass."
+  }
+}

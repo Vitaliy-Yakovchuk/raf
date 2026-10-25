@@ -140,7 +140,7 @@ const digest = (value: string) => hash(value);
 const summary: any = { sha, base, platform: process.platform, node: process.version, versions: process.versions,
   os: spawnSync('uname', ['-a'], { encoding: 'utf8' }).stdout.trim(),
   osRelease: await readFile('/etc/os-release', 'utf8'),
-  tools: Object.fromEntries(['git', 'tmux', 'openspec'].map(name => [name, spawnSync(name, ['--version'], { encoding: 'utf8' }).stdout.trim()])),
+  tools: Object.fromEntries(['git', 'tmux', 'openspec'].map(name => [name, spawnSync(name, [name === 'tmux' ? '-V' : '--version'], { encoding: 'utf8' }).stdout.trim()])),
   conf: {}, scenarios: [], commands: [], limitations: ['Runner is a synthetic interactive executable using real tmux/worker delivery. No provider credentials or real model call.', 'Per-child helper CPU is explicitly unavailable; total CPU is not claimed.'], cleanup: { complete: false } };
 const hooks: (() => unknown)[] = [];
 const lifecycle = { after: (action: () => unknown) => hooks.push(action) } as unknown as TestContext;
@@ -173,12 +173,13 @@ try {
   const constants = JSON.parse(await readFile(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
   const projects = JSON.parse(await readFile(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
   const models = JSON.parse(await readFile(new URL('../../conf/models.json', import.meta.url), 'utf8'));
-  const isolatedSettings = { ...settings, state: { fileName: 'isolated.sqlite' }, runnerProtocols: local.runnerProtocols, bugs: { ...settings.bugs, sections: [] } };
+  const isolatedSettings = { ...settings, state: { fileName: 'isolated.sqlite' }, runnerProtocols: local.runnerProtocols };
+  delete isolatedSettings.bugs;
   await writeFile(join(f.confRoot, 'raf.json'), JSON.stringify(isolatedSettings));
   await writeFile(join(f.confRoot, 'raf-constants.json'), JSON.stringify(constants));
   await writeFile(join(f.confRoot, 'models.json'), JSON.stringify(models));
   for (const name of ['raf.json', 'raf-constants.json', 'projects.json', 'models.json', 'flow.json', 'test-runs.json']) summary.conf[name] = digest(await readFile(join(f.confRoot, name), 'utf8'));
-  summary.configurationDifferences = { state: isolatedSettings.state, runner: 'synthetic codex protocol only', bugs: 'No external sections; no network/auth copied', flow: 'existing fixture resource estimates, retained and fingerprinted' };
+  summary.configurationDifferences = { state: isolatedSettings.state, runner: 'synthetic codex protocol only', bugs: 'Optional bugs configuration omitted via supported no-sync contract; no network/auth copied', flow: 'existing fixture resource estimates, retained and fingerprinted' };
   const main = join(f.root, projects.projects.raf.branchPaths.main);
   for (const name of ['src', 'bin', 'scripts', 'package.json']) await cp(join(f.cwd, name), join(main, name), { recursive: true });
   const git = (cwd: string, args: string[]) => {
@@ -231,6 +232,7 @@ try {
     const snapshot = before.body.profile.rows.filter((r: any) => r.scope === 'worker');
     await new Promise(resolve => setTimeout(resolve, local.runnerProtocols[0].timeouts.pollMs * 10));
     const after = await cli(['command', 'stats']); assert.equal(after.code, 0, after.stderr);
+    assert.deepEqual(after.body.profile.rows.find((r: any) => r.scope === 'worker' && r.stage === 'delivery' && r.executor === 'self'), snapshot.find((r: any) => r.stage === 'delivery' && r.executor === 'self'));
     return { runnerPid: runner.identity.pid, workerPid: runner.wrapperPid, deliveredOccurrences: 1, snapshot, later: after.body.profile.rows.filter((r: any) => r.scope === 'worker') };
   });
   const contributor = join(base, 'contributor.mjs');
@@ -310,6 +312,28 @@ for(let i=0;i<20;i++){p.stage('wait');p.stage('handler');}p.finish();hook.disabl
     }
     return {stop,before,start,after};
   });
+  await scenario('real service crash and restart preserve completed service samples', async () => {
+    const status = await cli(['service', 'status']); assert.equal(status.code, 0, status.stderr);
+    assert.equal(status.body.state, 'ready'); assert.ok(Number.isSafeInteger(status.body.pid) && status.body.pid > 0);
+    assert.ok(status.body.mainPath.startsWith(f!.root + '/'));
+    const commandLine = await readFile(`/proc/${status.body.pid}/cmdline`, 'utf8');
+    assert.ok(commandLine.includes(status.body.mainPath + '/'));
+    const before = f!.store.readCostProfile().rows.filter(r => r.scope === 'service');
+    assert.ok(before.length > 0);
+    process.kill(status.body.pid, 'SIGKILL');
+    await eventually(() => readFile(`/proc/${status.body.pid}/stat`, 'utf8').catch(() => ''), value => !value || value.slice(value.lastIndexOf(')') + 2).startsWith('Z'), 'owned service exited');
+    const afterCrash = f!.store.readCostProfile().rows.filter(r => r.scope === 'service');
+    const start = await cli(['service', 'start']); assert.equal(start.code, 0, start.stderr);
+    const afterRestart = f!.store.readCostProfile().rows.filter(r => r.scope === 'service');
+    for (const old of before) {
+      for (const rows of [afterCrash, afterRestart]) {
+        const next = rows.find(r => r.stage === old.stage && r.executor === old.executor)!;
+        assert.ok(next.samples >= old.samples); assert.equal(next.firstSampleStartedAt, old.firstSampleStartedAt);
+      }
+    }
+    assert.equal((await readFile(f!.deliveredPath, 'utf8')).split('BRIEF_END').length - 1, 1);
+    return { status, before, afterCrash, start, afterRestart };
+  });
   await scenario('unavailable primary SQLite is explicit and preserves original file', async () => {
     const alternate = join(base, 'unavailable-home'); await mkdir(join(alternate,'.raf'),{recursive:true});
     const blocked = join(alternate,'.raf','isolated.sqlite'); await writeFile(blocked,'PROFILE_QA_CORRUPT_SQLITE');
@@ -322,7 +346,7 @@ finally {
   const failures:string[]=[];
   if(f){
     try{await writeFile(f.releasePath,JSON.stringify({exitCode:0}));await writeFile(f.exitGatePath,'exit');if(runner)await eventually(f.session,s=>s?.state==='finished','worker completion');}catch(e){failures.push(String(e));}
-    try{if(cli!)await cli(['service','stop']);}catch(e){failures.push(String(e));}
+    try{if(cli!){const stop=await cli(['service','stop']);assert.equal(stop.code,0,stop.stderr);}}catch(e){failures.push(String(e));}
     try{summary.finalProfile=f.store.readCostProfile();}catch(e){failures.push(String(e));}
   }
   for(const c of children){c.kill('SIGKILL');await new Promise(resolve=>c.once('close',resolve));}

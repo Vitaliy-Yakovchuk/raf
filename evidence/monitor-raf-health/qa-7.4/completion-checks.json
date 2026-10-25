@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-25T03:13:01.164853+00:00",
+  "sha": "fb26e23b4a662df40b3604053936603edd0a7375",
+  "checks": [
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "scripts/qa-health-summary-host.mjs",
+        "evidence/monitor-raf-health/qa-7.4"
+      ],
+      "cliExitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "node",
+        "--check",
+        "scripts/qa-health-summary-host.mjs"
+      ],
+      "cliExitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "scopedChanges": "Only QA host script and evidence/monitor-raf-health/qa-7.4; no production implementation or tests modified by this assignment.",
+  "archive": "Not applicable: other change items remain open; assigned checkbox is owned by raf."
+}

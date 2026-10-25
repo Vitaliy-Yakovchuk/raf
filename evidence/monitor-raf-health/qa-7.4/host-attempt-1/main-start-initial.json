@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/usr/bin/tmux",
+    "-L",
+    "raf-lfc-bb3c3c10",
+    "new-session",
+    "-d",
+    "-s",
+    "main",
+    "-c",
+    "/srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/orchestrator",
+    "/opt/dev/node/bin/node",
+    "/srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/main-caller.mjs",
+    "/srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/fixture.json",
+    "0"
+  ],
+  "code": 0,
+  "stdout": "",
+  "stderr": ""
+}

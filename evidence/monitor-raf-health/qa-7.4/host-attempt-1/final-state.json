@@ -1,0 +1,417 @@
+{
+  "state": {
+    "rafInstanceId": "5977cd76-e1e3-466b-b5c7-e429c0b1b57c",
+    "since": "2026-10-25T03:07:53.424Z",
+    "boundary": "2026-10-25T03:09:55.448Z",
+    "forceBaseline": {
+      "value": {
+        "since": "2026-10-25T03:07:53.412Z",
+        "completed": 0,
+        "refusalsByCode": {}
+      },
+      "availability": "complete",
+      "reason": null
+    },
+    "lastSummary": {
+      "event": {
+        "type": "raf.health-summary",
+        "rafInstanceId": "5977cd76-e1e3-466b-b5c7-e429c0b1b57c",
+        "factKey": "[\"raf.health-summary\",\"5977cd76-e1e3-466b-b5c7-e429c0b1b57c\",\"2026-10-25T03:08:24.806Z\",\"2026-10-25T03:09:55.448Z\"]",
+        "startedAt": "2026-10-25T03:08:24.806Z",
+        "completedAt": "2026-10-25T03:09:55.448Z",
+        "scheduledAt": "2026-10-25T03:08:54.806Z",
+        "delayed": true,
+        "eventsByType": {
+          "availability": "complete",
+          "reason": null,
+          "value": {
+            "raf.health-summary": 1,
+            "agent.failed": 1,
+            "agent.closed": 1
+          }
+        },
+        "refusalsByCodeAndStage": {
+          "availability": "complete",
+          "reason": null,
+          "value": {}
+        },
+        "queue": {
+          "availability": "unavailable",
+          "reason": "Resource-wait pending snapshot is owned by its live coordinator and is unavailable in SQLite",
+          "value": null
+        },
+        "cpu": {
+          "availability": "unavailable",
+          "reason": "CPU profile assessment does not cover the summary period",
+          "startedAt": "2026-10-25T03:08:24.806Z",
+          "completedAt": "2026-10-25T03:09:55.448Z",
+          "wallMs": null,
+          "cpuUserMs": null,
+          "cpuSystemMs": null,
+          "cores": null,
+          "thresholdCores": null,
+          "exceeded": false,
+          "sources": [],
+          "scopes": null,
+          "error": null
+        },
+        "forcedClose": {
+          "value": {
+            "since": "2026-10-25T03:07:53.412Z",
+            "completed": 0,
+            "refusalsByCode": {}
+          },
+          "availability": "complete",
+          "reason": null
+        }
+      },
+      "delivery": "delivered"
+    }
+  },
+  "facts": [
+    {
+      "id": "[\"raf.health-summary\",\"5977cd76-e1e3-466b-b5c7-e429c0b1b57c\",\"2026-10-25T03:07:54.802Z\",\"2026-10-25T03:08:24.806Z\"]",
+      "runId": null,
+      "event": "raf.health-summary",
+      "payload": {
+        "kind": "raf.health-summary",
+        "id": "5977cd76-e1e3-466b-b5c7-e429c0b1b57c",
+        "data": {
+          "type": "raf.health-summary",
+          "rafInstanceId": "5977cd76-e1e3-466b-b5c7-e429c0b1b57c",
+          "factKey": "[\"raf.health-summary\",\"5977cd76-e1e3-466b-b5c7-e429c0b1b57c\",\"2026-10-25T03:07:54.802Z\",\"2026-10-25T03:08:24.806Z\"]",
+          "startedAt": "2026-10-25T03:07:54.802Z",
+          "completedAt": "2026-10-25T03:08:24.806Z",
+          "scheduledAt": "2026-10-25T03:08:24.802Z",
+          "delayed": true,
+          "eventsByType": {
+            "availability": "complete",
+            "reason": null,
+            "value": {
+              "agent.started": 1
+            }
+          },
+          "refusalsByCodeAndStage": {
+            "availability": "complete",
+            "reason": null,
+            "value": {}
+          },
+          "queue": {
+            "availability": "unavailable",
+            "reason": "Resource-wait pending snapshot is owned by its live coordinator and is unavailable in SQLite",
+            "value": null
+          },
+          "cpu": {
+            "availability": "unavailable",
+            "reason": "CPU profile assessment does not cover the summary period",
+            "startedAt": "2026-10-25T03:07:54.802Z",
+            "completedAt": "2026-10-25T03:08:24.806Z",
+            "wallMs": null,
+            "cpuUserMs": null,
+            "cpuSystemMs": null,
+            "cores": null,
+            "thresholdCores": null,
+            "exceeded": false,
+            "sources": [],
+            "scopes": null,
+            "error": null
+          },
+          "forcedClose": {
+            "value": {
+              "since": "2026-10-25T03:07:53.412Z",
+              "completed": 0,
+              "refusalsByCode": {}
+            },
+            "availability": "complete",
+            "reason": null
+          }
+        }
+      }
+    },
+    {
+      "id": "[\"raf.health-summary\",\"5977cd76-e1e3-466b-b5c7-e429c0b1b57c\",\"2026-10-25T03:08:24.806Z\",\"2026-10-25T03:09:55.448Z\"]",
+      "runId": null,
+      "event": "raf.health-summary",
+      "payload": {
+        "kind": "raf.health-summary",
+        "id": "5977cd76-e1e3-466b-b5c7-e429c0b1b57c",
+        "data": {
+          "type": "raf.health-summary",
+          "rafInstanceId": "5977cd76-e1e3-466b-b5c7-e429c0b1b57c",
+          "factKey": "[\"raf.health-summary\",\"5977cd76-e1e3-466b-b5c7-e429c0b1b57c\",\"2026-10-25T03:08:24.806Z\",\"2026-10-25T03:09:55.448Z\"]",
+          "startedAt": "2026-10-25T03:08:24.806Z",
+          "completedAt": "2026-10-25T03:09:55.448Z",
+          "scheduledAt": "2026-10-25T03:08:54.806Z",
+          "delayed": true,
+          "eventsByType": {
+            "availability": "complete",
+            "reason": null,
+            "value": {
+              "raf.health-summary": 1,
+              "agent.failed": 1,
+              "agent.closed": 1
+            }
+          },
+          "refusalsByCodeAndStage": {
+            "availability": "complete",
+            "reason": null,
+            "value": {}
+          },
+          "queue": {
+            "availability": "unavailable",
+            "reason": "Resource-wait pending snapshot is owned by its live coordinator and is unavailable in SQLite",
+            "value": null
+          },
+          "cpu": {
+            "availability": "unavailable",
+            "reason": "CPU profile assessment does not cover the summary period",
+            "startedAt": "2026-10-25T03:08:24.806Z",
+            "completedAt": "2026-10-25T03:09:55.448Z",
+            "wallMs": null,
+            "cpuUserMs": null,
+            "cpuSystemMs": null,
+            "cores": null,
+            "thresholdCores": null,
+            "exceeded": false,
+            "sources": [],
+            "scopes": null,
+            "error": null
+          },
+          "forcedClose": {
+            "value": {
+              "since": "2026-10-25T03:07:53.412Z",
+              "completed": 0,
+              "refusalsByCode": {}
+            },
+            "availability": "complete",
+            "reason": null
+          }
+        }
+      }
+    }
+  ],
+  "receipts": [
+    {
+      "id": "[\"raf.health-summary\",\"5977cd76-e1e3-466b-b5c7-e429c0b1b57c\",\"2026-10-25T03:07:54.802Z\",\"2026-10-25T03:08:24.806Z\"]",
+      "runId": null,
+      "event": "raf.health-summary",
+      "payload": {
+        "kind": "raf.health-summary",
+        "id": "5977cd76-e1e3-466b-b5c7-e429c0b1b57c",
+        "data": {
+          "type": "raf.health-summary",
+          "rafInstanceId": "5977cd76-e1e3-466b-b5c7-e429c0b1b57c",
+          "factKey": "[\"raf.health-summary\",\"5977cd76-e1e3-466b-b5c7-e429c0b1b57c\",\"2026-10-25T03:07:54.802Z\",\"2026-10-25T03:08:24.806Z\"]",
+          "startedAt": "2026-10-25T03:07:54.802Z",
+          "completedAt": "2026-10-25T03:08:24.806Z",
+          "scheduledAt": "2026-10-25T03:08:24.802Z",
+          "delayed": true,
+          "eventsByType": {
+            "availability": "complete",
+            "reason": null,
+            "value": {
+              "agent.started": 1
+            }
+          },
+          "refusalsByCodeAndStage": {
+            "availability": "complete",
+            "reason": null,
+            "value": {}
+          },
+          "queue": {
+            "availability": "unavailable",
+            "reason": "Resource-wait pending snapshot is owned by its live coordinator and is unavailable in SQLite",
+            "value": null
+          },
+          "cpu": {
+            "availability": "unavailable",
+            "reason": "CPU profile assessment does not cover the summary period",
+            "startedAt": "2026-10-25T03:07:54.802Z",
+            "completedAt": "2026-10-25T03:08:24.806Z",
+            "wallMs": null,
+            "cpuUserMs": null,
+            "cpuSystemMs": null,
+            "cores": null,
+            "thresholdCores": null,
+            "exceeded": false,
+            "sources": [],
+            "scopes": null,
+            "error": null
+          },
+          "forcedClose": {
+            "value": {
+              "since": "2026-10-25T03:07:53.412Z",
+              "completed": 0,
+              "refusalsByCode": {}
+            },
+            "availability": "complete",
+            "reason": null
+          }
+        },
+        "mainDelivered": true
+      }
+    },
+    {
+      "id": "[\"raf.health-summary\",\"5977cd76-e1e3-466b-b5c7-e429c0b1b57c\",\"2026-10-25T03:08:24.806Z\",\"2026-10-25T03:09:55.448Z\"]",
+      "runId": null,
+      "event": "raf.health-summary",
+      "payload": {
+        "kind": "raf.health-summary",
+        "id": "5977cd76-e1e3-466b-b5c7-e429c0b1b57c",
+        "data": {
+          "type": "raf.health-summary",
+          "rafInstanceId": "5977cd76-e1e3-466b-b5c7-e429c0b1b57c",
+          "factKey": "[\"raf.health-summary\",\"5977cd76-e1e3-466b-b5c7-e429c0b1b57c\",\"2026-10-25T03:08:24.806Z\",\"2026-10-25T03:09:55.448Z\"]",
+          "startedAt": "2026-10-25T03:08:24.806Z",
+          "completedAt": "2026-10-25T03:09:55.448Z",
+          "scheduledAt": "2026-10-25T03:08:54.806Z",
+          "delayed": true,
+          "eventsByType": {
+            "availability": "complete",
+            "reason": null,
+            "value": {
+              "raf.health-summary": 1,
+              "agent.failed": 1,
+              "agent.closed": 1
+            }
+          },
+          "refusalsByCodeAndStage": {
+            "availability": "complete",
+            "reason": null,
+            "value": {}
+          },
+          "queue": {
+            "availability": "unavailable",
+            "reason": "Resource-wait pending snapshot is owned by its live coordinator and is unavailable in SQLite",
+            "value": null
+          },
+          "cpu": {
+            "availability": "unavailable",
+            "reason": "CPU profile assessment does not cover the summary period",
+            "startedAt": "2026-10-25T03:08:24.806Z",
+            "completedAt": "2026-10-25T03:09:55.448Z",
+            "wallMs": null,
+            "cpuUserMs": null,
+            "cpuSystemMs": null,
+            "cores": null,
+            "thresholdCores": null,
+            "exceeded": false,
+            "sources": [],
+            "scopes": null,
+            "error": null
+          },
+          "forcedClose": {
+            "value": {
+              "since": "2026-10-25T03:07:53.412Z",
+              "completed": 0,
+              "refusalsByCode": {}
+            },
+            "availability": "complete",
+            "reason": null
+          }
+        },
+        "mainDelivered": true
+      }
+    }
+  ],
+  "sessions": [
+    {
+      "runId": "e8ab3e9d-ab68-4aa6-b262-01dc6cd289a2",
+      "addressId": "main",
+      "revision": 3,
+      "state": "finished",
+      "process": {
+        "pid": 3665695,
+        "startedAt": "2026-10-25T03:07:52.000Z",
+        "runner": "main",
+        "runnerSessionId": "%0",
+        "tmuxSession": "main",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/main-caller.mjs /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/fixture.json 0",
+          "tmuxSocket": "/srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/tmux-1000/raf-lfc-bb3c3c10",
+          "tmuxPane": "%0",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "result": {
+        "status": "failed",
+        "response": "",
+        "proof": null
+      },
+      "finishedAt": "2026-10-25T03:07:54.701Z"
+    },
+    {
+      "runId": "e599a4fe-98c4-4193-ba19-a19756f41ebd",
+      "addressId": "summary-worker",
+      "revision": 7,
+      "state": "finished",
+      "process": {
+        "pid": 3666764,
+        "startedAt": "2026-10-25T03:07:56.000Z",
+        "runner": "codex",
+        "runnerSessionId": "57744699-2029-41f7-b960-4c27ff7b70f5",
+        "tmuxSession": "5e3ffbf1-0baf-4a56-be31-45f145f15ee0",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/bin/codex --model gpt-6.1-sol -c model_reasoning_effort=\"high\" --add-dir /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/orchestrator/openspec/changes --add-dir /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/orchestrator/openspec/specs/launch-fixture --add-dir /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/orchestrator/questions/projects/raf/questions.md --add-dir /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/orchestrator/.git/modules/raf-main/worktrees/raf-develop --add-dir /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/orchestrator/.git/modules/raf-main --add-dir /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/orchestrator/.git --add-dir /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/home/.raf/tmp/e599a4fe-98c4-4193-ba19-a19756f41ebd",
+          "runId": "e599a4fe-98c4-4193-ba19-a19756f41ebd",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+          "tmuxSocket": "/srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/home/.raf/tmp/tmux/server.sock"
+        }
+      },
+      "result": {
+        "status": "failed",
+        "response": "",
+        "proof": null
+      },
+      "finishedAt": "2026-10-25T03:08:27.409Z",
+      "abortReason": "tmux kill-session failed: can't find session: 5e3ffbf1-0baf-4a56-be31-45f145f15ee0\n"
+    },
+    {
+      "runId": "0f94af03-315a-4536-aae1-17f1859787c8",
+      "addressId": "main",
+      "revision": 4,
+      "state": "running",
+      "activity": {
+        "type": "main",
+        "project": "orchestrator",
+        "features": [],
+        "phase": "main",
+        "cwd": "/srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/orchestrator"
+      },
+      "process": {
+        "pid": 3670840,
+        "startedAt": "2026-10-25T03:08:24.000Z",
+        "runner": "main",
+        "runnerSessionId": "%1",
+        "tmuxSession": "main",
+        "evidence": {
+          "command": "/opt/dev/node/bin/node /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/main-caller.mjs /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/fixture.json 2",
+          "tmuxSocket": "/srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/tmux-1000/raf-lfc-bb3c3c10",
+          "tmuxPane": "%1",
+          "machineId": "05edcea976d34e69b22f660519c11f6f",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "observation": {
+        "state": "alive",
+        "observedAt": "2026-10-25T03:09:56.753Z",
+        "identity": {
+          "pid": 3670840,
+          "startedAt": "2026-10-25T03:08:24.000Z",
+          "runner": "main",
+          "runnerSessionId": "%1",
+          "tmuxSession": "main",
+          "evidence": {
+            "command": "/opt/dev/node/bin/node /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/main-caller.mjs /srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/fixture.json 2",
+            "tmuxSocket": "/srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/tmux-1000/raf-lfc-bb3c3c10",
+            "tmuxPane": "%1",
+            "machineId": "05edcea976d34e69b22f660519c11f6f",
+            "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+          }
+        }
+      }
+    }
+  ]
+}

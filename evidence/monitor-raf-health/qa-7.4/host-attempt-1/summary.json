@@ -1,0 +1,284 @@
+{
+  "assignment": "monitor-raf-health:7.4",
+  "runId": "a06261ec-5954-4aa9-ad37-2bfa16155c64",
+  "outcome": "passed",
+  "invocations": [
+    {
+      "label": "main-attach-initial",
+      "argv": [
+        "main",
+        "attach"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "transportStderr": "",
+      "evidence": "main-attach-initial.transport.json"
+    },
+    {
+      "label": "service-off-initial",
+      "argv": [
+        "service",
+        "status"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "transportStderr": "",
+      "evidence": "service-off-initial.transport.json"
+    },
+    {
+      "label": "offline-reconcile",
+      "argv": [
+        "agent",
+        "ps"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "transportStderr": "Startup context collection failed for run e8ab3e9d-ab68-4aa6-b262-01dc6cd289a2\n",
+      "evidence": "offline-reconcile.transport.json"
+    },
+    {
+      "label": "worker-launch",
+      "argv": [
+        "agent",
+        "run",
+        "--id",
+        "summary-worker",
+        "--type",
+        "implement",
+        "--project",
+        "raf",
+        "--features",
+        "launch-fixture",
+        "--phase",
+        "implement",
+        "--complexity",
+        "decision",
+        "--tasks",
+        "launch-failure-fixture:1.1"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "transportStderr": "",
+      "evidence": "worker-launch.transport.json"
+    },
+    {
+      "label": "main-attach-returned",
+      "argv": [
+        "main",
+        "attach"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "transportStderr": "",
+      "evidence": "main-attach-returned.transport.json"
+    },
+    {
+      "label": "stats-returned",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "transportStderr": "",
+      "evidence": "stats-returned.transport.json"
+    },
+    {
+      "label": "stats-delayed-catchup",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "transportStderr": "",
+      "evidence": "stats-delayed-catchup.transport.json"
+    },
+    {
+      "label": "repeat-a",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "transportStderr": "",
+      "evidence": "repeat-a.transport.json"
+    },
+    {
+      "label": "repeat-b",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "transportStderr": "",
+      "evidence": "repeat-b.transport.json"
+    },
+    {
+      "label": "missing-recipient",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "missing-summary-qa",
+        "--text",
+        "SUMMARY_QA_NON_SECRET_CANARY"
+      ],
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "transportStderr": "",
+      "evidence": "missing-recipient.transport.json"
+    },
+    {
+      "label": "invalid-summary-policy",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "transportStderr": "(node:3684841) Warning: Invalid conf/raf.json#/health/summaryIntervalMs\n(Use `node --trace-warnings ...` to show where the warning was created)\n(node:3684841) Warning: Invalid conf/raf.json#/health/summaryIntervalMs\n(node:3684841) Warning: Invalid conf/raf.json#/health/summaryIntervalMs\n",
+      "evidence": "invalid-summary-policy.transport.json"
+    },
+    {
+      "label": "service-off-final",
+      "argv": [
+        "service",
+        "status"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "transportStderr": "",
+      "evidence": "service-off-final.transport.json"
+    }
+  ],
+  "assertions": [
+    "Live worker produces exactly one due fact with service stopped and no main; it stays pending without a receipt.",
+    "Only attached current main receives the pending fact once; another command preserves accepted delivery and commands/profile.",
+    "Three real intervals without a worker or runtime commands produce no facts; next CLI creates one delayed actual period and concurrent retries create no storm.",
+    "Expected missing recipient refuses with a nonzero code and exact cause; invalid summary policy preserves CLI success and reports its precise pointer. Service remains stopped."
+  ],
+  "limitations": [
+    "Real production CLI, worker, SQLite, main attachment and tmux transport. Terminal runner is synthetic; no provider calls or credentials.",
+    "Fixture summary interval is 30000 ms; CPU policy, costProfile and production runner timeouts are preserved. No production conf is written.",
+    "Existing agentRunFixture relaxes isolated admission thresholds; this is not a resource admission test.",
+    "SQLite audit triggers observe facts and accepted transport receipts before normal outbox pruning; observer reads never settle runtime."
+  ],
+  "environment": {
+    "sha": "619ed61868052a01bec3e21a4041539d597646fc",
+    "dirty": "?? node_modules",
+    "node": "v26.12.1",
+    "versions": {
+      "node": "26.12.1",
+      "acorn": "8.19.0",
+      "ada": "4.0.0",
+      "amaro": "1.1.11",
+      "ares": "1.34.9",
+      "brotli": "1.2.0",
+      "cldr": "48.0",
+      "icu": "78.3",
+      "libffi": "3.8.0",
+      "lief": "1.0.0",
+      "llhttp": "9.4.3",
+      "merve": "1.2.2",
+      "modules": "147",
+      "napi": "10",
+      "nbytes": "0.1.4",
+      "ncrypto": "0.0.1",
+      "nghttp2": "1.70.0",
+      "nghttp3": "",
+      "ngtcp2": "",
+      "openssl": "3.5.9",
+      "simdjson": "5.0.3",
+      "simdutf": "7.7.0",
+      "sqlite": "3.54.0",
+      "tz": "2026e",
+      "undici": "8.12.2",
+      "unicode": "17.0",
+      "uv": "1.52.1",
+      "uvwasi": "0.0.23",
+      "v8": "14.6.202.34-node.40",
+      "zlib": "1.3.2.1-motley-456ae73",
+      "zstd": "1.5.7"
+    },
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6",
+    "openspec": "1.14.3"
+  },
+  "stand": {
+    "directory": "/srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J",
+    "root": "/srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/orchestrator",
+    "home": "/srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/home",
+    "statePath": "/srv/dev/mrh74-iqjQS3/tmp/raf-lfc-UKlt7J/home/.raf/state.sqlite",
+    "sourceHealth": {
+      "cpuWindowMs": 600000,
+      "cpuThresholdCores": 1,
+      "summaryIntervalMs": 3600000
+    },
+    "standHealth": {
+      "cpuWindowMs": 600000,
+      "cpuThresholdCores": 1,
+      "summaryIntervalMs": 30000
+    },
+    "timeouts": {
+      "startupMs": 10000,
+      "transitionMs": 10000,
+      "overallMs": 30000,
+      "pollMs": 100
+    },
+    "baseline": {
+      "rafInstanceId": "5977cd76-e1e3-466b-b5c7-e429c0b1b57c",
+      "since": "2026-10-25T03:07:53.424Z",
+      "boundary": "2026-10-25T03:07:54.802Z",
+      "forceBaseline": {
+        "value": {
+          "since": "2026-10-25T03:07:53.412Z",
+          "completed": 0,
+          "refusalsByCode": {}
+        },
+        "availability": "complete",
+        "reason": null
+      },
+      "lastSummary": null
+    },
+    "confHashes": {
+      "raf.json": "3867a458963d2a8be9f422fdf8462303703732ef04c8befc560a26faf91a3a0c",
+      "raf-constants.json": "77ddf0765b0385bbce0947608a8447dd208e855ddbe6d4746d10bd3e90042c8f",
+      "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+      "models.json": "bbeaeb70e595ee9802f7ce9a294d074a1b27ecf10919089fba2852fd59c8514e",
+      "flow.json": "83c6864a168b4f62d29cbcc67253a2c53bac6e7023b8634a804e12c4bcde58b6",
+      "test-runs.json": "d339e31113bd74cc52a7c1d312fc2f509176f64b9eeabb44b065cdbf5095a1b3"
+    },
+    "costProfileUnchanged": true
+  },
+  "expectedRefusal": {
+    "code": "HANDLER_FAILED",
+    "message": "Unknown or ambiguous session: missing-summary-qa",
+    "details": {
+      "command": "agent message",
+      "stage": "handler",
+      "source": "app-runtime",
+      "sourceCode": null,
+      "reason": "Unknown or ambiguous session: missing-summary-qa",
+      "received": null,
+      "expected": null,
+      "found": null,
+      "completed": [],
+      "pending": [],
+      "retrySafe": true,
+      "admission": null
+    },
+    "remediation": [
+      "Виправте причину та повторіть команду.",
+      "raf help agent message"
+    ]
+  },
+  "cleanup": {
+    "complete": true,
+    "fixtureRemoved": true
+  }
+}

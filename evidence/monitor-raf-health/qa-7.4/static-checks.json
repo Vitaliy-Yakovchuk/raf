@@ -1,0 +1,40 @@
+{
+  "at": "2026-10-25T03:04:55.886539+00:00",
+  "sha": "eb5353dd2e85925d09f7fef0ced57a20d2fdc175",
+  "checks": [
+    {
+      "argv": [
+        "node",
+        "--check",
+        "scripts/qa-health-summary-host.mjs"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "node",
+        "--check",
+        "/tmp/mrh74-main-caller-syntax.mjs"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "scripts/qa-health-summary-host.mjs",
+        "evidence/monitor-raf-health/qa-7.4"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "generatedMainScript": "Extracted main-caller template, JavaScript backslash escapes resolved; syntax checked only. No stand execution."
+}

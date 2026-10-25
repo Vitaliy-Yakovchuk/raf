@@ -1,0 +1,222 @@
+{
+  "reviewedAt": "2026-10-25T03:11:58.463060+00:00",
+  "outcome": "passed",
+  "source": "/srv/dev/raf-mrh74-evidence-1",
+  "sourceManifestSha256": "3ee5c0d60f58dd6f4ea3010c97f215d9e5afed2f1348921809a3494e3b41e5b2",
+  "filesVerified": 50,
+  "provenance": "Main executed reviewed committed script on a clean tracked-source clone; main confirmed secret scan: 0 matches. Untracked node_modules supplies dependencies.",
+  "command": "node scripts/qa-health-summary-host.mjs /srv/dev/raf-mrh74-evidence-1",
+  "sha": "619ed61868052a01bec3e21a4041539d597646fc",
+  "runId": "a06261ec-5954-4aa9-ad37-2bfa16155c64",
+  "workerRunId": "e599a4fe-98c4-4193-ba19-a19756f41ebd",
+  "currentMainRunId": "0f94af03-315a-4536-aae1-17f1859787c8",
+  "versions": {
+    "sha": "619ed61868052a01bec3e21a4041539d597646fc",
+    "dirty": "?? node_modules",
+    "node": "v26.12.1",
+    "versions": {
+      "node": "26.12.1",
+      "acorn": "8.19.0",
+      "ada": "4.0.0",
+      "amaro": "1.1.11",
+      "ares": "1.34.9",
+      "brotli": "1.2.0",
+      "cldr": "48.0",
+      "icu": "78.3",
+      "libffi": "3.8.0",
+      "lief": "1.0.0",
+      "llhttp": "9.4.3",
+      "merve": "1.2.2",
+      "modules": "147",
+      "napi": "10",
+      "nbytes": "0.1.4",
+      "ncrypto": "0.0.1",
+      "nghttp2": "1.70.0",
+      "nghttp3": "",
+      "ngtcp2": "",
+      "openssl": "3.5.9",
+      "simdjson": "5.0.3",
+      "simdutf": "7.7.0",
+      "sqlite": "3.54.0",
+      "tz": "2026e",
+      "undici": "8.12.2",
+      "unicode": "17.0",
+      "uv": "1.52.1",
+      "uvwasi": "0.0.23",
+      "v8": "14.6.202.34-node.40",
+      "zlib": "1.3.2.1-motley-456ae73",
+      "zstd": "1.5.7"
+    },
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6",
+    "openspec": "1.14.3"
+  },
+  "periods": [
+    {
+      "startedAt": "2026-10-25T03:07:54.802Z",
+      "scheduledAt": "2026-10-25T03:08:24.802Z",
+      "completedAt": "2026-10-25T03:08:24.806Z",
+      "delayed": true
+    },
+    {
+      "startedAt": "2026-10-25T03:08:24.806Z",
+      "scheduledAt": "2026-10-25T03:08:54.806Z",
+      "completedAt": "2026-10-25T03:09:55.448Z",
+      "delayed": true
+    }
+  ],
+  "facts": 2,
+  "acceptedReceipts": 2,
+  "mainTransportMessages": 2,
+  "workerSummaryMessages": 0,
+  "silenceWithoutWorkerOrRuntimeCommandsMs": 87395,
+  "missedScheduledBoundaries": 3,
+  "clarification": "Three scheduled boundaries were missed during 87.395 seconds of silence; the actual delayed summary covers 90.642 seconds. The harness assertion text describes three intervals; it does not mean three full intervals after worker shutdown.",
+  "expectedDiagnostics": [
+    "Initial main is intentionally killed; offline reconciliation reports its startup-context collection failure while CLI/child remain 0.",
+    "Synthetic worker runner is intentionally killed; its finished result is failed with an already-absent tmux session.",
+    "Invalid policy emits warnings at its exact configuration pointer while stats succeeds."
+  ],
+  "invocations": [
+    {
+      "label": "main-attach-initial",
+      "argv": [
+        "main",
+        "attach"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    },
+    {
+      "label": "service-off-initial",
+      "argv": [
+        "service",
+        "status"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    },
+    {
+      "label": "offline-reconcile",
+      "argv": [
+        "agent",
+        "ps"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    },
+    {
+      "label": "worker-launch",
+      "argv": [
+        "agent",
+        "run",
+        "--id",
+        "summary-worker",
+        "--type",
+        "implement",
+        "--project",
+        "raf",
+        "--features",
+        "launch-fixture",
+        "--phase",
+        "implement",
+        "--complexity",
+        "decision",
+        "--tasks",
+        "launch-failure-fixture:1.1"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    },
+    {
+      "label": "main-attach-returned",
+      "argv": [
+        "main",
+        "attach"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    },
+    {
+      "label": "stats-returned",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    },
+    {
+      "label": "stats-delayed-catchup",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    },
+    {
+      "label": "repeat-a",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    },
+    {
+      "label": "repeat-b",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    },
+    {
+      "label": "missing-recipient",
+      "argv": [
+        "agent",
+        "message",
+        "--to",
+        "missing-summary-qa",
+        "--text",
+        "SUMMARY_QA_NON_SECRET_CANARY"
+      ],
+      "cliExitCode": 1,
+      "childExitCode": 1
+    },
+    {
+      "label": "invalid-summary-policy",
+      "argv": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    },
+    {
+      "label": "service-off-final",
+      "argv": [
+        "service",
+        "status"
+      ],
+      "cliExitCode": 0,
+      "childExitCode": 0
+    }
+  ],
+  "cleanup": {
+    "complete": true,
+    "fixtureRemoved": true,
+    "outerIsolatedDirectoryRemoved": true
+  },
+  "limitations": [
+    "Real production CLI, worker, SQLite, main attachment and tmux transport. Terminal runner is synthetic; no provider calls or credentials.",
+    "Fixture summary interval is 30000 ms; CPU policy, costProfile and production runner timeouts are preserved. No production conf is written.",
+    "Existing agentRunFixture relaxes isolated admission thresholds; this is not a resource admission test.",
+    "SQLite audit triggers observe facts and accepted transport receipts before normal outbox pruning; observer reads never settle runtime."
+  ],
+  "newProductDefects": []
+}

@@ -183,9 +183,9 @@ test('U2 selected command is wrapped once without replacing model effort cwd or 
   assert.deepEqual(wrapped[0].environment, { FIXTURE: 'unchanged' });
   const launch = commands.find(command => command.args.includes('new-session'));
   if (!launch) throw new Error('Expected a tmux launch command');
-  assert.ok(launch.cwd === request.cwd || launch.args.includes(request.cwd) ||
-    launch.args.some(arg => arg.includes(request.cwd)), JSON.stringify(launch));
-  assert.ok(launch.args.some(arg => arg.includes('/fixture/report-wrapper') && arg.includes(reportPath)), JSON.stringify(launch));
+  assert.ok(launch.cwd === request.cwd || launch.args.includes(request.cwd), JSON.stringify(launch));
+  assert.ok(launch.args.some(arg => arg.includes('/fixture/report-wrapper')), JSON.stringify(launch));
+  assert.ok(launch.args.some(arg => arg.includes(reportPath)), JSON.stringify(launch));
   assert.ok(commands.every(command => command.stdin !== brief && !command.args.includes(brief)));
 });
 

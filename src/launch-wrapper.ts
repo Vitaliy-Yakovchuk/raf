@@ -126,6 +126,7 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
     await ports.lifecycle.finish(handshake, exit);
     await watcher.dispose();
   } catch (error) {
+    let failure = error;
     let recoverable = attempted;
     if (recoverable && !ended) {
       try {
@@ -136,12 +137,12 @@ export async function runLaunchWrapper(request: LaunchWrapperRequest, ports: Lau
           await within(ports.transport.waitExit(), request.readinessTimeoutMs, 'Owned runner stop confirmation');
           recoverable = false;
         }
-      } catch {}
+      } catch (cleanup) { failure = withAccompanyingFailure(failure, cleanup); }
     }
-    try { await ports.lifecycle.failed(request.runId, error instanceof Error ? error.message : String(error), recoverable); }
-    catch (cleanup) { throw withAccompanyingFailure(error, cleanup); }
+    try { await ports.lifecycle.failed(request.runId, failure instanceof Error ? failure.message : String(failure), recoverable); }
+    catch (cleanup) { throw withAccompanyingFailure(failure, cleanup); }
     if (!recoverable) await watcher?.dispose();
-    throw error;
+    throw failure;
   }
 }
 

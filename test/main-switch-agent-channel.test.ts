@@ -16,7 +16,7 @@ import { execute } from "../src/cli.ts";
 import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
 import { createWorkspacePorts } from "../src/os-runtime.ts";
 import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
-import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog } from "../scripts/qa-main-agent-channel-metadata.mjs";
+import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage } from "../scripts/qa-main-agent-channel-metadata.mjs";
 import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
 import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
 import * as generationHost from "../src/hotfix-host.ts";
@@ -42,6 +42,27 @@ import type {
 import { captureStateReadControls, assertNativeDenial, nativeProbeReceipt } from "../scripts/qa-main-agent-denial.mjs";
 
 const root = "/fixture/orchestrator";
+
+test("native actor assignment stays small enough for complete repeated ps output", () => {
+  const actors = ["a", "b"].map(nativeActorPlan);
+  const output = JSON.stringify(actors.map(plan => ({ assignment: plan.item, activity: { description: plan.item }, launchContext: { description: plan.item } })));
+  assert.ok(Buffer.byteLength(output) < 8192, "PS repeats the assigned item; put the full workflow in a stable fixture file");
+  for (const plan of actors) {
+    for (const stage of [0, 1, 2, 3]) assert.ok(plan.instructions.includes("node qa/sym64-probe.mjs " + stage));
+    assert.ok(plan.instructions.includes("agent ps"));
+    assert.ok(plan.instructions.includes("agent close --id"));
+  }
+});
+
+test("native host releases both actors before awaiting either stage", async () => {
+  const released: string[] = [];
+  const controls: string[] = [];
+  await releaseNativeStage({ actors: ["a", "b"],
+    writeControls: (actor: string) => controls.push(actor),
+    gate: (actor: string) => { assert.ok(controls.includes(actor)); released.push(actor); },
+    wait: async () => { assert.deepEqual(released, ["a", "b"], "A stalled actor must not keep its live peer behind the host gate"); },
+  });
+});
 
 test("native hidden state denial requires exact existing host controls and refuses missing fixtures", async () => {
   const directory = await fs.mkdtemp(join(tmpdir(), "native-read-controls-"));

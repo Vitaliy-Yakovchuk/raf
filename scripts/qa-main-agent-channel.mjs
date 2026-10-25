@@ -10,7 +10,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { captureStateReadControls } from './qa-main-agent-denial.mjs';
 import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
-import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog } from './qa-main-agent-channel-metadata.mjs';
+import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog, nativeActorPlan, releaseNativeStage } from './qa-main-agent-channel-metadata.mjs';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const reviewed = process.argv[2];
@@ -120,6 +120,7 @@ try {
   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-probe.mjs'), path.join(main, 'qa/sym64-probe.mjs'));
   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-denial.mjs'), path.join(main, 'qa/qa-main-agent-denial.mjs'));
   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-metadata.mjs'), path.join(main, 'qa/sym64-metadata.mjs'));
+  for (const actor of ['a', 'b']) fs.writeFileSync(path.join(main, 'qa/sym64-instructions-' + actor + '.txt'), nativeActorPlan(actor).instructions + '\n');
   const sandboxFile = path.join(main, 'src/codex-sandbox.ts');
   let sandboxSource = fs.readFileSync(sandboxFile, 'utf8');
   const beforeProbe = '    const visible: string[] = [];';
@@ -144,8 +145,8 @@ try {
   fs.writeFileSync(path.join(root, 'openspec/config.yaml'), 'schema: spec-driven\n');
   fs.writeFileSync(path.join(change, '.openspec.yaml'), 'schema: spec-driven\nskip_specs: true\n');
   fs.writeFileSync(path.join(change, 'proposal.md'), '## Why\nIsolated live native channel QA.\n\n## What Changes\nHost-controlled probes only.\n\n## Non-goals\nNo product implementation or unit runs.\n');
-  const description = actor => `Controlled live QA actor ${actor}. Model and effort already selected by raf; never replace them. Do not implement, run tests, edit tasks, write report, archive, or retry failed/unknown commands. The provided helper makes only its own isolated fixture commits in develop and Orchestrator; these are authorized. In native exec tool perform this exact sequence. For EVERY functions.exec call set the first line to // @exec: {"max_output_tokens": 60000} followed by an actual newline, AND request max_output_tokens:60000 on the inner tools.exec_command/write_stdin. For functions.wait request max_tokens:60000. Both the outer tool and its inner command need the larger limit, including message/ps outputs: preserve exact outputs without truncation. Never print a full probe JSON report; the helper emits a small sha256 receipt for the complete host-copied file. First execute node qa/sym64-probe.mjs 0 <exact report_path from your brief>; wait for completion, polling a running native tool session as necessary. Then execute the issued raf_command agent message --to sym64-${actor === 'a' ? 'b' : 'a'} --text sym64-${actor}-after-B as ONE simple native tool command, using the original issued absolute raf_command unchanged. Next execute the issued raf_command agent ps in a separate native tool call. Then execute the issued raf_command ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} as a separate simple native command; this unauthorized subcommand must return a nonzero code, preserve its exact result and continue only for that expected denial. Next execute node qa/sym64-probe.mjs 1 <exact report_path>; wait for completion. Next repeat separate simple native message with text sym64-${actor}-after-A and agent ps using that same original prefix, followed by the same separate unauthorized ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} with required nonzero code. Execute node qa/sym64-probe.mjs 2 <exact report_path> and wait. After it completes repeat separate simple native message with text sym64-${actor}-after-rollback and agent ps using that same original prefix, followed by the same separate unauthorized ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} with required nonzero code. Execute node qa/sym64-probe.mjs 3 <exact report_path> and wait. Do not acknowledge received messages with tool calls, only chat. If any expected-success command fails, stop and preserve the error. The probe helper owns allowed negative actions only inside this isolated fixture. Do not change the helper or evade its checks. After completion wait for host.`;
-  fs.writeFileSync(path.join(change, 'tasks.md'), `- [ ] 1.1 ${description('a')}\n- [ ] 1.2 ${description('b')}\n- [ ] 1.3 Host keeps the fixture active.\n`);
+
+  fs.writeFileSync(path.join(change, 'tasks.md'), `- [ ] 1.1 ${nativeActorPlan('a').item}\n- [ ] 1.2 ${nativeActorPlan('b').item}\n- [ ] 1.3 Host keeps the fixture active.\n`);
   git(root, 'add', '--', '.gitmodules', 'raf-main', 'conf', 'openspec'); git(root, 'commit', '-m', 'qa: isolated orchestrator');
   const layout = await import(pathToFileURL(path.join(main, 'src/main-layout.ts')));
   await layout.ensureMainLayoutForStart({ root, projects: projects.projects });
@@ -285,11 +286,11 @@ try {
     summary.switches.push({ action: index === 2 ? 'rollback' : 'switch', target, previous, active: fs.realpathSync(main), preparedFrom: git(develop, 'rev-parse', 'HEAD'), before, generation });
     const readControlsBefore = captureStateReadControls(path.join(stand, '.raf'));
     atomic(path.join(ev, 'read-controls-before-' + index + '.json'), readControlsBefore);
-    for (const a of actors) {
-      atomic(path.join(own(a), 'sym64-read-controls-' + (index + 1) + '.json'), { stage: index + 1, runId: a.runId, files: readControlsBefore });
-      gate(a, index);
-      await wait('native gate ' + (index + 1), () => stage(a, index + 1));
-    }
+    await releaseNativeStage({ actors,
+      writeControls: a => atomic(path.join(own(a), 'sym64-read-controls-' + (index + 1) + '.json'), { stage: index + 1, runId: a.runId, files: readControlsBefore }),
+      gate: a => gate(a, index),
+      wait: a => wait('native gate ' + (index + 1), () => stage(a, index + 1)),
+    });
     const readControlsAfter = captureStateReadControls(path.join(stand, '.raf'));
     atomic(path.join(ev, 'read-controls-after-' + index + '.json'), readControlsAfter);
     assert.deepEqual(readControlsAfter, readControlsBefore, 'Hidden files must remain the same existing host files throughout native probes');

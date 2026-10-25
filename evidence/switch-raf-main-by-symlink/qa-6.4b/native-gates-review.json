@@ -1,0 +1,103 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "native-pending",
+  "sourceStand": "native-partial-s64-BCVFnO/review.json",
+  "audit": "Assigned 6.4 is still current and open. These changes affect only its isolated host fixture; full real native acceptance remains required. No product output or permission boundary is weakened.",
+  "unitRuns": [
+    {
+      "runId": "9027b61f-b238-453f-a804-fa679abea6be",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native actor assignment stays small enough for complete repeated ps output"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native host releases both actors before awaiting either stage"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "raw": "native-gates-red.TestRunResult.json",
+      "tool": "native-gates-red.tool.json",
+      "combinedStream": "native-gates-red.combined-stream.txt",
+      "cli": "native-gates-red.cli-exit.json",
+      "cliExitCode": 1,
+      "passedCount": 104,
+      "workspace": {
+        "head": "4a0bc11ec74917da83049bf2c0fd0b628ea88ac6",
+        "status": "native-gates-red-workspace.status.txt",
+        "patch": "native-gates-red-workspace.patch"
+      }
+    },
+    {
+      "runId": "170c2072-77dd-4a8e-ac78-52da8bd3b0c2",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "raw": "native-gates-qa.TestRunResult.json",
+      "tool": "native-gates-qa.tool.json",
+      "combinedStream": "native-gates-qa.combined-stream.txt",
+      "cli": "native-gates-qa.cli-exit.json",
+      "cliExitCode": 0,
+      "passedCount": 106,
+      "workspace": {
+        "head": "4a0bc11ec74917da83049bf2c0fd0b628ea88ac6",
+        "status": "native-gates-qa-workspace.status.txt",
+        "patch": "native-gates-qa-workspace.patch"
+      }
+    }
+  ],
+  "checks": {
+    "npm run build": 0,
+    "npm run check:comments": 0,
+    "git diff --check": 0
+  },
+  "nextAction": "Commit reviewed fixture and evidence, then main runs the clean-clone native stand with ordinary existing owner Codex provider.",
+  "secretScan": {
+    "source": "main host scan before commit, 2026-10-25; complete qa-6.4b and three changed source/test files",
+    "matches": 0
+  }
+}

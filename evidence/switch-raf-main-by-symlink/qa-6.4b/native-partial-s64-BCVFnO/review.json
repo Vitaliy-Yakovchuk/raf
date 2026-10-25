@@ -1,0 +1,47 @@
+{
+  "item": "switch-raf-main-by-symlink:6.4",
+  "status": "failed-partial",
+  "reviewed": "5104f2be57b5f2220aa3f5006e9f90fc2e80c308",
+  "error": "Unexecuted remainder: native gate 1",
+  "actors": {
+    "a": "2db78451-be5e-4016-a1a0-da769c2dfaa2",
+    "b": "2d4a2141-6d61-4d1d-be96-8c319e4fcb1a"
+  },
+  "nativeFindings": [
+    "Both native stage-0 probes passed. First switch and live split completed; no stage-1 reports exist. This is not acceptance.",
+    "Actor a issued message and ps with exit 0, then ended its turn saying ps was truncated. The cleaned native tool result contains a complete parseable JSON of three sessions and no tool truncation marker.",
+    "Actor b remained behind host gate 0: host waited for a stage 1 before opening b. Both user-visible final messages and task_complete are copied separately without reasoning.",
+    "The complete PS also includes long real hook configuration commands. Moving descriptions out of repeated assignments reduces only the workflow contribution, not these production fields."
+  ],
+  "psEvidence": {
+    "nativeEvents": "native/sym64-a.events.jsonl",
+    "sourceLine": 59,
+    "cliExitCode": 0,
+    "originalTokenCount": 22512,
+    "stdoutBytes": 90047,
+    "stdoutSha256": "24733e280d9b854f17e988143bfd58d4df03fc4042e0a8c2abb0cf142a15c107",
+    "records": 3,
+    "matchingAudit": "cli-audit/a7ab1c66-0acd-4a24-aaf1-e3fd0709751e.json",
+    "comparison": "native combined stream equals audited stdout plus the CLI console.log terminating LF; audited stderr is empty"
+  },
+  "unexecuted": [
+    "native stage 1 negative probes",
+    "second switch",
+    "rollback",
+    "remaining simple commands and native stages"
+  ],
+  "fix": [
+    "Store full stable actor workflow in a tracked fixture file referenced by the initial short task item; never mutate the brief across switches.",
+    "Emit unescaped stdout separately from command metadata and distinguish explicit tool truncation markers from words inside valid PS data.",
+    "Write each actors controls and open both gates before awaiting either stage."
+  ],
+  "secretScan": {
+    "source": "main messages for stand36 evidence, cleaned native and assistant bundles",
+    "matches": 0,
+    "rawReasoningCopied": false
+  },
+  "cleanup": {
+    "source": "main confirms no stand processes remain; copied cleanup JSON preserves exact statuses",
+    "standRetainedPendingCopyConfirmation": true
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "sourceSha": "d12ca3d440c90ec7abfa1b1388cefe829699dc53",
+  "workspace": "Main executed clean clone of exact source SHA; no uncommitted application changes",
+  "command": "node scripts/qa-cost-profile-host.ts /srv/dev/raf-profile-qa-evidence-d12ca3d",
+  "executor": "main, host outside sandbox",
+  "cliExitCode": 0,
+  "cliExitCodeSource": "main message: Host-стенд d12ca3d4 пройшов: код 0 (stderr-лог чистий)",
+  "stdout": "host-qa-d12ca3d/prp24-host3.stdout",
+  "stderr": "host-qa-d12ca3d/prp24-host3.stderr",
+  "secretScanMatches": 0,
+  "secretScanSource": "main read-only evidence handoff",
+  "manifest": "host-qa-d12ca3d.sha256",
+  "verifiedFiles": 33,
+  "scenarioCount": 11,
+  "status": "passed",
+  "cleanup": {
+    "complete": true,
+    "failures": []
+  },
+  "timedOut": false,
+  "commands": [
+    {
+      "index": 0,
+      "args": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-0.stdout",
+      "stderr": "host-qa-d12ca3d/cli-0.stderr"
+    },
+    {
+      "index": 1,
+      "args": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-1.stdout",
+      "stderr": "host-qa-d12ca3d/cli-1.stderr"
+    },
+    {
+      "index": 2,
+      "args": [
+        "agent",
+        "message",
+        "--to",
+        "missing-profile-qa",
+        "--text",
+        "PROFILE_QA_ARGUMENT_CANARY"
+      ],
+      "cliExitCode": 1,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-2.stdout",
+      "stderr": "host-qa-d12ca3d/cli-2.stderr"
+    },
+    {
+      "index": 3,
+      "args": [
+        "service",
+        "start"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-3.stdout",
+      "stderr": "host-qa-d12ca3d/cli-3.stderr"
+    },
+    {
+      "index": 4,
+      "args": [
+        "service",
+        "status"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-4.stdout",
+      "stderr": "host-qa-d12ca3d/cli-4.stderr"
+    },
+    {
+      "index": 5,
+      "args": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-5.stdout",
+      "stderr": "host-qa-d12ca3d/cli-5.stderr"
+    },
+    {
+      "index": 6,
+      "args": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-6.stdout",
+      "stderr": "host-qa-d12ca3d/cli-6.stderr"
+    },
+    {
+      "index": 7,
+      "args": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-7.stdout",
+      "stderr": "host-qa-d12ca3d/cli-7.stderr"
+    },
+    {
+      "index": 8,
+      "args": [
+        "service",
+        "stop"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-8.stdout",
+      "stderr": "host-qa-d12ca3d/cli-8.stderr"
+    },
+    {
+      "index": 9,
+      "args": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-9.stdout",
+      "stderr": "host-qa-d12ca3d/cli-9.stderr"
+    },
+    {
+      "index": 10,
+      "args": [
+        "service",
+        "start"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-10.stdout",
+      "stderr": "host-qa-d12ca3d/cli-10.stderr"
+    },
+    {
+      "index": 11,
+      "args": [
+        "command",
+        "stats"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-11.stdout",
+      "stderr": "host-qa-d12ca3d/cli-11.stderr"
+    },
+    {
+      "index": 12,
+      "args": [
+        "service",
+        "status"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-12.stdout",
+      "stderr": "host-qa-d12ca3d/cli-12.stderr"
+    },
+    {
+      "index": 13,
+      "args": [
+        "service",
+        "start"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-13.stdout",
+      "stderr": "host-qa-d12ca3d/cli-13.stderr"
+    },
+    {
+      "index": 14,
+      "args": [
+        "service",
+        "stop"
+      ],
+      "cliExitCode": 0,
+      "signal": null,
+      "stdout": "host-qa-d12ca3d/cli-14.stdout",
+      "stderr": "host-qa-d12ca3d/cli-14.stderr"
+    }
+  ],
+  "limitations": [
+    "Runner is a synthetic interactive executable using real tmux/worker delivery. No provider credentials or real model call.",
+    "Per-child helper CPU is explicitly unavailable; total CPU is not claimed."
+  ]
+}

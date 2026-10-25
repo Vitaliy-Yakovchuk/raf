@@ -1,0 +1,86 @@
+[
+  {
+    "name": "red",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z413 --files test/assignment-sandbox-placeholders.test.ts",
+    "workspace": "red-workspace.json",
+    "result": "red.TestRunResult.json",
+    "tool": "red.tool.json",
+    "runId": "54fd0ade-4382-4651-868f-b2f0a5b2692a",
+    "selection": {
+      "files": [
+        "test/assignment-sandbox-placeholders.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "assertions-failed",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 40,
+    "knownRed": [
+      {
+        "file": "test/assignment-sandbox-placeholders.test.ts",
+        "name": "Z413 selection ignores only empty sandbox mountpoints beside real active and archived changes"
+      },
+      {
+        "file": "test/assignment-sandbox-placeholders.test.ts",
+        "name": "Z413 completion accepts the confirmed checkbox despite concurrent sandbox mountpoints"
+      },
+      {
+        "file": "test/assignment-sandbox-placeholders.test.ts",
+        "name": "Z413 mountpoints never confirm an open checkbox"
+      },
+      {
+        "file": "test/assignment-sandbox-placeholders.test.ts",
+        "name": "Z413 duplicate real changes remain ambiguous alongside placeholders"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "timeoutCount": 0,
+    "groupState": "idle",
+    "nextAction": "implement",
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+    "stderr": null,
+    "stderrAvailability": "exec_command exposes combined output only; stderr is not independently available"
+  },
+  {
+    "name": "hotfix",
+    "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z413 --files test/assignment-sandbox-placeholders.test.ts test/assignment.test.ts",
+    "workspace": "hotfix-workspace.json",
+    "result": "hotfix.TestRunResult.json",
+    "tool": "hotfix.tool.json",
+    "runId": "aa09a2ca-1ee9-4df5-a55f-15eca4d56c9c",
+    "selection": {
+      "files": [
+        "test/assignment-sandbox-placeholders.test.ts",
+        "test/assignment.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "passed": 71,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "timeoutCount": 0,
+    "groupState": "complete",
+    "nextAction": "complete",
+    "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+    "stderr": null,
+    "stderrAvailability": "exec_command exposes combined output only; stderr is not independently available"
+  }
+]

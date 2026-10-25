@@ -6,6 +6,7 @@ import { test, type TestContext } from 'node:test';
 import { launchPersistentWrapper } from '../src/launch-wrapper.ts';
 import { listTaskReservations } from '../src/task-reservations.ts';
 import { resolveGitWriteBoundaries } from '../src/task-context.ts';
+import { protectCodexReadOnlyPaths } from '../src/codex-sandbox.ts';
 import type { RuntimeConfiguration, RuntimeLaunch } from '../src/app-runtime.ts';
 import type { LaunchWrapperRequest } from '../src/launch-wrapper.ts';
 import type { ProtocolSettings } from '../src/runner-protocols.ts';
@@ -41,7 +42,13 @@ const runner = ${JSON.stringify(runner)};
 const sticky = ${JSON.stringify(sticky)};
 if (process.argv.includes('--version')) { console.log(runner === 'claude' ? ${JSON.stringify(`${settings.version} (Claude Code)`)} : ${JSON.stringify(`codex-cli ${settings.version}`)}); process.exit(0); }
 const argv = process.argv.slice(2);
-if (runner === 'codex' && argv[0] === 'sandbox') {
+let commandIndex = 0;
+while (commandIndex < argv.length) {
+  if (argv[commandIndex] === '--no-daemon') commandIndex++;
+  else if (['-c', '--config'].includes(argv[commandIndex])) commandIndex += 2;
+  else break;
+}
+if (runner === 'codex' && ['sandbox', 'app-server'].includes(argv[commandIndex])) {
   const result = spawnSync(${JSON.stringify(sandboxExecutable)}, argv, { stdio: 'inherit' });
   if (result.error) throw result.error;
   if (result.signal) process.kill(process.pid, result.signal);
@@ -150,7 +157,7 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
   }
   const base = configured(runner);
   const settings: ProtocolSettings = { ...base, timeouts: { ...base.timeouts, startupMs: 5000, transitionMs: 5000, overallMs: 15000, pollMs: 30 } };
-  await writeFile(join(f.confRoot, 'raf.json'), JSON.stringify({ version: 1, state: { fileName: 'isolated.sqlite' }, commandTiming: configuration.commandTiming, runnerProtocols: [settings] }));
+  await writeFile(join(f.confRoot, 'raf.json'), JSON.stringify({ ...conf, state: { fileName: 'isolated.sqlite' }, commandTiming: configuration.commandTiming, runnerProtocols: [settings] }));
   await writeFile(join(f.confRoot, 'models.json'), JSON.stringify(configuration.models));
   f.store.initializeRunners(configuration.models.runners);
   const cliConfigs = { [join(f.home, '.claude.json')]: '{"projects":{}}\n', [join(f.home, '.codex', 'config.toml')]: '# fixture codex config\n' };
@@ -217,6 +224,66 @@ async function trustFixture(t: TestContext, runner: Runner, placement: Placement
 test('[workspace-trust] production QA fixture selects its own worker Orchestrator root', async t => {
   const f = await fixture(t, { productionQa: true });
   assert.equal(process.env.RAF_ORCHESTRATOR_ROOT, f.root, 'worker must not inherit the outer raf session root');
+});
+
+test('[workspace-trust] production QA fixture provisions the registered main Git root', async t => {
+  const f = await fixture(t, { productionQa: true });
+  const projects = JSON.parse(await readFile(join(f.confRoot, 'projects.json'), 'utf8'));
+  const main = join(f.root, projects.projects.raf.branchPaths.main);
+  const top = spawnSync('git', ['-C', main, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' });
+  assert.equal(top.status, 0, top.stderr);
+  assert.equal(top.stdout.trim(), main, 'registered main must have its own Git identity');
+  const branch = spawnSync('git', ['-C', main, 'symbolic-ref', '--short', 'HEAD'], { encoding: 'utf8' });
+  assert.equal(branch.status, 0, branch.stderr);
+  assert.equal(branch.stdout.trim(), 'main');
+});
+
+test('[workspace-trust] production trust fixture supplies the worker cost policy', async t => {
+  const f = await trustFixture(t, 'codex', 'registered');
+  const settings = JSON.parse(await readFile(join(f.confRoot, 'raf.json'), 'utf8'));
+  assert.deepEqual(settings.costProfile, conf.costProfile, 'worker requires the configured cost policy before runner readiness');
+});
+
+test('[workspace-trust] Codex fixture delegates sandbox with global options intact', async t => {
+  const f = await fixture(t, { productionQa: true });
+  const delegate = join(f.binRoot, 'sandbox-delegate');
+  await writeFile(delegate, `#!${process.execPath}\nconsole.log(JSON.stringify(process.argv.slice(2)));\n`, { mode: 0o700 });
+  const executable = join(f.binRoot, 'codex');
+  await writeFile(executable, stub('codex', configured('codex'), { pid: join(f.root, 'delegate.pid'), input: join(f.root, 'delegate-input'), accepted: join(f.root, 'delegate-accepted') }, false, delegate), { mode: 0o700 });
+  const args = ['--no-daemon', 'sandbox', '--', 'node', '-e', 'process.exit(0)'];
+  const result = spawnSync(executable, args, { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), args, 'preflight must use the real sandbox without dropping global options');
+});
+
+test('[workspace-trust] Codex fixture delegates app-server hook inspection intact', async t => {
+  const f = await fixture(t, { productionQa: true });
+  const delegate = join(f.binRoot, 'hook-delegate');
+  await writeFile(delegate, `#!${process.execPath}\nconsole.log(JSON.stringify(process.argv.slice(2)));\n`, { mode: 0o700 });
+  const executable = join(f.binRoot, 'codex');
+  await writeFile(executable, stub('codex', configured('codex'), { pid: join(f.root, 'hook.pid'), input: join(f.root, 'hook-input'), accepted: join(f.root, 'hook-accepted') }, false, delegate), { mode: 0o700 });
+  const args = ['-c', 'sandbox_mode="workspace-write"', 'app-server', '--listen', 'stdio://'];
+  const result = spawnSync(executable, args, { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), args, 'hook inspection must use the real app-server without dropping its configuration');
+});
+
+test('[workspace-trust] protected slot Git directory needs no descendant lock mounts', async t => {
+  const f = await fixture(t, { productionQa: true });
+  const common = join(f.root, '.git', 'modules', 'raf-main');
+  const slot = join(common, 'worktrees', 'raf-main-b');
+  const lock = join(slot, 'HEAD.lock');
+  const index = join(f.root, '.git', 'index');
+  const hidden = join(slot, 'hidden');
+  await mkdir(slot, { recursive: true });
+  await writeFile(join(slot, 'HEAD'), 'ref: refs/heads/main\n');
+  await writeFile(hidden, 'hidden');
+  const result = await protectCodexReadOnlyPaths({ ':root': 'read', [f.root]: 'write', [lock]: 'write', [hidden]: 'none', [index]: 'write' }, [slot, lock], [lock, index]);
+  assert.equal(result.filesystem[slot], 'read');
+  assert.equal(result.filesystem[lock], undefined, 'a missing lock must not require a mountpoint inside its read-only Git parent');
+  assert.equal(result.filesystem[hidden], 'none');
+  assert.equal(result.filesystem[index], 'write');
+  assert.deepEqual(result.writableFiles, [index]);
 });
 
 for (const runner of ['codex', 'claude'] as const) {

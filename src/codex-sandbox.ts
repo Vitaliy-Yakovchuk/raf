@@ -103,6 +103,9 @@ export async function protectCodexReadOnlyPaths(
     if (source !== target) delete filesystem[source];
     filesystem[target] = 'read';
   }
+  for (const [path, access] of Object.entries(filesystem)) {
+    if (isAbsolute(path) && access !== 'none' && targets.some(({ target }) => path !== target && within(target, path))) delete filesystem[path];
+  }
   return { filesystem, writableFiles: [...files], symlinkParents };
 }
 

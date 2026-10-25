@@ -23,6 +23,10 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
   const initialized = spawnSync('git', ['init', '-q', '--initial-branch=develop', codeRoot], { encoding: 'utf8', env: gitEnvironment });
   assert.ifError(initialized.error);
   assert.equal(initialized.status, 0, initialized.stderr);
+  const mainRoot = join(location.root, projects.projects.raf.branchPaths.main);
+  const mainInitialized = spawnSync('git', ['init', '-q', '--initial-branch=main', mainRoot], { encoding: 'utf8', env: gitEnvironment });
+  assert.ifError(mainInitialized.error);
+  assert.equal(mainInitialized.status, 0, mainInitialized.stderr);
 
   const names = ['HOME', 'RAF_QA_HOME', 'RAF_ORCHESTRATOR_ROOT', 'TMUX', 'TMUX_PANE'] as const;
   const inherited = Object.fromEntries(names.map(name => [name, process.env[name]]));

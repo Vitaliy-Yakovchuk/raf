@@ -1,0 +1,105 @@
+{
+  "assignment": "complete-raf-flow-contracts:5.3",
+  "status": "succeeded",
+  "implementationCommit": "8cc44f65c0fb5787bd5daf8acef95817ae943871",
+  "audit": {
+    "current": true,
+    "sources": [
+      "../../openspec/changes/complete-raf-flow-contracts/specs/projects/raf/event-registry/spec.md",
+      "../../openspec/changes/complete-raf-flow-contracts/event-registry-design.md"
+    ],
+    "findings": [
+      "Каталог уже компілюється чинним механізмом 12.4; збережено цей механізм і додано лише перевірку дати для changeId.",
+      "Реєстр уже підтримує pending, rollback і явні reminder actions; усунено видалення unresolved у command settlement.",
+      "Production раніше не викликав createArchiveObserver; тепер командний і service settlement використовують спільний adapter."
+    ]
+  },
+  "implementation": [
+    "Canonical changeId відхиляє початкову дату архіву, шлях та несумісний синтаксис.",
+    "Archive observer копіює snapshots перед очікуванням; точне зіставлення ID, початкові архіви та нові цикли не утворюють історичного реєстру.",
+    "Archive runtime поза write-транзакцією перевіряє OpenSpec list активних/архівних змін і повністю закритий архівний tasks.md. Лише точні ID незавершених event bindings спостерігаються.",
+    "Мінімальний checkpoint поточного спостереження зберігається в pending_intents без kind/id факту: він не є подією і не споживається dispatcher. Нових event kinds, таблиць, статусів чи CLI немає.",
+    "Порівняння revision/checkpoint під write-транзакцією обмежує конкурентні snapshots; справжній pending-факт і завершення циклу фіксуються атомарно. Збій залишає старий checkpoint для повтору.",
+    "Читання поточного стану використовує SELECT за id і індексований state IN (pending, active), без write-lock; незмінний checkpoint не переписується."
+  ],
+  "independence": "initial-implementation.json",
+  "runs": [
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/raf-event-registry --files test/event-registry.test.ts",
+      "result": "test-run-1.json",
+      "stderr": "test-run-1.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "3dc2fdd4-0b2e-4da9-b9ab-72734856609b",
+      "selection": {
+        "files": [
+          "test/event-registry.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 28,
+      "durationMs": 2237,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "groupSnapshot": "loaded",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "workspaceProof": null,
+      "workspaceSHA": "46c9acce373dc2dbac511b0d5e9018922ced260e",
+      "workspaceNote": "Initial independent implementation ran as uncommitted changes; runtime storage and indexed selection subsequently refined and committed. Final run is authoritative."
+    },
+    {
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group complete-raf-flow-contracts/raf-event-registry --files test/event-registry.test.ts",
+      "result": "test-run-2.json",
+      "stderr": "test-run-2.stderr.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "da1baf7a-db5b-4984-a298-78e4389d8e7c",
+      "selection": {
+        "files": [
+          "test/event-registry.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 28,
+      "durationMs": 803,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "groupSnapshot": "loaded",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "workspaceProof": "final-workspace-before.json",
+      "workspaceSHA": "8cc44f65c0fb5787bd5daf8acef95817ae943871",
+      "workspaceNote": "Final committed implementation; before/after file SHA256 identical. Other agents may advance HEAD."
+    }
+  ],
+  "checks": "checks.json",
+  "streamCapture": {
+    "rawResultPreserved": true,
+    "transportFiles": [
+      "test-run-1.transport.json",
+      "test-run-2.transport.json"
+    ],
+    "limitation": "exec_command надає об’єднаний output. Повний видимий output кожного виклику є одним JSON TestRunResult без додаткового тексту stderr; stderr.txt порожній. Незалежного захоплення stderr fd інструмент не надає. CLI code збережено окремо від child exitCode."
+  },
+  "groupContinuity": "Обидва прогони мають той самий group, project, workspace та QA HOME; timeoutCount=0. Чинний ledger не скидався. Зміна стороннього test-runs fingerprint видима в незмінених TestRunResult.",
+  "testsEdited": false,
+  "configurationEdited": false,
+  "remaining": "Живі I1–I7, SQLite/tmux/OpenSpec QA належать відкритому 5.4. Цільова unit-група використовує in-memory порти і не підтверджує ці інтеграції. Інші відкриті пункти зміни лишаються відкритими; tasks.md не редагував, sync/archive не виконував."
+}

@@ -76,6 +76,12 @@ for (const tasks of [
   '- [ ] 7.2 Finish change\n- [ ] 7.3 Someone else\n',
   '- [ ] 7.2 Finish change\n  - [ ] 7.2.1 Unselected child\n',
   '- [ ] 7.2 Finish change\n  - [ ] Unnumbered remaining action\n',
+  '- [ ] 7.2 Finish change\n* [ ] 7.3 Someone else\n',
+  '- [ ] 7.2 Finish change\n+ [ ] 7.3 Someone else\n',
+  '- [ ] 7.2 Finish change\n1. [ ] 7.3 Someone else\n',
+  '- [ ] 7.2 Finish change\n2) [~] 7.3 Someone else\n',
+  '- [ ] 7.2 Finish change\n- [] 7.3 Someone else\n',
+  '- [ ] 7.2 Finish change\n- [~] 7.3 Someone else\n',
 ]) {
   test(`Z412 nonfinal selection keeps exactly its existing boundaries: ${tasks.trim().split('\n').at(-1)}`, async t => {
     const f = await fixture(t, tasks);
@@ -95,6 +101,12 @@ test('Z412 completed tasks outside the selection do not require permission to ex
   const f = await fixture(t);
   await f.put(join(f.directory, '.openspec.yaml'), 'schema: spec-driven\nskip_specs: true\n');
   assertFinalScope(f, (await f.derive()).writeBoundaries, []);
+});
+
+test('Z412 OpenSpec ordinal IDs also identify an unnumbered final checkbox', async t => {
+  const f = await fixture(t, '* [ x ] Earlier work\n+ [] Finish change\n');
+  const assignment: AssignmentSnapshot = { ...f.assignment, changes: [{ id: f.change, items: [{ id: '2', description: 'Finish change' }] }] };
+  assertFinalScope(f, (await f.derive({ ...f.parameters, tasks: [`${f.change}:2`] }, assignment)).writeBoundaries, []);
 });
 
 test('Z412 multiple changes grant sync only for the final change', async t => {

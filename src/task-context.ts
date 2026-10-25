@@ -4,7 +4,7 @@ import { reportedCommitsSchema } from './reported-commits.ts';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
-import { open, readFile, realpath, rename, rm, stat } from 'node:fs/promises';
+import { lstat, open, readFile, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -249,15 +249,77 @@ function reportSchema(statuses: readonly { readonly id: string }[]): TaskReportS
   } };
 }
 
+async function archiveWriteBoundaries(root: string, selected: readonly { change: string; item: { id: string; description: string } }[]): Promise<string[]> {
+  const changesRoot = join(root, 'openspec', 'changes');
+  const boundaries = new Set<string>();
+  const unlinked = async (path: string) => {
+    for (let current = path; current !== root; current = resolve(current, '..')) {
+      if (current === resolve(current, '..') || relative(root, current).startsWith(`..${sep}`)) contextFailure('TASK_CONTEXT_MISMATCH', `Archive write scope lies outside Orchestrator: ${path}`);
+      const entry = await lstat(current).catch(error => {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        return null;
+      });
+      if (entry?.isSymbolicLink()) contextFailure('TASK_CONTEXT_MISMATCH', `Archive write scope cannot follow a symlink: ${current}`);
+    }
+  };
+  for (const change of new Set(selected.map(row => row.change))) {
+    const directory = join(changesRoot, change);
+    const content = await readFile(join(directory, 'tasks.md'), 'utf8').catch(error => {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      return '';
+    });
+    const rows = content.split('\n').flatMap(line => {
+      const match = /^\s*(?:[-*+]|\d{1,9}[.)])\s*\[(?:\s*([^\]\s]?)\s*\](?![([])|\s+\])\s*(.*)/.exec(line);
+      if (!match) return [];
+      return [{ done: (match[1] ?? '').toLowerCase() === 'x', description: match[2].trim() }];
+    }).map((row, index) => {
+      const numbered = /^([0-9]+(?:\.[0-9]+)*|[A-Z](?:\.[0-9]+)+)\s+(.+)$/s.exec(row.description);
+      return { done: row.done, id: numbered?.[1] ?? String(index + 1), description: numbered?.[2] ?? row.description };
+    });
+    const items = selected.filter(row => row.change === change).map(row => row.item);
+    if (!rows.length || rows.some(row => !row.done && !items.some(item => item.id === row.id))) continue;
+    if (items.some(item => {
+      const matches = rows.filter(row => row.id === item.id);
+      return matches.length !== 1 || matches[0].description !== item.description;
+    })) continue;
+    await unlinked(join(changesRoot, 'archive'));
+    await unlinked(directory);
+    boundaries.add(changesRoot + sep);
+    const deltaRoot = join(directory, 'specs');
+    const walk = async (path: string): Promise<void> => {
+      await unlinked(path);
+      const entries = await readdir(path, { withFileTypes: true }).catch(error => {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        return [];
+      });
+      for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+        const child = join(path, entry.name);
+        if (entry.isSymbolicLink()) contextFailure('TASK_CONTEXT_MISMATCH', `Archive delta scope cannot follow a symlink: ${child}`);
+        if (entry.isDirectory()) await walk(child);
+        else if (entry.isFile() && entry.name === 'spec.md') {
+          const capability = relative(deltaRoot, path);
+          if (!capability) contextFailure('TASK_CONTEXT_MISMATCH', `Archive delta needs a capability directory: ${child}`);
+          const target = join(root, 'openspec', 'specs', capability);
+          await unlinked(target);
+          boundaries.add(target + sep);
+        }
+      }
+    };
+    await walk(deltaRoot);
+  }
+  return [...boundaries];
+}
+
 export async function deriveTaskContext(request: TaskContextRequest): Promise<DerivedTaskContext> {
   const { root, parameters, assignment, configuration } = request;
   const branch = branchFor(parameters, configuration.projects);
   const selected = selectedItems(parameters, assignment);
   const changes = [...new Set(selected.map(row => row.change))];
+  const archiveBoundaries = await archiveWriteBoundaries(root, selected);
   return {
     branch,
     outcome: selected.map(({ change, item }) => `${change}:${item.id} — ${item.description}`).join('\n'),
-    writeBoundaries: [...changes.map(change => join(root, 'openspec', 'changes', change)), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
+    writeBoundaries: [...(archiveBoundaries.length ? archiveBoundaries : changes.map(change => join(root, 'openspec', 'changes', change))), join(root, 'questions', 'projects', parameters.project, 'questions.md')],
     workspaceWritable: !workspaceReadOnlyTypes.has(parameters.type),
     sources: await deriveSources(root, selected),
     reportSchema: reportSchema(configuration.reportStatuses),

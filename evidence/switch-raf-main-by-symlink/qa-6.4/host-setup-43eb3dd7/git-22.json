@@ -1,0 +1,16 @@
+{
+  "command": [
+    "git",
+    "-C",
+    "/srv/dev/s64-erRFT9/root/raf-main-b",
+    "checkout",
+    "--detach",
+    "3f210865fefbba5c8a1a35adb9a59841b3cf48d1"
+  ],
+  "cwd": "/srv/dev/s64-erRFT9/root/raf-main-b",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "HEAD is now at 3f21086 qa: isolated native channel fixture and exact CLI audit\nerror: Unable to create '/srv/dev/s64-erRFT9/root/.git/modules/raf-main/packed-refs.lock': File exists.\n\nAnother git process seems to be running in this repository, e.g.\nan editor opened by 'git commit'. Please make sure all processes\nare terminated then try again. If it still fails, a git process\nmay have crashed in this repository earlier:\nremove the file manually to continue.\nerror: Unable to create '/srv/dev/s64-erRFT9/root/.git/modules/raf-main/packed-refs.lock': File exists.\n\nAnother git process seems to be running in this repository, e.g.\nan editor opened by 'git commit'. Please make sure all processes\nare terminated then try again. If it still fails, a git process\nmay have crashed in this repository earlier:\nremove the file manually to continue.\n"
+}

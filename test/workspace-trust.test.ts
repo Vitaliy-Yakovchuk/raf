@@ -130,7 +130,7 @@ setTimeout(() => process.exit(91), 20000);
 `;
 
 async function trustFixture(t: TestContext, runner: Runner, placement: Placement, sticky = false, rootTask?: 'spec' | 'design') {
-  const f = await fixture(t, { productionQa: true, externalHome: rootTask !== undefined });
+  const f = await fixture(t, { productionQa: true, externalHome: rootTask !== undefined, tasks: rootTask ? 2 : 1 });
   const parameters = rootTask ? { ...f.params, type: rootTask, phase: rootTask, project: 'orchestrator' } : f.params;
   if (rootTask) {
     assert.equal(dirname(f.home), dirname(f.root), 'root trust fixtures require sibling HOME and Orchestrator directories');
@@ -266,6 +266,17 @@ test('[workspace-trust] Codex fixture delegates app-server hook inspection intac
   const result = spawnSync(executable, args, { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout), args, 'hook inspection must use the real app-server without dropping its configuration');
+});
+
+test('[workspace-trust] absent protected Git files never become native mountpoints', async t => {
+  const f = await fixture(t, { productionQa: true });
+  const common = join(f.root, '.git', 'modules', 'raf-main');
+  const locks = ['index.lock', 'HEAD.lock', 'config.worktree', 'config.worktree.lock', 'packed-refs.lock'].map(name => join(common, name));
+  const index = join(f.root, '.git', 'index');
+  const result = await protectCodexReadOnlyPaths({ ':root': 'read', [f.root]: 'write', [common]: 'write', [index]: 'write' }, locks, [index]);
+  for (const path of locks) assert.equal(result.filesystem[path], undefined, 'absent protected paths must not create host mountpoints: ' + path);
+  assert.equal(result.filesystem[index], 'write', 'the shared Orchestrator index stays writable');
+  assert.deepEqual(result.writableFiles, [index]);
 });
 
 test('[workspace-trust] protected slot Git directory needs no descendant lock mounts', async t => {

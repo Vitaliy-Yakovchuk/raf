@@ -1,0 +1,9 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/8d40820d-3449-4a8e-b3ed-1c3f4a1738d2/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/qa64-trust-fixture --only 'test/workspace-trust.test.ts::[workspace-trust] Z.12 codex/spec: verified Orchestrator main root is trusted once without expanding write scope' 'test/workspace-trust.test.ts::[workspace-trust] Z.12 codex/design: verified Orchestrator main root is trusted once without expanding write scope' 'test/workspace-trust.test.ts::[workspace-trust] Z.12 claude/spec: verified Orchestrator main root is trusted once without expanding write scope' 'test/workspace-trust.test.ts::[workspace-trust] Z.12 claude/design: verified Orchestrator main root is trusted once without expanding write scope'",
+  "cliExitCode": 1,
+  "childExitCode": 0,
+  "stderr": null,
+  "limitation": "Tool output merges stdout/stderr; independent stderr unavailable.",
+  "sourceItem": "switch-raf-main-by-symlink:6.4",
+  "aggregate": "same group and QA HOME; unresolved missing-lock red retained"
+}

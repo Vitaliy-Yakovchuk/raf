@@ -1,0 +1,84 @@
+{
+  "runId": "17ed39b3-f6aa-47f5-b237-7a80a800f3af",
+  "profile": "linux",
+  "sandboxMode": "workspace-write",
+  "codex": "/home/dev/.local/bin/codex",
+  "bwrap": "/usr/bin/bwrap",
+  "backend": {
+    "selection": "PATH",
+    "sharedDaemon": false,
+    "helperDirectory": "/srv/dev/s64-erRFT9/.raf/tmp/17ed39b3-f6aa-47f5-b237-7a80a800f3af/codex-sandbox-17ed39b3-f6aa-47f5-b237-7a80a800f3af",
+    "verification": "preflight Unix IPC, TCP denial and hidden paths"
+  },
+  "network": {
+    "codex": "enabled",
+    "namespace": "unshared",
+    "socketFamilies": [
+      "AF_UNIX"
+    ],
+    "ioUring": "denied"
+  },
+  "tmuxSockets": "private tmpfs per sandboxed command",
+  "filesystem": {
+    ":root": "read",
+    ":slash_tmp": "write",
+    "/srv/dev/s64-erRFT9/.raf/tmp/17ed39b3-f6aa-47f5-b237-7a80a800f3af": "write",
+    "/srv/dev/s64-erRFT9/root/openspec/changes/sym64-fixture": "write",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/worktrees/raf-develop": "write",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main": "write",
+    "/srv/dev/s64-erRFT9/root/.git": "write",
+    "/srv/dev/s64-erRFT9/root/raf-develop": "write",
+    "/srv/dev/s64-erRFT9/root/raf-develop/.git": "write",
+    "/home/dev/.raf": "none",
+    "/tmp/raf-ipc-1000": "none",
+    "/tmp/raf-tools-1000": "none",
+    "/run": "none",
+    "/tmp/tmux-1000": "none",
+    "/tmp/cc-socks": "none",
+    "/srv/dev/s64-erRFT9/.raf": "none",
+    "/srv/dev/s64-erRFT9/main.sock": "none",
+    "/srv/dev/s64-erRFT9/root": "read",
+    "/srv/dev/s64-erRFT9/root/raf-main-a": "read",
+    "/srv/dev/s64-erRFT9/root/raf-main-b": "read",
+    "/srv/dev/s64-erRFT9/root/.gitmodules": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/raf-hotfix": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/HEAD": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/HEAD.lock": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/index": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/index.lock": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/config": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/config.lock": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/config.worktree": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/config.worktree.lock": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/logs/HEAD": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/logs/HEAD.lock": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/worktrees/raf-main-b": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/refs/heads/main": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/refs/heads/main.lock": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/logs/refs/heads/main": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/logs/refs/heads/main.lock": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/packed-refs": "read",
+    "/srv/dev/s64-erRFT9/root/.git/modules/raf-main/packed-refs.lock": "read",
+    "/srv/dev/s64-erRFT9/.raf/tmp/17ed39b3-f6aa-47f5-b237-7a80a800f3af/codex-sandbox-17ed39b3-f6aa-47f5-b237-7a80a800f3af": "read",
+    "/srv/dev/s64-erRFT9/.raf/tmp/17ed39b3-f6aa-47f5-b237-7a80a800f3af/tmux-1000": "write"
+  },
+  "writableFiles": [
+    "/srv/dev/s64-erRFT9/root/questions/projects/raf/questions.md"
+  ],
+  "symlinkParents": [
+    "/srv/dev/s64-erRFT9/root"
+  ],
+  "environment": {
+    "cleared": [
+      "TMUX",
+      "TMUX_PANE",
+      "SSH_AUTH_SOCK",
+      "SSH_AGENT_PID",
+      "DBUS_SESSION_BUS_ADDRESS",
+      "XDG_RUNTIME_DIR"
+    ],
+    "set": {
+      "TMUX_TMPDIR": "/srv/dev/s64-erRFT9/.raf/tmp/17ed39b3-f6aa-47f5-b237-7a80a800f3af"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "status": "failed",
+  "change": "switch-raf-main-by-symlink",
+  "item": "6.4",
+  "reason": "Native live5 зупинився до першого switch: sandbox створив host index.lock. Безпечний продуктовий фікс не підтверджений; у стабільній групі лишився один knownRed.",
+  "native": {
+    "reviewedSha": "43eb3dd7af9773eac106455612dc07b4d0c5be1f",
+    "stage": 0,
+    "completedSwitches": 0,
+    "raw": "host-setup-43eb3dd7/",
+    "hostCommandReceipt": "host-setup-43eb3dd7/git-23.json"
+  },
+  "redRunId": "4da8714a-783b-45c2-a482-96b074198062",
+  "qaRunId": "7cb0cb31-5c38-4111-8aa3-143867083e10",
+  "qaFixtureAssertionsPassed": 4,
+  "knownRed": 1,
+  "unexecuted": 0,
+  "unknown": 0,
+  "timeoutCount": 0,
+  "cleanupComplete": true,
+  "groupState": "idle",
+  "nextAction": "fix-implementation",
+  "analysis": "missing-lock-analysis.md",
+  "limitations": [
+    "Окремий stderr unit CLI недоступний: exec_command повертає злитий output; це явно зафіксовано у streams.json.",
+    "Один попередній cost-profile red мав урізаний raw stdout: збережений повний lastResult експорт агрегату не названий сирим stdout.",
+    "Unit та stage0 не є повним native QA6.4."
+  ],
+  "tasksModified": false,
+  "archived": false
+}

@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/s64-erRFT9/root/raf-main/bin/raf.ts",
+    "agent",
+    "close",
+    "--id",
+    "sym64-b",
+    "--force",
+    "--reason",
+    "Host-owned isolated QA cleanup"
+  ],
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "{\"code\":\"STATE_CONTEXT_REFUSED\",\"message\":\"STATE_CONTEXT_REFUSED: Unregistered module origin: /srv/dev/s64-erRFT9/root/raf-main-b/src/production-entry.ts\",\"details\":{\"command\":\"agent close\",\"stage\":\"state-preflight\",\"source\":\"state-store\",\"sourceCode\":\"STATE_CONTEXT_REFUSED\",\"reason\":\"Unregistered module origin: /srv/dev/s64-erRFT9/root/raf-main-b/src/production-entry.ts\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true},\"remediation\":[\"Use the configured raf production tree and account HOME, or select a separate HOME with RAF_QA_HOME before starting any child process.\",\"raf help agent close\"]}\n"
+}

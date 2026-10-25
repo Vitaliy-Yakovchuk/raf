@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runTestRun, reconcileTestRunGroup } from '../src/test-runs.ts';
+import { acknowledgeTestRunDelivery } from '../src/test-run-state-recovery.ts';
 import type { TestRunRequest } from '../src/test-runs.ts';
 import { RunHarness, policy, flushMicrotasks, fixtureGroup } from './helpers/test-run-fixture.ts';
 import { reconcileTestRunResources, type ResourceReservedTestRunPorts, type TestRunResourceClaim } from '../src/test-run-reservations.ts';
@@ -31,6 +32,11 @@ function harness() {
 }
 const groupKey = (h: RunHarness) => ({ project: 'raf', workspace: h.context.workspace, group });
 const run = (h: RunHarness) => runTestRun(request, h.config, policy, h.context, h.ports);
+const runAndAcknowledge = async (h: RunHarness) => {
+  const result = await run(h);
+  await acknowledgeTestRunDelivery(result, h.ports.state);
+  return result;
+};
 
 test('integration runtime: actual wrapper uses exact singleton, separate policy and trusted caller phase', async () => {
   const h = harness();
@@ -48,6 +54,7 @@ test('integration runtime: actual wrapper uses exact singleton, separate policy 
 
 test('integration runtime: repeated full timeouts across callers exceed unit cap and preserve aggregate', async () => {
   const h = harness();
+  const run = runAndAcknowledge;
   h.finishImmediately = false;
   h.events = [{ kind: 'assertion-failed', test: id }];
   for (let index = 0; index <= policy.maxGroupTimeouts; index++) {
@@ -72,6 +79,7 @@ test('integration runtime: repeated full timeouts across callers exceed unit cap
 
 test('integration runtime: unknown and pending facts cannot be erased by truncated or timed-out confirmation', async () => {
   const h = harness();
+  const run = runAndAcknowledge;
   h.events = [{ kind: 'setup-failed', test: id }, { kind: 'complete', expected: [id] }];
   assert.deepEqual((await run(h)).unknown, [id]);
   h.events = [];

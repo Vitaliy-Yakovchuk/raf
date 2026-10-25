@@ -1,0 +1,96 @@
+{
+  "assignment": "add-raf-test-run:6.2.6.2.2",
+  "audit": {
+    "activeItem": "openspec/changes/add-raf-test-run/tasks.md#6.2.6.2.2",
+    "applicableContract": "openspec/changes/add-raf-test-run/specs/core/process/feature-test-authoring/spec.md: Агент тестів і каркаса",
+    "finding": "Доручення актуальне: повторні прогони двох сценаріїв не підтверджували попередню delivery.pending; змінено лише локальний тестовий канал."
+  },
+  "change": {
+    "file": "test/test-run-integration-runtime.test.ts",
+    "fixture": "runAndAcknowledge awaits runTestRun and acknowledgeTestRunDelivery before returning; bound as local run only in the two assigned repeat-run scenarios.",
+    "assertionsByteForByteUnchanged": 64,
+    "productionChangedByThisAssignment": false,
+    "sharedHarnessChanged": false
+  },
+  "testCommand": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group add-raf-test-run/integration-profiles",
+  "profileHandoff": {
+    "group": "add-raf-test-run/integration-profiles",
+    "profileId": "node",
+    "unitFilesAdditions": [],
+    "groupsAdditions": {},
+    "existingGroup": {
+      "profileId": "node",
+      "files": [
+        "test/test-run-integration-profiles.test.ts",
+        "test/test-run-integration-runtime.test.ts"
+      ]
+    },
+    "alreadyRegisteredUnitFiles": [
+      "test/test-run-integration-profiles.test.ts",
+      "test/test-run-integration-runtime.test.ts"
+    ],
+    "prerequisites": {
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "activeChange": "add-raf-test-run",
+      "runtime": "Node >=25.4.0",
+      "checks": [
+        "node_modules/typescript/package.json",
+        "src/test-run-reporter.ts",
+        "scripts/test-run-node.ts"
+      ],
+      "environment": {
+        "isolatedHome": true,
+        "stateOrigin": true
+      },
+      "isolation": "wrapper-managed QA HOME/state/tmp; keep same stable group/QA aggregate; no operational state access",
+      "dependencies": "Existing local node_modules/typescript; installation not required"
+    },
+    "configurationChanged": false
+  },
+  "runs": [
+    {
+      "file": "red-initial.json",
+      "cliCode": 1,
+      "result": "assertions-failed",
+      "reason": "Initial acknowledgement helper was applied to every scenario and caused a state transaction in the no-state preflight-refusal test. Own fixture error corrected by limiting the helper to the two assigned scenarios; this is not target red evidence."
+    },
+    {
+      "file": "red-fixture-check.json",
+      "cliCode": 0,
+      "result": "passed",
+      "passed": 104,
+      "reason": "Narrowed delivery fixture; target assertions pass."
+    },
+    {
+      "file": "red-final.json",
+      "cliCode": 0,
+      "result": "passed",
+      "runId": "fc98710a-e712-4d1d-8a7e-c7d6ec7d9d08",
+      "passed": 104,
+      "reason": "Final fixture uses a local alias in each target scenario to keep assertion source text byte-for-byte unchanged."
+    }
+  ],
+  "targetTests": [
+    {
+      "file": "test/test-run-integration-runtime.test.ts",
+      "name": "integration runtime: repeated full timeouts across callers exceed unit cap and preserve aggregate"
+    },
+    {
+      "file": "test/test-run-integration-runtime.test.ts",
+      "name": "integration runtime: unknown and pending facts cannot be erased by truncated or timed-out confirmation"
+    }
+  ],
+  "finalChecks": {
+    "targetTestsPassed": true,
+    "unknown": [],
+    "unexecuted": [],
+    "knownRed": [],
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    }
+  },
+  "handoff": "Main verifies both target test IDs in passed; full TestRunResult in red-final.json. Preserve add-raf-test-run/integration-profiles for later stages. Existing implementation makes tests green; no new feature implementation is required by this scaffold repair.",
+  "scope": "Other tasks remain open; tasks.md untouched; no sync/archive."
+}

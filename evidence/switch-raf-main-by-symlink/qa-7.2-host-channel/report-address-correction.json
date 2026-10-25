@@ -1,0 +1,128 @@
+{
+  "reportPath": "/home/dev/.raf/tmp/9544bc6b-26ad-46b2-b451-c49084757909/raf-sym72-qa.json",
+  "reason": "Main rejected nonmatching QA scenario addresses. Corrected in the same run; no test rerun or stream rewrite.",
+  "scenarioAddresses": [
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "[qa] Після 7.1 на ізольованому стенді пройти шлях від звичайної main-теки через справжній start до двох випусків із живим агентом: збереження staged/unstaged/untracked при конвертації, develop→main, постійний hotfix→main→develop, rollback, два switch без зупинки агентів, pending report/message та handover, повторний start. Додати SHA/fingerprint/readlink/Git before/after, PID/runId/runner-session, user_version й нові дані, точні коди й прийнятий JSON. Перевірити навігацію для layout/state/release/handover/sandbox ролей за README та відсутність зайвого обов’язкового контексту. Позитивні сценарії → 0, негативні → ненульові за delta; `openspec validate switch-raf-main-by-symlink --strict --no-interactive` → 0. Пропущені live кроки лишають пункт відкритим."
+    ],
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "Configured mainCopies готові до production entry — первинний власний assertion red"
+    ],
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "Configured mainCopies готові до production entry — виправлення та власний qa"
+    ],
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "Постійний hotfix worktree зареєстрований перед layout conversion — первинний власний assertion red"
+    ],
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "Постійний hotfix worktree зареєстрований перед layout conversion — виправлення та власний qa"
+    ],
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "Host1: збірка actual-start стенда до live-кроків"
+    ],
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "Catalog fixture: власний assertion red"
+    ],
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "Catalog fixture: власний qa після збереження registry"
+    ]
+  ],
+  "findingAddresses": [
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "Configured mainCopies готові до production entry — первинний власний assertion red"
+    ],
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "Постійний hotfix worktree зареєстрований перед layout conversion — первинний власний assertion red"
+    ],
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "Catalog fixture: власний assertion red"
+    ],
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "Host1: збірка actual-start стенда до live-кроків"
+    ]
+  ],
+  "followUpSourceAddresses": [
+    [
+      "switch-raf-main-by-symlink",
+      "7.2",
+      "[qa] Після 7.1 на ізольованому стенді пройти шлях від звичайної main-теки через справжній start до двох випусків із живим агентом: збереження staged/unstaged/untracked при конвертації, develop→main, постійний hotfix→main→develop, rollback, два switch без зупинки агентів, pending report/message та handover, повторний start. Додати SHA/fingerprint/readlink/Git before/after, PID/runId/runner-session, user_version й нові дані, точні коди й прийнятий JSON. Перевірити навігацію для layout/state/release/handover/sandbox ролей за README та відсутність зайвого обов’язкового контексту. Позитивні сценарії → 0, негативні → ненульові за delta; `openspec validate switch-raf-main-by-symlink --strict --no-interactive` → 0. Пропущені live кроки лишають пункт відкритим."
+    ]
+  ],
+  "allFindingAddressesExist": true,
+  "allFollowUpSourcesExist": true,
+  "failedScenarios": [
+    {
+      "address": [
+        "switch-raf-main-by-symlink",
+        "7.2",
+        "[qa] Після 7.1 на ізольованому стенді пройти шлях від звичайної main-теки через справжній start до двох випусків із живим агентом: збереження staged/unstaged/untracked при конвертації, develop→main, постійний hotfix→main→develop, rollback, два switch без зупинки агентів, pending report/message та handover, повторний start. Додати SHA/fingerprint/readlink/Git before/after, PID/runId/runner-session, user_version й нові дані, точні коди й прийнятий JSON. Перевірити навігацію для layout/state/release/handover/sandbox ролей за README та відсутність зайвого обов’язкового контексту. Позитивні сценарії → 0, негативні → ненульові за delta; `openspec validate switch-raf-main-by-symlink --strict --no-interactive` → 0. Пропущені live кроки лишають пункт відкритим."
+      ],
+      "hasFixedFinding": false
+    },
+    {
+      "address": [
+        "switch-raf-main-by-symlink",
+        "7.2",
+        "Configured mainCopies готові до production entry — первинний власний assertion red"
+      ],
+      "hasFixedFinding": true
+    },
+    {
+      "address": [
+        "switch-raf-main-by-symlink",
+        "7.2",
+        "Постійний hotfix worktree зареєстрований перед layout conversion — первинний власний assertion red"
+      ],
+      "hasFixedFinding": true
+    },
+    {
+      "address": [
+        "switch-raf-main-by-symlink",
+        "7.2",
+        "Host1: збірка actual-start стенда до live-кроків"
+      ],
+      "hasFixedFinding": true
+    },
+    {
+      "address": [
+        "switch-raf-main-by-symlink",
+        "7.2",
+        "Catalog fixture: власний assertion red"
+      ],
+      "hasFixedFinding": true
+    }
+  ],
+  "pendingLive": "Full required live scenario remains failed/pending until actual host result, with report/item failed. It is not a fabricated fixed finding.",
+  "hostQueued": {
+    "workspace": "/srv/dev/sym72q2",
+    "reviewed": "6ad616d09af67dfcba7c34420f609a7f9c9213ea",
+    "source": "Main confirmation in this session",
+    "artifacts": "Await full ev directory"
+  },
+  "stderrIssue": "Main assigned working raf defect to complete-raf-flow-contracts:Z.423. Preserve all original test artifacts; await main instruction.",
+  "receiptId": "2aa26673-51d5-4462-a2af-2ca34a105868"
+}

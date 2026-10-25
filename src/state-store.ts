@@ -13,7 +13,7 @@ import type { ReportRejectionSnapshot } from './report-rejection.ts';
 import type { TaskReservationSet } from "./task-reservations.ts";
 import type { PendingEvent } from "./event-registry.ts";
 import { DatabaseSync } from "node:sqlite";
-import { existsSync, mkdirSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { admitStateStore, canonicalStatePath, stateFailure } from "./state-migration-guard.ts";
 import { inspectStateSchema } from './state-schema.ts';
@@ -200,7 +200,16 @@ export function openStateStore(path: string, options?: import('./state-migration
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   checkContext();
   const beforeOpen = path !== ':memory:' && existsSync(path) ? statSync(path) : undefined;
-  const db = operation("open", () => new DatabaseSync(path, { timeout: 250 }));
+  let busyTimeoutMs: number;
+  try {
+    const contention = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8')).state?.contention;
+    if (!contention || !['busyTimeoutMs', 'timeoutMs', 'retryDelayMs'].every(key => Number.isSafeInteger(contention[key]) && contention[key] > 0) ||
+        contention.busyTimeoutMs > contention.timeoutMs || contention.retryDelayMs > contention.timeoutMs) throw new Error('Invalid contention policy');
+    busyTimeoutMs = contention.timeoutMs;
+  } catch (error) {
+    throw stateFailure('CONFIGURATION_INVALID', `Invalid conf/raf.json#/state/contention: ${(error as Error).message}`);
+  }
+  const db = operation("open", () => new DatabaseSync(path, { timeout: busyTimeoutMs }));
   try {
     checkContext();
     if (options?.context) {

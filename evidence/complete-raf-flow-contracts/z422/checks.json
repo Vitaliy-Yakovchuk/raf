@@ -1,0 +1,9 @@
+{
+  "build": {
+    "command": "npm run build",
+    "exitCode": 0,
+    "stdout": "\n> build\n> node scripts/build.ts\n\nКаталог перевірено та зібрано; доступність операцій визначають їхні обробники.\n",
+    "includes": ["repository comment policy", "catalog validation and generation"]
+  },
+  "diff": { "command": "git diff --check", "exitCode": 0, "output": "" }
+}

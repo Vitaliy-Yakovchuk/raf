@@ -6,6 +6,8 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { test, type TestContext } from "node:test";
 import { openStateStore, STATE_SCHEMA_VERSION, STATE_SCHEMA_SUPPORTED_VERSIONS, type StateStore } from "../src/state-store.ts";
+import { ResourceUsageRepository, ResourceUsageTracker, type UsageContext } from '../src/resource-usage.ts';
+import { readUsageConfiguration, usageConfigurationRoot } from '../src/resource-usage-runtime.ts';
 
 function fixture(t: TestContext) {
   const directory = mkdtempSync(join(tmpdir(), "raf-state-store-"));
@@ -31,6 +33,98 @@ function fixture(t: TestContext) {
     },
   };
 }
+
+async function holdWriteTransaction(t: TestContext, path: string, holdMs = 700) {
+  const source = `
+    import { DatabaseSync } from 'node:sqlite';
+    const db = new DatabaseSync(process.argv[1]);
+    db.exec('BEGIN IMMEDIATE');
+    process.send('locked');
+    process.once('message', () => {
+      setTimeout(() => { db.exec('COMMIT'); db.close(); process.disconnect(); }, ${holdMs});
+      process.send('holding');
+    });
+  `;
+  const child = spawn(process.execPath, ['--input-type=module', '--eval', source, path], { stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+  let stderr = '';
+  child.stderr!.setEncoding('utf8').on('data', chunk => { stderr += chunk; });
+  const closed = new Promise<void>((resolve, reject) => {
+    child.once('error', reject);
+    child.once('close', (code, signal) => code === 0 ? resolve() : reject(new Error(`Lock holder failed (${code ?? signal}): ${stderr}`)));
+  });
+  void closed.catch(() => {});
+  t.after(async () => {
+    if (child.exitCode === null && child.signalCode === null) child.kill();
+    await closed.catch(() => {});
+  });
+  const message = () => Promise.race([
+    new Promise(resolve => child.once('message', resolve)),
+    closed.then(() => { throw new Error('Lock holder closed before acknowledgement'); }),
+  ]);
+  assert.equal(await message(), 'locked');
+  const holding = message();
+  child.send('hold');
+  assert.equal(await holding, 'holding');
+  return { closed };
+}
+
+test('Z422: state writes wait for another process holding a transaction beyond 250ms', async t => {
+  const f = fixture(t);
+  const store = f.open();
+  store.initializeRunners([{ id: 'codex', initialEnabled: true }]);
+  const { closed: released } = await holdWriteTransaction(t, f.path);
+  assert.doesNotThrow(() => store.setRunnerEnabled('codex', false));
+  await released;
+  f.close(store);
+  assert.equal(f.open().getRunnerEnabled('codex'), false);
+});
+
+test('Z422: opening state during another process write transaction waits and preserves both writers', async t => {
+  const f = fixture(t);
+  const store = f.open();
+  store.initializeRunners([{ id: 'existing', initialEnabled: true }]);
+  f.close(store);
+  const { closed: released } = await holdWriteTransaction(t, f.path);
+  let reopened!: StateStore;
+  assert.doesNotThrow(() => { reopened = f.open(); });
+  reopened.initializeRunners([{ id: 'after-lock', initialEnabled: true }]);
+  await released;
+  assert.equal(reopened.getRunnerEnabled('existing'), true);
+  assert.equal(reopened.getRunnerEnabled('after-lock'), true);
+});
+
+test('Z422: unfinished resource usage cleanup retries after a lock without duplicate finalization', async t => {
+  const f = fixture(t);
+  const store = f.open();
+  const database = store.startupContextDatabase;
+  const repository = new ResourceUsageRepository(database);
+  const tracker = new ResourceUsageTracker({ repository, configuration: readUsageConfiguration(usageConfigurationRoot),
+    measurement: { baseline: () => ({ at: 1, disk: [] }), sample: () => { throw new Error('No final measurement requested'); } } });
+  const context: UsageContext = {
+    identity: { kind: 'test', id: 'unfinished-cleanup', machineId: 'fixture', bootId: 'fixture', fence: 'fixture', root: null },
+    project: 'raf', agentType: null, testProfile: 'node', items: [{ project: 'raf', change: 'complete-raf-flow-contracts', item: 'Z.422' }],
+    requestedEstimate: { ramBytes: 0, diskBytes: {}, sources: [], confHash: 'fixture' }, requiredFileSystems: [],
+  };
+  tracker.prepare(context, true, 1);
+  tracker.started(context.identity, 2);
+  const timeout = Number(database.prepare('PRAGMA busy_timeout').get()!.timeout);
+  const { closed: released } = await holdWriteTransaction(t, f.path);
+  const finish = { at: 3, reason: 'exit' as const, verifiedComplete: false, reasons: ['recovered cleanup'] };
+  database.exec('PRAGMA busy_timeout=1');
+  try {
+    assert.throws(() => tracker.finish(context.identity, finish), (error: any) => error.code === 'ERR_SQLITE_ERROR' && (error.errcode & 255) === 5);
+  } finally { database.exec(`PRAGMA busy_timeout=${timeout}`); }
+  assert.equal(repository.get(context.identity)!.finishedAt, null);
+  assert.doesNotThrow(() => tracker.finish(context.identity, finish));
+  await released;
+  const completed = repository.get(context.identity)!;
+  assert.equal(completed.finishedAt, 3);
+  assert.equal(completed.finishReason, 'exit');
+  assert.deepEqual(tracker.finish(context.identity, { ...finish, at: 4 }), completed);
+  assert.equal(database.prepare('SELECT count(*) AS total FROM resource_usage').get()!.total, 1);
+  f.close(store);
+  assert.deepEqual(new ResourceUsageRepository(f.open().startupContextDatabase).get(context.identity), completed);
+});
 
 test("a new explicit SQLite database has no invented runner, quota, or timing values", (t) => {
   const db = fixture(t);

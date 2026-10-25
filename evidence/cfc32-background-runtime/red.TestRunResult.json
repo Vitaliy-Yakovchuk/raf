@@ -1,0 +1,1684 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: readiness requires exclusiveOwner, not spawn or a live PID"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:78:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.start (node:internal/test_runner/test:1262:17)",
+        "    at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: readiness requires databaseOpen, not spawn or a live PID"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:78:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: readiness requires lastGrantLoaded, not spawn or a live PID"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:78:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: readiness requires resourceWaitReady, not spawn or a live PID"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:78:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: stale handshake serviceEpoch cannot authorize an enqueue"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.request",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 68,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.request (src/service-lifecycle.ts:68:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:92:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: stale handshake identity cannot authorize an enqueue"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.request",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 68,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.request (src/service-lifecycle.ts:68:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:92:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: stale handshake pid cannot authorize an enqueue"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.request",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 68,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.request (src/service-lifecycle.ts:68:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:92:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: stale handshake mainPath cannot authorize an enqueue"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.request",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 68,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.request (src/service-lifecycle.ts:68:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:92:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U1: first start confirms initialization and the current owner before returning ready"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:100:36)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U2: concurrent starts and repeated start share one verified service"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:108:48)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U2: lock contention and retries consume one readiness budget"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:119:26)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U2: exhausted lock budget does not spawn or enqueue"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.request",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 68,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.request (src/service-lifecycle.ts:68:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:129:26)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U2: aborted resource caller cannot spawn or enqueue"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.request",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 68,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.request (src/service-lifecycle.ts:68:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:137:26)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: main route, entry and spawn cwd use the same verified generation"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:144:36)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: missing-main refuses start without develop fallback"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:157:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: missing-entry refuses start without develop fallback"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:157:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: invalid-origin refuses start without develop fallback"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:157:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: route-error refuses start without develop fallback"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:157:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: unsafe entry ../develop/bin/service.ts cannot escape the pinned root"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:166:26)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: unsafe entry /develop/bin/service.ts cannot escape the pinned root"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:166:26)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U3: publication of another logical main does not replace the live generation"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:174:36)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: first status is stopped with explicitly unknown diagnostics and no spawn"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.status",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 60,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.status (src/service-lifecycle.ts:60:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:181:36)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: failed preserves the current lifecycle diagnostic across status instances"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.status",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 60,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.status (src/service-lifecycle.ts:60:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:192:38)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: stopped preserves the current lifecycle diagnostic across status instances"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.status",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 60,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.status (src/service-lifecycle.ts:60:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:192:38)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: dead formerly ready owner has unknown reason instead of invented crash details"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.status",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 60,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.status (src/service-lifecycle.ts:60:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:200:36)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: persisted ready plus live PID without a current handshake is not ready"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.status",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 60,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.status (src/service-lifecycle.ts:60:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:205:34)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: record read failure returns diagnostics rather than a successful stopped status"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.status",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 60,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.status (src/service-lifecycle.ts:60:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:217:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: identity read failure returns diagnostics rather than a successful stopped status"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.status",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 60,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.status (src/service-lifecycle.ts:60:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:217:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: stop awaits verified shutdown and repeated stop preserves normal diagnostics"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.stop",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 64,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.stop (src/service-lifecycle.ts:64:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:225:36)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: accepted stop request is not successful shutdown"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.stop",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 64,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.stop (src/service-lifecycle.ts:64:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:235:26)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: unknown-identity refuses stop without signalling or deleting a foreign endpoint"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.stop",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 64,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.stop (src/service-lifecycle.ts:64:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:244:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: reused-pid refuses stop without signalling or deleting a foreign endpoint"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.stop",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 64,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.stop (src/service-lifecycle.ts:64:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:244:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: foreign-epoch refuses stop without signalling or deleting a foreign endpoint"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.stop",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 64,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.stop (src/service-lifecycle.ts:64:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:244:28)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: stop after crash retains failure and does not replace it with normal stop"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.stop",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 64,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.stop (src/service-lifecycle.ts:64:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:255:36)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: resource request uses the confirmed epoch and loss does not re-enqueue"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.request",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 68,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.request (src/service-lifecycle.ts:68:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:268:26)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U6: service composition starts and stops only bug sync and the resource queue"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceProducerRuntime.recover",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 88,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceProducerRuntime.recover (src/service-lifecycle.ts:88:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:291:19)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U6: lifecycle restart has no main/session/reminder/event/quota/report/reservation effects"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:303:17)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U7: shared transport receives literal text, address main and verified system identity"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceProducerRuntime.notifyMain",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 96,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceProducerRuntime.notifyMain (src/service-lifecycle.ts:96:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:312:36)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U7: producer preserves rejected acceptance instead of claiming delivered"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceProducerRuntime.notifyMain",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 96,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceProducerRuntime.notifyMain (src/service-lifecycle.ts:96:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:320:36)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U7: missing shared transport is an explicit unaccepted delivery"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceProducerRuntime.notifyMain",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 96,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceProducerRuntime.notifyMain (src/service-lifecycle.ts:96:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:326:35)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U8: transport exception stays unaccepted without starting service or main"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceProducerRuntime.notifyMain",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 96,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceProducerRuntime.notifyMain (src/service-lifecycle.ts:96:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:334:35)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U8: bug-sync notifier uses shared transport without adding a second raf signature"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceProducerRuntime.recover",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 88,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceProducerRuntime.recover (src/service-lifecycle.ts:88:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:343:19)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U8: bug-sync rejection remains retryable by its own pending contract"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceProducerRuntime.recover",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 88,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceProducerRuntime.recover (src/service-lifecycle.ts:88:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:352:19)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U4: restart does not reuse a previous lifecycle failure reason"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.start",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 52,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.start (src/service-lifecycle.ts:52:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:363:36)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U5: shutdown transport failure stays a failure with its actual source"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceLifecycleController.stop",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 64,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceLifecycleController.stop (src/service-lifecycle.ts:64:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:370:26)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U7: an unacknowledged shared transport return cannot become accepted"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceProducerRuntime.notifyMain",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 96,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceProducerRuntime.notifyMain (src/service-lifecycle.ts:96:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:376:34)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "test-failure",
+      "test": {
+        "file": "test/background-runtime-unit.test.ts",
+        "name": "U8: human-comment notice includes its full bug key and comment ID via shared delivery"
+      },
+      "errorName": "Error",
+      "message": "NotImplemented: ServiceProducerRuntime.recover",
+      "location": {
+        "file": "src/service-lifecycle.ts",
+        "line": 88,
+        "column": 11
+      },
+      "stack": [
+        "    at ServiceProducerRuntime.recover (src/service-lifecycle.ts:88:11)",
+        "    at TestContext.<anonymous> (test/background-runtime-unit.test.ts:384:19)",
+        "    at Test.runInAsyncScope (node:async_hooks:226:14)",
+        "    at Test.run (node:internal/test_runner/test:1402:25)",
+        "    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)",
+        "    at Test.postRun (node:internal/test_runner/test:1542:19)",
+        "    at Test.run (node:internal/test_runner/test:1467:12)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 47,
+    "retainedEntries": 47,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": false
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "bf53e11f5237ec791d42b7e767e618689717a0e06cdce76d5dbac484c3ba69d1",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "ead5c24c-8b1e-4dbc-9433-08a74f20b1ed",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "complete-raf-flow-contracts/raf-background-runtime",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/background-runtime-unit.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/background-runtime-unit.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-ARtx5Y"
+    }
+  },
+  "startedAt": "2026-10-25T12:57:43.601Z",
+  "durationMs": 670,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [],
+  "knownRed": [
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U1: readiness requires exclusiveOwner, not spawn or a live PID"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U1: readiness requires databaseOpen, not spawn or a live PID"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U1: readiness requires lastGrantLoaded, not spawn or a live PID"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U1: readiness requires resourceWaitReady, not spawn or a live PID"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U1: stale handshake serviceEpoch cannot authorize an enqueue"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U1: stale handshake identity cannot authorize an enqueue"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U1: stale handshake pid cannot authorize an enqueue"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U1: stale handshake mainPath cannot authorize an enqueue"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U1: first start confirms initialization and the current owner before returning ready"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U2: concurrent starts and repeated start share one verified service"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U2: lock contention and retries consume one readiness budget"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U2: exhausted lock budget does not spawn or enqueue"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U2: aborted resource caller cannot spawn or enqueue"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U3: main route, entry and spawn cwd use the same verified generation"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U3: missing-main refuses start without develop fallback"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U3: missing-entry refuses start without develop fallback"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U3: invalid-origin refuses start without develop fallback"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U3: route-error refuses start without develop fallback"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U3: unsafe entry ../develop/bin/service.ts cannot escape the pinned root"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U3: unsafe entry /develop/bin/service.ts cannot escape the pinned root"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U3: publication of another logical main does not replace the live generation"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U4: first status is stopped with explicitly unknown diagnostics and no spawn"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U4: failed preserves the current lifecycle diagnostic across status instances"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U4: stopped preserves the current lifecycle diagnostic across status instances"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U4: dead formerly ready owner has unknown reason instead of invented crash details"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U4: persisted ready plus live PID without a current handshake is not ready"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U4: record read failure returns diagnostics rather than a successful stopped status"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U4: identity read failure returns diagnostics rather than a successful stopped status"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U5: stop awaits verified shutdown and repeated stop preserves normal diagnostics"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U5: accepted stop request is not successful shutdown"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U5: unknown-identity refuses stop without signalling or deleting a foreign endpoint"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U5: reused-pid refuses stop without signalling or deleting a foreign endpoint"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U5: foreign-epoch refuses stop without signalling or deleting a foreign endpoint"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U5: stop after crash retains failure and does not replace it with normal stop"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U5: resource request uses the confirmed epoch and loss does not re-enqueue"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U6: service composition starts and stops only bug sync and the resource queue"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U6: lifecycle restart has no main/session/reminder/event/quota/report/reservation effects"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U7: shared transport receives literal text, address main and verified system identity"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U7: producer preserves rejected acceptance instead of claiming delivered"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U7: missing shared transport is an explicit unaccepted delivery"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U8: transport exception stays unaccepted without starting service or main"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U8: bug-sync notifier uses shared transport without adding a second raf signature"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U8: bug-sync rejection remains retryable by its own pending contract"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U4: restart does not reuse a previous lifecycle failure reason"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U5: shutdown transport failure stays a failure with its actual source"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U7: an unacknowledged shared transport return cannot become accepted"
+    },
+    {
+      "file": "test/background-runtime-unit.test.ts",
+      "name": "U8: human-comment notice includes its full bug key and comment ID via shared delivery"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 5.54,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 17798512640,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 164625330176
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 8184406016
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 0,
+        "diskBytes": {}
+      }
+    },
+    "remaining": {
+      "ramBytes": 15651028992,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 153887911936,
+        "/dev/mapper/home-dev": 8184406016
+      },
+      "normalizedLoad": 0.6925
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "ead5c24c-8b1e-4dbc-9433-08a74f20b1ed",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "41fdea1d-00e0-4071-a496-451ea2753c00",
+        "root": {
+          "pid": 1529449,
+          "startTicks": "27574604",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "complete-raf-flow-contracts",
+          "item": "3.2"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "2ab2a91f06f203f1fe415e6292781d16c403cc2b9046d688590685c8338d784e"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-ARtx5Y"
+      ]
+    },
+    "preparedAt": 1792933063937,
+    "baseline": {
+      "at": 1792933063951,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1792933063971,
+    "lastObservedAt": 1792933064233,
+    "finishedAt": 1792933064256,
+    "finishReason": "exit",
+    "peakRamBytes": 54591488,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 54591488,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Root process identity is unavailable or changed",
+      "RAM measurement unavailable",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": null
+}

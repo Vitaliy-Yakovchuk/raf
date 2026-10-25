@@ -1,0 +1,23 @@
+{
+  "workspace": "f8584eabf8a76e5d8b636124aff6b812f2817044",
+  "wrapper": "6730c74b5ce2fae6b0f7daa05e393c5fa244b423",
+  "node": "v26.12.1",
+  "hashes": {
+    "/srv/dev/work/orchestrator/conf/test-runs.json": "bf53e11f5237ec791d42b7e767e618689717a0e06cdce76d5dbac484c3ba69d1",
+    "/srv/dev/work/orchestrator/conf/flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "/srv/dev/work/orchestrator/conf/raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "/srv/dev/work/orchestrator/conf/raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e"
+  },
+  "group": {
+    "profileId": "node",
+    "files": [
+      "test/background-runtime-unit.test.ts"
+    ]
+  },
+  "registered": true,
+  "timeoutPolicy": {
+    "timeoutMs": 1200000,
+    "optimizeAfterTimeouts": 1,
+    "maxGroupTimeouts": 2
+  }
+}

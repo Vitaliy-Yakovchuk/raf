@@ -4,6 +4,7 @@ import { promises as fs } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { promisify } from 'node:util';
 import type { HotfixHost, HotfixWorkspace } from './hotfix-worktree.ts';
+import { resolveProductionStore } from './main-production-store.ts';
 
 const execute = promisify(execFile);
 export const hash = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
@@ -32,7 +33,7 @@ export async function durable(path: string, data: unknown): Promise<void> {
   const directory = await fs.open(dirname(path), 'r');
   try { await directory.sync(); } finally { await directory.close(); }
 }
-export async function mainRoute(host: HotfixHost): Promise<{ cwd: string; repositoryIdentity: string; control: string }> {
+export async function mainRoute(host: HotfixHost): Promise<{ cwd: string; repositoryIdentity: string; productionDirectory: string; control: string }> {
   const root = await fs.realpath(host.orchestratorRoot);
   if (root !== resolve(host.orchestratorRoot)) throw new Error('Hotfix root must be canonical');
   const config = await json(join(root, 'conf/projects.json'));
@@ -45,8 +46,8 @@ export async function mainRoute(host: HotfixHost): Promise<{ cwd: string; reposi
     if (!(await fs.lstat(logical)).isSymbolicLink() || !Array.isArray(copies) || copies.length !== 2 || new Set(copies).size !== 2 || copies.some((copy: unknown) => typeof copy !== 'string' || !copy || copy.startsWith('/') || copy.split('/').some(part => ['', '.', '..', '.git'].includes(part))) || !copies.map((copy: string) => resolve(root, copy)).includes(cwd)) throw new Error('Registered main symlink layout required');
   }
   if (await fs.realpath(cwd) !== cwd || await git(cwd, 'rev-parse', '--show-toplevel') !== cwd || await git(cwd, 'symbolic-ref', '--short', 'HEAD') !== 'main') throw new Error('Registered main Git root required');
-  const repositoryIdentity = await fs.realpath(await git(cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir'));
-  return { cwd, repositoryIdentity, control: join(repositoryIdentity, 'raf-hotfix') };
+  const store = await resolveProductionStore(root, cwd);
+  return { cwd, repositoryIdentity: store.source, productionDirectory: store.production, control: store.control };
 }
 export async function validateWorkspace(host: HotfixHost, workspace: HotfixWorkspace): Promise<Awaited<ReturnType<typeof mainRoute>>> {
   const route = await mainRoute(host);
@@ -56,7 +57,7 @@ export async function validateWorkspace(host: HotfixHost, workspace: HotfixWorks
   if (workspace.ownershipPath !== join(expected, 'ownership.json') || workspace.cwd !== configured.cwd || await fs.realpath(workspace.cwd) !== workspace.cwd) throw new Error('BRANCH_MISMATCH: hotfix path identity mismatch');
   if (await git(workspace.cwd, 'rev-parse', '--show-toplevel') !== workspace.cwd || await fs.realpath(await git(workspace.cwd, 'rev-parse', '--path-format=absolute', '--git-dir')) !== workspace.gitDirectory || await fs.realpath(await git(workspace.cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir')) !== workspace.commonDirectory || workspace.commonDirectory !== route.repositoryIdentity) throw new Error('Hotfix worktree registration mismatch');
   if (await git(workspace.cwd, 'symbolic-ref', '-q', 'HEAD') !== 'refs/heads/hotfix') throw new Error('BRANCH_MISMATCH: hotfix branch required');
-  const records = await git(route.cwd, 'worktree', 'list', '--porcelain');
+  const records = await git(workspace.cwd, 'worktree', 'list', '--porcelain');
   if (!records.split('\n\n').some(record => record.startsWith('worktree ' + workspace.cwd + '\n') && record.includes('\nbranch refs/heads/hotfix'))) throw new Error('BRANCH_MISMATCH: lost hotfix worktree registration');
   await git(workspace.cwd, 'merge-base', '--is-ancestor', workspace.baseCommit, 'HEAD');
   return route;
@@ -65,7 +66,7 @@ export async function validateReleaseWorkspace(host: HotfixHost, workspace: Hotf
   if (sourceWorkspace) {
     const route = await validateReleaseWorkspace(host, sourceWorkspace, source);
     const copies = (await json(join(host.orchestratorRoot, 'conf/projects.json'))).projects?.raf?.mainCopies;
-    if (!Array.isArray(copies) || !copies.map((path: string) => resolve(host.orchestratorRoot, path)).includes(workspace.cwd) || workspace.cwd === sourceWorkspace.cwd || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.baseCommit !== sourceWorkspace.baseCommit || workspace.runId !== sourceWorkspace.runId || workspace.repositoryIdentity !== route.repositoryIdentity || workspace.commonDirectory !== route.repositoryIdentity || await git(workspace.cwd, 'rev-parse', '--show-toplevel') !== workspace.cwd || await fs.realpath(await git(workspace.cwd, 'rev-parse', '--absolute-git-dir')) !== workspace.gitDirectory || await fs.realpath(await git(workspace.cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir')) !== route.repositoryIdentity || await git(workspace.cwd, 'rev-parse', 'HEAD') !== await git(sourceWorkspace.cwd, 'rev-parse', 'HEAD')) throw new Error('BRANCH_MISMATCH: prepared main slot/source identity mismatch');
+    if (!Array.isArray(copies) || !copies.map((path: string) => resolve(host.orchestratorRoot, path)).includes(workspace.cwd) || workspace.cwd === sourceWorkspace.cwd || await fs.realpath(workspace.cwd) !== workspace.cwd || workspace.project !== 'raf' || workspace.targetBranch !== 'main' || workspace.orchestratorRoot !== host.orchestratorRoot || workspace.baseCommit !== sourceWorkspace.baseCommit || workspace.runId !== sourceWorkspace.runId || workspace.repositoryIdentity !== route.repositoryIdentity || workspace.commonDirectory !== route.productionDirectory || await git(workspace.cwd, 'rev-parse', '--show-toplevel') !== workspace.cwd || await fs.realpath(await git(workspace.cwd, 'rev-parse', '--absolute-git-dir')) !== workspace.gitDirectory || await fs.realpath(await git(workspace.cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir')) !== route.productionDirectory || await git(workspace.cwd, 'rev-parse', 'HEAD') !== await git(sourceWorkspace.cwd, 'rev-parse', 'HEAD')) throw new Error('BRANCH_MISMATCH: prepared main slot/source identity mismatch');
     const branch = await git(workspace.cwd, 'symbolic-ref', '-q', 'HEAD').catch(() => '');
     if (branch && !(workspace.cwd === route.cwd && branch === 'refs/heads/main')) throw new Error('BRANCH_MISMATCH: prepared main slot must be detached');
     return route;

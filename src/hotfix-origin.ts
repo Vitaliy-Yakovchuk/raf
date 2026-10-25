@@ -27,7 +27,13 @@ function inventory(root: string): { path: string; sha256: string; mode: number }
 }
 export function hotfixModuleOrigin(orchestratorRoot: string, productionRoot: string, modulePath: string, qa: boolean): string | undefined {
   const common = git(productionRoot, 'rev-parse', '--path-format=absolute', '--git-common-dir');
-  const control = join(realpathSync(common), 'raf-hotfix');
+  const projects = json(join(orchestratorRoot, 'conf/projects.json')).projects;
+  const source = realpathSync(git(resolve(orchestratorRoot, projects.raf.branchPaths.develop), 'rev-parse', '--path-format=absolute', '--git-common-dir'));
+  const control = join(source, 'raf-hotfix');
+  if (realpathSync(common) !== source) {
+    const registration = json(join(control, 'main-store.json'));
+    if (registration.root !== orchestratorRoot || registration.source !== source || registration.control !== control || registration.production !== join(control, 'main.git') || realpathSync(common) !== registration.production) return undefined;
+  }
   const root = dirname(dirname(modulePath));
   if (realpathSync(root) !== root || !['src', 'bin', 'scripts'].includes(relative(root, modulePath).split('/')[0])) return undefined;
   try {

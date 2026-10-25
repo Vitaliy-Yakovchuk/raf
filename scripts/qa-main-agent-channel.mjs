@@ -40,13 +40,13 @@ const run = (label, exe, args, cwd = root, budget = 120000) => {
   return value;
 };
 const must = r => { assert.equal(r.cliExitCode, 0, r.stderr || r.error); return r.stdout.trim(); };
-const git = (cwd, ...args) => must(run('git-' + (++seq), 'git', ['-C', cwd, ...args], cwd));
-const wait = async (label, read, budget = 240000) => {
+const git = (cwd, ...args) => must(run('git-' + (++seq), 'git', ['--no-optional-locks', '-C', cwd, ...args], cwd));
+const wait = async (label, read, budget = 900000) => {
   const end = Date.now() + budget;
   while (Date.now() < end) { const v = read(); if (v) return v; await delay(300); }
   throw Error('Unexecuted remainder: ' + label);
 };
-const request = async (label, args, budget = 240000) => {
+const request = async (label, args, budget = 900000) => {
   const target = path.join(ev, label + '.json'); assert.ok(!fs.existsSync(target), 'Never retry an unknown command');
   atomic(path.join(stand, 'commands', String(++seq).padStart(5, '0') + '.json'), { label, args, budget });
   return wait(label, () => fs.existsSync(target) && JSON.parse(fs.readFileSync(target)), budget + 10000);
@@ -92,6 +92,8 @@ console.log(JSON.stringify({ stand, evidence: ev, reviewed }));
 try {
   assert.equal(git(source, 'rev-parse', 'HEAD'), reviewed, 'Review exact current SHA');
   summary.workspace = git(source, 'status', '--porcelain');
+  assert.equal(summary.workspace, '', 'Run the reviewed SHA from a clean clone');
+  summary.configuration = Object.fromEntries(['raf-constants.json', 'projects.json', 'raf.json', 'flow.json', 'test-runs.json'].map(name => [name, hash(path.join(path.dirname(source), 'conf', name))]));
   for (const [exe, args] of [['node', ['--version']], ['codex', ['--version']], ['git', ['--version']], ['tmux', ['-V']], ['bwrap', ['--version']], ['uname', ['-a']]]) must(run('version-' + exe, exe, args));
   must(run('identity-author', 'git', ['var', 'GIT_AUTHOR_IDENT'], stand));
   must(run('identity-committer', 'git', ['var', 'GIT_COMMITTER_IDENT'], stand));
@@ -124,7 +126,7 @@ try {
   fs.writeFileSync(path.join(root, 'openspec/config.yaml'), 'schema: spec-driven\n');
   fs.writeFileSync(path.join(change, '.openspec.yaml'), 'schema: spec-driven\nskip_specs: true\n');
   fs.writeFileSync(path.join(change, 'proposal.md'), '## Why\nIsolated live native channel QA.\n\n## What Changes\nHost-controlled probes only.\n\n## Non-goals\nNo product implementation or unit runs.\n');
-  const description = actor => `Controlled live QA actor ${actor}. Model and effort already selected by raf; never replace them. Do not implement, run tests, edit tasks, write report, archive, or retry failed/unknown commands. In native exec tool perform this exact sequence, requesting max_output_tokens 60000 for message/ps so exact outputs are retained. First execute node qa/sym64-probe.mjs 0 <exact report_path from your brief>; wait for completion. Then execute the issued raf_command agent message --to sym64-${actor === 'a' ? 'b' : 'a'} --text sym64-${actor}-after-B as ONE simple native tool command, using the original issued absolute raf_command unchanged. Next execute the issued raf_command agent ps in a separate native tool call. Next execute node qa/sym64-probe.mjs 1 <exact report_path>; wait for completion. Next repeat separate simple native message with text sym64-${actor}-after-A and agent ps using that same original prefix. Finally execute node qa/sym64-probe.mjs 2 <exact report_path> and wait. Do not acknowledge received messages with tool calls, only chat. If any expected-success command fails, stop and preserve the error. The probe helper owns allowed negative actions only inside this isolated fixture. Do not change the helper or evade its checks. After completion wait for host.`;
+  const description = actor => `Controlled live QA actor ${actor}. Model and effort already selected by raf; never replace them. Do not implement, run tests, edit tasks, write report, archive, or retry failed/unknown commands. The provided helper makes only its own isolated fixture commits in develop and Orchestrator; these are authorized. In native exec tool perform this exact sequence, requesting max_output_tokens 60000 for message/ps so exact outputs are retained. First execute node qa/sym64-probe.mjs 0 <exact report_path from your brief>; wait for completion, polling a running native tool session as necessary. Then execute the issued raf_command agent message --to sym64-${actor === 'a' ? 'b' : 'a'} --text sym64-${actor}-after-B as ONE simple native tool command, using the original issued absolute raf_command unchanged. Next execute the issued raf_command agent ps in a separate native tool call. Then execute the issued raf_command help agent ps as a separate simple native command; this unauthorized subcommand must return a nonzero code, preserve its exact result and continue only for that expected denial. Next execute node qa/sym64-probe.mjs 1 <exact report_path>; wait for completion. Next repeat separate simple native message with text sym64-${actor}-after-A and agent ps using that same original prefix, followed by the same separate unauthorized help agent ps with required nonzero code. Execute node qa/sym64-probe.mjs 2 <exact report_path> and wait. After it completes repeat separate simple native message with text sym64-${actor}-after-rollback and agent ps using that same original prefix, followed by the same separate unauthorized help agent ps with required nonzero code. Execute node qa/sym64-probe.mjs 3 <exact report_path> and wait. Do not acknowledge received messages with tool calls, only chat. If any expected-success command fails, stop and preserve the error. The probe helper owns allowed negative actions only inside this isolated fixture. Do not change the helper or evade its checks. After completion wait for host.`;
   fs.writeFileSync(path.join(change, 'tasks.md'), `- [ ] 1.1 ${description('a')}\n- [ ] 1.2 ${description('b')}\n- [ ] 1.3 Host keeps the fixture active.\n`);
   git(root, 'add', '--', '.gitmodules', 'raf-main', 'conf', 'openspec'); git(root, 'commit', '-m', 'qa: isolated orchestrator');
   const layout = await import(pathToFileURL(path.join(main, 'src/main-layout.ts')));
@@ -140,7 +142,8 @@ try {
   must(await request('service-start', ['service', 'start']));
   endpoint = createServer(c => c.end('sym64-host-alive'));
   await new Promise((resolve, reject) => { endpoint.once('error', reject); endpoint.listen(path.join(develop, 'qa/peer.sock'), resolve); });
-  const common = git(A, 'rev-parse', '--path-format=absolute', '--git-common-dir');
+  const common = git(develop, 'rev-parse', '--path-format=absolute', '--git-common-dir');
+  const control = path.join(common, 'raf-hotfix'), production = path.join(control, 'main.git');
   const host = { orchestratorRoot: root, qaHome: stand, environment: env, sandboxExecutable: 'codex' };
   const hh = await import(pathToFileURL(path.join(A, 'src/hotfix-host.ts')));
   const activation = await import(pathToFileURL(path.join(A, 'src/hotfix-activation.ts')));
@@ -163,18 +166,59 @@ try {
   await controls('before');
   fs.writeFileSync(path.join(stand, '.raf/secrets.json'), 'sym64-isolated-secret-sentinel\n');
   for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) assert.ok(fs.existsSync(path.join(stand, '.raf', name)), 'Host read-deny positive control: ' + name);
-  for (const [index, slot] of [B, A].entries()) {
+  const store = await import(pathToFileURL(path.join(A, 'src/main-production-store.ts')));
+  const oldB = git(B, 'rev-parse', '--absolute-git-dir');
+  const legacyB = path.join(common, 'worktrees', 'native-main-b');
+  fs.cpSync(oldB, legacyB, { recursive: true, dereference: false });
+  fs.writeFileSync(path.join(legacyB, 'commondir'), '../..\n');
+  fs.writeFileSync(path.join(legacyB, 'gitdir'), path.join(B, '.git') + '\n');
+  fs.writeFileSync(path.join(A, '.git'), 'gitdir: ' + path.relative(A, common) + '\n');
+  fs.writeFileSync(path.join(B, '.git'), 'gitdir: ' + path.relative(B, legacyB) + '\n');
+  git(root, '--git-dir=' + common, 'config', 'core.worktree', A);
+  fs.renameSync(production, path.join(control, 'native-retained-main.git'));
+  fs.unlinkSync(path.join(control, 'main-store.json'));
+  summary.liveSplit = { source: common, control, production, readersBefore: fs.readdirSync(path.join(control, 'readers')).map(name => JSON.parse(fs.readFileSync(path.join(control, 'readers', name)))) };
+  const sourceBefore = git(develop, 'rev-parse', 'HEAD');
+  await store.ensureProductionMainStore({ root, onCheckpoint: async checkpoint => {
+    if (checkpoint !== 'store-prepared') return;
+    for (const a of actors) {
+      fs.writeFileSync(path.join(own(a), 'sym64-commit-0'), 'host');
+      const result = await wait('native source commit during split', () => {
+        const file = path.join(own(a), 'sym64-source-0.json');
+        return fs.existsSync(file) && JSON.parse(fs.readFileSync(file));
+      });
+      assert.equal(result.status, 'passed', result.error);
+    }
+    summary.liveSplit.sourceDuring = git(develop, 'rev-parse', 'HEAD');
+    summary.liveSplit.orchestratorDuring = git(root, 'rev-parse', 'HEAD');
+    assert.notEqual(summary.liveSplit.sourceDuring, sourceBefore);
+  } });
+  assert.equal(git(develop, 'rev-parse', 'HEAD'), summary.liveSplit.sourceDuring, 'Migration cannot restore source refs');
+  assert.equal(git(root, 'rev-parse', 'HEAD'), summary.liveSplit.orchestratorDuring, 'Migration cannot restore Orchestrator refs');
+  assert.equal(git(A, 'rev-parse', '--path-format=absolute', '--git-common-dir'), production);
+  assert.equal(git(B, 'rev-parse', '--path-format=absolute', '--git-common-dir'), production);
+  await controls('after-live-split');
+  let rollbackCommit;
+  for (const [index, slot] of [B, A, B].entries()) {
     const previous = fs.realpathSync(main), before = git(slot, 'rev-parse', 'HEAD');
-    assert.notEqual(previous, slot); git(slot, 'checkout', '--detach', git(develop, 'rev-parse', 'HEAD'));
+    assert.notEqual(previous, slot);
+    const target = index === 2 ? rollbackCommit : git(develop, 'rev-parse', 'HEAD');
+    git(slot, 'fetch', '--no-tags', '--no-write-fetch-head', common, target);
+    git(slot, 'checkout', '--detach', target);
+    if (index === 0) rollbackCommit = target;
     const temporary = main + '.' + randomUUID(); fs.symlinkSync(slot, temporary); fs.renameSync(temporary, main);
     git(previous, 'checkout', '--detach'); git(slot, 'update-ref', 'refs/heads/main', git(slot, 'rev-parse', 'HEAD')); git(slot, 'symbolic-ref', 'HEAD', 'refs/heads/main');
     for (const p of ['raf-main-a', 'raf-main-b']) git(root, 'update-index', '--force-remove', p);
     git(root, 'update-index', '--add', '--cacheinfo', '160000', git(slot, 'rev-parse', 'HEAD'), path.basename(slot));
     git(root, 'config', '-f', '.gitmodules', 'submodule.raf-main.path', path.basename(slot)); git(root, 'add', '--', '.gitmodules');
     const generation = await register(slot);
-    const fingerprint = () => ({ active: fs.readlinkSync(main), a: hash(path.join(A, 'bin/raf.ts')), b: hash(path.join(B, 'bin/raf.ts')), modules: hash(path.join(root, '.gitmodules')), mainRef: git(slot, 'rev-parse', 'refs/heads/main') });
+    const metadataTree = directory => Object.fromEntries(fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).map(entry => {
+      const file = path.join(directory, entry.name), info = fs.lstatSync(file);
+      return [entry.name, entry.isDirectory() ? metadataTree(file) : { sha256: hash(file), mode: info.mode, ino: info.ino, nlink: info.nlink }];
+    }));
+    const fingerprint = () => ({ production: metadataTree(production), active: fs.readlinkSync(main), a: hash(path.join(A, 'bin/raf.ts')), b: hash(path.join(B, 'bin/raf.ts')), modules: hash(path.join(root, '.gitmodules')), mainRef: git(slot, 'rev-parse', 'refs/heads/main') });
     const beforeProbe = fingerprint();
-    summary.switches.push({ previous, active: fs.realpathSync(main), preparedFrom: git(develop, 'rev-parse', 'HEAD'), before, generation });
+    summary.switches.push({ action: index === 2 ? 'rollback' : 'switch', target, previous, active: fs.realpathSync(main), preparedFrom: git(develop, 'rev-parse', 'HEAD'), before, generation });
     for (const a of actors) {
       gate(a, index);
       await wait('native gate ' + (index + 1), () => stage(a, index + 1));
@@ -190,18 +234,18 @@ try {
   for (const a of actors) {
     const transcript = fs.readFileSync(summary.transcripts[actors.indexOf(a)], 'utf8');
     assert.match(transcript, /exec_command|shell_command/);
-    for (const suffix of ['after-B', 'after-A']) {
+    for (const suffix of ['after-B', 'after-A', 'after-rollback']) {
       const marker = 'sym64-' + a.addressId.slice(-1) + '-' + suffix;
       const matches = audits.filter(v => v.argv.includes(marker)); assert.equal(matches.length, 1, marker);
       assert.equal(matches[0].result.exitCode, 0); assert.ok(transcript.includes(marker));
     }
-    for (const n of [1, 2]) {
+    for (const n of [1, 2, 3]) {
       const probe = JSON.parse(fs.readFileSync(path.join(own(a), 'sym64-stage-' + n + '.json')));
       assert.equal(probe.status, 'passed');
     }
   }
   summary.status = 'native-completed-review-required';
-  summary.nextAction = 'Inspect native tool result events against cli-audit raw exact outputs, sender receipts, generation roots and both live ps results before accepting 6.4. This status is deliberately not an automatic pass.';
+  summary.nextAction = 'Inspect native tool result events against cli-audit raw exact outputs, sender receipts, generation roots and all three live ps results before accepting 6.4. This status is deliberately not an automatic pass.';
 } catch (error) { summary.error = { message: error.message, stack: error.stack }; process.exitCode = 1; }
 finally {
   if (pane) {

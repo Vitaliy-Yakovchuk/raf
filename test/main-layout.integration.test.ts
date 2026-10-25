@@ -15,6 +15,9 @@ import {
   type MainLayoutStartOptions,
 } from '../src/main-layout.ts';
 
+import { ensureProductionMainStore } from '../src/main-production-store.ts';
+import { processStart } from '../src/hotfix-host.ts';
+
 type Fixture = {
   base: string;
   root: string;
@@ -153,7 +156,6 @@ function workingState(cwd: string): unknown {
   return {
     head: git(cwd, 'rev-parse', 'HEAD'),
     branch: git(cwd, 'symbolic-ref', 'HEAD'),
-    commonDir: realpathSync(resolve(cwd, git(cwd, 'rev-parse', '--git-common-dir'))),
     index: digest(gitPath(cwd, 'index')),
     staged: git(cwd, 'diff', '--cached', '--binary'),
     unstaged: git(cwd, 'diff', '--binary'),
@@ -241,12 +243,17 @@ for (const copies of [['raf-main-a', 'raf-main-b'], ['slots/one', 'slots/two']])
     await withFixture(async f => {
       f.projects.raf.mainCopies = copies;
       writeConfiguration(f.root, f.projects);
+      const source = git(f.original, 'rev-parse', '--path-format=absolute', '--git-common-dir');
       const before = workingState(f.original);
       const outside = outsiders(f);
       const input = JSON.stringify(f.projects);
       const result = await ensureMainLayoutForStart(f.options);
       assert.equal(result.status, 'converted');
       const { active, inactive } = assertLayout(f);
+      const production = join(source, 'raf-hotfix/main.git');
+      assert.equal(git(active, 'rev-parse', '--path-format=absolute', '--git-common-dir'), production);
+      assert.equal(git(inactive, 'rev-parse', '--path-format=absolute', '--git-common-dir'), production);
+      assert.equal(git(join(f.root, 'raf-develop'), 'rev-parse', '--path-format=absolute', '--git-common-dir'), source);
       assert.equal(result.activePath, active);
       assert.equal(result.inactivePath, inactive);
       assert.deepEqual(workingState(active), before, 'HEAD, index bytes, modes and every local file survive relocation');
@@ -420,5 +427,72 @@ test('already converted layout rejects missing slot or foreign repository withou
     const foreign = tree(f.root);
     await assert.rejects(() => ensureMainLayoutForStart(f.options), /repository|репозитор|identity/i);
     assert.deepEqual(tree(f.root), foreign);
+  });
+});
+
+
+test('production migration preserves split index, unreachable staged blobs and concurrent source commits', async () => {
+  await withFixture(async f => {
+    git(f.original, 'update-index', '--split-index');
+    const before = workingState(f.original), source = git(f.original, 'rev-parse', '--path-format=absolute', '--git-common-dir');
+    const sourceIndex = digest(join(source, 'index'));
+    const develop = join(f.root, 'raf-develop');
+    let sourceCommit = '';
+    const result = await ensureProductionMainStore({ root: f.root, onCheckpoint: async checkpoint => {
+      if (checkpoint !== 'store-prepared') return;
+      write(join(develop, 'own-migration.txt'), 'concurrent source commit\n');
+      git(develop, 'add', '--', 'own-migration.txt');
+      git(develop, 'commit', '--only', '-m', 'Concurrent source commit', '--', 'own-migration.txt');
+      sourceCommit = git(develop, 'rev-parse', 'HEAD');
+      write(join(f.root, 'own-migration.txt'), 'concurrent Orchestrator commit\n');
+      git(f.root, 'add', '--', 'own-migration.txt');
+      git(f.root, 'commit', '--only', '-m', 'Concurrent Orchestrator commit', '--', 'own-migration.txt');
+    } });
+    assert.equal(result.source, source);
+    assert.equal(result.production, join(source, 'raf-hotfix/main.git'));
+    assert.equal(git(develop, 'rev-parse', 'HEAD'), sourceCommit);
+    assert.equal(digest(join(source, 'index')), sourceIndex);
+    assert.deepEqual(workingState(f.original), before);
+    assert.equal(git(f.original, 'cat-file', '-s', ':binary.bin'), '4');
+    const check = directory => { for (const name of readdirSync(directory)) {
+      const file = join(directory, name), info = lstatSync(file);
+      assert.ok(!info.isSymbolicLink());
+      if (info.isDirectory()) check(file); else assert.equal(info.nlink, 1);
+    } };
+    check(result.production);
+    assert.ok(!existsSync(join(result.production, 'objects/info/alternates')));
+  });
+});
+
+for (const checkpoint of ['store-prepared', 'store-pointer', 'store-registered']) {
+  test(`fresh process recovers production migration interrupted at ${checkpoint}`, async () => {
+    await withFixture(async f => {
+      const before = workingState(f.original);
+      const module = new URL('../src/main-production-store.ts', import.meta.url).href;
+      const child = spawnSync(process.execPath, ['--input-type=module', '-e', `
+        import { ensureProductionMainStore } from ${JSON.stringify(module)};
+        await ensureProductionMainStore({ root: ${JSON.stringify(f.root)}, onCheckpoint: phase => {
+          if (phase === ${JSON.stringify(checkpoint)}) process.kill(process.pid, 'SIGKILL');
+        } });
+      `], { encoding: 'utf8', timeout: 30000 });
+      assert.equal(child.signal, 'SIGKILL', child.stderr);
+      const result = await ensureProductionMainStore({ root: f.root });
+      assert.equal(result.split, true);
+      assert.deepEqual(workingState(f.original), before);
+      assert.ok(!existsSync(join(result.control, 'main-store-intent.json')));
+    });
+  });
+}
+
+test('unknown live reader holds production migration without terminating it', async () => {
+  await withFixture(async f => {
+    const source = git(f.original, 'rev-parse', '--path-format=absolute', '--git-common-dir');
+    const control = join(source, 'raf-hotfix');
+    write(join(control, 'readers/old.json'), JSON.stringify({ pid: process.pid, start: await processStart(process.pid), root: f.original }));
+    const before = tree(f.root);
+    await assert.rejects(ensureProductionMainStore({ root: f.root }), /live reader has unknown protection/);
+    assert.deepEqual(tree(f.original), before.entries['raf-main']);
+    assert.ok(!existsSync(join(control, 'main.git')));
+    process.kill(process.pid, 0);
   });
 });

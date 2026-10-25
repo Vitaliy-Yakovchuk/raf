@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, readFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, rmSync, rmdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -15,18 +15,27 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
     cpSync(new URL(`../../conf/${name}`, import.meta.url), join(location.root, 'conf', name), { force: false });
   }
   const codeRoot = join(location.root, projects.projects.raf.branchPaths.develop);
+  const gitEnvironment = { ...process.env };
+  for (const name of Object.keys(gitEnvironment)) if (name.startsWith('GIT_')) delete gitEnvironment[name];
+  const git = (cwd: string, ...args: string[]) => {
+    const result = spawnSync('git', ['-C', cwd, '-c', 'user.name=QA fixture', '-c', 'user.email=qa@example.invalid', '-c', 'commit.gpgsign=false', ...args], { encoding: 'utf8', env: gitEnvironment });
+    assert.ifError(result.error);
+    assert.equal(result.status, 0, result.stderr);
+  };
+  const mainRoot = join(location.root, projects.projects.raf.branchPaths.main);
+  git(location.root, 'init', '-q', '--initial-branch=main');
+  git(mainRoot, 'init', '-q', '--initial-branch=main');
+  git(mainRoot, 'commit', '--allow-empty', '-m', 'Registered QA source');
+  git(location.root, '-c', 'protocol.file.allow=always', 'submodule', 'add', './' + projects.projects.raf.branchPaths.main, projects.projects.raf.branchPaths.main);
+  git(location.root, 'submodule', 'absorbgitdirs');
+  rmSync(join(codeRoot, '.git'), { recursive: true, force: true });
+  rmdirSync(codeRoot);
+  git(mainRoot, 'worktree', 'add', '-b', 'develop', codeRoot, 'HEAD');
   for (const name of ['src', 'bin', 'scripts', 'package.json']) {
     cpSync(new URL(`../${name}`, import.meta.url), join(codeRoot, name), { recursive: true });
   }
-  const gitEnvironment = { ...process.env };
-  for (const name of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE']) delete gitEnvironment[name];
-  const initialized = spawnSync('git', ['init', '-q', '--initial-branch=develop', codeRoot], { encoding: 'utf8', env: gitEnvironment });
-  assert.ifError(initialized.error);
-  assert.equal(initialized.status, 0, initialized.stderr);
-  const mainRoot = join(location.root, projects.projects.raf.branchPaths.main);
-  const mainInitialized = spawnSync('git', ['init', '-q', '--initial-branch=main', mainRoot], { encoding: 'utf8', env: gitEnvironment });
-  assert.ifError(mainInitialized.error);
-  assert.equal(mainInitialized.status, 0, mainInitialized.stderr);
+  const { ensureProductionMainStore } = await import('../src/main-production-store.ts');
+  await ensureProductionMainStore({ root: location.root });
 
   const names = ['HOME', 'RAF_QA_HOME', 'RAF_ORCHESTRATOR_ROOT', 'TMUX', 'TMUX_PANE'] as const;
   const inherited = Object.fromEntries(names.map(name => [name, process.env[name]]));

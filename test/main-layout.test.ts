@@ -94,6 +94,17 @@ test('unit: ordinary main is convertible with two absent destination slots', asy
   assert.ok(f.calls.every(call => !call.includes('other-main')), 'the two-copy exception only inspects raf');
 });
 
+test('unit: registered production store preserves the distinct source worktree identity', async () => {
+  const f = model(true);
+  const source = '/fixture/orchestrator/.git/modules/raf';
+  for (const slot of ['raf-main-a', 'raf-main-b']) {
+    Object.assign(f.repos.get(`${root}/${slot}`)!, { identity: source + '/raf-hotfix/main.git', sourceIdentity: source });
+  }
+  assert.equal((await validateMainLayoutForStart(f.options)).state, 'ready');
+  f.repos.get(`${root}/raf-develop`)!.identity = source + '/foreign-clone';
+  await assert.rejects(validateMainLayoutForStart(f.options), /develop/);
+});
+
 for (const active of ['raf-main-a', 'raf-main-b']) {
   test(`unit: ready layout accepts active ${active} and detached previous inactive generation`, async () => {
     const f = model(true, active);

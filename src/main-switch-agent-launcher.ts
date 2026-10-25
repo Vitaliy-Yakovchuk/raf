@@ -91,17 +91,11 @@ export async function agentChannelReadOnlyPaths(orchestratorRoot: string, homeDi
   if (copies !== undefined && (!Array.isArray(copies) || copies.length !== 2 || new Set(copies).size !== 2 ||
       copies.some((copy: unknown) => typeof copy !== 'string' || !copy || isAbsolute(copy) || copy.split('/').some(part => ['', '.', '..', '.git'].includes(part))))) refuse('invalid main copies');
   const roots = copies ? copies.map((copy: string) => resolve(orchestratorRoot, copy)) : [route.cwd];
-  const paths = [logical, ...roots, join(orchestratorRoot, '.gitmodules'), route.control];
+  if (route.productionDirectory === route.repositoryIdentity) refuse('production Git store must be split before runner admission');
+  if (await fs.realpath(route.control) !== route.control || !(await fs.lstat(route.control)).isDirectory()) refuse('activation directory must exist and be canonical');
   for (const root of roots) {
     if (await fs.realpath(root) !== root) refuse('physical main copy is an alias');
-    const directory = await git(root, 'rev-parse', '--absolute-git-dir');
-    if (directory !== route.repositoryIdentity) paths.push(directory);
-    for (const name of ['HEAD', 'index', 'config', 'config.worktree', 'logs/HEAD']) {
-      paths.push(join(directory, name), join(directory, name + '.lock'));
-    }
+    if (await fs.realpath(await git(root, 'rev-parse', '--path-format=absolute', '--git-common-dir')) !== route.productionDirectory) refuse('main copy production registration changed');
   }
-  for (const name of ['refs/heads/main', 'logs/refs/heads/main', 'packed-refs']) {
-    paths.push(join(route.repositoryIdentity, name), join(route.repositoryIdentity, name + '.lock'));
-  }
-  return [...new Set(paths)];
+  return [...new Set([logical, ...roots, join(orchestratorRoot, '.gitmodules'), route.control])];
 }

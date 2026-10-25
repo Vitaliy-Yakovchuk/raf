@@ -128,15 +128,15 @@ process.exit(result.status ?? 1);
   const writeFlowResourceEstimates = (resourceEstimates: unknown) => writeFile(flowPath, JSON.stringify({ ...realFlow, resources: fixtureResources, resourceEstimates }));
   await writeFlowResources(fixtureResources);
   await writeFile(join(confRoot, 'test-runs.json'), await readFile(new URL('../../conf/test-runs.json', import.meta.url)));
-  const { agentPhases, commands } = JSON.parse(await readFile(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
+  const { agentPhases, commands, eventIdKinds, events } = JSON.parse(await readFile(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
   await writeFile(join(confRoot, 'raf-constants.json'), JSON.stringify({
     version: 1,
     agentPhases,
     commands: commands.filter((command: { path: string[] }) => ['agent message', 'agent ps', 'agent update', 'agent run', 'test run'].includes(command.path.join(' '))),
     agentTypes: [{ id: 'main', launchableByRaf: false }, { id: 'implement', launchableByRaf: true }, { id: 'spec', launchableByRaf: true }],
     reportStatuses: [{ id: 'succeeded', event: 'agent.succeeded' }, { id: 'failed', event: 'agent.failed' }],
-    eventIdKinds: { agentAddress: 'Fixture agent address', reminderId: 'Fixture reminder ID' },
-    events: ['agent.started', 'agent.activity-changed', 'agent.interrupted', 'agent.closed', 'agent.succeeded', 'agent.failed', 'reminder.activated', 'reminder.closed'].map(id => ({ id, idKind: id.startsWith('reminder.') ? 'reminderId' : 'agentAddress' })),
+    eventIdKinds,
+    events,
   }));
   const templates = join(confRoot, 'briefs');
   await Promise.all([mkdir(join(templates, 'runners'), { recursive: true }), mkdir(join(templates, 'tasks'), { recursive: true })]);

@@ -1,3 +1,4 @@
+import { recordProductionSandboxProtection } from './main-production-store.ts';
 import { createRafToolSocketDirectory, rafSocketRoot, rafToolSocketRoot, socketPathFits } from './raf-temporary-socket.ts';
 import type { Invocation, NativeSandboxScope } from './runner-protocols.ts';
 import { codexInvocationSandboxMode } from './codex-raf-command-access.ts';
@@ -66,7 +67,15 @@ export async function protectCodexReadOnlyPaths(
   writableFiles: readonly string[] = [],
 ): Promise<{ filesystem: Record<string, string>; writableFiles: string[]; symlinkParents: string[] }> {
   const filesystem = { ...original };
-  const targets = await Promise.all(readOnlyPaths.map(async path => ({ source: resolve(path), target: await canonical(path) })));
+  const targets = await Promise.all(readOnlyPaths.map(async path => {
+    const source = resolve(path);
+    let target = await canonical(path);
+    while (!await fs.lstat(target).catch(error => {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      return null;
+    })) target = dirname(target);
+    return { source, target };
+  }));
   const protectedPath = (path: string) => targets.some(value => within(value.target, path) || within(value.source, path));
   const parents = new Set<string>();
   for (const { source } of targets) {
@@ -391,6 +400,7 @@ export async function prepareCodexSandbox(
     const visible: string[] = [];
     for (const path of masked) if (await fs.access(path, constants.R_OK).then(() => true, () => false)) visible.push(path);
     await probe(toolSandbox, environment, cwd, probeSocket, visible, request.timeoutMs);
+    await recordProductionSandboxProtection(request.readOnlyDirectories ?? [], join(directory, 'policy.json'));
     return { invocation, environment, toolSandbox, policyPaths: [directory], cleanup };
   } catch (error) {
     await cleanup().catch(() => undefined);

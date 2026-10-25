@@ -5,6 +5,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { promisify } from 'node:util';
 import { alive, durable, processStart } from './hotfix-host.ts';
 import { nativeMainLayoutPublicationProvider } from './main-layout-publication.ts';
+import { ensureProductionMainStore, productionStorePaths, resolveProductionStore } from './main-production-store.ts';
 
 export interface MainLayoutProject {
   path: string;
@@ -62,6 +63,7 @@ export interface MainLayoutFileIdentity {
 
 export interface MainLayoutRepositoryInspection {
   identity: string;
+  sourceIdentity?: string;
   head: string;
   branch: string | null;
   files: readonly MainLayoutFileIdentity[];
@@ -179,7 +181,7 @@ export async function validateMainLayoutForStart(
     if (!path) continue;
     const absolute = resolve(root, path);
     const repository = await probe.inspectRepository(absolute);
-    if (!repository || repository.identity !== active.identity || repository.branch !== branch) refuse(`expected raf ${branch} worktree of ${active.identity} at ${absolute}; received ${repository?.identity ?? 'missing'} branch ${repository?.branch}`);
+    if (!repository || repository.identity !== (active.sourceIdentity ?? active.identity) || repository.branch !== branch) refuse(`expected raf ${branch} worktree of ${active.sourceIdentity ?? active.identity} at ${absolute}; received ${repository?.identity ?? 'missing'} branch ${repository?.branch}`);
 
   }
   differentFiles(repositories);
@@ -216,7 +218,7 @@ async function inspectPath(path: string): Promise<MainLayoutPathInspection> {
   }
 }
 
-async function inspectRepository(path: string): Promise<MainLayoutRepositoryInspection | null> {
+async function inspectRepository(path: string, root?: string): Promise<MainLayoutRepositoryInspection | null> {
   if (!(await stat(path))?.isDirectory()) return null;
   let identity: string, head: string, branch: string | null;
   try {
@@ -243,7 +245,8 @@ async function inspectRepository(path: string): Promise<MainLayoutRepositoryInsp
     }
   }
   await walk(path);
-  return { identity, head, branch, files };
+  const sourceIdentity = root ? (await resolveProductionStore(root, path)).source : undefined;
+  return { identity, sourceIdentity, head, branch, files };
 }
 
 async function moduleRegistration(root: string) {
@@ -264,7 +267,7 @@ async function inspectGitRegistration(root: string): Promise<MainLayoutGitRegist
   return { modulePath: module.path, gitlinkPath: module.path, gitlinkHead: match[1], logicalMode: logical.slice(0, 6) as '160000' | '120000' };
 }
 
-const nativeProbe: MainLayoutProbe = { inspectPath, inspectRepository, inspectGitRegistration };
+const nativeProbe = (root: string): MainLayoutProbe => ({ inspectPath, inspectRepository: path => inspectRepository(path, root), inspectGitRegistration });
 
 interface LayoutIntent {
   version: 1;
@@ -420,14 +423,13 @@ async function recoverLayout(options: MainLayoutStartOptions, intent: LayoutInte
   if (published.kind !== 'symlink' || published.canonicalPath !== intent.activePath) refuse('publication provider did not publish the expected logical symlink; recoverable intent retained');
   await syncDirectory(dirname(intent.logicalPath));
   await checkpoint('link-published');
-  const verified = await validateMainLayoutForStart({ root: options.root, projects: options.projects, probe: nativeProbe });
+  const verified = await validateMainLayoutForStart({ root: options.root, projects: options.projects, probe: nativeProbe(options.root) });
   if (verified.state !== 'ready' || verified.activePath !== intent.activePath) refuse('final layout verification failed');
   await fs.unlink(intentPath);
   await syncDirectory(dirname(intentPath));
 }
 
-async function withLayoutWriter<T>(repository: string, use: () => Promise<T>): Promise<T> {
-  const directory = join(repository, 'raf-hotfix');
+async function withLayoutWriter<T>(directory: string, use: () => Promise<T>): Promise<T> {
   await fs.mkdir(directory, { recursive: true, mode: 0o700 });
   const path = join(directory, 'activation.lock');
   for (;;) {
@@ -457,19 +459,28 @@ export async function ensureMainLayoutForStart(
   const intentPath = join(control, 'raf-main-layout', 'intent.json');
   let intent: LayoutIntent | null = await fs.readFile(intentPath, 'utf8').then(JSON.parse, error => { if (error.code === 'ENOENT') return null; throw error; });
   let layout: MainLayoutValidationResult | null = null;
+  let production;
   if (!intent) {
-    layout = await validateMainLayoutForStart({ root, projects, probe: nativeProbe });
+    const store = await productionStorePaths(root);
+    if (await stat(join(store.control, 'main-store-intent.json'))) {
+      await publicationProvider.assertSupported(root);
+      await ensureProductionMainStore({ root });
+    }
+    layout = await validateMainLayoutForStart({ root, projects, probe: nativeProbe(root) });
+    await publicationProvider.assertSupported(root);
+    production = await ensureProductionMainStore({ root });
     if (layout.state === 'ready') return { status: 'unchanged', activePath: layout.activePath, inactivePath: layout.inactivePath };
   }
   await publicationProvider.assertSupported(root);
   const repository = intent?.repository ?? (await inspectRepository(join(root, 'raf-main')))!.identity;
   if (await fs.realpath(repository) !== repository) refuse('repository identity must be canonical');
-  return withLayoutWriter(repository, async () => {
+  const writerControl = production?.control ?? (await productionStorePaths(root)).control;
+  return withLayoutWriter(writerControl, async () => {
     intent = await fs.readFile(intentPath, 'utf8').then(JSON.parse, error => { if (error.code === 'ENOENT') return null; throw error; });
     if (intent && intent.repository !== repository) refuse('recovery repository changed while acquiring writer barrier');
     const recovered = !!intent;
     if (!intent) {
-      layout = await validateMainLayoutForStart({ root, projects, probe: nativeProbe });
+      layout = await validateMainLayoutForStart({ root, projects, probe: nativeProbe(root) });
       if (layout.state === 'ready') return { status: 'unchanged', activePath: layout.activePath, inactivePath: layout.inactivePath };
       const indexPath = await git(root, ['rev-parse', '--path-format=absolute', '--git-path', 'index']);
       if (await stat(indexPath + '.lock')) refuse(`Orchestrator index.lock busy at ${indexPath}.lock; existing lock retained`);

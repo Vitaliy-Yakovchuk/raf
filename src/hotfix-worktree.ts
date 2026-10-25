@@ -85,6 +85,7 @@ export async function prepareHotfixWorktree(host: HotfixHost, runId: string): Pr
     const route = await mainRoute(host);
     const { cwd, gitDirectory } = await hotfixRoute(host);
     const baseCommit = await git(route.cwd, 'rev-parse', 'HEAD');
+    if (route.productionDirectory !== route.repositoryIdentity) await git(cwd, 'fetch', '--no-tags', '--no-write-fetch-head', route.productionDirectory, baseCommit);
     for (const marker of ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply']) {
       if (await exists(join(gitDirectory, marker))) throw new Error('Hotfix preparation has unfinished Git operation: ' + marker);
     }

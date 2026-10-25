@@ -1,0 +1,61 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/config-dependencies --files test/test-run-config-dependencies.test.ts",
+  "phase": "red",
+  "callerPhase": "test-scaffold",
+  "group": "monitor-raf-health/config-dependencies",
+  "initial": {
+    "runId": "bd01ae09-be45-4052-83a1-bc55b832ec0c",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "outcome": "assertions-failed",
+    "knownRed": 58,
+    "testCommit": "02dcddc72dd9caddf7480fd289159a247b994a25",
+    "review": "Five race cases were blocked by GROUP_RENAME_REFUSED because foreign fixture group reused the same change/selection; this was a test setup defect, not sufficient red evidence for those cases. Full initial result preserved. Fixed only foreign fixture group key to unrelated-change/active in 947f24f; assertions unchanged."
+  },
+  "final": {
+    "runId": "a43cb084-f1ca-4867-bc28-7424fb28150c",
+    "testCommit": "947f24f3790642e825c7c4501e53b34cb07770d6",
+    "cliExitCode": 1,
+    "childExitCode": 1,
+    "outcome": "assertions-failed",
+    "knownRed": 58,
+    "passed": 1,
+    "timeoutCount": 0,
+    "timedOut": false,
+    "unexecuted": [],
+    "unknown": [],
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "diagnostics": {
+      "NotImplemented": 42,
+      "assertions": 16,
+      "setupImportFailures": 0
+    },
+    "review": "All five race cases now reach assertRefusal: no final spawn-boundary dependency check exists, so the fake child incorrectly passes. Other 42 failures throw NotImplemented from semantic scaffold, 5 error-shape assertions require CONFIGURATION_INVALID instead of NotImplemented, remaining assertions require capture/recheck and refusal/authorization integration. One pre-existing preflight authorization preservation case passes. No setup/import failure, cancellation or timeout."
+  },
+  "aggregate": {
+    "project": "raf",
+    "workspace": "/srv/dev/work/orchestrator/raf-develop",
+    "group": "monitor-raf-health/config-dependencies",
+    "qaStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+    "instruction": "Retain this same verified QA HOME/aggregate in implement/qa. No reset, rename or new HOME to evade limits."
+  },
+  "limits": {
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "source": "conf/flow.json#/unitTests"
+  },
+  "fullResults": [
+    "red-initial.result.json",
+    "red-final.result.json"
+  ],
+  "transport": [
+    "red-initial.tool-result.json",
+    "red-final.tool-result.json"
+  ],
+  "completeness": "Both tool results are untruncated; full result stdout was captured from the authorized simple command, without a shell pipe or redirection. CLI nonzero preserved."
+}

@@ -1,0 +1,46 @@
+{
+  "receipt": {
+    "accepted": true,
+    "receiptId": "315fae43-83f5-4e40-8ff9-9c6000db27c6"
+  },
+  "mainSent": {
+    "accepted": true,
+    "receiptId": "37f2bea7-11db-4d4d-84c5-d1b307450484"
+  },
+  "lines": [
+    {
+      "text": "[raf] CFC34 system without service $(touch forbidden) `false`",
+      "pid": 675
+    },
+    {
+      "text": "[cfc34-worker] [raf] [main] CFC34 literal prefix",
+      "pid": 675
+    }
+  ],
+  "serviceBefore": {
+    "pid": 1519,
+    "identity": {
+      "pid": 1519,
+      "startedAt": "27814805",
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    },
+    "token": "a6109676-aed2-4b18-aba0-d42d29b194b4",
+    "mainPath": "/tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main",
+    "state": "ready",
+    "stopReason": null
+  },
+  "serviceAfter": {
+    "pid": 1519,
+    "identity": {
+      "pid": 1519,
+      "startedAt": "27814805",
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    },
+    "token": "a6109676-aed2-4b18-aba0-d42d29b194b4",
+    "mainPath": "/tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main",
+    "state": "ready",
+    "stopReason": null
+  }
+}

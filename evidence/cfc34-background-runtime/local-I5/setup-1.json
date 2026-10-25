@@ -1,0 +1,18 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "rev-parse",
+    "HEAD"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-develop",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 4.2449650000000005,
+  "stdout": "d48824fd70a22877def1def26e6bb5c02b01a1c5\n",
+  "stderr": ""
+}

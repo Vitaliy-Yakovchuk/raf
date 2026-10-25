@@ -1,0 +1,19 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "commit",
+    "-m",
+    "qa: controlled background runtime stand entry"
+  ],
+  "cwd": "/tmp/c34-C5Wvhh/r/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 76.46029699999963,
+  "stdout": "[main 6747090] qa: controlled background runtime stand entry\n 1 file changed, 9 insertions(+)\n create mode 100644 bin/qa-service.ts\n",
+  "stderr": ""
+}

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs",
+    "state",
+    "/tmp/c34-QmDRYg/input-15.json"
+  ],
+  "cwd": "/tmp/c34-QmDRYg/r",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "durationMs": 6437.900790000001,
+  "stdout": "",
+  "stderr": "node:internal/errors:999\n  const err = new Error(message);\n              ^\n\nError: Command failed: git --no-optional-locks -C /tmp/c34-QmDRYg/r clone --mirror --no-local /tmp/c34-QmDRYg/r/.git/modules/raf-main /tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4\nCloning into bare repository '/tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4'...\nfatal: sha1 file '/tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4/objects/pack/tmp_idx_NyPe5d' write error: Disk quota exceeded\nfatal: fetch-pack: invalid index-pack output\n\n    at genericNodeError (node:internal/errors:999:15)\n    at wrappedFn (node:internal/errors:544:14)\n    at ChildProcess.exithandler (node:child_process:420:12)\n    at ChildProcess.emit (node:events:514:20)\n    at maybeClose (node:internal/child_process:1156:16)\n    at ChildProcess._handle.onexit (node:internal/child_process:334:5) {\n  code: 128,\n  killed: false,\n  signal: null,\n  cmd: 'git --no-optional-locks -C /tmp/c34-QmDRYg/r clone --mirror --no-local /tmp/c34-QmDRYg/r/.git/modules/raf-main /tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4',\n  stdout: '',\n  stderr: \"Cloning into bare repository '/tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4'...\\n\" +\n    \"fatal: sha1 file '/tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4/objects/pack/tmp_idx_NyPe5d' write error: Disk quota exceeded\\n\" +\n    'fatal: fetch-pack: invalid index-pack output\\n'\n}\n\nNode.js v26.12.1\n"
+}

@@ -1,0 +1,24 @@
+{
+  "command": [
+    "tmux",
+    "-S",
+    "/srv/dev/c34h/tmp/c34-WluaOx/worker.sock",
+    "-f",
+    "/dev/null",
+    "new-session",
+    "-d",
+    "-s",
+    "qa-worker",
+    "/opt/dev/node/bin/node",
+    "/srv/dev/c34h/raf-develop/scripts/qa-background-runtime.mjs",
+    "pane",
+    "/srv/dev/c34h/tmp/c34-WluaOx/worker.json"
+  ],
+  "cwd": "/srv/dev/c34h/tmp/c34-WluaOx/r",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 19.2125589999996,
+  "stdout": "",
+  "stderr": ""
+}

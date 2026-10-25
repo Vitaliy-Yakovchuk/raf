@@ -1,0 +1,20 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "commit",
+    "--allow-empty",
+    "-m",
+    "qa: advance logical main while service pinned"
+  ],
+  "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 34.304542999998375,
+  "stdout": "[main ce1ddbe] qa: advance logical main while service pinned\n",
+  "stderr": ""
+}

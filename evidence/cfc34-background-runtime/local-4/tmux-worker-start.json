@@ -1,0 +1,24 @@
+{
+  "command": [
+    "tmux",
+    "-S",
+    "/tmp/c34-bfob6I/worker.sock",
+    "-f",
+    "/dev/null",
+    "new-session",
+    "-d",
+    "-s",
+    "qa-worker",
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs",
+    "pane",
+    "/tmp/c34-bfob6I/worker.json"
+  ],
+  "cwd": "/tmp/c34-bfob6I/r",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 16.62873099999706,
+  "stdout": "",
+  "stderr": ""
+}

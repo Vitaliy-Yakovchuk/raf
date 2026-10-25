@@ -1,0 +1,151 @@
+{
+  "assignment": "complete-raf-flow-contracts:3.4",
+  "status": "failed",
+  "base": "/tmp/c34-QmDRYg",
+  "root": "/tmp/c34-QmDRYg/r",
+  "home": "/tmp/c34-QmDRYg/h",
+  "state": "/tmp/c34-QmDRYg/h/.raf/state.sqlite",
+  "bugs": "/tmp/c34-QmDRYg/h/.raf/bugs.sqlite",
+  "output": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc34-background-runtime/local-channel",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs",
+    "evidence/cfc34-background-runtime/local-channel",
+    "--no-tcp",
+    "--scenarios=I5-channel"
+  ],
+  "versions": {
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "sqlite": "3.54.0",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6"
+  },
+  "scenarios": [],
+  "commands": [
+    {
+      "label": "setup-1",
+      "evidence": "setup-1.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-2",
+      "evidence": "setup-2.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "git-version",
+      "evidence": "git-version.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-version",
+      "evidence": "tmux-version.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-3",
+      "evidence": "setup-3.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-4",
+      "evidence": "setup-4.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "build",
+      "evidence": "build.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-5",
+      "evidence": "setup-5.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-6",
+      "evidence": "setup-6.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-7",
+      "evidence": "setup-7.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-8",
+      "evidence": "setup-8.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-9",
+      "evidence": "setup-9.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-10",
+      "evidence": "setup-10.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-11",
+      "evidence": "setup-11.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-12",
+      "evidence": "setup-12.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-13",
+      "evidence": "setup-13.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-14",
+      "evidence": "setup-14.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "prepare-production-store",
+      "evidence": "prepare-production-store.json",
+      "cliExitCode": 1
+    },
+    {
+      "label": "service-stop-16",
+      "evidence": "service-stop-16.json",
+      "cliExitCode": 1
+    }
+  ],
+  "cleanup": {},
+  "limitations": [
+    "Live tmux recipient is an owned stdin CLI receiver displaying configured Claude native-screen context and empty composer; this is a controlled screen fixture, not a real AI runner acceptance; no external AI provider credentials are copied or exercised.",
+    "Fixture service entry records origin and injects recovery/crash only for explicit fault scenarios; I6 uses default production ports without sharedDelivery injection.",
+    "I6 excluded: sandbox TCP listen returns EACCES; no fixture credential installed, bug sync does not contact upstream."
+  ],
+  "selection": [
+    "I5-channel"
+  ],
+  "sha": "f78e7377cda7f94cc8ea79bf208771f0dbc36b4e",
+  "workspace": "M scripts/qa-background-runtime.mjs\n?? evidence/cfc34-background-runtime/",
+  "configurationFingerprints": {
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "test-runs.json": "f29fb10d5f6aa147d655e106d714e999439c3190e17bf784f05f4a3e938cbcf4"
+  },
+  "fixtureCommit": "207acad37c71beda39e89a4cacd3b9305514680d",
+  "fixtureConfigurationFingerprints": {
+    "raf.json": "faad1b87cd05f7f3ab2e1a3aadd7bb97ee6ba75cffe3c3534fe5d123be0dca50",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+  },
+  "setupError": {
+    "message": "AssertionError [ERR_ASSERTION]: node:internal/errors:999\n  const err = new Error(message);\n              ^\n\nError: Command failed: git --no-optional-locks -C /tmp/c34-QmDRYg/r clone --mirror --no-local /tmp/c34-QmDRYg/r/.git/modules/raf-main /tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4\nCloning into bare repository '/tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4'...\nfatal: sha1 file '/tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4/objects/pack/tmp_idx_NyPe5d' write error: Disk quota exceeded\nfatal: fetch-pack: invalid index-pack output\n\n    at genericNodeError (node:internal/errors:999:15)\n    at wrappedFn (node:internal/errors:544:14)\n    at ChildProcess.exithandler (node:child_process:420:12)\n    at ChildProcess.emit (node:events:514:20)\n    at maybeClose (node:internal/child_process:1156:16)\n    at ChildProcess._handle.onexit (node:internal/child_process:334:5) {\n  code: 128,\n  killed: false,\n  signal: null,\n  cmd: 'git --no-optional-locks -C /tmp/c34-QmDRYg/r clone --mirror --no-local /tmp/c34-QmDRYg/r/.git/modules/raf-main /tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4',\n  stdout: '',\n  stderr: \"Cloning into bare repository '/tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4'...\\n\" +\n    \"fatal: sha1 file '/tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4/objects/pack/tmp_idx_NyPe5d' write error: Disk quota exceeded\\n\" +\n    'fatal: fetch-pack: invalid index-pack output\\n'\n}\n\nNode.js v26.12.1\n\n\n1 !== 0\n",
+    "stack": "AssertionError [ERR_ASSERTION]: node:internal/errors:999\n  const err = new Error(message);\n              ^\n\nError: Command failed: git --no-optional-locks -C /tmp/c34-QmDRYg/r clone --mirror --no-local /tmp/c34-QmDRYg/r/.git/modules/raf-main /tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4\nCloning into bare repository '/tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4'...\nfatal: sha1 file '/tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4/objects/pack/tmp_idx_NyPe5d' write error: Disk quota exceeded\nfatal: fetch-pack: invalid index-pack output\n\n    at genericNodeError (node:internal/errors:999:15)\n    at wrappedFn (node:internal/errors:544:14)\n    at ChildProcess.exithandler (node:child_process:420:12)\n    at ChildProcess.emit (node:events:514:20)\n    at maybeClose (node:internal/child_process:1156:16)\n    at ChildProcess._handle.onexit (node:internal/child_process:334:5) {\n  code: 128,\n  killed: false,\n  signal: null,\n  cmd: 'git --no-optional-locks -C /tmp/c34-QmDRYg/r clone --mirror --no-local /tmp/c34-QmDRYg/r/.git/modules/raf-main /tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4',\n  stdout: '',\n  stderr: \"Cloning into bare repository '/tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4'...\\n\" +\n    \"fatal: sha1 file '/tmp/c34-QmDRYg/r/.git/modules/raf-main/raf-hotfix/main.git.5144c710-e670-48ed-b504-fcdfea45e7c4/objects/pack/tmp_idx_NyPe5d' write error: Disk quota exceeded\\n\" +\n    'fatal: fetch-pack: invalid index-pack output\\n'\n}\n\nNode.js v26.12.1\n\n\n1 !== 0\n\n    at must (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs:121:128)\n    at invoke (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs:124:201)\n    at file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs:171:5\n    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)\n    at async node:internal/modules/esm/loader:650:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+    "reminder",
+    "add",
+    "--to",
+    "main",
+    "--at",
+    "2099-01-01T00:00:00Z",
+    "--text",
+    "CFC34 preserved reminder"
+  ],
+  "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 1982.8422850000024,
+  "stdout": "{\"id\":\"279d4173-a163-40d9-84ba-c09938720985\",\"createdFor\":\"main\",\"assignedTo\":\"main\",\"text\":\"CFC34 preserved reminder\",\"at\":\"2099-01-01T00:00:00Z\",\"binding\":null,\"state\":\"pending\",\"closedAt\":null,\"closeReason\":null}\n",
+  "stderr": ""
+}

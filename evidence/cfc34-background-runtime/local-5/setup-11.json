@@ -1,0 +1,22 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "worktree",
+    "add",
+    "-B",
+    "develop",
+    "/tmp/c34-qjPq8r/r/raf-develop",
+    "HEAD"
+  ],
+  "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 1629.7669970000006,
+  "stdout": "HEAD is now at 00038d4 qa: controlled background runtime stand entry\n",
+  "stderr": "Preparing worktree (resetting branch 'develop'; was at 42de488)\nUpdating files:  74% (11017/14788)\rUpdating files:  75% (11091/14788)\rUpdating files:  76% (11239/14788)\rUpdating files:  77% (11387/14788)\rUpdating files:  78% (11535/14788)\rUpdating files:  79% (11683/14788)\rUpdating files:  80% (11831/14788)\rUpdating files:  81% (11979/14788)\rUpdating files:  82% (12127/14788)\rUpdating files:  83% (12275/14788)\rUpdating files:  84% (12422/14788)\rUpdating files:  85% (12570/14788)\rUpdating files:  86% (12718/14788)\rUpdating files:  87% (12866/14788)\rUpdating files:  88% (13014/14788)\rUpdating files:  89% (13162/14788)\rUpdating files:  90% (13310/14788)\rUpdating files:  91% (13458/14788)\rUpdating files:  92% (13605/14788)\rUpdating files:  93% (13753/14788)\rUpdating files:  94% (13901/14788)\rUpdating files:  95% (14049/14788)\rUpdating files:  96% (14197/14788)\rUpdating files:  97% (14345/14788)\rUpdating files:  98% (14493/14788)\rUpdating files:  99% (14641/14788)\rUpdating files: 100% (14788/14788)\rUpdating files: 100% (14788/14788), done.\n"
+}

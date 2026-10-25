@@ -1,0 +1,137 @@
+{
+  "missing": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+      "service",
+      "start"
+    ],
+    "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+    "cliExitCode": 1,
+    "signal": null,
+    "error": null,
+    "durationMs": 1517.2197049999959,
+    "stdout": "",
+    "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Service startup failed\",\"details\":{\"command\":\"service start\",\"stage\":\"start\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"Service entry is missing or outside the main generation\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service start\"],\"retrySafe\":false},\"remediation\":[\"Inspect the current service owner, configured main generation and service.log before retrying.\",\"raf help service start\"]}\n"
+  },
+  "missingMain": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+      "service",
+      "start"
+    ],
+    "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+    "cliExitCode": 1,
+    "signal": null,
+    "error": null,
+    "durationMs": 297.99490700000024,
+    "stdout": "",
+    "stderr": "{\"code\":\"STATE_CONTEXT_REFUSED\",\"message\":\"STATE_CONTEXT_REFUSED: Cannot prove state context for /tmp/c34-qjPq8r/r/raf-main/src/production-entry.ts: ENOENT: no such file or directory, lstat '/tmp/c34-qjPq8r/r/absent-main'\",\"details\":{\"command\":\"service start\",\"stage\":\"state-preflight\",\"source\":\"state-store\",\"sourceCode\":\"STATE_CONTEXT_REFUSED\",\"reason\":\"Cannot prove state context for /tmp/c34-qjPq8r/r/raf-main/src/production-entry.ts: ENOENT: no such file or directory, lstat '/tmp/c34-qjPq8r/r/absent-main'\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true},\"remediation\":[\"Use the configured raf production tree and account HOME, or select a separate HOME with RAF_QA_HOME before starting any child process.\",\"raf help service start\"]}\n"
+  },
+  "recovery": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+      "service",
+      "start"
+    ],
+    "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+    "cliExitCode": 1,
+    "signal": null,
+    "error": null,
+    "durationMs": 3027.1107940000074,
+    "stdout": "",
+    "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Service startup failed\",\"details\":{\"command\":\"service start\",\"stage\":\"start\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"Error: CFC34 recovery failure\\nfile:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/bin/qa-service.ts:7\\nconst host=await runServiceEntry(fault?{loadPorts:async(file,context)=>{const ports=await(await import(pathToFileURL(file).href)).createServicePorts(context);return {...ports,recover:async value=>{if(mode==='recovery-fail')throw Error('CFC34 recovery failure');await new Promise(resolve=>setTimeout(resolve,120000));await ports.recover(value);}};}}:undefined);\\n                                                                                                                                                                                                                                     ^\\n\\nError: CFC34 recovery failure\\n    at Object.recover (file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/bin/qa-service.ts:7:230)\\n    at runServiceHost (file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367:42)\\n    at async file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/bin/qa-service.ts:7:12\\n\\nNode.js v26.12.1\\n\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service start\"],\"retrySafe\":false},\"remediation\":[\"Inspect the current service owner, configured main generation and service.log before retrying.\",\"raf help service start\"]}\n"
+  },
+  "gated": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+      "service",
+      "start"
+    ],
+    "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+    "cliExitCode": 1,
+    "signal": null,
+    "error": null,
+    "durationMs": 31405.399116,
+    "stdout": "",
+    "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Service startup failed\",\"details\":{\"command\":\"service start\",\"stage\":\"start\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"Service readiness deadline exhausted\\nfile:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367\\n    await Promise.race([options.handlers.recover({ serviceEpoch: record.token }), closed.then(() => { throw new Error('Service stopped during recovery'); })]);\\n                                                                                                            ^\\n\\nError: Service stopped during recovery\\n    at file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367:109\\n    at async runServiceHost (file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367:5)\\n    at async file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/bin/qa-service.ts:7:12\\n\\nNode.js v26.12.1\\n\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service start\"],\"retrySafe\":false},\"remediation\":[\"Inspect the current service owner, configured main generation and service.log before retrying.\",\"raf help service start\"]}\n"
+  },
+  "gatedRecord": {
+    "pid": 2195,
+    "identity": {
+      "pid": 2195,
+      "startedAt": "27817029",
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    },
+    "token": "d24cd3d1-aaf6-44c4-ac25-40fe18e551bb",
+    "mainPath": "/tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main",
+    "state": "failed",
+    "stopReason": "Service readiness deadline exhausted\nfile:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367\n    await Promise.race([options.handlers.recover({ serviceEpoch: record.token }), closed.then(() => { throw new Error('Service stopped during recovery'); })]);\n                                                                                                            ^\n\nError: Service stopped during recovery\n    at file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367:109\n    at async runServiceHost (file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367:5)\n    at async file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/bin/qa-service.ts:7:12\n\nNode.js v26.12.1\n"
+  },
+  "stale": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+      "service",
+      "start"
+    ],
+    "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+    "cliExitCode": 1,
+    "signal": null,
+    "error": null,
+    "durationMs": 1724.9188869999925,
+    "stdout": "",
+    "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Service startup failed\",\"details\":{\"command\":\"service start\",\"stage\":\"start\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"Socket exists without verified dead service ownership\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service start\"],\"retrySafe\":false},\"remediation\":[\"Inspect the current service owner, configured main generation and service.log before retrying.\",\"raf help service start\"]}\n"
+  },
+  "unverified": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+      "service",
+      "start"
+    ],
+    "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+    "cliExitCode": 1,
+    "signal": null,
+    "error": null,
+    "durationMs": 1396.732164000001,
+    "stdout": "",
+    "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Service startup failed\",\"details\":{\"command\":\"service start\",\"stage\":\"start\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"Recorded service owner identity is unavailable\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service start\"],\"retrySafe\":false},\"remediation\":[\"Inspect the current service owner, configured main generation and service.log before retrying.\",\"raf help service start\"]}\n"
+  },
+  "noEnqueue": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+      "resource",
+      "wait",
+      "--level",
+      "normal"
+    ],
+    "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+    "cliExitCode": 1,
+    "signal": null,
+    "error": null,
+    "durationMs": 1461.7992490000033,
+    "stdout": "",
+    "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"resource_wait_failed\",\"details\":{\"command\":\"resource wait\",\"stage\":\"resource wait\",\"source\":\"resource-wait\",\"sourceCode\":1,\"reason\":\"Resource wait service readiness failed: {\\\"exitCode\\\":1,\\\"reason\\\":\\\"Service startup failed\\\",\\\"details\\\":\\\"Recorded service owner identity is unavailable\\\",\\\"remediation\\\":\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\"}\",\"received\":\"Resource wait service readiness failed: {\\\"exitCode\\\":1,\\\"reason\\\":\\\"Service startup failed\\\",\\\"details\\\":\\\"Recorded service owner identity is unavailable\\\",\\\"remediation\\\":\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\"}\",\"expected\":\"matching committed permit\",\"found\":null,\"completed\":[],\"pending\":[\"confirmed resource permit\"],\"retrySafe\":false},\"remediation\":[\"Correct the reported service, identity or resource problem, then start a new resource wait.\",\"raf help resource wait\"]}\n"
+  },
+  "noStop": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+      "service",
+      "stop"
+    ],
+    "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+    "cliExitCode": 1,
+    "signal": null,
+    "error": null,
+    "durationMs": 1406.7525969999988,
+    "stdout": "",
+    "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Service stop failed\",\"details\":{\"command\":\"service stop\",\"stage\":\"stop\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"Recorded service owner identity is unavailable\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service stop\"],\"retrySafe\":false},\"remediation\":[\"Inspect the current service owner, configured main generation and service.log before retrying.\",\"raf help service stop\"]}\n"
+  }
+}

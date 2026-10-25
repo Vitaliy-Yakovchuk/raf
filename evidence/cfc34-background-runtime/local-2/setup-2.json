@@ -1,0 +1,18 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-develop",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 54.935724,
+  "stdout": " M src/production-runtime.ts\n M test/agent-adapters-contract.test.ts\n?? evidence/cfc24-agent-adapters/\n?? evidence/cfc34-background-runtime/\n?? scripts/qa-background-runtime.mjs\n?? src/message-delivery.ts\n",
+  "stderr": ""
+}

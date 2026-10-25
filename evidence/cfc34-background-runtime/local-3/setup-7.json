@@ -1,0 +1,18 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "rev-parse",
+    "HEAD"
+  ],
+  "cwd": "/tmp/c34-FefxeW/r/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 2.7731809999995676,
+  "stdout": "184becd5ed88cf73151e05e2eb32661dcf8c0ade\n",
+  "stderr": ""
+}

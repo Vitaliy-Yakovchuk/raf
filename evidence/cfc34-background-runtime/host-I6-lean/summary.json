@@ -1,0 +1,386 @@
+{
+  "assignment": "complete-raf-flow-contracts:3.4",
+  "status": "passed",
+  "base": "/srv/dev/c34h/tmp/c34-WluaOx",
+  "root": "/srv/dev/c34h/tmp/c34-WluaOx/r",
+  "home": "/srv/dev/c34h/tmp/c34-WluaOx/h",
+  "state": "/srv/dev/c34h/tmp/c34-WluaOx/h/.raf/state.sqlite",
+  "bugs": "/srv/dev/c34h/tmp/c34-WluaOx/h/.raf/bugs.sqlite",
+  "output": "/srv/dev/c34h/raf-develop/evidence/cfc34-background-runtime/host-I6-lean",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/c34h/raf-develop/scripts/qa-background-runtime.mjs",
+    "evidence/cfc34-background-runtime/host-I6-lean",
+    "--only-I6"
+  ],
+  "versions": {
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "sqlite": "3.54.0",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6"
+  },
+  "scenarios": [
+    {
+      "id": "I6",
+      "status": "passed",
+      "details": {
+        "evidence": "I6-delivery.json",
+        "defaultProductionDelivery": true
+      }
+    }
+  ],
+  "commands": [
+    {
+      "label": "setup-1",
+      "evidence": "setup-1.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-2",
+      "evidence": "setup-2.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "git-version",
+      "evidence": "git-version.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-version",
+      "evidence": "tmux-version.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "fixture-tls",
+      "evidence": "fixture-tls.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-3",
+      "evidence": "setup-3.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "source-archive",
+      "evidence": "source-archive.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "source-extract",
+      "evidence": "source-extract.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-4",
+      "evidence": "setup-4.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-5",
+      "evidence": "setup-5.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "build",
+      "evidence": "build.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-6",
+      "evidence": "setup-6.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-7",
+      "evidence": "setup-7.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-8",
+      "evidence": "setup-8.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-9",
+      "evidence": "setup-9.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-10",
+      "evidence": "setup-10.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-11",
+      "evidence": "setup-11.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-12",
+      "evidence": "setup-12.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-13",
+      "evidence": "setup-13.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-14",
+      "evidence": "setup-14.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-15",
+      "evidence": "setup-15.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "prepare-production-store",
+      "evidence": "prepare-production-store.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "seed-fixture-secret",
+      "evidence": "seed-fixture-secret.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-main-start",
+      "evidence": "tmux-main-start.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-worker-start",
+      "evidence": "tmux-worker-start.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "worker-pane",
+      "evidence": "worker-pane.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "worker-identity",
+      "evidence": "worker-identity.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "seed-worker",
+      "evidence": "seed-worker.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-start-20",
+      "evidence": "service-start-20.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-stop-21",
+      "evidence": "service-stop-21.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-stop-22",
+      "evidence": "service-stop-22.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-cleanup-23",
+      "evidence": "tmux-cleanup-23.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-cleanup-24",
+      "evidence": "tmux-cleanup-24.json",
+      "cliExitCode": 0
+    }
+  ],
+  "cleanup": {
+    "remaining": [],
+    "complete": true,
+    "fixtureRemoved": true
+  },
+  "limitations": [
+    "Live tmux recipient is an owned stdin CLI receiver displaying configured Claude native-screen context and empty composer; this is a controlled screen fixture, not a real AI runner acceptance; no external AI provider credentials are copied or exercised.",
+    "Fixture service entry records origin and injects recovery/crash only for explicit fault scenarios; I6 uses default production ports without sharedDelivery injection."
+  ],
+  "selection": [
+    "I6"
+  ],
+  "sha": "6955590627bd81584c690f8411edb1a326305151",
+  "workspace": "?? evidence/cfc34-background-runtime/",
+  "configurationFingerprints": {
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "test-runs.json": "f29fb10d5f6aa147d655e106d714e999439c3190e17bf784f05f4a3e938cbcf4"
+  },
+  "fixtureSource": {
+    "method": "git archive of exact source SHA; own minimal repository",
+    "sha": "6955590627bd81584c690f8411edb1a326305151",
+    "excludedTrees": [
+      "evidence",
+      "docs"
+    ],
+    "entries": [
+      ".gitignore",
+      "BOOTSTRAP.md",
+      "README.md",
+      "bin",
+      "package-lock.json",
+      "package.json",
+      "scripts",
+      "src",
+      "test"
+    ]
+  },
+  "fixtureCommit": "3d49a22a76b25d0a0b8619452a1f470c2f1fbd16",
+  "fixtureConfigurationFingerprints": {
+    "raf.json": "693f8ae735a1635fd816b9f0354f1a29d8cc6c2d194a980d3c8a43c336c03760",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+  },
+  "received": [
+    {
+      "text": "[raf] New bug projects/raf/bug#3401",
+      "pid": 1686500
+    },
+    {
+      "text": "[raf] New human comment cfc34-comment-2 on projects/raf/bug#3401",
+      "pid": 1686500
+    }
+  ],
+  "finalSql": {
+    "sessions": [
+      {
+        "run_id": "d3cb25bf-b1a6-4059-b7d3-aee591c0ffd3",
+        "address_id": "cfc34-worker",
+        "state": "running",
+        "finished_at": null,
+        "payload": "{\"runId\":\"d3cb25bf-b1a6-4059-b7d3-aee591c0ffd3\",\"addressId\":\"cfc34-worker\",\"revision\":0,\"state\":\"running\",\"process\":{\"pid\":1686614,\"startedAt\":\"2026-10-25T13:48:46.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-worker\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/c34h/raf-develop/scripts/qa-background-runtime.mjs pane /srv/dev/c34h/tmp/c34-WluaOx/worker.json\",\"tmuxSocket\":\"/srv/dev/c34h/tmp/c34-WluaOx/worker.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"runId\":\"d3cb25bf-b1a6-4059-b7d3-aee591c0ffd3\"}},\"activity\":{\"type\":\"agent\",\"project\":\"raf\",\"features\":[],\"phase\":\"qa\",\"cwd\":\"/srv/dev/c34h/tmp/c34-WluaOx/r/raf-main\"}}"
+      },
+      {
+        "run_id": "62511baf-d24a-4c6b-86c1-0aea30606b27",
+        "address_id": "main",
+        "state": "running",
+        "finished_at": null,
+        "payload": "{\"runId\":\"62511baf-d24a-4c6b-86c1-0aea30606b27\",\"addressId\":\"main\",\"revision\":2,\"state\":\"running\",\"activity\":{\"type\":\"main\",\"project\":\"orchestrator\",\"features\":[],\"phase\":\"main\",\"cwd\":\"/srv/dev/c34h/tmp/c34-WluaOx/r/raf-main\"},\"process\":{\"pid\":1686500,\"startedAt\":\"2026-10-25T13:48:42.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-main\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/c34h/raf-develop/scripts/qa-background-runtime.mjs pane /srv/dev/c34h/tmp/c34-WluaOx/pane.json\",\"tmuxSocket\":\"/srv/dev/c34h/tmp/c34-WluaOx/main.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}},\"observation\":{\"state\":\"alive\",\"observedAt\":\"2026-10-25T13:48:53.312Z\",\"identity\":{\"pid\":1686500,\"startedAt\":\"2026-10-25T13:48:42.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-main\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/c34h/raf-develop/scripts/qa-background-runtime.mjs pane /srv/dev/c34h/tmp/c34-WluaOx/pane.json\",\"tmuxSocket\":\"/srv/dev/c34h/tmp/c34-WluaOx/main.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}}}"
+      }
+    ],
+    "reminders": [],
+    "admission_reservations": [
+      {
+        "run_id": "d3cb25bf-b1a6-4059-b7d3-aee591c0ffd3",
+        "payload": "{\"runId\":\"d3cb25bf-b1a6-4059-b7d3-aee591c0ffd3\",\"resource\":\"qa-fixture\",\"amount\":1,\"resourceBundle\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"resources\":{\"ramBytes\":1024,\"diskBytes\":{}}}}"
+      }
+    ],
+    "task_reservation_runs": [
+      {
+        "run_id": "d3cb25bf-b1a6-4059-b7d3-aee591c0ffd3",
+        "address_id": "cfc34-worker",
+        "fence": "owned-fixture",
+        "revision": 0,
+        "machine_id": "05edcea976d34e69b22f660519c11f6f",
+        "boot_id": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "stage": "running",
+        "starter": "{\"pid\":1686614,\"startedAt\":\"2026-10-25T13:48:46.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-worker\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/c34h/raf-develop/scripts/qa-background-runtime.mjs pane /srv/dev/c34h/tmp/c34-WluaOx/worker.json\",\"tmuxSocket\":\"/srv/dev/c34h/tmp/c34-WluaOx/worker.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"runId\":\"d3cb25bf-b1a6-4059-b7d3-aee591c0ffd3\"}}",
+        "wrapper": null,
+        "agent": "{\"pid\":1686614,\"startedAt\":\"2026-10-25T13:48:46.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-worker\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/c34h/raf-develop/scripts/qa-background-runtime.mjs pane /srv/dev/c34h/tmp/c34-WluaOx/worker.json\",\"tmuxSocket\":\"/srv/dev/c34h/tmp/c34-WluaOx/worker.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"runId\":\"d3cb25bf-b1a6-4059-b7d3-aee591c0ffd3\"}}"
+      }
+    ],
+    "task_reservations": [
+      {
+        "project": "raf",
+        "change_instance": "owned-fixture-instance",
+        "task_id": "1",
+        "change_id": "owned-fixture",
+        "fingerprint": "owned-fixture-fingerprint",
+        "run_id": "d3cb25bf-b1a6-4059-b7d3-aee591c0ffd3"
+      }
+    ],
+    "resource_wait_protocol_state": [
+      {
+        "singleton": 1,
+        "epoch": "789a0a63-4f2b-423c-b0f2-ff476de8a9df",
+        "grant_json": null
+      }
+    ]
+  },
+  "finalNotices": [
+    {
+      "notice_key": "bug-comment:[\"qa\",\"fixture\",\"3401\"]:cfc34-comment-2",
+      "kind": "human-comment",
+      "bug_pk": 1,
+      "comment_server_id": "cfc34-comment-2",
+      "created_at": "2026-10-25T13:48:52.788Z",
+      "noticed_at": "2026-10-25T13:48:53.854Z"
+    },
+    {
+      "notice_key": "bug-new:[\"qa\",\"fixture\",\"3401\"]",
+      "kind": "new-bug",
+      "bug_pk": 1,
+      "comment_server_id": null,
+      "created_at": "2026-10-25T13:48:51.615Z",
+      "noticed_at": "2026-10-25T13:48:52.264Z"
+    }
+  ],
+  "finalBugState": {
+    "bugs": [
+      {
+        "bug_pk": 1,
+        "section_id": "raf:qa",
+        "project": "raf",
+        "env": "qa",
+        "source": "qa",
+        "owner": "fixture",
+        "raw_id": "3401",
+        "problem_id": "[\"qa\",\"fixture\",\"3401\"]",
+        "canonical_project": "projects/raf",
+        "revision": 2,
+        "status": "open",
+        "state": "open",
+        "claimed_by": null,
+        "payload": "{\"problem_id\":\"[\\\"qa\\\",\\\"fixture\\\",\\\"3401\\\"]\",\"revision\":2,\"status\":\"open\",\"state\":\"open\",\"created_at\":\"2026-10-25T00:00:00Z\"}",
+        "server_created_at": "2026-10-25T00:00:00Z",
+        "detail_revision": 2,
+        "detail_complete": 1,
+        "detail_error_code": null,
+        "presence": "present",
+        "presence_at": "2026-10-25T13:48:51.615Z",
+        "synced_at": "2026-10-25T13:48:55.425Z"
+      }
+    ],
+    "comments": [
+      {
+        "comment_pk": 1,
+        "bug_pk": 1,
+        "server_id": "cfc34-comment-2",
+        "author_id": "human-fixture",
+        "author_kind": "person",
+        "text": "CFC34 literal $(touch forbidden) `false`",
+        "reply_to": null,
+        "created_at": "2026-10-25T00:00:00Z",
+        "payload": "{\"id\":\"cfc34-comment-2\",\"author_id\":\"human-fixture\",\"author_kind\":\"person\",\"text\":\"CFC34 literal $(touch forbidden) `false`\",\"created_at\":\"2026-10-25T00:00:00Z\"}"
+      }
+    ],
+    "sync_state": [
+      {
+        "section_id": "raf:qa",
+        "phase": "incremental",
+        "journal_cursor": "2",
+        "snapshot_head": null,
+        "list_cursor": null,
+        "list_claims_fingerprint": "1a1564befd6ab1657f5da85c7ef4eedd49905e2bb7f34526e2b468d8723ca802",
+        "snapshot_complete": 1,
+        "last_success_at": "2026-10-25T13:48:57.165Z",
+        "last_attempt_at": "2026-10-25T13:48:57.165Z",
+        "last_error_code": null,
+        "consecutive_failures": 0
+      }
+    ]
+  }
+}

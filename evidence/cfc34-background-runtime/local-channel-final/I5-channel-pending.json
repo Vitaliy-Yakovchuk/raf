@@ -1,0 +1,56 @@
+{
+  "owner": {
+    "exitCode": 0,
+    "state": "ready",
+    "pid": 561,
+    "mainPath": "/tmp/c34-d22P3T/r/.git/modules/raf-main/raf-hotfix/generations/9a79bd4d-c88d-4e15-b27c-62d6f1daba96/raf-main",
+    "stopReason": null,
+    "reasonKnown": false,
+    "serviceEpoch": "326be785-7a63-42fb-aa5f-33c7b9aa5bb3",
+    "resourceWaitReady": true
+  },
+  "grant": {
+    "exitCode": 0,
+    "kind": "permit",
+    "permit": {
+      "requestId": "54ae2435-d830-4781-b1d8-87485f629367",
+      "serviceEpoch": "3fb06005-3adb-4aed-911e-6ab301beb7d2",
+      "grantedAt": 1792936146040
+    },
+    "reservation": false
+  },
+  "before": [
+    {
+      "singleton": 1,
+      "epoch": "326be785-7a63-42fb-aa5f-33c7b9aa5bb3",
+      "grant_json": "{\"requestId\":\"54ae2435-d830-4781-b1d8-87485f629367\",\"serviceEpoch\":\"3fb06005-3adb-4aed-911e-6ab301beb7d2\",\"grantedAt\":1792936146040,\"bootIdentity\":\"05edcea976d34e69b22f660519c11f6f/b1029120-f5ec-44e5-9a19-868ab046f59c\",\"monotonicAt\":2389.7446}"
+    }
+  ],
+  "pendingFds": [
+    "/dev/null",
+    "socket:[270876065]",
+    "pipe:[270874875]",
+    "pipe:[270874875]",
+    "anon_inode:[eventfd]",
+    "anon_inode:[eventpoll]",
+    "pipe:[270878748]",
+    "pipe:[270878748]",
+    "anon_inode:[eventfd]",
+    "/dev/null",
+    "/tmp/c34-d22P3T/h/.raf/state.sqlite",
+    "/tmp/c34-d22P3T/h/.raf/state.sqlite-wal",
+    "socket:[270876067]",
+    "/tmp/c34-d22P3T/h/.raf/state.sqlite-shm",
+    "socket:[270874296]",
+    "anon_inode:[eventpoll]",
+    "pipe:[270878746]",
+    "pipe:[270878746]",
+    "pipe:[270878747]",
+    "pipe:[270878747]",
+    "anon_inode:[eventfd]",
+    "anon_inode:[eventpoll]"
+  ],
+  "clientExit": null,
+  "stdout": "",
+  "stderr": ""
+}

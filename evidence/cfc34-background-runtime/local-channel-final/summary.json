@@ -1,0 +1,335 @@
+{
+  "assignment": "complete-raf-flow-contracts:3.4",
+  "status": "passed",
+  "base": "/tmp/c34-d22P3T",
+  "root": "/tmp/c34-d22P3T/r",
+  "home": "/tmp/c34-d22P3T/h",
+  "state": "/tmp/c34-d22P3T/h/.raf/state.sqlite",
+  "bugs": "/tmp/c34-d22P3T/h/.raf/bugs.sqlite",
+  "output": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc34-background-runtime/local-channel-final",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs",
+    "evidence/cfc34-background-runtime/local-channel-final",
+    "--no-tcp",
+    "--scenarios=I5-channel"
+  ],
+  "versions": {
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "sqlite": "3.54.0",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6"
+  },
+  "scenarios": [
+    {
+      "id": "I5-channel",
+      "status": "passed",
+      "details": {
+        "evidence": "I5-channel.json"
+      }
+    }
+  ],
+  "commands": [
+    {
+      "label": "setup-1",
+      "evidence": "setup-1.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-2",
+      "evidence": "setup-2.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "git-version",
+      "evidence": "git-version.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-version",
+      "evidence": "tmux-version.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-3",
+      "evidence": "setup-3.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "source-archive",
+      "evidence": "source-archive.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "source-extract",
+      "evidence": "source-extract.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-4",
+      "evidence": "setup-4.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-5",
+      "evidence": "setup-5.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "build",
+      "evidence": "build.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-6",
+      "evidence": "setup-6.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-7",
+      "evidence": "setup-7.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-8",
+      "evidence": "setup-8.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-9",
+      "evidence": "setup-9.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-10",
+      "evidence": "setup-10.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-11",
+      "evidence": "setup-11.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-12",
+      "evidence": "setup-12.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-13",
+      "evidence": "setup-13.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-14",
+      "evidence": "setup-14.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-15",
+      "evidence": "setup-15.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "prepare-production-store",
+      "evidence": "prepare-production-store.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-main-start",
+      "evidence": "tmux-main-start.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-worker-start",
+      "evidence": "tmux-worker-start.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "worker-pane",
+      "evidence": "worker-pane.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "worker-identity",
+      "evidence": "worker-identity.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "seed-worker",
+      "evidence": "seed-worker.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-start-19",
+      "evidence": "service-start-19.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "channel-initial-grant",
+      "evidence": "channel-initial-grant.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-stop-20",
+      "evidence": "service-stop-20.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-start-21",
+      "evidence": "service-start-21.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-start-22",
+      "evidence": "service-start-22.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-stop-23",
+      "evidence": "service-stop-23.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-stop-24",
+      "evidence": "service-stop-24.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-cleanup-25",
+      "evidence": "tmux-cleanup-25.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-cleanup-26",
+      "evidence": "tmux-cleanup-26.json",
+      "cliExitCode": 0
+    }
+  ],
+  "cleanup": {
+    "remaining": [],
+    "complete": true,
+    "fixtureRemoved": true
+  },
+  "limitations": [
+    "Live tmux recipient is an owned stdin CLI receiver displaying configured Claude native-screen context and empty composer; this is a controlled screen fixture, not a real AI runner acceptance; no external AI provider credentials are copied or exercised.",
+    "Fixture service entry records origin and injects recovery/crash only for explicit fault scenarios; I6 uses default production ports without sharedDelivery injection.",
+    "I6 excluded: sandbox TCP listen returns EACCES; no fixture credential installed, bug sync does not contact upstream."
+  ],
+  "selection": [
+    "I5-channel"
+  ],
+  "sha": "4cdc8f956689268faa3f4a4bfad2ffa9cc215f5d",
+  "workspace": "?? evidence/cfc34-background-runtime/",
+  "configurationFingerprints": {
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "test-runs.json": "f29fb10d5f6aa147d655e106d714e999439c3190e17bf784f05f4a3e938cbcf4"
+  },
+  "fixtureSource": {
+    "method": "git archive of exact source SHA; own minimal repository",
+    "sha": "4cdc8f956689268faa3f4a4bfad2ffa9cc215f5d",
+    "excludedTrees": [
+      "evidence",
+      "docs"
+    ],
+    "entries": [
+      ".gitignore",
+      "BOOTSTRAP.md",
+      "README.md",
+      "bin",
+      "package-lock.json",
+      "package.json",
+      "scripts",
+      "src",
+      "test"
+    ]
+  },
+  "fixtureCommit": "d9b09bc540235828c2ce2d56fdb3c878bb7031f4",
+  "fixtureConfigurationFingerprints": {
+    "raf.json": "faad1b87cd05f7f3ab2e1a3aadd7bb97ee6ba75cffe3c3534fe5d123be0dca50",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+  },
+  "received": [],
+  "finalSql": {
+    "sessions": [
+      {
+        "run_id": "2d3fe33e-7500-42bc-95f5-0b66e7e110ee",
+        "address_id": "main",
+        "state": "running",
+        "finished_at": null,
+        "payload": "{\"runId\":\"2d3fe33e-7500-42bc-95f5-0b66e7e110ee\",\"addressId\":\"main\",\"revision\":0,\"state\":\"running\",\"activity\":{\"type\":\"main\",\"project\":\"orchestrator\",\"features\":[],\"phase\":\"main\",\"cwd\":\"/tmp/c34-d22P3T/r/raf-main\"},\"process\":{\"pid\":219,\"startedAt\":\"2026-10-25T13:48:56.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-main\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs pane /tmp/c34-d22P3T/pane.json\",\"tmuxSocket\":\"/tmp/c34-d22P3T/main.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}}"
+      },
+      {
+        "run_id": "d329b8ef-6284-40f3-8c89-d431c663eb73",
+        "address_id": "cfc34-worker",
+        "state": "running",
+        "finished_at": null,
+        "payload": "{\"runId\":\"d329b8ef-6284-40f3-8c89-d431c663eb73\",\"addressId\":\"cfc34-worker\",\"revision\":0,\"state\":\"running\",\"process\":{\"pid\":277,\"startedAt\":\"2026-10-25T13:49:00.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-worker\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs pane /tmp/c34-d22P3T/worker.json\",\"tmuxSocket\":\"/tmp/c34-d22P3T/worker.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"runId\":\"d329b8ef-6284-40f3-8c89-d431c663eb73\"}},\"activity\":{\"type\":\"agent\",\"project\":\"raf\",\"features\":[],\"phase\":\"qa\",\"cwd\":\"/tmp/c34-d22P3T/r/raf-main\"}}"
+      }
+    ],
+    "reminders": [],
+    "admission_reservations": [
+      {
+        "run_id": "d329b8ef-6284-40f3-8c89-d431c663eb73",
+        "payload": "{\"runId\":\"d329b8ef-6284-40f3-8c89-d431c663eb73\",\"resource\":\"qa-fixture\",\"amount\":1,\"resourceBundle\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"resources\":{\"ramBytes\":1024,\"diskBytes\":{}}}}"
+      }
+    ],
+    "task_reservation_runs": [
+      {
+        "run_id": "d329b8ef-6284-40f3-8c89-d431c663eb73",
+        "address_id": "cfc34-worker",
+        "fence": "owned-fixture",
+        "revision": 0,
+        "machine_id": "05edcea976d34e69b22f660519c11f6f",
+        "boot_id": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "stage": "running",
+        "starter": "{\"pid\":277,\"startedAt\":\"2026-10-25T13:49:00.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-worker\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs pane /tmp/c34-d22P3T/worker.json\",\"tmuxSocket\":\"/tmp/c34-d22P3T/worker.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"runId\":\"d329b8ef-6284-40f3-8c89-d431c663eb73\"}}",
+        "wrapper": null,
+        "agent": "{\"pid\":277,\"startedAt\":\"2026-10-25T13:49:00.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-worker\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs pane /tmp/c34-d22P3T/worker.json\",\"tmuxSocket\":\"/tmp/c34-d22P3T/worker.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"runId\":\"d329b8ef-6284-40f3-8c89-d431c663eb73\"}}"
+      }
+    ],
+    "task_reservations": [
+      {
+        "project": "raf",
+        "change_instance": "owned-fixture-instance",
+        "task_id": "1",
+        "change_id": "owned-fixture",
+        "fingerprint": "owned-fixture-fingerprint",
+        "run_id": "d329b8ef-6284-40f3-8c89-d431c663eb73"
+      }
+    ],
+    "resource_wait_protocol_state": [
+      {
+        "singleton": 1,
+        "epoch": "dd32f024-947b-4b01-91b2-b49145b545c7",
+        "grant_json": "{\"requestId\":\"54ae2435-d830-4781-b1d8-87485f629367\",\"serviceEpoch\":\"3fb06005-3adb-4aed-911e-6ab301beb7d2\",\"grantedAt\":1792936146040,\"bootIdentity\":\"05edcea976d34e69b22f660519c11f6f/b1029120-f5ec-44e5-9a19-868ab046f59c\",\"monotonicAt\":2389.7446}"
+      }
+    ]
+  },
+  "finalNotices": [],
+  "finalBugState": {
+    "bugs": [],
+    "comments": [],
+    "sync_state": [
+      {
+        "section_id": "raf:qa",
+        "phase": "initial",
+        "journal_cursor": "0",
+        "snapshot_head": null,
+        "list_cursor": null,
+        "list_claims_fingerprint": null,
+        "snapshot_complete": 0,
+        "last_success_at": null,
+        "last_attempt_at": "2026-10-25T13:49:19.136Z",
+        "last_error_code": "secret-missing",
+        "consecutive_failures": 20
+      }
+    ]
+  }
+}

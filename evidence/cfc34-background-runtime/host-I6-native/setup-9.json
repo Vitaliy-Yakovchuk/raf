@@ -1,0 +1,22 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "-c",
+    "protocol.file.allow=always",
+    "submodule",
+    "add",
+    "./raf-main",
+    "raf-main"
+  ],
+  "cwd": "/tmp/c34-C5Wvhh/r",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 80.227441,
+  "stdout": "Adding existing repo at 'raf-main' to the index\n",
+  "stderr": ""
+}

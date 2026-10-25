@@ -1,0 +1,20 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "checkout",
+    "-B",
+    "main",
+    "42de488e1195fec384a02f87b757c4f411ffb83d"
+  ],
+  "cwd": "/tmp/c34-99HROe/r/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 1238.704241,
+  "stdout": "",
+  "stderr": "Switched to a new branch 'main'\n"
+}

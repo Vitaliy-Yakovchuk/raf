@@ -1,0 +1,59 @@
+{
+  "bug": [
+    {
+      "notice_key": "bug-new:[\"qa\",\"fixture\",\"3401\"]",
+      "kind": "new-bug",
+      "bug_pk": 1,
+      "comment_server_id": null,
+      "created_at": "2026-10-25T13:48:51.615Z",
+      "noticed_at": "2026-10-25T13:48:52.264Z"
+    }
+  ],
+  "pending": [
+    {
+      "notice_key": "bug-comment:[\"qa\",\"fixture\",\"3401\"]:cfc34-comment-2",
+      "kind": "human-comment",
+      "bug_pk": 1,
+      "comment_server_id": "cfc34-comment-2",
+      "created_at": "2026-10-25T13:48:52.788Z",
+      "noticed_at": null
+    },
+    {
+      "notice_key": "bug-new:[\"qa\",\"fixture\",\"3401\"]",
+      "kind": "new-bug",
+      "bug_pk": 1,
+      "comment_server_id": null,
+      "created_at": "2026-10-25T13:48:51.615Z",
+      "noticed_at": "2026-10-25T13:48:52.264Z"
+    }
+  ],
+  "delivered": [
+    {
+      "notice_key": "bug-comment:[\"qa\",\"fixture\",\"3401\"]:cfc34-comment-2",
+      "kind": "human-comment",
+      "bug_pk": 1,
+      "comment_server_id": "cfc34-comment-2",
+      "created_at": "2026-10-25T13:48:52.788Z",
+      "noticed_at": "2026-10-25T13:48:53.854Z"
+    },
+    {
+      "notice_key": "bug-new:[\"qa\",\"fixture\",\"3401\"]",
+      "kind": "new-bug",
+      "bug_pk": 1,
+      "comment_server_id": null,
+      "created_at": "2026-10-25T13:48:51.615Z",
+      "noticed_at": "2026-10-25T13:48:52.264Z"
+    }
+  ],
+  "received": [
+    {
+      "text": "[raf] New bug projects/raf/bug#3401",
+      "pid": 1686500
+    },
+    {
+      "text": "[raf] New human comment cfc34-comment-2 on projects/raf/bug#3401",
+      "pid": 1686500
+    }
+  ],
+  "upstreamErrors": ""
+}

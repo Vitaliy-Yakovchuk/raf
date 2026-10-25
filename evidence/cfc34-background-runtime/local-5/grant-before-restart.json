@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+    "resource",
+    "wait",
+    "--level",
+    "normal"
+  ],
+  "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "durationMs": 1566.003641999996,
+  "stdout": "",
+  "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"resource_unknown\",\"details\":{\"command\":\"resource wait\",\"stage\":\"resource wait\",\"source\":\"resource-wait\",\"sourceCode\":1,\"reason\":\"Existing reservation has no resource bundle or machine identity\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"confirmed resource permit\"],\"retrySafe\":false},\"remediation\":[\"Correct the reported service, identity or resource problem, then start a new resource wait.\",\"raf help resource wait\"]}\n"
+}

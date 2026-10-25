@@ -1,0 +1,62 @@
+[
+  {
+    "path": "/tmp/c34-bfob6I",
+    "mainConfirmedNoActiveProcesses": true,
+    "checkedAt": "2026-10-25T13:47:26.010682+00:00",
+    "tmuxChecks": [
+      {
+        "command": [
+          "tmux",
+          "-S",
+          "/tmp/c34-bfob6I/main.sock",
+          "has-session"
+        ],
+        "cliExitCode": 1,
+        "stdout": "",
+        "stderr": "no server running on /tmp/c34-bfob6I/main.sock\n"
+      },
+      {
+        "command": [
+          "tmux",
+          "-S",
+          "/tmp/c34-bfob6I/worker.sock",
+          "has-session"
+        ],
+        "cliExitCode": 1,
+        "stdout": "",
+        "stderr": "no server running on /tmp/c34-bfob6I/worker.sock\n"
+      }
+    ],
+    "fixtureRemoved": true
+  },
+  {
+    "path": "/tmp/c34-QmDRYg",
+    "mainConfirmedNoActiveProcesses": true,
+    "checkedAt": "2026-10-25T13:47:26.917860+00:00",
+    "tmuxChecks": [
+      {
+        "command": [
+          "tmux",
+          "-S",
+          "/tmp/c34-QmDRYg/main.sock",
+          "has-session"
+        ],
+        "cliExitCode": 1,
+        "stdout": "",
+        "stderr": "error connecting to /tmp/c34-QmDRYg/main.sock (No such file or directory)\n"
+      },
+      {
+        "command": [
+          "tmux",
+          "-S",
+          "/tmp/c34-QmDRYg/worker.sock",
+          "has-session"
+        ],
+        "cliExitCode": 1,
+        "stdout": "",
+        "stderr": "error connecting to /tmp/c34-QmDRYg/worker.sock (No such file or directory)\n"
+      }
+    ],
+    "fixtureRemoved": true
+  }
+]

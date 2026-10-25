@@ -1,0 +1,77 @@
+{
+  "assignment": "complete-raf-flow-contracts:3.4",
+  "status": "incomplete",
+  "base": "/tmp/c34-Rw37rM",
+  "root": "/tmp/c34-Rw37rM/r",
+  "home": "/tmp/c34-Rw37rM/h",
+  "state": "/tmp/c34-Rw37rM/h/.raf/state.sqlite",
+  "bugs": "/tmp/c34-Rw37rM/h/.raf/bugs.sqlite",
+  "output": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc34-background-runtime/live-1",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs",
+    "/srv/dev/work/orchestrator/raf-develop/evidence/cfc34-background-runtime/live-1"
+  ],
+  "versions": {
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "sqlite": "3.54.0",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6"
+  },
+  "scenarios": [],
+  "commands": [
+    {
+      "label": "setup-1",
+      "evidence": "setup-1.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-2",
+      "evidence": "setup-2.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "git-version",
+      "evidence": "git-version.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-version",
+      "evidence": "tmux-version.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "fixture-tls",
+      "evidence": "fixture-tls.json",
+      "cliExitCode": 0
+    }
+  ],
+  "cleanup": {
+    "remaining": [],
+    "complete": true,
+    "fixtureRemoved": true
+  },
+  "limitations": [
+    "Live tmux recipient is an owned stdin CLI receiver; no external AI provider credentials are copied or exercised.",
+    "Fixture service entry records origin and injects recovery/crash only for explicit fault scenarios; I6 uses default production ports without sharedDelivery injection."
+  ],
+  "sha": "9dd18529664c77fa25c517bae63e564b4ff50668",
+  "workspace": "?? evidence/cfc24-agent-adapters/\n?? evidence/cfc34-background-runtime/\n?? evidence/cfc941-workspace-routing/\n?? scripts/qa-background-runtime.mjs",
+  "configurationFingerprints": {
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "test-runs.json": "4ddc888e40abcf0ba054c2c227b9362439440673ffd0d245c6cc38b475ec48d3"
+  },
+  "setupError": {
+    "message": "Error: Incomplete stand precondition: fixture HTTPS upstream",
+    "stack": "Error: Incomplete stand precondition: fixture HTTPS upstream\n    at wait (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs:17:9)\n    at async file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs:146:21"
+  },
+  "received": [],
+  "finalSql": null,
+  "finalNotices": null
+}

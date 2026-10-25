@@ -1,0 +1,22 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "clone",
+    "--quiet",
+    "--no-hardlinks",
+    "--no-checkout",
+    "/srv/dev/c34h/raf-develop",
+    "/tmp/c34-C5Wvhh/r/raf-main"
+  ],
+  "cwd": "/tmp/c34-C5Wvhh/r",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 483.28794000000005,
+  "stdout": "",
+  "stderr": ""
+}

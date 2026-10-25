@@ -1,0 +1,28 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "add",
+    "--",
+    ".gitignore",
+    "BOOTSTRAP.md",
+    "README.md",
+    "bin",
+    "package-lock.json",
+    "package.json",
+    "scripts",
+    "src",
+    "test",
+    "bin/qa-service.ts"
+  ],
+  "cwd": "/tmp/c34-r98B7Y/r/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 151.16841399999976,
+  "stdout": "",
+  "stderr": ""
+}

@@ -1,0 +1,18 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "submodule",
+    "absorbgitdirs"
+  ],
+  "cwd": "/tmp/c34-r98B7Y/r",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 54.174543000000085,
+  "stdout": "",
+  "stderr": "Migrating git directory of 'raf-main' from\n'/tmp/c34-r98B7Y/r/raf-main/.git' to\n'/tmp/c34-r98B7Y/r/.git/modules/raf-main'\n"
+}

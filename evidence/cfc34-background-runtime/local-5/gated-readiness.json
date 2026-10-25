@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+    "service",
+    "start"
+  ],
+  "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "durationMs": 31405.399116,
+  "stdout": "",
+  "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Service startup failed\",\"details\":{\"command\":\"service start\",\"stage\":\"start\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"Service readiness deadline exhausted\\nfile:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367\\n    await Promise.race([options.handlers.recover({ serviceEpoch: record.token }), closed.then(() => { throw new Error('Service stopped during recovery'); })]);\\n                                                                                                            ^\\n\\nError: Service stopped during recovery\\n    at file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367:109\\n    at async runServiceHost (file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367:5)\\n    at async file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/bin/qa-service.ts:7:12\\n\\nNode.js v26.12.1\\n\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service start\"],\"retrySafe\":false},\"remediation\":[\"Inspect the current service owner, configured main generation and service.log before retrying.\",\"raf help service start\"]}\n"
+}

@@ -1,0 +1,75 @@
+{
+  "owner": {
+    "exitCode": 0,
+    "state": "ready",
+    "pid": 574,
+    "mainPath": "/tmp/c34-r98B7Y/r/.git/modules/raf-main/raf-hotfix/generations/472763b7-5f64-43f5-b92f-c162c0ef4bde/raf-main",
+    "stopReason": null,
+    "reasonKnown": false,
+    "serviceEpoch": "b1f9ac77-4369-427f-9f28-010c702822a5",
+    "resourceWaitReady": true
+  },
+  "replacement": {
+    "exitCode": 0,
+    "state": "ready",
+    "pid": 729,
+    "mainPath": "/tmp/c34-r98B7Y/r/.git/modules/raf-main/raf-hotfix/generations/472763b7-5f64-43f5-b92f-c162c0ef4bde/raf-main",
+    "stopReason": null,
+    "reasonKnown": false,
+    "serviceEpoch": "89f4d487-37ae-4678-a848-767920b0c4e4",
+    "resourceWaitReady": true
+  },
+  "before": [
+    {
+      "singleton": 1,
+      "epoch": "b1f9ac77-4369-427f-9f28-010c702822a5",
+      "grant_json": "{\"requestId\":\"cadc4503-daba-44ab-9957-1841bdcd0332\",\"serviceEpoch\":\"2f561308-e4fb-4d00-884c-ddc1eb2ebadf\",\"grantedAt\":1792936059882,\"bootIdentity\":\"05edcea976d34e69b22f660519c11f6f/b1029120-f5ec-44e5-9a19-868ab046f59c\",\"monotonicAt\":2478.739032}"
+    }
+  ],
+  "abandoned": [
+    {
+      "singleton": 1,
+      "epoch": "b1f9ac77-4369-427f-9f28-010c702822a5",
+      "grant_json": "{\"requestId\":\"cadc4503-daba-44ab-9957-1841bdcd0332\",\"serviceEpoch\":\"2f561308-e4fb-4d00-884c-ddc1eb2ebadf\",\"grantedAt\":1792936059882,\"bootIdentity\":\"05edcea976d34e69b22f660519c11f6f/b1029120-f5ec-44e5-9a19-868ab046f59c\",\"monotonicAt\":2478.739032}"
+    }
+  ],
+  "result": {
+    "cliExitCode": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"resource_wait_failed\",\"details\":{\"command\":\"resource wait\",\"stage\":\"resource wait\",\"source\":\"resource-wait\",\"sourceCode\":1,\"reason\":\"Service connection lost before confirmed permit\",\"received\":{\"requestId\":\"dc8024c7-efd2-4a91-8f30-623e6d8a6197\",\"serviceEpoch\":\"b1f9ac77-4369-427f-9f28-010c702822a5\"},\"expected\":\"matching committed permit\",\"found\":null,\"completed\":[\"enqueue\"],\"pending\":[\"confirmed resource permit\"],\"retrySafe\":false},\"remediation\":[\"Correct the reported service, identity or resource problem, then start a new resource wait.\",\"raf help resource wait\"]}\n",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/c34-r98B7Y/r/raf-main/bin/raf.ts",
+      "resource",
+      "wait",
+      "--level",
+      "normal"
+    ]
+  },
+  "pendingFds": [
+    "/dev/null",
+    "socket:[270854374]",
+    "pipe:[270854378]",
+    "pipe:[270854378]",
+    "anon_inode:[eventfd]",
+    "anon_inode:[eventpoll]",
+    "pipe:[270850605]",
+    "pipe:[270850605]",
+    "anon_inode:[eventfd]",
+    "/dev/null",
+    "/tmp/c34-r98B7Y/h/.raf/state.sqlite",
+    "/tmp/c34-r98B7Y/h/.raf/state.sqlite-wal",
+    "socket:[270854376]",
+    "/tmp/c34-r98B7Y/h/.raf/state.sqlite-shm",
+    "socket:[270852780]",
+    "anon_inode:[eventpoll]",
+    "pipe:[270850603]",
+    "pipe:[270850603]",
+    "pipe:[270850604]",
+    "pipe:[270850604]",
+    "anon_inode:[eventfd]",
+    "anon_inode:[eventpoll]"
+  ],
+  "noRevive": true
+}

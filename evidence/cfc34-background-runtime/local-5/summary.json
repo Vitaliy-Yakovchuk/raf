@@ -1,0 +1,483 @@
+{
+  "assignment": "complete-raf-flow-contracts:3.4",
+  "status": "incomplete",
+  "base": "/tmp/c34-qjPq8r",
+  "root": "/tmp/c34-qjPq8r/r",
+  "home": "/tmp/c34-qjPq8r/h",
+  "state": "/tmp/c34-qjPq8r/h/.raf/state.sqlite",
+  "bugs": "/tmp/c34-qjPq8r/h/.raf/bugs.sqlite",
+  "output": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc34-background-runtime/local-5",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs",
+    "evidence/cfc34-background-runtime/local-5",
+    "--no-tcp"
+  ],
+  "versions": {
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "sqlite": "3.54.0",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6"
+  },
+  "scenarios": [
+    {
+      "id": "I1",
+      "status": "passed",
+      "details": {
+        "pid": 929,
+        "epoch": "df178d4b-9eb6-4c36-b3bd-2680a7d41ce3",
+        "mainPath": "/tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main",
+        "evidence": "I1-origin.json",
+        "logicalMainAdvancePreservedOwner": true
+      }
+    },
+    {
+      "id": "I3",
+      "status": "passed",
+      "details": {
+        "evidence": "I3-state.json",
+        "pidExited": 929
+      }
+    },
+    {
+      "id": "I4",
+      "status": "passed",
+      "details": {
+        "evidence": "I4-diagnostics.json"
+      }
+    },
+    {
+      "id": "I7",
+      "status": "passed",
+      "details": {
+        "evidence": "I7-messages.json",
+        "verifiedOrdinaryAgent": "cfc34-worker",
+        "systemPassed": true
+      }
+    },
+    {
+      "id": "I5",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: {\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"resource_unknown\",\"details\":{\"command\":\"resource wait\",\"stage\":\"resource wait\",\"source\":\"resource-wait\",\"sourceCode\":1,\"reason\":\"Existing reservation has no resource bundle or machine identity\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"confirmed resource permit\"],\"retrySafe\":false},\"remediation\":[\"Correct the reported service, identity or resource problem, then start a new resource wait.\",\"raf help resource wait\"]}\n\n\n1 !== 0\n",
+      "stack": "AssertionError [ERR_ASSERTION]: {\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"resource_unknown\",\"details\":{\"command\":\"resource wait\",\"stage\":\"resource wait\",\"source\":\"resource-wait\",\"sourceCode\":1,\"reason\":\"Existing reservation has no resource bundle or machine identity\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"confirmed resource permit\"],\"retrySafe\":false},\"remediation\":[\"Correct the reported service, identity or resource problem, then start a new resource wait.\",\"raf help resource wait\"]}\n\n\n1 !== 0\n\n    at must (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs:118:128)\n    at file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs:244:21\n    at scenario (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs:125:157)\n    at file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs:242:11"
+    },
+    {
+      "id": "I2",
+      "status": "passed",
+      "details": {
+        "evidence": "I2-faults.json",
+        "foreignOwnerPreserved": true,
+        "staleEndpointPreserved": true
+      }
+    }
+  ],
+  "commands": [
+    {
+      "label": "setup-1",
+      "evidence": "setup-1.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-2",
+      "evidence": "setup-2.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "git-version",
+      "evidence": "git-version.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-version",
+      "evidence": "tmux-version.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-3",
+      "evidence": "setup-3.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-4",
+      "evidence": "setup-4.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "build",
+      "evidence": "build.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-5",
+      "evidence": "setup-5.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-6",
+      "evidence": "setup-6.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-7",
+      "evidence": "setup-7.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-8",
+      "evidence": "setup-8.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-9",
+      "evidence": "setup-9.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-10",
+      "evidence": "setup-10.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-11",
+      "evidence": "setup-11.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-12",
+      "evidence": "setup-12.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-13",
+      "evidence": "setup-13.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-14",
+      "evidence": "setup-14.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "prepare-production-store",
+      "evidence": "prepare-production-store.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-main-start",
+      "evidence": "tmux-main-start.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-worker-start",
+      "evidence": "tmux-worker-start.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "worker-pane",
+      "evidence": "worker-pane.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "worker-identity",
+      "evidence": "worker-identity.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "seed-worker",
+      "evidence": "seed-worker.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "fresh-status",
+      "evidence": "fresh-status.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-start-18",
+      "evidence": "service-start-18.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-19",
+      "evidence": "setup-19.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-start-20",
+      "evidence": "service-start-20.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "add-reminder",
+      "evidence": "add-reminder.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-stop-22",
+      "evidence": "service-stop-22.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-stop-23",
+      "evidence": "service-stop-23.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "status-after-stop",
+      "evidence": "status-after-stop.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-start-24",
+      "evidence": "service-start-24.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "known-crash-status",
+      "evidence": "known-crash-status.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-stop-25",
+      "evidence": "service-stop-25.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-start-26",
+      "evidence": "service-start-26.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "unknown-crash-status",
+      "evidence": "unknown-crash-status.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-stop-27",
+      "evidence": "service-stop-27.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "invalid-record-status",
+      "evidence": "invalid-record-status.json",
+      "cliExitCode": 1
+    },
+    {
+      "label": "service-stop-28",
+      "evidence": "service-stop-28.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "system-no-service",
+      "evidence": "system-no-service.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "literal-main-prefix",
+      "evidence": "literal-main-prefix.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-start-31",
+      "evidence": "service-start-31.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "grant-before-restart",
+      "evidence": "grant-before-restart.json",
+      "cliExitCode": 1
+    },
+    {
+      "label": "service-stop-32",
+      "evidence": "service-stop-32.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "missing-entry",
+      "evidence": "missing-entry.json",
+      "cliExitCode": 1
+    },
+    {
+      "label": "recovery-failure",
+      "evidence": "recovery-failure.json",
+      "cliExitCode": 1
+    },
+    {
+      "label": "gated-readiness",
+      "evidence": "gated-readiness.json",
+      "cliExitCode": 1
+    },
+    {
+      "label": "service-start-33",
+      "evidence": "service-start-33.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-stop-34",
+      "evidence": "service-stop-34.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "missing-main",
+      "evidence": "missing-main.json",
+      "cliExitCode": 1
+    },
+    {
+      "label": "stale-endpoint",
+      "evidence": "stale-endpoint.json",
+      "cliExitCode": 1
+    },
+    {
+      "label": "unverifiable-owner",
+      "evidence": "unverifiable-owner.json",
+      "cliExitCode": 1
+    },
+    {
+      "label": "unverifiable-owner-resource",
+      "evidence": "unverifiable-owner-resource.json",
+      "cliExitCode": 1
+    },
+    {
+      "label": "unverifiable-owner-stop",
+      "evidence": "unverifiable-owner-stop.json",
+      "cliExitCode": 1
+    },
+    {
+      "label": "service-start-35",
+      "evidence": "service-start-35.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-stop-36",
+      "evidence": "service-stop-36.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "service-stop-37",
+      "evidence": "service-stop-37.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-cleanup-38",
+      "evidence": "tmux-cleanup-38.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-cleanup-39",
+      "evidence": "tmux-cleanup-39.json",
+      "cliExitCode": 0
+    }
+  ],
+  "cleanup": {
+    "remaining": [],
+    "complete": true,
+    "fixtureRemoved": true
+  },
+  "limitations": [
+    "Live tmux recipient is an owned stdin CLI receiver; no external AI provider credentials are copied or exercised.",
+    "Fixture service entry records origin and injects recovery/crash only for explicit fault scenarios; I6 uses default production ports without sharedDelivery injection.",
+    "I6 excluded: sandbox TCP listen returns EACCES; no fixture credential installed, bug sync does not contact upstream."
+  ],
+  "selection": [
+    "I1",
+    "I2",
+    "I3",
+    "I4",
+    "I5",
+    "I7"
+  ],
+  "sha": "42de488e1195fec384a02f87b757c4f411ffb83d",
+  "workspace": "M src/production-runtime.ts\n M test/agent-adapters-contract.test.ts\n?? evidence/cfc24-agent-adapters/\n?? evidence/cfc34-background-runtime/\n?? scripts/qa-agent-message.mjs\n?? scripts/qa-agent-startup.mjs\n?? scripts/qa-background-runtime.mjs\n?? src/message-delivery.ts",
+  "configurationFingerprints": {
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "test-runs.json": "f29fb10d5f6aa147d655e106d714e999439c3190e17bf784f05f4a3e938cbcf4"
+  },
+  "fixtureCommit": "00038d4924b7975edb05bf0afc789d77e62e0dd4",
+  "fixtureConfigurationFingerprints": {
+    "raf.json": "faad1b87cd05f7f3ab2e1a3aadd7bb97ee6ba75cffe3c3534fe5d123be0dca50",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+  },
+  "received": [
+    {
+      "text": "[raf] CFC34 system without service $(touch forbidden) `false`",
+      "pid": 675
+    },
+    {
+      "text": "[cfc34-worker] [raf] [main] CFC34 literal prefix",
+      "pid": 675
+    }
+  ],
+  "finalSql": {
+    "sessions": [
+      {
+        "run_id": "b53b7ef2-6db3-43d3-ba9f-643e0db86ef9",
+        "address_id": "main",
+        "state": "running",
+        "finished_at": null,
+        "payload": "{\"runId\":\"b53b7ef2-6db3-43d3-ba9f-643e0db86ef9\",\"addressId\":\"main\",\"revision\":2,\"state\":\"running\",\"activity\":{\"type\":\"main\",\"project\":\"orchestrator\",\"features\":[],\"phase\":\"main\",\"cwd\":\"/tmp/c34-qjPq8r/r/raf-main\"},\"process\":{\"pid\":675,\"startedAt\":\"2026-10-25T13:37:11.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-main\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs pane /tmp/c34-qjPq8r/pane.json\",\"tmuxSocket\":\"/tmp/c34-qjPq8r/main.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}},\"observation\":{\"state\":\"alive\",\"observedAt\":\"2026-10-25T13:37:55.231Z\",\"identity\":{\"pid\":675,\"startedAt\":\"2026-10-25T13:37:11.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-main\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs pane /tmp/c34-qjPq8r/pane.json\",\"tmuxSocket\":\"/tmp/c34-qjPq8r/main.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}}}}"
+      },
+      {
+        "run_id": "df60d3ee-62f1-4ca8-a095-c0fb83dce731",
+        "address_id": "cfc34-worker",
+        "state": "running",
+        "finished_at": null,
+        "payload": "{\"runId\":\"df60d3ee-62f1-4ca8-a095-c0fb83dce731\",\"addressId\":\"cfc34-worker\",\"revision\":1,\"state\":\"running\",\"process\":{\"pid\":753,\"startedAt\":\"2026-10-25T13:37:24.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-worker\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs pane /tmp/c34-qjPq8r/worker.json\",\"tmuxSocket\":\"/tmp/c34-qjPq8r/worker.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"runId\":\"df60d3ee-62f1-4ca8-a095-c0fb83dce731\"}},\"activity\":{\"type\":\"agent\",\"project\":\"raf\",\"features\":[],\"phase\":\"qa\",\"cwd\":\"/tmp/c34-qjPq8r/r/raf-main\"},\"observation\":{\"state\":\"alive\",\"observedAt\":\"2026-10-25T13:37:55.085Z\",\"identity\":{\"pid\":753,\"startedAt\":\"2026-10-25T13:37:24.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-worker\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs pane /tmp/c34-qjPq8r/worker.json\",\"tmuxSocket\":\"/tmp/c34-qjPq8r/worker.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"runId\":\"df60d3ee-62f1-4ca8-a095-c0fb83dce731\"}}}}"
+      }
+    ],
+    "reminders": [
+      {
+        "id": "279d4173-a163-40d9-84ba-c09938720985",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": "{\"id\":\"279d4173-a163-40d9-84ba-c09938720985\",\"createdFor\":\"main\",\"assignedTo\":\"main\",\"text\":\"CFC34 preserved reminder\",\"at\":\"2099-01-01T00:00:00Z\",\"binding\":null,\"state\":\"pending\",\"closedAt\":null,\"closeReason\":null}"
+      }
+    ],
+    "admission_reservations": [
+      {
+        "run_id": "df60d3ee-62f1-4ca8-a095-c0fb83dce731",
+        "payload": "{\"runId\":\"df60d3ee-62f1-4ca8-a095-c0fb83dce731\",\"resource\":\"qa-fixture\",\"amount\":1}"
+      }
+    ],
+    "task_reservation_runs": [
+      {
+        "run_id": "df60d3ee-62f1-4ca8-a095-c0fb83dce731",
+        "address_id": "cfc34-worker",
+        "fence": "owned-fixture",
+        "revision": 0,
+        "machine_id": "05edcea976d34e69b22f660519c11f6f",
+        "boot_id": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "stage": "running",
+        "starter": "{\"pid\":753,\"startedAt\":\"2026-10-25T13:37:24.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-worker\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs pane /tmp/c34-qjPq8r/worker.json\",\"tmuxSocket\":\"/tmp/c34-qjPq8r/worker.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"runId\":\"df60d3ee-62f1-4ca8-a095-c0fb83dce731\"}}",
+        "wrapper": null,
+        "agent": "{\"pid\":753,\"startedAt\":\"2026-10-25T13:37:24.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-worker\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs pane /tmp/c34-qjPq8r/worker.json\",\"tmuxSocket\":\"/tmp/c34-qjPq8r/worker.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"runId\":\"df60d3ee-62f1-4ca8-a095-c0fb83dce731\"}}"
+      }
+    ],
+    "task_reservations": [
+      {
+        "project": "raf",
+        "change_instance": "owned-fixture-instance",
+        "task_id": "1",
+        "change_id": "owned-fixture",
+        "fingerprint": "owned-fixture-fingerprint",
+        "run_id": "df60d3ee-62f1-4ca8-a095-c0fb83dce731"
+      }
+    ],
+    "resource_wait_protocol_state": [
+      {
+        "singleton": 1,
+        "epoch": "8e736981-1ed8-43a1-9ab7-a5c5f12d2f05",
+        "grant_json": null
+      }
+    ]
+  },
+  "finalNotices": []
+}

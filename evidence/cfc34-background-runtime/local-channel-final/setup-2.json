@@ -1,0 +1,18 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "status",
+    "--porcelain"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-develop",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 62.022775,
+  "stdout": "?? evidence/cfc34-background-runtime/\n",
+  "stderr": ""
+}

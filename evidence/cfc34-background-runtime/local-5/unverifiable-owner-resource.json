@@ -1,0 +1,17 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+    "resource",
+    "wait",
+    "--level",
+    "normal"
+  ],
+  "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "durationMs": 1461.7992490000033,
+  "stdout": "",
+  "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"resource_wait_failed\",\"details\":{\"command\":\"resource wait\",\"stage\":\"resource wait\",\"source\":\"resource-wait\",\"sourceCode\":1,\"reason\":\"Resource wait service readiness failed: {\\\"exitCode\\\":1,\\\"reason\\\":\\\"Service startup failed\\\",\\\"details\\\":\\\"Recorded service owner identity is unavailable\\\",\\\"remediation\\\":\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\"}\",\"received\":\"Resource wait service readiness failed: {\\\"exitCode\\\":1,\\\"reason\\\":\\\"Service startup failed\\\",\\\"details\\\":\\\"Recorded service owner identity is unavailable\\\",\\\"remediation\\\":\\\"Inspect the current service owner, configured main generation and service.log before retrying.\\\"}\",\"expected\":\"matching committed permit\",\"found\":null,\"completed\":[],\"pending\":[\"confirmed resource permit\"],\"retrySafe\":false},\"remediation\":[\"Correct the reported service, identity or resource problem, then start a new resource wait.\",\"raf help resource wait\"]}\n"
+}

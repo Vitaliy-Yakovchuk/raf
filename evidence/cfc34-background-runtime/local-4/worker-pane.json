@@ -1,0 +1,19 @@
+{
+  "command": [
+    "tmux",
+    "-S",
+    "/tmp/c34-bfob6I/worker.sock",
+    "display-message",
+    "-p",
+    "-t",
+    "qa-worker:0.0",
+    "#{pane_id}"
+  ],
+  "cwd": "/tmp/c34-bfob6I/r",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 6.621506999999838,
+  "stdout": "%0\n",
+  "stderr": ""
+}

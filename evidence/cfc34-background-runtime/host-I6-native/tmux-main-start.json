@@ -1,0 +1,28 @@
+{
+  "command": [
+    "tmux",
+    "-S",
+    "/tmp/c34-C5Wvhh/main.sock",
+    "-f",
+    "/dev/null",
+    "new-session",
+    "-d",
+    "-s",
+    "qa-main",
+    "-x",
+    "160",
+    "-y",
+    "40",
+    "/opt/dev/node/bin/node",
+    "/srv/dev/c34h/raf-develop/scripts/qa-background-runtime.mjs",
+    "pane",
+    "/tmp/c34-C5Wvhh/pane.json"
+  ],
+  "cwd": "/tmp/c34-C5Wvhh/r",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 12.263756999998805,
+  "stdout": "",
+  "stderr": ""
+}

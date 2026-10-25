@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs",
+    "state",
+    "/tmp/c34-bfob6I/input-15.json"
+  ],
+  "cwd": "/tmp/c34-bfob6I/r",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 201.50596099999893,
+  "stdout": "{\"pid\":286,\"startedAt\":\"2026-10-25T13:35:56.000Z\",\"runner\":\"main\",\"runnerSessionId\":\"%0\",\"tmuxSession\":\"qa-worker\",\"evidence\":{\"command\":\"/opt/dev/node/bin/node /srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs pane /tmp/c34-bfob6I/worker.json\",\"tmuxSocket\":\"/tmp/c34-bfob6I/worker.sock\",\"tmuxPane\":\"%0\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"runId\":\"c1deb9a2-632b-4e28-9852-edbb5b6a037e\"}}",
+  "stderr": ""
+}

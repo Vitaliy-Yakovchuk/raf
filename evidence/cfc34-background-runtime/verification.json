@@ -1,0 +1,1036 @@
+{
+  "assignment": "complete-raf-flow-contracts:3.4",
+  "outcome": "passed-on-isolated-live-stand",
+  "runs": [
+    {
+      "directory": "local-5",
+      "summary": "local-5/summary.json",
+      "sha": "42de488e1195fec384a02f87b757c4f411ffb83d",
+      "workspace": "M src/production-runtime.ts\n M test/agent-adapters-contract.test.ts\n?? evidence/cfc24-agent-adapters/\n?? evidence/cfc34-background-runtime/\n?? scripts/qa-agent-message.mjs\n?? scripts/qa-agent-startup.mjs\n?? scripts/qa-background-runtime.mjs\n?? src/message-delivery.ts",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs",
+        "evidence/cfc34-background-runtime/local-5",
+        "--no-tcp"
+      ],
+      "selection": [
+        "I1",
+        "I2",
+        "I3",
+        "I4",
+        "I5",
+        "I7"
+      ],
+      "suiteOutcome": "incomplete",
+      "acceptedScenarios": [
+        "I1",
+        "I2",
+        "I3",
+        "I4"
+      ],
+      "cleanup": {
+        "remaining": [],
+        "complete": true,
+        "fixtureRemoved": true
+      },
+      "versions": {
+        "node": "v26.12.1",
+        "os": "7.0.0-30-generic",
+        "platform": "linux",
+        "sqlite": "3.54.0",
+        "git": "git version 2.53.0",
+        "tmux": "tmux 3.6"
+      },
+      "configurationFingerprints": {
+        "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+        "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+        "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+        "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+        "test-runs.json": "f29fb10d5f6aa147d655e106d714e999439c3190e17bf784f05f4a3e938cbcf4"
+      },
+      "fixtureCommit": "00038d4924b7975edb05bf0afc789d77e62e0dd4",
+      "fixtureConfigurationFingerprints": {
+        "raf.json": "faad1b87cd05f7f3ab2e1a3aadd7bb97ee6ba75cffe3c3534fe5d123be0dca50",
+        "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      },
+      "commandEvidence": [
+        {
+          "file": "local-5/setup-1.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-2.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/git-version.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/tmux-version.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-3.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-4.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/build.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-5.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-6.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-7.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-8.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-9.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-10.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-11.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-12.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-13.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-14.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/prepare-production-store.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/tmux-main-start.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/tmux-worker-start.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/worker-pane.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/worker-identity.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/seed-worker.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/fresh-status.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/service-start-18.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/setup-19.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/service-start-20.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/add-reminder.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/service-stop-22.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/service-stop-23.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/status-after-stop.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/service-start-24.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/known-crash-status.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/service-stop-25.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/service-start-26.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/unknown-crash-status.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/service-stop-27.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/invalid-record-status.json",
+          "cliExitCode": 1
+        },
+        {
+          "file": "local-5/service-stop-28.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/system-no-service.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/literal-main-prefix.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/service-start-31.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/grant-before-restart.json",
+          "cliExitCode": 1
+        },
+        {
+          "file": "local-5/service-stop-32.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/missing-entry.json",
+          "cliExitCode": 1
+        },
+        {
+          "file": "local-5/recovery-failure.json",
+          "cliExitCode": 1
+        },
+        {
+          "file": "local-5/gated-readiness.json",
+          "cliExitCode": 1
+        },
+        {
+          "file": "local-5/service-start-33.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/service-stop-34.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/missing-main.json",
+          "cliExitCode": 1
+        },
+        {
+          "file": "local-5/stale-endpoint.json",
+          "cliExitCode": 1
+        },
+        {
+          "file": "local-5/unverifiable-owner.json",
+          "cliExitCode": 1
+        },
+        {
+          "file": "local-5/unverifiable-owner-resource.json",
+          "cliExitCode": 1
+        },
+        {
+          "file": "local-5/unverifiable-owner-stop.json",
+          "cliExitCode": 1
+        },
+        {
+          "file": "local-5/service-start-35.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/service-stop-36.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/service-stop-37.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/tmux-cleanup-38.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-5/tmux-cleanup-39.json",
+          "cliExitCode": 0
+        }
+      ]
+    },
+    {
+      "directory": "local-I5",
+      "summary": "local-I5/summary.json",
+      "sha": "d48824fd70a22877def1def26e6bb5c02b01a1c5",
+      "workspace": "M scripts/qa-background-runtime.mjs\n M src/production-runtime.ts\n M test/agent-adapters-contract.test.ts\n?? evidence/cfc24-agent-adapters/\n?? evidence/cfc34-background-runtime/\n?? scripts/qa-agent-message.mjs\n?? scripts/qa-agent-startup.mjs\n?? src/message-delivery.ts",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs",
+        "evidence/cfc34-background-runtime/local-I5",
+        "--no-tcp",
+        "--scenarios=I5"
+      ],
+      "selection": [
+        "I5"
+      ],
+      "suiteOutcome": "passed",
+      "acceptedScenarios": [
+        "I5"
+      ],
+      "cleanup": {
+        "remaining": [],
+        "complete": true,
+        "fixtureRemoved": true
+      },
+      "versions": {
+        "node": "v26.12.1",
+        "os": "7.0.0-30-generic",
+        "platform": "linux",
+        "sqlite": "3.54.0",
+        "git": "git version 2.53.0",
+        "tmux": "tmux 3.6"
+      },
+      "configurationFingerprints": {
+        "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+        "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+        "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+        "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+        "test-runs.json": "f29fb10d5f6aa147d655e106d714e999439c3190e17bf784f05f4a3e938cbcf4"
+      },
+      "fixtureCommit": "3c646b3351f809f071e7aede6a261263fc22ac9f",
+      "fixtureConfigurationFingerprints": {
+        "raf.json": "faad1b87cd05f7f3ab2e1a3aadd7bb97ee6ba75cffe3c3534fe5d123be0dca50",
+        "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      },
+      "commandEvidence": [
+        {
+          "file": "local-I5/setup-1.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-2.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/git-version.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/tmux-version.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-3.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-4.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/build.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-5.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-6.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-7.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-8.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-9.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-10.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-11.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-12.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-13.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/setup-14.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/prepare-production-store.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/tmux-main-start.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/tmux-worker-start.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/worker-pane.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/worker-identity.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/seed-worker.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/service-start-18.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/grant-before-restart.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/service-stop-19.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/service-start-20.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/grant-after-restart.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/service-stop-21.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/service-stop-22.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/tmux-cleanup-23.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-I5/tmux-cleanup-24.json",
+          "cliExitCode": 0
+        }
+      ]
+    },
+    {
+      "directory": "local-native",
+      "summary": "local-native/summary.json",
+      "sha": "d483903dc25da0c9e3d54efe55155331c8b73302",
+      "workspace": "M scripts/qa-background-runtime.mjs\n?? evidence/cfc34-background-runtime/",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs",
+        "evidence/cfc34-background-runtime/local-native",
+        "--no-tcp",
+        "--scenarios=I7,I5-channel"
+      ],
+      "selection": [
+        "I7",
+        "I5-channel"
+      ],
+      "suiteOutcome": "incomplete",
+      "acceptedScenarios": [
+        "I7"
+      ],
+      "cleanup": {
+        "remaining": [],
+        "complete": true,
+        "fixtureRemoved": true
+      },
+      "versions": {
+        "node": "v26.12.1",
+        "os": "7.0.0-30-generic",
+        "platform": "linux",
+        "sqlite": "3.54.0",
+        "git": "git version 2.53.0",
+        "tmux": "tmux 3.6"
+      },
+      "configurationFingerprints": {
+        "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+        "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+        "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+        "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+        "test-runs.json": "f29fb10d5f6aa147d655e106d714e999439c3190e17bf784f05f4a3e938cbcf4"
+      },
+      "fixtureCommit": "8a9eaf5c5b78b97dd017ca90094a6c28702b612f",
+      "fixtureConfigurationFingerprints": {
+        "raf.json": "faad1b87cd05f7f3ab2e1a3aadd7bb97ee6ba75cffe3c3534fe5d123be0dca50",
+        "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      },
+      "commandEvidence": [
+        {
+          "file": "local-native/setup-1.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-2.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/git-version.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/tmux-version.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-3.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-4.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/build.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-5.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-6.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-7.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-8.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-9.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-10.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-11.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-12.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-13.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/setup-14.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/prepare-production-store.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/tmux-main-start.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/tmux-worker-start.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/worker-pane.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/worker-identity.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/seed-worker.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/service-stop-18.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/system-no-service.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/literal-main-prefix.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/service-start-21.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/service-stop-22.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/tmux-cleanup-23.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-native/tmux-cleanup-24.json",
+          "cliExitCode": 0
+        }
+      ]
+    },
+    {
+      "directory": "local-channel-final",
+      "summary": "local-channel-final/summary.json",
+      "sha": "4cdc8f956689268faa3f4a4bfad2ffa9cc215f5d",
+      "workspace": "?? evidence/cfc34-background-runtime/",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs",
+        "evidence/cfc34-background-runtime/local-channel-final",
+        "--no-tcp",
+        "--scenarios=I5-channel"
+      ],
+      "selection": [
+        "I5-channel"
+      ],
+      "suiteOutcome": "passed",
+      "acceptedScenarios": [
+        "I5-channel"
+      ],
+      "cleanup": {
+        "remaining": [],
+        "complete": true,
+        "fixtureRemoved": true
+      },
+      "versions": {
+        "node": "v26.12.1",
+        "os": "7.0.0-30-generic",
+        "platform": "linux",
+        "sqlite": "3.54.0",
+        "git": "git version 2.53.0",
+        "tmux": "tmux 3.6"
+      },
+      "configurationFingerprints": {
+        "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+        "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+        "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+        "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+        "test-runs.json": "f29fb10d5f6aa147d655e106d714e999439c3190e17bf784f05f4a3e938cbcf4"
+      },
+      "fixtureCommit": "d9b09bc540235828c2ce2d56fdb3c878bb7031f4",
+      "fixtureConfigurationFingerprints": {
+        "raf.json": "faad1b87cd05f7f3ab2e1a3aadd7bb97ee6ba75cffe3c3534fe5d123be0dca50",
+        "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      },
+      "commandEvidence": [
+        {
+          "file": "local-channel-final/setup-1.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-2.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/git-version.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/tmux-version.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-3.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/source-archive.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/source-extract.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-4.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-5.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/build.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-6.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-7.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-8.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-9.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-10.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-11.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-12.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-13.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-14.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/setup-15.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/prepare-production-store.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/tmux-main-start.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/tmux-worker-start.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/worker-pane.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/worker-identity.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/seed-worker.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/service-start-19.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/channel-initial-grant.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/service-stop-20.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/service-start-21.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/service-start-22.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/service-stop-23.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/service-stop-24.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/tmux-cleanup-25.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "local-channel-final/tmux-cleanup-26.json",
+          "cliExitCode": 0
+        }
+      ]
+    },
+    {
+      "directory": "host-I6-lean",
+      "summary": "host-I6-lean/summary.json",
+      "sha": "6955590627bd81584c690f8411edb1a326305151",
+      "workspace": "?? evidence/cfc34-background-runtime/",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/c34h/raf-develop/scripts/qa-background-runtime.mjs",
+        "evidence/cfc34-background-runtime/host-I6-lean",
+        "--only-I6"
+      ],
+      "selection": [
+        "I6"
+      ],
+      "suiteOutcome": "passed",
+      "acceptedScenarios": [
+        "I6"
+      ],
+      "cleanup": {
+        "remaining": [],
+        "complete": true,
+        "fixtureRemoved": true
+      },
+      "versions": {
+        "node": "v26.12.1",
+        "os": "7.0.0-30-generic",
+        "platform": "linux",
+        "sqlite": "3.54.0",
+        "git": "git version 2.53.0",
+        "tmux": "tmux 3.6"
+      },
+      "configurationFingerprints": {
+        "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+        "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+        "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+        "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+        "test-runs.json": "f29fb10d5f6aa147d655e106d714e999439c3190e17bf784f05f4a3e938cbcf4"
+      },
+      "fixtureCommit": "3d49a22a76b25d0a0b8619452a1f470c2f1fbd16",
+      "fixtureConfigurationFingerprints": {
+        "raf.json": "693f8ae735a1635fd816b9f0354f1a29d8cc6c2d194a980d3c8a43c336c03760",
+        "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      },
+      "commandEvidence": [
+        {
+          "file": "host-I6-lean/setup-1.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-2.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/git-version.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/tmux-version.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/fixture-tls.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-3.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/source-archive.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/source-extract.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-4.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-5.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/build.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-6.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-7.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-8.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-9.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-10.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-11.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-12.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-13.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-14.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/setup-15.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/prepare-production-store.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/seed-fixture-secret.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/tmux-main-start.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/tmux-worker-start.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/worker-pane.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/worker-identity.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/seed-worker.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/service-start-20.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/service-stop-21.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/service-stop-22.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/tmux-cleanup-23.json",
+          "cliExitCode": 0
+        },
+        {
+          "file": "host-I6-lean/tmux-cleanup-24.json",
+          "cliExitCode": 0
+        }
+      ]
+    }
+  ],
+  "evidenceIntegrity": {
+    "checkedCommandRecords": 189,
+    "rawStdoutStderrMatch": true,
+    "comparison": "UTF-8 bytes; CR progress output preserved without newline normalization",
+    "scenarioReferencesExist": true,
+    "allAcceptedRunsCleanupComplete": true
+  },
+  "unitRunner": {
+    "attempted": false,
+    "testRunResult": null,
+    "runId": null,
+    "group": "complete-raf-flow-contracts/raf-background-runtime",
+    "groupState": "not inspected; not modified",
+    "knownRed": "not inspected",
+    "unexecuted": "no unit run requested",
+    "unknown": "no unit outcome claimed",
+    "nextAction": "none required for conditional unit verification; raf accepts live item"
+  },
+  "integrationRunner": {
+    "attempted": false,
+    "reason": "Main instructed own isolated live stand; no authorized integration profile in current launch/working raf"
+  },
+  "limits": [
+    "Controlled live tmux stdin receiver with configured native screen; no real AI runner acceptance/startup claim",
+    "Initial host EDQUOT raw logs unavailable; quoted main message retained; not a pass",
+    "Early incomplete suites retain their original outcome; only named complete scenarios accepted"
+  ]
+}

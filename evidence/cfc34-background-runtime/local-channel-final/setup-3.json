@@ -1,0 +1,19 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "ls-tree",
+    "--name-only",
+    "4cdc8f956689268faa3f4a4bfad2ffa9cc215f5d"
+  ],
+  "cwd": "/srv/dev/work/orchestrator/raf-develop",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 4.70956799999999,
+  "stdout": ".gitignore\nBOOTSTRAP.md\nREADME.md\nbin\nevidence\npackage-lock.json\npackage.json\nscripts\nsrc\ntest\n",
+  "stderr": ""
+}

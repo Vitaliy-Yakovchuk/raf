@@ -1,0 +1,133 @@
+{
+  "assignment": "complete-raf-flow-contracts:3.4",
+  "status": "incomplete",
+  "base": "/tmp/c34-FefxeW",
+  "root": "/tmp/c34-FefxeW/r",
+  "home": "/tmp/c34-FefxeW/h",
+  "state": "/tmp/c34-FefxeW/h/.raf/state.sqlite",
+  "bugs": "/tmp/c34-FefxeW/h/.raf/bugs.sqlite",
+  "output": "/srv/dev/work/orchestrator/raf-develop/evidence/cfc34-background-runtime/local-3",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs",
+    "evidence/cfc34-background-runtime/local-3",
+    "--no-tcp"
+  ],
+  "versions": {
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "sqlite": "3.54.0",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6"
+  },
+  "scenarios": [],
+  "commands": [
+    {
+      "label": "setup-1",
+      "evidence": "setup-1.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-2",
+      "evidence": "setup-2.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "git-version",
+      "evidence": "git-version.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "tmux-version",
+      "evidence": "tmux-version.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-3",
+      "evidence": "setup-3.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-4",
+      "evidence": "setup-4.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "build",
+      "evidence": "build.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-5",
+      "evidence": "setup-5.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-6",
+      "evidence": "setup-6.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-7",
+      "evidence": "setup-7.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-8",
+      "evidence": "setup-8.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-9",
+      "evidence": "setup-9.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-10",
+      "evidence": "setup-10.json",
+      "cliExitCode": 0
+    },
+    {
+      "label": "setup-11",
+      "evidence": "setup-11.json",
+      "cliExitCode": 255
+    }
+  ],
+  "cleanup": {
+    "remaining": [],
+    "complete": true,
+    "fixtureRemoved": true
+  },
+  "limitations": [
+    "Live tmux recipient is an owned stdin CLI receiver; no external AI provider credentials are copied or exercised.",
+    "Fixture service entry records origin and injects recovery/crash only for explicit fault scenarios; I6 uses default production ports without sharedDelivery injection.",
+    "I6 excluded: sandbox TCP listen returns EACCES; no fixture credential installed, bug sync does not contact upstream."
+  ],
+  "selection": [
+    "I1",
+    "I2",
+    "I3",
+    "I4",
+    "I5",
+    "I7"
+  ],
+  "sha": "42de488e1195fec384a02f87b757c4f411ffb83d",
+  "workspace": "M src/production-runtime.ts\n M test/agent-adapters-contract.test.ts\n?? evidence/cfc24-agent-adapters/\n?? evidence/cfc34-background-runtime/\n?? scripts/qa-agent-message.mjs\n?? scripts/qa-background-runtime.mjs\n?? src/message-delivery.ts",
+  "configurationFingerprints": {
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "models.json": "3d80c59820b700596b49948994fb41ce7cdfc2428a9cc2eed9c68d35fbf4637b",
+    "test-runs.json": "6a741ee0883e81a1521d1cbdad89e8f4672e52b2aed5dfe46db448aea1548dfd"
+  },
+  "fixtureCommit": "184becd5ed88cf73151e05e2eb32661dcf8c0ade",
+  "setupError": {
+    "message": "AssertionError [ERR_ASSERTION]: Preparing worktree (new branch 'develop')\nfatal: a branch named 'develop' already exists\n\n\n255 !== 0\n",
+    "stack": "AssertionError [ERR_ASSERTION]: Preparing worktree (new branch 'develop')\nfatal: a branch named 'develop' already exists\n\n\n255 !== 0\n\n    at git (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs:117:169)\n    at file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-background-runtime.mjs:162:5\n    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)\n    at async node:internal/modules/esm/loader:650:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:105:5)"
+  },
+  "received": [],
+  "finalSql": null,
+  "finalNotices": null
+}

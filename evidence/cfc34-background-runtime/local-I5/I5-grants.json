@@ -1,0 +1,52 @@
+{
+  "grant": {
+    "exitCode": 0,
+    "kind": "permit",
+    "permit": {
+      "requestId": "9ff74660-d5a1-49e4-a389-47ba7e2f6db7",
+      "serviceEpoch": "1575d09c-72d0-4ef8-9564-7aa8ff692a65",
+      "grantedAt": 1792935569212
+    },
+    "reservation": false
+  },
+  "next": {
+    "exitCode": 0,
+    "kind": "permit",
+    "permit": {
+      "requestId": "5407dd21-76e5-4b34-9a4d-f709b50151bc",
+      "serviceEpoch": "675dc5bf-2190-4b9b-8867-edd56b2176b9",
+      "grantedAt": 1792935588650
+    },
+    "reservation": false
+  },
+  "before": [
+    {
+      "singleton": 1,
+      "epoch": "1575d09c-72d0-4ef8-9564-7aa8ff692a65",
+      "grant_json": "{\"requestId\":\"9ff74660-d5a1-49e4-a389-47ba7e2f6db7\",\"serviceEpoch\":\"1575d09c-72d0-4ef8-9564-7aa8ff692a65\",\"grantedAt\":1792935569212,\"bootIdentity\":\"05edcea976d34e69b22f660519c11f6f/b1029120-f5ec-44e5-9a19-868ab046f59c\",\"monotonicAt\":2976.027903}"
+    }
+  ],
+  "after": [
+    {
+      "singleton": 1,
+      "epoch": "675dc5bf-2190-4b9b-8867-edd56b2176b9",
+      "grant_json": "{\"requestId\":\"5407dd21-76e5-4b34-9a4d-f709b50151bc\",\"serviceEpoch\":\"675dc5bf-2190-4b9b-8867-edd56b2176b9\",\"grantedAt\":1792935588650,\"bootIdentity\":\"05edcea976d34e69b22f660519c11f6f/b1029120-f5ec-44e5-9a19-868ab046f59c\",\"monotonicAt\":16269.38707}"
+    }
+  ],
+  "elapsed": 15141.21041,
+  "interval": 15000,
+  "abandoned": {
+    "cliExitCode": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"service_stopped\",\"details\":{\"command\":\"resource wait\",\"stage\":\"resource wait\",\"source\":\"resource-wait\",\"sourceCode\":1,\"reason\":\"Service stopped\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"confirmed resource permit\"],\"retrySafe\":false},\"remediation\":[\"Correct the reported service, identity or resource problem, then start a new resource wait.\",\"raf help resource wait\"]}\n",
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/c34-p1DlPs/r/raf-main/bin/raf.ts",
+      "resource",
+      "wait",
+      "--level",
+      "normal"
+    ]
+  }
+}

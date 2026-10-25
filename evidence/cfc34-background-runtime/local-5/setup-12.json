@@ -1,0 +1,22 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "worktree",
+    "add",
+    "-B",
+    "hotfix",
+    "/tmp/c34-qjPq8r/r/raf-hotfix",
+    "HEAD"
+  ],
+  "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 1510.256472000001,
+  "stdout": "HEAD is now at 00038d4 qa: controlled background runtime stand entry\n",
+  "stderr": "Preparing worktree (new branch 'hotfix')\nUpdating files:  80% (11929/14788)\rUpdating files:  81% (11979/14788)\rUpdating files:  82% (12127/14788)\rUpdating files:  83% (12275/14788)\rUpdating files:  84% (12422/14788)\rUpdating files:  85% (12570/14788)\rUpdating files:  86% (12718/14788)\rUpdating files:  87% (12866/14788)\rUpdating files:  88% (13014/14788)\rUpdating files:  89% (13162/14788)\rUpdating files:  90% (13310/14788)\rUpdating files:  91% (13458/14788)\rUpdating files:  92% (13605/14788)\rUpdating files:  93% (13753/14788)\rUpdating files:  94% (13901/14788)\rUpdating files:  95% (14049/14788)\rUpdating files:  96% (14197/14788)\rUpdating files:  97% (14345/14788)\rUpdating files:  98% (14493/14788)\rUpdating files:  99% (14641/14788)\rUpdating files: 100% (14788/14788)\rUpdating files: 100% (14788/14788), done.\n"
+}

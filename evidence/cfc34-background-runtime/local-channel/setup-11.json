@@ -1,0 +1,22 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "worktree",
+    "add",
+    "-B",
+    "develop",
+    "/tmp/c34-QmDRYg/r/raf-develop",
+    "HEAD"
+  ],
+  "cwd": "/tmp/c34-QmDRYg/r/raf-main",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 1130.2598010000002,
+  "stdout": "HEAD is now at 207acad qa: controlled background runtime stand entry\n",
+  "stderr": "Preparing worktree (resetting branch 'develop'; was at f78e737)\nUpdating files:  91% (13566/14851)\rUpdating files:  92% (13663/14851)\rUpdating files:  93% (13812/14851)\rUpdating files:  94% (13960/14851)\rUpdating files:  95% (14109/14851)\rUpdating files:  96% (14257/14851)\rUpdating files:  97% (14406/14851)\rUpdating files:  98% (14554/14851)\rUpdating files:  99% (14703/14851)\rUpdating files: 100% (14851/14851)\rUpdating files: 100% (14851/14851), done.\n"
+}

@@ -1,0 +1,20 @@
+file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/bin/qa-service.ts:7
+const host=await runServiceEntry(fault?{loadPorts:async(file,context)=>{const ports=await(await import(pathToFileURL(file).href)).createServicePorts(context);return {...ports,recover:async value=>{if(mode==='recovery-fail')throw Error('CFC34 recovery failure');await new Promise(resolve=>setTimeout(resolve,120000));await ports.recover(value);}};}}:undefined);
+                                                                                                                                                                                                                                     ^
+
+Error: CFC34 recovery failure
+    at Object.recover (file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/bin/qa-service.ts:7:230)
+    at runServiceHost (file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367:42)
+    at async file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/bin/qa-service.ts:7:12
+
+Node.js v26.12.1
+file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367
+    await Promise.race([options.handlers.recover({ serviceEpoch: record.token }), closed.then(() => { throw new Error('Service stopped during recovery'); })]);
+                                                                                                            ^
+
+Error: Service stopped during recovery
+    at file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367:109
+    at async runServiceHost (file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/src/background-runtime.ts:367:5)
+    at async file:///tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main/bin/qa-service.ts:7:12
+
+Node.js v26.12.1

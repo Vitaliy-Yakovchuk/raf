@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+    "service",
+    "status"
+  ],
+  "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "durationMs": 1176.8058420000016,
+  "stdout": "",
+  "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Cannot inspect service state\",\"details\":{\"command\":\"service status\",\"stage\":\"status\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"Expected property name or '}' in JSON at position 1 (line 1 column 2)\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service status\"],\"retrySafe\":false},\"remediation\":[\"Inspect the current service owner, configured main generation and service.log before retrying.\",\"raf help service status\"]}\n"
+}

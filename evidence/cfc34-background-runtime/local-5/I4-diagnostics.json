@@ -1,0 +1,46 @@
+{
+  "known": {
+    "exitCode": 0,
+    "state": "failed",
+    "pid": null,
+    "mainPath": "/tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main",
+    "stopReason": "Service process exited unexpectedly with code 17",
+    "reasonKnown": true
+  },
+  "unknown": {
+    "exitCode": 0,
+    "state": "failed",
+    "pid": null,
+    "mainPath": "/tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main",
+    "stopReason": null,
+    "reasonKnown": false
+  },
+  "record": {
+    "pid": 1519,
+    "identity": {
+      "pid": 1519,
+      "startedAt": "27814805",
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    },
+    "token": "a6109676-aed2-4b18-aba0-d42d29b194b4",
+    "mainPath": "/tmp/c34-qjPq8r/r/.git/modules/raf-main/raf-hotfix/generations/0c70b725-cc1c-482d-9195-c954109a51a3/raf-main",
+    "state": "ready",
+    "stopReason": null
+  },
+  "unreadable": {
+    "command": [
+      "/opt/dev/node/bin/node",
+      "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+      "service",
+      "status"
+    ],
+    "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+    "cliExitCode": 1,
+    "signal": null,
+    "error": null,
+    "durationMs": 1176.8058420000016,
+    "stdout": "",
+    "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Cannot inspect service state\",\"details\":{\"command\":\"service status\",\"stage\":\"status\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"Expected property name or '}' in JSON at position 1 (line 1 column 2)\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service status\"],\"retrySafe\":false},\"remediation\":[\"Inspect the current service owner, configured main generation and service.log before retrying.\",\"raf help service status\"]}\n"
+  }
+}

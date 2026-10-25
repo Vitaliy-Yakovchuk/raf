@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/c34-bfob6I/r/raf-main/bin/raf.ts",
+    "service",
+    "start"
+  ],
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdout": "",
+  "stderr": "{\"code\":\"PRODUCTION_ENTRY_FAILED\",\"message\":\"Production Git store refused: live reader has unknown protection; wait without terminating it\",\"details\":{\"command\":\"service start\",\"stage\":\"startup\",\"source\":\"production-entry\",\"sourceCode\":null,\"reason\":\"Production Git store refused: live reader has unknown protection; wait without terminating it\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[],\"retrySafe\":true},\"remediation\":[\"Перевірте конфігурацію та доступність потрібного компонента.\",\"raf help service start\"]}\n"
+}

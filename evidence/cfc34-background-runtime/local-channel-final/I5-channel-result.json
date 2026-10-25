@@ -1,0 +1,14 @@
+{
+  "cliExitCode": 1,
+  "signal": null,
+  "stdout": "",
+  "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"resource_wait_failed\",\"details\":{\"command\":\"resource wait\",\"stage\":\"resource wait\",\"source\":\"resource-wait\",\"sourceCode\":1,\"reason\":\"Service connection lost before confirmed permit\",\"received\":{\"requestId\":\"04ceb984-33fa-4f69-aaa0-0d93ba01bb9e\",\"serviceEpoch\":\"326be785-7a63-42fb-aa5f-33c7b9aa5bb3\"},\"expected\":\"matching committed permit\",\"found\":null,\"completed\":[\"enqueue\"],\"pending\":[\"confirmed resource permit\"],\"retrySafe\":false},\"remediation\":[\"Correct the reported service, identity or resource problem, then start a new resource wait.\",\"raf help resource wait\"]}\n",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/c34-d22P3T/r/raf-main/bin/raf.ts",
+    "resource",
+    "wait",
+    "--level",
+    "normal"
+  ]
+}

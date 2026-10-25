@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/tmp/c34-qjPq8r/r/raf-main/bin/raf.ts",
+    "service",
+    "start"
+  ],
+  "cwd": "/tmp/c34-qjPq8r/r/raf-main",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "durationMs": 1724.9188869999925,
+  "stdout": "",
+  "stderr": "{\"code\":\"SERVICE_OPERATION_FAILED\",\"message\":\"Service startup failed\",\"details\":{\"command\":\"service start\",\"stage\":\"start\",\"source\":\"background-runtime\",\"sourceCode\":1,\"reason\":\"Socket exists without verified dead service ownership\",\"received\":null,\"expected\":null,\"found\":null,\"completed\":[],\"pending\":[\"service start\"],\"retrySafe\":false},\"remediation\":[\"Inspect the current service owner, configured main generation and service.log before retrying.\",\"raf help service start\"]}\n"
+}

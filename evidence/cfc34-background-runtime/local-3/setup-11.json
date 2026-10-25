@@ -1,0 +1,22 @@
+{
+  "command": [
+    "git",
+    "-c",
+    "commit.gpgsign=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "worktree",
+    "add",
+    "-b",
+    "develop",
+    "/tmp/c34-FefxeW/r/raf-develop",
+    "HEAD"
+  ],
+  "cwd": "/tmp/c34-FefxeW/r/raf-main",
+  "cliExitCode": 255,
+  "signal": null,
+  "error": null,
+  "durationMs": 6.94443500000034,
+  "stdout": "",
+  "stderr": "Preparing worktree (new branch 'develop')\nfatal: a branch named 'develop' already exists\n"
+}

@@ -1,14 +1,24 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, existsSync, appendFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 type FixtureLifecycle = { after(action: () => void): void };
 type FixtureLocation = { root: string; home: string };
 type ProductionCli = typeof import('../src/production-entry.ts').runProductionCli;
 
-export async function prepareProductionQaFixture(t: FixtureLifecycle, location: FixtureLocation): Promise<ProductionCli> {
+export function copyProductionQaDependencies(codeRoot: string): void {
+  mkdirSync(join(codeRoot, 'node_modules'), { recursive: true });
+  cpSync(new URL('../node_modules/typescript', import.meta.url), join(codeRoot, 'node_modules/typescript'), { recursive: true, dereference: true });
+  const result = spawnSync('git', ['-C', codeRoot, 'rev-parse', '--path-format=absolute', '--git-path', 'info/exclude'], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const exclude = result.stdout.trim();
+  mkdirSync(dirname(exclude), { recursive: true });
+  if (!existsSync(exclude) || !readFileSync(exclude, 'utf8').split('\n').includes('/node_modules/')) appendFileSync(exclude, '\n/node_modules/\n');
+}
+
+export async function prepareProductionQaFixture(t: FixtureLifecycle, location: FixtureLocation, beforeLoad?: (codeRoot: string) => Promise<void>): Promise<ProductionCli> {
   const projects = JSON.parse(readFileSync(join(location.root, 'conf', 'projects.json'), 'utf8'));
   mkdirSync(join(location.root, projects.projects.raf.path), { recursive: true });
   for (const name of ['flow.json', 'test-runs.json']) {
@@ -37,6 +47,7 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
   for (const name of ['src', 'bin', 'scripts', 'package.json']) {
     cpSync(new URL(`../${name}`, import.meta.url), join(codeRoot, name), { recursive: true });
   }
+  copyProductionQaDependencies(codeRoot);
   const { ensureProductionMainStore } = await import('../src/main-production-store.ts');
   await ensureProductionMainStore({ root: location.root });
 
@@ -54,6 +65,7 @@ export async function prepareProductionQaFixture(t: FixtureLifecycle, location: 
   delete process.env.TMUX;
   delete process.env.TMUX_PANE;
 
+  await beforeLoad?.(codeRoot);
   const entry: typeof import('../src/production-entry.ts') = await import(pathToFileURL(join(codeRoot, 'src', 'production-entry.ts')).href);
   return entry.runProductionCli;
 }

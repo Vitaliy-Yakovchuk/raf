@@ -19,6 +19,10 @@ export async function drainStandServiceReader(options) {
   return { pid, start, result };
 }
 
+export function normalizeStandReflog(directory, git) {
+  return git(directory, 'reflog', 'expire', '--expire=never', '--expire-unreachable=never', 'HEAD');
+}
+
 export function metadataTree(directory) {
   const stat = fs.lstatSync(directory);
   const entry = { mode: stat.mode, dev: stat.dev, ino: stat.ino, nlink: stat.nlink };

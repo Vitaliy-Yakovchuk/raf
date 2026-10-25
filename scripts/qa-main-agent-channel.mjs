@@ -7,8 +7,9 @@ import { createServer, connect } from 'node:net';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import { createStandGeneration } from './qa-main-agent-generation.mjs';
 import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
-import { metadataTree, negativePeerCommand, drainStandServiceReader } from './qa-main-agent-channel-metadata.mjs';
+import { metadataTree, negativePeerCommand, drainStandServiceReader, normalizeStandReflog } from './qa-main-agent-channel-metadata.mjs';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const reviewed = process.argv[2];
@@ -169,7 +170,7 @@ try {
     fs.mkdirSync(parent, { recursive: true }); await hh.copyTree(slot, target);
     fs.cpSync(path.join(root, 'conf'), path.join(parent, 'conf'), { recursive: true });
     await hh.durable(path.join(parent, 'ownership.json'), { root: target, orchestratorRoot: root, repositoryIdentity: route.repositoryIdentity });
-    const files = await hh.inventory(target), value = { root: target, commit: git(slot, 'rev-parse', 'HEAD'), files, fingerprint: hh.hash(JSON.stringify(files)) };
+    const value = await createStandGeneration(target, git(slot, 'rev-parse', 'HEAD'), hh);
     const file = path.join(route.control, 'registry.json'), state = JSON.parse(fs.readFileSync(file));
     state.generations[target] = value; state.current = target; await hh.durable(file, state); return value;
   });
@@ -216,6 +217,7 @@ try {
   fs.writeFileSync(path.join(A, '.git'), 'gitdir: ' + path.relative(A, common) + '\n');
   fs.writeFileSync(path.join(B, '.git'), 'gitdir: ' + path.relative(B, legacyB) + '\n');
   git(root, '--git-dir=' + common, 'config', 'core.worktree', A);
+  normalizeStandReflog(B, git);
   fs.renameSync(production, path.join(control, 'native-retained-main.git'));
   fs.unlinkSync(path.join(control, 'main-store.json'));
   summary.liveSplit = { source: common, control, production, readersBefore: fs.readdirSync(path.join(control, 'readers')).map(name => JSON.parse(fs.readFileSync(path.join(control, 'readers', name)))) };

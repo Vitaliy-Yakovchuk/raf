@@ -1,6 +1,6 @@
-import { prepareProductionQaFixture } from './production-qa-fixture.ts';
+import { prepareProductionQaFixture, copyProductionQaDependencies } from './production-qa-fixture.ts';
 import { pathToFileURL } from 'node:url';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { cp } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
@@ -29,17 +29,36 @@ async function fixture(t: TestContext, mode: 'valid' | 'absent' | 'broken' = 'va
   projects.projects.raf.path = 'configured-working-main';
   projects.projects.raf.branchPaths.main = 'configured-working-main';
   await writeFile(join(root, 'conf', 'projects.json'), JSON.stringify(projects));
-  const runProductionCli = await prepareProductionQaFixture(t, { root, home: homeDirectory });
+  const origin = { configuredMain: main, nonce: 'qa-service-entry-origin-v1' };
+  const loaderProofAudit: { root: string; originalDigest: string; instrumentedDigest: string; instrumentation: string }[] = [];
+  const runProductionCli = await prepareProductionQaFixture(t, { root, home: homeDirectory }, async () => {
+    await cp(join(develop, 'src'), join(main, 'src'), { recursive: true });
+    copyProductionQaDependencies(main);
+    await writeFile(join(main, 'package.json'), '{"type":"module"}');
+    await cp(join(develop, 'bin/raf.ts'), join(main, 'bin/raf.ts'));
+    await cp(join(develop, 'scripts'), join(main, 'scripts'), { recursive: true });
+    await writeFile(join(main, 'service-fixture-origin.json'), JSON.stringify(origin));
+    const serviceModule = join(main, 'src', 'service-entry.ts');
+    const original = await readFile(serviceModule, 'utf8');
+    const instrumentation = `\nexport const serviceEntryFixtureOrigin = { moduleUrl: import.meta.url, nonce: ${JSON.stringify(origin.nonce)} };\n`;
+    await writeFile(serviceModule, original + instrumentation);
+    const originalDigest = createHash('sha256').update(original).digest('hex');
+    const instrumentedDigest = createHash('sha256').update(original + instrumentation).digest('hex');
+    for (const codeRoot of [main, develop]) {
+      const copiedProofs = join(codeRoot, 'src/hotfix-runtime-loaders.ts');
+      const proofs = await readFile(copiedProofs, 'utf8');
+      const rewritten = proofs.replace(/("src\/service-entry\.ts"\s*:\s*\{[^}]*"sha256"\s*:\s*")[a-f0-9]{64}(")/, (_match, prefix, suffix) => prefix + instrumentedDigest + suffix);
+      assert.notEqual(rewritten, proofs, 'The independently reviewed fixture export needs a new loader proof before the publisher loads');
+      await writeFile(copiedProofs, rewritten);
+      loaderProofAudit.push({ root: codeRoot, originalDigest, instrumentedDigest, instrumentation });
+    }
+  });
   const gitDirectory = execFileSync('git', ['-C', develop, 'rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim();
-  await cp(join(develop, 'src'), join(main, 'src'), { recursive: true });
-  await writeFile(join(main, 'package.json'), '{"type":"module"}');
-  const origin = { configuredMain: main, nonce: randomUUID() };
-  await writeFile(join(main, 'service-fixture-origin.json'), JSON.stringify(origin));
-  const serviceModule = join(main, 'src', 'service-entry.ts');
-  await writeFile(serviceModule, (await readFile(serviceModule, 'utf8')) + `\nexport const serviceEntryFixtureOrigin = { moduleUrl: import.meta.url, nonce: ${JSON.stringify(origin.nonce)} };\n`);
   const { createServiceHandlers }: typeof import('../src/service-entry.ts') = await import(pathToFileURL(join(develop, 'src', 'service-entry.ts')).href);
   const { execute }: typeof import('../src/cli.ts') = await import(pathToFileURL(join(develop, 'src', 'cli.ts')).href);
   const log = join(root, 'service-events.jsonl');
+  await writeFile(log, loaderProofAudit.map(proof => JSON.stringify({ event: 'fixture-loader-proof', ...proof })).join('\n') + '\n');
+  t.diagnostic(JSON.stringify({ fixtureLoaderProofs: loaderProofAudit }));
   const modulePath = join(root, 'fixture-ports.ts');
   await writeFile(modulePath, `
 import { appendFile } from 'node:fs/promises';
@@ -70,7 +89,7 @@ const host = await runServiceEntry();
 await host.closed;
 `);
   await writeFile(join(develop, 'bin', 'service.ts'), 'throw new Error("forbidden develop worker");\n');
-  execFileSync('git', ['-C', main, 'add', '--', 'bin', 'src', 'service-fixture-origin.json', 'package.json']);
+  execFileSync('git', ['-C', main, 'add', '--', 'bin', 'src', 'scripts', 'service-fixture-origin.json', 'package.json']);
   execFileSync('git', ['-C', main, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '--allow-empty', '-m', 'Initialize configured main fixture']);
   const mainCommit = execFileSync('git', ['-C', main, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
   const committedFile = (path: string): string => execFileSync('git', ['-C', main, 'show', `${mainCommit}:${path}`], { encoding: 'utf8' });

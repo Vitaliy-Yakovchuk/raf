@@ -1,0 +1,501 @@
+{
+  "status": "unit-passed-native-rerun-required",
+  "sourceHostStand": "native-partial-s64-Itc0Q9/review.json",
+  "sourceStandStatus": "failed before first switch; no native acceptance",
+  "reflogFix": {
+    "red": "4a4306eb-69f0-49ff-8051-14a204081a21",
+    "behavior": "Git reflog expire normalizes a Git-created empty message from LF to TAB+LF. Normalize the synthetic legacy B HEAD log before its migration snapshot; do not weaken metadata equality checks or disable Git maintenance."
+  },
+  "fixtureLoaderAudit": {
+    "source": "src/service-entry.ts",
+    "originalDigest": "9d1f8f2e51353e435ce5242ea71bbd056b627d766ab2e41431fc8d00b55b2db3",
+    "instrumentedDigest": "a224c4a72f4287db787a19ba9985a0fbacd9a3422f2e167ccf2fa5e540efafb7",
+    "instrumentation": "\nexport const serviceEntryFixtureOrigin = { moduleUrl: import.meta.url, nonce: \"qa-service-entry-origin-v1\" };\n",
+    "copiedProofs": [
+      "configured-working-main/src/hotfix-runtime-loaders.ts",
+      "raf-develop/src/hotfix-runtime-loaders.ts"
+    ],
+    "boundary": "Only isolated copied QA files are changed before importing the copied publisher. Existing loader targets and library proofs are unchanged. Newly published generations receive new inventories; no product bypass."
+  },
+  "hostRegistrationFix": {
+    "red": "e174e4c4-18db-47c9-9e08-0332e6d833a6",
+    "behavior": "Verify actual generation module against its new trusted inventory, then mutate source and require refusal. Host registration creates a new inventory before publishing registry entry."
+  },
+  "dependencyDrift": {
+    "implementationCommit": "a66ad12857a36dec17772b92d59b50d611bcd349",
+    "qaFixCommit": "c50b4c6d331f807f8a0f5533e0341d75ba3ae8a2",
+    "notes": "Import/setup/dependency fixture errors in earlier runs do not constitute behavior red. e174e4c4 also contained three foreign package-bin traversal failures, resolved by owner c50b4c6. No foreign source changes were edited or committed by this agent."
+  },
+  "workspace": {
+    "head": "c50b4c6d331f807f8a0f5533e0341d75ba3ae8a2",
+    "evidence": [
+      "reflog-normalization-workspace.patch",
+      "runtime-inventory-red-workspace.patch",
+      "runtime-inventory-qa-workspace.patch",
+      "runtime-inventory-final-workspace.patch"
+    ],
+    "limitations": "The initial reflog red start diff was not captured atomically. Later workspace captures preserve actual own diff and visible foreign status. Per-test original random nonce audits were transient; final fixed nonce instrumentation hashes are recorded above."
+  },
+  "runs": [
+    {
+      "evidence": "reflog-normalization-red.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "runId": "4a4306eb-69f0-49ff-8051-14a204081a21",
+      "phase": "red",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T04:30:32.490Z",
+      "durationMs": 18647,
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "public CLI pins the active physical main slot before loading its runtime"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production launcher verifies registered caller and pins published code through exact output and exit"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "legacy stand reflog survives source maintenance without a false metadata conflict"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "cliExitCode": 1,
+      "passedCount": 92
+    },
+    {
+      "evidence": "reflog-normalization-qa.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "runId": "d9f0d8c1-d170-48b1-a223-ce875a18edb0",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T04:34:48.695Z",
+      "durationMs": 15994,
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "public CLI pins the active physical main slot before loading its runtime"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production launcher verifies registered caller and pins published code through exact output and exit"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "cliExitCode": 1,
+      "passedCount": 93
+    },
+    {
+      "evidence": "reflog-normalization-qa2.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "runId": "f60c9b61-6e31-4f29-bd1f-22814bc0aae5",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T04:35:41.582Z",
+      "durationMs": 23038,
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "public CLI pins the active physical main slot before loading its runtime"
+        },
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production launcher verifies registered caller and pins published code through exact output and exit"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "cliExitCode": 1,
+      "passedCount": 93
+    },
+    {
+      "evidence": "reflog-normalization-qa3.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "runId": "ab634b91-bdb3-413a-a4e5-2bac156d8ccb",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T04:39:05.922Z",
+      "durationMs": 17369,
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production launcher verifies registered caller and pins published code through exact output and exit"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "help is lazy and remains usable with absent main and absent host ports"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing configured main never falls back to available develop worker"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production help remains available before service wiring or the main service entry is available"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "configured main path on the wrong Git branch is rejected before spawning"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "cliExitCode": 1,
+      "passedCount": 90
+    },
+    {
+      "evidence": "reflog-normalization-qa4.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "runId": "c12f7c56-19c1-4898-b17e-0c1a0576b6a5",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T04:40:49.610Z",
+      "durationMs": 26228,
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "CLI service lifecycle launches configured main entry and stop preserves an unrelated owned agent process"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "service requests auto-start one configured worker and reuse it after command completion"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "cliExitCode": 1,
+      "passedCount": 95
+    },
+    {
+      "evidence": "reflog-normalization-qa5.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "runId": "efda9a93-e861-42a2-b72e-9d83dcab1b10",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T04:44:27.288Z",
+      "durationMs": 29092,
+      "outcome": "passed",
+      "exitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "cliExitCode": 0,
+      "passedCount": 100
+    },
+    {
+      "evidence": "runtime-inventory-red.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "runId": "e174e4c4-18db-47c9-9e08-0332e6d833a6",
+      "phase": "red",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T04:45:34.727Z",
+      "durationMs": 35021,
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native stand registers a complete runtime inventory before publishing each generation"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "missing production ports and failed recovery do not claim readiness"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "unknown operation cannot masquerade as successful reminder or resource handling"
+        },
+        {
+          "file": "test/service-entry.test.ts",
+          "name": "production CLI binds service handlers and passes the explicit host module to the main child"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "implement",
+      "cliExitCode": 1,
+      "passedCount": 97
+    },
+    {
+      "evidence": "runtime-inventory-qa.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "runId": "ea6f07c0-3150-4dd1-a0d2-2d40b4f57f39",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T04:48:10.945Z",
+      "durationMs": 31212,
+      "outcome": "passed",
+      "exitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "cliExitCode": 0,
+      "passedCount": 101
+    },
+    {
+      "evidence": "runtime-inventory-final.TestRunResult.json",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts test/service-entry.test.ts test/workspace-routing.test.ts",
+      "runId": "5a195377-3def-4fc3-b367-801a6994334d",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts",
+          "test/service-entry.test.ts",
+          "test/workspace-routing.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T04:49:31.003Z",
+      "durationMs": 29010,
+      "outcome": "passed",
+      "exitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "cliExitCode": 0,
+      "passedCount": 101
+    }
+  ],
+  "stderrLimitation": "Full tool return and complete unmodified TestRunResult retained. Tool exposes a combined stream only; separate stderr is unknown, not asserted empty.",
+  "nativeNextAction": "Main reviews next commit and runs clean host stand with ordinary owner Codex. Item 6.4 remains open pending full native transcript and endpoint/protection review."
+}

@@ -13,8 +13,11 @@ import { compileCatalog } from "../src/catalog.ts";
 import { execute } from "../src/cli.ts";
 import { resolveWorkspaceRoute } from "../src/workspace-routing.ts";
 import { createWorkspacePorts } from "../src/os-runtime.ts";
-import { prepareProductionQaFixture } from "./production-qa-fixture.ts";
-import { negativePeerCommand, drainStandServiceReader } from "../scripts/qa-main-agent-channel-metadata.mjs";
+import { prepareProductionQaFixture, copyProductionQaDependencies } from "./production-qa-fixture.ts";
+import { negativePeerCommand, drainStandServiceReader, normalizeStandReflog } from "../scripts/qa-main-agent-channel-metadata.mjs";
+import { createStandGeneration } from "../scripts/qa-main-agent-generation.mjs";
+import { verifyHotfixRuntimeInventory } from "../src/hotfix-runtime-inventory.ts";
+import * as generationHost from "../src/hotfix-host.ts";
 import { alive, processStart } from "../src/hotfix-host.ts";
 import {
   assessAgentChannelSlotReuse,
@@ -517,12 +520,33 @@ async function publishedLauncherFixture() {
     await fs.writeFile(join(root, "conf/projects.json"), JSON.stringify({ version: 1, profiles: { fixture: { production: "main", environments: { runtime: "main" } } }, projects: { raf: { profile: "fixture", path: "raf-main", branchPaths: { main: "raf-main", develop: "raf-develop" }, mainCopies: ["raf-main-a", "raf-main-b"] } } }));
     await fs.writeFile(join(root, "conf/raf.json"), JSON.stringify({ version: 1, state: { fileName: "state.sqlite" }, runnerProtocols: [{ runner: "codex", timeouts: { transitionMs: 10000 } }] }));
     const common = git("rev-parse", "--path-format=absolute", "--git-common-dir");
-    for (const name of ["src", "package.json"]) await fs.cp(join(source, name), join(root, "raf-develop", name), { recursive: true });
+    for (const directory of [A, join(root, "raf-develop")]) {
+      await fs.cp(join(source, "src"), join(directory, "src"), { recursive: true });
+      await fs.cp(join(source, "scripts"), join(directory, "scripts"), { recursive: true });
+      await fs.writeFile(join(directory, "package.json"), '{"type":"module"}\n');
+    }
+    await fs.copyFile(join(source, "bin/service.ts"), join(A, "bin/service.ts"));
+    git("add", "--", "src", "bin", "scripts", "package.json");
+    git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "-m", "Complete published runtime fixture");
+    execFileSync("git", ["-C", root, "add", "--", "raf-main-a", ".gitmodules"], { env: environment });
     const { ensureProductionMainStore } = await import("../src/main-production-store.ts");
     await ensureProductionMainStore({ root });
+    copyProductionQaDependencies(A);
+    copyProductionQaDependencies(join(root, "raf-develop"));
     return { root, A, B, home, work, source: join(root, "raf-develop"), git, common, environment };
   } catch (error) { await fs.rm(root, { recursive: true, force: true }); throw error; }
 }
+
+test("native stand registers a complete runtime inventory before publishing each generation", async () => {
+  const f = await publishedLauncherFixture();
+  try {
+    const commit = f.git("rev-parse", "HEAD");
+    const generation = await createStandGeneration(f.A, commit, generationHost);
+    verifyHotfixRuntimeInventory(f.A, commit, generation.runtimeInventory, join(f.A, "src/production-entry.ts"));
+    await fs.appendFile(join(f.A, "src/production-entry.ts"), "\nexport const tamperedFixture = true;\n");
+    assert.throws(() => verifyHotfixRuntimeInventory(f.A, commit, generation.runtimeInventory), /runtime inputs changed/);
+  } finally { await fs.rm(f.root, { recursive: true, force: true }); }
+});
 
 test("public CLI pins the active physical main slot before loading its runtime", async () => {
   const f = await publishedLauncherFixture();
@@ -721,4 +745,23 @@ process.stdout.write(JSON.stringify({mask:fs.readFileSync(9,'utf8'),filter:fs.re
     assert.notEqual(output.fd, 9);
     assert.deepEqual(output.args.slice(-6), ["--perms", "0700", "--tmpfs", join(root, "tmux"), "--", "/payload"]);
   } finally { await mask?.close(); await fs.rm(root, { recursive: true, force: true }); }
+});
+
+
+test("legacy stand reflog survives source maintenance without a false metadata conflict", async () => {
+  const f = await publishedLauncherFixture();
+  try {
+    const runGit = (cwd: string, ...args: string[]) => execFileSync("git", ["-C", cwd, ...args], { env: f.environment, encoding: "utf8" }).trim();
+    const directory = runGit(f.B, "rev-parse", "--absolute-git-dir");
+    const reflog = join(directory, "logs/HEAD");
+    const beforeHead = runGit(f.B, "rev-parse", "HEAD");
+    const original = await fs.readFile(reflog, "utf8");
+    assert.ok(original.endsWith(" +0000\n") || /[+-]\d{4}\n$/.test(original), "Git-created empty reflog messages must exercise the normalization case");
+    normalizeStandReflog(f.B, runGit);
+    const prepared = await fs.readFile(reflog, "utf8");
+    runGit(f.B, "reflog", "expire", "--expire=never", "--expire-unreachable=never", "--all");
+    assert.equal(await fs.readFile(reflog, "utf8"), prepared, "Source maintenance must not change the prepared legacy snapshot");
+    assert.equal(runGit(f.B, "rev-parse", "HEAD"), beforeHead);
+    assert.equal(prepared.replace(/\t(?=\n)/g, ""), original.replace(/\t(?=\n)/g, ""), "Normalization must retain every reflog entry and commit");
+  } finally { await fs.rm(f.root, { recursive: true, force: true }); }
 });

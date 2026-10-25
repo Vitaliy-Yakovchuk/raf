@@ -1,0 +1,46 @@
+{
+  "status": "failed-before-switch",
+  "reviewed": "0e022cd356a9bf7760328839fcb7f39103ebce30",
+  "stand": "/srv/dev/s64-Itc0Q9",
+  "hostManifestSha256": "7aace0d0ffe3f24dcf7a3d40a33aa7e20d8f46cf60e8d50e6a7148eef9d2774b",
+  "cleanedNative": "/srv/dev/s64-Itc0Q9-native.Xxr4Dn",
+  "cleanedManifestSha256": "845db2eeb26406684915744e98784788ce0e7c5e1b2f2783dde4aedf01c70a51",
+  "mainAttests": "Read-only; secscan zero matches; cleaned events edits zero; stand processes gone.",
+  "verifiedHostFiles": [
+    "summary.json",
+    "service-before-live-split-stop.json",
+    "before-controls.json",
+    "after-host-service-drain-controls.json",
+    "unproven-reader-held-controls.json",
+    "metadata-before-policy.json",
+    "metadata-after-native-launch.json",
+    "metadata-after-refused-launch.json",
+    "metadata-after-exit.json",
+    "version-git.json",
+    "version-bwrap.json",
+    "version-uname.json",
+    "version-tmux.json",
+    "version-codex.json",
+    "version-node.json",
+    "sym64-a-final/run/sym64-source-0.json",
+    "sym64-b-final/run/sym64-source-0.json"
+  ],
+  "sourceNativeHashesVerifiedAgainstHostManifest": true,
+  "metadataChanges": [
+    {
+      "copy": "/srv/dev/s64-Itc0Q9/root/raf-main-b",
+      "path": "logs/HEAD",
+      "expected": {
+        "hash": "ebdacc701d3f66535c895b59065c4d737fe98ad5c725b0f124fd9f3fc6384375",
+        "mode": 384
+      },
+      "actualSha256": "ca39cd14b0bede8d051efb1203fece6e42f19f952264903fa544d95cdaca145a",
+      "copiedSha256": "ebdacc701d3f66535c895b59065c4d737fe98ad5c725b0f124fd9f3fc6384375",
+      "sourceText": "0000000000000000000000000000000000000000 592b529d9b612b288967877e17696b0ab6ebad89 Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com> 1792902272 +0000\t\n",
+      "copiedText": "0000000000000000000000000000000000000000 592b529d9b612b288967877e17696b0ab6ebad89 Vitaliy Yakovchuk <vitaliy.yakovchuk@gmail.com> 1792902272 +0000\n",
+      "mtime": 1792902439.425003
+    }
+  ],
+  "cause": "Git maintenance during the allowed source commits normalized the empty inactive legacy HEAD reflog message from LF to TAB+LF. No commit OID changed. Guard correctly retained recovery.",
+  "nextAction": "Normalize the fixture legacy reflog with Git before metadata snapshot; behavioral red and QA in the unchanged agent-channel group, then reviewed live stand."
+}

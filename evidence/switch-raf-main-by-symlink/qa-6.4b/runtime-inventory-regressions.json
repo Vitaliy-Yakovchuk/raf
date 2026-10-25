@@ -1,0 +1,261 @@
+{
+  "sourceItem": "switch-raf-main-by-symlink:6.4",
+  "workspaceHeadAfter": "8f665165d57ae0b824f6b992824ebb6217358c83",
+  "workspaceStatusAfter": "?? evidence/profile-raf-performance/qa-5.7/\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-q414.TestRunResult.json\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-q414.cli-exit.json\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-q414.combined-stream.txt\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-q414.tool.json\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-z350.TestRunResult.json\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-z350.cli-exit.json\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-z350.combined-stream.txt\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-z350.tool.json\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-z389.TestRunResult.json\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-z389.cli-exit.json\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-z389.combined-stream.txt\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-z389.tool.json\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-z390.TestRunResult.json\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-z390.cli-exit.json\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-z390.combined-stream.txt\n?? evidence/switch-raf-main-by-symlink/qa-6.4b/runtime-inventory-z390.tool.json\n",
+  "workspaceLimitations": "Shared workspace. Own tested changes committed b1a32cd584d6af2d15353cd93659d3e78c369a63. Foreign owner committed runtime createRequire alias completeness as 8f665165d57ae0b824f6b992824ebb6217358c83 during the z389 invocation; no own code changed, exact run startedAt and reflog retained. No atomic before-start full workspace hash was available. No test state reset or run replay.",
+  "reflog": [
+    {
+      "sha": "8f665165d57ae0b824f6b992824ebb6217358c83",
+      "commitTimestamp": 1792904388,
+      "selector": "HEAD@{1792904388}"
+    },
+    {
+      "sha": "b1a32cd584d6af2d15353cd93659d3e78c369a63",
+      "commitTimestamp": 1792903845,
+      "selector": "HEAD@{1792903845}"
+    },
+    {
+      "sha": "c50b4c6d331f807f8a0f5533e0341d75ba3ae8a2",
+      "commitTimestamp": 1792903669,
+      "selector": "HEAD@{1792903669}"
+    },
+    {
+      "sha": "612329b4b7cb9c88d8c5182be1dfd560b5ca4c6a",
+      "commitTimestamp": 1792903317,
+      "selector": "HEAD@{1792903317}"
+    },
+    {
+      "sha": "a66ad12857a36dec17772b92d59b50d611bcd349",
+      "commitTimestamp": 1792903247,
+      "selector": "HEAD@{1792903247}"
+    },
+    {
+      "sha": "0e022cd356a9bf7760328839fcb7f39103ebce30",
+      "commitTimestamp": 1792902194,
+      "selector": "HEAD@{1792902194}"
+    },
+    {
+      "sha": "a5c28dd3ac8addb366d5e2a04d6383b8cdecc8a5",
+      "commitTimestamp": 1792902034,
+      "selector": "HEAD@{1792902034}"
+    },
+    {
+      "sha": "4da4a6aa1916101436b64fa5c1cb709060734405",
+      "commitTimestamp": 1792901968,
+      "selector": "HEAD@{1792901968}"
+    },
+    {
+      "sha": "dfded6ef5713ce43347c7bd9eec68b9f747166b1",
+      "commitTimestamp": 1792901853,
+      "selector": "HEAD@{1792901853}"
+    },
+    {
+      "sha": "51501f9136e8a6b43e7738921dded79ad79cce02",
+      "commitTimestamp": 1792901687,
+      "selector": "HEAD@{1792901687}"
+    },
+    {
+      "sha": "ae62139b58523a33ff1ec41042dc5e943ce601de",
+      "commitTimestamp": 1792901361,
+      "selector": "HEAD@{1792901361}"
+    },
+    {
+      "sha": "63f4f50561401c6405f8e67f7911361f2303380b",
+      "commitTimestamp": 1792901250,
+      "selector": "HEAD@{1792901250}"
+    },
+    {
+      "sha": "37a8a913c39642b123ff196f9e7d2e3a57f5841c",
+      "commitTimestamp": 1792900610,
+      "selector": "HEAD@{1792900610}"
+    },
+    {
+      "sha": "a592802c693130c26460fd7b82645636bf3c2882",
+      "commitTimestamp": 1792900509,
+      "selector": "HEAD@{1792900509}"
+    },
+    {
+      "sha": "3136b2f7de4c01400fdfd5503b06ba08080b1f54",
+      "commitTimestamp": 1792899909,
+      "selector": "HEAD@{1792899909}"
+    },
+    {
+      "sha": "785d97048b356a35dbe8c02eee72307cb171bfb5",
+      "commitTimestamp": 1792899840,
+      "selector": "HEAD@{1792899840}"
+    },
+    {
+      "sha": "22032d53a2c733a1a6c37f52845b347b23b77044",
+      "commitTimestamp": 1792899778,
+      "selector": "HEAD@{1792899778}"
+    },
+    {
+      "sha": "f9abba613502a94e0be66aba26fcea8018c5369c",
+      "commitTimestamp": 1792899557,
+      "selector": "HEAD@{1792899557}"
+    },
+    {
+      "sha": "fc2bd476aebb79101272b3f467c6fecc888361b5",
+      "commitTimestamp": 1792899325,
+      "selector": "HEAD@{1792899325}"
+    },
+    {
+      "sha": "84ace5e4cac9554190fb30ac006568cf360039e7",
+      "commitTimestamp": 1792899113,
+      "selector": "HEAD@{1792899113}"
+    },
+    {
+      "sha": "c25908e72a12a43731463a95a60cb3abc6a96a50",
+      "commitTimestamp": 1792899029,
+      "selector": "HEAD@{1792899029}"
+    },
+    {
+      "sha": "13db2ce73494d54e1ce7bd62ba03dd7ef8e81328",
+      "commitTimestamp": 1792898836,
+      "selector": "HEAD@{1792898836}"
+    },
+    {
+      "sha": "e794768d5e05bb25b6ba219eea07a4aa164b124f",
+      "commitTimestamp": 1792898803,
+      "selector": "HEAD@{1792898803}"
+    },
+    {
+      "sha": "c970810518949dad90271aa079c3ed9fa63ed4af",
+      "commitTimestamp": 1792898468,
+      "selector": "HEAD@{1792898468}"
+    },
+    {
+      "sha": "27e2668bb9803668bde8deb7518ff70a3cdcfb90",
+      "commitTimestamp": 1792898359,
+      "selector": "HEAD@{1792898359}"
+    }
+  ],
+  "runs": [
+    {
+      "sourceItem": "switch-raf-main-by-symlink:6.4",
+      "targetGroup": "complete-raf-flow-contracts/z390",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z390",
+      "evidence": "runtime-inventory-z390.TestRunResult.json",
+      "runId": "f441a7c1-3ee1-446b-ad92-ca5581a78d85",
+      "startedAt": "2026-10-25T04:56:38.529Z",
+      "durationMs": 31286,
+      "selection": {
+        "files": [
+          "test/codex-sandbox-preflight-path.test.ts",
+          "test/raf-unix-socket-paths.test.ts",
+          "test/codex-bwrap-entry.test.ts",
+          "test/codex-bwrap-evidence.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "cliExitCode": 0,
+      "passedCount": 77
+    },
+    {
+      "sourceItem": "switch-raf-main-by-symlink:6.4",
+      "targetGroup": "complete-raf-flow-contracts/z389-trust-order",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z389-trust-order",
+      "evidence": "runtime-inventory-z389.TestRunResult.json",
+      "runId": "d2a189b9-4835-41fa-9aa4-8d3fc446e8c5",
+      "startedAt": "2026-10-25T04:57:19.337Z",
+      "durationMs": 214636,
+      "selection": {
+        "files": [
+          "test/workspace-trust.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "cliExitCode": 0,
+      "passedCount": 53
+    },
+    {
+      "sourceItem": "switch-raf-main-by-symlink:6.4",
+      "targetGroup": "complete-raf-flow-contracts/z350",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/z350",
+      "evidence": "runtime-inventory-z350.TestRunResult.json",
+      "runId": "b4ab2367-694a-4c79-a72e-f66a0d8c8a82",
+      "startedAt": "2026-10-25T05:01:15.371Z",
+      "durationMs": 965,
+      "selection": {
+        "files": [
+          "test/sandbox-test-run.test.ts",
+          "test/sandbox-test-caller-z400.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "cliExitCode": 0,
+      "passedCount": 186
+    },
+    {
+      "sourceItem": "switch-raf-main-by-symlink:6.4",
+      "targetGroup": "complete-raf-flow-contracts/q414-regress",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/q414-regress",
+      "evidence": "runtime-inventory-q414.TestRunResult.json",
+      "runId": "12e05f69-c12f-4d1f-ac10-c211aff43afc",
+      "startedAt": "2026-10-25T05:01:24.668Z",
+      "durationMs": 1077,
+      "selection": {
+        "files": [
+          "test/agent-adapters.test.ts",
+          "test/session-state.test.ts",
+          "test/agent-run-queue.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "cliExitCode": 0,
+      "passedCount": 105
+    }
+  ]
+}

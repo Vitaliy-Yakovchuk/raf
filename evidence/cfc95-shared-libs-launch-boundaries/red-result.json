@@ -1,0 +1,469 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/shared-libs-launch-boundaries.test.ts",
+        "name": "[9.5 develop] dependent etchly grants the canonical same-branch library tree to worker and brief"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Worker writable roots must include the canonical shared-libs tree",
+      "location": {
+        "file": "test/shared-libs-launch-boundaries.test.ts",
+        "line": 121,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/shared-libs-launch-boundaries.test.ts:121:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/shared-libs-launch-boundaries.test.ts",
+        "name": "[9.5 develop] dependent etchly grants library git-dir and git-common-dir without another branch"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Worker writable roots\n+ actual - expected\n\n+ Set(6) {\n- Set(9) {\n    '<fixture>/raf-shared-libs-boundaries-Bids5y/.git',\n    '<fixture>/raf-shared-libs-boundaries-Bids5y/.git/modules/etchly',\n    '<fixture>/raf-shared-libs-boundaries-Bids5y/.git/modules/etchly/worktrees/etchly-develop',\n-   '<fixture>/raf-shared-libs-boundaries-Bids5y/.git/modules/shared-libs',\n-   '<fixture>/raf-shared-libs-boundaries-Bids5y/.git/modules/shared-libs/worktrees/shared-libs-develop',\n    '<fixture>/raf-shared-libs-boundaries-Bids5y/etchly-develop',\n    '<fixture>/raf-shared-libs-boundaries-Bids5y/openspec/changes/complete-raf-flow-contracts',\n    '<fixture>/raf-shared-libs-boundaries-Bids5y/questions/projects/etchly/questions.md',\n-   '<fixture>/raf-shared-libs-boundaries-Bids5y/shared-libs-develop'\n  }\n",
+      "location": {
+        "file": "test/shared-libs-launch-boundaries.test.ts",
+        "line": 112,
+        "column": 10
+      },
+      "stack": [
+        "    at samePaths (test/shared-libs-launch-boundaries.test.ts:112:10)",
+        "    at TestContext.<anonymous> (test/shared-libs-launch-boundaries.test.ts:132:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/shared-libs-launch-boundaries.test.ts",
+        "name": "[9.5 develop] dependent etchly registers the canonical library in reported-commits repositories"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Report preparation repositories\n+ actual - expected\n\n+ Set(2) {\n- Set(3) {\n    '<fixture>/raf-shared-libs-boundaries-pkSnIP',\n    '<fixture>/raf-shared-libs-boundaries-pkSnIP/etchly-develop',\n-   '<fixture>/raf-shared-libs-boundaries-pkSnIP/shared-libs-develop'\n  }\n",
+      "location": {
+        "file": "test/shared-libs-launch-boundaries.test.ts",
+        "line": 112,
+        "column": 10
+      },
+      "stack": [
+        "    at samePaths (test/shared-libs-launch-boundaries.test.ts:112:10)",
+        "    at TestContext.<anonymous> (test/shared-libs-launch-boundaries.test.ts:142:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/shared-libs-launch-boundaries.test.ts",
+        "name": "[9.5 release] dependent etchly grants the canonical same-branch library tree to worker and brief"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Worker writable roots must include the canonical shared-libs tree",
+      "location": {
+        "file": "test/shared-libs-launch-boundaries.test.ts",
+        "line": 121,
+        "column": 12
+      },
+      "stack": [
+        "    at TestContext.<anonymous> (test/shared-libs-launch-boundaries.test.ts:121:12)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": false,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/shared-libs-launch-boundaries.test.ts",
+        "name": "[9.5 release] dependent etchly grants library git-dir and git-common-dir without another branch"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Worker writable roots\n+ actual - expected\n\n+ Set(6) {\n- Set(9) {\n    '<fixture>/raf-shared-libs-boundaries-JX7AUX/.git',\n    '<fixture>/raf-shared-libs-boundaries-JX7AUX/.git/modules/etchly',\n    '<fixture>/raf-shared-libs-boundaries-JX7AUX/.git/modules/etchly/worktrees/etchly-release',\n-   '<fixture>/raf-shared-libs-boundaries-JX7AUX/.git/modules/shared-libs',\n-   '<fixture>/raf-shared-libs-boundaries-JX7AUX/.git/modules/shared-libs/worktrees/shared-libs-release',\n    '<fixture>/raf-shared-libs-boundaries-JX7AUX/etchly-release',\n    '<fixture>/raf-shared-libs-boundaries-JX7AUX/openspec/changes/complete-raf-flow-contracts',\n    '<fixture>/raf-shared-libs-boundaries-JX7AUX/questions/projects/etchly/questions.md',\n-   '<fixture>/raf-shared-libs-boundaries-JX7AUX/shared-libs-release'\n  }\n",
+      "location": {
+        "file": "test/shared-libs-launch-boundaries.test.ts",
+        "line": 112,
+        "column": 10
+      },
+      "stack": [
+        "    at samePaths (test/shared-libs-launch-boundaries.test.ts:112:10)",
+        "    at TestContext.<anonymous> (test/shared-libs-launch-boundaries.test.ts:132:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    },
+    {
+      "kind": "assertion",
+      "test": {
+        "file": "test/shared-libs-launch-boundaries.test.ts",
+        "name": "[9.5 release] dependent etchly registers the canonical library in reported-commits repositories"
+      },
+      "errorName": "AssertionError",
+      "errorCode": "ERR_ASSERTION",
+      "message": "Report preparation repositories\n+ actual - expected\n\n+ Set(2) {\n- Set(3) {\n    '<fixture>/raf-shared-libs-boundaries-FiqTt6',\n    '<fixture>/raf-shared-libs-boundaries-FiqTt6/etchly-release',\n-   '<fixture>/raf-shared-libs-boundaries-FiqTt6/shared-libs-release'\n  }\n",
+      "location": {
+        "file": "test/shared-libs-launch-boundaries.test.ts",
+        "line": 112,
+        "column": 10
+      },
+      "stack": [
+        "    at samePaths (test/shared-libs-launch-boundaries.test.ts:112:10)",
+        "    at TestContext.<anonymous> (test/shared-libs-launch-boundaries.test.ts:142:5)",
+        "    at async Test.run (node:internal/test_runner/test:1409:7)",
+        "    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"
+      ],
+      "redacted": true,
+      "truncated": false
+    }
+  ],
+  "diagnosticSummary": {
+    "totalEntries": 6,
+    "retainedEntries": 6,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": true
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "c05daefcae638a9ea973438a904ba84ab7d583f64f7c45b95ca30023b66b0cc6",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "11f7179a-9bf7-46f8-87c9-a98d8ea0411a",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "complete-raf-flow-contracts/shared-libs-launch-boundaries",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/shared-libs-launch-boundaries.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/shared-libs-launch-boundaries.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-7jXVKL"
+    }
+  },
+  "startedAt": "2026-10-25T16:23:44.378Z",
+  "durationMs": 941,
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "assertions-failed",
+  "failureKinds": [
+    "assertions"
+  ],
+  "passed": [
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 develop dependency false] local library symlink does not grant library rights"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 develop dependency undefined] local library symlink does not grant library rights"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 release dependency false] local library symlink does not grant library rights"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 release dependency undefined] local library symlink does not grant library rights"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 spec] a validated library dependency preserves read-only code and narrow document rights"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 design] a validated library dependency preserves read-only code and narrow document rights"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 library main] invalid dependency is refused before permissions report or runner"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 library detached] invalid dependency is refused before permissions report or runner"
+    }
+  ],
+  "knownRed": [
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 develop] dependent etchly grants the canonical same-branch library tree to worker and brief"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 develop] dependent etchly grants library git-dir and git-common-dir without another branch"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 develop] dependent etchly registers the canonical library in reported-commits repositories"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 release] dependent etchly grants the canonical same-branch library tree to worker and brief"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 release] dependent etchly grants library git-dir and git-common-dir without another branch"
+    },
+    {
+      "file": "test/shared-libs-launch-boundaries.test.ts",
+      "name": "[9.5 release] dependent etchly registers the canonical library in reported-commits repositories"
+    }
+  ],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "idle",
+  "timeoutCount": 0,
+  "nextAction": "implement",
+  "hintIds": [
+    "red-assertions"
+  ],
+  "hints": [
+    "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement."
+  ],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 9.13,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 17209696256,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 161442889728
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 8067809280
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 0,
+        "diskBytes": {}
+      }
+    },
+    "remaining": {
+      "ramBytes": 15062212608,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 150705471488,
+        "/dev/mapper/home-dev": 8067809280
+      },
+      "normalizedLoad": 1.14125
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "11f7179a-9bf7-46f8-87c9-a98d8ea0411a",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "e3a26508-960e-4cfc-8412-a31375b650b2",
+        "root": {
+          "pid": 2155864,
+          "startTicks": "28810692",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "complete-raf-flow-contracts",
+          "item": "9.5"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "9a1bf1e5b2cecbc1595077f98ae17a75c7194660dbe44d6db4cdb18027ed774c"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-7jXVKL"
+      ]
+    },
+    "preparedAt": 1792945424806,
+    "baseline": {
+      "at": 1792945424821,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1792945424844,
+    "lastObservedAt": 1792945425268,
+    "finishedAt": 1792945425299,
+    "finishReason": "exit",
+    "peakRamBytes": 61976576,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 61976576,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Root process identity is unavailable or changed",
+      "RAM measurement unavailable",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": null
+}

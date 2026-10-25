@@ -1,0 +1,12 @@
+{
+  "outcome": "passed",
+  "checks": [
+    "SQLite aggregates, actual delayed period, force delta, explicit unavailable sources",
+    "main offline retains fact; generic dispatch cannot delete an unacknowledged summary",
+    "restart preserves domain, boundary and one pending fact",
+    "delivery claim excludes a concurrent sender; rejected receipt remains pending",
+    "existing settle sends one accepted system message fenced to current main and dispatches the fact",
+    "transaction rollback preserves boundary; newly recorded summary counts only in the next period"
+  ],
+  "liveWorkerQA": false
+}

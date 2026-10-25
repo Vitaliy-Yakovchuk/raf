@@ -1,3 +1,4 @@
+import { scheduleWorkerHealthSummary } from './health-summary-runtime.ts';
 import { settleRuntimeHealthCpu } from './health-cpu-runtime.ts';
 import { RafCostRuntime, rafCostBoundary } from './raf-cost-runtime.ts';
 import { prepareFlowBrief } from './flow-brief.ts';
@@ -1365,6 +1366,7 @@ export async function runProductionWorker(
   const store = openStateStore(request.statePath, { context: stateContext });
   let costProfile: RafCostRuntime | undefined;
   let workerFailure: unknown;
+  let stopHealthSummary: (() => Promise<void>) | undefined;
   let sessionStartChannel: OwnedSessionStartChannel | undefined;
   let unsubscribeSessionStart: (() => void) | undefined;
   let sessionStartWork: Promise<void> = Promise.resolve();
@@ -1379,6 +1381,10 @@ export async function runProductionWorker(
     const tools = sessionTools(store, execute, manifest.configuration, context, async () => settings.timeouts, options.execute);
     const session = tools.current(request.runId);
     if (session?.state !== 'reserved' || session.addressId !== request.address || session.activity?.cwd !== request.cwd || !session.launchContext || !isDeepStrictEqual(session.launchContext.assignment, request.assignment) || session.launchContext.reportPath !== join(request.tmpRoot, request.runId, `${request.address}.json`) || !isDeepStrictEqual({ runner: session.launchContext.selection.runner, model: session.launchContext.selection.model, effort: session.launchContext.selection.effort }, request.selection) || await fs.readFile(session.launchContext.briefPath, 'utf8') !== request.brief) fail('INVALID_CONTEXT', 'Worker launch does not match durable reserved context');
+    const settleWorkerHealth = () => settleCommandState({ store, orchestratorRoot: context.orchestratorRoot, now: Date.now, nextReminderId: randomUUID,
+      catalog: loadEventCatalog(context.orchestratorRoot), deliver: message => tools.control.message(message, rafSystemCaller) });
+    try { await settleWorkerHealth(); } catch (error) { process.emitWarning(String(error)); }
+    stopHealthSummary = scheduleWorkerHealthSummary(store, context.orchestratorRoot, settleWorkerHealth);
     const hotfix = manifest.workspaceRoute?.hotfix;
     if (hotfix) {
       if (hotfix.runId !== request.runId || manifest.workspaceRoute.branch !== 'hotfix' || !isDeepStrictEqual(hotfix, manifest.workspace) || !await validateHotfixTrust(context.orchestratorRoot, request.cwd, hotfix)) fail('BRANCH_MISMATCH', 'Invalid persistent hotfix identity');
@@ -1843,7 +1849,7 @@ export async function runProductionWorker(
       throw error;
     }
   } catch (error) { workerFailure = error; throw error; }
-  finally { try { unsubscribeSessionStart?.(); await sessionStartWork; await sessionStartChannel?.close(); } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxDirectory) await toolTmuxDirectory.cleanup(async socket => {
+  finally { try { await stopHealthSummary?.(); unsubscribeSessionStart?.(); await sessionStartWork; await sessionStartChannel?.close(); } finally { try { await hotfixCommitPort?.close(); await codexAccess?.cleanup(); } finally { try { await codexSandbox?.cleanup(); if (toolTmuxDirectory) await toolTmuxDirectory.cleanup(async socket => {
         await executeCommand({ executable: 'tmux', args: ['-S', socket, 'kill-server'], environment: stateContextEnvironment(stateContext, process.env) });
         await new Promise<void>((resolve, reject) => {
           const connection = createConnection(socket);

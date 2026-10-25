@@ -113,7 +113,7 @@ function runnerLimits(options: ProductionEntryOptions, orchestratorRoot: string,
 
 function commandState(orchestratorRoot: string): (store: StateStore, services: () => Promise<RuntimeServices>) => CommandStatePorts {
   return (store, services) => ({
-    store, now: Date.now, nextReminderId: randomUUID, catalog: loadEventCatalog(orchestratorRoot),
+    store, orchestratorRoot, now: Date.now, nextReminderId: randomUUID, catalog: loadEventCatalog(orchestratorRoot),
     validateResourceQueueId: async id => validateStoredQueueId(store, storedLaunchQueueIdentity(store, (await readMachineBootIdentity()).machineId), id),
     deliver: async (request, sender) => {
       if (sender.kind !== 'system') return { accepted: false, reason: 'Command state delivers only system messages' };
@@ -208,6 +208,8 @@ export async function runProductionCli(argv: readonly string[], options: Product
           return result;
         } catch (error) {
           original = failureContext(error) ? error : failure('PRODUCTION_ENTRY_FAILED', error instanceof Error ? error.message : String(error));
+          const diagnostic = failureContext(original);
+          if (profileStore && diagnostic) { try { profileStore.recordHealthRefusal(diagnostic.code, diagnostic.stage); } catch (healthError) { process.emitWarning(String(healthError)); } }
           try { await runtime?.close(); } catch {}
           throw original;
         } finally {
@@ -215,6 +217,16 @@ export async function runProductionCli(argv: readonly string[], options: Product
           try { profile?.stage('finalization'); profile?.finish(); }
           catch (error) { if (original === undefined) finalizationError = error; else process.emitWarning(error instanceof Error ? error : String(error)); }
           if (profileStore) await settleRuntimeHealthCpu(profileStore, options.orchestratorRoot);
+          if (profileStore && loaded && !runtime && name !== 'test run' && !name.startsWith('service ')) {
+            try {
+              const context = productionContext(options, options.orchestratorRoot, loaded.fileName, startedAtMs, async () => rafSystemCaller);
+              let services: Promise<RuntimeServices> | undefined;
+              const catalog: CompiledCatalog = JSON.parse(readFileSync(options.artifactPath, 'utf8'));
+              await settleCommandState(commandState(options.orchestratorRoot)(profileStore, () => services ??= createProductionServices(profileStore!, {
+                catalog, models: loaded!.models, commandTiming: loaded!.commandTiming,
+              }, context)));
+            } catch (error) { process.emitWarning(String(error)); }
+          }
           try {
             if (profileStore && loaded) recordCommandTiming(profileStore, command, startedAtMs, now, loaded.commandTiming.emaAlpha);
           } catch (error) { finalizationError = commandTimingFailure(error, original ?? finalizationError); }

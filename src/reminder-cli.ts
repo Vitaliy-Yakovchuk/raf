@@ -1,3 +1,4 @@
+import { runtimeHealthSummary } from './health-summary-runtime.ts';
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import type { Handler } from './cli.ts';
@@ -21,6 +22,7 @@ export type ReminderCommand =
   | 'reminder close-all';
 
 export interface CommandStatePorts {
+  orchestratorRoot?: string;
   store: StateStore;
   now: () => number;
   nextReminderId: () => string;
@@ -224,6 +226,10 @@ function applyPendingFacts(ports: CommandStatePorts, at: string): void {
 export async function settleCommandState(ports: CommandStatePorts): Promise<CommandSettleReport> {
   const report: CommandSettleReport = { activated: [], delivered: [], undelivered: [], notices: [], pruned: [] };
   const clock = isoClock(ports);
+  if (ports.orchestratorRoot) {
+    try { await runtimeHealthSummary(ports.store, ports.orchestratorRoot, () => deliverHealthSummaries(ports)).settle(); }
+    catch (error) { process.emitWarning(String(error)); }
+  }
   await settleResultNotices(ports);
   const reminders = reminderService(ports);
   report.activated.push(...reminders.activateDue().map(reminder => reminder.id));
@@ -298,4 +304,15 @@ export function resultNoticeViews(store: StateStore, sessions: readonly SessionR
     const { id, recipient, state, attempts, lastError } = notice;
     return { ...session, resultNotice: { id, recipient, state, attempts, lastError } };
   });
+}
+
+async function deliverHealthSummaries(ports: CommandStatePorts): Promise<void> {
+  const owner: DeliveryClaimOwner = { token: randomUUID(), pid: process.pid, processStart: processStart(process.pid) };
+  const facts = ports.store.sessionRepository.transaction(tx => tx.listPending().filter(intent => intent.event === 'raf.health-summary'), 'read');
+  for (const fact of facts) {
+    const claimed = ports.store.healthSummary.claim(fact.id, owner, new Date(ports.now()).toISOString(), ownerAlive);
+    if (!claimed) continue;
+    const receipt = await send(ports, { to: 'main', runId: claimed.recipientRunId, text: JSON.stringify(claimed.event) });
+    ports.store.healthSummary.complete(fact.id, owner.token, receipt.accepted);
+  }
 }

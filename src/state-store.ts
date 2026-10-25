@@ -1,3 +1,5 @@
+import { initializeHealthSummary, readHealthSummary, saveHealthSummary, readHealthSources, recordHealthEvent, recordHealthRefusal } from './health-summary-storage.ts';
+import type { HealthSummaryTransaction, HealthSummaryEvent } from './health-summary.ts';
 import { initializeHealthCpu, readHealthCpu, saveHealthCpu, recordHealthCpuCoverage, healthCpuReading, healthCpuKey } from './health-cpu-storage.ts';
 import type { RafHealthCpuProfileReading, RafHealthCpuTransaction } from './health-cpu.ts';
 import { aggregateRafCostSample, mergeRafCostRows, type RafCostProfileRepository, type RafCostSample, type RafCostProfileSnapshot, type RafCostRow } from './raf-cost-profile.ts';
@@ -105,6 +107,12 @@ export interface StateStore {
     interval(token: string, startedAt: string | null): void;
     coverage(startedAt: string | null): void;
   };
+  healthSummary: {
+    transaction<T>(action: (tx: HealthSummaryTransaction) => T): T;
+    claim(key: string, owner: DeliveryClaimOwner, at: string, alive: DeliveryOwnerProbe): { event: HealthSummaryEvent; recipientRunId: string } | undefined;
+    complete(key: string, token: string, accepted: boolean): void;
+  };
+  recordHealthRefusal(code: string, stage: string): void;
   readForcedCloseMetrics(readAt?: string): ForcedCloseMetricsSnapshot;
   recordForcedCloseRefusal(code: string, observedAt: string): void;
 }
@@ -469,7 +477,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         });
       }
       if (version() >= 18) {
-        try { transaction(() => initializeHealthCpu(db)); } catch (error) { process.emitWarning(String(error)); }
+        try { transaction(() => { initializeHealthCpu(db); initializeHealthSummary(db); }); } catch (error) { process.emitWarning(String(error)); }
       }
       for (let attempt = 0; ; attempt++) {
         try {
@@ -636,8 +644,9 @@ export function openStateStore(path: string, options?: import('./state-migration
       }),
       deleteReservation: runId => access(() => { db.prepare("DELETE FROM admission_reservations WHERE run_id = ?").run(runId); }),
       putPending: intent => access(() => {
-        db.prepare(`INSERT INTO pending_intents(id, run_id, payload) VALUES (?, ?, ?)
+        const inserted = db.prepare(`INSERT INTO pending_intents(id, run_id, payload) VALUES (?, ?, ?)
           ON CONFLICT(id) DO NOTHING`).run(intent.id, intent.runId, JSON.stringify(intent));
+        if (Number(inserted.changes)) recordHealthEvent(db, intent.event);
       }),
       deletePending: id => access(() => { db.prepare("DELETE FROM pending_intents WHERE id = ?").run(id); }),
       listPending: () => access(() => db.prepare("SELECT payload FROM pending_intents").all().map(row => JSON.parse(row.payload as string) as PendingIntent)),
@@ -731,6 +740,7 @@ export function openStateStore(path: string, options?: import('./state-migration
         }),
         listPending: () => access(() => db.prepare("SELECT payload FROM pending_intents").all().flatMap(row => {
           const intent = JSON.parse(row.payload as string) as PendingIntent;
+          if (intent.event === 'raf.health-summary' && !(intent.payload as { mainDelivered?: boolean })?.mainDelivered) return [];
           if (intent.event === 'context-review.due' && !(intent.payload as { mainDelivered?: boolean })?.mainDelivered) return [];
           const event = intent.payload as { kind?: unknown; id?: unknown } | null;
           if (!event || typeof event.kind !== 'string' || typeof event.id !== 'string' || intent.event !== event.kind) return [];
@@ -748,6 +758,7 @@ export function openStateStore(path: string, options?: import('./state-migration
           }
           const intent: PendingIntent = { id: fact.key, runId: null, event: fact.event.kind, payload: { ...fact.event, ...(fact.data !== undefined ? { data: fact.data } : {}) } };
           db.prepare("INSERT INTO pending_intents(id, run_id, payload) VALUES (?, ?, ?)").run(intent.id, null, JSON.stringify(intent));
+          recordHealthEvent(db, intent.event);
         }),
         deletePending: key => access(() => {
           const row = db.prepare("SELECT payload FROM pending_intents WHERE id = ?").get(key);
@@ -1027,6 +1038,42 @@ export function openStateStore(path: string, options?: import('./state-migration
         return result;
       })),
     },
+    healthSummary: {
+      transaction: action => operation('healthSummary.transaction', () => transaction(() => {
+        const state = readHealthSummary(db);
+        const previous = state.boundary;
+        const events: HealthSummaryEvent[] = [];
+        const result = action({ state, readSources: (start, end) => readHealthSources(db, start, end), recordEvent: event => events.push(event) });
+        saveHealthSummary(db, state, previous !== state.boundary);
+        for (const event of events) eventRepository.transaction(tx => tx.savePending({ key: event.factKey, event: { kind: event.type, id: event.rafInstanceId }, data: event }));
+        return result;
+      })),
+      claim: (key, owner, at, alive) => operation('healthSummary.claim', () => transaction(() => {
+        const main = sessionRepository.transaction(tx => tx.listSessions().find(row => row.addressId === 'main' && row.state === 'running'), 'read');
+        if (!main) return undefined;
+        const row = db.prepare('SELECT payload FROM pending_intents WHERE id=?').get(key);
+        if (!row) return undefined;
+        const intent = JSON.parse(String(row.payload));
+        if (intent.event !== 'raf.health-summary' || intent.payload.mainDelivered) return undefined;
+        if (!takeClaim(key, key, owner, at, alive)) return undefined;
+        return { event: intent.payload.data, recipientRunId: main.runId };
+      })),
+      complete: (key, token, accepted) => operation('healthSummary.complete', () => transaction(() => {
+        if (!holds(key, token)) return;
+        if (accepted) {
+          const row = db.prepare('SELECT payload FROM pending_intents WHERE id=?').get(key);
+          if (row) {
+            const intent = JSON.parse(String(row.payload));
+            intent.payload.mainDelivered = true;
+            db.prepare('UPDATE pending_intents SET payload=? WHERE id=?').run(JSON.stringify(intent), key);
+          }
+          const state = readHealthSummary(db);
+          if (state.lastSummary?.event.factKey === key) { state.lastSummary.delivery = 'delivered'; saveHealthSummary(db, state, false); }
+        }
+        db.prepare('DELETE FROM delivery_claims WHERE target=? AND token=?').run(key, token);
+      })),
+    },
+    recordHealthRefusal: (code, stage) => operation('healthSummary.refusal', () => transaction(() => recordHealthRefusal(db, code, stage))),
     costProfileRepository,
     mergeCostContribution(row) {
       operation('costProfile.merge', () => transaction(() => {

@@ -1,0 +1,135 @@
+{
+  "assignment": "monitor-raf-health:7.3",
+  "confDependency": {
+    "repository": "/srv/dev/work/orchestrator",
+    "sha": "9686658f0bea3038a05529ef59c8495559d04325"
+  },
+  "runs": [
+    {
+      "name": "initial",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase implement --group monitor-raf-health/summary --files test/health-summary.test.ts",
+      "resultFile": "evidence/monitor-raf-health/implement-7.3/summary-initial.stdout.json",
+      "stderrFile": "evidence/monitor-raf-health/implement-7.3/summary-initial.stderr.txt",
+      "cliExitFile": "evidence/monitor-raf-health/implement-7.3/summary-initial.cli-exit.txt",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "runId": "8430e16e-9e36-4b00-9dd2-047aaed73268",
+      "selection": {
+        "files": [
+          "test/health-summary.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 49,
+      "knownRed": [
+        {
+          "file": "test/health-summary.test.ts",
+          "name": "summary: forcedClose partial preserves incompleteness and reason without invented zeros"
+        },
+        {
+          "file": "test/health-summary.test.ts",
+          "name": "summary: event projection excludes frames briefs secrets and arbitrary source fields"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspaceSnapshot": null
+    },
+    {
+      "name": "confirmation",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase implement --group monitor-raf-health/summary --files test/health-summary.test.ts",
+      "resultFile": "evidence/monitor-raf-health/implement-7.3/summary-confirmation.stdout.json",
+      "stderrFile": "evidence/monitor-raf-health/implement-7.3/summary-confirmation.stderr.txt",
+      "cliExitFile": "evidence/monitor-raf-health/implement-7.3/summary-confirmation.cli-exit.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "8ae06ac1-6a93-425f-926d-eaf9afbd3295",
+      "selection": {
+        "files": [
+          "test/health-summary.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 51,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspaceSnapshot": "evidence/monitor-raf-health/implement-7.3/workspace-before-confirmation.json"
+    },
+    {
+      "name": "final",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase implement --group monitor-raf-health/summary --files test/health-summary.test.ts",
+      "resultFile": "evidence/monitor-raf-health/implement-7.3/summary-final.stdout.json",
+      "stderrFile": "evidence/monitor-raf-health/implement-7.3/summary-final.stderr.txt",
+      "cliExitFile": "evidence/monitor-raf-health/implement-7.3/summary-final.cli-exit.txt",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "runId": "11cfd19e-b091-424b-a692-f046b895e725",
+      "selection": {
+        "files": [
+          "test/health-summary.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 51,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "qaHome": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "workspaceSnapshot": "evidence/monitor-raf-health/implement-7.3/workspace-final-test.json"
+    }
+  ],
+  "checks": [
+    {
+      "command": "node evidence/monitor-raf-health/implement-7.3/runtime-smoke.mjs",
+      "cliExitCode": 0,
+      "stdoutFile": "evidence/monitor-raf-health/implement-7.3/runtime-smoke.stdout.txt",
+      "stderrFile": "evidence/monitor-raf-health/implement-7.3/runtime-smoke.stderr.txt"
+    },
+    {
+      "command": "npm run build",
+      "cliExitCode": 0,
+      "stdoutFile": "evidence/monitor-raf-health/implement-7.3/build.stdout.txt",
+      "stderrFile": "evidence/monitor-raf-health/implement-7.3/build.stderr.txt"
+    },
+    {
+      "command": "npm run check:comments",
+      "cliExitCode": 0,
+      "stdoutFile": "evidence/monitor-raf-health/implement-7.3/check-comments.stdout.txt",
+      "stderrFile": "evidence/monitor-raf-health/implement-7.3/check-comments.stderr.txt"
+    }
+  ],
+  "testsChanged": false,
+  "liveWorkerQA": false,
+  "archive": null,
+  "nextAction": "raf marks item 7.3; independent QA item 7.4 remains open"
+}

@@ -179,7 +179,7 @@ export function parseSandboxCommand(source: string): string[] | null {
   let word = '', started = false, quote = '';
   for (let index = 0; index < source.length; index++) {
     const char = source[index];
-    if (char === '\0' || char === '\n' || char === '\r') return null;
+    if (char === '\0') return null;
     if (quote === "'") {
       if (char === "'") quote = ''; else word += char;
     } else if (quote === '"') {
@@ -190,7 +190,8 @@ export function parseSandboxCommand(source: string): string[] | null {
         if (next === undefined || /[\n\r\0]/.test(next)) return null;
         word += ['$', '`', '"', '\\'].includes(next) ? next : '\\' + next;
       } else word += char;
-    } else if (char === "'" || char === '"') { quote = char; started = true; }
+    } else if (char === '\n' || char === '\r') return null;
+    else if (char === "'" || char === '"') { quote = char; started = true; }
     else if (char === '\\') {
       const next = source[++index];
       if (next === undefined || /[\n\r\0]/.test(next)) return null;

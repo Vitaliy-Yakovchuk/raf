@@ -1,0 +1,12 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-agent-run/sandbox-multiline",
+  "snapshot": "2ad2a44c70b2d65e9532c4f457d866eeba901ffe\n M src/sandbox-test-run.ts\n?? evidence/add-raf-test-run/etchly-integration-qa-b/\n?? scripts/qa-etchly-integration-host.mjs\nc0435f568f7f1264fdc135c7dcfdc41d22142affe36124a20a581aa81da5c822  src/sandbox-test-run.ts\n          \"profileId\": \"node\",\n          \"files\": [\n            \"test/qa-agent-run-evidence.test.ts\"\n          ]\n        },\n        \"add-raf-agent-run/sandbox-multiline\": {\n          \"profileId\": \"node\",\n          \"files\": [\n            \"test/sandbox-command-multiline.test.ts\"\n          ]\n        },\n        \"profile-raf-performance/runtime-verification-cost\": {\n          \"profileId\": \"node\",\n          \"files\": [\n            \"test/runtime-verification-cost.test.ts\"\n          ]\n",
+  "toolMetadata": {
+    "chunk_id": "057e6c",
+    "wall_time_seconds": 0,
+    "exit_code": 1,
+    "original_token_count": 1036
+  },
+  "capture": "Full native exec output retained before display. Tool supplies one merged stream; it contained exactly one complete TestRunResult JSON and LF with no other text. stderr records no extra text; independent byte-level stderr is unavailable. No truncation. CLI exit code is separate from child exitCode null.",
+  "nextAction": "Notify main about conf/test-runs.json#/projects/raf/profiles/node/unitFiles/230 drift; no blind retry."
+}

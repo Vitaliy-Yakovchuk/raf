@@ -35,6 +35,7 @@ import { runSandboxTestCommand } from './sandbox-test-run.ts';
 import { sandboxTestControlSnapshot } from './production-runtime.ts';
 import { productionStateContext, stateContextEnvironment, canonicalStatePath, type StateContext } from './state-migration-guard.ts';
 import { openStateStore } from './state-store.ts';
+import { prepareUnitTestState } from './test-run-unit-state.ts';
 import { loadFlowPolicy } from './flow-policy.ts';
 import { planTestRun, parseTestRunArgs, validateTestRunConfig, cleanupClosedTestRunGroups, testRunFailureResult } from './test-runs.ts';
 import { cleanupTestProcessGroup, reconcileTestRunProcess } from './test-run-processes.ts';
@@ -396,6 +397,7 @@ export async function runConfiguredTestRun(argv: readonly string[], options: { o
         mkdirSync(home, { recursive: true, mode: 0o700 });
         const homeIdentity = lstatSync(home);
         if (!homeIdentity.isDirectory() || homeIdentity.uid !== process.getuid?.() || (homeIdentity.mode & 0o077) !== 0) throw Object.assign(new Error('Unit HOME is not private'), { code: 'STATE_CONTEXT_REFUSED' });
+        await prepareUnitTestState(stateContext, key);
         context = { integrationTests, cwd, workspace, projectWorkspaces: workspaces, agentPhases: phases, activeChanges: [...control.activeChanges],
           agentId: assignment.agentId, callerPhase: assignment.phase, sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(),
           home, statePath: stateContext.statePath, tmpPath: stateContext.tmpRoot, operationalHome: userInfo().homedir };

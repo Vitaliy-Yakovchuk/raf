@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { registerHooks } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -39,6 +39,7 @@ test('test run upgrades its owned schema-16 unit state without losing the group 
   writeFileSync(projectsPath, JSON.stringify(projects));
   for (const path of ['raf-main', 'raf-develop', 'raf-hotfix', 'control-home']) mkdirSync(join(root, path), { mode: 0o700 });
   cpSync(join(source, 'src'), join(workspace, 'src'), { recursive: true });
+  symlinkSync(join(source, 'node_modules'), join(workspace, 'node_modules'));
   writeFileSync(join(workspace, 'package.json'), '{"type":"module"}');
   mkdirSync(join(workspace, 'bin'));
   writeFileSync(join(workspace, 'bin/raf.ts'), '');

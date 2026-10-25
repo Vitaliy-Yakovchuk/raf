@@ -1,0 +1,143 @@
+{
+  "assignment": "switch-raf-main-by-symlink:6.3",
+  "implementation": "Trusted host Codex hook retains its original issued command prefixes and verifies registered live ancestry before acquiring the existing publication lock and immutable generation reader lease; current published CLI executes shell:false with original argv/cwd and inherited binary streams. Scope protection is installed before runner launch for executor workers. Existing legacy routing/reader refusal and retained worker generation remain conservative until normal completion. No retrofit of already running native sessions is claimed.",
+  "tests": [
+    {
+      "result": "unit-TestRunResult.json",
+      "cli": "unit-cli.json",
+      "runId": "e840e26c-6364-45a8-95fd-8fb2d147197b",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "explanation": null
+    },
+    {
+      "result": "unit-2-TestRunResult.json",
+      "cli": "unit-2-cli.json",
+      "runId": "72dd94ee-3cc6-4ce7-a19e-b9416f38787b",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production launcher verifies registered caller and pins published code through exact output and exit"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "explanation": "New test fixture had await inside synchronous transaction callback; moved boot identity read before transaction."
+    },
+    {
+      "result": "unit-3-TestRunResult.json",
+      "cli": "unit-3-cli.json",
+      "runId": "f1a7f420-d0c5-4adf-899e-172ef89b0d7c",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "childExitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "production launcher verifies registered caller and pins published code through exact output and exit"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "explanation": "New fixture embedded common Git directory inside source, unlike production external shared metadata; changed fixture to --separate-git-dir."
+    },
+    {
+      "result": "unit-4-TestRunResult.json",
+      "cli": "unit-4-cli.json",
+      "runId": "024f4917-ce9f-44fb-9844-8ed7dbeb1e60",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "childExitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "explanation": null
+    }
+  ],
+  "native": {
+    "status": "pending",
+    "owner": "main",
+    "command": "node --test test/main-switch-agent-channel.integration.test.ts",
+    "reason": "Main will run on host supported provider with isolated HOME/TMPDIR and clean clone of implementation commit."
+  },
+  "scope": {
+    "protected": [
+      "physical main copies and logical raf-main (lexical/canonical native entries)",
+      "physical main worktree metadata, main HEAD/index/config and lock counterparts",
+      "raf main ref/reflog, packed-refs and lock counterparts",
+      ".gitmodules",
+      "raf-hotfix activation control including generation registry and snapshots"
+    ],
+    "baselineRetained": [
+      "Denied state HOME/SQLite/sidecars/secrets",
+      "Denied registered host/peer sockets, host socket directories and loopback transport",
+      "Only captured simple issued command prefixes; no added subcommands or candidate prefixes"
+    ],
+    "notProtected": [
+      "Shared Orchestrator .git/index remains writable for authorized own OpenSpec commits; Git can therefore stage or change its gitlink entries. No complete command-mediated Git protection for this shared index is implemented."
+    ],
+    "reason": "Explicit main scope clarification: complete command-mediated Git for shared orchestrator .git/index is outside item 6.3. Exact file sandbox cannot authorize own unrelated index entries while excluding gitlink entries in the same file. .gitmodules and raf repository main metadata remain protected."
+  },
+  "regressions": {
+    "owner": "QA 6.4",
+    "executedByThisAgent": false,
+    "reason": "Main directed no foreign unit groups; item6.4 owns declared regressionGroups."
+  },
+  "testChanges": "Initial independent implementation preceded all prepared-test reads. Original 65 scaffold scenarios were kept; three production launcher/scope scenarios were added afterward.",
+  "captureLimit": "Tool exec_command exposes merged stdout/stderr. Every unit captured stream is a complete single TestRunResult JSON document, saved byte-for-byte; no additional stderr was observed. Separate .stderr files record this absence, not a separately available OS stream."
+}

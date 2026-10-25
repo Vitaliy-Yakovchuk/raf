@@ -95,10 +95,13 @@ export async function routeAgentChannelCommand(
   request: AgentChannelRequest,
   ports: AgentChannelPorts,
 ): Promise<ChannelCommandOutput> {
+  request = structuredClone(request);
   if (!Number.isSafeInteger(request.callerPid) || request.callerPid <= 0) refuse('caller PID', 'CALLER_UNVERIFIED');
-  const identity = await ports.verifyCaller(request.callerPid);
+  const verified = await ports.verifyCaller(request.callerPid);
+  const identity = verified && structuredClone(verified);
   if (!identity) refuse('unverified caller', 'CALLER_UNVERIFIED');
-  const grant = await ports.loadGrant(identity);
+  const loadedGrant = await ports.loadGrant({ ...identity });
+  const grant = loadedGrant && structuredClone(loadedGrant);
   if (!grant) refuse('grant missing', 'CHANNEL_GRANT_MISSING');
   if (!sameIdentity(identity, grant.identity)) refuse('grant identity mismatch', 'CALLER_UNVERIFIED');
   const prefix = parseSandboxCommand(grant.issuedPrefix);
@@ -128,10 +131,11 @@ export async function routeAgentChannelCommand(
       !(['publicationId', 'slot', 'commit', 'sourceFingerprint', 'buildFingerprint', 'catalogFingerprint'] as const).every(key => !!generation[key])) refuse('incomplete published snapshot', 'CHANNEL_PUBLICATION_UNVERIFIED');
   if (grant.routing === 'legacy' && generation.slot !== grant.issuedSlot) refuse('legacy channel holds its issued slot');
   if (grant.routing !== 'trusted-facade' && grant.routing !== 'legacy') refuse('unknown routing');
-  const lease = await ports.pinGeneration(generation, registry.revision);
+  absolute(grant.workspace);
+  const lease = await ports.pinGeneration(structuredClone(generation), registry.revision);
   try {
     if (!sameGeneration(generation, lease.generation)) refuse('pinned snapshot mismatch', 'CHANNEL_SNAPSHOT_MISMATCH');
-    return await ports.executePinned({ generation, executable: generation.executable,
+    return await ports.executePinned({ generation: structuredClone(generation), executable: generation.executable,
       argv: [generation.entrypoint, ...args], cwd: grant.workspace, sender: { ...identity }, shell: false });
   } finally { await lease.release(); }
 }

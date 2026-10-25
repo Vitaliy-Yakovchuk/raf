@@ -4,6 +4,7 @@ import { createInterface } from 'node:readline';
 import { mkdir, mkdtemp, open, readFile, readdir, realpath, rm, rmdir, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { join } from 'node:path';
+import type { PublishedAgentChannelContext } from './main-switch-agent-launcher.ts';
 
 export interface CodexRafCommandAccessRequest {
   readonly invocation: Invocation;
@@ -12,6 +13,7 @@ export interface CodexRafCommandAccessRequest {
   readonly runDirectory: string;
   readonly environment: Readonly<Record<string, string | undefined>>;
   readonly timeoutMs?: number;
+  readonly publication?: PublishedAgentChannelContext;
 }
 
 export interface PreparedCodexRafCommandAccess {
@@ -141,7 +143,10 @@ if (request.hook_event_name === 'PreToolUse' && request.tool_name === 'Bash' && 
     const path = '/proc/self/fd/' + directory.fd;
     for (const filename of ['stdout', 'stderr', 'result.json']) files.push(await fs.open(path + '/' + filename, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600));
     if (await closed()) throw new Error('command channel closed before execution');
-    const child = spawn(allowed[0], words.slice(1), { cwd: access.cwd, env: process.env, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
+    const launcher = access.publication
+      ? ['--input-type=module', '-e', 'const {runPublishedAgentChannel}=await import(process.argv[1]);process.exitCode=await runPublishedAgentChannel(JSON.parse(process.argv[2]));', access.launcher, JSON.stringify({ ...access.publication, cwd: access.cwd, issuedCommands: access.commands, command })]
+      : words.slice(1);
+    const child = spawn(access.publication ? access.node : allowed[0], launcher, { cwd: access.cwd, env: process.env, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
     let spawnError;
     const completed = new Promise(resolve => {
       child.once('error', error => { spawnError = error; });
@@ -303,7 +308,8 @@ export async function prepareCodexRafCommandAccess(
       const identity = await root.stat();
       results = { path, dev: identity.dev, ino: identity.ino };
     } finally { await root.close(); }
-    const source = `const access = ${JSON.stringify({ commands, cwd: request.cwd, results, node: process.execPath, reader: replayProgram })};\n${hookProgram}`;
+    const source = `const access = ${JSON.stringify({ commands, cwd: request.cwd, results, node: process.execPath, reader: replayProgram,
+      ...(request.publication ? { publication: request.publication, launcher: new URL('./main-switch-agent-launcher.ts', import.meta.url).href } : {}) })};\n${hookProgram}`;
     const command = `${literal(process.execPath)} --input-type=module -e ${literal(source)}`;
     const hook = `hooks.PreToolUse=[{matcher="^Bash$",hooks=[{type="command",timeout=${commandHookTimeoutSeconds},async=false,command=${JSON.stringify(command)}}]}]`;
     const configuration: string[] = [];

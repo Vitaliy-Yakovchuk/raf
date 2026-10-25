@@ -21,6 +21,7 @@ import { validateTestRunConfig } from './test-runs.ts';
 import type { SandboxCallerControlSnapshot } from './sandbox-test-caller.ts';
 import type { SandboxTestControlSnapshot, SandboxTestAssignment } from './sandbox-test-run.ts';
 import { retainHotfixGeneration } from './hotfix-activation.ts';
+import { agentChannelReadOnlyPaths } from './main-switch-agent-launcher.ts';
 import { prepareHotfixWorktree, validateHotfixTrust, startHotfixCommitPort } from './hotfix-worktree.ts';
 import { hotfixRoute } from './hotfix-host.ts';
 import { productionStateContext, stateContextEnvironment, stateFailure } from './state-migration-guard.ts';
@@ -1382,6 +1383,8 @@ export async function runProductionWorker(
         if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
         throw error;
       });
+      const protectsMain = rafSubcommandsFor(session.launchContext.testAssignment?.type ?? session.activity?.type ?? '') !== null;
+      const mainReadOnly = protectsMain ? await agentChannelReadOnlyPaths(context.orchestratorRoot, stateContext.homeDirectory) : [];
       if (settings.runner === 'claude' && !socketPathFits(join(scope.tmuxDirectory, `tmux-${process.getuid?.() ?? 0}`, 'default'))) {
         toolTmuxDirectory = await createRafToolSocketDirectory();
         scope.tmuxDirectory = toolTmuxDirectory.directory;
@@ -1389,16 +1392,16 @@ export async function runProductionWorker(
         invocation.args.push(...nativeWriteScopeArgs(settings, [toolTmuxDirectory.directory]));
       }
       invocation.args.splice(0, invocation.args.length, ...nativeSandboxArgs(settings, invocation.args, scope));
-      if (hotfix && settings.runner === 'claude') {
+      if ((hotfix || mainReadOnly.length) && settings.runner === 'claude') {
         const index = invocation.args.indexOf('--settings');
-        if (index < 0) fail('RUNNER_SANDBOX_UNAVAILABLE', 'Hotfix claude requires enforced filesystem sandbox');
+        if (index < 0) fail('RUNNER_SANDBOX_UNAVAILABLE', 'Claude requires enforced filesystem sandbox');
         const settingsValue = JSON.parse(invocation.args[index + 1]);
-        settingsValue.sandbox.filesystem = { ...settingsValue.sandbox.filesystem, denyWrite: [...(settingsValue.sandbox.filesystem?.denyWrite ?? []), hotfix.commonDirectory, join(hotfix.cwd, '.git')], allowWrite: [...writable.directories, ...writable.workspace] };
+        settingsValue.sandbox.filesystem = { ...settingsValue.sandbox.filesystem, denyWrite: [...(settingsValue.sandbox.filesystem?.denyWrite ?? []), ...mainReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], allowWrite: [...writable.directories, ...writable.workspace] };
         invocation.args[index + 1] = JSON.stringify(settingsValue);
       }
       if (settings.runner === 'codex' && codexInvocationSandboxMode(invocation.args) !== null) {
         try {
-          codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], ...(hotfix ? { readOnlyDirectories: [hotfix.commonDirectory, join(hotfix.cwd, '.git')] } : {}), environment: process.env, timeoutMs: settings.timeouts.transitionMs });
+          codexSandbox = await prepareCodexSandbox({ runId: request.runId, invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), writableDirectories: [...writable.directories, ...writable.workspace], readOnlyDirectories: [...mainReadOnly, ...(hotfix ? [hotfix.commonDirectory, join(hotfix.cwd, '.git')] : [])], environment: process.env, timeoutMs: settings.timeouts.transitionMs });
         } catch (error) {
           if (error instanceof CodexSandboxUnavailable) fail('RUNNER_SANDBOX_UNAVAILABLE', error.message);
           throw error;
@@ -1406,7 +1409,8 @@ export async function runProductionWorker(
         invocation = codexSandbox.invocation;
       }
       if (settings.runner === 'codex') {
-        codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs });
+        codexAccess = await prepareCodexRafCommandAccess({ invocation, scope, cwd: request.cwd, runDirectory: dirname(session.launchContext.reportPath), environment: process.env, timeoutMs: settings.timeouts.transitionMs,
+          publication: { orchestratorRoot: context.orchestratorRoot, homeDirectory: stateContext.homeDirectory, runId: request.runId, agentId: request.address } });
         invocation = codexAccess.invocation;
         if (codexAccess.unavailable) process.stderr.write(`${request.runId}: ${codexAccess.unavailable}\n`);
       }

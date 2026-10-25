@@ -11,7 +11,7 @@ import { executeCommand } from './os-runtime.ts';
 
 type Guard = { path: string; stat: BigIntStats; handle: FileHandle; entries?: string[] };
 type Source = { path: string; instance: string; location: 'active' | 'archive' };
-type ParsedSource = { digest: string; rows: Awaited<ReturnType<typeof readAssignmentTasks>> };
+type ParsedSource = { digest: string; rows: Awaited<ReturnType<typeof readAssignmentTasks>>; schemaRoot?: string };
 const parsedSources = new WeakMap<AdapterCommandExecutor, Map<string, ParsedSource>>();
 async function checkedTogether<T>(checks: readonly Promise<T>[]): Promise<T[]> {
   const results = await Promise.allSettled(checks);
@@ -179,15 +179,37 @@ export function createAssignmentIdentityAdapter(
         }
         await copySpecs(join(source.path, 'specs'), join(target, 'specs'));
         await access.verify();
+        const withSchema = async <T>(schemaRoot: string, read: (digest: string) => Promise<T>): Promise<T> => {
+          if (await realpath(schemaRoot) !== schemaRoot) throw new Error('Verified package schema path changed');
+          return guarded(schemaRoot, async schemaAccess => {
+            const content = await schemaAccess.bytes(join(schemaRoot, 'schema.yaml'));
+            if (!content || createHash('sha256').update(content).digest('hex') !== 'b6f28f305ab7f33b061949251bba82c79de66c82424cfed60582327db3f888f2') throw new Error('Unverified package schema inputs for the supported OpenSpec 1.14.3 read plan');
+            const digest = inputs.copy().update(JSON.stringify([schemaRoot, content.toString('base64')])).digest('hex');
+            const destination = join(view, 'openspec', 'schemas', 'spec-driven');
+            files.set(join(destination, 'schema.yaml'), content);
+            await schemaAccess.verify();
+            return read(digest);
+          });
+        };
+        const previous = parsed.get(cacheKey);
+        const reuse = async (digest: string) => {
+          if (previous?.digest !== digest) return undefined;
+          verifiedParse = previous;
+          return previous.rows;
+        };
+        const cached = options.execute === undefined
+          ? previous?.schemaRoot ? await withSchema(previous.schemaRoot, reuse) : undefined
+          : await reuse(inputs.copy().digest('hex'));
+        if (cached !== undefined) {
+          await access.verify();
+          return consume(source, cached);
+        }
         const [version, resolution] = await checkedTogether([
           execute({ executable: 'openspec', args: ['--version'], cwd: view }),
           ...(options.execute === undefined ? [execute({ executable: 'openspec', args: ['schema', 'which', 'spec-driven', '--json'], cwd: view })] : []),
         ]);
         if (version.exitCode !== 0 || version.stdout.trim() !== '1.14.3') throw new Error('Unverified OpenSpec version; the supported read plan requires 1.14.3');
-        const readRows = async () => {
-          const digest = inputs.digest('hex');
-          const previous = parsed.get(cacheKey);
-          if (previous?.digest === digest) { verifiedParse = previous; return previous.rows; }
+        const readRows = async (digest: string, schemaRoot?: string) => {
           for (const [path, content] of files) {
             await mkdir(dirname(path), { recursive: true, mode: 0o700 });
             await writeFile(path, content, { mode: 0o600 });
@@ -208,7 +230,7 @@ export function createAssignmentIdentityAdapter(
             } },
             fs: { readText: path => readFile(path, 'utf8') },
           });
-          if (verifiedSchema) verifiedParse = { digest, rows };
+          if (verifiedSchema) verifiedParse = { digest, rows, ...(schemaRoot ? { schemaRoot } : {}) };
           return rows;
         };
         let rows: Awaited<ReturnType<typeof readAssignmentTasks>>;
@@ -217,16 +239,8 @@ export function createAssignmentIdentityAdapter(
           const schema = JSON.parse(resolution!.stdout);
           if (schema.source !== 'package' || schema.name !== 'spec-driven' || typeof schema.path !== 'string' || !isAbsolute(schema.path)) throw new Error('Unverified user or external schema override; only the package spec-driven read plan is supported');
           const schemaRoot = await realpath(schema.path);
-          rows = await guarded(schemaRoot, async schemaAccess => {
-            const content = await schemaAccess.bytes(join(schemaRoot, 'schema.yaml'));
-            if (!content || createHash('sha256').update(content).digest('hex') !== 'b6f28f305ab7f33b061949251bba82c79de66c82424cfed60582327db3f888f2') throw new Error('Unverified package schema inputs for the supported OpenSpec 1.14.3 read plan');
-            inputs.update(JSON.stringify([schemaRoot, content.toString('base64')]));
-            const destination = join(view, 'openspec', 'schemas', 'spec-driven');
-            files.set(join(destination, 'schema.yaml'), content);
-            await schemaAccess.verify();
-            return readRows();
-          });
-        } else rows = await readRows();
+          rows = await withSchema(schemaRoot, digest => readRows(digest, schemaRoot));
+        } else rows = await readRows(inputs.copy().digest('hex'));
         await access.verify();
         return consume(source, rows);
       } finally { await rm(view, { recursive: true, force: true }); }

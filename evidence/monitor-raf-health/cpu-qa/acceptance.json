@@ -1,0 +1,54 @@
+{
+  "assignment": "monitor-raf-health:2.4",
+  "status": "passed",
+  "hostRunId": "9e4f443a-e123-4e80-8504-9f035e018040",
+  "testedSha": "5c7107de1bd1c26e8ce9ee2e465a9e76b205bf64",
+  "command": "node scripts/qa-health-cpu-cli-host.ts /srv/dev/raf-mrh24-cli-evidence",
+  "execution": {
+    "executor": "main",
+    "reportedCliExitCode": 0,
+    "reportedSecretScanExitCode": 0,
+    "provenance": "Main host handoff in session; secret-scan command/output was not supplied",
+    "agreedExecutionProtocol": [
+      "review diff",
+      "clean clone",
+      "resource wait"
+    ]
+  },
+  "archive": {
+    "source": "/srv/dev/raf-mrh24-cli-evidence",
+    "manifestSource": "/srv/dev/raf-mrh24-cli-evidence.sha256",
+    "copiedWithoutModification": true,
+    "sha256VerifiedFiles": 21,
+    "readOnlySource": true
+  },
+  "checks": {
+    "scenariosPassed": 4,
+    "ownCores": 2.664284368016678,
+    "eventCount": 1,
+    "deliveredOccurrences": 1,
+    "admissionUnchanged": true,
+    "queueUnchanged": true,
+    "liveCpuAvailability": "partial",
+    "liveCores": null,
+    "corruptHealthAvailability": "unavailable",
+    "refusalCode": "CALLER_UNVERIFIED",
+    "refusalCliExitCode": 1,
+    "refusalReason": "Current process ancestry has no verified registered agent or attached main pane",
+    "cleanup": {
+      "complete": true,
+      "failures": [],
+      "remainingChildPids": []
+    },
+    "temporaryBaseAbsent": true
+  },
+  "limitations": [
+    "Synthetic interactive codex executable, real tmux/production worker and isolated service; no AI provider",
+    "Fixture CPU window is explicitly shortened; threshold remains production conf value",
+    "Production helper per-child CPU is unavailable; live partial windows must stay partial",
+    "Initial complete CPU window uses actual RafCostRuntime contributors with service stopped; live worker/service scenario follows in the same state",
+    "The scenario label mentions missing-recipient; the actual refusal is CALLER_UNVERIFIED before recipient lookup. Missing-recipient lookup/delivery failure is not claimed.",
+    "Unit stderr transport was combined; see unit.capture-note.txt."
+  ],
+  "nextAction": "raf marks assigned item 2.4; other open items are outside assignment; no archive"
+}

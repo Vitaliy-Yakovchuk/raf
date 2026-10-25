@@ -5,7 +5,8 @@
     "resource-wait": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/8d40820d-3449-4a8e-b3ed-1c3f4a1738d2/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/resource-wait --files test/state-store.test.ts test/state-migration-cli.test.ts",
     "host-stand": "node /srv/dev/work/orchestrator/raf-develop/scripts/qa-forced-close-live.mjs /srv/dev/work/orchestrator/raf-develop/evidence/monitor-raf-health/qa-5.4/host-stand",
     "host-config-red": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/8d40820d-3449-4a8e-b3ed-1c3f4a1738d2/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/forced-close --files test/forced-close-metrics.test.ts",
-    "host-attempt-1": "node /srv/dev/mrh54-src.396Hxa/raf-develop/scripts/qa-forced-close-live.mjs /srv/dev/mrh54-ev1"
+    "host-attempt-1": "node /srv/dev/mrh54-src.396Hxa/raf-develop/scripts/qa-forced-close-live.mjs /srv/dev/mrh54-ev1",
+    "host-attempt-2": "node scripts/qa-forced-close-live.mjs /srv/dev/mrh54-ev2 (cwd: clean clone at 41e76380b8bc10b478165fb26093e713236b93fa; TMPDIR on /srv/dev)"
   },
   "regressionAuthorization": {
     "sourceChange": "monitor-raf-health",

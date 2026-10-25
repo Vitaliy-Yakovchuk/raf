@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -9,7 +10,8 @@ import { prepareAgentClose, type AgentCloseOptions } from '../src/agent-close-pr
 import { loadFlowPolicy } from '../src/flow-policy.ts';
 import { openStateStore } from '../src/state-store.ts';
 import { createSessionState, type SessionRecord, type SessionRepository, type TransitionEffects } from '../src/session-state.ts';
-import { configureForcedCloseStand } from '../scripts/qa-forced-close-config.mjs';
+import { mainRoute } from '../src/hotfix-host.ts';
+import { configureForcedCloseStand, forcedCloseStandPrefix, prepareForcedCloseMain } from '../scripts/qa-forced-close-config.mjs';
 import {
   forcedCloseMetricsPeriod, readForcedCloseMetrics,
   recordForcedCloseFinalizationInTransaction, recordForcedCloseRefusalInTransaction,
@@ -29,6 +31,25 @@ test('forced-close live stand preserves required production cost policy for star
   assert.deepEqual(configured.commandTiming, original.commandTiming);
   assert.deepEqual(configured.runnerProtocols[0].timeouts, original.runnerProtocols.find(row => row.runner === 'codex').timeouts);
   assert.equal(configured.runnerProtocols[0].version, '0.0.1');
+});
+
+test('forced-close live stand creates its registered main Git root before worker launch', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'raf-forced-main-unit-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, 'conf'));
+  const projects = { projects: { raf: { path: 'raf-main', branchPaths: { main: 'raf-main' } } } };
+  writeFileSync(join(root, 'conf/projects.json'), JSON.stringify(projects));
+  assert.equal(spawnSync('git', ['init', '-q', '--initial-branch=main', root]).status, 0);
+  mkdirSync(join(root, 'raf-main'));
+  const main = prepareForcedCloseMain(root, projects);
+  const route = await mainRoute({ orchestratorRoot: root, qaHome: root, environment: {}, sandboxExecutable: 'codex' });
+  assert.equal(route.cwd, main);
+  assert.equal(route.repositoryIdentity, join(main, '.git'));
+});
+
+test('forced-close live stand respects its host disk TMPDIR', () => {
+  assert.equal(forcedCloseStandPrefix({ TMPDIR: '/srv/dev/qa-scratch' }), '/srv/dev/qa-scratch/mrh54-');
+  assert.equal(forcedCloseStandPrefix({}), '/srv/dev/mrh54-');
 });
 
 function fixture(t: TestContext) {

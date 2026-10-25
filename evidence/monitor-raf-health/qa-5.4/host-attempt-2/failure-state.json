@@ -1,0 +1,16 @@
+{
+  "sessions": [
+    {
+      "runId": "40c54a13-1c5d-470e-bda1-fc360fe04661",
+      "addressId": "auto-worker",
+      "revision": 3,
+      "state": "finished",
+      "abortReason": "Wrapper launch 40c54a13-1c5d-470e-bda1-fc360fe04661 failed: Worker exited before readiness: code=1, signal=null; worker: 2026-10-25T01:49:53.482Z worker started run=40c54a13-1c5d-470e-bda1-fc360fe04661 pid=3213222 ppid=3212825\n40c54a13-1c5d-470e-bda1-fc360fe04661: worker process group=3213222 session=3213222 pidNamespace=pid:[4026531836]\nfile:///tmp/mrh54-LhU2N8/tmp/raf-lfc-IG2WX9/orchestrator/raf-develop/src/hotfix-host.ts:47\n  if (await fs.realpath(cwd) !== cwd || await git(cwd, 'rev-parse', '--show-toplevel') !== cwd || await git(cwd, 'symbolic-ref', '--short', 'HEAD') !== 'main') throw new Error('Registered main Git root required');\n                                                                                                                                                                      ^\n\nError: Registered main Git root required\n    at mainRoute (file:///tmp/mrh54-LhU2N8/tmp/raf-lfc-IG2WX9/orchestrator/raf-develop/src/hotfix-host.ts:47:167)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async agentChannelReadOnlyPaths (file:///tmp/mrh54-LhU2N8/tmp/raf-lfc-IG2WX9/orchestrator/raf-develop/src/main-switch-agent-launcher.ts:87:17)\n    at async Module.runProductionWorker (file:///tmp/mrh54-LhU2N8/tmp/raf-lfc-IG2WX9/orchestrator/raf-develop/src/production-runtime.ts:1391:43)\n    at async file:///tmp/mrh54-LhU2N8/tmp/raf-lfc-IG2WX9/orchestrator/raf-develop/[eval1]:1:120\n\nNode.js v26.12.1; verify runner readiness and recover this run before retrying",
+      "finishedAt": "2026-10-25T01:49:53.895Z"
+    }
+  ],
+  "claims": [],
+  "admission": [],
+  "pending": [],
+  "reminders": []
+}

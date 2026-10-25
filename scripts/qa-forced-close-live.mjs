@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { release } from 'node:os';
 import { setTimeout as delay } from 'node:timers/promises';
-import { configureForcedCloseStand } from './qa-forced-close-config.mjs';
+import { configureForcedCloseStand, forcedCloseStandPrefix, prepareForcedCloseMain } from './qa-forced-close-config.mjs';
 
 const source = resolve(import.meta.dirname, '..');
 const output = resolve(process.argv[2] ?? '');
@@ -18,7 +18,7 @@ const json = async path => JSON.parse(await fs.readFile(path, 'utf8'));
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 
 if (process.argv[3] !== '--isolated') {
-  const base = await fs.mkdtemp('/tmp/mrh54-');
+  const base = await fs.mkdtemp(forcedCloseStandPrefix());
   const home = join(base, 'home');
   const tmp = join(base, 'tmp');
   await fs.mkdir(home, { mode: 0o700 });
@@ -99,6 +99,9 @@ if (process.argv[3] !== '--isolated') {
       retentionUnchanged: JSON.stringify(flow.retention) === JSON.stringify((await json(join(source, '../conf/flow.json'))).retention) };
     assert.equal(evidence.stand.costProfileUnchanged, true);
     assert.equal(evidence.stand.retentionUnchanged, true);
+    evidence.stand.mainRoot = prepareForcedCloseMain(cfg.root, await json(join(cfg.root, 'conf/projects.json')));
+    const { mainRoute } = await import(pathToFileURL(join(cfg.sourceRoot, 'src/hotfix-host.ts')));
+    evidence.stand.mainRoute = await mainRoute({ orchestratorRoot: cfg.root, qaHome: cfg.home, environment: {}, sandboxExecutable: 'codex' });
     const started = await record('auto-launch', f.runArgs('auto-worker'), await f.run('auto-worker'));
     assert.equal(started.exitCode, 0);
     const session = id => f.inspect().sessions.find(row => row.addressId === id);

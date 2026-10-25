@@ -578,6 +578,71 @@
       "childExitCode": 0,
       "passed": 27,
       "evidence": "host-config-qa.TestRunResult.json"
+    },
+    {
+      "runId": "710b0169-57b2-4442-8ffc-1d8e2a2fc52f",
+      "group": "monitor-raf-health/forced-close",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/forced-close-metrics.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "knownRed": [
+        {
+          "file": "test/forced-close-metrics.test.ts",
+          "name": "forced-close live stand creates its registered main Git root before worker launch"
+        },
+        {
+          "file": "test/forced-close-metrics.test.ts",
+          "name": "forced-close live stand respects its host disk TMPDIR"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 27,
+      "evidence": "host-main-red.TestRunResult.json"
+    },
+    {
+      "runId": "2e58ac04-7e67-416b-8103-e65fb446570d",
+      "group": "monitor-raf-health/forced-close",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/forced-close-metrics.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 29,
+      "evidence": "host-main-qa.TestRunResult.json"
     }
   ],
   "aggregatePreserved": true,

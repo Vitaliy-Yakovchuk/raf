@@ -138,6 +138,7 @@ if (mode === 'prepare') {
     summary.agentPs = { command: 'agent-ps.json', cliExitCode: ps.cliExitCode, evidence: metadata?.evidence ?? null };
     assert.equal(ps.cliExitCode, 0, 'PS series failed; preserve primary result, do not retry');
     assert.ok(metadata && fs.existsSync(metadata.evidence));
+    assert.deepEqual(JSON.parse(fs.readFileSync(metadata.evidence)).sourceConfiguration, summary.configuration);
     const { nativeHarness, hashes } = prepareNative(output, conf);
     summary.harness.generated = hashes;
     for (let index = 0; index < repetitions; index++) {
@@ -150,6 +151,7 @@ if (mode === 'prepare') {
       summary.agentRun.push(record); atomic(path.join(output, 'summary.json'), summary);
       assert.equal(result.cliExitCode, 0, 'Native scenario failed; preserve primary result, do not retry');
       assert.equal(native.status, 'completed-review-required');
+      assert.deepEqual(native.configuration, summary.configuration);
       assert.equal(native.cleanup.complete, true);
       assert.equal(native.unexecuted.length, 0);
       assert.ok(native.checks.every(check => check.status === 'passed'));
@@ -157,12 +159,15 @@ if (mode === 'prepare') {
         const measured = JSON.parse(fs.readFileSync(path.join(native.evidence, launch.originalResult)));
         assert.equal(measured.cliExitCode, 0); assert.equal(measured.signal, null);
         assert.equal(measured.measurement.rusage.childExitCode, 0);
-        assert.ok(measured.measurement.profileDelta.some(row => row.executor === 'self' && row.samples > 0));
+        const self = measured.measurement.profileDelta.filter(row => row.executor === 'self' && row.samples > 0);
+        assert.ok(self.length > 0);
+        assert.ok(self.every(row => row.cpuSamples > 0 && [row.wallMs, row.cpuUserMs, row.cpuSystemMs].every(value => Number.isFinite(value) && value >= 0)));
         record.launches.push({ label: launch.label, source: path.join(native.evidence, launch.originalResult), measurement: measured.measurement });
       }
       assert.deepEqual(record.launches.map(launch => launch.label), ['launch-a', 'launch-b']);
       atomic(path.join(output, 'summary.json'), summary);
     }
+    assert.deepEqual(Object.fromEntries(Object.keys(summary.configuration).map(file => [file, hash(path.join(conf, file))])), summary.configuration, 'Configuration changed during the series');
     summary.semanticStatus = 'completed-review-required';
   } catch (error) { summary.status = 'failed'; summary.error = { message: error.message, stack: error.stack }; }
   finally {
@@ -184,6 +189,8 @@ if (mode === 'prepare') {
     const verifier = run('agent-ps-comparison', process.execPath, [path.join(source, 'evidence/profile-raf-performance/qa-5.7/verify-comparison.mjs'),
       before.agentPs.evidence, after.agentPs.evidence, path.join(output, 'agent-ps-comparison.json')], source, output);
     result.agentPs = { cliExitCode: verifier.cliExitCode, evidence: 'agent-ps-comparison.json' };
+    assert.equal(verifier.cliExitCode, 0, 'PS evidence integrity failed');
+    result.agentPs.allCasesHaveFavorableMeans = JSON.parse(fs.readFileSync(path.join(output, 'agent-ps-comparison.json'))).allCasesHaveFavorableMeans;
     for (const label of ['launch-a', 'launch-b']) {
       const select = series => series.agentRun.map(sample => sample.launches.find(launch => launch.label === label).measurement);
       const initial = select(before), final = select(after);

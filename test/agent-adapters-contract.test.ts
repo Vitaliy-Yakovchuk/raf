@@ -276,6 +276,34 @@ test('U4 delayed readiness from run A cannot unlock run B at the same address', 
   assert.equal(b.events.includes('stop'), false);
 });
 
+for (const stale of [
+  { status: 'limited', reason: 'run-a limit', retryAt: '2026-10-25T11:00:00Z' },
+  { status: 'exited', exitCode: null },
+  { status: 'exited', exitCode: 0 },
+] as const) {
+  test(`U4 delayed ${JSON.stringify(stale)} from A cannot affect ready run B`, async () => {
+    const a = harness();
+    const bRequest = { ...request, runId: 'run-b', tmpRoot: '/fixture/run-b', tmuxSession: 'owned-b' };
+    const bIdentity = { ...identity, pid: 5678, tmuxSession: 'owned-b', runnerSessionId: 'native-b',
+      evidence: { ...identity.evidence, runId: 'run-b', tmuxPane: '%2' } };
+    const b = harness(bRequest, bIdentity);
+    const late = deferred<AdapterObservation>();
+    a.onInspect(() => late.promise);
+    await a.transport.startWithoutInput(request, '/fixture/run-a/report.json');
+    const oldReady = a.transport.waitReady(100);
+    await b.ready();
+    late.resolve(stale);
+    assert.notEqual((await oldReady).state, 'ready');
+    assert.deepEqual(await b.transport.waitReady(100), { state: 'ready', runnerSessionId: 'native-b' });
+    assert.deepEqual(await b.transport.ownership(), { state: 'owned', identity: bIdentity, processKind: 'agent' });
+    await b.transport.deliver(brief);
+    assert.deepEqual(b.deliveries, [brief]);
+    assert.equal(b.starts.length, 1);
+    assert.equal(b.events.includes('stop'), false);
+    assert.equal(b.events.includes('verify-process-exit'), false);
+  });
+}
+
 const replacements: [string, ProcessIdentity][] = [
   ['PID', { ...identity, pid: 9876 }],
   ['machine', { ...identity, evidence: { ...identity.evidence, machineId: 'machine-b' } }],
@@ -333,9 +361,10 @@ test('U5 launch failure retains delivery reason before a secondary cleanup failu
   let failure: unknown;
   try { await runLaunchWrapper(request, ports); } catch (error) { failure = error; }
   if (!(failure instanceof Error)) throw new Error('Expected launch failure', { cause: failure });
+  assert.ok(h.events.includes('stop'), 'The injected secondary failure must reach adapter cleanup');
   const reason = failure.message;
   assert.ok(reason.includes('PRIMARY: delivery unknown screen'), reason);
-  assert.ok(reason.includes('SECONDARY: cleanup unavailable'), reason);
+  assert.ok(reason.includes('SECONDARY: cleanup unavailable'), JSON.stringify({ reason, events: h.events, failures }));
   assert.ok(reason.indexOf('PRIMARY:') < reason.indexOf('SECONDARY:'), reason);
   assert.ok(failures.some(value => value.includes('PRIMARY: delivery unknown screen')));
   await assert.rejects(h.transport.deliver(brief));

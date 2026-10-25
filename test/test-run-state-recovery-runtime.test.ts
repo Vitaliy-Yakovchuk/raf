@@ -43,7 +43,8 @@ function original(after: HostExecution, before: HostSnapshot) {
   assert.equal(after.result.phase, flight.phase);
   assert.equal(after.result.callerPhase, flight.callerPhase);
   assert.deepEqual(after.result.selection, flight.selection);
-  assert.deepEqual(after.result.command, flight.command);
+  const command = before.group.lastResult?.runId === flight.runId ? before.group.lastResult.command : flight.command;
+  assert.deepEqual(after.result.command, command);
   assert.deepEqual(after.result.timeoutPolicy, flight.timeoutPolicy);
   assert.deepEqual(after.result.knownRed, before.group.knownRed);
   assert.deepEqual(after.result.unexecuted, before.group.unexecuted);

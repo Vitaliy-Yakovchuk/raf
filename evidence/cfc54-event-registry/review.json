@@ -1,0 +1,238 @@
+{
+  "assignment": "complete-raf-flow-contracts:5.4",
+  "status": "failed",
+  "reason": "I6 native interrupt і позитивний I7 з реальним виробником/підтвердженою версією не виконані. Матриця I1–I7 неповна; 5.4 залишається відкритим.",
+  "scenarioEvidence": [
+    {
+      "id": "I1",
+      "status": "passed-on-controlled-stand",
+      "evidence": "live-1/integration.json",
+      "checks": [
+        "actual production control.ps rejects malformed report",
+        "activate/close exact kind/address",
+        "other address unchanged",
+        "unknown event and malformed ID rejected before binding",
+        "reminder update"
+      ]
+    },
+    {
+      "id": "I2",
+      "status": "passed-on-controlled-stand",
+      "evidence": "live-1/integration.json",
+      "checks": [
+        "persistent SQLite pending across separate OS processes",
+        "real SQL abort rolls back transition",
+        "independent SQLite writer lock causes bounded failure",
+        "release/reopen consumes pending atomically"
+      ]
+    },
+    {
+      "id": "I3",
+      "status": "passed-on-controlled-stand",
+      "evidence": "live-2/integration.json",
+      "checks": [
+        "real OpenSpec archive and production settle",
+        "list/show evidence",
+        "old archive, partial archive, failed archive, disappearance, suffix-ID negative controls"
+      ]
+    },
+    {
+      "id": "I4",
+      "status": "passed-on-controlled-stand",
+      "evidence": "live-3/integration.json",
+      "checks": [
+        "two concurrent child commands",
+        "reopen preserves original closedAt",
+        "new active cycle baseline with preexisting archive before real archive",
+        "no remaining completed pending"
+      ]
+    },
+    {
+      "id": "I5",
+      "status": "passed-on-controlled-stand",
+      "evidence": "live-1/integration.json",
+      "checks": [
+        "unavailable tmux recipient leaves active reminder undelivered",
+        "restore real recipient and accept receipt",
+        "one stdin marker and no duplicate delivery after reopen"
+      ]
+    },
+    {
+      "id": "I6",
+      "status": "partial",
+      "evidence": "live-1/integration.json",
+      "checks": [
+        "accepted failed report while process remains running does not close closed-binding",
+        "observed process exit and production finalization produce agent.closed",
+        "report-rejection smoke in I1"
+      ],
+      "unexecuted": [
+        "native runner interrupt; controlled stdin receiver is not an authenticated native runner"
+      ]
+    },
+    {
+      "id": "I7",
+      "status": "partial",
+      "evidence": "live-1/integration.json",
+      "checks": [
+        "fixture command exits 0 without version proof; production settle creates no deployment.completed and leaves reminder pending"
+      ],
+      "unexecuted": [
+        "actual deployment and positive verification of an environment version for a concrete deployment ID; no approved producer/stand"
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "path": "live-1/integration.json",
+      "sourceSha": "5d07412ed841b6023fcc63f34b99899667875bae",
+      "status": "failed",
+      "outerCliExitCode": 1,
+      "cleanup": {
+        "agent": {
+          "exitCode": 0,
+          "remainingPids": []
+        },
+        "main": {
+          "exitCode": 0,
+          "remainingPids": []
+        },
+        "fixture": {
+          "fixtureRemoved": true
+        }
+      }
+    },
+    {
+      "path": "live-2/integration.json",
+      "sourceSha": "0c9a1a8f3935333a9f93f19ef27ace56eaf7e092",
+      "status": "partial",
+      "outerCliExitCode": 0,
+      "cleanup": {
+        "agent": {
+          "exitCode": 0,
+          "remainingPids": []
+        },
+        "main": {
+          "exitCode": 0,
+          "remainingPids": []
+        },
+        "fixture": {
+          "fixtureRemoved": true
+        }
+      }
+    },
+    {
+      "path": "live-3/integration.json",
+      "sourceSha": "481e2a301d74c7f59a9ea1a82d220b3f30563a61",
+      "status": "partial",
+      "outerCliExitCode": 0,
+      "cleanup": {
+        "agent": {
+          "exitCode": 0,
+          "remainingPids": []
+        },
+        "main": {
+          "exitCode": 0,
+          "remainingPids": []
+        },
+        "fixture": {
+          "fixtureRemoved": true
+        }
+      }
+    }
+  ],
+  "fixtureCorrections": [
+    {
+      "commit": "0c9a1a8f3935333a9f93f19ef27ace56eaf7e092",
+      "reason": "OpenSpec rejected fixture metadata missing required schema; setup failure, not a product regression red",
+      "affected": [
+        "I3",
+        "I4"
+      ],
+      "confirmation": "live-2/integration.json"
+    },
+    {
+      "commit": "481e2a301d74c7f59a9ea1a82d220b3f30563a61",
+      "reason": "Move historical archive before next-cycle baseline and assert pending, eliminating ambiguous evidence",
+      "affected": [
+        "I4"
+      ],
+      "confirmation": "live-3/integration.json"
+    }
+  ],
+  "unit": {
+    "rawResult": "unit.TestRunResult.json",
+    "transport": "unit.transport.json",
+    "commandFile": "unit.command.txt",
+    "cliExitCodeFile": "unit.cli-exit-code.txt",
+    "runId": "a5873b43-4988-47c8-bc36-debeb74cda13",
+    "selection": {
+      "files": [
+        "test/event-registry.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "childExitCode": 0,
+    "cliExitCode": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "timedOut": false,
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "groupSnapshot": "loaded",
+    "timeoutCount": 0,
+    "nextAction": "complete",
+    "workspaceObservation": {
+      "observedHeadBeforeRun": "f8584eabf8a76e5d8b636124aff6b812f2817044",
+      "atomicWithRun": false,
+      "limitation": "Shared HEAD may advance. The unit runner did not emit a source SHA/dirty snapshot; the exact unit source snapshot is unverified. Live runs instead use recorded committed git archives."
+    },
+    "independentStderrCapture": false,
+    "stderrEvidence": "unit.stderr-availability.json",
+    "evidenceCompleteness": "incomplete independent stderr and atomic workspace identity; runner passed is preserved, not promoted to full acceptance"
+  },
+  "versions": {
+    "node": "v26.12.1",
+    "tmux-version": "tmux 3.6",
+    "openspec-version": "1.14.3",
+    "sqlite": "3.54.0"
+  },
+  "integrationChannel": {
+    "kind": "main-authorized isolated sandbox scenario script",
+    "runnerIntegrationPhase": "not executed: main reports unavailable before raf transfer; no wrapper/preset added per final main instruction"
+  },
+  "mainMessages": [
+    {
+      "source": "in-session user message [main]",
+      "quote": "Власний сценарний скрипт на ізольованому стенді у своєму sandbox (окремі тимчасові HOME/SQLite/OpenSpec fixture/tmux socket, committed HEAD raf-develop) — запускай сам, як це зробив QA 4.4; робочу БД/HOME не чіпай."
+    },
+    {
+      "source": "in-session user message [main]",
+      "quote": "Затвердженого живого виробника deployment.completed поза delta немає: перевір лише те, що вимагає delta (event-registry spec.md:77 — подія не створюється за самим кодом виходу) на fixture-виробнику; якщо для I7 потрібен реальний виробник викладки — познач невиконаним із причиною."
+    },
+    {
+      "source": "in-session user message [main]",
+      "quote": "main: окремий wrapper/preset зараз не додавай — integration-фазу raf-main ще не приймає (до перенесення raf). Завершуй failed 5.4 з повними доказами; неперевірені native interrupt і позитивний I7 лиши відкритими у звіті."
+    }
+  ],
+  "limitations": [
+    "The compiled CLI parser dispatches production handlers in separate processes with a test runtime context. This is an API/CLI stand, not public bin/raf.ts provenance acceptance.",
+    "The live tmux recipients are controlled stdin receivers, not an authenticated external AI provider. Native runner interrupt acceptance is reported separately.",
+    "Deployment has no approved live producer or environment; fixture controls do not prove a real deployment or I7 positive acceptance.",
+    "I1 live smoke does not independently exercise report rejection while its own recipient delivery fails; generic event delivery failure is covered by I5.",
+    "The public bin/raf.ts launch/provenance path was not exercised.",
+    "No blanket product-green claim; no product defect established in completed stand assertions."
+  ],
+  "nextAction": "5.4 remains open for native interrupt and real deployment/version-proof stand prerequisites. Main owns integration runner availability. No checkbox, new task, sync, archive or push performed.",
+  "metadataClarification": "Raw integration.json compiled CLI parser means the production source-module parser in Node using a built dist/catalog.json. scripts/build.ts generates catalog metadata, not a compiled JS binary. Raw evidence remains unchanged.",
+  "verification": {
+    "scriptSyntax": "node --check scripts/qa-event-registry.mjs: exit 0",
+    "diffWhitespace": "git diff --check -- scripts/qa-event-registry.mjs evidence/cfc54-event-registry: exit 0",
+    "productSourceChangedByQA": false
+  }
+}

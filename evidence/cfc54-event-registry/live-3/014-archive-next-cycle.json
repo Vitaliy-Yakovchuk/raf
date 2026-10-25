@@ -1,0 +1,303 @@
+{
+  "label": "archive-next-cycle",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+    "child",
+    "/tmp/cfc54-97RafG/input-13.json"
+  ],
+  "cwd": "/tmp/cfc54-97RafG/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 969.4411569999993,
+  "stdout": "014-archive-next-cycle.stdout",
+  "stderr": "014-archive-next-cycle.stderr",
+  "before": {
+    "reminders": [
+      {
+        "id": "0c16ae8d-e5dc-4ffc-bbea-b3d67737ca08",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "closed",
+        "closed_at": "2026-10-25T13:11:10.134Z",
+        "payload": {
+          "id": "0c16ae8d-e5dc-4ffc-bbea-b3d67737ca08",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-race-binding",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-race",
+            "action": "close"
+          },
+          "state": "closed",
+          "closedAt": "2026-10-25T13:11:10.134Z",
+          "closeReason": "event openspec.archived: archive-race"
+        }
+      }
+    ],
+    "pending_intents": [],
+    "reminder_deliveries": [],
+    "result_notices": [],
+    "sessions": [
+      {
+        "run_id": "835db1bc-9347-41ca-888c-857c02c026b6",
+        "address_id": "main",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "835db1bc-9347-41ca-888c-857c02c026b6",
+          "addressId": "main",
+          "state": "running",
+          "revision": 0,
+          "process": {
+            "pid": 55,
+            "startedAt": "2026-10-25T13:11:06.000Z",
+            "runner": "main",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-97RafG/main-receiver.mjs /tmp/cfc54-97RafG/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-97RafG/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          }
+        }
+      },
+      {
+        "run_id": "3afeb19d-7c9b-4c78-ad00-6dbc121cb39a",
+        "address_id": "worker",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "3afeb19d-7c9b-4c78-ad00-6dbc121cb39a",
+          "addressId": "worker",
+          "state": "running",
+          "revision": 0,
+          "process": {
+            "pid": 73,
+            "startedAt": "2026-10-25T13:11:06.000Z",
+            "runner": "codex",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-97RafG/agent/main-receiver.mjs /tmp/cfc54-97RafG/agent/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-97RafG/agent/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          },
+          "activity": {
+            "type": "qa",
+            "phase": "qa",
+            "project": "raf",
+            "cwd": "/tmp/cfc54-97RafG/root/raf-develop",
+            "features": [
+              "event-fixture"
+            ]
+          },
+          "launchedBy": {
+            "addressId": "main",
+            "runId": "835db1bc-9347-41ca-888c-857c02c026b6"
+          },
+          "launchContext": {
+            "assignment": {
+              "root": "/tmp/cfc54-97RafG/root",
+              "changes": [
+                {
+                  "id": "event-fixture",
+                  "items": [
+                    {
+                      "id": "1.1",
+                      "description": "Fixture complete"
+                    }
+                  ]
+                }
+              ]
+            },
+            "reportPath": "/tmp/cfc54-97RafG/tmp/3afeb19d-7c9b-4c78-ad00-6dbc121cb39a/worker.json",
+            "briefPath": "/tmp/cfc54-97RafG/tmp/3afeb19d-7c9b-4c78-ad00-6dbc121cb39a/brief.txt",
+            "selection": {
+              "runner": "codex",
+              "model": "fixture",
+              "effort": "fixture"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "after": {
+    "reminders": [
+      {
+        "id": "0c16ae8d-e5dc-4ffc-bbea-b3d67737ca08",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "closed",
+        "closed_at": "2026-10-25T13:11:10.134Z",
+        "payload": {
+          "id": "0c16ae8d-e5dc-4ffc-bbea-b3d67737ca08",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-race-binding",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-race",
+            "action": "close"
+          },
+          "state": "closed",
+          "closedAt": "2026-10-25T13:11:10.134Z",
+          "closeReason": "event openspec.archived: archive-race"
+        }
+      },
+      {
+        "id": "550df5dd-9ef3-4654-a958-66b182679dd1",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "550df5dd-9ef3-4654-a958-66b182679dd1",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-next-cycle",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-race",
+            "action": "close"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      }
+    ],
+    "pending_intents": [
+      {
+        "id": "openspec:archive-observation",
+        "payload": {
+          "id": "openspec:archive-observation",
+          "runId": null,
+          "event": "openspec.archived",
+          "payload": {
+            "revision": "204bfe02-5b73-4699-ad04-9fc8c02d6c22",
+            "active": [
+              "archive-race"
+            ],
+            "cycles": [
+              {
+                "id": "archive-race",
+                "baseline": [
+                  "2026-04-01-archive-race"
+                ]
+              }
+            ]
+          }
+        },
+        "run_id": null
+      }
+    ],
+    "reminder_deliveries": [],
+    "result_notices": [],
+    "sessions": [
+      {
+        "run_id": "835db1bc-9347-41ca-888c-857c02c026b6",
+        "address_id": "main",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "835db1bc-9347-41ca-888c-857c02c026b6",
+          "addressId": "main",
+          "state": "running",
+          "revision": 0,
+          "process": {
+            "pid": 55,
+            "startedAt": "2026-10-25T13:11:06.000Z",
+            "runner": "main",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-97RafG/main-receiver.mjs /tmp/cfc54-97RafG/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-97RafG/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          }
+        }
+      },
+      {
+        "run_id": "3afeb19d-7c9b-4c78-ad00-6dbc121cb39a",
+        "address_id": "worker",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "3afeb19d-7c9b-4c78-ad00-6dbc121cb39a",
+          "addressId": "worker",
+          "state": "running",
+          "revision": 0,
+          "process": {
+            "pid": 73,
+            "startedAt": "2026-10-25T13:11:06.000Z",
+            "runner": "codex",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-97RafG/agent/main-receiver.mjs /tmp/cfc54-97RafG/agent/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-97RafG/agent/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          },
+          "activity": {
+            "type": "qa",
+            "phase": "qa",
+            "project": "raf",
+            "cwd": "/tmp/cfc54-97RafG/root/raf-develop",
+            "features": [
+              "event-fixture"
+            ]
+          },
+          "launchedBy": {
+            "addressId": "main",
+            "runId": "835db1bc-9347-41ca-888c-857c02c026b6"
+          },
+          "launchContext": {
+            "assignment": {
+              "root": "/tmp/cfc54-97RafG/root",
+              "changes": [
+                {
+                  "id": "event-fixture",
+                  "items": [
+                    {
+                      "id": "1.1",
+                      "description": "Fixture complete"
+                    }
+                  ]
+                }
+              ]
+            },
+            "reportPath": "/tmp/cfc54-97RafG/tmp/3afeb19d-7c9b-4c78-ad00-6dbc121cb39a/worker.json",
+            "briefPath": "/tmp/cfc54-97RafG/tmp/3afeb19d-7c9b-4c78-ad00-6dbc121cb39a/brief.txt",
+            "selection": {
+              "runner": "codex",
+              "model": "fixture",
+              "effort": "fixture"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

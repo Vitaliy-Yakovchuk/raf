@@ -83,7 +83,7 @@ if (process.argv[2] === 'child') {
     GIT_COMMITTER_NAME: 'Event QA fixture', GIT_COMMITTER_EMAIL: 'qa@example.invalid' };
   const evidence = { assignment: 'complete-raf-flow-contracts:5.4', status: 'failed', base, root, code, home, db, tmp,
     command: [process.execPath, script, output, ...(selected ? [selected.join(',')] : [])], selected: selected ?? 'all', versions: { node: process.version }, commands: [], scenarios: [], cleanup: {}, limitations: [
-      'The compiled CLI parser dispatches production handlers in separate processes with a test runtime context. This is an API/CLI stand, not public bin/raf.ts provenance acceptance.',
+      'The production CLI parser uses a built dist/catalog.json and dispatches source-module handlers in separate Node processes with a test runtime context. This is an API/CLI stand, not public bin/raf.ts provenance acceptance.',
       'The live tmux recipients are controlled stdin receivers, not an authenticated external AI provider. Native runner interrupt acceptance is reported separately.',
       'Deployment has no approved live producer or environment; fixture controls do not prove a real deployment or I7 positive acceptance.'
     ] };

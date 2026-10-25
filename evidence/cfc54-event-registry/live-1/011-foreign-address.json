@@ -1,0 +1,325 @@
+{
+  "label": "foreign-address",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+    "child",
+    "/tmp/cfc54-7KM18U/input-10.json"
+  ],
+  "cwd": "/tmp/cfc54-7KM18U/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 418.2205190000004,
+  "stdout": "011-foreign-address.stdout",
+  "stderr": "011-foreign-address.stderr",
+  "before": {
+    "reminders": [
+      {
+        "id": "ca522442-8eff-4c13-adf6-13860d6b45a1",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "ca522442-8eff-4c13-adf6-13860d6b45a1",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 rejected-activate",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.report-rejected",
+            "id": "worker",
+            "action": "activate"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      },
+      {
+        "id": "2bde174c-b8e4-4b5f-8a8b-4dbeb42ddf26",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "2bde174c-b8e4-4b5f-8a8b-4dbeb42ddf26",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 rejected-close",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.report-rejected",
+            "id": "worker",
+            "action": "close"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      }
+    ],
+    "pending_intents": [],
+    "reminder_deliveries": [],
+    "result_notices": [],
+    "sessions": [
+      {
+        "run_id": "91c390a6-556f-45c8-a305-9f5fbfaef598",
+        "address_id": "main",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "91c390a6-556f-45c8-a305-9f5fbfaef598",
+          "addressId": "main",
+          "state": "running",
+          "revision": 0,
+          "process": {
+            "pid": 55,
+            "startedAt": "2026-10-25T13:06:00.000Z",
+            "runner": "main",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/main-receiver.mjs /tmp/cfc54-7KM18U/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-7KM18U/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          }
+        }
+      },
+      {
+        "run_id": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+        "address_id": "worker",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+          "addressId": "worker",
+          "state": "running",
+          "revision": 0,
+          "process": {
+            "pid": 73,
+            "startedAt": "2026-10-25T13:06:01.000Z",
+            "runner": "codex",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/agent/main-receiver.mjs /tmp/cfc54-7KM18U/agent/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-7KM18U/agent/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          },
+          "activity": {
+            "type": "qa",
+            "phase": "qa",
+            "project": "raf",
+            "cwd": "/tmp/cfc54-7KM18U/root/raf-develop",
+            "features": [
+              "event-fixture"
+            ]
+          },
+          "launchedBy": {
+            "addressId": "main",
+            "runId": "91c390a6-556f-45c8-a305-9f5fbfaef598"
+          },
+          "launchContext": {
+            "assignment": {
+              "root": "/tmp/cfc54-7KM18U/root",
+              "changes": [
+                {
+                  "id": "event-fixture",
+                  "items": [
+                    {
+                      "id": "1.1",
+                      "description": "Fixture complete"
+                    }
+                  ]
+                }
+              ]
+            },
+            "reportPath": "/tmp/cfc54-7KM18U/tmp/d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6/worker.json",
+            "briefPath": "/tmp/cfc54-7KM18U/tmp/d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6/brief.txt",
+            "selection": {
+              "runner": "codex",
+              "model": "fixture",
+              "effort": "fixture"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "after": {
+    "reminders": [
+      {
+        "id": "ca522442-8eff-4c13-adf6-13860d6b45a1",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "ca522442-8eff-4c13-adf6-13860d6b45a1",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 rejected-activate",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.report-rejected",
+            "id": "worker",
+            "action": "activate"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      },
+      {
+        "id": "2bde174c-b8e4-4b5f-8a8b-4dbeb42ddf26",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "2bde174c-b8e4-4b5f-8a8b-4dbeb42ddf26",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 rejected-close",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.report-rejected",
+            "id": "worker",
+            "action": "close"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      },
+      {
+        "id": "783e0bd4-9919-4e21-82ae-a287e451cda7",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "783e0bd4-9919-4e21-82ae-a287e451cda7",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 foreign-address",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.report-rejected",
+            "id": "other-worker",
+            "action": "activate"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      }
+    ],
+    "pending_intents": [],
+    "reminder_deliveries": [],
+    "result_notices": [],
+    "sessions": [
+      {
+        "run_id": "91c390a6-556f-45c8-a305-9f5fbfaef598",
+        "address_id": "main",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "91c390a6-556f-45c8-a305-9f5fbfaef598",
+          "addressId": "main",
+          "state": "running",
+          "revision": 0,
+          "process": {
+            "pid": 55,
+            "startedAt": "2026-10-25T13:06:00.000Z",
+            "runner": "main",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/main-receiver.mjs /tmp/cfc54-7KM18U/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-7KM18U/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          }
+        }
+      },
+      {
+        "run_id": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+        "address_id": "worker",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+          "addressId": "worker",
+          "state": "running",
+          "revision": 0,
+          "process": {
+            "pid": 73,
+            "startedAt": "2026-10-25T13:06:01.000Z",
+            "runner": "codex",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/agent/main-receiver.mjs /tmp/cfc54-7KM18U/agent/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-7KM18U/agent/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          },
+          "activity": {
+            "type": "qa",
+            "phase": "qa",
+            "project": "raf",
+            "cwd": "/tmp/cfc54-7KM18U/root/raf-develop",
+            "features": [
+              "event-fixture"
+            ]
+          },
+          "launchedBy": {
+            "addressId": "main",
+            "runId": "91c390a6-556f-45c8-a305-9f5fbfaef598"
+          },
+          "launchContext": {
+            "assignment": {
+              "root": "/tmp/cfc54-7KM18U/root",
+              "changes": [
+                {
+                  "id": "event-fixture",
+                  "items": [
+                    {
+                      "id": "1.1",
+                      "description": "Fixture complete"
+                    }
+                  ]
+                }
+              ]
+            },
+            "reportPath": "/tmp/cfc54-7KM18U/tmp/d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6/worker.json",
+            "briefPath": "/tmp/cfc54-7KM18U/tmp/d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6/brief.txt",
+            "selection": {
+              "runner": "codex",
+              "model": "fixture",
+              "effort": "fixture"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

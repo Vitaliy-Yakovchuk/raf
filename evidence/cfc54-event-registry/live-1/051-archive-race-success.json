@@ -1,0 +1,699 @@
+{
+  "label": "archive-race-success",
+  "command": [
+    "openspec",
+    "archive",
+    "archive-race",
+    "--yes",
+    "--skip-specs"
+  ],
+  "cwd": "/tmp/cfc54-7KM18U/root",
+  "cliExitCode": 1,
+  "signal": null,
+  "error": null,
+  "durationMs": 342.22285900000134,
+  "stdout": "051-archive-race-success.stdout",
+  "stderr": "051-archive-race-success.stderr",
+  "before": {
+    "reminders": [
+      {
+        "id": "ca522442-8eff-4c13-adf6-13860d6b45a1",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "active",
+        "closed_at": null,
+        "payload": {
+          "id": "ca522442-8eff-4c13-adf6-13860d6b45a1",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 rejected-activate",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.report-rejected",
+            "id": "worker",
+            "action": "activate"
+          },
+          "state": "active",
+          "closedAt": null,
+          "closeReason": null
+        }
+      },
+      {
+        "id": "2bde174c-b8e4-4b5f-8a8b-4dbeb42ddf26",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "closed",
+        "closed_at": "2026-10-25T13:06:05.343Z",
+        "payload": {
+          "id": "2bde174c-b8e4-4b5f-8a8b-4dbeb42ddf26",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 updated close",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.report-rejected",
+            "id": "worker",
+            "action": "close"
+          },
+          "state": "closed",
+          "closedAt": "2026-10-25T13:06:05.343Z",
+          "closeReason": "event agent.report-rejected: worker"
+        }
+      },
+      {
+        "id": "783e0bd4-9919-4e21-82ae-a287e451cda7",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "783e0bd4-9919-4e21-82ae-a287e451cda7",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 foreign-address",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.report-rejected",
+            "id": "other-worker",
+            "action": "activate"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      },
+      {
+        "id": "8784ce4f-c56c-43c3-ac4e-bc5ffa7a1b04",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "closed",
+        "closed_at": "2026-10-25T13:06:07.763Z",
+        "payload": {
+          "id": "8784ce4f-c56c-43c3-ac4e-bc5ffa7a1b04",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 restart-close",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.failed",
+            "id": "retry-worker",
+            "action": "close"
+          },
+          "state": "closed",
+          "closedAt": "2026-10-25T13:06:07.763Z",
+          "closeReason": "event agent.failed: retry-worker"
+        }
+      },
+      {
+        "id": "75dc91d1-b8a0-48a5-82c8-98e66b2d3226",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "75dc91d1-b8a0-48a5-82c8-98e66b2d3226",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-current",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-live",
+            "action": "close"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      },
+      {
+        "id": "3431d6b0-614b-41cd-91ee-00faf1b8aada",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "3431d6b0-614b-41cd-91ee-00faf1b8aada",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-race-binding",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-race",
+            "action": "close"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      }
+    ],
+    "pending_intents": [
+      {
+        "id": "openspec:archive-observation",
+        "payload": {
+          "id": "openspec:archive-observation",
+          "runId": null,
+          "event": "openspec.archived",
+          "payload": {
+            "revision": "15fa771f-4f99-4407-85ce-1e313ba6b614",
+            "active": [
+              "archive-race",
+              "archive-live"
+            ],
+            "cycles": [
+              {
+                "id": "archive-live",
+                "baseline": [
+                  "2026-02-01-archive-live",
+                  "2026-01-01-archive-live"
+                ]
+              },
+              {
+                "id": "archive-race",
+                "baseline": [
+                  "2026-02-01-archive-live",
+                  "2026-01-01-archive-live"
+                ]
+              }
+            ]
+          }
+        },
+        "run_id": null
+      }
+    ],
+    "reminder_deliveries": [
+      {
+        "reminder_id": "ca522442-8eff-4c13-adf6-13860d6b45a1",
+        "delivery_key": "[\"main\",\"CFC54 rejected-activate\",\"2099-01-01T00:00:00Z\"]",
+        "receipt_id": "f5224140-e7c2-429c-8be4-ced1208f2c9d",
+        "delivered_at": "2026-10-25T13:06:05.383Z"
+      }
+    ],
+    "result_notices": [
+      {
+        "id": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6:report-rejected:30f76211ef582df97db3c1af740e6876d79a362bc018de2de6ed93e881aaf205",
+        "run_id": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+        "payload": {
+          "id": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6:report-rejected:30f76211ef582df97db3c1af740e6876d79a362bc018de2de6ed93e881aaf205",
+          "runId": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+          "recipient": "main",
+          "recipientRunId": "91c390a6-556f-45c8-a305-9f5fbfaef598",
+          "state": "delivered",
+          "attempts": 1,
+          "lastError": null,
+          "text": "raf event: agent.report-rejected\nAgent: worker\nRun: d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6\nItems: event-fixture:1.1\nReport: /tmp/cfc54-7KM18U/tmp/d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6/worker.json\nReason: Incomplete or invalid report JSON",
+          "source": {
+            "runId": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+            "addressId": "worker",
+            "revision": 0,
+            "state": "running",
+            "activity": {
+              "type": "qa",
+              "phase": "qa",
+              "project": "raf",
+              "cwd": "/tmp/cfc54-7KM18U/root/raf-develop",
+              "features": [
+                "event-fixture"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "sessions": [
+      {
+        "run_id": "91c390a6-556f-45c8-a305-9f5fbfaef598",
+        "address_id": "main",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "91c390a6-556f-45c8-a305-9f5fbfaef598",
+          "addressId": "main",
+          "state": "running",
+          "revision": 3,
+          "process": {
+            "pid": 55,
+            "startedAt": "2026-10-25T13:06:00.000Z",
+            "runner": "main",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/main-receiver.mjs /tmp/cfc54-7KM18U/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-7KM18U/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          },
+          "observation": {
+            "state": "alive",
+            "observedAt": "2026-10-25T13:06:05.345Z",
+            "identity": {
+              "pid": 55,
+              "startedAt": "2026-10-25T13:06:00.000Z",
+              "runner": "main",
+              "runnerSessionId": "%0",
+              "tmuxSession": "queue-main",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/main-receiver.mjs /tmp/cfc54-7KM18U/main-input.jsonl",
+                "tmuxSocket": "/tmp/cfc54-7KM18U/main.sock",
+                "tmuxPane": "%0",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            }
+          }
+        }
+      },
+      {
+        "run_id": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+        "address_id": "worker",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+          "addressId": "worker",
+          "state": "running",
+          "revision": 1,
+          "process": {
+            "pid": 73,
+            "startedAt": "2026-10-25T13:06:01.000Z",
+            "runner": "codex",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/agent/main-receiver.mjs /tmp/cfc54-7KM18U/agent/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-7KM18U/agent/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          },
+          "activity": {
+            "type": "qa",
+            "phase": "qa",
+            "project": "raf",
+            "cwd": "/tmp/cfc54-7KM18U/root/raf-develop",
+            "features": [
+              "event-fixture"
+            ]
+          },
+          "launchedBy": {
+            "addressId": "main",
+            "runId": "91c390a6-556f-45c8-a305-9f5fbfaef598"
+          },
+          "launchContext": {
+            "assignment": {
+              "root": "/tmp/cfc54-7KM18U/root",
+              "changes": [
+                {
+                  "id": "event-fixture",
+                  "items": [
+                    {
+                      "id": "1.1",
+                      "description": "Fixture complete"
+                    }
+                  ]
+                }
+              ]
+            },
+            "reportPath": "/tmp/cfc54-7KM18U/tmp/d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6/worker.json",
+            "briefPath": "/tmp/cfc54-7KM18U/tmp/d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6/brief.txt",
+            "selection": {
+              "runner": "codex",
+              "model": "fixture",
+              "effort": "fixture"
+            }
+          },
+          "observation": {
+            "state": "alive",
+            "observedAt": "2026-10-25T13:06:05.250Z",
+            "identity": {
+              "pid": 73,
+              "startedAt": "2026-10-25T13:06:01.000Z",
+              "runner": "codex",
+              "runnerSessionId": "%0",
+              "tmuxSession": "queue-main",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/agent/main-receiver.mjs /tmp/cfc54-7KM18U/agent/main-input.jsonl",
+                "tmuxSocket": "/tmp/cfc54-7KM18U/agent/main.sock",
+                "tmuxPane": "%0",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "after": {
+    "reminders": [
+      {
+        "id": "ca522442-8eff-4c13-adf6-13860d6b45a1",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "active",
+        "closed_at": null,
+        "payload": {
+          "id": "ca522442-8eff-4c13-adf6-13860d6b45a1",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 rejected-activate",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.report-rejected",
+            "id": "worker",
+            "action": "activate"
+          },
+          "state": "active",
+          "closedAt": null,
+          "closeReason": null
+        }
+      },
+      {
+        "id": "2bde174c-b8e4-4b5f-8a8b-4dbeb42ddf26",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "closed",
+        "closed_at": "2026-10-25T13:06:05.343Z",
+        "payload": {
+          "id": "2bde174c-b8e4-4b5f-8a8b-4dbeb42ddf26",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 updated close",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.report-rejected",
+            "id": "worker",
+            "action": "close"
+          },
+          "state": "closed",
+          "closedAt": "2026-10-25T13:06:05.343Z",
+          "closeReason": "event agent.report-rejected: worker"
+        }
+      },
+      {
+        "id": "783e0bd4-9919-4e21-82ae-a287e451cda7",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "783e0bd4-9919-4e21-82ae-a287e451cda7",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 foreign-address",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.report-rejected",
+            "id": "other-worker",
+            "action": "activate"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      },
+      {
+        "id": "8784ce4f-c56c-43c3-ac4e-bc5ffa7a1b04",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "closed",
+        "closed_at": "2026-10-25T13:06:07.763Z",
+        "payload": {
+          "id": "8784ce4f-c56c-43c3-ac4e-bc5ffa7a1b04",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 restart-close",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "agent.failed",
+            "id": "retry-worker",
+            "action": "close"
+          },
+          "state": "closed",
+          "closedAt": "2026-10-25T13:06:07.763Z",
+          "closeReason": "event agent.failed: retry-worker"
+        }
+      },
+      {
+        "id": "75dc91d1-b8a0-48a5-82c8-98e66b2d3226",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "75dc91d1-b8a0-48a5-82c8-98e66b2d3226",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-current",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-live",
+            "action": "close"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      },
+      {
+        "id": "3431d6b0-614b-41cd-91ee-00faf1b8aada",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "3431d6b0-614b-41cd-91ee-00faf1b8aada",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-race-binding",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-race",
+            "action": "close"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      }
+    ],
+    "pending_intents": [
+      {
+        "id": "openspec:archive-observation",
+        "payload": {
+          "id": "openspec:archive-observation",
+          "runId": null,
+          "event": "openspec.archived",
+          "payload": {
+            "revision": "15fa771f-4f99-4407-85ce-1e313ba6b614",
+            "active": [
+              "archive-race",
+              "archive-live"
+            ],
+            "cycles": [
+              {
+                "id": "archive-live",
+                "baseline": [
+                  "2026-02-01-archive-live",
+                  "2026-01-01-archive-live"
+                ]
+              },
+              {
+                "id": "archive-race",
+                "baseline": [
+                  "2026-02-01-archive-live",
+                  "2026-01-01-archive-live"
+                ]
+              }
+            ]
+          }
+        },
+        "run_id": null
+      }
+    ],
+    "reminder_deliveries": [
+      {
+        "reminder_id": "ca522442-8eff-4c13-adf6-13860d6b45a1",
+        "delivery_key": "[\"main\",\"CFC54 rejected-activate\",\"2099-01-01T00:00:00Z\"]",
+        "receipt_id": "f5224140-e7c2-429c-8be4-ced1208f2c9d",
+        "delivered_at": "2026-10-25T13:06:05.383Z"
+      }
+    ],
+    "result_notices": [
+      {
+        "id": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6:report-rejected:30f76211ef582df97db3c1af740e6876d79a362bc018de2de6ed93e881aaf205",
+        "run_id": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+        "payload": {
+          "id": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6:report-rejected:30f76211ef582df97db3c1af740e6876d79a362bc018de2de6ed93e881aaf205",
+          "runId": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+          "recipient": "main",
+          "recipientRunId": "91c390a6-556f-45c8-a305-9f5fbfaef598",
+          "state": "delivered",
+          "attempts": 1,
+          "lastError": null,
+          "text": "raf event: agent.report-rejected\nAgent: worker\nRun: d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6\nItems: event-fixture:1.1\nReport: /tmp/cfc54-7KM18U/tmp/d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6/worker.json\nReason: Incomplete or invalid report JSON",
+          "source": {
+            "runId": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+            "addressId": "worker",
+            "revision": 0,
+            "state": "running",
+            "activity": {
+              "type": "qa",
+              "phase": "qa",
+              "project": "raf",
+              "cwd": "/tmp/cfc54-7KM18U/root/raf-develop",
+              "features": [
+                "event-fixture"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "sessions": [
+      {
+        "run_id": "91c390a6-556f-45c8-a305-9f5fbfaef598",
+        "address_id": "main",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "91c390a6-556f-45c8-a305-9f5fbfaef598",
+          "addressId": "main",
+          "state": "running",
+          "revision": 3,
+          "process": {
+            "pid": 55,
+            "startedAt": "2026-10-25T13:06:00.000Z",
+            "runner": "main",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/main-receiver.mjs /tmp/cfc54-7KM18U/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-7KM18U/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          },
+          "observation": {
+            "state": "alive",
+            "observedAt": "2026-10-25T13:06:05.345Z",
+            "identity": {
+              "pid": 55,
+              "startedAt": "2026-10-25T13:06:00.000Z",
+              "runner": "main",
+              "runnerSessionId": "%0",
+              "tmuxSession": "queue-main",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/main-receiver.mjs /tmp/cfc54-7KM18U/main-input.jsonl",
+                "tmuxSocket": "/tmp/cfc54-7KM18U/main.sock",
+                "tmuxPane": "%0",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            }
+          }
+        }
+      },
+      {
+        "run_id": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+        "address_id": "worker",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+          "addressId": "worker",
+          "state": "running",
+          "revision": 1,
+          "process": {
+            "pid": 73,
+            "startedAt": "2026-10-25T13:06:01.000Z",
+            "runner": "codex",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/agent/main-receiver.mjs /tmp/cfc54-7KM18U/agent/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-7KM18U/agent/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          },
+          "activity": {
+            "type": "qa",
+            "phase": "qa",
+            "project": "raf",
+            "cwd": "/tmp/cfc54-7KM18U/root/raf-develop",
+            "features": [
+              "event-fixture"
+            ]
+          },
+          "launchedBy": {
+            "addressId": "main",
+            "runId": "91c390a6-556f-45c8-a305-9f5fbfaef598"
+          },
+          "launchContext": {
+            "assignment": {
+              "root": "/tmp/cfc54-7KM18U/root",
+              "changes": [
+                {
+                  "id": "event-fixture",
+                  "items": [
+                    {
+                      "id": "1.1",
+                      "description": "Fixture complete"
+                    }
+                  ]
+                }
+              ]
+            },
+            "reportPath": "/tmp/cfc54-7KM18U/tmp/d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6/worker.json",
+            "briefPath": "/tmp/cfc54-7KM18U/tmp/d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6/brief.txt",
+            "selection": {
+              "runner": "codex",
+              "model": "fixture",
+              "effort": "fixture"
+            }
+          },
+          "observation": {
+            "state": "alive",
+            "observedAt": "2026-10-25T13:06:05.250Z",
+            "identity": {
+              "pid": 73,
+              "startedAt": "2026-10-25T13:06:01.000Z",
+              "runner": "codex",
+              "runnerSessionId": "%0",
+              "tmuxSession": "queue-main",
+              "evidence": {
+                "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/agent/main-receiver.mjs /tmp/cfc54-7KM18U/agent/main-input.jsonl",
+                "tmuxSocket": "/tmp/cfc54-7KM18U/agent/main.sock",
+                "tmuxPane": "%0",
+                "machineId": "05edcea976d34e69b22f660519c11f6f",
+                "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

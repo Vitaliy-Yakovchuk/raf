@@ -1,0 +1,451 @@
+{
+  "assignment": "complete-raf-flow-contracts:5.4",
+  "status": "partial",
+  "base": "/tmp/cfc54-97RafG",
+  "root": "/tmp/cfc54-97RafG/root",
+  "code": "/tmp/cfc54-97RafG/root/raf-develop",
+  "home": "/tmp/cfc54-97RafG/home",
+  "db": "/tmp/cfc54-97RafG/state.sqlite",
+  "tmp": "/tmp/cfc54-97RafG/tmp",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+    "/srv/dev/work/orchestrator/raf-develop/evidence/cfc54-event-registry/live-3",
+    "I4"
+  ],
+  "selected": [
+    "I4"
+  ],
+  "versions": {
+    "node": "v26.12.1",
+    "tmux-version": "tmux 3.6",
+    "openspec-version": "1.14.3",
+    "sqlite": "3.54.0"
+  },
+  "commands": [
+    {
+      "label": "build",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "scripts/build.ts"
+      ],
+      "cwd": "/tmp/cfc54-97RafG/root/raf-develop",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 1453.711374,
+      "stdout": "001-build.stdout",
+      "stderr": "001-build.stderr",
+      "detail": "001-build.json"
+    },
+    {
+      "label": "tmux-version",
+      "command": [
+        "tmux",
+        "-V"
+      ],
+      "cwd": "/tmp/cfc54-97RafG/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 4.8173340000000735,
+      "stdout": "002-tmux-version.stdout",
+      "stderr": "002-tmux-version.stderr",
+      "detail": "002-tmux-version.json"
+    },
+    {
+      "label": "openspec-version",
+      "command": [
+        "openspec",
+        "--version"
+      ],
+      "cwd": "/tmp/cfc54-97RafG/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 66.64218100000016,
+      "stdout": "003-openspec-version.stdout",
+      "stderr": "003-openspec-version.stderr",
+      "detail": "003-openspec-version.json"
+    },
+    {
+      "label": "seed-live-sessions",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-97RafG/input-4.json"
+      ],
+      "cwd": "/tmp/cfc54-97RafG/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 134.9070059999999,
+      "stdout": "005-seed-live-sessions.stdout",
+      "stderr": "005-seed-live-sessions.stderr",
+      "detail": "005-seed-live-sessions.json"
+    },
+    {
+      "label": "archive-race-binding",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-97RafG/input-6.json"
+      ],
+      "cwd": "/tmp/cfc54-97RafG/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 691.0931299999997,
+      "stdout": "007-archive-race-binding.stdout",
+      "stderr": "007-archive-race-binding.stderr",
+      "detail": "007-archive-race-binding.json"
+    },
+    {
+      "label": "race-baseline",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-97RafG/input-8.json"
+      ],
+      "cwd": "/tmp/cfc54-97RafG/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 633.1666879999998,
+      "stdout": "009-race-baseline.stdout",
+      "stderr": "009-race-baseline.stderr",
+      "detail": "009-race-baseline.json"
+    },
+    {
+      "label": "archive-race-success",
+      "command": [
+        "openspec",
+        "archive",
+        "archive-race",
+        "--yes",
+        "--skip-specs"
+      ],
+      "cwd": "/tmp/cfc54-97RafG/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 248.53428500000018,
+      "stdout": "010-archive-race-success.stdout",
+      "stderr": "010-archive-race-success.stderr",
+      "detail": "010-archive-race-success.json"
+    },
+    {
+      "label": "race-reopen-repeat",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-97RafG/input-11.json"
+      ],
+      "cwd": "/tmp/cfc54-97RafG/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 498.17434200000025,
+      "stdout": "012-race-reopen-repeat.stdout",
+      "stderr": "012-race-reopen-repeat.stderr",
+      "detail": "012-race-reopen-repeat.json"
+    },
+    {
+      "label": "archive-next-cycle",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-97RafG/input-13.json"
+      ],
+      "cwd": "/tmp/cfc54-97RafG/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 969.4411569999993,
+      "stdout": "014-archive-next-cycle.stdout",
+      "stderr": "014-archive-next-cycle.stderr",
+      "detail": "014-archive-next-cycle.json"
+    },
+    {
+      "label": "second-cycle-baseline",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-97RafG/input-15.json"
+      ],
+      "cwd": "/tmp/cfc54-97RafG/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 788.1429109999999,
+      "stdout": "016-second-cycle-baseline.stdout",
+      "stderr": "016-second-cycle-baseline.stderr",
+      "detail": "016-second-cycle-baseline.json"
+    },
+    {
+      "label": "archive-next-cycle-success",
+      "command": [
+        "openspec",
+        "archive",
+        "archive-race",
+        "--yes",
+        "--skip-specs"
+      ],
+      "cwd": "/tmp/cfc54-97RafG/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 276.06735899999967,
+      "stdout": "017-archive-next-cycle-success.stdout",
+      "stderr": "017-archive-next-cycle-success.stderr",
+      "detail": "017-archive-next-cycle-success.json"
+    },
+    {
+      "label": "second-cycle-settle",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-97RafG/input-18.json"
+      ],
+      "cwd": "/tmp/cfc54-97RafG/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 815.1477559999994,
+      "stdout": "019-second-cycle-settle.stdout",
+      "stderr": "019-second-cycle-settle.stderr",
+      "detail": "019-second-cycle-settle.json"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "I4",
+      "status": "passed",
+      "details": {
+        "first": "0c16ae8d-e5dc-4ffc-bbea-b3d67737ca08",
+        "second": "550df5dd-9ef3-4654-a958-66b182679dd1",
+        "closedAt": "2026-10-25T13:11:10.134Z",
+        "after": {
+          "reminders": [
+            {
+              "id": "0c16ae8d-e5dc-4ffc-bbea-b3d67737ca08",
+              "created_for": "main",
+              "assigned_to": "main",
+              "at": "2099-01-01T00:00:00Z",
+              "state": "closed",
+              "closed_at": "2026-10-25T13:11:10.134Z",
+              "payload": {
+                "id": "0c16ae8d-e5dc-4ffc-bbea-b3d67737ca08",
+                "createdFor": "main",
+                "assignedTo": "main",
+                "text": "CFC54 archive-race-binding",
+                "at": "2099-01-01T00:00:00Z",
+                "binding": {
+                  "kind": "openspec.archived",
+                  "id": "archive-race",
+                  "action": "close"
+                },
+                "state": "closed",
+                "closedAt": "2026-10-25T13:11:10.134Z",
+                "closeReason": "event openspec.archived: archive-race"
+              }
+            },
+            {
+              "id": "550df5dd-9ef3-4654-a958-66b182679dd1",
+              "created_for": "main",
+              "assigned_to": "main",
+              "at": "2099-01-01T00:00:00Z",
+              "state": "closed",
+              "closed_at": "2026-10-25T13:11:13.559Z",
+              "payload": {
+                "id": "550df5dd-9ef3-4654-a958-66b182679dd1",
+                "createdFor": "main",
+                "assignedTo": "main",
+                "text": "CFC54 archive-next-cycle",
+                "at": "2099-01-01T00:00:00Z",
+                "binding": {
+                  "kind": "openspec.archived",
+                  "id": "archive-race",
+                  "action": "close"
+                },
+                "state": "closed",
+                "closedAt": "2026-10-25T13:11:13.559Z",
+                "closeReason": "event openspec.archived: archive-race"
+              }
+            }
+          ],
+          "pending_intents": [
+            {
+              "id": "openspec:archive-observation",
+              "payload": {
+                "id": "openspec:archive-observation",
+                "runId": null,
+                "event": "openspec.archived",
+                "payload": {
+                  "revision": "05a1523e-cea0-4d86-86fa-b93a30788dde",
+                  "active": [],
+                  "cycles": []
+                }
+              },
+              "run_id": null
+            }
+          ],
+          "reminder_deliveries": [],
+          "result_notices": [],
+          "sessions": [
+            {
+              "run_id": "835db1bc-9347-41ca-888c-857c02c026b6",
+              "address_id": "main",
+              "state": "running",
+              "finished_at": null,
+              "payload": {
+                "runId": "835db1bc-9347-41ca-888c-857c02c026b6",
+                "addressId": "main",
+                "state": "running",
+                "revision": 0,
+                "process": {
+                  "pid": 55,
+                  "startedAt": "2026-10-25T13:11:06.000Z",
+                  "runner": "main",
+                  "runnerSessionId": "%0",
+                  "tmuxSession": "queue-main",
+                  "evidence": {
+                    "command": "/opt/dev/node/bin/node /tmp/cfc54-97RafG/main-receiver.mjs /tmp/cfc54-97RafG/main-input.jsonl",
+                    "tmuxSocket": "/tmp/cfc54-97RafG/main.sock",
+                    "tmuxPane": "%0",
+                    "machineId": "05edcea976d34e69b22f660519c11f6f",
+                    "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+                  }
+                }
+              }
+            },
+            {
+              "run_id": "3afeb19d-7c9b-4c78-ad00-6dbc121cb39a",
+              "address_id": "worker",
+              "state": "running",
+              "finished_at": null,
+              "payload": {
+                "runId": "3afeb19d-7c9b-4c78-ad00-6dbc121cb39a",
+                "addressId": "worker",
+                "state": "running",
+                "revision": 0,
+                "process": {
+                  "pid": 73,
+                  "startedAt": "2026-10-25T13:11:06.000Z",
+                  "runner": "codex",
+                  "runnerSessionId": "%0",
+                  "tmuxSession": "queue-main",
+                  "evidence": {
+                    "command": "/opt/dev/node/bin/node /tmp/cfc54-97RafG/agent/main-receiver.mjs /tmp/cfc54-97RafG/agent/main-input.jsonl",
+                    "tmuxSocket": "/tmp/cfc54-97RafG/agent/main.sock",
+                    "tmuxPane": "%0",
+                    "machineId": "05edcea976d34e69b22f660519c11f6f",
+                    "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+                  }
+                },
+                "activity": {
+                  "type": "qa",
+                  "phase": "qa",
+                  "project": "raf",
+                  "cwd": "/tmp/cfc54-97RafG/root/raf-develop",
+                  "features": [
+                    "event-fixture"
+                  ]
+                },
+                "launchedBy": {
+                  "addressId": "main",
+                  "runId": "835db1bc-9347-41ca-888c-857c02c026b6"
+                },
+                "launchContext": {
+                  "assignment": {
+                    "root": "/tmp/cfc54-97RafG/root",
+                    "changes": [
+                      {
+                        "id": "event-fixture",
+                        "items": [
+                          {
+                            "id": "1.1",
+                            "description": "Fixture complete"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "reportPath": "/tmp/cfc54-97RafG/tmp/3afeb19d-7c9b-4c78-ad00-6dbc121cb39a/worker.json",
+                  "briefPath": "/tmp/cfc54-97RafG/tmp/3afeb19d-7c9b-4c78-ad00-6dbc121cb39a/brief.txt",
+                  "selection": {
+                    "runner": "codex",
+                    "model": "fixture",
+                    "effort": "fixture"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "cleanup": {
+    "fixtureRemoved": true
+  },
+  "limitations": [
+    "The compiled CLI parser dispatches production handlers in separate processes with a test runtime context. This is an API/CLI stand, not public bin/raf.ts provenance acceptance.",
+    "The live tmux recipients are controlled stdin receivers, not an authenticated external AI provider. Native runner interrupt acceptance is reported separately.",
+    "Deployment has no approved live producer or environment; fixture controls do not prove a real deployment or I7 positive acceptance."
+  ],
+  "sha": "481e2a301d74c7f59a9ea1a82d220b3f30563a61",
+  "workspace": " M src/background-runtime.ts\n M src/production-runtime.ts\n M src/production-service-ports.ts\n M src/service-lifecycle.ts\n?? evidence/cfc33-background-runtime/\n?? evidence/cfc44-command-timing/I1-address-a.json\n?? evidence/cfc44-command-timing/I1-address-a.stderr\n?? evidence/cfc44-command-timing/I1-address-a.stdout\n?? evidence/cfc44-command-timing/I1-address-b.json\n?? evidence/cfc44-command-timing/I1-address-b.stderr\n?? evidence/cfc44-command-timing/I1-address-b.stdout\n?? evidence/cfc44-command-timing/I1.command.txt\n?? evidence/cfc44-command-timing/I1.json\n?? evidence/cfc44-command-timing/I1.tool.json\n?? evidence/cfc44-command-timing/I2-a.stderr\n?? evidence/cfc44-command-timing/I2-a.stdout\n?? evidence/cfc44-command-timing/I2-b.stderr\n?? evidence/cfc44-command-timing/I2-b.stdout\n?? evidence/cfc44-command-timing/I2-child.source.txt\n?? evidence/cfc44-command-timing/I2-lock.stderr\n?? evidence/cfc44-command-timing/I2-lock.stdout\n?? evidence/cfc44-command-timing/I2.command.txt\n?? evidence/cfc44-command-timing/I2.json\n?? evidence/cfc44-command-timing/I2.tool.json\n?? evidence/cfc44-command-timing/I3-alpha-change.json\n?? evidence/cfc44-command-timing/I3-alpha-change.stderr\n?? evidence/cfc44-command-timing/I3-alpha-change.stdout\n?? evidence/cfc44-command-timing/I3-help.json\n?? evidence/cfc44-command-timing/I3-help.stderr\n?? evidence/cfc44-command-timing/I3-help.stdout\n?? evidence/cfc44-command-timing/I3-next.json\n?? evidence/cfc44-command-timing/I3-next.stderr\n?? evidence/cfc44-command-timing/I3-next.stdout\n?? evidence/cfc44-command-timing/I3-parser.json\n?? evidence/cfc44-command-timing/I3-parser.stderr\n?? evidence/cfc44-command-timing/I3-parser.stdout\n?? evidence/cfc44-command-timing/I3-snapshot.json\n?? evidence/cfc44-command-timing/I3-snapshot.stderr\n?? evidence/cfc44-command-timing/I3-snapshot.stdout\n?? evidence/cfc44-command-timing/I3.command.txt\n?? evidence/cfc44-command-timing/I3.tool.json\n?? evidence/cfc44-command-timing/I4-crash.json\n?? evidence/cfc44-command-timing/I4-crash.stderr\n?? evidence/cfc44-command-timing/I4-crash.stdout\n?? evidence/cfc44-command-timing/I4-refusal-files.json\n?? evidence/cfc44-command-timing/I4-runtime-error.json\n?? evidence/cfc44-command-timing/I4-runtime-error.stderr\n?? evidence/cfc44-command-timing/I4-runtime-error.stdout\n?? evidence/cfc44-command-timing/I4-state-refusal.json\n?? evidence/cfc44-command-timing/I4-state-refusal.stderr\n?? evidence/cfc44-command-timing/I4-state-refusal.stdout\n?? evidence/cfc44-command-timing/I4-success.json\n?? evidence/cfc44-command-timing/I4-success.stderr\n?? evidence/cfc44-command-timing/I4-success.stdout\n?? evidence/cfc44-command-timing/I4.command.txt\n?? evidence/cfc44-command-timing/I4.tool.json\n?? evidence/cfc44-command-timing/I5-00.json\n?? evidence/cfc44-command-timing/I5-00.stderr\n?? evidence/cfc44-command-timing/I5-00.stdout\n?? evidence/cfc44-command-timing/I5-01.json\n?? evidence/cfc44-command-timing/I5-01.stderr\n?? evidence/cfc44-command-timing/I5-01.stdout\n?? evidence/cfc44-command-timing/I5-02.json\n?? evidence/cfc44-command-timing/I5-02.stderr\n?? evidence/cfc44-command-timing/I5-02.stdout\n?? evidence/cfc44-command-timing/I5-03.json\n?? evidence/cfc44-command-timing/I5-03.stderr\n?? evidence/cfc44-command-timing/I5-03.stdout\n?? evidence/cfc44-command-timing/I5-04.json\n?? evidence/cfc44-command-timing/I5-04.stderr\n?? evidence/cfc44-command-timing/I5-04.stdout\n?? evidence/cfc44-command-timing/I5-05.json\n?? evidence/cfc44-command-timing/I5-05.stderr\n?? evidence/cfc44-command-timing/I5-05.stdout\n?? evidence/cfc44-command-timing/I5-06.json\n?? evidence/cfc44-command-timing/I5-06.stderr\n?? evidence/cfc44-command-timing/I5-06.stdout\n?? evidence/cfc44-command-timing/I5-07.json\n?? evidence/cfc44-command-timing/I5-07.stderr\n?? evidence/cfc44-command-timing/I5-07.stdout\n?? evidence/cfc44-command-timing/I5-08.json\n?? evidence/cfc44-command-timing/I5-08.stderr\n?? evidence/cfc44-command-timing/I5-08.stdout\n?? evidence/cfc44-command-timing/I5-09.json\n?? evidence/cfc44-command-timing/I5-09.stderr\n?? evidence/cfc44-command-timing/I5-09.stdout\n?? evidence/cfc44-command-timing/I5-10.json\n?? evidence/cfc44-command-timing/I5-10.stderr\n?? evidence/cfc44-command-timing/I5-10.stdout\n?? evidence/cfc44-command-timing/I5-11.json\n?? evidence/cfc44-command-timing/I5-11.stderr\n?? evidence/cfc44-command-timing/I5-11.stdout\n?? evidence/cfc44-command-timing/I5-12.json\n?? evidence/cfc44-command-timing/I5-12.stderr\n?? evidence/cfc44-command-timing/I5-12.stdout\n?? evidence/cfc44-command-timing/I5-13.json\n?? evidence/cfc44-command-timing/I5-13.stderr\n?? evidence/cfc44-command-timing/I5-13.stdout\n?? evidence/cfc44-command-timing/I5-14.json\n?? evidence/cfc44-command-timing/I5-14.stderr\n?? evidence/cfc44-command-timing/I5-14.stdout\n?? evidence/cfc44-command-timing/I5-15.json\n?? evidence/cfc44-command-timing/I5-15.stderr\n?? evidence/cfc44-command-timing/I5-15.stdout\n?? evidence/cfc44-command-timing/I5-ready.command.txt\n?? evidence/cfc44-command-timing/I5-ready.exit.json\n?? evidence/cfc44-command-timing/I5-ready.stderr\n?? evidence/cfc44-command-timing/I5-ready.stdout\n?? evidence/cfc44-command-timing/I5.command.txt\n?? evidence/cfc44-command-timing/I5.json\n?? evidence/cfc44-command-timing/I5.tool.json\n?? evidence/cfc44-command-timing/I6-actor.source.txt\n?? evidence/cfc44-command-timing/I6-agent-run.json\n?? evidence/cfc44-command-timing/I6-agent-run.stderr\n?? evidence/cfc44-command-timing/I6-agent-run.stdout\n?? evidence/cfc44-command-timing/I6-boundary-fixed-setup.json\n?? evidence/cfc44-command-timing/I6-build-develop.stderr\n?? evidence/cfc44-command-timing/I6-build-develop.stdout\n?? evidence/cfc44-command-timing/I6-build-main.stderr\n?? evidence/cfc44-command-timing/I6-build-main.stdout\n?? evidence/cfc44-command-timing/I6-data-setup-fixed.json\n?? evidence/cfc44-command-timing/I6-data-setup.json\n?? evidence/cfc44-command-timing/I6-effective-policy.json\n?? evidence/cfc44-command-timing/I6-fixed-setup.json\n?? evidence/cfc44-command-timing/I6-gate-refused-main-attach.json\n?? evidence/cfc44-command-timing/I6-gate-refused-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-gate-refused-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-gate-refused.json\n?? evidence/cfc44-command-timing/I6-layout-ready.json\n?? evidence/cfc44-command-timing/I6-layout-refused-main-attach.json\n?? evidence/cfc44-command-timing/I6-layout-refused-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-layout-refused-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-layout-refused.json\n?? evidence/cfc44-command-timing/I6-library-refused-main-attach.json\n?? evidence/cfc44-command-timing/I6-library-refused-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-library-refused-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-library-refused.json\n?? evidence/cfc44-command-timing/I6-main-attach.json\n?? evidence/cfc44-command-timing/I6-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-operator.mjs\n?? evidence/cfc44-command-timing/I6-pane.txt\n?? evidence/cfc44-command-timing/I6-proof-mismatch.json\n?? evidence/cfc44-command-timing/I6-setup-quota.json\n?? evidence/cfc44-command-timing/I6-source-refused-main-attach.json\n?? evidence/cfc44-command-timing/I6-source-refused-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-source-refused-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-source-refused.json\n?? evidence/cfc44-command-timing/I6-sparse-completion.json\n?? evidence/cfc44-command-timing/I6-sparse-refused-main-attach.json\n?? evidence/cfc44-command-timing/I6-sparse-refused-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-sparse-refused-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-sparse-refused.json\n?? evidence/cfc44-command-timing/I6-tmpfs-agent-run.json\n?? evidence/cfc44-command-timing/I6-tmpfs-agent-run.stderr\n?? evidence/cfc44-command-timing/I6-tmpfs-agent-run.stdout\n?? evidence/cfc44-command-timing/I6-tmpfs-main-attach.json\n?? evidence/cfc44-command-timing/I6-tmpfs-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-tmpfs-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-tmpfs-pane.txt\n?? evidence/cfc44-command-timing/I6-tmpfs.json\n?? evidence/cfc44-command-timing/I6-tmux-preflight.json\n?? evidence/cfc44-command-timing/I6-worktree-refused-main-attach.json\n?? evidence/cfc44-command-timing/I6-worktree-refused-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-worktree-refused-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-worktree-refused.json\n?? evidence/cfc44-command-timing/I6.json\n?? evidence/cfc44-command-timing/build-ready.stderr\n?? evidence/cfc44-command-timing/build-ready.stdout\n?? evidence/cfc44-command-timing/build.stderr\n?? evidence/cfc44-command-timing/build.stdout\n?? evidence/cfc44-command-timing/cleanup.json\n?? evidence/cfc44-command-timing/initial-workspace.txt\n?? evidence/cfc44-command-timing/operator.source.txt\n?? evidence/cfc44-command-timing/processes-before-cleanup.json\n?? evidence/cfc44-command-timing/review-evidence.mjs\n?? evidence/cfc44-command-timing/review.json\n?? evidence/cfc44-command-timing/stand-I6-proof-only.json\n?? evidence/cfc44-command-timing/stand-I6-tmpfs.json\n?? evidence/cfc44-command-timing/stand-I6.json\n?? evidence/cfc44-command-timing/stand.json\n?? evidence/cfc44-command-timing/stats-first.exit.json\n?? evidence/cfc44-command-timing/stats-first.stderr\n?? evidence/cfc44-command-timing/stats-first.stdout\n?? evidence/cfc44-command-timing/stats-isolated.exit.json\n?? evidence/cfc44-command-timing/stats-isolated.stderr\n?? evidence/cfc44-command-timing/stats-isolated.stdout\n?? evidence/cfc44-command-timing/unit-green.TestRunResult.json\n?? evidence/cfc44-command-timing/unit-green.capture.json\n?? evidence/cfc44-command-timing/unit-green.merged.txt\n?? evidence/cfc44-command-timing/unit-initial.TestRunResult.json\n?? evidence/cfc44-command-timing/unit-initial.capture.json\n?? evidence/cfc44-command-timing/unit-red.TestRunResult.json\n?? evidence/cfc44-command-timing/unit-red.capture.json\n?? evidence/cfc44-command-timing/unit-red.merged.txt\n?? evidence/cfc44-command-timing/unit-runs.json\n?? evidence/cfc44-command-timing/workspace-reflog.txt\n?? evidence/cfc54-event-registry/\n",
+  "configuration": {
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "test-runs.json": "bf53e11f5237ec791d42b7e767e618689717a0e06cdce76d5dbac484c3ba69d1",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+  },
+  "tmux": {
+    "main": {
+      "pid": 55,
+      "startedAt": "2026-10-25T13:11:06.000Z",
+      "runner": "main",
+      "runnerSessionId": "%0",
+      "tmuxSession": "queue-main",
+      "evidence": {
+        "command": "/opt/dev/node/bin/node /tmp/cfc54-97RafG/main-receiver.mjs /tmp/cfc54-97RafG/main-input.jsonl",
+        "tmuxSocket": "/tmp/cfc54-97RafG/main.sock",
+        "tmuxPane": "%0",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      }
+    },
+    "agent": {
+      "pid": 73,
+      "startedAt": "2026-10-25T13:11:06.000Z",
+      "runner": "main",
+      "runnerSessionId": "%0",
+      "tmuxSession": "queue-main",
+      "evidence": {
+        "command": "/opt/dev/node/bin/node /tmp/cfc54-97RafG/agent/main-receiver.mjs /tmp/cfc54-97RafG/agent/main-input.jsonl",
+        "tmuxSocket": "/tmp/cfc54-97RafG/agent/main.sock",
+        "tmuxPane": "%0",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      }
+    }
+  },
+  "agentCleanup": {
+    "exitCode": 0,
+    "remainingPids": []
+  },
+  "mainCleanup": {
+    "exitCode": 0,
+    "remainingPids": []
+  }
+}

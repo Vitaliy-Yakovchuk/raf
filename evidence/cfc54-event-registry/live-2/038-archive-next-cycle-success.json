@@ -1,0 +1,397 @@
+{
+  "label": "archive-next-cycle-success",
+  "command": [
+    "openspec",
+    "archive",
+    "archive-race",
+    "--yes",
+    "--skip-specs"
+  ],
+  "cwd": "/tmp/cfc54-UHyz5N/root",
+  "cliExitCode": 0,
+  "signal": null,
+  "error": null,
+  "durationMs": 303.7669729999998,
+  "stdout": "038-archive-next-cycle-success.stdout",
+  "stderr": "038-archive-next-cycle-success.stderr",
+  "before": {
+    "reminders": [
+      {
+        "id": "9d02eccd-db22-4e3d-8f44-fbaa8711b2b9",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "closed",
+        "closed_at": "2026-10-25T13:07:10.839Z",
+        "payload": {
+          "id": "9d02eccd-db22-4e3d-8f44-fbaa8711b2b9",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-current",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-live",
+            "action": "close"
+          },
+          "state": "closed",
+          "closedAt": "2026-10-25T13:07:10.839Z",
+          "closeReason": "event openspec.archived: archive-live"
+        }
+      },
+      {
+        "id": "1121323e-7172-4a66-a878-3521ad354618",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "closed",
+        "closed_at": "2026-10-25T13:07:13.911Z",
+        "payload": {
+          "id": "1121323e-7172-4a66-a878-3521ad354618",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-race-binding",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-race",
+            "action": "close"
+          },
+          "state": "closed",
+          "closedAt": "2026-10-25T13:07:13.911Z",
+          "closeReason": "event openspec.archived: archive-race"
+        }
+      },
+      {
+        "id": "0d6b0403-fd82-4d4b-a257-d12c241bcd0e",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "0d6b0403-fd82-4d4b-a257-d12c241bcd0e",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-next-cycle",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-race",
+            "action": "close"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      }
+    ],
+    "pending_intents": [
+      {
+        "id": "openspec:archive-observation",
+        "payload": {
+          "id": "openspec:archive-observation",
+          "runId": null,
+          "event": "openspec.archived",
+          "payload": {
+            "revision": "478f372d-ce9e-48a6-a12d-eb5ef9a977d9",
+            "active": [
+              "archive-race"
+            ],
+            "cycles": [
+              {
+                "id": "archive-race",
+                "baseline": [
+                  "2026-10-25-archive-race"
+                ]
+              }
+            ]
+          }
+        },
+        "run_id": null
+      }
+    ],
+    "reminder_deliveries": [],
+    "result_notices": [],
+    "sessions": [
+      {
+        "run_id": "e527c75e-bbb5-40c9-8ef2-98e9c19f67ba",
+        "address_id": "main",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "e527c75e-bbb5-40c9-8ef2-98e9c19f67ba",
+          "addressId": "main",
+          "state": "running",
+          "revision": 0,
+          "process": {
+            "pid": 55,
+            "startedAt": "2026-10-25T13:07:02.000Z",
+            "runner": "main",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-UHyz5N/main-receiver.mjs /tmp/cfc54-UHyz5N/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-UHyz5N/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          }
+        }
+      },
+      {
+        "run_id": "f07052f7-df78-4c60-a1b8-1c1fb2fea57a",
+        "address_id": "worker",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "f07052f7-df78-4c60-a1b8-1c1fb2fea57a",
+          "addressId": "worker",
+          "state": "running",
+          "revision": 0,
+          "process": {
+            "pid": 73,
+            "startedAt": "2026-10-25T13:07:02.000Z",
+            "runner": "codex",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-UHyz5N/agent/main-receiver.mjs /tmp/cfc54-UHyz5N/agent/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-UHyz5N/agent/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          },
+          "activity": {
+            "type": "qa",
+            "phase": "qa",
+            "project": "raf",
+            "cwd": "/tmp/cfc54-UHyz5N/root/raf-develop",
+            "features": [
+              "event-fixture"
+            ]
+          },
+          "launchedBy": {
+            "addressId": "main",
+            "runId": "e527c75e-bbb5-40c9-8ef2-98e9c19f67ba"
+          },
+          "launchContext": {
+            "assignment": {
+              "root": "/tmp/cfc54-UHyz5N/root",
+              "changes": [
+                {
+                  "id": "event-fixture",
+                  "items": [
+                    {
+                      "id": "1.1",
+                      "description": "Fixture complete"
+                    }
+                  ]
+                }
+              ]
+            },
+            "reportPath": "/tmp/cfc54-UHyz5N/tmp/f07052f7-df78-4c60-a1b8-1c1fb2fea57a/worker.json",
+            "briefPath": "/tmp/cfc54-UHyz5N/tmp/f07052f7-df78-4c60-a1b8-1c1fb2fea57a/brief.txt",
+            "selection": {
+              "runner": "codex",
+              "model": "fixture",
+              "effort": "fixture"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "after": {
+    "reminders": [
+      {
+        "id": "9d02eccd-db22-4e3d-8f44-fbaa8711b2b9",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "closed",
+        "closed_at": "2026-10-25T13:07:10.839Z",
+        "payload": {
+          "id": "9d02eccd-db22-4e3d-8f44-fbaa8711b2b9",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-current",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-live",
+            "action": "close"
+          },
+          "state": "closed",
+          "closedAt": "2026-10-25T13:07:10.839Z",
+          "closeReason": "event openspec.archived: archive-live"
+        }
+      },
+      {
+        "id": "1121323e-7172-4a66-a878-3521ad354618",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "closed",
+        "closed_at": "2026-10-25T13:07:13.911Z",
+        "payload": {
+          "id": "1121323e-7172-4a66-a878-3521ad354618",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-race-binding",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-race",
+            "action": "close"
+          },
+          "state": "closed",
+          "closedAt": "2026-10-25T13:07:13.911Z",
+          "closeReason": "event openspec.archived: archive-race"
+        }
+      },
+      {
+        "id": "0d6b0403-fd82-4d4b-a257-d12c241bcd0e",
+        "created_for": "main",
+        "assigned_to": "main",
+        "at": "2099-01-01T00:00:00Z",
+        "state": "pending",
+        "closed_at": null,
+        "payload": {
+          "id": "0d6b0403-fd82-4d4b-a257-d12c241bcd0e",
+          "createdFor": "main",
+          "assignedTo": "main",
+          "text": "CFC54 archive-next-cycle",
+          "at": "2099-01-01T00:00:00Z",
+          "binding": {
+            "kind": "openspec.archived",
+            "id": "archive-race",
+            "action": "close"
+          },
+          "state": "pending",
+          "closedAt": null,
+          "closeReason": null
+        }
+      }
+    ],
+    "pending_intents": [
+      {
+        "id": "openspec:archive-observation",
+        "payload": {
+          "id": "openspec:archive-observation",
+          "runId": null,
+          "event": "openspec.archived",
+          "payload": {
+            "revision": "478f372d-ce9e-48a6-a12d-eb5ef9a977d9",
+            "active": [
+              "archive-race"
+            ],
+            "cycles": [
+              {
+                "id": "archive-race",
+                "baseline": [
+                  "2026-10-25-archive-race"
+                ]
+              }
+            ]
+          }
+        },
+        "run_id": null
+      }
+    ],
+    "reminder_deliveries": [],
+    "result_notices": [],
+    "sessions": [
+      {
+        "run_id": "e527c75e-bbb5-40c9-8ef2-98e9c19f67ba",
+        "address_id": "main",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "e527c75e-bbb5-40c9-8ef2-98e9c19f67ba",
+          "addressId": "main",
+          "state": "running",
+          "revision": 0,
+          "process": {
+            "pid": 55,
+            "startedAt": "2026-10-25T13:07:02.000Z",
+            "runner": "main",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-UHyz5N/main-receiver.mjs /tmp/cfc54-UHyz5N/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-UHyz5N/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          }
+        }
+      },
+      {
+        "run_id": "f07052f7-df78-4c60-a1b8-1c1fb2fea57a",
+        "address_id": "worker",
+        "state": "running",
+        "finished_at": null,
+        "payload": {
+          "runId": "f07052f7-df78-4c60-a1b8-1c1fb2fea57a",
+          "addressId": "worker",
+          "state": "running",
+          "revision": 0,
+          "process": {
+            "pid": 73,
+            "startedAt": "2026-10-25T13:07:02.000Z",
+            "runner": "codex",
+            "runnerSessionId": "%0",
+            "tmuxSession": "queue-main",
+            "evidence": {
+              "command": "/opt/dev/node/bin/node /tmp/cfc54-UHyz5N/agent/main-receiver.mjs /tmp/cfc54-UHyz5N/agent/main-input.jsonl",
+              "tmuxSocket": "/tmp/cfc54-UHyz5N/agent/main.sock",
+              "tmuxPane": "%0",
+              "machineId": "05edcea976d34e69b22f660519c11f6f",
+              "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+            }
+          },
+          "activity": {
+            "type": "qa",
+            "phase": "qa",
+            "project": "raf",
+            "cwd": "/tmp/cfc54-UHyz5N/root/raf-develop",
+            "features": [
+              "event-fixture"
+            ]
+          },
+          "launchedBy": {
+            "addressId": "main",
+            "runId": "e527c75e-bbb5-40c9-8ef2-98e9c19f67ba"
+          },
+          "launchContext": {
+            "assignment": {
+              "root": "/tmp/cfc54-UHyz5N/root",
+              "changes": [
+                {
+                  "id": "event-fixture",
+                  "items": [
+                    {
+                      "id": "1.1",
+                      "description": "Fixture complete"
+                    }
+                  ]
+                }
+              ]
+            },
+            "reportPath": "/tmp/cfc54-UHyz5N/tmp/f07052f7-df78-4c60-a1b8-1c1fb2fea57a/worker.json",
+            "briefPath": "/tmp/cfc54-UHyz5N/tmp/f07052f7-df78-4c60-a1b8-1c1fb2fea57a/brief.txt",
+            "selection": {
+              "runner": "codex",
+              "model": "fixture",
+              "effort": "fixture"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

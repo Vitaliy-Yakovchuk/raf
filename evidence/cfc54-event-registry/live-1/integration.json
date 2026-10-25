@@ -1,0 +1,902 @@
+{
+  "assignment": "complete-raf-flow-contracts:5.4",
+  "status": "failed",
+  "base": "/tmp/cfc54-7KM18U",
+  "root": "/tmp/cfc54-7KM18U/root",
+  "code": "/tmp/cfc54-7KM18U/root/raf-develop",
+  "home": "/tmp/cfc54-7KM18U/home",
+  "db": "/tmp/cfc54-7KM18U/state.sqlite",
+  "tmp": "/tmp/cfc54-7KM18U/tmp",
+  "command": [
+    "/opt/dev/node/bin/node",
+    "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+    "/srv/dev/work/orchestrator/raf-develop/evidence/cfc54-event-registry/live-1"
+  ],
+  "versions": {
+    "node": "v26.12.1",
+    "tmux-version": "tmux 3.6",
+    "openspec-version": "1.14.3",
+    "sqlite": "3.54.0"
+  },
+  "commands": [
+    {
+      "label": "build",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "scripts/build.ts"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root/raf-develop",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 2064.084859,
+      "stdout": "001-build.stdout",
+      "stderr": "001-build.stderr",
+      "detail": "001-build.json"
+    },
+    {
+      "label": "tmux-version",
+      "command": [
+        "tmux",
+        "-V"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 6.626545000000078,
+      "stdout": "002-tmux-version.stdout",
+      "stderr": "002-tmux-version.stderr",
+      "detail": "002-tmux-version.json"
+    },
+    {
+      "label": "openspec-version",
+      "command": [
+        "openspec",
+        "--version"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 77.66220499999963,
+      "stdout": "003-openspec-version.stdout",
+      "stderr": "003-openspec-version.stderr",
+      "detail": "003-openspec-version.json"
+    },
+    {
+      "label": "seed-live-sessions",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-4.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 254.1453730000003,
+      "stdout": "005-seed-live-sessions.stdout",
+      "stderr": "005-seed-live-sessions.stderr",
+      "detail": "005-seed-live-sessions.json"
+    },
+    {
+      "label": "rejected-activate",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-6.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 446.99772200000007,
+      "stdout": "007-rejected-activate.stdout",
+      "stderr": "007-rejected-activate.stderr",
+      "detail": "007-rejected-activate.json"
+    },
+    {
+      "label": "rejected-close",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-8.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 470.4128800000003,
+      "stdout": "009-rejected-close.stdout",
+      "stderr": "009-rejected-close.stderr",
+      "detail": "009-rejected-close.json"
+    },
+    {
+      "label": "foreign-address",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-10.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 418.2205190000004,
+      "stdout": "011-foreign-address.stdout",
+      "stderr": "011-foreign-address.stderr",
+      "detail": "011-foreign-address.json"
+    },
+    {
+      "label": "update-binding",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-12.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 404.88691800000015,
+      "stdout": "013-update-binding.stdout",
+      "stderr": "013-update-binding.stderr",
+      "detail": "013-update-binding.json"
+    },
+    {
+      "label": "unknown-event",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-14.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 1,
+      "signal": null,
+      "error": null,
+      "durationMs": 408.7355630000002,
+      "stdout": "015-unknown-event.stdout",
+      "stderr": "015-unknown-event.stderr",
+      "detail": "015-unknown-event.json"
+    },
+    {
+      "label": "wrong-id",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-16.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 1,
+      "signal": null,
+      "error": null,
+      "durationMs": 371.0831069999995,
+      "stdout": "017-wrong-id.stdout",
+      "stderr": "017-wrong-id.stderr",
+      "detail": "017-wrong-id.json"
+    },
+    {
+      "label": "reconcile-rejected-report",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-18.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 519.6693939999996,
+      "stdout": "019-reconcile-rejected-report.stdout",
+      "stderr": "019-reconcile-rejected-report.stderr",
+      "detail": "019-reconcile-rejected-report.json"
+    },
+    {
+      "label": "restart-close",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-20.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 370.1906990000007,
+      "stdout": "021-restart-close.stdout",
+      "stderr": "021-restart-close.stderr",
+      "detail": "021-restart-close.json"
+    },
+    {
+      "label": "enqueue-and-exit",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-22.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 220.46720499999992,
+      "stdout": "023-enqueue-and-exit.stdout",
+      "stderr": "023-enqueue-and-exit.stderr",
+      "detail": "023-enqueue-and-exit.json"
+    },
+    {
+      "label": "rollback-delete",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-24.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 211.9694810000001,
+      "stdout": "025-rollback-delete.stdout",
+      "stderr": "025-rollback-delete.stderr",
+      "detail": "025-rollback-delete.json"
+    },
+    {
+      "label": "writer-contention",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-26.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 1,
+      "signal": null,
+      "error": null,
+      "durationMs": 749.4955719999998,
+      "stdout": "027-writer-contention.stdout",
+      "stderr": "027-writer-contention.stderr",
+      "detail": "027-writer-contention.json"
+    },
+    {
+      "label": "restart-consumes-pending",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-28.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 588.7805039999994,
+      "stdout": "029-restart-consumes-pending.stdout",
+      "stderr": "029-restart-consumes-pending.stderr",
+      "detail": "029-restart-consumes-pending.json"
+    },
+    {
+      "label": "archive-current",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-30.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 1140.9050690000004,
+      "stdout": "031-archive-current.stdout",
+      "stderr": "031-archive-current.stderr",
+      "detail": "031-archive-current.json"
+    },
+    {
+      "label": "archive-baseline",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-32.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 1018.8643229999998,
+      "stdout": "033-archive-baseline.stdout",
+      "stderr": "033-archive-baseline.stderr",
+      "detail": "033-archive-baseline.json"
+    },
+    {
+      "label": "before-active",
+      "command": [
+        "openspec",
+        "list",
+        "--json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 251.60900000000038,
+      "stdout": "034-before-active.stdout",
+      "stderr": "034-before-active.stderr",
+      "detail": "034-before-active.json"
+    },
+    {
+      "label": "before-archived",
+      "command": [
+        "openspec",
+        "list",
+        "--archived",
+        "--json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 244.2948550000001,
+      "stdout": "035-before-archived.stdout",
+      "stderr": "035-before-archived.stderr",
+      "detail": "035-before-archived.json"
+    },
+    {
+      "label": "before-show",
+      "command": [
+        "openspec",
+        "show",
+        "archive-live",
+        "--json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 264.5046100000018,
+      "stdout": "036-before-show.stdout",
+      "stderr": "036-before-show.stderr",
+      "detail": "036-before-show.json"
+    },
+    {
+      "label": "archive-refused",
+      "command": [
+        "openspec",
+        "archive",
+        "missing-change",
+        "--yes",
+        "--skip-specs"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 1,
+      "signal": null,
+      "error": null,
+      "durationMs": 371.1040689999991,
+      "stdout": "037-archive-refused.stdout",
+      "stderr": "037-archive-refused.stderr",
+      "detail": "037-archive-refused.json"
+    },
+    {
+      "label": "settle-failed-archive",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-38.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 881.274757000001,
+      "stdout": "039-settle-failed-archive.stdout",
+      "stderr": "039-settle-failed-archive.stderr",
+      "detail": "039-settle-failed-archive.json"
+    },
+    {
+      "label": "partial-with-active",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-40.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 951.2783660000005,
+      "stdout": "041-partial-with-active.stdout",
+      "stderr": "041-partial-with-active.stderr",
+      "detail": "041-partial-with-active.json"
+    },
+    {
+      "label": "deletion-and-suffix-controls",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-42.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 979.6048790000004,
+      "stdout": "043-deletion-and-suffix-controls.stdout",
+      "stderr": "043-deletion-and-suffix-controls.stderr",
+      "detail": "043-deletion-and-suffix-controls.json"
+    },
+    {
+      "label": "new-active-baseline",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-44.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 976.6089100000008,
+      "stdout": "045-new-active-baseline.stdout",
+      "stderr": "045-new-active-baseline.stderr",
+      "detail": "045-new-active-baseline.json"
+    },
+    {
+      "label": "archive-success",
+      "command": [
+        "openspec",
+        "archive",
+        "archive-live",
+        "--yes",
+        "--skip-specs"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 1,
+      "signal": null,
+      "error": null,
+      "durationMs": 256.2452979999998,
+      "stdout": "046-archive-success.stdout",
+      "stderr": "046-archive-success.stderr",
+      "detail": "046-archive-success.json"
+    },
+    {
+      "label": "archive-race-binding",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-47.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 963.280655999999,
+      "stdout": "048-archive-race-binding.stdout",
+      "stderr": "048-archive-race-binding.stderr",
+      "detail": "048-archive-race-binding.json"
+    },
+    {
+      "label": "race-baseline",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-49.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 890.0503190000018,
+      "stdout": "050-race-baseline.stdout",
+      "stderr": "050-race-baseline.stderr",
+      "detail": "050-race-baseline.json"
+    },
+    {
+      "label": "archive-race-success",
+      "command": [
+        "openspec",
+        "archive",
+        "archive-race",
+        "--yes",
+        "--skip-specs"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 1,
+      "signal": null,
+      "error": null,
+      "durationMs": 342.22285900000134,
+      "stdout": "051-archive-race-success.stdout",
+      "stderr": "051-archive-race-success.stderr",
+      "detail": "051-archive-race-success.json"
+    },
+    {
+      "label": "delivery-retry",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-52.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 927.4809200000018,
+      "stdout": "053-delivery-retry.stdout",
+      "stderr": "053-delivery-retry.stderr",
+      "detail": "053-delivery-retry.json"
+    },
+    {
+      "label": "recipient-unavailable",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-54.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 178.72081099999923,
+      "stdout": "055-recipient-unavailable.stdout",
+      "stderr": "055-recipient-unavailable.stderr",
+      "detail": "055-recipient-unavailable.json"
+    },
+    {
+      "label": "delivery-event",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-56.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 164.97167999999874,
+      "stdout": "057-delivery-event.stdout",
+      "stderr": "057-delivery-event.stderr",
+      "detail": "057-delivery-event.json"
+    },
+    {
+      "label": "undelivered-active",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-58.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 794.0876659999994,
+      "stdout": "059-undelivered-active.stdout",
+      "stderr": "059-undelivered-active.stderr",
+      "detail": "059-undelivered-active.json"
+    },
+    {
+      "label": "recipient-restored",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-60.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 146.85789499999737,
+      "stdout": "061-recipient-restored.stdout",
+      "stderr": "061-recipient-restored.stderr",
+      "detail": "061-recipient-restored.json"
+    },
+    {
+      "label": "deliver-real-tmux",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-62.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 825.8173319999987,
+      "stdout": "063-deliver-real-tmux.stdout",
+      "stderr": "063-deliver-real-tmux.stderr",
+      "detail": "063-deliver-real-tmux.json"
+    },
+    {
+      "label": "delivery-reopen-repeat",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-64.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 789.5648400000027,
+      "stdout": "065-delivery-reopen-repeat.stdout",
+      "stderr": "065-delivery-reopen-repeat.stderr",
+      "detail": "065-delivery-reopen-repeat.json"
+    },
+    {
+      "label": "result-failed",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-66.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 781.0464859999993,
+      "stdout": "067-result-failed.stdout",
+      "stderr": "067-result-failed.stderr",
+      "detail": "067-result-failed.json"
+    },
+    {
+      "label": "final-close",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-68.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 966.3760739999998,
+      "stdout": "069-final-close.stdout",
+      "stderr": "069-final-close.stderr",
+      "detail": "069-final-close.json"
+    },
+    {
+      "label": "accept-real-report",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-70.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 1317.3265749999991,
+      "stdout": "071-accept-real-report.stdout",
+      "stderr": "071-accept-real-report.stderr",
+      "detail": "071-accept-real-report.json"
+    },
+    {
+      "label": "finalize-observed-exit",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-72.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 836.9973580000005,
+      "stdout": "073-finalize-observed-exit.stdout",
+      "stderr": "073-finalize-observed-exit.stderr",
+      "detail": "073-finalize-observed-exit.json"
+    },
+    {
+      "label": "deployment-no-proof",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-74.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 789.1995180000013,
+      "stdout": "075-deployment-no-proof.stdout",
+      "stderr": "075-deployment-no-proof.stderr",
+      "detail": "075-deployment-no-proof.json"
+    },
+    {
+      "label": "deployment-fixture-exit-zero",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "-e",
+        "process.exitCode=0"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 27.01035299999785,
+      "stdout": "076-deployment-fixture-exit-zero.stdout",
+      "stderr": "076-deployment-fixture-exit-zero.stderr",
+      "detail": "076-deployment-fixture-exit-zero.json"
+    },
+    {
+      "label": "settle-without-version-proof",
+      "command": [
+        "/opt/dev/node/bin/node",
+        "/srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs",
+        "child",
+        "/tmp/cfc54-7KM18U/input-77.json"
+      ],
+      "cwd": "/tmp/cfc54-7KM18U/root",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null,
+      "durationMs": 792.0200609999993,
+      "stdout": "078-settle-without-version-proof.stdout",
+      "stderr": "078-settle-without-version-proof.stderr",
+      "detail": "078-settle-without-version-proof.json"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "I1",
+      "status": "passed",
+      "details": {
+        "activate": "ca522442-8eff-4c13-adf6-13860d6b45a1",
+        "close": "2bde174c-b8e4-4b5f-8a8b-4dbeb42ddf26",
+        "untouched": "783e0bd4-9919-4e21-82ae-a287e451cda7",
+        "producer": "production control.ps report acceptance rejects actual invalid report bytes"
+      }
+    },
+    {
+      "id": "I2",
+      "status": "passed",
+      "details": {
+        "binding": "8784ce4f-c56c-43c3-ac4e-bc5ffa7a1b04",
+        "restart": "new child for every operation",
+        "rollback": "real SQLite abort trigger",
+        "writerLock": "separate live process"
+      }
+    },
+    {
+      "id": "I3",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs:210:14\n    at scenario (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs:117:33)\n    at file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs:194:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    {
+      "id": "I4",
+      "status": "failed",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs:218:14\n    at scenario (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs:117:33)\n    at file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs:215:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    {
+      "id": "I5",
+      "status": "passed",
+      "details": {
+        "binding": "9e2c4095-54b1-442d-90c2-6c29add70514",
+        "receipt": {
+          "reminder_id": "9e2c4095-54b1-442d-90c2-6c29add70514",
+          "delivery_key": "[\"main\",\"CFC54 delivery-retry\",\"2099-01-01T00:00:00Z\"]",
+          "receipt_id": "89a26b8e-2613-48cd-8e55-2a89bbe1cd5b",
+          "delivered_at": "2026-10-25T13:06:20.415Z"
+        },
+        "received": [
+          {
+            "text": "[raf] Reminder 9e2c4095-54b1-442d-90c2-6c29add70514: CFC54 delivery-retry",
+            "pid": 55
+          }
+        ]
+      }
+    },
+    {
+      "id": "I6-result-and-final-close",
+      "status": "passed",
+      "details": {
+        "resultBinding": "727aa6f6-a621-4517-9de4-13c36432f828",
+        "closeBinding": "67c36fd2-5c3c-4348-9066-8d31095c946f",
+        "acceptedResult": {
+          "status": "failed",
+          "response": "Controlled live-process result",
+          "proof": {
+            "runId": "d62aa268-3dfa-4ef5-8c7e-a6d3f74bbab6",
+            "at": "2026-10-25T13:06:23.784Z",
+            "flowEvidence": []
+          }
+        },
+        "reportRejectedCovered": "I1",
+        "nativeInterrupt": "unexecuted: controlled stdin receiver is not a native runner"
+      }
+    },
+    {
+      "id": "I7-negative-fixture-control",
+      "status": "passed",
+      "details": {
+        "binding": "2715076e-9026-49cd-a33b-e74076c3a2c1",
+        "eventCreated": false,
+        "positiveAcceptance": "unexecuted: no approved real deployment producer or stand"
+      }
+    }
+  ],
+  "cleanup": {
+    "fixtureRemoved": true
+  },
+  "limitations": [
+    "The compiled CLI parser dispatches production handlers in separate processes with a test runtime context. This is an API/CLI stand, not public bin/raf.ts provenance acceptance.",
+    "The live tmux recipients are controlled stdin receivers, not an authenticated external AI provider. Native runner interrupt acceptance is reported separately.",
+    "Deployment has no approved live producer or environment; fixture controls do not prove a real deployment or I7 positive acceptance."
+  ],
+  "sha": "5d07412ed841b6023fcc63f34b99899667875bae",
+  "workspace": " M src/workspace-routing.ts\n M test/workspace-routing-contracts.test.ts\n?? .cfc44-I6/\n?? evidence/cfc44-command-timing/I1-address-a.json\n?? evidence/cfc44-command-timing/I1-address-a.stderr\n?? evidence/cfc44-command-timing/I1-address-a.stdout\n?? evidence/cfc44-command-timing/I1-address-b.json\n?? evidence/cfc44-command-timing/I1-address-b.stderr\n?? evidence/cfc44-command-timing/I1-address-b.stdout\n?? evidence/cfc44-command-timing/I1.command.txt\n?? evidence/cfc44-command-timing/I1.json\n?? evidence/cfc44-command-timing/I1.tool.json\n?? evidence/cfc44-command-timing/I2-a.stderr\n?? evidence/cfc44-command-timing/I2-a.stdout\n?? evidence/cfc44-command-timing/I2-b.stderr\n?? evidence/cfc44-command-timing/I2-b.stdout\n?? evidence/cfc44-command-timing/I2-child.source.txt\n?? evidence/cfc44-command-timing/I2-lock.stderr\n?? evidence/cfc44-command-timing/I2-lock.stdout\n?? evidence/cfc44-command-timing/I2.command.txt\n?? evidence/cfc44-command-timing/I2.json\n?? evidence/cfc44-command-timing/I2.tool.json\n?? evidence/cfc44-command-timing/I3-alpha-change.json\n?? evidence/cfc44-command-timing/I3-alpha-change.stderr\n?? evidence/cfc44-command-timing/I3-alpha-change.stdout\n?? evidence/cfc44-command-timing/I3-help.json\n?? evidence/cfc44-command-timing/I3-help.stderr\n?? evidence/cfc44-command-timing/I3-help.stdout\n?? evidence/cfc44-command-timing/I3-next.json\n?? evidence/cfc44-command-timing/I3-next.stderr\n?? evidence/cfc44-command-timing/I3-next.stdout\n?? evidence/cfc44-command-timing/I3-parser.json\n?? evidence/cfc44-command-timing/I3-parser.stderr\n?? evidence/cfc44-command-timing/I3-parser.stdout\n?? evidence/cfc44-command-timing/I3-snapshot.json\n?? evidence/cfc44-command-timing/I3-snapshot.stderr\n?? evidence/cfc44-command-timing/I3-snapshot.stdout\n?? evidence/cfc44-command-timing/I3.command.txt\n?? evidence/cfc44-command-timing/I3.tool.json\n?? evidence/cfc44-command-timing/I4-crash.json\n?? evidence/cfc44-command-timing/I4-crash.stderr\n?? evidence/cfc44-command-timing/I4-crash.stdout\n?? evidence/cfc44-command-timing/I4-refusal-files.json\n?? evidence/cfc44-command-timing/I4-runtime-error.json\n?? evidence/cfc44-command-timing/I4-runtime-error.stderr\n?? evidence/cfc44-command-timing/I4-runtime-error.stdout\n?? evidence/cfc44-command-timing/I4-state-refusal.json\n?? evidence/cfc44-command-timing/I4-state-refusal.stderr\n?? evidence/cfc44-command-timing/I4-state-refusal.stdout\n?? evidence/cfc44-command-timing/I4-success.json\n?? evidence/cfc44-command-timing/I4-success.stderr\n?? evidence/cfc44-command-timing/I4-success.stdout\n?? evidence/cfc44-command-timing/I4.command.txt\n?? evidence/cfc44-command-timing/I4.tool.json\n?? evidence/cfc44-command-timing/I5-00.json\n?? evidence/cfc44-command-timing/I5-00.stderr\n?? evidence/cfc44-command-timing/I5-00.stdout\n?? evidence/cfc44-command-timing/I5-01.json\n?? evidence/cfc44-command-timing/I5-01.stderr\n?? evidence/cfc44-command-timing/I5-01.stdout\n?? evidence/cfc44-command-timing/I5-02.json\n?? evidence/cfc44-command-timing/I5-02.stderr\n?? evidence/cfc44-command-timing/I5-02.stdout\n?? evidence/cfc44-command-timing/I5-03.json\n?? evidence/cfc44-command-timing/I5-03.stderr\n?? evidence/cfc44-command-timing/I5-03.stdout\n?? evidence/cfc44-command-timing/I5-04.json\n?? evidence/cfc44-command-timing/I5-04.stderr\n?? evidence/cfc44-command-timing/I5-04.stdout\n?? evidence/cfc44-command-timing/I5-05.json\n?? evidence/cfc44-command-timing/I5-05.stderr\n?? evidence/cfc44-command-timing/I5-05.stdout\n?? evidence/cfc44-command-timing/I5-06.json\n?? evidence/cfc44-command-timing/I5-06.stderr\n?? evidence/cfc44-command-timing/I5-06.stdout\n?? evidence/cfc44-command-timing/I5-07.json\n?? evidence/cfc44-command-timing/I5-07.stderr\n?? evidence/cfc44-command-timing/I5-07.stdout\n?? evidence/cfc44-command-timing/I5-08.json\n?? evidence/cfc44-command-timing/I5-08.stderr\n?? evidence/cfc44-command-timing/I5-08.stdout\n?? evidence/cfc44-command-timing/I5-09.json\n?? evidence/cfc44-command-timing/I5-09.stderr\n?? evidence/cfc44-command-timing/I5-09.stdout\n?? evidence/cfc44-command-timing/I5-10.json\n?? evidence/cfc44-command-timing/I5-10.stderr\n?? evidence/cfc44-command-timing/I5-10.stdout\n?? evidence/cfc44-command-timing/I5-11.json\n?? evidence/cfc44-command-timing/I5-11.stderr\n?? evidence/cfc44-command-timing/I5-11.stdout\n?? evidence/cfc44-command-timing/I5-12.json\n?? evidence/cfc44-command-timing/I5-12.stderr\n?? evidence/cfc44-command-timing/I5-12.stdout\n?? evidence/cfc44-command-timing/I5-13.json\n?? evidence/cfc44-command-timing/I5-13.stderr\n?? evidence/cfc44-command-timing/I5-13.stdout\n?? evidence/cfc44-command-timing/I5-14.json\n?? evidence/cfc44-command-timing/I5-14.stderr\n?? evidence/cfc44-command-timing/I5-14.stdout\n?? evidence/cfc44-command-timing/I5-15.json\n?? evidence/cfc44-command-timing/I5-15.stderr\n?? evidence/cfc44-command-timing/I5-15.stdout\n?? evidence/cfc44-command-timing/I5-ready.command.txt\n?? evidence/cfc44-command-timing/I5-ready.exit.json\n?? evidence/cfc44-command-timing/I5-ready.stderr\n?? evidence/cfc44-command-timing/I5-ready.stdout\n?? evidence/cfc44-command-timing/I5.command.txt\n?? evidence/cfc44-command-timing/I5.json\n?? evidence/cfc44-command-timing/I5.tool.json\n?? evidence/cfc44-command-timing/I6-agent-run.json\n?? evidence/cfc44-command-timing/I6-agent-run.stderr\n?? evidence/cfc44-command-timing/I6-agent-run.stdout\n?? evidence/cfc44-command-timing/I6-boundary-fixed-setup.json\n?? evidence/cfc44-command-timing/I6-build-develop.stderr\n?? evidence/cfc44-command-timing/I6-build-develop.stdout\n?? evidence/cfc44-command-timing/I6-build-main.stderr\n?? evidence/cfc44-command-timing/I6-build-main.stdout\n?? evidence/cfc44-command-timing/I6-data-setup-fixed.json\n?? evidence/cfc44-command-timing/I6-data-setup.json\n?? evidence/cfc44-command-timing/I6-fixed-setup.json\n?? evidence/cfc44-command-timing/I6-gate-refused-main-attach.json\n?? evidence/cfc44-command-timing/I6-gate-refused-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-gate-refused-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-gate-refused.json\n?? evidence/cfc44-command-timing/I6-layout-ready.json\n?? evidence/cfc44-command-timing/I6-layout-refused-main-attach.json\n?? evidence/cfc44-command-timing/I6-layout-refused-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-layout-refused-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-layout-refused.json\n?? evidence/cfc44-command-timing/I6-library-refused-main-attach.json\n?? evidence/cfc44-command-timing/I6-library-refused-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-library-refused-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-library-refused.json\n?? evidence/cfc44-command-timing/I6-main-attach.json\n?? evidence/cfc44-command-timing/I6-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-operator.mjs\n?? evidence/cfc44-command-timing/I6-pane.txt\n?? evidence/cfc44-command-timing/I6-proof-mismatch.json\n?? evidence/cfc44-command-timing/I6-setup-quota.json\n?? evidence/cfc44-command-timing/I6-source-refused-main-attach.json\n?? evidence/cfc44-command-timing/I6-source-refused-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-source-refused-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-source-refused.json\n?? evidence/cfc44-command-timing/I6-sparse-completion.json\n?? evidence/cfc44-command-timing/I6-sparse-refused-main-attach.json\n?? evidence/cfc44-command-timing/I6-sparse-refused-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-sparse-refused-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-sparse-refused.json\n?? evidence/cfc44-command-timing/I6-tmux-preflight.json\n?? evidence/cfc44-command-timing/I6-worktree-refused-main-attach.json\n?? evidence/cfc44-command-timing/I6-worktree-refused-main-attach.stderr\n?? evidence/cfc44-command-timing/I6-worktree-refused-main-attach.stdout\n?? evidence/cfc44-command-timing/I6-worktree-refused.json\n?? evidence/cfc44-command-timing/I6.json\n?? evidence/cfc44-command-timing/build-ready.stderr\n?? evidence/cfc44-command-timing/build-ready.stdout\n?? evidence/cfc44-command-timing/build.stderr\n?? evidence/cfc44-command-timing/build.stdout\n?? evidence/cfc44-command-timing/initial-workspace.txt\n?? evidence/cfc44-command-timing/operator.source.txt\n?? evidence/cfc44-command-timing/processes-before-cleanup.json\n?? evidence/cfc44-command-timing/stand-I6-proof-only.json\n?? evidence/cfc44-command-timing/stand-I6.json\n?? evidence/cfc44-command-timing/stand.json\n?? evidence/cfc44-command-timing/stats-first.exit.json\n?? evidence/cfc44-command-timing/stats-first.stderr\n?? evidence/cfc44-command-timing/stats-first.stdout\n?? evidence/cfc44-command-timing/stats-isolated.exit.json\n?? evidence/cfc44-command-timing/stats-isolated.stderr\n?? evidence/cfc44-command-timing/stats-isolated.stdout\n?? evidence/cfc44-command-timing/unit-green.TestRunResult.json\n?? evidence/cfc44-command-timing/unit-green.capture.json\n?? evidence/cfc44-command-timing/unit-green.merged.txt\n?? evidence/cfc44-command-timing/unit-initial.TestRunResult.json\n?? evidence/cfc44-command-timing/unit-initial.capture.json\n?? evidence/cfc44-command-timing/unit-red.TestRunResult.json\n?? evidence/cfc44-command-timing/unit-red.capture.json\n?? evidence/cfc44-command-timing/unit-red.merged.txt\n?? evidence/cfc54-event-registry/\n?? evidence/cfc94-workspace-routing/\n",
+  "configuration": {
+    "raf.json": "4e40910d7654f2142709c66bc62ac88df748b5e2abf665157897c60f0930f1f6",
+    "raf-constants.json": "0cd8b3454da9073a194ba7f87700f18891255fe126e25b22fdf0d7b82f9e8c5e",
+    "flow.json": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+    "test-runs.json": "bf53e11f5237ec791d42b7e767e618689717a0e06cdce76d5dbac484c3ba69d1",
+    "projects.json": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+  },
+  "tmux": {
+    "main": {
+      "pid": 55,
+      "startedAt": "2026-10-25T13:06:00.000Z",
+      "runner": "main",
+      "runnerSessionId": "%0",
+      "tmuxSession": "queue-main",
+      "evidence": {
+        "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/main-receiver.mjs /tmp/cfc54-7KM18U/main-input.jsonl",
+        "tmuxSocket": "/tmp/cfc54-7KM18U/main.sock",
+        "tmuxPane": "%0",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      }
+    },
+    "agent": {
+      "pid": 73,
+      "startedAt": "2026-10-25T13:06:01.000Z",
+      "runner": "main",
+      "runnerSessionId": "%0",
+      "tmuxSession": "queue-main",
+      "evidence": {
+        "command": "/opt/dev/node/bin/node /tmp/cfc54-7KM18U/agent/main-receiver.mjs /tmp/cfc54-7KM18U/agent/main-input.jsonl",
+        "tmuxSocket": "/tmp/cfc54-7KM18U/agent/main.sock",
+        "tmuxPane": "%0",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+      }
+    }
+  },
+  "agentCleanup": {
+    "exitCode": 0,
+    "remainingPids": []
+  },
+  "mainCleanup": {
+    "exitCode": 0,
+    "remainingPids": []
+  }
+}

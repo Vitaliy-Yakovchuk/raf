@@ -1,0 +1,27 @@
+file:///tmp/cfc54-7KM18U/root/raf-develop/src/state-store.ts:189
+        throw Object.assign(new Error(`State store ${name} failed (SQLite ${source.errcode ?? source.code}): ${source.message ?? String(error)}`, { cause: error }), {
+                            ^
+
+Error: State store eventTransaction failed (SQLite 5): database is locked
+    at operation (file:///tmp/cfc54-7KM18U/root/raf-develop/src/state-store.ts:189:29)
+    at Object.transaction (file:///tmp/cfc54-7KM18U/root/raf-develop/src/state-store.ts:717:28)
+    ... 2 lines matching cause stack trace ...
+    at file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs:52:24 {
+  code: 'ERR_SQLITE_ERROR',
+  errcode: 5,
+  operation: 'eventTransaction',
+  [cause]: Error: database is locked
+      at transaction (file:///tmp/cfc54-7KM18U/root/raf-develop/src/state-store.ts:218:8)
+      at file:///tmp/cfc54-7KM18U/root/raf-develop/src/state-store.ts:717:64
+      at operation (file:///tmp/cfc54-7KM18U/root/raf-develop/src/state-store.ts:185:14)
+      at Object.transaction (file:///tmp/cfc54-7KM18U/root/raf-develop/src/state-store.ts:717:28)
+      at Object.transaction (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs:31:135)
+      at Object.dispatch (file:///tmp/cfc54-7KM18U/root/raf-develop/src/event-registry.ts:71:20)
+      at file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-event-registry.mjs:52:24 {
+    code: 'ERR_SQLITE_ERROR',
+    errcode: 5,
+    errstr: 'database is locked'
+  }
+}
+
+Node.js v26.12.1

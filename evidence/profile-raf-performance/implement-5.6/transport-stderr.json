@@ -1,0 +1,13 @@
+{
+  "status": "not-separately-observable",
+  "appliesTo": [
+    "e878fe6f-35ff-46b6-a720-ba815b86d403",
+    "3f298567-6a4d-44bd-8e13-d1596efbded5",
+    "d91783dd-3fb2-437c-8a22-f8604d737d60"
+  ],
+  "channel": "exec_command exposes combined output and CLI code only",
+  "rawCombined": "final-tool-result.json preserves final combined output verbatim; each TestRunResult is complete JSON. Earlier raw JSON is separately preserved.",
+  "stderr": "unknown; no independent stderr byte stream is available; empty stderr is not claimed",
+  "confirmation": "main confirmed no separate stderr evidence is available for e878fe6f and 3f298567; requested preserving full JSON/CLI and disclosing this limitation, same as 4.5.",
+  "effect": "This is transport observability only; final TestRunResult explicitly passed90, child0, CLI0, cleanup complete, timedOut false, complete group. No missing/truncated TestRunResult is treated as pass."
+}

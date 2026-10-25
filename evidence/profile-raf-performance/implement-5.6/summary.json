@@ -1,0 +1,168 @@
+{
+  "item": "profile-raf-performance:5.6",
+  "status": "succeeded",
+  "codeCommit": "a66ad12857a36dec17772b92d59b50d611bcd349",
+  "initialImplementationIndependent": true,
+  "testsModified": false,
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+  "runs": [
+    {
+      "runId": "e878fe6f-35ff-46b6-a720-ba815b86d403",
+      "phase": "implement",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "group": "profile-raf-performance/module-origin-cost",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [
+        {
+          "file": "test/hotfix-origin-cost.test.ts",
+          "name": "[module-origin-cost] one guard never traverses or reads proven non-runtime trees"
+        },
+        {
+          "file": "test/hotfix-origin-cost.test.ts",
+          "name": "[module-origin-cost] excluded or unbounded loading is refused by publication: import {spawn} from 'node:child_process'; spawn(process.execPath,['docs/child.payload']);"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "fix-implementation",
+      "label": "initial",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+      "cliExitCode": 1,
+      "passedCount": 88,
+      "rawTestRunResult": "initial-TestRunResult.json",
+      "transportStderr": "transport-stderr.json",
+      "workspaceHead": "initial-head.txt",
+      "dirtyWorkspace": "initial-workspace.txt",
+      "implementation": "initial-implementation.patch"
+    },
+    {
+      "runId": "3f298567-6a4d-44bd-8e13-d1596efbded5",
+      "phase": "implement",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "group": "profile-raf-performance/module-origin-cost",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "label": "target",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+      "cliExitCode": 0,
+      "passedCount": 90,
+      "rawTestRunResult": "target-TestRunResult.json",
+      "transportStderr": "transport-stderr.json",
+      "workspaceHead": "initial-head.txt",
+      "dirtyWorkspace": "initial-workspace.txt",
+      "implementation": "initial-implementation.patch"
+    },
+    {
+      "runId": "d91783dd-3fb2-437c-8a22-f8604d737d60",
+      "phase": "implement",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "group": "profile-raf-performance/module-origin-cost",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/hotfix-origin-cost.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "label": "final",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/635ca786-3fb6-4ee9-bd0b-bc3135c48d50/raf-main/bin/raf.ts test run --project raf --phase implement --group profile-raf-performance/module-origin-cost --files test/hotfix-origin-cost.test.ts",
+      "cliExitCode": 0,
+      "passedCount": 90,
+      "rawTestRunResult": "final-TestRunResult.json",
+      "transportStderr": "transport-stderr.json",
+      "workspaceHead": "final-test-head.txt",
+      "dirtyWorkspace": "final-test-workspace.txt",
+      "implementation": "final-implementation.patch"
+    }
+  ],
+  "checks": {
+    "build": {
+      "cliExitCode": 0,
+      "stdout": "build.stdout",
+      "stderr": "build.stderr"
+    },
+    "check-comments": {
+      "cliExitCode": 0,
+      "stdout": "check-comments.stdout",
+      "stderr": "check-comments.stderr"
+    },
+    "publication-smoke": {
+      "cliExitCode": 0,
+      "stdout": "publication-smoke.stdout",
+      "stderr": "publication-smoke.stderr"
+    }
+  },
+  "finalWorkspaceSource": {
+    "head": "0e022cd356a9bf7760328839fcb7f39103ebce30",
+    "dirtyPatch": "final-implementation.patch",
+    "newSource": "final-runtime-loaders.ts.snapshot",
+    "committedAs": "a66ad12857a36dec17772b92d59b50d611bcd349"
+  },
+  "publication": "Trusted generation record stores a separate runtime inventory bound to canonical root and commit. Existing activation fingerprints, snapshot gates, intent/recovery and reader lifetime are preserved. Default scope covers every root file and directory except proven evidence/docs and Git administrative entry; dependencies are included.",
+  "loadingProof": "Literal imports, dynamic imports, package targets, child script paths and URL package inputs must remain protected. Known nonliteral loaders have exact source digest proofs and explicit targets; TypeScript parser/scanner APIs have a library digest plus exact consumer digest proofs. Changed loaders/dependencies/consumers require a new reviewed proof and newly gated generation; runtime never repairs missing proof.",
+  "guard": "Each origin verification enumerates and rehashes protected scopes and checks current paths, bytes, modes, canonical root and aliases. It does not traverse/stat/read excluded evidence/docs. Actual modules must be proven loading targets; retained readers use their own generation inventory.",
+  "compatibility": "Older registry generations without runtimeInventory refuse production origin. There is no lazy upgrade or fallback full-tree success. New publication must create the inventory with the complete runtime tree and installed TypeScript 6.0.3; parser is lazy and not loaded by verify/origin.",
+  "qaCoordination": {
+    "agent": "raf-sym64b-qa",
+    "pathsUntouched": [
+      "test/main-switch-agent-channel.test.ts",
+      "test/production-qa-fixture.ts",
+      "test/service-entry.test.ts",
+      "scripts/qa-main-agent-channel.mjs",
+      "scripts/qa-main-agent-channel-metadata.mjs"
+    ],
+    "agreedFixtureContract": "Copy actual production entrypoints, src/scripts/dist/package metadata and node_modules/typescript with dereference:true; commit fixture inputs. QA instrumentation may update exact proofs only inside isolated copies after checking unchanged loading boundaries, record original/instrumented digests, and create a new inventory before publication. Product, production registry and existing snapshot proofs must not be rewritten."
+  },
+  "notClaimed": [
+    "5.7 existing generation/origin unit groups and live agent ps before/after acceptance",
+    "Production activation or transfer",
+    "Archive or completion of other open tasks"
+  ],
+  "nextAction": "Main marks only 5.6 after validating this report; independent 5.7 QA runs own authorized groups and live stand acceptance. Other tasks remain open; no archive."
+}

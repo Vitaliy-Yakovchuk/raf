@@ -1,0 +1,523 @@
+{
+  "testKind": "unit",
+  "timeoutPolicy": {
+    "source": "conf/flow.json#/unitTests/timeoutMs",
+    "timeoutMs": 1200000
+  },
+  "callerPhase": "test-scaffold",
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "totalEntries": 0,
+    "retainedEntries": 0,
+    "omittedEntries": 0,
+    "truncated": false,
+    "redacted": false
+  },
+  "environmentSummary": {
+    "executable": "node",
+    "runtimeVersion": "v26.12.1",
+    "adapter": "node-test-events",
+    "isolation": "process",
+    "configurationFingerprints": {
+      "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+      "testRuns": "4505149f6af453e2ad4a99013aad13807add3f1fcc7b84036a8b3ee703f6f7e1",
+      "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+    },
+    "tmpPathBytes": 13,
+    "privateRunTmp": true
+  },
+  "runId": "059a8075-367c-435e-8f58-06e8b5ccb7f7",
+  "project": "raf",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "phase": "red",
+  "group": "complete-raf-flow-contracts/model-routing",
+  "profileId": "node",
+  "selection": {
+    "files": [
+      "test/model-routing.test.ts",
+      "test/model-routing-handoff.test.ts"
+    ],
+    "testIds": []
+  },
+  "command": {
+    "executable": "node",
+    "argv": [
+      "./scripts/test-run-node.ts",
+      "test/model-routing.test.ts",
+      "test/model-routing-handoff.test.ts"
+    ],
+    "cwd": "/srv/dev/work/orchestrator/raf-develop",
+    "shell": false,
+    "environment": {
+      "HOME": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391",
+      "statePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "tmpPath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/tmp",
+      "TMPDIR": "/tmp/r-6cckwQ"
+    }
+  },
+  "startedAt": "2026-10-25T12:40:41.594Z",
+  "durationMs": 1126,
+  "exitCode": 0,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": {
+    "complete": true,
+    "remainingPids": []
+  },
+  "outcome": "passed",
+  "failureKinds": [],
+  "passed": [
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection U1 classifies tasks from the current catalog after classification and complexity names change"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection U1 an unclassified task has no implicit complexity or role rule"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection U1 rereads complexity order, effort, transitions and role bindings without provider rules"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection U2 excludes the preferred candidate when its runner is unavailable"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection U2 excludes the preferred candidate when its model is unavailable"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection U2 excludes the preferred candidate when its cli is unavailable"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection U2 excludes the preferred candidate when its quota is unavailable"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection U2 unknown quota remains selectable and explicit, without a probe or confirmed capacity"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection uses configured runner priority and returns actual effort with a reason"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection takes changed configuration on the next call and does not bind an unconfigured role"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection honors explicit role bindings"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection uses configured transitions when the previous model pool is exhausted"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection does not disable an independent quota pool on the same runner"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection rejects new selection explicitly when no model is enabled"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection does not downgrade required complexity when only a small model remains"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection uses persisted switches over initial defaults and initializes only absent switches"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection does not present missing quota observations as confirmed capacity"
+    },
+    {
+      "file": "test/model-routing.test.ts",
+      "name": "model-routing configured selection lists configuration separately from actual disabled availability"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 handoff waits for final report, confirmed exit and existing finalization before new agent-run"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 limited with alive process keeps claims and never starts another executor"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 limited with unknown process keeps claims and never starts another executor"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U4 a failed scanner cannot turn a missing pane into a confirmed exit"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 pending final report cannot authorize finalization or a successor"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 wrong-run final report cannot authorize finalization or a successor"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 incomplete finalization blocks transfer without retrying launch"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 incomplete claims blocks transfer without retrying launch"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 a finalization exception preserves the failure and prevents partial handoff"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 concurrent observers through the same atomic agent-run port create one successor"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U6 owner paused cannot be bypassed by automatic handoff"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U6 owner stopped cannot be bypassed by automatic handoff"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U6 accepted succeeded survives nonzero exit and does not repeat completed tasks"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U6 failed hands off only current unfinished items and evidence with fresh identities"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U6 missing hands off only current unfinished items and evidence with fresh identities"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U6 rejected hands off only current unfinished items and evidence with fresh identities"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U6 no remaining work after OpenSpec recheck starts no executor"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 changed OpenSpec source is waiting, never a partial assignment launch"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 atomic agent-run refusal: task claimed by another executor"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 atomic agent-run refusal: runner disabled before reservation"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 atomic agent-run refusal: OpenSpec changed before reservation"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U2 handoff rereads changed policy and runner switches after finalization"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U4 limited unknown pool preserves known facts and does not manufacture quota, reset or success"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U4 limited known pool preserves known facts and does not manufacture quota, reset or success"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U4 failed unknown pool preserves known facts and does not manufacture quota, reset or success"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U4 exited unknown pool preserves known facts and does not manufacture quota, reset or success"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U4 delayed limited from a reused address cannot affect the new run"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U4 delayed exited from a reused address cannot affect the new run"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U4 a stale session snapshot cannot hand off the current owner at the same address"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U4 starting including agy identity pending does not authorize transfer or invent identity"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U4 ready including agy identity pending does not authorize transfer or invent identity"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 pre-session limit with cleanup retrySafe=false obeys confirmed cleanup"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 pre-session limit with cleanup retrySafe=true obeys confirmed cleanup"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 retrySafe alone cannot bypass pending cleanup effects"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U5 absent process without startup cleanup proof cannot authorize another launch"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 saved runner switches survive new runtime and changed initialEnabled without stopping live sessions"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 one runner enable preserves catalog-disabled models and initializes only missing switches"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 unauthorized enable cannot write runner state even when caller claims main"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 invalid enable arguments [] do not write state"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 invalid enable arguments [\"--runner\",\"missing\"] do not write state"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 invalid enable arguments [\"--runner\",\"beta\",\"--runner\",\"beta\"] do not write state"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 unauthorized disable cannot write runner state even when caller claims main"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 invalid disable arguments [] do not write state"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 invalid disable arguments [\"--runner\",\"missing\"] do not write state"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 invalid disable arguments [\"--runner\",\"beta\",\"--runner\",\"beta\"] do not write state"
+    }
+  ],
+  "knownRed": [],
+  "unexecuted": [],
+  "unknown": [],
+  "removed": [],
+  "stateAccess": null,
+  "groupSnapshot": "loaded",
+  "groupState": "complete",
+  "timeoutCount": 0,
+  "nextAction": "complete",
+  "hintIds": [],
+  "hints": [],
+  "evidence": [],
+  "admission": {
+    "level": "ANY_RUN",
+    "requestedTier": "normal",
+    "allowed": true,
+    "reasons": [
+      "All normal resource thresholds satisfied after reservations"
+    ],
+    "measurement": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "loadAverage1m": 6.26,
+      "availableCores": 8,
+      "totalRamBytes": 32852041728,
+      "availableRamBytes": 19740151808,
+      "memoryPressure": "normal",
+      "fileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "totalBytes": 190143823872,
+          "availableBytes": 164656857088
+        },
+        {
+          "id": "/dev/mapper/home-dev",
+          "totalBytes": 11499937792,
+          "availableBytes": 8196648960
+        }
+      ]
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "reservation": {
+      "requested": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        }
+      },
+      "unused": {
+        "ramBytes": 0,
+        "diskBytes": {}
+      }
+    },
+    "remaining": {
+      "ramBytes": 17592668160,
+      "diskBytes": {
+        "/dev/mapper/data-dev": 153919438848,
+        "/dev/mapper/home-dev": 8196648960
+      },
+      "normalizedLoad": 0.7825
+    },
+    "estimate": {
+      "status": "KNOWN",
+      "sources": [
+        "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+      ],
+      "reason": null
+    },
+    "queueId": "15392981-91bf-41d4-857c-5fc6d4899263"
+  },
+  "resourceUsage": {
+    "context": {
+      "identity": {
+        "kind": "test",
+        "id": "059a8075-367c-435e-8f58-06e8b5ccb7f7",
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c",
+        "fence": "7bd1a491-1e89-485b-be6a-4f31a78175ae",
+        "root": {
+          "pid": 1471720,
+          "startTicks": "27472415",
+          "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+        }
+      },
+      "project": "raf",
+      "agentType": null,
+      "testProfile": "node",
+      "items": [
+        {
+          "project": "raf",
+          "change": "complete-raf-flow-contracts",
+          "item": "10.3.1"
+        }
+      ],
+      "requestedEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytes": {
+          "/dev/mapper/data-dev": 10737418240
+        },
+        "sources": [
+          "conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate"
+        ],
+        "confHash": "9c1e6ab7b14140984098ebbd2eceb1537a1f9b75a0a92ac3b5617891aac17244"
+      },
+      "requiredFileSystems": [
+        {
+          "id": "/dev/mapper/data-dev",
+          "paths": [
+            "/srv/dev/work/orchestrator",
+            "/srv/dev/work/orchestrator/raf-develop"
+          ]
+        }
+      ],
+      "resultStatePath": "/tmp/raf-unit-1000/8b186c55b4e5d09825e2b95aff4f750bb7bc2ab6fd6034951178a517b04b3391/.raf/state.sqlite",
+      "attributedPaths": [
+        "/tmp/r-6cckwQ"
+      ]
+    },
+    "preparedAt": 1792932042032,
+    "baseline": {
+      "at": 1792932042054,
+      "disk": [
+        {
+          "fileSystemId": "/dev/mapper/data-dev",
+          "files": [],
+          "complete": false,
+          "reasons": [
+            "No run-owned output scope is available on this filesystem"
+          ]
+        }
+      ]
+    },
+    "startedAt": 1792932042078,
+    "lastObservedAt": 1792932042672,
+    "finishedAt": 1792932042701,
+    "finishReason": "exit",
+    "peakRamBytes": 57491456,
+    "peakDiskBytes": {
+      "/dev/mapper/data-dev": null
+    },
+    "ram": {
+      "peakBytes": 57491456,
+      "currentBytes": null,
+      "method": {
+        "name": "rss-sampled",
+        "scope": "verified process tree; simultaneous RSS sum",
+        "sharedPages": "Shared pages counted once per process RSS; may be counted in multiple processes"
+      },
+      "completeness": "partial",
+      "reasons": [
+        "RAM measurement unavailable"
+      ]
+    },
+    "disk": {
+      "/dev/mapper/data-dev": {
+        "peakBytes": null,
+        "currentBytes": null,
+        "method": {
+          "name": "allocated-files-sampled",
+          "scope": "Run-attributed allocated blocks above pre-spawn baseline, deduplicated by device/inode"
+        },
+        "completeness": "unknown",
+        "reasons": [
+          "Changes in shared development directories cannot be fully attributed to this run",
+          "No run-owned output scope is available on this filesystem",
+          "Disk observation or pre-spawn baseline unavailable",
+          "Disk attribution is partial"
+        ]
+      }
+    },
+    "completeness": "partial",
+    "reasons": [
+      "Changes in shared development directories cannot be fully attributed to this run",
+      "No run-owned output scope is available on this filesystem",
+      "Disk observation or pre-spawn baseline unavailable",
+      "Disk attribution is partial",
+      "Root process identity is unavailable or changed",
+      "RAM measurement unavailable",
+      "Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete",
+      "Final measurement completeness is unverified"
+    ]
+  },
+  "queue": null
+}

@@ -372,7 +372,7 @@ function switchFixture() {
     collectQuotas: async () => { probes++; assert.fail('list/selection must read cached quota only'); },
     control: { close: async () => { stops++; assert.fail('runner switch cannot stop live agents'); }, interrupt: async () => { stops++; assert.fail('runner switch cannot interrupt live agents'); } },
   } as unknown as RuntimeServices;
-  const config: RuntimeConfiguration = { catalog: commands, models: r.catalog, commandTiming: { emaAlpha: 0.5 } };
+  const config: RuntimeConfiguration = { catalog: commands, models: r.catalog, commandTiming: { emaAlpha: 0.1, sqliteOnlyMeanBudgetMs: 1000 } };
   const open = () => createAppRuntime({
     orchestratorRoot: '/fixture/orchestrator', confRoot: '/fixture/conf', artifactPath: '/fixture/catalog', statePath: '/fixture/state', tmpRoot: '/fixture/tmp', mode: 'test', commandStartedAtMs: 0, commandTimingOwner: 'production', resolveCaller: async () => caller,
   }, {

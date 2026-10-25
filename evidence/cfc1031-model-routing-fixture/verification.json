@@ -1,0 +1,123 @@
+{
+  "assignment": "complete-raf-flow-contracts:10.3.1",
+  "audit": {
+    "current": true,
+    "sources": [
+      "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/tasks.md#10.3.1",
+      "/srv/dev/work/orchestrator/conf/raf.json#/commandTiming",
+      "/srv/dev/work/orchestrator/openspec/changes/complete-raf-flow-contracts/model-routing-design.md#unit-приймання"
+    ],
+    "reason": "Fixture не відповідав чинній повній конфігурації commandTiming; вузьке виправлення актуальне. Інші пункти залишаються відкритими."
+  },
+  "fixture": {
+    "path": "test/model-routing-handoff.test.ts",
+    "commandTiming": {
+      "emaAlpha": 0.1,
+      "sqliteOnlyMeanBudgetMs": 1000
+    },
+    "onlyFixtureChanged": true,
+    "assertionsUnchanged": true,
+    "productionChangedByThisAssignment": false,
+    "sha256": "f321e0f56194f507ec4bc735a269415ab353275b1f58b035717477181ee6db0a"
+  },
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/model-routing --files test/model-routing.test.ts test/model-routing-handoff.test.ts",
+  "cliExitCode": 0,
+  "childExitCode": 0,
+  "runId": "059a8075-367c-435e-8f58-06e8b5ccb7f7",
+  "passed": 63,
+  "targetU3Passed": [
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 saved runner switches survive new runtime and changed initialEnabled without stopping live sessions"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 one runner enable preserves catalog-disabled models and initializes only missing switches"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 unauthorized enable cannot write runner state even when caller claims main"
+    },
+    {
+      "file": "test/model-routing-handoff.test.ts",
+      "name": "U3 unauthorized disable cannot write runner state even when caller claims main"
+    }
+  ],
+  "testRunResult": "evidence/cfc1031-model-routing-fixture/test-run-result.json",
+  "profileHandoff": {
+    "group": "complete-raf-flow-contracts/model-routing",
+    "profileId": "node",
+    "unitFilesAdditions": [],
+    "groupsAdditions": {},
+    "existingUnitFiles": [
+      "test/model-routing.test.ts",
+      "test/model-routing-handoff.test.ts"
+    ],
+    "existingGroup": {
+      "profileId": "node",
+      "files": [
+        "test/model-routing.test.ts",
+        "test/model-routing-handoff.test.ts"
+      ]
+    },
+    "prerequisites": {
+      "cwd": ".",
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts"
+      ],
+      "exactIds": "node-test-name",
+      "resultAdapter": "node-test-events",
+      "environment": {
+        "isolatedHome": true,
+        "stateOrigin": true
+      },
+      "checks": [
+        "node_modules/typescript/package.json",
+        "src/test-run-reporter.ts",
+        "scripts/test-run-node.ts"
+      ],
+      "timeoutSource": "conf/flow.json#/unitTests/timeoutMs"
+    }
+  },
+  "sharedWorkspace": {
+    "lastObservedHeadBeforeRun": "99fa295ff2961a035adaa7c2f32e67877251c373",
+    "headAfterRun": "c35d17f60a91218a83bb4a7be6b3669e261ee94c",
+    "statusAfterRun": [
+      " M scripts/build.ts",
+      " M src/agent-report.ts",
+      " M src/app-runtime.ts",
+      " M src/assignment.ts",
+      " M src/brief-guide.ts",
+      " M src/catalog-generator.ts",
+      " M src/catalog.ts",
+      " M src/cli-arguments.ts",
+      " M src/cli.ts",
+      " M src/event-catalog.ts",
+      " M src/model-routing-handoff.ts",
+      " M src/model-routing.ts",
+      " M src/production-agent-queue.ts",
+      " M src/production-entry.ts",
+      " M src/production-runtime.ts",
+      " M src/service-host.ts",
+      " M src/session-state.ts",
+      " M src/task-context.ts",
+      " M test/command-timing.test.ts",
+      " M test/model-routing-handoff.test.ts",
+      " M test/test-run-integration-runtime.test.ts",
+      "?? evidence/add-raf-test-run/integration-delivery-scaffold/",
+      "?? evidence/cfc1031-model-routing-fixture/",
+      "?? evidence/cfc104-model-routing/",
+      "?? evidence/cfc44-command-timing/",
+      "?? evidence/complete-raf-flow-contracts-12.4/",
+      "?? src/catalog-schema.ts",
+      "?? src/catalog.schema.json",
+      "?? src/compiled-catalog.ts",
+      "?? src/production-bindings.ts",
+      "?? src/production-model-handoff.ts"
+    ],
+    "limitation": "Прогін перевіряє спільне робоче дерево з незакоміченими production-правками інших агентів; це не доказ окремого чистого SHA чи завершення 10.4/10.5."
+  },
+  "taskCheckboxesChangedByThisAssignment": false,
+  "archive": null
+}

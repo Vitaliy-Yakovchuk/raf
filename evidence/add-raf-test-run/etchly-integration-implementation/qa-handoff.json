@@ -1,0 +1,29 @@
+{
+  "registrationPatch": "evidence/add-raf-test-run/etchly-integration-scaffold/etchly-registration.patch.json",
+  "patchSha256": "b449411caf27b16e83540d1994445ce9923003be016143052f203241523da343",
+  "currentConfigSha256": "4505149f6af453e2ad4a99013aad13807add3f1fcc7b84036a8b3ee703f6f7e1",
+  "entries": [
+    {
+      "path": "/projects/etchly/profiles/vitest-worker-d1-integration",
+      "registeredExactly": false
+    },
+    {
+      "path": "/projects/etchly/groups/bound-generation-retries-and-spend~1worker-d1-invalid-analysis",
+      "registeredExactly": false
+    },
+    {
+      "path": "/projects/etchly/groups/bound-generation-retries-and-spend~1worker-d1-accepted-source",
+      "registeredExactly": false
+    },
+    {
+      "path": "/projects/etchly/groups/bound-generation-retries-and-spend~1worker-d1-summary-language",
+      "registeredExactly": false
+    },
+    {
+      "path": "/projects/etchly/groups/add-raf-test-run~1etchly-worker-d1-smoke",
+      "registeredExactly": false
+    }
+  ],
+  "newTrustedGeneration": null,
+  "rolloutPrerequisite": "Main must record exact new generation, code commit and compatible bridge/conf after switch-raf-main-by-symlink 6.6 before independent live QA. Invoked generation 3557f6a4-89a2-41a3-b963-b4343aabc699 only supplies the authorized unit channel; no live D1 execution claimed."
+}

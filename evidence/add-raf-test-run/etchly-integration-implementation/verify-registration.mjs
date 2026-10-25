@@ -1,0 +1,40 @@
+import { readFileSync, realpathSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { observeEtchlyInventory } from '../../../src/test-run-etchly-inventory.ts';
+import { validateTestRunConfig, planTestRun } from '../../../src/test-runs.ts';
+import { planVitestInvocations } from '../../../src/test-run-etchly.ts';
+const root = resolve(import.meta.dirname, '../../../..');
+const raf = resolve(root, 'raf-develop');
+const json = path => JSON.parse(readFileSync(path, 'utf8'));
+const hash = path => createHash('sha256').update(readFileSync(path)).digest('hex');
+const patchPath = resolve(import.meta.dirname, '../etchly-integration-scaffold/etchly-registration.patch.json');
+const config = json(resolve(root, 'conf/test-runs.json'));
+const sourceConfHash = hash(resolve(root, 'conf/test-runs.json'));
+const registration = json(patchPath);
+for (const operation of registration) {
+  if (operation.op !== 'add') throw new Error('Unsupported registration operation');
+  const keys = operation.path.slice(1).split('/').map(key => key.replaceAll('~1', '/').replaceAll('~0', '~'));
+  const leaf = keys.pop();
+  const parent = keys.reduce((value, key) => value[key], config);
+  if (parent[leaf] !== undefined && JSON.stringify(parent[leaf]) !== JSON.stringify(operation.value)) throw new Error('Existing registration differs: ' + operation.path);
+  parent[leaf] = operation.value;
+}
+const flow = json(resolve(root, 'conf/flow.json'));
+const projects = json(resolve(root, 'conf/projects.json'));
+const workspace = realpathSync(resolve(root, projects.projects.etchly.branchPaths.develop));
+const validated = validateTestRunConfig(config, Object.keys(config.phases), flow.unitTests, flow.integrationTests);
+const facts = await observeEtchlyInventory(workspace, validated.projects.etchly.profiles);
+const files = {};
+for (const profile of Object.values(validated.projects.etchly.profiles)) for (const file of profile.unitFiles ?? profile.integrationFiles) files[file] = { kind: 'file', realpath: realpathSync(resolve(workspace, file)), unit: profile.testKind !== 'integration', testKind: profile.testKind ?? 'unit' };
+const context = { cwd: workspace, workspace, projectWorkspaces: { etchly: [workspace] }, agentPhases: Object.keys(config.phases), activeChanges: ['add-raf-test-run', 'bound-generation-retries-and-spend'], agentId: 'static-review', sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspace, encoding: 'utf8' }).trim(), home: '/private/qa', statePath: '/private/qa/.raf/state.sqlite', tmpPath: '/private/qa/.raf/tmp', operationalHome: '/operational/raf', integrationTests: flow.integrationTests };
+const environment = { canonicalWorkspace: workspace, canonicalCwd: workspace, gitIdentityMatches: true, runtimeAvailable: true, localRunnerAvailable: true, dependenciesAvailable: true, resultAdapterAvailable: true, artifactsWritable: true, treeControlSupported: true, isolatedHome: true, stateOriginAllowed: true, stateAliasesOperational: false, tmpAliasesOperational: false, inheritedOperationalChannel: false, unitFiles: facts.filter(fact => fact.classification === 'unit').map(fact => fact.file), files };
+const groups = Object.fromEntries(registration.filter(operation => operation.path.includes('/groups/')).map(operation => {
+  const group = operation.path.split('/').at(-1).replaceAll('~1', '/');
+  const plan = planTestRun({ project: 'etchly', phase: 'integration', group }, validated, context, environment);
+  const profile = validated.projects.etchly.profiles[plan.profileId];
+  const commands = planVitestInvocations(plan, profile, flow.integrationTests, resolve(raf, 'src/test-run-vitest-reporter.ts'), []);
+  return [group, { profileId: plan.profileId, selection: plan.selection, timeoutPolicy: plan.timeoutPolicy, commands }];
+}));
+console.log(JSON.stringify({ method: 'Static configuration validation, runtime import inventory and production command planning; no test execution or Vitest discovery. Environment booleans are planning inputs, not live preflight evidence.', rafHead: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: raf, encoding: 'utf8' }).trim(), etchlyHead: context.sha, etchlyStatus: execFileSync('git', ['status', '--porcelain'], { cwd: workspace, encoding: 'utf8' }), sourceConfHash, registrationSha256: hash(patchPath), profileFiles: config.projects.etchly.profiles['vitest-worker-d1-integration'].integrationFiles.length, staticFacts: facts.length, groups, flowLimitsUnchanged: true }, null, 2));

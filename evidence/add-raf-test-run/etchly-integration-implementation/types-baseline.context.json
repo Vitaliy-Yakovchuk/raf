@@ -1,0 +1,26 @@
+{
+  "command": [
+    "node",
+    "/srv/dev/work/orchestrator/raf-develop/node_modules/typescript/bin/tsc",
+    "--noEmit",
+    "--strict",
+    "--target",
+    "esnext",
+    "--module",
+    "nodenext",
+    "--allowImportingTsExtensions",
+    "--typeRoots",
+    "/srv/dev/work/orchestrator/etchly-develop/node_modules/@types",
+    "--types",
+    "node",
+    "src/test-run-etchly-integration.ts",
+    "src/test-run-etchly.ts",
+    "src/test-run-etchly-inventory.ts",
+    "src/test-run-integration-profiles.ts",
+    "src/test-run-runtime.ts",
+    "src/test-runs.ts"
+  ],
+  "cwd": "/tmp/raf-6262-types-5c8741c1d7c3",
+  "head": "5c8741c1d7c3aa91b7405b2fa40b275bf81a3f1e",
+  "exitCode": 2
+}

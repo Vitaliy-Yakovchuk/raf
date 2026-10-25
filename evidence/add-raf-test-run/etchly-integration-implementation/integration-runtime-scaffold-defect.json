@@ -1,0 +1,10 @@
+{
+  "baselineCommit": "75d421deca4b8fa1828fbf61558bd01bc53bd8d6",
+  "baselineGuard": "if (group?.delivery?.pending && group.lastResult?.runId === group.delivery.runId && !group.inFlight) { pendingResult = structuredClone(group.lastResult); return; }",
+  "baselineTestHasAcknowledgement": false,
+  "tests": "test/test-run-integration-runtime.test.ts:49-90",
+  "firstObservedRunId": "94694035-a8ea-4203-8832-eec071541946",
+  "finalRunId": "61664645-ea7e-42b4-ab5a-4b87ee6d5abf",
+  "cause": "Repeated runTestRun calls omit acknowledgement of persisted delivery.pending. The unchanged replay guard returns the previous result rather than spawning a new run. Therefore timeoutCount stays 1 in the timeout loop and the final confirmation still sees setup-failed. Prepared tests and the delivery guard were not changed.",
+  "mainDirection": "Do not edit prepared tests; report defect and finish own runs. Main will create a separate test-scaffold item."
+}

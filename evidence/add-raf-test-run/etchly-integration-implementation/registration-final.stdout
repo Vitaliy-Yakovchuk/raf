@@ -1,0 +1,185 @@
+{
+  "method": "Static configuration validation, runtime import inventory and production command planning; no test execution or Vitest discovery. Environment booleans are planning inputs, not live preflight evidence.",
+  "rafHead": "9acb35ab1d1992ba1d99ea2fe86e00e21b70f7b2",
+  "etchlyHead": "a6b072652ccb6c1e478b2046b2523314c4209908",
+  "etchlyStatus": "",
+  "sourceConfHash": "4505149f6af453e2ad4a99013aad13807add3f1fcc7b84036a8b3ee703f6f7e1",
+  "registrationSha256": "b449411caf27b16e83540d1994445ce9923003be016143052f203241523da343",
+  "profileFiles": 621,
+  "staticFacts": 3230,
+  "groups": {
+    "bound-generation-retries-and-spend/worker-d1-invalid-analysis": {
+      "profileId": "vitest-worker-d1-integration",
+      "selection": {
+        "files": [
+          "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts"
+        ],
+        "testIds": []
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/integrationTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "commands": [
+        {
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../scripts/shared-library-runtime.mjs",
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+            "--configLoader",
+            "runner",
+            "--project",
+            "worker-d1-integration",
+            "--testTimeout",
+            "1200000",
+            "--hookTimeout",
+            "1200000",
+            "--reporter",
+            "/srv/dev/work/orchestrator/raf-develop/src/test-run-vitest-reporter.ts"
+          ],
+          "cwd": "/srv/dev/work/orchestrator/etchly-develop/worker",
+          "shell": false,
+          "environment": {
+            "HOME": "/private/qa",
+            "statePath": "/private/qa/.raf/state.sqlite",
+            "tmpPath": "/private/qa/.raf/tmp"
+          }
+        }
+      ]
+    },
+    "bound-generation-retries-and-spend/worker-d1-accepted-source": {
+      "profileId": "vitest-worker-d1-integration",
+      "selection": {
+        "files": [
+          "worker/src/accepted-source-1939-agent-tests/continuation.test.ts"
+        ],
+        "testIds": []
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/integrationTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "commands": [
+        {
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../scripts/shared-library-runtime.mjs",
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "src/accepted-source-1939-agent-tests/continuation.test.ts",
+            "--configLoader",
+            "runner",
+            "--project",
+            "worker-d1-integration",
+            "--testTimeout",
+            "1200000",
+            "--hookTimeout",
+            "1200000",
+            "--reporter",
+            "/srv/dev/work/orchestrator/raf-develop/src/test-run-vitest-reporter.ts"
+          ],
+          "cwd": "/srv/dev/work/orchestrator/etchly-develop/worker",
+          "shell": false,
+          "environment": {
+            "HOME": "/private/qa",
+            "statePath": "/private/qa/.raf/state.sqlite",
+            "tmpPath": "/private/qa/.raf/tmp"
+          }
+        }
+      ]
+    },
+    "bound-generation-retries-and-spend/worker-d1-summary-language": {
+      "profileId": "vitest-worker-d1-integration",
+      "selection": {
+        "files": [
+          "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts"
+        ],
+        "testIds": []
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/integrationTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "commands": [
+        {
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../scripts/shared-library-runtime.mjs",
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts",
+            "--configLoader",
+            "runner",
+            "--project",
+            "worker-d1-integration",
+            "--testTimeout",
+            "1200000",
+            "--hookTimeout",
+            "1200000",
+            "--reporter",
+            "/srv/dev/work/orchestrator/raf-develop/src/test-run-vitest-reporter.ts"
+          ],
+          "cwd": "/srv/dev/work/orchestrator/etchly-develop/worker",
+          "shell": false,
+          "environment": {
+            "HOME": "/private/qa",
+            "statePath": "/private/qa/.raf/state.sqlite",
+            "tmpPath": "/private/qa/.raf/tmp"
+          }
+        }
+      ]
+    },
+    "add-raf-test-run/etchly-worker-d1-smoke": {
+      "profileId": "vitest-worker-d1-integration",
+      "selection": {
+        "files": [
+          "worker/src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+          "worker/src/accepted-source-1939-agent-tests/continuation.test.ts",
+          "worker/src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts"
+        ],
+        "testIds": []
+      },
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/integrationTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "commands": [
+        {
+          "executable": "node",
+          "argv": [
+            "--import",
+            "../scripts/shared-library-runtime.mjs",
+            "../node_modules/vitest/vitest.mjs",
+            "run",
+            "src/analysis-output-1177-agent-tests/invalid-analysis-retried.test.ts",
+            "src/accepted-source-1939-agent-tests/continuation.test.ts",
+            "src/summary-pass-language-agent-tests/english-course-prompt-form.test.ts",
+            "--configLoader",
+            "runner",
+            "--project",
+            "worker-d1-integration",
+            "--testTimeout",
+            "1200000",
+            "--hookTimeout",
+            "1200000",
+            "--reporter",
+            "/srv/dev/work/orchestrator/raf-develop/src/test-run-vitest-reporter.ts"
+          ],
+          "cwd": "/srv/dev/work/orchestrator/etchly-develop/worker",
+          "shell": false,
+          "environment": {
+            "HOME": "/private/qa",
+            "statePath": "/private/qa/.raf/state.sqlite",
+            "tmpPath": "/private/qa/.raf/tmp"
+          }
+        }
+      ]
+    }
+  },
+  "flowLimitsUnchanged": true
+}

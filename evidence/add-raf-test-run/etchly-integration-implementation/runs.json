@@ -1,0 +1,580 @@
+{
+  "item": "add-raf-test-run:6.2.6.2",
+  "implementationCommit": "9acb35ab1d1992ba1d99ea2fe86e00e21b70f7b2",
+  "initialScaffoldRed": {
+    "runId": "7a83dbc0-fd5c-4142-801d-9a67afd426f0",
+    "assertionFailures": 91,
+    "source": "Scaffold/main handoff before independent implementation"
+  },
+  "stderrLimitation": "raf commands were simple unwrapped commands as required. exec_command returns a combined stream. All outputs were complete JSON with no observed additional stderr; separate empty .stderr files record that observation, not independently captured OS stderr. Full child diagnostic data remains in each original JSON. CLI status and child exitCode are separate.",
+  "runs": [
+    {
+      "name": "target-1",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-test-run/etchly-integration --files test/test-run-etchly-integration.test.ts",
+      "runId": "16479d77-21c6-48b4-a4e7-9a29bd2a8862",
+      "startedAt": "2026-10-25T12:14:31.171Z",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceEvidence": null,
+      "sourceState": "Historical intermediate working tree; contemporaneous exact HEAD/dirty snapshot was not captured. This is progression evidence only; final runs have precise snapshots.",
+      "result": "target-1.result.json",
+      "resultSha256": "acc55777c124702a320c2fea91e2128d8e8ef905b04d0b6b6988de6c9d91bc2d",
+      "stdout": "target-1.stdout",
+      "stderr": "target-1.stderr",
+      "capture": "target-1.capture.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/test-run-etchly-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passedCount": 80,
+      "knownRed": [
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D01 Vitest integration accepts its adapter pair and preserves Node integration and legacy unit"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D03 implicit preset and reordered exact files select the same root-relative files"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D03 refuses preset for another profile"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D05 external templates, caches, worker endpoints and credentials are not inherited; state stays private"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D07 author unit-red remains available for own raf wrapper tests"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D06/D08 skip never gives complete or unit remainder"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D06/D08 missing-file never gives complete or unit remainder"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D06/D08 unknown never gives complete or unit remainder"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D06/D08 unexecuted never gives complete or unit remainder"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D08 recovery signals/removes only owned resources, retains deadline and full retry after unit threshold"
+        },
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D06 diagnostics redact synthetic bearer credentials while retaining lifecycle origin"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "f64fb7bbd245c9093c1fce2642697daff02c42bfb3541d0014be32c3f00ba59e",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      }
+    },
+    {
+      "name": "target-2",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-test-run/etchly-integration --files test/test-run-etchly-integration.test.ts",
+      "runId": "3a365c75-cc1e-48b5-8a6c-82511c1f7740",
+      "startedAt": "2026-10-25T12:18:15.220Z",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceEvidence": null,
+      "sourceState": "Historical intermediate working tree; contemporaneous exact HEAD/dirty snapshot was not captured. This is progression evidence only; final runs have precise snapshots.",
+      "result": "target-2.result.json",
+      "resultSha256": "43a3a13d796e1e266110bf45e656121c3152eb7882d4537793c5508abd317ba5",
+      "stdout": "target-2.stdout",
+      "stderr": "target-2.stderr",
+      "capture": "target-2.capture.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/test-run-etchly-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passedCount": 90,
+      "knownRed": [
+        {
+          "file": "test/test-run-etchly-integration.test.ts",
+          "name": "D01 Vitest integration accepts its adapter pair and preserves Node integration and legacy unit"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "0e5f3262a8b7dc7d5a2ab40efb97dc275d3aef1969ea4cbc3abb8ca3fe4cb8db",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      }
+    },
+    {
+      "name": "target-3",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-test-run/etchly-integration --files test/test-run-etchly-integration.test.ts",
+      "runId": "1469255f-1d4d-44e1-8364-accefbd89438",
+      "startedAt": "2026-10-25T12:18:43.854Z",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceEvidence": null,
+      "sourceState": "Historical intermediate working tree; contemporaneous exact HEAD/dirty snapshot was not captured. This is progression evidence only; final runs have precise snapshots.",
+      "result": "target-3.result.json",
+      "resultSha256": "644062fdc6fb2bdb9a3e78d953d2a4578093d4cf467ebed61d2c23b48988ba05",
+      "stdout": "target-3.stdout",
+      "stderr": "target-3.stderr",
+      "capture": "target-3.capture.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/test-run-etchly-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passedCount": 91,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "0e5f3262a8b7dc7d5a2ab40efb97dc275d3aef1969ea4cbc3abb8ca3fe4cb8db",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      }
+    },
+    {
+      "name": "etchly-regression-1",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-test-run/etchly-profiles",
+      "runId": "54666e86-514e-4ad5-9f37-d9e1298cdbcf",
+      "startedAt": "2026-10-25T12:18:52.899Z",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceEvidence": null,
+      "sourceState": "Historical intermediate working tree; contemporaneous exact HEAD/dirty snapshot was not captured. This is progression evidence only; final runs have precise snapshots.",
+      "result": "etchly-regression-1.result.json",
+      "resultSha256": "222cc7b329ef18e284be0c3ce32b4619001543686e90714017cbf0d4e58043ea",
+      "stdout": "etchly-regression-1.stdout",
+      "stderr": "etchly-regression-1.stderr",
+      "capture": "etchly-regression-1.capture.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/test-run-etchly-profiles.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passedCount": 87,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "0e5f3262a8b7dc7d5a2ab40efb97dc275d3aef1969ea4cbc3abb8ca3fe4cb8db",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      }
+    },
+    {
+      "name": "integration-regression-1",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-test-run/integration-profiles",
+      "runId": "94694035-a8ea-4203-8832-eec071541946",
+      "startedAt": "2026-10-25T12:19:09.476Z",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceEvidence": null,
+      "sourceState": "Historical intermediate working tree; contemporaneous exact HEAD/dirty snapshot was not captured. This is progression evidence only; final runs have precise snapshots.",
+      "result": "integration-regression-1.result.json",
+      "resultSha256": "e9de7627db4dcc1e02b5b51b2cd59a4451f1138e94a7f0b2a82e2045a1d57f91",
+      "stdout": "integration-regression-1.stdout",
+      "stderr": "integration-regression-1.stderr",
+      "capture": "integration-regression-1.capture.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/test-run-integration-profiles.test.ts",
+          "test/test-run-integration-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passedCount": 101,
+      "knownRed": [
+        {
+          "file": "test/test-run-integration-profiles.test.ts",
+          "name": "I02 unsupported adapter is configuration failure before any reservation"
+        },
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: repeated full timeouts across callers exceed unit cap and preserve aggregate"
+        },
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: unknown and pending facts cannot be erased by truncated or timed-out confirmation"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "0e5f3262a8b7dc7d5a2ab40efb97dc275d3aef1969ea4cbc3abb8ca3fe4cb8db",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      }
+    },
+    {
+      "name": "integration-regression-2",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-test-run/integration-profiles",
+      "runId": "3878c814-3fa4-4408-8624-9441bab4d972",
+      "startedAt": "2026-10-25T12:25:30.759Z",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceEvidence": null,
+      "sourceState": "Historical intermediate working tree; contemporaneous exact HEAD/dirty snapshot was not captured. This is progression evidence only; final runs have precise snapshots.",
+      "result": "integration-regression-2.result.json",
+      "resultSha256": "ad9efd91880a216592ba18696b733fba362a1d76efac430a1d190c03fb9221ae",
+      "stdout": "integration-regression-2.stdout",
+      "stderr": "integration-regression-2.stderr",
+      "capture": "integration-regression-2.capture.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/test-run-integration-profiles.test.ts",
+          "test/test-run-integration-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passedCount": 102,
+      "knownRed": [
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: repeated full timeouts across callers exceed unit cap and preserve aggregate"
+        },
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: unknown and pending facts cannot be erased by truncated or timed-out confirmation"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "36b67c8f8a971f54cbcbc53f36933680aed0ef092e4dd721c6c857c7d49acbc8",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      }
+    },
+    {
+      "name": "etchly-regression-2",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-test-run/etchly-profiles",
+      "runId": "68a6725b-ecbd-4f67-bc9d-0f91e46a5c6f",
+      "startedAt": "2026-10-25T12:27:32.279Z",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceEvidence": null,
+      "sourceState": "Historical intermediate working tree; contemporaneous exact HEAD/dirty snapshot was not captured. This is progression evidence only; final runs have precise snapshots.",
+      "result": "etchly-regression-2.result.json",
+      "resultSha256": "29f4b92f27a0f4e4a6e0b187de6fa32da9c50dc38bdfb47ac9cafe9746849005",
+      "stdout": "etchly-regression-2.stdout",
+      "stderr": "etchly-regression-2.stderr",
+      "capture": "etchly-regression-2.capture.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/test-run-etchly-profiles.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passedCount": 87,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "36b67c8f8a971f54cbcbc53f36933680aed0ef092e4dd721c6c857c7d49acbc8",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      }
+    },
+    {
+      "name": "target-4",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-test-run/etchly-integration --files test/test-run-etchly-integration.test.ts",
+      "runId": "73d4adb7-260c-487c-b794-f8d1fddc1e52",
+      "startedAt": "2026-10-25T12:28:18.546Z",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceEvidence": null,
+      "sourceState": "Historical intermediate working tree; contemporaneous exact HEAD/dirty snapshot was not captured. This is progression evidence only; final runs have precise snapshots.",
+      "result": "target-4.result.json",
+      "resultSha256": "78f832ae512b831f250c1edfee03f0c84df01f27bdf40e71950603c7a779b1ad",
+      "stdout": "target-4.stdout",
+      "stderr": "target-4.stderr",
+      "capture": "target-4.capture.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/test-run-etchly-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passedCount": 91,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "36b67c8f8a971f54cbcbc53f36933680aed0ef092e4dd721c6c857c7d49acbc8",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      }
+    },
+    {
+      "name": "target-final",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-test-run/etchly-integration --files test/test-run-etchly-integration.test.ts",
+      "runId": "13bea059-ac71-416a-b2f6-c272fae9a2f7",
+      "startedAt": "2026-10-25T12:29:30.787Z",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceEvidence": "target-final.workspace.json",
+      "sourceState": "Exact own committed code and concurrent foreign dirty paths recorded before run in workspaceEvidence.",
+      "result": "target-final.result.json",
+      "resultSha256": "4a98ac1d18bbbf71b25c1553b5326537fe4a08ca38fa55a20128cf3f3ceaefcc",
+      "stdout": "target-final.stdout",
+      "stderr": "target-final.stderr",
+      "capture": "target-final.capture.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/test-run-etchly-integration.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passedCount": 91,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "36b67c8f8a971f54cbcbc53f36933680aed0ef092e4dd721c6c857c7d49acbc8",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      }
+    },
+    {
+      "name": "etchly-final",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-test-run/etchly-profiles",
+      "runId": "c73dc72d-00c5-4f28-92ff-60af4a21d461",
+      "startedAt": "2026-10-25T12:30:18.643Z",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceEvidence": "etchly-final.workspace.json",
+      "sourceState": "Exact own committed code and concurrent foreign dirty paths recorded before run in workspaceEvidence.",
+      "result": "etchly-final.result.json",
+      "resultSha256": "0c6aef235ef63500d21c9d27e73832d63d38350aad2b37a9f54481a4e6eff68d",
+      "stdout": "etchly-final.stdout",
+      "stderr": "etchly-final.stderr",
+      "capture": "etchly-final.capture.json",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "selection": {
+        "files": [
+          "test/test-run-etchly-profiles.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passedCount": 87,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "36b67c8f8a971f54cbcbc53f36933680aed0ef092e4dd721c6c857c7d49acbc8",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      }
+    },
+    {
+      "name": "integration-final",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/3557f6a4-89a2-41a3-b963-b4343aabc699/raf-main/bin/raf.ts test run --project raf --phase implement --group add-raf-test-run/integration-profiles",
+      "runId": "61664645-ea7e-42b4-ab5a-4b87ee6d5abf",
+      "startedAt": "2026-10-25T12:34:13.667Z",
+      "workspace": "/srv/dev/work/orchestrator/raf-develop",
+      "workspaceEvidence": "integration-final.workspace.json",
+      "sourceState": "Exact own committed code and concurrent foreign dirty paths recorded before run in workspaceEvidence.",
+      "result": "integration-final.result.json",
+      "resultSha256": "d0365796c20eeca3d3ed217dfe96328ad18113672255349e3224feee20966e68",
+      "stdout": "integration-final.stdout",
+      "stderr": "integration-final.stderr",
+      "capture": "integration-final.capture.json",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "selection": {
+        "files": [
+          "test/test-run-integration-profiles.test.ts",
+          "test/test-run-integration-runtime.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passedCount": 102,
+      "knownRed": [
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: repeated full timeouts across callers exceed unit cap and preserve aggregate"
+        },
+        {
+          "file": "test/test-run-integration-runtime.test.ts",
+          "name": "integration runtime: unknown and pending facts cannot be erased by truncated or timed-out confirmation"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "timeoutCount": 0,
+      "timeoutPolicy": {
+        "source": "conf/flow.json#/unitTests/timeoutMs",
+        "timeoutMs": 1200000
+      },
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "configurationFingerprints": {
+        "flow": "fc9e1c03e79670caa0a3deda69e192ce08c39bbf9c6fab57994724ba0b35e00f",
+        "testRuns": "4505149f6af453e2ad4a99013aad13807add3f1fcc7b84036a8b3ee703f6f7e1",
+        "projects": "56d74a9366c0f68b9a67ae9693d3f9c631cd9ae96360807ca9cd4eb3029e456b"
+      }
+    }
+  ]
+}

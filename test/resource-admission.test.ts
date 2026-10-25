@@ -6,6 +6,51 @@ import { createResourceSnapshotReader, type ResourceProbeDependencies } from '..
 
 const GiB = 1024 ** 3;
 
+for (const tier of ['normal', 'hotfix'] as const) {
+  it(`ARA 2.1 ${tier} boundaries follow conf after new and unused reservations`, () => {
+    const policy = JSON.parse(readFileSync(new URL('../../conf/flow.json', import.meta.url), 'utf8'));
+    const thresholds = policy.resources[tier];
+    const input = fixture();
+    input.measurement.totalRamBytes = 64 * GiB;
+    input.measurement.fileSystems[0].totalBytes = 512 * GiB;
+    input.measurement.loadAverage1m = thresholds.maxNormalizedLoad * input.measurement.availableCores;
+    const ramMinimum = Math.ceil(Math.max(thresholds.minRamBytes, thresholds.minRamFraction * input.measurement.totalRamBytes));
+    const diskMinimum = Math.ceil(Math.max(thresholds.minDiskBytes, thresholds.minDiskFraction * input.measurement.fileSystems[0].totalBytes));
+    input.measurement.availableRamBytes = ramMinimum + input.requested.ramBytes + input.unusedReservations[0].ramBytes;
+    input.measurement.fileSystems[0].availableBytes = diskMinimum + input.requested.diskBytes.work + input.unusedReservations[0].diskBytes.work;
+    const before = structuredClone(input);
+    assert.equal(evaluateResourceAdmission(input, policy).allowed[tier], true);
+    assert.deepEqual(input, before, 'admission is pure');
+    for (const dimension of ['RAM', 'disk', 'load']) {
+      const lower = structuredClone(input);
+      if (dimension === 'RAM') lower.measurement.availableRamBytes--;
+      if (dimension === 'disk') lower.measurement.fileSystems[0].availableBytes--;
+      if (dimension === 'load') lower.measurement.loadAverage1m += 0.001;
+      assert.equal(evaluateResourceAdmission(lower, policy).allowed[tier], false, `${dimension} outside ${tier} boundary`);
+    }
+  });
+}
+
+it('ARA 2.1 admission is invariant under reserve permutation and splitting, and never improves with added cost', () => {
+  const input = fixture();
+  input.unusedReservations = [
+    { ramBytes: GiB / 2, diskBytes: { work: GiB } },
+    { ramBytes: GiB / 2, diskBytes: { work: GiB } },
+  ];
+  const before = structuredClone(input);
+  const expected = evaluateResourceAdmission(input);
+  assert.deepEqual(evaluateResourceAdmission({ ...input, unusedReservations: [...input.unusedReservations].reverse() }), expected);
+  assert.deepEqual(evaluateResourceAdmission({ ...input, unusedReservations: [{ ramBytes: GiB, diskBytes: { work: 2 * GiB } }] }), expected);
+  const rank = { UNKNOWN: -1, NO_RESOURCES: 0, HOTFIX_ONLY: 1, ANY_RUN: 2 };
+  for (const multiplier of [0, 1, 2, 4]) {
+    const more = structuredClone(input);
+    more.requested.ramBytes += multiplier * GiB;
+    more.requested.diskBytes.work += multiplier * GiB;
+    assert.ok(rank[evaluateResourceAdmission(more).level] <= rank[expected.level], 'a larger estimate cannot improve admission');
+  }
+  assert.deepEqual(input, before);
+});
+
 function fixture(): ResourceAdmissionInput {
   return {
     measurement: {

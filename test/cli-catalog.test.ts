@@ -3,6 +3,7 @@ import test from 'node:test';
 import { compileCatalog } from '../src/catalog.ts';
 import { execute } from '../src/cli.ts';
 import type { ExecutionResult, Handler } from '../src/cli.ts';
+import { readFileSync } from 'node:fs';
 
 
 function fixture() {
@@ -73,6 +74,34 @@ function diagnostic(result: ExecutionResult) {
   assert.ok(error.remediation);
   assert.match(JSON.stringify(error.remediation), /help/);
   return error;
+}
+
+test('ARA 2.1 run uses every approved launchable type from agentTypes, without a command-local list', async () => {
+  const constants = JSON.parse(readFileSync(new URL('../../conf/raf-constants.json', import.meta.url), 'utf8'));
+  const models = JSON.parse(readFileSync(new URL('../../conf/models.json', import.meta.url), 'utf8'));
+  const projects = JSON.parse(readFileSync(new URL('../../conf/projects.json', import.meta.url), 'utf8'));
+  const handlers = Object.fromEntries(constants.commands.filter((command: { path: string[] }) => command.path.join(' ') !== 'help').map((command: { path: string[] }) => [command.path.join(' '), async (params: Record<string, unknown>) => params]));
+  const catalog = compileCatalog(constants, models, Object.keys(handlers), projects);
+  const args = (type: string) => ['agent', 'run', '--id', 'hotfix-xxxx', '--type', type, '--project', 'raf', '--features', 'add-raf-agent-run', '--phase', 'test-scaffold', '--complexity', models.routing.complexityOrder[0], '--tasks', 'add-raf-agent-run:2.1'];
+  const launchable = constants.agentTypes.filter((entry: { launchableByRaf: boolean }) => entry.launchableByRaf);
+  assert.ok(launchable.length > 0);
+  for (const entry of constants.agentTypes) {
+    const result = await execute(args(entry.id), catalog, handlers);
+    if (entry.launchableByRaf) {
+      assert.equal(result.exitCode, 0, `${entry.id}: ${result.stderr}`);
+      assert.equal(JSON.parse(result.stdout).type, entry.id);
+    } else diagnostic(result);
+  }
+  for (const missing of ['--id', '--type', '--project', '--features', '--phase', '--complexity', '--tasks']) {
+    const argv = args(launchable[0].id);
+    argv.splice(argv.indexOf(missing), 2);
+    assert.match(diagnosticText(await execute(argv, catalog, handlers)), new RegExp(missing.slice(2)));
+  }
+  diagnostic(await execute(args('unapproved-ARA-type'), catalog, handlers));
+});
+
+function diagnosticText(result: ExecutionResult): string {
+  return JSON.stringify(diagnostic(result));
 }
 
 test('help and --help agree, expose catalog metadata, and invoke no runtime handlers', async () => {

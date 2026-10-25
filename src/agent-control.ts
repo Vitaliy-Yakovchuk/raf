@@ -182,6 +182,10 @@ export class AgentControlService {
     return receipt;
   }
 
+  private async confirmMessageRecipient(target: SessionRecord): Promise<void> {
+    throw new Error('NotImplemented');
+  }
+
   async update(id: string, update: ActivityUpdate): Promise<SessionRecord> {
     if (!this.dependencies.projects.includes(update.project)) throw new Error('Unknown project');
     if (!Array.isArray(update.features) || !update.features.length || update.features.some(feature => typeof feature !== 'string' || !feature.trim())) {

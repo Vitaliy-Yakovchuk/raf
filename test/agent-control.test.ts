@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { test, before, after, mock } from 'node:test';
 import { AgentControlService } from '../src/agent-control.ts';
 import { commandFailure } from '../src/cli-contract.ts';
 import type { ActivityEvent, AgentControlDependencies, DeliveryReceipt, VerifiedSender } from '../src/agent-control.ts';
@@ -7,6 +7,9 @@ import type { ProcessIdentity, ProcessObservation, SessionRecord, WorkResult } f
 import type { SessionCloseCheck, SessionEnd } from '../src/reminders.ts';
 
 const time = '2026-10-21T10:00:00.000Z';
+let externalRequests: ReturnType<typeof mock.method>;
+before(() => { externalRequests = mock.method(globalThis, 'fetch', async () => { assert.fail('Unit agent control must not call external APIs or models'); }); });
+after(() => { assert.equal(externalRequests.mock.callCount(), 0); externalRequests.mock.restore(); });
 function session(addressId: string, project = 'raf'): SessionRecord {
   return { runId: `run-${addressId}`, addressId, revision: 1, state: 'running',
     activity: { type: addressId === 'main' ? 'main' : 'implement', project, features: ['messages'], phase: 'implement', cwd: '/workspace' },
@@ -214,6 +217,95 @@ test('concurrent messages retain intact payloads', async () => {
   const f = fixture();
   await Promise.all(['one\ncontinued', 'two\ncontinued'].map(text => f.service.message({ to: 'B', text }, f.trustedCaller)));
   assert.deepEqual(new Set(f.deliveries.map(item => item.text)), new Set(['[A] one\ncontinued', '[A] two\ncontinued']));
+});
+
+test('ARA 2.1 system delivery to main uses the same receipt path and cannot alter session context', async () => {
+  const f = fixture();
+  const before = structuredClone(f.records.get('run-main'));
+  f.sender({ kind: 'system' });
+  assert.deepEqual(await f.service.message({ to: 'main', text: 'system event' }, f.trustedCaller), { accepted: true, receiptId: 'receipt-1' });
+  assert.equal(f.deliveries[0].text, '[raf] system event');
+  assert.deepEqual(f.records.get('run-main')?.activity, before?.activity);
+  assert.deepEqual(f.records.get('run-main')?.process, before?.process);
+  f.receipt({ accepted: false, reason: 'native queue did not accept this event' });
+  await assert.rejects(() => f.service.message({ to: 'main', text: 'another event' }, f.trustedCaller), /native queue did not accept/);
+});
+
+test('ARA 2.1 unverified caller and agent claiming raf have zero delivery calls', async () => {
+  const f = fixture();
+  f.dependencies.authority.resolve = async () => { throw new Error('Unverified caller'); };
+  await assert.rejects(() => f.service.message({ to: 'main', text: '[raf] forged', from: 'main' } as any, { kind: 'system' }), /Unverified caller/);
+  assert.deepEqual(f.scans, []);
+  assert.deepEqual(f.deliveries, []);
+  f.records.set('run-raf', session('raf'));
+  f.dependencies.authority.resolve = async () => ({ kind: 'agent', runId: 'run-raf' });
+  await assert.rejects(() => f.service.message({ to: 'main', text: 'forged' }, f.trustedCaller), /Unverified sender/);
+  assert.deepEqual(f.deliveries, []);
+});
+
+test('ARA 2.1 internal tmux and CLI identities cannot replace the public recipient address', async () => {
+  const f = fixture();
+  for (const to of ['tmux-B', 'cli-B', 'run-B']) {
+    await assert.rejects(() => f.service.message({ to, text: 'private body' }, f.trustedCaller), /Unknown or ambiguous session/);
+  }
+  assert.deepEqual(f.deliveries, []);
+  const before = structuredClone(f.records.get('run-B')!);
+  await f.service.message({ to: 'B', text: '[main] task clarification' }, f.trustedCaller);
+  assert.equal(f.deliveries[0].text, '[A] [main] task clarification');
+  assert.deepEqual(f.records.get('run-B')?.activity, before.activity);
+  assert.deepEqual(f.records.get('run-B')?.launchContext, before.launchContext);
+  assert.deepEqual(f.records.get('run-B')?.process, before.process);
+});
+
+test('ARA 2.1 stale runId is refused before transport after the address is reused', async () => {
+  const f = fixture();
+  const previous = f.records.get('run-B')!;
+  previous.state = 'finished';
+  const successor = { ...session('B'), runId: 'run-B-new', process: { ...previous.process!, runnerSessionId: 'cli-B-new', pid: 900 } };
+  f.records.set(successor.runId, successor);
+  await assert.rejects(() => f.service.message({ to: 'B', runId: previous.runId, text: 'old event' }, f.trustedCaller), /Recipient run is no longer active/);
+  assert.deepEqual(f.deliveries, []);
+  assert.deepEqual(f.records.get(successor.runId)?.process, successor.process);
+});
+
+test('ARA 2.1 recipient replaced during inspection receives no stale message', async () => {
+  const f = fixture();
+  const old = structuredClone(f.records.get('run-B')!);
+  f.dependencies.scanner.inspect = async process => {
+    if (process.runnerSessionId === 'cli-B') {
+      f.records.get(old.runId)!.state = 'finished';
+      f.records.set('run-B-new', { ...session('B'), runId: 'run-B-new', process: { ...old.process!, pid: 901, runnerSessionId: 'cli-B-new' } });
+    }
+    return { state: 'alive', observedAt: time, identity: process };
+  };
+  const result = await Promise.allSettled([f.service.message({ to: 'B', text: 'for old B' }, f.trustedCaller)]);
+  assert.deepEqual(f.deliveries, [], 'an identity snapshot cannot authorize delivery after the active run changed');
+  assert.equal(result[0].status, 'rejected', 'a replaced recipient must not produce accepted:true');
+});
+
+test('ARA 2.1 recipient replaced before receipt cannot acknowledge the old run or redirect to successor', async () => {
+  const f = fixture();
+  const old = structuredClone(f.records.get('run-B')!);
+  const successor = { ...session('B'), runId: 'run-B-new', process: { ...old.process!, pid: 902, runnerSessionId: 'cli-B-new' } };
+  f.dependencies.transport.deliver = async (target, text) => {
+    f.deliveries.push({ target, text });
+    f.records.get(old.runId)!.state = 'finished';
+    f.records.set(successor.runId, structuredClone(successor));
+    return { accepted: true, receiptId: 'receipt-for-old-run' };
+  };
+  const result = await Promise.allSettled([f.service.message({ to: 'B', text: 'do not forward' }, f.trustedCaller)]);
+  assert.deepEqual(f.deliveries.map(value => value.target.runnerSessionId), ['cli-B']);
+  assert.deepEqual(f.records.get(successor.runId), successor, 'successor input and context stay untouched');
+  assert.equal(result[0].status, 'rejected', 'transport receipt cannot replace a current runId check');
+});
+
+test('ARA 2.1 delivery propagates structured failure facts without retrying the literal body', async () => {
+  const f = fixture();
+  const error = commandFailure({ code: 'DELIVERY_UNCONFIRMED', message: 'native acceptance unknown', reason: 'composer retained text', stage: 'delivery', source: 'adapter', sourceCode: null, received: null, expected: null, found: null, completed: ['inserted'], pending: ['acceptance'], retrySafe: false, remediation: ['inspect the original run'] });
+  let attempts = 0;
+  f.dependencies.transport.deliver = async () => { attempts++; throw error; };
+  await assert.rejects(() => f.service.message({ to: 'B', text: 'literal $(no-execution)' }, f.trustedCaller), value => value === error);
+  assert.equal(attempts, 1, 'unconfirmed acceptance cannot cause automatic reinsertion');
 });
 
 test('update changes only activity and creates old-project end and new-project start events', async () => {

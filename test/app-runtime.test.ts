@@ -428,3 +428,51 @@ test('failed preflight cleanup does not replace original brief failure', async (
   await assert.rejects(() => run(f), /primary template failure/);
   noLaunch(f);
 });
+
+for (const command of ['agent run', 'agent message', 'agent ps']) {
+  test(`ARA 2.1 ${command} fails closed on state-store open failure without fallback or runner`, async () => {
+    const f = fixture();
+    const unavailable = new Error('ARA state-store unavailable');
+    f.deps.openStore = async path => { f.note('open', path); throw unavailable; };
+    const app = f.runtime();
+    try {
+      await assert.rejects(() => app.handlers[command]({ ...params, to: 'worker', text: 'literal message' }), error => error === unavailable);
+      assert.deepEqual(f.calls.get('open'), [[f.context.statePath]], 'one explicit store path, no replacement database');
+      for (const effect of ['services', 'reserve', 'start', 'compose', 'prepare', 'message', 'ps', 'commit']) assert.equal(count(f, effect), 0, effect);
+    } finally { await app.close(); }
+  });
+}
+
+test('ARA 2.1 reservation write failure cannot start tmux or commit a session', async () => {
+  const f = fixture();
+  f.services.reserve = async input => { f.note('reserve', input); throw new Error('ARA atomic store write failed'); };
+  await assert.rejects(() => run(f), /ARA atomic store write failed/);
+  assert.equal(count(f, 'reserve'), 1);
+  for (const effect of ['start', 'verify', 'commit', 'compensate', 'abort']) assert.equal(count(f, effect), 0, effect);
+  assert.equal(count(f, 'cleanup'), 1, 'only the unstarted report directory is cleaned');
+});
+
+for (const type of constants.agentTypes.filter((entry: { launchableByRaf: boolean }) => entry.launchableByRaf)) {
+  test(`ARA 2.1 approved type ${type.id} reaches launch unchanged from the shared catalog`, async () => {
+    const f = fixture();
+    await run(f, { type: type.id, phase: type.id });
+    const launch = call(f, 'reserve')?.[0] as import('../src/app-runtime.ts').RuntimeReservationInput;
+    assert.equal(launch.activity.type, type.id);
+    assert.equal(launch.activity.phase, type.id);
+    assert.equal(count(f, 'start'), 1);
+    assert.equal(count(f, 'open'), 1);
+    assert.equal(call(f, 'services')?.[0], f.store, 'commands consume the ready owner store');
+  });
+}
+
+test('ARA 2.1 hotfix address remains distinct from runId and tmux session', async () => {
+  const f = fixture();
+  await run(f, { id: 'hotfix-xxxx', type: 'hotfix', phase: 'hotfix' });
+  const launch = call(f, 'reserve')?.[0] as import('../src/app-runtime.ts').RuntimeReservationInput;
+  assert.equal(launch.addressId, 'hotfix-xxxx');
+  assert.notEqual(launch.runId, launch.addressId);
+  assert.notEqual(launch.tmuxSession, launch.addressId);
+  const brief = call(f, 'compose')?.[1] as Record<string, unknown>;
+  assert.equal(brief.agentId, 'hotfix-xxxx');
+  assert.deepEqual(launch.selection, selected, 'address and type cannot replace the owner-selected runner/model/effort');
+});

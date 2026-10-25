@@ -1,4 +1,3 @@
-// Host-only live QA. No product state, auth copies, model overrides or unit runs.
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -16,7 +15,6 @@ assert.match(reviewed ?? '', /^[a-f0-9]{40}$/);
 assert.equal(process.env.CODEX_HOME, '/home/dev/.codex', 'Use the existing provider selector; never copy auth');
 assert.equal(process.env.LC_ALL, 'C');
 process.umask(0o077);
-// mkdtemp owns the entire fixture. Nothing outside this directory is cleaned up.
 const stand = fs.mkdtempSync('/tmp/s64-');
 const root = path.join(stand, 'root'), ev = path.join(stand, 'ev');
 const main = path.join(root, 'raf-main'), develop = path.join(root, 'raf-develop');
@@ -76,7 +74,6 @@ async function controls(label) {
 }
 function copyTranscript(record, label) {
   const target = path.join(ev, label); fs.mkdirSync(target, { recursive: true });
-  // Only this run's directory and native rollout; no traversal/copy of auth or provider config.
   fs.cpSync(own(record), path.join(target, 'run'), { recursive: true, filter: p => { const s = fs.lstatSync(p); return s.isFile() || s.isDirectory(); } });
   const native = record.process?.runnerSessionId;
   assert.ok(native, 'native session ID required');
@@ -112,7 +109,6 @@ try {
   must(run('build', 'npm', ['run', 'build'], main));
   fs.mkdirSync(path.join(main, 'qa'), { recursive: true });
   fs.copyFileSync(path.join(source, 'scripts/qa-main-agent-channel-probe.mjs'), path.join(main, 'qa/sym64-probe.mjs'));
-  // Audit the real public CLI result before it is emitted; channel implementation is untouched.
   const bin = path.join(main, 'bin/raf.ts');
   let cli = fs.readFileSync(bin, 'utf8');
   const insertion = "if (result.stdout)";
@@ -134,11 +130,9 @@ try {
   const layout = await import(pathToFileURL(path.join(main, 'src/main-layout.ts')));
   await layout.ensureMainLayoutForStart({ root, projects: projects.projects });
   const A = path.join(root, 'raf-main-a'), B = path.join(root, 'raf-main-b');
-  // Git worktrees do not include ignored runtime dependencies/build output.
   for (const slot of [B, develop, path.join(root, 'raf-hotfix')]) {
     for (const name of ['node_modules', 'dist']) fs.cpSync(path.join(A, name), path.join(slot, name), { recursive: true, dereference: true });
   }
-  // The native runner/selection/brief/process identity are all produced by real raf.
   env.SYM64_AUDIT = path.join(ev, 'cli-audit'); fs.mkdirSync(env.SYM64_AUDIT);
   must(run('main-start', 'tmux', ['-S', socket, 'new-session', '-d', '-s', 'sym64-main', '-x', '180', '-y', '50', process.execPath, path.join(source, 'test/helpers/z4044-main-pane.mjs'), stand])); pane = true;
   must(await wait('main attach', () => fs.existsSync(path.join(stand, 'main-ready.json')) && JSON.parse(fs.readFileSync(path.join(stand, 'main-ready.json')))));
@@ -151,7 +145,6 @@ try {
   const hh = await import(pathToFileURL(path.join(A, 'src/hotfix-host.ts')));
   const activation = await import(pathToFileURL(path.join(A, 'src/hotfix-activation.ts')));
   const initial = await activation.acquireHotfixReader(host, 'hook'); await initial.release();
-  // Snapshot registration uses the production inventory format; no transport/CLI mock.
   const register = async slot => hh.locked(host, async route => {
     const parent = path.join(route.control, 'generations', randomUUID()), target = path.join(parent, 'raf-main');
     fs.mkdirSync(parent, { recursive: true }); await hh.copyTree(slot, target);
@@ -172,7 +165,6 @@ try {
   for (const name of ['state.sqlite', 'state.sqlite-wal', 'state.sqlite-shm', 'secrets.json']) assert.ok(fs.existsSync(path.join(stand, '.raf', name)), 'Host read-deny positive control: ' + name);
   for (const [index, slot] of [B, A].entries()) {
     const previous = fs.realpathSync(main), before = git(slot, 'rev-parse', 'HEAD');
-    // Re-prepare the inactive physical slot from the actual development source.
     assert.notEqual(previous, slot); git(slot, 'checkout', '--detach', git(develop, 'rev-parse', 'HEAD'));
     const temporary = main + '.' + randomUUID(); fs.symlinkSync(slot, temporary); fs.renameSync(temporary, main);
     git(previous, 'checkout', '--detach'); git(slot, 'update-ref', 'refs/heads/main', git(slot, 'rev-parse', 'HEAD')); git(slot, 'symbolic-ref', 'HEAD', 'refs/heads/main');
@@ -212,7 +204,6 @@ try {
   summary.nextAction = 'Inspect native tool result events against cli-audit raw exact outputs, sender receipts, generation roots and both live ps results before accepting 6.4. This status is deliberately not an automatic pass.';
 } catch (error) { summary.error = { message: error.message, stack: error.stack }; process.exitCode = 1; }
 finally {
-  // Preserve raw evidence, stop only named fixture actors/service and our own tmux server.
   if (pane) {
     for (const a of actors) {
       try { copyTranscript(sessions().find(s => s.runId === a.runId) ?? a, a.addressId + '-final'); } catch (e) { (summary.copyErrors ??= []).push(e.message); }

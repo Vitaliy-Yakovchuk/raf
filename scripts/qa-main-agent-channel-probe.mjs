@@ -1,4 +1,3 @@
-// Runs only from a native tool in the isolated host stand. No working-account state.
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -39,7 +38,6 @@ try {
       const directory = spawnSync('git', ['-C', path.join(root, slot), 'rev-parse', '--absolute-git-dir'], { encoding: 'utf8' }); assert.equal(directory.status, 0);
       for (const target of ['HEAD', 'index']) probe('deny slot metadata ' + slot + '/' + target, write, [path.join(directory.stdout.trim(), target)], 'deny');
     }
-    // Owner contract: shared Orchestrator index is writable; opening it must not change main.
     probe('allow shared index', "import{openSync,closeSync}from'node:fs';closeSync(openSync(process.argv[1],'r+'));", [path.join(root, '.git/index')], 'allow');
     const marker = path.join(root, 'openspec/changes/sym64-fixture', `index-probe-${path.basename(own)}-${stage}.txt`);
     fs.writeFileSync(marker, 'Own isolated index probe\n');

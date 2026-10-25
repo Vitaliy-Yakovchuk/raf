@@ -62,3 +62,11 @@ Main тимчасово зняв integration-реєстрацію (conf 35121777
 ## Передумови продовження
 
 [pending-prerequisites.json](pending-prerequisites.json) зберігає точну чинну Git-цитату Z.425, останній refused runId, чергу host на reviewed SHA та ще неперевірені native критерії. Закриття агентів Z.423/Z.424 не означає випуску у робочу raf: main повідомив про чотири нові preflight-падіння кандидата e860ffa, які блокують повернення preset. Це запис зовнішніх передумов, а не фінальний звіт або відкладення за рішенням власника.
+
+## Додатковий host-стенд L3-full (ще не виконаний)
+
+Додатковий режим `scripts/qa-agent-adapters-live.ts <reviewed-full-sha> codex <new-evidence-dir> L3-full` (так само claude) перевіряє ще непокриті захисні сценарії. `scripts/qa-agent-adapters-controls.ts` перед native запуском тримає справжній власний SQLite/WAL/SHM, створює лише приватні nonsecret secrets/questions canaries та Unix listeners bus/ssh-agent/host і бере socket зареєстрованого private main. Host перевіряє наявність/identity та з’єднання до і після native проб; operational services чи credentials не читаються.
+
+`scripts/qa-agent-adapters-extra-probe.mjs` виконується самим native агентом: власні file/Unix IPC/Git commit/tmux, а для кожного захищеного контрольного ресурсу — direct/symlink/справжній child. Masked ENOENT має сенс лише разом із незалежним host before/after контролем існування та живості; без успішного host verify режим не проходить. Первісний probe зі строгим EACCES/EPERM не змінений. Новий режим не зараховує заново L1: native lifecycle є передумовою нових L3 проб.
+
+Це підготовка сценаріїв, не green і не повтор виконаних перевірок. Перевірка синтаксису трьох файлів та `npm run build` завершилися 0. Фактичних native результатів нового режиму немає; попередній queued host на ffcfae61 лишається без змін. L2 та L4 цим режимом не закриваються.

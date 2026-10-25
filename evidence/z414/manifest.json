@@ -1,0 +1,148 @@
+{
+  "item": "complete-raf-flow-contracts:Z.414",
+  "runs": [
+    {
+      "name": "red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a319f8d4-bcf7-4036-a39f-e6c74bd3fadf/raf-main/bin/raf.ts test run --project raf --phase red --group complete-raf-flow-contracts/z414 --files test/task-checkbox-final-archive-z414.test.ts",
+      "runId": "67614deb-2c63-4b23-9218-184cd5785037",
+      "selection": {
+        "files": [
+          "test/task-checkbox-final-archive-z414.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passedCount": 8,
+      "knownRed": [
+        {
+          "file": "test/task-checkbox-final-archive-z414.test.ts",
+          "name": "Z414 archive move before the final JSON preserves checkbox provenance while awaiting the exact claim"
+        },
+        {
+          "file": "test/task-checkbox-final-archive-z414.test.ts",
+          "name": "Z414 rejects changed row after a committed checkbox and archive"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "implement",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "workspaceSha": "6fb2857e8533dd31dced3ee039004e4655c01122",
+      "workspacePatch": "red.workspace.patch",
+      "workspaceStatus": "red.workspace-status.txt",
+      "result": "red.TestRunResult.json",
+      "resultSha256": "4b6b57cf7ca87515a17e34c97657d232540123beaa0c78ff0b9e3070288a4b21",
+      "stderr": "red.stderr",
+      "toolCapture": "red.tool.json"
+    },
+    {
+      "name": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a319f8d4-bcf7-4036-a39f-e6c74bd3fadf/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z414 --files test/task-checkbox-final-archive-z414.test.ts test/task-checkbox-report.test.ts test/task-checkbox-index.test.ts",
+      "runId": "936ca20e-d18a-417c-b389-bbc794f6458c",
+      "selection": {
+        "files": [
+          "test/task-checkbox-final-archive-z414.test.ts",
+          "test/task-checkbox-report.test.ts",
+          "test/task-checkbox-index.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passedCount": 70,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "workspaceSha": "6fb2857e8533dd31dced3ee039004e4655c01122",
+      "workspacePatch": "hotfix.workspace.patch",
+      "workspaceStatus": "hotfix.workspace-status.txt",
+      "result": "hotfix.TestRunResult.json",
+      "resultSha256": "1519dfd0732c48ab149e78a587e6c37b16b06e0e5ae3875db3038e4ac2184b67",
+      "stderr": "hotfix.stderr",
+      "toolCapture": "hotfix.tool.json"
+    },
+    {
+      "name": "z412-hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a319f8d4-bcf7-4036-a39f-e6c74bd3fadf/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z412",
+      "runId": "5ceb296f-3957-4452-b7f4-b8aced3b2f79",
+      "selection": {
+        "files": [
+          "test/task-context-final-archive.test.ts",
+          "test/spec-design-commit.test.ts",
+          "test/task-context-z12.test.ts",
+          "test/task-context.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passedCount": 91,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "workspaceSha": "6fb2857e8533dd31dced3ee039004e4655c01122",
+      "workspacePatch": "hotfix.workspace.patch",
+      "workspaceStatus": "hotfix.workspace-status.txt",
+      "result": "z412-hotfix.TestRunResult.json",
+      "resultSha256": "94abd06b57ce0ff6ba7bccc1cc5dc04e11032b57c8c2a2605dee0a5210277b77",
+      "stderr": "z412-hotfix.stderr",
+      "toolCapture": "z412-hotfix.tool.json"
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "check:comments"
+      ],
+      "cwd": "/srv/dev/work/orchestrator/raf-hotfix",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "cliExitCode": 0,
+      "signal": null,
+      "error": null
+    }
+  ],
+  "capture": "TestRunResult files preserve the complete original CLI JSON text. Tool response captures and CLI statuses are separate. The captured command output contained only the complete JSON, with no additional stderr text; stderr artifacts are empty. Resource measurements retain their reported partial/unknown completeness."
+}

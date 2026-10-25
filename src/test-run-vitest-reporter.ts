@@ -1,3 +1,4 @@
+import { completeRunnerProtocol } from './test-run-protocol.ts';
 import { writeSync } from 'node:fs';
 import { isAbsolute, relative } from 'node:path';
 import { TestRunDiagnostics } from './test-run-diagnostics.ts';
@@ -60,6 +61,6 @@ export default class VitestReporter {
     for (const error of errors) if (!this.seenErrors.has(error)) this.failure(null, 'fixture-setup', error);
     if (reason === 'interrupted') this.emit({ kind: 'protocol-error', diagnostic: 'Vitest interrupted' });
     if (!this.expected.size) this.emit({ kind: 'protocol-error', diagnostic: 'Empty Vitest collection or unmatched exact filter' });
-    this.emit({ kind: 'complete', expected: [...this.expected.values()], adapter: 'vitest-events' });
+    for (const event of completeRunnerProtocol(this.expected.values(), 'vitest-events')) this.emit(event);
   }
 }

@@ -1,3 +1,4 @@
+import { RunnerProtocol } from '../src/test-run-protocol.ts';
 import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +15,7 @@ for (const batch of batches) {
   child.stdout!.pipe(process.stderr, { end: false });
   child.stderr!.pipe(process.stderr, { end: false });
   let complete = false, rejected = false, buffer = '';
+  const protocol = new RunnerProtocol();
   const decoder = new StringDecoder('utf8');
   child.stdio[3]!.on('data', (chunk: Buffer) => {
     process.stdout.write(chunk);
@@ -22,12 +24,13 @@ for (const batch of batches) {
       buffer += part;
       if (Buffer.byteLength(buffer) > limits.maxProtocolLineBytes) { rejected = true; buffer = ''; continue; }
       if (part.endsWith('\n')) {
-        try { const event = JSON.parse(buffer); if (event.kind === 'complete' && event.expected?.length) complete = true; } catch { rejected = true; }
+        try { const event = protocol.accept(JSON.parse(buffer)); if (event?.kind === 'complete' && event.expected.length) complete = true; if (event?.kind === 'protocol-error') rejected = true; } catch { rejected = true; }
         buffer = '';
       }
     }
   });
   const code = await new Promise<number>((done, fail) => { child.once('error', fail); child.once('close', (code, signal) => done(signal ? 1 : code ?? 1)); });
+  try { protocol.finish(); } catch { rejected = true; }
   if (!complete || rejected || buffer || decoder.end()) {
     process.stdout.write(JSON.stringify({ kind: 'protocol-error', diagnostic: 'Vitest batch missing complete structured protocol' }) + '\n');
     process.exitCode = 1;

@@ -26,23 +26,24 @@ function environment(t: TestContext, values: Record<string, string>): void {
   t.after(() => { for (const [key, value] of Object.entries(original)) if (value === undefined) delete process.env[key]; else process.env[key] = value; });
 }
 
-async function reporterLines(t: TestContext, adapter: 'node' | 'vitest-events', mode: 'passed' | 'mixed', selected = false): Promise<string[]> {
+async function reporterLines(t: TestContext, adapter: 'node' | 'vitest-events', mode: 'passed' | 'mixed', selected = false, protocol = '2', inventory: TestId[] = ids): Promise<string[]> {
+  environment(t, { RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL: protocol });
   if (adapter === 'node') {
     async function* source() {
-      for (const [index, id] of ids.entries()) {
+      for (const [index, id] of inventory.entries()) {
         const data = { file: join(workspace, id.file), name: id.name, nesting: 0, testId: index, entryFile: true, type: 'test' };
         yield { type: 'test:enqueue', data };
         const failed = mode === 'mixed' && index === 0;
-        yield { type: failed ? 'test:fail' : 'test:pass', data: { ...data, skip: mode === 'mixed' && index === ids.length - 1,
+        yield { type: failed ? 'test:fail' : 'test:pass', data: { ...data, skip: mode === 'mixed' && index === inventory.length - 1,
           details: failed ? { error: Object.assign(new Error('product assertion'), { code: 'ERR_TEST_FAILURE', failureType: 'testCodeFailure', cause: new Error('product assertion') }) } : {},
         } };
       }
     }
     const lines: string[] = [];
-    for await (const line of report(source(), selected ? ids : undefined)) lines.push(line);
+    for await (const line of report(source(), selected ? inventory : undefined)) lines.push(line);
     return lines;
   }
-  environment(t, { RAF_TEST_RUN_IDS: selected ? JSON.stringify(ids) : '[]', RAF_TEST_RUN_WORKSPACE: workspace, RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(limits) });
+  environment(t, { RAF_TEST_RUN_IDS: selected ? JSON.stringify(inventory) : '[]', RAF_TEST_RUN_WORKSPACE: workspace, RAF_TEST_RUN_DIAGNOSTICS: JSON.stringify(limits) });
   const lines: string[] = [];
   const writeSync = fs.writeSync;
   const write = t.mock.method(fs, 'writeSync', (fd: number, ...args: any[]) => {
@@ -52,9 +53,9 @@ async function reporterLines(t: TestContext, adapter: 'node' | 'vitest-events', 
   syncBuiltinESMExports();
   try {
     const reporter = new VitestReporter();
-    const tests = ids.map((id, index) => ({ name: id.name, module: { moduleId: join(workspace, id.file) },
+    const tests = inventory.map((id, index) => ({ name: id.name, module: { moduleId: join(workspace, id.file) },
       result: () => mode === 'mixed' && index === 0 ? { state: 'failed', errors: [Object.assign(new Error('product assertion'), { rafTestOrigin: 'test-body' })] }
-        : mode === 'mixed' && index === ids.length - 1 ? { state: 'skipped' } : { state: 'passed' },
+        : mode === 'mixed' && index === inventory.length - 1 ? { state: 'skipped' } : { state: 'passed' },
     }));
     reporter.onTestModuleCollected({ children: { allTests: () => tests } });
     for (const value of tests) reporter.onTestCaseResult(value);
@@ -64,7 +65,8 @@ async function reporterLines(t: TestContext, adapter: 'node' | 'vitest-events', 
 }
 
 function fakeChild(t: TestContext, lines: string[], channel: number): void {
-  t.mock.method(childProcess, 'spawn', () => {
+  t.mock.method(childProcess, 'spawn', (_executable: string, _argv: string[], options: any) => {
+    if (channel === 1) assert.equal(options.env.RAF_TEST_RUN_DIAGNOSTICS_PROTOCOL, '2', 'new runtime must advertise chunked inventory support');
     const child = Object.assign(new EventEmitter(), { pid: process.pid, stdout: new PassThrough(), stderr: new PassThrough(), stdio: [null, new PassThrough(), new PassThrough(), new PassThrough()] });
     queueMicrotask(() => {
       child.emit('spawn');
@@ -186,4 +188,16 @@ test(`Z416 Vitest batch wrapper validates large inventories across batches: ${co
     assert.equal(output.join('').includes('Vitest batch missing complete structured protocol'), corruption !== 'none');
   } finally { write.mock.restore(); process.exitCode = previousExitCode; }
 });
+}
+
+for (const adapter of ['node', 'vitest-events'] as const) {
+  test(`Z416 ${adapter}: legacy runtime receives the legacy completion format`, async t => {
+    const inventory = ids.slice(0, 2);
+    const lines = await reporterLines(t, adapter, 'passed', false, '1', inventory);
+    assert.equal(lines.some(line => JSON.parse(line).kind === 'expected'), false);
+    assert.deepEqual(JSON.parse(lines.at(-1)!).expected, inventory);
+    const events = await receive(t, lines);
+    assert.deepEqual(events.filter(event => event.kind === 'protocol-error'), []);
+    assert.equal(classifyRunnerResult(events, { exitCode: 0, signal: null, stderr: '' }).outcome, 'passed');
+  });
 }

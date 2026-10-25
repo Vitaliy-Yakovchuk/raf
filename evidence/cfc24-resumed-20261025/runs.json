@@ -1,0 +1,234 @@
+{
+  "runs": [
+    {
+      "stem": "unit",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase qa --group complete-raf-flow-contracts/raf-agent-adapters --files test/agent-adapter-readiness.test.ts test/agent-adapters-contract.test.ts",
+      "runId": "08174764-3f10-4c03-ac97-c134eec28b4d",
+      "resultPath": "evidence/cfc24-resumed-20261025/unit.TestRunResult.json",
+      "toolPath": "evidence/cfc24-resumed-20261025/unit.tool.json",
+      "stderrAvailable": false,
+      "stderrLimitationPath": "evidence/cfc24-resumed-20261025/unit.stderr-unavailable.txt",
+      "cliCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "acceptance": "Unit confirmation only"
+    },
+    {
+      "stem": "integration-setup",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/raf-agent-adapters-integration --files test/agent-adapters-integration.test.ts",
+      "runId": "a0b0d7e4-865c-4bab-9cf0-10ecd68402a6",
+      "resultPath": "evidence/cfc24-resumed-20261025/integration-setup.TestRunResult.json",
+      "toolPath": "evidence/cfc24-resumed-20261025/integration-setup.tool.json",
+      "stderrAvailable": false,
+      "stderrLimitationPath": "evidence/cfc24-resumed-20261025/integration-setup.stderr-unavailable.txt",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I1/I3] public compiled CLI persists identity, literal brief, atomic succeeded and nonzero exit exactly once"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI delivery keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI readiness-unknown keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI fast-exit keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI limited keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] failed cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] partial cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] invalid cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] zero-without-report cannot create succeeded from process exit zero"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration",
+      "acceptance": "No product red or I scenario acceptance: setup/preflight failed"
+    },
+    {
+      "stem": "integration-timing-setup",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/raf-agent-adapters-integration --files test/agent-adapters-integration.test.ts",
+      "runId": "4f2f630e-2a4d-44e3-b2ca-645841aafb72",
+      "resultPath": "evidence/cfc24-resumed-20261025/integration-timing-setup.TestRunResult.json",
+      "toolPath": "evidence/cfc24-resumed-20261025/integration-timing-setup.tool.json",
+      "stderrAvailable": false,
+      "stderrLimitationPath": "evidence/cfc24-resumed-20261025/integration-timing-setup.stderr-unavailable.txt",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I1/I3] public compiled CLI persists identity, literal brief, atomic succeeded and nonzero exit exactly once"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI delivery keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI readiness-unknown keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI fast-exit keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI limited keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] failed cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] partial cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] invalid cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] zero-without-report cannot create succeeded from process exit zero"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration",
+      "acceptance": "No product red or I scenario acceptance: setup/preflight failed"
+    },
+    {
+      "stem": "integration-full-config-setup",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/raf-agent-adapters-integration --files test/agent-adapters-integration.test.ts",
+      "runId": "6e9111c5-6e0c-4b83-b47e-c88fe73df533",
+      "resultPath": "evidence/cfc24-resumed-20261025/integration-full-config-setup.TestRunResult.json",
+      "toolPath": "evidence/cfc24-resumed-20261025/integration-full-config-setup.tool.json",
+      "stderrAvailable": false,
+      "stderrLimitationPath": "evidence/cfc24-resumed-20261025/integration-full-config-setup.stderr-unavailable.txt",
+      "cliCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I1/I3] public compiled CLI persists identity, literal brief, atomic succeeded and nonzero exit exactly once"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI delivery keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI readiness-unknown keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI fast-exit keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I2] public compiled CLI limited keeps the primary error and cleans only its verified processes"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] failed cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] partial cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] invalid cannot create succeeded from process exit zero"
+        },
+        {
+          "file": "test/agent-adapters-integration.test.ts",
+          "name": "[I3] zero-without-report cannot create succeeded from process exit zero"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "incomplete",
+      "nextAction": "complete-integration",
+      "acceptance": "No product red or I scenario acceptance: setup/preflight failed"
+    },
+    {
+      "stem": "integration-inventory-refused",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/efd45e4d-b49f-42fe-9c21-dc5495f71b98/raf-main/bin/raf.ts test run --project raf --phase integration --group complete-raf-flow-contracts/raf-agent-adapters-integration --files test/agent-adapters-integration.test.ts",
+      "runId": "e17afe73-8880-49f0-ad59-b6afb1e9fce3",
+      "resultPath": "evidence/cfc24-resumed-20261025/integration-inventory-refused.TestRunResult.json",
+      "toolPath": "evidence/cfc24-resumed-20261025/integration-inventory-refused.tool.json",
+      "stderrAvailable": false,
+      "stderrLimitationPath": "evidence/cfc24-resumed-20261025/integration-inventory-refused.stderr-unavailable.txt",
+      "cliCode": 1,
+      "childExitCode": null,
+      "outcome": "refused",
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": null,
+      "nextAction": "fix-setup",
+      "acceptance": "No product red or I scenario acceptance: setup/preflight failed"
+    }
+  ],
+  "ledgerInvariant": "Same stable group and QA HOME; no rename, no counter reset, no foreign regression run",
+  "workspaceAtUnit": "before.json",
+  "integrationWorkspaceLimitation": "Shared workspace evolved across own commits b140a061 -> 321a15fc -> 767970cb -> ffcfae61. Per-run atomic Git tree/source snapshot was not captured; do not claim clean immutable source attribution. Raw results contain actual config hashes and process identity.",
+  "integrationPaused": "Main removed registration in conf commit 351217774a pending working raf Z.423/Z.424; no further integration command until explicit restored registration/authorization."
+}

@@ -1,0 +1,35 @@
+{
+  "source": "evidence/switch-raf-main-by-symlink/qa-6.4b/symlink-route-regressions.json",
+  "raw": "evidence/switch-raf-main-by-symlink/qa-6.4b/symlink-route-z390.TestRunResult.json",
+  "verifiedCodeCommit": "63f4f50561401c6405f8e67f7911361f2303380b",
+  "runId": "71f37e3c-d96b-403a-9fa4-b9437ab40068",
+  "workspaceEvidence": "evidence/switch-raf-main-by-symlink/qa-6.4b/symlink-route-workspace.patch",
+  "sourceChecks": [
+    {
+      "file": "src/raf-temporary-socket.ts",
+      "unchanged": true,
+      "sha256": "68789d0f3a706d0b306f2a344c07e2a029b3941c76f67df4375ddce765922def"
+    },
+    {
+      "file": "test/raf-unix-socket-paths.test.ts",
+      "unchanged": true,
+      "sha256": "4e5a62161560babd5ab881970c9a71e4dc7bb5ec32b76429e856321c4591709b"
+    },
+    {
+      "file": "test/raf-unix-socket-paths-fixture.ts",
+      "unchanged": true,
+      "sha256": "a5018f0948f85fdb2be4959b7db2f76f19ba4a4e39b4cd3ae50f123862efb908"
+    }
+  ],
+  "reuseScope": [
+    "I4 real endpoint listen/connect/payload with short,long,multibyte paths; NUL-inclusive byte bound",
+    "I4 concurrent distinct runIds in same private HOME/TMPDIR and peer survival",
+    "I4 real private tmux and parent/child handshake"
+  ],
+  "limitations": [
+    "Source result is catalogued as unit; real OS/process assertions reused only for their executed facts, not a new integration pass.",
+    "Wrapper source changed only accompanying cleanup error preservation after source proof; no socket allocation/path changes.",
+    "Evidence captures concurrent shared workspace with documented attribution limitation; not an atomic clean tree snapshot.",
+    "Does not close native CLI or live platform matrix Z.390.8; no foreign regression executed."
+  ]
+}

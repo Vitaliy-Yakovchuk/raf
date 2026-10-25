@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { test, type TestContext } from 'node:test';
 import { buildCatalog } from '../src/bootstrap.ts';
@@ -53,7 +53,7 @@ async function fixture(t: TestContext) {
   writeFileSync(log, '');
   for (const protocol of settings.runnerProtocols) writeFileSync(join(stubs, protocol.runner), `#!${process.execPath}
 import { appendFileSync } from 'node:fs';
-appendFileSync(${JSON.stringify(log)}, JSON.stringify({runner:${JSON.stringify(protocol.runner)}, args:process.argv.slice(2)})+'\n');
+appendFileSync(${JSON.stringify(log)}, JSON.stringify({runner:${JSON.stringify(protocol.runner)}, args:process.argv.slice(2)})+'\\n');
 if(process.argv[2]!=='--version') process.exit(97);
 console.log(${JSON.stringify(`${protocol.runner} ${protocol.version}`)});
 `, { mode: 0o700 });

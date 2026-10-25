@@ -1,5 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { recordFlowTestRun } from '../src/flow-qa-report.ts';
+import { flowTestRunStore } from '../src/flow-runtime.ts';
+import { openStateStore } from '../src/state-store.ts';
+import { testRunFailureResult } from '../src/test-runs.ts';
 import {
   assertTestRunConfigurationUnchanged, captureTestRunConfiguration, testRunConfigurationManifest,
   type ConfigurationValue, type TestRunConfigurationDependency, type TestRunConfigurationFailure,
@@ -7,6 +14,7 @@ import {
   type TestRunConfigurationSnapshot,
 } from '../src/test-run-config-dependencies.ts';
 import { runResourceReservedTestRun, type ResourceReservedTestRunResult } from '../src/test-run-reservations.ts';
+import { TestRunDiagnostics, type DiagnosticEnvironmentSummary } from '../src/test-run-diagnostics.ts';
 import {
   config, context, copy, expectWaiting, file, fixture, key, machine, policy, request,
 } from './helpers/test-run-reservations-fixture.ts';
@@ -106,6 +114,66 @@ async function configurationFailure(operation: () => Promise<unknown>): Promise<
   }
   assert.fail('configuration change must refuse explicitly');
 }
+
+function inlineConfigurationFailure(error: Error) {
+  const diagnostics = new TestRunDiagnostics(config.diagnostics, { workspace: context.workspace, qaHome: context.home, fixtureRoots: [] });
+  diagnostics.preflight(error);
+  const facts = { runId: 'configuration-qa', outcome: 'refused', failureKinds: [], knownRed: [], unexecuted: [], unknown: [], timeoutCount: 0, timedOut: false, cleanup: { complete: true, remainingPids: [] }, evidence: [] };
+  const entry = diagnostics.attach(facts, {} as DiagnosticEnvironmentSummary).diagnostics[0];
+  const serialized = new TestRunDiagnostics(config.diagnostics, { workspace: context.workspace, qaHome: context.home, fixtureRoots: [] });
+  serialized.inline(entry);
+  return serialized.attach(facts, {} as DiagnosticEnvironmentSummary).diagnostics[0];
+}
+
+test('config-dependencies CLI diagnostics preserve the changed leaf from a rejected snapshot', async () => {
+  const s = source();
+  s.change('conf/test-runs.json', ['projects', 'raf', 'profiles', 'node', 'resourceEstimate'], { ramBytes: 100, diskBytesPerFileSystem: 200 });
+  const snapshot = await captureTestRunConfiguration(unitManifest, s.reader);
+  s.change('conf/test-runs.json', ['projects', 'raf', 'profiles', 'node', 'resourceEstimate', 'ramBytes'], 101);
+  const failure = await configurationFailure(() => assertTestRunConfigurationUnchanged(snapshot, s.reader));
+  const diagnostic = inlineConfigurationFailure(failure);
+  assert.equal(diagnostic.errorCode, 'CONFIGURATION_INVALID');
+  assert.equal(diagnostic.message, failure.message);
+  assert.ok(diagnostic.message.includes('conf/test-runs.json#/projects/raf/profiles/node/resourceEstimate/ramBytes'));
+});
+
+test('config-dependencies CLI diagnostics retain every configuration address and still redact external paths and secrets', () => {
+  const pointers = [
+    'conf/test-runs.json#/projects/p~0q/groups/change~1group~0x',
+    'conf/projects.json#/projects/raf/path',
+    'conf/flow.json#/resources/normal/minRamBytes',
+    'conf/raf-constants.json#/agentPhases/0',
+    'conf/raf.json#/resourceWait/grantIntervalMs',
+  ];
+  const diagnostic = inlineConfigurationFailure(Object.assign(new Error(`Configuration changed: ${pointers.join(', ')}; file /private/qa/secret.log; token=SYNTHETIC_QA_SECRET`), { code: 'CONFIGURATION_INVALID' }));
+  for (const pointer of pointers) assert.ok(diagnostic.message.includes(pointer), diagnostic.message);
+  assert.ok(!diagnostic.message.includes('/private/qa/'));
+  assert.ok(!diagnostic.message.includes('SYNTHETIC_QA_SECRET'));
+  assert.ok(diagnostic.redacted);
+});
+
+test('config-dependencies revoked QA caller keeps its authorization refusal without recording a fact on the finished session', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'raf-config-caller-'));
+  const store = openStateStore(join(directory, 'state.sqlite'));
+  try {
+    const caller = { runId: 'qa-caller', agentId: 'qa-agent', project: 'raf', workspace: context.workspace };
+    const session: any = { runId: caller.runId, addressId: caller.agentId, revision: 0, state: 'finished', finishedAt: new Date().toISOString(),
+      activity: { type: 'qa', project: caller.project, cwd: caller.workspace }, launchContext: { assignment: { changes: [] } } };
+    store.sessionRepository.transaction(tx => tx.putSession(session));
+    const result = testRunFailureResult({ ...request, phase: 'qa' }, context, 'revoked-test', 1, config,
+      Object.assign(new Error('Test authorization changed while waiting'), { code: 'CALLER_UNAUTHORIZED' }));
+    const facts = flowTestRunStore(store);
+    await assert.doesNotReject(() => recordFlowTestRun(caller, result, '', 1, facts));
+    assert.equal(result.errorCode, 'CALLER_UNAUTHORIZED');
+    assert.equal(await facts.get(result.runId), null);
+    assert.deepEqual(store.sessionRepository.transaction(tx => tx.getSession(caller.runId), 'read'), session);
+    store.sessionRepository.transaction(tx => tx.putSession({ ...session, runId: 'current-qa', state: 'running', finishedAt: undefined }));
+    const configurationRefusal = testRunFailureResult({ ...request, phase: 'qa' }, context, 'configuration-test', 1, config,
+      Object.assign(new Error('Selected configuration changed'), { code: 'CONFIGURATION_INVALID' }));
+    await recordFlowTestRun({ ...caller, runId: 'current-qa' }, configurationRefusal, '', 1, facts);
+    assert.equal((await facts.get(configurationRefusal.runId))?.cliCode, 1);
+  } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
+});
 
 test('config-dependencies manifest declares only the selected command, route, unit budget and admission inputs', () => {
   const actual = testRunConfigurationManifest(scope).map(address).sort();

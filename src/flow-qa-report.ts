@@ -298,6 +298,7 @@ export async function verifyFlowQaSnapshot(snapshot: FlowVerifiedSnapshot, input
   return checked;
 }
 export async function recordFlowTestRun(caller: Pick<FlowQaLaunchContext, 'runId' | 'agentId' | 'project' | 'workspace'>, result: TestRunResult, stderr: string, cliCode: number, store: FlowTestRunStore): Promise<void> {
+  if (result.errorCode === 'CALLER_UNAUTHORIZED') return;
   await store.put({ testRunId: result.runId, agentRunId: caller.runId, agentId: caller.agentId, project: caller.project, workspace: caller.workspace, group: result.group, phase: result.phase, selection: structuredClone(result.selection), resultDigest: flowDigest(JSON.stringify(result)), stderrDigest: flowDigest(stderr), cliCode });
 }
 export async function cleanupFlowTestRuns(agentRunId: string, closed: boolean, store: FlowTestRunStore): Promise<void> {

@@ -1,0 +1,453 @@
+{
+  "assignment": {
+    "project": "raf",
+    "change": "profile-raf-performance",
+    "item": "5.10",
+    "phase": "test-scaffold",
+    "agent": "raf-prp510-scaffold"
+  },
+  "audit": {
+    "result": "current and consistent",
+    "sources": [
+      "openspec/changes/profile-raf-performance/proposal.md",
+      "openspec/changes/profile-raf-performance/tasks.md#5.9-5.11",
+      "openspec/changes/profile-raf-performance/design.md#Межі повторної перевірки й очікування agent run (5.9)"
+    ],
+    "priorTask59Complete": true,
+    "checkboxesModified": false,
+    "archive": false,
+    "reason": "5.11 and other change tasks remain open; raf owns checkbox commits."
+  },
+  "implementation": {
+    "productionFilesChanged": [],
+    "newProductionSurface": false,
+    "scaffold": "Existing production boundaries suffice; no production implementation or new method stub needed."
+  },
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/a082d01d-15d1-4418-a307-f8f63cb140f5/raf-main/bin/raf.ts test run --project raf --phase red --group profile-raf-performance/runtime-verification-cost --files test/runtime-verification-cost.test.ts",
+  "selection": {
+    "files": [
+      "test/runtime-verification-cost.test.ts"
+    ],
+    "testIds": []
+  },
+  "stableGroup": "profile-raf-performance/runtime-verification-cost",
+  "workspace": "/srv/dev/work/orchestrator/raf-develop",
+  "branch": "develop",
+  "testCommit": "95a260f47fddfd58d39cfdbaf370f746ba50ac4a",
+  "testFileSha256": "8e256ecd45877b96e6d7bc0b811cd72d5fc28a82dec36c9f3f7bfb56c54fb3cb",
+  "ownCommitsBeforeEvidence": [
+    "e9c5f37b4aabfaca608f992582dc403b4f6dd917",
+    "5464b722d21a0aba3b7e5476be2c9001c4202315",
+    "ff1e0ebd94dcb1fe5667dce22b1a43ee86ea5cbe",
+    "795d6662cb6bdfce9db376141afb95ff8e555929",
+    "4c90bffcfaf3ea42c9e3534f4bd6018c5970117b",
+    "95a260f47fddfd58d39cfdbaf370f746ba50ac4a"
+  ],
+  "registration": {
+    "managedBy": "main",
+    "registrationCommit": "a27c803e31d534c00dfce2b0e8627efbf0575d93",
+    "configFile": "/srv/dev/work/orchestrator/conf/test-runs.json",
+    "observedConfigSha256": "7c1db36a1b8cb9b5de5eca9a89ec2185d61e5ad3b19cf0b7387d8d5e938a6c48",
+    "exactAdditions": {
+      "unitFiles": {
+        "jsonPointer": "/projects/raf/profiles/node/unitFiles",
+        "append": [
+          "test/runtime-verification-cost.test.ts"
+        ]
+      },
+      "group": {
+        "jsonPointer": "/projects/raf/groups/profile-raf-performance~1runtime-verification-cost",
+        "value": {
+          "profileId": "node",
+          "files": [
+            "test/runtime-verification-cost.test.ts"
+          ]
+        }
+      }
+    },
+    "verifiedPresent": true,
+    "profile": {
+      "cwd": ".",
+      "executable": "node",
+      "argv": [
+        "./scripts/test-run-node.ts"
+      ],
+      "exactIds": "node-test-name",
+      "resultAdapter": "node-test-events",
+      "environment": {
+        "isolatedHome": true,
+        "stateOrigin": true
+      },
+      "checks": [
+        "node_modules/typescript/package.json",
+        "src/test-run-reporter.ts",
+        "scripts/test-run-node.ts"
+      ],
+      "resourceEstimate": {
+        "ramBytes": 2147483648,
+        "diskBytesPerFileSystem": 10737418240
+      }
+    },
+    "prerequisites": [
+      "Existing node profile and trusted author red grant for assignment 5.10",
+      "Node runtime supporting node:sqlite, module hooks and TypeScript stripping; installed TypeScript",
+      "Profile checks present; compile catalog uses committed parent conf",
+      "Linux /proc and local ps fixture baseline; no real runner/tmux/network spawned",
+      "Isolated QA HOME and valid state origin; main migrated schema 16 to 18 before final red",
+      "Runner-enforced admission, temporary directory, timeout and process-tree cleanup"
+    ]
+  },
+  "red": {
+    "runId": "95a1a052-4abb-409f-bbc8-82fb76c1dc1f",
+    "startedAt": "2026-10-25T21:43:38.382Z",
+    "durationMs": 23120,
+    "cliCode": 1,
+    "childExitCode": 1,
+    "outcome": "assertions-failed",
+    "counts": {
+      "total": 91,
+      "passed": 28,
+      "knownRed": 63
+    },
+    "failureKinds": [
+      "assertions"
+    ],
+    "knownRed": [
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "origin admission with 0 nested module checks and real SQLite open traverses once"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "origin admission with 1 nested module checks and real SQLite open traverses once"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "origin admission with 5 nested module checks and real SQLite open traverses once"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "independent open after same-stack obtains fresh full inventory"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "independent open after await obtains fresh full inventory"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "independent open after serialized obtains fresh full inventory"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent ps empty: inventory/store/profile/finalization and one process pass"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent ps many: inventory/store/profile/finalization and one process pass"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent ps missing: inventory/store/profile/finalization and one process pass"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent ps reuse: inventory/store/profile/finalization and one process pass"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent ps old-machine: inventory/store/profile/finalization and one process pass"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent ps old-boot: inventory/store/profile/finalization and one process pass"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent ps unknown: inventory/store/profile/finalization and one process pass"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "Linux 1 observation-only wait passes: no inventory, SQLite reopen or global process scan"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "Linux 3 observation-only wait passes: no inventory, SQLite reopen or global process scan"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "Linux 7 observation-only wait passes: no inventory, SQLite reopen or global process scan"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "known identity fresh after wait rejects start without inventing alive"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "known identity fresh after wait rejects command without inventing alive"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "known identity fresh after wait rejects missing without inventing alive"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "known identity fresh after wait rejects denied without inventing alive"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "known identity fresh after wait rejects malformed without inventing alive"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "known identity fresh after wait rejects disappeared without inventing alive"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "known identity fresh after wait rejects machine without inventing alive"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "known identity fresh after wait rejects boot without inventing alive"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "extra consumers do not multiply real targeted OS reads in one identity pass"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "PID reuse between targeted OS reads never becomes an alive identity"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "known runner ownership observes fresh pane-pid before delivery without a global scan"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "known runner ownership observes fresh process-command before delivery without a global scan"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "wait boundary protected-state has exactly one new origin operation and fresh process facts"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "wait boundary launch has exactly one new origin operation and fresh process facts"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "wait boundary stop has exactly one new origin operation and fresh process facts"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "wait boundary delivery has exactly one new origin operation and fresh process facts"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy ready with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy protected-state with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy timeout with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy unknown with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy pane-lost with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy delivery-error with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy ownership-changed with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy ready with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy protected-state with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy timeout with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy unknown with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy pane-lost with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy delivery-error with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run legacy ownership-changed with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue ready with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue protected-state with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue timeout with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue unknown with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue pane-lost with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue delivery-error with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue ownership-changed with 1 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue ready with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue protected-state with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue timeout with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue unknown with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue pane-lost with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue delivery-error with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "whole agent run queue ownership-changed with 4 controlled wait passes preserves delivery and total costs"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "known identity fresh after wait rejects host-machine without inventing alive"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "known identity fresh after wait rejects host-boot without inventing alive"
+      },
+      {
+        "file": "test/runtime-verification-cost.test.ts",
+        "name": "one PID with different full identities cannot share an alive proof"
+      }
+    ],
+    "unexecuted": [],
+    "unknown": [],
+    "removed": [],
+    "timedOut": false,
+    "timeoutPolicy": {
+      "source": "conf/flow.json#/unitTests/timeoutMs",
+      "timeoutMs": 1200000
+    },
+    "timeoutCount": 0,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "groupState": "idle",
+    "nextAction": "implement",
+    "fullTestRunResult": "final-red/stdout.json",
+    "stderr": "final-red/stderr.txt",
+    "originalCaptureManifest": "final-red/capture-result.json",
+    "hashesAndDeliveryAttestation": "final-red/delivery.json",
+    "setupOrImportFailures": false
+  },
+  "matrix": [
+    {
+      "requirement": "One origin admission, nested modules, SQLite/schema/path",
+      "tests": "origin admission 0/1/5; unknown unloaded module; real actual-file and schema tests",
+      "counters": "Actual filesystem readdir/opendir, lstat/stat/realpath/readlink, readFile; open recorded separately to avoid double-counting readFile internal open"
+    },
+    {
+      "requirement": "Independent operation and mutation freshness after await",
+      "tests": "same-stack/await/serialized origin; bytes preserved size+mtime, mode, add/delete, file/directory, aliases, registry/inventory/module/proof/state-path mutations",
+      "invariant": "Refuse before opening/modifying database, WAL or SHM"
+    },
+    {
+      "requirement": "Parallel, retained generations, serialized/forged proof, refusal/retry",
+      "tests": "parallel independent A/B, retained A after active B, invalid proof and subsequent valid retry",
+      "invariant": "Operation permission cannot transfer; each independent admission has its own complete inventory"
+    },
+    {
+      "requirement": "Whole agent ps shared observation snapshot",
+      "tests": "empty/many/missing/PID-reuse/old-machine/old-boot/unknown; repeat recovery",
+      "invariant": "One store/context/close, EMA/profile, identity state/time/reason, claims and pending event uniqueness; zero empty or at most one nonempty global scan"
+    },
+    {
+      "requirement": "Fresh full identities and unknown preservation",
+      "tests": "start/command/missing/denied/malformed/disappeared/machine/boot/host-machine/host-boot; same PID different full identities; mixed PID evidence; pane id/PID/command/denied",
+      "invariant": "No invented alive; fresh observations after await and before ownership delivery"
+    },
+    {
+      "requirement": "Known Linux wait N iterations and complete command counters",
+      "tests": "observation-only N=1/3/7; whole entry agent run legacy/queue N=1/4 with seven readiness/delivery outcomes",
+      "counters": "All executor commands and targeted /proc content reads retained across per-pass resets; total global scans=0; targeted costs scale with unique per-pass identities plus explicitly declared ownership/finalization boundaries"
+    },
+    {
+      "requirement": "Origin and process boundaries during wait",
+      "tests": "protected-state/launch/stop/delivery boundary cases; protected-state whole agent run",
+      "invariant": "One new inventory traversal per declared origin boundary; old OS snapshot cannot authorize new action"
+    },
+    {
+      "requirement": "Readiness, queue, ownership, brief delivery, errors, profile and help/parser",
+      "tests": "real production entry/app-runtime/queue flow/TmuxAgentAdapter launch transport with controlled fixture ports; ready/protected-state/timeout/unknown/pane-lost/delivery-error/ownership-changed",
+      "invariant": "Exactly-once literal brief, reserve/commit/abort/fence/claim handoff; primary errors; profile/EMA; zero runtime work for help/parser"
+    }
+  ],
+  "observedMissingBehavior": [
+    "Origin root traversals 10/16/40 for nested 0/1/5, expected 1 each",
+    "Independent reopen root traversals 8/8/10, expected 1 each",
+    "Old machine/boot ps cases exceed one global process snapshot",
+    "Observation-only known Linux wait enumerates host processes",
+    "Complete agent run global scans: legacy ready N=1/4 gives 3/6; queue ready gives 4/7, expected zero",
+    "Current ps disappearance returns exited where partial targeted evidence requires unknown; mixed PID evidence is accepted alive"
+  ],
+  "limitations": [
+    "This is unit test scaffolding: controlled OS executor and lifecycle ports exercise real origin/SQLite/entry/queue/transport code; live CPU/wall, real runner and full production delivery acceptance remain 5.11/main.",
+    "Historical attempts 1-4 were refusals; 5 setup syntax failure corrected before red; 6 transport output truncated and not final full evidence. Only final-red is the definitive full result.",
+    "Installed capture replay removes result files and lacks context/hash manifest fields. Read-only descriptors retained complete own streams before unlink; delivery attestation records verified byte lengths, hashes, context and independent CLI code. No capture was changed or hard-linked.",
+    "Runtime resourceUsage reports partial/unknown CPU-independent memory/disk attribution; no benchmark or full CPU claim is made."
+  ],
+  "validation": {
+    "typeScriptParser": "passed via node:module stripTypeScriptTypes",
+    "comments": "npm run check:comments exit 0",
+    "diff": "git diff --check exit 0",
+    "finalEvidenceIntegrity": "SHA-256 and byte lengths verified; full stdout parses as exactly one JSON TestRunResult; code/selection/outcome/cleanup and all diagnostics verified"
+  },
+  "next": "Main checks this author red and existing conf mapping before separate 5.11 implementation. Use this same stable group and assertions; do not replace with setup failure or change tests to current implementation."
+}

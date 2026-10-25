@@ -1,0 +1,21 @@
+{
+  "source": "/home/dev/.raf/tmp/866fbc63-c0cc-4229-8b2b-99d04359b93c/codex-raf-results-614RoW/capture-3124124-e5842380-ea3c-474d-b586-70765a634202",
+  "method": "Read-only file descriptors opened during own command; read complete streams after capture manifest publication; no capture writes or hard links.",
+  "cliCode": 1,
+  "stdoutBytes": 64038,
+  "stdoutSha256": "f1ef5d948a358e35ea278600edc9f0fc32bd94f02a031463f08c70cea5417ff4",
+  "stderrBytes": 1513,
+  "stderrSha256": "552b690d296bdb63836614c57c8306b503e1fe2fb9acb8845ba0229da9fdf2b4",
+  "captureResultSha256": "f624a80503d55fe8b33dcd94c72ff7b6330ef23132997afab59ed17fa6a3e3a9",
+  "runId": "95a1a052-4abb-409f-bbc8-82fb76c1dc1f",
+  "project": "raf",
+  "phase": "red",
+  "group": "profile-raf-performance/runtime-verification-cost",
+  "selection": {
+    "files": [
+      "test/runtime-verification-cost.test.ts"
+    ],
+    "testIds": []
+  },
+  "limitation": "Installed capture manifest has lengths/code only and is removed after replay; this attestation records independently computed hashes and parsed context."
+}

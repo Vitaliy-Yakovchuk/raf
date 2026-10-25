@@ -1,0 +1,282 @@
+{
+  "assignment": "monitor-raf-health:6.4",
+  "status": "succeeded",
+  "answer": "На ізольованому живому CLI/SQLite/Unix-socket стенді пройдено FIFO, сторонню та застосовну conf-зміни, точний CONFIGURATION_INVALID і CALLER_UNAUTHORIZED без child, резерви/ledger/cleanup. Два знайдені дефекти виправлено власноруч після assertion red. Фінальна unit-група qa: 62 passed, CLI/child 0, timeoutCount 0, knownRed/unexecuted/unknown порожні. Галочку 6.4 ставить raf; відкритий пункт перенесення 6.5 додав main, b2109708d3d9e24494e05f6570c79f25d44dcf2a. Інші пункти лишаються відкритими, архівацію не виконано.",
+  "codeCommits": [
+    {
+      "repository": "/srv/dev/work/orchestrator/raf-develop",
+      "sha": "13db2ce73494d54e1ce7bd62ba03dd7ef8e81328"
+    }
+  ],
+  "qa": {
+    "scenarios": [
+      {
+        "change": "monitor-raf-health",
+        "item": "6.4",
+        "scenario": "unrelated-edit-fifo",
+        "status": "succeeded",
+        "evidence": [
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/process.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unaffected.TestRunResult.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unaffected.stderr",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unaffected.exit.json"
+        ]
+      },
+      {
+        "change": "monitor-raf-health",
+        "item": "6.4",
+        "scenario": "dependent-configuration-refusal",
+        "status": "succeeded",
+        "evidence": [
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-3/process.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/process.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/dependent.TestRunResult.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/dependent.stderr",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/dependent.exit.json"
+        ]
+      },
+      {
+        "change": "monitor-raf-health",
+        "item": "6.4",
+        "scenario": "caller-authorization-control",
+        "status": "succeeded",
+        "evidence": [
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-6/process.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/process.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unauthorized.TestRunResult.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unauthorized.stderr",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unauthorized.exit.json"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "change": "monitor-raf-health",
+        "item": "6.4",
+        "scenario": "dependent-configuration-refusal",
+        "requirement": "openspec/changes/monitor-raf-health/specs/projects/raf/test-runs/spec.md#Залежності конфігурації очікувача тестового прогону",
+        "fixed": true,
+        "reason": "Санітизація сприймала JSON pointer як зовнішній filesystem path і втрачала точну адресу. Дозволено адреси лише п’яти відомих conf-файлів після чинного редагування секретів; зовнішні шляхи й синтетичний секрет перевірені регресією.",
+        "evidence": [
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-3/dependent.TestRunResult.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-red.TestRunResult.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-auth-qa.TestRunResult.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/dependent.TestRunResult.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "13db2ce73494d54e1ce7bd62ba03dd7ef8e81328"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "monitor-raf-health/config-dependencies",
+          "red": {
+            "resultPath": "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-red.TestRunResult.json",
+            "stderrPath": "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-red.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-auth-qa.TestRunResult.json",
+            "stderrPath": "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-auth-qa.stderr",
+            "cliCode": 0
+          }
+        }
+      },
+      {
+        "change": "monitor-raf-health",
+        "item": "6.4",
+        "scenario": "caller-authorization-control",
+        "requirement": "openspec/changes/monitor-raf-health/specs/projects/raf/test-runs/spec.md#Залежності конфігурації очікувача тестового прогону",
+        "fixed": true,
+        "reason": "Після правильної відмови авторизації recordFlowTestRun намагався записати факт до finished QA-сесії, кидав Flow test caller is no longer current та замінював результат на INVALID_ARGUMENT з новим runId. Відмова CALLER_UNAUTHORIZED тепер повертається без запису факту; інші відмови чинної QA-сесії далі реєструються.",
+        "evidence": [
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-6/unauthorized.TestRunResult.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-auth-red.TestRunResult.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-auth-qa.TestRunResult.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unauthorized.TestRunResult.json"
+        ],
+        "commits": [
+          {
+            "repository": "/srv/dev/work/orchestrator/raf-develop",
+            "sha": "13db2ce73494d54e1ce7bd62ba03dd7ef8e81328"
+          }
+        ],
+        "regression": {
+          "kind": "unit",
+          "group": "monitor-raf-health/config-dependencies",
+          "red": {
+            "resultPath": "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-auth-red.TestRunResult.json",
+            "stderrPath": "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-auth-red.stderr",
+            "cliCode": 1
+          },
+          "green": {
+            "resultPath": "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-auth-qa.TestRunResult.json",
+            "stderrPath": "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-auth-qa.stderr",
+            "cliCode": 0
+          }
+        }
+      }
+    ],
+    "followUps": [
+      {
+        "change": "monitor-raf-health",
+        "item": "6.5",
+        "sourceItem": "6.4",
+        "scenario": "qa-fixes-transfer",
+        "purpose": "deployment",
+        "reason": "Main додав перенесення двох виправлень develop → робоча raf main окремим відкритим пунктом; QA не виконував викладку і не змінював tasks.md.",
+        "evidence": [
+          "openspec/changes/monitor-raf-health/tasks.md",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/committed-source.json",
+          "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/process.json"
+        ]
+      }
+    ]
+  },
+  "audit": {
+    "current": true,
+    "prerequisite": "6.3 checked complete; implementation eb5353dd2e85925d09f7fef0ced57a20d2fdc175; review evidence/monitor-raf-health/implement-6.3/review.json",
+    "scope": "Only assigned item 6.4; no foreign unit-regression group or production registration changes.",
+    "sources": [
+      "openspec/changes/monitor-raf-health/proposal.md#Why",
+      "openspec/changes/monitor-raf-health/proposal.md#What Changes",
+      "openspec/changes/monitor-raf-health/proposal.md#Non-goals",
+      "openspec/changes/monitor-raf-health/tasks.md#6",
+      "openspec/specs/core/process/user-qa/spec.md",
+      "openspec/changes/monitor-raf-health/specs/projects/raf/test-runs/spec.md#Залежності конфігурації очікувача тестового прогону",
+      "openspec/specs/core/process/unit-test-runs/spec.md",
+      "openspec/specs/projects/orchestrator/parallel-development/spec.md#Коміти в спільному робочому дереві"
+    ],
+    "conflicts": []
+  },
+  "platform": {
+    "sha": "c970810518949dad90271aa079c3ed9fa63ed4af",
+    "dirty": " M evidence/profile-raf-performance/qa-4.5/verify-comparison.mjs\n M scripts/qa-main-agent-channel-metadata.mjs\n M scripts/qa-main-agent-channel.mjs\n M src/flow-qa-report.ts\n M src/test-run-diagnostics.ts\n M test/main-switch-agent-channel.test.ts\n M test/test-run-config-dependencies.test.ts\n?? evidence/monitor-raf-health/qa-6.4/\n?? evidence/profile-raf-performance/qa-4.5/second-source-scope.json\n?? scripts/qa-test-config-dependencies.ts\n",
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "browser": "not applicable: CLI",
+    "openspec": "1.14.3",
+    "tmux": "tmux 3.6"
+  },
+  "stand": {
+    "command": "TMPDIR=/tmp node scripts/qa-test-config-dependencies.ts evidence/monitor-raf-health/qa-6.4/stand-7",
+    "cliExitCode": 0,
+    "evidence": "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/process.json",
+    "rawResults": [
+      {
+        "label": "unaffected",
+        "result": "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unaffected.TestRunResult.json",
+        "stderr": "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unaffected.stderr",
+        "exit": "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unaffected.exit.json"
+      },
+      {
+        "label": "dependent",
+        "result": "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/dependent.TestRunResult.json",
+        "stderr": "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/dependent.stderr",
+        "exit": "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/dependent.exit.json"
+      },
+      {
+        "label": "unauthorized",
+        "result": "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unauthorized.TestRunResult.json",
+        "stderr": "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unauthorized.stderr",
+        "exit": "raf-develop/evidence/monitor-raf-health/qa-6.4/stand-7/unauthorized.exit.json"
+      }
+    ],
+    "isolation": "Two distinct waiting CLI wrapper identities, separate profiles/groups, one shared isolated queue to verify FIFO; isolated registered production fixture, control HOME, unit HOME and SQLite. Production service and resource wait code, Unix socket, real child test process and caller process identities.",
+    "controls": "Only loadAverage1m controlled to hold/release queue; RAM/disk and admission thresholds are real. Same configured unit timeout/admission policy. Fixture seeds timeoutCount=1 and knownRed; these are explicitly synthetic, not assigned unit aggregate state.",
+    "result": "Unrelated earlier waiter launches once: CLI/child 0, timeoutCount remains 1, group complete. Dependent and unauthorized CLI 1, child null, optimize/fix-setup, timeoutCount 1, seeded knownRed retained, unexecuted file wildcard reported, unknown empty. Both refusal ledgers unchanged. Queue pending/entries empty and reservations empty at finish; every child settled, private fixture/HOMEs/artifacts removed.",
+    "limitations": [
+      "Isolated local process stand: real CLI, production service, Unix socket, OS caller identities, SQLite, reservation and test child tree. No AI runner or provider is required by test run.",
+      "Only loadAverage1m is controlled at the production resource reader and a stand-only node:os preload. RAM, disk, process identities and configured admission thresholds are real. This is not a physical CPU pressure test.",
+      "The prior timeout/knownRed ledger is explicitly seeded synthetic fixture state; no operational or assigned unit aggregate is reset."
+    ]
+  },
+  "unit": {
+    "evidence": "raf-develop/evidence/monitor-raf-health/qa-6.4/runs.json",
+    "raw": "raf-develop/evidence/monitor-raf-health/qa-6.4/unit-auth-qa.TestRunResult.json",
+    "finalRunId": "2a2f2983-1d36-4594-b5e1-e94fade82421",
+    "group": "monitor-raf-health/config-dependencies",
+    "selection": {
+      "files": [
+        "test/test-run-config-dependencies.test.ts"
+      ],
+      "testIds": []
+    },
+    "outcome": "passed",
+    "cliExitCode": 0,
+    "childExitCode": 0,
+    "passed": 62,
+    "timeoutCount": 0,
+    "timedOut": false,
+    "cleanup": {
+      "complete": true,
+      "remainingPids": []
+    },
+    "knownRed": [],
+    "unexecuted": [],
+    "unknown": [],
+    "groupState": "complete",
+    "nextAction": "complete",
+    "aggregate": "No group or QA HOME reset across scaffold/implement/QA and these regressions. Same group and file throughout. Two confirmed assertion reds preceded corresponding fixes.",
+    "captureLimit": "For authorized unit commands exec_command exposes combined output; complete unchanged TestRunResult and raw tool result retained. No extra stderr bytes observed; separate empty stderr files reflect that observation. Stand children have independent stdout/stderr pipes."
+  },
+  "checks": {
+    "build": 0,
+    "comments": 0,
+    "nodeSyntax": 0,
+    "diffCheck": 0,
+    "evidence": "raf-develop/evidence/monitor-raf-health/qa-6.4/checks.tool-results.json"
+  },
+  "attempts": [
+    {
+      "stand": 1,
+      "result": "fixture setup failure: overlapping profile inventories; corrected to unique test file per profile; no pass claimed"
+    },
+    {
+      "stand": 2,
+      "result": "fixture setup failure: configured temporary artifact path too long for Unix-socket capacity; shortened only stand-owned path; no pass claimed"
+    },
+    {
+      "stand": 3,
+      "result": "real defect reproduced: dependent CONFIGURATION_INVALID pointer became conf/test-runs.json#<external>/ramBytes"
+    },
+    {
+      "stand": 4,
+      "result": "fixture authorization setup failure: closed is not an allowed persisted session state; no authorization pass claimed"
+    },
+    {
+      "stand": 5,
+      "result": "fixture authorization setup failure: finished session requires finishedAt; corrected lifecycle record; no authorization pass claimed"
+    },
+    {
+      "stand": 6,
+      "result": "real defect reproduced: revoked caller result replaced by INVALID_ARGUMENT during flow fact recording"
+    },
+    {
+      "stand": 7,
+      "result": "all assigned live scenarios passed after both fixes; see complete result, stderr and CLI codes"
+    },
+    {
+      "unit": "unit-red-initial",
+      "result": "One real sanitization assertion plus a test-fixture undefined resourceEstimate error. Corrected fixture before code fix and confirmed both intended assertions in unit-red; initial fixture error is not used as red proof."
+    }
+  ],
+  "coordination": {
+    "temporaryFailure": "agent message briefly returned STATE_CONTEXT_REFUSED / Unregistered module origin for provided generation. No prefix/HOME/registry bypass performed; same authorized ps/message/test channel later succeeded.",
+    "acceptedMessageReceipts": [
+      "276adeeb-edb3-4dc5-b078-4a8969dc11c9",
+      "0b0cb3e0-4651-477a-ae1b-059ab8e6d333",
+      "6f627a31-a053-43a6-a367-5aa673a69496",
+      "6c2ad799-aa11-41ea-8538-e076724769a9",
+      "7be2c457-9d49-4967-9d10-9c7b16c62543"
+    ],
+    "tasks": "No tasks.md edit by QA. Main explicitly retained ownership and added transfer 6.5 at b2109708d3d9e24494e05f6570c79f25d44dcf2a."
+  },
+  "context": {
+    "unnecessary": [],
+    "missing": []
+  }
+}

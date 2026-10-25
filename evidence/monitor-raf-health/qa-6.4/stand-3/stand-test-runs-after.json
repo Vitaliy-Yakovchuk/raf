@@ -1,0 +1,316 @@
+{
+  "version": 1,
+  "phases": {
+    "main": {
+      "allowed": false,
+      "purpose": "none",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "hotfix": {
+      "allowed": true,
+      "purpose": "verification",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "spec": {
+      "allowed": false,
+      "purpose": "none",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "design": {
+      "allowed": false,
+      "purpose": "none",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "test-scaffold": {
+      "allowed": false,
+      "purpose": "none",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "implement": {
+      "allowed": true,
+      "purpose": "verification",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "coordinator": {
+      "allowed": false,
+      "purpose": "none",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "qa": {
+      "allowed": true,
+      "purpose": "verification",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "qa-assertions",
+        "timeout": "qa-timeout",
+        "interruption": "interruption"
+      }
+    },
+    "context-review": {
+      "allowed": false,
+      "purpose": "none",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "assertions",
+        "timeout": "timeout",
+        "interruption": "interruption"
+      }
+    },
+    "red": {
+      "allowed": true,
+      "purpose": "initial-red",
+      "hints": {
+        "refusal": "refusal",
+        "setup": "setup",
+        "assertions": "red-assertions",
+        "timeout": "red-timeout",
+        "interruption": "interruption"
+      }
+    }
+  },
+  "hints": {
+    "refusal": "Виправте фазу, стабільну групу або точний відбір unit-файлів; повторіть лише дозволений прогін.",
+    "setup": "Виправте конфігурацію, імпорт, залежності або ізоляцію середовища. Setup/import не підтверджує початковий red.",
+    "assertions": "Виправте реалізацію за вимогами; збережіть твердження підготовлених тестів.",
+    "timeout": "Застосуйте nextAction за активним агрегатом: оптимізуйте виконання/відбір; після межі підтверджуйте лише knownRed. Неперевірений залишок не є pass.",
+    "interruption": "Звірте cleanup дерева й активний агрегат перед повторним запуском тієї самої групи.",
+    "red-assertions": "Початковий red підтверджує відсутню поведінку. Передайте точний відбір і JSON незалежному implement.",
+    "red-timeout": "Початковий unit-timeout дозволяє передачу до implement за test-first; збережіть лічильник групи, відомі red й неперевірені тести.",
+    "qa-assertions": "Зафіксуйте дефект, виправте реалізацію в цьому QA-проході та повторіть адресну групу з phase qa.",
+    "qa-timeout": "Застосуйте nextAction unit-групи; unit-виняток не закриває користувацький чи стендовий QA-сценарій."
+  },
+  "projects": {
+    "raf": {
+      "profiles": {
+        "unaffected": {
+          "cwd": ".",
+          "executable": "/opt/dev/node/bin/node",
+          "argv": [
+            "./scripts/test-run-node.ts"
+          ],
+          "unitFiles": [
+            "unaffected.test.ts"
+          ],
+          "exactIds": "node-test-name",
+          "resultAdapter": "node-test-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [],
+          "resourceEstimate": {
+            "ramBytes": 1048576,
+            "diskBytesPerFileSystem": 0
+          }
+        },
+        "dependent": {
+          "cwd": ".",
+          "executable": "/opt/dev/node/bin/node",
+          "argv": [
+            "./scripts/test-run-node.ts"
+          ],
+          "unitFiles": [
+            "dependent.test.ts"
+          ],
+          "exactIds": "node-test-name",
+          "resultAdapter": "node-test-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [],
+          "resourceEstimate": {
+            "ramBytes": 2097152,
+            "diskBytesPerFileSystem": 0
+          }
+        },
+        "unauthorized": {
+          "cwd": ".",
+          "executable": "/opt/dev/node/bin/node",
+          "argv": [
+            "./scripts/test-run-node.ts"
+          ],
+          "unitFiles": [
+            "unauthorized.test.ts"
+          ],
+          "exactIds": "node-test-name",
+          "resultAdapter": "node-test-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [],
+          "resourceEstimate": {
+            "ramBytes": 1048576,
+            "diskBytesPerFileSystem": 0
+          }
+        }
+      },
+      "groups": {
+        "fixture-launch/unaffected": {
+          "profileId": "unaffected",
+          "files": [
+            "unaffected.test.ts"
+          ]
+        },
+        "fixture-launch/dependent": {
+          "profileId": "dependent",
+          "files": [
+            "dependent.test.ts"
+          ]
+        },
+        "fixture-launch/unauthorized": {
+          "profileId": "unauthorized",
+          "files": [
+            "unauthorized.test.ts"
+          ]
+        }
+      }
+    },
+    "unrelated-project": {
+      "profiles": {
+        "unaffected": {
+          "cwd": ".",
+          "executable": "/opt/dev/node/bin/node",
+          "argv": [
+            "./scripts/test-run-node.ts"
+          ],
+          "unitFiles": [
+            "unaffected.test.ts"
+          ],
+          "exactIds": "node-test-name",
+          "resultAdapter": "node-test-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [],
+          "resourceEstimate": {
+            "ramBytes": 1048576,
+            "diskBytesPerFileSystem": 0
+          }
+        },
+        "dependent": {
+          "cwd": ".",
+          "executable": "/opt/dev/node/bin/node",
+          "argv": [
+            "./scripts/test-run-node.ts"
+          ],
+          "unitFiles": [
+            "dependent.test.ts"
+          ],
+          "exactIds": "node-test-name",
+          "resultAdapter": "node-test-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [],
+          "resourceEstimate": {
+            "ramBytes": 2097152,
+            "diskBytesPerFileSystem": 0
+          }
+        },
+        "unauthorized": {
+          "cwd": ".",
+          "executable": "/opt/dev/node/bin/node",
+          "argv": [
+            "./scripts/test-run-node.ts"
+          ],
+          "unitFiles": [
+            "unauthorized.test.ts"
+          ],
+          "exactIds": "node-test-name",
+          "resultAdapter": "node-test-events",
+          "environment": {
+            "isolatedHome": true,
+            "stateOrigin": true
+          },
+          "checks": [],
+          "resourceEstimate": {
+            "ramBytes": 1048576,
+            "diskBytesPerFileSystem": 0
+          }
+        }
+      },
+      "groups": {
+        "fixture-launch/unaffected": {
+          "profileId": "unaffected",
+          "files": [
+            "unaffected.test.ts"
+          ]
+        },
+        "fixture-launch/dependent": {
+          "profileId": "dependent",
+          "files": [
+            "dependent.test.ts"
+          ]
+        },
+        "fixture-launch/unauthorized": {
+          "profileId": "unauthorized",
+          "files": [
+            "unauthorized.test.ts"
+          ]
+        }
+      }
+    }
+  },
+  "diagnostics": {
+    "maxEntries": 64,
+    "maxMessageBytes": 4096,
+    "maxStackFrames": 16,
+    "maxStackBytes": 8192,
+    "maxTotalBytes": 65536,
+    "maxProtocolLineBytes": 65536,
+    "maxStderrBytes": 8192,
+    "redactionPatterns": []
+  },
+  "temporaryArtifacts": {
+    "root": "/tmp/c6-c9c646e4",
+    "minimumNestedSocketPathBytes": 80
+  }
+}

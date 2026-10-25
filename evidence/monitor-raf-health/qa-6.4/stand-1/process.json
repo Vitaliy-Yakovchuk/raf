@@ -1,0 +1,233 @@
+{
+  "assignment": "monitor-raf-health:6.4",
+  "outcome": "failed",
+  "assertions": [],
+  "invocations": [
+    {
+      "label": "unaffected",
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "--import",
+        "/tmp/raf-prod-5UMnTZ/load-preload.mjs",
+        "/tmp/raf-prod-5UMnTZ/raf-develop/bin/raf.ts",
+        "test",
+        "run",
+        "--project",
+        "raf",
+        "--phase",
+        "qa",
+        "--group",
+        "fixture-launch/unaffected"
+      ],
+      "cwd": "/tmp/raf-prod-5UMnTZ/raf-develop",
+      "environment": {
+        "PATH": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/home/dev/.local/bin:/home/dev/.local/bin:/home/dev/.codex/tmp/arg0-linux/codex-arg0Zh0s4W:/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/home/dev/.raf/tmp/571cd503-45e9-498b-93b8-c73198397868/codex-sandbox-571cd503-45e9-498b-93b8-c73198397868:/home/dev/.local/bin:/home/dev/.local/bin:/home/dev/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/dev/Android/Sdk/platform-tools:/home/dev/Android/Sdk/emulator:/home/dev/Android/Sdk/cmdline-tools/latest/bin",
+        "HOME": "/tmp/raf-prod-5UMnTZ/home",
+        "RAF_QA_HOME": "/tmp/raf-prod-5UMnTZ/home",
+        "LANG": "C.UTF-8",
+        "TZ": "UTC",
+        "RAF_MAIN_PATH": "/tmp/raf-prod-5UMnTZ"
+      },
+      "pid": 221,
+      "startedAt": 1792898047072,
+      "finishedAt": 1792898047382,
+      "cliExitCode": 1,
+      "signal": null
+    }
+  ],
+  "samples": [],
+  "environment": {
+    "sha": "b16830aa06524741c2f93f56fd20f8a6f40750e0",
+    "dirty": " D evidence/profile-raf-performance/qa-4.5/workspace-uncommitted.patch\n M test/agent-ps-cost.test.ts\n?? evidence/profile-raf-performance/qa-4.5/agent-ps-double-open-red.TestRunResult.json\n?? evidence/profile-raf-performance/qa-4.5/agent-ps-double-open-red.cli.json\n?? evidence/profile-raf-performance/qa-4.5/agent-ps-double-open-red.stderr.txt\n?? evidence/profile-raf-performance/qa-4.5/attempt-1/\n?? evidence/profile-raf-performance/qa-4.5/baseline-conditions.json\n?? evidence/profile-raf-performance/qa-4.5/baseline-reverification.cli.json\n?? evidence/profile-raf-performance/qa-4.5/baseline-reverification.stderr\n?? evidence/profile-raf-performance/qa-4.5/baseline-reverification.stdout\n?? evidence/profile-raf-performance/qa-4.5/calibrate-rusage.py\n?? evidence/profile-raf-performance/qa-4.5/comparison-verification.cli.json\n?? evidence/profile-raf-performance/qa-4.5/comparison-verification.stderr\n?? evidence/profile-raf-performance/qa-4.5/comparison-verification.stdout\n?? evidence/profile-raf-performance/qa-4.5/comparison.json\n?? evidence/profile-raf-performance/qa-4.5/cpu-accounting-calibration.json\n?? evidence/profile-raf-performance/qa-4.5/cpu-calibration.stderr\n?? evidence/profile-raf-performance/qa-4.5/cpu-calibration.stdout\n?? evidence/profile-raf-performance/qa-4.5/double-open-red-workspace.json\n?? evidence/profile-raf-performance/qa-4.5/source-scope.diff-stat.txt\n?? evidence/profile-raf-performance/qa-4.5/source-scope.json\n?? evidence/profile-raf-performance/qa-4.5/unit-review.json\n?? evidence/profile-raf-performance/qa-4.5/verify-comparison.mjs\n?? evidence/profile-raf-performance/qa-4.5/workspace-head-reflog.txt\n?? evidence/profile-raf-performance/qa-4.5/workspace-uncommitted.json\n?? scripts/qa-test-config-dependencies.ts\n",
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "browser": "not applicable: CLI",
+    "openspec": "1.14.3",
+    "tmux": "tmux 3.6"
+  },
+  "limitations": [
+    "Isolated local process stand: real CLI, production service, Unix socket, OS caller identities, SQLite, reservation and test child tree. No AI runner or provider is required by test run.",
+    "Only loadAverage1m is controlled at the production resource reader and a stand-only node:os preload. RAM, disk, process identities and configured admission thresholds are real. This is not a physical CPU pressure test.",
+    "The prior timeout/knownRed ledger is explicitly seeded synthetic fixture state; no operational or assigned unit aggregate is reset."
+  ],
+  "stand": {
+    "root": "/tmp/raf-prod-5UMnTZ",
+    "workspace": "/tmp/raf-prod-5UMnTZ/raf-develop",
+    "controlHome": "/tmp/raf-prod-5UMnTZ/home",
+    "statePath": "/tmp/raf-prod-5UMnTZ/home/.raf/isolated.sqlite",
+    "unitHome": "/tmp/raf-unit-1000/15171a9a335a4663766e6b7280242f9c421178fd16140a0658522fc50c8f5b76",
+    "machine": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    },
+    "baseline": {
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 2.55,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 21145026560,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "tmpfs",
+            "totalBytes": 25769803776,
+            "availableBytes": 18217365504
+          }
+        ]
+      },
+      "reasons": [],
+      "fileSystemByPath": {
+        "/tmp/raf-prod-5UMnTZ": "tmpfs",
+        "/tmp/raf-prod-5UMnTZ/raf-develop": "tmpfs",
+        "/tmp/raf-prod-5UMnTZ/home": "tmpfs"
+      }
+    },
+    "protocol": {
+      "levels": [
+        {
+          "id": "hotfix",
+          "description": "Допуск за hotfix-порогами resource-admission",
+          "priority": 0
+        },
+        {
+          "id": "normal",
+          "description": "Допуск за звичайними порогами resource-admission",
+          "priority": 1
+        }
+      ],
+      "grantIntervalMs": 15000,
+      "deliveryTimeoutMs": 30000,
+      "hostTickIntervalMs": 15000,
+      "readinessTimeoutMs": 30000
+    },
+    "configurationHashes": {
+      "flow.json": "c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd",
+      "test-runs.json": "bab4557c3813ad91bda3301ca49d90f70ec5c7d350e82136705ad08b1b0d6a10",
+      "projects.json": "ac6da185fe25d8b01da020014cefcfc3251324263fb9d888fb88bc90925c4ffc",
+      "raf.json": "4d96536232de9a7f50dbfe9c0a4dbeabb44e287335b59c685b701bd0597c8438",
+      "raf-constants.json": "4a9986526efe2b9751684f6a1b4d74aadb91dd0094acda2a1ac8d91e92b4e6e0"
+    },
+    "unitPolicy": {
+      "timeoutMs": 1200000,
+      "optimizeAfterTimeouts": 1,
+      "maxGroupTimeouts": 2
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "seedLedger": [
+      {
+        "key": {
+          "project": "raf",
+          "workspace": "/tmp/raf-prod-5UMnTZ/raf-develop",
+          "group": "fixture-launch/unaffected"
+        },
+        "testKind": "unit",
+        "profileId": "unaffected",
+        "timeoutCount": 1,
+        "state": "optimize",
+        "selection": {
+          "files": [
+            "unaffected.test.ts"
+          ],
+          "testIds": []
+        },
+        "knownRed": [
+          {
+            "file": "unaffected.test.ts",
+            "name": "unaffected"
+          }
+        ],
+        "unexecuted": [],
+        "inFlight": null,
+        "lastResult": null
+      },
+      {
+        "key": {
+          "project": "raf",
+          "workspace": "/tmp/raf-prod-5UMnTZ/raf-develop",
+          "group": "fixture-launch/dependent"
+        },
+        "testKind": "unit",
+        "profileId": "dependent",
+        "timeoutCount": 1,
+        "state": "optimize",
+        "selection": {
+          "files": [
+            "dependent.test.ts"
+          ],
+          "testIds": []
+        },
+        "knownRed": [
+          {
+            "file": "dependent.test.ts",
+            "name": "dependent"
+          }
+        ],
+        "unexecuted": [],
+        "inFlight": null,
+        "lastResult": null
+      },
+      {
+        "key": {
+          "project": "raf",
+          "workspace": "/tmp/raf-prod-5UMnTZ/raf-develop",
+          "group": "fixture-launch/unauthorized"
+        },
+        "testKind": "unit",
+        "profileId": "unauthorized",
+        "timeoutCount": 1,
+        "state": "optimize",
+        "selection": {
+          "files": [
+            "unauthorized.test.ts"
+          ],
+          "testIds": []
+        },
+        "knownRed": [
+          {
+            "file": "unauthorized.test.ts",
+            "name": "unauthorized"
+          }
+        ],
+        "unexecuted": [],
+        "inFlight": null,
+        "lastResult": null
+      }
+    ]
+  },
+  "error": "AssertionError [ERR_ASSERTION]: {\"testKind\":null,\"timeoutPolicy\":null,\"callerPhase\":null,\"diagnostics\":[{\"kind\":\"preflight\",\"test\":null,\"errorCode\":\"CONFIGURATION_INVALID\",\"message\":\"Preflight refused (CONFIGURATION_INVALID); diagnostic configuration unavailable\",\"location\":null,\"stack\":[],\"redacted\":false,\"truncated\":false,\"unavailableReason\":\"Valid diagnostic configuration unavailable\"}],\"diagnosticSummary\":{\"totalEntries\":1,\"retainedEntries\":1,\"omittedEntries\":0,\"truncated\":false,\"redacted\":false},\"environmentSummary\":{\"executable\":\"/opt/dev/node/bin/node\",\"runtimeVersion\":\"v26.12.1\",\"adapter\":\"unavailable\",\"isolation\":\"unavailable\",\"configurationFingerprints\":{\"flow\":\"\",\"testRuns\":\"\",\"projects\":\"\"},\"tmpPathBytes\":0,\"privateRunTmp\":false},\"runId\":\"6f5c740f-9a91-468a-abbe-063a5a10babf\",\"project\":\"raf\",\"workspace\":\"\",\"phase\":\"qa\",\"group\":\"fixture-launch/unaffected\",\"profileId\":null,\"selection\":{\"files\":[],\"testIds\":[]},\"command\":null,\"startedAt\":\"2026-10-25T03:14:07.358Z\",\"durationMs\":0,\"exitCode\":null,\"signal\":null,\"timedOut\":false,\"cleanup\":{\"complete\":true,\"remainingPids\":[]},\"outcome\":\"setup-failed\",\"failureKinds\":[\"setup\"],\"passed\":[],\"knownRed\":[],\"unexecuted\":[],\"unknown\":[],\"removed\":[],\"stateAccess\":null,\"groupSnapshot\":\"unavailable\",\"groupState\":null,\"timeoutCount\":null,\"nextAction\":\"fix-setup\",\"hintIds\":[],\"hints\":[],\"evidence\":[],\"errorCode\":\"CONFIGURATION_INVALID\"}\n\n\n1 !== null\n",
+  "stack": "AssertionError [ERR_ASSERTION]: {\"testKind\":null,\"timeoutPolicy\":null,\"callerPhase\":null,\"diagnostics\":[{\"kind\":\"preflight\",\"test\":null,\"errorCode\":\"CONFIGURATION_INVALID\",\"message\":\"Preflight refused (CONFIGURATION_INVALID); diagnostic configuration unavailable\",\"location\":null,\"stack\":[],\"redacted\":false,\"truncated\":false,\"unavailableReason\":\"Valid diagnostic configuration unavailable\"}],\"diagnosticSummary\":{\"totalEntries\":1,\"retainedEntries\":1,\"omittedEntries\":0,\"truncated\":false,\"redacted\":false},\"environmentSummary\":{\"executable\":\"/opt/dev/node/bin/node\",\"runtimeVersion\":\"v26.12.1\",\"adapter\":\"unavailable\",\"isolation\":\"unavailable\",\"configurationFingerprints\":{\"flow\":\"\",\"testRuns\":\"\",\"projects\":\"\"},\"tmpPathBytes\":0,\"privateRunTmp\":false},\"runId\":\"6f5c740f-9a91-468a-abbe-063a5a10babf\",\"project\":\"raf\",\"workspace\":\"\",\"phase\":\"qa\",\"group\":\"fixture-launch/unaffected\",\"profileId\":null,\"selection\":{\"files\":[],\"testIds\":[]},\"command\":null,\"startedAt\":\"2026-10-25T03:14:07.358Z\",\"durationMs\":0,\"exitCode\":null,\"signal\":null,\"timedOut\":false,\"cleanup\":{\"complete\":true,\"remainingPids\":[]},\"outcome\":\"setup-failed\",\"failureKinds\":[\"setup\"],\"passed\":[],\"knownRed\":[],\"unexecuted\":[],\"unknown\":[],\"removed\":[],\"stateAccess\":null,\"groupSnapshot\":\"unavailable\",\"groupState\":null,\"timeoutCount\":null,\"nextAction\":\"fix-setup\",\"hintIds\":[],\"hints\":[],\"evidence\":[],\"errorCode\":\"CONFIGURATION_INVALID\"}\n\n\n1 !== null\n\n    at queued (file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-test-config-dependencies.ts:141:12)\n    at async file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-test-config-dependencies.ts:145:3",
+  "cleanup": {
+    "children": [
+      {
+        "label": "unaffected",
+        "pid": 221,
+        "exitCode": 1,
+        "signal": null
+      }
+    ],
+    "standRemoved": true,
+    "unitHomeRemoved": true,
+    "artifactsRemoved": true,
+    "errors": []
+  }
+}

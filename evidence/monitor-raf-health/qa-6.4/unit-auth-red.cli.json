@@ -1,0 +1,13 @@
+{
+  "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/config-dependencies --files test/test-run-config-dependencies.test.ts",
+  "cliExitCode": 1,
+  "childExitCode": 1,
+  "sha": "c970810518949dad90271aa079c3ed9fa63ed4af",
+  "sourceVariant": "auth-red",
+  "shaEvidence": "workspace-head-reflog.txt + TestRunResult.startedAt; owned code variants persisted in source-states.json",
+  "capture": {
+    "rawToolResult": "unit-auth-red.tool-result.json",
+    "stderrPath": "unit-auth-red.stderr",
+    "detail": "exec_command exposes one combined output string. Every observed byte is the complete TestRunResult JSON emitted on stdout; no extra stderr bytes were observed. Empty stderr file records that observation, not an independently captured file descriptor."
+  }
+}

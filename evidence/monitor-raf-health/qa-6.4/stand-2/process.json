@@ -1,0 +1,428 @@
+{
+  "assignment": "monitor-raf-health:6.4",
+  "outcome": "failed",
+  "assertions": [
+    "Two distinct live CLI owner identities wait in one queue without children/reservations; semantic edits preserve both pending fences, FIFO entries and seeded timeout/knownRed ledger while blocked."
+  ],
+  "invocations": [
+    {
+      "label": "unaffected",
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "--import",
+        "/tmp/raf-prod-OsIL3p/load-preload.mjs",
+        "/tmp/raf-prod-OsIL3p/raf-develop/bin/raf.ts",
+        "test",
+        "run",
+        "--project",
+        "raf",
+        "--phase",
+        "qa",
+        "--group",
+        "fixture-launch/unaffected"
+      ],
+      "cwd": "/tmp/raf-prod-OsIL3p/raf-develop",
+      "environment": {
+        "PATH": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/home/dev/.local/bin:/home/dev/.local/bin:/home/dev/.codex/tmp/arg0-linux/codex-arg0Zh0s4W:/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/home/dev/.raf/tmp/571cd503-45e9-498b-93b8-c73198397868/codex-sandbox-571cd503-45e9-498b-93b8-c73198397868:/home/dev/.local/bin:/home/dev/.local/bin:/home/dev/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/dev/Android/Sdk/platform-tools:/home/dev/Android/Sdk/emulator:/home/dev/Android/Sdk/cmdline-tools/latest/bin",
+        "HOME": "/tmp/raf-prod-OsIL3p/home",
+        "RAF_QA_HOME": "/tmp/raf-prod-OsIL3p/home",
+        "LANG": "C.UTF-8",
+        "TZ": "UTC",
+        "RAF_MAIN_PATH": "/tmp/raf-prod-OsIL3p"
+      },
+      "pid": 221,
+      "startedAt": 1792898077302,
+      "finishedAt": 1792898093676,
+      "cliExitCode": 1,
+      "signal": null
+    },
+    {
+      "label": "dependent",
+      "executable": "/opt/dev/node/bin/node",
+      "argv": [
+        "--import",
+        "/tmp/raf-prod-OsIL3p/load-preload.mjs",
+        "/tmp/raf-prod-OsIL3p/raf-develop/bin/raf.ts",
+        "test",
+        "run",
+        "--project",
+        "raf",
+        "--phase",
+        "qa",
+        "--group",
+        "fixture-launch/dependent"
+      ],
+      "cwd": "/tmp/raf-prod-OsIL3p/raf-develop",
+      "environment": {
+        "PATH": "/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/home/dev/.local/bin:/home/dev/.local/bin:/home/dev/.codex/tmp/arg0-linux/codex-arg0Zh0s4W:/opt/dev/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/codex-path:/home/dev/.raf/tmp/571cd503-45e9-498b-93b8-c73198397868/codex-sandbox-571cd503-45e9-498b-93b8-c73198397868:/home/dev/.local/bin:/home/dev/.local/bin:/home/dev/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/dev/Android/Sdk/platform-tools:/home/dev/Android/Sdk/emulator:/home/dev/Android/Sdk/cmdline-tools/latest/bin",
+        "HOME": "/tmp/raf-prod-OsIL3p/home",
+        "RAF_QA_HOME": "/tmp/raf-prod-OsIL3p/home",
+        "LANG": "C.UTF-8",
+        "TZ": "UTC",
+        "RAF_MAIN_PATH": "/tmp/raf-prod-OsIL3p"
+      },
+      "pid": 254,
+      "startedAt": 1792898077790,
+      "finishedAt": 1792898093760,
+      "cliExitCode": 1,
+      "signal": null
+    }
+  ],
+  "samples": [
+    {
+      "at": 1792898077851,
+      "actualLoad": 1.9,
+      "controlledLoad": 20
+    },
+    {
+      "at": 1792898093420,
+      "actualLoad": 1.55,
+      "controlledLoad": 0
+    }
+  ],
+  "environment": {
+    "sha": "b16830aa06524741c2f93f56fd20f8a6f40750e0",
+    "dirty": " D evidence/profile-raf-performance/qa-4.5/workspace-uncommitted.patch\n M test/agent-ps-cost.test.ts\n?? evidence/monitor-raf-health/qa-6.4/\n?? evidence/profile-raf-performance/qa-4.5/agent-ps-double-open-red.TestRunResult.json\n?? evidence/profile-raf-performance/qa-4.5/agent-ps-double-open-red.cli.json\n?? evidence/profile-raf-performance/qa-4.5/agent-ps-double-open-red.stderr.txt\n?? evidence/profile-raf-performance/qa-4.5/attempt-1/\n?? evidence/profile-raf-performance/qa-4.5/baseline-conditions.json\n?? evidence/profile-raf-performance/qa-4.5/baseline-reverification.cli.json\n?? evidence/profile-raf-performance/qa-4.5/baseline-reverification.stderr\n?? evidence/profile-raf-performance/qa-4.5/baseline-reverification.stdout\n?? evidence/profile-raf-performance/qa-4.5/calibrate-rusage.py\n?? evidence/profile-raf-performance/qa-4.5/comparison-verification.cli.json\n?? evidence/profile-raf-performance/qa-4.5/comparison-verification.stderr\n?? evidence/profile-raf-performance/qa-4.5/comparison-verification.stdout\n?? evidence/profile-raf-performance/qa-4.5/comparison.json\n?? evidence/profile-raf-performance/qa-4.5/cpu-accounting-calibration.json\n?? evidence/profile-raf-performance/qa-4.5/cpu-calibration.stderr\n?? evidence/profile-raf-performance/qa-4.5/cpu-calibration.stdout\n?? evidence/profile-raf-performance/qa-4.5/double-open-red-workspace.json\n?? evidence/profile-raf-performance/qa-4.5/source-scope.diff-stat.txt\n?? evidence/profile-raf-performance/qa-4.5/source-scope.json\n?? evidence/profile-raf-performance/qa-4.5/unit-review.json\n?? evidence/profile-raf-performance/qa-4.5/verify-comparison.mjs\n?? evidence/profile-raf-performance/qa-4.5/workspace-head-reflog.txt\n?? evidence/profile-raf-performance/qa-4.5/workspace-uncommitted.json\n?? scripts/qa-test-config-dependencies.ts\n",
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "browser": "not applicable: CLI",
+    "openspec": "1.14.3",
+    "tmux": "tmux 3.6"
+  },
+  "limitations": [
+    "Isolated local process stand: real CLI, production service, Unix socket, OS caller identities, SQLite, reservation and test child tree. No AI runner or provider is required by test run.",
+    "Only loadAverage1m is controlled at the production resource reader and a stand-only node:os preload. RAM, disk, process identities and configured admission thresholds are real. This is not a physical CPU pressure test.",
+    "The prior timeout/knownRed ledger is explicitly seeded synthetic fixture state; no operational or assigned unit aggregate is reset."
+  ],
+  "stand": {
+    "root": "/tmp/raf-prod-OsIL3p",
+    "workspace": "/tmp/raf-prod-OsIL3p/raf-develop",
+    "controlHome": "/tmp/raf-prod-OsIL3p/home",
+    "statePath": "/tmp/raf-prod-OsIL3p/home/.raf/isolated.sqlite",
+    "unitHome": "/tmp/raf-unit-1000/b63141936f7fa3311bec57135b2041555d066ed837bb6d564461a347f17017ae",
+    "machine": {
+      "machineId": "05edcea976d34e69b22f660519c11f6f",
+      "bootId": "b1029120-f5ec-44e5-9a19-868ab046f59c"
+    },
+    "baseline": {
+      "measurement": {
+        "machineId": "05edcea976d34e69b22f660519c11f6f",
+        "loadAverage1m": 1.9,
+        "availableCores": 8,
+        "totalRamBytes": 32852041728,
+        "availableRamBytes": 21519282176,
+        "memoryPressure": "normal",
+        "fileSystems": [
+          {
+            "id": "tmpfs",
+            "totalBytes": 25769803776,
+            "availableBytes": 18217365504
+          }
+        ]
+      },
+      "reasons": [],
+      "fileSystemByPath": {
+        "/tmp/raf-prod-OsIL3p": "tmpfs",
+        "/tmp/raf-prod-OsIL3p/raf-develop": "tmpfs",
+        "/tmp/raf-prod-OsIL3p/home": "tmpfs"
+      }
+    },
+    "protocol": {
+      "levels": [
+        {
+          "id": "hotfix",
+          "description": "Допуск за hotfix-порогами resource-admission",
+          "priority": 0
+        },
+        {
+          "id": "normal",
+          "description": "Допуск за звичайними порогами resource-admission",
+          "priority": 1
+        }
+      ],
+      "grantIntervalMs": 15000,
+      "deliveryTimeoutMs": 30000,
+      "hostTickIntervalMs": 15000,
+      "readinessTimeoutMs": 30000
+    },
+    "configurationHashes": {
+      "flow.json": "c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd",
+      "test-runs.json": "42c76315660d2a253e4750b290e5c2e50d955f38b6ff0dfbb72cd4c551a54106",
+      "projects.json": "ac6da185fe25d8b01da020014cefcfc3251324263fb9d888fb88bc90925c4ffc",
+      "raf.json": "4d96536232de9a7f50dbfe9c0a4dbeabb44e287335b59c685b701bd0597c8438",
+      "raf-constants.json": "4a9986526efe2b9751684f6a1b4d74aadb91dd0094acda2a1ac8d91e92b4e6e0"
+    },
+    "unitPolicy": {
+      "timeoutMs": 1200000,
+      "optimizeAfterTimeouts": 1,
+      "maxGroupTimeouts": 2
+    },
+    "thresholds": {
+      "normal": {
+        "maxNormalizedLoad": 1.2,
+        "minRamFraction": 0.2,
+        "minRamBytes": 2147483648,
+        "minDiskFraction": 0.1,
+        "minDiskBytes": 10737418240
+      },
+      "hotfix": {
+        "maxNormalizedLoad": 1.5,
+        "minRamFraction": 0.1,
+        "minRamBytes": 1073741824,
+        "minDiskFraction": 0.05,
+        "minDiskBytes": 5368709120
+      },
+      "home": {
+        "minDiskBytes": 524288000
+      }
+    },
+    "seedLedger": [
+      {
+        "key": {
+          "project": "raf",
+          "workspace": "/tmp/raf-prod-OsIL3p/raf-develop",
+          "group": "fixture-launch/unaffected"
+        },
+        "testKind": "unit",
+        "profileId": "unaffected",
+        "timeoutCount": 1,
+        "state": "optimize",
+        "selection": {
+          "files": [
+            "unaffected.test.ts"
+          ],
+          "testIds": []
+        },
+        "knownRed": [
+          {
+            "file": "unaffected.test.ts",
+            "name": "unaffected"
+          }
+        ],
+        "unexecuted": [],
+        "inFlight": null,
+        "lastResult": null
+      },
+      {
+        "key": {
+          "project": "raf",
+          "workspace": "/tmp/raf-prod-OsIL3p/raf-develop",
+          "group": "fixture-launch/dependent"
+        },
+        "testKind": "unit",
+        "profileId": "dependent",
+        "timeoutCount": 1,
+        "state": "optimize",
+        "selection": {
+          "files": [
+            "dependent.test.ts"
+          ],
+          "testIds": []
+        },
+        "knownRed": [
+          {
+            "file": "dependent.test.ts",
+            "name": "dependent"
+          }
+        ],
+        "unexecuted": [],
+        "inFlight": null,
+        "lastResult": null
+      },
+      {
+        "key": {
+          "project": "raf",
+          "workspace": "/tmp/raf-prod-OsIL3p/raf-develop",
+          "group": "fixture-launch/unauthorized"
+        },
+        "testKind": "unit",
+        "profileId": "unauthorized",
+        "timeoutCount": 1,
+        "state": "optimize",
+        "selection": {
+          "files": [
+            "unauthorized.test.ts"
+          ],
+          "testIds": []
+        },
+        "knownRed": [
+          {
+            "file": "unauthorized.test.ts",
+            "name": "unauthorized"
+          }
+        ],
+        "unexecuted": [],
+        "inFlight": null,
+        "lastResult": null
+      }
+    ]
+  },
+  "beforeMutation": {
+    "ledger": [
+      {
+        "key": {
+          "project": "raf",
+          "workspace": "/tmp/raf-prod-OsIL3p/raf-develop",
+          "group": "fixture-launch/dependent"
+        },
+        "testKind": "unit",
+        "profileId": "dependent",
+        "timeoutCount": 1,
+        "state": "optimize",
+        "selection": {
+          "files": [
+            "dependent.test.ts"
+          ],
+          "testIds": []
+        },
+        "knownRed": [
+          {
+            "file": "dependent.test.ts",
+            "name": "dependent"
+          }
+        ],
+        "unexecuted": [],
+        "inFlight": null,
+        "lastResult": null
+      },
+      {
+        "key": {
+          "project": "raf",
+          "workspace": "/tmp/raf-prod-OsIL3p/raf-develop",
+          "group": "fixture-launch/unaffected"
+        },
+        "testKind": "unit",
+        "profileId": "unaffected",
+        "timeoutCount": 1,
+        "state": "optimize",
+        "selection": {
+          "files": [
+            "unaffected.test.ts"
+          ],
+          "testIds": []
+        },
+        "knownRed": [
+          {
+            "file": "unaffected.test.ts",
+            "name": "unaffected"
+          }
+        ],
+        "unexecuted": [],
+        "inFlight": null,
+        "lastResult": null
+      },
+      {
+        "key": {
+          "project": "raf",
+          "workspace": "/tmp/raf-prod-OsIL3p/raf-develop",
+          "group": "fixture-launch/unauthorized"
+        },
+        "testKind": "unit",
+        "profileId": "unauthorized",
+        "timeoutCount": 1,
+        "state": "optimize",
+        "selection": {
+          "files": [
+            "unauthorized.test.ts"
+          ],
+          "testIds": []
+        },
+        "knownRed": [
+          {
+            "file": "unauthorized.test.ts",
+            "name": "unauthorized"
+          }
+        ],
+        "unexecuted": [],
+        "inFlight": null,
+        "lastResult": null
+      }
+    ],
+    "queues": [
+      {
+        "queueId": "9701bbf0-56fa-4714-825c-1bbf74359bf2",
+        "generation": 1,
+        "entries": [
+          {
+            "queueId": "9701bbf0-56fa-4714-825c-1bbf74359bf2",
+            "generation": 1,
+            "requestId": "7f86c987-7941-4b4d-90c2-e34bcd265154",
+            "fence": "af2941e1-53d7-4b00-bd4f-e40528192d0c",
+            "stage": "waiting"
+          },
+          {
+            "queueId": "9701bbf0-56fa-4714-825c-1bbf74359bf2",
+            "generation": 1,
+            "requestId": "a3f43e54-99ec-4765-b827-83ea4af8193a",
+            "fence": "50503b05-e6f2-458c-975e-eb50da8e3b2c",
+            "stage": "waiting"
+          }
+        ],
+        "started": 0,
+        "cancelled": 0,
+        "failed": 0,
+        "pendingTests": [
+          {
+            "testRunId": "f2ce671e-b873-42ce-af01-4852ebd61d95",
+            "fence": "af2941e1-53d7-4b00-bd4f-e40528192d0c",
+            "groupKey": {
+              "project": "raf",
+              "workspace": "/tmp/raf-prod-OsIL3p/raf-develop",
+              "group": "fixture-launch/unaffected"
+            },
+            "ownerIdentity": "{\"pid\":221,\"start\":\"24075938\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+            "processIdentity": null,
+            "handle": {
+              "queueId": "9701bbf0-56fa-4714-825c-1bbf74359bf2",
+              "generation": 1,
+              "requestId": "7f86c987-7941-4b4d-90c2-e34bcd265154",
+              "fence": "af2941e1-53d7-4b00-bd4f-e40528192d0c"
+            }
+          },
+          {
+            "testRunId": "3a6e6817-ccc5-4e45-a5a0-f1a6a876dd88",
+            "fence": "50503b05-e6f2-458c-975e-eb50da8e3b2c",
+            "groupKey": {
+              "project": "raf",
+              "workspace": "/tmp/raf-prod-OsIL3p/raf-develop",
+              "group": "fixture-launch/dependent"
+            },
+            "ownerIdentity": "{\"pid\":254,\"start\":\"24075986\",\"boot\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\"}",
+            "processIdentity": null,
+            "handle": {
+              "queueId": "9701bbf0-56fa-4714-825c-1bbf74359bf2",
+              "generation": 1,
+              "requestId": "a3f43e54-99ec-4765-b827-83ea4af8193a",
+              "fence": "50503b05-e6f2-458c-975e-eb50da8e3b2c"
+            }
+          }
+        ]
+      }
+    ],
+    "reservations": [],
+    "lastGrant": null
+  },
+  "error": "AssertionError [ERR_ASSERTION]: {\"kind\":\"launch-queue.waiting\",\"queueId\":\"9701bbf0-56fa-4714-825c-1bbf74359bf2\",\"requestId\":\"7f86c987-7941-4b4d-90c2-e34bcd265154\",\"testRunId\":\"f2ce671e-b873-42ce-af01-4852ebd61d95\",\"admission\":{\"level\":\"NO_RESOURCES\",\"requestedTier\":\"normal\",\"allowed\":false,\"reasons\":[\"normal: normalized load exceeds 1.2\",\"hotfix: normalized load exceeds 1.5\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":20,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":21358268416,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":18217037824},{\"id\":\"/dev/mapper/home-dev\",\"totalBytes\":11499937792,\"availableBytes\":8435601408}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.2,\"minRamFraction\":0.2,\"minRamBytes\":2147483648,\"minDiskFraction\":0.1,\"minDiskBytes\":10737418240},\"hotfix\":{\"maxNormalizedLoad\":1.5,\"minRamFraction\":0.1,\"minRamBytes\":1073741824,\"minDiskFraction\":0.05,\"minDiskBytes\":5368709120},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":1048576,\"diskBytes\":{\"tmpfs\":0}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":21357219840,\"diskBytes\":{\"tmpfs\":18217037824,\"/dev/mapper/home-dev\":8435601408},\"normalizedLoad\":2.5},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/unaffected/resourceEstimate\"],\"reason\":null},\"queueId\":\"9701bbf0-56fa-4714-825c-1bbf74359bf2\"}}\n{\"testKind\":\"unit\",\"timeoutPolicy\":{\"source\":\"conf/flow.json#/unitTests/timeoutMs\",\"timeoutMs\":1200000},\"callerPhase\":\"qa\",\"diagnostics\":[{\"kind\":\"setup\",\"test\":null,\"errorName\":\"Error\",\"errorCode\":\"TEMPORARY_DIRECTORY_INVALID\",\"message\":\"Configured temporary root exceeds socket pathname capacity\",\"location\":{\"file\":\"src/test-run-diagnostics.ts\",\"line\":352,\"column\":249},\"stack\":[\"    at tmpError (src/test-run-diagnostics.ts:352:249)\",\"    at prepareRunTemporaryDirectory (src/test-run-diagnostics.ts:361:34)\",\"    at Object.prepareTemporary (src/test-run-runtime.ts:165:49)\",\"    at runTestRun (src/test-runs.ts:536:31)\",\"    at async runResourceReservedTestRun (src/test-run-reservations.ts:265:18)\",\"    at async runTestRunCli (src/test-run-cli.ts:31:20)\",\"    at async runSandboxTestCommand (src/sandbox-test-run.ts:161:18)\",\"    at async runConfiguredTestRun (src/test-run-runtime.ts:339:19)\",\"    at async src/production-entry.ts:184:29\",\"    at async execute (src/cli.ts:100:15)\"],\"redacted\":false,\"truncated\":false}],\"diagnosticSummary\":{\"totalEntries\":1,\"retainedEntries\":1,\"omittedEntries\":0,\"truncated\":false,\"redacted\":false},\"environmentSummary\":{\"executable\":\"/opt/dev/node/bin/node\",\"runtimeVersion\":\"v26.12.1\",\"adapter\":\"node-test-events\",\"isolation\":\"process\",\"configurationFingerprints\":{\"flow\":\"c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd\",\"testRuns\":\"42c76315660d2a253e4750b290e5c2e50d955f38b6ff0dfbb72cd4c551a54106\",\"projects\":\"ac6da185fe25d8b01da020014cefcfc3251324263fb9d888fb88bc90925c4ffc\"},\"tmpPathBytes\":92,\"privateRunTmp\":false},\"runId\":\"f2ce671e-b873-42ce-af01-4852ebd61d95\",\"project\":\"raf\",\"workspace\":\"/tmp/raf-prod-OsIL3p/raf-develop\",\"phase\":\"qa\",\"group\":\"fixture-launch/unaffected\",\"profileId\":\"unaffected\",\"selection\":{\"files\":[\"unaffected.test.ts\"],\"testIds\":[]},\"command\":{\"executable\":\"/opt/dev/node/bin/node\",\"argv\":[\"./scripts/test-run-node.ts\",\"unaffected.test.ts\"],\"cwd\":\"/tmp/raf-prod-OsIL3p/raf-develop\",\"shell\":false,\"environment\":{\"HOME\":\"/tmp/raf-unit-1000/b63141936f7fa3311bec57135b2041555d066ed837bb6d564461a347f17017ae\",\"statePath\":\"/tmp/raf-unit-1000/b63141936f7fa3311bec57135b2041555d066ed837bb6d564461a347f17017ae/.raf/isolated.sqlite\",\"tmpPath\":\"/tmp/raf-unit-1000/b63141936f7fa3311bec57135b2041555d066ed837bb6d564461a347f17017ae/.raf/tmp\"}},\"startedAt\":\"2026-10-25T03:14:37.606Z\",\"durationMs\":16027,\"exitCode\":null,\"signal\":null,\"timedOut\":false,\"cleanup\":{\"complete\":true,\"remainingPids\":[]},\"outcome\":\"setup-failed\",\"failureKinds\":[\"setup\"],\"passed\":[],\"knownRed\":[{\"file\":\"unaffected.test.ts\",\"name\":\"unaffected\"}],\"unexecuted\":[],\"unknown\":[],\"removed\":[],\"stateAccess\":null,\"groupSnapshot\":\"loaded\",\"groupState\":\"optimize\",\"timeoutCount\":1,\"nextAction\":\"fix-setup\",\"hintIds\":[\"setup\"],\"hints\":[\"Виправте конфігурацію, імпорт, залежності або ізоляцію середовища. Setup/import не підтверджує початковий red.\"],\"evidence\":[],\"errorCode\":\"TEMPORARY_DIRECTORY_INVALID\",\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":0,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":21724241920,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":18217013248},{\"id\":\"/dev/mapper/home-dev\",\"totalBytes\":11499937792,\"availableBytes\":8435597312}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.2,\"minRamFraction\":0.2,\"minRamBytes\":2147483648,\"minDiskFraction\":0.1,\"minDiskBytes\":10737418240},\"hotfix\":{\"maxNormalizedLoad\":1.5,\"minRamFraction\":0.1,\"minRamBytes\":1073741824,\"minDiskFraction\":0.05,\"minDiskBytes\":5368709120},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":1048576,\"diskBytes\":{\"tmpfs\":0}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":21723193344,\"diskBytes\":{\"tmpfs\":18217013248,\"/dev/mapper/home-dev\":8435597312},\"normalizedLoad\":0},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/unaffected/resourceEstimate\"],\"reason\":null},\"queueId\":\"9701bbf0-56fa-4714-825c-1bbf74359bf2\"},\"resourceUsage\":{\"context\":{\"identity\":{\"kind\":\"test\",\"id\":\"f2ce671e-b873-42ce-af01-4852ebd61d95\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"fence\":\"63f70a1d-9e11-43e9-a190-40e749b4ddf8\",\"root\":null},\"project\":\"raf\",\"agentType\":null,\"testProfile\":\"unaffected\",\"items\":[{\"project\":\"raf\",\"change\":\"fixture-launch\",\"item\":\"2.1\"}],\"requestedEstimate\":{\"ramBytes\":1048576,\"diskBytes\":{\"tmpfs\":0},\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/unaffected/resourceEstimate\"],\"confHash\":\"eb7e2c36cc5b56fe24c0c7f189cc375e0f29c4eebbbfc31d909871976ca1704f\"},\"requiredFileSystems\":[{\"id\":\"tmpfs\",\"paths\":[\"/tmp/raf-prod-OsIL3p\",\"/tmp/raf-prod-OsIL3p/raf-develop\"]}],\"resultStatePath\":\"/tmp/raf-unit-1000/b63141936f7fa3311bec57135b2041555d066ed837bb6d564461a347f17017ae/.raf/isolated.sqlite\"},\"preparedAt\":1792898093567,\"baseline\":{\"at\":1792898093568,\"disk\":[{\"fileSystemId\":\"tmpfs\",\"files\":[],\"complete\":false,\"reasons\":[\"No run-owned output scope is available on this filesystem\"]}]},\"startedAt\":null,\"lastObservedAt\":null,\"finishedAt\":1792898093630,\"finishReason\":\"spawn-failure\",\"peakRamBytes\":null,\"peakDiskBytes\":{\"tmpfs\":null},\"ram\":{\"peakBytes\":null,\"currentBytes\":null,\"method\":null,\"completeness\":\"unknown\",\"reasons\":[\"RAM has not been observed\"]},\"disk\":{\"tmpfs\":{\"peakBytes\":null,\"currentBytes\":null,\"method\":null,\"completeness\":\"unknown\",\"reasons\":[\"Disk has not been observed\"]}},\"completeness\":\"partial\",\"reasons\":[\"Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete\",\"Final measurement completeness is unverified\"]},\"queue\":{\"queueId\":\"9701bbf0-56fa-4714-825c-1bbf74359bf2\",\"waited\":true}}\n\n\n1 !== null\n",
+  "stack": "AssertionError [ERR_ASSERTION]: {\"kind\":\"launch-queue.waiting\",\"queueId\":\"9701bbf0-56fa-4714-825c-1bbf74359bf2\",\"requestId\":\"7f86c987-7941-4b4d-90c2-e34bcd265154\",\"testRunId\":\"f2ce671e-b873-42ce-af01-4852ebd61d95\",\"admission\":{\"level\":\"NO_RESOURCES\",\"requestedTier\":\"normal\",\"allowed\":false,\"reasons\":[\"normal: normalized load exceeds 1.2\",\"hotfix: normalized load exceeds 1.5\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":20,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":21358268416,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":18217037824},{\"id\":\"/dev/mapper/home-dev\",\"totalBytes\":11499937792,\"availableBytes\":8435601408}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.2,\"minRamFraction\":0.2,\"minRamBytes\":2147483648,\"minDiskFraction\":0.1,\"minDiskBytes\":10737418240},\"hotfix\":{\"maxNormalizedLoad\":1.5,\"minRamFraction\":0.1,\"minRamBytes\":1073741824,\"minDiskFraction\":0.05,\"minDiskBytes\":5368709120},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":1048576,\"diskBytes\":{\"tmpfs\":0}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":21357219840,\"diskBytes\":{\"tmpfs\":18217037824,\"/dev/mapper/home-dev\":8435601408},\"normalizedLoad\":2.5},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/unaffected/resourceEstimate\"],\"reason\":null},\"queueId\":\"9701bbf0-56fa-4714-825c-1bbf74359bf2\"}}\n{\"testKind\":\"unit\",\"timeoutPolicy\":{\"source\":\"conf/flow.json#/unitTests/timeoutMs\",\"timeoutMs\":1200000},\"callerPhase\":\"qa\",\"diagnostics\":[{\"kind\":\"setup\",\"test\":null,\"errorName\":\"Error\",\"errorCode\":\"TEMPORARY_DIRECTORY_INVALID\",\"message\":\"Configured temporary root exceeds socket pathname capacity\",\"location\":{\"file\":\"src/test-run-diagnostics.ts\",\"line\":352,\"column\":249},\"stack\":[\"    at tmpError (src/test-run-diagnostics.ts:352:249)\",\"    at prepareRunTemporaryDirectory (src/test-run-diagnostics.ts:361:34)\",\"    at Object.prepareTemporary (src/test-run-runtime.ts:165:49)\",\"    at runTestRun (src/test-runs.ts:536:31)\",\"    at async runResourceReservedTestRun (src/test-run-reservations.ts:265:18)\",\"    at async runTestRunCli (src/test-run-cli.ts:31:20)\",\"    at async runSandboxTestCommand (src/sandbox-test-run.ts:161:18)\",\"    at async runConfiguredTestRun (src/test-run-runtime.ts:339:19)\",\"    at async src/production-entry.ts:184:29\",\"    at async execute (src/cli.ts:100:15)\"],\"redacted\":false,\"truncated\":false}],\"diagnosticSummary\":{\"totalEntries\":1,\"retainedEntries\":1,\"omittedEntries\":0,\"truncated\":false,\"redacted\":false},\"environmentSummary\":{\"executable\":\"/opt/dev/node/bin/node\",\"runtimeVersion\":\"v26.12.1\",\"adapter\":\"node-test-events\",\"isolation\":\"process\",\"configurationFingerprints\":{\"flow\":\"c8996fbf7ae5e6e6319a9f45db97609520e510e67ce7b5c86a799c0bb07803dd\",\"testRuns\":\"42c76315660d2a253e4750b290e5c2e50d955f38b6ff0dfbb72cd4c551a54106\",\"projects\":\"ac6da185fe25d8b01da020014cefcfc3251324263fb9d888fb88bc90925c4ffc\"},\"tmpPathBytes\":92,\"privateRunTmp\":false},\"runId\":\"f2ce671e-b873-42ce-af01-4852ebd61d95\",\"project\":\"raf\",\"workspace\":\"/tmp/raf-prod-OsIL3p/raf-develop\",\"phase\":\"qa\",\"group\":\"fixture-launch/unaffected\",\"profileId\":\"unaffected\",\"selection\":{\"files\":[\"unaffected.test.ts\"],\"testIds\":[]},\"command\":{\"executable\":\"/opt/dev/node/bin/node\",\"argv\":[\"./scripts/test-run-node.ts\",\"unaffected.test.ts\"],\"cwd\":\"/tmp/raf-prod-OsIL3p/raf-develop\",\"shell\":false,\"environment\":{\"HOME\":\"/tmp/raf-unit-1000/b63141936f7fa3311bec57135b2041555d066ed837bb6d564461a347f17017ae\",\"statePath\":\"/tmp/raf-unit-1000/b63141936f7fa3311bec57135b2041555d066ed837bb6d564461a347f17017ae/.raf/isolated.sqlite\",\"tmpPath\":\"/tmp/raf-unit-1000/b63141936f7fa3311bec57135b2041555d066ed837bb6d564461a347f17017ae/.raf/tmp\"}},\"startedAt\":\"2026-10-25T03:14:37.606Z\",\"durationMs\":16027,\"exitCode\":null,\"signal\":null,\"timedOut\":false,\"cleanup\":{\"complete\":true,\"remainingPids\":[]},\"outcome\":\"setup-failed\",\"failureKinds\":[\"setup\"],\"passed\":[],\"knownRed\":[{\"file\":\"unaffected.test.ts\",\"name\":\"unaffected\"}],\"unexecuted\":[],\"unknown\":[],\"removed\":[],\"stateAccess\":null,\"groupSnapshot\":\"loaded\",\"groupState\":\"optimize\",\"timeoutCount\":1,\"nextAction\":\"fix-setup\",\"hintIds\":[\"setup\"],\"hints\":[\"Виправте конфігурацію, імпорт, залежності або ізоляцію середовища. Setup/import не підтверджує початковий red.\"],\"evidence\":[],\"errorCode\":\"TEMPORARY_DIRECTORY_INVALID\",\"admission\":{\"level\":\"ANY_RUN\",\"requestedTier\":\"normal\",\"allowed\":true,\"reasons\":[\"All normal resource thresholds satisfied after reservations\"],\"measurement\":{\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"loadAverage1m\":0,\"availableCores\":8,\"totalRamBytes\":32852041728,\"availableRamBytes\":21724241920,\"memoryPressure\":\"normal\",\"fileSystems\":[{\"id\":\"tmpfs\",\"totalBytes\":25769803776,\"availableBytes\":18217013248},{\"id\":\"/dev/mapper/home-dev\",\"totalBytes\":11499937792,\"availableBytes\":8435597312}]},\"thresholds\":{\"normal\":{\"maxNormalizedLoad\":1.2,\"minRamFraction\":0.2,\"minRamBytes\":2147483648,\"minDiskFraction\":0.1,\"minDiskBytes\":10737418240},\"hotfix\":{\"maxNormalizedLoad\":1.5,\"minRamFraction\":0.1,\"minRamBytes\":1073741824,\"minDiskFraction\":0.05,\"minDiskBytes\":5368709120},\"home\":{\"minDiskBytes\":524288000}},\"reservation\":{\"requested\":{\"ramBytes\":1048576,\"diskBytes\":{\"tmpfs\":0}},\"unused\":{\"ramBytes\":0,\"diskBytes\":{}}},\"remaining\":{\"ramBytes\":21723193344,\"diskBytes\":{\"tmpfs\":18217013248,\"/dev/mapper/home-dev\":8435597312},\"normalizedLoad\":0},\"estimate\":{\"status\":\"KNOWN\",\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/unaffected/resourceEstimate\"],\"reason\":null},\"queueId\":\"9701bbf0-56fa-4714-825c-1bbf74359bf2\"},\"resourceUsage\":{\"context\":{\"identity\":{\"kind\":\"test\",\"id\":\"f2ce671e-b873-42ce-af01-4852ebd61d95\",\"machineId\":\"05edcea976d34e69b22f660519c11f6f\",\"bootId\":\"b1029120-f5ec-44e5-9a19-868ab046f59c\",\"fence\":\"63f70a1d-9e11-43e9-a190-40e749b4ddf8\",\"root\":null},\"project\":\"raf\",\"agentType\":null,\"testProfile\":\"unaffected\",\"items\":[{\"project\":\"raf\",\"change\":\"fixture-launch\",\"item\":\"2.1\"}],\"requestedEstimate\":{\"ramBytes\":1048576,\"diskBytes\":{\"tmpfs\":0},\"sources\":[\"conf/test-runs.json#/projects/raf/profiles/unaffected/resourceEstimate\"],\"confHash\":\"eb7e2c36cc5b56fe24c0c7f189cc375e0f29c4eebbbfc31d909871976ca1704f\"},\"requiredFileSystems\":[{\"id\":\"tmpfs\",\"paths\":[\"/tmp/raf-prod-OsIL3p\",\"/tmp/raf-prod-OsIL3p/raf-develop\"]}],\"resultStatePath\":\"/tmp/raf-unit-1000/b63141936f7fa3311bec57135b2041555d066ed837bb6d564461a347f17017ae/.raf/isolated.sqlite\"},\"preparedAt\":1792898093567,\"baseline\":{\"at\":1792898093568,\"disk\":[{\"fileSystemId\":\"tmpfs\",\"files\":[],\"complete\":false,\"reasons\":[\"No run-owned output scope is available on this filesystem\"]}]},\"startedAt\":null,\"lastObservedAt\":null,\"finishedAt\":1792898093630,\"finishReason\":\"spawn-failure\",\"peakRamBytes\":null,\"peakDiskBytes\":{\"tmpfs\":null},\"ram\":{\"peakBytes\":null,\"currentBytes\":null,\"method\":null,\"completeness\":\"unknown\",\"reasons\":[\"RAM has not been observed\"]},\"disk\":{\"tmpfs\":{\"peakBytes\":null,\"currentBytes\":null,\"method\":null,\"completeness\":\"unknown\",\"reasons\":[\"Disk has not been observed\"]}},\"completeness\":\"partial\",\"reasons\":[\"Sampled lifecycle observation; continuous peak and shared disk attribution are incomplete\",\"Final measurement completeness is unverified\"]},\"queue\":{\"queueId\":\"9701bbf0-56fa-4714-825c-1bbf74359bf2\",\"waited\":true}}\n\n\n1 !== null\n\n    at file:///srv/dev/work/orchestrator/raf-develop/scripts/qa-test-config-dependencies.ts:168:10",
+  "cleanup": {
+    "children": [
+      {
+        "label": "unaffected",
+        "pid": 221,
+        "exitCode": 1,
+        "signal": null
+      },
+      {
+        "label": "dependent",
+        "pid": 254,
+        "exitCode": 1,
+        "signal": null
+      }
+    ],
+    "standRemoved": true,
+    "unitHomeRemoved": true,
+    "artifactsRemoved": true,
+    "errors": []
+  }
+}

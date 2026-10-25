@@ -1,0 +1,233 @@
+{
+  "group": "monitor-raf-health/config-dependencies",
+  "homePolicy": "Existing assigned group aggregate and QA HOME retained for every authorized unit run; no timeout/knownRed reset. Stand group seeds are synthetic and use independent fixture-only SQLite/HOME.",
+  "runs": [
+    {
+      "name": "unit",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group monitor-raf-health/config-dependencies --files test/test-run-config-dependencies.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "sha": "b16830aa06524741c2f93f56fd20f8a6f40750e0",
+      "sourceVariant": "baseline",
+      "shaEvidence": "workspace-head-reflog.txt + TestRunResult.startedAt; owned code variants persisted in source-states.json",
+      "capture": {
+        "rawToolResult": "unit.tool-result.json",
+        "stderrPath": "unit.stderr",
+        "detail": "exec_command exposes one combined output string. Every observed byte is the complete TestRunResult JSON emitted on stdout; no extra stderr bytes were observed. Empty stderr file records that observation, not an independently captured file descriptor."
+      },
+      "runId": "e4290167-e545-4d8a-986f-60944e1b7cc4",
+      "selection": {
+        "files": [
+          "test/test-run-config-dependencies.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 59,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timeoutCount": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "name": "unit-red-initial",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/config-dependencies --files test/test-run-config-dependencies.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "sha": "535441d79f5b18d70442c9a7374c1037c428fee7",
+      "sourceVariant": "pointer-red-initial",
+      "shaEvidence": "workspace-head-reflog.txt + TestRunResult.startedAt; owned code variants persisted in source-states.json",
+      "capture": {
+        "rawToolResult": "unit-red-initial.tool-result.json",
+        "stderrPath": "unit-red-initial.stderr",
+        "detail": "exec_command exposes one combined output string. Every observed byte is the complete TestRunResult JSON emitted on stdout; no extra stderr bytes were observed. Empty stderr file records that observation, not an independently captured file descriptor."
+      },
+      "runId": "cb4f7163-8200-4f43-a956-6486f5eec29d",
+      "selection": {
+        "files": [
+          "test/test-run-config-dependencies.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 59,
+      "knownRed": [
+        {
+          "file": "test/test-run-config-dependencies.test.ts",
+          "name": "config-dependencies CLI diagnostics preserve the changed leaf from a rejected snapshot"
+        },
+        {
+          "file": "test/test-run-config-dependencies.test.ts",
+          "name": "config-dependencies CLI diagnostics retain every configuration address and still redact external paths and secrets"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timeoutCount": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "name": "unit-red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/config-dependencies --files test/test-run-config-dependencies.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "sha": "27e2668bb9803668bde8deb7518ff70a3cdcfb90",
+      "sourceVariant": "pointer-red",
+      "shaEvidence": "workspace-head-reflog.txt + TestRunResult.startedAt; owned code variants persisted in source-states.json",
+      "capture": {
+        "rawToolResult": "unit-red.tool-result.json",
+        "stderrPath": "unit-red.stderr",
+        "detail": "exec_command exposes one combined output string. Every observed byte is the complete TestRunResult JSON emitted on stdout; no extra stderr bytes were observed. Empty stderr file records that observation, not an independently captured file descriptor."
+      },
+      "runId": "fa4a3a2f-95bf-45af-ba5a-ddd093dd0ec5",
+      "selection": {
+        "files": [
+          "test/test-run-config-dependencies.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 59,
+      "knownRed": [
+        {
+          "file": "test/test-run-config-dependencies.test.ts",
+          "name": "config-dependencies CLI diagnostics preserve the changed leaf from a rejected snapshot"
+        },
+        {
+          "file": "test/test-run-config-dependencies.test.ts",
+          "name": "config-dependencies CLI diagnostics retain every configuration address and still redact external paths and secrets"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timeoutCount": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "name": "unit-qa",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group monitor-raf-health/config-dependencies --files test/test-run-config-dependencies.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "sha": "27e2668bb9803668bde8deb7518ff70a3cdcfb90",
+      "sourceVariant": "pointer-qa",
+      "shaEvidence": "workspace-head-reflog.txt + TestRunResult.startedAt; owned code variants persisted in source-states.json",
+      "capture": {
+        "rawToolResult": "unit-qa.tool-result.json",
+        "stderrPath": "unit-qa.stderr",
+        "detail": "exec_command exposes one combined output string. Every observed byte is the complete TestRunResult JSON emitted on stdout; no extra stderr bytes were observed. Empty stderr file records that observation, not an independently captured file descriptor."
+      },
+      "runId": "f231d800-5832-4050-b382-de137474d2c9",
+      "selection": {
+        "files": [
+          "test/test-run-config-dependencies.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 61,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timeoutCount": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete"
+    },
+    {
+      "name": "unit-auth-red",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group monitor-raf-health/config-dependencies --files test/test-run-config-dependencies.test.ts",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "sha": "c970810518949dad90271aa079c3ed9fa63ed4af",
+      "sourceVariant": "auth-red",
+      "shaEvidence": "workspace-head-reflog.txt + TestRunResult.startedAt; owned code variants persisted in source-states.json",
+      "capture": {
+        "rawToolResult": "unit-auth-red.tool-result.json",
+        "stderrPath": "unit-auth-red.stderr",
+        "detail": "exec_command exposes one combined output string. Every observed byte is the complete TestRunResult JSON emitted on stdout; no extra stderr bytes were observed. Empty stderr file records that observation, not an independently captured file descriptor."
+      },
+      "runId": "34535503-0cf5-4bf0-ac6a-276df6fe18cb",
+      "selection": {
+        "files": [
+          "test/test-run-config-dependencies.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "passed": 61,
+      "knownRed": [
+        {
+          "file": "test/test-run-config-dependencies.test.ts",
+          "name": "config-dependencies revoked QA caller keeps its authorization refusal without recording a fact on the finished session"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "timeoutCount": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "idle",
+      "nextAction": "implement"
+    },
+    {
+      "name": "unit-auth-qa",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group monitor-raf-health/config-dependencies --files test/test-run-config-dependencies.test.ts",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "sha": "c970810518949dad90271aa079c3ed9fa63ed4af",
+      "sourceVariant": "auth-qa",
+      "shaEvidence": "workspace-head-reflog.txt + TestRunResult.startedAt; owned code variants persisted in source-states.json",
+      "capture": {
+        "rawToolResult": "unit-auth-qa.tool-result.json",
+        "stderrPath": "unit-auth-qa.stderr",
+        "detail": "exec_command exposes one combined output string. Every observed byte is the complete TestRunResult JSON emitted on stdout; no extra stderr bytes were observed. Empty stderr file records that observation, not an independently captured file descriptor."
+      },
+      "runId": "2a2f2983-1d36-4594-b5e1-e94fade82421",
+      "selection": {
+        "files": [
+          "test/test-run-config-dependencies.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "passed": 62,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "timeoutCount": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "groupState": "complete",
+      "nextAction": "complete"
+    }
+  ]
+}

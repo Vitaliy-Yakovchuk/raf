@@ -30,5 +30,22 @@
     "pending": [],
     "retrySafe": true
   },
-  "note": "The final unit qa completed before main announced subsequent conf registration b1ca8e7cf5; no retry of a passed run."
+  "note": "The final unit qa completed before main announced subsequent conf registration b1ca8e7cf5; no retry of a passed run.",
+  "hostQueue": {
+    "name": "sym72q4",
+    "confirmedBy": "main",
+    "reviewed": "ae1d7cce7a8f572eb0e01d50c5b16a0d2c1334ed",
+    "stand": "/srv/dev/s72-bDaBYe",
+    "resultDirectory": "/srv/dev/sym72q4",
+    "artifactsExpected": [
+      "stdout",
+      "stderr",
+      "exit",
+      "ev/ev",
+      "ev/ev-native-main",
+      "ev-clean"
+    ],
+    "freshStand": false,
+    "status": "queued"
+  }
 }

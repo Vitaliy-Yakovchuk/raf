@@ -1,0 +1,14 @@
+{
+  "command": [
+    "openspec",
+    "validate",
+    "switch-raf-main-by-symlink",
+    "--strict",
+    "--no-interactive"
+  ],
+  "cwd": "/srv/dev/work/orchestrator",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "reason": "Task evidence text and README links changed in own root commit 325e743; validates current change after those edits, without replaying live scenarios."
+}

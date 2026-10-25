@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { release } from 'node:os';
 import { setTimeout as delay } from 'node:timers/promises';
+import { configureForcedCloseStand } from './qa-forced-close-config.mjs';
 
 const source = resolve(import.meta.dirname, '..');
 const output = resolve(process.argv[2] ?? '');
@@ -88,15 +89,15 @@ if (process.argv[3] !== '--isolated') {
       PATH: join(f.directory, 'bin') + ':' + process.env.PATH, TMPDIR: f.directory, TMUX_TMPDIR: f.directory };
     delete env.TMUX; delete env.TMUX_PANE;
     const rafPath = join(cfg.root, 'conf/raf.json');
-    const raf = await json(rafPath);
-    raf.commandTiming = originalRaf.commandTiming;
-    raf.runnerProtocols[0].timeouts = timeouts;
+    const raf = configureForcedCloseStand(await json(rafPath), originalRaf);
     await fs.writeFile(rafPath, JSON.stringify(raf));
     const flow = await json(join(cfg.root, 'conf/flow.json'));
     evidence.stand = { directory: f.directory, root: cfg.root, home: cfg.home, tmpRoot: f.tmpRoot, statePath: cfg.statePath,
       timeouts, retention: flow.retention, syntheticRunnerVersion: raf.runnerProtocols[0].version,
       sourceRafHash: hash(await fs.readFile(join(source, '../conf/raf.json'))), fixtureRafHash: hash(await fs.readFile(rafPath)),
+      costProfileUnchanged: JSON.stringify(raf.costProfile) === JSON.stringify(originalRaf.costProfile),
       retentionUnchanged: JSON.stringify(flow.retention) === JSON.stringify((await json(join(source, '../conf/flow.json'))).retention) };
+    assert.equal(evidence.stand.costProfileUnchanged, true);
     assert.equal(evidence.stand.retentionUnchanged, true);
     const started = await record('auto-launch', f.runArgs('auto-worker'), await f.run('auto-worker'));
     assert.equal(started.exitCode, 0);

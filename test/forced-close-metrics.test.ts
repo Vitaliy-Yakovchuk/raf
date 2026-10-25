@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -9,6 +9,7 @@ import { prepareAgentClose, type AgentCloseOptions } from '../src/agent-close-pr
 import { loadFlowPolicy } from '../src/flow-policy.ts';
 import { openStateStore } from '../src/state-store.ts';
 import { createSessionState, type SessionRecord, type SessionRepository, type TransitionEffects } from '../src/session-state.ts';
+import { configureForcedCloseStand } from '../scripts/qa-forced-close-config.mjs';
 import {
   forcedCloseMetricsPeriod, readForcedCloseMetrics,
   recordForcedCloseFinalizationInTransaction, recordForcedCloseRefusalInTransaction,
@@ -19,6 +20,16 @@ const epoch = Date.UTC(2026, 9, 24, 12);
 const at = (ms: number) => new Date(epoch + ms).toISOString();
 const empty: TransitionEffects = { pending: [], domain: [] };
 const forced = { force: true, reason: 'PRIVATE_REASON_FOR_THIS_RUN' };
+
+test('forced-close live stand preserves required production cost policy for startup', () => {
+  const original = JSON.parse(readFileSync(new URL('../../conf/raf.json', import.meta.url), 'utf8'));
+  const synthetic = { runnerProtocols: [{ runner: 'codex', version: '0.0.1', timeouts: {} }], commandTiming: { emaAlpha: 0.1 } };
+  const configured = configureForcedCloseStand(synthetic, original);
+  assert.deepEqual(configured.costProfile, original.costProfile);
+  assert.deepEqual(configured.commandTiming, original.commandTiming);
+  assert.deepEqual(configured.runnerProtocols[0].timeouts, original.runnerProtocols.find(row => row.runner === 'codex').timeouts);
+  assert.equal(configured.runnerProtocols[0].version, '0.0.1');
+});
 
 function fixture(t: TestContext) {
   const directory = mkdtempSync(join(tmpdir(), 'raf-forced-close-unit-'));

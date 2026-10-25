@@ -1,0 +1,78 @@
+{
+  "assignment": "monitor-raf-health:5.4",
+  "outcome": "failed",
+  "invocations": [
+    {
+      "label": "auto-launch",
+      "argv": [
+        "agent",
+        "run",
+        "--id",
+        "auto-worker",
+        "--type",
+        "implement",
+        "--project",
+        "raf",
+        "--features",
+        "launch-fixture",
+        "--phase",
+        "implement",
+        "--complexity",
+        "decision",
+        "--tasks",
+        "launch-failure-fixture:1.1"
+      ],
+      "cliExitCode": 1,
+      "resultExitCode": 1,
+      "transportStderr": "",
+      "evidence": "auto-launch.transport.json"
+    }
+  ],
+  "assertions": [],
+  "limitations": [
+    "Real production CLI, watcher, Git checkbox writer, SQLite and tmux processes; terminal payload is synthetic and makes no model or network calls.",
+    "Existing agentRunFixture relaxes isolated resource admission thresholds. This stand does not test resource admission or a real AI provider.",
+    "Restart replaces the isolated main caller and all command runtimes reopen SQLite; no production service is restarted.",
+    "Retention boundaries use the real cleanup operation with a future observation time from unchanged finishedSessionsMs, without waiting a day."
+  ],
+  "environment": {
+    "sha": "423edf5eeae25a6c8a6e6010bb2ab9cc5bc43ce6",
+    "dirty": "?? node_modules",
+    "node": "v26.12.1",
+    "os": "7.0.0-30-generic",
+    "platform": "linux",
+    "git": "git version 2.53.0",
+    "tmux": "tmux 3.6",
+    "openspec": "1.14.3"
+  },
+  "stand": {
+    "directory": "/tmp/mrh54-Q7ANYV/tmp/raf-lfc-QvY0uG",
+    "root": "/tmp/mrh54-Q7ANYV/tmp/raf-lfc-QvY0uG/orchestrator",
+    "home": "/tmp/mrh54-Q7ANYV/tmp/raf-lfc-QvY0uG/home",
+    "tmpRoot": "/tmp/mrh54-Q7ANYV/tmp/raf-lfc-QvY0uG/home/.raf/tmp",
+    "statePath": "/tmp/mrh54-Q7ANYV/tmp/raf-lfc-QvY0uG/home/.raf/state.sqlite",
+    "timeouts": {
+      "startupMs": 10000,
+      "transitionMs": 10000,
+      "overallMs": 30000,
+      "pollMs": 100
+    },
+    "retention": {
+      "closedRemindersMs": 172800000,
+      "finishedSessionsMs": 86400000
+    },
+    "syntheticRunnerVersion": "0.0.1",
+    "sourceRafHash": "5da516443138a944fa3dfbab5b4f843a43750a85b78337557fc26cdc71fcd20f",
+    "fixtureRafHash": "6cd89ac29d98d6fd524a1763ebfdc943426e9c08083fa0aac574861114c1db8c",
+    "retentionUnchanged": true
+  },
+  "error": {
+    "name": "AssertionError",
+    "message": "Expected values to be strictly equal:\n\n1 !== 0\n",
+    "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at file:///srv/dev/mrh54-src.396Hxa/raf-develop/scripts/qa-forced-close-live.mjs:102:12"
+  },
+  "cleanup": {
+    "complete": true,
+    "fixtureRemoved": true
+  }
+}

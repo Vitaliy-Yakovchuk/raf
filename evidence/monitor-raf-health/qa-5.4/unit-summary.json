@@ -517,6 +517,67 @@
       "groupState": "idle",
       "timeoutCount": 0,
       "nextAction": "fix-implementation"
+    },
+    {
+      "runId": "29148837-1e04-4d31-8a6c-a4aa14c3a5ba",
+      "group": "monitor-raf-health/forced-close",
+      "phase": "red",
+      "selection": {
+        "files": [
+          "test/forced-close-metrics.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "assertions-failed",
+      "knownRed": [
+        {
+          "file": "test/forced-close-metrics.test.ts",
+          "name": "forced-close live stand preserves required production cost policy for startup"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "timeoutCount": 0,
+      "nextAction": "implement",
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "passed": 26,
+      "evidence": "host-config-red.TestRunResult.json"
+    },
+    {
+      "runId": "495cb61e-9302-4247-b09d-141358ee222a",
+      "group": "monitor-raf-health/forced-close",
+      "phase": "qa",
+      "selection": {
+        "files": [
+          "test/forced-close-metrics.test.ts"
+        ],
+        "testIds": []
+      },
+      "outcome": "passed",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timedOut": false,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "timeoutCount": 0,
+      "nextAction": "complete",
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "passed": 27,
+      "evidence": "host-config-qa.TestRunResult.json"
     }
   ],
   "aggregatePreserved": true,

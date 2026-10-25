@@ -1,0 +1,138 @@
+{
+  "item": "complete-raf-flow-contracts:Z.393.10",
+  "audit": {
+    "relevant": true,
+    "sources": [
+      "openspec/changes/complete-raf-flow-contracts/proposal.md Why/What Changes",
+      "openspec/changes/complete-raf-flow-contracts/tasks.md Z.393.10",
+      "openspec/changes/add-raf-agent-run/specs/projects/raf/agent-run/spec.md: Звільнення резервів після збоїв"
+    ],
+    "finding": "At base SHA 61f5ef0, cleanup returns retained for ready/running even when this launch client returns LAUNCH_FAILED; ps can also remove the ready queue entry before cleanup."
+  },
+  "fix": "For launch-failed, match the complete durable launch owner (run/address/queue/request/fence/client/coordinator), compensate the own process and await finalization before releasing claims. A reconciled queue entry can be absent. Client-death reconciliation continues preserving a live ready agent. Unconfirmed stop retains claims and returns unknown with pending process termination.",
+  "phaseClarification": "The original brief requested initial --phase red. Main subsequently explicitly instructed initial red using --phase hotfix after group registration (conf commit 6b63d436e5); both actual runs use hotfix. Initial run is assertion-red before implementation, not a setup failure.",
+  "group": "complete-raf-flow-contracts/z39310",
+  "workspaceHead": "9cf77f3c287228bb81b4deee43ebbb3f5ea62fee",
+  "ownedFiles": [
+    "src/production-agent-queue.ts",
+    "test/agent-queue-start-result.test.ts"
+  ],
+  "workspaceStatusAtEvidence": " M src/production-agent-queue.ts\n M test/agent-queue-start-result.test.ts\n?? evidence/z39310/\n?? evidence/z39398/\n?? node_modules\n",
+  "workspaceFileSha256": {
+    "src/production-agent-queue.ts": "228d0c6a40935353e902857689b41e57e617498252314f7111d76f105bb41fde",
+    "test/agent-queue-start-result.test.ts": "7f3c003c69ebfd0b88526f2c09c1aa9cda2cd6edb0418caccc9b9eca9df1c4c8"
+  },
+  "runs": [
+    {
+      "stage": "initial",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/8d40820d-3449-4a8e-b3ed-1c3f4a1738d2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z39310 --files test/agent-queue-start-result.test.ts",
+      "workspaceHead": "61f5ef0a9fa442fec476f7951e2d231baa5ed40e",
+      "workspacePatch": "evidence/z39310/initial.workspace.patch",
+      "runId": "cec07f3e-099c-46f9-8093-0e578f1be5c8",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/agent-queue-start-result.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 1,
+      "childExitCode": 1,
+      "outcome": "assertions-failed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 20,
+      "knownRed": [
+        {
+          "file": "test/agent-queue-start-result.test.ts",
+          "name": "Z.393.10 handshake timeout after durable readiness: waited=false, reconciled=false cancels its worker and releases claims"
+        },
+        {
+          "file": "test/agent-queue-start-result.test.ts",
+          "name": "Z.393.10 handshake timeout after durable readiness: waited=false, reconciled=true cancels its worker and releases claims"
+        },
+        {
+          "file": "test/agent-queue-start-result.test.ts",
+          "name": "Z.393.10 handshake timeout after durable readiness: waited=true, reconciled=false cancels its worker and releases claims"
+        },
+        {
+          "file": "test/agent-queue-start-result.test.ts",
+          "name": "Z.393.10 handshake timeout after durable readiness: waited=true, reconciled=true cancels its worker and releases claims"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "idle",
+      "nextAction": "fix-implementation",
+      "timeoutCount": 0,
+      "fullResult": "evidence/z39310/initial.TestRunResult.json",
+      "stderr": "evidence/z39310/initial.stderr.txt",
+      "capture": "evidence/z39310/initial.capture.json",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "uncommittedOwnedFiles": [
+        "test/agent-queue-start-result.test.ts"
+      ]
+    },
+    {
+      "stage": "hotfix",
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/8d40820d-3449-4a8e-b3ed-1c3f4a1738d2/raf-main/bin/raf.ts test run --project raf --phase hotfix --group complete-raf-flow-contracts/z39310 --files test/agent-queue-start-result.test.ts",
+      "workspacePatch": "evidence/z39310/hotfix.workspace.patch",
+      "runId": "4a7c1968-748b-4aff-bf72-7d100d315846",
+      "phase": "hotfix",
+      "selection": {
+        "files": [
+          "test/agent-queue-start-result.test.ts"
+        ],
+        "testIds": []
+      },
+      "cliExitCode": 0,
+      "childExitCode": 0,
+      "outcome": "passed",
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "passedCount": 33,
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "groupState": "complete",
+      "nextAction": "complete",
+      "timeoutCount": 0,
+      "fullResult": "evidence/z39310/hotfix.TestRunResult.json",
+      "stderr": "evidence/z39310/hotfix.stderr.txt",
+      "capture": "evidence/z39310/hotfix.capture.json",
+      "qaHome": "/tmp/raf-unit-1000/1ee10007bf6d5e71b39d6a2873064a767eeb928e7910599b166a0d60270ff685",
+      "workspaceHeadAtCommand": "61f5ef0a9fa442fec476f7951e2d231baa5ed40e",
+      "workspaceHeadAfterRun": "9cf77f3c287228bb81b4deee43ebbb3f5ea62fee",
+      "concurrentCommit": {
+        "sha": "9cf77f3c287228bb81b4deee43ebbb3f5ea62fee",
+        "committedAt": "2026-10-25T01:25:03Z",
+        "files": [
+          "test/report-confirmation-deadline-z39398.test.ts"
+        ],
+        "note": "Other executor committed while this command waited for resources. Actual test started at 01:25:12 UTC (resourceUsage.startedAt). Own tested files are captured by the patch and SHA256; no unrelated file was selected."
+      },
+      "uncommittedOwnedFiles": [
+        "src/production-agent-queue.ts",
+        "test/agent-queue-start-result.test.ts"
+      ]
+    }
+  ],
+  "build": {
+    "metadata": "evidence/z39310/build.json",
+    "stdout": "evidence/z39310/build.stdout.txt",
+    "stderr": "evidence/z39310/build.stderr.txt",
+    "cliExitCode": 0
+  },
+  "limits": "Isolated unit regression of real production queue/lifecycle coordination with simulated process-stop ports; no new real CLI/runner launch was performed and the historical production process was not touched.",
+  "completion": {
+    "tasksModifiedByExecutor": false,
+    "archive": null,
+    "reason": "Other tasks of complete-raf-flow-contracts remain open; archiving is not authorized."
+  }
+}

@@ -63,6 +63,14 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
     agentType: input.activity.type, owner, clientIdentity,
     selections: input.assignment.changes.map(change => ({ change: change.id, items: change.items.map(item => item.id) })), coordinator };
   const record: AgentQueueRecord = { queueId, requestId: randomUUID(), agentId: input.addressId, owner, clientIdentity, coordinator, eventHandle: null };
+  const ownsLaunch = (session: SessionRecord | undefined, record: AgentQueueRecord): boolean => {
+    const queued = session?.launchContext?.agentQueue;
+    return session?.state === 'running' && session.runId === input.runId && session.runId === record.owner.runId &&
+      session.addressId === input.addressId && session.addressId === record.agentId && !!queued &&
+      queued.queueId === record.queueId && queued.requestId === record.requestId && queued.agentId === record.agentId &&
+      queued.owner.runId === record.owner.runId && queued.owner.fence === record.owner.fence &&
+      isDeepStrictEqual(queued.clientIdentity, record.clientIdentity) && isDeepStrictEqual(queued.coordinator, record.coordinator);
+  };
   const failure = (code: string, reason: string) => ({ code, message: reason, reason, stage: 'queue', source: 'production-agent-queue', sourceCode: null,
     received: null, expected: null, found: null, completed: [], pending: [], retrySafe: false,
     remediation: ['Перевірте актуальність доручення, власника й стан запуску.'] });
@@ -116,40 +124,36 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
       return { kind: result.admitted ? 'reserved' : 'waiting', record, admission: result.admission };
     },
     commitReady: async (record, process) => {
-      const ownsLaunch = (session: SessionRecord | undefined): session is SessionRecord & { process: ProcessIdentity } => {
-        const queued = session?.launchContext?.agentQueue;
-        return session?.state === 'running' && session.runId === input.runId && session.runId === record.owner.runId &&
-          session.addressId === input.addressId && session.addressId === record.agentId && !!queued &&
-          queued.queueId === record.queueId && queued.requestId === record.requestId && queued.agentId === record.agentId &&
-          queued.owner.runId === record.owner.runId && queued.owner.fence === record.owner.fence &&
-          isDeepStrictEqual(queued.clientIdentity, record.clientIdentity) && isDeepStrictEqual(queued.coordinator, record.coordinator) &&
-          !!session.process && session.process.pid === process.pid && session.process.startedAt === process.startedAt &&
+      const ownsProcess = (session: SessionRecord | undefined): session is SessionRecord & { process: ProcessIdentity } => {
+        return ownsLaunch(session, record) &&
+          !!session?.process && session.process.pid === process.pid && session.process.startedAt === process.startedAt &&
           sameQueueNativeIdentity({ ...session.process, machineId: session.process.evidence.machineId, bootId: session.process.evidence.bootId, ...(process.runner === undefined ? { runner: undefined } : {}) }, process) &&
           session.process.evidence.machineId === process.machineId && session.process.evidence.bootId === process.bootId;
       };
       const session = state.transaction(tx => tx.getSession(record.owner.runId));
-      if (!ownsLaunch(session) || (await dependencies.observe(session.process)).state !== 'alive') return false;
+      if (!ownsProcess(session) || (await dependencies.observe(session.process)).state !== 'alive') return false;
       if (!await api.commitStarted(record.owner.runId, session.process)) return false;
       return state.transaction(tx => {
         const entry = state.get(record);
         const session = tx.getSession(record.owner.runId);
-        if (!ownsLaunch(session)) return false;
+        if (!ownsProcess(session)) return false;
         if (!entry) return true;
         if (entry.phase !== 'starting' || !entry.ready || entry.record.agentId !== record.agentId) return false;
         return state.remove(record);
       });
     },
     cleanup: async (record, reason, detail) => {
-      if (!state.transaction(() => state.get(record))) return { state: 'retained', reason: 'Launch fence is no longer owned by this client', completed: [], pending: [] };
+      const failedOwnLaunch = reason === 'launch-failed' && ownsLaunch(current(record.owner.runId), record);
+      if (!state.transaction(() => state.get(record)) && !failedOwnLaunch) return { state: 'retained', reason: 'Launch fence is no longer owned by this client', completed: [], pending: [] };
       state.transaction(() => {
         const entry = state.get(record);
         if (entry && !entry.ready) state.save({ ...entry, terminalReason: entry.terminalReason ?? reason });
       });
       const session = current(record.owner.runId);
-      if (session?.state === 'running' && state.transaction(() => state.get(record))?.ready) {
+      if (session?.state === 'running' && (failedOwnLaunch || state.transaction(() => state.get(record))?.ready)) {
         if (!session.process) return { state: 'unknown', reason: 'Running agent identity is missing', completed: [], pending: ['agent reconciliation'] };
         const observation = await dependencies.observe(session.process);
-        if (observation.state !== 'exited') return { state: observation.state === 'alive' ? 'retained' : 'unknown', reason: 'Agent owns the launched process and reservation', completed: [], pending: [] };
+        if (observation.state !== 'exited' && !failedOwnLaunch) return { state: observation.state === 'alive' ? 'retained' : 'unknown', reason: 'Agent owns the launched process and reservation', completed: [], pending: [] };
       }
       if (session && session.state !== 'finished' && record.owner.runId !== input.runId) return { state: 'unknown', reason: 'Existing worker lifecycle must reconcile this launch', completed: [], pending: ['launch reconciliation'] };
       if (session && session.state !== 'finished') {
@@ -160,7 +164,7 @@ export async function createProductionAgentQueue(input: RuntimeReservationInput,
         if (remaining && remaining.state !== 'finished') return { state: 'unknown', reason: 'Launch cleanup is incomplete', completed: [], pending: ['launch cleanup'] };
       }
       await dependencies.cleanReport(record.owner.runId);
-      const removed = state.transaction(() => state.remove(record, reason));
+      const removed = state.transaction(() => state.remove(record, reason) || failedOwnLaunch && !state.get(record) && current(record.owner.runId)?.state === 'finished');
       return { state: removed ? 'released' : 'retained', reason: detail, completed: removed ? ['launch claims', 'resource reservation', 'report cleanup'] : [], pending: [] };
     },
     observe: async record => {

@@ -7,6 +7,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { agentChannelReadOnlyPaths, runPublishedAgentChannel } from "../src/main-switch-agent-launcher.ts";
 import { codexBwrapWrapper, protectCodexReadOnlyPaths } from "../src/codex-sandbox.ts";
+import { compileCatalog } from "../src/catalog.ts";
+import { execute } from "../src/cli.ts";
+import { negativePeerCommand } from "../scripts/qa-main-agent-channel-metadata.mjs";
 import {
   assessAgentChannelSlotReuse,
   compileAgentChannelNativePolicy,
@@ -26,6 +29,18 @@ import type {
 } from "../src/main-switch-agent-channel.ts";
 
 const root = "/fixture/orchestrator";
+
+test("native QA negative CLI probe exercises protected runtime rather than public catalog output", async () => {
+  const configuration = async (name: string) => JSON.parse(await fs.readFile(new URL('../../conf/' + name, import.meta.url), 'utf8'));
+  const constants = await configuration('raf-constants.json');
+  const catalog = compileCatalog(constants, await configuration('models.json'), constants.commands.map((command: { path: string[] }) => command.path.join(' ')), await configuration('projects.json'));
+  let runtimeCalls = 0;
+  const result = await execute(negativePeerCommand('sym64-peer'), catalog, new Proxy(Object.create(null), {
+    get: () => async () => { runtimeCalls++; throw new Error('Protected runtime denied'); },
+  }));
+  assert.equal(runtimeCalls, 1, 'A catalog-only command cannot prove denial of protected host operations');
+  assert.notEqual(result.exitCode, 0);
+});
 const slotA = `${root}/raf-main-a`;
 const slotB = `${root}/raf-main-b`;
 const issuedPrefix = `node ${slotA}/bin/raf.ts`;

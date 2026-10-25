@@ -1,0 +1,70 @@
+diff --git a/scripts/qa-main-agent-channel-metadata.mjs b/scripts/qa-main-agent-channel-metadata.mjs
+index fab1d0d..1be46c7 100644
+--- a/scripts/qa-main-agent-channel-metadata.mjs
++++ b/scripts/qa-main-agent-channel-metadata.mjs
+@@ -2,6 +2,10 @@ import fs from 'node:fs';
+ import path from 'node:path';
+ import { createHash } from 'node:crypto';
+ 
++export function negativePeerCommand(peer) {
++  return ['agent', 'close', '--id', peer];
++}
++
+ export function metadataTree(directory) {
+   const stat = fs.lstatSync(directory);
+   const entry = { mode: stat.mode, dev: stat.dev, ino: stat.ino, nlink: stat.nlink };
+diff --git a/scripts/qa-main-agent-channel.mjs b/scripts/qa-main-agent-channel.mjs
+index 0414a19..3bcd014 100644
+--- a/scripts/qa-main-agent-channel.mjs
++++ b/scripts/qa-main-agent-channel.mjs
+@@ -8,7 +8,7 @@ import { DatabaseSync } from 'node:sqlite';
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+ import { setTimeout as delay } from 'node:timers/promises';
+ import { configureLiveCodexTrust } from '../test/helpers/z4044-live-trust.mjs';
+-import { metadataTree } from './qa-main-agent-channel-metadata.mjs';
++import { metadataTree, negativePeerCommand } from './qa-main-agent-channel-metadata.mjs';
+ 
+ const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+ const reviewed = process.argv[2];
+@@ -137,7 +137,7 @@ try {
+   fs.writeFileSync(path.join(root, 'openspec/config.yaml'), 'schema: spec-driven\n');
+   fs.writeFileSync(path.join(change, '.openspec.yaml'), 'schema: spec-driven\nskip_specs: true\n');
+   fs.writeFileSync(path.join(change, 'proposal.md'), '## Why\nIsolated live native channel QA.\n\n## What Changes\nHost-controlled probes only.\n\n## Non-goals\nNo product implementation or unit runs.\n');
+-  const description = actor => `Controlled live QA actor ${actor}. Model and effort already selected by raf; never replace them. Do not implement, run tests, edit tasks, write report, archive, or retry failed/unknown commands. The provided helper makes only its own isolated fixture commits in develop and Orchestrator; these are authorized. In native exec tool perform this exact sequence, requesting max_output_tokens 60000 for message/ps so exact outputs are retained. First execute node qa/sym64-probe.mjs 0 <exact report_path from your brief>; wait for completion, polling a running native tool session as necessary. Then execute the issued raf_command agent message --to sym64-${actor === 'a' ? 'b' : 'a'} --text sym64-${actor}-after-B as ONE simple native tool command, using the original issued absolute raf_command unchanged. Next execute the issued raf_command agent ps in a separate native tool call. Then execute the issued raf_command help agent ps as a separate simple native command; this unauthorized subcommand must return a nonzero code, preserve its exact result and continue only for that expected denial. Next execute node qa/sym64-probe.mjs 1 <exact report_path>; wait for completion. Next repeat separate simple native message with text sym64-${actor}-after-A and agent ps using that same original prefix, followed by the same separate unauthorized help agent ps with required nonzero code. Execute node qa/sym64-probe.mjs 2 <exact report_path> and wait. After it completes repeat separate simple native message with text sym64-${actor}-after-rollback and agent ps using that same original prefix, followed by the same separate unauthorized help agent ps with required nonzero code. Execute node qa/sym64-probe.mjs 3 <exact report_path> and wait. Do not acknowledge received messages with tool calls, only chat. If any expected-success command fails, stop and preserve the error. The probe helper owns allowed negative actions only inside this isolated fixture. Do not change the helper or evade its checks. After completion wait for host.`;
++  const description = actor => `Controlled live QA actor ${actor}. Model and effort already selected by raf; never replace them. Do not implement, run tests, edit tasks, write report, archive, or retry failed/unknown commands. The provided helper makes only its own isolated fixture commits in develop and Orchestrator; these are authorized. In native exec tool perform this exact sequence, requesting max_output_tokens 60000 for message/ps so exact outputs are retained. First execute node qa/sym64-probe.mjs 0 <exact report_path from your brief>; wait for completion, polling a running native tool session as necessary. Then execute the issued raf_command agent message --to sym64-${actor === 'a' ? 'b' : 'a'} --text sym64-${actor}-after-B as ONE simple native tool command, using the original issued absolute raf_command unchanged. Next execute the issued raf_command agent ps in a separate native tool call. Then execute the issued raf_command ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} as a separate simple native command; this unauthorized subcommand must return a nonzero code, preserve its exact result and continue only for that expected denial. Next execute node qa/sym64-probe.mjs 1 <exact report_path>; wait for completion. Next repeat separate simple native message with text sym64-${actor}-after-A and agent ps using that same original prefix, followed by the same separate unauthorized ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} with required nonzero code. Execute node qa/sym64-probe.mjs 2 <exact report_path> and wait. After it completes repeat separate simple native message with text sym64-${actor}-after-rollback and agent ps using that same original prefix, followed by the same separate unauthorized ${negativePeerCommand('sym64-' + (actor === 'a' ? 'b' : 'a')).join(' ')} with required nonzero code. Execute node qa/sym64-probe.mjs 3 <exact report_path> and wait. Do not acknowledge received messages with tool calls, only chat. If any expected-success command fails, stop and preserve the error. The probe helper owns allowed negative actions only inside this isolated fixture. Do not change the helper or evade its checks. After completion wait for host.`;
+   fs.writeFileSync(path.join(change, 'tasks.md'), `- [ ] 1.1 ${description('a')}\n- [ ] 1.2 ${description('b')}\n- [ ] 1.3 Host keeps the fixture active.\n`);
+   git(root, 'add', '--', '.gitmodules', 'raf-main', 'conf', 'openspec'); git(root, 'commit', '-m', 'qa: isolated orchestrator');
+   const layout = await import(pathToFileURL(path.join(main, 'src/main-layout.ts')));
+diff --git a/test/main-switch-agent-channel.test.ts b/test/main-switch-agent-channel.test.ts
+index e9e9d28..bc7ccc0 100644
+--- a/test/main-switch-agent-channel.test.ts
++++ b/test/main-switch-agent-channel.test.ts
+@@ -7,6 +7,9 @@ import { dirname, join } from "node:path";
+ import { fileURLToPath } from "node:url";
+ import { agentChannelReadOnlyPaths, runPublishedAgentChannel } from "../src/main-switch-agent-launcher.ts";
+ import { codexBwrapWrapper, protectCodexReadOnlyPaths } from "../src/codex-sandbox.ts";
++import { compileCatalog } from "../src/catalog.ts";
++import { execute } from "../src/cli.ts";
++import { negativePeerCommand } from "../scripts/qa-main-agent-channel-metadata.mjs";
+ import {
+   assessAgentChannelSlotReuse,
+   compileAgentChannelNativePolicy,
+@@ -26,6 +29,18 @@ import type {
+ } from "../src/main-switch-agent-channel.ts";
+ 
+ const root = "/fixture/orchestrator";
++
++test("native QA negative CLI probe exercises protected runtime rather than public catalog output", async () => {
++  const configuration = async (name: string) => JSON.parse(await fs.readFile(new URL('../../conf/' + name, import.meta.url), 'utf8'));
++  const constants = await configuration('raf-constants.json');
++  const catalog = compileCatalog(constants, await configuration('models.json'), constants.commands.map((command: { path: string[] }) => command.path.join(' ')), await configuration('projects.json'));
++  let runtimeCalls = 0;
++  const result = await execute(negativePeerCommand('sym64-peer'), catalog, new Proxy(Object.create(null), {
++    get: () => async () => { runtimeCalls++; throw new Error('Protected runtime denied'); },
++  }));
++  assert.equal(runtimeCalls, 1, 'A catalog-only command cannot prove denial of protected host operations');
++  assert.notEqual(result.exitCode, 0);
++});
+ const slotA = `${root}/raf-main-a`;
+ const slotB = `${root}/raf-main-b`;
+ const issuedPrefix = `node ${slotA}/bin/raf.ts`;

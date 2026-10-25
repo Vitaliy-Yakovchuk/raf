@@ -2,6 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 
+export function negativePeerCommand(peer) {
+  return ['agent', 'close', '--id', peer];
+}
+
 export function metadataTree(directory) {
   const stat = fs.lstatSync(directory);
   const entry = { mode: stat.mode, dev: stat.dev, ino: stat.ino, nlink: stat.nlink };

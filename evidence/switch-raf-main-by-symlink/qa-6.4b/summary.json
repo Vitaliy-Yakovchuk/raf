@@ -1270,6 +1270,79 @@
       "unknown": [],
       "raw": "trust-target-qa.TestRunResult.json",
       "separateStderrAvailable": false
+    },
+    {
+      "runId": "67b62b12-80f6-45eb-b1bb-daf2e7de586e",
+      "phase": "red",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:22:58.482Z",
+      "outcome": "assertions-failed",
+      "exitCode": 1,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "idle",
+      "nextAction": "implement",
+      "knownRed": [
+        {
+          "file": "test/main-switch-agent-channel.test.ts",
+          "name": "native QA negative CLI probe exercises protected runtime rather than public catalog output"
+        }
+      ],
+      "unexecuted": [],
+      "unknown": [],
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase red --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "cliExitCode": 1,
+      "passed": 70,
+      "raw": "negative-probe-red.TestRunResult.json",
+      "separateStderrAvailable": false,
+      "headAtStartedAtFromReflog": "c970810518949dad90271aa079c3ed9fa63ed4af",
+      "workspaceAtStart": "Shared tree; negative-probe-fixture.patch captures own red-to-fix change. Exact per-run shared diff not atomically captured."
+    },
+    {
+      "runId": "a7526ef1-426f-4f06-b2f0-4799da3e0b66",
+      "phase": "qa",
+      "group": "switch-raf-main-by-symlink/agent-channel",
+      "profileId": "node",
+      "selection": {
+        "files": [
+          "test/main-switch-agent-channel.test.ts"
+        ],
+        "testIds": []
+      },
+      "startedAt": "2026-10-25T03:25:38.163Z",
+      "outcome": "passed",
+      "exitCode": 0,
+      "timedOut": false,
+      "cleanup": {
+        "complete": true,
+        "remainingPids": []
+      },
+      "timeoutCount": 0,
+      "groupSnapshot": "loaded",
+      "groupState": "complete",
+      "nextAction": "complete",
+      "knownRed": [],
+      "unexecuted": [],
+      "unknown": [],
+      "command": "node /srv/dev/work/orchestrator/.git/modules/raf/raf-hotfix/generations/23e78b0d-9095-48b2-929b-0e5e8d307756/raf-main/bin/raf.ts test run --project raf --phase qa --group switch-raf-main-by-symlink/agent-channel --files test/main-switch-agent-channel.test.ts",
+      "cliExitCode": 0,
+      "passed": 71,
+      "raw": "negative-probe-qa.TestRunResult.json",
+      "separateStderrAvailable": false,
+      "headAtStartedAtFromReflog": "c970810518949dad90271aa079c3ed9fa63ed4af",
+      "workspaceAtStart": "Shared tree; negative-probe-fixture.patch captures own red-to-fix change. Exact per-run shared diff not atomically captured."
     }
   ],
   "incompleteCapture": {
@@ -1302,5 +1375,13 @@
       }
     ]
   },
-  "createdAt": "2026-10-25T03:11:47.143644+00:00"
+  "createdAt": "2026-10-25T03:11:47.143644+00:00",
+  "negativeProbeFixture": {
+    "defect": "Public help returns catalog output with exit 0 without protected runtime access; it cannot serve as a denial control.",
+    "redRunId": "67b62b12-80f6-45eb-b1bb-daf2e7de586e",
+    "fix": "Use the unissued agent close --id <live peer> command after each switch, preserve its exact nonzero result, and verify both peers remain live via host controls.",
+    "qaRunId": "a7526ef1-426f-4f06-b2f0-4799da3e0b66",
+    "supersededHostCommit": "27e2668bb9803668bde8deb7518ff70a3cdcfb90",
+    "nativeStatus": "awaiting-new-reviewed-commit-host-run"
+  }
 }

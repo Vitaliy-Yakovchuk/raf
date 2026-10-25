@@ -72,6 +72,7 @@ if (process.argv[2] === 'child') {
   process.disconnect?.();
 } else {
   const output = path.resolve(process.argv[2]);
+  const selected = process.argv[3]?.split(',');
   fs.mkdirSync(output, { recursive: true });
   const base = fs.mkdtempSync('/tmp/cfc54-');
   const root = path.join(base, 'root'), code = path.join(root, 'raf-develop');
@@ -81,7 +82,7 @@ if (process.argv[2] === 'child') {
     GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'Event QA fixture', GIT_AUTHOR_EMAIL: 'qa@example.invalid',
     GIT_COMMITTER_NAME: 'Event QA fixture', GIT_COMMITTER_EMAIL: 'qa@example.invalid' };
   const evidence = { assignment: 'complete-raf-flow-contracts:5.4', status: 'failed', base, root, code, home, db, tmp,
-    command: [process.execPath, script, output], versions: { node: process.version }, commands: [], scenarios: [], cleanup: {}, limitations: [
+    command: [process.execPath, script, output, ...(selected ? [selected.join(',')] : [])], selected: selected ?? 'all', versions: { node: process.version }, commands: [], scenarios: [], cleanup: {}, limitations: [
       'The compiled CLI parser dispatches production handlers in separate processes with a test runtime context. This is an API/CLI stand, not public bin/raf.ts provenance acceptance.',
       'The live tmux recipients are controlled stdin receivers, not an authenticated external AI provider. Native runner interrupt acceptance is reported separately.',
       'Deployment has no approved live producer or environment; fixture controls do not prove a real deployment or I7 positive acceptance.'
@@ -114,6 +115,7 @@ if (process.argv[2] === 'child') {
   const find = item => reminders().find(row => row.id === item.id);
   const pending = () => sql(db).pending_intents.filter(row => row.payload.payload?.kind);
   const scenario = async (id, body) => {
+    if (selected && !selected.includes(id)) return;
     try { const details = await body(); evidence.scenarios.push({ id, status: 'passed', details }); }
     catch (error) { evidence.scenarios.push({ id, status: 'failed', error: String(error), stack: error.stack }); }
     flush();
@@ -121,9 +123,9 @@ if (process.argv[2] === 'child') {
   const fixture = (id, complete = true, archived) => {
     const directory = path.join(root, 'openspec/changes', ...(archived ? ['archive', archived] : [id]));
     fs.mkdirSync(directory, { recursive: true });
-    fs.writeFileSync(path.join(directory, 'proposal.md'), '## Why\nQA fixture.\n## What Changes\nLocal state only.\n## Impact\nNone.\n');
+    fs.writeFileSync(path.join(directory, 'proposal.md'), '## Why\nThis isolated QA fixture verifies current OpenSpec archive events using real commands.\n## What Changes\nLocal state only.\n## Impact\nNone.\n');
     fs.writeFileSync(path.join(directory, 'tasks.md'), '- [' + (complete ? 'x' : ' ') + '] 1.1 Fixture complete\n');
-    fs.writeFileSync(path.join(directory, '.openspec.yaml'), 'skip_specs: true\n');
+    fs.writeFileSync(path.join(directory, '.openspec.yaml'), 'schema: spec-driven\nskip_specs: true\n');
     return directory;
   };
   try {
